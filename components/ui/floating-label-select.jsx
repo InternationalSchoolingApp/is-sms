@@ -51,7 +51,7 @@ function PlainFloatingLabelSelect({ icon: Icon, label, value, onValueChange, opt
         )}
         <Select className=""   value={value} onValueChange={onValueChange} onOpenChange={setOpen}>
           <SelectTrigger
-            className={`!h-12 rounded-md w-full pt-1 ${Icon ? "pl-10" : "pl-3.5"} pr-3.5 ${
+            className={`!h-12 rounded-md w-full bg-white pt-1 ${Icon ? "pl-10" : "pl-3.5"} pr-3.5 ${
               error ? "border-2 border-red-500" : open ? "border-2 border-slate-900" : "border-slate-300"
             }`}
           >

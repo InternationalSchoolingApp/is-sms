@@ -20,25 +20,32 @@ function courseDetailsKey(userId) {
 
 /**
  * Request for course-details-by-standard-id, matching
- * getRequestForCourseSelection() in signupStudentStage3.js. With no
- * controlType the call is a read: the backend uses the saved standardId and
- * selectedSubjects (and pre-selects the compulsory subjects if none are
- * saved yet). With controlType "add"/"remove" it persists the given
- * standardId + selectedSubjects before returning the recomputed page.
+ * getRequestForCourseSelection() in signupStudentStage3.js — confirmed
+ * against a real captured payload from the live is-rest-api app:
+ * `{"userId":"25391","courseId":"","callFrom":"signup","standardId":"4",
+ * "selectedSubjects":"21992,...","controlType":"","requestFromMigration":"N"}`.
+ * Every key is always present, `courseId`/`controlType` included as `""`
+ * when not given (not omitted) — the plain read call carries them as
+ * empty strings on the confirmed-working legacy payload too, not left out
+ * of the JSON entirely, so this matches that shape exactly rather than
+ * relying on "missing key" and "empty string" behaving the same downstream.
+ * `standardId` in particular must always be sent (Stage 1's saved grade —
+ * see app/step/3/page.jsx): the JS reads it live off `#signupStage3
+ * #standardId`, pre-rendered with that grade. Leaving it out entirely (as
+ * this used to do) gives the backend's `GradeLearningProgramMapping` lookup
+ * nothing to key on and it NPEs (surfaces as the generic "technical
+ * glitch" message).
  */
-function buildCourseDetailsRequest(userId, { standardId, selectedSubjects = "", controlType, courseId } = {}) {
-  const request = { userId, callFrom: "signup", selectedSubjects, requestFromMigration: "N" };
-  if (standardId) request.standardId = standardId;
-  if (controlType) request.controlType = controlType;
-  if (courseId) request.courseId = courseId;
+function buildCourseDetailsRequest(userId, { standardId, selectedSubjects = "", controlType = "", courseId = "" } = {}) {
+  const request = { userId, courseId, callFrom: "signup", standardId: standardId || "", selectedSubjects, controlType, requestFromMigration: "N" };
   return request;
 }
 
-export function useCourseDetails({ context, userId }) {
+export function useCourseDetails({ context, userId, standardId }) {
   return useQuery({
     queryKey: courseDetailsKey(userId),
     queryFn: async () => {
-      const response = await chooseCoursesByGrade(context.schoolUUID, buildCourseDetailsRequest(userId));
+      const response = await chooseCoursesByGrade(context.schoolUUID, buildCourseDetailsRequest(userId, { standardId }));
       if (!response) throw new Error("course-details-by-standard-id returned no response");
       return response;
     },

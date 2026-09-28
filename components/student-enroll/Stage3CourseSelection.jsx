@@ -101,9 +101,15 @@ function CourseSummaryLink({ url }) {
  * Not built here yet: the change-grade modal, the ONE_TO_ONE_FLEX grade
  * switcher, and the enrollment-documents gate (legacy lets the student skip
  * that one, so proceeding without it matches the skip path).
+ *
+ * `standardId` is Stage 1's saved grade (see app/step/3/page.jsx) — the
+ * initial course-details-by-standard-id read must carry it (confirmed
+ * against a real captured legacy-app payload; see useCourseSelection.js's
+ * doc comment) or the backend's grade/fee mapping lookup has nothing to key
+ * on and the call fails with a generic error.
  */
-export function Stage3CourseSelection({ context, userId, onNext, onBack, onSessionExpired }) {
-  const courseQuery = useCourseDetails({ context, userId });
+export function Stage3CourseSelection({ context, userId, standardId, onNext, onBack, onSessionExpired }) {
+  const courseQuery = useCourseDetails({ context, userId, standardId });
   const paymentOption = useShowPaymentOption({ context, userId });
   const update = useUpdateCourseSelection({ context, userId });
   const recommended = useRecommendedCourses({ context, userId });
