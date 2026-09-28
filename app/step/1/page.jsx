@@ -26,9 +26,15 @@ export default function Step1Page() {
 
   useEffect(() => {
     if (!ready) return;
-    setInitialFields(loadWizardStudentFields(context.schoolUUID, session.userId));
+    const saved = loadWizardStudentFields(context.schoolUUID, session.userId);
+    // No saved progress yet (first-ever visit, e.g. right after signup or
+    // the SSO handoff from login) — default the email field to the one the
+    // student just signed up / logged in with (session.email, from
+    // auth.js), rather than leaving it blank for them to retype. Once
+    // they've saved Stage 1 at least once, `saved` always wins.
+    setInitialFields(saved || (session.email ? { communicationEmail: session.email } : null));
     setHydrated(true);
-  }, [ready, context?.schoolUUID, session?.userId]);
+  }, [ready, context?.schoolUUID, session?.userId, session?.email]);
 
   if (!ready || !hydrated) {
     return <main className="flex min-h-screen items-center justify-center text-slate-500">Loading…</main>;

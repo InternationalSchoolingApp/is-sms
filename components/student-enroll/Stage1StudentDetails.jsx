@@ -77,6 +77,7 @@ function Req({ label, required }) {
  * app behaves and looks the same.
  */
 export function Stage1StudentDetails({ context, userId, initialFields, onNext }) {
+  debugger;
   const [fields, setFields] = useState(() => ({ ...INITIAL_FIELDS, ...initialFields }));
   const [errors, setErrors] = useState({});
   const [flaggedModal, setFlaggedModal] = useState(null);

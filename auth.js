@@ -130,6 +130,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.uniqueId = user.id;
+        token.email = user.email;
         token.userLoginHash = user.userLoginHash;
         token.redirectUrl = user.redirectUrl;
         token.userId = user.userId;
@@ -141,6 +142,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async session({ session, token }) {
       session.uniqueId = token.uniqueId;
+      session.email = token.email;
       session.userLoginHash = token.userLoginHash;
       session.redirectUrl = token.redirectUrl;
       session.userId = token.userId;
