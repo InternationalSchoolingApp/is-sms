@@ -165,10 +165,10 @@ export function validateStudentDetails(fields, { isDualDiploma = false } = {}) {
  * validateRequestForSignupParent() in signupStudentStage2.js. For
  * ONE_TO_ONE_FLEX, only workingProfession/institutionName/institutionCountryId
  * are required (the normal parent-relationship fields don't even render) —
- * confirmed at SignupStudentUtil.java:2478. `fields.emailVerified` gates the
- * OTP-verification flow: if a parent email was entered, it must be OTP
- * verified before submit; leaving email blank is allowed (skipParent="Y"
- * path — see hooks/useParentDetailsSignup.js).
+ * confirmed at SignupStudentUtil.java:2478. Parent email and phone are both
+ * optional (labeled "(Optional)" on the live is-rest-api form too) — no OTP
+ * verification gate before submit (skipParent="Y" path — see
+ * hooks/useParentDetailsSignup.js).
  */
 export function validateParentDetails(fields, { isOneToOneFlex = false } = {}) {
   const errors = {};
@@ -183,16 +183,11 @@ export function validateParentDetails(fields, { isOneToOneFlex = false } = {}) {
   if (!fields.firstName?.trim()) errors.firstName = "First name is required";
   if (!fields.lastName?.trim()) errors.lastName = "Last name is required";
   if (!fields.relation) errors.relation = "Relation with student is required";
-  if (fields.relation === "Other" && !fields.otherRelationName?.trim()) {
-    errors.otherRelationName = "Please specify the relation";
-  }
   if (fields.contactNumber && fields.phoneValid === false) {
     errors.contactNumber = "Please enter a valid phone number";
   }
   if (fields.email && !isValidEmail(fields.email)) {
     errors.email = "Email is either empty or invalid";
-  } else if (fields.email && !fields.emailVerified) {
-    errors.email = "Please verify the parent's email address";
   }
   if (!fields.countryId) errors.countryId = "Country is required";
   if (!fields.stateId) errors.stateId = "State is required";
@@ -201,7 +196,7 @@ export function validateParentDetails(fields, { isOneToOneFlex = false } = {}) {
     errors.communication = "Please select how you would like to be contacted";
   }
 
-  const asciiFields = [fields.firstName, fields.middleName, fields.lastName, fields.otherRelationName];
+  const asciiFields = [fields.firstName, fields.middleName, fields.lastName];
   if (asciiFields.some((v) => v && !isPureAscii(v))) {
     errors.form = "Please use the English keyboard while providing information";
   }

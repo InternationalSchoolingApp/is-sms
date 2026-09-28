@@ -1,9 +1,10 @@
 "use client";
 
-const STORAGE_PREFIX = "is-sms:enrollment-student-fields:";
+const STUDENT_STORAGE_PREFIX = "is-sms:enrollment-student-fields:";
+const PARENT_STORAGE_PREFIX = "is-sms:enrollment-parent-fields:";
 
-function storageKey(schoolUUID, userId) {
-  return `${STORAGE_PREFIX}${schoolUUID}:${userId}`;
+function storageKey(prefix, schoolUUID, userId) {
+  return `${prefix}${schoolUUID}:${userId}`;
 }
 
 /**
@@ -23,7 +24,7 @@ export function saveWizardStudentFields(schoolUUID, userId, studentFields) {
   if (typeof window === "undefined" || !schoolUUID || !userId) return;
   try {
     window.sessionStorage.setItem(
-      storageKey(schoolUUID, userId),
+      storageKey(STUDENT_STORAGE_PREFIX, schoolUUID, userId),
       JSON.stringify({
         ...studentFields,
         dob: studentFields?.dob instanceof Date ? studentFields.dob.toISOString() : studentFields?.dob,
@@ -37,11 +38,40 @@ export function saveWizardStudentFields(schoolUUID, userId, studentFields) {
 export function loadWizardStudentFields(schoolUUID, userId) {
   if (typeof window === "undefined" || !schoolUUID || !userId) return null;
   try {
-    const raw = window.sessionStorage.getItem(storageKey(schoolUUID, userId));
+    const raw = window.sessionStorage.getItem(storageKey(STUDENT_STORAGE_PREFIX, schoolUUID, userId));
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (parsed?.dob) parsed.dob = new Date(parsed.dob);
     return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Same stopgap persistence as above, for Stage 2's fields — so navigating
+ * /step/2 -> /step/3 and then Back re-fills the parent form instead of
+ * resetting it, the same pattern Stage 1 already gets from
+ * save/loadWizardStudentFields.
+ */
+export function saveWizardParentFields(schoolUUID, userId, parentFields) {
+  if (typeof window === "undefined" || !schoolUUID || !userId) return;
+  try {
+    window.sessionStorage.setItem(
+      storageKey(PARENT_STORAGE_PREFIX, schoolUUID, userId),
+      JSON.stringify(parentFields)
+    );
+  } catch {
+    // no-op — see doc comment above
+  }
+}
+
+export function loadWizardParentFields(schoolUUID, userId) {
+  if (typeof window === "undefined" || !schoolUUID || !userId) return null;
+  try {
+    const raw = window.sessionStorage.getItem(storageKey(PARENT_STORAGE_PREFIX, schoolUUID, userId));
+    if (!raw) return null;
+    return JSON.parse(raw);
   } catch {
     return null;
   }

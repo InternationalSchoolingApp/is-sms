@@ -9,15 +9,16 @@ import { PhoneNumberField } from "@/components/student-enroll/PhoneNumberField";
 import { SectionHeading } from "@/components/student-enroll/wizard/fields";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { useCountryOptions, useStateOptions, useCityOptions } from "@/hooks/useStudentDetailsSignup";
-import { useParentDetailsSignup, useSendParentOtp, useVerifyParentOtp } from "@/hooks/useParentDetailsSignup";
-import { validateParentDetails, isValidEmail } from "@/utils/studentSignupValidation";
+import { useParentDetailsSignup } from "@/hooks/useParentDetailsSignup";
+import { validateParentDetails } from "@/utils/studentSignupValidation";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 
+// "Other" is commented out on the is-rest-api form too (masterContent.js
+// getRelationshipContent()) -- only these three are actually selectable.
 const RELATION_OPTIONS = [
   { value: "Mother", label: "Mother" },
   { value: "Father", label: "Father" },
   { value: "Guardian", label: "Guardian" },
-  { value: "Other", label: "Other" },
 ];
 
 // SS/CS/WP confirmed at SignupUtil.java's display-name mapping
@@ -29,15 +30,13 @@ const WORKING_PROFESSION_OPTIONS = [
   { value: "WP", label: "Working Professional" },
 ];
 
-function initialFields(studentAddress) {
+function defaultFields(studentAddress) {
   return {
     firstName: "",
     middleName: "",
     lastName: "",
     relation: "",
-    otherRelationName: "",
     email: "",
-    emailVerified: false,
     contactNumber: "",
     countryCode: "",
     countryIsdCode: "",
@@ -49,7 +48,6 @@ function initialFields(studentAddress) {
     communicationWhatsApp: false,
     communicationCall: false,
     communicationEmail: false,
-    referralCode: "",
     workingProfession: "",
     institutionName: "",
     institutionCountryId: "",
@@ -71,41 +69,34 @@ function Req({ label, required }) {
  * ONE_TO_ONE_FLEX, the normal parent-relationship fields are replaced
  * entirely by workingProfession/institutionName/institutionCountryId
  * (confirmed at SignupStudentUtil.java:2478, saved onto the Student entity,
- * not Parents). Parent email verification is OTP-based
- * (send-otp-for-parent-verification / verify-otp in CommonController.java),
- * not a plain field save — see hooks/useParentDetailsSignup.js.
+ * not Parents). Parent email and phone are both optional here, matching the
+ * "(Optional)" labels on the live is-rest-api form — no OTP verification
+ * gate on submit.
  *
  * `studentAddress` (countryId/stateId/cityId from Stage 1) seeds the "same
  * as student" default — purely a client-side convenience copy, there's no
  * backend flag for it (confirmed: SignupUtil.convertToSignupParentsDTO only
  * defaults the parent's location from the student on first visit, same idea).
+ *
+ * `initialFields`, when given (Back from Stage 3, or a refresh), overrides
+ * those defaults with whatever was last saved via
+ * utils/wizardStorage.js's saveWizardParentFields — the same
+ * save/reload-on-mount pattern Stage 1 uses for its own fields.
  */
-export function Stage2ParentDetails({ context, userId, studentAddress, onNext, onBack }) {
-  const [fields, setFields] = useState(() => initialFields(studentAddress));
+export function Stage2ParentDetails({ context, userId, studentAddress, initialFields, onNext, onBack }) {
+  const [fields, setFields] = useState(() => ({ ...defaultFields(studentAddress), ...initialFields }));
   const [errors, setErrors] = useState({});
   const [flaggedModal, setFlaggedModal] = useState(null);
-  const [otpStep, setOtpStep] = useState("idle"); // idle | sent
-  const [otpCode, setOtpCode] = useState("");
-  const [otpMessage, setOtpMessage] = useState(null);
 
   const isOneToOneFlex = getLearningProgramBackendValue(context.learningProgram) === "ONE_TO_ONE_FLEX";
 
   const signup = useParentDetailsSignup({ context, userId, isOneToOneFlex });
-  const sendOtp = useSendParentOtp({ context, userId });
-  const verifyOtp = useVerifyParentOtp({ context });
   const countries = useCountryOptions(context);
   const states = useStateOptions(context, fields.countryId);
   const cities = useCityOptions(context, fields.stateId);
 
   function setField(name, value) {
     setFields((prev) => ({ ...prev, [name]: value }));
-  }
-
-  function setEmail(value) {
-    setFields((prev) => ({ ...prev, email: value, emailVerified: false }));
-    setOtpStep("idle");
-    setOtpCode("");
-    setOtpMessage(null);
   }
 
   function toggleSameAsStudent(checked) {
@@ -116,37 +107,6 @@ export function Stage2ParentDetails({ context, userId, studentAddress, onNext, o
       stateId: checked ? studentAddress?.stateId || "" : "",
       cityId: checked ? studentAddress?.cityId || "" : "",
     }));
-  }
-
-  async function handleSendOtp() {
-    if (!isValidEmail(fields.email)) {
-      setErrors((prev) => ({ ...prev, email: "Email is either empty or invalid" }));
-      return;
-    }
-    setOtpMessage(null);
-    const response = await sendOtp.mutateAsync({
-      email: fields.email,
-      parentName: `${fields.firstName} ${fields.lastName}`.trim(),
-    });
-    if (response?.statusCode === "1") {
-      setOtpStep("sent");
-    } else if (response?.statusCode === "4") {
-      setOtpMessage(response.message || "Too many OTP attempts, please try again later.");
-    } else {
-      setOtpMessage(response?.message || "Could not send OTP. Please try again.");
-    }
-  }
-
-  async function handleVerifyOtp() {
-    setOtpMessage(null);
-    const response = await verifyOtp.mutateAsync({ email: fields.email, otp: otpCode });
-    if (response?.statusCode === "2") {
-      setFields((prev) => ({ ...prev, emailVerified: true }));
-      setOtpStep("idle");
-      setErrors((prev) => ({ ...prev, email: undefined }));
-    } else {
-      setOtpMessage(response?.message || "Incorrect OTP, please try again.");
-    }
   }
 
   async function handleSubmit() {
@@ -238,76 +198,24 @@ export function Stage2ParentDetails({ context, userId, studentAddress, onNext, o
               options={RELATION_OPTIONS}
               error={errors.relation}
             />
-            {fields.relation === "Other" && (
-              <FloatingLabelInput
-                label={<Req label="Please specify relation" required />}
-                value={fields.otherRelationName}
-                onChange={(e) => setField("otherRelationName", e.target.value)}
-                error={errors.otherRelationName}
-              />
-            )}
           </div>
 
           <SectionHeading>Contact Information</SectionHeading>
           <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-            <div>
-              <FloatingLabelInput
-                label="Email Address"
-                type="email"
-                value={fields.email}
-                onChange={(e) => setEmail(e.target.value)}
-                error={errors.email}
-                status={fields.emailVerified ? "valid" : undefined}
-              />
-              {fields.email && !fields.emailVerified && (
-                <div className="mt-1.5 flex items-center gap-2 pl-2">
-                  <button
-                    type="button"
-                    onClick={handleSendOtp}
-                    disabled={sendOtp.isPending}
-                    className="text-xs font-semibold text-primary underline"
-                  >
-                    {sendOtp.isPending ? "Sending…" : otpStep === "sent" ? "Resend OTP" : "Verify email (send OTP)"}
-                  </button>
-                </div>
-              )}
-              {fields.email && fields.emailVerified && (
-                <p className="mt-1 pl-2 text-xs font-semibold text-emerald-600">Email verified</p>
-              )}
-              {otpStep === "sent" && !fields.emailVerified && (
-                <div className="mt-2 flex items-center gap-2">
-                  <FloatingLabelInput
-                    label="Enter OTP"
-                    className="flex-1"
-                    inputMode="numeric"
-                    maxLength={6}
-                    value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ""))}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleVerifyOtp}
-                    disabled={verifyOtp.isPending || otpCode.length !== 6}
-                  >
-                    {verifyOtp.isPending ? "Verifying…" : "Verify"}
-                  </Button>
-                </div>
-              )}
-              {otpMessage && <p className="mt-1 pl-2 text-xs text-red-600">{otpMessage}</p>}
-            </div>
+            <FloatingLabelInput
+              label="Parent Email (Optional)"
+              type="email"
+              value={fields.email}
+              onChange={(e) => setField("email", e.target.value)}
+              error={errors.email}
+            />
             <PhoneNumberField
-              label="Contact Number"
+              label="Parent Phone Number (Optional)"
               value={fields.contactNumber}
               onChange={({ contactNumber, countryIsdCode, countryCode, isValid }) =>
                 setFields((prev) => ({ ...prev, contactNumber, countryIsdCode, countryCode, phoneValid: isValid }))
               }
               error={errors.contactNumber}
-            />
-            <FloatingLabelInput
-              label="Referral Code"
-              value={fields.referralCode}
-              onChange={(e) => setField("referralCode", e.target.value)}
             />
           </div>
 

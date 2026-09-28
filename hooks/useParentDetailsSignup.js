@@ -36,7 +36,10 @@ function buildSaveParentDetailsRequest({ fields, context, userId, isOneToOneFlex
     signupParent.institutionCountryId = fields.institutionCountryId;
   } else {
     signupParent.relationship = fields.relation;
-    signupParent.otherRelationName = fields.relation === "Other" ? fields.otherRelationName : "";
+    // "Other" relation isn't selectable in the UI (see RELATION_OPTIONS in
+    // Stage2ParentDetails.jsx), matching the live is-rest-api form, so this is
+    // always empty -- kept because the backend DTO still expects the key.
+    signupParent.otherRelationName = "";
     signupParent.firstName = fields.firstName;
     signupParent.middleName = fields.middleName || "";
     signupParent.lastName = fields.lastName;
@@ -47,7 +50,10 @@ function buildSaveParentDetailsRequest({ fields, context, userId, isOneToOneFlex
     signupParent.countryId = fields.countryId;
     signupParent.stateId = fields.stateId;
     signupParent.cityId = fields.cityId;
-    signupParent.referralCode = fields.referralCode || "";
+    // No referral-code field on the live is-rest-api form either (its
+    // #referralCode element doesn't exist, so getRequestForSignupParent()
+    // always falls back to '').
+    signupParent.referralCode = "";
     signupParent.communications = buildCommunications({
       whatsapp: fields.communicationWhatsApp,
       call: fields.communicationCall,
