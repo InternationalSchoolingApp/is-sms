@@ -66,7 +66,7 @@ function Req({ label, required }) {
  * details (name, DOB, gender, grade, nationality/contact or the Dual
  * Diploma "current school" variant, and country/state/city). Content only;
  * rendered inside EnrollmentWizardShell by
- * app/[schoolId]/student/enrollment/page.jsx. Mirrors
+ * app/step/1/page.jsx. Mirrors
  * signupStudentStage1.js / SignupStudentUtil.saveStudentDetails() — see
  * utils/ageValidation.js and hooks/useStudentDetailsSignup.js for the
  * confirmed field/endpoint contract this replicates.
@@ -76,8 +76,8 @@ function Req({ label, required }) {
  * rather than a separate static-label implementation, so every form in the
  * app behaves and looks the same.
  */
-export function Stage1StudentDetails({ context, userId, onNext }) {
-  const [fields, setFields] = useState(INITIAL_FIELDS);
+export function Stage1StudentDetails({ context, userId, initialFields, onNext }) {
+  const [fields, setFields] = useState(() => ({ ...INITIAL_FIELDS, ...initialFields }));
   const [errors, setErrors] = useState({});
   const [flaggedModal, setFlaggedModal] = useState(null);
 

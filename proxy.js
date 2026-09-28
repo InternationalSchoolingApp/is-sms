@@ -2,18 +2,19 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 
 /**
- * Server-side guard for the post-login enrollment wizard. Mirrors the
- * client-side check already in app/[schoolId]/student/enrollment/page.jsx
- * (useSession() -> "unauthenticated" -> router.replace(login)), but runs
- * before any page HTML is sent, so a direct hit / bookmark / reload with no
+ * Server-side guard for the post-login enrollment wizard's flat routes
+ * (/step/1, /step/2, /step/3 — no {schoolId} segment; schoolUUID lives in the
+ * session instead, see auth.js). Mirrors each step page's own client-side
+ * check (useSession() -> "unauthenticated" -> redirect), but runs before
+ * any page HTML is sent, so a direct hit / bookmark / reload with no
  * Auth.js session never even momentarily renders the protected wizard shell.
- * That page's own client-side redirect is left in place — it still covers
- * the session expiring while the user is already on the page.
  *
- * Scoped ONLY to /:schoolId/student/enrollment — NOT all of /student/**,
- * because /[schoolId]/student/[enrollmentFor]/[learningProgram] is the
- * pre-login account-creation screen (AccountForm.jsx / AccountFormOfflineB2B.jsx)
- * and must stay public.
+ * Unauthenticated hits redirect to "/" (not a school-specific login page):
+ * without a session we don't know which school's login to send them to —
+ * schoolId is only ever known from the LOGIN page's own URL
+ * (/[schoolId]/common/login), which these flat /step/N routes deliberately
+ * don't carry. "/" is the app's own entry point; wire it to pick/prompt for
+ * a school (or redirect further) once that flow exists.
  *
  * Uses the v5 `auth()` wrapper (from the central auth.js config) instead of
  * v4's `getToken()` — `req.auth` is the decoded session, already populated
@@ -23,11 +24,9 @@ import { auth } from "@/auth";
  */
 export default auth((req) => {
   if (req.auth) return NextResponse.next();
-
-  const schoolUUID = req.nextUrl.pathname.split("/")[1];
-  return NextResponse.redirect(new URL(`/${schoolUUID}/common/login`, req.url));
+  return NextResponse.redirect(new URL("/", req.url));
 });
 
 export const config = {
-  matcher: ["/:schoolId/student/enrollment/:path*"],
+  matcher: ["/step/1/:path*", "/step/2/:path*", "/step/3/:path*"],
 };

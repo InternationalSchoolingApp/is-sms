@@ -14,7 +14,7 @@ import { getHash } from "@/utils/common";
  * `schoolId`/`schoolUUID`/`learningProgram`/`enrollmentFor` now come from
  * the URL the user is actually on
  * (/{schoolId}/student/{enrollmentFor}/{learningProgram}, see
- * app/[schoolId]/student/[enrollmentFor]/[learningProgram]/page.jsx),
+ * app/[enrollmentFor]/[learningProgram]/page.jsx),
  * matching how the JSP app resolves these server-side per-request —
  * `context` is just carrying them down, not defaulting them from env vars
  * anymore.

@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { login } from "@/services/authApi";
+import { login, exchangeSsoToken } from "@/services/authApi";
 
 /**
  * Central Auth.js (next-auth v5) config — the single source used by:
@@ -27,6 +27,12 @@ import { login } from "@/services/authApi";
  *
  * `secret` is passed explicitly from NEXTAUTH_SECRET (not the v5-default
  * AUTH_SECRET) so .env.local doesn't need to change.
+ *
+ * The enrollment wizard's URLs are flat (/step/1, /step/2, /step/3 — no
+ * {schoolId} segment), so schoolUUID/schoolNumericId/schoolName (known at
+ * login time, since the LOGIN page is still {schoolId}-scoped) are carried
+ * through into the JWT/session here, same as uniqueId/userId above, so
+ * those pages can read `session.schoolUUID` etc. instead of a URL param.
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
@@ -39,6 +45,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         captcha: { label: "Captcha", type: "text" },
         schoolUUID: { label: "School", type: "text" }, // URL-path slug/UUID
         schoolNumericId: { label: "School (numeric)", type: "text" }, // backend's Integer row id — see authApi.js
+        schoolName: { label: "School name", type: "text" }, // display-only, passed through so session carries it without an extra fetch
       },
       async authorize(credentials, request) {
         const response = await login(
@@ -69,6 +76,49 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // save-*-details endpoints, which cannot resolve the user from
           // uniqueId alone (confirmed at SignupStudentUtil.java:1606).
           userId: response.userId,
+          schoolUUID: credentials.schoolUUID,
+          schoolNumericId: Number(credentials.schoolNumericId),
+          schoolName: credentials.schoolName || "",
+        };
+      },
+    }),
+    // SSO handoff FROM the legacy Java login page (Login.jsp) — login no
+    // longer happens inside this Next.js app at all (see the removed
+    // /[schoolId]/common/login route). When a STUDENT with an in-progress
+    // enrollment logs in there, the backend redirects the browser to
+    // app/api/sso/route.js with a short-lived, single-use `ssoToken`; that
+    // route calls signIn("sso-token", ...) server-side, which lands here.
+    // `authorize()` exchanges the token for the same user shape the
+    // password-based provider above returns — the exchange endpoint is the
+    // ONLY consumer of this token, and the backend invalidates it after one
+    // use (see services/authApi.js's exchangeSsoToken).
+    CredentialsProvider({
+      id: "sso-token",
+      name: "SSO",
+      credentials: {
+        ssoToken: { label: "SSO token", type: "text" },
+        schoolUUID: { label: "School", type: "text" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.ssoToken || !credentials?.schoolUUID) {
+          console.error("sso-token authorize: missing ssoToken or schoolUUID in credentials");
+          return null;
+        }
+        const response = await exchangeSsoToken(credentials.schoolUUID, credentials.ssoToken);
+        // Temporary diagnostic — this is the first live run of this path;
+        // remove once the handoff is confirmed working end to end.
+        console.log("sso-token authorize: exchangeSsoToken response:", response);
+        if (!response || response.status === "0") return null;
+
+        return {
+          id: response.uniqueId,
+          email: response.email || "",
+          userLoginHash: response.userLoginHash,
+          redirectUrl: response.redirectUrl || "",
+          userId: response.userId,
+          schoolUUID: response.schoolUUID,
+          schoolNumericId: response.schoolNumericId,
+          schoolName: response.schoolName || "",
         };
       },
     }),
@@ -83,6 +133,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.userLoginHash = user.userLoginHash;
         token.redirectUrl = user.redirectUrl;
         token.userId = user.userId;
+        token.schoolUUID = user.schoolUUID;
+        token.schoolNumericId = user.schoolNumericId;
+        token.schoolName = user.schoolName;
       }
       return token;
     },
@@ -91,6 +144,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.userLoginHash = token.userLoginHash;
       session.redirectUrl = token.redirectUrl;
       session.userId = token.userId;
+      session.schoolUUID = token.schoolUUID;
+      session.schoolNumericId = token.schoolNumericId;
+      session.schoolName = token.schoolName;
       return session;
     },
   },

@@ -161,6 +161,55 @@ export function validateStudentDetails(fields, { isDualDiploma = false } = {}) {
 }
 
 /**
+ * Stage 2 ("Parent Details") form validation, mirroring
+ * validateRequestForSignupParent() in signupStudentStage2.js. For
+ * ONE_TO_ONE_FLEX, only workingProfession/institutionName/institutionCountryId
+ * are required (the normal parent-relationship fields don't even render) —
+ * confirmed at SignupStudentUtil.java:2478. `fields.emailVerified` gates the
+ * OTP-verification flow: if a parent email was entered, it must be OTP
+ * verified before submit; leaving email blank is allowed (skipParent="Y"
+ * path — see hooks/useParentDetailsSignup.js).
+ */
+export function validateParentDetails(fields, { isOneToOneFlex = false } = {}) {
+  const errors = {};
+
+  if (isOneToOneFlex) {
+    if (!fields.workingProfession) errors.workingProfession = "This field is required";
+    if (!fields.institutionName?.trim()) errors.institutionName = "Name of the School/College/Organization is required";
+    if (!fields.institutionCountryId) errors.institutionCountryId = "Country of the School/College/Organization is required";
+    return { valid: Object.keys(errors).length === 0, errors };
+  }
+
+  if (!fields.firstName?.trim()) errors.firstName = "First name is required";
+  if (!fields.lastName?.trim()) errors.lastName = "Last name is required";
+  if (!fields.relation) errors.relation = "Relation with student is required";
+  if (fields.relation === "Other" && !fields.otherRelationName?.trim()) {
+    errors.otherRelationName = "Please specify the relation";
+  }
+  if (fields.contactNumber && fields.phoneValid === false) {
+    errors.contactNumber = "Please enter a valid phone number";
+  }
+  if (fields.email && !isValidEmail(fields.email)) {
+    errors.email = "Email is either empty or invalid";
+  } else if (fields.email && !fields.emailVerified) {
+    errors.email = "Please verify the parent's email address";
+  }
+  if (!fields.countryId) errors.countryId = "Country is required";
+  if (!fields.stateId) errors.stateId = "State is required";
+  if (!fields.cityId) errors.cityId = "City is required";
+  if (!fields.communicationWhatsApp && !fields.communicationCall && !fields.communicationEmail) {
+    errors.communication = "Please select how you would like to be contacted";
+  }
+
+  const asciiFields = [fields.firstName, fields.middleName, fields.lastName, fields.otherRelationName];
+  if (asciiFields.some((v) => v && !isPureAscii(v))) {
+    errors.form = "Please use the English keyboard while providing information";
+  }
+
+  return { valid: Object.keys(errors).length === 0, errors };
+}
+
+/**
  * Offline/B2B mode only needs a learning-program selection — matches the
  * `signupType == 'Offline'` branch in callForUserSignUp(), which skips
  * email/password entirely.

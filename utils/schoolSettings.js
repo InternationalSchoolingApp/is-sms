@@ -19,7 +19,7 @@ import { resolveBackendOrigin } from "@/utils/backendOrigin";
  * resolves the record. The UUID/slug from the URL is NOT used here at
  * all (unlike getPublicSchoolInfo in services/studentSignupApi.js, which
  * genuinely needs the UUID). See
- * app/[schoolId]/student/[enrollmentFor]/[learningProgram]/page.jsx for
+ * app/[enrollmentFor]/[learningProgram]/page.jsx for
  * where schoolNumericId comes from (getPublicSchoolInfo resolving first).
  *
  * Deliberately NOT in services/studentSignupApi.js: that file is scoped to

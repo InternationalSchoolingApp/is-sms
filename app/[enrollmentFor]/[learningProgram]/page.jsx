@@ -10,13 +10,20 @@ import { SignupFooter } from "@/components/student-enroll/SignupFooter";
 import { getPublicSchoolInfo } from "@/services/studentSignupApi";
 import { getLearningProgramTheme } from "@/utils/learningProgramTheme";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
+import { resolveBackendOrigin } from "@/utils/backendOrigin";
 
-// This route ({schoolId}/student/{enrollmentFor}/{learningProgram}) matches
-// ClientSignupStudentController#signupStudent in is-rest-api exactly — the
-// same live URL pattern the JSP app itself serves. Everything school-specific
-// (numeric id, name, WhatsApp number, policy links) is resolved per-request
-// from that {schoolId} slug via the backend, NOT from env vars — a single
-// Next.js deployment now serves every school, same as the JSP app does.
+// This route (/{enrollmentFor}/{learningProgram}) is flat — no {schoolId}
+// path segment. Unlike /step/1,2,3 (which get schoolUUID from the Auth.js
+// session post-login), this page runs BEFORE any login, so there's no
+// session yet — schoolUUID comes from a `?school=` query param instead
+// (e.g. /enrollment/O?school=international-schooling). Everything else
+// school-specific (numeric id, name, WhatsApp number, policy links) is still
+// resolved per-request from that slug via the backend, NOT from env vars —
+// one Next.js deployment still serves every school, same as the JSP app.
+//
+// Login itself is NOT served by this Next.js app — it stays on the legacy
+// Java/Spring Boot app (Login.jsp), reached via loginUrl below. There is no
+// Next.js-hosted login page/route anymore.
 const FALLBACK_SCHOOL_INFO = {
   schoolNumericId: undefined,
   schoolName: "",
@@ -48,7 +55,7 @@ function AccountCreationPageContent() {
   const isOffline = searchParams.get("mode") === "offline";
   const [verificationEmail, setVerificationEmail] = useState(null);
 
-  const schoolUUID = params.schoolId;
+  const schoolUUID = searchParams.get("school");
   const enrollmentFor = params.enrollmentFor;
   // Matched case-insensitively (the confirmed live URLs used lowercase
   // codes) and falls back to "O", the same default
@@ -65,7 +72,9 @@ function AccountCreationPageContent() {
     schoolUUID,
     enrollmentFor,
     learningProgram,
-    loginUrl: `/${schoolUUID}/common/login`,
+    // Login is served by the legacy Java app, not this Next.js app — see
+    // the file-header comment above.
+    loginUrl: `${resolveBackendOrigin()}/${schoolUUID}/common/login`,
     ...schoolInfo,
     ...policyLinks,
   };

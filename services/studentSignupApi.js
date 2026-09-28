@@ -12,7 +12,7 @@ import { resolveBackendOrigin } from "@/utils/backendOrigin";
  * now taken as an explicit argument on every call, NOT read from an env
  * var — the real value comes from the URL the user is on
  * (/{schoolId}/student/{enrollmentFor}/{learningProgram}, see
- * app/[schoolId]/student/[enrollmentFor]/[learningProgram]/page.jsx),
+ * app/[enrollmentFor]/[learningProgram]/page.jsx),
  * matching how the JSP app resolves it per-request rather than a single
  * fixed school for the whole deployment.
  *
@@ -174,6 +174,18 @@ export function getStudentEnrollmentDocuments(schoolUUID, payload) {
 
 export function getStudentEnrollmentDocumentsStatus(schoolUUID, payload) {
   return getPayload(schoolUUID, "student/enrollment/get-documents-status", { payload }, { includeSchoolId: false });
+}
+
+// --- Stage 2: Parent email OTP verification ---
+// CommonController.java: send-otp-for-parent-verification / verify-otp.
+// Both live under the same {schoolId}/api/v1/common/* prefix as login/captcha,
+// not under student/enrollment/* like the other Stage 2 endpoints.
+export function sendOtpForParentVerification(schoolUUID, request) {
+  return postPayload(schoolUUID, "api/v1/common/send-otp-for-parent-verification", request);
+}
+
+export function verifyParentOtp(schoolUUID, request) {
+  return postPayload(schoolUUID, "api/v1/common/verify-otp", request);
 }
 
 // --- Misc ---
