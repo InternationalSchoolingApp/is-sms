@@ -107,7 +107,6 @@ export default function LoginPage() {
       // enrollment route instead; swap this once a real stage-resume
       // destination is confirmed (Step 10).
       const session = await getSession();
-      debugger
       console.log("Login succeeded, backend redirectUrl (unused) was:", session?.redirectUrl);
       window.location.href = `/${schoolUUID}/student/enrollment`;
     } catch (err) {
