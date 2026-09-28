@@ -3,20 +3,18 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Button } from "@/components/ui/button";
+import { Stage3CourseSelection } from "@/components/student-enroll/Stage3CourseSelection";
 import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
 import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
 
 /**
- * Stage 3 ("Course Selection") route — reserved so /step/1 -> /step/2 -> /step/3
- * navigation is already wired and testable, but the actual course/payment-plan
- * component isn't built yet (see the migration plan's Step 5). Replace this
- * body with Stage3CourseAndPayment.jsx once it exists; the shell/guard/session
- * wiring here won't need to change.
+ * Stage 3 ("Course Selection") as its own flat route. Course choices are
+ * persisted by the backend on every add/remove, so unlike /step/1 and
+ * /step/2 there's nothing to keep in sessionStorage here.
  */
 export default function Step3Page() {
   const router = useRouter();
-  const { status, context, logoUrl, ready } = useEnrollmentContext();
+  const { status, session, context, logoUrl, ready } = useEnrollmentContext();
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/");
@@ -33,15 +31,13 @@ export default function Step3Page() {
       currentStepKey="course_selection"
       onLogout={() => signOut({ callbackUrl: "/" })}
     >
-      <h1 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Course selection</h1>
-      <p className="mt-2 max-w-2xl text-sm text-slate-500">
-        Step 3 of 4. Grade/course selection and payment plan — coming soon.
-      </p>
-      <div className="mt-10 border-t border-slate-200 pt-6">
-        <Button type="button" variant="outline" onClick={() => router.push("/step/2")}>
-          Back
-        </Button>
-      </div>
+      <Stage3CourseSelection
+        context={context}
+        userId={session.userId}
+        onNext={() => router.push("/step/4")}
+        onBack={() => router.push("/step/2")}
+        onSessionExpired={() => signOut({ callbackUrl: "/" })}
+      />
     </EnrollmentWizardShell>
   );
 }

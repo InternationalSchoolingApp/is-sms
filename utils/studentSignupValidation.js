@@ -216,3 +216,67 @@ export function validateAccountFormOfflineB2B(fields) {
   }
   return { valid: Object.keys(errors).length === 0, errors };
 }
+
+// Legacy getCourseSelectionContent() hides credit counts for these standardIds.
+const CREDITLESS_STANDARD_IDS = [1, 2, 3, 11, 12, 13, 14, 15, 16, 17];
+
+export function hidesCourseCredits(standardId) {
+  return CREDITLESS_STANDARD_IDS.includes(Number(standardId));
+}
+
+/**
+ * Stage 3 credit check before moving on, mirroring
+ * validateRequestForPaymentModeSelection() in signupStudentStage3.js,
+ * including its skip for standardIds 8 and 11-17. The backend never
+ * rejects out-of-range credits on get-payment-details/choose-payment-plan,
+ * so this is the only gate. Returns an error message, or null when valid.
+ */
+export function validateCourseCredits(courseData) {
+  const standardId = Number(courseData?.standardId);
+  if ((standardId >= 11 && standardId <= 17) || standardId === 8) return null;
+  const total = Number(courseData?.totalCredit) || 0;
+  const min = Number(courseData?.minCourseLimit) || 0;
+  const upperBand = Number(courseData?.upperBandLimit) || 0;
+  if (total < min) return `Please select a minimum of ${min} credits.`;
+  if (upperBand > 0 && total > upperBand) return `You can select a maximum of ${upperBand} credits.`;
+  return null;
+}
+
+/**
+ * Check before adding one more course, mirroring assignEvent() in
+ * signupStudentStage3.js: at or past the upper band the add is blocked;
+ * at or past the max limit the course is allowed but costs extra, so the
+ * student has to confirm.
+ */
+export function getCourseAddCheck(courseData) {
+  const total = Number(courseData?.totalCredit) || 0;
+  const maxLimit = Number(courseData?.maxCourseLimit) || 0;
+  const upperBand = Number(courseData?.upperBandLimit) || 0;
+  if (upperBand > 0 && total >= upperBand) {
+    return { blockedMessage: `You can select a maximum of ${upperBand} credits.`, extraFee: false };
+  }
+  return { blockedMessage: null, extraFee: maxLimit > 0 && total >= maxLimit };
+}
+
+// paymentMode values the backend recognises (SeriConstant.java). Anything
+// else is stored as-is by choose-payment-plan, since it doesn't validate.
+const PAYMENT_MODES = [
+  "a_partially",
+  "a_installment",
+  "a_annually",
+  "c_installment",
+  "c_annually",
+  "annually",
+  "twoMonthly",
+  "threeMonthly",
+  "fiveMonthly",
+  "sixMonthly",
+  "nineMonthly",
+  "tenMonthly",
+  "twelveMonthly",
+  "registration",
+];
+
+export function isKnownPaymentMode(mode) {
+  return PAYMENT_MODES.includes(mode);
+}

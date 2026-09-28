@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { signIn } from "@/auth";
 
-const VALID_STEPS = new Set(["1", "2", "3"]);
+const VALID_STEPS = new Set(["1", "2", "3", "4"]);
 
 /**
  * SSO handoff endpoint — the redirect target the legacy Java login page
@@ -12,7 +12,7 @@ const VALID_STEPS = new Set(["1", "2", "3"]);
  * -> services/authApi.js's exchangeSsoToken), then forwards the browser on
  * to the actual wizard step the backend said to resume at.
  *
- * Expected URL: /api/sso?token=<oneTimeToken>&step=<1|2|3>&school=<schoolUUID>
+ * Expected URL: /api/sso?token=<oneTimeToken>&step=<1|2|3|4>&school=<schoolUUID>
  * `step` is validated against the routes that actually exist and defaults
  * to "1" if missing/invalid — never trust it blindly as a redirect target.
  * `school` is required — see services/authApi.js's exchangeSsoToken doc
