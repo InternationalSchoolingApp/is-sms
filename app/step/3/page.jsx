@@ -43,6 +43,7 @@ export default function Step3Page() {
     <EnrollmentWizardShell
       schoolName={context.schoolName}
       logoUrl={logoUrl}
+      context={context}
       currentStepKey="course_selection"
       onLogout={() => signOut({ callbackUrl: "/" })}
     >

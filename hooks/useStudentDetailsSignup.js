@@ -213,24 +213,32 @@ function buildSaveStudentDetailsRequest({ fields, context, userId, isDualDiploma
     ...getUtmFieldsForSignup(),
   };
 
+  // communicationEmail/nationality/countryCode/countryIsdCode/contactNumber
+  // are sent for EVERY learning program, Dual Diploma included — legacy's
+  // getStudentDetailsContent() renders those fields unconditionally (only
+  // the studyingSchoolName/studyingGradeId/countryIdOfSchool block is
+  // wrapped in the hidden-by-default `.dual-diploma` container, shown
+  // ADDITIONALLY for Dual Diploma, not as a replacement); its own
+  // validateRequestForSignupStudent() only skips REQUIRING email/phone/
+  // nationality for Dual Diploma, it never drops them from the request.
+  signupStudent.communicationEmail = fields.communicationEmail;
+  signupStudent.nationality = resolveNationalityName(countries, fields.nationality);
+  // useIntlTelInput's onChange (see PhoneNumberField) hands back
+  // countryCode = ISO2 ("IN") and countryIsdCode = dial code with a
+  // leading "+" ("+91") — the OPPOSITE of what these two DTO field names
+  // mean on the backend: signupStudentDTO['countryCode'] is the dial code
+  // (no "+", from country.dialCode) and signupStudentDTO['countryIsdCode']
+  // is the lowercase ISO2 (from country.iso2). Swap and reformat here
+  // rather than renaming the widget's own field names, which other
+  // callers (initialCountry restore) also rely on.
+  signupStudent.countryCode = fields.countryIsdCode ? fields.countryIsdCode.replace(/^\+/, "") : "";
+  signupStudent.countryIsdCode = fields.countryCode ? fields.countryCode.toLowerCase() : "";
+  signupStudent.contactNumber = (fields.contactNumber || "").replace(/\s+/g, "");
+
   if (isDualDiploma) {
     signupStudent.studyingSchoolName = fields.studyingSchoolName;
     signupStudent.studyingGradeId = fields.studyingGradeId;
     signupStudent.countryIdOfSchool = fields.countryIdOfSchool;
-  } else {
-    signupStudent.communicationEmail = fields.communicationEmail;
-    signupStudent.nationality = resolveNationalityName(countries, fields.nationality);
-    // useIntlTelInput's onChange (see PhoneNumberField) hands back
-    // countryCode = ISO2 ("IN") and countryIsdCode = dial code with a
-    // leading "+" ("+91") — the OPPOSITE of what these two DTO field names
-    // mean on the backend: signupStudentDTO['countryCode'] is the dial code
-    // (no "+", from country.dialCode) and signupStudentDTO['countryIsdCode']
-    // is the lowercase ISO2 (from country.iso2). Swap and reformat here
-    // rather than renaming the widget's own field names, which other
-    // callers (initialCountry restore) also rely on.
-    signupStudent.countryCode = fields.countryIsdCode ? fields.countryIsdCode.replace(/^\+/, "") : "";
-    signupStudent.countryIsdCode = fields.countryCode ? fields.countryCode.toLowerCase() : "";
-    signupStudent.contactNumber = (fields.contactNumber || "").replace(/\s+/g, "");
   }
 
   return { authentication: buildAuthenticatedRequest(context, userId), signupStudent };

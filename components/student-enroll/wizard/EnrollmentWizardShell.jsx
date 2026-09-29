@@ -1,71 +1,60 @@
 "use client";
 
 import Image from "next/image";
+import { BookOpen, CreditCard, LogOut, User, Users } from "lucide-react";
+import { getLearningProgramTheme } from "@/utils/learningProgramTheme";
 
 /**
- * Sidebar-driven wizard shell for the post-login enrollment flow (Student
- * profile → Parent information → Documents → Payment). Only Stage 1
- * ("Student profile") has a real screen behind it so far — the other three
- * steps render as inactive placeholders in the nav until Stages 2-4 exist,
- * matching the plan's own step ordering.
+ * Wizard chrome for the post-login enrollment flow (Student profile →
+ * Parent information → Course Selection → Review and Payment). Visual
+ * design matches the reference screenshot: a slim white top bar (logo +
+ * Log Out), a centered program title + horizontal icon-step row below it,
+ * then a single centered white card holding the step's own content.
  *
- * Desktop: a fixed left sidebar (logo + numbered step list + log out).
- * Tablet/mobile: the sidebar collapses into a top bar (logo + log out) plus
- * a compact horizontal row of step circles, content stacking full-width
- * below it.
+ * `context` is only read for `context.learningProgram` (via
+ * getLearningProgramTheme) to resolve the title text — every other prop is
+ * unchanged from before this redesign, so no step page's data flow changes.
  */
 const STEPS = [
-  { key: "student", label: "Student profile" },
-  { key: "parent", label: "Parent information" },
-  { key: "course_selection", label: "Course Selection" },
-  { key: "review_and_payment", label: "Review and Payment" },
+  { key: "student", label: "Student profile", icon: User },
+  { key: "parent", label: "Parent information", icon: Users },
+  { key: "course_selection", label: "Course Selection", icon: BookOpen },
+  { key: "review_and_payment", label: "Review and Payment", icon: CreditCard },
 ];
 
-export function EnrollmentWizardShell({ schoolName, logoUrl, currentStepKey, onLogout, children }) {
+export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentStepKey, onLogout, children }) {
   const currentIndex = STEPS.findIndex((step) => step.key === currentStepKey);
+  const programLabel = context ? getLearningProgramTheme(context.learningProgram).label : null;
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[#eef1f5] lg:flex-row">
-      {/* Desktop sidebar — fixed in place (own column, full viewport
-          height, never scrolls); only <main> below scrolls. Matches the
-          "desktop" mockup; tablet width still uses the collapsed top bar,
-          same as mobile, per the "tablet"/"mobile" mockups (both collapsed,
-          only the widest, true-desktop view keeps the persistent sidebar). */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200 bg-white lg:flex">
-        <SidebarHeader schoolName={schoolName} logoUrl={logoUrl} />
-        <nav className="flex-1 space-y-1 px-3 py-4">
-          {STEPS.map((step, index) => (
-            <StepRow key={step.key} index={index} label={step.label} state={stepState(index, currentIndex)} />
-          ))}
-        </nav>
-        <SidebarFooter onLogout={onLogout} />
-      </aside>
-
-      {/* Tablet/mobile top bar — also fixed in place (shrink-0, outside the
-          scrolling column below), not sticky-on-scroll. */}
-      <header className="flex shrink-0 flex-col border-b border-slate-200 bg-white lg:hidden">
-        <div className="flex items-center justify-between px-4 py-3">
+    <div className="min-h-screen bg-white">
+      <header className="border-b border-slate-200 px-4 py-3 sm:px-6 fixed z-11 w-full bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between">
           <LogoMark schoolName={schoolName} logoUrl={logoUrl} />
-          <button type="button" onClick={onLogout} className="text-sm text-primary">
-            Log out
+          <button
+            type="button"
+            onClick={onLogout}
+            className="inline-flex items-center gap-2 rounded bg-slate-900 px-2 py-1.5 cursor-pointer text-sm font-semibold text-white hover:bg-slate-800"
+          >
+            <LogOut className="h-4 w-4" /> Log Out
           </button>
-        </div>
-        <div className="flex items-center gap-2 overflow-x-auto px-4 pb-3 justify-around">
-          {STEPS.map((step, index) => (
-            <div key={step.key} className="inline-flex flex-col items-center">
-              <StepCircle index={index} state={stepState(index, currentIndex)} />
-              <p className={`w-full text-sm text-center ${stepState(index, currentIndex) === "active" ? "border-primary text-primary" : stepState(index, currentIndex) === "done" ? "border-primary bg-primary text-white" : "border-slate-300 text-slate-400"}`}>
-                  {step.label}
-              </p>
-            </div>
-          ))}
         </div>
       </header>
 
-      {/* The only scrolling region — the form itself. */}
-      <main className="flex-1 overflow-y-auto px-4 py-8 sm:px-8 lg:px-12 lg:py-4">
-        <div className="mx-auto max-w-3xl">{children}</div>
-      </main>
+      <div className="px-4 py-8 sm:px-6 bg-[#f2f5fa] pt-[62px]">
+        {programLabel && (
+          <div className="text-center">
+            <h1 className="text-1.5xl font-extrabold text-slate-900 sm:text-2xl">{programLabel}</h1>
+            <p className="mt-1 text-sm text-slate-500">Complete in under 1 minute</p>
+          </div>
+        )}
+
+        <StepRow currentIndex={currentIndex} />
+
+        <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-slate-200 bg-white p-2 shadow-sm sm:p-4 lg:py-6 lg:px-8">
+          {children}
+        </div>
+      </div>
     </div>
   );
 }
@@ -76,13 +65,49 @@ function stepState(index, currentIndex) {
   return "upcoming";
 }
 
+function StepRow({ currentIndex }) {
+  const progressPercent = STEPS.length > 1 ? (Math.max(currentIndex, 0) / (STEPS.length - 1)) * 100 : 0;
+
+  return (
+    <div className="relative mx-auto mt-4 flex max-w-2xl items-center justify-between">
+      <div className="absolute inset-x-6 top-4 h-px bg-slate-200 sm:top-5" />
+      <div
+        className="absolute inset-x-6 top-4 h-1 bg-green-600 transition-[width] sm:top-5"
+        style={{ width: `calc(${progressPercent}% - ${progressPercent === 0 ? "0px" : "24px"})` }}
+      />
+      {STEPS.map((step, index) => (
+        <div key={step.key} className="relative z-10 flex flex-col items-center gap-2">
+          <StepCircle icon={step.icon} state={stepState(index, currentIndex)} />
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Step {index + 1}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function StepCircle({ icon: Icon, state }) {
+  return (
+    <div
+      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 sm:h-10 sm:w-10 ${
+        state === "active"
+          ? "border-primary text-primary bg-white"
+          : state === "done"
+            ? "border-green-600 bg-green-600 text-white"
+            : "border-slate-300 text-slate-400"
+      }`}
+    >
+      <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+    </div>
+  );
+}
+
 // Same actual school logo image as the login page (LoginPage,
 // app/[schoolId]/common/login/page.jsx) — via getSchoolSettingsLinks()'s
 // logoUrl, not a hardcoded "IS" mark. Falls back to that mark only while
 // logoUrl hasn't resolved yet (or a school has none configured).
 function LogoMark({ schoolName, logoUrl }) {
   if (logoUrl) {
-    return <Image src={logoUrl} alt={schoolName || ""} width={160} height={36} className="w-full sm:max-w-[250px] max-w-[200px]" unoptimized />;
+    return <Image src={logoUrl} alt={schoolName || ""} width={160} height={36} className="w-full max-w-[160px] sm:max-w-[220px]" unoptimized />;
   }
 
   return (
@@ -93,56 +118,5 @@ function LogoMark({ schoolName, logoUrl }) {
         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Admissions Portal</p>
       </div>
     </div>
-  );
-}
-
-function SidebarHeader({ schoolName, logoUrl }) {
-  return (
-    <div className="border-b border-slate-200 px-5 py-5">
-      <LogoMark schoolName={schoolName} logoUrl={logoUrl} />
-    </div>
-  );
-}
-
-function SidebarFooter({ onLogout }) {
-  return (
-    <div className="border-t border-slate-200 px-5 py-4">
-      <p className="text-xs text-slate-500">Enrollment session</p>
-      <button type="button" onClick={onLogout} className="text-sm text-primary">
-        Log out
-      </button>
-    </div>
-  );
-}
-
-function StepRow({ index, label, state }) {
-  return (
-    <div
-      className={`flex items-center gap-3 rounded-lg px-3 py-2.5 ${state === "active" ? "bg-[color-mix(in_oklch,var(--primary),white_90%)]" : ""}`}
-    >
-      <StepCircle index={index} state={state} />
-      <span className={`text-sm ${state === "active" ? "font-semibold text-primary" : state === "done" ? "text-slate-700" : "text-slate-400"}`}>
-        {label}
-      </span>
-    </div>
-  );
-}
-
-function StepCircle({ index, state, label }) {
-  return (
-    <>
-      <div
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-xs font-semibold ${
-          state === "active"
-            ? "border-primary text-primary"
-            : state === "done"
-              ? "border-primary bg-primary text-white"
-              : "border-slate-300 text-slate-400"
-        }`}
-      >
-        {String(index + 1).padStart(2, "0")}
-      </div>
-      
-    </>
   );
 }

@@ -283,8 +283,8 @@ export function Stage2ParentDetails({ context, userId, studentAddress, initialFi
 
       {errors.form && <p className="mt-4 text-sm font-semibold text-red-600">{errors.form}</p>}
 
-      <div className="mt-10 flex flex-col-reverse items-center justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row">
-        <p className="text-xs text-slate-500">Required fields are marked with an asterisk.</p>
+      <div className="mt-10 flex flex-col-reverse items-center justify-center gap-4 border-t border-slate-200 pt-6 sm:flex-row">
+        {/* <p className="text-xs text-slate-500">Required fields are marked with an asterisk.</p> */}
         <div className="flex items-center gap-3">
           {onBack && (
             <Button type="button" variant="outline" onClick={onBack} disabled={signup.isPending}>

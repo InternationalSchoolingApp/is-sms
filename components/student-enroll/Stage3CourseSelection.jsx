@@ -19,7 +19,7 @@ import {
 } from "@/hooks/useCourseSelection";
 import { useGradeOptions, useCountryOptions, useStudentDetailsPrefill, useStudentDetailsSignup } from "@/hooks/useStudentDetailsSignup";
 import { getCourseAddCheck, hidesCourseCredits, validateCourseCredits } from "@/utils/studentSignupValidation";
-import { getLearningProgramTheme, getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
+import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { saveWizardStudentFields } from "@/utils/wizardStorage";
 
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
@@ -146,7 +146,6 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
   const initialFailure = courseQuery.data && courseQuery.data.status !== STATUS_SUCCESS ? courseQuery.data : null;
   const showPaymentOption = paymentOption.data;
   const busy = update.isPending || recommended.isPending || proceed.isPending;
-  const programLabel = getLearningProgramTheme(context.learningProgram).label;
 
   useEffect(() => {
     if (data?.selectedSubjects?.some((course) => course.courseTypeOriginal === "Advanced Placement")) {
@@ -389,10 +388,8 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
 
   const header = inReview ? null : (
     <>
-      <span className="inline-block rounded-full bg-primary px-3 py-1 text-sm font-bold uppercase tracking-wide text-white sm:text-base md:text-lg">
-        {programLabel}
-      </span>
-      <h1 className="mt-3 text-3xl font-extrabold text-slate-900 sm:text-4xl">Course selection</h1>
+      {/* Program name is now shown by EnrollmentWizardShell's own hero above this card. */}
+      <h1 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Course selection</h1>
       <p className="mt-2 max-w-2xl text-sm text-slate-500">Step 3 of 4. Choose the courses for this academic year.</p>
     </>
   );

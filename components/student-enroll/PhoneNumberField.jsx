@@ -1,15 +1,17 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
-// import { Phone } from "lucide-react";
 import { useIntlTelInput } from "@/hooks/useIntlTelInput";
 
 /**
  * Floating-label phone input — see hooks/useIntlTelInput.js for the actual
  * intl-tel-input wiring (shared with the wizard's plain-label variant,
- * components/student-enroll/wizard/fields.jsx's PhoneField).
+ * components/student-enroll/wizard/fields.jsx's PhoneField). No leading
+ * icon here (unlike the other Stage 1 fields) — intl-tel-input's own
+ * flag+dial-code selector already occupies that spot, matching the
+ * reference design (a phone icon there would collide with the flag).
  */
-export function PhoneNumberField({ label = "Contact Number", name = "contactNumber", value, onChange, error, initialCountry }) {
+export function PhoneNumberField({ label = "Contact Number", name = "contactNumber", value, onChange, error, initialCountry, className }) {
   const inputRef = useRef(null);
   const itiRef = useRef(null);
   const id = useId();
@@ -39,7 +41,7 @@ export function PhoneNumberField({ label = "Contact Number", name = "contactNumb
           defaultValue={value}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          className={`h-12 w-full rounded-md bg-white pl-10 pr-3.5 pt-1 text-sm outline-none ${
+          className={`h-12 w-full rounded-md bg-white pl-10 pr-3.5 pt-1 text-sm outline-none ${className} ${
             error ? "border-2 border-red-500" : focused ? "border-2 border-slate-900" : "border border-slate-300"
           }`}
         />
