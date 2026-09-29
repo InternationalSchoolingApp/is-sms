@@ -326,6 +326,6 @@ export function getCaptchaImageUrl(schoolUUID, cacheBust) {
   if (!baseUrl || !schoolUUID) {
     throw new Error("A backend origin and a schoolUUID (from the URL) are required");
   }
-  const color = process.env.NEXT_PUBLIC_THEME_PRIMARY_COLOR || "2563eb";
+  const color = process.env.NEXT_PUBLIC_CATPCHA_COLOR || "2563eb";
   return `${baseUrl}/${schoolUUID}/api/v1/common/captcha.jpg?payload=${encodeURIComponent(color)}&v=${cacheBust}`;
 }

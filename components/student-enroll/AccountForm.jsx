@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { FloatingLabelInput } from "@/components/ui/floating-label-input";
+import { Eye, EyeOff } from "lucide-react";
+import { AccountInput } from "@/components/student-enroll/AccountInput";
+import { MailSolidIcon, LockSolidIcon } from "@/components/student-enroll/FieldIcons";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { PasswordStrengthChecklist } from "@/components/student-enroll/PasswordStrengthChecklist";
@@ -11,7 +12,7 @@ import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal
 import { InfoModal, getWelcomeBackMessage } from "@/components/student-enroll/InfoModal";
 import { useAccountSignup } from "@/hooks/useAccountSignup";
 import { checkEmailAvailability } from "@/services/studentSignupApi";
-import { validateAccountFormOnline, isValidEmail, getPasswordStrength } from "@/utils/studentSignupValidation";
+import { validateAccountFormOnline, isValidEmail } from "@/utils/studentSignupValidation";
 import { captureUtmParamsFromUrl } from "@/utils/utmCookies";
 import { getHash } from "@/utils/common";
 
@@ -209,39 +210,42 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
         }}
         className="mx-auto w-full  space-y-5"
       >
-        <h2 className="hidden text-center text-xl font-semibold text-primary md:block">
-          Complete the enrollment in under 5 minutes
-        </h2>
+        <div className="text-center">
+          <h2 className="text-[22px] font-bold leading-tight text-slate-800">
+            Complete your enrollment in just 5 minutes.
+          </h2>
+          <p className="mt-1.5 text-sm text-slate-500">
+            Create your account to start your learning journey
+          </p>
+        </div>
 
-        <FloatingLabelInput
-          icon={Mail}
-          label="Email"
+        <AccountInput
+          icon={MailSolidIcon}
+          label="Enter your email"
           name="email"
           type="email"
           autoComplete="email"
           value={fields.email}
           onChange={(e) => setField("email", e.target.value)}
           onBlur={(e) => handleEmailBlur(e.target.value)}
-          status={fields.email ? (isValidEmail(fields.email) ? "valid" : "invalid") : undefined}
           error={errors.email}
         />
 
-        <FloatingLabelInput
-          icon={Mail}
-          label="Confirm Email"
+        <AccountInput
+          icon={MailSolidIcon}
+          label="Confirm your email"
           name="confirmEmail"
           type="email"
           autoComplete="off"
           value={fields.confirmEmail}
           onChange={(e) => setField("confirmEmail", e.target.value)}
-          status={fields.confirmEmail ? (emailsMatch && isValidEmail(fields.confirmEmail) ? "valid" : "invalid") : undefined}
           error={!emailsMatch ? "Email and confirm email are not same" : errors.confirmEmail}
         />
 
         <div className="relative">
-          <FloatingLabelInput
-            icon={Lock}
-            label="Create your password"
+          <AccountInput
+            icon={LockSolidIcon}
+            label="Enter your password"
             name="password"
             type={showPassword ? "text" : "password"}
             // "new-password" (not "off") is the standards-correct way to
@@ -255,7 +259,6 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
             onFocus={() => setPasswordFocused(true)}
             onBlur={() => setPasswordFocused(false)}
             onChange={(e) => setField("password", e.target.value)}
-            status={fields.password ? (getPasswordStrength(fields.password).isValid ? "valid" : "invalid") : undefined}
             error={!passwordFocused ? errors.password : undefined}
             trailing={
               <button
@@ -268,48 +271,42 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
                 // resize, so it always worked there). Blocking the default
                 // mousedown/touch focus-change keeps the input focused and
                 // the click reliable.
-                
+
                 onClick={() => setShowPassword((v) => !v)}
-                // Bigger hit area (not just the 16px icon) + explicit
-                // z-index + touch-manipulation — on a real mobile device
-                // the icon-sized-only hit area was too small to reliably
-                // tap, and taps could land on the input underneath instead
-                // (no visible feedback, looked like "the button doesn't
-                // work"). z-20 sits above the label/icon (z-10).
-                className="absolute right-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 cursor-pointer touch-manipulation items-center justify-center text-slate-400 hover:text-slate-600"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                // Bigger hit area (not just the icon) + explicit z-index +
+                // touch-manipulation — on a real mobile device the
+                // icon-sized-only hit area was too small to reliably tap,
+                // and taps could land on the input underneath instead (no
+                // visible feedback, looked like "the button doesn't work").
+                className="absolute right-1 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 cursor-pointer touch-manipulation items-center justify-center text-slate-500 hover:text-slate-700"
                 tabIndex={-1}
               >
-                {showPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                {showPassword ? <Eye className="h-[18px] w-[18px]" /> : <EyeOff className="h-[18px] w-[18px]" />}
               </button>
             }
           />
           {passwordFocused && <PasswordStrengthChecklist password={fields.password} />}
         </div>
-        <FloatingLabelInput
-          icon={Lock}
+        <AccountInput
+          icon={LockSolidIcon}
           label="Confirm your password"
           name="confirmPassword"
           type={showConfirmPassword ? "text" : "password"}
           autoComplete="new-password"
           value={fields.confirmPassword}
           onChange={(e) => setField("confirmPassword", e.target.value)}
-          status={
-            fields.confirmPassword
-              ? getPasswordStrength(fields.password, fields.confirmPassword).matchesConfirm
-                ? "valid"
-                : "invalid"
-              : undefined
-          }
           error={errors.confirmPassword}
           trailing={
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => setShowConfirmPassword((v) => !v)}
-              className="absolute right-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 touch-manipulation items-center justify-center text-slate-400 hover:text-slate-600"
+              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              className="absolute right-1 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 touch-manipulation items-center justify-center text-slate-500 hover:text-slate-700"
               tabIndex={-1}
             >
-              {showConfirmPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+              {showConfirmPassword ? <Eye className="h-[18px] w-[18px]" /> : <EyeOff className="h-[18px] w-[18px]" />}
             </button>
           }
         />
@@ -325,11 +322,11 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
 
         {errors.form && <p className="text-center text-sm font-semibold text-red-600">{errors.form}</p>}
 
-        <label className="flex items-start gap-2 text-xs text-slate-600">
+        <label className="flex items-start gap-2.5 text-[13px] leading-relaxed text-slate-600">
           <Checkbox
             checked={fields.checkTerms}
             onCheckedChange={(checked) => setField("checkTerms", checked === true)}
-            className="mt-0.5"
+            className="mt-0.5 shrink-0"
           />
           <span>
             I have read and agree to the{" "}
@@ -356,18 +353,20 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
         </label>
         {errors.checkTerms && <p className="text-xs text-red-600">{errors.checkTerms}</p>}
 
-        <Button
-          type="button"
-          onClick={handleSubmit}
-          disabled={signup.isPending}
-          className="mx-auto block w-32 rounded-full bg-primary hover:bg-primary/90"
-        >
-          {signup.isPending ? "Please wait…" : "Next"}
-        </Button>
+        <div className="flex justify-center pt-1">
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={signup.isPending}
+            className="h-11 min-w-[110px] rounded-xl bg-primary px-7 text-[15px] font-semibold text-white shadow-sm hover:bg-primary/90"
+          >
+            {signup.isPending ? "Please wait…" : "Next"}
+          </Button>
+        </div>
 
         <p className="text-center text-sm text-slate-600">
           Already Enrolled?{" "}
-          <a href={context.loginUrl} className="text-primary">
+          <a href={process.env.NEXT_PUBLIC_BACKEND_BASE_URL + "/international-schooling/common/login"} className="font-semibold text-primary hover:underline">
             Log in here.
           </a>
         </p>

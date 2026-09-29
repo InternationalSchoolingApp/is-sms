@@ -6,6 +6,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { AccountForm } from "@/components/student-enroll/AccountForm";
 import { AccountFormOfflineB2B } from "@/components/student-enroll/AccountFormOfflineB2B";
 import { EmailVerificationPanel } from "@/components/student-enroll/EmailVerificationPanel";
+import { SchoolLogo } from "@/components/student-enroll/SchoolLogo";
 import { SignupFooter } from "@/components/student-enroll/SignupFooter";
 import { getPublicSchoolInfo } from "@/services/studentSignupApi";
 import { getLearningProgramTheme } from "@/utils/learningProgramTheme";
@@ -162,63 +163,124 @@ function AccountCreationPageContent() {
   }, []);
 
   return (
-    <main className="flex min-h-screen flex-col md:flex-row">
-      {/* Compact mobile-only header — matches SignupCommon.jsp's mobile
-          layout: small icon logo + badge + heading + divider, no photo
-          hero. Hidden from md up, where the blue hero section below takes
-          over instead. */}
-      <div
-        id="signupMobileHeader"
-        className="flex fixed z-1 w-full top-0 left-0 items-center gap-3 border-b border-slate-200 bg-white px-4 pb-4 pt-4 md:hidden"
-      >
-        <Image src="/images/is_fav_logo_200.png" alt={context.schoolName} width={38} height={38} priority />
-        <div className="text-center flex-1 right-4 relative">
-          <span className="w-fit rounded-full border-2 border-primary bg-primary px-5 py-1.5 text-sm font-bold text-white">
-            {theme.label}
-          </span>
-          <h2 className="text-center text-lg font-bold text-primary max-[767px]:text-[14px] mt-3">
-            {isOffline ? "Complete the enrollment" : "Complete the enrollment in under 5 minutes"}
-          </h2>
-        </div>
+    <main className="relative flex min-h-screen flex-col bg-[#eef4fb] bg-gradient-to-b from-[#eaf2fc] via-[#eef5fc] to-[#e7f0fb] md:h-screen md:min-h-0 md:overflow-hidden">
+      {/* Soft decorative blobs — the light-blue organic wave shapes behind
+          everything on desktop. Purely decorative, so hidden from a11y and
+          from pointer events; below md the layout is compact so they're
+          hidden there. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 hidden overflow-hidden md:block">
+        <div className="absolute -left-24 -top-24 h-96 w-96 rounded-full bg-[#d7e6fb] opacity-60 blur-3xl" />
+        <div className="absolute left-1/3 top-10 h-72 w-72 rounded-full bg-[#dcebfd] opacity-50 blur-3xl" />
+        <div className="absolute -bottom-24 right-10 h-96 w-96 rounded-full bg-[#d9e8fc] opacity-50 blur-3xl" />
       </div>
 
-      <section className="relative hidden flex-col gap-8 overflow-hidden bg-primary p-8 text-white md:flex md:w-2.2/5 lg:w-3/5">
-        <div className="relative z-10 mx-auto w-fit rounded-xl bg-white px-4 py-3">
-          <Image
-            src="/images/IS_Final_Logo.webp"
-            alt={context.schoolName}
-            width={200}
-            height={40}
-            className="w-auto"
-            priority
-          />
-        </div>
-        <span className="z-10 mx-auto mt-[10%] w-fit rounded-full bg-slate-900 px-5 py-2 text-[clamp(1rem,3vw,1.5rem)] font-bold">
+      {/* Compact mobile-only header — small icon logo + badge + heading +
+          divider, no photo hero. Hidden from md up, where the hero column
+          below takes over instead. Keeps id="signupMobileHeader" so the
+          padding-sync effect can still measure it. */}
+      <div
+        id="signupMobileHeader"
+        className="fixed left-0 top-0 z-20 flex w-full flex-col items-center gap-2 border-b border-slate-200 bg-[#F0F9FD] px-4 py-3 backdrop-blur md:hidden"
+      >
+        <SchoolLogo schoolName={context.schoolName} width={180} />
+        <span className="rounded-full bg-primary px-4 py-1 text-xs font-bold text-white">
           {theme.label}
         </span>
-        <div className="pointer-events-none absolute bottom-0 left-0 h-[45%] w-full">
-          <Image src={theme.image} alt="" fill className="object-contain object-bottom" priority />
-        </div>
-      </section>
+      </div>
 
-      <section id="enrollmentFormWrapper" className="flex flex-1 items-center justify-center bg-white p-8">
-        {verificationEmail ? (
-          <EmailVerificationPanel
-            email={verificationEmail}
-            context={context}
-            onClose={() => setVerificationEmail(null)}
-          />
-        ) : isOffline ? (
-          <AccountFormOfflineB2B context={context} onRedirect={(url) => url && (window.location.href = url)} />
-        ) : (
-          <AccountForm
-            className="z-[-1]"
-            context={context}
-            onVerificationEmailSent={setVerificationEmail}
-            onRedirect={(url) => url && (window.location.href = url)}
-          />
-        )}
-      </section>
+      {/* Content row: hero (left, fixed) + form (right, scrollable). On
+          desktop this row is a fixed-height flex box (min-h-0 so children
+          can scroll independently); the footer sits below it, pinned to the
+          viewport bottom. */}
+      <div className="relative z-10 flex flex-1 flex-col md:min-h-0 md:flex-row">
+        {/* Desktop hero column — FIXED (does not scroll). Full column height,
+            logo + heading at top, hero image filling the lower portion and
+            pinned to the bottom-left. */}
+        <section className="relative hidden h-full flex-col overflow-hidden px-10 pt-8 md:flex md:w-[42%] lg:w-[45%]">
+          <div className="flex items-center gap-2">
+            <SchoolLogo schoolName={context.schoolName} width={260} />
+          </div>
+
+          <div className="mt-8">
+            <h1 className="text-[clamp(1.5rem,2.6vw,2.1rem)] font-extrabold leading-tight text-primary">
+              {theme.label}
+            </h1>
+            {theme.subtitle && (
+              <p className="mt-1.5 max-w-sm text-[clamp(0.85rem,1vw,1rem)] font-medium text-slate-600">
+                {theme.subtitle}
+              </p>
+            )}
+          </div>
+
+          {/* Image takes all remaining column height (flex-1) and is pinned
+              bottom-left, so on desktop the whole illustration stays inside
+              the viewport instead of scrolling away. */}
+          <div className="pointer-events-none relative mt-6 -ml-10 min-h-0 flex-1 w-[calc(100%+2.5rem)]">
+            <Image
+              src="/images/signup-new.png"
+              alt=""
+              fill
+              className="object-contain object-left-bottom"
+              priority
+            />
+          </div>
+        </section>
+
+        {/* Form column — the ONLY scrollable region on desktop. If the card
+            is taller than the viewport, this column scrolls; the hero stays
+            put. */}
+        <section
+          id="enrollmentFormWrapper"
+          className="relative flex flex-1 items-start justify-center p-4 md:overflow-y-auto md:p-8"
+        >
+          {/* my-auto centers the card when it fits, but still lets the top
+              scroll into view (no clipping) when it's taller than the
+              column — unlike items-center, which would clip the top. */}
+          <div className="my-4 w-full max-w-lg rounded-3xl bg-white p-6 shadow-xl shadow-slate-900/5 ring-1 ring-slate-900/5 sm:p-8 md:my-auto md:p-10">
+            {verificationEmail ? (
+              <EmailVerificationPanel
+                email={verificationEmail}
+                context={context}
+                onClose={() => setVerificationEmail(null)}
+              />
+            ) : isOffline ? (
+              <AccountFormOfflineB2B context={context} onRedirect={(url) => url && (window.location.href = url)} />
+            ) : (
+              <AccountForm
+                context={context}
+                onVerificationEmailSent={setVerificationEmail}
+                onRedirect={(url) => url && (window.location.href = url)}
+              />
+            )}
+          </div>
+        </section>
+      </div>
+
+      {/* Full-width desktop footer — spans the WHOLE page bottom (under both
+          columns), not just the hero. Year + school name are dynamic (year
+          from the client clock; school name from the per-school context
+          resolved from ?school=). Mobile keeps its own copyright line inside
+          SignupFooter. */}
+      <footer className="relative z-10 hidden border-t border-slate-200/70 py-4 text-center text-xs text-slate-500 md:block bg-white/90">
+        Copyright © {new Date().getFullYear()} - {context.schoolName || "International Schooling"} - All Rights Reserved.
+      </footer>
+
+      {/* Desktop-only floating WhatsApp support button (bottom-right).
+          Mobile keeps the fixed WhatsApp footer bar via SignupFooter. */}
+      {context.whatsAppNumber && (
+        <a
+          href={`https://api.whatsapp.com/send?phone=${context.whatsAppNumber}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Enrollment support on WhatsApp"
+          className="fixed bottom-6 right-6 z-30 hidden h-14 w-14 items-center justify-center rounded-2xl text-white shadow-lg transition-transform hover:scale-105 md:flex"
+          style={{ background: "#25D366" }}
+        >
+          <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="#fff">
+            <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 1.8a8.2 8.2 0 1 1-4.2 15.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 0 1 12 3.8zm4.7 10.3c-.3-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.1-.2 0-.4.1-.5l.4-.5c.1-.2.2-.3.3-.5v-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.9.9-1 2.1-.4 3.4a11 11 0 0 0 4.5 4.5c1.9.9 2.7.8 3.4.7.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.6-.3z" />
+          </svg>
+        </a>
+      )}
 
       <SignupFooter whatsAppNumber={context.whatsAppNumber} schoolName={context.schoolName} />
     </main>
