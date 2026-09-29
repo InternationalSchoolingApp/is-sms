@@ -98,7 +98,7 @@ export function useCityOptions(context, stateId) {
  * select in this app keys options by String(item.key), so they're
  * stringified here too.
  */
-function mapSignupStudentToFields(signupStudent) {
+export function mapSignupStudentToFields(signupStudent) {
   if (!signupStudent) return null;
   const dob = signupStudent.dob ? new Date(signupStudent.dob) : null;
   return {

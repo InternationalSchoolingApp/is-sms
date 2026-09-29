@@ -114,8 +114,7 @@ function CourseSummaryLink({ url }) {
  * doc comment) or the backend's grade/fee mapping lookup has nothing to key
  * on and the call fails with a generic error.
  */
-export function Stage3CourseSelection({ context, userId, standardId, onNext, onBack, onSessionExpired }) {
-  const queryClient = useQueryClient();
+export function Stage3CourseSelection({ context, userId, standardId, onNext, onBack, onSessionExpired, inReview = false }) {
   const courseQuery = useCourseDetails({ context, userId, standardId });
   const paymentOption = useShowPaymentOption({ context, userId });
   const update = useUpdateCourseSelection({ context, userId });
@@ -388,7 +387,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
     }
   }
 
-  const header = (
+  const header = inReview ? null : (
     <>
       <span className="inline-block rounded-full bg-primary px-3 py-1 text-sm font-bold uppercase tracking-wide text-white sm:text-base md:text-lg">
         {programLabel}
@@ -640,7 +639,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
         <div className="flex items-center gap-3">
           {onBack && (
             <Button type="button" variant="outline" onClick={onBack} disabled={busy}>
-              Back
+              {inReview ? "Cancel" : "Back"}
             </Button>
           )}
           <Button
@@ -649,7 +648,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
             disabled={busy || !showPaymentOption}
             className="rounded-md bg-primary px-6 hover:bg-primary/90"
           >
-            {proceed.isPending ? "Please wait…" : "Continue to Step 4"}
+            {proceed.isPending ? "Please wait…" : inReview ? "Save" : "Continue to Step 4"}
           </Button>
         </div>
       </div>

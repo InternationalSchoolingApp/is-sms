@@ -4,6 +4,39 @@ import { useMutation } from "@tanstack/react-query";
 import { saveParentDetails, sendOtpForParentVerification, verifyParentOtp } from "@/services/studentSignupApi";
 import { buildAuthentication, buildAuthenticatedRequest } from "@/utils/authentication";
 
+/**
+ * Inverse of buildCommunications(): turns a SignupParentDTO (as returned in
+ * get-student-review-details' `signupParent`, same converter as
+ * get-parent-details) into Stage2ParentDetails' own field shape, so the
+ * review screen's inline "Edit" opens pre-filled from the data it already
+ * loaded. `communications` is "W=Y|C=N|E=Y".
+ */
+export function mapSignupParentToFields(signupParent) {
+  if (!signupParent) return null;
+  const comm = String(signupParent.communications || "");
+  const flag = (key) => new RegExp(`${key}=Y`).test(comm);
+  return {
+    firstName: signupParent.firstName || "",
+    middleName: signupParent.middleName || "",
+    lastName: signupParent.lastName || "",
+    relation: signupParent.relationship || "",
+    email: signupParent.email || "",
+    contactNumber: signupParent.contactNumber || "",
+    countryCode: signupParent.countryCode || "",
+    countryIsdCode: signupParent.countryIsdCode2 || "",
+    sameAsStudent: false,
+    countryId: signupParent.countryId ? String(signupParent.countryId) : "",
+    stateId: signupParent.stateId ? String(signupParent.stateId) : "",
+    cityId: signupParent.cityId ? String(signupParent.cityId) : "",
+    communicationWhatsApp: flag("W"),
+    communicationCall: flag("C"),
+    communicationEmail: flag("E"),
+    workingProfession: signupParent.workingProfession || "",
+    institutionName: signupParent.institutionName || "",
+    institutionCountryId: signupParent.institutionCountryId ? String(signupParent.institutionCountryId) : "",
+  };
+}
+
 function buildCommunications({ whatsapp, call, email }) {
   return `W=${whatsapp ? "Y" : "N"}|C=${call ? "Y" : "N"}|E=${email ? "Y" : "N"}`;
 }

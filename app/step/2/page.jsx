@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import { Stage2ParentDetails } from "@/components/student-enroll/Stage2ParentDetails";
 import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
 import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
+import { useWizardResume } from "@/hooks/useWizardResume";
 import { loadWizardStudentFields, loadWizardParentFields, saveWizardParentFields } from "@/utils/wizardStorage";
 
 /**
@@ -19,6 +20,7 @@ import { loadWizardStudentFields, loadWizardParentFields, saveWizardParentFields
 export default function Step2Page() {
   const router = useRouter();
   const { status, session, context, logoUrl, ready } = useEnrollmentContext();
+  useWizardResume({ currentStep: 2, context, uniqueId: session?.uniqueId, ready });
   const [studentFields, setStudentFields] = useState(null);
   const [parentFields, setParentFields] = useState(null);
   const [hydrated, setHydrated] = useState(false);

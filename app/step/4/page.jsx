@@ -3,19 +3,24 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Button } from "@/components/ui/button";
+import { Stage4ReviewPayment } from "@/components/student-enroll/Stage4ReviewPayment";
 import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
 import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
+import { useWizardResume } from "@/hooks/useWizardResume";
+
+const STEP_ROUTES = { 1: "/step/1", 2: "/step/2", 3: "/step/3" };
 
 /**
- * Stage 4 ("Review and Payment") route. Reserved so the /step/3 -> /step/4
- * navigation and the SSO resume (nextSessionStage 4) already land
- * somewhere; the review page (get-student-review-details, plan cards,
- * payment-method modal) isn't built yet.
+ * Stage 4 ("Review and Payment") route — get-student-review-details on
+ * load, choose-payment-plan if the student switches plans, then either
+ * submit-application/proceed-to-dashboard (no payment) or the payment
+ * gateway (Confirm & Pay). See Stage4ReviewPayment.jsx for the full port
+ * of getReviewAndPayContent()/showPaymentModal() from the legacy JS.
  */
 export default function Step4Page() {
   const router = useRouter();
-  const { status, context, logoUrl, ready } = useEnrollmentContext();
+  const { status, session, context, logoUrl, ready } = useEnrollmentContext();
+  useWizardResume({ currentStep: 4, context, uniqueId: session?.uniqueId, ready });
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/");
@@ -32,13 +37,13 @@ export default function Step4Page() {
       currentStepKey="review_and_payment"
       onLogout={() => signOut({ callbackUrl: "/" })}
     >
-      <h1 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Review and payment</h1>
-      <p className="mt-2 max-w-2xl text-sm text-slate-500">Step 4 of 4. Review your details and choose a payment plan — coming soon.</p>
-      <div className="mt-10 border-t border-slate-200 pt-6">
-        <Button type="button" variant="outline" onClick={() => router.push("/step/3")}>
-          Back
-        </Button>
-      </div>
+      <Stage4ReviewPayment
+        context={context}
+        userId={session.userId}
+        uniqueId={session.uniqueId}
+        onBack={(step) => router.push(STEP_ROUTES[step] || "/step/3")}
+        onSessionExpired={() => signOut({ callbackUrl: "/" })}
+      />
     </EnrollmentWizardShell>
   );
 }

@@ -60,7 +60,7 @@ async function parseJsonResponse(response) {
 }
 
 async function postPayload(schoolUUID, path, data, options) {
-  debugger
+
   const response = await fetch(backendUrl(schoolUUID, path, options), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -121,7 +121,7 @@ export function getParentDetails(schoolUUID, request) {
 
 // --- Stage 3: Course / Grade + Payment Plan ---
 export function chooseCoursesByGrade(schoolUUID, request) {
-  debugger
+
   return postPayload(schoolUUID, "student/enrollment/course-details-by-standard-id", request);
 }
 
@@ -188,6 +188,30 @@ export function sendOtpForParentVerification(schoolUUID, request) {
 
 export function verifyParentOtp(schoolUUID, request) {
   return postPayload(schoolUUID, "api/v1/common/verify-otp", request);
+}
+
+// --- Payment gateway (Step 4: Review and Payment "Confirm & Pay") ---
+// Both confirmed at ClientCommonPaymentController.java — class-level
+// @RequestMapping("{schoolId}") means these DO carry the schoolId path
+// segment despite their own mapping strings reading "/common/...".
+export function getPaymentGatewayOptions(schoolUUID, request) {
+  return postPayload(schoolUUID, "common/payment-gateway/options", request);
+}
+
+export function invokePaymentGateway(schoolUUID, request) {
+  return postPayload(schoolUUID, "common/invoke-payment-gateway", request);
+}
+
+// Airwallex's selectable payment methods, shown once common/payment-gateway/options lists
+// "Airwallex" — getAirwallexMethods() in commonPaymentGateway.js. A plain GET (not the
+// encoded-payload POST): schoolId (the gateway's school id) and countryCode travel as
+// base64 query params, and the controller mapping carries the {schoolId} path segment
+// like the other ClientCommonPaymentController routes.
+export function getAirwallexPaymentMethods(schoolUUID, schoolIdOfPaymentGateway, countryCode) {
+  return getPayload(schoolUUID, "get-airwallex-payment-methods", {
+    schoolId: btoa(String(schoolIdOfPaymentGateway)),
+    countryCode: btoa(countryCode || ""),
+  });
 }
 
 // --- Misc ---

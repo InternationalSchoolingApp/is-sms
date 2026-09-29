@@ -24,7 +24,7 @@ import { getLearningProgramBackendValue, getLearningProgramTheme } from "@/utils
 // source — SignupStudentDTO carries both `gender` (code) and `genderName`
 // (display), implying a short code. Confirm against a live
 // save-student-details call before shipping; swap here if wrong.
-const GENDER_OPTIONS = [
+export const GENDER_OPTIONS = [
   { value: "MALE", label: "Male" },
   { value: "FEMALE", label: "Female" },
   { value: "DONOTWANTTOSPECIFY", label: "Do Not Want To Specify" },

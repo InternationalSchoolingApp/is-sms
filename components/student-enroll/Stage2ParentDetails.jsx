@@ -15,7 +15,7 @@ import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 
 // "Other" is commented out on the is-rest-api form too (masterContent.js
 // getRelationshipContent()) -- only these three are actually selectable.
-const RELATION_OPTIONS = [
+export const RELATION_OPTIONS = [
   { value: "Mother", label: "Mother" },
   { value: "Father", label: "Father" },
   { value: "Guardian", label: "Guardian" },
@@ -24,7 +24,7 @@ const RELATION_OPTIONS = [
 // SS/CS/WP confirmed at SignupUtil.java's display-name mapping
 // (getParentDetails response: SS -> "School Student", CS -> "College
 // Student", WP -> "Working Professional").
-const WORKING_PROFESSION_OPTIONS = [
+export const WORKING_PROFESSION_OPTIONS = [
   { value: "SS", label: "School Student" },
   { value: "CS", label: "College Student" },
   { value: "WP", label: "Working Professional" },
