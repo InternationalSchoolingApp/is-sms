@@ -59,7 +59,7 @@ export function FloatingLabelInput({
           {...inputProps}
         />
         {Icon && (
-          <Icon className="pointer-events-none absolute left-3.5 top-1/2 z-0 h-4 w-4 -translate-y-1/2 text-slate-500" />
+          <Icon className="pointer-events-none absolute left-3.5 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-slate-500" />
         )}
         {label && (
           <label

@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { User, Briefcase, Mail, MapPin, Map, Building2, Phone as PhoneIcon, GraduationCap, School } from "lucide-react";
+import { IoLogoWhatsapp } from "react-icons/io";
+
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { PhoneNumberField } from "@/components/student-enroll/PhoneNumberField";
-import { SectionHeading } from "@/components/student-enroll/wizard/fields";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { useCountryOptions, useStateOptions, useCityOptions } from "@/hooks/useStudentDetailsSignup";
 import { useParentDetailsSignup } from "@/hooks/useParentDetailsSignup";
@@ -77,6 +79,14 @@ function Req({ label, required }) {
  * as student" default — purely a client-side convenience copy, there's no
  * backend flag for it (confirmed: SignupUtil.convertToSignupParentsDTO only
  * defaults the parent's location from the student on first visit, same idea).
+ * Displayed as a "Change your Location" checkbox (matches legacy's own
+ * #sameAsStudentLocation naming — see signupStudentStage1.js's
+ * syncParentLocationWithStudent doc comment) — UNCHECKED (fields.sameAsStudent
+ * true) is the default, showing the student's own country/state/city
+ * read-only; checking it clears and unlocks them for a different address.
+ * The underlying field is still `sameAsStudent`/true-means-same internally
+ * (validation, submit payload) — only the checkbox's displayed
+ * checked-state and label are inverted to match the reference design.
  *
  * `initialFields`, when given (Back from Stage 3, or a refresh), overrides
  * those defaults with whatever was last saved via
@@ -137,77 +147,84 @@ export function Stage2ParentDetails({ context, userId, studentAddress, initialFi
     }
   }
 
+  const locationDisabled = fields.sameAsStudent;
+
   return (
     <div>
-      <h1 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Parent information</h1>
-      <p className="mt-2 max-w-2xl text-sm text-slate-500">Step 2 of 4. Tell us who we should stay in touch with.</p>
+      <h2 className="text-center text-2xl font-bold text-slate-900">Parents Details</h2>
 
       {isOneToOneFlex ? (
-        <>
-          <SectionHeading>Working Professional Details</SectionHeading>
-          <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-            <FloatingLabelSelect
-              label={<Req label="Are you a student or a working professional?" required />}
-              className="sm:col-span-2 lg:col-span-1"
-              value={fields.workingProfession}
-              onValueChange={(v) => setField("workingProfession", v)}
-              options={WORKING_PROFESSION_OPTIONS}
-              error={errors.workingProfession}
-            />
-            <FloatingLabelInput
-              label={<Req label="School / College / Organization Name" required />}
-              value={fields.institutionName}
-              onChange={(e) => setField("institutionName", e.target.value)}
-              error={errors.institutionName}
-            />
-            <FloatingLabelSelect
-              label={<Req label="Country of School / College / Organization" required />}
-              value={fields.institutionCountryId}
-              onValueChange={(v) => setField("institutionCountryId", v)}
-              options={countries.data || []}
-              error={errors.institutionCountryId}
-              searchable
-            />
-          </div>
-        </>
+        <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+          <FloatingLabelSelect
+            icon={GraduationCap}
+            label={<Req label="Are you a student or a working professional?" required />}
+            className="sm:col-span-2 lg:col-span-1"
+            value={fields.workingProfession}
+            onValueChange={(v) => setField("workingProfession", v)}
+            options={WORKING_PROFESSION_OPTIONS}
+            error={errors.workingProfession}
+          />
+          <FloatingLabelInput
+            icon={School}
+            label={<Req label="School / College / Organization Name" required />}
+            value={fields.institutionName}
+            onChange={(e) => setField("institutionName", e.target.value)}
+            error={errors.institutionName}
+          />
+          <FloatingLabelSelect
+            icon={MapPin}
+            label={<Req label="Country of School / College / Organization" required />}
+            value={fields.institutionCountryId}
+            onValueChange={(v) => setField("institutionCountryId", v)}
+            options={countries.data || []}
+            error={errors.institutionCountryId}
+            searchable
+          />
+        </div>
       ) : (
         <>
-          <SectionHeading>Parent / Guardian</SectionHeading>
-          <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
             <FloatingLabelInput
+              icon={User}
               label={<Req label="First Name" required />}
               value={fields.firstName}
               onChange={(e) => setField("firstName", e.target.value)}
               error={errors.firstName}
             />
             <FloatingLabelInput
+              icon={User}
               label="Middle Name"
               value={fields.middleName}
               onChange={(e) => setField("middleName", e.target.value)}
             />
             <FloatingLabelInput
+              icon={User}
               label={<Req label="Last Name" required />}
               value={fields.lastName}
               onChange={(e) => setField("lastName", e.target.value)}
               error={errors.lastName}
             />
             <FloatingLabelSelect
+              icon={Briefcase}
               label={<Req label="Relation with Student" required />}
               value={fields.relation}
               onValueChange={(v) => setField("relation", v)}
               options={RELATION_OPTIONS}
               error={errors.relation}
+              searchable
             />
             <FloatingLabelInput
-              label="Parent Email (Optional)"
+              icon={Mail}
+              label="Parent Email"
               type="email"
               value={fields.email}
               onChange={(e) => setField("email", e.target.value)}
               error={errors.email}
             />
             <PhoneNumberField
-              label="Parent Phone Number (Optional)"
+              label="Parent Mobile Number (Optional)"
               value={fields.contactNumber}
+              className="pb-1.5 w-full"
               onChange={({ contactNumber, countryIsdCode, countryCode, isValid }) =>
                 setFields((prev) => ({ ...prev, contactNumber, countryIsdCode, countryCode, phoneValid: isValid }))
               }
@@ -215,86 +232,87 @@ export function Stage2ParentDetails({ context, userId, studentAddress, initialFi
             />
           </div>
 
-          <SectionHeading>Address</SectionHeading>
-          <label className="mb-4 flex items-center gap-2 text-sm text-slate-600">
-            <Checkbox checked={fields.sameAsStudent} onCheckedChange={toggleSameAsStudent} />
-            Same as student&apos;s residence address
+          <label className="mt-8 mb-4 flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <Checkbox checked={!fields.sameAsStudent} onCheckedChange={(v) => toggleSameAsStudent(!v)} />
+            Change your Location
           </label>
-          {fields.sameAsStudent ? (
-            <p className="mb-4 text-sm text-slate-500">
-              Using the same country / state / city entered for the student.
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-              <FloatingLabelSelect
-                label={<Req label="Country" required />}
-                value={fields.countryId}
-                onValueChange={(v) => setFields((prev) => ({ ...prev, countryId: v, stateId: "", cityId: "" }))}
-                options={countries.data || []}
-                error={errors.countryId}
-                searchable
-              />
-              <FloatingLabelSelect
-                label={<Req label="Province / State" required />}
-                value={fields.stateId}
-                onValueChange={(v) => setFields((prev) => ({ ...prev, stateId: v, cityId: "" }))}
-                options={states.data || []}
-                error={errors.stateId}
-                searchable
-              />
-              <FloatingLabelSelect
-                label={<Req label="City" required />}
-                value={fields.cityId}
-                onValueChange={(v) => setField("cityId", v)}
-                options={cities.data || []}
-                error={errors.cityId}
-                searchable
-              />
-            </div>
-          )}
+          <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+            <FloatingLabelSelect
+              icon={MapPin}
+              label={locationDisabled ? "Country (Parent's Current Location)" : <Req label="Country" required />}
+              value={fields.countryId}
+              onValueChange={(v) => setFields((prev) => ({ ...prev, countryId: v, stateId: "", cityId: "" }))}
+              options={countries.data || []}
+              error={errors.countryId}
+              disabled={locationDisabled}
+              searchable
+            />
+            <FloatingLabelSelect
+              icon={Map}
+              label={<Req label="Province / State" required={!locationDisabled} />}
+              value={fields.stateId}
+              onValueChange={(v) => setFields((prev) => ({ ...prev, stateId: v, cityId: "" }))}
+              options={states.data || []}
+              error={errors.stateId}
+              disabled={locationDisabled}
+              searchable
+            />
+            <FloatingLabelSelect
+              icon={Building2}
+              label={<Req label="City" required={!locationDisabled} />}
+              value={fields.cityId}
+              onValueChange={(v) => setField("cityId", v)}
+              options={cities.data || []}
+              error={errors.cityId}
+              disabled={locationDisabled}
+              searchable
+            />
+          </div>
 
-          <SectionHeading>Preferred Contact Method</SectionHeading>
-          <div className="flex flex-wrap gap-x-6 gap-y-3">
-            <label className="flex items-center gap-2 text-sm text-slate-600">
-              <Checkbox
-                checked={fields.communicationWhatsApp}
-                onCheckedChange={(v) => setField("communicationWhatsApp", Boolean(v))}
-              />
-              WhatsApp
-            </label>
-            <label className="flex items-center gap-2 text-sm text-slate-600">
-              <Checkbox
-                checked={fields.communicationCall}
-                onCheckedChange={(v) => setField("communicationCall", Boolean(v))}
-              />
-              Call
-            </label>
-            <label className="flex items-center gap-2 text-sm text-slate-600">
-              <Checkbox
-                checked={fields.communicationEmail}
-                onCheckedChange={(v) => setField("communicationEmail", Boolean(v))}
-              />
-              Email
-            </label>
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+            <h3 className="text-base font-bold text-slate-900">How to Contact You?</h3>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+              <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <IoLogoWhatsapp className="h-4 w-4 text-emerald-600" />
+                WhatsApp
+                <Checkbox
+                  checked={fields.communicationWhatsApp}
+                  onCheckedChange={(v) => setField("communicationWhatsApp", Boolean(v))}
+                />
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <PhoneIcon className="h-4 w-4 text-slate-900" />
+                Call
+                <Checkbox
+                  checked={fields.communicationCall}
+                  onCheckedChange={(v) => setField("communicationCall", Boolean(v))}
+                />
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <Mail className="h-4 w-4 text-slate-900" />
+                Email
+                <Checkbox
+                  checked={fields.communicationEmail}
+                  onCheckedChange={(v) => setField("communicationEmail", Boolean(v))}
+                />
+              </label>
+            </div>
           </div>
           {errors.communication && <p className="mt-2 text-xs text-red-600">{errors.communication}</p>}
         </>
       )}
 
-      {errors.form && <p className="mt-4 text-sm font-semibold text-red-600">{errors.form}</p>}
+      {errors.form && <p className="mt-4 text-center text-sm font-semibold text-red-600">{errors.form}</p>}
 
-      <div className="mt-10 flex flex-col-reverse items-center justify-center gap-4 border-t border-slate-200 pt-6 sm:flex-row">
-        {/* <p className="text-xs text-slate-500">Required fields are marked with an asterisk.</p> */}
-        <div className="flex items-center gap-3">
-          {onBack && (
-            <Button type="button" variant="outline" onClick={onBack} disabled={signup.isPending}>
-              Back
-            </Button>
-          )}
-          <Button type="button" onClick={handleSubmit} disabled={signup.isPending} className="rounded-md bg-primary px-6 hover:bg-primary/90">
-            {signup.isPending ? "Please wait…" : "Continue to Step 3"}
+      <div className="mt-10 flex items-center justify-center gap-4 border-t border-slate-200 pt-6">
+        {onBack && (
+          <Button type="button" variant="outline" onClick={onBack} disabled={signup.isPending}>
+            Back
           </Button>
-        </div>
+        )}
+        <Button type="button" onClick={handleSubmit} disabled={signup.isPending} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
+          {signup.isPending ? "Please wait…" : "Next"}
+        </Button>
       </div>
 
       <FlaggedSeatsModal

@@ -24,7 +24,7 @@ export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDat
             error ? "border-2 border-red-500" : open ? "border-2 border-slate-900" : "border-slate-300"
           }`}
         >
-          {Icon && <Icon className="pointer-events-none absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-500" />}
+          {Icon && <Icon className="pointer-events-none absolute left-3.5 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-slate-500" />}
           {label && (
             <span
               className={`pointer-events-none absolute z-1 bg-white px-1 transition-all ${

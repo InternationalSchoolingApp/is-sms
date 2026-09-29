@@ -51,7 +51,7 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
 
         <StepRow currentIndex={currentIndex} />
 
-        <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-slate-200 bg-white p-2 shadow-sm sm:p-4 lg:py-6 lg:px-8">
+        <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
           {children}
         </div>
       </div>

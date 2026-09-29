@@ -389,8 +389,8 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
   const header = inReview ? null : (
     <>
       {/* Program name is now shown by EnrollmentWizardShell's own hero above this card. */}
-      <h1 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Course selection</h1>
-      <p className="mt-2 max-w-2xl text-sm text-slate-500">Step 3 of 4. Choose the courses for this academic year.</p>
+      <h2 className="text-center text-2xl font-bold text-slate-900">Course selection</h2>
+      {/* <p className="mt-2 max-w-2xl text-sm text-slate-500">Step 3 of 4. Choose the courses for this academic year.</p> */}
     </>
   );
 

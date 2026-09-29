@@ -94,7 +94,7 @@ function Stage1Skeleton({ isDualDiploma }) {
           ))}
         </div>
       )}
-      <div className="mt-10 flex justify-center border-t border-slate-200 pt-6">
+      <div className="mt-10 flex justify-center">
         <div className="h-11 w-40 animate-pulse rounded-md bg-slate-200" />
       </div>
     </div>
@@ -210,7 +210,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
 
   return (
     <div>
-      <h2 className="text-center text-2xl font-bold text-slate-900">Student Details</h2>
+      <h2 className="text-center text-1.5xl sm:text-2xl font-extrabold text-slate-900">Student Details</h2>
 
       <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
         <FloatingLabelInput
@@ -274,6 +274,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
         <PhoneNumberField
           label={<Req label="Mobile Number" required />}
           value={fields.contactNumber}
+          className="pb-1.5 w-full"
           // Only takes effect at mount (see useIntlTelInput's doc
           // comment) — restores the saved country flag when Stage 1
           // was prefilled from get-student-details (initialFields
@@ -283,7 +284,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           onChange={({ contactNumber, countryIsdCode, countryCode, isValid }) =>
             setFields((prev) => ({ ...prev, contactNumber, countryIsdCode, countryCode, phoneValid: isValid }))
           }
-          className="pb-1.5"
+          
           error={errors.contactNumber}
         />
         <FloatingLabelSelect
@@ -359,7 +360,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
 
       {errors.form && <p className="mt-4 text-center text-sm font-semibold text-red-600">{errors.form}</p>}
 
-      <div className="mt-10 flex justify-center border-t border-slate-200 pt-6">
+      <div className="mt-10 flex justify-center ">
         <Button type="button" onClick={handleSubmit} disabled={signup.isPending} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
           {signup.isPending ? "Please wait…" : "Next"}
         </Button>
