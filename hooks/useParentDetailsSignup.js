@@ -44,8 +44,16 @@ function buildSaveParentDetailsRequest({ fields, context, userId, isOneToOneFlex
     signupParent.middleName = fields.middleName || "";
     signupParent.lastName = fields.lastName;
     signupParent.email = fields.email || "";
-    signupParent.countryIsdCode2 = fields.countryIsdCode || "";
-    signupParent.countryCode = fields.countryCode || "";
+    // useIntlTelInput's onChange (see PhoneNumberField) hands back
+    // countryCode = ISO2 ("IN") and countryIsdCode = dial code with a
+    // leading "+" ("+91") — the OPPOSITE of what these DTO fields mean on
+    // the backend: signupParentDTO.countryCode is the dial code, no "+"
+    // (-> parents.PHONE_CODE_CONTACT_NUMBER), and countryIsdCode2 is the
+    // lowercase ISO2 (-> parents.COUNTRY_CODE_ISO2, VARCHAR(2) — sending the
+    // "+91" dial code there overflows it: "Data too long for column
+    // 'COUNTRY_CODE_ISO2'"). Same fix as Stage 1's useStudentDetailsSignup.js.
+    signupParent.countryIsdCode2 = fields.countryCode ? fields.countryCode.toLowerCase() : "";
+    signupParent.countryCode = fields.countryIsdCode ? fields.countryIsdCode.replace(/^\+/, "") : "";
     signupParent.contactNumber = fields.contactNumber || "";
     signupParent.countryId = fields.countryId;
     signupParent.stateId = fields.stateId;

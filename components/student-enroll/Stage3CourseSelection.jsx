@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { ConfirmDialog } from "@/components/student-enroll/ConfirmDialog";
 import { RecommendedCoursesDialog } from "@/components/student-enroll/RecommendedCoursesDialog";
+import { ChangeGradeDialog } from "@/components/student-enroll/ChangeGradeDialog";
 import {
   STATUS_SESSION_OUT,
   STATUS_SUCCESS,
@@ -15,8 +17,10 @@ import {
   useShowPaymentOption,
   useUpdateCourseSelection,
 } from "@/hooks/useCourseSelection";
+import { useGradeOptions, useCountryOptions, useStudentDetailsPrefill, useStudentDetailsSignup } from "@/hooks/useStudentDetailsSignup";
 import { getCourseAddCheck, hidesCourseCredits, validateCourseCredits } from "@/utils/studentSignupValidation";
-import { getLearningProgramTheme } from "@/utils/learningProgramTheme";
+import { getLearningProgramTheme, getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
+import { saveWizardStudentFields } from "@/utils/wizardStorage";
 
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
 
@@ -98,9 +102,11 @@ function CourseSummaryLink({ url }) {
  * persists it and returns the recomputed page. Continuing saves a payment
  * plan (see useProceedToReview) so the next step is the review page.
  *
- * Not built here yet: the change-grade modal, the ONE_TO_ONE_FLEX grade
- * switcher, and the enrollment-documents gate (legacy lets the student skip
- * that one, so proceeding without it matches the skip path).
+ * Not built here yet: the ONE_TO_ONE_FLEX grade switcher and the
+ * enrollment-documents gate (legacy lets the student skip that one, so
+ * proceeding without it matches the skip path). The change-grade modal
+ * (changeSelectedGrade()/saveSelectedGradeAndDob() in signupStudentStage3.js)
+ * is built — see ChangeGradeDialog and handleGradeChange below.
  *
  * `standardId` is Stage 1's saved grade (see app/step/3/page.jsx) — the
  * initial course-details-by-standard-id read must carry it (confirmed
@@ -109,11 +115,22 @@ function CourseSummaryLink({ url }) {
  * on and the call fails with a generic error.
  */
 export function Stage3CourseSelection({ context, userId, standardId, onNext, onBack, onSessionExpired }) {
+  const queryClient = useQueryClient();
   const courseQuery = useCourseDetails({ context, userId, standardId });
   const paymentOption = useShowPaymentOption({ context, userId });
   const update = useUpdateCourseSelection({ context, userId });
   const recommended = useRecommendedCourses({ context, userId });
   const proceed = useProceedToReview({ context, userId });
+
+  // Change Grade & DOB modal (changeSelectedGrade()/saveSelectedGradeAndDob()
+  // in signupStudentStage3.js) — reuses Stage 1's own prefill/save hooks
+  // rather than a separate request builder, same as Stage 1 itself does.
+  const isDualDiploma = getLearningProgramBackendValue(context.learningProgram) === "DUAL_DIPLOMA";
+  const studentPrefill = useStudentDetailsPrefill({ context, userId });
+  const grades = useGradeOptions(context);
+  const countries = useCountryOptions(context);
+  const changeGrade = useStudentDetailsSignup({ context, userId, isDualDiploma, countries: countries.data });
+  const [changeGradeOpen, setChangeGradeOpen] = useState(false);
 
   const [notice, setNotice] = useState(null);
   const [flaggedModal, setFlaggedModal] = useState(null);
@@ -297,6 +314,37 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
     });
   }
 
+  async function handleGradeChange(newStandardId, newDob) {
+    setNotice(null);
+    try {
+      const fields = { ...(studentPrefill.data || {}), standardId: newStandardId, dob: newDob };
+      const saveResponse = await changeGrade.mutateAsync(fields);
+      if (saveResponse?.status !== STATUS_SUCCESS) {
+        handleFailure(saveResponse, "Could not save the new grade. Please try again.");
+        return;
+      }
+      // Keep the prefill cache in sync with what was just saved — otherwise
+      // reopening this modal later reads the STALE standardId/dob (the query
+      // has no reason to refetch on its own since this component never
+      // remounts), and the Grade select shows the grade from before this
+      // change instead of preselecting what was just saved.
+      queryClient.setQueryData(["student-details-prefill", userId], fields);
+      // Mirrors saveSelectedGradeAndDob(): grade saved, so refresh Step 3's
+      // course list for the new grade, clearing the old grade's selection
+      // (courses are grade-specific) — same as getAllCourseDetails('Y', '')
+      // after #signupStage3 #standardId/#selectedSubjects/#controlType are reset.
+      saveWizardStudentFields(context.schoolUUID, userId, fields);
+      setChangeGradeOpen(false);
+      const courseResponse = await update.mutateAsync({ standardId: newStandardId, selectedSubjects: "", controlType: "remove" });
+      if (courseResponse?.status !== STATUS_SUCCESS) {
+        handleFailure(courseResponse, "Grade saved, but could not refresh courses for it. Please try again.");
+      }
+    } catch (err) {
+      console.error("Stage3CourseSelection change-grade failed:", err);
+      setNotice({ tone: "error", text: GENERIC_ERROR });
+    }
+  }
+
   async function openRecommended() {
     if (busy) return;
     setNotice(null);
@@ -404,7 +452,17 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {data.standardName && (
-          <span className="rounded-full bg-slate-900 px-3 py-1 text-sm font-semibold text-white">{data.standardName}</span>
+          <span className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1 text-sm font-semibold text-white">
+            {data.standardName}
+            <button
+              type="button"
+              onClick={() => setChangeGradeOpen(true)}
+              disabled={busy}
+              className="text-xs font-semibold text-white/80 underline hover:text-white"
+            >
+              Change
+            </button>
+          </span>
         )}
         {showMinBanner && (
           <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-800">
@@ -597,6 +655,16 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
       </div>
 
       <ConfirmDialog request={confirmRequest} onResolve={resolveConfirm} />
+      <ChangeGradeDialog
+        open={changeGradeOpen}
+        onOpenChange={setChangeGradeOpen}
+        grades={grades.data}
+        courseProviderId={Number(data.courseProviderId)}
+        initialStandardId={String(studentPrefill.data?.standardId ?? data.standardId ?? "")}
+        initialDob={studentPrefill.data?.dob}
+        busy={changeGrade.isPending || update.isPending}
+        onSave={handleGradeChange}
+      />
       {recommendedData && (
         <RecommendedCoursesDialog
           data={recommendedData}

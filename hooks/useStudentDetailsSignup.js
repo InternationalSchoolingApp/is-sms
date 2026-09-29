@@ -115,6 +115,10 @@ function mapSignupStudentToFields(signupStudent) {
     // in this UI) — carried through prefill -> submit unchanged, same as the
     // legacy JS reading it off a hidden #courseProviderId field.
     courseProviderId: signupStudent.courseProviderId ?? "",
+    // Backend's full LearningProgramConstant value (e.g. "DUAL_DIPLOMA") —
+    // useEnrollmentContext reads this to resolve the short URL code for a
+    // resumed session, since the session itself doesn't carry it.
+    learningProgram: signupStudent.learningProgram || "",
     // Backend stores/returns nationality as the country NAME string (legacy
     // getNationalityOption() renders <option value="{name}">), but this
     // form's Nationality select is keyed by country ID like every other

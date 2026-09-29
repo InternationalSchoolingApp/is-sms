@@ -38,3 +38,14 @@ const LEARNING_PROGRAM_BACKEND_VALUE = {
 export function getLearningProgramBackendValue(learningProgram) {
   return LEARNING_PROGRAM_BACKEND_VALUE[learningProgram] || LEARNING_PROGRAM_BACKEND_VALUE.O;
 }
+
+// Reverse of LEARNING_PROGRAM_BACKEND_VALUE — used to turn the full backend
+// value get-student-details returns (SignupStudentDTO.learningProgram) back
+// into our short URL code, e.g. for useEnrollmentContext's resumed session.
+const LEARNING_PROGRAM_SHORT_CODE = Object.fromEntries(
+  Object.entries(LEARNING_PROGRAM_BACKEND_VALUE).map(([shortCode, backendValue]) => [backendValue, shortCode])
+);
+
+export function getLearningProgramShortCode(backendValue) {
+  return LEARNING_PROGRAM_SHORT_CODE[backendValue] || "O";
+}

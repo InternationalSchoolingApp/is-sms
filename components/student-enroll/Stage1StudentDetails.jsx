@@ -211,72 +211,38 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           searchable
         />
       </div>
-
-      {isDualDiploma ? (
-        <>
-          <SectionHeading>Current School</SectionHeading>
-          <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-            <FloatingLabelInput
-              label={<Req label="Current School Name" required />}
-              className="sm:col-span-2 lg:col-span-1"
-              value={fields.studyingSchoolName}
-              onChange={(e) => setField("studyingSchoolName", e.target.value)}
-              error={errors.studyingSchoolName}
-            />
-            <FloatingLabelSelect
-              label={<Req label="Current Grade" required />}
-              value={fields.studyingGradeId}
-              onValueChange={(v) => setField("studyingGradeId", v)}
-              options={grades.data || []}
-              error={errors.studyingGradeId}
-            />
-            <FloatingLabelSelect
-              label={<Req label="Country of Current School" required />}
-              value={fields.countryIdOfSchool}
-              onValueChange={(v) => setField("countryIdOfSchool", v)}
-              options={countries.data || []}
-              error={errors.countryIdOfSchool}
-              searchable
-            />
-          </div>
-        </>
-      ) : (
-        <>
-          <SectionHeading>Contact &amp; Citizenship</SectionHeading>
-          <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-            <FloatingLabelInput
-              label={<Req label="Email Address" required />}
-              type="email"
-              value={fields.communicationEmail}
-              onChange={(e) => setField("communicationEmail", e.target.value)}
-              error={errors.communicationEmail}
-            />
-            <PhoneNumberField
-              label={<Req label="Mobile Number" required />}
-              value={fields.contactNumber}
-              // Only takes effect at mount (see useIntlTelInput's doc
-              // comment) — restores the saved country flag when Stage 1
-              // was prefilled from get-student-details (initialFields
-              // already has countryCode by the time this component first
-              // renders; see app/step/1/page.jsx).
-              initialCountry={initialFields?.countryCode ? initialFields.countryCode.toLowerCase() : undefined}
-              onChange={({ contactNumber, countryIsdCode, countryCode, isValid }) =>
-                setFields((prev) => ({ ...prev, contactNumber, countryIsdCode, countryCode, phoneValid: isValid }))
-              }
-              error={errors.contactNumber}
-            />
-            <FloatingLabelSelect
-              label={<Req label="Nationality" required />}
-              value={fields.nationality}
-              onValueChange={(v) => setField("nationality", v)}
-              options={countries.data || []}
-              error={errors.nationality}
-              searchable
-            />
-          </div>
-        </>
-      )}
-
+      <SectionHeading>Contact &amp; Citizenship</SectionHeading>
+      <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+        <FloatingLabelInput
+          label={<Req label="Email Address" required />}
+          type="email"
+          value={fields.communicationEmail}
+          onChange={(e) => setField("communicationEmail", e.target.value)}
+          error={errors.communicationEmail}
+        />
+        <PhoneNumberField
+          label={<Req label="Mobile Number" required />}
+          value={fields.contactNumber}
+          // Only takes effect at mount (see useIntlTelInput's doc
+          // comment) — restores the saved country flag when Stage 1
+          // was prefilled from get-student-details (initialFields
+          // already has countryCode by the time this component first
+          // renders; see app/step/1/page.jsx).
+          initialCountry={initialFields?.countryCode ? initialFields.countryCode.toLowerCase() : undefined}
+          onChange={({ contactNumber, countryIsdCode, countryCode, isValid }) =>
+            setFields((prev) => ({ ...prev, contactNumber, countryIsdCode, countryCode, phoneValid: isValid }))
+          }
+          error={errors.contactNumber}
+        />
+        <FloatingLabelSelect
+          label={<Req label="Nationality" required />}
+          value={fields.nationality}
+          onValueChange={(v) => setField("nationality", v)}
+          options={countries.data || []}
+          error={errors.nationality}
+          searchable
+        />
+      </div>
       <SectionHeading>Current Residence</SectionHeading>
       <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
         <FloatingLabelSelect
@@ -304,7 +270,37 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           searchable
         />
       </div>
-
+      {isDualDiploma ? (
+        <>
+          <SectionHeading>Current School Details</SectionHeading>
+          <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+            <FloatingLabelInput
+              label={<Req label="Current School Name" required />}
+              className="sm:col-span-2 lg:col-span-1"
+              value={fields.studyingSchoolName}
+              onChange={(e) => setField("studyingSchoolName", e.target.value)}
+              error={errors.studyingSchoolName}
+            />
+            <FloatingLabelSelect
+              label={<Req label="Current Grade" required />}
+              value={fields.studyingGradeId}
+              onValueChange={(v) => setField("studyingGradeId", v)}
+              options={grades.data || []}
+              error={errors.studyingGradeId}
+            />
+            <FloatingLabelSelect
+              label={<Req label="Country of Current School" required />}
+              value={fields.countryIdOfSchool}
+              onValueChange={(v) => setField("countryIdOfSchool", v)}
+              options={countries.data || []}
+              error={errors.countryIdOfSchool}
+              searchable
+            />
+          </div>
+        </>
+      ) : (
+        <></>
+      )}  
       {errors.form && <p className="mt-4 text-sm font-semibold text-red-600">{errors.form}</p>}
 
       <div className="mt-10 flex flex-col-reverse items-center justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row">
