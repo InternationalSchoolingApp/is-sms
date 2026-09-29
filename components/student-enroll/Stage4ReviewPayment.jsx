@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { flushSync } from "react-dom";
-import { flushSync } from "react-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/student-enroll/ConfirmDialog";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
@@ -13,8 +11,7 @@ import { InfoModal } from "@/components/student-enroll/InfoModal";
 import { ParentInlineEdit, StudentInlineEdit } from "@/components/student-enroll/ReviewInlineEdit";
 import { Stage3CourseSelection } from "@/components/student-enroll/Stage3CourseSelection";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
-import { launchPaymentGatewayForm } from "@/services/studentSignupApi";
-import { launchPaymentGatewayForm } from "@/services/studentSignupApi";
+import { getPaymentPaidStatus, launchPaymentGatewayForm } from "@/services/studentSignupApi";
 import { useShowPaymentOption } from "@/hooks/useCourseSelection";
 import { saveWizardParentFields, saveWizardStudentFields } from "@/utils/wizardStorage";
 import {
@@ -26,7 +23,6 @@ import {
   useAirwallexPaymentMethods,
   useChoosePaymentPlan,
   useInvokePaymentGateway,
-  useOfflinePayment,
   useOfflinePayment,
   usePaymentGatewayOptions,
   useProceedToDashboard,
@@ -43,14 +39,8 @@ import {
   getPayerCountryCodePromise,
   loadLocationGlobals,
 } from "@/utils/locationFinder";
-import {
-  callLocationForPaymentPromise,
-  getAirwallexCountryCode,
-  getLocationValue,
-  getPayerCountryCodePromise,
-  loadLocationGlobals,
-} from "@/utils/locationFinder";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
+import { isDummyStudentMode, showDummyStripeCheckoutPage } from "@/utils/paymentGatewayChecks";
 
 const SECTION_CLASS = "overflow-hidden rounded-xl border border-slate-200 bg-white";
 
@@ -122,21 +112,11 @@ function SectionHeader({ title, open, onToggle, onEdit }) {
 // CLIENT_SIDE_GATEWAYS; matched case-insensitively, gateway names are cased inconsistently.
 const CLIENT_SIDE_GATEWAYS = ["wellsfargo", "convera", "yoco", "wiretransfer", "cash", "paypal transfer", "smoovpay"];
 
-// Closing animation of the shadcn Dialog is 100ms; the redirect waits a beat longer so the
-// modal is actually gone from the screen before the browser starts leaving the page.
-const MODAL_DISPOSE_MS = 150;
-const disposeDelay = () => new Promise((resolve) => setTimeout(resolve, MODAL_DISPOSE_MS));
+// getPaymentPaidStatus() polling in commonPaymentGateway.js: every 10s, gives up after 10 checks.
+const PAID_STATUS_POLL_MS = 10000;
+const PAID_STATUS_MAX_CHECKS = 10;
 
-// Gateways with no server-side redirect (inline card entry / offline methods) — legacy
-// CLIENT_SIDE_GATEWAYS; matched case-insensitively, gateway names are cased inconsistently.
-const CLIENT_SIDE_GATEWAYS = ["wellsfargo", "convera", "yoco", "wiretransfer", "cash", "paypal transfer", "smoovpay"];
-
-// Closing animation of the shadcn Dialog is 100ms; the redirect waits a beat longer so the
-// modal is actually gone from the screen before the browser starts leaving the page.
-const MODAL_DISPOSE_MS = 150;
-const disposeDelay = () => new Promise((resolve) => setTimeout(resolve, MODAL_DISPOSE_MS));
-
-const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
+const GENERIC_ERROR ="Something went wrong. Please check your connection and try again.";
 
 function fullName(person) {
   if (!person) return "";
@@ -221,7 +201,6 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
   const invokeGateway = useInvokePaymentGateway({ context });
   const airwallexMethods = useAirwallexPaymentMethods({ context });
   const offlinePayment = useOfflinePayment({ context, uniqueId });
-  const offlinePayment = useOfflinePayment({ context, uniqueId });
 
   const [notice, setNotice] = useState(null);
   const [flaggedModal, setFlaggedModal] = useState(null);
@@ -230,8 +209,13 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
   const [gatewayPicker, setGatewayPicker] = useState(null);
   // Cash / Wire Transfer submitted: "Payment Under Review" (#logout_modal_logout) replaces Confirm & Pay.
   const [paymentUnderReview, setPaymentUnderReview] = useState(false);
-  // Cash / Wire Transfer submitted: "Payment Under Review" (#logout_modal_logout) replaces Confirm & Pay.
-  const [paymentUnderReview, setPaymentUnderReview] = useState(false);
+  // Pay Now clicked: the modal stays open (busy) until the browser actually leaves for the gateway.
+  const [launching, setLaunching] = useState(false);
+  // paymentUnderProcessOverlay() / paymentStatusResponseModal(): shown while polling a gateway
+  // that opens away from this page (openSelf false), and when that poll ends unpaid.
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [paymentIncomplete, setPaymentIncomplete] = useState(false);
+  const paidPollRef = useRef({ timer: null, count: 0 });
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [submittedMessage, setSubmittedMessage] = useState(null);
   // Which section is being edited in place ("student" | "parent" | "course" | null) —
@@ -295,40 +279,19 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
   }, [stageStatusData, onSessionExpired]);
 
   // Coming back from the payment gateway (browser Back / bfcache) restores this page exactly as it
-  // was left — with the payment modal open. Dispose it (and the "redirecting…" notice) whenever the
-  // page is hidden or restored from the back/forward cache.
+  // was left — with the payment modal open and busy. Reset it when the page is restored from the cache.
   useEffect(() => {
-    const dispose = () => {
+    const onPageShow = (event) => {
+      if (!event.persisted) return;
+      setLaunching(false);
       setGatewayPicker(null);
       setNotice((current) => (current?.tone === "info" ? null : current));
     };
-    const onPageShow = (event) => {
-      if (event.persisted) dispose();
-    };
-    window.addEventListener("pagehide", dispose);
     window.addEventListener("pageshow", onPageShow);
+    const poll = paidPollRef.current;
     return () => {
-      window.removeEventListener("pagehide", dispose);
       window.removeEventListener("pageshow", onPageShow);
-    };
-  }, []);
-
-  // Coming back from the payment gateway (browser Back / bfcache) restores this page exactly as it
-  // was left — with the payment modal open. Dispose it (and the "redirecting…" notice) whenever the
-  // page is hidden or restored from the back/forward cache.
-  useEffect(() => {
-    const dispose = () => {
-      setGatewayPicker(null);
-      setNotice((current) => (current?.tone === "info" ? null : current));
-    };
-    const onPageShow = (event) => {
-      if (event.persisted) dispose();
-    };
-    window.addEventListener("pagehide", dispose);
-    window.addEventListener("pageshow", onPageShow);
-    return () => {
-      window.removeEventListener("pagehide", dispose);
-      window.removeEventListener("pageshow", onPageShow);
+      clearInterval(poll.timer);
     };
   }, []);
 
@@ -388,16 +351,6 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       window.location.href = `${baseUrl}/${context.schoolUUID}/student/enrollment/process/${userId}`;
       return;
     }
-    // choosePaymentOption()/invokePaymentGateway(): the enrollment moved on server-side -> reload.
-    const baseUrl = resolveBackendOrigin();
-    if (response.statusCode === STATUS_REDIRECT_TO_DASHBOARD && baseUrl) {
-      window.location.href = `${baseUrl}/${context.schoolUUID}/dashboard/student/${userId}`;
-      return;
-    }
-    if (response.statusCode === STATUS_ELIGIBLE_CUSTOM_PLAN && baseUrl) {
-      window.location.href = `${baseUrl}/${context.schoolUUID}/student/enrollment/process/${userId}`;
-      return;
-    }
     setNotice({ tone: "error", text: response.categoryMandatoryMessage || response.message || fallback });
   }
 
@@ -407,10 +360,6 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
     if (busy) return;
     setNotice(null);
     try {
-      // showPaymentModal(): LOCATION_SERVICE_BYPASS / DEFAULT_LOCATION globals, then
-      // `await callLocationForPaymentPromise()` (fills #location) before the options flow.
-      await loadLocationGlobals({ schoolUUID: context.schoolUUID, userId });
-      await callLocationForPaymentPromise();
       // showPaymentModal(): LOCATION_SERVICE_BYPASS / DEFAULT_LOCATION globals, then
       // `await callLocationForPaymentPromise()` (fills #location) before the options flow.
       await loadLocationGlobals({ schoolUUID: context.schoolUUID, userId });
@@ -437,8 +386,6 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         entityId: data.entityId,
         paidByUserId: data.userId,
         schoolId: data.schoolId,
-        paidByUserId: data.userId,
-        schoolId: data.schoolId,
         countryCode,
       });
       if (options?.status !== STATUS_SUCCESS) {
@@ -455,18 +402,9 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       // country read from #location, else the browser locale). A failure just means no method
       // tiles, never a blocked payment.
       await callLocationForPaymentPromise();
-      // getPaymentGatewaysOptions(), after the modal is appended: `await callLocationForPaymentPromise()`
-      // refreshes #location, then get-airwallex-payment-methods runs for the "Airwallex" entry (its
-      // country read from #location, else the browser locale). A failure just means no method
-      // tiles, never a blocked payment.
-      await callLocationForPaymentPromise();
       let methods = [];
       if (gateways.some((gateway) => gateway.name === "Airwallex")) {
         try {
-          const airwallex = await airwallexMethods.mutateAsync({
-            schoolId: data.schoolId,
-            countryCode: getAirwallexCountryCode(),
-          });
           const airwallex = await airwallexMethods.mutateAsync({
             schoolId: data.schoolId,
             countryCode: getAirwallexCountryCode(),
@@ -478,8 +416,6 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       }
       // Legacy always opens the "Choose Your Payment Method" modal, even for a single gateway.
       setGatewayPicker({ details: options.details, methods, countryCode });
-      // Legacy always opens the "Choose Your Payment Method" modal, even for a single gateway.
-      setGatewayPicker({ details: options.details, methods, countryCode });
     } catch (err) {
       console.error("Stage4ReviewPayment confirmAndPay failed:", err);
       setNotice({ tone: "error", text: GENERIC_ERROR });
@@ -489,36 +425,60 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
   // invokePaymentGateway() in commonPaymentGateway.js: every gateway is launched through a plain
   // top-level GET form to common/launch-payment-gateway, except the client-side ones, which have
   // no server redirect and go through the JSON invoke call.
-  async function launchGateway(gateway) {
-    const details = gatewayPicker.details;
-    const payload = {
-      location: getLocationValue(),
-      browserDetails: details.upid,
-      userPaymentDetailsId: details.upid,
-      paidByUserId: details.paidByUserId,
-      schoolId: details.schoolId,
-      schoolIdOfPaymentGateway: details.schoolIdOfPaymentGateway,
-      paymentGateway: gateway.name,
-      initiateVia: "",
-      backUrl: window.location.href,
-    };
-    // Pay Now: the payment modal is disposed first, then the browser goes to the gateway.
-    const disposePicker = async () => {
-      flushSync(() => setGatewayPicker(null));
-      await disposeDelay();
-    };
-    if (!CLIENT_SIDE_GATEWAYS.includes((gateway.name || "").toLowerCase())) {
-      setNotice({ tone: "info", text: "Please wait while redirecting to payment gateway..." });
-      await disposePicker();
-      launchPaymentGatewayForm(context.schoolUUID, payload);
-      return;
-    }
+  function stopPaidStatusPoll() {
+    clearInterval(paidPollRef.current.timer);
+    paidPollRef.current.timer = null;
+  }
+
+  // flushPaymentInterval(): stop polling, drop the modal + overlay, show "Payment Incomplete".
+  function flushPaidStatusPoll() {
+    stopPaidStatusPoll();
+    setGatewayPicker(null);
+    setPaymentProcessing(false);
+    setPaymentIncomplete(true);
+  }
+
+  // getPaymentPaidStatus(): only a status "1" reply counts as a check; SUCCESS ends the wait,
+  // FAILURE (or more than PAID_STATUS_MAX_CHECKS checks) ends it as incomplete.
+  async function checkPaidStatus(userPaymentDetailsId, schoolId) {
+    if (!userPaymentDetailsId || !schoolId) return;
     try {
-      const response = await invokeGateway.mutateAsync(payload);
-  // invokePaymentGateway() in commonPaymentGateway.js: every gateway is launched through a plain
-  // top-level GET form to common/launch-payment-gateway, except the client-side ones, which have
-  // no server redirect and go through the JSON invoke call.
+      const response = await getPaymentPaidStatus(context.schoolUUID, { userPaymentDetailsId, schoolId });
+      if (response?.status !== STATUS_SUCCESS) return;
+      if (paidPollRef.current.count > PAID_STATUS_MAX_CHECKS) {
+        flushPaidStatusPoll();
+        return;
+      }
+      paidPollRef.current.count += 1;
+      if (response.statusCode === "SUCCESS") {
+        stopPaidStatusPoll();
+        setGatewayPicker(null);
+        setPaymentProcessing(false);
+        reviewQuery.refetch();
+      } else if (response.statusCode === "FAILURE") {
+        flushPaidStatusPoll();
+      }
+    } catch (err) {
+      console.error("Stage4ReviewPayment get-payment-paid-status failed:", err);
+    }
+  }
+
+  function startPaidStatusPoll(userPaymentDetailsId, schoolId) {
+    stopPaidStatusPoll();
+    paidPollRef.current.count = 0;
+    setPaymentProcessing(true);
+    paidPollRef.current.timer = setInterval(
+      () => checkPaidStatus(userPaymentDetailsId, schoolId),
+      PAID_STATUS_POLL_MS
+    );
+  }
+
   async function launchGateway(gateway) {
+    if (isDummyStudentMode()) {
+      showDummyStripeCheckoutPage();
+      return;
+    }
+    setNotice(null);
     const details = gatewayPicker.details;
     const payload = {
       location: getLocationValue(),
@@ -528,88 +488,46 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       schoolId: details.schoolId,
       schoolIdOfPaymentGateway: details.schoolIdOfPaymentGateway,
       paymentGateway: gateway.name,
-      initiateVia: "",
+      initiateVia: window.location.href.includes("fee-receipt") ? "Link" : "",
       backUrl: window.location.href,
+      applyingFrom: "next_js",
     };
-    // Pay Now: the payment modal is disposed first, then the browser goes to the gateway.
-    const disposePicker = async () => {
-      flushSync(() => setGatewayPicker(null));
-      await disposeDelay();
-    };
+    // Pay Now: the payment modal stays open (legacy leaves #paymentOptionsModal up) while the
+    // browser goes to the gateway; it is only closed if the launch fails.
+    setLaunching(true);
     if (!CLIENT_SIDE_GATEWAYS.includes((gateway.name || "").toLowerCase())) {
       setNotice({ tone: "info", text: "Please wait while redirecting to payment gateway..." });
-      await disposePicker();
       launchPaymentGatewayForm(context.schoolUUID, payload);
       return;
     }
+    // isPopupBlocked(): legacy probes window.open('', '_blank') before the AJAX invoke.
+    const probe = window.open("", "_blank");
+    if (!probe || probe.closed || typeof probe.closed === "undefined") {
+      setLaunching(false);
+      setNotice({ tone: "error", text: "Popup blocked. Please allow popups and try again." });
+      return;
+    }
+    probe.close();
     try {
       const response = await invokeGateway.mutateAsync(payload);
       if (response?.status !== STATUS_SUCCESS || !response.details?.redirectUrl) {
-        setGatewayPicker(null);
+        setLaunching(false);
         setGatewayPicker(null);
         handleFailure(response, "Could not start the payment. Please try again.");
         return;
       }
       setNotice({ tone: "info", text: "Please wait while redirecting to payment gateway..." });
-      await disposePicker();
-      if (response.details.openSelf) window.location.replace(response.details.redirectUrl);
-      else window.location.href = response.details.redirectUrl;
-      setNotice({ tone: "info", text: "Please wait while redirecting to payment gateway..." });
-      await disposePicker();
-      if (response.details.openSelf) window.location.replace(response.details.redirectUrl);
-      else window.location.href = response.details.redirectUrl;
+      if (response.details.openSelf) {
+        window.location.replace(response.details.redirectUrl);
+      } else {
+        startPaidStatusPoll(payload.userPaymentDetailsId, payload.schoolId);
+        window.location.href = response.details.redirectUrl;
+      }
     } catch (err) {
       console.error("Stage4ReviewPayment launchGateway failed:", err);
-      setGatewayPicker(null);
+      setLaunching(false);
       setGatewayPicker(null);
       setNotice({ tone: "error", text: GENERIC_ERROR });
-    }
-  }
-
-  // bindFileUploadNew1(): upload the proof; resolves to { fileName } or { error }.
-  async function uploadProof(file, spec) {
-    try {
-      const response = await offlinePayment.upload({ file, ...spec });
-      if (!response) return { error: GENERIC_ERROR };
-      if (response.status === STATUS_SESSION_OUT) {
-        onSessionExpired?.();
-        return { error: response.message || "Your session has timed out." };
-      }
-      const fileName = response.uploadFiles?.[0]?.fileName;
-      if (response.status === "0" || !fileName) return { error: response.message || "Upload failed. Please try again." };
-      return { fileName };
-    } catch (err) {
-      console.error("Payment proof upload failed:", err);
-      return { error: GENERIC_ERROR };
-    }
-  }
-
-  // callOfflinePayment(): common/offline-payment; status "1" -> "Your Payment is under review."
-  async function submitOffline(gateway, form, { paymentByUserId }) {
-    const details = gatewayPicker.details;
-    try {
-      const response = await offlinePayment.submit({
-        userId: paymentByUserId,
-        paymentByUserId,
-        userPaymentDetailsId: details.upid,
-        callingFrom: "signup",
-        gatewayName: gateway.name,
-        referenceNumber: form.referenceNumber,
-        uplaodedFileName: form.fileName, // (sic) the backend's field name
-        amountPaid: details.payAmount,
-        schoolId: details.schoolId,
-      });
-      if (response?.status === STATUS_SESSION_OUT) {
-        onSessionExpired?.();
-        return { ok: false };
-      }
-      if (response?.status !== STATUS_SUCCESS) return { ok: false, message: response?.message };
-      setGatewayPicker(null);
-      setPaymentUnderReview(true);
-      return { ok: true };
-    } catch (err) {
-      console.error("Offline payment submit failed:", err);
-      return { ok: false, message: GENERIC_ERROR };
     }
   }
 
@@ -912,7 +830,6 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         {paymentOption.isLoading ? (
           <p className="text-sm text-slate-500">Loading…</p>
         ) : paymentPending && paymentUnderReview ? null : paymentPending ? (
-        ) : paymentPending && paymentUnderReview ? null : paymentPending ? (
           <Button type="button" onClick={confirmAndPay} disabled={busy || !!editing} className="rounded-md bg-primary px-6 hover:bg-primary/90">
             {busy ? "Please wait…" : "Confirm & Pay"}
           </Button>
@@ -943,46 +860,31 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         open={!!gatewayPicker}
         onOpenChange={(open) => !open && setGatewayPicker(null)}
         details={gatewayPicker?.details}
-        details={gatewayPicker?.details}
         airwallexMethods={gatewayPicker?.methods}
         payerCountryCode={gatewayPicker?.countryCode}
         schoolNumericId={context.schoolNumericId}
         schoolName={context.schoolName}
-        payerCountryCode={gatewayPicker?.countryCode}
-        schoolNumericId={context.schoolNumericId}
-        schoolName={context.schoolName}
-        busy={invokeGateway.isPending}
+        busy={invokeGateway.isPending || launching}
         onPay={launchGateway}
         onUploadProof={uploadProof}
         onSubmitOffline={submitOffline}
       />
-      <Dialog open={paymentUnderReview}>
-        <DialogContent showCloseButton={false} className="text-center sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-xl">Payment Under Review</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 text-sm text-slate-700">
-            <h2 className="text-lg font-semibold text-slate-900">Your payment is under review.</h2>
-            <p>
-              {data.enrollmentType !== "REGISTRATION_REGISTER" && "You will be able to access the dashboard once the payment is received. "}
-              You can contact us at{" "}
-              <b>
-                <a href={`mailto:${data.contactEmail}`} className="underline">
-                  {data.contactEmail}
-                </a>
-              </b>{" "}
-              for more information
-            </p>
-            <Button type="button" onClick={() => onSessionExpired?.()}>
-              Log out
-            </Button>
+      {paymentProcessing && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 text-white">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <Loader2 className="h-10 w-10 animate-spin text-amber-400" />
+            <h4 className="text-lg font-semibold">Payment is under process...</h4>
           </div>
+        </div>
+      )}
+      <Dialog open={paymentIncomplete} onOpenChange={(open) => !open && setPaymentIncomplete(false)}>
+        <DialogContent className="text-center">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Oops!</DialogTitle>
+          </DialogHeader>
+          <h3 className="text-lg font-semibold text-red-600">Payment Incomplete</h3>
         </DialogContent>
       </Dialog>
-        onPay={launchGateway}
-        onUploadProof={uploadProof}
-        onSubmitOffline={submitOffline}
-      />
       <Dialog open={paymentUnderReview}>
         <DialogContent showCloseButton={false} className="text-center sm:max-w-lg">
           <DialogHeader>

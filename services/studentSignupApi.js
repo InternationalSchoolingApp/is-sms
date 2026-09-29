@@ -204,14 +204,15 @@ export function getPaymentGatewayOptions(schoolUUID, request) {
 }
 
 export function invokePaymentGateway(schoolUUID, request) {
+  // Pay Now (client-side gateways): show which URL is hit and with what.
+  console.log("[Pay Now] POST", backendUrl(schoolUUID, "common/invoke-payment-gateway"), request);
   return postPayload(schoolUUID, "common/invoke-payment-gateway", request);
 }
 
-// Server-side gateway launch — submitPaymentGatewayForm() in commonPaymentGateway.js: a plain
-// top-level GET form to {schoolId}/common/launch-payment-gateway carrying the encoded payload,
-// so the whole hop is one user-gesture navigation ending in the server's 302 to the gateway.
-// Legacy uses this for every gateway except the client-side ones (see CLIENT_SIDE_GATEWAYS in
-// Stage4ReviewPayment.jsx), which go through invokePaymentGateway's JSON call instead.
+export function getPaymentPaidStatus(schoolUUID, request) {
+  return postPayload(schoolUUID, "common/get-payment-paid-status", request);
+}
+
 export function launchPaymentGatewayForm(schoolUUID, payload) {
   const form = document.createElement("form");
   form.method = "GET";
@@ -221,6 +222,8 @@ export function launchPaymentGatewayForm(schoolUUID, payload) {
   input.name = "payload";
   input.value = encodePayload(payload);
   form.appendChild(input);
+  // Pay Now (redirect gateways): the browser navigates to this exact URL (GET form -> ?payload=...).
+  console.log("[Pay Now] GET", `${form.action}?payload=${encodeURIComponent(input.value)}`, payload);
   document.body.appendChild(form);
   form.submit();
 }

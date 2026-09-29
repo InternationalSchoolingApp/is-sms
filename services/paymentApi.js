@@ -3,10 +3,6 @@ import { resolveBackendOrigin } from "@/utils/backendOrigin";
 
 /**
  * Payment-gateway endpoints, confirmed from ClientCommonPaymentController.java.
- * The gateway-launch endpoint is NOT a JSON call — it's a browser redirect
- * (see launchPaymentGatewayUrl below), matching commonPaymentGateway.js's
- * `submitPaymentGatewayForm` behavior (hidden form POST / full navigation),
- * not an XHR/fetch call.
  */
 
 const SCHOOL_ID = process.env.NEXT_PUBLIC_SCHOOL_ID;
@@ -49,13 +45,4 @@ export function getPaymentPaidStatus(request) {
 
 export function getPaymentGatewayMaster() {
   return fetch(backendUrl("pg-getway-master"), { credentials: "include" }).then((r) => r.json());
-}
-
-/**
- * Not an XHR call. Redirect-style gateways expect a real browser navigation
- * (matches commonPaymentGateway.js's hidden-form-POST pattern) — build the
- * URL/params and set window.location.href to it, never fetch() this.
- */
-export function launchPaymentGatewayUrl() {
-  return backendUrl("common/launch-payment-gateway");
 }
