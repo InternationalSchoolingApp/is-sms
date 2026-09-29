@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
@@ -41,6 +41,7 @@ const INITIAL_FIELDS = {
   stateId: "",
   cityId: "",
   nationality: "",
+  courseProviderId: "",
   communicationEmail: "",
   contactNumber: "",
   countryCode: "",
@@ -77,7 +78,6 @@ function Req({ label, required }) {
  * app behaves and looks the same.
  */
 export function Stage1StudentDetails({ context, userId, initialFields, onNext }) {
-  debugger;
   const [fields, setFields] = useState(() => ({ ...INITIAL_FIELDS, ...initialFields }));
   const [errors, setErrors] = useState({});
   const [flaggedModal, setFlaggedModal] = useState(null);
@@ -85,12 +85,28 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
   const isDualDiploma = getLearningProgramBackendValue(context.learningProgram) === "DUAL_DIPLOMA";
   const programLabel = getLearningProgramTheme(context.learningProgram).label;
 
-  const signup = useStudentDetailsSignup({ context, userId, isDualDiploma });
   const grades = useGradeOptions(context);
   const countries = useCountryOptions(context);
   const states = useStateOptions(context, fields.countryId);
   const cities = useCityOptions(context, fields.stateId);
+  const signup = useStudentDetailsSignup({ context, userId, isDualDiploma, countries: countries.data });
   const dobBounds = getDobPickerBounds();
+
+  // Prefill's fields.nationality (from get-student-details) is the backend's
+  // country NAME string (legacy schema — see resolveNationalityName's doc
+  // comment in useStudentDetailsSignup.js), but this select is keyed by
+  // country ID like every other one here. Once the country list loads,
+  // swap the prefilled name for the matching id so the select shows the
+  // right value; a value already matching an id (fresh form, no prefill,
+  // or already remapped) is left alone.
+  useEffect(() => {
+    if (!countries.data?.length || !fields.nationality) return;
+    const alreadyById = countries.data.some((c) => c.value === fields.nationality);
+    if (alreadyById) return;
+    const match = countries.data.find((c) => c.label === fields.nationality);
+    if (match) setField("nationality", match.value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countries.data]);
 
   function setField(name, value) {
     setFields((prev) => ({ ...prev, [name]: value }));
@@ -238,6 +254,12 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
             <PhoneNumberField
               label={<Req label="Mobile Number" required />}
               value={fields.contactNumber}
+              // Only takes effect at mount (see useIntlTelInput's doc
+              // comment) — restores the saved country flag when Stage 1
+              // was prefilled from get-student-details (initialFields
+              // already has countryCode by the time this component first
+              // renders; see app/step/1/page.jsx).
+              initialCountry={initialFields?.countryCode ? initialFields.countryCode.toLowerCase() : undefined}
               onChange={({ contactNumber, countryIsdCode, countryCode, isValid }) =>
                 setFields((prev) => ({ ...prev, contactNumber, countryIsdCode, countryCode, phoneValid: isValid }))
               }

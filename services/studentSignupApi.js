@@ -60,6 +60,7 @@ async function parseJsonResponse(response) {
 }
 
 async function postPayload(schoolUUID, path, data, options) {
+  debugger
   const response = await fetch(backendUrl(schoolUUID, path, options), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -120,6 +121,7 @@ export function getParentDetails(schoolUUID, request) {
 
 // --- Stage 3: Course / Grade + Payment Plan ---
 export function chooseCoursesByGrade(schoolUUID, request) {
+  debugger
   return postPayload(schoolUUID, "student/enrollment/course-details-by-standard-id", request);
 }
 

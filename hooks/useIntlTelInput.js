@@ -10,8 +10,14 @@ import "intl-tel-input/styles";
  * "./react" entry). Shared by every phone-input variant (floating-label,
  * plain-label) so the wiring — and any future bugfix in it — only lives in
  * one place.
+ *
+ * `initialCountry` (ISO2, lowercase) only matters at mount — the widget is
+ * only ever created once (empty dep array below) — so a caller that wants
+ * to restore a saved country (e.g. Stage 1's get-student-details prefill)
+ * must have that value ready BEFORE this component first mounts, not set
+ * it asynchronously afterward.
  */
-export function useIntlTelInput(inputRef, itiRef, onChange) {
+export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry = "in") {
   useEffect(() => {
     let cancelled = false;
     const input = inputRef.current;
@@ -34,7 +40,7 @@ export function useIntlTelInput(inputRef, itiRef, onChange) {
     import("intl-tel-input/intlTelInputWithUtils").then(({ default: intlTelInput }) => {
       if (cancelled || !input) return;
       itiRef.current = intlTelInput(input, {
-        initialCountry: "in",
+        initialCountry: initialCountry || "in",
         separateDialCode: true,
       });
       input.addEventListener("countrychange", handleChange);

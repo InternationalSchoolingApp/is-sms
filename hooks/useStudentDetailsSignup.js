@@ -1,10 +1,20 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { saveStudentDetails, getEnrollmentsGrades, getCountries, getStates, getCities } from "@/services/studentSignupApi";
+import {
+  saveStudentDetails,
+  getStudentDetails,
+  getEnrollmentsGrades,
+  getCountries,
+  getStates,
+  getCities,
+} from "@/services/studentSignupApi";
 import { buildAuthentication, buildAuthenticatedRequest } from "@/utils/authentication";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { formatDobForRequest } from "@/utils/ageValidation";
+import { getUtmFieldsForSignup } from "@/utils/utmCookies";
+
+const STATUS_SUCCESS = "1";
 
 function toOptions(list) {
   return (list || []).map((item) => ({ value: String(item.key), label: item.value }));
@@ -79,6 +89,84 @@ export function useCityOptions(context, stateId) {
 }
 
 /**
+ * Converts a get-student-details response's `signupStudent`
+ * (SignupStudentDTO, confirmed against SignupUtil.convertToSignupStudentDTO)
+ * into Stage1StudentDetails' own field shape, so a returning student sees
+ * whatever they already saved instead of a blank form. `dob` comes back as
+ * "MMM dd, yyyy" (DateUtil.STANDARD_DATE_FORMAT_ONLY, e.g. "Sep 10, 2024") —
+ * unambiguous for the JS Date constructor. IDs come back as numbers; every
+ * select in this app keys options by String(item.key), so they're
+ * stringified here too.
+ */
+function mapSignupStudentToFields(signupStudent) {
+  if (!signupStudent) return null;
+  const dob = signupStudent.dob ? new Date(signupStudent.dob) : null;
+  return {
+    firstName: signupStudent.firstName || "",
+    middleName: signupStudent.middleName || "",
+    lastName: signupStudent.lastName || "",
+    dob: dob && !Number.isNaN(dob.getTime()) ? dob : null,
+    gender: signupStudent.gender || "",
+    standardId: signupStudent.standardId ? String(signupStudent.standardId) : "",
+    countryId: signupStudent.countryId ? String(signupStudent.countryId) : "",
+    stateId: signupStudent.stateId ? String(signupStudent.stateId) : "",
+    cityId: signupStudent.cityId ? String(signupStudent.cityId) : "",
+    // courseProviderId is set server-side at account creation (never chosen
+    // in this UI) — carried through prefill -> submit unchanged, same as the
+    // legacy JS reading it off a hidden #courseProviderId field.
+    courseProviderId: signupStudent.courseProviderId ?? "",
+    // Backend stores/returns nationality as the country NAME string (legacy
+    // getNationalityOption() renders <option value="{name}">), but this
+    // form's Nationality select is keyed by country ID like every other
+    // select here (see toOptions()) — Stage1StudentDetails remaps this name
+    // to the matching country ID once the country list has loaded.
+    nationality: signupStudent.nationality || "",
+    communicationEmail: signupStudent.communicationEmail || "",
+    contactNumber: signupStudent.contactNumber || "",
+    countryCode: signupStudent.countryCode || "",
+    // countryIsdCode2 (ISO2, e.g. "IN") is what intl-tel-input needs to
+    // restore the right flag — see PhoneNumberField's initialCountry prop.
+    countryIsdCode: signupStudent.countryIsdCode2 || signupStudent.countryIsdCode || "",
+    studyingSchoolName: signupStudent.studyingSchoolName || "",
+    studyingGradeId: signupStudent.studyingGradeId ? String(signupStudent.studyingGradeId) : "",
+    countryIdOfSchool: signupStudent.countryIdOfSchool ? String(signupStudent.countryIdOfSchool) : "",
+  };
+}
+
+/**
+ * Prefill for Stage 1 — get-student-details, confirmed at
+ * SignupStudentUtil.java:5458. Request is StudentRequestDTO; only
+ * studentUserId/userId/signupType are read for an in-progress student
+ * (callFrom is only checked when equal to "signup", so omitting it here is
+ * deliberate — this call must never trigger the
+ * REDIRECT_TO_DASHBOOARD/registration-completed branch on a normal resume).
+ * `studentUserId` and `userId` are the same value post-login: the backend
+ * only diverges them for a pre-login Offline continuation, not our flow.
+ *
+ * signupType is hardcoded "Online" — the only account-creation mode wired
+ * up so far (AccountFormOfflineB2B exists but Offline resume into this
+ * page isn't); revisit once Offline reaches Stage 1.
+ */
+export function useStudentDetailsPrefill({ context, userId }) {
+  return useQuery({
+    queryKey: ["student-details-prefill", userId],
+    queryFn: async () => {
+      const response = await getStudentDetails(context.schoolUUID, {
+        studentUserId: userId,
+        userId,
+        signupType: "Online",
+      });
+      if (response?.status !== STATUS_SUCCESS) return null;
+      return mapSignupStudentToFields(response.signupStudent);
+    },
+    enabled: Boolean(context?.schoolUUID && userId),
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+}
+
+/**
  * Builds the save-student-details request, matching getRequestForStudent()
  * in signupStudentStage1.js field-for-field (request DTO confirmed at
  * SignupStudentUtil.java:1605 — SaveStudentDetailsRequestDTO { authentication,
@@ -87,7 +175,19 @@ export function useCityOptions(context, stateId) {
  * exclusive, gated on isDualDiploma — see validateStudentDetails() in
  * utils/studentSignupValidation.js for the matching required-field rules.
  */
-function buildSaveStudentDetailsRequest({ fields, context, userId, isDualDiploma }) {
+// Nationality select is keyed by country ID (toOptions()), but the backend's
+// signupStudent.nationality is the country NAME string (getNationalityOption()
+// in signupStudentContent.js renders <option value="{country name}">, not the
+// id) — resolve the selected id back to its label from the same countries
+// list Stage1StudentDetails already loads for the dropdown, matching how the
+// legacy page reuses one countries list for both the Country and Nationality
+// selects, just keyed differently.
+function resolveNationalityName(countries, nationalityId) {
+  const match = (countries || []).find((c) => c.value === nationalityId);
+  return match ? match.label : nationalityId;
+}
+
+function buildSaveStudentDetailsRequest({ fields, context, userId, isDualDiploma, countries }) {
   const signupStudent = {
     themeType: "theme2",
     firstName: fields.firstName,
@@ -101,6 +201,12 @@ function buildSaveStudentDetailsRequest({ fields, context, userId, isDualDiploma
     standardId: fields.standardId || null,
     learningProgram: getLearningProgramBackendValue(context.learningProgram),
     enrollmentFor: context.enrollmentFor,
+    // Both set server-side by the backend at account creation
+    // (StudentStandard.courseProviderId / studyCenter=schoolId) — getRequestForStudent()
+    // just reflects them back, never computes them; same here.
+    courseProviderId: fields.courseProviderId,
+    studyCenter: context.schoolNumericId,
+    ...getUtmFieldsForSignup(),
   };
 
   if (isDualDiploma) {
@@ -109,10 +215,18 @@ function buildSaveStudentDetailsRequest({ fields, context, userId, isDualDiploma
     signupStudent.countryIdOfSchool = fields.countryIdOfSchool;
   } else {
     signupStudent.communicationEmail = fields.communicationEmail;
-    signupStudent.nationality = fields.nationality;
-    signupStudent.countryCode = fields.countryCode;
-    signupStudent.countryIsdCode = fields.countryIsdCode;
-    signupStudent.contactNumber = fields.contactNumber;
+    signupStudent.nationality = resolveNationalityName(countries, fields.nationality);
+    // useIntlTelInput's onChange (see PhoneNumberField) hands back
+    // countryCode = ISO2 ("IN") and countryIsdCode = dial code with a
+    // leading "+" ("+91") — the OPPOSITE of what these two DTO field names
+    // mean on the backend: signupStudentDTO['countryCode'] is the dial code
+    // (no "+", from country.dialCode) and signupStudentDTO['countryIsdCode']
+    // is the lowercase ISO2 (from country.iso2). Swap and reformat here
+    // rather than renaming the widget's own field names, which other
+    // callers (initialCountry restore) also rely on.
+    signupStudent.countryCode = fields.countryIsdCode ? fields.countryIsdCode.replace(/^\+/, "") : "";
+    signupStudent.countryIsdCode = fields.countryCode ? fields.countryCode.toLowerCase() : "";
+    signupStudent.contactNumber = (fields.contactNumber || "").replace(/\s+/g, "");
   }
 
   return { authentication: buildAuthenticatedRequest(context, userId), signupStudent };
@@ -124,9 +238,12 @@ function buildSaveStudentDetailsRequest({ fields, context, userId, isDualDiploma
  * continuation right after Offline/B2B account creation, that signup
  * response's own `studentUserId` field.
  */
-export function useStudentDetailsSignup({ context, userId, isDualDiploma }) {
+export function useStudentDetailsSignup({ context, userId, isDualDiploma, countries }) {
   return useMutation({
     mutationFn: (fields) =>
-      saveStudentDetails(context.schoolUUID, buildSaveStudentDetailsRequest({ fields, context, userId, isDualDiploma })),
+      saveStudentDetails(
+        context.schoolUUID,
+        buildSaveStudentDetailsRequest({ fields, context, userId, isDualDiploma, countries })
+      ),
   });
 }

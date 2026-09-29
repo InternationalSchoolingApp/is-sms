@@ -120,11 +120,24 @@ export function useProceedToReview({ context, userId }) {
     mutationFn: async ({ courseData, showPaymentOption }) => {
       let paymentMode = courseData.paymentMode;
       if (showPaymentOption === "Y") {
+        // Matches getRequestForPaymentModeSelection() in signupStudentStage3.js
+        // field-for-field. courseId/controlType are always sent as "" here:
+        // every signup call site passes callForPaymentModeSelection(formId, '',
+        // ...) — that '' lands in the courseId param (a mis-wired but
+        // confirmed-consistent bit of legacy plumbing) — and controlType's
+        // backing #controlType field is reset to value="" on every course-list
+        // re-render, so by the time Step 3 -> Step 4 fires it's always "".
+        // (Backend confirmed to not even read courseId/controlType/standardId/
+        // selectedSubjects for THIS endpoint — SignupStudentUtil.getPaymentDetails
+        // only uses userId/callFrom — but the request shape is kept identical
+        // to legacy's rather than relying on that.)
         const details = await getPaymentDetails(context.schoolUUID, {
           userId,
+          courseId: "",
           callFrom: "signup",
           standardId: courseData.standardId,
           selectedSubjects: courseData.selectedSubjectsAsString || "",
+          controlType: "",
           requestFromMigration: "N",
         });
         if (details?.status !== STATUS_SUCCESS) return { ok: false, response: details };

@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import { Stage1StudentDetails } from "@/components/student-enroll/Stage1StudentDetails";
 import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
 import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
+import { useStudentDetailsPrefill } from "@/hooks/useStudentDetailsSignup";
 import { saveWizardStudentFields, loadWizardStudentFields } from "@/utils/wizardStorage";
 
 /**
@@ -13,10 +14,21 @@ import { saveWizardStudentFields, loadWizardStudentFields } from "@/utils/wizard
  * /[schoolId]/student/enrollment page's "student" branch. schoolUUID comes
  * from the Auth.js session (see hooks/useEnrollmentContext.js / auth.js),
  * not a URL param — this route intentionally carries no {schoolId} segment.
+ *
+ * Prefill priority, resolved before the form ever mounts (see the
+ * !hydrated gate below — Stage1StudentDetails only reads initialFields at
+ * mount, not on later prop changes):
+ *   1. Backend (get-student-details) — the real saved record, so a student
+ *      resuming from a fresh SSO handoff sees what they already entered.
+ *   2. This tab's sessionStorage — covers the backend call failing, or a
+ *      first-ever visit where nothing's saved server-side yet either.
+ *   3. Just the signed-up email (session.email, from auth.js), as a last
+ *      resort so that one field isn't blank.
  */
 export default function Step1Page() {
   const router = useRouter();
   const { status, session, context, logoUrl, ready } = useEnrollmentContext();
+  const prefill = useStudentDetailsPrefill({ context, userId: session?.userId });
   const [initialFields, setInitialFields] = useState(null);
   const [hydrated, setHydrated] = useState(false);
 
@@ -25,16 +37,11 @@ export default function Step1Page() {
   }, [status, router]);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || prefill.isPending) return;
     const saved = loadWizardStudentFields(context.schoolUUID, session.userId);
-    // No saved progress yet (first-ever visit, e.g. right after signup or
-    // the SSO handoff from login) — default the email field to the one the
-    // student just signed up / logged in with (session.email, from
-    // auth.js), rather than leaving it blank for them to retype. Once
-    // they've saved Stage 1 at least once, `saved` always wins.
-    setInitialFields(saved || (session.email ? { communicationEmail: session.email } : null));
+    setInitialFields(prefill.data || saved || (session.email ? { communicationEmail: session.email } : null));
     setHydrated(true);
-  }, [ready, context?.schoolUUID, session?.userId, session?.email]);
+  }, [ready, prefill.isPending, prefill.data, context?.schoolUUID, session?.userId, session?.email]);
 
   if (!ready || !hydrated) {
     return <main className="flex min-h-screen items-center justify-center text-slate-500">Loading…</main>;

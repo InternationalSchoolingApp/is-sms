@@ -36,6 +36,7 @@ export function saveWizardStudentFields(schoolUUID, userId, studentFields) {
 }
 
 export function loadWizardStudentFields(schoolUUID, userId) {
+  debugger
   if (typeof window === "undefined" || !schoolUUID || !userId) return null;
   try {
     const raw = window.sessionStorage.getItem(storageKey(STUDENT_STORAGE_PREFIX, schoolUUID, userId));

@@ -9,13 +9,13 @@ import { useIntlTelInput } from "@/hooks/useIntlTelInput";
  * intl-tel-input wiring (shared with the wizard's plain-label variant,
  * components/student-enroll/wizard/fields.jsx's PhoneField).
  */
-export function PhoneNumberField({ label = "Contact Number", name = "contactNumber", value, onChange, error }) {
+export function PhoneNumberField({ label = "Contact Number", name = "contactNumber", value, onChange, error, initialCountry }) {
   const inputRef = useRef(null);
   const itiRef = useRef(null);
   const id = useId();
   const [focused, setFocused] = useState(false);
 
-  useIntlTelInput(inputRef, itiRef, onChange);
+  useIntlTelInput(inputRef, itiRef, onChange, initialCountry);
 
   const floated = focused || Boolean(value);
 
