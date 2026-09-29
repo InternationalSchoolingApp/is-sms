@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
+import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
 import { useStudentDetailsPrefill } from "@/hooks/useStudentDetailsSignup";
 import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
 
@@ -47,6 +48,17 @@ export function useEnrollmentContext() {
   }, [session?.schoolNumericId]);
 
   const ready = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
+
+  // Legacy fills the hidden `#location` input when the wizard page loads (the student form's
+  // callLocationAndSelectCountryNew() -> LOCATION_SERVICE_BYPASS ? DEFAULT_LOCATION : the IP
+  // lookup), so getPayerCountryCodePromise() finds it already there at payment time and only
+  // falls back to its own IP call when it is empty. Same here: capture it once per page load.
+  useEffect(() => {
+    if (!ready) return;
+    loadLocationGlobals({ schoolUUID: session.schoolUUID, userId: session.userId })
+      .then(() => callLocationForPaymentPromise())
+      .catch((err) => console.error("Payer location capture failed:", err));
+  }, [ready, session?.schoolUUID, session?.userId]);
 
   const context = ready
     ? {

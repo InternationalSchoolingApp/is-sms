@@ -60,10 +60,15 @@ async function parseJsonResponse(response) {
 }
 
 async function postPayload(schoolUUID, path, data, options) {
-
+  // Legacy's $.ajaxSetup beforeSend sends the session's UNIQUEUUID as a header on every call;
+  // a few payment endpoints read it (e.g. common/offline-payment), so callers that need it
+  // pass `uniqueId`. Left off otherwise: a custom header forces a CORS preflight when the
+  // backend origin differs from this page's.
+  const headers = { "Content-Type": "application/json" };
+  if (options?.uniqueId) headers.UNIQUEUUID = options.uniqueId;
   const response = await fetch(backendUrl(schoolUUID, path, options), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     credentials: "include",
     body: JSON.stringify({ payload: encodePayload(data) }),
   });
@@ -200,6 +205,56 @@ export function getPaymentGatewayOptions(schoolUUID, request) {
 
 export function invokePaymentGateway(schoolUUID, request) {
   return postPayload(schoolUUID, "common/invoke-payment-gateway", request);
+}
+
+// Server-side gateway launch — submitPaymentGatewayForm() in commonPaymentGateway.js: a plain
+// top-level GET form to {schoolId}/common/launch-payment-gateway carrying the encoded payload,
+// so the whole hop is one user-gesture navigation ending in the server's 302 to the gateway.
+// Legacy uses this for every gateway except the client-side ones (see CLIENT_SIDE_GATEWAYS in
+// Stage4ReviewPayment.jsx), which go through invokePaymentGateway's JSON call instead.
+export function launchPaymentGatewayForm(schoolUUID, payload) {
+  const form = document.createElement("form");
+  form.method = "GET";
+  form.action = backendUrl(schoolUUID, "common/launch-payment-gateway");
+  const input = document.createElement("input");
+  input.type = "hidden";
+  input.name = "payload";
+  input.value = encodePayload(payload);
+  form.appendChild(input);
+  document.body.appendChild(form);
+  form.submit();
+}
+
+// {schoolId}/api/v1/common-script-variables — the endpoint behind legacy getCommonCustomScript():
+// returns the page-wide script globals, including LOCATION_SERVICE_BYPASS (boolean) and
+// DEFAULT_LOCATION (a JSON string), i.e. the two flags getPayerCountryCodePromise() reads.
+export function getCommonScriptVariables(schoolUUID, request) {
+  return postPayload(schoolUUID, "api/v1/common-script-variables", request);
+}
+
+// Offline payments (CASH / WIRETRANSFER) — callOfflinePayment() in commonPaymentGateway.js:
+// {schoolId}/common/offline-payment, with the UNIQUEUUID header the controller reads.
+export function submitOfflinePayment(schoolUUID, uniqueId, request) {
+  return postPayload(schoolUUID, "common/offline-payment", request, { uniqueId });
+}
+
+// Proof-of-payment upload — bindFileUploadNew1() in jquery.commonFunction.js: multipart POST to
+// {schoolId}/api/upload/{UNIQUEUUID}; the `payload` form field carries the encoded
+// { uploadCategory, uploadUserId, skipSession } (getFinalValue() shape) and the file goes under
+// the input's name (`fileupload<index>`). Resolves to { status, message, uploadFiles:[{fileName}] }.
+export async function uploadPaymentProof(schoolUUID, uniqueId, { file, uploadIndex, uploadCategory, uploadUserId }) {
+  const form = new FormData();
+  form.append(
+    "payload",
+    JSON.stringify({ payload: encodePayload({ uploadCategory, uploadUserId, skipSession: true }) })
+  );
+  form.append(`fileupload${uploadIndex}`, file);
+  const response = await fetch(backendUrl(schoolUUID, `api/upload/${uniqueId}`), {
+    method: "POST",
+    credentials: "include",
+    body: form,
+  });
+  return parseJsonResponse(response);
 }
 
 // Airwallex's selectable payment methods, shown once common/payment-gateway/options lists

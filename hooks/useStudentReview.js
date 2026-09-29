@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   choosePaymentPlan,
   getAirwallexPaymentMethods,
+  submitOfflinePayment,
+  uploadPaymentProof,
   getPaymentGatewayOptions,
   getSignupStageStatus,
   getStudentReviewDetails,
@@ -111,15 +113,17 @@ export function useSignupStageStatusPoll({ context, uniqueId, enabled = true }) 
  */
 export function usePaymentGatewayOptions({ context }) {
   return useMutation({
-    mutationFn: ({ userPaymentDetailsId, entityType, entityId, paidByUserId, countryCode }) =>
+    // Payload as getPaymentGatewaysOptions() builds it; both school ids are the review
+    // data's schoolId (legacy passes `.payabledetails` schoolId for each).
+    mutationFn: ({ userPaymentDetailsId, entityType, entityId, paidByUserId, schoolId, countryCode }) =>
       getPaymentGatewayOptions(context.schoolUUID, {
         userPaymentDetailsId,
         entityType,
         entityId,
         paidByUserId,
+        schoolIdOfPaymentGateway: schoolId,
+        schoolId,
         countryCode,
-        schoolId: context.schoolNumericId,
-        schoolIdOfPaymentGateway: context.schoolNumericId,
       }),
   });
 }
@@ -133,19 +137,8 @@ export function usePaymentGatewayOptions({ context }) {
  */
 export function useInvokePaymentGateway({ context }) {
   return useMutation({
-    mutationFn: ({ userPaymentDetailsId, paidByUserId, paymentGateway, backUrl }) =>
-      invokePaymentGateway(context.schoolUUID, {
-        userPaymentDetailsId,
-        paidByUserId,
-        schoolId: context.schoolNumericId,
-        schoolIdOfPaymentGateway: context.schoolNumericId,
-        paymentGateway,
-        browserDetails: typeof navigator !== "undefined" ? navigator.userAgent : "",
-        location: "",
-        apiLocation: "",
-        initiateVia: "signup",
-        backUrl: backUrl || "",
-      }),
+    // `payload` is built by the caller in invokePaymentGateway()'s exact legacy shape.
+    mutationFn: (payload) => invokePaymentGateway(context.schoolUUID, payload),
   });
 }
 
@@ -158,7 +151,15 @@ export function useInvokePaymentGateway({ context }) {
  */
 export function useAirwallexPaymentMethods({ context }) {
   return useMutation({
-    mutationFn: ({ countryCode }) =>
-      getAirwallexPaymentMethods(context.schoolUUID, context.schoolNumericId, countryCode),
+    // schoolId is the gateway's school id (legacy passes schoolIdOfPaymentGateway).
+    mutationFn: ({ schoolId, countryCode }) => getAirwallexPaymentMethods(context.schoolUUID, schoolId, countryCode),
   });
+}
+
+/** Cash / Wire Transfer: proof upload, then common/offline-payment (see PaymentGatewayPickerModal's OfflineForm). */
+export function useOfflinePayment({ context, uniqueId }) {
+  return {
+    upload: (args) => uploadPaymentProof(context.schoolUUID, uniqueId, args),
+    submit: (request) => submitOfflinePayment(context.schoolUUID, uniqueId, request),
+  };
 }
