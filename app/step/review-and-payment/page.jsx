@@ -7,8 +7,7 @@ import { Stage4ReviewPayment } from "@/components/student-enroll/Stage4ReviewPay
 import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
 import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
 import { useWizardResume } from "@/hooks/useWizardResume";
-
-const STEP_ROUTES = { 1: "/step/1", 2: "/step/2", 3: "/step/3" };
+import { STEP_ROUTES } from "@/utils/wizardSteps";
 
 /**
  * Stage 4 ("Review and Payment") route — get-student-review-details on
@@ -17,7 +16,7 @@ const STEP_ROUTES = { 1: "/step/1", 2: "/step/2", 3: "/step/3" };
  * gateway (Confirm & Pay). See Stage4ReviewPayment.jsx for the full port
  * of getReviewAndPayContent()/showPaymentModal() from the legacy JS.
  */
-export default function Step4Page() {
+export default function StudentEnrollmentStep4() {
   const router = useRouter();
   const { status, session, context, logoUrl, ready } = useEnrollmentContext();
   useWizardResume({ currentStep: 4, context, uniqueId: session?.uniqueId, ready });
@@ -41,7 +40,7 @@ export default function Step4Page() {
         context={context}
         userId={session.userId}
         uniqueId={session.uniqueId}
-        onBack={(step) => router.push(STEP_ROUTES[step] || "/step/3")}
+        onBack={(step) => router.push(STEP_ROUTES[step] || STEP_ROUTES[3])}
         onSessionExpired={() => signOut({ callbackUrl: "/" })}
       />
     </EnrollmentWizardShell>

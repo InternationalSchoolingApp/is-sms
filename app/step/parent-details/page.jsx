@@ -8,6 +8,7 @@ import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/Enroll
 import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
 import { useWizardResume } from "@/hooks/useWizardResume";
 import { loadWizardStudentFields, loadWizardParentFields, saveWizardParentFields } from "@/utils/wizardStorage";
+import { STEP_ROUTES } from "@/utils/wizardSteps";
 
 /**
  * Stage 2 ("Parent information") as its own flat route. `studentAddress`
@@ -17,7 +18,7 @@ import { loadWizardStudentFields, loadWizardParentFields, saveWizardParentFields
  * fields are persisted/reloaded the same way, so Back from /step/3 (or a
  * refresh) re-fills the parent form instead of resetting it.
  */
-export default function Step2Page() {
+export default function StudentEnrollmentStep2() {
   const router = useRouter();
   const { status, session, context, logoUrl, ready } = useEnrollmentContext();
   useWizardResume({ currentStep: 2, context, uniqueId: session?.uniqueId, ready });
@@ -60,9 +61,9 @@ export default function Step2Page() {
         onNext={(fields) => {
           saveWizardParentFields(context.schoolUUID, session.userId, fields);
           console.log("Stage 2 complete, TODO Stage 3:", fields);
-          router.push("/step/3");
+          router.push(STEP_ROUTES[3]);
         }}
-        onBack={() => router.push("/step/1")}
+        onBack={() => router.push(STEP_ROUTES[1])}
       />
     </EnrollmentWizardShell>
   );

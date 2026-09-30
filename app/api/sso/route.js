@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { signIn } from "@/auth";
+import { STEP_ROUTES } from "@/utils/wizardSteps";
 
 const VALID_STEPS = new Set(["1", "2", "3", "4"]);
 
@@ -50,7 +51,6 @@ async function handleSsoHandoff(request) {
     const result = await signIn("sso-token", { ssoToken, schoolUUID, redirect: false });
     if (!result || result.error) {
       console.error("SSO token exchange failed:", result?.error);
-      console.log("redirect url", request)
       return redirectTo("/", request);
     }
   } catch (err) {
@@ -58,7 +58,7 @@ async function handleSsoHandoff(request) {
     return redirectTo("/", request);
   }
 
-  return redirectTo(`/step/${targetStep}`, request);
+  return redirectTo(STEP_ROUTES[targetStep], request);
 }
 
 export const GET = handleSsoHandoff;

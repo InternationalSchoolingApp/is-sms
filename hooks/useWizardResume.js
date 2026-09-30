@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSignupStageStatus } from "@/services/studentSignupApi";
+import { STEP_ROUTES } from "@/utils/wizardSteps";
 
 /**
  * `marker` is the backend's nextSessionStage (1-4). Step 4 (review) has no
@@ -50,7 +51,7 @@ export function useWizardResume({ currentStep, context, uniqueId, ready }) {
           return;
         }
         const target = resolveResumeStep(currentStep, response.wizardStep);
-        if (target !== currentStep) router.replace(`/step/${target}`);
+        if (target !== currentStep) router.replace(STEP_ROUTES[target]);
       })
       .catch((err) => console.error("Wizard resume check failed:", err));
   }, [ready, uniqueId, currentStep, context?.schoolUUID, router]);

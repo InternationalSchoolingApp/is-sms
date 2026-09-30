@@ -9,6 +9,7 @@ import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
 import { useWizardResume } from "@/hooks/useWizardResume";
 import { useStudentDetailsPrefill } from "@/hooks/useStudentDetailsSignup";
 import { saveWizardStudentFields, loadWizardStudentFields } from "@/utils/wizardStorage";
+import { STEP_ROUTES } from "@/utils/wizardSteps";
 
 /**
  * Stage 1 ("Student profile") as its own flat route — replaces the old
@@ -26,7 +27,7 @@ import { saveWizardStudentFields, loadWizardStudentFields } from "@/utils/wizard
  *   3. Just the signed-up email (session.email, from auth.js), as a last
  *      resort so that one field isn't blank.
  */
-export default function Step1Page() {
+export default function StudentEnrollmentStep1() {
   const router = useRouter();
   const { status, session, context, logoUrl, ready } = useEnrollmentContext();
   useWizardResume({ currentStep: 1, context, uniqueId: session?.uniqueId, ready });
@@ -63,7 +64,7 @@ export default function Step1Page() {
         initialFields={initialFields}
         onNext={(fields) => {
           saveWizardStudentFields(context.schoolUUID, session.userId, fields);
-          router.push("/step/2");
+          router.push(STEP_ROUTES[2]);
         }}
       />
     </EnrollmentWizardShell>

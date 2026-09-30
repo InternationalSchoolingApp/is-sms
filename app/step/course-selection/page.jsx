@@ -8,6 +8,7 @@ import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/Enroll
 import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
 import { useWizardResume } from "@/hooks/useWizardResume";
 import { loadWizardStudentFields } from "@/utils/wizardStorage";
+import { STEP_ROUTES } from "@/utils/wizardSteps";
 
 /**
  * Stage 3 ("Course Selection") as its own flat route. Course choices are
@@ -18,7 +19,7 @@ import { loadWizardStudentFields } from "@/utils/wizardStorage";
  * comment and useCourseSelection.js), so that one field is loaded the same
  * way /step/2 loads it for its own "same as student" default.
  */
-export default function Step3Page() {
+export default function StudentEnrollmentStep3() {
   const router = useRouter();
   const { status, session, context, logoUrl, ready } = useEnrollmentContext();
   useWizardResume({ currentStep: 3, context, uniqueId: session?.uniqueId, ready });
@@ -51,8 +52,8 @@ export default function Step3Page() {
         context={context}
         userId={session.userId}
         standardId={standardId}
-        onNext={() => router.push("/step/4")}
-        onBack={() => router.push("/step/2")}
+        onNext={() => router.push(STEP_ROUTES[4])}
+        onBack={() => router.push(STEP_ROUTES[2])}
         onSessionExpired={() => signOut({ callbackUrl: "/" })}
       />
     </EnrollmentWizardShell>

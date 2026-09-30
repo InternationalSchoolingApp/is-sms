@@ -3,7 +3,8 @@ import { auth } from "@/auth";
 
 /**
  * Server-side guard for the post-login enrollment wizard's flat routes
- * (/step/1 to /step/4 — no {schoolId} segment; schoolUUID lives in the
+ * (/step/student-details, /step/parent-details, /step/course-selection,
+ * /step/review-and-payment — no {schoolId} segment; schoolUUID lives in the
  * session instead, see auth.js). Mirrors each step page's own client-side
  * check (useSession() -> "unauthenticated" -> redirect), but runs before
  * any page HTML is sent, so a direct hit / bookmark / reload with no
@@ -28,5 +29,10 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/step/1/:path*", "/step/2/:path*", "/step/3/:path*", "/step/4/:path*"],
+  matcher: [
+    "/step/student-details/:path*",
+    "/step/parent-details/:path*",
+    "/step/course-selection/:path*",
+    "/step/review-and-payment/:path*",
+  ],
 };
