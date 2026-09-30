@@ -53,6 +53,15 @@ const OFFLINE_SPEC = {
 const ACCEPTED_TYPES = /^(image\/(png|jpe?g)|application\/pdf)$/i;
 const MAX_PROOF_BYTES = 5767168;
 
+function PaymentLabel({ children }) {
+  return String(children ?? "")
+    .split(/(<sup>.*?<\/sup>)/gi)
+    .map((part, index) => {
+      const match = part.match(/^<sup>(.*?)<\/sup>$/i);
+      return match ? <sup key={index}>{match[1]}</sup> : part;
+    });
+}
+
 function tabIcon(option) {
   return option.icon === "Airwallex.png" ? "airwallex_icon.png" : option.icon;
 }
@@ -471,7 +480,11 @@ export function PaymentGatewayPickerModal({
               <h3 className="text-3xl font-extrabold text-slate-900">Choose Your Payment Method</h3>
               <p className="mt-2 text-slate-600">{subHeading}</p>
             </div>
-            {details?.paymentLabel && <p className="mt-5 text-lg font-semibold text-slate-800">{details.paymentLabel}</p>}
+            {details?.paymentLabel && (
+              <p className="mt-5 text-lg font-semibold text-slate-800">
+                <PaymentLabel>{details.paymentLabel}</PaymentLabel>
+              </p>
+            )}
             <div className="mt-3">
               <CurrencyCard details={details || {}} payerCountryCode={payerCountryCode} />
             </div>
