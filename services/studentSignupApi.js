@@ -209,6 +209,17 @@ export function invokePaymentGateway(schoolUUID, request) {
   return postPayload(schoolUUID, "common/invoke-payment-gateway", request);
 }
 
+// logoutConfimation(true, ...common/logout/UNIQUEUUID) in signupStudentStage3.js: the backend drops
+// the user's login hash, records the logout and invalidates its HTTP session (found via the session
+// cookie, hence credentials: "include"). The 302 to the Java login page is deliberately not followed.
+export async function logoutSignup(schoolUUID, uniqueId) {
+  await fetch(backendUrl(schoolUUID, `common/logout/${encodeURIComponent(uniqueId)}`), {
+    method: "GET",
+    credentials: "include",
+    redirect: "manual",
+  });
+}
+
 export function getPaymentPaidStatus(schoolUUID, request) {
   return postPayload(schoolUUID, "common/get-payment-paid-status", request);
 }

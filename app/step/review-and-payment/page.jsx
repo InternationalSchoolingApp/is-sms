@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import { Stage4ReviewPayment } from "@/components/student-enroll/Stage4ReviewPayment";
 import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
 import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
+import { logoutEverywhere } from "@/utils/logout";
 import { useWizardResume } from "@/hooks/useWizardResume";
 import { STEP_ROUTES } from "@/utils/wizardSteps";
 
@@ -34,7 +35,7 @@ export default function StudentEnrollmentStep4() {
       schoolName={context.schoolName}
       logoUrl={logoUrl}
       currentStepKey="review_and_payment"
-      onLogout={() => signOut({ callbackUrl: "/" })}
+      onLogout={() => logoutEverywhere(session)}
     >
       <Stage4ReviewPayment
         context={context}

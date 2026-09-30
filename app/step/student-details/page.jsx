@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
 import { Stage1StudentDetails } from "@/components/student-enroll/Stage1StudentDetails";
 import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
 import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
+import { logoutEverywhere } from "@/utils/logout";
 import { useWizardResume } from "@/hooks/useWizardResume";
 import { useStudentDetailsPrefill } from "@/hooks/useStudentDetailsSignup";
 import { saveWizardStudentFields, loadWizardStudentFields } from "@/utils/wizardStorage";
@@ -56,7 +56,7 @@ export default function StudentEnrollmentStep1() {
       logoUrl={logoUrl}
       context={context}
       currentStepKey="student"
-      onLogout={() => signOut({ callbackUrl: "/" })}
+      onLogout={() => logoutEverywhere(session)}
     >
       <Stage1StudentDetails
         context={context}

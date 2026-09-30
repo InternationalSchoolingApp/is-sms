@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import { Stage3CourseSelection } from "@/components/student-enroll/Stage3CourseSelection";
 import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
 import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
+import { logoutEverywhere } from "@/utils/logout";
 import { useWizardResume } from "@/hooks/useWizardResume";
 import { loadWizardStudentFields } from "@/utils/wizardStorage";
 import { STEP_ROUTES } from "@/utils/wizardSteps";
@@ -46,7 +47,7 @@ export default function StudentEnrollmentStep3() {
       logoUrl={logoUrl}
       context={context}
       currentStepKey="course_selection"
-      onLogout={() => signOut({ callbackUrl: "/" })}
+      onLogout={() => logoutEverywhere(session)}
     >
       <Stage3CourseSelection
         context={context}
