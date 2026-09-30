@@ -192,4 +192,4 @@ input:-internal-autofill-selected {
   -webkit-text-fill-color: oklch(0.145 0 0) !important;
 }
 
-.iti--inline-country-selector{width: 100%;}
+.iti{width: 100%;}

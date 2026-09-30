@@ -59,7 +59,28 @@ export function useWizardResume({ currentStep, context, uniqueId, ready }) {
       .then((response) => {
         if (!response) return;
         if (response.status === "1" && response.redirectUri) {
-          window.location.replace(response.redirectUri);
+          // Defensive: the backend has been observed sending a redirectUri that
+          // points at THIS app's own flat /step/N route with an extra uniqueId
+          // path segment appended (e.g. ".../step/student-details/{uuid}") —
+          // none of these routes accept one (schoolUUID/userId come from the
+          // session, not the URL), so following it verbatim 404s. Anything
+          // that isn't a same-origin, unrecognized /step/ path (the legacy
+          // app's own dashboard URL on a different port, or an /api/sso
+          // handoff URL) is still followed exactly as before; only this one
+          // malformed shape gets normalized via the response's own wizardStep.
+          let redirectTarget = response.redirectUri;
+          try {
+            const url = new URL(response.redirectUri, window.location.origin);
+            const sameOriginStepUrl = url.origin === window.location.origin && url.pathname.startsWith("/step/");
+            const knownStepRoute = Object.values(STEP_ROUTES).includes(url.pathname);
+            if (sameOriginStepUrl && !knownStepRoute) {
+              router.replace(STEP_ROUTES[response.wizardStep] || STEP_ROUTES[currentStep]);
+              return;
+            }
+          } catch {
+            // Relative/malformed URL string — fall through and follow it as-is.
+          }
+          window.location.replace(redirectTarget);
           return;
         }
         const target = resolveResumeStep(currentStep, response.wizardStep);
