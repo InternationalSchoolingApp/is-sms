@@ -140,7 +140,7 @@ function categoryIcon(name) {
 // courseTypeOriginal as before, for anything not in one of those two
 // categories.
 function summarizeSelection(selectedCourses) {
-  debugger
+  
   const counts = { Required: 0, Regular: 0, Electives: 0, Honors: 0, Advanced: 0 };
   selectedCourses.forEach((course) => {
     if (course.courseMandatory === 1) {
@@ -514,7 +514,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
       extraFeeNoticeShownRef.current = true;
     }
     if (Number(context.schoolNumericId) === 1 && subject.courseType === "Advanced Placement" && !apAcknowledgedRef.current) {
-      debugger
+      
       const confirmed = await ask({
         title: "AP course",
         message: (

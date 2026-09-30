@@ -98,6 +98,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         ssoToken: { label: "SSO token", type: "text" },
         schoolUUID: { label: "School", type: "text" },
+        // Passed through from the legacy login page's redirect URL (see
+        // app/api/sso/route.js) — declared here because next-auth silently
+        // drops any signIn() credential not listed in this schema before
+        // authorize() ever sees it. The backend's sso/exchange response
+        // doesn't reliably carry a schoolName field, so this URL-provided
+        // value is the real source, not response.schoolName.
+        schoolName: { label: "School name", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.ssoToken || !credentials?.schoolUUID) {
@@ -118,7 +125,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           userId: response.userId,
           schoolUUID: response.schoolUUID,
           schoolNumericId: response.schoolNumericId,
-          schoolName: response.schoolName || "",
+          schoolName: credentials.schoolName || response.schoolName || "",
         };
       },
     }),

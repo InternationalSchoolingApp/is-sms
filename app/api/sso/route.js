@@ -40,12 +40,15 @@ async function handleSsoHandoff(request) {
   const url = new URL(request.url);
   const ssoToken = url.searchParams.get("token");
   const schoolUUID = url.searchParams.get("school");
+  const schoolName = url.searchParams.get("schoolName");
   const step = url.searchParams.get("step");
   const targetStep = VALID_STEPS.has(step) ? step : "1";
 
+  console.log("request", request)
   console.log("url======>", url)
   console.log("ssoToken======>", ssoToken)
   console.log("schoolUUID======>", schoolUUID)
+  console.log("schoolName======>", schoolName)
   console.log("step======>", step)
   console.log("targetStep======>", targetStep)
 
@@ -54,7 +57,7 @@ async function handleSsoHandoff(request) {
   }
 
   try {
-    const result = await signIn("sso-token", { ssoToken, schoolUUID, redirect: false });
+    const result = await signIn("sso-token", { ssoToken, schoolName, schoolUUID, redirect: false });
     if (!result || result.error) {
       console.error("SSO token exchange failed:", result?.error);
       return redirectTo("/", request);
