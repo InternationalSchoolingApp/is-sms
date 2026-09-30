@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { User, GraduationCap, VenusAndMars, Mail, Globe, Cake, MapPin, Map, Building2, School, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -15,7 +16,7 @@ import {
   useStateOptions,
   useCityOptions,
 } from "@/hooks/useStudentDetailsSignup";
-import { validateStudentDetails, isPureAscii } from "@/utils/studentSignupValidation";
+import { validateStudentDetails } from "@/utils/studentSignupValidation";
 import { validateAge, getDobPickerBounds } from "@/utils/ageValidation";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 
@@ -174,10 +175,6 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
     const dobError = validateAge(fields.dob);
     const allErrors = dobError ? { ...fieldErrors, dob: fieldErrors.dob || dobError } : fieldErrors;
 
-    if (!isPureAscii(fields.studyingSchoolName || "")) {
-      allErrors.form = "Please use the English keyboard while providing information";
-    }
-
     setErrors(allErrors);
     if (!valid || dobError) return;
 
@@ -330,7 +327,9 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
         </div>
 
         {isDualDiploma && (
-          <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+          <>
+            <strong className="mt-6 block text-base font-bold text-slate-900">Current School Details</strong>
+          <div className="mt-3 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
             <FloatingLabelInput
               icon={School}
               label={<Req label="Current School Name" required />}
@@ -357,15 +356,16 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
               searchable
             />
           </div>
+          </>
         )}
 
         {errors.form && <p className="mt-4 text-center text-sm font-semibold text-red-600">{errors.form}</p>}
 
-        <div className="mt-10 flex justify-center ">
+        <MobileActionBar context={context} className="md:mt-10">
           <Button type="button" onClick={handleSubmit} disabled={signup.isPending} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
             {signup.isPending ? "Please wait…" : "Next"}
           </Button>
-        </div>
+        </MobileActionBar>
 
         <FlaggedSeatsModal
           open={!!flaggedModal}

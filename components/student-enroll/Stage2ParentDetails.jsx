@@ -5,6 +5,7 @@ import { User, Briefcase, Mail, MapPin, Map, Building2, Phone as PhoneIcon, Grad
 import { IoLogoWhatsapp } from "react-icons/io";
 
 import { Button } from "@/components/ui/button";
+import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
@@ -93,7 +94,7 @@ function Req({ label, required }) {
  * utils/wizardStorage.js's saveWizardParentFields — the same
  * save/reload-on-mount pattern Stage 1 uses for its own fields.
  */
-export function Stage2ParentDetails({ context, userId, studentAddress, initialFields, onNext, onBack }) {
+export function Stage2ParentDetails({ context, userId, studentAddress, courseProviderId, initialFields, onNext, onBack }) {
   const [fields, setFields] = useState(() => ({ ...defaultFields(studentAddress), ...initialFields }));
   const [errors, setErrors] = useState({});
   const [flaggedModal, setFlaggedModal] = useState(null);
@@ -147,11 +148,20 @@ export function Stage2ParentDetails({ context, userId, studentAddress, initialFi
     }
   }
 
+  // getParentDetailsContent() in signupStudentContent.js: provider 39 first, then the FLEX program.
+  // The default keeps this screen's own "Parents Details" title.
+  const heading =
+    Number(courseProviderId) === 39
+      ? "Communication Details"
+      : isOneToOneFlex
+        ? "Academic & Communication Details"
+        : "Parents Details";
+
   const locationDisabled = fields.sameAsStudent;
 
   return (
     <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
-      <h2 className="text-center text-2xl font-bold text-slate-900">Parents Details</h2>
+      <h2 className="text-center text-2xl font-bold text-slate-900">{heading}</h2>
 
       {isOneToOneFlex ? (
         <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -306,7 +316,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, initialFi
 
       {errors.form && <p className="mt-4 text-center text-sm font-semibold text-red-600">{errors.form}</p>}
 
-      <div className="mt-10 flex items-center justify-center gap-4 pt-6">
+      <MobileActionBar context={context} className="md:mt-10 md:pt-6">
         {onBack && (
           <Button type="button" variant="outline"  className="cursor-pointer" onClick={onBack} disabled={signup.isPending}>
             Back
@@ -315,7 +325,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, initialFi
         <Button type="button" onClick={handleSubmit} disabled={signup.isPending} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
           {signup.isPending ? "Please wait…" : "Next"}
         </Button>
-      </div>
+      </MobileActionBar>
 
       <FlaggedSeatsModal
         open={!!flaggedModal}

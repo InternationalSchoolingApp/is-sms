@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BiSolidBookAdd, BiSolidPencil, BiSolidUserDetail } from "react-icons/bi";
 import { ChevronDown } from "lucide-react";
@@ -8,6 +7,7 @@ import { FaNotesMedical } from "react-icons/fa6";
 import { IoMdPeople } from "react-icons/io";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { Button } from "@/components/ui/button";
+import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/student-enroll/ConfirmDialog";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
@@ -740,12 +740,19 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
   const course = data.signupCourse;
   const fee = data.feePaymentDetailsResponse;
   const hideCredits = hidesCourseCredits(course?.standardId);
+  // parentDetailsPreview() in signupStudentContent.js: the parent section's title depends on the program.
+  const parentTitle =
+    getLearningProgramBackendValue(context.learningProgram) === "ONE_TO_ONE_FLEX"
+      ? "Academic & Communication Details"
+      : student?.courseProviderId === 39
+        ? "Communication Details"
+        : "Parent/Guardian Details";
   const paymentPending = showPaymentOption === "Y";
 
   const showFee = paymentPending && fee;
 
   return (
-    <div className="mb-7 rounded-xl border border-slate-200 bg-white p-4 md:mb-0 md:rounded-none md:border-0 md:bg-transparent md:p-0">
+    <div className="rounded-xl border border-slate-200 bg-white p-4 md:mb-0 md:rounded-none md:border-0 md:bg-transparent md:p-0">
       <h1 className="mb-4 text-center text-1.5xl font-extrabold text-slate-900 sm:text-2xl md:hidden">Review Your Details &amp; Payment</h1>
       {notice && (
         <p
@@ -805,6 +812,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
             context={context}
             userId={userId}
             parent={parent}
+            title={parentTitle}
             onSaved={(fields) => finishEdit("parent", fields)}
             onCancel={() => setEditing(null)}
             onSessionExpired={onSessionExpired}
@@ -812,7 +820,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         )}
         <section className={ROW_CLASS}>
           <SectionHeader
-            title="Parent/Guardian Details"
+            title={parentTitle}
             icon={IoMdPeople}
             open={openSectionFor() === "parent"}
             onToggle={() => toggleSection("parent")}
@@ -916,21 +924,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
 
       {/* Mobile: a fixed action bar above the footer (WhatsApp left, Back / Final Step right). From md
           it is the centred button row at the end of the content. */}
-      <div className="fixed inset-x-0 bottom-8 z-20 flex items-center justify-between gap-3 bg-white px-4 py-2 md:static md:z-auto md:mt-10 md:justify-center md:bg-transparent md:p-0 md:pt-6">
-        {context.whatsAppNumber ? (
-          <a
-            href={`https://api.whatsapp.com/send?phone=${context.whatsAppNumber}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Enrollment support on WhatsApp"
-            className="flex h-10 w-10 shrink-0 md:hidden"
-          >
-            <Image src="/images/whatsapp-new.webp" alt="" width={40} height={40} unoptimized className="h-10 w-10" />
-          </a>
-        ) : (
-          <span className="md:hidden" />
-        )}
-        <div className="flex items-center gap-4">
+      <MobileActionBar context={context} className="md:mt-10 md:pt-6">
           {onBack && (
             <Button
               type="button"
@@ -953,8 +947,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
               {busy ? "Please wait…" : "Submit Application"}
             </Button>
           )}
-        </div>
-      </div>
+      </MobileActionBar>
 
       <ConfirmDialog
         request={confirmSubmit ? { title: "Submit application", message: <p>Are you sure you want to submit your application?</p>, confirmLabel: "Yes, submit" } : null}

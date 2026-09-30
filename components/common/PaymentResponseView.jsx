@@ -2,7 +2,9 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { CheckCircle2, Clock, LoaderCircle, XCircle } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { Clock, LoaderCircle, XCircle } from "lucide-react";
 import { getPaymentResponseSuccess, getPaymentResponseFailure } from "@/services/paymentResponseApi";
 
 /**
@@ -417,8 +419,21 @@ function ContactEmail({ email }) {
 }
 
 function StatusIcon({ variant }) {
+  // Success shows the animated tick (150x150 gif): smaller on phones, larger from md.
+  if (variant === "success") {
+    return (
+      <Image
+        src="/images/OrderSuccess.gif"
+        alt="Payment successful"
+        width={150}
+        height={150}
+        unoptimized
+        priority
+        className="mx-auto h-24 w-24 md:h-32 md:w-32"
+      />
+    );
+  }
   const map = {
-    success: { Icon: CheckCircle2, ring: "bg-emerald-50 text-emerald-500" },
     pending: { Icon: Clock, ring: "bg-amber-50 text-amber-500" },
     failed: { Icon: XCircle, ring: "bg-red-50 text-red-500" },
   };
