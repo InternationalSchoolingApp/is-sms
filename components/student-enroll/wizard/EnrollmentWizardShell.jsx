@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { BookOpen, CreditCard, LogOut, User, Users } from "lucide-react";
+import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
 import { getLearningProgramTheme } from "@/utils/learningProgramTheme";
 
 /**
@@ -23,6 +25,8 @@ const STEPS = [
 ];
 
 export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentStepKey, onLogout, children }) {
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const currentIndex = STEPS.findIndex((step) => step.key === currentStepKey);
   const programLabel = context ? getLearningProgramTheme(context.learningProgram).label : null;
 
@@ -33,13 +37,28 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
           <LogoMark schoolName={schoolName} logoUrl={logoUrl} />
           <button
             type="button"
-            onClick={onLogout}
+            onClick={() => setConfirmLogout(true)}
             className="inline-flex items-center gap-2 rounded bg-slate-900 px-2 py-1.5 cursor-pointer text-sm font-semibold text-white hover:bg-slate-800"
           >
             <LogOut className="h-4 w-4" /> Log Out
           </button>
         </div>
       </header>
+
+      <LogoutConfirmDialog
+        open={confirmLogout}
+        busy={loggingOut}
+        onCancel={() => setConfirmLogout(false)}
+        onConfirm={async () => {
+          setLoggingOut(true);
+          try {
+            await onLogout();
+          } finally {
+            setLoggingOut(false);
+            setConfirmLogout(false);
+          }
+        }}
+      />
 
       <div className="px-4 py-8 sm:px-6 bg-[#f2f5fa] pt-[62px]">
         {programLabel && (
