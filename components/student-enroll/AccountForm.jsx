@@ -32,7 +32,10 @@ const INITIAL_FIELDS = {
  * wired to the confirmed POST enrollment/stage-1 endpoint.
  */
 export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
-  const [fields, setFields] = useState(INITIAL_FIELDS);
+  const [fields, setFields] = useState(() => ({
+    ...INITIAL_FIELDS,
+    referralCode: context?.referralCode || "",
+  }));
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);

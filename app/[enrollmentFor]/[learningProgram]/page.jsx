@@ -9,9 +9,8 @@ import { EmailVerificationPanel } from "@/components/student-enroll/EmailVerific
 import { SchoolLogo } from "@/components/student-enroll/SchoolLogo";
 import { Footer } from "@/components/common/Footer";
 import { SignupFooter } from "@/components/student-enroll/SignupFooter";
-import { getPublicSchoolInfo } from "@/services/studentSignupApi";
+import { getEnrollmentSignupInfo, getPublicSchoolInfo } from "@/services/studentSignupApi";
 import { getLearningProgramTheme } from "@/utils/learningProgramTheme";
-import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
 
 // This route (/{enrollmentFor}/{learningProgram}) is flat — no {schoolId}
@@ -56,6 +55,9 @@ function AccountCreationPageContent() {
   const searchParams = useSearchParams();
   const isOffline = searchParams.get("mode") === "offline";
   const [verificationEmail, setVerificationEmail] = useState(null);
+  const [signupInfo, setSignupInfo] = useState(null);
+  const [signupInfoError, setSignupInfoError] = useState("");
+  const [signupInfoAttempt, setSignupInfoAttempt] = useState(0);
 
   const schoolUUID = searchParams.get("school");
   const enrollmentFor = params.enrollmentFor;
@@ -66,30 +68,88 @@ function AccountCreationPageContent() {
   const requestedProgram = (params.learningProgram || "").toUpperCase();
   const learningProgram = VALID_LEARNING_PROGRAMS.includes(requestedProgram) ? requestedProgram : "O";
   const theme = getLearningProgramTheme(learningProgram);
+  const search = searchParams.toString();
 
   const [schoolInfo, setSchoolInfo] = useState(FALLBACK_SCHOOL_INFO);
-  const [policyLinks, setPolicyLinks] = useState(FALLBACK_POLICY_LINKS);
 
-  const context = {
-    schoolUUID,
-    enrollmentFor,
-    learningProgram,
-    // Login is served by the legacy Java app, not this Next.js app — see
-    // the file-header comment above.
-    loginUrl: `${resolveBackendOrigin()}/${schoolUUID}/common/login`,
-    ...schoolInfo,
-    ...policyLinks,
-  };
+  const schoolSettingsLinks = signupInfo?.schoolSettingsLinks || {};
+  const displayedSchoolName = signupInfo?.schoolName || schoolInfo.schoolName || "";
+  const displayedProgramLabel = signupInfo?.programLabel || signupInfo?.learningProgramLabel || theme.label;
+  const context = signupInfo
+    ? {
+        schoolUUID: signupInfo.schoolUuid || schoolUUID,
+        schoolNumericId: schoolSettingsLinks.schoolId ?? schoolInfo.schoolNumericId,
+        schoolName: signupInfo.schoolName || schoolInfo.schoolName,
+        whatsAppNumber: schoolInfo.whatsAppNumber,
+        enrollmentStatus: signupInfo.status,
+        enrollmentFor: signupInfo.enrollmentFor || enrollmentFor,
+        learningProgram,
+        backendLearningProgram: signupInfo.learningProgram,
+        courseProviderId: signupInfo.courseProviderId,
+        programLabel: signupInfo.programLabel,
+        moduleNameToDisplay: signupInfo.moduleNameToDisplay,
+        moduleId: signupInfo.moduleId,
+        captchaRandomNumber: signupInfo.captchaRandomNumber,
+        uniqueId: signupInfo.UNIQUEUUID,
+        ras: signupInfo.ras,
+        referralCode: signupInfo.referralCode || new URLSearchParams(search).get("referralCode") || "",
+        signupType: signupInfo.signupType,
+        learningProgramLabel: signupInfo.learningProgramLabel,
+        unregisteredId: signupInfo.unregisteredId,
+        schoolSettingsLinks,
+        loginUrl: `${resolveBackendOrigin()}/${signupInfo.schoolUuid || schoolUUID}/common/login`,
+        termsOfUseUrl: schoolSettingsLinks.termasOfUserUrl || FALLBACK_POLICY_LINKS.termsOfUseUrl,
+        privacyPolicyUrl: schoolSettingsLinks.privacyPolicyUrl || FALLBACK_POLICY_LINKS.privacyPolicyUrl,
+        enrollmentPolicyUrl: schoolSettingsLinks.enrollmentPolicyUrl || FALLBACK_POLICY_LINKS.enrollmentPolicyUrl,
+        schoolPolicyUrl: schoolSettingsLinks.schoolPolicyUrl || FALLBACK_POLICY_LINKS.schoolPolicyUrl,
+        studentPolicyUrl: schoolSettingsLinks.studentPolicytUrl || FALLBACK_POLICY_LINKS.studentPolicyUrl,
+      }
+    : null;
 
-  // Resolves {schoolId} into numeric id/name/WhatsApp number, then — once
-  // the numeric id is known — the policy/legal links, which need it in
-  // their request body. See services/studentSignupApi.js
-  // (getPublicSchoolInfo) and utils/schoolSettings.js
-  // (getSchoolSettingsLinks).
+  // Public enrollment bootstrap. The exact URL query (including referralCode,
+  // ras, payload, and v when present) is sent to the backend; its response
+  // supplies the form defaults and school policy links.
+  useEffect(() => {
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      if (!schoolUUID) {
+        setSignupInfoError("We couldn’t identify your school. Please open the enrollment link again.");
+        return;
+      }
+
+      setSignupInfoError("");
+      setSignupInfo(null);
+      getEnrollmentSignupInfo(schoolUUID, enrollmentFor, learningProgram, new URLSearchParams(search))
+        .then((response) => {
+          if (cancelled) return;
+          if (response?.status === "SUCCESS") {
+            setSignupInfo(response);
+            return;
+          }
+          if (response?.status === "REDIRECT" && response.redirectTo) {
+            window.location.assign(response.redirectTo);
+            return;
+          }
+          const message = response?.message?.replace(/^FAILED\|/, "").trim();
+          setSignupInfoError(message || "We couldn’t load the enrollment form. Please try again.");
+        })
+        .catch((error) => {
+          console.error("Enrollment setup failed:", error);
+          if (!cancelled) setSignupInfoError("We couldn’t load the enrollment form. Please try again.");
+        });
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [schoolUUID, enrollmentFor, learningProgram, search, signupInfoAttempt]);
+
+  // The enrollment initialization response includes school settings links;
+  // keep the existing public-info lookup only for the WhatsApp support number.
   useEffect(() => {
     if (!schoolUUID) return;
     let cancelled = false;
-
     getPublicSchoolInfo(schoolUUID)
       .then((info) => {
         if (cancelled || !info) return;
@@ -98,20 +158,8 @@ function AccountCreationPageContent() {
           schoolName: info.schoolName || FALLBACK_SCHOOL_INFO.schoolName,
           whatsAppNumber: info.whatsAppNumber,
         });
-        return getSchoolSettingsLinks(info.schoolNumericId);
       })
-      .then((links) => {
-        if (cancelled || !links) return;
-        setPolicyLinks({
-          termsOfUseUrl: links.termasOfUserUrl || FALLBACK_POLICY_LINKS.termsOfUseUrl,
-          privacyPolicyUrl: links.privacyPolicyUrl || FALLBACK_POLICY_LINKS.privacyPolicyUrl,
-          enrollmentPolicyUrl: links.enrollmentPolicyUrl || FALLBACK_POLICY_LINKS.enrollmentPolicyUrl,
-          schoolPolicyUrl: links.schoolPolicyUrl || FALLBACK_POLICY_LINKS.schoolPolicyUrl,
-          studentPolicyUrl: links.studentPolicytUrl || FALLBACK_POLICY_LINKS.studentPolicyUrl,
-        });
-      })
-      .catch((err) => console.error("School info/links fetch failed:", err));
-
+      .catch((error) => console.error("School support info fetch failed:", error));
     return () => {
       cancelled = true;
     };
@@ -183,9 +231,9 @@ function AccountCreationPageContent() {
         id="signupMobileHeader"
         className="fixed left-0 top-0 z-20 flex w-full flex-col items-center gap-2 border-b border-slate-200 bg-[#F0F9FD] px-4 py-3 backdrop-blur md:hidden"
       >
-        <SchoolLogo schoolName={context.schoolName} width={180} />
+        <SchoolLogo schoolName={displayedSchoolName} width={180} />
         <span className="rounded-full bg-primary px-4 py-1 text-xs font-bold text-white">
-          {theme.label}
+          {displayedProgramLabel}
         </span>
       </div>
 
@@ -199,12 +247,12 @@ function AccountCreationPageContent() {
             pinned to the bottom-left. */}
         <section className="relative hidden h-full flex-col overflow-hidden px-10 pt-8 md:flex md:w-[42%] lg:w-[45%]">
           <div className="flex items-center gap-2">
-            <SchoolLogo schoolName={context.schoolName} width={260} />
+            <SchoolLogo schoolName={displayedSchoolName} width={260} />
           </div>
 
           <div className="mt-8">
             <h1 className="text-[clamp(1.5rem,2.6vw,2.1rem)] font-extrabold leading-tight text-primary">
-              {theme.label}
+              {displayedProgramLabel}
             </h1>
             {theme.subtitle && (
               <p className="mt-1.5 max-w-sm text-[clamp(0.85rem,1vw,1rem)] font-medium text-slate-600">
@@ -238,7 +286,25 @@ function AccountCreationPageContent() {
               scroll into view (no clipping) when it's taller than the
               column — unlike items-center, which would clip the top. */}
           <div className="my-4 w-full max-w-lg rounded-3xl bg-white p-6 shadow-xl shadow-slate-900/5 ring-1 ring-slate-900/5 sm:p-8 md:my-auto md:p-10">
-            {verificationEmail ? (
+            {!signupInfo ? (
+              signupInfoError ? (
+                <div className="space-y-4 py-6 text-center" role="alert">
+                  <p className="text-sm font-medium text-rose-700">{signupInfoError}</p>
+                  <button
+                    type="button"
+                    onClick={() => setSignupInfoAttempt((attempt) => attempt + 1)}
+                    className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : (
+                <div className="flex min-h-44 flex-col items-center justify-center gap-3 text-center" role="status" aria-live="polite">
+                  <span className="size-9 animate-spin rounded-full border-[3px] border-primary/20 border-t-primary" />
+                  <p className="text-sm font-medium text-slate-600">Preparing your enrollment form...</p>
+                </div>
+              )
+            ) : verificationEmail ? (
               <EmailVerificationPanel
                 email={verificationEmail}
                 context={context}
@@ -262,11 +328,11 @@ function AccountCreationPageContent() {
           from the client clock; school name from the per-school context
           resolved from ?school=). Mobile keeps its own copyright line inside
           SignupFooter. */}
-      <Footer schoolName={context.schoolName} />
+      <Footer schoolName={displayedSchoolName} />
 
       {/* Desktop-only floating WhatsApp support button (bottom-right).
           Mobile keeps the fixed WhatsApp footer bar via SignupFooter. */}
-      {context.whatsAppNumber && (
+      {context?.whatsAppNumber && (
         <a
           href={`https://api.whatsapp.com/send?phone=${context.whatsAppNumber}`}
           target="_blank"
@@ -281,7 +347,7 @@ function AccountCreationPageContent() {
         </a>
       )}
 
-      <SignupFooter whatsAppNumber={context.whatsAppNumber} schoolName={context.schoolName} />
+      <SignupFooter whatsAppNumber={context?.whatsAppNumber} schoolName={displayedSchoolName} />
     </main>
   );
 }

@@ -28,7 +28,10 @@ const INITIAL_FIELDS = { communicationEmail: "", learningProgram: "", referralCo
  * Confirmed in scope for this migration (see the plan doc's decision log).
  */
 export function AccountFormOfflineB2B({ context, onRedirect }) {
-  const [fields, setFields] = useState(INITIAL_FIELDS);
+  const [fields, setFields] = useState(() => ({
+    ...INITIAL_FIELDS,
+    referralCode: context?.referralCode || "",
+  }));
   const [errors, setErrors] = useState({});
   const signup = useAccountSignup({ mode: "offline", context });
 

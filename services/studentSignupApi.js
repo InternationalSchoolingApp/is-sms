@@ -338,6 +338,31 @@ export function getPublicSchoolInfo(schoolUUID) {
 }
 
 /**
+ * Initializes the public enrollment form. Route and request parameters match
+ * PaymentResponseApiController.studentEnrollmentSignup():
+ * GET /api/v1/{schoolId}/student/{enrollmentFor}/{learningProgram}.
+ * Preserve the page query as-is (including repeated keys); the controller
+ * reads payload, referralCode, ras, and v from it.
+ */
+export function getEnrollmentSignupInfo(schoolUUID, enrollmentFor, learningProgram, params) {
+  const baseUrl = resolveBackendOrigin();
+  if (!hasBackendOrigin() || !schoolUUID) {
+    throw new Error("A backend origin and a schoolUUID are required for enrollment setup");
+  }
+
+  const query = new URLSearchParams(params?.toString() || "");
+  if (!query.has("ras")) query.set("ras", "N");
+
+  return trackRequest(async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/student/${encodeURIComponent(enrollmentFor)}/${encodeURIComponent(learningProgram)}?${query.toString()}`,
+      { method: "GET", credentials: "include" }
+    );
+    return parseJsonResponse(response);
+  });
+}
+
+/**
  * Not JSON — a captcha image. `cacheBust` should change (e.g. Date.now())
  * whenever the visible captcha needs to change, matching refreshCaptcha()'s
  * behavior of reloading the <img> with a new query param.
