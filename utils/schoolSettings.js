@@ -1,6 +1,6 @@
 import { trackRequest } from "@/utils/loaderStore";
 import { encodePayload } from "@/utils/payloadEncoding";
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
+import { hasBackendOrigin, resolveBackendOrigin } from "@/utils/backendOrigin";
 
 /**
  * Mirrors jquery.commonFunction.js's getSchoolSettingsLinks() (is-rest-api,
@@ -31,7 +31,7 @@ import { resolveBackendOrigin } from "@/utils/backendOrigin";
  */
 export async function getSchoolSettingsLinks(schoolNumericId) {
   const baseUrl = resolveBackendOrigin();
-  if (!baseUrl) {
+  if (!hasBackendOrigin()) {
     throw new Error("A backend origin (NEXT_PUBLIC_BACKEND_BASE_URL) is required");
   }
   // Comes from getPublicSchoolInfo() (services/studentSignupApi.js)

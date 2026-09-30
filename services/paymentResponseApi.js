@@ -1,5 +1,5 @@
 import { trackRequest } from "@/utils/loaderStore";
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
+import { hasBackendOrigin, resolveBackendOrigin } from "@/utils/backendOrigin";
 
 /**
  * Payment-response endpoints — the JSON behind ClientCommonPaymentController's
@@ -25,7 +25,7 @@ import { resolveBackendOrigin } from "@/utils/backendOrigin";
 
 function backendUrl(schoolUUID, path) {
   const baseUrl = resolveBackendOrigin();
-  if (!baseUrl || !schoolUUID) {
+  if (!hasBackendOrigin() || !schoolUUID) {
     throw new Error("A backend origin and a schoolUUID (from the URL) are required");
   }
   return `${baseUrl}/${schoolUUID}/${path}`;

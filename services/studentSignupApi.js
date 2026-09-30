@@ -1,6 +1,6 @@
 import { trackRequest } from "@/utils/loaderStore";
 import { encodePayload } from "@/utils/payloadEncoding";
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
+import { hasBackendOrigin, resolveBackendOrigin } from "@/utils/backendOrigin";
 
 /**
  * Thin fetch wrappers, one per confirmed Student Signup backend endpoint.
@@ -30,7 +30,7 @@ import { resolveBackendOrigin } from "@/utils/backendOrigin";
 
 function backendUrl(schoolUUID, path, { includeSchoolId = true } = {}) {
   const baseUrl = resolveBackendOrigin();
-  if (!baseUrl || (includeSchoolId && !schoolUUID)) {
+  if (!hasBackendOrigin() || (includeSchoolId && !schoolUUID)) {
     throw new Error(
       "A backend origin (NEXT_PUBLIC_BACKEND_BASE_URL) and a schoolUUID are required — schoolUUID must come from the URL, not an env var"
     );
@@ -344,7 +344,7 @@ export function getPublicSchoolInfo(schoolUUID) {
  */
 export function getCaptchaImageUrl(schoolUUID, cacheBust) {
   const baseUrl = resolveBackendOrigin();
-  if (!baseUrl || !schoolUUID) {
+  if (!hasBackendOrigin() || !schoolUUID) {
     throw new Error("A backend origin and a schoolUUID (from the URL) are required");
   }
   const color = process.env.NEXT_PUBLIC_CATPCHA_COLOR || "2563eb";

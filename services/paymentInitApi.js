@@ -1,4 +1,4 @@
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
+import { hasBackendOrigin, resolveBackendOrigin } from "@/utils/backendOrigin";
 
 const SCHOOL_ID = process.env.NEXT_PUBLIC_SCHOOL_ID;
 
@@ -12,7 +12,7 @@ function buildQuery(params) {
 
 async function getPaymentInitResponse(gateway, uniqueUuid, params) {
   const baseUrl = resolveBackendOrigin();
-  if (!baseUrl || !SCHOOL_ID || !uniqueUuid) return null;
+  if (!hasBackendOrigin() || !SCHOOL_ID || !uniqueUuid) return null;
 
   const query = buildQuery(params);
   const url = `${baseUrl}/api/v1/${encodeURIComponent(SCHOOL_ID)}/payment/${gateway}-payment-init/${encodeURIComponent(uniqueUuid)}${query ? `?${query}` : ""}`;

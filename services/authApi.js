@@ -91,7 +91,7 @@ export async function exchangeSsoToken(schoolUUID, ssoToken) {
  * This function only ever runs server-side, inside next-auth's authorize()
  * (route.js) — it deliberately uses resolveServerBackendOrigin(), NOT the
  * plain resolveBackendOrigin() every browser-facing caller uses, because
- * that one has no page origin to resolve "/backend" against outside a
+ * that one has no page origin to resolve relative URLs against outside a
  * browser (and switching it based on `typeof window` broke SSR/hydration
  * elsewhere — see utils/backendOrigin.js's doc comments).
  */

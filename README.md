@@ -6,12 +6,12 @@ Student Signup migration for `is-rest-api` (International Schooling) — see the
 
 The Spring Boot backend authenticates via a plain server-side session cookie — no Spring Security/JWT. For captcha validation and login to work, this app and the backend **must share that session cookie**, which requires being on the **same domain** in production.
 
-**Local dev**: `next.config.mjs`'s `rewrites()` forwards `/backend/*` to `NEXT_PUBLIC_BACKEND_BASE_URL` so the browser sees Next.js and the backend as one origin. Enable it with `NEXT_PUBLIC_USE_LOCAL_PROXY=true` in `.env.local` (see `utils/backendOrigin.js`). Verified locally: the proxied request returns the backend's real `Set-Cookie: SESSION=...` header through the same-origin path.
+**Local dev**: `next.config.mjs`'s fallback `rewrites()` forwards paths not handled by a Next.js route to `NEXT_PUBLIC_BACKEND_BASE_URL`, without adding a URL prefix. The browser sees Next.js and the backend as one origin. Enable it with `NEXT_PUBLIC_USE_LOCAL_PROXY=true` in `.env.local` (see `utils/backendOrigin.js`).
 
 **Production/staging**: this repo cannot configure the real infra reverse proxy — that needs coordination with whoever manages it. The equivalent Nginx rule to mirror what `next.config.mjs` does locally:
 
 ```nginx
-location /backend/ {
+location / {
     proxy_pass http://<spring-boot-backend-origin>/;
     proxy_set_header Host $host;
     proxy_set_header Cookie $http_cookie;
@@ -22,7 +22,7 @@ location ~ ^/[^/]+/student/[^/]+/[^/]+ {
 }
 ```
 
-Once that's in place, set `NEXT_PUBLIC_BACKEND_BASE_URL` to the same-origin `/backend` path (or drop the distinction entirely) instead of the direct backend URL used during local development.
+Once that's in place, set `NEXT_PUBLIC_BACKEND_BASE_URL` to the direct backend origin for local development, or to the same origin when a reverse proxy routes backend paths there.
 
 **Route change**: the student-signup account page moved off the `/student-enroll` prefix onto the exact same URL pattern the JSP app itself serves — `/{schoolId}/student/{enrollmentFor}/{learningProgram}` (`app/[schoolId]/student/[enrollmentFor]/[learningProgram]/page.jsx`), matching `ClientSignupStudentController#signupStudent` in is-rest-api. This means Next.js and the JSP app now claim the **same root-level path space**; whoever owns the real reverse proxy needs to route that specific pattern to the Next.js origin instead of (or ahead of) the JSP backend for it to actually take over those URLs — this repo cannot configure that itself, same as the `/backend` proxy above.
 

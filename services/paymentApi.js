@@ -1,5 +1,5 @@
 import { encodePayload } from "@/utils/payloadEncoding";
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
+import { hasBackendOrigin, resolveBackendOrigin } from "@/utils/backendOrigin";
 
 /**
  * Payment-gateway endpoints, confirmed from ClientCommonPaymentController.java.
@@ -9,7 +9,7 @@ const SCHOOL_ID = process.env.NEXT_PUBLIC_SCHOOL_ID;
 
 function backendUrl(path) {
   const baseUrl = resolveBackendOrigin();
-  if (!baseUrl || !SCHOOL_ID) {
+  if (!hasBackendOrigin() || !SCHOOL_ID) {
     throw new Error(
       "NEXT_PUBLIC_BACKEND_BASE_URL and NEXT_PUBLIC_SCHOOL_ID must be set (see .env.local.example)"
     );

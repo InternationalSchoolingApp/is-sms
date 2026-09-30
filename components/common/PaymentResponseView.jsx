@@ -430,7 +430,7 @@ function buildRedirectHref(redirectTo) {
 
 function resolveBackendOriginSafe() {
   const useLocalProxy = process.env.NEXT_PUBLIC_USE_LOCAL_PROXY === "true";
-  if (useLocalProxy) return "/backend";
+  if (useLocalProxy) return "";
   return process.env.NEXT_PUBLIC_BACKEND_BASE_URL || "";
 }
 

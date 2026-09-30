@@ -1,5 +1,5 @@
 /**
- * Local-dev reverse proxy: forwards /backend/* to the real Spring Boot
+ * Local-dev reverse proxy: forwards unmatched paths to the real Spring Boot
  * origin so the browser sees Next.js and the backend as the SAME origin
  * (no CORS, and — critically — the same session cookie for both the
  * captcha image and the JSON API calls that validate it).
@@ -24,13 +24,28 @@ const nextConfig = {
   allowedDevOrigins: ["192.168.1.39"],
   async rewrites() {
     const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
-    if (!backendBaseUrl) return [];
-    return [
-      {
-        source: "/backend/:path*",
-        destination: `${backendBaseUrl}/:path*`,
-      },
-    ];
+    if (!backendBaseUrl || process.env.NEXT_PUBLIC_USE_LOCAL_PROXY !== "true") return [];
+    return {
+      afterFiles: [
+        { source: "/api/v1/:path*", destination: `${backendBaseUrl}/api/v1/:path*` },
+        { source: "/:schoolId/api/:path*", destination: `${backendBaseUrl}/:schoolId/api/:path*` },
+        { source: "/:schoolId/common/:path*", destination: `${backendBaseUrl}/:schoolId/common/:path*` },
+        { source: "/:schoolId/student/enrollment/:path*", destination: `${backendBaseUrl}/:schoolId/student/enrollment/:path*` },
+        { source: "/:schoolId/student/submit-application", destination: `${backendBaseUrl}/:schoolId/student/submit-application` },
+        { source: "/:schoolId/student/proceed-to-dashboard", destination: `${backendBaseUrl}/:schoolId/student/proceed-to-dashboard` },
+        { source: "/:schoolId/student/recommended-courses", destination: `${backendBaseUrl}/:schoolId/student/recommended-courses` },
+        { source: "/:schoolId/dashboard/:path*", destination: `${backendBaseUrl}/:schoolId/dashboard/:path*` },
+        { source: "/:schoolId/create-checkout-session/:path*", destination: `${backendBaseUrl}/:schoolId/create-checkout-session/:path*` },
+        { source: "/:schoolId/create-checkout-intent/:path*", destination: `${backendBaseUrl}/:schoolId/create-checkout-intent/:path*` },
+        { source: "/student/enrollment/:path*", destination: `${backendBaseUrl}/student/enrollment/:path*` },
+      ],
+      fallback: [
+        {
+          source: "/:path*",
+          destination: `${backendBaseUrl}/:path*`,
+        },
+      ],
+    };
   },
 };
 
