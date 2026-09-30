@@ -42,5 +42,6 @@ export function GlobalLoader() {
     return () => clearTimeout(timer);
   }, [active, visible]);
 
-  return visible ? <FullScreenLoader /> : null;
+  const isPaymentResponsePage = pathname?.includes("/payment-response-");
+  return visible && !isPaymentResponsePage ? <FullScreenLoader /> : null;
 }

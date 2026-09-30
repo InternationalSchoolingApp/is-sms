@@ -2,8 +2,8 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { CheckCircle2, Clock, XCircle } from "lucide-react";
-import { Loader } from "@/components/common/Loader";
+import Link from "next/link";
+import { CheckCircle2, Clock, LoaderCircle, XCircle } from "lucide-react";
 import { getPaymentResponseSuccess, getPaymentResponseFailure } from "@/services/paymentResponseApi";
 
 /**
@@ -23,9 +23,8 @@ import { getPaymentResponseSuccess, getPaymentResponseFailure } from "@/services
  *  3. On Success with showReloadOption "Y", a 5s countdown auto-redirects to
  *     returnUrl (mirrors the JSP's page-redirect-counter), with a manual link.
  *
- * schoolUUID comes from the {schoolId} path segment. In this app the common
- * routes are mounted WITHOUT a schoolId segment, so the slug falls back to
- * NEXT_PUBLIC_SCHOOL_ID — same single-school default the rest of the app uses.
+ * The school UUID comes from a schoolId path/query parameter when supplied,
+ * then falls back to NEXT_PUBLIC_SCHOOL_ID for the common callback routes.
  */
 export function PaymentResponseView({ endpointPath, mode = "success" }) {
   return (
@@ -39,7 +38,6 @@ function PaymentResponseContent({ endpointPath, mode }) {
   const params = useParams();
   const searchParams = useSearchParams();
 
-  const schoolUUID = params.schoolId || process.env.NEXT_PUBLIC_SCHOOL_ID;
   const customReference = params.customReference;
   const uniqueUuid = params.UNIQUEUUID;
 
@@ -47,36 +45,37 @@ function PaymentResponseContent({ endpointPath, mode }) {
   const [data, setData] = useState(null);
   const [failed, setFailed] = useState(false);
 
-  // Snapshot the query params once (object) so the fetch effect doesn't
-  // re-run on every render just because searchParams is a new instance.
-  const query = useMemo(() => {
-    const obj = {};
-    for (const [k, v] of searchParams.entries()) obj[k] = v;
-    return obj;
-  }, [searchParams]);
+  const search = searchParams.toString();
+  // Keep a stable snapshot so unrelated renders don't issue another payment lookup.
+  const query = useMemo(() => new URLSearchParams(search), [search]);
+  const schoolUUID =
+    params.schoolId ||
+    query.get("schoolUUID") ||
+    process.env.NEXT_PUBLIC_SCHOOL_ID;
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    const requestTimer = window.setTimeout(() => {
+      setLoading(true);
+      const request =
+        mode === "failure"
+          ? getPaymentResponseFailure(schoolUUID, customReference, uniqueUuid, query)
+          : getPaymentResponseSuccess(schoolUUID, endpointPath, query);
 
-    const request =
-      mode === "failure"
-        ? getPaymentResponseFailure(schoolUUID, customReference, uniqueUuid, query)
-        : getPaymentResponseSuccess(schoolUUID, endpointPath, query);
-
-    request
-      .then((res) => {
-        if (cancelled) return;
-        if (!res) setFailed(true);
-        else setData(res);
-      })
-      .catch(() => !cancelled && setFailed(true))
-      .finally(() => !cancelled && setLoading(false));
+      request
+        .then((res) => {
+          if (cancelled) return;
+          if (!res) setFailed(true);
+          else setData(res);
+        })
+        .catch(() => !cancelled && setFailed(true))
+        .finally(() => !cancelled && setLoading(false));
+    }, 0);
 
     return () => {
       cancelled = true;
+      window.clearTimeout(requestTimer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, query]);
 
   if (loading) return <ProcessingLoader />;
@@ -98,7 +97,7 @@ function ProcessingLoader() {
   return (
     <PageShell>
       <div className="flex flex-col items-center gap-5 py-10 text-center">
-        <Loader />
+        <LoaderCircle className="size-12 animate-spin text-primary" aria-hidden="true" />
         <div>
           <h1 className="text-xl font-bold text-slate-800">Please wait…</h1>
           <p className="mt-1 text-sm text-slate-500">
@@ -317,7 +316,12 @@ function FailedCard({ data }) {
             <b>Fee Failed Reason:</b> {data.feeFailedReason}
           </p>
         )}
-        <ReturnButton data={data} label="Try again" />
+        <Link
+          href="/step/review-and-payment"
+          className="mt-6 inline-block rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
+        >
+          Try again
+        </Link>
       </div>
     </PageShell>
   );
