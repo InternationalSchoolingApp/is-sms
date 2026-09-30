@@ -197,28 +197,28 @@ function SuccessCard({ data }) {
   return (
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
-        <StatusIcon variant="success" />
-        <h2 className="mt-4 text-2xl font-extrabold text-slate-900">Thank You!</h2>
-        <h3 className="mt-1 text-lg font-bold text-emerald-600">{successTitle(data)}</h3>
+        <h2 className="text-2xl font-extrabold tracking-tight text-emerald-600 sm:text-3xl">
+          {successTitle(data)}!
+        </h2>
 
-        {data.userName && <p className="mt-4 font-semibold text-slate-800">Dear {data.userName},</p>}
+        {data.userName && <p className="mt-4 text-base font-bold text-slate-900">Dear, {data.userName}</p>}
         {data.displaySchoolName && (
-          <p className="mt-1 text-sm text-slate-600">Thank you for choosing {data.displaySchoolName}!</p>
+          <p className="mt-3 text-sm font-semibold text-slate-700">Thank you for choosing {data.displaySchoolName}!</p>
         )}
 
-        <div className="mt-4 space-y-2 text-sm leading-relaxed text-slate-600">
+        <div className="mt-5 space-y-2 rounded-2xl bg-emerald-50/80 px-5 py-4 text-sm leading-relaxed text-slate-700 ring-1 ring-emerald-100">
           <SuccessBody data={data} />
         </div>
 
         <ReceiptButtons data={data} />
 
         {showReload && returnUrl && !redirected && (
-          <div className="mt-6 rounded-2xl bg-primary/5 px-4 py-5">
-            <p className="text-sm font-semibold text-slate-700">
-              Please wait… taking you to your dashboard in
-            </p>
-            <p className="mt-2 text-4xl font-extrabold text-primary tabular-nums">{countdown}</p>
-            <div className="mx-auto mt-3 h-9 w-9 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+          <div className="mt-5 flex items-center justify-center gap-4 rounded-2xl bg-blue-50 px-5 py-4 text-left ring-1 ring-blue-100">
+            <CircularCountdown value={countdown} />
+            <div>
+              <p className="text-base font-bold text-primary">Please wait...</p>
+              <p className="mt-1 text-xs leading-5 text-slate-700">We are taking you to your dashboard in a moment.</p>
+            </div>
           </div>
         )}
 
@@ -300,25 +300,27 @@ function FailedCard({ data }) {
   return (
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
-        <StatusIcon variant="failed" />
-        <h2 className="mt-4 text-2xl font-extrabold text-slate-900">Oops!</h2>
-        {data.failedTitle && <h3 className="mt-1 text-lg font-bold text-red-600">{data.failedTitle}</h3>}
-        {data.userName && <p className="mt-3 font-semibold text-primary">Dear {data.userName},</p>}
+        <h2 className="text-2xl font-extrabold tracking-tight text-rose-600 sm:text-3xl">
+          {data.failedTitle || "Payment Unsuccessful"}
+        </h2>
+        {data.userName && <p className="mt-4 text-base font-bold text-slate-900">Dear, {data.userName}</p>}
         {data.displaySchoolName && (
-          <p className="mt-1 text-sm italic text-slate-600">Greetings from {data.displaySchoolName}!</p>
+          <p className="mt-3 text-sm font-semibold text-slate-700">Greetings from {data.displaySchoolName}</p>
         )}
-        <p className="mt-4 text-sm leading-relaxed text-slate-600">
-          We believe you were trying to complete a transaction with us, but due to an issue we have not received your
-          payment. Kindly contact us at <ContactEmail email={data.contactEmail} /> if we can help.
-        </p>
-        {data.feeFailedReason && (
-          <p className="mt-3 text-sm text-slate-700">
-            <b>Fee Failed Reason:</b> {data.feeFailedReason}
+        <div className="mt-5 space-y-2 rounded-2xl bg-rose-50/80 px-5 py-4 text-sm leading-relaxed text-slate-700 ring-1 ring-rose-100">
+          {data.paymentName && (
+            <p className="font-semibold text-slate-900">
+              {data.paymentName}{data.payAmount ? ` · ${data.payAmount}` : ""}
+            </p>
+          )}
+          <p>
+            We couldn’t confirm your payment. Please try again, or contact <ContactEmail email={data.contactEmail} /> for help.
           </p>
-        )}
+          {data.feeFailedReason && <p className="font-medium text-rose-700">{data.feeFailedReason}</p>}
+        </div>
         <Link
           href="/step/review-and-payment"
-          className="mt-6 inline-block rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
+          className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-7 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           Try again
         </Link>
@@ -414,6 +416,32 @@ function StatusIcon({ variant }) {
   return (
     <div className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full ${ring}`}>
       <Icon className="h-11 w-11" strokeWidth={1.75} />
+    </div>
+  );
+}
+
+function CircularCountdown({ value }) {
+  const circumference = 2 * Math.PI * 18;
+  const progress = ((5 - value) / 5) * circumference;
+
+  return (
+    <div className="relative flex size-12 shrink-0 items-center justify-center" aria-label={`${value} seconds remaining`}>
+      <svg viewBox="0 0 44 44" className="absolute inset-0 -rotate-90" aria-hidden="true">
+        <circle cx="22" cy="22" r="18" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-blue-100" />
+        <circle
+          cx="22"
+          cy="22"
+          r="18"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={progress}
+          className="text-blue-400 transition-[stroke-dashoffset] duration-500"
+        />
+      </svg>
+      <span className="text-sm font-semibold tabular-nums text-blue-700">{value}</span>
     </div>
   );
 }
