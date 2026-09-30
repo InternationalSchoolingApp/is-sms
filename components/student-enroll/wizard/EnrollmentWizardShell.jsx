@@ -24,7 +24,7 @@ const STEPS = [
   { key: "review_and_payment", label: "Review and Payment", icon: CreditCard },
 ];
 
-export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentStepKey, onLogout, children }) {
+export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentStepKey, onLogout, plain = false, children }) {
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const currentIndex = STEPS.findIndex((step) => step.key === currentStepKey);
@@ -70,9 +70,14 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
 
         <StepRow currentIndex={currentIndex} />
 
-        <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
-          {children}
-        </div>
+        {plain ? (
+          // Review & payment lays its own white cards directly on the page background.
+          <div className="mx-auto mt-8 max-w-[1310px]">{children}</div>
+        ) : (
+          <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
+            {children}
+          </div>
+        )}
       </div>
     </div>
   );

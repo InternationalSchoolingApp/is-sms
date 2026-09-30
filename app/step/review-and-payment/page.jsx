@@ -35,6 +35,7 @@ export default function StudentEnrollmentStep4() {
       schoolName={context.schoolName}
       logoUrl={logoUrl}
       currentStepKey="review_and_payment"
+      plain
       onLogout={() => logoutEverywhere(session)}
     >
       <Stage4ReviewPayment

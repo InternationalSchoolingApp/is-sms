@@ -2,11 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { BiSolidBookAdd, BiSolidUserDetail } from "react-icons/bi";
+import { FaNotesMedical } from "react-icons/fa6";
+import { IoMdPeople } from "react-icons/io";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/student-enroll/ConfirmDialog";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
-import { CustomPlanTable, FeePaymentPlans } from "@/components/student-enroll/FeePaymentPlans";
+import { CustomPlanTable, FeePaymentPlans, FeeSummaryCard } from "@/components/student-enroll/FeePaymentPlans";
 import { InfoModal } from "@/components/student-enroll/InfoModal";
 import { ParentInlineEdit, StudentInlineEdit } from "@/components/student-enroll/ReviewInlineEdit";
 import { Stage3CourseSelection } from "@/components/student-enroll/Stage3CourseSelection";
@@ -42,19 +45,7 @@ import {
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import { isDummyStudentMode, showDummyStripeCheckoutPage } from "@/utils/paymentGatewayChecks";
 
-const SECTION_CLASS = "overflow-hidden rounded-xl border border-slate-200 bg-white";
-
-/** Card shell for a section while it is being edited in place (no Edit button; the form has its own Save/Cancel). */
-function EditingSection({ title, children }) {
-  return (
-    <section className={SECTION_CLASS}>
-      <header className="bg-primary px-4 py-3 text-white">
-        <h2 className="text-sm font-semibold">{title}</h2>
-      </header>
-      <div className="px-4 py-5">{children}</div>
-    </section>
-  );
-}
+const ROW_CLASS = "overflow-hidden rounded-lg border border-slate-200 bg-white";
 
 /**
  * Accordion header — legacy `<h4 class="a-title">` with an Edit button
@@ -62,7 +53,7 @@ function EditingSection({ title, children }) {
  * section, like the old `.accordion .a-title` click handler; Edit stops the
  * click bubbling so it doesn't also toggle.
  */
-function SectionHeader({ title, open, onToggle, onEdit }) {
+function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
   return (
     <header
       role="button"
@@ -75,15 +66,30 @@ function SectionHeader({ title, open, onToggle, onEdit }) {
           onToggle();
         }
       }}
-      className="flex cursor-pointer items-center justify-between gap-3 bg-primary px-4 py-3 text-white"
+      className="flex cursor-pointer items-center justify-between gap-3 px-3 py-3"
     >
-      <h2 className="text-sm font-semibold">{title}</h2>
+      <div className="flex items-center gap-4">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+          <Icon className="h-6 w-6" aria-hidden="true" />
+        </span>
+        <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+      </div>
       <div className="flex gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          className="border-primary px-3 font-semibold text-primary hover:bg-primary/5 hover:text-primary"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
+        >
+          Review
+        </Button>
         {onEdit && (
           <Button
             type="button"
-            size="sm"
-            variant="secondary"
+            className="px-3 font-semibold"
             onClick={(e) => {
               e.stopPropagation();
               onEdit();
@@ -92,17 +98,6 @@ function SectionHeader({ title, open, onToggle, onEdit }) {
             Edit
           </Button>
         )}
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggle();
-          }}
-        >
-          Review
-        </Button>
       </div>
     </header>
   );
@@ -157,6 +152,7 @@ function buildPlanOptions(fee) {
         ? `Pay ${fee.oneTimePayment.paymentMode} & save ${fee.oneTimePayment.paymentOptionDiscountString}`
         : `Pay ${fee.oneTimePayment.paymentMode}`,
       amount: fee.oneTimePayment.payableFeeString,
+      badge: discount ? "Best Value" : undefined,
     });
   }
   if (fee.monthlyFeeDetails) {
@@ -308,16 +304,13 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
     return openOverride === undefined ? (showPaymentOption === "N" ? "course" : null) : openOverride;
   }
 
-  // Review button / header click. Toggling a section that is mid-edit discards
-  // the edit without saving (finishReviewEdit() in legacy), then collapses it.
+  // Review button / header click: expand or collapse the read-only details.
   function toggleSection(type) {
-    if (editing === type) setEditing(null);
     setOpenOverride(openSectionFor() === type ? null : type);
   }
 
   function startEdit(type) {
     setEditing(type);
-    setOpenOverride(type);
   }
 
   function finishEdit(type, fields) {
@@ -490,7 +483,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       paymentGateway: gateway.name,
       initiateVia: window.location.href.includes("fee-receipt") ? "Link" : "",
       backUrl: window.location.href,
-      applyingFrom: "next_js",
+      applyingFrom: "nextjs",
     };
     // Pay Now: the payment modal stays open (legacy leaves #paymentOptionsModal up) while the
     // browser goes to the gateway; it is only closed if the launch fails.
@@ -602,20 +595,10 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
     }
   }
 
-  const header = (
-    <>
-      <h1 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Review and payment</h1>
-      <p className="mt-2 max-w-2xl text-sm text-slate-500">
-        Step 4 of 4. Kindly review your details {showPaymentOption === "Y" ? "and choose a payment plan" : ""}.
-      </p>
-    </>
-  );
-
   if (reviewQuery.isLoading) {
     return (
       <div>
-        {header}
-        <p className="mt-8 text-sm text-slate-500">Loading your details…</p>
+        <p className="text-sm text-slate-500">Loading your details…</p>
       </div>
     );
   }
@@ -627,8 +610,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         : failure?.message || "Could not load your review details.";
     return (
       <div>
-        {header}
-        <p className="mt-8 text-sm font-semibold text-red-600">{message}</p>
+        <p className="text-sm font-semibold text-red-600">{message}</p>
         {failure?.statusCode !== STATUS_REDIRECT_TO_DASHBOARD && failure?.statusCode !== STATUS_ELIGIBLE_CUSTOM_PLAN && (
           <div className="mt-6 flex gap-3">
             {onBack && (
@@ -652,10 +634,10 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
   const hideCredits = hidesCourseCredits(course?.standardId);
   const paymentPending = showPaymentOption === "Y";
 
+  const showFee = paymentPending && fee;
+
   return (
     <div>
-      {header}
-
       {notice && (
         <p
           role={notice.tone === "error" ? "alert" : "status"}
@@ -665,8 +647,15 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         </p>
       )}
 
-      <div className={`mt-6 space-y-4 ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
-        {editing === "student" ? (
+      <div
+        className={`mt-6 grid gap-x-8 gap-y-8 ${
+          showFee ? "lg:grid-cols-[555fr_723fr]" : "mx-auto max-w-2xl"
+        } ${busy ? "opacity-60" : ""}`}
+        aria-busy={busy}
+      >
+        <div className="space-y-3">
+        <h2 className="text-lg font-semibold text-slate-900">Kindly Review your details</h2>
+        {editing === "student" && (
           <StudentInlineEdit
             context={context}
             userId={userId}
@@ -674,19 +663,19 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
             gradeName={course?.standardName}
             onSaved={(fields) => finishEdit("student", fields)}
             onCancel={() => setEditing(null)}
-            onReview={() => toggleSection("student")}
             onSessionExpired={onSessionExpired}
           />
-        ) : (
-        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        )}
+        <section className={ROW_CLASS}>
           <SectionHeader
             title="Student Details"
+            icon={BiSolidUserDetail}
             open={openSectionFor() === "student"}
             onToggle={() => toggleSection("student")}
             onEdit={data.customPaymentEnabled ? undefined : () => startEdit("student")}
           />
           {openSectionFor() === "student" && (
-          <dl className="divide-y divide-slate-100 px-4 py-2 text-sm">
+          <dl className="divide-y divide-slate-100 border-t border-slate-100 px-4 py-2 text-sm">
             <div className="flex justify-between py-2"><dt className="text-slate-500">Name</dt><dd className="font-medium text-slate-900">{fullName(student)}</dd></div>
             {course?.standardName && (
               <div className="flex justify-between py-2"><dt className="text-slate-500">Grade</dt><dd className="font-medium text-slate-900">{course.standardName}</dd></div>
@@ -700,28 +689,27 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
           </dl>
           )}
         </section>
-        )}
 
-        {editing === "parent" ? (
+        {editing === "parent" && (
           <ParentInlineEdit
             context={context}
             userId={userId}
             parent={parent}
             onSaved={(fields) => finishEdit("parent", fields)}
             onCancel={() => setEditing(null)}
-            onReview={() => toggleSection("parent")}
             onSessionExpired={onSessionExpired}
           />
-        ) : (
-        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        )}
+        <section className={ROW_CLASS}>
           <SectionHeader
             title="Parent/Guardian Details"
+            icon={IoMdPeople}
             open={openSectionFor() === "parent"}
             onToggle={() => toggleSection("parent")}
             onEdit={data.customPaymentEnabled ? undefined : () => startEdit("parent")}
           />
           {openSectionFor() === "parent" && (
-          <dl className="divide-y divide-slate-100 px-4 py-2 text-sm">
+          <dl className="divide-y divide-slate-100 border-t border-slate-100 px-4 py-2 text-sm">
             {parent?.workingProfessionName ? (
               <>
                 <div className="flex justify-between py-2"><dt className="text-slate-500">Student or a working professional</dt><dd className="font-medium text-slate-900">{parent.workingProfessionName}</dd></div>
@@ -743,30 +731,35 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
           </dl>
           )}
         </section>
-        )}
 
-        {editing === "course" ? (
-          <EditingSection title="Edit Selected Courses">
-          <Stage3CourseSelection
-            context={context}
-            userId={userId}
-            inReview
-            standardId={course?.standardId ? String(course.standardId) : null}
-            onNext={() => finishEdit("course")}
-            onBack={() => setEditing(null)}
-            onSessionExpired={onSessionExpired}
-          />
-          </EditingSection>
-        ) : (
-        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        {editing === "course" && (
+          <Dialog open onOpenChange={(open) => !open && setEditing(null)}>
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl">
+              <DialogHeader>
+                <DialogTitle className="text-lg font-semibold text-slate-900">Edit Selected Courses</DialogTitle>
+              </DialogHeader>
+              <Stage3CourseSelection
+                context={context}
+                userId={userId}
+                inReview
+                standardId={course?.standardId ? String(course.standardId) : null}
+                onNext={() => finishEdit("course")}
+                onBack={() => setEditing(null)}
+                onSessionExpired={onSessionExpired}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
+        <section className={ROW_CLASS}>
           <SectionHeader
             title="Selected Courses"
+            icon={FaNotesMedical}
             open={openSectionFor() === "course"}
             onToggle={() => toggleSection("course")}
             onEdit={data.customPaymentEnabled ? undefined : () => startEdit("course")}
           />
           {openSectionFor() === "course" && (
-          <div className="px-4 py-3">
+          <div className="border-t border-slate-100 px-4 py-3">
             <h3 className="mb-2 text-sm font-semibold text-slate-900">{course?.standardName}</h3>
             <table className="w-full text-sm">
               <thead>
@@ -795,16 +788,19 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
           </div>
           )}
         </section>
-        )}
 
-        {paymentPending && fee && editing !== "course" && (
-          <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-            <header className="bg-primary px-4 py-3 text-white">
-              <h2 className="text-sm font-semibold">{data.feeSetionTitile || "Fee Payment"}</h2>
-            </header>
-            <div className="px-4 py-4 text-sm">
+        </div>
+
+        {showFee && (
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">
+              {data.customPaymentEnabled ? data.feeSetionTitile || "Fee Payment" : "Choose Payment Option"}
+            </h2>
+            <div className="mt-3">
               {data.customPaymentEnabled ? (
-                <CustomPlanTable fee={fee} />
+                <FeeSummaryCard>
+                  <CustomPlanTable fee={fee} />
+                </FeeSummaryCard>
               ) : (
                 <FeePaymentPlans
                   fee={fee}
@@ -817,24 +813,30 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
                 />
               )}
             </div>
-          </section>
+          </div>
         )}
       </div>
 
-      <div className="mt-10 flex flex-col-reverse items-center justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row">
+      <div className="mt-8 flex items-center justify-center gap-3">
         {onBack && (
-          <Button type="button" variant="outline" onClick={() => onBack(3)} disabled={busy || !!editing}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onBack(3)}
+            disabled={busy || !!editing}
+            className="border-primary px-4 font-semibold text-primary hover:bg-primary/5 hover:text-primary"
+          >
             Back
           </Button>
         )}
         {paymentOption.isLoading ? (
           <p className="text-sm text-slate-500">Loading…</p>
         ) : paymentPending && paymentUnderReview ? null : paymentPending ? (
-          <Button type="button" onClick={confirmAndPay} disabled={busy || !!editing} className="rounded-md bg-primary px-6 hover:bg-primary/90">
-            {busy ? "Please wait…" : "Confirm & Pay"}
+          <Button type="button" onClick={confirmAndPay} disabled={busy || !!editing} className="rounded-md bg-primary px-4 font-semibold hover:bg-primary/90">
+            {busy ? "Please wait…" : "Final Step"}
           </Button>
         ) : (
-          <Button type="button" onClick={() => setConfirmSubmit(true)} disabled={busy || !!editing} className="rounded-md bg-primary px-6 hover:bg-primary/90">
+          <Button type="button" onClick={() => setConfirmSubmit(true)} disabled={busy || !!editing} className="rounded-md bg-primary px-4 font-semibold hover:bg-primary/90">
             {busy ? "Please wait…" : "Submit Application"}
           </Button>
         )}

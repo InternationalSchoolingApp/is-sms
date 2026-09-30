@@ -1,5 +1,7 @@
 "use client";
 
+import { ReceiptText } from "lucide-react";
+
 /**
  * "Selected Fee Plan" block of the review screen — port of
  * getPaymentSelectionBodyContent() (and its table builders
@@ -13,9 +15,20 @@
  * `feeAlreayPaid`).
  */
 
-const TH = "border border-slate-200 px-3 py-2 text-left text-sm font-semibold";
-const TD = "border border-slate-200 px-3 py-2 align-top text-sm";
+const TH = "px-4 py-3 text-xs font-bold text-slate-900";
+const TD = "border-t border-slate-100 px-4 py-3 align-top text-xs text-slate-800";
 const RIGHT = "text-right";
+
+// The backend sends labels like "1<sup>st</sup> month fee"; render the <sup> as real superscript
+// without injecting the string as HTML.
+function SupText({ children }) {
+  return String(children ?? "")
+    .split(/(<sup>.*?<\/sup>)/gi)
+    .map((part, index) => {
+      const match = part.match(/^<sup>(.*?)<\/sup>$/i);
+      return match ? <sup key={index}>{match[1]}</sup> : part;
+    });
+}
 
 function money(currency, amount) {
   return `${currency}${Number(amount).toFixed(2)}`;
@@ -27,22 +40,35 @@ function currencyOf(fee) {
   return match ? match[0].trim() : "";
 }
 
-function FeeTable({ children, wide }) {
+// The bordered card around every fee table ("Fee Summary" in the design), note included.
+export function FeeSummaryCard({ children }) {
   return (
-    <div className="overflow-x-auto">
+    <section className="mt-5 rounded-xl border border-slate-200 bg-white px-7 py-6">
+      <h3 className="flex items-center gap-3 text-lg font-semibold text-slate-900">
+        <ReceiptText className="h-6 w-6 text-primary" aria-hidden="true" /> Fee Summary
+      </h3>
+      <div className="mt-4">{children}</div>
+      <p className="mt-4 text-center text-xs font-medium text-slate-800">
+        Note: All fees mentioned above are in US Dollars
+      </p>
+    </section>
+  );
+}
+
+function FeeTable({ children }) {
+  return (
+    <div className="overflow-hidden rounded-lg border border-slate-200">
       <table className="w-full border-collapse bg-white">
-        {wide && (
-          <colgroup>
-            <col style={{ width: "60%" }} />
-            <col style={{ width: "20%" }} />
-            <col style={{ width: "20%" }} />
-          </colgroup>
-        )}
-        <thead className="bg-primary text-white">
+        <colgroup>
+          <col style={{ width: "58%" }} />
+          <col style={{ width: "21%" }} />
+          <col style={{ width: "21%" }} />
+        </colgroup>
+        <thead className="bg-slate-50">
           <tr>
-            <th className={TH}>Description</th>
-            <th className={`${TH} text-center`}>Fee</th>
-            <th className={`${TH} text-center`}>Total</th>
+            <th className={`${TH} text-left`}>Description</th>
+            <th className={`${TH} text-right`}>Fee (USD)</th>
+            <th className={`${TH} text-right`}>Total (USD)</th>
           </tr>
         </thead>
         <tbody>{children}</tbody>
@@ -53,7 +79,7 @@ function FeeTable({ children, wide }) {
 
 function PayableRow({ amount }) {
   return (
-    <tr className="bg-primary/10 font-bold">
+    <tr className="bg-slate-50 font-bold">
       <td className={TD}>Payable Fee</td>
       <td className={`${TD} ${RIGHT}`}>{amount}</td>
       <td className={`${TD} ${RIGHT}`}>{amount}</td>
@@ -68,16 +94,17 @@ function BreakdownRow({ title, totalLabel, details, sign }) {
     <tr>
       <td className={TD}>
         <span>{title}</span>
-        <ol className="my-1 ml-5 list-decimal text-xs text-slate-600">
+        <ol className="my-0.5 list-inside list-decimal">
           {(details.description || []).map((desc, index) => (
-            <li key={index}>{desc}</li>
+            <li key={index}>
+              <SupText>{desc}</SupText>
+            </li>
           ))}
         </ol>
-        <span>{totalLabel}</span>
+        <span className="font-bold">{totalLabel}</span>
       </td>
-      <td className={`${TD} ${RIGHT}`}>
-        <div>&nbsp;</div>
-        <ul className="my-1 text-xs">
+      <td className={`${TD} ${RIGHT}`} style={{ verticalAlign: "bottom" }}>
+        <ul className="my-0.5">
           {(details.entityFees || []).map((amount, index) => (
             <li key={index}>
               {sign} {amount}
@@ -85,7 +112,7 @@ function BreakdownRow({ title, totalLabel, details, sign }) {
           ))}
         </ul>
       </td>
-      <td className={`${TD} ${RIGHT} align-bottom`}>
+      <td className={`${TD} ${RIGHT}`} style={{ verticalAlign: "bottom" }}>
         {sign} {details.totalEntityFeeString}
       </td>
     </tr>
@@ -155,13 +182,13 @@ function InstallmentTables({ fee, standardId, isFlexOrDual }) {
     monthly.youSave?.description?.length > 0 || fee.courseExtraFeeDetails?.totalEntityFee > 0 || fee.feeAlreayPaid?.totalEntityFee > 0;
   return (
     <>
-      <FeeTable wide>
+      <FeeTable>
         <CommonRows fee={fee} standardId={standardId} isFlexOrDual={isFlexOrDual} />
         <DiscountRow youSave={monthly.youSave} />
         {showPayable && <PayableRow amount={monthly.payableFeeString} />}
       </FeeTable>
-      <div className="mt-4">
-        <h3 className="bg-slate-700 px-4 py-2 text-left text-base font-semibold tracking-wide text-white">FEE SCHEDULE</h3>
+      <div className="mt-4 overflow-hidden rounded-lg border border-slate-200">
+        <h3 className="bg-slate-50 px-4 py-3 text-left text-xs font-bold tracking-wide text-slate-900">FEE SCHEDULE</h3>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse bg-white">
             <colgroup>
@@ -172,7 +199,9 @@ function InstallmentTables({ fee, standardId, isFlexOrDual }) {
             <tbody>
               {(monthly.monthlyFees || []).map((monthlyFee, index) => (
                 <tr key={index}>
-                  <td className={TD}>{monthlyFee.paymentLabel}</td>
+                  <td className={TD}>
+                    <SupText>{monthlyFee.paymentLabel}</SupText>
+                  </td>
                   <td className={`${TD} ${RIGHT} font-bold`}>{monthlyFee.amountString}</td>
                   <td className={`${TD} ${RIGHT} font-bold`}>{index === 0 ? monthlyFee.amountString : ""}</td>
                 </tr>
@@ -192,7 +221,7 @@ function RegistrationTable({ fee }) {
       <FeeTable>
         <PayableRow amount={fee.enrollmentFee.enrollmentFeeString} />
       </FeeTable>
-      <p className="p-2 text-sm">
+      <p className="p-2 text-xs">
         Reserve an Enrollment Seat Fee of&nbsp;<b>{fee.enrollmentFee.enrollmentFeeString}</b>&nbsp;is non-refundable.
       </p>
     </>
@@ -204,11 +233,11 @@ export function CustomPlanTable({ fee }) {
   const details = fee?.paymentCalculationResponse?.paymentDetails;
   if (!details) return null;
   return (
-    <FeeTable wide>
+    <FeeTable>
       {(details.schedulePayments || []).map((payment, index) => (
         <tr key={index}>
           <td className={TD}>
-            {payment.paymentTitle} {index === 0 ? " (to be paid at the time of enrollment)" : ""}
+            <SupText>{payment.paymentTitle}</SupText> {index === 0 ? " (to be paid at the time of enrollment)" : ""}
           </td>
           <td className={`${TD} ${RIGHT}`}>{payment.payAmountString}</td>
           <td className={`${TD} ${RIGHT}`}>{payment.payAmountString}</td>
@@ -223,42 +252,41 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, disabled, st
   const active = options.find((option) => option.key === selected);
   return (
     <div>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {options.map((option) => {
           const checked = option.key === selected;
           return (
             <label
               key={option.key}
-              className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors ${
-                checked ? "border-primary bg-primary text-white shadow-md" : "border-slate-200 bg-white text-primary hover:border-primary/50"
+              className={`relative flex cursor-pointer flex-col justify-center rounded-xl border px-6 py-4 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40 ${
+                checked ? "border-primary bg-primary/10" : "border-slate-200 bg-white hover:border-primary/50"
               } ${disabled ? "cursor-not-allowed opacity-70" : ""}`}
             >
               <input
                 type="radio"
                 name="payModeCheckboxes"
-                className="h-4 w-4 accent-green-500"
+                className="sr-only"
                 checked={checked}
                 onChange={() => onSelect(option.key)}
                 disabled={disabled}
               />
-              <span className="leading-snug">
-                <b className="block text-sm">{option.label}</b>
-                <span className="block text-xl font-bold">{option.amount}</span>
+              <span className="text-sm text-slate-700">{option.label}</span>
+              <span className="mt-1 flex items-center gap-2">
+                <span className="text-2xl font-bold leading-tight text-slate-900">{option.amount}</span>
+                {option.badge && (
+                  <span className="rounded bg-yellow-300 px-2 py-0.5 text-xs font-semibold text-slate-900">{option.badge}</span>
+                )}
               </span>
             </label>
           );
         })}
       </div>
 
-      <div className="mt-4">
+      <FeeSummaryCard>
         {active?.kind === "registration" && <RegistrationTable fee={fee} />}
         {active?.kind === "annual" && <AnnualTable fee={fee} standardId={standardId} isFlexOrDual={isFlexOrDual} />}
         {active?.kind === "monthly" && <InstallmentTables fee={fee} standardId={standardId} isFlexOrDual={isFlexOrDual} />}
-      </div>
-
-      <p className="mt-3 text-center text-xs font-bold">
-        <b>Note:</b> All fees mentioned above are in US Dollars
-      </p>
+      </FeeSummaryCard>
     </div>
   );
 }

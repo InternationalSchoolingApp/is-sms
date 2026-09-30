@@ -18,11 +18,11 @@ export function LogoutConfirmDialog({ open, busy, onConfirm, onCancel }) {
             Are you sure you want to Log out?
           </DialogTitle>
           <div className="flex items-center justify-center gap-2">
-            <Button type="button" onClick={onConfirm} disabled={busy} className="min-w-20">
-              {busy ? "Logging out…" : "Yes"}
-            </Button>
             <Button type="button" variant="outline" onClick={onCancel} disabled={busy} className="min-w-20">
               No
+            </Button>
+            <Button type="button" onClick={onConfirm} disabled={busy} className="min-w-20">
+              {busy ? "Logging out…" : "Yes"}
             </Button>
           </div>
         </div>

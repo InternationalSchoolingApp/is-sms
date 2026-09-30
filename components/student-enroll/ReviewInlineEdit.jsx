@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
@@ -26,10 +27,10 @@ const GENERIC_ERROR = "Something went wrong. Please check your connection and tr
 const STATUS_SESSION_OUT = "3";
 
 /**
- * In-place editing for the review screen's Student / Parent sections —
+ * Edit popups for the review screen's Student / Parent sections —
  * openReviewInlineEdit() / saveReviewInlineEdit() in signupStudentContent.js.
- * Same table, same rows: each value cell turns into its input, and the
- * header's Edit button is replaced by Save / Cancel. Nothing navigates.
+ * Same rows, each value as an input inside a dialog with Cancel / Save; a
+ * successful Save closes the dialog. Nothing navigates.
  *
  * Save re-runs the step's own validation and save endpoint
  * (save-student-details / save-parent-details) via the same hooks Steps 1
@@ -66,27 +67,31 @@ function LockedValue({ children }) {
   return <p className="pt-2 font-medium text-slate-900">{children}</p>;
 }
 
-function EditCard({ title, saving, onSave, onCancel, onReview, formError, children }) {
+function EditCard({ title, saving, onSave, onCancel, formError, children }) {
   return (
-    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-      <header className="flex items-center justify-between gap-3 bg-primary px-4 py-3 text-white">
-        <h2 className="text-sm font-semibold">{title}</h2>
-        <div className="flex gap-2">
-          <Button type="button" size="sm" variant="secondary" onClick={onCancel} disabled={saving}>
+    <Dialog open onOpenChange={(open) => !open && !saving && onCancel()}>
+      <DialogContent showCloseButton={!saving} className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+        <DialogHeader className="border-b border-slate-100 pb-3">
+          <DialogTitle className="text-lg font-semibold text-slate-900">Edit {title}</DialogTitle>
+        </DialogHeader>
+        <dl className="divide-y divide-slate-100 text-sm">{children}</dl>
+        {formError && <p className="text-sm font-semibold text-red-600">{formError}</p>}
+        <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={saving}
+            className="border-primary px-4 font-semibold text-primary hover:bg-primary/5 hover:text-primary"
+          >
             Cancel
           </Button>
-          <Button type="button" size="sm" variant="secondary" onClick={onSave} disabled={saving}>
+          <Button type="button" onClick={onSave} disabled={saving} className="px-4 font-semibold">
             {saving ? "Saving…" : "Save"}
           </Button>
-          {/* Legacy keeps the Review button in the header while editing; it discards the edit and collapses. */}
-          <Button type="button" size="sm" variant="secondary" onClick={onReview} disabled={saving}>
-            Review
-          </Button>
         </div>
-      </header>
-      <dl className="divide-y divide-slate-100 px-4 py-2 text-sm">{children}</dl>
-      {formError && <p className="px-4 pb-3 text-sm font-semibold text-red-600">{formError}</p>}
-    </section>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -127,7 +132,7 @@ function useSaveOutcome({ context, onSessionExpired }) {
   return { formError, setFormError, outcome, modal };
 }
 
-export function StudentInlineEdit({ context, userId, student, gradeName, onSaved, onCancel, onReview, onSessionExpired }) {
+export function StudentInlineEdit({ context, userId, student, gradeName, onSaved, onCancel, onSessionExpired }) {
   const [initial] = useState(() => mapSignupStudentToFields(student));
   const [fields, setFields] = useState(initial);
   const [errors, setErrors] = useState({});
@@ -179,7 +184,7 @@ export function StudentInlineEdit({ context, userId, student, gradeName, onSaved
 
   return (
     <>
-      <EditCard title="Student Details" saving={signup.isPending} onSave={save} onCancel={onCancel} onReview={onReview} formError={formError}>
+      <EditCard title="Student Details" saving={signup.isPending} onSave={save} onCancel={onCancel} formError={formError}>
         <Row label="Name" error={errors.firstName || errors.lastName}>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             <TextCell value={fields.firstName} onChange={set("firstName")} error={errors.firstName} placeholder="First name" />
@@ -254,7 +259,7 @@ export function StudentInlineEdit({ context, userId, student, gradeName, onSaved
   );
 }
 
-export function ParentInlineEdit({ context, userId, parent, onSaved, onCancel, onReview, onSessionExpired }) {
+export function ParentInlineEdit({ context, userId, parent, onSaved, onCancel, onSessionExpired }) {
   const [initial] = useState(() => mapSignupParentToFields(parent));
   const [fields, setFields] = useState(initial);
   const [errors, setErrors] = useState({});
@@ -293,7 +298,7 @@ export function ParentInlineEdit({ context, userId, parent, onSaved, onCancel, o
 
   return (
     <>
-      <EditCard title="Parent/Guardian Details" saving={signup.isPending} onSave={save} onCancel={onCancel} onReview={onReview} formError={formError}>
+      <EditCard title="Parent/Guardian Details" saving={signup.isPending} onSave={save} onCancel={onCancel} formError={formError}>
         {isOneToOneFlex ? (
           <>
             <Row label="Student or a working professional" error={errors.workingProfession}>
