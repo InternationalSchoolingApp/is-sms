@@ -35,6 +35,7 @@ export default function StudentEnrollmentStep4() {
     <EnrollmentWizardShell
       schoolName={context.schoolName}
       logoUrl={logoUrl}
+      context={context}
       currentStepKey="review_and_payment"
       plain
       onLogout={() => logoutEverywhere(session)}

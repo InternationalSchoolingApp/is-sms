@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { Briefcase, Building2, BookOpen, Cake, GraduationCap, Globe, Mail, Map, MapPin, Phone as PhoneIcon, School, User, VenusAndMars } from "lucide-react";
+import { IoLogoWhatsapp } from "react-icons/io";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { PhoneNumberField } from "@/components/student-enroll/PhoneNumberField";
@@ -19,18 +22,19 @@ import {
   useStudentDetailsSignup,
 } from "@/hooks/useStudentDetailsSignup";
 import { mapSignupParentToFields, useParentDetailsSignup } from "@/hooks/useParentDetailsSignup";
-import { validateAge } from "@/utils/ageValidation";
+import { getDobPickerBounds, validateAge } from "@/utils/ageValidation";
 import { validateParentDetails, validateStudentDetails } from "@/utils/studentSignupValidation";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
 const STATUS_SESSION_OUT = "3";
+const GRID = "grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3";
 
 /**
  * Edit popups for the review screen's Student / Parent sections —
  * openReviewInlineEdit() / saveReviewInlineEdit() in signupStudentContent.js.
- * Same rows, each value as an input inside a dialog with Cancel / Save; a
- * successful Save closes the dialog. Nothing navigates.
+ * Same field layout as Steps 1 and 2 (floating-label fields in a 3-column grid) inside a dialog with
+ * a centred Save; a successful Save closes it. Nothing navigates.
  *
  * Save re-runs the step's own validation and save endpoint
  * (save-student-details / save-parent-details) via the same hooks Steps 1
@@ -38,55 +42,27 @@ const STATUS_SESSION_OUT = "3";
  * changed since Edit was clicked.
  */
 
-function Row({ label, error, children }) {
+/** Same red asterisk the step forms use. */
+function Req({ label, required }) {
   return (
-    <div className="grid grid-cols-1 gap-1 py-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] sm:items-start sm:gap-4">
-      <dt className="pt-2 text-slate-500">{label}</dt>
-      <dd>
-        {children}
-        {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-      </dd>
-    </div>
+    <>
+      {label}
+      {required && <span className="relative top-1 text-red-500"> *</span>}
+    </>
   );
-}
-
-function TextCell({ value, onChange, error, type = "text", placeholder }) {
-  return (
-    <Input
-      type={type}
-      value={value}
-      placeholder={placeholder}
-      onChange={(e) => onChange(e.target.value)}
-      aria-invalid={error ? true : undefined}
-      className="h-10 bg-white"
-    />
-  );
-}
-
-function LockedValue({ children }) {
-  return <p className="pt-2 font-medium text-slate-900">{children}</p>;
 }
 
 function EditCard({ title, saving, onSave, onCancel, formError, children }) {
   return (
     <Dialog open onOpenChange={(open) => !open && !saving && onCancel()}>
-      <DialogContent showCloseButton={!saving} className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-        <DialogHeader className="border-b border-slate-100 pb-3">
-          <DialogTitle className="text-lg font-semibold text-slate-900">Edit {title}</DialogTitle>
+      <DialogContent showCloseButton={!saving} className="max-h-[90vh] gap-0 overflow-y-auto px-7 py-6 sm:max-w-[1112px]">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold text-slate-900">{title}</DialogTitle>
         </DialogHeader>
-        <dl className="divide-y divide-slate-100 text-sm">{children}</dl>
-        {formError && <p className="text-sm font-semibold text-red-600">{formError}</p>}
-        <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={saving}
-            className="border-primary px-4 font-semibold text-primary hover:bg-primary/5 hover:text-primary"
-          >
-            Cancel
-          </Button>
-          <Button type="button" onClick={onSave} disabled={saving} className="px-4 font-semibold">
+        <div className="mt-6">{children}</div>
+        {formError && <p className="mt-4 text-center text-sm font-semibold text-red-600">{formError}</p>}
+        <div className="mt-8 flex justify-center">
+          <Button type="button" onClick={onSave} disabled={saving} className="rounded-md bg-primary px-4 font-semibold hover:bg-primary/90">
             {saving ? "Saving…" : "Save"}
           </Button>
         </div>
@@ -132,8 +108,12 @@ function useSaveOutcome({ context, onSessionExpired }) {
   return { formError, setFormError, outcome, modal };
 }
 
-export function StudentInlineEdit({ context, userId, student, gradeName, onSaved, onCancel, onSessionExpired }) {
-  const [initial] = useState(() => mapSignupStudentToFields(student));
+export function StudentInlineEdit({ context, userId, student, standardId, onSaved, onCancel, onSessionExpired }) {
+  // The review payload keeps the grade on the course block when the student block lacks it.
+  const [initial] = useState(() => {
+    const mapped = mapSignupStudentToFields(student);
+    return mapped && !mapped.standardId && standardId ? { ...mapped, standardId: String(standardId) } : mapped;
+  });
   const [fields, setFields] = useState(initial);
   const [errors, setErrors] = useState({});
   const isDualDiploma =
@@ -182,77 +162,135 @@ export function StudentInlineEdit({ context, userId, student, gradeName, onSaved
     }
   }
 
+  const dobBounds = getDobPickerBounds();
+
   return (
     <>
       <EditCard title="Student Details" saving={signup.isPending} onSave={save} onCancel={onCancel} formError={formError}>
-        <Row label="Name" error={errors.firstName || errors.lastName}>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <TextCell value={fields.firstName} onChange={set("firstName")} error={errors.firstName} placeholder="First name" />
-            <TextCell value={fields.middleName} onChange={set("middleName")} placeholder="Middle name" />
-            <TextCell value={fields.lastName} onChange={set("lastName")} error={errors.lastName} placeholder="Last name" />
-          </div>
-        </Row>
-        {/* Grade and DOB stay visible but locked, as in legacy's REVIEW_EDIT_DISABLED_KEYS. */}
-        {gradeName && (
-          <Row label="Grade">
-            <LockedValue>{gradeName}</LockedValue>
-          </Row>
-        )}
-        <Row label="Date of Birth">
-          <LockedValue>{student?.dob}</LockedValue>
-        </Row>
-        <Row label="Gender" error={errors.gender}>
-          <FloatingLabelSelect value={fields.gender} onValueChange={set("gender")} options={GENDER_OPTIONS} error={undefined} />
-        </Row>
-        {isDualDiploma ? (
-          <>
-            <Row label="Current School Name" error={errors.studyingSchoolName}>
-              <TextCell value={fields.studyingSchoolName} onChange={set("studyingSchoolName")} error={errors.studyingSchoolName} />
-            </Row>
-            <Row label="Current Grade" error={errors.studyingGradeId}>
-              <FloatingLabelSelect value={fields.studyingGradeId} onValueChange={set("studyingGradeId")} options={grades.data || []} />
-            </Row>
-            <Row label="Country of Current School" error={errors.countryIdOfSchool}>
-              <FloatingLabelSelect value={fields.countryIdOfSchool} onValueChange={set("countryIdOfSchool")} options={countries.data || []} searchable />
-            </Row>
-          </>
-        ) : (
-          <>
-            <Row label="Email" error={errors.communicationEmail}>
-              <TextCell type="email" value={fields.communicationEmail} onChange={set("communicationEmail")} error={errors.communicationEmail} />
-            </Row>
-            <Row label="Phone Number" error={errors.contactNumber}>
-              <PhoneNumberField
-                label=" "
-                value={fields.contactNumber}
-                initialCountry={initial?.countryCode ? initial.countryCode.toLowerCase() : undefined}
-                onChange={({ contactNumber, countryIsdCode, countryCode, isValid }) =>
-                  setFields((prev) => ({ ...prev, contactNumber, countryIsdCode, countryCode, phoneValid: isValid }))
-                }
-              />
-            </Row>
-            <Row label="Nationality" error={errors.nationality}>
-              <FloatingLabelSelect value={current.nationality} onValueChange={set("nationality")} options={countries.data || []} searchable />
-            </Row>
-          </>
-        )}
-        <Row label="Country | State | City" error={errors.countryId || errors.stateId || errors.cityId}>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <div className={GRID}>
+          <FloatingLabelInput icon={User} label={<Req label="First Name" required />} value={fields.firstName} onChange={(e) => set("firstName")(e.target.value)} error={errors.firstName} />
+          <FloatingLabelInput icon={User} label="Middle Name" value={fields.middleName} onChange={(e) => set("middleName")(e.target.value)} />
+          <FloatingLabelInput icon={User} label={<Req label="Last Name" required />} value={fields.lastName} onChange={(e) => set("lastName")(e.target.value)} error={errors.lastName} />
+          <FloatingLabelSelect
+            icon={GraduationCap}
+            label={<Req label="Grade" required />}
+            value={fields.standardId}
+            onValueChange={set("standardId")}
+            options={grades.data || []}
+            error={errors.standardId}
+            searchable
+          />
+          {/* Only Date of Birth and Email are locked; everything else is editable. */}
+          <DatePicker
+            icon={Cake}
+            label={<Req label="Date of Birth" required />}
+            value={fields.dob}
+            onChange={set("dob")}
+            fromDate={dobBounds.fromDate}
+            toDate={dobBounds.toDate}
+            error={errors.dob}
+            disabled
+          />
+          <FloatingLabelSelect
+            icon={VenusAndMars}
+            label={<Req label="Gender" required />}
+            value={fields.gender}
+            onValueChange={set("gender")}
+            options={GENDER_OPTIONS}
+            error={errors.gender}
+            searchable
+          />
+        </div>
+
+        <div className={`mt-6 ${GRID}`}>
+          <FloatingLabelInput
+            icon={Mail}
+            label="Enter your email"
+            type="email"
+            value={fields.communicationEmail}
+            readOnly
+            disabled
+            inputClassName="cursor-not-allowed bg-slate-100 text-slate-500"
+          />
+          <PhoneNumberField
+            label={<Req label="Mobile Number" required />}
+            value={fields.contactNumber}
+            className="w-full pb-1.5"
+            initialCountry={initial?.countryCode ? initial.countryCode.toLowerCase() : undefined}
+            onChange={({ contactNumber, countryIsdCode, countryCode, isValid }) =>
+              setFields((prev) => ({ ...prev, contactNumber, countryIsdCode, countryCode, phoneValid: isValid }))
+            }
+            error={errors.contactNumber}
+          />
+          <FloatingLabelSelect
+            icon={Globe}
+            label={<Req label="Nationality" required />}
+            value={current.nationality}
+            onValueChange={set("nationality")}
+            options={countries.data || []}
+            error={errors.nationality}
+            searchable
+          />
+        </div>
+
+        <div className={`mt-6 ${GRID}`}>
+          <FloatingLabelSelect
+            icon={MapPin}
+            label={<Req label="Country" required />}
+            value={fields.countryId}
+            onValueChange={(countryId) => setFields((prev) => ({ ...prev, countryId, stateId: "", cityId: "" }))}
+            options={countries.data || []}
+            error={errors.countryId}
+            searchable
+          />
+          <FloatingLabelSelect
+            icon={Map}
+            label={<Req label="Province / State" required />}
+            value={fields.stateId}
+            onValueChange={(stateId) => setFields((prev) => ({ ...prev, stateId, cityId: "" }))}
+            options={states.data || []}
+            error={errors.stateId}
+            searchable
+          />
+          <FloatingLabelSelect
+            icon={Building2}
+            label={<Req label="City" required />}
+            value={fields.cityId}
+            onValueChange={set("cityId")}
+            options={cities.data || []}
+            error={errors.cityId}
+            searchable
+          />
+        </div>
+
+        {isDualDiploma && (
+          <div className={`mt-6 ${GRID}`}>
+            <FloatingLabelInput
+              icon={School}
+              label={<Req label="Current School Name" required />}
+              value={fields.studyingSchoolName}
+              onChange={(e) => set("studyingSchoolName")(e.target.value)}
+              error={errors.studyingSchoolName}
+            />
             <FloatingLabelSelect
-              value={fields.countryId}
-              onValueChange={(countryId) => setFields((prev) => ({ ...prev, countryId, stateId: "", cityId: "" }))}
+              icon={BookOpen}
+              label={<Req label="Current Grade" required />}
+              value={fields.studyingGradeId}
+              onValueChange={set("studyingGradeId")}
+              options={grades.data || []}
+              error={errors.studyingGradeId}
+            />
+            <FloatingLabelSelect
+              icon={MapPin}
+              label={<Req label="Country of Current School" required />}
+              value={fields.countryIdOfSchool}
+              onValueChange={set("countryIdOfSchool")}
               options={countries.data || []}
+              error={errors.countryIdOfSchool}
               searchable
             />
-            <FloatingLabelSelect
-              value={fields.stateId}
-              onValueChange={(stateId) => setFields((prev) => ({ ...prev, stateId, cityId: "" }))}
-              options={states.data || []}
-              searchable
-            />
-            <FloatingLabelSelect value={fields.cityId} onValueChange={set("cityId")} options={cities.data || []} searchable />
           </div>
-        </Row>
+        )}
       </EditCard>
       {modal}
     </>
@@ -300,73 +338,108 @@ export function ParentInlineEdit({ context, userId, parent, onSaved, onCancel, o
     <>
       <EditCard title="Parent/Guardian Details" saving={signup.isPending} onSave={save} onCancel={onCancel} formError={formError}>
         {isOneToOneFlex ? (
-          <>
-            <Row label="Student or a working professional" error={errors.workingProfession}>
-              <FloatingLabelSelect value={fields.workingProfession} onValueChange={set("workingProfession")} options={WORKING_PROFESSION_OPTIONS} />
-            </Row>
-            <Row label="School/College/Organization" error={errors.institutionName}>
-              <TextCell value={fields.institutionName} onChange={set("institutionName")} error={errors.institutionName} />
-            </Row>
-            <Row label="Country" error={errors.institutionCountryId}>
-              <FloatingLabelSelect value={fields.institutionCountryId} onValueChange={set("institutionCountryId")} options={countries.data || []} searchable />
-            </Row>
-          </>
+          <div className={GRID}>
+            <FloatingLabelSelect
+              icon={GraduationCap}
+              label={<Req label="Are you a student or a working professional?" required />}
+              value={fields.workingProfession}
+              onValueChange={set("workingProfession")}
+              options={WORKING_PROFESSION_OPTIONS}
+              error={errors.workingProfession}
+            />
+            <FloatingLabelInput
+              icon={School}
+              label={<Req label="School / College / Organization Name" required />}
+              value={fields.institutionName}
+              onChange={(e) => set("institutionName")(e.target.value)}
+              error={errors.institutionName}
+            />
+            <FloatingLabelSelect
+              icon={MapPin}
+              label={<Req label="Country of School / College / Organization" required />}
+              value={fields.institutionCountryId}
+              onValueChange={set("institutionCountryId")}
+              options={countries.data || []}
+              error={errors.institutionCountryId}
+              searchable
+            />
+          </div>
         ) : (
           <>
-            <Row label="Name" error={errors.firstName || errors.lastName}>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <TextCell value={fields.firstName} onChange={set("firstName")} error={errors.firstName} placeholder="First name" />
-                <TextCell value={fields.middleName} onChange={set("middleName")} placeholder="Middle name" />
-                <TextCell value={fields.lastName} onChange={set("lastName")} error={errors.lastName} placeholder="Last name" />
-              </div>
-            </Row>
-            <Row label="Relation with student" error={errors.relation}>
-              <FloatingLabelSelect value={fields.relation} onValueChange={set("relation")} options={RELATION_OPTIONS} />
-            </Row>
-            <Row label="Email" error={errors.email}>
-              <TextCell type="email" value={fields.email} onChange={set("email")} error={errors.email} />
-            </Row>
-            <Row label="Phone Number" error={errors.contactNumber}>
+            <div className={GRID}>
+              <FloatingLabelInput icon={User} label={<Req label="First Name" required />} value={fields.firstName} onChange={(e) => set("firstName")(e.target.value)} error={errors.firstName} />
+              <FloatingLabelInput icon={User} label="Middle Name" value={fields.middleName} onChange={(e) => set("middleName")(e.target.value)} />
+              <FloatingLabelInput icon={User} label={<Req label="Last Name" required />} value={fields.lastName} onChange={(e) => set("lastName")(e.target.value)} error={errors.lastName} />
+              <FloatingLabelSelect
+                icon={Briefcase}
+                label={<Req label="Relation with Student" required />}
+                value={fields.relation}
+                onValueChange={set("relation")}
+                options={RELATION_OPTIONS}
+                error={errors.relation}
+                searchable
+              />
+              <FloatingLabelInput icon={Mail} label="Parent Email" type="email" value={fields.email} onChange={(e) => set("email")(e.target.value)} error={errors.email} />
               <PhoneNumberField
-                label=" "
+                label="Parent Mobile Number (Optional)"
                 value={fields.contactNumber}
+                className="w-full pb-1.5"
                 initialCountry={initial?.countryCode ? initial.countryCode.toLowerCase() : undefined}
                 onChange={({ contactNumber, countryIsdCode, countryCode, isValid }) =>
                   setFields((prev) => ({ ...prev, contactNumber, countryIsdCode, countryCode, phoneValid: isValid }))
                 }
+                error={errors.contactNumber}
               />
-            </Row>
-            <Row label="Country | State | City" error={errors.countryId || errors.stateId || errors.cityId}>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <FloatingLabelSelect
-                  value={fields.countryId}
-                  onValueChange={(countryId) => setFields((prev) => ({ ...prev, countryId, stateId: "", cityId: "" }))}
-                  options={countries.data || []}
-                  searchable
-                />
-                <FloatingLabelSelect
-                  value={fields.stateId}
-                  onValueChange={(stateId) => setFields((prev) => ({ ...prev, stateId, cityId: "" }))}
-                  options={states.data || []}
-                  searchable
-                />
-                <FloatingLabelSelect value={fields.cityId} onValueChange={set("cityId")} options={cities.data || []} searchable />
+            </div>
+
+            <div className={`mt-6 ${GRID}`}>
+              <FloatingLabelSelect
+                icon={MapPin}
+                label={<Req label="Country" required />}
+                value={fields.countryId}
+                onValueChange={(countryId) => setFields((prev) => ({ ...prev, countryId, stateId: "", cityId: "" }))}
+                options={countries.data || []}
+                error={errors.countryId}
+                searchable
+              />
+              <FloatingLabelSelect
+                icon={Map}
+                label={<Req label="Province / State" required />}
+                value={fields.stateId}
+                onValueChange={(stateId) => setFields((prev) => ({ ...prev, stateId, cityId: "" }))}
+                options={states.data || []}
+                error={errors.stateId}
+                searchable
+              />
+              <FloatingLabelSelect
+                icon={Building2}
+                label={<Req label="City" required />}
+                value={fields.cityId}
+                onValueChange={set("cityId")}
+                options={cities.data || []}
+                error={errors.cityId}
+                searchable
+              />
+            </div>
+
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+              <h3 className="text-base font-bold text-slate-900">How to Contact You?</h3>
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+                  <IoLogoWhatsapp className="h-4 w-4 text-emerald-600" /> WhatsApp
+                  <Checkbox checked={fields.communicationWhatsApp} onCheckedChange={(v) => set("communicationWhatsApp")(Boolean(v))} />
+                </label>
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+                  <PhoneIcon className="h-4 w-4 text-slate-900" /> Call
+                  <Checkbox checked={fields.communicationCall} onCheckedChange={(v) => set("communicationCall")(Boolean(v))} />
+                </label>
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+                  <Mail className="h-4 w-4 text-slate-900" /> Email
+                  <Checkbox checked={fields.communicationEmail} onCheckedChange={(v) => set("communicationEmail")(Boolean(v))} />
+                </label>
               </div>
-            </Row>
-            <Row label="Preferred contact" error={errors.communication}>
-              <div className="flex flex-wrap gap-x-6 gap-y-2 pt-2">
-                {[
-                  ["communicationWhatsApp", "WhatsApp"],
-                  ["communicationCall", "Call"],
-                  ["communicationEmail", "Email"],
-                ].map(([key, text]) => (
-                  <label key={key} className="flex items-center gap-2 text-slate-700">
-                    <Checkbox checked={fields[key]} onCheckedChange={(v) => set(key)(Boolean(v))} />
-                    {text}
-                  </label>
-                ))}
-              </div>
-            </Row>
+            </div>
+            {errors.communication && <p className="mt-2 text-xs text-red-600">{errors.communication}</p>}
           </>
         )}
       </EditCard>

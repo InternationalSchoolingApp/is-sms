@@ -1,10 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BiSolidBookAdd, BiSolidPencil, BiSolidUserDetail } from "react-icons/bi";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { FaNotesMedical } from "react-icons/fa6";
-import { IoLogoWhatsapp, IoMdPeople } from "react-icons/io";
+import { IoMdPeople } from "react-icons/io";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -13,7 +14,6 @@ import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal
 import { CustomPlanTable, FeePaymentPlans, FeeSummaryCard } from "@/components/student-enroll/FeePaymentPlans";
 import { InfoModal } from "@/components/student-enroll/InfoModal";
 import { ParentInlineEdit, StudentInlineEdit } from "@/components/student-enroll/ReviewInlineEdit";
-import { Stage3CourseSelection } from "@/components/student-enroll/Stage3CourseSelection";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
 import { getPaymentPaidStatus, launchPaymentGatewayForm } from "@/services/studentSignupApi";
 import { useShowPaymentOption } from "@/hooks/useCourseSelection";
@@ -705,7 +705,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
             context={context}
             userId={userId}
             student={student}
-            gradeName={course?.standardName}
+            standardId={course?.standardId}
             onSaved={(fields) => finishEdit("student", fields)}
             onCancel={() => setEditing(null)}
             onSessionExpired={onSessionExpired}
@@ -783,35 +783,17 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
           )}
         </section>
 
-        {editing === "course" && (
-          <Dialog open onOpenChange={(open) => !open && setEditing(null)}>
-            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl">
-              <DialogHeader>
-                <DialogTitle className="text-lg font-semibold text-slate-900">Edit Selected Courses</DialogTitle>
-              </DialogHeader>
-              <Stage3CourseSelection
-                context={context}
-                userId={userId}
-                inReview
-                standardId={course?.standardId ? String(course.standardId) : null}
-                onNext={() => finishEdit("course")}
-                onBack={() => setEditing(null)}
-                onSessionExpired={onSessionExpired}
-              />
-            </DialogContent>
-          </Dialog>
-        )}
         <section className={ROW_CLASS}>
           <SectionHeader
             title="Selected Courses"
             icon={FaNotesMedical}
             open={openSectionFor() === "course"}
             onToggle={() => toggleSection("course")}
-            onEdit={data.customPaymentEnabled ? undefined : () => startEdit("course")}
+            onEdit={data.customPaymentEnabled || !onBack ? undefined : () => onBack(3)}
           />
           {openSectionFor() === "course" && (
           <>
-          <MobileEditRow onEdit={data.customPaymentEnabled ? undefined : () => startEdit("course")} />
+          <MobileEditRow onEdit={data.customPaymentEnabled || !onBack ? undefined : () => onBack(3)} />
           <div className="py-3 md:border-t md:border-slate-100 md:px-4">
             <h3 className="mb-2 text-sm font-semibold text-slate-900">{course?.standardName}</h3>
             <table className="w-full text-sm">
@@ -881,9 +863,9 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Enrollment support on WhatsApp"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#25D366] text-white md:hidden"
+            className="flex h-10 w-10 shrink-0 md:hidden"
           >
-            <IoLogoWhatsapp className="h-7 w-7" aria-hidden="true" />
+            <Image src="/images/whatsapp-new.webp" alt="" width={40} height={40} unoptimized className="h-10 w-10" />
           </a>
         ) : (
           <span className="md:hidden" />

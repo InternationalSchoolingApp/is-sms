@@ -11,7 +11,7 @@ import { Calendar } from "@/components/ui/calendar";
  * components/ui — built from the existing calendar.jsx/popover.jsx
  * primitives, no new shadcn install needed.
  */
-export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDate, error }) {
+export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDate, error, disabled = false }) {
   const [open, setOpen] = useState(false);
   const floated = open || Boolean(value);
 
@@ -20,7 +20,8 @@ export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDat
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger
           type="button"
-          className={`relative flex h-12 w-full items-center rounded-md border bg-white ${Icon ? "pl-10" : "pl-3.5"} pr-3.5 pt-1 text-left text-sm ${
+          disabled={disabled}
+          className={`relative flex h-12 w-full items-center rounded-md border ${disabled ? "cursor-not-allowed bg-slate-100 text-slate-500" : "bg-white"} ${Icon ? "pl-10" : "pl-3.5"} pr-3.5 pt-1 text-left text-sm ${
             error ? "border-2 border-red-500" : open ? "border-2 border-slate-900" : "border-slate-300"
           }`}
         >

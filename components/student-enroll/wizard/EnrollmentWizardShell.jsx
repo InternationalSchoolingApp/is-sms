@@ -102,6 +102,20 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
         )}
       </div>
 
+      {/* Desktop-only floating WhatsApp support button, above the fixed footer (mobile shows it in the
+          step's own action bar). */}
+      {context?.whatsAppNumber && (
+        <a
+          href={`https://api.whatsapp.com/send?phone=${context.whatsAppNumber}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Enrollment support on WhatsApp"
+          className="fixed bottom-[72px] right-6 z-30 hidden transition-transform hover:scale-105 md:block"
+        >
+          <Image src="/images/whatsapp-new.webp" alt="" width={50} height={50} unoptimized className="h-[50px] w-[50px]" />
+        </a>
+      )}
+
       <Footer schoolName={schoolName} fixed />
     </div>
   );

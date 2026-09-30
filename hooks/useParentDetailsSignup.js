@@ -13,8 +13,11 @@ import { buildAuthentication, buildAuthenticatedRequest } from "@/utils/authenti
  */
 export function mapSignupParentToFields(signupParent) {
   if (!signupParent) return null;
+  // For a saved parent the backend fills the three "Y"/"N" flags from the DB but leaves the
+  // `communications` string at its default (SignupUtil.convertToSignupParentsDTO), so read the flags
+  // first and only fall back to the string.
   const comm = String(signupParent.communications || "");
-  const flag = (key) => new RegExp(`${key}=Y`).test(comm);
+  const flag = (key, explicit) => explicit === "Y" || new RegExp(`${key}=Y`).test(comm);
   return {
     firstName: signupParent.firstName || "",
     middleName: signupParent.middleName || "",
@@ -22,15 +25,17 @@ export function mapSignupParentToFields(signupParent) {
     relation: signupParent.relationship || "",
     email: signupParent.email || "",
     contactNumber: signupParent.contactNumber || "",
-    countryCode: signupParent.countryCode || "",
-    countryIsdCode: signupParent.countryIsdCode2 || "",
+    // The DTO's countryCode is the dial code ("1") and countryIsdCode2 the ISO2 ("us"); the form state
+    // is the other way round (countryCode = ISO2, countryIsdCode = "+dial"), as the widget emits it.
+    countryCode: String(signupParent.countryIsdCode2 || "").toUpperCase(),
+    countryIsdCode: signupParent.countryCode ? `+${String(signupParent.countryCode).replace(/^\+/, "")}` : "",
     sameAsStudent: false,
     countryId: signupParent.countryId ? String(signupParent.countryId) : "",
     stateId: signupParent.stateId ? String(signupParent.stateId) : "",
     cityId: signupParent.cityId ? String(signupParent.cityId) : "",
-    communicationWhatsApp: flag("W"),
-    communicationCall: flag("C"),
-    communicationEmail: flag("E"),
+    communicationWhatsApp: flag("W", signupParent.communicationWhatsApp),
+    communicationCall: flag("C", signupParent.communicationCall),
+    communicationEmail: flag("E", signupParent.communicationEmail),
     workingProfession: signupParent.workingProfession || "",
     institutionName: signupParent.institutionName || "",
     institutionCountryId: signupParent.institutionCountryId ? String(signupParent.institutionCountryId) : "",
