@@ -11,10 +11,11 @@ import { Checkbox } from "@/components/ui/checkbox";
  * chooseRecomendedCourse() in the legacy signup JS. Mandatory courses are
  * always included; already-selected ones start checked.
  *
- * On confirm, the recommended toggles are merged into the current selection:
- * non-recommended courses the student already picked are kept. (Legacy
- * computes this same merge, then overwrites it with only the recommended
- * list on the next line, dropping any other selected course.)
+ * On confirm, the recommended selection REPLACES the student's current
+ * course selection entirely (matches legacy: it computes a merge with the
+ * previous selection, then immediately overwrites that with just the
+ * recommended list, dropping any other previously-selected course) — see
+ * the warning note in the dialog body.
  */
 export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm, busy }) {
   const courses = data?.recommendedCourses || [];
@@ -57,19 +58,20 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
   }
 
   function handleConfirm() {
-    const recommendedIds = new Set(courses.map((course) => String(course.subjectId)));
-    const kept = selectedIds.filter((id) => !recommendedIds.has(id));
-    onConfirm([...kept, ...checked]);
+    // Replaces the current selection outright — matches legacy's actual
+    // behavior and the warning note shown below, not a merge with whatever
+    // was selected before opening this dialog.
+    onConfirm([...checked]);
   }
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg p-0">
-        <DialogHeader className="gap-0 border-b py-2  px-4">
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader className="gap-0 border-b py-2 px-4 -mx-4 -mb-4">
           <DialogTitle className="text-lg">Recommended Courses</DialogTitle>
           {data?.gradeName && <p className="text-sm text-slate-500">{data.gradeName}</p>}
         </DialogHeader>
-        <div className="w-full px-4">
+        <div className="w-full pt-4">
           <div className="flex items-center gap-3 rounded-lg bg-[#eef4ff] px-4 py-3 mb-5 border border-primary">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-white">
               <GraduationCap className="h-4 w-4" />
@@ -133,10 +135,9 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
               </ul>
             </div>
           )}
-
-          <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            <strong>Note:</strong> selecting courses above updates your Recommended Courses list for this grade — any other
-            course you already picked stays in your selection.
+        </div>   
+          <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs border border-amber-400 text-black-900">
+            <strong>Note:</strong> By adding the above recommended courses, your current course selection will be replaced. You can still add or remove courses.
           </p>
         
           <DialogFooter className="sm:justify-center">
@@ -144,7 +145,7 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
               {busy ? "Please wait…" : "Confirm"}
             </Button>
           </DialogFooter>
-        </div>  
+         
       </DialogContent>
     </Dialog>
   );

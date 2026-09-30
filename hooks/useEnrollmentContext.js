@@ -55,6 +55,7 @@ export function useEnrollmentContext() {
     let cancelled = false;
     getPublicSchoolInfo(session.schoolUUID)
       .then((info) => {
+        debugger
         if (!cancelled && info?.whatsAppNumber) setWhatsAppNumber(info.whatsAppNumber);
       })
       .catch((err) => console.error("School public info fetch failed:", err));
@@ -75,7 +76,7 @@ export function useEnrollmentContext() {
       .then(() => callLocationForPaymentPromise())
       .catch((err) => console.error("Payer location capture failed:", err));
   }, [ready, session?.schoolUUID, session?.userId]);
-
+  debugger
   const context = ready
     ? {
         schoolUUID: session.schoolUUID,
@@ -88,6 +89,6 @@ export function useEnrollmentContext() {
           : "O",
       }
     : null;
-
+  console.log("context", context)
   return { status, session, context, logoUrl, ready };
 }

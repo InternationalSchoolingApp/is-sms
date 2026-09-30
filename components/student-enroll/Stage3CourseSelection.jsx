@@ -22,6 +22,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { ConfirmDialog } from "@/components/student-enroll/ConfirmDialog";
 import { RecommendedCoursesDialog } from "@/components/student-enroll/RecommendedCoursesDialog";
@@ -128,21 +130,27 @@ function categoryIcon(name) {
 }
 
 // Purely cosmetic breakdown of the already-selected courses for the
-// "Selection Summary" legend — derived entirely from fields already present
-// on each selected course (courseMandatory, courseTypeOriginal), not a new
-// business rule. Anything not recognized as Regular/Honors/Advanced
-// Placement falls back to "Electives" rather than being silently dropped.
+// "Selection Summary" legend — a pure derived count over `selectedCourses`
+// (recomputed fresh every render), so adding/removing a course automatically
+// moves it in/out of the right bucket, no extra state needed. Confirmed
+// field mapping: Required from courseMandatory (unchanged); Electives and
+// Advanced come from `courseCategory` (CourseDTO.courseCategory — the
+// subject's own category name, e.g. "Electives"/"Advanced Placement", NOT
+// courseTypeOriginal) specifically; Regular/Honors still come from
+// courseTypeOriginal as before, for anything not in one of those two
+// categories.
 function summarizeSelection(selectedCourses) {
+  debugger
   const counts = { Required: 0, Regular: 0, Electives: 0, Honors: 0, Advanced: 0 };
   selectedCourses.forEach((course) => {
     if (course.courseMandatory === 1) {
       counts.Required += 1;
       return;
     }
-    if (course.courseTypeOriginal === "Regular") counts.Regular += 1;
+    if (course.courseCategory === "Electives") counts.Electives += 1;
+    else if (course.courseCategory === "Advanced Placement") counts.Advanced += 1;
+    else if (course.courseTypeOriginal === "Regular") counts.Regular += 1;
     else if (course.courseTypeOriginal === "Honors") counts.Honors += 1;
-    else if (course.courseTypeOriginal === "Advanced Placement") counts.Advanced += 1;
-    else counts.Electives += 1;
   });
   return [
     { label: "Required", count: counts.Required, dot: "bg-emerald-500" },
@@ -197,6 +205,153 @@ function VariantToggle({ course, target, onToggle, disabled }) {
   );
 }
 
+// Below-768px layout swaps the desktop sidebar+detail-pane for a full-width
+// category list + this dialog — real viewport detection, not just CSS,
+// since both layouts are driven by the SAME openCourseId state and only one
+// of them may actually render as a modal at a time (a CSS-hidden Dialog
+// still mounts its fixed-position overlay and would block the desktop UI).
+function useIsMobile(breakpointPx = 768) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${breakpointPx - 1}px)`);
+    const update = () => setIsMobile(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, [breakpointPx]);
+  return isMobile;
+}
+
+// Mobile-only "category sheet": tapping a category on the mobile course list
+// opens this instead of the desktop inline detail pane. Checking one or more
+// subjects and tapping "+ Add" calls the exact same addSubject(course,
+// subject) used everywhere else, once per checked subject in sequence — same
+// extra-fee/AP/no-live-class confirm gates, same request per subject, just
+// triggered from a batch of checkboxes instead of one inline Add button each.
+function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentOption, busy, onAddSubject }) {
+  const [checked, setChecked] = useState(() => new Set());
+  const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    setChecked(new Set());
+  }, [course?.courseId]);
+
+  if (!course) return null;
+
+  function toggle(id) {
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function handleAdd() {
+    const toAdd = course.subjects.filter((subject) => checked.has(String(subject.subjectId)));
+    if (toAdd.length === 0) return;
+    setAdding(true);
+    try {
+      for (const subject of toAdd) {
+        // eslint-disable-next-line no-await-in-loop -- each add's own confirm gate must resolve before the next one fires
+        await onAddSubject(course, subject);
+      }
+      setChecked(new Set());
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader className="flex-row items-center justify-between gap-2 space-y-0 border-b border-slate-200 pb-3">
+          <DialogTitle className="text-base text-primary">{course.courseName}</DialogTitle>
+          <span className="text-xs text-slate-500 mr-7">{course.subjects.length} Courses</span>
+        </DialogHeader>
+        <div className="max-h-[60vh] space-y-1 overflow-y-auto">
+          {course.subjects.map((subject) => {
+            const id = String(subject.subjectId);
+            const alreadySelected = selectedIds.includes(id);
+            const notes = subjectNotes(subject, data, showPaymentOption);
+            return (
+              <label
+                key={id}
+                className={`flex items-center gap-3 rounded-lg px-2 py-2 text-sm ${alreadySelected ? "opacity-60" : ""}`}
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#eef4ff] text-primary">
+                  <BookOpen className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium text-slate-900">{subject.subjectName}</span>
+                  {!hidesCourseCredits(data.standardId) && <span className="block text-xs text-slate-500">{subject.subjectCredit} Credit</span>}
+                  {notes.map((note, index) => (
+                    <span key={index} className="block text-xs font-medium text-primary">
+                      {note}
+                    </span>
+                  ))}
+                </span>
+                <Checkbox checked={alreadySelected || checked.has(id)} disabled={alreadySelected || busy || adding} onCheckedChange={() => toggle(id)} />
+              </label>
+            );
+          })}
+        </div>
+        <div className="flex justify-center">
+          <Button
+            type="button"
+            onClick={handleAdd}
+            disabled={checked.size === 0 || busy || adding}
+            className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90"
+          >
+            <Plus className="h-4 w-4" /> {adding || busy ? "Please wait…" : "Add"}
+          </Button>
+        </div>
+        
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Gray placeholder block — same building block Stage1Skeleton uses.
+function SkeletonBlock({ className = "" }) {
+  return <div className={`animate-pulse rounded-lg bg-slate-100 ${className}`} />;
+}
+
+/** Structural skeleton mirroring the real layout, shown while course-details-by-standard-id is loading. */
+function Stage3Skeleton({ header }) {
+  return (
+    <div className="mx-auto mt-6 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
+      {header}
+      <SkeletonBlock className="mt-4 h-20 w-full rounded-xl" />
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.6fr]">
+        <section className="rounded-xl border border-slate-200 p-4">
+          <SkeletonBlock className="h-5 w-40" />
+          <div className="mt-4 space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SkeletonBlock key={i} className="h-14 w-full" />
+            ))}
+          </div>
+        </section>
+        <section className="rounded-xl border border-slate-200 p-4">
+          <SkeletonBlock className="h-5 w-40" />
+          <div className="mt-4 grid gap-3 sm:grid-cols-[190px_1fr]">
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <SkeletonBlock key={i} className="h-10 w-full" />
+              ))}
+            </div>
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <SkeletonBlock key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
 /**
  * Stage 3 of the enrollment wizard ("Course Selection"). Mirrors
  * getAllCourseDetails()/addCourse()/removeCourse() in signupStudentStage3.js
@@ -225,6 +380,7 @@ function VariantToggle({ course, target, onToggle, disabled }) {
  * on and the call fails with a generic error.
  */
 export function Stage3CourseSelection({ context, userId, standardId, onNext, onBack, onSessionExpired, inReview = false }) {
+  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const courseQuery = useCourseDetails({ context, userId, standardId });
   const paymentOption = useShowPaymentOption({ context, userId });
@@ -358,6 +514,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
       extraFeeNoticeShownRef.current = true;
     }
     if (Number(context.schoolNumericId) === 1 && subject.courseType === "Advanced Placement" && !apAcknowledgedRef.current) {
+      debugger
       const confirmed = await ask({
         title: "AP course",
         message: (
@@ -508,12 +665,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
   );
 
   if (courseQuery.isLoading) {
-    return (
-      <div>
-        {header}
-        <p className="mt-8 text-sm text-slate-500">Loading courses…</p>
-      </div>
-    );
+    return <Stage3Skeleton header={header} />;
   }
 
   if (!data) {
@@ -569,12 +721,21 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
       )
     : availableCourses;
   const activeCourse = visibleCourses.find((course) => course.courseId === effectiveOpenId) || visibleCourses[0];
-      console.log("Course", data)
+  // Unlike activeCourse (which defaults to the first category for the
+  // desktop sidebar's always-something-shown pane), the mobile category
+  // sheet must stay closed until a category is explicitly tapped — openCourseId
+  // is null/-1 in that closed state, not defaulted to the first category.
+  const mobileActiveCourse = openCourseId && openCourseId !== -1 ? visibleCourses.find((course) => course.courseId === openCourseId) || null : null;
+  console.log("course", data)
   return (
     <div className="mx-auto mt-6 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       {header}
 
-      <div className="mt-4 flex flex-col gap-4 rounded-xl border border-blue-100 bg-[#eef4ff] p-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
+      {/* Grade badge / credits requirement / progress ring / selection summary —
+          hidden below 768px per the mobile reference design, which goes
+          straight from the wizard's own step row into "Your Selected
+          Courses". Change-grade is still reachable from md+ (tablet/desktop). */}
+      <div className="mt-4 hidden gap-4 rounded-xl border border-blue-100 bg-[#eef4ff] p-4 md:flex md:flex-wrap md:items-center md:gap-6">
         {data.standardName && (
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm">
@@ -737,10 +898,11 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
 
         {showAvailable && (
           <section className="self-start overflow-hidden rounded-xl border border-slate-200 bg-white">
-            <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+            {/* Desktop/tablet header: title + search + recommended button inline. */}
+            <header className="hidden flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 md:flex">
               <h2 className="text-sm font-bold text-slate-900">Choose Courses</h2>
-              <div className="flex flex-1 items-center gap-3 sm:flex-none">
-                <div className="relative flex-1 sm:w-56 sm:flex-none">
+              <div className="flex flex-1 items-center gap-3 md:flex-none">
+                <div className="relative flex-1 md:w-56 md:flex-none">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
@@ -757,33 +919,120 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
                 )}
               </div>
             </header>
+            {/* Mobile header: title only — the recommended-courses button below
+                is full-width instead, and there's no search box (matches the
+                reference mobile design). */}
+            <div className="border-b border-slate-200 px-4 py-3 md:hidden">
+              <h2 className="text-sm font-bold text-slate-900">Choose Courses</h2>
+            </div>
+            {data.eligibleForRecommendedCourse && (
+              <div className="px-4 pt-4 md:hidden">
+                <Button type="button" onClick={openRecommended} disabled={busy} className="w-full rounded-md bg-primary hover:bg-primary/90">
+                  <Plus className="h-4 w-4" /> Add recommended Courses
+                </Button>
+              </div>
+            )}
             {data.registrationType === "SCHOLARSHIP" && (
               <p className="px-4 pt-3 text-xs text-slate-500">Please note: live classes are not offered in this program.</p>
             )}
             {visibleCourses.length === 0 ? (
               <p className="px-4 py-6 text-sm text-slate-500">No courses match your search.</p>
             ) : (
-              <div className="grid sm:grid-cols-[190px_1fr]">
-                <ul className="border-b border-slate-200 sm:border-b-0 sm:border-r">
+              <>
+                {/* Desktop/tablet: category sidebar + inline detail pane. */}
+                <div className="hidden md:grid md:grid-cols-[190px_1fr]">
+                  <ul className="border-r border-slate-200">
+                    {visibleCourses.map((course) => {
+                      const CategoryIcon = categoryIcon(course.courseName);
+                      const active = activeCourse?.courseId === course.courseId;
+                      return (
+                        <li key={course.courseId}>
+                          <button
+                            type="button"
+                            onClick={() => setOpenCourseId(course.courseId)}
+                            className={`flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium ${
+                              active ? "bg-[#eef4ff] text-primary" : "text-slate-700 hover:bg-slate-50"
+                            }`}
+                          >
+                            <CategoryIcon className="h-4 w-4 shrink-0" />
+                            <span className="min-w-0 flex-1 truncate">{course.courseName}</span>
+                            <span
+                              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
+                                active ? "bg-primary text-white" : "bg-slate-100 text-slate-500"
+                              }`}
+                            >
+                              {course.subjects.length}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {activeCourse && (
+                    <div>
+                      <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
+                        <span className="text-sm font-semibold text-primary">{activeCourse.courseName}</span>
+                        <span className="flex items-center gap-1 text-xs text-slate-500">
+                          {activeCourse.subjects.length} Courses <ChevronDown className="h-3.5 w-3.5" />
+                        </span>
+                      </div>
+                      <div className="space-y-2 p-4">
+                        {activeCourse.courseDescription && <p className="text-xs text-slate-500">{activeCourse.courseDescription}</p>}
+                        {activeCourse.subjects
+                          .filter((subject) => !query || subject.subjectName?.toLowerCase().includes(query) || activeCourse.courseName?.toLowerCase().includes(query))
+                          .map((subject) => {
+                            const notes = subjectNotes(subject, data, showPaymentOption);
+                            return (
+                              <div key={subject.subjectId} className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2">
+                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#eef4ff] text-primary">
+                                  <BookOpen className="h-4 w-4" />
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-medium text-slate-900">{subject.subjectName}</p>
+                                  {notes.length > 0 && (
+                                    <ul className="mt-1 space-y-0.5 text-xs text-slate-500">
+                                      {notes.map((note, index) => (
+                                        <li key={index}>• {note}</li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                  <CourseSummaryLink url={subject.courseDescriptionUrl} />
+                                </div>
+                                {!hideCredits && (
+                                  <div className="shrink-0 text-right text-xs text-slate-600">
+                                    {data.showCourseFee === "Y" && (
+                                      <p className="font-semibold text-slate-900">{subject.subjectPriceString}</p>
+                                    )}
+                                    <p>{subject.subjectCredit} credit</p>
+                                  </div>
+                                )}
+                                <Button type="button" size="sm" onClick={() => addSubject(activeCourse, subject)} disabled={busy} className="rounded-md bg-primary hover:bg-primary/90">
+                                  <Plus className="h-4 w-4" /> Add
+                                </Button>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {/* Mobile: flat, full-width category list — tapping one opens
+                    CourseCategoryDialog below instead of an inline pane. */}
+                <ul className="divide-y divide-slate-100 md:hidden">
                   {visibleCourses.map((course) => {
                     const CategoryIcon = categoryIcon(course.courseName);
-                    const active = activeCourse?.courseId === course.courseId;
                     return (
                       <li key={course.courseId}>
                         <button
                           type="button"
                           onClick={() => setOpenCourseId(course.courseId)}
-                          className={`flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium ${
-                            active ? "bg-[#eef4ff] text-primary" : "text-slate-700 hover:bg-slate-50"
-                          }`}
+                          className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-slate-700"
                         >
-                          <CategoryIcon className="h-4 w-4 shrink-0" />
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#eef4ff] text-primary">
+                            <CategoryIcon className="h-4 w-4" />
+                          </span>
                           <span className="min-w-0 flex-1 truncate">{course.courseName}</span>
-                          <span
-                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-                              active ? "bg-primary text-white" : "bg-slate-100 text-slate-500"
-                            }`}
-                          >
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-500">
                             {course.subjects.length}
                           </span>
                         </button>
@@ -791,58 +1040,23 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
                     );
                   })}
                 </ul>
-                {activeCourse && (
-                  <div>
-                    <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
-                      <span className="text-sm font-semibold text-primary">{activeCourse.courseName}</span>
-                      <span className="flex items-center gap-1 text-xs text-slate-500">
-                        {activeCourse.subjects.length} Courses <ChevronDown className="h-3.5 w-3.5" />
-                      </span>
-                    </div>
-                    <div className="space-y-2 p-4">
-                      {activeCourse.courseDescription && <p className="text-xs text-slate-500">{activeCourse.courseDescription}</p>}
-                      {activeCourse.subjects
-                        .filter((subject) => !query || subject.subjectName?.toLowerCase().includes(query) || activeCourse.courseName?.toLowerCase().includes(query))
-                        .map((subject) => {
-                          const notes = subjectNotes(subject, data, showPaymentOption);
-                          return (
-                            <div key={subject.subjectId} className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2">
-                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#eef4ff] text-primary">
-                                <BookOpen className="h-4 w-4" />
-                              </span>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-slate-900">{subject.subjectName}</p>
-                                {notes.length > 0 && (
-                                  <ul className="mt-1 space-y-0.5 text-xs text-slate-500">
-                                    {notes.map((note, index) => (
-                                      <li key={index}>• {note}</li>
-                                    ))}
-                                  </ul>
-                                )}
-                                <CourseSummaryLink url={subject.courseDescriptionUrl} />
-                              </div>
-                              {!hideCredits && (
-                                <div className="shrink-0 text-right text-xs text-slate-600">
-                                  {data.showCourseFee === "Y" && (
-                                    <p className="font-semibold text-slate-900">{subject.subjectPriceString}</p>
-                                  )}
-                                  <p>{subject.subjectCredit} credit</p>
-                                </div>
-                              )}
-                              <Button type="button" size="sm" onClick={() => addSubject(activeCourse, subject)} disabled={busy} className="rounded-md bg-primary hover:bg-primary/90">
-                                <Plus className="h-4 w-4" /> Add
-                              </Button>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </div>
-                )}
-              </div>
+              </>
             )}
           </section>
         )}
       </div>
+
+      {isMobile && (
+        <CourseCategoryDialog
+          course={mobileActiveCourse}
+          onClose={() => setOpenCourseId(null)}
+          selectedIds={selectedIds}
+          data={data}
+          showPaymentOption={showPaymentOption}
+          busy={busy}
+          onAddSubject={addSubject}
+        />
+      )}
 
       {paymentOption.isError && (
         <p className="mt-4 text-sm text-red-600">
