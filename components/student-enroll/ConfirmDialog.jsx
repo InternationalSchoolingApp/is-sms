@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
  * styling) was restyled to match the reference design.
  */
 export function ConfirmDialog({ request, onResolve }) {
-  debugger
+  
   return (
     <Dialog open={!!request} onOpenChange={(open) => !open && onResolve(false)}>
       <DialogContent className="sm:max-w-md">
