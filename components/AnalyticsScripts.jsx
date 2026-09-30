@@ -18,6 +18,7 @@ export function AnalyticsScripts() {
   const isProd = process.env.NEXT_PUBLIC_DEPLOYMENT_MODE === "PROD";
   const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
   const clarityId = process.env.NEXT_PUBLIC_CLARITY_ID;
+  const fbPixelId = process.env.NEXT_PUBLIC_FB_PIXEL_ID;
 
   if (!isProd) return null;
 
@@ -54,6 +55,36 @@ t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
 y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
 })(window,document,"clarity","script","${clarityId}");`}
         </Script>
+      )}
+
+      {fbPixelId && (
+        <>
+          {/* Facebook Pixel — standard init + PageView. The JSP only showed
+              the <noscript> fallback, but that alone does nothing without the
+              init script, so the full snippet is included here. */}
+          <Script id="fb-pixel-loader" strategy="afterInteractive">
+            {`!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window,document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','${fbPixelId}');fbq('track','PageView');`}
+          </Script>
+          {/* Facebook Pixel (noscript) */}
+          <noscript>
+            {/* eslint-disable-next-line @next/next/no-img-element -- tracking pixel */}
+            <img
+              height="1"
+              width="1"
+              style={{ display: "none" }}
+              src={`https://www.facebook.com/tr?id=${fbPixelId}&ev=PageView&noscript=1`}
+              alt=""
+            />
+          </noscript>
+        </>
       )}
     </>
   );
