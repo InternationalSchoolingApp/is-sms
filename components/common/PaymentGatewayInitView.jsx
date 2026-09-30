@@ -1,0 +1,100 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { ArrowRight, LoaderCircle, RefreshCw, ShieldCheck } from "lucide-react";
+import { getAirwallexPaymentInit, getStripePaymentInit } from "@/services/paymentInitApi";
+
+const GATEWAY_CONFIG = {
+  stripe: {
+    name: "Stripe",
+    request: getStripePaymentInit,
+    redirectField: "redirectUrl",
+    successStatus: "SUCCESS",
+  },
+  airwallex: {
+    name: "Airwallex",
+    request: getAirwallexPaymentInit,
+    redirectField: "airwallexCheckoutUrl",
+    successStatus: "1",
+  },
+};
+
+function getSafeRedirectUrl(value) {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+function getFailureMessage(response) {
+  const message = typeof response?.message === "string" ? response.message : "";
+  const cleanMessage = message.replace(/^FAILED\|/, "").trim();
+  return cleanMessage || "We couldn’t start your payment. Please try again in a moment.";
+}
+
+export function PaymentGatewayInitView({ gateway }) {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const config = GATEWAY_CONFIG[gateway];
+  const uniqueUuid = params?.UNIQUEUUID;
+  const [state, setState] = useState("loading");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const startPayment = useCallback(async () => {
+    const response = await config.request(uniqueUuid, new URLSearchParams(searchParams.toString()));
+    if (response?.status === config.successStatus) {
+      const redirectUrl = getSafeRedirectUrl(response[config.redirectField]);
+      if (redirectUrl) {
+        window.location.assign(redirectUrl);
+        return;
+      }
+    }
+
+    setErrorMessage(getFailureMessage(response));
+    setState("error");
+  }, [config, searchParams, uniqueUuid]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => startPayment(), 0);
+    return () => window.clearTimeout(timer);
+  }, [startPayment]);
+
+  function retryPayment() {
+    setState("loading");
+    setErrorMessage("");
+    startPayment();
+  }
+
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-50 via-white to-indigo-50 px-5 py-12 text-slate-900">
+      <section className="w-full max-w-lg rounded-3xl border border-slate-200/80 bg-white p-8 text-center shadow-[0_24px_80px_-32px_rgba(15,23,42,0.28)] sm:p-10">
+        <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-2xl bg-sky-50 text-sky-700 ring-1 ring-sky-100">
+          {state === "loading" ? <LoaderCircle className="size-8 animate-spin" aria-hidden="true" /> : state === "error" ? <RefreshCw className="size-7" aria-hidden="true" /> : <ShieldCheck className="size-8" aria-hidden="true" />}
+        </div>
+
+        {state === "loading" ? (
+          <>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">Secure checkout</p>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Connecting to {config.name}</h1>
+            <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-600">Please wait while we prepare your secure payment. This should only take a moment.</p>
+            <div className="mt-8 flex items-center justify-center gap-2 text-xs font-medium text-slate-500"><ShieldCheck className="size-4 text-emerald-600" aria-hidden="true" /> Your payment details stay protected</div>
+          </>
+        ) : (
+          <>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-rose-600">Payment setup interrupted</p>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">We couldn’t connect to {config.name}</h1>
+            <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-600">{errorMessage}</p>
+            <button type="button" onClick={retryPayment} className="mt-7 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
+              Try again <ArrowRight className="size-4" aria-hidden="true" />
+            </button>
+            <p className="mt-5 text-xs leading-5 text-slate-500">If the issue continues, go back to the previous page or contact support.</p>
+          </>
+        )}
+      </section>
+    </main>
+  );
+}
