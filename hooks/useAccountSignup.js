@@ -29,6 +29,7 @@ import { getHash } from "@/utils/common";
  * merge these two into one value again.
  */
 function buildStage1Request({ mode, fields, context }) {
+  debugger
   const authentication = {
     hash: getHash(),
     schoolId: context.schoolNumericId,
@@ -73,6 +74,8 @@ function buildStage1Request({ mode, fields, context }) {
     data.learningProgram = getLearningProgramBackendValue(context.learningProgram);
     data.enrollmentFor = context.enrollmentFor;
   }
+  console.log(data);
+  
 
   return { authentication, data };
 }

@@ -1,5 +1,5 @@
-import { PaymentResponseScaffold } from "@/components/common/PaymentResponseScaffold";
+import { PaymentResponseView } from "@/components/common/PaymentResponseView";
 
 export default function OtherPaymentResponseSuccessPage() {
-  return <PaymentResponseScaffold title="Payment Successful" route="/common/other-payment-response-success" />;
+  return <PaymentResponseView endpointPath="common/other-payment-response-success" />;
 }
