@@ -197,6 +197,7 @@ function SuccessCard({ data }) {
   return (
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
+        <StatusIcon variant="success" />
         <h2 className="text-2xl font-extrabold tracking-tight text-emerald-600 sm:text-3xl">
           {successTitle(data)}!
         </h2>
@@ -300,6 +301,7 @@ function FailedCard({ data }) {
   return (
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
+        <StatusIcon variant="failed" />
         <h2 className="text-2xl font-extrabold tracking-tight text-rose-600 sm:text-3xl">
           {data.failedTitle || "Payment Unsuccessful"}
         </h2>
