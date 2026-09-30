@@ -2,7 +2,8 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { CheckCircle2, Clock, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Loader } from "@/components/common/Loader";
 import { getPaymentResponseSuccess, getPaymentResponseFailure } from "@/services/paymentResponseApi";
 
 /**
@@ -97,7 +98,7 @@ function ProcessingLoader() {
   return (
     <PageShell>
       <div className="flex flex-col items-center gap-5 py-10 text-center">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <Loader />
         <div>
           <h1 className="text-xl font-bold text-slate-800">Please wait…</h1>
           <p className="mt-1 text-sm text-slate-500">

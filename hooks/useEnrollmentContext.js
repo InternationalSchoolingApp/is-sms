@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
+import { getPublicSchoolInfo } from "@/services/studentSignupApi";
 import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
 import { useStudentDetailsPrefill } from "@/hooks/useStudentDetailsSignup";
 import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
@@ -29,6 +30,7 @@ import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
 export function useEnrollmentContext() {
   const { data: session, status } = useSession();
   const [logoUrl, setLogoUrl] = useState(null);
+  const [whatsAppNumber, setWhatsAppNumber] = useState(undefined);
   const prefill = useStudentDetailsPrefill({
     context: { schoolUUID: session?.schoolUUID },
     userId: session?.userId,
@@ -46,6 +48,20 @@ export function useEnrollmentContext() {
       cancelled = true;
     };
   }, [session?.schoolNumericId]);
+
+  // Support number for the mobile action bar's WhatsApp button (same public-info call the landing page uses).
+  useEffect(() => {
+    if (!session?.schoolUUID) return;
+    let cancelled = false;
+    getPublicSchoolInfo(session.schoolUUID)
+      .then((info) => {
+        if (!cancelled && info?.whatsAppNumber) setWhatsAppNumber(info.whatsAppNumber);
+      })
+      .catch((err) => console.error("School public info fetch failed:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.schoolUUID]);
 
   const ready = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
 
@@ -65,6 +81,7 @@ export function useEnrollmentContext() {
         schoolUUID: session.schoolUUID,
         schoolNumericId: session.schoolNumericId,
         schoolName: session.schoolName,
+        whatsAppNumber,
         enrollmentFor: "enrollment",
         learningProgram: prefill.data?.learningProgram
           ? getLearningProgramShortCode(prefill.data.learningProgram)

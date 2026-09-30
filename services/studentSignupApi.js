@@ -1,3 +1,4 @@
+import { trackRequest } from "@/utils/loaderStore";
 import { encodePayload } from "@/utils/payloadEncoding";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
 
@@ -66,22 +67,26 @@ async function postPayload(schoolUUID, path, data, options) {
   // backend origin differs from this page's.
   const headers = { "Content-Type": "application/json" };
   if (options?.uniqueId) headers.UNIQUEUUID = options.uniqueId;
-  const response = await fetch(backendUrl(schoolUUID, path, options), {
-    method: "POST",
-    headers,
-    credentials: "include",
-    body: JSON.stringify({ payload: encodePayload(data) }),
-  });
-  return parseJsonResponse(response);
+  return trackRequest(async () => {
+    const response = await fetch(backendUrl(schoolUUID, path, options), {
+      method: "POST",
+      headers,
+      credentials: "include",
+      body: JSON.stringify({ payload: encodePayload(data) }),
+    });
+    return parseJsonResponse(response);
+  }, options);
 }
 
 async function getPayload(schoolUUID, path, params, options) {
   const query = params ? `?${new URLSearchParams(params).toString()}` : "";
-  const response = await fetch(backendUrl(schoolUUID, `${path}${query}`, options), {
-    method: "GET",
-    credentials: "include",
-  });
-  return parseJsonResponse(response);
+  return trackRequest(async () => {
+    const response = await fetch(backendUrl(schoolUUID, `${path}${query}`, options), {
+      method: "GET",
+      credentials: "include",
+    });
+    return parseJsonResponse(response);
+  }, options);
 }
 
 // --- Stage 1: Student Details ---
@@ -157,7 +162,7 @@ export function proceedToDashboard(schoolUUID, request) {
 
 // --- Stage resume / polling ---
 export function getSignupStageStatus(schoolUUID, uniqueId) {
-  return getPayload(schoolUUID, "student/enrollment-stage-status", { uniqueId });
+  return getPayload(schoolUUID, "student/enrollment-stage-status", { uniqueId }, { silent: true });
 }
 
 // --- Document upload ---
@@ -221,7 +226,7 @@ export async function logoutSignup(schoolUUID, uniqueId) {
 }
 
 export function getPaymentPaidStatus(schoolUUID, request) {
-  return postPayload(schoolUUID, "common/get-payment-paid-status", request);
+  return postPayload(schoolUUID, "common/get-payment-paid-status", request, { silent: true });
 }
 
 export function launchPaymentGatewayForm(schoolUUID, payload) {
@@ -263,12 +268,14 @@ export async function uploadPaymentProof(schoolUUID, uniqueId, { file, uploadInd
     JSON.stringify({ payload: encodePayload({ uploadCategory, uploadUserId, skipSession: true }) })
   );
   form.append(`fileupload${uploadIndex}`, file);
-  const response = await fetch(backendUrl(schoolUUID, `api/upload/${uniqueId}`), {
-    method: "POST",
-    credentials: "include",
-    body: form,
+  return trackRequest(async () => {
+    const response = await fetch(backendUrl(schoolUUID, `api/upload/${uniqueId}`), {
+      method: "POST",
+      credentials: "include",
+      body: form,
+    });
+    return parseJsonResponse(response);
   });
-  return parseJsonResponse(response);
 }
 
 // Airwallex's selectable payment methods, shown once common/payment-gateway/options lists

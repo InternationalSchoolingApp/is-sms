@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2 } from "lucide-react";
-import { BiSolidBookAdd, BiSolidUserDetail } from "react-icons/bi";
+import { BiSolidBookAdd, BiSolidPencil, BiSolidUserDetail } from "react-icons/bi";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { FaNotesMedical } from "react-icons/fa6";
-import { IoMdPeople } from "react-icons/io";
+import { IoLogoWhatsapp, IoMdPeople } from "react-icons/io";
+import { FullScreenLoader } from "@/components/common/Loader";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/student-enroll/ConfirmDialog";
@@ -45,7 +46,34 @@ import {
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import { isDummyStudentMode, showDummyStripeCheckoutPage } from "@/utils/paymentGatewayChecks";
 
-const ROW_CLASS = "overflow-hidden rounded-lg border border-slate-200 bg-white";
+const ROW_CLASS = "md:overflow-hidden md:rounded-lg md:border md:border-slate-200 md:bg-white";
+
+// Gray placeholder blocks matching the three review rows (same idea as Stage 1's FieldSkeleton),
+// shown under the real heading while get-student-review-details loads.
+function ReviewDetailsSkeleton() {
+  return (
+    <div className="space-y-3">
+      <h2 className="hidden text-lg font-semibold text-slate-900 md:block">Kindly Review your details</h2>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="h-[62px] w-full animate-pulse rounded-lg bg-slate-200" />
+      ))}
+    </div>
+  );
+}
+
+// Right column placeholder: two plan cards and the Fee Summary card.
+function PaymentOptionsSkeleton() {
+  return (
+    <div>
+      <h2 className="text-lg font-semibold text-slate-900">Choose Payment Option</h2>
+      <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="h-[80px] animate-pulse rounded-xl bg-slate-200" />
+        <div className="h-[80px] animate-pulse rounded-xl bg-slate-200" />
+      </div>
+      <div className="mt-5 h-[360px] animate-pulse rounded-xl bg-slate-200" />
+    </div>
+  );
+}
 
 /**
  * Accordion header — legacy `<h4 class="a-title">` with an Edit button
@@ -54,6 +82,7 @@ const ROW_CLASS = "overflow-hidden rounded-lg border border-slate-200 bg-white";
  * click bubbling so it doesn't also toggle.
  */
 function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
+  const Chevron = open ? ChevronUp : ChevronDown;
   return (
     <header
       role="button"
@@ -66,15 +95,16 @@ function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
           onToggle();
         }
       }}
-      className="flex cursor-pointer items-center justify-between gap-3 px-3 py-3"
+      className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 md:rounded-none md:border-0 md:py-3"
     >
       <div className="flex items-center gap-4">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-          <Icon className="h-6 w-6" aria-hidden="true" />
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary md:h-10 md:w-10">
+          <Icon className="h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />
         </span>
-        <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+        <h2 className="text-[clamp(12px,3.5vw,15px)] font-bold text-slate-900 md:text-base md:font-semibold">{title}</h2>
       </div>
-      <div className="flex gap-2">
+      <Chevron className="h-4 w-4 shrink-0 text-slate-900 md:hidden" strokeWidth={3} aria-hidden="true" />
+      <div className="hidden gap-2 md:flex">
         <Button
           type="button"
           variant="outline"
@@ -100,6 +130,19 @@ function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
         )}
       </div>
     </header>
+  );
+}
+
+// Mobile-only "Edit Details  ✎ Edit" line above an expanded section (the header's Edit button is desktop-only).
+function MobileEditRow({ onEdit }) {
+  if (!onEdit) return null;
+  return (
+    <div className="mt-4 flex items-center justify-between md:hidden">
+      <h3 className="text-sm font-bold text-slate-900">Edit Details</h3>
+      <button type="button" onClick={onEdit} className="flex items-center gap-1.5 text-sm font-semibold text-primary">
+        <BiSolidPencil className="h-4 w-4" aria-hidden="true" /> Edit
+      </button>
+    </div>
   );
 }
 
@@ -597,8 +640,9 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
 
   if (reviewQuery.isLoading) {
     return (
-      <div>
-        <p className="text-sm text-slate-500">Loading your details…</p>
+      <div className="mt-6 grid gap-x-8 gap-y-8 lg:grid-cols-[555fr_723fr]" aria-busy="true">
+        <ReviewDetailsSkeleton />
+        {paymentOption.data !== "N" && <PaymentOptionsSkeleton />}
       </div>
     );
   }
@@ -637,7 +681,8 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
   const showFee = paymentPending && fee;
 
   return (
-    <div>
+    <div className="mb-7 rounded-xl border border-slate-200 bg-white p-4 md:mb-0 md:rounded-none md:border-0 md:bg-transparent md:p-0">
+      <h1 className="mb-4 text-center text-1.5xl font-extrabold text-slate-900 sm:text-2xl md:hidden">Review Your Details &amp; Payment</h1>
       {notice && (
         <p
           role={notice.tone === "error" ? "alert" : "status"}
@@ -648,13 +693,13 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       )}
 
       <div
-        className={`mt-6 grid gap-x-8 gap-y-8 ${
+        className={`grid gap-x-8 gap-y-4 md:mt-6 md:gap-y-8 ${
           showFee ? "lg:grid-cols-[555fr_723fr]" : "mx-auto max-w-2xl"
         } ${busy ? "opacity-60" : ""}`}
         aria-busy={busy}
       >
-        <div className="space-y-3">
-        <h2 className="text-lg font-semibold text-slate-900">Kindly Review your details</h2>
+        <div className="space-y-2 md:space-y-3">
+        <h2 className="hidden text-lg font-semibold text-slate-900 md:block">Kindly Review your details</h2>
         {editing === "student" && (
           <StudentInlineEdit
             context={context}
@@ -675,18 +720,21 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
             onEdit={data.customPaymentEnabled ? undefined : () => startEdit("student")}
           />
           {openSectionFor() === "student" && (
-          <dl className="divide-y divide-slate-100 border-t border-slate-100 px-4 py-2 text-sm">
-            <div className="flex justify-between py-2"><dt className="text-slate-500">Name</dt><dd className="font-medium text-slate-900">{fullName(student)}</dd></div>
+          <>
+          <MobileEditRow onEdit={data.customPaymentEnabled ? undefined : () => startEdit("student")} />
+          <dl className="py-2 text-[13px] md:divide-y md:divide-slate-100 md:border-t md:border-slate-100 md:px-4 md:text-sm">
+            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Name</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{fullName(student)}</dd></div>
             {course?.standardName && (
-              <div className="flex justify-between py-2"><dt className="text-slate-500">Grade</dt><dd className="font-medium text-slate-900">{course.standardName}</dd></div>
+              <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Grade</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{course.standardName}</dd></div>
             )}
-            <div className="flex justify-between py-2"><dt className="text-slate-500">Date of Birth</dt><dd className="font-medium text-slate-900">{student?.dob}</dd></div>
-            <div className="flex justify-between py-2"><dt className="text-slate-500">Gender</dt><dd className="font-medium text-slate-900">{student?.genderName}</dd></div>
-            <div className="flex justify-between py-2"><dt className="text-slate-500">Email</dt><dd className="font-medium text-slate-900">{student?.communicationEmail}</dd></div>
-            <div className="flex justify-between py-2"><dt className="text-slate-500">Phone Number</dt><dd className="font-medium text-slate-900">{phoneLine(student)}</dd></div>
-            <div className="flex justify-between py-2"><dt className="text-slate-500">Nationality</dt><dd className="font-medium text-slate-900">{student?.nationality}</dd></div>
-            <div className="flex justify-between py-2"><dt className="text-slate-500">Country | State | City</dt><dd className="font-medium text-slate-900">{locationLine(student)}</dd></div>
+            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Date of Birth</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{student?.dob}</dd></div>
+            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Gender</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{student?.genderName}</dd></div>
+            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Email</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{student?.communicationEmail}</dd></div>
+            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Phone Number</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{phoneLine(student)}</dd></div>
+            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Nationality</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{student?.nationality}</dd></div>
+            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Country | State | City</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{locationLine(student)}</dd></div>
           </dl>
+          </>
           )}
         </section>
 
@@ -709,26 +757,29 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
             onEdit={data.customPaymentEnabled ? undefined : () => startEdit("parent")}
           />
           {openSectionFor() === "parent" && (
-          <dl className="divide-y divide-slate-100 border-t border-slate-100 px-4 py-2 text-sm">
+          <>
+          <MobileEditRow onEdit={data.customPaymentEnabled ? undefined : () => startEdit("parent")} />
+          <dl className="px-1 py-2 text-base md:divide-y md:divide-slate-100 md:border-t md:border-slate-100 md:px-4 md:text-sm">
             {parent?.workingProfessionName ? (
               <>
-                <div className="flex justify-between py-2"><dt className="text-slate-500">Student or a working professional</dt><dd className="font-medium text-slate-900">{parent.workingProfessionName}</dd></div>
-                <div className="flex justify-between py-2"><dt className="text-slate-500">School/College/Organization</dt><dd className="font-medium text-slate-900">{parent.institutionName}</dd></div>
-                <div className="flex justify-between py-2"><dt className="text-slate-500">Country</dt><dd className="font-medium text-slate-900">{parent.institutionCountryName}</dd></div>
+                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Student or a working professional</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{parent.workingProfessionName}</dd></div>
+                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">School/College/Organization</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{parent.institutionName}</dd></div>
+                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Country</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{parent.institutionCountryName}</dd></div>
               </>
             ) : (
               <>
-                <div className="flex justify-between py-2"><dt className="text-slate-500">Name</dt><dd className="font-medium text-slate-900">{fullName(parent)}</dd></div>
-                <div className="flex justify-between py-2"><dt className="text-slate-500">Relation with student</dt><dd className="font-medium text-slate-900">{parent?.relationshipName}</dd></div>
-                <div className="flex justify-between py-2"><dt className="text-slate-500">Email</dt><dd className="font-medium text-slate-900">{parent?.email || "N/A"}</dd></div>
-                <div className="flex justify-between py-2"><dt className="text-slate-500">Phone Number</dt><dd className="font-medium text-slate-900">{phoneLine(parent)}</dd></div>
-                <div className="flex justify-between py-2"><dt className="text-slate-500">Country | State | City</dt><dd className="font-medium text-slate-900">{locationLine(parent)}</dd></div>
+                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Name</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{fullName(parent)}</dd></div>
+                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Relation with student</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{parent?.relationshipName}</dd></div>
+                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Email</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{parent?.email || "N/A"}</dd></div>
+                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Phone Number</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{phoneLine(parent)}</dd></div>
+                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Country | State | City</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{locationLine(parent)}</dd></div>
                 {parent?.referralCode && (
-                  <div className="flex justify-between py-2"><dt className="text-slate-500">Referral Code</dt><dd className="font-medium text-slate-900">{parent.referralCode}</dd></div>
+                  <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Referral Code</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{parent.referralCode}</dd></div>
                 )}
               </>
             )}
           </dl>
+          </>
           )}
         </section>
 
@@ -759,7 +810,9 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
             onEdit={data.customPaymentEnabled ? undefined : () => startEdit("course")}
           />
           {openSectionFor() === "course" && (
-          <div className="border-t border-slate-100 px-4 py-3">
+          <>
+          <MobileEditRow onEdit={data.customPaymentEnabled ? undefined : () => startEdit("course")} />
+          <div className="py-3 md:border-t md:border-slate-100 md:px-4">
             <h3 className="mb-2 text-sm font-semibold text-slate-900">{course?.standardName}</h3>
             <table className="w-full text-sm">
               <thead>
@@ -786,6 +839,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
               )}
             </table>
           </div>
+          </>
           )}
         </section>
 
@@ -793,10 +847,11 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
 
         {showFee && (
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">
+            <hr className="mb-4 border-slate-200 md:hidden" />
+            <h2 className="hidden text-lg font-semibold text-slate-900 md:block">
               {data.customPaymentEnabled ? data.feeSetionTitile || "Fee Payment" : "Choose Payment Option"}
             </h2>
-            <div className="mt-3">
+            <div className="md:mt-3">
               {data.customPaymentEnabled ? (
                 <FeeSummaryCard>
                   <CustomPlanTable fee={fee} />
@@ -817,29 +872,46 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         )}
       </div>
 
-      <div className="mt-8 flex items-center justify-center gap-3">
-        {onBack && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onBack(3)}
-            disabled={busy || !!editing}
-            className="border-primary px-4 font-semibold text-primary hover:bg-primary/5 hover:text-primary"
+      {/* Mobile: a fixed action bar above the footer (WhatsApp left, Back / Final Step right). From md
+          it is the centred button row at the end of the content. */}
+      <div className="fixed inset-x-0 bottom-8 z-20 flex items-center justify-between gap-3 bg-white px-4 py-2 md:static md:z-auto md:mt-8 md:justify-center md:bg-transparent md:p-0">
+        {context.whatsAppNumber ? (
+          <a
+            href={`https://api.whatsapp.com/send?phone=${context.whatsAppNumber}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Enrollment support on WhatsApp"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#25D366] text-white md:hidden"
           >
-            Back
-          </Button>
-        )}
-        {paymentOption.isLoading ? (
-          <p className="text-sm text-slate-500">Loading…</p>
-        ) : paymentPending && paymentUnderReview ? null : paymentPending ? (
-          <Button type="button" onClick={confirmAndPay} disabled={busy || !!editing} className="rounded-md bg-primary px-4 font-semibold hover:bg-primary/90">
-            {busy ? "Please wait…" : "Final Step"}
-          </Button>
+            <IoLogoWhatsapp className="h-7 w-7" aria-hidden="true" />
+          </a>
         ) : (
-          <Button type="button" onClick={() => setConfirmSubmit(true)} disabled={busy || !!editing} className="rounded-md bg-primary px-4 font-semibold hover:bg-primary/90">
-            {busy ? "Please wait…" : "Submit Application"}
-          </Button>
+          <span className="md:hidden" />
         )}
+        <div className="flex items-center gap-2 md:gap-3">
+          {onBack && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onBack(3)}
+              disabled={busy || !!editing}
+              className="h-10 border-primary px-4 text-[15px] font-semibold text-primary hover:bg-primary/5 hover:text-primary md:h-8 md:text-sm"
+            >
+              Back
+            </Button>
+          )}
+          {paymentOption.isLoading ? (
+            <p className="text-sm text-slate-500">Loading…</p>
+          ) : paymentPending && paymentUnderReview ? null : paymentPending ? (
+            <Button type="button" onClick={confirmAndPay} disabled={busy || !!editing} className="h-10 rounded-md bg-primary px-4 text-[15px] font-semibold hover:bg-primary/90 md:h-8 md:text-sm">
+              {busy ? "Please wait…" : "Final Step"}
+            </Button>
+          ) : (
+            <Button type="button" onClick={() => setConfirmSubmit(true)} disabled={busy || !!editing} className="h-10 rounded-md bg-primary px-4 text-[15px] font-semibold hover:bg-primary/90 md:h-8 md:text-sm">
+              {busy ? "Please wait…" : "Submit Application"}
+            </Button>
+          )}
+        </div>
       </div>
 
       <ConfirmDialog
@@ -871,14 +943,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         onUploadProof={uploadProof}
         onSubmitOffline={submitOffline}
       />
-      {paymentProcessing && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 text-white">
-          <div className="flex flex-col items-center gap-4 text-center">
-            <Loader2 className="h-10 w-10 animate-spin text-amber-400" />
-            <h4 className="text-lg font-semibold">Payment is under process...</h4>
-          </div>
-        </div>
-      )}
+      {paymentProcessing && <FullScreenLoader message="Payment is under process..." />}
       <Dialog open={paymentIncomplete} onOpenChange={(open) => !open && setPaymentIncomplete(false)}>
         <DialogContent className="text-center">
           <DialogHeader>

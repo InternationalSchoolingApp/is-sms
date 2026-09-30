@@ -1,3 +1,4 @@
+import { trackRequest } from "@/utils/loaderStore";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
 
 /**
@@ -31,15 +32,17 @@ function backendUrl(schoolUUID, path) {
 }
 
 async function getJson(url) {
-  const response = await fetch(url, { method: "GET", credentials: "include" });
-  if (!response.ok) return null;
-  const text = await response.text();
-  if (!text) return null;
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
+  return trackRequest(async () => {
+    const response = await fetch(url, { method: "GET", credentials: "include" });
+    if (!response.ok) return null;
+    const text = await response.text();
+    if (!text) return null;
+    try {
+      return JSON.parse(text);
+    } catch {
+      return null;
+    }
+  });
 }
 
 /**

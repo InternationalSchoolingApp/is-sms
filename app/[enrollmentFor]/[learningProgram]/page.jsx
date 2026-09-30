@@ -7,6 +7,7 @@ import { AccountForm } from "@/components/student-enroll/AccountForm";
 import { AccountFormOfflineB2B } from "@/components/student-enroll/AccountFormOfflineB2B";
 import { EmailVerificationPanel } from "@/components/student-enroll/EmailVerificationPanel";
 import { SchoolLogo } from "@/components/student-enroll/SchoolLogo";
+import { Footer } from "@/components/common/Footer";
 import { SignupFooter } from "@/components/student-enroll/SignupFooter";
 import { getPublicSchoolInfo } from "@/services/studentSignupApi";
 import { getLearningProgramTheme } from "@/utils/learningProgramTheme";
@@ -261,9 +262,7 @@ function AccountCreationPageContent() {
           from the client clock; school name from the per-school context
           resolved from ?school=). Mobile keeps its own copyright line inside
           SignupFooter. */}
-      <footer className="relative z-10 hidden border-t border-slate-200/70 py-4 text-center text-xs text-slate-500 md:block bg-white/90">
-        Copyright © {new Date().getFullYear()} - {context.schoolName || "International Schooling"} - All Rights Reserved.
-      </footer>
+      <Footer schoolName={context.schoolName} />
 
       {/* Desktop-only floating WhatsApp support button (bottom-right).
           Mobile keeps the fixed WhatsApp footer bar via SignupFooter. */}

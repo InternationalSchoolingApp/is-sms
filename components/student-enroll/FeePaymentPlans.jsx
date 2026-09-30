@@ -15,9 +15,9 @@ import { ReceiptText } from "lucide-react";
  * `feeAlreayPaid`).
  */
 
-const TH = "px-4 py-3 text-xs font-bold text-slate-900";
-const TD = "border-t border-slate-100 px-4 py-3 align-top text-xs text-slate-800";
-const RIGHT = "text-right";
+const TH = "px-3 py-2 md:px-4 md:py-3 text-xs font-bold text-slate-900";
+const TD = "border-t border-slate-100 px-3 py-3 md:px-4 align-top text-[11px] text-slate-800 md:text-xs";
+const RIGHT = "text-right whitespace-nowrap";
 
 // The backend sends labels like "1<sup>st</sup> month fee"; render the <sup> as real superscript
 // without injecting the string as HTML.
@@ -43,11 +43,11 @@ function currencyOf(fee) {
 // The bordered card around every fee table ("Fee Summary" in the design), note included.
 export function FeeSummaryCard({ children }) {
   return (
-    <section className="mt-5 rounded-xl border border-slate-200 bg-white px-7 py-6">
-      <h3 className="flex items-center gap-3 text-lg font-semibold text-slate-900">
-        <ReceiptText className="h-6 w-6 text-primary" aria-hidden="true" /> Fee Summary
+    <section className="mt-4 md:mt-5 md:rounded-xl md:border md:border-slate-200 md:bg-white md:px-7 md:py-6">
+      <h3 className="flex items-center gap-3 text-lg font-bold text-slate-900 md:font-semibold">
+        <ReceiptText className="h-5 w-5 text-primary md:h-6 md:w-6" aria-hidden="true" /> Fee Summary
       </h3>
-      <div className="mt-4">{children}</div>
+      <div className="mt-3 md:mt-4">{children}</div>
       <p className="mt-4 text-center text-xs font-medium text-slate-800">
         Note: All fees mentioned above are in US Dollars
       </p>
@@ -60,15 +60,19 @@ function FeeTable({ children }) {
     <div className="overflow-hidden rounded-lg border border-slate-200">
       <table className="w-full border-collapse bg-white">
         <colgroup>
-          <col style={{ width: "58%" }} />
-          <col style={{ width: "21%" }} />
-          <col style={{ width: "21%" }} />
+          <col className="w-[42%] md:w-[58%]" />
+          <col className="w-[29%] md:w-[21%]" />
+          <col className="w-[29%] md:w-[21%]" />
         </colgroup>
-        <thead className="bg-slate-50">
+        <thead className="bg-slate-100 md:bg-slate-50">
           <tr>
             <th className={`${TH} text-left`}>Description</th>
-            <th className={`${TH} text-right`}>Fee (USD)</th>
-            <th className={`${TH} text-right`}>Total (USD)</th>
+            <th className={`${TH} text-right`}>
+              Fee<span className="hidden md:inline"> (USD)</span>
+            </th>
+            <th className={`${TH} text-right`}>
+              Total<span className="hidden md:inline"> (USD)</span>
+            </th>
           </tr>
         </thead>
         <tbody>{children}</tbody>
@@ -79,7 +83,7 @@ function FeeTable({ children }) {
 
 function PayableRow({ amount }) {
   return (
-    <tr className="bg-slate-50 font-bold">
+    <tr className="bg-slate-100 font-bold md:bg-slate-50">
       <td className={TD}>Payable Fee</td>
       <td className={`${TD} ${RIGHT}`}>{amount}</td>
       <td className={`${TD} ${RIGHT}`}>{amount}</td>
@@ -252,13 +256,13 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, disabled, st
   const active = options.find((option) => option.key === selected);
   return (
     <div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4">
         {options.map((option) => {
           const checked = option.key === selected;
           return (
             <label
               key={option.key}
-              className={`relative flex cursor-pointer flex-col justify-center rounded-xl border px-6 py-4 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40 ${
+              className={`relative grid cursor-pointer grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1 rounded-xl border px-4 py-3 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40 md:flex md:flex-col md:items-stretch md:justify-center md:gap-0 md:px-6 ${
                 checked ? "border-primary bg-primary/10" : "border-slate-200 bg-white hover:border-primary/50"
               } ${disabled ? "cursor-not-allowed opacity-70" : ""}`}
             >
@@ -270,11 +274,20 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, disabled, st
                 onChange={() => onSelect(option.key)}
                 disabled={disabled}
               />
-              <span className="text-sm text-slate-700">{option.label}</span>
-              <span className="mt-1 flex items-center gap-2">
-                <span className="text-2xl font-bold leading-tight text-slate-900">{option.amount}</span>
+              {/* Mobile shows a visible radio; desktop relies on the card highlight. */}
+              <span
+                aria-hidden="true"
+                className={`flex h-5 w-5 items-center justify-center rounded-full border-2 md:hidden ${checked ? "border-primary" : "border-slate-400"}`}
+              >
+                {checked && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+              </span>
+              <span className="text-[clamp(12px,3.4vw,14px)] text-slate-700 md:text-sm">{option.label}</span>
+              <span className="col-start-2 mt-1 flex items-center gap-2 md:mt-1">
+                <span className="text-[clamp(15px,4.2vw,18px)] font-bold leading-tight text-slate-900 md:text-2xl">{option.amount}</span>
                 {option.badge && (
-                  <span className="rounded bg-yellow-300 px-2 py-0.5 text-xs font-semibold text-slate-900">{option.badge}</span>
+                  <span className="rounded-md border border-yellow-400 bg-yellow-200 px-2 py-0.5 text-xs font-bold text-slate-900 md:rounded md:border-0 md:bg-yellow-300 md:font-semibold">
+                    {option.badge}
+                  </span>
                 )}
               </span>
             </label>

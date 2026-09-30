@@ -2,6 +2,7 @@ import { Open_Sans } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { AuthSessionProvider } from "@/components/providers/AuthSessionProvider";
+import { GlobalLoader } from "@/components/common/GlobalLoader";
 import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 
 // Matches the existing JSP app's font (Google Fonts "Open Sans", loaded via
@@ -26,6 +27,7 @@ export default function RootLayout({ children }) {
         <AnalyticsScripts />
         <AuthSessionProvider>
           <QueryProvider>{children}</QueryProvider>
+          <GlobalLoader />
         </AuthSessionProvider>
       </body>
     </html>

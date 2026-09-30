@@ -1,5 +1,6 @@
 "use client";
 
+import { FullScreenLoader } from "@/components/common/Loader";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Stage2ParentDetails } from "@/components/student-enroll/Stage2ParentDetails";
@@ -38,7 +39,7 @@ export default function StudentEnrollmentStep2() {
   }, [ready, context?.schoolUUID, session?.userId]);
 
   if (!ready || !hydrated) {
-    return <main className="flex min-h-screen items-center justify-center text-slate-500">Loading…</main>;
+    return <FullScreenLoader />;
   }
 
   return (
