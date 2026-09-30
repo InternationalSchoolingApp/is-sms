@@ -2,7 +2,25 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  BookOpen,
+  Calculator,
+  ChevronDown,
+  FlaskConical,
+  Globe2,
+  GraduationCap,
+  HeartPulse,
+  Info,
+  Languages,
+  Palette,
+  Plus,
+  RefreshCw,
+  Search,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { ConfirmDialog } from "@/components/student-enroll/ConfirmDialog";
@@ -94,6 +112,91 @@ function CourseSummaryLink({ url }) {
   );
 }
 
+// Purely cosmetic: picks an icon for a subject-category card by matching its
+// name — the backend doesn't send an icon/category-type field, so this is a
+// best-effort keyword match with a generic fallback, not business logic.
+function categoryIcon(name) {
+  const n = (name || "").toLowerCase();
+  if (n.includes("math")) return Calculator;
+  if (n.includes("science")) return FlaskConical;
+  if (n.includes("language")) return Languages;
+  if (n.includes("social") || n.includes("history")) return Globe2;
+  if (n.includes("elective")) return Sparkles;
+  if (n.includes("health") || n.includes("physical")) return HeartPulse;
+  if (n.includes("art")) return Palette;
+  return BookOpen;
+}
+
+// Purely cosmetic breakdown of the already-selected courses for the
+// "Selection Summary" legend — derived entirely from fields already present
+// on each selected course (courseMandatory, courseTypeOriginal), not a new
+// business rule. Anything not recognized as Regular/Honors/Advanced
+// Placement falls back to "Electives" rather than being silently dropped.
+function summarizeSelection(selectedCourses) {
+  const counts = { Required: 0, Regular: 0, Electives: 0, Honors: 0, Advanced: 0 };
+  selectedCourses.forEach((course) => {
+    if (course.courseMandatory === 1) {
+      counts.Required += 1;
+      return;
+    }
+    if (course.courseTypeOriginal === "Regular") counts.Regular += 1;
+    else if (course.courseTypeOriginal === "Honors") counts.Honors += 1;
+    else if (course.courseTypeOriginal === "Advanced Placement") counts.Advanced += 1;
+    else counts.Electives += 1;
+  });
+  return [
+    { label: "Required", count: counts.Required, dot: "bg-emerald-500" },
+    { label: "Regular", count: counts.Regular, dot: "bg-primary" },
+    { label: "Electives", count: counts.Electives, dot: "bg-purple-500" },
+    { label: "Honors", count: counts.Honors, dot: "bg-amber-500" },
+    { label: "Advanced", count: counts.Advanced, dot: "bg-indigo-700" },
+  ];
+}
+
+// CSS conic-gradient ring, no chart library needed.
+function CreditProgressRing({ value, max }) {
+  const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
+  return (
+    <div
+      className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
+      style={{ background: `conic-gradient(var(--primary) ${pct * 3.6}deg, #dbeafe ${pct * 3.6}deg)` }}
+      role="img"
+      aria-label={`${value} of ${max} credits selected`}
+    >
+      <div className="h-9 w-9 rounded-full bg-white" />
+    </div>
+  );
+}
+
+// Same upgrade(course, target) call as the arrow-button fallback below — just
+// a toggle-shaped control for the common "exactly one alternate variant"
+// case (e.g. Regular <-> Honors), matching the reference design. Any
+// confirmation gate (extra fee, warning message) still lives inside
+// upgrade() itself and still runs before anything changes.
+function VariantToggle({ course, target, onToggle, disabled }) {
+  const isTarget = course.courseTypeOriginal !== "Regular";
+  return (
+    <div className="flex shrink-0 items-center gap-2">
+      
+      <button
+        type="button"
+        role="switch"
+        aria-checked={isTarget}
+        aria-label={target.buttonLabel || "Switch course variant"}
+        title={upgradeHint(target.courseType)}
+        onClick={() => onToggle(course, target)}
+        disabled={disabled}
+        className={`relative h-5 shrink-0 rounded-full transition-colors disabled:opacity-50 ${isTarget ? "bg-primary w-18" : "bg-slate-300 w-20"}`}
+      >
+        <span className={`text-xs relative bottom-1 font-medium  ${isTarget ? "text-white right-2" : "text-slate-500 left-1.75"}`}>{course.courseTypeOriginal || (isTarget ? "Honor" : "Regular")}</span>
+        <span
+          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${isTarget ? "-translate-x-0.5" : "-translate-x-15"}`}
+        />
+      </button>
+    </div>
+  );
+}
+
 /**
  * Stage 3 of the enrollment wizard ("Course Selection"). Mirrors
  * getAllCourseDetails()/addCourse()/removeCourse() in signupStudentStage3.js
@@ -101,6 +204,13 @@ function CourseSummaryLink({ url }) {
  * re-posts the full selection to course-details-by-standard-id, which
  * persists it and returns the recomputed page. Continuing saves a payment
  * plan (see useProceedToReview) so the next step is the review page.
+ *
+ * Visual design (summary bar with credit ring/legend, category sidebar +
+ * detail pane for available courses, Regular/Honor toggle) matches the
+ * reference screenshots — see categoryIcon/summarizeSelection/
+ * CreditProgressRing/VariantToggle above for what's presentational-only vs.
+ * the untouched business logic below (add/remove/upgrade/recommended/
+ * change-grade/proceed all call the exact same hooks/handlers as before).
  *
  * Not built here yet: the ONE_TO_ONE_FLEX grade switcher and the
  * enrollment-documents gate (legacy lets the student skip that one, so
@@ -115,6 +225,7 @@ function CourseSummaryLink({ url }) {
  * on and the call fails with a generic error.
  */
 export function Stage3CourseSelection({ context, userId, standardId, onNext, onBack, onSessionExpired, inReview = false }) {
+  const queryClient = useQueryClient();
   const courseQuery = useCourseDetails({ context, userId, standardId });
   const paymentOption = useShowPaymentOption({ context, userId });
   const update = useUpdateCourseSelection({ context, userId });
@@ -136,6 +247,9 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
   const [recommendedData, setRecommendedData] = useState(null);
   const [openCourseId, setOpenCourseId] = useState(null);
   const [confirmRequest, setConfirmRequest] = useState(null);
+  // Display-only filter over the "Choose Courses" panel (category names +
+  // subject names) — never touches selection state or any request payload.
+  const [search, setSearch] = useState("");
   const resolverRef = useRef(null);
   // Legacy apCourseSelectionFlag: the AP warning shows once per selection session.
   const apAcknowledgedRef = useRef(false);
@@ -390,7 +504,6 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
     <>
       {/* Program name is now shown by EnrollmentWizardShell's own hero above this card. */}
       <h2 className="text-center text-2xl font-bold text-slate-900">Course selection</h2>
-      {/* <p className="mt-2 max-w-2xl text-sm text-slate-500">Step 3 of 4. Choose the courses for this academic year.</p> */}
     </>
   );
 
@@ -440,27 +553,81 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
   const showAvailable = !fixed && availableCourses.length > 0;
   const effectiveOpenId = openCourseId ?? availableCourses[0]?.courseId;
   const showMinBanner = Number(data.courseProviderId) !== 39 && Number(data.minCourseLimit) > Number(data.totalCredit);
+  const showCreditSummary = !hideCredits && !batchOrProvider39 && Number(data.minCourseLimit) > 0;
   const materialFee = data.courseMaterialFeeDetails;
-  console.log("Course ==> ", data);
+  const summaryBuckets = summarizeSelection(selectedCourses);
+
+  // Display-only filter — matches a category by its own name, or by any of
+  // its subjects' names, and only affects what's rendered in the "Choose
+  // Courses" panel below.
+  const query = search.trim().toLowerCase();
+  const visibleCourses = query
+    ? availableCourses.filter(
+        (course) =>
+          course.courseName?.toLowerCase().includes(query) ||
+          course.subjects?.some((subject) => subject.subjectName?.toLowerCase().includes(query))
+      )
+    : availableCourses;
+  const activeCourse = visibleCourses.find((course) => course.courseId === effectiveOpenId) || visibleCourses[0];
+      console.log("Course", data)
   return (
-    <div>
+    <div className="mx-auto mt-6 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       {header}
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      <div className="mt-4 flex flex-col gap-4 rounded-xl border border-blue-100 bg-[#eef4ff] p-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
         {data.standardName && (
-          <span className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1 text-sm font-semibold text-white">
-            {data.standardName}
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm">
+              <GraduationCap className="h-5 w-5 text-primary" />
+              {data.standardName}
+            </span>
             <button
               type="button"
               onClick={() => setChangeGradeOpen(true)}
               disabled={busy}
-              className="text-xs font-semibold text-white/80 underline hover:text-white"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
             >
-              Change
+              Change <RefreshCw className="h-3.5 w-3.5" />
             </button>
-          </span>
+          </div>
         )}
-        {showMinBanner && (
+
+        {showCreditSummary && (
+          <div className="flex items-center gap-2 border-slate-200 sm:border-l sm:pl-6">
+            <Info className="h-4 w-4 shrink-0 text-primary" />
+            <div>
+              <p className="text-xs text-slate-500">Credits Requirement</p>
+              <p className="text-sm font-bold text-slate-900">Minimum {data.minCourseLimit} Credits</p>
+            </div>
+          </div>
+        )}
+
+        {showCreditSummary && (
+          <div className="flex items-center gap-3 border-slate-200 sm:border-l sm:pl-6">
+            <CreditProgressRing value={Number(data.totalCredit) || 0} max={Number(data.minCourseLimit) || 1} />
+            <div>
+              <p className="text-sm font-bold text-slate-900">
+                {data.totalCredit}/{data.minCourseLimit}
+              </p>
+              <p className="text-xs text-slate-500">Credits Selected</p>
+            </div>
+          </div>
+        )}
+
+        {!fixed && !batchOrProvider39 && (
+          <div className="border-slate-200 sm:border-l sm:pl-6">
+            <p className="text-xs font-semibold text-slate-500">Selection Summary</p>
+            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+              {summaryBuckets.map((bucket) => (
+                <span key={bucket.label} className="inline-flex items-center gap-1 text-slate-700">
+                  <span className={`h-2 w-2 rounded-full ${bucket.dot}`} /> {bucket.label}:{bucket.count}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {showMinBanner && !showCreditSummary && (
           <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-800">
             You need a minimum of {data.minCourseLimit} credits
           </span>
@@ -476,64 +643,81 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
         </p>
       )}
 
-      <div className={`mt-6 grid gap-6 ${showAvailable ? "lg:grid-cols-2" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
+      <div className={`mt-6 grid gap-6 ${showAvailable ? "lg:grid-cols-[1fr_1.6fr]" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
         <section className="self-start overflow-hidden rounded-xl border border-slate-200 bg-white">
-          <header className="flex items-center justify-between gap-3 bg-primary px-4 py-3 text-white">
-            <h2 className="text-sm font-semibold">{selectedSummary(data)}</h2>
-            {canRemoveAll && (
-              <button
-                type="button"
-                onClick={removeAll}
-                disabled={busy}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-white/90 hover:text-white"
-              >
-                <Trash2 className="h-4 w-4" /> Remove all
-              </button>
-            )}
+          <header className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+            <h2 className="text-sm font-bold text-slate-900">Your Selected Courses</h2>
+            <div className="flex items-center gap-3">
+              {!hideCredits && <span className="text-sm font-semibold text-primary">{data.totalCredit} Credit</span>}
+              {canRemoveAll && (
+                <button
+                  type="button"
+                  onClick={removeAll}
+                  disabled={busy}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 hover:text-red-700"
+                  aria-label="Remove all courses"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           </header>
+          {selectedCourses.length === 0 && <p className="px-4 py-6 text-sm text-slate-500">{selectedSummary(data)}</p>}
           {selectedCourses.length > 0 && (
             <ol className="divide-y divide-slate-100">
-              {selectedCourses.map((course, index) => (
-                <li key={course.courseId} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                  <span className="text-sm text-slate-400">{index + 1}.</span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-slate-900">
-                      {course.courseName}
-                      {!hideCredits && <span className="text-slate-500"> ({course.creditScore} credit)</span>}
-                    </p>
-                    <CourseSummaryLink url={course.courseDescriptionUrl} />
-                  </div>
-                  {(course.upgradeCourses || []).map((target) => (
-                    <Button
-                      key={target.courseId}
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      title={upgradeHint(target.courseType)}
-                      onClick={() => upgrade(course, target)}
-                      disabled={busy}
-                    >
-                      {target.buttonLabel}
-                      {course.courseTypeOriginal === "Regular" ? <ArrowUp /> : <ArrowDown />}
-                    </Button>
-                  ))}
-                  {!fixed && course.courseMandatory === 1 && !batchOrProvider39 && (
-                    <span className="rounded-md bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">Mandatory</span>
-                  )}
-                  {!fixed && course.courseMandatory === 0 && (
-                    <Button
-                      type="button"
-                      size="icon-sm"
-                      variant="ghost"
-                      aria-label={`Remove ${course.courseName}`}
-                      onClick={() => removeSubject(course)}
-                      disabled={busy}
-                    >
-                      <Trash2 className="text-red-600" />
-                    </Button>
-                  )}
-                </li>
-              ))}
+              {selectedCourses.map((course) => {
+                const CourseIcon = categoryIcon(course.courseName);
+                const singleUpgradeTarget = course.upgradeCourses?.length === 1 ? course.upgradeCourses[0] : null;
+                return (
+                  <li key={course.courseId} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#eef4ff] text-primary">
+                      <CourseIcon className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-slate-900">
+                        {course.courseName}
+                        {!hideCredits && <span className="text-slate-500"> ({course.creditScore} credit)</span>}
+                      </p>
+                      <CourseSummaryLink url={course.courseDescriptionUrl} />
+                    </div>
+                    {singleUpgradeTarget ? (
+                      <VariantToggle course={course} target={singleUpgradeTarget} onToggle={upgrade} disabled={busy} />
+                    ) : (
+                      (course.upgradeCourses || []).map((target) => (
+                        <Button
+                          key={target.courseId}
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          title={upgradeHint(target.courseType)}
+                          onClick={() => upgrade(course, target)}
+                          disabled={busy}
+                        >
+                          {target.buttonLabel}
+                          {course.courseTypeOriginal === "Regular" ? <ArrowUp /> : <ArrowDown />}
+                        </Button>
+                      ))
+                    )}
+                    {!fixed && course.courseMandatory === 1 && !batchOrProvider39 && (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
+                        Mandatory
+                      </span>
+                    )}
+                    {!fixed && course.courseMandatory === 0 && (
+                      <Button
+                        type="button"
+                        size="icon-sm"
+                        variant="ghost"
+                        aria-label={`Remove ${course.courseName}`}
+                        onClick={() => removeSubject(course)}
+                        disabled={busy}
+                      >
+                        <Trash2 className="text-red-600" />
+                      </Button>
+                    )}
+                  </li>
+                );
+              })}
             </ol>
           )}
           {materialFee?.totalEntityFee > 0 && (
@@ -554,41 +738,80 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
         {showAvailable && (
           <section className="self-start overflow-hidden rounded-xl border border-slate-200 bg-white">
             <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
-              <div>
-                <h2 className="text-sm font-semibold text-slate-900">{availableSummary(data)}</h2>
-                {data.registrationType === "SCHOLARSHIP" && (
-                  <p className="text-xs text-slate-500">Please note: live classes are not offered in this program.</p>
+              <h2 className="text-sm font-bold text-slate-900">Choose Courses</h2>
+              <div className="flex flex-1 items-center gap-3 sm:flex-none">
+                <div className="relative flex-1 sm:w-56 sm:flex-none">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search for courses..."
+                    className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-slate-900"
+                  />
+                </div>
+                {data.eligibleForRecommendedCourse && (
+                  <Button type="button" size="sm" onClick={openRecommended} disabled={busy} className="shrink-0 rounded-md bg-primary hover:bg-primary/90">
+                    <Plus className="h-4 w-4" /> Add recommended Courses
+                  </Button>
                 )}
               </div>
-              {data.eligibleForRecommendedCourse && (
-                <Button type="button" size="sm" variant="outline" onClick={openRecommended} disabled={busy}>
-                  Add recommended courses
-                </Button>
-              )}
             </header>
-            <ul>
-              {availableCourses.map((course) => {
-                const open = effectiveOpenId === course.courseId;
-                return (
-                  <li key={course.courseId} className="border-b border-slate-200 last:border-b-0">
-                    <button
-                      type="button"
-                      onClick={() => setOpenCourseId(open ? -1 : course.courseId)}
-                      aria-expanded={open}
-                      className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-semibold text-slate-800"
-                    >
-                      <span>{course.courseName}</span>
-                      <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
-                    </button>
-                    {open && (
-                      <div className="space-y-2 px-4 pb-4">
-                        {course.courseDescription && <p className="text-xs text-slate-500">{course.courseDescription}</p>}
-                        {course.subjects.map((subject) => {
+            {data.registrationType === "SCHOLARSHIP" && (
+              <p className="px-4 pt-3 text-xs text-slate-500">Please note: live classes are not offered in this program.</p>
+            )}
+            {visibleCourses.length === 0 ? (
+              <p className="px-4 py-6 text-sm text-slate-500">No courses match your search.</p>
+            ) : (
+              <div className="grid sm:grid-cols-[190px_1fr]">
+                <ul className="border-b border-slate-200 sm:border-b-0 sm:border-r">
+                  {visibleCourses.map((course) => {
+                    const CategoryIcon = categoryIcon(course.courseName);
+                    const active = activeCourse?.courseId === course.courseId;
+                    return (
+                      <li key={course.courseId}>
+                        <button
+                          type="button"
+                          onClick={() => setOpenCourseId(course.courseId)}
+                          className={`flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium ${
+                            active ? "bg-[#eef4ff] text-primary" : "text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          <CategoryIcon className="h-4 w-4 shrink-0" />
+                          <span className="min-w-0 flex-1 truncate">{course.courseName}</span>
+                          <span
+                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
+                              active ? "bg-primary text-white" : "bg-slate-100 text-slate-500"
+                            }`}
+                          >
+                            {course.subjects.length}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {activeCourse && (
+                  <div>
+                    <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
+                      <span className="text-sm font-semibold text-primary">{activeCourse.courseName}</span>
+                      <span className="flex items-center gap-1 text-xs text-slate-500">
+                        {activeCourse.subjects.length} Courses <ChevronDown className="h-3.5 w-3.5" />
+                      </span>
+                    </div>
+                    <div className="space-y-2 p-4">
+                      {activeCourse.courseDescription && <p className="text-xs text-slate-500">{activeCourse.courseDescription}</p>}
+                      {activeCourse.subjects
+                        .filter((subject) => !query || subject.subjectName?.toLowerCase().includes(query) || activeCourse.courseName?.toLowerCase().includes(query))
+                        .map((subject) => {
                           const notes = subjectNotes(subject, data, showPaymentOption);
                           return (
                             <div key={subject.subjectId} className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2">
+                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#eef4ff] text-primary">
+                                <BookOpen className="h-4 w-4" />
+                              </span>
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-primary">{subject.subjectName}</p>
+                                <p className="text-sm font-medium text-slate-900">{subject.subjectName}</p>
                                 {notes.length > 0 && (
                                   <ul className="mt-1 space-y-0.5 text-xs text-slate-500">
                                     {notes.map((note, index) => (
@@ -606,18 +829,17 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
                                   <p>{subject.subjectCredit} credit</p>
                                 </div>
                               )}
-                              <Button type="button" size="sm" onClick={() => addSubject(course, subject)} disabled={busy}>
-                                <Plus /> Add
+                              <Button type="button" size="sm" onClick={() => addSubject(activeCourse, subject)} disabled={busy} className="rounded-md bg-primary hover:bg-primary/90">
+                                <Plus className="h-4 w-4" /> Add
                               </Button>
                             </div>
                           );
                         })}
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </section>
         )}
       </div>
@@ -631,11 +853,11 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
         </p>
       )}
 
-      <div className="mt-10 flex flex-col-reverse items-center justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row">
-        <p className="text-xs text-slate-500">Your course choices are saved as you make them.</p>
+      <div className="mt-10 flex flex-col-reverse items-center justify-center gap-4 pt-6 sm:flex-row">
+        {/* <p className="text-xs text-slate-500">Your course choices are saved as you make them.</p> */}
         <div className="flex items-center gap-3">
           {onBack && (
-            <Button type="button" variant="outline" onClick={onBack} disabled={busy}>
+            <Button type="button" variant="outline" className="cursor-pointer" onClick={onBack} disabled={busy}>
               {inReview ? "Cancel" : "Back"}
             </Button>
           )}
@@ -643,9 +865,9 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
             type="button"
             onClick={handleNext}
             disabled={busy || !showPaymentOption}
-            className="rounded-md bg-primary px-6 hover:bg-primary/90"
+            className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90"
           >
-            {proceed.isPending ? "Please wait…" : inReview ? "Save" : "Continue to Step 4"}
+            {proceed.isPending ? "Please wait…" : inReview ? "Save" : "Next"}
           </Button>
         </div>
       </div>

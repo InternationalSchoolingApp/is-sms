@@ -150,7 +150,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, initialFi
   const locationDisabled = fields.sameAsStudent;
 
   return (
-    <div>
+    <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       <h2 className="text-center text-2xl font-bold text-slate-900">Parents Details</h2>
 
       {isOneToOneFlex ? (
@@ -304,9 +304,9 @@ export function Stage2ParentDetails({ context, userId, studentAddress, initialFi
 
       {errors.form && <p className="mt-4 text-center text-sm font-semibold text-red-600">{errors.form}</p>}
 
-      <div className="mt-10 flex items-center justify-center gap-4 border-t border-slate-200 pt-6">
+      <div className="mt-10 flex items-center justify-center gap-4 pt-6">
         {onBack && (
-          <Button type="button" variant="outline" onClick={onBack} disabled={signup.isPending}>
+          <Button type="button" variant="outline"  className="cursor-pointer" onClick={onBack} disabled={signup.isPending}>
             Back
           </Button>
         )}

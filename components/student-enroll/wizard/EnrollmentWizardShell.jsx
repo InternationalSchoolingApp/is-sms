@@ -33,7 +33,6 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
   const [loggingOut, setLoggingOut] = useState(false);
   const currentIndex = STEPS.findIndex((step) => step.key === currentStepKey);
   const programLabel = context ? getLearningProgramTheme(context.learningProgram).label : null;
-
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <header className="fixed z-11 hidden w-full border-b border-slate-200 bg-white px-4 py-3 sm:px-6 md:block">
@@ -95,9 +94,11 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
           // Review & payment lays its own white cards directly on the page background.
           <div className="mx-auto mt-6 max-w-[1310px] md:mt-8">{children}</div>
         ) : (
-          <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
-            {children}
-          </div>
+          
+            <>
+              {children}
+            </>
+          
         )}
       </div>
 

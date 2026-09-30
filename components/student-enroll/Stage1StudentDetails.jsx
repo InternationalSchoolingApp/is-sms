@@ -209,169 +209,171 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
   }
 
   return (
-    <div>
-      <h2 className="text-center text-1.5xl sm:text-2xl font-extrabold text-slate-900">Student Details</h2>
+    
+      <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
+        <h2 className="text-center text-1.5xl sm:text-2xl font-extrabold text-slate-900">Student Details</h2>
 
-      <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-        <FloatingLabelInput
-          icon={User}
-          label={<Req label="First Name" required />}
-          value={fields.firstName}
-          onChange={(e) => setField("firstName", e.target.value)}
-          error={errors.firstName}
-        />
-        <FloatingLabelInput
-          icon={User}
-          label="Middle Name"
-          value={fields.middleName}
-          onChange={(e) => setField("middleName", e.target.value)}
-        />
-        <FloatingLabelInput
-          icon={User}
-          label={<Req label="Last Name" required />}
-          value={fields.lastName}
-          onChange={(e) => setField("lastName", e.target.value)}
-          error={errors.lastName}
-        />
-        <FloatingLabelSelect
-          icon={GraduationCap}
-          label={<Req label="Grade" required />}
-          value={fields.standardId}
-          onValueChange={(v) => setField("standardId", v)}
-          options={grades.data || []}
-          error={errors.standardId || (grades.isError ? "Could not load grades" : undefined)}
-          searchable
-        />
-        <DatePicker
-          icon={Cake}
-          label={<Req label="Date of Birth" required />}
-          value={fields.dob}
-          onChange={(v) => setField("dob", v)}
-          fromDate={dobBounds.fromDate}
-          toDate={dobBounds.toDate}
-          error={errors.dob}
-        />
-        <FloatingLabelSelect
-          icon={VenusAndMars}
-          label={<Req label="Gender" required />}
-          value={fields.gender}
-          onValueChange={(v) => setField("gender", v)}
-          options={GENDER_OPTIONS}
-          error={errors.gender}
-          searchable
-        />
-      </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-        <FloatingLabelInput
-          icon={Mail}
-          label={<Req label="Email Address" required />}
-          type="email"
-          value={fields.communicationEmail}
-          onChange={(e) => setField("communicationEmail", e.target.value)}
-          error={errors.communicationEmail}
-        />
-        <PhoneNumberField
-          label={<Req label="Mobile Number" required />}
-          value={fields.contactNumber}
-          className="pb-1.5 w-full"
-          // Only takes effect at mount (see useIntlTelInput's doc
-          // comment) — restores the saved country flag when Stage 1
-          // was prefilled from get-student-details (initialFields
-          // already has countryCode by the time this component first
-          // renders; see app/step/1/page.jsx).
-          initialCountry={initialFields?.countryCode ? initialFields.countryCode.toLowerCase() : undefined}
-          onChange={({ contactNumber, countryIsdCode, countryCode, isValid }) =>
-            setFields((prev) => ({ ...prev, contactNumber, countryIsdCode, countryCode, phoneValid: isValid }))
-          }
-          
-          error={errors.contactNumber}
-        />
-        <FloatingLabelSelect
-          icon={Globe}
-          label={<Req label="Nationality" required />}
-          value={fields.nationality}
-          onValueChange={(v) => setField("nationality", v)}
-          options={countries.data || []}
-          error={errors.nationality}
-          searchable
-        />
-      </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-        <FloatingLabelSelect
-          icon={MapPin}
-          label={<Req label="Country" required />}
-          value={fields.countryId}
-          onValueChange={setCountry}
-          options={countries.data || []}
-          error={errors.countryId}
-          searchable
-        />
-        <FloatingLabelSelect
-          icon={Map}
-          label={<Req label="Province / State" required />}
-          value={fields.stateId}
-          onValueChange={setState}
-          options={states.data || []}
-          error={errors.stateId}
-          searchable
-        />
-        <FloatingLabelSelect
-          icon={Building2}
-          label={<Req label="City" required />}
-          value={fields.cityId}
-          onValueChange={(v) => setField("cityId", v)}
-          options={cities.data || []}
-          error={errors.cityId}
-          searchable
-        />
-      </div>
-
-      {isDualDiploma && (
-        <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
           <FloatingLabelInput
-            icon={School}
-            label={<Req label="Current School Name" required />}
-            className="sm:col-span-2 lg:col-span-1"
-            value={fields.studyingSchoolName}
-            onChange={(e) => setField("studyingSchoolName", e.target.value)}
-            error={errors.studyingSchoolName}
+            icon={User}
+            label={<Req label="First Name" required />}
+            value={fields.firstName}
+            onChange={(e) => setField("firstName", e.target.value)}
+            error={errors.firstName}
+          />
+          <FloatingLabelInput
+            icon={User}
+            label="Middle Name"
+            value={fields.middleName}
+            onChange={(e) => setField("middleName", e.target.value)}
+          />
+          <FloatingLabelInput
+            icon={User}
+            label={<Req label="Last Name" required />}
+            value={fields.lastName}
+            onChange={(e) => setField("lastName", e.target.value)}
+            error={errors.lastName}
           />
           <FloatingLabelSelect
-            icon={BookOpen}
-            label={<Req label="Current Grade" required />}
-            value={fields.studyingGradeId}
-            onValueChange={(v) => setField("studyingGradeId", v)}
+            icon={GraduationCap}
+            label={<Req label="Grade" required />}
+            value={fields.standardId}
+            onValueChange={(v) => setField("standardId", v)}
             options={grades.data || []}
-            error={errors.studyingGradeId}
+            error={errors.standardId || (grades.isError ? "Could not load grades" : undefined)}
+            searchable
+          />
+          <DatePicker
+            icon={Cake}
+            label={<Req label="Date of Birth" required />}
+            value={fields.dob}
+            onChange={(v) => setField("dob", v)}
+            fromDate={dobBounds.fromDate}
+            toDate={dobBounds.toDate}
+            error={errors.dob}
           />
           <FloatingLabelSelect
-            icon={MapPin}
-            label={<Req label="Country of Current School" required />}
-            value={fields.countryIdOfSchool}
-            onValueChange={(v) => setField("countryIdOfSchool", v)}
-            options={countries.data || []}
-            error={errors.countryIdOfSchool}
+            icon={VenusAndMars}
+            label={<Req label="Gender" required />}
+            value={fields.gender}
+            onValueChange={(v) => setField("gender", v)}
+            options={GENDER_OPTIONS}
+            error={errors.gender}
             searchable
           />
         </div>
-      )}
 
-      {errors.form && <p className="mt-4 text-center text-sm font-semibold text-red-600">{errors.form}</p>}
+        <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+          <FloatingLabelInput
+            icon={Mail}
+            label={<Req label="Email Address" required />}
+            type="email"
+            value={fields.communicationEmail}
+            onChange={(e) => setField("communicationEmail", e.target.value)}
+            error={errors.communicationEmail}
+          />
+          <PhoneNumberField
+            label={<Req label="Mobile Number" required />}
+            value={fields.contactNumber}
+            className="pb-1.5 w-full"
+            // Only takes effect at mount (see useIntlTelInput's doc
+            // comment) — restores the saved country flag when Stage 1
+            // was prefilled from get-student-details (initialFields
+            // already has countryCode by the time this component first
+            // renders; see app/step/1/page.jsx).
+            initialCountry={initialFields?.countryCode ? initialFields.countryCode.toLowerCase() : undefined}
+            onChange={({ contactNumber, countryIsdCode, countryCode, isValid }) =>
+              setFields((prev) => ({ ...prev, contactNumber, countryIsdCode, countryCode, phoneValid: isValid }))
+            }
+            
+            error={errors.contactNumber}
+          />
+          <FloatingLabelSelect
+            icon={Globe}
+            label={<Req label="Nationality" required />}
+            value={fields.nationality}
+            onValueChange={(v) => setField("nationality", v)}
+            options={countries.data || []}
+            error={errors.nationality}
+            searchable
+          />
+        </div>
 
-      <div className="mt-10 flex justify-center ">
-        <Button type="button" onClick={handleSubmit} disabled={signup.isPending} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
-          {signup.isPending ? "Please wait…" : "Next"}
-        </Button>
+        <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+          <FloatingLabelSelect
+            icon={MapPin}
+            label={<Req label="Country" required />}
+            value={fields.countryId}
+            onValueChange={setCountry}
+            options={countries.data || []}
+            error={errors.countryId}
+            searchable
+          />
+          <FloatingLabelSelect
+            icon={Map}
+            label={<Req label="Province / State" required />}
+            value={fields.stateId}
+            onValueChange={setState}
+            options={states.data || []}
+            error={errors.stateId}
+            searchable
+          />
+          <FloatingLabelSelect
+            icon={Building2}
+            label={<Req label="City" required />}
+            value={fields.cityId}
+            onValueChange={(v) => setField("cityId", v)}
+            options={cities.data || []}
+            error={errors.cityId}
+            searchable
+          />
+        </div>
+
+        {isDualDiploma && (
+          <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+            <FloatingLabelInput
+              icon={School}
+              label={<Req label="Current School Name" required />}
+              className="sm:col-span-2 lg:col-span-1"
+              value={fields.studyingSchoolName}
+              onChange={(e) => setField("studyingSchoolName", e.target.value)}
+              error={errors.studyingSchoolName}
+            />
+            <FloatingLabelSelect
+              icon={BookOpen}
+              label={<Req label="Current Grade" required />}
+              value={fields.studyingGradeId}
+              onValueChange={(v) => setField("studyingGradeId", v)}
+              options={grades.data || []}
+              error={errors.studyingGradeId}
+            />
+            <FloatingLabelSelect
+              icon={MapPin}
+              label={<Req label="Country of Current School" required />}
+              value={fields.countryIdOfSchool}
+              onValueChange={(v) => setField("countryIdOfSchool", v)}
+              options={countries.data || []}
+              error={errors.countryIdOfSchool}
+              searchable
+            />
+          </div>
+        )}
+
+        {errors.form && <p className="mt-4 text-center text-sm font-semibold text-red-600">{errors.form}</p>}
+
+        <div className="mt-10 flex justify-center ">
+          <Button type="button" onClick={handleSubmit} disabled={signup.isPending} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
+            {signup.isPending ? "Please wait…" : "Next"}
+          </Button>
+        </div>
+
+        <FlaggedSeatsModal
+          open={!!flaggedModal}
+          onOpenChange={(open) => !open && setFlaggedModal(null)}
+          schoolName={flaggedModal?.schoolName}
+          sessionName={flaggedModal?.sessionName}
+        />
       </div>
-
-      <FlaggedSeatsModal
-        open={!!flaggedModal}
-        onOpenChange={(open) => !open && setFlaggedModal(null)}
-        schoolName={flaggedModal?.schoolName}
-        sessionName={flaggedModal?.sessionName}
-      />
-    </div>
+    
   );
 }
