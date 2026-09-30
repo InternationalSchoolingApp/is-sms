@@ -38,6 +38,7 @@ export default function StudentEnrollmentStep4() {
       context={context}
       currentStepKey="review_and_payment"
       plain
+      hideStepper={context.customPaymentEnabled}
       onLogout={() => logoutEverywhere(session)}
     >
       <Stage4ReviewPayment

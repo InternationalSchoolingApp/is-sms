@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
-import { getPublicSchoolInfo } from "@/services/studentSignupApi";
+import { getEnrollmentProcess, getPublicSchoolInfo } from "@/services/studentSignupApi";
 import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
 import { useStudentDetailsPrefill } from "@/hooks/useStudentDetailsSignup";
 import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
@@ -31,9 +32,20 @@ export function useEnrollmentContext() {
   const { data: session, status } = useSession();
   const [logoUrl, setLogoUrl] = useState(null);
   const [whatsAppNumber, setWhatsAppNumber] = useState(undefined);
+  const authenticated = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
   const prefill = useStudentDetailsPrefill({
     context: { schoolUUID: session?.schoolUUID },
     userId: session?.userId,
+  });
+
+  const enrollmentProcess = useQuery({
+    queryKey: ["enrollment-process", session?.schoolUUID, session?.uniqueId],
+    queryFn: () => getEnrollmentProcess(session.schoolUUID, session.uniqueId),
+    enabled: Boolean(authenticated && session?.uniqueId),
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    retry: false,
   });
 
   useEffect(() => {
@@ -64,7 +76,8 @@ export function useEnrollmentContext() {
     };
   }, [session?.schoolUUID]);
 
-  const ready = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
+  const processReady = !session?.uniqueId || enrollmentProcess.isFetched;
+  const ready = authenticated && processReady;
 
   // Legacy fills the hidden `#location` input when the wizard page loads (the student form's
   // callLocationAndSelectCountryNew() -> LOCATION_SERVICE_BYPASS ? DEFAULT_LOCATION : the IP
@@ -84,11 +97,12 @@ export function useEnrollmentContext() {
         schoolName: session.schoolName,
         whatsAppNumber,
         enrollmentFor: "enrollment",
+        customPaymentEnabled: enrollmentProcess.data?.customPaymentEnabled === true,
+        signupPage: enrollmentProcess.data?.signupPage,
         learningProgram: prefill.data?.learningProgram
           ? getLearningProgramShortCode(prefill.data.learningProgram)
           : "O",
       }
     : null;
-  console.log("context", context)
   return { status, session, context, logoUrl, ready };
 }

@@ -38,7 +38,7 @@ export default function StudentEnrollmentStep3() {
     setHydrated(true);
   }, [ready, context?.schoolUUID, session?.userId]);
 
-  if (!ready || !hydrated) {
+  if (!ready || context.customPaymentEnabled || !hydrated) {
     return <FullScreenLoader />;
   }
 

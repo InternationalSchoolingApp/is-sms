@@ -47,7 +47,7 @@ export default function StudentEnrollmentStep1() {
     setHydrated(true);
   }, [ready, prefill.isPending, prefill.data, context?.schoolUUID, session?.userId, session?.email]);
 
-  if (!ready || !hydrated) {
+  if (!ready || context.customPaymentEnabled || !hydrated) {
     return <FullScreenLoader />;
   }
 

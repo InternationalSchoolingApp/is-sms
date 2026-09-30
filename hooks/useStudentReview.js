@@ -24,8 +24,8 @@ export const STATUS_REDIRECT_TO_DASHBOARD = "REDIRECT_TO_DASHBOOARD"; // typo co
 export const STATUS_ELIGIBLE_CUSTOM_PLAN = "ELIGIBLE_CUSTOME_PLAN"; // typo confirmed at source
 export const STATUS_FLAGGED = "FLAGGED";
 
-function reviewDetailsKey(userId) {
-  return ["student-review-details", userId];
+function reviewDetailsKey(userId, reloadRequired) {
+  return ["student-review-details", userId, reloadRequired];
 }
 
 /**
@@ -34,13 +34,13 @@ function reviewDetailsKey(userId) {
  * is only ever entered fresh (from Stage 3's "Continue to Step 4" or a
  * stage-resume), never re-used without a reload.
  */
-export function useStudentReviewDetails({ context, userId }) {
+export function useStudentReviewDetails({ context, userId, reloadRequired = "Y" }) {
   return useQuery({
-    queryKey: reviewDetailsKey(userId),
+    queryKey: reviewDetailsKey(userId, reloadRequired),
     queryFn: async () => {
       const response = await getStudentReviewDetails(context.schoolUUID, {
         userId,
-        reloadRequired: "Y",
+        reloadRequired,
         requestFromMigration: "N",
       });
       if (!response) throw new Error("get-student-review-details returned no response");
@@ -66,7 +66,7 @@ export function useChoosePaymentPlan({ context, userId }) {
     mutationFn: (paymentMode) => choosePaymentPlan(context.schoolUUID, { userId, paymentMode, requestFromMigration: "N" }),
     onSuccess: (response) => {
       if (response?.status === STATUS_SUCCESS) {
-        queryClient.invalidateQueries({ queryKey: reviewDetailsKey(userId) });
+        queryClient.invalidateQueries({ queryKey: ["student-review-details", userId] });
       }
     },
   });

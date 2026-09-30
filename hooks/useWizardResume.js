@@ -37,8 +37,20 @@ export function useWizardResume({ currentStep, context, uniqueId, ready }) {
 
   useEffect(() => {
     if (!ready || !uniqueId || typeof window === "undefined") return;
+    if (context?.customPaymentEnabled) {
+      window.__wizardResumeChecked = true;
+      if (currentStep !== 4) router.replace(STEP_ROUTES[4]);
+      return;
+    }
     if (window.__wizardResumeChecked) return;
     window.__wizardResumeChecked = true;
+
+    const signupPage = Number(context?.signupPage);
+    if (signupPage >= 1 && signupPage <= 4) {
+      const target = resolveResumeStep(currentStep, signupPage);
+      if (target !== currentStep) router.replace(STEP_ROUTES[target]);
+      return;
+    }
 
     // Deliberately no cancel-on-cleanup: React Strict Mode (dev) runs this effect twice,
     // and the once-per-document flag above makes the second run a no-op — cancelling in
@@ -54,5 +66,5 @@ export function useWizardResume({ currentStep, context, uniqueId, ready }) {
         if (target !== currentStep) router.replace(STEP_ROUTES[target]);
       })
       .catch((err) => console.error("Wizard resume check failed:", err));
-  }, [ready, uniqueId, currentStep, context?.schoolUUID, router]);
+  }, [ready, uniqueId, currentStep, context?.schoolUUID, context?.customPaymentEnabled, context?.signupPage, router]);
 }

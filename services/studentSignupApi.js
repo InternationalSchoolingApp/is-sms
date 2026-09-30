@@ -165,6 +165,17 @@ export function getSignupStageStatus(schoolUUID, uniqueId) {
   return getPayload(schoolUUID, "student/enrollment-stage-status", { uniqueId }, { silent: true });
 }
 
+// ClientSignupStudentController.getEnrollmentProcess(): resolves the saved
+// enrollment stage and custom-payment override used by the legacy process page.
+export function getEnrollmentProcess(schoolUUID, uniqueId) {
+  return getPayload(
+    schoolUUID,
+    `api/v1/student/enrollment/process/${encodeURIComponent(uniqueId)}`,
+    null,
+    { silent: true }
+  );
+}
+
 // --- Document upload ---
 // CONFIRMED QUIRK: these 4 endpoints are mapped WITHOUT the {schoolId} path
 // segment in ClientSignupStudentController (unlike every other endpoint in

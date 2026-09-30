@@ -280,12 +280,24 @@ function buildPlanOptions(fee) {
  * called when the primary action button is pressed.
  */
 export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessionExpired, onOfflineSignup }) {
-  const reviewQuery = useStudentReviewDetails({ context, userId });
+  const reviewQuery = useStudentReviewDetails({
+    context,
+    userId,
+    // SignupStudentStage6Preview.jsp calls callForReviewAndPaymentSelection('N').
+    // A confirmed custom plan must bypass the API's reloadRequired=Y redirect guard.
+    reloadRequired: context.customPaymentEnabled ? "N" : "Y",
+  });
   // API order on this screen: get-payment-details and choose-payment-plan run
   // on Stage 3's "Continue" (useProceedToReview), then get-student-review-details
   // above, then enrollment-stage-status — held back until the review call has
   // succeeded so it always fires 4th, then repeats every 3 min (getSignupStatus()).
-  const stageStatus = useSignupStageStatusPoll({ context, uniqueId, enabled: reviewQuery.isSuccess });
+  const stageStatus = useSignupStageStatusPoll({
+    context,
+    uniqueId,
+    // Custom plans always return the backend's SSO redirect from stage-status;
+    // polling it here would send the user straight back into this page forever.
+    enabled: reviewQuery.isSuccess && !context.customPaymentEnabled,
+  });
   const paymentOption = useShowPaymentOption({ context, userId });
   const choosePlan = useChoosePaymentPlan({ context, userId });
   const submitApplication = useSubmitApplication({ context, userId });
@@ -372,13 +384,13 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
   // and the response carries the page to go to.
   const stageStatusData = stageStatus.data;
   useEffect(() => {
-    if (!stageStatusData) return;
+    if (!stageStatusData || context.customPaymentEnabled) return;
     if (stageStatusData.status === STATUS_SESSION_OUT) {
       onSessionExpired?.();
     } else if (stageStatusData.status === STATUS_SUCCESS && stageStatusData.redirectUri) {
       window.location.replace(stageStatusData.redirectUri);
     }
-  }, [stageStatusData, onSessionExpired]);
+  }, [stageStatusData, context.customPaymentEnabled, onSessionExpired]);
 
   // Coming back from the payment gateway (browser Back / bfcache) restores this page exactly as it
   // was left — with the payment modal open and busy. Reset it when the page is restored from the cache.
@@ -931,7 +943,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
           <span className="md:hidden" />
         )}
         <div className="flex items-center gap-4">
-          {onBack && (
+          {onBack && !data.customPaymentEnabled && (
             <Button
               type="button"
               variant="outline"
