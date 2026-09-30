@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { CheckCircle2, Clock, LoaderCircle, XCircle } from "lucide-react";
 import { getPaymentResponseSuccess, getPaymentResponseFailure } from "@/services/paymentResponseApi";
 
@@ -329,12 +328,12 @@ function FailedCard({ data }) {
           </p>
           {data.feeFailedReason && <p className="font-medium text-rose-700">{data.feeFailedReason}</p>}
         </div>
-        <Link
-          href="/step/review-and-payment"
+        {data.returnUrl && <a
+          href={data.returnUrl}
           className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-7 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           Try again
-        </Link>
+        </a>}
       </div>
     </PageShell>
   );
