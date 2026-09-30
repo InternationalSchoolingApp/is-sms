@@ -22,6 +22,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
@@ -1069,7 +1070,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
 
       <div className="mt-10 flex flex-col-reverse items-center justify-center gap-4 pt-6 sm:flex-row">
         {/* <p className="text-xs text-slate-500">Your course choices are saved as you make them.</p> */}
-        <div className="flex items-center gap-3">
+        <MobileActionBar context={context}>
           {onBack && (
             <Button type="button" variant="outline" className="cursor-pointer" onClick={onBack} disabled={busy}>
               {inReview ? "Cancel" : "Back"}
@@ -1083,7 +1084,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
           >
             {proceed.isPending ? "Please wait…" : inReview ? "Save" : "Next"}
           </Button>
-        </div>
+        </MobileActionBar>
       </div>
 
       <ConfirmDialog request={confirmRequest} onResolve={resolveConfirm} />

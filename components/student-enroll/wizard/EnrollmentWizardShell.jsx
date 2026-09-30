@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { BookOpen, Check, CreditCard, LogOut, User, Users } from "lucide-react";
+import { BookOpen, CreditCard, LogOut, User, Users } from "lucide-react";
 import { Footer } from "@/components/common/Footer";
 import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
 import { getLearningProgramTheme } from "@/utils/learningProgramTheme";
@@ -63,7 +63,7 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
         }}
       />
 
-      <div className="flex-1 bg-[#f2f5fa] px-4 pb-16 md:px-6 md:py-8 md:pb-24 md:pt-[62px]">
+      <div className="flex-1 bg-[#f2f5fa] px-4 pb-28 md:px-6 md:py-8 md:pb-24 md:pt-[62px]">
         {/* Mobile header: favicon | title + subtitle | round log-out. */}
         <header className="grid grid-cols-[2rem_1fr_2rem] items-center gap-2 px-1 py-4 md:hidden">
           <Image src="/images/is_fav_logo_200.png" alt={schoolName || ""} width={28} height={28} className="h-7 w-auto" unoptimized />
@@ -102,8 +102,8 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
         )}
       </div>
 
-      {/* Desktop-only floating WhatsApp support button, above the fixed footer (mobile shows it in the
-          step's own action bar). */}
+      {/* Desktop floating WhatsApp support button, fixed above the fixed footer. Below md every step's
+          fixed action bar (MobileActionBar) carries the icon instead. */}
       {context?.whatsAppNumber && (
         <a
           href={`https://api.whatsapp.com/send?phone=${context.whatsAppNumber}`}
@@ -145,7 +145,7 @@ function StepRow({ currentIndex }) {
         </div>
         {STEPS.map((step, index) => (
           <div key={step.key} className="relative z-10 flex w-9 flex-col items-center gap-2 md:w-16">
-            <StepCircle icon={step.icon} state={stepState(index, currentIndex)} />
+            <StepCircle icon={step.icon} state={stepState(index, currentIndex)} justCompleted={index === currentIndex - 1} />
             <span className="hidden text-[11px] font-semibold uppercase tracking-wide text-slate-500 md:block">Step {index + 1}</span>
           </div>
         ))}
@@ -154,25 +154,47 @@ function StepRow({ currentIndex }) {
   );
 }
 
-function StepCircle({ icon: Icon, state }) {
+function StepCircle({ icon: Icon, state, justCompleted }) {
+  // Finished steps are drawn as images centred on the step circle. The step completed just before
+  // the current one plays OrderSuccess.gif (transparent background, ends as a 64px green circle with
+  // a tick inside its 150px canvas); every earlier finished step shows the static check_box.svg
+  // (41px canvas, green circle r=15.75). Each image is scaled so its green circle equals the step
+  // circle (36px below md, 40px from md): gif 150*36/64 = 84px and 150*40/64 = 94px, svg
+  // 41*36/31.5 = 47px and 41*40/31.5 = 52px. Being absolute, the gif's pop can overshoot the row.
+  if (state === "done") {
+    return (
+      <div className="relative h-9 w-9 shrink-0 md:h-10 md:w-10">
+        {justCompleted ? (
+          <Image
+            src="/images/OrderSuccess.gif"
+            alt="Step completed"
+            width={150}
+            height={150}
+            unoptimized
+            className="pointer-events-none absolute left-1/2 top-1/2 h-[84px] w-[84px] max-w-none -translate-x-1/2 -translate-y-1/2 md:h-[94px] md:w-[94px]"
+          />
+        ) : (
+          <Image
+            src="/images/check_box.svg"
+            alt="Step completed"
+            width={41}
+            height={41}
+            unoptimized
+            className="pointer-events-none absolute left-1/2 top-1/2 h-[47px] w-[47px] max-w-none -translate-x-1/2 -translate-y-1/2 md:h-[52px] md:w-[52px]"
+          />
+        )}
+      </div>
+    );
+  }
   return (
     <div
       className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 md:h-10 md:w-10 ${
         state === "active"
           ? "border-primary bg-white text-primary ring-4 ring-primary/20 md:ring-0"
-          : state === "done"
-            ? "border-green-600 bg-green-600 text-white"
-            : "border-slate-300 bg-[#f2f5fa] text-slate-400"
+          : "border-slate-300 bg-[#f2f5fa] text-slate-400"
       }`}
     >
-      {state === "done" ? (
-        <>
-          <Check className="h-5 w-5 md:hidden" strokeWidth={3} aria-hidden="true" />
-          <Icon className="hidden h-6 w-6 md:block" aria-hidden="true" />
-        </>
-      ) : (
-        <Icon className="h-4 w-4 md:h-6 md:w-6" aria-hidden="true" />
-      )}
+      <Icon className="h-4 w-4 md:h-6 md:w-6" aria-hidden="true" />
     </div>
   );
 }

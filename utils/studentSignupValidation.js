@@ -16,12 +16,6 @@ export function isValidEmail(value) {
   return EMAIL_REGEX.test((value ?? "").trim());
 }
 
-export function isPureAscii(value) {
-  // Mirrors commonUtil.isPureAscii() / validateFormAscii() — blocks
-  // non-English-keyboard input across the signup form.
-  return /^[\x00-\x7F]*$/.test(value ?? "");
-}
-
 /**
  * Mirrors hasSequentialChars() from jquery.commonFunction.js:6319 — flags any
  * 3–5 char run that's alphabetically or numerically sequential, forward or
@@ -86,11 +80,6 @@ export function isValidCaptcha(value) {
 export function validateAccountFormOnline(fields) {
   const errors = {};
 
-  const asciiFields = [fields.email, fields.confirmEmail, fields.password, fields.confirmPassword];
-  if (asciiFields.some((v) => !isPureAscii(v))) {
-    errors.form = "Please use the English keyboard while providing information";
-  }
-
   if (!isValidEmail(fields.email)) {
     errors.email = "Email is either empty or invalid";
   }
@@ -152,11 +141,6 @@ export function validateStudentDetails(fields, { isDualDiploma = false } = {}) {
     }
   }
 
-  const asciiFields = [fields.firstName, fields.middleName, fields.lastName, fields.studyingSchoolName];
-  if (asciiFields.some((v) => v && !isPureAscii(v))) {
-    errors.form = "Please use the English keyboard while providing information";
-  }
-
   return { valid: Object.keys(errors).length === 0, errors };
 }
 
@@ -194,11 +178,6 @@ export function validateParentDetails(fields, { isOneToOneFlex = false } = {}) {
   if (!fields.cityId) errors.cityId = "City is required";
   if (!fields.communicationWhatsApp && !fields.communicationCall && !fields.communicationEmail) {
     errors.communication = "Please select how you would like to be contacted";
-  }
-
-  const asciiFields = [fields.firstName, fields.middleName, fields.lastName];
-  if (asciiFields.some((v) => v && !isPureAscii(v))) {
-    errors.form = "Please use the English keyboard while providing information";
   }
 
   return { valid: Object.keys(errors).length === 0, errors };

@@ -264,7 +264,9 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
         </div>
 
         {isDualDiploma && (
-          <div className={`mt-6 ${GRID}`}>
+          <>
+            <strong className="mt-6 block text-base font-bold text-slate-900">Current School Details</strong>
+          <div className={`mt-3 ${GRID}`}>
             <FloatingLabelInput
               icon={School}
               label={<Req label="Current School Name" required />}
@@ -290,6 +292,7 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
               searchable
             />
           </div>
+          </>
         )}
       </EditCard>
       {modal}
@@ -297,7 +300,7 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
   );
 }
 
-export function ParentInlineEdit({ context, userId, parent, onSaved, onCancel, onSessionExpired }) {
+export function ParentInlineEdit({ context, userId, parent, title = "Parent/Guardian Details", onSaved, onCancel, onSessionExpired }) {
   const [initial] = useState(() => mapSignupParentToFields(parent));
   const [fields, setFields] = useState(initial);
   const [errors, setErrors] = useState({});
@@ -336,7 +339,7 @@ export function ParentInlineEdit({ context, userId, parent, onSaved, onCancel, o
 
   return (
     <>
-      <EditCard title="Parent/Guardian Details" saving={signup.isPending} onSave={save} onCancel={onCancel} formError={formError}>
+      <EditCard title={title} saving={signup.isPending} onSave={save} onCancel={onCancel} formError={formError}>
         {isOneToOneFlex ? (
           <div className={GRID}>
             <FloatingLabelSelect

@@ -71,6 +71,7 @@ export default function StudentEnrollmentStep2() {
           stateId: studentFields?.stateId,
           cityId: studentFields?.cityId,
         }}
+        courseProviderId={studentFields?.courseProviderId}
         initialFields={parentFields}
         onNext={(fields) => {
           saveWizardParentFields(context.schoolUUID, session.userId, fields);
