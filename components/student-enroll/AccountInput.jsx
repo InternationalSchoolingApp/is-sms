@@ -11,8 +11,7 @@
  * would break on autofill. This requires `placeholder=" "` (a single
  * space) so `:placeholder-shown` toggles off the moment there's any value.
  *
- * Icons are rendered filled/solid (see the icons passed from AccountForm)
- * in near-black, matching the signup-new design.
+ * Icons use the same outline Lucide style as the student-details fields.
  *
  * This stays separate from the shared `FloatingLabelInput` (used by Stage
  * 1–4, offline B2B, the DOB picker) so the account card can be tuned
@@ -50,9 +49,7 @@ export function AccountInput({
         />
 
         {Icon && (
-          <Icon
-            className="pointer-events-none absolute left-4 top-1/2 z-10 h-[18px] w-[18px] -translate-y-1/2 fill-slate-900 text-slate-900"
-          />
+          <Icon className="pointer-events-none absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-500" />
         )}
 
         {label && (

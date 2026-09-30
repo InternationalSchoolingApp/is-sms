@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 import { AccountInput } from "@/components/student-enroll/AccountInput";
-import { MailSolidIcon, LockSolidIcon } from "@/components/student-enroll/FieldIcons";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { PasswordStrengthChecklist } from "@/components/student-enroll/PasswordStrengthChecklist";
@@ -223,7 +222,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
         </div>
 
         <AccountInput
-          icon={MailSolidIcon}
+          icon={Mail}
           label="Enter your email"
           name="email"
           type="email"
@@ -235,7 +234,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
         />
 
         <AccountInput
-          icon={MailSolidIcon}
+          icon={Mail}
           label="Confirm your email"
           name="confirmEmail"
           type="email"
@@ -247,7 +246,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
 
         <div className="relative">
           <AccountInput
-            icon={LockSolidIcon}
+            icon={LockKeyhole}
             label="Enter your password"
             name="password"
             type={showPassword ? "text" : "password"}
@@ -292,7 +291,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           {passwordFocused && <PasswordStrengthChecklist password={fields.password} />}
         </div>
         <AccountInput
-          icon={LockSolidIcon}
+          icon={LockKeyhole}
           label="Confirm your password"
           name="confirmPassword"
           type={showConfirmPassword ? "text" : "password"}

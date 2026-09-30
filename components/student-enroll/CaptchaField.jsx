@@ -1,8 +1,8 @@
 "use client";
 
 import { RotateCw } from "lucide-react";
+import { FaShieldAlt } from "react-icons/fa";
 import { AccountInput } from "@/components/student-enroll/AccountInput";
-import { ShieldSolidIcon } from "@/components/student-enroll/FieldIcons";
 import { getCaptchaImageUrl } from "@/services/studentSignupApi";
 
 /**
@@ -21,7 +21,7 @@ export function CaptchaField({ schoolUUID, value, onChange, error, cacheBust, on
   return (
     <div className="flex items-start gap-2.5">
       <AccountInput
-        icon={ShieldSolidIcon}
+        icon={FaShieldAlt}
         label="Enter CAPTCHA code"
         inputMode="numeric"
         maxLength={6}
