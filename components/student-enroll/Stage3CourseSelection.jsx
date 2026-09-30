@@ -441,7 +441,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
   const effectiveOpenId = openCourseId ?? availableCourses[0]?.courseId;
   const showMinBanner = Number(data.courseProviderId) !== 39 && Number(data.minCourseLimit) > Number(data.totalCredit);
   const materialFee = data.courseMaterialFeeDetails;
-
+  console.log("Course ==> ", data);
   return (
     <div>
       {header}
