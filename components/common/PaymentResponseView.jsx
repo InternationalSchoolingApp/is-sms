@@ -125,6 +125,15 @@ function successTitle(data) {
   return "Payment Successful";
 }
 
+function PaymentLabel({ children }) {
+  return String(children ?? "")
+    .split(/(<sup>.*?<\/sup>)/gi)
+    .map((part, index) => {
+      const match = part.match(/^<sup>(.*?)<\/sup>$/i);
+      return match ? <sup key={index}>{match[1]}</sup> : part;
+    });
+}
+
 // Body copy per contentFor — mirrors the JSP's <c:choose> blocks.
 function SuccessBody({ data }) {
   const amount = <b className="text-slate-900">{data.payAmount}</b>;
@@ -153,7 +162,7 @@ function SuccessBody({ data }) {
       return (
         <>
           <p>
-            Your {data.paymentName} of {amount} for <b>{data.grade}</b> has been received.
+            Your <PaymentLabel>{data.paymentName}</PaymentLabel> of {amount} for <b>{data.grade}</b> has been received.
           </p>
           <p>Kindly refer to the fee details in your profile for the receipt.</p>
           <p>Good luck &amp; we wish you a wonderful experience with us!</p>
@@ -312,7 +321,7 @@ function FailedCard({ data }) {
         <div className="mt-5 space-y-2 rounded-2xl bg-rose-50/80 px-5 py-4 text-sm leading-relaxed text-slate-700 ring-1 ring-rose-100">
           {data.paymentName && (
             <p className="font-semibold text-slate-900">
-              {data.paymentName}{data.payAmount ? ` · ${data.payAmount}` : ""}
+              <PaymentLabel>{data.paymentName}</PaymentLabel>{data.payAmount ? ` · ${data.payAmount}` : ""}
             </p>
           )}
           <p>
