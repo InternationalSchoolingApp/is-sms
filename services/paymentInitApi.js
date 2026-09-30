@@ -7,6 +7,7 @@ function buildQuery(params) {
   for (const [key, value] of params.entries()) {
     query.append(key, value);
   }
+  query.set("applyingFrom", "nextjs");
   return query.toString();
 }
 
