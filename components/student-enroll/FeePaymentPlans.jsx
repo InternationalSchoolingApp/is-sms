@@ -55,9 +55,9 @@ export function FeeSummaryCard({ children }) {
   );
 }
 
-function FeeTable({ children }) {
+function FeeTable({ children, className = "overflow-hidden rounded-lg border border-slate-200" }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200">
+    <div className={className}>
       <table className="w-full border-collapse bg-white">
         <colgroup>
           <col className="w-[42%] md:w-[58%]" />
@@ -178,21 +178,28 @@ function AnnualTable({ fee, standardId, isFlexOrDual }) {
   );
 }
 
-// getMonthlyPaymentTable() + monthlyFeeShchedule() ("FEE SCHEDULE")
-function InstallmentTables({ fee, standardId, isFlexOrDual }) {
-  const monthly = fee.monthlyFeeDetails;
+// getMonthlyPaymentTable() + monthlyFeeShchedule() ("FEE SCHEDULE"). `details` is the selected
+// installment variant; `multi` (3/4/5-month chips) uses the attached blue schedule bar.
+function InstallmentTables({ fee, details, multi, standardId, isFlexOrDual }) {
+  const monthly = details || fee.monthlyFeeDetails;
   // Payable Fee row only when something above changes the plain course fee.
   const showPayable =
     monthly.youSave?.description?.length > 0 || fee.courseExtraFeeDetails?.totalEntityFee > 0 || fee.feeAlreayPaid?.totalEntityFee > 0;
   return (
     <>
-      <FeeTable>
+      <FeeTable className={multi ? "overflow-hidden rounded-t-lg border border-b-0 border-slate-200" : undefined}>
         <CommonRows fee={fee} standardId={standardId} isFlexOrDual={isFlexOrDual} />
         <DiscountRow youSave={monthly.youSave} />
         {showPayable && <PayableRow amount={monthly.payableFeeString} />}
       </FeeTable>
-      <div className="mt-4 overflow-hidden rounded-lg border border-slate-200">
-        <h3 className="bg-slate-50 px-4 py-3 text-left text-xs font-bold tracking-wide text-slate-900">FEE SCHEDULE</h3>
+      <div className={multi ? "overflow-hidden rounded-b-lg border border-slate-200" : "mt-4 overflow-hidden rounded-lg border border-slate-200"}>
+        <h3
+          className={`px-4 text-left text-xs font-bold tracking-wide ${
+            multi ? "bg-primary py-2 text-white" : "bg-slate-50 py-3 text-slate-900"
+          }`}
+        >
+          FEE SCHEDULE
+        </h3>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse bg-white">
             <colgroup>
@@ -206,8 +213,8 @@ function InstallmentTables({ fee, standardId, isFlexOrDual }) {
                   <td className={TD}>
                     <SupText>{monthlyFee.paymentLabel}</SupText>
                   </td>
-                  <td className={`${TD} ${RIGHT} font-bold`}>{monthlyFee.amountString}</td>
-                  <td className={`${TD} ${RIGHT} font-bold`}>{index === 0 ? monthlyFee.amountString : ""}</td>
+                  <td className={`${TD} ${RIGHT} ${multi ? "" : "font-bold"}`}>{monthlyFee.amountString}</td>
+                  <td className={`${TD} ${RIGHT} ${multi ? "" : "font-bold"}`}>{index === 0 ? monthlyFee.amountString : ""}</td>
                 </tr>
               ))}
             </tbody>
@@ -252,19 +259,28 @@ export function CustomPlanTable({ fee }) {
   );
 }
 
-export function FeePaymentPlans({ fee, options, selected, onSelect, disabled, standardId, isFlexOrDual }) {
+export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVariant, onSelectVariant, disabled, standardId, isFlexOrDual }) {
   const active = options.find((option) => option.key === selected);
+  // More than one monthly-fee object in the response -> the installment card gets 3/4/5-month chips.
+  const hasChips = options.some((option) => option.variants?.length > 1);
+  const activeVariant = active?.variants?.find((variant) => variant.mode === selectedVariant) || active?.variants?.[0];
+
   return (
     <div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4">
         {options.map((option) => {
           const checked = option.key === selected;
+          const chips = option.variants?.length > 1 ? option.variants : null;
+          const shownVariant = chips ? chips.find((variant) => variant.mode === selectedVariant) || chips[0] : null;
+          const amount = shownVariant?.amount ?? option.amount;
           return (
             <label
               key={option.key}
-              className={`relative grid cursor-pointer grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1 rounded-xl border px-4 py-3 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40 md:flex md:flex-col md:items-stretch md:justify-center md:gap-0 md:px-6 ${
-                checked ? "border-primary bg-primary/10" : "border-slate-200 bg-white hover:border-primary/50"
-              } ${disabled ? "cursor-not-allowed opacity-70" : ""}`}
+              className={`relative grid cursor-pointer grid-cols-[auto_1fr] content-start items-center gap-x-3 gap-y-1 rounded-xl border px-4 py-3 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40 ${
+                hasChips ? "md:px-4" : "md:flex md:flex-col md:items-stretch md:justify-center md:gap-0 md:px-6"
+              } ${checked ? "border-primary bg-primary/10" : "border-slate-200 bg-white hover:border-primary/50"} ${
+                disabled ? "cursor-not-allowed opacity-70" : ""
+              }`}
             >
               <input
                 type="radio"
@@ -274,22 +290,52 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, disabled, st
                 onChange={() => onSelect(option.key)}
                 disabled={disabled}
               />
-              {/* Mobile shows a visible radio; desktop relies on the card highlight. */}
-              <span
-                aria-hidden="true"
-                className={`flex h-5 w-5 items-center justify-center rounded-full border-2 md:hidden ${checked ? "border-primary" : "border-slate-400"}`}
-              >
-                {checked && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
-              </span>
-              <span className="text-[clamp(12px,3.4vw,14px)] text-slate-700 md:text-sm">{option.label}</span>
-              <span className="col-start-2 mt-1 flex items-center gap-2 md:mt-1">
-                <span className="text-[clamp(15px,4.2vw,18px)] font-bold leading-tight text-slate-900 md:text-2xl">{option.amount}</span>
+              {/* Mobile shows a visible radio; desktop relies on the card highlight (and shows it on
+                  every card except the chip card when the chips layout is on). */}
+              {!chips && (
+                <span
+                  aria-hidden="true"
+                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${hasChips ? "" : "md:hidden"} ${checked ? "border-primary" : "border-slate-400"}`}
+                >
+                  {checked && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                </span>
+              )}
+              <span className={`text-[clamp(12px,3.4vw,14px)] text-slate-700 md:text-sm ${chips ? "col-span-2" : ""}`}>{option.label}</span>
+              <span className={`mt-1 flex items-center gap-2 md:mt-1 ${chips ? "col-span-2" : "col-start-2"} ${hasChips ? "md:flex-col md:items-start md:gap-1" : ""}`}>
+                <span className="text-[clamp(15px,4.2vw,18px)] font-bold leading-tight text-slate-900 md:text-2xl">{amount}</span>
                 {option.badge && (
                   <span className="rounded-md border border-yellow-400 bg-yellow-200 px-2 py-0.5 text-xs font-bold text-slate-900 md:rounded md:border-0 md:bg-yellow-300 md:font-semibold">
                     {option.badge}
                   </span>
                 )}
               </span>
+              {chips && (
+                <span className="col-span-2 mt-2 flex flex-wrap gap-2">
+                  {chips.map((variant) => {
+                    const on = checked && shownVariant?.mode === variant.mode;
+                    return (
+                      <button
+                        key={variant.mode}
+                        type="button"
+                        disabled={disabled}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onSelect(option.key);
+                          onSelectVariant?.(variant.mode);
+                        }}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium text-slate-800 transition-colors ${
+                          on ? "border-primary bg-primary/10" : "border-slate-300 bg-white hover:border-primary/50"
+                        }`}
+                      >
+                        <span className={`flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 ${on ? "border-primary" : "border-slate-400"}`}>
+                          {on && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                        </span>
+                        {variant.label}
+                      </button>
+                    );
+                  })}
+                </span>
+              )}
             </label>
           );
         })}
@@ -298,7 +344,15 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, disabled, st
       <FeeSummaryCard>
         {active?.kind === "registration" && <RegistrationTable fee={fee} />}
         {active?.kind === "annual" && <AnnualTable fee={fee} standardId={standardId} isFlexOrDual={isFlexOrDual} />}
-        {active?.kind === "monthly" && <InstallmentTables fee={fee} standardId={standardId} isFlexOrDual={isFlexOrDual} />}
+        {active?.kind === "monthly" && (
+          <InstallmentTables
+            fee={fee}
+            details={activeVariant?.details}
+            multi={active.variants?.length > 1}
+            standardId={standardId}
+            isFlexOrDual={isFlexOrDual}
+          />
+        )}
       </FeeSummaryCard>
     </div>
   );

@@ -225,6 +225,8 @@ export function Stage2ParentDetails({ context, userId, studentAddress, initialFi
               label="Parent Mobile Number (Optional)"
               value={fields.contactNumber}
               className="pb-1.5 w-full"
+              // Only takes effect at mount (see useIntlTelInput) — restores the saved phone country.
+              initialCountry={initialFields?.countryCode ? initialFields.countryCode.toLowerCase() : undefined}
               onChange={({ contactNumber, countryIsdCode, countryCode, isValid }) =>
                 setFields((prev) => ({ ...prev, contactNumber, countryIsdCode, countryCode, phoneValid: isValid }))
               }

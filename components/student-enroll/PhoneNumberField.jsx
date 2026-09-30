@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Smartphone } from "lucide-react";
 import { useIntlTelInput } from "@/hooks/useIntlTelInput";
 
@@ -19,28 +19,31 @@ export function PhoneNumberField({ label = "Contact Number", name = "contactNumb
   const itiRef = useRef(null);
   const id = useId();
   const [focused, setFocused] = useState(false);
-  // Length of the selected country's dial code digits (e.g. 2 for "+91", 3
-  // for "+971") — intl-tel-input's flag+dial-code overlay gets wider for
-  // longer dial codes, so the label needs to shift right to match. Can only
-  // be known once useIntlTelInput's onChange fires (itiRef.current is null
-  // until its async init finishes — reading it synchronously during render
-  // is what crashed here before), so this starts at the common 2-digit case
-  // and updates itself on the first real countrychange/input event.
-  const [dialCodeLength, setDialCodeLength] = useState(2);
+  // intl-tel-input writes the exact width of its flag + dial-code overlay into the input's inline
+  // padding-left (77px for "+1", 86px for "+91", 96px for "+213"...), both after its async init and on
+  // every country change. The resting label sits exactly at that padding so it never overlaps the dial
+  // code, whatever the country.
+  const [labelLeft, setLabelLeft] = useState(null);
 
   function handlePhoneChange(payload) {
-    const digits = (payload.countryIsdCode || "").replace(/\D/g, "");
-    if (digits.length) setDialCodeLength(digits.length);
     onChange?.(payload);
   }
+
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    const measure = () => {
+      const padding = parseFloat(el.style.paddingLeft);
+      if (padding) setLabelLeft(padding - 4); // the label has 4px of its own left padding
+    };
+    const observer = new MutationObserver(measure);
+    observer.observe(el, { attributes: true, attributeFilter: ["style"] });
+    return () => observer.disconnect();
+  }, []);
 
   useIntlTelInput(inputRef, itiRef, handlePhoneChange, initialCountry);
 
   const floated = focused || Boolean(value);
-  // Icon sits right after intl-tel-input's flag+dial-code overlay; label
-  // sits one step further right than the icon (icon width + gap).
-  const labelLeftClass = dialCodeLength === 1 ? "left-18" : dialCodeLength === 2 ? "left-20" : dialCodeLength === 3 ? "left-23" : "left-26";
-
   return (
     <div>
       <div className="relative">
@@ -50,8 +53,9 @@ export function PhoneNumberField({ label = "Contact Number", name = "contactNumb
         <label
           htmlFor={id}
           className={`pointer-events-none absolute z-1 bg-white px-1 transition-all ${
-            floated ? `left-3 top-0 -translate-y-1/2 text-xs ${error ? "text-red-500" : "text-primary"}` : `${labelLeftClass} top-1/2 -translate-y-1/2 text-sm ${error ? "text-red-500" : "text-slate-500"}`
+            floated ? `left-3 top-0 -translate-y-1/2 text-xs ${error ? "text-red-500" : "text-primary"}` : `left-20 top-1/2 -translate-y-1/2 text-sm ${error ? "text-red-500" : "text-slate-500"}`
           }`}
+          style={!floated && labelLeft != null ? { left: labelLeft } : undefined}
         >
           {label}
         </label>

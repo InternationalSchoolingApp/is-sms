@@ -62,7 +62,7 @@ function EditCard({ title, saving, onSave, onCancel, formError, children }) {
         <div className="mt-6">{children}</div>
         {formError && <p className="mt-4 text-center text-sm font-semibold text-red-600">{formError}</p>}
         <div className="mt-8 flex justify-center">
-          <Button type="button" onClick={onSave} disabled={saving} className="rounded-md bg-primary px-4 font-semibold hover:bg-primary/90">
+          <Button type="button" onClick={onSave} disabled={saving} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
             {saving ? "Saving…" : "Save"}
           </Button>
         </div>

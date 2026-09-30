@@ -269,6 +269,7 @@ const PAYMENT_MODES = [
   "annually",
   "twoMonthly",
   "threeMonthly",
+  "fourMonthly",
   "fiveMonthly",
   "sixMonthly",
   "nineMonthly",

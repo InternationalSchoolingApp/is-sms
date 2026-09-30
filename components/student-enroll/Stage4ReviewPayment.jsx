@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BiSolidBookAdd, BiSolidPencil, BiSolidUserDetail } from "react-icons/bi";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { FaNotesMedical } from "react-icons/fa6";
 import { IoMdPeople } from "react-icons/io";
 import { FullScreenLoader } from "@/components/common/Loader";
@@ -75,6 +75,22 @@ function PaymentOptionsSkeleton() {
   );
 }
 
+// Accordion body: animates its height (grid row 0fr -> 1fr) instead of mounting/unmounting, so it
+// opens and closes smoothly. Collapsed content is inert so it cannot be tabbed into.
+function Collapse({ open, children }) {
+  return (
+    <div
+      aria-hidden={!open}
+      inert={!open}
+      className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out motion-reduce:transition-none ${
+        open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+      }`}
+    >
+      <div className="overflow-hidden">{children}</div>
+    </div>
+  );
+}
+
 /**
  * Accordion header — legacy `<h4 class="a-title">` with an Edit button
  * (.edit-btn) and a Review button (.review-btn). The whole header toggles the
@@ -82,7 +98,6 @@ function PaymentOptionsSkeleton() {
  * click bubbling so it doesn't also toggle.
  */
 function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
-  const Chevron = open ? ChevronUp : ChevronDown;
   return (
     <header
       role="button"
@@ -103,12 +118,16 @@ function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
         </span>
         <h2 className="text-[clamp(12px,3.5vw,15px)] font-bold text-slate-900 md:text-base md:font-semibold">{title}</h2>
       </div>
-      <Chevron className="h-4 w-4 shrink-0 text-slate-900 md:hidden" strokeWidth={3} aria-hidden="true" />
+      <ChevronDown
+        className={`h-4 w-4 shrink-0 text-slate-900 transition-transform duration-300 motion-reduce:transition-none md:hidden ${open ? "rotate-180" : ""}`}
+        strokeWidth={3}
+        aria-hidden="true"
+      />
       <div className="hidden gap-2 md:flex">
         <Button
           type="button"
           variant="outline"
-          className="border-primary px-3 font-semibold text-primary hover:bg-primary/5 hover:text-primary"
+          className="cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
             onToggle();
@@ -119,7 +138,7 @@ function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
         {onEdit && (
           <Button
             type="button"
-            className="px-3 font-semibold"
+            className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90"
             onClick={(e) => {
               e.stopPropagation();
               onEdit();
@@ -175,6 +194,36 @@ function phoneLine(person) {
 // Mirrors getPaymentSelectionBodyContent() in signupStudentContent.js: one
 // radio per plan the backend currently offers, built straight off
 // feePaymentDetailsResponse (no separate "available plans" list exists).
+// choose-payment-plan wants the legacy pay-mode word, not the rule engine's radio id
+// (displayScholorshipDetails() in signupStudentStage3.js maps dtl-* -> mode).
+const PAY_MODE_BY_KEY = {
+  "dtl-one": "annually",
+  "dtl-two": "twoMonthly",
+  "dtl-three": "threeMonthly",
+  "dtl-four": "fourMonthly",
+  "dtl-five": "fiveMonthly",
+
+};
+const PAY_MODE_BY_MONTHS = { 2: "twoMonthly", 3: "threeMonthly", 4: "fourMonthly", 5: "fiveMonthly", 6: "sixMonthly" };
+const MONTHS_BY_PAY_MODE = { twoMonthly: 2, threeMonthly: 3, fourMonthly: 4, fiveMonthly: 5, sixMonthly: 6 };
+
+// The installment plan has one variant per monthly-fee object the backend sends
+// (monthlyFeeDetails, fourMonthlyFeeDetails, fiveMonthlyFeeDetails); more than one -> month chips.
+function buildMonthlyVariants(fee) {
+  const make = (details, fixedMode) => {
+    const mode = fixedMode || PAY_MODE_BY_KEY[details.paymentKey] || PAY_MODE_BY_MONTHS[details.monthlyFees?.length] || "threeMonthly";
+    const months = details.monthlyFees?.length || MONTHS_BY_PAY_MODE[mode];
+    return { key: mode, mode, months, label: months ? `${months} Months` : "Installments", amount: details.payableFeeString, details };
+  };
+  return [
+    fee.monthlyFeeDetails && make(fee.monthlyFeeDetails),
+    fee.fourMonthlyFeeDetails && make(fee.fourMonthlyFeeDetails, "fourMonthly"),
+    fee.fiveMonthlyFeeDetails && make(fee.fiveMonthlyFeeDetails, "fiveMonthly"),
+  ]
+    .filter(Boolean)
+    .sort((x, y) => (x.months || 0) - (y.months || 0));
+}
+
 function buildPlanOptions(fee) {
   if (!fee) return [];
   const options = [];
@@ -182,6 +231,7 @@ function buildPlanOptions(fee) {
     options.push({
       key: "registration",
       kind: "registration",
+      mode: "registration",
       label: "Reserve an enrollment Seat",
       amount: fee.enrollmentFee.enrollmentFeeString,
     });
@@ -189,8 +239,9 @@ function buildPlanOptions(fee) {
   if (fee.oneTimePayment) {
     const discount = fee.oneTimePayment.paymentOptionDiscount > 0;
     options.push({
-      key: fee.oneTimePayment.paymentKey,
+      key: fee.oneTimePayment.paymentKey || "annual",
       kind: "annual",
+      mode: "annually",
       label: discount
         ? `Pay ${fee.oneTimePayment.paymentMode} & save ${fee.oneTimePayment.paymentOptionDiscountString}`
         : `Pay ${fee.oneTimePayment.paymentMode}`,
@@ -198,12 +249,15 @@ function buildPlanOptions(fee) {
       badge: discount ? "Best Value" : undefined,
     });
   }
-  if (fee.monthlyFeeDetails) {
+  const variants = buildMonthlyVariants(fee);
+  if (variants.length > 0) {
     options.push({
-      key: fee.monthlyFeeDetails.paymentKey,
+      key: fee.monthlyFeeDetails?.paymentKey || "monthly",
       kind: "monthly",
+      mode: variants[0].mode,
       label: "Pay Easy installments",
-      amount: fee.monthlyFeeDetails.payableFeeString,
+      amount: variants[0].amount,
+      variants,
     });
   }
   return options;
@@ -256,6 +310,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
   const [paymentIncomplete, setPaymentIncomplete] = useState(false);
   const paidPollRef = useRef({ timer: null, count: 0 });
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const [submittedMessage, setSubmittedMessage] = useState(null);
   // Which section is being edited in place ("student" | "parent" | "course" | null) —
   // openReviewInlineEdit() in signupStudentContent.js. Edits stay on this screen.
@@ -276,10 +331,18 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
 
   // Same "derive a default, let the user's own choice override it" pattern
   // Stage3CourseSelection uses for effectiveOpenId — avoids a setState-in-effect.
-  const preferredPlan = data?.signupCourse?.payMode;
-  const defaultPlan =
-    preferredPlan && planOptions.some((option) => option.key === preferredPlan) ? preferredPlan : planOptions[0]?.key;
+  const preferredMode = data?.signupCourse?.payMode;
+  const preferredOption = planOptions.find(
+    (option) => option.mode === preferredMode || option.variants?.some((variant) => variant.mode === preferredMode)
+  );
+  const defaultPlan = preferredOption?.key ?? planOptions[0]?.key;
   const currentPlan = selectedPlan ?? defaultPlan;
+  const currentOption = planOptions.find((option) => option.key === currentPlan);
+  // Installment variant (3 / 4 / 5 months): the student's pick, else the saved mode, else the first.
+  const currentVariant =
+    selectedVariant ??
+    (currentOption?.variants?.some((variant) => variant.mode === preferredMode) ? preferredMode : currentOption?.variants?.[0]?.mode);
+  const currentPayMode = currentOption?.variants ? currentVariant : currentOption?.mode;
 
   const infoMessage =
     data?.isOptedAlternetPaymentMethod === 1
@@ -361,6 +424,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
     if (type === "parent" && fields) saveWizardParentFields(context.schoolUUID, userId, fields);
     setEditing(null);
     setSelectedPlan(null);
+    setSelectedVariant(null);
     reviewQuery.refetch();
   }
 
@@ -406,7 +470,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
           setNotice({ tone: "error", text: "Please choose a fee payment plan." });
           return;
         }
-        const plan = await choosePlan.mutateAsync(isKnownPaymentMode(currentPlan) ? currentPlan : "annually");
+        const plan = await choosePlan.mutateAsync(isKnownPaymentMode(currentPayMode) ? currentPayMode : "annually");
         if (plan?.status !== STATUS_SUCCESS) {
           handleFailure(plan, "Could not save your payment plan. Please try again.");
           return;
@@ -658,11 +722,11 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         {failure?.statusCode !== STATUS_REDIRECT_TO_DASHBOARD && failure?.statusCode !== STATUS_ELIGIBLE_CUSTOM_PLAN && (
           <div className="mt-6 flex gap-3">
             {onBack && (
-              <Button type="button" variant="outline" onClick={onBack}>
+              <Button type="button" variant="outline" onClick={onBack} className="cursor-pointer">
                 Back
               </Button>
             )}
-            <Button type="button" onClick={() => reviewQuery.refetch()} disabled={reviewQuery.isFetching}>
+            <Button type="button" onClick={() => reviewQuery.refetch()} disabled={reviewQuery.isFetching} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
               Try again
             </Button>
           </div>
@@ -719,8 +783,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
             onToggle={() => toggleSection("student")}
             onEdit={data.customPaymentEnabled ? undefined : () => startEdit("student")}
           />
-          {openSectionFor() === "student" && (
-          <>
+          <Collapse open={openSectionFor() === "student"}>
           <MobileEditRow onEdit={data.customPaymentEnabled ? undefined : () => startEdit("student")} />
           <dl className="py-2 text-[13px] md:divide-y md:divide-slate-100 md:border-t md:border-slate-100 md:px-4 md:text-sm">
             <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Name</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{fullName(student)}</dd></div>
@@ -734,8 +797,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
             <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Nationality</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{student?.nationality}</dd></div>
             <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Country | State | City</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{locationLine(student)}</dd></div>
           </dl>
-          </>
-          )}
+          </Collapse>
         </section>
 
         {editing === "parent" && (
@@ -756,8 +818,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
             onToggle={() => toggleSection("parent")}
             onEdit={data.customPaymentEnabled ? undefined : () => startEdit("parent")}
           />
-          {openSectionFor() === "parent" && (
-          <>
+          <Collapse open={openSectionFor() === "parent"}>
           <MobileEditRow onEdit={data.customPaymentEnabled ? undefined : () => startEdit("parent")} />
           <dl className="px-1 py-2 text-base md:divide-y md:divide-slate-100 md:border-t md:border-slate-100 md:px-4 md:text-sm">
             {parent?.workingProfessionName ? (
@@ -779,8 +840,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
               </>
             )}
           </dl>
-          </>
-          )}
+          </Collapse>
         </section>
 
         <section className={ROW_CLASS}>
@@ -791,8 +851,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
             onToggle={() => toggleSection("course")}
             onEdit={data.customPaymentEnabled || !onBack ? undefined : () => onBack(3)}
           />
-          {openSectionFor() === "course" && (
-          <>
+          <Collapse open={openSectionFor() === "course"}>
           <MobileEditRow onEdit={data.customPaymentEnabled || !onBack ? undefined : () => onBack(3)} />
           <div className="py-3 md:border-t md:border-slate-100 md:px-4">
             <h3 className="mb-2 text-sm font-semibold text-slate-900">{course?.standardName}</h3>
@@ -821,8 +880,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
               )}
             </table>
           </div>
-          </>
-          )}
+          </Collapse>
         </section>
 
         </div>
@@ -844,6 +902,8 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
                   options={planOptions}
                   selected={currentPlan}
                   onSelect={setSelectedPlan}
+                  selectedVariant={currentVariant}
+                  onSelectVariant={setSelectedVariant}
                   disabled={busy}
                   standardId={course?.standardId}
                   isFlexOrDual={["ONE_TO_ONE_FLEX", "DUAL_DIPLOMA"].includes(getLearningProgramBackendValue(context.learningProgram))}
@@ -856,7 +916,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
 
       {/* Mobile: a fixed action bar above the footer (WhatsApp left, Back / Final Step right). From md
           it is the centred button row at the end of the content. */}
-      <div className="fixed inset-x-0 bottom-8 z-20 flex items-center justify-between gap-3 bg-white px-4 py-2 md:static md:z-auto md:mt-8 md:justify-center md:bg-transparent md:p-0">
+      <div className="fixed inset-x-0 bottom-8 z-20 flex items-center justify-between gap-3 bg-white px-4 py-2 md:static md:z-auto md:mt-10 md:justify-center md:bg-transparent md:p-0 md:pt-6">
         {context.whatsAppNumber ? (
           <a
             href={`https://api.whatsapp.com/send?phone=${context.whatsAppNumber}`}
@@ -870,14 +930,14 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         ) : (
           <span className="md:hidden" />
         )}
-        <div className="flex items-center gap-2 md:gap-3">
+        <div className="flex items-center gap-4">
           {onBack && (
             <Button
               type="button"
               variant="outline"
               onClick={() => onBack(3)}
               disabled={busy || !!editing}
-              className="h-10 border-primary px-4 text-[15px] font-semibold text-primary hover:bg-primary/5 hover:text-primary md:h-8 md:text-sm"
+              className="cursor-pointer"
             >
               Back
             </Button>
@@ -885,11 +945,11 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
           {paymentOption.isLoading ? (
             <p className="text-sm text-slate-500">Loading…</p>
           ) : paymentPending && paymentUnderReview ? null : paymentPending ? (
-            <Button type="button" onClick={confirmAndPay} disabled={busy || !!editing} className="h-10 rounded-md bg-primary px-4 text-[15px] font-semibold hover:bg-primary/90 md:h-8 md:text-sm">
+            <Button type="button" onClick={confirmAndPay} disabled={busy || !!editing} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
               {busy ? "Please wait…" : "Final Step"}
             </Button>
           ) : (
-            <Button type="button" onClick={() => setConfirmSubmit(true)} disabled={busy || !!editing} className="h-10 rounded-md bg-primary px-4 text-[15px] font-semibold hover:bg-primary/90 md:h-8 md:text-sm">
+            <Button type="button" onClick={() => setConfirmSubmit(true)} disabled={busy || !!editing} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
               {busy ? "Please wait…" : "Submit Application"}
             </Button>
           )}
@@ -951,7 +1011,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
               </b>{" "}
               for more information
             </p>
-            <Button type="button" onClick={() => onSessionExpired?.()}>
+            <Button type="button" onClick={() => onSessionExpired?.()} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
               Log out
             </Button>
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
-import { saveParentDetails, sendOtpForParentVerification, verifyParentOtp } from "@/services/studentSignupApi";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { getParentDetails, saveParentDetails, sendOtpForParentVerification, verifyParentOtp } from "@/services/studentSignupApi";
 import { buildAuthentication, buildAuthenticatedRequest } from "@/utils/authentication";
 
 /**
@@ -40,6 +40,28 @@ export function mapSignupParentToFields(signupParent) {
     institutionName: signupParent.institutionName || "",
     institutionCountryId: signupParent.institutionCountryId ? String(signupParent.institutionCountryId) : "",
   };
+}
+
+/**
+ * Step 2's prefill — get-parent-details (callForParentSelection() in signupStudentStage2.js), the
+ * same way Step 1 uses get-student-details. Resolves to the form-field shape, or null when the call
+ * fails or this student has no parent saved yet (so the form keeps its own defaults).
+ */
+export function useParentDetailsPrefill({ context, userId }) {
+  return useQuery({
+    queryKey: ["parent-details-prefill", userId],
+    queryFn: async () => {
+      const response = await getParentDetails(context.schoolUUID, { userId });
+      if (response?.status !== "1" || !response.signupParent) return null;
+      const parent = response.signupParent;
+      const hasSavedParent = Boolean(parent.firstName || parent.relationship || parent.workingProfession || parent.institutionName);
+      return hasSavedParent ? mapSignupParentToFields(parent) : null;
+    },
+    enabled: Boolean(context?.schoolUUID && userId),
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
 }
 
 function buildCommunications({ whatsapp, call, email }) {
