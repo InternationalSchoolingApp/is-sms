@@ -4,9 +4,7 @@ import { FullScreenLoader } from "@/components/common/Loader";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Stage2ParentDetails } from "@/components/student-enroll/Stage2ParentDetails";
-import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
 import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
-import { logoutEverywhere } from "@/utils/logout";
 import { useWizardResume } from "@/hooks/useWizardResume";
 import { useParentDetailsPrefill } from "@/hooks/useParentDetailsSignup";
 import { useStudentDetailsPrefill } from "@/hooks/useStudentDetailsSignup";
@@ -14,7 +12,8 @@ import { loadWizardStudentFields, loadWizardParentFields, saveWizardParentFields
 import { stepPath } from "@/utils/wizardSteps";
 
 /**
- * Stage 2 ("Parent information") as its own flat route. The form is prefilled from
+ * Stage 2 ("Parent information") step content, rendered inside the shared
+ * EnrollmentWizardShell from the step-group layout. The form is prefilled from
  * get-parent-details (same idea as Step 1's get-student-details), falling back to what this tab
  * last saved in sessionStorage — see utils/wizardStorage.js. `studentAddress` (for the "same as
  * student" default) comes from sessionStorage too, else the cached student prefill, since
@@ -23,7 +22,7 @@ import { stepPath } from "@/utils/wizardSteps";
 export function ParentDetailsStep() {
   const router = useRouter();
   const { school, program } = useParams();
-  const { status, session, context, logoUrl, ready } = useEnrollmentContext();
+  const { session, context, ready } = useEnrollmentContext();
   useWizardResume({ currentStep: 2, context, uniqueId: session?.uniqueId, ready });
   const parentPrefill = useParentDetailsPrefill({ context, userId: session?.userId });
   // Same query the enrollment context already runs, so this is normally already cached.
@@ -31,10 +30,6 @@ export function ParentDetailsStep() {
   const [studentFields, setStudentFields] = useState(null);
   const [parentFields, setParentFields] = useState(null);
   const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    if (status === "unauthenticated") router.replace("/");
-  }, [status, router]);
 
   useEffect(() => {
     if (!ready || parentPrefill.isPending || studentPrefill.isPending) return;
@@ -57,30 +52,22 @@ export function ParentDetailsStep() {
   }
 
   return (
-    <EnrollmentWizardShell
-      schoolName={context.schoolName}
-      logoUrl={logoUrl}
+    <Stage2ParentDetails
       context={context}
-      currentStepKey="parent"
-      onLogout={() => logoutEverywhere(session)}
-    >
-      <Stage2ParentDetails
-        context={context}
-        userId={session.userId}
-        studentAddress={{
-          countryId: studentFields?.countryId,
-          stateId: studentFields?.stateId,
-          cityId: studentFields?.cityId,
-        }}
-        courseProviderId={studentFields?.courseProviderId}
-        initialFields={parentFields}
-        onNext={(fields) => {
-          saveWizardParentFields(context.schoolUUID, session.userId, fields);
-          console.log("Stage 2 complete, TODO Stage 3:", fields);
-          router.push(stepPath(school, program, 3));
-        }}
-        onBack={() => router.push(stepPath(school, program, 1))}
-      />
-    </EnrollmentWizardShell>
+      userId={session.userId}
+      studentAddress={{
+        countryId: studentFields?.countryId,
+        stateId: studentFields?.stateId,
+        cityId: studentFields?.cityId,
+      }}
+      courseProviderId={studentFields?.courseProviderId}
+      initialFields={parentFields}
+      onNext={(fields) => {
+        saveWizardParentFields(context.schoolUUID, session.userId, fields);
+        console.log("Stage 2 complete, TODO Stage 3:", fields);
+        router.push(stepPath(school, program, 3));
+      }}
+      onBack={() => router.push(stepPath(school, program, 1))}
+    />
   );
 }

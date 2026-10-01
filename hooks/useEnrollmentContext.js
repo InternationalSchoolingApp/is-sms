@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
@@ -27,8 +27,16 @@ import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
  * enrollmentFor still defaults the same way the old
  * /[schoolId]/student/enrollment page did — not carried by the session
  * either; revisit once Step 10 (stage-resume) threads the real value through.
+ *
+ * Resolved ONCE per wizard mount by EnrollmentProvider (see the step-group
+ * layout) and shared with the shell chrome and all step pages via context —
+ * so the logo/public-info/location side effects below fire a single time,
+ * not once per step. Step pages read it with useEnrollmentContext() exactly
+ * as before; only the call now returns the shared value.
  */
-export function useEnrollmentContext() {
+const EnrollmentContext = createContext(null);
+
+function useResolveEnrollmentContext() {
   const { data: session, status } = useSession();
   const [logoUrl, setLogoUrl] = useState(null);
   const [whatsAppNumber, setWhatsAppNumber] = useState(undefined);
@@ -105,4 +113,26 @@ export function useEnrollmentContext() {
       }
     : null;
   return { status, session, context, logoUrl, ready };
+}
+
+/**
+ * Mounts the enrollment context once and shares it with everything inside the
+ * wizard (the shell chrome + every step page). Placed in the step-group
+ * layout so navigating between steps does not re-run the resolver's effects.
+ */
+export function EnrollmentProvider({ children }) {
+  const value = useResolveEnrollmentContext();
+  return <EnrollmentContext.Provider value={value}>{children}</EnrollmentContext.Provider>;
+}
+
+/**
+ * Reads the shared enrollment context. Must be rendered inside
+ * EnrollmentProvider (the wizard layout provides it for all step routes).
+ */
+export function useEnrollmentContext() {
+  const value = useContext(EnrollmentContext);
+  if (value === null) {
+    throw new Error("useEnrollmentContext must be used within an EnrollmentProvider");
+  }
+  return value;
 }

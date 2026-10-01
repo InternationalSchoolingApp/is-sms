@@ -4,19 +4,20 @@ import { FullScreenLoader } from "@/components/common/Loader";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Stage1StudentDetails } from "@/components/student-enroll/Stage1StudentDetails";
-import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
 import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
-import { logoutEverywhere } from "@/utils/logout";
 import { useWizardResume } from "@/hooks/useWizardResume";
 import { useStudentDetailsPrefill } from "@/hooks/useStudentDetailsSignup";
 import { saveWizardStudentFields, loadWizardStudentFields } from "@/utils/wizardStorage";
 import { stepPath } from "@/utils/wizardSteps";
 
 /**
- * Stage 1 ("Student profile") as its own flat route — replaces the old
- * /[schoolId]/student/enrollment page's "student" branch. schoolUUID comes
- * from the Auth.js session (see hooks/useEnrollmentContext.js / auth.js),
- * not a URL param — this route intentionally carries no {schoolId} segment.
+ * Stage 1 ("Student profile") step content. Rendered inside the shared
+ * EnrollmentWizardShell mounted by the step-group layout — this component
+ * only owns Stage 1's own data (prefill) and navigation.
+ *
+ * schoolUUID comes from the Auth.js session (see hooks/useEnrollmentContext.js
+ * / auth.js), not the URL; the {school}/{program} segments are used only to
+ * build the next step's path.
  *
  * Prefill priority, resolved before the form ever mounts (see the
  * !hydrated gate below — Stage1StudentDetails only reads initialFields at
@@ -31,15 +32,11 @@ import { stepPath } from "@/utils/wizardSteps";
 export function StudentDetailsStep() {
   const router = useRouter();
   const { school, program } = useParams();
-  const { status, session, context, logoUrl, ready } = useEnrollmentContext();
+  const { session, context, ready } = useEnrollmentContext();
   useWizardResume({ currentStep: 1, context, uniqueId: session?.uniqueId, ready });
   const prefill = useStudentDetailsPrefill({ context, userId: session?.userId });
   const [initialFields, setInitialFields] = useState(null);
   const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    if (status === "unauthenticated") router.replace("/");
-  }, [status, router]);
 
   useEffect(() => {
     if (!ready || prefill.isPending) return;
@@ -53,22 +50,14 @@ export function StudentDetailsStep() {
   }
 
   return (
-    <EnrollmentWizardShell
-      schoolName={context.schoolName}
-      logoUrl={logoUrl}
+    <Stage1StudentDetails
       context={context}
-      currentStepKey="student"
-      onLogout={() => logoutEverywhere(session)}
-    >
-      <Stage1StudentDetails
-        context={context}
-        userId={session.userId}
-        initialFields={initialFields}
-        onNext={(fields) => {
-          saveWizardStudentFields(context.schoolUUID, session.userId, fields);
-          router.push(stepPath(school, program, 2));
-        }}
-      />
-    </EnrollmentWizardShell>
+      userId={session.userId}
+      initialFields={initialFields}
+      onNext={(fields) => {
+        saveWizardStudentFields(context.schoolUUID, session.userId, fields);
+        router.push(stepPath(school, program, 2));
+      }}
+    />
   );
 }
