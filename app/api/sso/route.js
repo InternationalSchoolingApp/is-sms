@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { signIn } from "@/auth";
-import { STEP_ROUTES } from "@/utils/wizardSteps";
+import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
 
 const VALID_STEPS = new Set(["1", "2", "3", "4"]);
 
@@ -67,7 +67,10 @@ async function handleSsoHandoff(request) {
     return redirectTo("/", request);
   }
 
-  return redirectTo(STEP_ROUTES[targetStep], request);
+  // The enrollment program isn't part of the SSO handoff (the backend only
+  // sends token/step/school), so the URL uses the default program segment;
+  // the wizard resolves the real school/program from the session on load.
+  return redirectTo(stepPath(schoolUUID, DEFAULT_PROGRAM, targetStep), request);
 }
 
 export const GET = handleSsoHandoff;

@@ -2,7 +2,7 @@
 
 import { FullScreenLoader } from "@/components/common/Loader";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Stage3CourseSelection } from "@/components/student-enroll/Stage3CourseSelection";
 import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
@@ -10,7 +10,7 @@ import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
 import { logoutEverywhere } from "@/utils/logout";
 import { useWizardResume } from "@/hooks/useWizardResume";
 import { loadWizardStudentFields } from "@/utils/wizardStorage";
-import { STEP_ROUTES } from "@/utils/wizardSteps";
+import { stepPath } from "@/utils/wizardSteps";
 
 /**
  * Stage 3 ("Course Selection") as its own flat route. Course choices are
@@ -23,6 +23,7 @@ import { STEP_ROUTES } from "@/utils/wizardSteps";
  */
 export function CourseSelectionStep() {
   const router = useRouter();
+  const { school, program } = useParams();
   const { status, session, context, logoUrl, ready } = useEnrollmentContext();
   useWizardResume({ currentStep: 3, context, uniqueId: session?.uniqueId, ready });
   const [standardId, setStandardId] = useState(null);
@@ -54,8 +55,8 @@ export function CourseSelectionStep() {
         context={context}
         userId={session.userId}
         standardId={standardId}
-        onNext={() => router.push(STEP_ROUTES[4])}
-        onBack={() => router.push(STEP_ROUTES[2])}
+        onNext={() => router.push(stepPath(school, program, 4))}
+        onBack={() => router.push(stepPath(school, program, 2))}
         onSessionExpired={() => signOut({ callbackUrl: "/" })}
       />
     </EnrollmentWizardShell>

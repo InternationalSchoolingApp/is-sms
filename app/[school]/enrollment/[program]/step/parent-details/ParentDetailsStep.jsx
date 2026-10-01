@@ -2,7 +2,7 @@
 
 import { FullScreenLoader } from "@/components/common/Loader";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Stage2ParentDetails } from "@/components/student-enroll/Stage2ParentDetails";
 import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
 import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
@@ -11,7 +11,7 @@ import { useWizardResume } from "@/hooks/useWizardResume";
 import { useParentDetailsPrefill } from "@/hooks/useParentDetailsSignup";
 import { useStudentDetailsPrefill } from "@/hooks/useStudentDetailsSignup";
 import { loadWizardStudentFields, loadWizardParentFields, saveWizardParentFields } from "@/utils/wizardStorage";
-import { STEP_ROUTES } from "@/utils/wizardSteps";
+import { stepPath } from "@/utils/wizardSteps";
 
 /**
  * Stage 2 ("Parent information") as its own flat route. The form is prefilled from
@@ -22,6 +22,7 @@ import { STEP_ROUTES } from "@/utils/wizardSteps";
  */
 export function ParentDetailsStep() {
   const router = useRouter();
+  const { school, program } = useParams();
   const { status, session, context, logoUrl, ready } = useEnrollmentContext();
   useWizardResume({ currentStep: 2, context, uniqueId: session?.uniqueId, ready });
   const parentPrefill = useParentDetailsPrefill({ context, userId: session?.userId });
@@ -76,9 +77,9 @@ export function ParentDetailsStep() {
         onNext={(fields) => {
           saveWizardParentFields(context.schoolUUID, session.userId, fields);
           console.log("Stage 2 complete, TODO Stage 3:", fields);
-          router.push(STEP_ROUTES[3]);
+          router.push(stepPath(school, program, 3));
         }}
-        onBack={() => router.push(STEP_ROUTES[1])}
+        onBack={() => router.push(stepPath(school, program, 1))}
       />
     </EnrollmentWizardShell>
   );

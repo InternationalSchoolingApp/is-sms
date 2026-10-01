@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { getSignupStageStatus } from "@/services/studentSignupApi";
-import { STEP_ROUTES } from "@/utils/wizardSteps";
+import { stepPath } from "@/utils/wizardSteps";
 
 /**
  * `marker` is the backend's nextSessionStage (1-4). Step 4 (review) has no
@@ -34,12 +34,13 @@ function resolveResumeStep(currentStep, marker) {
  */
 export function useWizardResume({ currentStep, context, uniqueId, ready }) {
   const router = useRouter();
+  const { school, program } = useParams();
 
   useEffect(() => {
     if (!ready || !uniqueId || typeof window === "undefined") return;
     if (context?.customPaymentEnabled) {
       window.__wizardResumeChecked = true;
-      if (currentStep !== 4) router.replace(STEP_ROUTES[4]);
+      if (currentStep !== 4) router.replace(stepPath(school, program, 4));
       return;
     }
     if (window.__wizardResumeChecked) return;
@@ -48,7 +49,7 @@ export function useWizardResume({ currentStep, context, uniqueId, ready }) {
     const signupPage = Number(context?.signupPage);
     if (signupPage >= 1 && signupPage <= 4) {
       const target = resolveResumeStep(currentStep, signupPage);
-      if (target !== currentStep) router.replace(STEP_ROUTES[target]);
+      if (target !== currentStep) router.replace(stepPath(school, program, target));
       return;
     }
 
@@ -60,21 +61,23 @@ export function useWizardResume({ currentStep, context, uniqueId, ready }) {
         if (!response) return;
         if (response.status === "1" && response.redirectUri) {
           // Defensive: the backend has been observed sending a redirectUri that
-          // points at THIS app's own flat /step/N route with an extra uniqueId
+          // points at THIS app's own wizard step route with an extra uniqueId
           // path segment appended (e.g. ".../step/student-details/{uuid}") —
           // none of these routes accept one (schoolUUID/userId come from the
           // session, not the URL), so following it verbatim 404s. Anything
-          // that isn't a same-origin, unrecognized /step/ path (the legacy
+          // that isn't a same-origin, unrecognized step path (the legacy
           // app's own dashboard URL on a different port, or an /api/sso
           // handoff URL) is still followed exactly as before; only this one
           // malformed shape gets normalized via the response's own wizardStep.
           let redirectTarget = response.redirectUri;
           try {
             const url = new URL(response.redirectUri, window.location.origin);
-            const sameOriginStepUrl = url.origin === window.location.origin && url.pathname.startsWith("/step/");
-            const knownStepRoute = Object.values(STEP_ROUTES).includes(url.pathname);
+            const knownStepRoutes = [1, 2, 3, 4].map((s) => stepPath(school, program, s));
+            const sameOriginStepUrl = url.origin === window.location.origin && url.pathname.includes("/step/");
+            const knownStepRoute = knownStepRoutes.includes(url.pathname);
             if (sameOriginStepUrl && !knownStepRoute) {
-              router.replace(STEP_ROUTES[response.wizardStep] || STEP_ROUTES[currentStep]);
+              const ws = response.wizardStep >= 1 && response.wizardStep <= 4 ? response.wizardStep : currentStep;
+              router.replace(stepPath(school, program, ws));
               return;
             }
           } catch {
@@ -84,8 +87,8 @@ export function useWizardResume({ currentStep, context, uniqueId, ready }) {
           return;
         }
         const target = resolveResumeStep(currentStep, response.wizardStep);
-        if (target !== currentStep) router.replace(STEP_ROUTES[target]);
+        if (target !== currentStep) router.replace(stepPath(school, program, target));
       })
       .catch((err) => console.error("Wizard resume check failed:", err));
-  }, [ready, uniqueId, currentStep, context?.schoolUUID, context?.customPaymentEnabled, context?.signupPage, router]);
+  }, [ready, uniqueId, currentStep, context?.schoolUUID, context?.customPaymentEnabled, context?.signupPage, router, school, program]);
 }

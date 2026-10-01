@@ -2,7 +2,7 @@
 
 import { FullScreenLoader } from "@/components/common/Loader";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Stage1StudentDetails } from "@/components/student-enroll/Stage1StudentDetails";
 import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
 import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
@@ -10,7 +10,7 @@ import { logoutEverywhere } from "@/utils/logout";
 import { useWizardResume } from "@/hooks/useWizardResume";
 import { useStudentDetailsPrefill } from "@/hooks/useStudentDetailsSignup";
 import { saveWizardStudentFields, loadWizardStudentFields } from "@/utils/wizardStorage";
-import { STEP_ROUTES } from "@/utils/wizardSteps";
+import { stepPath } from "@/utils/wizardSteps";
 
 /**
  * Stage 1 ("Student profile") as its own flat route — replaces the old
@@ -30,6 +30,7 @@ import { STEP_ROUTES } from "@/utils/wizardSteps";
  */
 export function StudentDetailsStep() {
   const router = useRouter();
+  const { school, program } = useParams();
   const { status, session, context, logoUrl, ready } = useEnrollmentContext();
   useWizardResume({ currentStep: 1, context, uniqueId: session?.uniqueId, ready });
   const prefill = useStudentDetailsPrefill({ context, userId: session?.userId });
@@ -65,7 +66,7 @@ export function StudentDetailsStep() {
         initialFields={initialFields}
         onNext={(fields) => {
           saveWizardStudentFields(context.schoolUUID, session.userId, fields);
-          router.push(STEP_ROUTES[2]);
+          router.push(stepPath(school, program, 2));
         }}
       />
     </EnrollmentWizardShell>
