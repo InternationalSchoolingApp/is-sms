@@ -20,27 +20,96 @@ const GATEWAY_CONFIG = {
   },
 };
 
-function getSafeRedirectUrl(value, gateway) {
+function getSafeRedirectUrl(value) {
   if (typeof value !== "string") return null;
   try {
     const url = new URL(value);
-    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+    return url.protocol === "https:" || url.protocol === "http:" ? url.href : null;
+  } catch {
+    return null;
+  }
+}
 
-    // Airwallex returns an absolute backend URL for this JSON endpoint. In
-    // local-proxy mode, keep the browser on the Next.js origin so the
-    // create-checkout-intent rewrite forwards it to Spring without CORS.
+function getAirwallexCheckoutIntentUrl(value) {
+  if (typeof value !== "string") return null;
+
+  try {
+    const url = new URL(value, window.location.origin);
     if (
-      gateway === "airwallex" &&
-      process.env.NEXT_PUBLIC_USE_LOCAL_PROXY === "true" &&
-      /^\/[^/]+\/create-checkout-intent\/[^/]+$/.test(url.pathname)
+      (url.protocol !== "https:" && url.protocol !== "http:") ||
+      !/^\/[^/]+\/create-checkout-intent\/[^/]+$/.test(url.pathname)
     ) {
-      return `${url.pathname}${url.search}${url.hash}`;
+      return null;
     }
 
+    // The JSP's AJAX request is same-origin. The API currently builds an
+    // absolute backend URL, so use its path on the Next.js origin; the local
+    // rewrite (and the production reverse proxy) forwards it to Spring.
+    if (process.env.NEXT_PUBLIC_USE_LOCAL_PROXY === "true" || url.origin === window.location.origin) {
+      return `${url.pathname}${url.search}`;
+    }
     return url.href;
   } catch {
     return null;
   }
+}
+
+function loadAirwallexSdk() {
+  if (window.Airwallex) return Promise.resolve(window.Airwallex);
+  if (window.__airwallexSdkPromise) return window.__airwallexSdkPromise;
+
+  window.__airwallexSdkPromise = new Promise((resolve, reject) => {
+    let script = document.querySelector('script[data-airwallex-sdk="true"]');
+    if (!script) {
+      script = document.createElement("script");
+      script.src = "https://checkout.airwallex.com/assets/elements.bundle.min.js";
+      script.async = true;
+      script.dataset.airwallexSdk = "true";
+    }
+
+    script.addEventListener("load", () => {
+      if (window.Airwallex) resolve(window.Airwallex);
+      else reject(new Error("Airwallex checkout could not be loaded."));
+    }, { once: true });
+    script.addEventListener("error", () => reject(new Error("Airwallex checkout could not be loaded.")), { once: true });
+
+    if (!script.isConnected) document.head.appendChild(script);
+  });
+
+  return window.__airwallexSdkPromise;
+}
+
+async function startAirwallexCheckout(checkoutUrl) {
+  const url = getAirwallexCheckoutIntentUrl(checkoutUrl);
+  if (!url) throw new Error("The Airwallex checkout URL is invalid.");
+
+  const response = await fetch(url, { method: "GET", credentials: "include" });
+  if (!response.ok) throw new Error("We could not reach the payment gateway. Please try again.");
+
+  const intent = await response.json();
+  if (String(intent?.status) !== "1") {
+    throw new Error(getFailureMessage(intent));
+  }
+
+  const airwallex = await loadAirwallexSdk();
+  airwallex.init({
+    env: intent.environment,
+    origin: window.location.origin,
+  });
+  await airwallex.redirectToCheckout({
+    env: intent.environment,
+    mode: "payment",
+    intent_id: intent.intentId,
+    client_secret: intent.clientSecret,
+    currency: intent.currency,
+    autoCapture: intent.autoCapture,
+    successUrl: intent.successUrl,
+    failUrl: intent.failUrl,
+    cancelUrl: intent.cancelUrl,
+    disableAutoRedirect: intent.disableAutoRedirect,
+    logoUrl: intent.logoUrl,
+    shopper_name: intent.shopperName,
+  });
 }
 
 function getFailureMessage(response) {
@@ -49,27 +118,42 @@ function getFailureMessage(response) {
   return cleanMessage || "We couldn’t start your payment. Please try again in a moment.";
 }
 
-export function PaymentGatewayInitView({ gateway }) {
+export function PaymentGatewayInitView({ gateway, schoolUUID: schoolUUIDFromRoute }) {
   const params = useParams();
   const searchParams = useSearchParams();
   const config = GATEWAY_CONFIG[gateway];
   const uniqueUuid = params?.UNIQUEUUID;
+  const schoolUUID = schoolUUIDFromRoute || params?.school || process.env.NEXT_PUBLIC_SCHOOL_ID;
   const [state, setState] = useState("loading");
   const [errorMessage, setErrorMessage] = useState("");
 
   const startPayment = useCallback(async () => {
-    const response = await config.request(uniqueUuid, new URLSearchParams(searchParams.toString()));
-    if (response?.status === config.successStatus) {
-      const redirectUrl = getSafeRedirectUrl(response[config.redirectField], gateway);
-      if (redirectUrl) {
-        window.location.assign(redirectUrl);
-        return;
-      }
-    }
+    try {
+      const response = await config.request(
+        uniqueUuid,
+        new URLSearchParams(searchParams.toString()),
+        schoolUUID
+      );
+      if (response?.status === config.successStatus) {
+        if (gateway === "airwallex") {
+          await startAirwallexCheckout(response.airwallexCheckoutUrl);
+          return;
+        }
 
-    setErrorMessage(getFailureMessage(response));
-    setState("error");
-  }, [config, gateway, searchParams, uniqueUuid]);
+        const redirectUrl = getSafeRedirectUrl(response[config.redirectField]);
+        if (redirectUrl) {
+          window.location.assign(redirectUrl);
+          return;
+        }
+      }
+
+      setErrorMessage(getFailureMessage(response));
+      setState("error");
+    } catch (error) {
+      setErrorMessage(error?.message || "We couldn’t start your payment. Please try again in a moment.");
+      setState("error");
+    }
+  }, [config, gateway, schoolUUID, searchParams, uniqueUuid]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => startPayment(), 0);

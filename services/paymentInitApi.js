@@ -1,9 +1,7 @@
 import { hasBackendOrigin, resolveBackendOrigin } from "@/utils/backendOrigin";
 
-// `schoolUUID` now comes from the caller's own params (the page's searchParams,
-// e.g. ?schoolUUID=... on the gateway's redirect back into this app), NOT an
-// env var — matches the same convention services/studentSignupApi.js and
-// studentSignupBackendApi.js use for `schoolUUID`.
+// School-prefixed gateway pages pass their URL school segment explicitly.
+// Older unprefixed pages can still fall back to the query param or env value.
 function buildQuery(params) {
   const query = new URLSearchParams();
   for (const [key, value] of params.entries()) {
@@ -14,9 +12,10 @@ function buildQuery(params) {
   return query.toString();
 }
 
-async function getPaymentInitResponse(gateway, uniqueUuid, params) {
+async function getPaymentInitResponse(gateway, uniqueUuid, params, schoolUUIDFromRoute) {
   const baseUrl = resolveBackendOrigin();
-  const schoolUUID = params?.get("schoolUUID");
+  const schoolUUID =
+    schoolUUIDFromRoute || params?.get("schoolUUID") || process.env.NEXT_PUBLIC_SCHOOL_ID;
   if (!hasBackendOrigin() || !schoolUUID || !uniqueUuid) return null;
 
   const query = buildQuery(params);
@@ -34,10 +33,10 @@ async function getPaymentInitResponse(gateway, uniqueUuid, params) {
   }
 }
 
-export function getStripePaymentInit(uniqueUuid, params) {
-  return getPaymentInitResponse("stripe", uniqueUuid, params);
+export function getStripePaymentInit(uniqueUuid, params, schoolUUID) {
+  return getPaymentInitResponse("stripe", uniqueUuid, params, schoolUUID);
 }
 
-export function getAirwallexPaymentInit(uniqueUuid, params) {
-  return getPaymentInitResponse("airwallex", uniqueUuid, params);
+export function getAirwallexPaymentInit(uniqueUuid, params, schoolUUID) {
+  return getPaymentInitResponse("airwallex", uniqueUuid, params, schoolUUID);
 }
