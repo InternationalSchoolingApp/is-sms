@@ -4,22 +4,22 @@ const LEARNING_PROGRAM_THEME = {
   O: {
     label: "One-to-One Enrollment",
     subtitle: "Personalized learning. Real attention. Brighter outcomes.",
-    image: "/images/one-to-one-learning-enrollment.png",
+    image: "/images/enrollement_bg.png",
   },
   DD: {
     label: "Dual Diploma Enrollment",
     subtitle: "Two diplomas. One journey. Twice the opportunity.",
-    image: "/images/one-to-one-learning-enrollment.png",
+    image: "/images/enrollement_bg.png",
   },
   ONE_TO_ONE_FLEX: {
     label: "Flexy Enrollment",
     subtitle: "Learn your way. On your schedule. At your pace.",
-    image: "/images/one-to-one-learning-enrollment.png",
+    image: "/images/enrollement_bg.png",
   },
   G: {
     label: "Group Learning Enrollment",
     subtitle: "Learn together. Grow together. Achieve together.",
-    image: "/images/group-learning-enrollment.png",
+    image: "/images/enrollement_bg.png",
   },
   SCHOLARSHIP: {
     label: "Self Learning Enrollment",

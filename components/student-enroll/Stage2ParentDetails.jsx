@@ -14,6 +14,7 @@ import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal
 import { useCountryOptions, useStateOptions, useCityOptions } from "@/hooks/useStudentDetailsSignup";
 import { useParentDetailsSignup } from "@/hooks/useParentDetailsSignup";
 import { validateParentDetails } from "@/utils/studentSignupValidation";
+import { nameFieldProps } from "@/utils/nameInput";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 
 // "Other" is commented out on the is-rest-api form too (masterContent.js
@@ -198,20 +199,20 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
               icon={User}
               label={<Req label="First Name" required />}
               value={fields.firstName}
-              onChange={(e) => setField("firstName", e.target.value)}
+              {...nameFieldProps((v) => setField("firstName", v))}
               error={errors.firstName}
             />
             <FloatingLabelInput
               icon={User}
               label="Middle Name"
               value={fields.middleName}
-              onChange={(e) => setField("middleName", e.target.value)}
+              {...nameFieldProps((v) => setField("middleName", v))}
             />
             <FloatingLabelInput
               icon={User}
               label={<Req label="Last Name" required />}
               value={fields.lastName}
-              onChange={(e) => setField("lastName", e.target.value)}
+              {...nameFieldProps((v) => setField("lastName", v))}
               error={errors.lastName}
             />
             <FloatingLabelSelect
@@ -244,7 +245,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
             />
           </div>
 
-          <label className="mt-8 mb-4 flex items-center gap-2 text-sm font-semibold text-slate-900">
+          <label className="mt-8 mb-4 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-900">
             <Checkbox checked={!fields.sameAsStudent} onCheckedChange={(v) => toggleSameAsStudent(!v)} />
             Change your Location
           </label>

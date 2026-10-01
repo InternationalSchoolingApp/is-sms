@@ -17,6 +17,7 @@ import {
   useCityOptions,
 } from "@/hooks/useStudentDetailsSignup";
 import { validateStudentDetails } from "@/utils/studentSignupValidation";
+import { nameFieldProps } from "@/utils/nameInput";
 import { validateAge, getDobPickerBounds } from "@/utils/ageValidation";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 
@@ -215,20 +216,20 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
             icon={User}
             label={<Req label="First Name" required />}
             value={fields.firstName}
-            onChange={(e) => setField("firstName", e.target.value)}
+            {...nameFieldProps((v) => setField("firstName", v))}
             error={errors.firstName}
           />
           <FloatingLabelInput
             icon={User}
             label="Middle Name"
             value={fields.middleName}
-            onChange={(e) => setField("middleName", e.target.value)}
+            {...nameFieldProps((v) => setField("middleName", v))}
           />
           <FloatingLabelInput
             icon={User}
             label={<Req label="Last Name" required />}
             value={fields.lastName}
-            onChange={(e) => setField("lastName", e.target.value)}
+            {...nameFieldProps((v) => setField("lastName", v))}
             error={errors.lastName}
           />
           <FloatingLabelSelect

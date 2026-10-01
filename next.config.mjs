@@ -22,6 +22,16 @@ const nextConfig = {
   // retrying the blocked HMR connection and periodically force-reloads.
   // Listing the LAN origin here lets the dev server accept it.
   allowedDevOrigins: ["192.168.1.39"],
+  // Enrollment pages are session-gated: no-store keeps the browser (incl. the back/forward cache)
+  // from replaying a wizard page after logout, so Back re-hits proxy.js and lands on the login page.
+  async headers() {
+    return [
+      {
+        source: "/:school/enrollment/:path*",
+        headers: [{ key: "Cache-Control", value: "no-store, must-revalidate" }],
+      },
+    ];
+  },
   async rewrites() {
     const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
     if (!backendBaseUrl || process.env.NEXT_PUBLIC_USE_LOCAL_PROXY !== "true") return [];

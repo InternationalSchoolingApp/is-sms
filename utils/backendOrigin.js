@@ -30,3 +30,13 @@ export function resolveServerBackendOrigin() {
   if (!useLocalProxy) return process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
   return process.env.NEXTAUTH_URL;
 }
+
+/**
+ * The Java app's own login page for a school (http://localhost:8080/{school}/common/login). It must
+ * be served by the Java app itself, not through Next.js, so this uses the real backend origin and
+ * not the "/backend" dev proxy. Safe for both server and client callers.
+ */
+export function loginPageUrl(schoolUUID) {
+  const backend = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
+  return schoolUUID && backend ? `${backend}/${schoolUUID}/common/login` : "/";
+}

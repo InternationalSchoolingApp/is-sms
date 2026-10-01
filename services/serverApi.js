@@ -13,6 +13,5 @@ export async function getStatesAndCitites() {
     }),
   });
   const result = await response.json();
-  console.log(result)
   return result.data;
 }

@@ -3,7 +3,7 @@
 import { FullScreenLoader } from "@/components/common/Loader";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { expireSession } from "@/utils/logout";
 import { Stage3CourseSelection } from "@/components/student-enroll/Stage3CourseSelection";
 import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
 import { useWizardResume } from "@/hooks/useWizardResume";
@@ -45,7 +45,7 @@ export function CourseSelectionStep() {
       standardId={standardId}
       onNext={() => router.push(stepPath(school, program, 4))}
       onBack={() => router.push(stepPath(school, program, 2))}
-      onSessionExpired={() => signOut({ callbackUrl: "/" })}
+      onSessionExpired={() => expireSession(school)}
     />
   );
 }

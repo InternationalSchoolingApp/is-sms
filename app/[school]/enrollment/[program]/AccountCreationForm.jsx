@@ -220,15 +220,15 @@ export function AccountCreationForm({ school, program, query }) {
   }, []);
 
   return (
-    <main className="relative flex min-h-screen flex-col bg-[#eef4fb] bg-gradient-to-b from-[#eaf2fc] via-[#eef5fc] to-[#e7f0fb] md:h-screen md:min-h-0 md:overflow-hidden">
+    <main className="relative flex min-h-screen flex-col bg-[#F2F5FA] md:h-screen md:min-h-0 md:overflow-hidden">
       {/* Soft decorative blobs — the light-blue organic wave shapes behind
           everything on desktop. Purely decorative, so hidden from a11y and
           from pointer events; below md the layout is compact so they're
           hidden there. */}
       <div aria-hidden className="pointer-events-none absolute inset-0 hidden overflow-hidden md:block">
-        <div className="absolute -left-24 -top-24 h-96 w-96 rounded-full bg-[#d7e6fb] opacity-60 blur-3xl" />
-        <div className="absolute left-1/3 top-10 h-72 w-72 rounded-full bg-[#dcebfd] opacity-50 blur-3xl" />
-        <div className="absolute -bottom-24 right-10 h-96 w-96 rounded-full bg-[#d9e8fc] opacity-50 blur-3xl" />
+        <div className="absolute -left-24 -top-24 h-96 w-96 rounded-full bg-[#F2F5FA] opacity-60 blur-3xl" />
+        <div className="absolute left-1/3 top-10 h-72 w-72 rounded-full bg-[#F2F5FA] opacity-50 blur-3xl" />
+        <div className="absolute -bottom-24 right-10 h-96 w-96 rounded-full bg-[#F2F5FA] opacity-50 blur-3xl" />
       </div>
 
       {/* Compact mobile-only header — small icon logo + badge + heading +

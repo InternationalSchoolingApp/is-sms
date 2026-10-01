@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getSignupStageStatus } from "@/services/studentSignupBackendApi";
+import { expireSession } from "@/utils/logout";
 import { stepPath } from "@/utils/wizardSteps";
 
 /**
@@ -59,6 +60,11 @@ export function useWizardResume({ currentStep, context, uniqueId, ready }) {
     getSignupStageStatus(context.schoolUUID, uniqueId)
       .then((response) => {
         if (!response) return;
+        // status "3" = session-out: the backend session is gone, so send them to login.
+        if (response.status === "3") {
+          expireSession(school);
+          return;
+        }
         if (response.status === "1" && response.redirectUri) {
           // Defensive: the backend has been observed sending a redirectUri that
           // points at THIS app's own wizard step route with an extra uniqueId

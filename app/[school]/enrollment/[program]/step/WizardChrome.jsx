@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, useSelectedLayoutSegment } from "next/navigation";
+import { useParams, useSelectedLayoutSegment } from "next/navigation";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
 import { EnrollmentProvider, useEnrollmentContext } from "@/hooks/useEnrollmentContext";
-import { logoutEverywhere } from "@/utils/logout";
+import { expireSession, logoutEverywhere } from "@/utils/logout";
 
 /**
  * Single shared chrome for the whole enrollment wizard, mounted once by the
@@ -30,7 +30,7 @@ const SEGMENT_TO_STEP_KEY = {
 };
 
 function WizardFrame({ children }) {
-  const router = useRouter();
+  const { school } = useParams();
   const segment = useSelectedLayoutSegment();
   const { status, session, context, logoUrl, ready } = useEnrollmentContext();
 
@@ -39,8 +39,18 @@ function WizardFrame({ children }) {
   // proxy already blocks unauthenticated navigations server-side; this covers
   // a session dropping while the wizard is open).
   useEffect(() => {
-    if (status === "unauthenticated") router.replace("/");
-  }, [status, router]);
+    if (status === "unauthenticated") expireSession(school);
+  }, [status, school]);
+
+  // Back/forward can restore this page from the browser's back/forward cache with its old
+  // in-memory session (e.g. after logout); reload so the server re-checks the session.
+  useEffect(() => {
+    const onPageShow = (e) => {
+      if (e.persisted) window.location.reload();
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
 
   // Match the pre-refactor behavior: nothing of the wizard shows until the
   // enrollment context is ready (each step used to gate on this itself).
