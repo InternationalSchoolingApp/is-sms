@@ -7,7 +7,8 @@ export default function TestComponent() {
 
    
   async function getDetails() {
-    await getStatesAndCitites();
+    const response = await getStatesAndCitites();
+    console.log(response);
   }
 
   return (
