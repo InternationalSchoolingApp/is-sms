@@ -20,11 +20,24 @@ const GATEWAY_CONFIG = {
   },
 };
 
-function getSafeRedirectUrl(value) {
+function getSafeRedirectUrl(value, gateway) {
   if (typeof value !== "string") return null;
   try {
     const url = new URL(value);
-    return url.protocol === "https:" || url.protocol === "http:" ? url.href : null;
+    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+
+    // Airwallex returns an absolute backend URL for this JSON endpoint. In
+    // local-proxy mode, keep the browser on the Next.js origin so the
+    // create-checkout-intent rewrite forwards it to Spring without CORS.
+    if (
+      gateway === "airwallex" &&
+      process.env.NEXT_PUBLIC_USE_LOCAL_PROXY === "true" &&
+      /^\/[^/]+\/create-checkout-intent\/[^/]+$/.test(url.pathname)
+    ) {
+      return `${url.pathname}${url.search}${url.hash}`;
+    }
+
+    return url.href;
   } catch {
     return null;
   }
@@ -47,7 +60,7 @@ export function PaymentGatewayInitView({ gateway }) {
   const startPayment = useCallback(async () => {
     const response = await config.request(uniqueUuid, new URLSearchParams(searchParams.toString()));
     if (response?.status === config.successStatus) {
-      const redirectUrl = getSafeRedirectUrl(response[config.redirectField]);
+      const redirectUrl = getSafeRedirectUrl(response[config.redirectField], gateway);
       if (redirectUrl) {
         window.location.assign(redirectUrl);
         return;
@@ -56,7 +69,7 @@ export function PaymentGatewayInitView({ gateway }) {
 
     setErrorMessage(getFailureMessage(response));
     setState("error");
-  }, [config, searchParams, uniqueUuid]);
+  }, [config, gateway, searchParams, uniqueUuid]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => startPayment(), 0);

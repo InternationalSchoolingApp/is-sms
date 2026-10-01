@@ -29,7 +29,8 @@ const nextConfig = {
       afterFiles: [
         { source: "/api/v1/:path*", destination: `${backendBaseUrl}/api/v1/:path*` },
         { source: "/:schoolId/api/:path*", destination: `${backendBaseUrl}/:schoolId/api/:path*` },
-        { source: "/:schoolId/common/:path*", destination: `${backendBaseUrl}/:schoolId/common/:path*` },
+        // Leave school-prefixed /common routes to the App Router first. Any
+        // backend-only /common path is still proxied by the fallback below.
         { source: "/:schoolId/student/enrollment/:path*", destination: `${backendBaseUrl}/:schoolId/student/enrollment/:path*` },
         { source: "/:schoolId/student/submit-application", destination: `${backendBaseUrl}/:schoolId/student/submit-application` },
         { source: "/:schoolId/student/proceed-to-dashboard", destination: `${backendBaseUrl}/:schoolId/student/proceed-to-dashboard` },

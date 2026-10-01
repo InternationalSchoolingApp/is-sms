@@ -27,15 +27,15 @@ import { getPaymentResponseSuccess, getPaymentResponseFailure } from "@/services
  * The school UUID comes from a schoolId path/query parameter when supplied,
  * then falls back to NEXT_PUBLIC_SCHOOL_ID for the common callback routes.
  */
-export function PaymentResponseView({ endpointPath, mode = "success" }) {
+export function PaymentResponseView({ endpointPath, mode = "success", schoolUUID }) {
   return (
     <Suspense fallback={<ProcessingLoader />}>
-      <PaymentResponseContent endpointPath={endpointPath} mode={mode} />
+      <PaymentResponseContent endpointPath={endpointPath} mode={mode} schoolUUID={schoolUUID} />
     </Suspense>
   );
 }
 
-function PaymentResponseContent({ endpointPath, mode }) {
+function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFromRoute }) {
   const params = useParams();
   const searchParams = useSearchParams();
 
@@ -50,6 +50,8 @@ function PaymentResponseContent({ endpointPath, mode }) {
   // Keep a stable snapshot so unrelated renders don't issue another payment lookup.
   const query = useMemo(() => new URLSearchParams(search), [search]);
   const schoolUUID =
+    schoolUUIDFromRoute ||
+    params.school ||
     params.schoolId ||
     query.get("schoolUUID") ||
     process.env.NEXT_PUBLIC_SCHOOL_ID;
