@@ -977,7 +977,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         onOpenChange={() => {}}
       >
         <DialogContent showCloseButton={false} className="sm:max-w-xl overflow-hidden p-0 text-center">
-          <DialogHeader className="bg-primary px-6 py-3 text-left">
+          <DialogHeader className="bg-primary px-6 py-3 text-left"> 
             <DialogTitle className="text-xl font-medium text-white">Application Under Review</DialogTitle>
           </DialogHeader>
           <div className="space-y-5 px-6 pb-7 pt-2">
