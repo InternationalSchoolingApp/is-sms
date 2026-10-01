@@ -24,6 +24,7 @@ import {
 import { mapSignupParentToFields, useParentDetailsSignup } from "@/hooks/useParentDetailsSignup";
 import { getDobPickerBounds, validateAge } from "@/utils/ageValidation";
 import { validateParentDetails, validateStudentDetails } from "@/utils/studentSignupValidation";
+import { nameFieldProps } from "@/utils/nameInput";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
@@ -168,9 +169,9 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
     <>
       <EditCard title="Student Details" saving={signup.isPending} onSave={save} onCancel={onCancel} formError={formError}>
         <div className={GRID}>
-          <FloatingLabelInput icon={User} label={<Req label="First Name" required />} value={fields.firstName} onChange={(e) => set("firstName")(e.target.value)} error={errors.firstName} />
-          <FloatingLabelInput icon={User} label="Middle Name" value={fields.middleName} onChange={(e) => set("middleName")(e.target.value)} />
-          <FloatingLabelInput icon={User} label={<Req label="Last Name" required />} value={fields.lastName} onChange={(e) => set("lastName")(e.target.value)} error={errors.lastName} />
+          <FloatingLabelInput icon={User} label={<Req label="First Name" required />} value={fields.firstName} {...nameFieldProps(set("firstName"))} error={errors.firstName} />
+          <FloatingLabelInput icon={User} label="Middle Name" value={fields.middleName} {...nameFieldProps(set("middleName"))} />
+          <FloatingLabelInput icon={User} label={<Req label="Last Name" required />} value={fields.lastName} {...nameFieldProps(set("lastName"))} error={errors.lastName} />
           <FloatingLabelSelect
             icon={GraduationCap}
             label={<Req label="Grade" required />}
@@ -370,9 +371,9 @@ export function ParentInlineEdit({ context, userId, parent, title = "Parent/Guar
         ) : (
           <>
             <div className={GRID}>
-              <FloatingLabelInput icon={User} label={<Req label="First Name" required />} value={fields.firstName} onChange={(e) => set("firstName")(e.target.value)} error={errors.firstName} />
-              <FloatingLabelInput icon={User} label="Middle Name" value={fields.middleName} onChange={(e) => set("middleName")(e.target.value)} />
-              <FloatingLabelInput icon={User} label={<Req label="Last Name" required />} value={fields.lastName} onChange={(e) => set("lastName")(e.target.value)} error={errors.lastName} />
+              <FloatingLabelInput icon={User} label={<Req label="First Name" required />} value={fields.firstName} {...nameFieldProps(set("firstName"))} error={errors.firstName} />
+              <FloatingLabelInput icon={User} label="Middle Name" value={fields.middleName} {...nameFieldProps(set("middleName"))} />
+              <FloatingLabelInput icon={User} label={<Req label="Last Name" required />} value={fields.lastName} {...nameFieldProps(set("lastName"))} error={errors.lastName} />
               <FloatingLabelSelect
                 icon={Briefcase}
                 label={<Req label="Relation with Student" required />}

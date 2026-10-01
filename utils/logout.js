@@ -1,22 +1,33 @@
 import { signOut } from "next-auth/react";
-import { logoutSignup } from "@/services/studentSignupBackendApi";
+import { loginPageUrl } from "@/utils/backendOrigin";
 
-// Legacy signupLogout(): kill the backend session first, then land on the school's login page
-// (logoutSchool redirects to /{schoolId}/common/login). A failed backend call must never trap the
-// user on the page, so it is swallowed.
-export async function logoutEverywhere(session) {
-  if (session?.schoolUUID && session?.uniqueId) {
-    try {
-      await logoutSignup(session.schoolUUID, session.uniqueId);
-    } catch (err) {
-      console.error("Backend logout failed:", err);
-    }
+// Session expired / missing: drop the Next.js session and land on the school's login page.
+// redirect:false + a manual navigation because the login page lives on another origin, which
+// signOut's own callbackUrl handling would refuse.
+export async function expireSession(schoolUUID) {
+  if (window.__loggingOut) return;
+  try {
+    await signOut({ redirect: false });
+  } catch (err) {
+    console.error("Sign out failed:", err);
   }
-  // redirect:false + a manual navigation: the login page may live on another origin, which
-  // signOut's own callbackUrl handling would refuse.
+  window.location.assign(loginPageUrl(schoolUUID));
+}
+
+// Legacy signupLogout() / logoutConfimation(true, ...common/logout/UNIQUEUUID): the logout endpoint
+// drops the user's login hash, records the logout and invalidates the Java HTTP session — which it
+// finds through the browser's session cookie, so it has to be a browser navigation (a Server
+// Action call can't carry that cookie). It then 302s to /{schoolId}/common/login, so one navigation
+// both kills the session and lands on the login page.
+export async function logoutEverywhere(session) {
+  // signOut flips useSession() to "unauthenticated", which WizardChrome answers with
+  // expireSession() -> login page; the flag keeps that from racing the logout navigation below.
+  window.__loggingOut = true;
   await signOut({ redirect: false });
-  // The real backend origin, not the "/backend" dev proxy: the login page must be served by the
-  // Java app itself (http://localhost:8080/{school}/common/login), not through Next.js.
   const backend = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
-  window.location.assign(session?.schoolUUID && backend ? `${backend}/${session.schoolUUID}/common/login` : "/");
+  if (session?.schoolUUID && session?.uniqueId && backend) {
+    window.location.assign(`${backend}/${session.schoolUUID}/common/logout/${encodeURIComponent(session.uniqueId)}`);
+    return;
+  }
+  window.location.assign(loginPageUrl(session?.schoolUUID));
 }

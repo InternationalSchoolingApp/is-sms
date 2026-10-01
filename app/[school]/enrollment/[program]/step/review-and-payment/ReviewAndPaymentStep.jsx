@@ -2,7 +2,7 @@
 
 import { FullScreenLoader } from "@/components/common/Loader";
 import { useParams, useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { expireSession } from "@/utils/logout";
 import { Stage4ReviewPayment } from "@/components/student-enroll/Stage4ReviewPayment";
 import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
 import { useWizardResume } from "@/hooks/useWizardResume";
@@ -34,7 +34,7 @@ export function ReviewAndPaymentStep() {
       userId={session.userId}
       uniqueId={session.uniqueId}
       onBack={(step) => router.push(stepPath(school, program, step || 3))}
-      onSessionExpired={() => signOut({ callbackUrl: "/" })}
+      onSessionExpired={() => expireSession(school)}
     />
   );
 }
