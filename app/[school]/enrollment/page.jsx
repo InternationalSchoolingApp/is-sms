@@ -15,11 +15,11 @@ const programs = [
   },
 ]
 export default async function  page({params}) {
-  const {school} = await params;
+  const {school} = await params;  
   return (
     <div>{
       programs.map((item, index) => {
-        return <Link key={index} href={`${process.env.NEXTAUTH_URL}/${school}/enrollment/${item.url}`}>
+        return <Link key={index} href={`${process.env.NEXT_PUBLIC_BASE_URL}/${school}/enrollment/${item.url}`}>
           {item.name}
         </Link>
       })

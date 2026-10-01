@@ -355,7 +355,7 @@ export function getPublicSchoolInfo(schoolUUID) {
  * Preserve the page query as-is (including repeated keys); the controller
  * reads payload, referralCode, ras, and v from it.
  */
-export function getEnrollmentSignupInfo(schoolUUID, enrollmentFor, learningProgram, params) {
+export function getEnrollmentSignupInfo(schoolUUID, learningProgram, params) {
   const baseUrl = resolveBackendOrigin();
   if (!hasBackendOrigin() || !schoolUUID) {
     throw new Error("A backend origin and a schoolUUID are required for enrollment setup");
@@ -366,7 +366,7 @@ export function getEnrollmentSignupInfo(schoolUUID, enrollmentFor, learningProgr
 
   return trackRequest(async () => {
     const response = await fetch(
-      `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/student/${encodeURIComponent(enrollmentFor)}/${encodeURIComponent(learningProgram)}?${query.toString()}`,
+      `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/student/enrollment/${encodeURIComponent(learningProgram)}?${query.toString()}`,
       { method: "GET", credentials: "include" }
     );
     return parseJsonResponse(response);
