@@ -244,7 +244,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
             />
           </div>
 
-          <label className="mt-8 mb-4 flex items-center gap-2 text-sm font-semibold text-slate-900">
+          <label className="mt-8 mb-4 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-900">
             <Checkbox checked={!fields.sameAsStudent} onCheckedChange={(v) => toggleSameAsStudent(!v)} />
             Change your Location
           </label>
