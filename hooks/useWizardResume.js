@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getSignupStageStatus as getSignupStageStatusAction } from "@/services/studentSignupBackendApi";
+import { getSignupStageStatus } from "@/services/studentSignupBackendApi";
 import { stepPath } from "@/utils/wizardSteps";
 
 /**
@@ -56,7 +56,7 @@ export function useWizardResume({ currentStep, context, uniqueId, ready }) {
     // Deliberately no cancel-on-cleanup: React Strict Mode (dev) runs this effect twice,
     // and the once-per-document flag above makes the second run a no-op — cancelling in
     // the first run's cleanup would throw away the only response we ever act on.
-    getSignupStageStatusAction(context.schoolUUID, uniqueId)
+    getSignupStageStatus(context.schoolUUID, uniqueId)
       .then((response) => {
         if (!response) return;
         if (response.status === "1" && response.redirectUri) {

@@ -2,11 +2,11 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  chooseCoursesByGrade as chooseCoursesByGradeAction,
-  choosePaymentPlan as choosePaymentPlanAction,
-  getPaymentDetails as getPaymentDetailsAction,
-  getRecommendedCourses as getRecommendedCoursesAction,
-  getStudentCommissionPayBy as getStudentCommissionPayByAction,
+  chooseCoursesByGrade,
+  choosePaymentPlan,
+  getPaymentDetails,
+  getRecommendedCourses,
+  getStudentCommissionPayBy,
 } from "@/services/studentSignupBackendApi";
 import { isKnownPaymentMode } from "@/utils/studentSignupValidation";
 
@@ -45,7 +45,7 @@ export function useCourseDetails({ context, userId, standardId }) {
   return useQuery({
     queryKey: courseDetailsKey(userId),
     queryFn: async () => {
-      const response = await chooseCoursesByGradeAction(context.schoolUUID, buildCourseDetailsRequest(userId, { standardId }));
+      const response = await chooseCoursesByGrade(context.schoolUUID, buildCourseDetailsRequest(userId, { standardId }));
       if (!response) throw new Error("course-details-by-standard-id returned no response");
       return response;
     },
@@ -60,7 +60,7 @@ export function useCourseDetails({ context, userId, standardId }) {
 export function useUpdateCourseSelection({ context, userId }) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (change) => chooseCoursesByGradeAction(context.schoolUUID, buildCourseDetailsRequest(userId, change)),
+    mutationFn: (change) => chooseCoursesByGrade(context.schoolUUID, buildCourseDetailsRequest(userId, change)),
     onSuccess: (response) => {
       if (response?.status === STATUS_SUCCESS) {
         queryClient.setQueryData(courseDetailsKey(userId), response);
@@ -80,7 +80,7 @@ export function useShowPaymentOption({ context, userId }) {
   return useQuery({
     queryKey: ["commission-pay-by", userId],
     queryFn: async () => {
-      const response = await getStudentCommissionPayByAction(context.schoolUUID, { userId });
+      const response = await getStudentCommissionPayBy(context.schoolUUID, { userId });
       if (!response) throw new Error("get-commission-pay-by returned no response");
       return response.showPaymentOption === "Y" ? "Y" : "N";
     },
@@ -98,7 +98,7 @@ export function useShowPaymentOption({ context, userId }) {
 export function useRecommendedCourses({ context, userId }) {
   return useMutation({
     mutationFn: () =>
-      getRecommendedCoursesAction(context.schoolUUID, { userId, reloadRequired: "", requestFromMigration: "N" }),
+      getRecommendedCourses(context.schoolUUID, { userId, reloadRequired: "", requestFromMigration: "N" }),
   });
 }
 
@@ -131,7 +131,7 @@ export function useProceedToReview({ context, userId }) {
         // selectedSubjects for THIS endpoint — SignupStudentUtil.getPaymentDetails
         // only uses userId/callFrom — but the request shape is kept identical
         // to legacy's rather than relying on that.)
-        const details = await getPaymentDetailsAction(context.schoolUUID, {
+        const details = await getPaymentDetails(context.schoolUUID, {
           userId,
           courseId: "",
           callFrom: "signup",
@@ -147,7 +147,7 @@ export function useProceedToReview({ context, userId }) {
       // (CTECourseUtil sets PAY_YEARLY); also covers a legacy-typo'd value
       // like "nineMonthlly" already stored on the student.
       if (!isKnownPaymentMode(paymentMode)) paymentMode = "annually";
-      const plan = await choosePaymentPlanAction(context.schoolUUID, { userId, paymentMode, requestFromMigration: "N" });
+      const plan = await choosePaymentPlan(context.schoolUUID, { userId, paymentMode, requestFromMigration: "N" });
       return { ok: plan?.status === STATUS_SUCCESS, response: plan };
     },
   });

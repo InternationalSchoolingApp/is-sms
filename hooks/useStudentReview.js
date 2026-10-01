@@ -2,16 +2,16 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  choosePaymentPlan as choosePaymentPlanAction,
-  getAirwallexPaymentMethods as getAirwallexPaymentMethodsAction,
-  submitOfflinePayment as submitOfflinePaymentAction,
-  uploadPaymentProof as uploadPaymentProofAction,
-  getPaymentGatewayOptions as getPaymentGatewayOptionsAction,
-  getSignupStageStatus as getSignupStageStatusAction,
-  getStudentReviewDetails as getStudentReviewDetailsAction,
-  invokePaymentGateway as invokePaymentGatewayAction,
-  proceedToDashboard as proceedToDashboardAction,
-  submitApplication as submitApplicationAction,
+  choosePaymentPlan,
+  getAirwallexPaymentMethods,
+  submitOfflinePayment,
+  uploadPaymentProof,
+  getPaymentGatewayOptions,
+  getSignupStageStatus,
+  getStudentReviewDetails,
+  invokePaymentGateway,
+  proceedToDashboard,
+  submitApplication,
 } from "@/services/studentSignupBackendApi";
 
 // SeriConstant, same as useCourseSelection.js.
@@ -38,7 +38,7 @@ export function useStudentReviewDetails({ context, userId, reloadRequired = "Y" 
   return useQuery({
     queryKey: reviewDetailsKey(userId, reloadRequired),
     queryFn: async () => {
-      const response = await getStudentReviewDetailsAction(context.schoolUUID, {
+      const response = await getStudentReviewDetails(context.schoolUUID, {
         userId,
         reloadRequired,
         requestFromMigration: "N",
@@ -63,7 +63,7 @@ export function useStudentReviewDetails({ context, userId, reloadRequired = "Y" 
 export function useChoosePaymentPlan({ context, userId }) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (paymentMode) => choosePaymentPlanAction(context.schoolUUID, { userId, paymentMode, requestFromMigration: "N" }),
+    mutationFn: (paymentMode) => choosePaymentPlan(context.schoolUUID, { userId, paymentMode, requestFromMigration: "N" }),
     onSuccess: (response) => {
       if (response?.status === STATUS_SUCCESS) {
         queryClient.invalidateQueries({ queryKey: ["student-review-details", userId] });
@@ -75,14 +75,14 @@ export function useChoosePaymentPlan({ context, userId }) {
 /** SHOW_PAYMENT_OPTION=='N' branch: student/submit-application, matches callForApplicationSubmit(). */
 export function useSubmitApplication({ context, userId }) {
   return useMutation({
-    mutationFn: () => submitApplicationAction(context.schoolUUID, { userId }),
+    mutationFn: () => submitApplication(context.schoolUUID, { userId }),
   });
 }
 
 /** Offline/B2B signup type's SHOW_PAYMENT_OPTION=='N' branch: student/proceed-to-dashboard, matches callForProgressionToDashboard(). */
 export function useProceedToDashboard({ context, userId }) {
   return useMutation({
-    mutationFn: () => proceedToDashboardAction(context.schoolUUID, { userId }),
+    mutationFn: () => proceedToDashboard(context.schoolUUID, { userId }),
   });
 }
 
@@ -95,7 +95,7 @@ export function useProceedToDashboard({ context, userId }) {
 export function useSignupStageStatusPoll({ context, uniqueId, enabled = true }) {
   return useQuery({
     queryKey: ["signup-stage-status", uniqueId],
-    queryFn: () => getSignupStageStatusAction(context.schoolUUID, uniqueId),
+    queryFn: () => getSignupStageStatus(context.schoolUUID, uniqueId),
     enabled: Boolean(context?.schoolUUID && uniqueId && enabled),
     refetchInterval: 180000,
     refetchOnWindowFocus: false,
@@ -116,7 +116,7 @@ export function usePaymentGatewayOptions({ context }) {
     // Payload as getPaymentGatewaysOptions() builds it; both school ids are the review
     // data's schoolId (legacy passes `.payabledetails` schoolId for each).
     mutationFn: ({ userPaymentDetailsId, entityType, entityId, paidByUserId, schoolId, countryCode }) =>
-      getPaymentGatewayOptionsAction(context.schoolUUID, {
+      getPaymentGatewayOptions(context.schoolUUID, {
         userPaymentDetailsId,
         entityType,
         entityId,
@@ -138,7 +138,7 @@ export function usePaymentGatewayOptions({ context }) {
 export function useInvokePaymentGateway({ context }) {
   return useMutation({
     // `payload` is built by the caller in invokePaymentGateway()'s exact legacy shape.
-    mutationFn: (payload) => invokePaymentGatewayAction(context.schoolUUID, payload),
+    mutationFn: (payload) => invokePaymentGateway(context.schoolUUID, payload),
   });
 }
 
@@ -152,14 +152,14 @@ export function useInvokePaymentGateway({ context }) {
 export function useAirwallexPaymentMethods({ context }) {
   return useMutation({
     // schoolId is the gateway's school id (legacy passes schoolIdOfPaymentGateway).
-    mutationFn: ({ schoolId, countryCode }) => getAirwallexPaymentMethodsAction(context.schoolUUID, schoolId, countryCode),
+    mutationFn: ({ schoolId, countryCode }) => getAirwallexPaymentMethods(context.schoolUUID, schoolId, countryCode),
   });
 }
 
 /** Cash / Wire Transfer: proof upload, then common/offline-payment (see PaymentGatewayPickerModal's OfflineForm). */
 export function useOfflinePayment({ context, uniqueId }) {
   return {
-    upload: (args) => uploadPaymentProofAction(context.schoolUUID, uniqueId, args),
-    submit: (request) => submitOfflinePaymentAction(context.schoolUUID, uniqueId, request),
+    upload: (args) => uploadPaymentProof(context.schoolUUID, uniqueId, args),
+    submit: (request) => submitOfflinePayment(context.schoolUUID, uniqueId, request),
   };
 }

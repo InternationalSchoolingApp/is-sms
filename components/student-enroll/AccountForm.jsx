@@ -10,7 +10,7 @@ import { CaptchaField } from "@/components/student-enroll/CaptchaField";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { InfoModal, getWelcomeBackMessage } from "@/components/student-enroll/InfoModal";
 import { useAccountSignup } from "@/hooks/useAccountSignup";
-import { checkEmailAvailability as checkEmailAvailabilityAction } from "@/services/studentSignupBackendApi";
+import { checkEmailAvailability } from "@/services/studentSignupBackendApi";
 import { validateAccountFormOnline, isValidEmail } from "@/utils/studentSignupValidation";
 import { captureUtmParamsFromUrl } from "@/utils/utmCookies";
 import { getHash } from "@/utils/common";
@@ -89,7 +89,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
     lastCheckedEmailRef.current = trimmed;
 
     try {
-      const response = await checkEmailAvailabilityAction(context.schoolUUID, {
+      const response = await checkEmailAvailability(context.schoolUUID, {
         authentication: {
           hash: getHash(),
           schoolId: context.schoolNumericId,

@@ -1,5 +1,5 @@
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
-import { getCommonScriptVariables as getCommonScriptVariablesAction } from "@/services/studentSignupBackendApi";
+import { getCommonScriptVariables } from "@/services/studentSignupBackendApi";
 
 /**
  * Port of the payer-location functions in the Java frontend —
@@ -24,7 +24,7 @@ let location = ""; // the `#location` input's value
 
 export async function loadLocationGlobals({ schoolUUID, userId }) {
   if (loaded) return;
-  const response = await getCommonScriptVariablesAction(schoolUUID, { userId });
+  const response = await getCommonScriptVariables(schoolUUID, { userId });
   if (!response) throw new Error("common-script-variables returned no response");
   LOCATION_SERVICE_BYPASS = String(response.LOCATION_SERVICE_BYPASS);
   DEFAULT_LOCATION = response.DEFAULT_LOCATION;

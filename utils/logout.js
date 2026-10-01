@@ -1,5 +1,5 @@
 import { signOut } from "next-auth/react";
-import { logoutSignup as logoutSignupAction } from "@/services/studentSignupBackendApi";
+import { logoutSignup } from "@/services/studentSignupBackendApi";
 
 // Legacy signupLogout(): kill the backend session first, then land on the school's login page
 // (logoutSchool redirects to /{schoolId}/common/login). A failed backend call must never trap the
@@ -7,7 +7,7 @@ import { logoutSignup as logoutSignupAction } from "@/services/studentSignupBack
 export async function logoutEverywhere(session) {
   if (session?.schoolUUID && session?.uniqueId) {
     try {
-      await logoutSignupAction(session.schoolUUID, session.uniqueId);
+      await logoutSignup(session.schoolUUID, session.uniqueId);
     } catch (err) {
       console.error("Backend logout failed:", err);
     }

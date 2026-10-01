@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { signupStage1 as signupStage1Action } from "@/services/studentSignupBackendApi";
+import { signupStage1 } from "@/services/studentSignupBackendApi";
 import { encodeRawString } from "@/utils/payloadEncoding";
 import { getUtmFieldsForSignup } from "@/utils/utmCookies";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
@@ -79,6 +79,6 @@ function buildStage1Request({ mode, fields, context }) {
 
 export function useAccountSignup({ mode, context }) {
   return useMutation({
-    mutationFn: (fields) => signupStage1Action(context.schoolUUID, buildStage1Request({ mode, fields, context })),
+    mutationFn: (fields) => signupStage1(context.schoolUUID, buildStage1Request({ mode, fields, context })),
   });
 }
