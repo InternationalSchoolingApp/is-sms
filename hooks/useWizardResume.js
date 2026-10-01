@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getSignupStageStatusAction } from "@/actions/studentSignupActions";
+import { getSignupStageStatus as getSignupStageStatusAction } from "@/services/studentSignupBackendApi";
 import { stepPath } from "@/utils/wizardSteps";
 
 /**

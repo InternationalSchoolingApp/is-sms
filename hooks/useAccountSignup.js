@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { signupStage1Action } from "@/actions/studentSignupActions";
+import { signupStage1 as signupStage1Action } from "@/services/studentSignupBackendApi";
 import { encodeRawString } from "@/utils/payloadEncoding";
 import { getUtmFieldsForSignup } from "@/utils/utmCookies";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";

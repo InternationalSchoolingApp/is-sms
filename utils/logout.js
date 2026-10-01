@@ -1,5 +1,5 @@
 import { signOut } from "next-auth/react";
-import { logoutSignupAction } from "@/actions/studentSignupActions";
+import { logoutSignup as logoutSignupAction } from "@/services/studentSignupBackendApi";
 
 // Legacy signupLogout(): kill the backend session first, then land on the school's login page
 // (logoutSchool redirects to /{schoolId}/common/login). A failed backend call must never trap the

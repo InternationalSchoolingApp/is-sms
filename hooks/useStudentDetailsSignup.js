@@ -2,13 +2,13 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
-  saveStudentDetailsAction,
-  getStudentDetailsAction,
-  getEnrollmentsGradesAction,
-  getCountriesAction,
-  getStatesAction,
-  getCitiesAction,
-} from "@/actions/studentSignupActions";
+  saveStudentDetails as saveStudentDetailsAction,
+  getStudentDetails as getStudentDetailsAction,
+  getEnrollmentsGrades as getEnrollmentsGradesAction,
+  getCountries as getCountriesAction,
+  getStates as getStatesAction,
+  getCities as getCitiesAction,
+} from "@/services/studentSignupBackendApi";
 import { buildAuthentication, buildAuthenticatedRequest } from "@/utils/authentication";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { formatDobForRequest } from "@/utils/ageValidation";

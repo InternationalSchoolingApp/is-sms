@@ -1,5 +1,5 @@
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
-import { getCommonScriptVariablesAction } from "@/actions/studentSignupActions";
+import { getCommonScriptVariables as getCommonScriptVariablesAction } from "@/services/studentSignupBackendApi";
 
 /**
  * Port of the payer-location functions in the Java frontend —

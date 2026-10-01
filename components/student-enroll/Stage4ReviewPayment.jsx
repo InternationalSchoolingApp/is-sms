@@ -16,7 +16,7 @@ import { InfoModal } from "@/components/student-enroll/InfoModal";
 import { ParentInlineEdit, StudentInlineEdit } from "@/components/student-enroll/ReviewInlineEdit";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
 import { launchPaymentGatewayForm } from "@/services/studentSignupClientApi";
-import { getPaymentPaidStatusAction } from "@/actions/studentSignupActions";
+import { getPaymentPaidStatus as getPaymentPaidStatusAction } from "@/services/studentSignupBackendApi";
 import { useShowPaymentOption } from "@/hooks/useCourseSelection";
 import { saveWizardParentFields, saveWizardStudentFields } from "@/utils/wizardStorage";
 import {

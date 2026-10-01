@@ -10,7 +10,7 @@ import { CaptchaField } from "@/components/student-enroll/CaptchaField";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { InfoModal, getWelcomeBackMessage } from "@/components/student-enroll/InfoModal";
 import { useAccountSignup } from "@/hooks/useAccountSignup";
-import { checkEmailAvailabilityAction } from "@/actions/studentSignupActions";
+import { checkEmailAvailability as checkEmailAvailabilityAction } from "@/services/studentSignupBackendApi";
 import { validateAccountFormOnline, isValidEmail } from "@/utils/studentSignupValidation";
 import { captureUtmParamsFromUrl } from "@/utils/utmCookies";
 import { getHash } from "@/utils/common";

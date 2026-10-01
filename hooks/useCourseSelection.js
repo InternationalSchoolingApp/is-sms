@@ -2,12 +2,12 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  chooseCoursesByGradeAction,
-  choosePaymentPlanAction,
-  getPaymentDetailsAction,
-  getRecommendedCoursesAction,
-  getStudentCommissionPayByAction,
-} from "@/actions/studentSignupActions";
+  chooseCoursesByGrade as chooseCoursesByGradeAction,
+  choosePaymentPlan as choosePaymentPlanAction,
+  getPaymentDetails as getPaymentDetailsAction,
+  getRecommendedCourses as getRecommendedCoursesAction,
+  getStudentCommissionPayBy as getStudentCommissionPayByAction,
+} from "@/services/studentSignupBackendApi";
 import { isKnownPaymentMode } from "@/utils/studentSignupValidation";
 
 // SeriConstant: "1" success, "0" failed, "2" exception, "3" session out.

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { resendEmailVerificationAction } from "@/actions/studentSignupActions";
+import { resendEmailVerification as resendEmailVerificationAction } from "@/services/studentSignupBackendApi";
 import { getHash } from "@/utils/common";
 
 /**

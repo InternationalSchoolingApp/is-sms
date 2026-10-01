@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { getParentDetailsAction, saveParentDetailsAction } from "@/actions/studentSignupActions";
+import { getParentDetails as getParentDetailsAction, saveParentDetails as saveParentDetailsAction } from "@/services/studentSignupBackendApi";
 import { buildAuthenticatedRequest } from "@/utils/authentication";
 
 /**

@@ -2,17 +2,17 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  choosePaymentPlanAction,
-  getAirwallexPaymentMethodsAction,
-  submitOfflinePaymentAction,
-  uploadPaymentProofAction,
-  getPaymentGatewayOptionsAction,
-  getSignupStageStatusAction,
-  getStudentReviewDetailsAction,
-  invokePaymentGatewayAction,
-  proceedToDashboardAction,
-  submitApplicationAction,
-} from "@/actions/studentSignupActions";
+  choosePaymentPlan as choosePaymentPlanAction,
+  getAirwallexPaymentMethods as getAirwallexPaymentMethodsAction,
+  submitOfflinePayment as submitOfflinePaymentAction,
+  uploadPaymentProof as uploadPaymentProofAction,
+  getPaymentGatewayOptions as getPaymentGatewayOptionsAction,
+  getSignupStageStatus as getSignupStageStatusAction,
+  getStudentReviewDetails as getStudentReviewDetailsAction,
+  invokePaymentGateway as invokePaymentGatewayAction,
+  proceedToDashboard as proceedToDashboardAction,
+  submitApplication as submitApplicationAction,
+} from "@/services/studentSignupBackendApi";
 
 // SeriConstant, same as useCourseSelection.js.
 export const STATUS_SUCCESS = "1";

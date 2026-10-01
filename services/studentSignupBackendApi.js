@@ -1,3 +1,5 @@
+"use server";
+
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
@@ -8,25 +10,28 @@ import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOri
  * request/response shapes here without re-checking the backend source, since
  * the backend itself is out of scope for this migration.
  *
- * SERVER-ONLY MODULE: imported only by the "use server" wrappers in
- * actions/studentSignupActions.js, so it always runs on the Next.js server,
- * not the browser. No cookies()/next/headers here — per explicit project
- * rule, DO NOT reintroduce `import { cookies } from "next/headers"` or any
- * other cookie-forwarding mechanism into this file. Identity/authorization
- * for these endpoints travels in the request payload itself (the
+ * File-level "use server": every export below IS the Server Action a Client
+ * Component calls directly (no separate actions/ wrapper layer — that file
+ * was removed; this is the service AND the Server Action boundary in one).
+ * Next requires every export in a "use server" file to be an `async
+ * function` declaration, which is why plain pass-through wrappers here are
+ * marked `async` even though they just return another async call's result.
+ *
+ * No cookies()/next/headers here — per explicit project rule, DO NOT
+ * reintroduce `import { cookies } from "next/headers"` or any other
+ * cookie-forwarding mechanism into this file. Identity/authorization for
+ * these endpoints travels in the request payload itself (the
  * `authentication` envelope and/or an explicit `userId`/`uniqueId`), not a
  * forwarded session cookie.
  *
- * Split out of services/studentSignupApi.js because a Next.js Client
- * Component (AccountCreationForm.jsx) imports a few endpoints from that file
- * directly (no Actions layer — see its own doc comment), and Next's
- * client/server bundling boundary is drawn at the whole-file level: this
- * file still can't be imported by a Client Component (it's reached only via
- * actions/studentSignupActions.js's "use server" boundary), so the split
- * stays even though neither file uses cookies() anymore. The two endpoints
- * that must execute in the browser itself — the captcha <img> URL and the
+ * The handful of public/pre-auth endpoints (getEnrollmentSignupInfo,
+ * getPublicSchoolInfo, getEnrollmentProcess) live in the sibling
+ * services/studentSignupApi.js instead — same "use server" pattern, just a
+ * separate file for no reason other than how they were introduced; nothing
+ * requires them to be split from this one anymore. The two endpoints that
+ * must execute in the browser itself — the captcha <img> URL and the
  * payment-gateway <form> POST/navigation — live in
- * services/studentSignupClientApi.js instead.
+ * services/studentSignupClientApi.js, which is genuinely client-only.
  *
  * `schoolUUID` is the {schoolId} URL-PATH segment (school UUID/slug) and is
  * taken as an explicit argument on every call, NOT read from an env var —
@@ -96,11 +101,11 @@ async function getPayload(schoolUUID, path, params, options) {
 }
 
 // --- Stage 1: Student Details ---
-export function saveStudentDetails(schoolUUID, request) {
+export async function saveStudentDetails(schoolUUID, request) {
   return postPayload(schoolUUID, "student/enrollment/save-student-details", request);
 }
 
-export function getStudentDetails(schoolUUID, request) {
+export async function getStudentDetails(schoolUUID, request) {
   return postPayload(schoolUUID, "student/enrollment/get-student-details", request);
 }
 
@@ -110,63 +115,63 @@ export function getStudentDetails(schoolUUID, request) {
 // COUNTRY_LIST_KEY="COUNTRIES-LIST", STATE_LIST_KEY="STATES-LIST",
 // CITY_LIST_KEY="CITIES-LIST". Response items are MasterDTO {key, value, ...}
 // under response.mastersData.{countries,states,cities}.
-export function getMasters(schoolUUID, request) {
+export async function getMasters(schoolUUID, request) {
   return postPayload(schoolUUID, "api/v1/common/masters", request);
 }
 
-export function getCountries(schoolUUID, authentication) {
+export async function getCountries(schoolUUID, authentication) {
   return getMasters(schoolUUID, { authentication, requestData: { requestKey: "COUNTRIES-LIST" } });
 }
 
-export function getStates(schoolUUID, authentication, countryId) {
+export async function getStates(schoolUUID, authentication, countryId) {
   return getMasters(schoolUUID, { authentication, requestData: { requestKey: "STATES-LIST", requestValue: String(countryId) } });
 }
 
-export function getCities(schoolUUID, authentication, stateId) {
+export async function getCities(schoolUUID, authentication, stateId) {
   return getMasters(schoolUUID, { authentication, requestData: { requestKey: "CITIES-LIST", requestValue: String(stateId) } });
 }
 
 // --- Stage 2: Parent Details ---
-export function saveParentDetails(schoolUUID, request) {
+export async function saveParentDetails(schoolUUID, request) {
   return postPayload(schoolUUID, "student/enrollment/save-parent-details", request);
 }
 
-export function getParentDetails(schoolUUID, request) {
+export async function getParentDetails(schoolUUID, request) {
   return postPayload(schoolUUID, "student/enrollment/get-parent-details", request);
 }
 
 // --- Stage 3: Course / Grade + Payment Plan ---
-export function chooseCoursesByGrade(schoolUUID, request) {
+export async function chooseCoursesByGrade(schoolUUID, request) {
   return postPayload(schoolUUID, "student/enrollment/course-details-by-standard-id", request);
 }
 
-export function choosePaymentPlan(schoolUUID, request) {
+export async function choosePaymentPlan(schoolUUID, request) {
   return postPayload(schoolUUID, "student/enrollment/choose-payment-plan", request);
 }
 
-export function getPaymentDetails(schoolUUID, request) {
+export async function getPaymentDetails(schoolUUID, request) {
   return postPayload(schoolUUID, "student/enrollment/get-payment-details", request);
 }
 
-export function getRecommendedCourses(schoolUUID, request) {
+export async function getRecommendedCourses(schoolUUID, request) {
   return postPayload(schoolUUID, "student/recommended-courses", request);
 }
 
 // --- Review & Submission ---
-export function getStudentReviewDetails(schoolUUID, request) {
+export async function getStudentReviewDetails(schoolUUID, request) {
   return postPayload(schoolUUID, "student/enrollment/get-student-review-details", request);
 }
 
-export function submitApplication(schoolUUID, request) {
+export async function submitApplication(schoolUUID, request) {
   return postPayload(schoolUUID, "student/submit-application", request);
 }
 
-export function proceedToDashboard(schoolUUID, request) {
+export async function proceedToDashboard(schoolUUID, request) {
   return postPayload(schoolUUID, "student/proceed-to-dashboard", request);
 }
 
 // --- Stage resume / polling ---
-export function getSignupStageStatus(schoolUUID, uniqueId) {
+export async function getSignupStageStatus(schoolUUID, uniqueId) {
   return getPayload(schoolUUID, "student/enrollment-stage-status", { uniqueId });
 }
 
@@ -177,19 +182,19 @@ export function getSignupStageStatus(schoolUUID, uniqueId) {
 // this to match the others; it would 404 against the real backend. schoolUUID
 // is still accepted (for signature consistency with the rest of this file)
 // but intentionally unused in the URL.
-export function saveStudentEnrollmentDocuments(schoolUUID, request) {
+export async function saveStudentEnrollmentDocuments(schoolUUID, request) {
   return postPayload(schoolUUID, "student/enrollment/save-documents", request, { includeSchoolId: false });
 }
 
-export function verifyStudentEnrollmentDocuments(schoolUUID, request) {
+export async function verifyStudentEnrollmentDocuments(schoolUUID, request) {
   return postPayload(schoolUUID, "student/enrollment/verify-documents", request, { includeSchoolId: false });
 }
 
-export function getStudentEnrollmentDocuments(schoolUUID, payload) {
+export async function getStudentEnrollmentDocuments(schoolUUID, payload) {
   return getPayload(schoolUUID, "student/enrollment/get-documents", { payload }, { includeSchoolId: false });
 }
 
-export function getStudentEnrollmentDocumentsStatus(schoolUUID, payload) {
+export async function getStudentEnrollmentDocumentsStatus(schoolUUID, payload) {
   return getPayload(schoolUUID, "student/enrollment/get-documents-status", { payload }, { includeSchoolId: false });
 }
 
@@ -197,11 +202,11 @@ export function getStudentEnrollmentDocumentsStatus(schoolUUID, payload) {
 // Both confirmed at ClientCommonPaymentController.java — class-level
 // @RequestMapping("{schoolId}") means these DO carry the schoolId path
 // segment despite their own mapping strings reading "/common/...".
-export function getPaymentGatewayOptions(schoolUUID, request) {
+export async function getPaymentGatewayOptions(schoolUUID, request) {
   return postPayload(schoolUUID, "common/payment-gateway/options", request);
 }
 
-export function invokePaymentGateway(schoolUUID, request) {
+export async function invokePaymentGateway(schoolUUID, request) {
   return postPayload(schoolUUID, "common/invoke-payment-gateway", request);
 }
 
@@ -215,20 +220,20 @@ export async function logoutSignup(schoolUUID, uniqueId) {
   });
 }
 
-export function getPaymentPaidStatus(schoolUUID, request) {
+export async function getPaymentPaidStatus(schoolUUID, request) {
   return postPayload(schoolUUID, "common/get-payment-paid-status", request);
 }
 
 // {schoolId}/api/v1/common-script-variables — the endpoint behind legacy getCommonCustomScript():
 // returns the page-wide script globals, including LOCATION_SERVICE_BYPASS (boolean) and
 // DEFAULT_LOCATION (a JSON string), i.e. the two flags getPayerCountryCodePromise() reads.
-export function getCommonScriptVariables(schoolUUID, request) {
+export async function getCommonScriptVariables(schoolUUID, request) {
   return postPayload(schoolUUID, "api/v1/common-script-variables", request);
 }
 
 // Offline payments (CASH / WIRETRANSFER) — callOfflinePayment() in commonPaymentGateway.js:
 // {schoolId}/common/offline-payment, with the UNIQUEUUID header the controller reads.
-export function submitOfflinePayment(schoolUUID, uniqueId, request) {
+export async function submitOfflinePayment(schoolUUID, uniqueId, request) {
   return postPayload(schoolUUID, "common/offline-payment", request, { uniqueId });
 }
 
@@ -257,7 +262,7 @@ export async function uploadPaymentProof(schoolUUID, uniqueId, { file, uploadInd
 // encoded-payload POST): schoolId (the gateway's school id) and countryCode travel as
 // base64 query params, and the controller mapping carries the {schoolId} path segment
 // like the other ClientCommonPaymentController routes.
-export function getAirwallexPaymentMethods(schoolUUID, schoolIdOfPaymentGateway, countryCode) {
+export async function getAirwallexPaymentMethods(schoolUUID, schoolIdOfPaymentGateway, countryCode) {
   return getPayload(schoolUUID, "get-airwallex-payment-methods", {
     schoolId: btoa(String(schoolIdOfPaymentGateway)),
     countryCode: btoa(countryCode || ""),
@@ -265,39 +270,39 @@ export function getAirwallexPaymentMethods(schoolUUID, schoolIdOfPaymentGateway,
 }
 
 // --- Misc ---
-export function eligibleForEdit(schoolUUID, request) {
+export async function eligibleForEdit(schoolUUID, request) {
   return postPayload(schoolUUID, "student/enrollment/eligbile-for-edit", request);
 }
 
-export function resendCredentials(schoolUUID, request) {
+export async function resendCredentials(schoolUUID, request) {
   return postPayload(schoolUUID, "student/enrollment/resend-credentiala", request);
 }
 
-export function getEnrollmentsGrades(schoolUUID, request) {
+export async function getEnrollmentsGrades(schoolUUID, request) {
   return postPayload(schoolUUID, "student/enrollment/get-enrollments-grades", request);
 }
 
-export function saveCopyLink(schoolUUID, request) {
+export async function saveCopyLink(schoolUUID, request) {
   return postPayload(schoolUUID, "student/enrollment/save-copy-link", request);
 }
 
-export function getStudentCommissionPayBy(schoolUUID, request) {
+export async function getStudentCommissionPayBy(schoolUUID, request) {
   return postPayload(schoolUUID, "student/enrollment/get-commission-pay-by", request);
 }
 
 // --- Account creation (Online + Offline/B2B) ---
-export function signupStage1(schoolUUID, request) {
+export async function signupStage1(schoolUUID, request) {
   return postPayload(schoolUUID, "api/v1/student/enrollment/stage-1", request);
 }
 
-export function checkEmailAvailability(schoolUUID, request) {
+export async function checkEmailAvailability(schoolUUID, request) {
   return postPayload(schoolUUID, "api/v1/common/is-user-available", request);
 }
 
-export function resendEmailVerification(schoolUUID, request) {
+export async function resendEmailVerification(schoolUUID, request) {
   return postPayload(schoolUUID, "api/v1/common/resend-email-verification", request);
 }
 
-export function verifyReferralCode(schoolUUID, request) {
+export async function verifyReferralCode(schoolUUID, request) {
   return postPayload(schoolUUID, "api/v1/common/verify-referral", request);
 }
