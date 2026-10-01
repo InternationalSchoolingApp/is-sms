@@ -324,7 +324,8 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
   const paidPollRef = useRef({ timer: null, count: 0 });
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
-  const [submittedMessage, setSubmittedMessage] = useState(null);
+  const [applicationSubmittedLocally, setApplicationSubmittedLocally] = useState(false);
+  const [submittedContactEmail, setSubmittedContactEmail] = useState("");
   // Which section is being edited in place ("student" | "parent" | "course" | null) —
   // openReviewInlineEdit() in signupStudentContent.js. Edits stay on this screen.
   const [editing, setEditing] = useState(null);
@@ -703,12 +704,8 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         return;
       }
       onOfflineSignup?.();
-      setSubmittedMessage(
-        <p>
-          Your application has been submitted and is under review. We will reach out to you at{" "}
-          <strong>{data.contactEmail}</strong> with the next steps.
-        </p>
-      );
+      setSubmittedContactEmail(response?.details?.contactEmail || data.contactEmail || "");
+      setApplicationSubmittedLocally(true);
     } catch (err) {
       console.error("Stage4ReviewPayment submit failed:", err);
       setNotice({ tone: "error", text: GENERIC_ERROR });
@@ -975,9 +972,37 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       <InfoModal open={!!infoMessage && !infoDismissed} onOpenChange={(open) => !open && setInfoDismissed(true)}>
         {infoMessage}
       </InfoModal>
-      <InfoModal open={!!submittedMessage} onOpenChange={(open) => !open && setSubmittedMessage(null)}>
-        {submittedMessage}
-      </InfoModal>
+      <Dialog
+        open={applicationSubmittedLocally || (showPaymentOption === "N" && data.applicationSubmitted === "Y")}
+        onOpenChange={() => {}}
+      >
+        <DialogContent showCloseButton={false} className="sm:max-w-xl overflow-hidden p-0 text-center">
+          <DialogHeader className="bg-primary px-6 py-3 text-left">
+            <DialogTitle className="text-xl font-medium text-white">Application Under Review</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-5 px-6 pb-7 pt-2">
+            <p className="text-lg font-bold leading-8 text-slate-950">
+              Your enrollment application is under review. For any further queries, reach out to
+              {" "}
+              <a
+                href={`mailto:${submittedContactEmail || data.contactEmail || ""}`}
+                className="block break-all text-violet-800"
+              >
+                {submittedContactEmail || data.contactEmail}
+              </a>
+            </p>
+            <div className="border-t border-slate-200 pt-5">
+              <Button
+                type="button"
+                onClick={() => onSessionExpired?.()}
+                className="rounded-md bg-primary px-4 text-white shadow hover:bg-teal-600"
+              >
+                LOG OUT
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       <PaymentGatewayPickerModal
         open={!!gatewayPicker}
         onOpenChange={(open) => !open && setGatewayPicker(null)}
