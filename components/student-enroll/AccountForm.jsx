@@ -33,6 +33,8 @@ const INITIAL_FIELDS = {
 export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
   const [fields, setFields] = useState(() => ({
     ...INITIAL_FIELDS,
+    email: context?.username || "",
+    confirmEmail: context?.username || "",
     referralCode: context?.referralCode || "",
   }));
   const [errors, setErrors] = useState({});
@@ -228,6 +230,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           type="email"
           autoComplete="email"
           value={fields.email}
+          disabled={Boolean(context?.username)}
           onChange={(e) => setField("email", e.target.value)}
           onBlur={(e) => handleEmailBlur(e.target.value)}
           error={errors.email}
@@ -240,6 +243,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           type="email"
           autoComplete="off"
           value={fields.confirmEmail}
+          disabled={Boolean(context?.username)}
           onChange={(e) => setField("confirmEmail", e.target.value)}
           error={!emailsMatch ? "Email and confirm email are not same" : errors.confirmEmail}
         />

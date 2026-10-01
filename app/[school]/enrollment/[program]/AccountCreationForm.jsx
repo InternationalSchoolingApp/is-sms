@@ -75,6 +75,7 @@ export function AccountCreationForm({ school, program, query }) {
         moduleNameToDisplay: signupInfo.moduleNameToDisplay,
         moduleId: signupInfo.moduleId,
         captchaRandomNumber: signupInfo.captchaRandomNumber,
+        username: signupInfo.username || "",
         uniqueId: signupInfo.UNIQUEUUID,
         ras: signupInfo.ras,
         referralCode: signupInfo.referralCode || new URLSearchParams(search).get("referralCode") || "",
@@ -104,14 +105,34 @@ export function AccountCreationForm({ school, program, query }) {
 
       setSignupInfoError("");
       setSignupInfo(null);
-      getEnrollmentSignupInfo(schoolUUID, learningProgram, new URLSearchParams(search))
+      const apiParams = new URLSearchParams(search);
+      const bootstrapStorageKey = `enrollment-bootstrap:${schoolUUID}:${learningProgram}`;
+      let bootstrap = null;
+
+      try {
+        const storedBootstrap = window.sessionStorage.getItem(bootstrapStorageKey);
+        bootstrap = storedBootstrap ? JSON.parse(storedBootstrap) : null;
+      } catch (error) {
+        console.error("Enrollment link data could not be read:", error);
+      }
+
+      if (bootstrap?.payload) apiParams.set("payload", bootstrap.payload);
+      for (const [key, value] of Object.entries(bootstrap?.decodedPayload || {})) {
+        if (value !== null && ["string", "number", "boolean"].includes(typeof value)) {
+          apiParams.set(key, String(value));
+        }
+      }
+
+      getEnrollmentSignupInfo(schoolUUID, learningProgram, apiParams)
         .then((response) => {
           if (cancelled) return;
           if (response?.status === "SUCCESS") {
+            if (bootstrap) window.sessionStorage.removeItem(bootstrapStorageKey);
             setSignupInfo(response);
             return;
           }
           if (response?.status === "REDIRECT" && response.redirectTo) {
+            if (bootstrap) window.sessionStorage.removeItem(bootstrapStorageKey);
             window.location.assign(response.redirectTo);
             return;
           }

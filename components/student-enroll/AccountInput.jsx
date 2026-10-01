@@ -44,7 +44,7 @@ export function AccountInput({
             hasError
               ? "border-red-400 focus:border-red-500"
               : "border-slate-200 hover:border-slate-300 focus:border-2 focus:border-primary"
-          } ${inputClassName}`}
+          } disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 disabled:opacity-80 ${inputClassName}`}
           {...inputProps}
         />
 
