@@ -1,14 +1,6 @@
 import { notFound } from "next/navigation";
+import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 import { EnrollRedirect } from "./EnrollRedirect";
-
-const VALID_LEARNING_PROGRAMS = new Set([
-  "O",
-  "DD",
-  "ONE_TO_ONE_FLEX",
-  "G",
-  "SCHOLARSHIP",
-  "SSP",
-]);
 
 function getFirstValue(value) {
   return Array.isArray(value) ? value[0] : value;
@@ -34,7 +26,7 @@ export default async function EnrollPage({ params, searchParams }) {
   const decodedPayload = decodePayload(payload);
   const learningProgram = decodedPayload?.learningProgram;
 
-  if (!school || !VALID_LEARNING_PROGRAMS.has(learningProgram)) notFound();
+  if (typeof learningProgram !== "string" || !getLearningProgramRouteCode(learningProgram)) notFound();
 
   return (
     <EnrollRedirect

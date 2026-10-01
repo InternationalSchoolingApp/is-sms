@@ -7,17 +7,9 @@ import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { Button } from "@/components/ui/button";
 import { useAccountSignup } from "@/hooks/useAccountSignup";
 import { validateAccountFormOfflineB2B } from "@/utils/studentSignupValidation";
+import { getLearningProgramsForSelect } from "@/constant/LearningPrograms";
 
-// Values confirmed from LearningProgramConstant.java — labels are a
-// reasonable first pass, not yet reviewed against the live masters list.
-const LEARNING_PROGRAMS = [
-  { value: "ONE_TO_ONE", label: "One-to-One Learning" },
-  { value: "ONE_TO_ONE_FLEX", label: "Flexy Program" },
-  { value: "DUAL_DIPLOMA", label: "Dual Diploma" },
-  { value: "BATCH", label: "Group Learning" },
-  { value: "SCHOLARSHIP", label: "Self Study" },
-  { value: "SSP", label: "Self Study Plus" },
-];
+const LEARNING_PROGRAMS = getLearningProgramsForSelect();
 
 const INITIAL_FIELDS = { communicationEmail: "", learningProgram: "", referralCode: "" };
 

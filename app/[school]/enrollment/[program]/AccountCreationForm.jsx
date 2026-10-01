@@ -9,6 +9,7 @@ import { SchoolLogo } from "@/components/student-enroll/SchoolLogo";
 import { Footer } from "@/components/common/Footer";
 import { SignupFooter } from "@/components/student-enroll/SignupFooter";
 import { getEnrollmentSignupInfo, getPublicSchoolInfo } from "@/services/studentSignupApi";
+import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 import { getLearningProgramTheme } from "@/utils/learningProgramTheme";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
 
@@ -38,8 +39,6 @@ const FALLBACK_POLICY_LINKS = {
 
 // Matches the enum values ClientSignupStudentController resolves
 // learningProgramNew/learningProgram into — see utils/learningProgramTheme.js.
-const VALID_LEARNING_PROGRAMS = ["O", "DD", "ONE_TO_ONE_FLEX", "G", "SCHOLARSHIP", "SSP"];
-
 export function AccountCreationForm({ school, program, query }) {
   const searchParams = useMemo(() => new URLSearchParams(query || ""), [query]);
   const search = searchParams.toString();
@@ -52,7 +51,7 @@ export function AccountCreationForm({ school, program, query }) {
 
   const schoolUUID = school;
   const enrollmentFor = program;
-  const learningProgram = VALID_LEARNING_PROGRAMS.includes(program) ? program : "O";
+  const learningProgram = getLearningProgramRouteCode(program) || "O";
   const theme = getLearningProgramTheme(learningProgram);
 
   const [schoolInfo, setSchoolInfo] = useState(FALLBACK_SCHOOL_INFO);
@@ -106,7 +105,7 @@ export function AccountCreationForm({ school, program, query }) {
       setSignupInfoError("");
       setSignupInfo(null);
       const apiParams = new URLSearchParams(search);
-      const bootstrapStorageKey = `enrollment-bootstrap:${schoolUUID}:${learningProgram}`;
+      const bootstrapStorageKey = `enrollment-bootstrap:${schoolUUID}:${program}`;
       let bootstrap = null;
 
       try {
@@ -123,7 +122,10 @@ export function AccountCreationForm({ school, program, query }) {
         }
       }
 
-      getEnrollmentSignupInfo(schoolUUID, learningProgram, apiParams)
+      // Preserve the route abbreviation in the public bootstrap URL (e.g.
+      // /student/enrollment/A); the shared constant is only for internal
+      // program behavior and signup payload mapping.
+      getEnrollmentSignupInfo(schoolUUID, program, apiParams)
         .then((response) => {
           if (cancelled) return;
           if (response?.status === "SUCCESS") {
@@ -149,7 +151,7 @@ export function AccountCreationForm({ school, program, query }) {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [schoolUUID, learningProgram, search, signupInfoAttempt]);
+  }, [schoolUUID, program, search, signupInfoAttempt]);
 
   // The enrollment initialization response includes school settings links;
   // keep the existing public-info lookup only for the WhatsApp support number.
