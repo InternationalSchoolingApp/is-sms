@@ -50,22 +50,18 @@ export default function AccountCreationPage() {
 // learningProgramNew/learningProgram into — see utils/learningProgramTheme.js.
 const VALID_LEARNING_PROGRAMS = ["O", "DD", "ONE_TO_ONE_FLEX", "G", "SCHOLARSHIP", "SSP"];
 
-function AccountCreationPageContent() {
-  const params = useParams();
-  const searchParams = useSearchParams();
+async function AccountCreationPageContent({params, searchParams}) {
+  const {school,program } = await params;
+  const requestedProgram = program
+  
   const isOffline = searchParams.get("mode") === "offline";
   const [verificationEmail, setVerificationEmail] = useState(null);
   const [signupInfo, setSignupInfo] = useState(null);
   const [signupInfoError, setSignupInfoError] = useState("");
   const [signupInfoAttempt, setSignupInfoAttempt] = useState(0);
 
-  const schoolUUID = searchParams.get("school");
-  const enrollmentFor = params.enrollmentFor;
-  // Matched case-insensitively (the confirmed live URLs used lowercase
-  // codes) and falls back to "O", the same default
-  // ClientSignupStudentController#commonSignupContent applies server-side
-  // when the segment doesn't resolve to a real LearningProgram.
-  const requestedProgram = (params.learningProgram || "").toUpperCase();
+  const schoolUUID = school;
+  const enrollmentFor = program;
   const learningProgram = VALID_LEARNING_PROGRAMS.includes(requestedProgram) ? requestedProgram : "O";
   const theme = getLearningProgramTheme(learningProgram);
   const search = searchParams.toString();
