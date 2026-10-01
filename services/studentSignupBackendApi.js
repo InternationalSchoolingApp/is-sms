@@ -28,9 +28,8 @@ import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOri
  * getPublicSchoolInfo, getEnrollmentProcess) live in the sibling
  * services/studentSignupApi.js instead — same "use server" pattern, just a
  * separate file for no reason other than how they were introduced; nothing
- * requires them to be split from this one anymore. The two endpoints that
- * must execute in the browser itself — the captcha <img> URL and the
- * payment-gateway <form> POST/navigation — live in
+ * requires them to be split from this one anymore. The captcha <img> URL,
+ * which must execute in the browser itself, lives in
  * services/studentSignupClientApi.js, which is genuinely client-only.
  *
  * `schoolUUID` is the {schoolId} URL-PATH segment (school UUID/slug) and is

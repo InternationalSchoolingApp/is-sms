@@ -1,15 +1,12 @@
-import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveBackendOrigin } from "@/utils/backendOrigin";
 
 /**
- * The only two Student Signup "endpoints" that cannot go through
- * services/studentSignupApi.js's Server Action layer, because neither is a
+ * The Student Signup endpoint that cannot go through
+ * services/studentSignupApi.js's Server Action layer, because it is not a
  * programmatic JSON fetch a server could make on the browser's behalf:
  *   - getCaptchaImageUrl returns an <img src> URL; the browser's own image
  *     request is what carries the session cookie the backend's captcha
  *     challenge is bound to.
- *   - launchPaymentGatewayForm builds and submits a real DOM <form> element
- *     for a full-page browser navigation/redirect to the payment gateway.
  * Kept in their own client-safe module (no next/headers import) so they can
  * still be imported by "use client" components — services/studentSignupApi.js
  * itself is server-only and would break the client bundle if imported here.
@@ -33,15 +30,3 @@ export function getCaptchaImageUrl(schoolUUID, cacheBust) {
   return `${backendUrl(schoolUUID, "api/v1/common/captcha.jpg")}?payload=${encodeURIComponent(color)}&v=${cacheBust}`;
 }
 
-export function launchPaymentGatewayForm(schoolUUID, payload) {
-  const form = document.createElement("form");
-  form.method = "GET";
-  form.action = backendUrl(schoolUUID, "common/launch-payment-gateway");
-  const input = document.createElement("input");
-  input.type = "hidden";
-  input.name = "payload";
-  input.value = encodePayload(payload);
-  form.appendChild(input);
-  document.body.appendChild(form);
-  form.submit();
-}

@@ -15,7 +15,6 @@ import { CustomPlanTable, FeePaymentPlans, FeeSummaryCard } from "@/components/s
 import { InfoModal } from "@/components/student-enroll/InfoModal";
 import { ParentInlineEdit, StudentInlineEdit } from "@/components/student-enroll/ReviewInlineEdit";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
-import { launchPaymentGatewayForm } from "@/services/studentSignupClientApi";
 import { getPaymentPaidStatus } from "@/services/studentSignupBackendApi";
 import { useShowPaymentOption } from "@/hooks/useCourseSelection";
 import { saveWizardParentFields, saveWizardStudentFields } from "@/utils/wizardStorage";
@@ -165,10 +164,6 @@ function MobileEditRow({ onEdit }) {
     </div>
   );
 }
-
-// Gateways with no server-side redirect (inline card entry / offline methods) — legacy
-// CLIENT_SIDE_GATEWAYS; matched case-insensitively, gateway names are cased inconsistently.
-const CLIENT_SIDE_GATEWAYS = ["wellsfargo", "convera", "yoco", "wiretransfer", "cash", "paypal transfer", "smoovpay"];
 
 // getPaymentPaidStatus() polling in commonPaymentGateway.js: every 10s, gives up after 10 checks.
 const PAID_STATUS_POLL_MS = 10000;
@@ -536,9 +531,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
     }
   }
 
-  // invokePaymentGateway() in commonPaymentGateway.js: every gateway is launched through a plain
-  // top-level GET form to common/launch-payment-gateway, except the client-side ones, which have
-  // no server redirect and go through the JSON invoke call.
+  // Every selected gateway is launched through common/invoke-payment-gateway.
   function stopPaidStatusPoll() {
     clearInterval(paidPollRef.current.timer);
     paidPollRef.current.timer = null;
@@ -609,11 +602,6 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
     // Pay Now: the payment modal stays open (legacy leaves #paymentOptionsModal up) while the
     // browser goes to the gateway; it is only closed if the launch fails.
     setLaunching(true);
-    if (!CLIENT_SIDE_GATEWAYS.includes((gateway.name || "").toLowerCase())) {
-      setNotice({ tone: "info", text: "Please wait while redirecting to payment gateway..." });
-      launchPaymentGatewayForm(context.schoolUUID, payload);
-      return;
-    }
     // isPopupBlocked(): legacy probes window.open('', '_blank') before the AJAX invoke.
     const probe = window.open("", "_blank");
     if (!probe || probe.closed || typeof probe.closed === "undefined") {
