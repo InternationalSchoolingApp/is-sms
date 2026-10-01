@@ -1,4 +1,6 @@
-import { useSyncExternalStore } from "react";
+// Namespace import (not a named useSyncExternalStore import) so this module can also be
+// imported by Server Components that only call trackRequest via services/studentSignupApi.js.
+import * as React from "react";
 
 // Count of in-flight backend calls; <GlobalLoader /> shows loader-new.gif while it is above zero,
 // like legacy's $.ajaxSetup loader. Background polls pass { silent: true } to stay out of it.
@@ -22,7 +24,7 @@ export async function trackRequest(run, { silent = false } = {}) {
 }
 
 export function usePendingRequests() {
-  return useSyncExternalStore(
+  return React.useSyncExternalStore(
     (listener) => {
       listeners.add(listener);
       return () => listeners.delete(listener);
