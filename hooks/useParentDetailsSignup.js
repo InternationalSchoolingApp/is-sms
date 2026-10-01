@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { getParentDetailsAction, saveParentDetailsAction } from "@/actions/studentSignupActions";
+import { getParentDetails, saveParentDetails } from "@/services/studentSignupBackendApi";
 import { buildAuthenticatedRequest } from "@/utils/authentication";
 
 /**
@@ -51,7 +51,7 @@ export function useParentDetailsPrefill({ context, userId }) {
   return useQuery({
     queryKey: ["parent-details-prefill", userId],
     queryFn: async () => {
-      const response = await getParentDetailsAction(context.schoolUUID, { userId });
+      const response = await getParentDetails(context.schoolUUID, { userId });
       if (response?.status !== "1" || !response.signupParent) return null;
       const parent = response.signupParent;
       const hasSavedParent = Boolean(parent.firstName || parent.relationship || parent.workingProfession || parent.institutionName);
@@ -135,6 +135,6 @@ function buildSaveParentDetailsRequest({ fields, context, userId, isOneToOneFlex
 export function useParentDetailsSignup({ context, userId, isOneToOneFlex }) {
   return useMutation({
     mutationFn: (fields) =>
-      saveParentDetailsAction(context.schoolUUID, buildSaveParentDetailsRequest({ fields, context, userId, isOneToOneFlex })),
+      saveParentDetails(context.schoolUUID, buildSaveParentDetailsRequest({ fields, context, userId, isOneToOneFlex })),
   });
 }
