@@ -3,7 +3,7 @@
 import { RotateCw } from "lucide-react";
 import { FaShieldAlt } from "react-icons/fa";
 import { AccountInput } from "@/components/student-enroll/AccountInput";
-import { getCaptchaImageUrl } from "@/services/studentSignupApi";
+import { getCaptchaImageUrl } from "@/services/studentSignupClientApi";
 
 /**
  * Captcha row for the Account Creation card — matches the signup-new

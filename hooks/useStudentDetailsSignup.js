@@ -2,13 +2,13 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
-  saveStudentDetails,
-  getStudentDetails,
-  getEnrollmentsGrades,
-  getCountries,
-  getStates,
-  getCities,
-} from "@/services/studentSignupApi";
+  saveStudentDetailsAction,
+  getStudentDetailsAction,
+  getEnrollmentsGradesAction,
+  getCountriesAction,
+  getStatesAction,
+  getCitiesAction,
+} from "@/actions/studentSignupActions";
 import { buildAuthentication, buildAuthenticatedRequest } from "@/utils/authentication";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { formatDobForRequest } from "@/utils/ageValidation";
@@ -39,7 +39,7 @@ export function useGradeOptions(context) {
   return useQuery({
     queryKey: ["signup-grades", context.schoolNumericId, context.enrollmentFor, context.learningProgram],
     queryFn: async () => {
-      const response = await getEnrollmentsGrades(context.schoolUUID, {
+      const response = await getEnrollmentsGradesAction(context.schoolUUID, {
         schoolId: context.schoolNumericId,
         enrollmentFor: context.enrollmentFor,
         learningProgram: getLearningProgramBackendValue(context.learningProgram),
@@ -56,7 +56,7 @@ export function useCountryOptions(context) {
   return useQuery({
     queryKey: ["signup-countries", context.schoolNumericId],
     queryFn: async () => {
-      const response = await getCountries(context.schoolUUID, buildAuthentication(context));
+      const response = await getCountriesAction(context.schoolUUID, buildAuthentication(context));
       return toOptions(response?.mastersData?.countries);
     },
     enabled: Boolean(context.schoolNumericId),
@@ -68,7 +68,7 @@ export function useStateOptions(context, countryId) {
   return useQuery({
     queryKey: ["signup-states", context.schoolNumericId, countryId],
     queryFn: async () => {
-      const response = await getStates(context.schoolUUID, buildAuthentication(context), countryId);
+      const response = await getStatesAction(context.schoolUUID, buildAuthentication(context), countryId);
       return toOptions(response?.mastersData?.states);
     },
     enabled: Boolean(context.schoolNumericId && countryId),
@@ -80,7 +80,7 @@ export function useCityOptions(context, stateId) {
   return useQuery({
     queryKey: ["signup-cities", context.schoolNumericId, stateId],
     queryFn: async () => {
-      const response = await getCities(context.schoolUUID, buildAuthentication(context), stateId);
+      const response = await getCitiesAction(context.schoolUUID, buildAuthentication(context), stateId);
       return toOptions(response?.mastersData?.cities);
     },
     enabled: Boolean(context.schoolNumericId && stateId),
@@ -155,7 +155,7 @@ export function useStudentDetailsPrefill({ context, userId }) {
   return useQuery({
     queryKey: ["student-details-prefill", userId],
     queryFn: async () => {
-      const response = await getStudentDetails(context.schoolUUID, {
+      const response = await getStudentDetailsAction(context.schoolUUID, {
         studentUserId: userId,
         userId,
         signupType: "Online",
@@ -253,7 +253,7 @@ function buildSaveStudentDetailsRequest({ fields, context, userId, isDualDiploma
 export function useStudentDetailsSignup({ context, userId, isDualDiploma, countries }) {
   return useMutation({
     mutationFn: (fields) =>
-      saveStudentDetails(
+      saveStudentDetailsAction(
         context.schoolUUID,
         buildSaveStudentDetailsRequest({ fields, context, userId, isDualDiploma, countries })
       ),

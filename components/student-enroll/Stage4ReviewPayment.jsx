@@ -15,7 +15,8 @@ import { CustomPlanTable, FeePaymentPlans, FeeSummaryCard } from "@/components/s
 import { InfoModal } from "@/components/student-enroll/InfoModal";
 import { ParentInlineEdit, StudentInlineEdit } from "@/components/student-enroll/ReviewInlineEdit";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
-import { getPaymentPaidStatus, launchPaymentGatewayForm } from "@/services/studentSignupApi";
+import { launchPaymentGatewayForm } from "@/services/studentSignupClientApi";
+import { getPaymentPaidStatusAction } from "@/actions/studentSignupActions";
 import { useShowPaymentOption } from "@/hooks/useCourseSelection";
 import { saveWizardParentFields, saveWizardStudentFields } from "@/utils/wizardStorage";
 import {
@@ -555,7 +556,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
   async function checkPaidStatus(userPaymentDetailsId, schoolId) {
     if (!userPaymentDetailsId || !schoolId) return;
     try {
-      const response = await getPaymentPaidStatus(context.schoolUUID, { userPaymentDetailsId, schoolId });
+      const response = await getPaymentPaidStatusAction(context.schoolUUID, { userPaymentDetailsId, schoolId });
       if (response?.status !== STATUS_SUCCESS) return;
       if (paidPollRef.current.count > PAID_STATUS_MAX_CHECKS) {
         flushPaidStatusPoll();

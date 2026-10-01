@@ -1,6 +1,6 @@
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
-import { getSignupStageStatus } from '@/services/studentSignupApi';
+import { getSignupStageStatus } from '@/services/studentSignupBackendApi';
 import { DEFAULT_PROGRAM, stepPath } from '@/utils/wizardSteps';
 
 export default async function  page({params}) {

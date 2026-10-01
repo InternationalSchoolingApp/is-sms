@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { resendEmailVerification } from "@/services/studentSignupApi";
+import { resendEmailVerificationAction } from "@/actions/studentSignupActions";
 import { getHash } from "@/utils/common";
 
 /**
@@ -13,7 +13,7 @@ export function EmailVerificationPanel({ email, context, onClose }) {
   const [resent, setResent] = useState(false);
 
   async function handleResend() {
-    await resendEmailVerification(context.schoolUUID, {
+    await resendEmailVerificationAction(context.schoolUUID, {
       // authentication.schoolId is the NUMERIC backend row id (Integer),
       // NOT the UUID/slug used in the URL — same distinction documented in
       // hooks/useAccountSignup.js. schoolUUID carries the slug instead.

@@ -1,10 +1,13 @@
 import { hasBackendOrigin, resolveBackendOrigin } from "@/utils/backendOrigin";
 
-const SCHOOL_ID = process.env.NEXT_PUBLIC_SCHOOL_ID;
-
+// `schoolUUID` now comes from the caller's own params (the page's searchParams,
+// e.g. ?schoolUUID=... on the gateway's redirect back into this app), NOT an
+// env var — matches the same convention services/studentSignupApi.js and
+// studentSignupBackendApi.js use for `schoolUUID`.
 function buildQuery(params) {
   const query = new URLSearchParams();
   for (const [key, value] of params.entries()) {
+    if (key === "schoolUUID") continue;
     query.append(key, value);
   }
   query.set("applyingFrom", "nextjs");
@@ -13,10 +16,11 @@ function buildQuery(params) {
 
 async function getPaymentInitResponse(gateway, uniqueUuid, params) {
   const baseUrl = resolveBackendOrigin();
-  if (!hasBackendOrigin() || !SCHOOL_ID || !uniqueUuid) return null;
+  const schoolUUID = params?.get("schoolUUID");
+  if (!hasBackendOrigin() || !schoolUUID || !uniqueUuid) return null;
 
   const query = buildQuery(params);
-  const url = `${baseUrl}/api/v1/${encodeURIComponent(SCHOOL_ID)}/payment/${gateway}-payment-init/${encodeURIComponent(uniqueUuid)}${query ? `?${query}` : ""}`;
+  const url = `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/payment/${gateway}-payment-init/${encodeURIComponent(uniqueUuid)}${query ? `?${query}` : ""}`;
 
   try {
     const response = await fetch(url, {

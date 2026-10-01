@@ -1,8 +1,8 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { getParentDetails, saveParentDetails, sendOtpForParentVerification, verifyParentOtp } from "@/services/studentSignupApi";
-import { buildAuthentication, buildAuthenticatedRequest } from "@/utils/authentication";
+import { getParentDetailsAction, saveParentDetailsAction } from "@/actions/studentSignupActions";
+import { buildAuthenticatedRequest } from "@/utils/authentication";
 
 /**
  * Inverse of buildCommunications(): turns a SignupParentDTO (as returned in
@@ -51,7 +51,7 @@ export function useParentDetailsPrefill({ context, userId }) {
   return useQuery({
     queryKey: ["parent-details-prefill", userId],
     queryFn: async () => {
-      const response = await getParentDetails(context.schoolUUID, { userId });
+      const response = await getParentDetailsAction(context.schoolUUID, { userId });
       if (response?.status !== "1" || !response.signupParent) return null;
       const parent = response.signupParent;
       const hasSavedParent = Boolean(parent.firstName || parent.relationship || parent.workingProfession || parent.institutionName);
@@ -135,38 +135,6 @@ function buildSaveParentDetailsRequest({ fields, context, userId, isOneToOneFlex
 export function useParentDetailsSignup({ context, userId, isOneToOneFlex }) {
   return useMutation({
     mutationFn: (fields) =>
-      saveParentDetails(context.schoolUUID, buildSaveParentDetailsRequest({ fields, context, userId, isOneToOneFlex })),
-  });
-}
-
-/**
- * OTP-based parent email verification (send-otp-for-parent-verification /
- * verify-otp, both in CommonController.java, {schoolId}/api/v1/common/*,
- * NOT under student/enrollment/*). Response `statusCode` legend (SeriConstant.java):
- * "1" sent ok, "0" send/verify failure, "2" verified, "3" OTP mismatch,
- * "4" send-count exceeded (rate limited).
- *
- * Only relevant on first pass through the wizard — saveSignupParent() on the
- * backend auto-verifies without checking the Otp table once the student has
- * already reached the Address stage once (User.firstReset >= 13). The UI
- * still always offers verification; the backend just no-ops the check then.
- */
-export function useSendParentOtp({ context, userId }) {
-  return useMutation({
-    mutationFn: ({ email, parentName }) =>
-      sendOtpForParentVerification(context.schoolUUID, {
-        authentication: buildAuthenticatedRequest(context, userId),
-        data: { userId, email, schoolId: context.schoolNumericId, parentName },
-      }),
-  });
-}
-
-export function useVerifyParentOtp({ context }) {
-  return useMutation({
-    mutationFn: ({ email, otp }) =>
-      verifyParentOtp(context.schoolUUID, {
-        authentication: buildAuthentication(context),
-        requestData: { requestValue: email, requestExtra1: otp },
-      }),
+      saveParentDetailsAction(context.schoolUUID, buildSaveParentDetailsRequest({ fields, context, userId, isOneToOneFlex })),
   });
 }
