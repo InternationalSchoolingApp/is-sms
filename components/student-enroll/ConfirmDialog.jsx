@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Info } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,10 +14,16 @@ import { Button } from "@/components/ui/button";
  * passed (unchanged) — only the visual chrome (info icon, spacing, button
  * styling) was restyled to match the reference design.
  */
-export function ConfirmDialog({ request, onResolve }) {
-  
+export function ConfirmDialog({ request: incoming, onResolve }) {
+  // Resolving sets the parent's request to null immediately, but the dialog
+  // keeps animating closed for a moment — keep rendering the last request so
+  // the message/buttons don't vanish and the default "I understand and agree"
+  // label doesn't flash during that close animation.
+  const [request, setRequest] = useState(incoming);
+  if (incoming && incoming !== request) setRequest(incoming);
+
   return (
-    <Dialog open={!!request} onOpenChange={(open) => !open && onResolve(false)}>
+    <Dialog open={!!incoming} onOpenChange={(open) => !open && onResolve(false)}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="flex-row items-center gap-2 space-y-0">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-white">
@@ -30,7 +37,7 @@ export function ConfirmDialog({ request, onResolve }) {
               <Button type="button" variant="outline" onClick={() => onResolve(false)}>
                 {request?.cancelLabel || "No"}
               </Button>
-              <Button type="button" onClick={() => onResolve(true)} className="rounded-md bg-primary hover:bg-primary/90">
+              <Button type="button" onClick={() => {onResolve(true)}} className="rounded-md bg-primary hover:bg-primary/90">
                 {request?.confirmLabel || "I understand and agree"}
               </Button>
             </div>

@@ -250,7 +250,6 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
       setAddingId(null);
     }
   }
-
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-md">
