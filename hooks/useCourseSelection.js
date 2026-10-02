@@ -116,6 +116,7 @@ export function useRecommendedCourses({ context, userId }) {
  * the choose-payment-plan response on success.
  */
 export function useProceedToReview({ context, userId }) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ courseData, showPaymentOption }) => {
       let paymentMode = courseData.paymentMode;
@@ -149,6 +150,14 @@ export function useProceedToReview({ context, userId }) {
       if (!isKnownPaymentMode(paymentMode)) paymentMode = "annually";
       const plan = await choosePaymentPlan(context.schoolUUID, { userId, paymentMode, requestFromMigration: "N" });
       return { ok: plan?.status === STATUS_SUCCESS, response: plan };
+    },
+    // The review page caches get-student-review-details with staleTime: Infinity, so a visit to
+    // Step 3 from the review screen (Edit) would otherwise come back to the pre-edit courses/fees.
+    // Dropping the cached entry makes the review page fetch fresh data when it mounts.
+    onSuccess: (result) => {
+      if (result?.ok) {
+        queryClient.removeQueries({ queryKey: ["student-review-details", userId] });
+      }
     },
   });
 }
