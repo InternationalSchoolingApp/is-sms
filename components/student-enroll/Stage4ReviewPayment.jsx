@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BiSolidBookAdd, BiSolidPencil, BiSolidUserDetail } from "react-icons/bi";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Info } from "lucide-react";
 import { FaNotesMedical } from "react-icons/fa6";
 import { IoMdPeople } from "react-icons/io";
 import { FullScreenLoader } from "@/components/common/Loader";
@@ -1014,22 +1014,21 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         </DialogContent>
       </Dialog>
       <Dialog open={paymentUnderReview}>
-        <DialogContent showCloseButton={false} className="text-center sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-xl">Payment Under Review</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 text-sm text-slate-700">
-            <h2 className="text-lg font-semibold text-slate-900">Your payment is under review.</h2>
+        <DialogContent showCloseButton={false} className="gap-0 overflow-hidden rounded-2xl p-0 text-slate-800 shadow-2xl sm:max-w-xl">
+          <div className="space-y-2 px-6 pb-5 pt-1 text-center text-base leading-6 text-slate-600 sm:px-10 sm:text-lg">
+            <h2 className="text-lg font-semibold text-slate-800 mt-2">Your payment is under review.</h2>
             <p>
               {data.enrollmentType !== "REGISTRATION_REGISTER" && "You will be able to access the dashboard once the payment is received. "}
               You can contact us at{" "}
               <b>
-                <a href={`mailto:${data.contactEmail}`} className="underline">
+                <a href={`mailto:${data.contactEmail}`} className="break-all font-semibold text-slate-700 underline underline-offset-2">
                   {data.contactEmail}
                 </a>
               </b>{" "}
               for more information
             </p>
+          </div>
+          <div className="flex justify-center border-t border-slate-200 bg-slate-50 px-5 py-4">
             <Button type="button" onClick={() => onSessionExpired?.()} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
               Log out
             </Button>
