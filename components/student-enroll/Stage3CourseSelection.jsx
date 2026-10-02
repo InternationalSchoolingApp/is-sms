@@ -727,7 +727,6 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
   // sheet must stay closed until a category is explicitly tapped — openCourseId
   // is null/-1 in that closed state, not defaulted to the first category.
   const mobileActiveCourse = openCourseId && openCourseId !== -1 ? visibleCourses.find((course) => course.courseId === openCourseId) || null : null;
-  console.log("course", data)
   return (
     <div className="mx-auto mt-6 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       {header}

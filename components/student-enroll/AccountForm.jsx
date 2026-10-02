@@ -11,7 +11,7 @@ import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal
 import { InfoModal, getWelcomeBackMessage } from "@/components/student-enroll/InfoModal";
 import { useAccountSignup } from "@/hooks/useAccountSignup";
 import { checkEmailAvailability } from "@/services/studentSignupBackendApi";
-import { validateAccountFormOnline, isValidEmail } from "@/utils/studentSignupValidation";
+import { validateAccountFormOnline, isValidEmail, getPasswordStrength } from "@/utils/studentSignupValidation";
 import { captureUtmParamsFromUrl } from "@/utils/utmCookies";
 import { getHash } from "@/utils/common";
 
@@ -66,6 +66,12 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
     () => !fields.confirmEmail || fields.email.trim() === fields.confirmEmail.trim(),
     [fields.email, fields.confirmEmail]
   );
+
+  // Mirrors checkPasswordStrength() in jquery.commonFunction.js: the checklist shows only while the
+  // field is focused, non-empty and still invalid (it hides once every rule passes); the confirm
+  // field is a plain live comparison ("Please re-enter the same password"), silent while empty.
+  const passwordIsValid = useMemo(() => getPasswordStrength(fields.password).isValid, [fields.password]);
+  const confirmMismatch = fields.confirmPassword.length > 0 && fields.confirmPassword !== fields.password;
 
   function setField(name, value) {
     setFields((prev) => ({ ...prev, [name]: value }));
@@ -265,7 +271,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
             onFocus={() => setPasswordFocused(true)}
             onBlur={() => setPasswordFocused(false)}
             onChange={(e) => setField("password", e.target.value)}
-            error={!passwordFocused ? errors.password : undefined}
+            error={!passwordFocused && !passwordIsValid ? errors.password : undefined}
             trailing={
               <button
                 type="button"
@@ -292,7 +298,9 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
               </button>
             }
           />
-          {passwordFocused && <PasswordStrengthChecklist password={fields.password} />}
+          {passwordFocused && fields.password.length > 0 && !passwordIsValid && (
+            <PasswordStrengthChecklist password={fields.password} />
+          )}
         </div>
         <AccountInput
           icon={LockKeyhole}
@@ -302,7 +310,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           autoComplete="new-password"
           value={fields.confirmPassword}
           onChange={(e) => setField("confirmPassword", e.target.value)}
-          error={errors.confirmPassword}
+          error={confirmMismatch ? "Please re-enter the same password" : undefined}
           trailing={
             <button
               type="button"
