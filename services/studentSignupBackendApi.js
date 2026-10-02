@@ -289,7 +289,6 @@ export async function getStudentCommissionPayBy(schoolUUID, request) {
   return postPayload(schoolUUID, "student/enrollment/get-commission-pay-by", request);
 }
 
-// --- Account creation (Online + Offline/B2B) ---
 export async function signupStage1(schoolUUID, request) {
   return postPayload(schoolUUID, "api/v1/student/enrollment/stage-1", request);
 }
