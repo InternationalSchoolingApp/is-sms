@@ -30,8 +30,8 @@ export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDat
             <span
               className={`pointer-events-none absolute z-1 bg-white px-1 transition-all ${
                 floated
-                  ? `left-3 top-0 -translate-y-1/2 text-xs ${error ? "text-red-500" : "text-primary"}`
-                  : `top-1/2 -translate-y-1/2 text-sm ${error ? "text-red-500" : "text-slate-500"} ${Icon ? "left-10" : "left-3.5"}`
+                  ? `left-3 top-0 -translate-y-1/2 text-xs max-[319px]:text-[10px] ${error ? "text-red-500" : "text-primary"}`
+                  : `top-1/2 -translate-y-1/2 text-sm max-[319px]:text-xs ${error ? "text-red-500" : "text-slate-500"} ${Icon ? "left-10" : "left-3.5"}`
               }`}
             >
               {label}

@@ -177,7 +177,7 @@ export function validateParentDetails(fields, { isOneToOneFlex = false } = {}) {
   if (!fields.stateId) errors.stateId = "State is required";
   if (!fields.cityId) errors.cityId = "City is required";
   if (!fields.communicationWhatsApp && !fields.communicationCall && !fields.communicationEmail) {
-    errors.communication = "Please select how you would like to be contacted";
+    errors.communication = "How would you like us to contact you? Please select atleast one";
   }
 
   return { valid: Object.keys(errors).length === 0, errors };

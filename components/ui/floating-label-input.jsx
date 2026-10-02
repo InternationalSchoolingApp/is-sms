@@ -63,7 +63,7 @@ export function FloatingLabelInput({
         )}
         {label && (
           <label
-            className={`pointer-events-none absolute top-1/2 z-0 -translate-y-1/2 bg-white px-1 text-sm transition-all peer-focus:top-0 peer-focus:text-xs peer-[&:not(:placeholder-shown)]:top-0 peer-[&:not(:placeholder-shown)]:text-xs peer-autofill:top-0 peer-autofill:text-xs peer-[:-internal-autofill-selected]:top-0 peer-[:-internal-autofill-selected]:text-xs ${
+            className={`pointer-events-none absolute top-1/2 z-0 -translate-y-1/2 bg-white px-1 text-sm max-[319px]:text-xs transition-all peer-focus:top-0 peer-focus:text-xs max-[319px]:peer-focus:!text-[10px] peer-[&:not(:placeholder-shown)]:top-0 peer-[&:not(:placeholder-shown)]:text-xs max-[319px]:peer-[&:not(:placeholder-shown)]:!text-[10px] peer-autofill:top-0 peer-autofill:text-xs max-[319px]:peer-autofill:!text-[10px] peer-[:-internal-autofill-selected]:top-0 peer-[:-internal-autofill-selected]:text-xs max-[319px]:peer-[:-internal-autofill-selected]:!text-[10px] ${
               Icon
                 ? "left-10 peer-focus:left-3 peer-[&:not(:placeholder-shown)]:left-3 peer-autofill:left-3 peer-[:-internal-autofill-selected]:left-3"
                 : "left-3.5 peer-focus:left-3 peer-[&:not(:placeholder-shown)]:left-3 peer-autofill:left-3 peer-[:-internal-autofill-selected]:left-3"

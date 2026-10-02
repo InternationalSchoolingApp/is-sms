@@ -42,8 +42,8 @@ function PlainFloatingLabelSelect({ icon: Icon, label, value, onValueChange, opt
           <label
             className={`pointer-events-none absolute z-10 bg-white px-1 transition-all ${
               floated
-                ? `left-3 top-0 -translate-y-1/2 text-xs ${error ? "text-red-500" : "text-primary"}`
-                : `top-1/2 -translate-y-1/2 text-sm text-slate-500 ${Icon ? "left-10" : "left-3.5"}`
+                ? `left-3 top-0 -translate-y-1/2 text-xs max-[319px]:text-[10px] ${error ? "text-red-500" : "text-primary"}`
+                : `top-1/2 -translate-y-1/2 text-sm max-[319px]:text-xs text-slate-500 ${Icon ? "left-10" : "left-3.5"}`
             }`}
           >
             {label}
@@ -53,7 +53,7 @@ function PlainFloatingLabelSelect({ icon: Icon, label, value, onValueChange, opt
           <SelectTrigger
             className={`!h-12 rounded-md w-full pt-1 ${Icon ? "pl-10" : "pl-3.5"} pr-3.5 ${
               disabled
-                ? "cursor-not-allowed bg-slate-100 text-slate-400"
+                ? "cursor-not-allowed bg-slate-100 text-black disabled:opacity-100"
                 : `bg-white ${error ? "border-2 border-red-500" : open ? "border-2 border-slate-900" : "border-slate-300"}`
             }`}
           >
@@ -106,8 +106,8 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, value, onValueChange
           <label
             className={`pointer-events-none absolute z-1 bg-white px-1 transition-all ${
               floated
-                ? `left-3 top-0 -translate-y-1/2 text-xs ${error ? "text-red-500" : "text-primary"}`
-                : `top-1/2 -translate-y-1/2 text-sm ${error ? "text-red-500" : "text-slate-500"} ${Icon ? "left-10" : "left-3.5"}`
+                ? `left-3 top-0 -translate-y-1/2 text-xs max-[319px]:text-[10px] ${error ? "text-red-500" : "text-primary"}`
+                : `top-1/2 -translate-y-1/2 text-sm max-[319px]:text-xs ${error ? "text-red-500" : "text-slate-500"} ${Icon ? "left-10" : "left-3.5"}`
             }`}
           >
             {label}
@@ -119,7 +119,7 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, value, onValueChange
             disabled={disabled}
             className={`flex !h-12 w-full items-center rounded-md border pr-8 pt-1 text-left text-sm ${Icon ? "pl-10" : "pl-3.5"} ${
               disabled
-                ? "cursor-not-allowed bg-slate-100 text-slate-400"
+                ? "cursor-not-allowed bg-slate-100 text-black disabled:opacity-100"
                 : `bg-white ${error ? "border-2 border-red-500" : open ? "border-2 border-slate-900" : "border-slate-300"}`
             }`}
           >

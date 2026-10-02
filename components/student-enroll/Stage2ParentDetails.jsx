@@ -111,7 +111,19 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
     setFields((prev) => ({ ...prev, [name]: value }));
   }
 
+  // Drops stale validation messages for the given fields (their value just changed).
+  function clearErrors(...names) {
+    setErrors((prev) => {
+      if (!names.some((name) => prev[name])) return prev;
+      const next = { ...prev };
+      names.forEach((name) => delete next[name]);
+      return next;
+    });
+  }
+
   function toggleSameAsStudent(checked) {
+    // Location values are replaced wholesale (prefilled or blanked), so earlier location errors are stale.
+    clearErrors("countryId", "stateId", "cityId");
     setFields((prev) => ({
       ...prev,
       sameAsStudent: checked,
@@ -254,7 +266,10 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
               icon={MapPin}
               label={locationDisabled ? "Country (Parent's Current Location)" : <Req label="Country" required />}
               value={fields.countryId}
-              onValueChange={(v) => setFields((prev) => ({ ...prev, countryId: v, stateId: "", cityId: "" }))}
+              onValueChange={(v) => {
+                setFields((prev) => ({ ...prev, countryId: v, stateId: "", cityId: "" }));
+                clearErrors("countryId");
+              }}
               options={countries.data || []}
               error={errors.countryId}
               disabled={locationDisabled}
@@ -264,7 +279,10 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
               icon={Map}
               label={<Req label="Province / State" required={!locationDisabled} />}
               value={fields.stateId}
-              onValueChange={(v) => setFields((prev) => ({ ...prev, stateId: v, cityId: "" }))}
+              onValueChange={(v) => {
+                setFields((prev) => ({ ...prev, stateId: v, cityId: "" }));
+                clearErrors("stateId");
+              }}
               options={states.data || []}
               error={errors.stateId}
               disabled={locationDisabled}
@@ -274,7 +292,10 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
               icon={Building2}
               label={<Req label="City" required={!locationDisabled} />}
               value={fields.cityId}
-              onValueChange={(v) => setField("cityId", v)}
+              onValueChange={(v) => {
+                setField("cityId", v);
+                clearErrors("cityId");
+              }}
               options={cities.data || []}
               error={errors.cityId}
               disabled={locationDisabled}
