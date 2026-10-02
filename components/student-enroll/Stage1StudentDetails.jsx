@@ -275,7 +275,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
             label={<Req label={
                 <>
                   Date of Birth{" "}
-                  <span className="text-black">(Month Day, Year)</span>
+                  <span className="text-black text-[12px]">(Month Day, Year)</span>
                 </>
               } required />}
             value={fields.dob}
@@ -310,7 +310,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
               label={
                 <>
                   Mobile Number{" "}
-                  <span className="text-black">(Student or Parent)</span>
+                  <span className="text-black text-[12px]">(Student or Parent)</span>
                 </>
               }
             required />}
@@ -333,7 +333,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
             label={<Req label={
                   <>
                     Nationality{" "}
-                    <span className="text-black">
+                    <span className="text-black text-[12px]">
                       (You must have a valid National ID)
                     </span>
                   </>
@@ -354,7 +354,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
                 label={
                   <>
                     Country{" "}
-                    <span className="text-black">(Student's Current Location)</span>
+                    <span className="text-black text-[12px]">(Student's Current Location)</span>
                   </>
                 }
                 required
