@@ -27,7 +27,7 @@ export function FloatingLabelSelect({ searchable = false, ...props }) {
   return searchable ? <SearchableFloatingLabelSelect {...props} /> : <PlainFloatingLabelSelect {...props} />;
 }
 
-function PlainFloatingLabelSelect({ icon: Icon, label, value, onValueChange, options, error, disabled = false, className = "" }) {
+function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, onValueChange, options, error, disabled = false, className = "" }) {
   const [open, setOpen] = useState(false);
   const floated = open || Boolean(value);
   const selected = options.find((option) => option.value === value);
@@ -47,6 +47,7 @@ function PlainFloatingLabelSelect({ icon: Icon, label, value, onValueChange, opt
             }`}
           >
             {label}
+            {required && <span className="text-red-500"> *</span>}
           </label>
         )}
         <Select className="" value={value} onValueChange={onValueChange} onOpenChange={setOpen} disabled={disabled}>
@@ -73,7 +74,7 @@ function PlainFloatingLabelSelect({ icon: Icon, label, value, onValueChange, opt
   );
 }
 
-function SearchableFloatingLabelSelect({ icon: Icon, label, value, onValueChange, options, error, disabled = false, className }) {
+function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, value, onValueChange, options, error, disabled = false, className }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const floated = open || Boolean(value);
@@ -111,6 +112,7 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, value, onValueChange
             }`}
           >
             {label}
+            {required && <span className="text-red-500"> *</span>}
           </label>
         )}
         <Popover open={open} onOpenChange={handleOpenChange}>

@@ -268,6 +268,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
         <AccountInput
           icon={Mail}
           label="Enter your email"
+          required
           name="email"
           type="email"
           autoComplete="email"
@@ -284,6 +285,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
         <AccountInput
           icon={Mail}
           label="Confirm your email"
+          required
           name="confirmEmail"
           type="email"
           autoComplete="off"
@@ -298,6 +300,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           <AccountInput
             icon={LockKeyhole}
             label="Enter your password"
+            required
             name="password"
             type={showPassword ? "text" : "password"}
             // "new-password" (not "off") is the standards-correct way to
@@ -348,6 +351,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
         <AccountInput
           icon={LockKeyhole}
           label="Confirm your password"
+          required
           name="confirmPassword"
           type={showConfirmPassword ? "text" : "password"}
           autoComplete="new-password"

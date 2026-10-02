@@ -20,6 +20,7 @@
 export function AccountInput({
   icon: Icon,
   label,
+  required = false,
   trailing,
   error,
   className = "",
@@ -65,6 +66,7 @@ export function AccountInput({
             }`}
           >
             {label}
+            {required && <span className="text-red-500"> *</span>}
           </label>
         )}
 

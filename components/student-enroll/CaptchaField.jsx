@@ -11,6 +11,7 @@ export function CaptchaField({ schoolUUID, value, onChange, onBlur, error, cache
       <AccountInput
         icon={FaShieldAlt}
         label="Enter CAPTCHA"
+        required
         inputMode="numeric"
         maxLength={6}
         value={value}

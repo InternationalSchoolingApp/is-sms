@@ -73,6 +73,7 @@ export function AccountFormOfflineB2B({ context, onRedirect }) {
       <FloatingLabelSelect
         icon={GraduationCap}
         label="Select learning program"
+        required
         value={fields.learningProgram}
         onValueChange={(v) => setField("learningProgram", v)}
         options={LEARNING_PROGRAMS}
