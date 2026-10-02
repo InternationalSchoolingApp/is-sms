@@ -277,7 +277,7 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVari
             <label
               key={option.key}
               className={`relative grid cursor-pointer grid-cols-[auto_1fr] content-start items-center gap-x-3 gap-y-1 rounded-xl border px-4 py-3 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40 ${
-                hasChips ? "md:px-4" : "md:flex md:flex-col md:items-stretch md:justify-center md:gap-0 md:px-6"
+                hasChips ? "md:px-4" : "md:px-6"
               } ${checked ? "border-primary bg-primary/10" : "border-slate-200 bg-white hover:border-primary/50"} ${
                 disabled ? "cursor-not-allowed opacity-70" : ""
               }`}
@@ -290,12 +290,11 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVari
                 onChange={() => onSelect(option.key)}
                 disabled={disabled}
               />
-              {/* Mobile shows a visible radio; desktop relies on the card highlight (and shows it on
-                  every card except the chip card when the chips layout is on). */}
+              {/* Visible radio on every size (the chip card draws its own chip radios instead). */}
               {!chips && (
                 <span
                   aria-hidden="true"
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${hasChips ? "" : "md:hidden"} ${checked ? "border-primary" : "border-slate-400"}`}
+                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${checked ? "border-primary" : "border-slate-400"}`}
                 >
                   {checked && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
                 </span>

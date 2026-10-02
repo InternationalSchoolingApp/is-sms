@@ -69,7 +69,7 @@ function tabIcon(option) {
 function Flag({ country, alt }) {
   if (!country) return null;
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src={assetUrl(FLAGS, `${country}.svg`)} alt={alt} className="h-6 w-8 rounded-sm object-cover" />;
+  return <img src={assetUrl(FLAGS, `${country}.svg`)} alt={alt} className="h-6 w-8 shrink-0 rounded-sm object-cover" />;
 }
 
 function CurrencyCard({ details, payerCountryCode }) {
@@ -91,19 +91,24 @@ function CurrencyCard({ details, payerCountryCode }) {
         <Info className="h-4 w-4" /> Payment Amount
       </div>
       <div className="mt-3 flex flex-col gap-4 md:flex-row md:items-center">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 font-semibold">
+        {/* Both amount boxes share the row equally below md (min-w-0 lets them shrink instead of the text
+            spilling out) and have the same structure: flag + amount over its currency code. */}
+        <div className="flex w-full items-center gap-2 md:w-auto md:gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 md:flex-none md:px-3">
             <Flag country={localFlag} alt={conversion.to} />
-            <span>
-              {getCurrencyDisplaySymbol(conversion.to)}
-              {formatMoneyWithCommas(details.payAmountWithCurrency)}
-            </span>
+            <div className="min-w-0 leading-tight">
+              <span className="block break-words text-[13px] font-semibold sm:text-base">
+                {getCurrencyDisplaySymbol(conversion.to)}
+                {formatMoneyWithCommas(details.payAmountWithCurrency)}
+              </span>
+              <small className="block text-xs text-slate-500">({conversion.to})</small>
+            </div>
           </div>
-          <ArrowRight className="h-4 w-4 text-primary" />
-          <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2">
+          <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
+          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 md:flex-none md:px-3">
             <Flag country={baseFlag} alt={conversion.base} />
-            <div className="leading-tight">
-              <span className="font-semibold">
+            <div className="min-w-0 leading-tight">
+              <span className="block break-words text-[13px] font-semibold sm:text-base">
                 {getCurrencyDisplaySymbol(conversion.base)}
                 {formatMoneyWithCommas(details.payAmount)}
               </span>
