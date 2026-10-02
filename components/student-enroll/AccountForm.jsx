@@ -9,6 +9,7 @@ import { PasswordStrengthChecklist } from "@/components/student-enroll/PasswordS
 import { CaptchaField } from "@/components/student-enroll/CaptchaField";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { InfoModal, getWelcomeBackMessage } from "@/components/student-enroll/InfoModal";
+import { EmailValidatorModal } from "@/components/student-enroll/EmailValidatorModal";
 import { useAccountSignup } from "@/hooks/useAccountSignup";
 import { checkEmailAvailability } from "@/services/studentSignupBackendApi";
 import { validateAccountFormOnline, isValidEmail, getPasswordStrength } from "@/utils/studentSignupValidation";
@@ -57,6 +58,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
   const [captchaCacheBust, setCaptchaCacheBust] = useState(0);
   const [flaggedModal, setFlaggedModal] = useState(null);
   const [welcomeBackModal, setWelcomeBackModal] = useState(null);
+  const [emailValidatorModal, setEmailValidatorModal] = useState(null);
   const formRef = useRef(null);
   // Mirrors signupCommon.js's `prevValue` closure var — avoids re-firing
   // the availability check when the email field blurs without its value
@@ -114,12 +116,15 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
   }
 
   // Mirrors callEmailCheck() in jquery.commonFunction.js, fired on the
-  // email field's blur (not on submit) — this is what shows the "Welcome
-  // back" modal as soon as an already-registered email is entered, before
-  // the user ever clicks Next. Confirmed at source: statusCode 0044/0043
-  // ("email already verified/registered") and 02 ("user declined") both
-  // call showWrapper(true, fr, extra1) exactly like the stage-1 submit
-  // path already handled in handleSubmit below.
+  // email field's blur (not on submit). Confirmed at source
+  // (CommonUtil.isUserAvailable in is-rest-api):
+  //   - status "1" (statusCode "0002", "REQUESTED EMAIL IS AVAILABLE"): no
+  //     existing user/parent for this email. If `emailVerified` is false —
+  //     the deliverability check couldn't confirm it — show the
+  //     "appears to be invalid, continue?" confirm (EmailValidatorModal).
+  //     If emailVerified is true, there's nothing to show; just continue.
+  //   - status "0"/"2" with statusCode 0044/0043/02 ("already registered"/
+  //     "declined"): the "Welcome back" modal, same as before.
   async function handleEmailBlur(email) {
     const trimmed = email.trim();
     if (!trimmed || !isValidEmail(trimmed) || trimmed === lastCheckedEmailRef.current) return;
@@ -136,6 +141,13 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
         data: { requestKey: "EMAIL-AVAILABLE", email: trimmed },
       });
       if (!response) return;
+
+      if (response.status === "1") {
+        if (!response.emailVerified) {
+          setEmailValidatorModal({ email: trimmed });
+        }
+        return;
+      }
 
       if (response.status === "0" || response.status === "2") {
         if (response.statusCode === "0044" || response.statusCode === "0043" || response.statusCode === "02") {
@@ -449,6 +461,27 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
         {welcomeBackModal &&
           getWelcomeBackMessage({ ...welcomeBackModal, loginHref: context.loginUrl })}
       </InfoModal>
+
+      <EmailValidatorModal
+        open={!!emailValidatorModal}
+        onOpenChange={(open) => !open && setEmailValidatorModal(null)}
+        email={emailValidatorModal?.email}
+        onContinue={() => {
+          // Mirrors validMailPermission(true): keep the typed email as-is,
+          // and also carry it into Confirm Email so the student doesn't
+          // have to retype the exact same address a second time.
+          setFields((prev) => ({ ...prev, confirmEmail: emailValidatorModal?.email ?? prev.confirmEmail }));
+          setEmailValidatorModal(null);
+        }}
+        onChangeEmail={() => {
+          // Mirrors validMailPermission(false): clear both email fields so
+          // the student re-enters a different address, and let that fresh
+          // value get re-checked on its own next blur.
+          lastCheckedEmailRef.current = "";
+          setFields((prev) => ({ ...prev, email: "", confirmEmail: "" }));
+          setEmailValidatorModal(null);
+        }}
+      />
     </>
   );
 }
