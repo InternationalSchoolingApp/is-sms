@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Button } from "@/components/ui/button";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Req } from "@/components/common/Req";
 import { validateAge, getDobPickerBounds } from "@/utils/ageValidation";
 
 /**
@@ -62,7 +63,7 @@ export function ChangeGradeDialog({ open, onOpenChange, grades, courseProviderId
         </DialogHeader>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FloatingLabelSelect
-            label="Grade *"
+            label={<Req label="Grade" required />}
             value={standardId}
             onValueChange={handleGradeChange}
             options={grades || []}
@@ -70,22 +71,27 @@ export function ChangeGradeDialog({ open, onOpenChange, grades, courseProviderId
             searchable
           />
           <DatePicker
-            label="Date of Birth *"
+            label={<Req label={
+              <>Date of Birth{" "} <span className="text-black text-[10px]">(Month Day, Year)</span></>
+            } required />}
             value={dob}
             onChange={(v) => setDob(v)}
             fromDate={dobBounds.fromDate}
             toDate={dobBounds.toDate}
             error={error.dob}
           />
+          
         </div>
-        <p className="text-center text-xs text-slate-400">(MMM DD, YYYY)</p>
+        
         <DialogFooter className="flex flex-row justify-center">
-          <Button type="button" className="w-fit" variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
-            Cancel
-          </Button>
-          <Button type="button" className="w-fit" onClick={handleSave} disabled={busy}>
-            {busy ? "Saving…" : "Save"}
-          </Button>
+          <div className="inline-flex gap-2 mx-auto">
+            <Button type="button" className="w-fit" variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
+              Cancel
+            </Button>
+            <Button type="button" className="w-fit" onClick={handleSave} disabled={busy}>
+              {busy ? "Saving…" : "Save"}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

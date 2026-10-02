@@ -68,7 +68,7 @@ export function PhoneNumberField({ label = "Contact Number", name = "contactNumb
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           className={`h-12 w-full rounded-md bg-white pl-10 pr-3.5 pt-1 text-sm outline-none ${className} ${
-            error ? "border-2 border-red-500" : focused ? "border-2 border-slate-900" : "border border-slate-300"
+            error ? "border-2 border-red-500" : focused ? "border-2 border-slate-900" : value ? "border-2 border-emerald-500" : "border border-slate-300"
           }`}
         />
       </div>

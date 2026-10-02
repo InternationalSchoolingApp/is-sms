@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User, Briefcase, Mail, MapPin, Map, Building2, Phone as PhoneIcon, GraduationCap, School } from "lucide-react";
 import { IoLogoWhatsapp } from "react-icons/io";
 
@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { PhoneNumberField } from "@/components/student-enroll/PhoneNumberField";
+import { Req } from "@/components/common/Req";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { useCountryOptions, useStateOptions, useCityOptions } from "@/hooks/useStudentDetailsSignup";
 import { useParentDetailsSignup } from "@/hooks/useParentDetailsSignup";
@@ -58,15 +59,6 @@ function defaultFields(studentAddress) {
   };
 }
 
-function Req({ label, required }) {
-  return (
-    <>
-      {label}
-      {required && <span className="text-red-500 top-1 relative"> *</span>}
-    </>
-  );
-}
-
 /**
  * Stage 2 of the enrollment wizard ("Parent information"). Mirrors
  * signupStudentStage2.js / SignupStudentUtil.saveSignupParent() — for
@@ -106,6 +98,29 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
   const countries = useCountryOptions(context);
   const states = useStateOptions(context, fields.countryId);
   const cities = useCityOptions(context, fields.stateId);
+
+  // Re-checks only fields that currently show an error, against the same
+  // validator handleSubmit uses, so the message clears (and the field can
+  // turn green) as soon as the value becomes valid.
+  useEffect(() => {
+    setErrors((prev) => {
+      const keys = Object.keys(prev).filter((key) => key !== "form");
+      if (keys.length === 0) return prev;
+      const { errors: current } = validateParentDetails(fields, { isOneToOneFlex });
+      const next = { ...prev };
+      let changed = false;
+      keys.forEach((key) => {
+        if (!current[key]) {
+          delete next[key];
+          changed = true;
+        } else if (current[key] !== prev[key]) {
+          next[key] = current[key];
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [fields, isOneToOneFlex]);
 
   function setField(name, value) {
     setFields((prev) => ({ ...prev, [name]: value }));
@@ -264,7 +279,17 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
           <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
             <FloatingLabelSelect
               icon={MapPin}
-              label={locationDisabled ? "Country (Parent's Current Location)" : <Req label="Country" required />}
+              label={
+                <Req
+                  label={
+                    <>
+                      Country{" "}
+                      <span className="text-black">(Parent's Current Location)</span>
+                    </>
+                  }
+                  required
+                />
+              }
               value={fields.countryId}
               onValueChange={(v) => {
                 setFields((prev) => ({ ...prev, countryId: v, stateId: "", cityId: "" }));
@@ -277,7 +302,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
             />
             <FloatingLabelSelect
               icon={Map}
-              label={<Req label="Province / State" required={!locationDisabled} />}
+              label={<Req label="Province / State" required />}
               value={fields.stateId}
               onValueChange={(v) => {
                 setFields((prev) => ({ ...prev, stateId: v, cityId: "" }));
@@ -290,7 +315,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
             />
             <FloatingLabelSelect
               icon={Building2}
-              label={<Req label="City" required={!locationDisabled} />}
+              label={<Req label="City" required />}
               value={fields.cityId}
               onValueChange={(v) => {
                 setField("cityId", v);
