@@ -700,11 +700,12 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
     }
   }
 
-  if (reviewQuery.isLoading) {
+  if (reviewQuery.isLoading || paymentOption.isLoading) {
     return (
       <div className="mt-6 grid gap-x-8 gap-y-8 lg:grid-cols-[555fr_723fr]" aria-busy="true">
         <ReviewDetailsSkeleton />
         {paymentOption.data !== "N" && <PaymentOptionsSkeleton />}
+        <FullScreenLoader />
       </div>
     );
   }
