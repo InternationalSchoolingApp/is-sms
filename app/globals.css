@@ -144,6 +144,13 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Reserve space for the fixed maintenance banner (set to its live height
+       by components/common/MaintenanceBanner.jsx; 0px when there's no
+       banner), so it doesn't cover the top of normal in-flow pages. Pages
+       with their OWN fixed top chrome (e.g. AccountCreationForm's mobile
+       header, EnrollmentWizardShell's desktop header) offset that chrome by
+       the same variable directly instead of relying on body padding. */
+    padding-top: var(--maintenance-banner-h, 0px);
   }
   html {
     @apply font-sans;
@@ -193,3 +200,24 @@ input:-internal-autofill-selected {
 }
 
 .iti{width: 100%;}
+
+/*
+ * Maintenance-notice marquee (components/common/MaintenanceBanner.jsx).
+ * The message is repeated enough times to overflow the track; min-width:200%
+ * plus a 0 -> -50% translate loops it seamlessly. `prefers-reduced-motion`
+ * stops the scroll for motion-sensitive users.
+ */
+.maintenance-track {
+  display: inline-block;
+  min-width: 200%;
+  animation: maintenance-scroll 60s linear infinite;
+}
+@keyframes maintenance-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .maintenance-track {
+    animation: none;
+  }
+}

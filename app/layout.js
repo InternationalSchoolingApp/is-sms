@@ -3,6 +3,7 @@ import "./globals.css";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { AuthSessionProvider } from "@/components/providers/AuthSessionProvider";
 import { GlobalLoader } from "@/components/common/GlobalLoader";
+import { MaintenanceBanner } from "@/components/common/MaintenanceBanner";
 import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 
 // Matches the existing JSP app's font (Google Fonts "Open Sans", loaded via
@@ -26,7 +27,10 @@ export default function RootLayout({ children }) {
             mirroring the JSP's <c:if test="${DEPLOYMENT_MODE=='PROD'}">. */}
         <AnalyticsScripts />
         <AuthSessionProvider>
-          <QueryProvider>{children}</QueryProvider>
+          <QueryProvider>
+            <MaintenanceBanner />
+            {children}
+          </QueryProvider>
           <GlobalLoader />
         </AuthSessionProvider>
       </body>

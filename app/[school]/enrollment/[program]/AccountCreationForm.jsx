@@ -220,7 +220,10 @@ export function AccountCreationForm({ school, program, query }) {
   }, []);
 
   return (
-    <main className="relative flex min-h-screen flex-col bg-[#F2F5FA] md:h-screen md:min-h-0 md:overflow-hidden">
+    <main
+      className="relative flex flex-col overflow-hidden bg-[#F2F5FA]"
+      style={{ height: "calc(100dvh - var(--maintenance-banner-h, 0px))" }}
+    >
       {/* Soft decorative blobs — the light-blue organic wave shapes behind
           everything on desktop. Purely decorative, so hidden from a11y and
           from pointer events; below md the layout is compact so they're
@@ -237,7 +240,7 @@ export function AccountCreationForm({ school, program, query }) {
           padding-sync effect can still measure it. */}
       <div
         id="signupMobileHeader"
-        className="fixed left-0 top-0 z-20 flex w-full flex-col items-center gap-2 border-b border-slate-200 bg-[#F0F9FD] px-4 py-3 backdrop-blur md:hidden"
+        className="fixed left-0 top-[var(--maintenance-banner-h,0px)] z-20 flex w-full flex-col items-center gap-2 border-b border-slate-200 bg-[#F0F9FD] px-4 py-3 backdrop-blur md:hidden"
       >
         <SchoolLogo schoolName={displayedSchoolName} width={180} />
         <span className="rounded-full bg-primary px-4 py-1 text-xs font-bold text-white">
@@ -245,11 +248,11 @@ export function AccountCreationForm({ school, program, query }) {
         </span>
       </div>
 
-      {/* Content row: hero (left, fixed) + form (right, scrollable). On
-          desktop this row is a fixed-height flex box (min-h-0 so children
-          can scroll independently); the footer sits below it, pinned to the
-          viewport bottom. */}
-      <div className="relative z-10 flex flex-1 flex-col md:min-h-0 md:flex-row">
+      {/* Content row: hero (left, fixed) + form (right, scrollable). This row
+          is a fixed-height flex box at every breakpoint (min-h-0 so children
+          can actually shrink/scroll instead of growing past the viewport);
+          the fixed header/footer sit outside it, pinned to the viewport. */}
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col md:flex-row">
         {/* Desktop hero column — FIXED (does not scroll). Full column height,
             logo + heading at top, hero image filling the lower portion and
             pinned to the bottom-left. */}
@@ -283,12 +286,17 @@ export function AccountCreationForm({ school, program, query }) {
           </div>
         </section>
 
-        {/* Form column — the ONLY scrollable region on desktop. If the card
-            is taller than the viewport, this column scrolls; the hero stays
-            put. */}
+        {/* Form column — the ONLY scrollable region, on mobile and desktop
+            alike. If the card is taller than the available height, this
+            column scrolls on its own; the hero (desktop) and the fixed
+            header/footer (mobile) stay put. Needs a real height ceiling from
+            `main` (set above) for `overflow-y-auto` + the header/footer
+            padding-sync below to have anything to bound against — without
+            it, this section just grows past the viewport and the padding
+            meant to clear the fixed footer never actually shows. */}
         <section
           id="enrollmentFormWrapper"
-          className="relative flex flex-1 items-start justify-center p-4 md:overflow-y-auto md:p-8"
+          className="relative flex flex-1 items-start justify-center overflow-y-auto p-4 md:p-8"
         >
           {/* my-auto centers the card when it fits, but still lets the top
               scroll into view (no clipping) when it's taller than the

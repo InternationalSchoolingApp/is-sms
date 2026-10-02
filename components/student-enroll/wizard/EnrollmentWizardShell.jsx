@@ -35,7 +35,7 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
   const programLabel = context ? getLearningProgramTheme(context.learningProgram).label : null;
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <header className="fixed z-11 hidden w-full border-b border-slate-200 bg-white px-4 py-3 sm:px-6 md:block">
+      <header className="fixed top-[var(--maintenance-banner-h,0px)] z-11 hidden w-full border-b border-slate-200 bg-white px-4 py-3 sm:px-6 md:block">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <LogoMark schoolName={schoolName} logoUrl={logoUrl} />
           <button
