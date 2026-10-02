@@ -41,7 +41,7 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
           <button
             type="button"
             onClick={() => setConfirmLogout(true)}
-            className="inline-flex items-center gap-2 rounded bg-slate-900 px-2 py-1.5 cursor-pointer text-sm font-semibold text-white hover:bg-slate-800"
+            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-2 py-1.5 cursor-pointer text-sm font-semibold text-white hover:bg-slate-800"
           >
             <LogOut className="h-4 w-4" /> Log Out
           </button>
