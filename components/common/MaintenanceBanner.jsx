@@ -91,7 +91,7 @@ export function MaintenanceBanner() {
       ref={bannerRef}
       role="status"
       aria-live="polite"
-      className="maintenance-banner fixed inset-x-0 top-0 z-[60] overflow-hidden border-b border-amber-300 bg-amber-100 py-1 text-sm font-medium text-amber-900"
+      className="maintenance-banner fixed inset-x-0 top-0 z-[60] overflow-hidden border-b border-emerald-300 bg-emerald-100 py-1 text-sm font-medium text-gray-800"
     >
       <div className="maintenance-track whitespace-nowrap">{items}</div>
     </div>
