@@ -58,7 +58,7 @@ export function AccountCreationForm({ school, program, query }) {
 
   const schoolSettingsLinks = signupInfo?.schoolSettingsLinks || {};
   const displayedSchoolName = signupInfo?.schoolName || schoolInfo.schoolName || "";
-  const displayedProgramLabel = signupInfo?.programLabel || signupInfo?.learningProgramLabel || theme.label;
+  const displayedProgramLabel = theme.label;
   const context = signupInfo
     ? {
         schoolUUID: signupInfo.schoolUuid || schoolUUID,
