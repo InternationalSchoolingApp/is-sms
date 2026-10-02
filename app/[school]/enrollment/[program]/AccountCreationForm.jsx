@@ -301,7 +301,7 @@ export function AccountCreationForm({ school, program, query }) {
           {/* my-auto centers the card when it fits, but still lets the top
               scroll into view (no clipping) when it's taller than the
               column — unlike items-center, which would clip the top. */}
-          <div className="my-4 w-full max-w-lg rounded-3xl bg-white p-6 shadow-xl shadow-slate-900/5 ring-1 ring-slate-900/5 sm:p-8 md:my-auto md:p-10">
+          <div className="my-4 w-full max-w-lg rounded-3xl bg-white p-3 shadow-xl shadow-slate-900/5 ring-1 ring-slate-900/5 sm:p-8 md:my-auto md:p-10">
             {!signupInfo ? (
               signupInfoError ? (
                 <div className="space-y-4 py-6 text-center" role="alert">

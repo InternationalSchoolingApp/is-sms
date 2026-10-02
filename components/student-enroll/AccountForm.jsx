@@ -221,10 +221,10 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
         className="mx-auto w-full  space-y-5"
       >
         <div className="text-center">
-          <h2 className="text-[22px] font-bold leading-tight text-slate-800">
+          <h2 className="text-base md:text-lg font-bold leading-tight text-slate-800">
             Complete your enrollment in just 5 minutes.
           </h2>
-          <p className="mt-1.5 text-sm text-slate-500">
+          <p className="mt-1.5 text-xs md:text-sm text-slate-500">
             Create your account to start your learning journey
           </p>
         </div>
