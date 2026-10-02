@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDown,
@@ -14,6 +14,7 @@ import {
   HeartPulse,
   Info,
   Languages,
+  Lock,
   Palette,
   Plus,
   RefreshCw,
@@ -21,9 +22,9 @@ import {
   Sparkles,
   Trash2,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { ConfirmDialog } from "@/components/student-enroll/ConfirmDialog";
@@ -184,9 +185,12 @@ function CreditProgressRing({ value, max }) {
 // upgrade() itself and still runs before anything changes.
 function VariantToggle({ course, target, onToggle, disabled }) {
   const isTarget = course.courseTypeOriginal !== "Regular";
+  // Off: label names the variant you'd switch TO (target); on: names the
+  // variant the course currently is. Width follows the label, so "Honor" and
+  // "Advanced" both fit with the knob on the opposite side.
+  const label = /adv/i.test(isTarget ? course.courseTypeOriginal : target.courseType) ? "Advanced" : "Honor";
   return (
     <div className="flex shrink-0 items-center gap-2">
-      
       <button
         type="button"
         role="switch"
@@ -195,12 +199,12 @@ function VariantToggle({ course, target, onToggle, disabled }) {
         title={upgradeHint(target.courseType)}
         onClick={() => onToggle(course, target)}
         disabled={disabled}
-        className={`relative h-5 shrink-0 rounded-full transition-colors disabled:opacity-50 ${isTarget ? "bg-primary w-18" : "bg-slate-300 w-20"}`}
+        className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-1 transition-colors disabled:opacity-50 ${
+          isTarget ? "flex-row-reverse bg-primary text-white" : "bg-slate-300 text-slate-600"
+        }`}
       >
-        <span className={`text-xs relative bottom-1 font-medium  ${isTarget ? "text-white right-2" : "text-slate-500 left-1.75"}`}>{course.courseTypeOriginal || (isTarget ? "Honor" : "Regular")}</span>
-        <span
-          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${isTarget ? "-translate-x-0.5" : "-translate-x-15"}`}
-        />
+        <span className="h-4 w-4 shrink-0 rounded-full bg-white shadow" />
+        <span className="px-1 text-xs font-medium leading-none">{label}</span>
       </button>
     </div>
   );
@@ -224,90 +228,68 @@ function useIsMobile(breakpointPx = 768) {
 }
 
 // Mobile-only "category sheet": tapping a category on the mobile course list
-// opens this instead of the desktop inline detail pane. Checking one or more
-// subjects and tapping "+ Add" calls the exact same addSubject(course,
-// subject) used everywhere else, once per checked subject in sequence — same
-// extra-fee/AP/no-live-class confirm gates, same request per subject, just
-// triggered from a batch of checkboxes instead of one inline Add button each.
+// opens this instead of the desktop inline detail pane. Each row has its own
+// "+ Add" button that calls the exact same addSubject(course, subject) used
+// everywhere else, immediately — same extra-fee/AP/no-live-class confirm
+// gates, same request per subject, just triggered per-row instead of via a
+// checkbox + batch "Add" button.
 function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentOption, busy, onAddSubject }) {
-  const [checked, setChecked] = useState(() => new Set());
-  const [adding, setAdding] = useState(false);
-
-  useEffect(() => {
-    setChecked(new Set());
-  }, [course?.courseId]);
+  const [addingId, setAddingId] = useState(null);
 
   if (!course) return null;
 
-  function toggle(id) {
-    setChecked((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
+  const CategoryIcon = categoryIcon(course.courseName);
 
-  async function handleAdd() {
-    const toAdd = course.subjects.filter((subject) => checked.has(String(subject.subjectId)));
-    if (toAdd.length === 0) return;
-    setAdding(true);
+  async function handleAdd(subject) {
+    if (busy || addingId) return;
+    const id = String(subject.subjectId);
+    setAddingId(id);
     try {
-      for (const subject of toAdd) {
-        // eslint-disable-next-line no-await-in-loop -- each add's own confirm gate must resolve before the next one fires
-        await onAddSubject(course, subject);
-      }
-      setChecked(new Set());
+      await onAddSubject(course, subject);
     } finally {
-      setAdding(false);
+      setAddingId(null);
     }
   }
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader className="flex-row items-center justify-between gap-2 space-y-0 border-b border-slate-200 pb-3">
-          <DialogTitle className="text-base text-primary">{course.courseName}</DialogTitle>
-          <span className="text-xs text-slate-500 mr-7">{course.subjects.length} Courses</span>
+      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-md">
+        <DialogHeader className="flex-row items-center gap-2 space-y-0 bg-[#eef4ff] px-4 py-3">
+          <CategoryIcon className="h-5 w-5 shrink-0 text-primary" />
+          <DialogTitle className="text-base font-semibold text-primary">{course.courseName}</DialogTitle>
         </DialogHeader>
-        <div className="max-h-[60vh] space-y-1 overflow-y-auto">
+        <div className="max-h-[60vh] divide-y divide-slate-100 overflow-y-auto">
           {course.subjects.map((subject) => {
             const id = String(subject.subjectId);
             const alreadySelected = selectedIds.includes(id);
             const notes = subjectNotes(subject, data, showPaymentOption);
             return (
-              <label
-                key={id}
-                className={`flex items-center gap-3 rounded-lg px-2 py-2 text-sm ${alreadySelected ? "opacity-60" : ""}`}
-              >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#eef4ff] text-primary">
+              <div key={id} className="flex items-center gap-3 px-4 py-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
                   <BookOpen className="h-4 w-4" />
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block font-medium text-slate-900">{subject.subjectName}</span>
-                  {!hidesCourseCredits(data.standardId) && <span className="block text-xs text-slate-500">{subject.subjectCredit} Credit</span>}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-slate-900">{subject.subjectName}</p>
+                  {!hidesCourseCredits(data.standardId) && <p className="text-xs text-slate-500">{subject.subjectCredit} Credit</p>}
                   {notes.map((note, index) => (
-                    <span key={index} className="block text-xs font-medium text-primary">
+                    <p key={index} className="text-xs font-medium text-primary">
                       {note}
-                    </span>
+                    </p>
                   ))}
-                </span>
-                <Checkbox checked={alreadySelected || checked.has(id)} disabled={alreadySelected || busy || adding} onCheckedChange={() => toggle(id)} />
-              </label>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => handleAdd(subject)}
+                  disabled={alreadySelected || busy || Boolean(addingId)}
+                  className="shrink-0 rounded-md bg-primary hover:bg-primary/90"
+                >
+                  <Plus className="h-4 w-4" /> {alreadySelected ? "Added" : addingId === id ? "Adding…" : "Add"}
+                </Button>
+              </div>
             );
           })}
         </div>
-        <div className="flex justify-center">
-          <Button
-            type="button"
-            onClick={handleAdd}
-            disabled={checked.size === 0 || busy || adding}
-            className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90"
-          >
-            <Plus className="h-4 w-4" /> {adding || busy ? "Please wait…" : "Add"}
-          </Button>
-        </div>
-        
       </DialogContent>
     </Dialog>
   );
@@ -413,6 +395,38 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
   // Legacy oneTimeModal: the "extra fee from now on" notice shows once.
   const extraFeeNoticeShownRef = useRef(false);
 
+  // Desktop/tablet only (>767px): .course-category's height is pinned to
+  // whatever height .suject-category (the sidebar) naturally renders at —
+  // whether that's short (few categories) or tall (many) — and scrolls its
+  // own content via overflow-y when it doesn't fit. A ref callback (not a
+  // useEffect) so it re-measures whenever the sidebar <ul> itself mounts or
+  // unmounts (e.g. the loading -> loaded transition), and a ResizeObserver so
+  // it stays in sync if the sidebar's own height ever changes later (search
+  // filtering the category list, font load, etc.).
+  const [detailPaneHeight, setDetailPaneHeight] = useState(null);
+  const sidebarCleanupRef = useRef(null);
+  const sidebarRefCallback = useCallback((node) => {
+    if (sidebarCleanupRef.current) {
+      sidebarCleanupRef.current();
+      sidebarCleanupRef.current = null;
+    }
+    if (!node) {
+      setDetailPaneHeight(null);
+      return;
+    }
+    function measure() {
+      setDetailPaneHeight(window.innerWidth > 767 ? node.offsetHeight : null);
+    }
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    window.addEventListener("resize", measure);
+    sidebarCleanupRef.current = () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
+
   const data = courseQuery.data?.status === STATUS_SUCCESS ? courseQuery.data : null;
   const initialFailure = courseQuery.data && courseQuery.data.status !== STATUS_SUCCESS ? courseQuery.data : null;
   const showPaymentOption = paymentOption.data;
@@ -491,7 +505,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
     setNotice(null);
     const check = getCourseAddCheck(data);
     if (check.blockedMessage) {
-      setNotice({ tone: "error", text: check.blockedMessage });
+      toast.error(check.blockedMessage);
       return;
     }
     if (check.extraFee && showPaymentOption === "Y") {
@@ -539,20 +553,22 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
       if (!confirmed) return;
     }
     setOpenCourseId(course.courseId);
-    await applyChange({
+    const added = await applyChange({
       selectedSubjects: [...selectedIds, String(subject.subjectId)].join(","),
       controlType: "add",
       courseId: course.courseId,
     });
+    if (added) toast.success(`${subject.subjectName} added`);
   }
 
   async function removeSubject(course) {
     if (busy) return;
-    await applyChange({
+    const removed = await applyChange({
       selectedSubjects: selectedIds.filter((id) => id !== String(course.courseId)).join(","),
       controlType: "remove",
       courseId: course.categoryId,
     });
+    if (removed) toast.success(`${course.courseName} removed`);
   }
 
   async function removeAll() {
@@ -577,11 +593,14 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
       });
       if (!confirmed) return;
     }
-    await applyChange({
+    const switched = await applyChange({
       selectedSubjects: [...selectedIds.filter((id) => id !== String(course.courseId)), String(target.courseId)].join(","),
       controlType: "add",
       courseId: course.categoryId,
     });
+    if (switched) {
+      toast.success(course.courseTypeOriginal === "Regular" ? "Switch to Honor" : "Switch to Regular");
+    }
   }
 
   async function handleGradeChange(newStandardId, newDob) {
@@ -661,7 +680,10 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
   const header = inReview ? null : (
     <>
       {/* Program name is now shown by EnrollmentWizardShell's own hero above this card. */}
-      <h2 className="text-center text-2xl font-bold text-slate-900">Course selection</h2>
+      <h2 className="text-center text-2xl font-bold text-slate-900">
+        <span className="md:hidden">Select Courses</span>
+        <span className="hidden md:inline">Course selection</span>
+      </h2>
     </>
   );
 
@@ -731,14 +753,13 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
     <div className="mx-auto mt-6 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       {header}
 
-      {/* Grade badge / credits requirement / progress ring / selection summary —
-          hidden below 768px per the mobile reference design, which goes
-          straight from the wizard's own step row into "Your Selected
-          Courses". Change-grade is still reachable from md+ (tablet/desktop). */}
-      <div className="mt-4 hidden gap-4 rounded-xl border border-blue-100 bg-[#eef4ff] p-4 md:flex md:flex-wrap md:items-center md:gap-6">
+      {/* Mobile-only: the simple stacked "Grade chip" + plain "Credits
+          Requirement" line from the mobile reference design — no card
+          border, no progress ring, no Selection Summary legend. */}
+      <div className="mt-4 space-y-2 md:hidden">
         {data.standardName && (
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm">
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-[#e6f3ff] px-3 py-2.5">
+            <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
               <GraduationCap className="h-5 w-5 text-primary" />
               {data.standardName}
             </span>
@@ -746,7 +767,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
               type="button"
               onClick={() => setChangeGradeOpen(true)}
               disabled={busy}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
             >
               Change <RefreshCw className="h-3.5 w-3.5" />
             </button>
@@ -754,29 +775,73 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
         )}
 
         {showCreditSummary && (
-          <div className="flex items-center gap-2 border-slate-200 sm:border-l sm:pl-6">
-            <Info className="h-4 w-4 shrink-0 text-primary" />
+          <div className="flex items-center justify-between px-1">
+            <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary text-white">
+                <Info className="h-2.5 w-2.5" />
+              </span>
+              Credits Requirement:
+            </span>
+            <span className="text-sm font-bold text-slate-900">Minimum {data.minCourseLimit} Credits</span>
+          </div>
+        )}
+
+        {/* {showMinBanner && !showCreditSummary && (
+          <span className="inline-block rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-800">
+            You need a minimum of {data.minCourseLimit} credits
+          </span>
+        )} */}
+      </div>
+
+      {/* Desktop/tablet: the full summary card (grade chip, credits
+          requirement, progress ring, Selection Summary legend) — untouched. */}
+      <div className="mt-4 hidden gap-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:flex md:flex-row md:flex-wrap md:items-center md:gap-8 md:p-5">
+        {data.standardName && (
+          <div className="flex items-center gap-2 rounded-lg py-2 px-3 bg-[#e6f3ff]">
+            <span className="inline-flex items-center gap-2  text-sm font-semibold text-slate-900">
+              <GraduationCap className="h-5 w-5 text-primary" />
+              {data.standardName}
+            </span>
+            <button
+              type="button"
+              onClick={() => setChangeGradeOpen(true)}
+              disabled={busy}
+              className="inline-flex items-center gap-1.5 ml-auto rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
+            >
+              Change <RefreshCw className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+
+        {showCreditSummary && (
+          <div className="flex items-center gap-2 border-slate-300 sm:border-l sm:pl-8">
+            
             <div>
-              <p className="text-xs text-slate-500">Credits Requirement</p>
+              <div className="flex">
+                <p className="text-xs text-slate-500">Credits Requirement</p>
+                <span className="flex h-5 w-5 ml-5 shrink-0 items-center justify-center rounded-full bg-primary text-white">
+                    <Info className="h-3 w-3" />
+                  </span>
+              </div>
               <p className="text-sm font-bold text-slate-900">Minimum {data.minCourseLimit} Credits</p>
             </div>
           </div>
         )}
 
         {showCreditSummary && (
-          <div className="flex items-center gap-3 border-slate-200 sm:border-l sm:pl-6">
+          <div className="hidden items-center gap-3 border-slate-300 lg:border-r-1 sm:border-l sm:px-8 md:flex">
             <CreditProgressRing value={Number(data.totalCredit) || 0} max={Number(data.minCourseLimit) || 1} />
             <div>
-              <p className="text-sm font-bold text-slate-900">
+              <p className="text-xl font-bold text-primary">
                 {data.totalCredit}/{data.minCourseLimit}
               </p>
-              <p className="text-xs text-slate-500">Credits Selected</p>
+              <p className="text-sm font-bold text-slate-900">Credits Selected</p>
             </div>
           </div>
         )}
 
         {!fixed && !batchOrProvider39 && (
-          <div className="border-slate-200 sm:border-l sm:pl-6">
+          <div className={`hidden bg-[#e6f3ff] rounded-lg xl:ml-2  py-4 ${showMinBanner && !showCreditSummary ? ``:`flex-1`} sm:px-3 md:block`}>
             <p className="text-xs font-semibold text-slate-500">Selection Summary</p>
             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
               {summaryBuckets.map((bucket) => (
@@ -787,15 +852,17 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
             </div>
           </div>
         )}
-
-        {showMinBanner && !showCreditSummary && (
-          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-800">
+        
+      </div>
+      {showMinBanner && !showCreditSummary && (
+          <div className="md:last:w-full rounded-lg py-1 text-center mt-4 tracking-wide bg-amber-100 text-dark-900">
+          <span className="  px-3 py-1 text-md font-semibold uppercas">
             You need a minimum of {data.minCourseLimit} credits
           </span>
+          </div>
         )}
-      </div>
-
-      {notice && (
+      {
+      notice && (
         <p
           role={notice.tone === "error" ? "alert" : "status"}
           className={`mt-4 text-sm font-semibold ${notice.tone === "error" ? "text-red-600" : notice.tone === "success" ? "text-emerald-700" : "text-slate-600"}`}
@@ -804,7 +871,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
         </p>
       )}
 
-      <div className={`mt-6 grid gap-6 ${showAvailable ? "lg:grid-cols-[1fr_1.6fr]" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
+      <div className={`mt-4 grid gap-6 ${showAvailable ? "lg:grid-cols-[1fr_1.6fr]" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
         <section className="self-start overflow-hidden rounded-xl border border-slate-200 bg-white">
           <header className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
             <h2 className="text-sm font-bold text-slate-900">Your Selected Courses</h2>
@@ -825,20 +892,21 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
           </header>
           {selectedCourses.length === 0 && <p className="px-4 py-6 text-sm text-slate-500">{selectedSummary(data)}</p>}
           {selectedCourses.length > 0 && (
-            <ol className="divide-y divide-slate-100">
+            <ol className="space-y-2 p-3 md:space-y-0 md:divide-y md:divide-slate-100 md:p-0">
               {selectedCourses.map((course) => {
                 const CourseIcon = categoryIcon(course.courseName);
                 const singleUpgradeTarget = course.upgradeCourses?.length === 1 ? course.upgradeCourses[0] : null;
                 return (
-                  <li key={course.courseId} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#eef4ff] text-primary">
+                  <li
+                    key={course.courseId}
+                    className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 shadow-sm md:rounded-none md:border-0 md:bg-transparent md:p-0 md:px-4 md:py-3 md:shadow-none"
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
                       <CourseIcon className="h-4 w-4" />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-900">
-                        {course.courseName}
-                        {!hideCredits && <span className="text-slate-500"> ({course.creditScore} credit)</span>}
-                      </p>
+                      <p className="text-sm font-medium text-slate-900">{course.courseName}</p>
+                      {!hideCredits && <p className="text-xs text-slate-500">{course.creditScore} Credit</p>}
                       <CourseSummaryLink url={course.courseDescriptionUrl} />
                     </div>
                     {singleUpgradeTarget ? (
@@ -861,7 +929,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
                     )}
                     {!fixed && course.courseMandatory === 1 && !batchOrProvider39 && (
                       <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
-                        Mandatory
+                        <Lock className="h-3 w-3" /> Mandatory
                       </span>
                     )}
                     {!fixed && course.courseMandatory === 0 && (
@@ -900,7 +968,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
           <section className="self-start overflow-hidden rounded-xl border border-slate-200 bg-white">
             {/* Desktop/tablet header: title + search + recommended button inline. */}
             <header className="hidden flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 md:flex">
-              <h2 className="text-sm font-bold text-slate-900">Choose Courses</h2>
+              <h2 className="text-sm font-bold text-slate-900">{data.totalCredit >= data.maxCourseLimit ? 'Select Extra Courses':'Select Courses'}</h2>
               <div className="flex flex-1 items-center gap-3 md:flex-none">
                 <div className="relative flex-1 md:w-56 md:flex-none">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -940,8 +1008,8 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
             ) : (
               <>
                 {/* Desktop/tablet: category sidebar + inline detail pane. */}
-                <div className="hidden md:grid md:grid-cols-[190px_1fr]">
-                  <ul className="border-r border-slate-200">
+                <div className="hidden md:grid md:grid-cols-[190px_1fr] md:items-start">
+                  <ul ref={sidebarRefCallback} className="suject-category">
                     {visibleCourses.map((course) => {
                       const CategoryIcon = categoryIcon(course.courseName);
                       const active = activeCourse?.courseId === course.courseId;
@@ -951,7 +1019,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
                             type="button"
                             onClick={() => setOpenCourseId(course.courseId)}
                             className={`flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium ${
-                              active ? "bg-[#eef4ff] text-primary" : "text-slate-700 hover:bg-slate-50"
+                              active ? "bg-[#e6f3ff] text-primary" : "text-slate-700 hover:bg-slate-50"
                             }`}
                           >
                             <CategoryIcon className="h-4 w-4 shrink-0" />
@@ -969,14 +1037,17 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
                     })}
                   </ul>
                   {activeCourse && (
-                    <div>
+                    <div
+                      className="course-category border-l border-slate-200"
+                      
+                    >
                       <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
                         <span className="text-sm font-semibold text-primary">{activeCourse.courseName}</span>
                         <span className="flex items-center gap-1 text-xs text-slate-500">
                           {activeCourse.subjects.length} Courses <ChevronDown className="h-3.5 w-3.5" />
                         </span>
                       </div>
-                      <div className="space-y-2 p-4">
+                      <div className="space-y-2 p-4" style={detailPaneHeight>250 ? { height: detailPaneHeight, overflowY: "auto" } : { maxHeight: "300px", overflowY: "auto" }}>
                         {activeCourse.courseDescription && <p className="text-xs text-slate-500">{activeCourse.courseDescription}</p>}
                         {activeCourse.subjects
                           .filter((subject) => !query || subject.subjectName?.toLowerCase().includes(query) || activeCourse.courseName?.toLowerCase().includes(query))
@@ -984,13 +1055,13 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
                             const notes = subjectNotes(subject, data, showPaymentOption);
                             return (
                               <div key={subject.subjectId} className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2">
-                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#eef4ff] text-primary">
+                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
                                   <BookOpen className="h-4 w-4" />
                                 </span>
                                 <div className="min-w-0 flex-1">
                                   <p className="text-sm font-medium text-slate-900">{subject.subjectName}</p>
                                   {notes.length > 0 && (
-                                    <ul className="mt-1 space-y-0.5 text-xs text-slate-500">
+                                    <ul className="mt-1 space-y-0.5 font-semibold text-xs text-primary">
                                       {notes.map((note, index) => (
                                         <li key={index}>• {note}</li>
                                       ))}
@@ -1028,11 +1099,11 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
                           onClick={() => setOpenCourseId(course.courseId)}
                           className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-slate-700"
                         >
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#eef4ff] text-primary">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
                             <CategoryIcon className="h-4 w-4" />
                           </span>
                           <span className="min-w-0 flex-1 truncate">{course.courseName}</span>
-                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-500">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-[11px] font-semibold text-slate-700">
                             {course.subjects.length}
                           </span>
                         </button>

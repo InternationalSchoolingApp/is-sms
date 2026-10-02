@@ -79,11 +79,11 @@ export function ChangeGradeDialog({ open, onOpenChange, grades, courseProviderId
           />
         </div>
         <p className="text-center text-xs text-slate-400">(MMM DD, YYYY)</p>
-        <DialogFooter className="justify-center sm:justify-center">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
+        <DialogFooter className="flex flex-row justify-center">
+          <Button type="button" className="w-fit" variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
             Cancel
           </Button>
-          <Button type="button" onClick={handleSave} disabled={busy}>
+          <Button type="button" className="w-fit" onClick={handleSave} disabled={busy}>
             {busy ? "Saving…" : "Save"}
           </Button>
         </DialogFooter>

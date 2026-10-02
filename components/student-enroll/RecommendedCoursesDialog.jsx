@@ -66,13 +66,13 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader className="gap-0 border-b py-2 px-4 -mx-4 -mb-4">
           <DialogTitle className="text-lg">Recommended Courses</DialogTitle>
           {data?.gradeName && <p className="text-sm text-slate-500">{data.gradeName}</p>}
         </DialogHeader>
         <div className="w-full pt-4">
-          <div className="flex items-center gap-3 rounded-lg bg-[#eef4ff] px-4 py-3 mb-5 border border-primary">
+          <div className="flex items-center gap-3 rounded-lg bg-[#e6f3ff] px-4 py-3 mb-5 border border-primary">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-white">
               <GraduationCap className="h-4 w-4" />
             </span>
@@ -91,7 +91,7 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
               <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200">
                 {mandatoryCourses.map((course) => (
                   <li key={course.subjectId} className="flex items-center gap-3 px-3 py-2 text-sm">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#eef4ff] text-primary">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
                       <BookOpen className="h-4 w-4" />
                     </span>
                     <div className="inline-flex flex-col">
@@ -109,7 +109,7 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
 
           {optionalCourses.length > 0 && (
             <div>
-              <div className="mb-2 flex items-center justify-between gap-3">
+              <div className="mb-2 flex items-center justify-between gap-3 mt-2">
                 <p className="text-sm font-semibold text-black-900">We recommend these courses for {data?.gradeName}</p>
                 <Button type="button" size="sm" onClick={toggleAll} className="rounded-md bg-primary hover:bg-primary/90">
                   {allOptionalChecked ? "Remove All" : "+ Add All"}
@@ -121,7 +121,7 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
                   const selected = checked.has(id);
                   return (
                     <li key={id} className="flex items-center gap-3 px-3 py-2 text-sm">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#eef4ff] text-primary">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
                         <BookOpen className="h-4 w-4" />
                       </span>
                       <div className="inline-flex flex-col">
