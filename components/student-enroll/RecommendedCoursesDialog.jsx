@@ -66,13 +66,13 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] flex-col">
-        <DialogHeader className="gap-0 border-b py-2 px-4 -mx-4 -mb-4">
+      <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
+        <DialogHeader className="shrink-0 gap-0 border-b px-4 py-3 pr-12">
           <DialogTitle className="text-lg">Recommended Courses</DialogTitle>
           {data?.gradeName && <p className="text-sm text-slate-500">{data.gradeName}</p>}
         </DialogHeader>
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="w-full pt-4">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+          <div className="w-full">
             <div className="flex items-center gap-3 rounded-lg bg-[#e6f3ff] px-4 py-3 mb-5 border border-primary">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-white">
                 <GraduationCap className="h-4 w-4" />
@@ -141,7 +141,7 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
             <strong>Note:</strong> By adding the above recommended courses, your current course selection will be replaced. You can still add or remove courses.
           </p>
         </div>
-        <DialogFooter className="sm:justify-center">
+        <DialogFooter className="mx-0 mb-0 shrink-0 border-t bg-white px-4 py-3 sm:justify-center">
           <Button type="button" onClick={handleConfirm} disabled={busy} className="rounded-md bg-primary px-10 hover:bg-primary/90">
             {busy ? "Please wait…" : "Confirm"}
           </Button>
