@@ -5,24 +5,12 @@ import { FaShieldAlt } from "react-icons/fa";
 import { AccountInput } from "@/components/student-enroll/AccountInput";
 import { getCaptchaImageUrl } from "@/services/studentSignupClientApi";
 
-/**
- * Captcha row for the Account Creation card — matches the signup-new
- * design: a plain "Enter CAPTCHA code" input, a light-blue rounded box
- * showing the challenge, and a solid-blue rounded refresh button.
- *
- * NOTE: the box on the right is the REAL server-generated captcha IMAGE
- * (getCaptchaImageUrl → backend captcha.jpg), NOT static text — the
- * backend validates the typed code against the exact image it generated in
- * the session (see services/authApi.js). The mock's "423567" is only what
- * a generated image happens to look like; it must stay an <img>, so the
- * code the user sees always matches what the server will accept.
- */
 export function CaptchaField({ schoolUUID, value, onChange, error, cacheBust, onRefresh }) {
   return (
     <div className="flex items-start gap-2.5">
       <AccountInput
         icon={FaShieldAlt}
-        label="Enter CAPTCHA code"
+        label="Enter CAPTCHA"
         inputMode="numeric"
         maxLength={6}
         value={value}
