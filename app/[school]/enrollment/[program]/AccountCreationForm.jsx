@@ -221,7 +221,7 @@ export function AccountCreationForm({ school, program, query }) {
 
   return (
     <main
-      className="relative flex flex-col overflow-hidden bg-[#F2F5FA]"
+      className="relative flex flex-col overflow-hidden bg-white md:bg-[#F2F5FA]"
       style={{ height: "calc(100dvh - var(--maintenance-banner-h, 0px))" }}
     >
       {/* Soft decorative blobs — the light-blue organic wave shapes behind
@@ -233,19 +233,11 @@ export function AccountCreationForm({ school, program, query }) {
         <div className="absolute left-1/3 top-10 h-72 w-72 rounded-full bg-[#F2F5FA] opacity-50 blur-3xl" />
         <div className="absolute -bottom-24 right-10 h-96 w-96 rounded-full bg-[#F2F5FA] opacity-50 blur-3xl" />
       </div>
-
-      {/* Compact mobile-only header — small icon logo + badge + heading +
-          divider, no photo hero. Hidden from md up, where the hero column
-          below takes over instead. Keeps id="signupMobileHeader" so the
-          padding-sync effect can still measure it. */}
       <div
         id="signupMobileHeader"
-        className="fixed left-0 top-[var(--maintenance-banner-h,0px)] z-20 flex w-full flex-col items-center gap-2 border-b border-slate-200 bg-[#F0F9FD] px-4 py-3 backdrop-blur md:hidden"
+        className="fixed left-0 top-[var(--maintenance-banner-h,0px)] z-20 flex w-full flex-col items-center gap-2 bg-white px-4 py-3 backdrop-blur md:hidden"
       >
         <SchoolLogo schoolName={displayedSchoolName} width={180} />
-        <span className="rounded-full bg-primary px-4 py-1 text-xs font-bold text-white">
-          {displayedProgramLabel}
-        </span>
       </div>
 
       {/* Content row: hero (left, fixed) + form (right, scrollable). This row
@@ -298,10 +290,10 @@ export function AccountCreationForm({ school, program, query }) {
           id="enrollmentFormWrapper"
           className="relative flex flex-1 items-start justify-center overflow-y-auto p-4 md:p-8"
         >
-          {/* my-auto centers the card when it fits, but still lets the top
-              scroll into view (no clipping) when it's taller than the
-              column — unlike items-center, which would clip the top. */}
-          <div className="my-4 w-full max-w-lg rounded-3xl bg-white p-3 shadow-xl shadow-slate-900/5 ring-1 ring-slate-900/5 sm:p-8 md:my-auto md:p-10">
+          <div className="mb-4 w-full max-w-lg rounded-3xl bg-white p-3 shadow-xl shadow-slate-900/5 md:ring-1 ring-slate-900/5 sm:p-8 md:my-auto md:p-10">
+            <p className="text-base font-bold text-slate-800 text-center md:hidden">
+              {displayedProgramLabel}
+            </p>
             {!signupInfo ? (
               signupInfoError ? (
                 <div className="space-y-4 py-6 text-center" role="alert">
