@@ -8,6 +8,7 @@ import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { PhoneNumberField } from "@/components/student-enroll/PhoneNumberField";
+import { Req } from "@/components/common/Req";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import {
   useStudentDetailsSignup,
@@ -29,6 +30,18 @@ export const GENDER_OPTIONS = [
   { value: "MALE", label: "Male" },
   { value: "FEMALE", label: "Female" },
   { value: "DONOTWANTTOSPECIFY", label: "Do Not Want To Specify" },
+];
+
+// Dual Diploma "Student Current Grade" is a fixed Grade 8-12 list in the old
+// app (getStandardContentForDualDimploma() in masterContent.js; ids from
+// getGradesData()), independent of the enrollment grade list — which for
+// Dual Diploma doesn't include Grade 8.
+export const CURRENT_GRADE_OPTIONS = [
+  { value: "3", label: "Grade 8" },
+  { value: "4", label: "Grade 9" },
+  { value: "5", label: "Grade 10" },
+  { value: "6", label: "Grade 11" },
+  { value: "7", label: "Grade 12" },
 ];
 
 const INITIAL_FIELDS = {
@@ -53,27 +66,17 @@ const INITIAL_FIELDS = {
   countryIdOfSchool: "",
 };
 
-/** Every field label goes through this — the red asterisk is the one bit every field needs consistently. */
-function Req({ label, required }) {
-  return (
-    <>
-      {label}
-      {required && <span className="text-red-500 top-1 relative"> *</span>}
-    </>
-  );
-}
-
 // Gray placeholder block matching one field's footprint — used only while
 // the step's required master-data queries (grades/countries) are loading.
 function FieldSkeleton() {
-  return <div className="h-12 w-full animate-pulse rounded-md bg-slate-200" />;
+  return <div className="h-12 w-full animate-pulse rounded-md bg-slate-100" />;
 }
 
 /** Structural skeleton mirroring the real form's grid, shown until grades + countries have loaded. */
 function Stage1Skeleton({ isDualDiploma }) {
   return (
-    <div>
-      <h2 className="text-center text-2xl font-bold text-slate-900">Student Details</h2>
+    <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
+      <h2 className="text-center text-2xl font-extrabold text-slate-900">Student Details</h2>
       <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
           <FieldSkeleton key={`identity-${i}`} />
@@ -97,7 +100,7 @@ function Stage1Skeleton({ isDualDiploma }) {
         </div>
       )}
       <div className="mt-10 flex justify-center">
-        <div className="h-11 w-40 animate-pulse rounded-md bg-slate-200" />
+        <div className="h-8 w-20 animate-pulse rounded-md bg-slate-100" />
       </div>
     </div>
   );
@@ -158,6 +161,32 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
     if (match) setField("nationality", match.value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countries.data]);
+
+  // Re-checks only fields that currently show an error, against the same
+  // validators handleSubmit uses, so the message clears (and the field can
+  // turn green) as soon as the value becomes valid instead of lingering
+  // until the next submit.
+  useEffect(() => {
+    setErrors((prev) => {
+      const keys = Object.keys(prev).filter((key) => key !== "form");
+      if (keys.length === 0) return prev;
+      const { errors: current } = validateStudentDetails(fields, { isDualDiploma });
+      const dobError = validateAge(fields.dob);
+      if (dobError && !current.dob) current.dob = dobError;
+      const next = { ...prev };
+      let changed = false;
+      keys.forEach((key) => {
+        if (!current[key]) {
+          delete next[key];
+          changed = true;
+        } else if (current[key] !== prev[key]) {
+          next[key] = current[key];
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [fields, isDualDiploma]);
 
   function setField(name, value) {
     setFields((prev) => ({ ...prev, [name]: value }));
@@ -243,7 +272,12 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           />
           <DatePicker
             icon={Cake}
-            label={<Req label="Date of Birth" required />}
+            label={<Req label={
+                <>
+                  Date of Birth{" "}
+                  <span className="text-black">(Month Day, Year)</span>
+                </>
+              } required />}
             value={fields.dob}
             onChange={(v) => setField("dob", v)}
             fromDate={dobBounds.fromDate}
@@ -269,9 +303,17 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
             value={fields.communicationEmail}
             onChange={(e) => setField("communicationEmail", e.target.value)}
             error={errors.communicationEmail}
+            disabled
           />
           <PhoneNumberField
-            label={<Req label="Mobile Number" required />}
+            label={<Req 
+              label={
+                <>
+                  Mobile Number{" "}
+                  <span className="text-black">(Student or Parent)</span>
+                </>
+              }
+            required />}
             value={fields.contactNumber}
             className="pb-1.5 w-full"
             // Only takes effect at mount (see useIntlTelInput's doc
@@ -288,7 +330,14 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           />
           <FloatingLabelSelect
             icon={Globe}
-            label={<Req label="Nationality" required />}
+            label={<Req label={
+                  <>
+                    Nationality{" "}
+                    <span className="text-black">
+                      (You must have a valid National ID)
+                    </span>
+                  </>
+                } required />}
             value={fields.nationality}
             onValueChange={(v) => setField("nationality", v)}
             options={countries.data || []}
@@ -300,7 +349,17 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
         <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
           <FloatingLabelSelect
             icon={MapPin}
-            label={<Req label="Country" required />}
+            label={
+              <Req
+                label={
+                  <>
+                    Country{" "}
+                    <span className="text-black">(Student's Current Location)</span>
+                  </>
+                }
+                required
+              />
+            }
             value={fields.countryId}
             onValueChange={setCountry}
             options={countries.data || []}
@@ -344,7 +403,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
               label={<Req label="Current Grade" required />}
               value={fields.studyingGradeId}
               onValueChange={(v) => setField("studyingGradeId", v)}
-              options={grades.data || []}
+              options={CURRENT_GRADE_OPTIONS}
               error={errors.studyingGradeId}
             />
             <FloatingLabelSelect

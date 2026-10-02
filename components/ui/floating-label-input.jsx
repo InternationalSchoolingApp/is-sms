@@ -54,7 +54,7 @@ export function FloatingLabelInput({
           } ${
             hasError
               ? "border-2 border-red-500"
-              : "border-slate-300 focus:border-2 focus:!border-slate-900"
+              : "border-slate-300 focus:border-2 focus:!border-slate-900 [&:not(:placeholder-shown):not(:focus):not(:disabled)]:border-2 [&:not(:placeholder-shown):not(:focus):not(:disabled)]:border-emerald-500"
           } focus-visible:ring-0 ${inputClassName}`}
           {...inputProps}
         />

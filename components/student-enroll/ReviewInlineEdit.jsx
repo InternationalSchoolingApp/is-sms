@@ -11,7 +11,8 @@ import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { PhoneNumberField } from "@/components/student-enroll/PhoneNumberField";
-import { GENDER_OPTIONS } from "@/components/student-enroll/Stage1StudentDetails";
+import { Req } from "@/components/common/Req";
+import { CURRENT_GRADE_OPTIONS, GENDER_OPTIONS } from "@/components/student-enroll/Stage1StudentDetails";
 import { RELATION_OPTIONS, WORKING_PROFESSION_OPTIONS } from "@/components/student-enroll/Stage2ParentDetails";
 import {
   mapSignupStudentToFields,
@@ -42,16 +43,6 @@ const GRID = "grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3";
  * and 2 use, and — like legacy — skips the request entirely when nothing
  * changed since Edit was clicked.
  */
-
-/** Same red asterisk the step forms use. */
-function Req({ label, required }) {
-  return (
-    <>
-      {label}
-      {required && <span className="relative top-1 text-red-500"> *</span>}
-    </>
-  );
-}
 
 function EditCard({ title, saving, onSave, onCancel, formError, children }) {
   return (
@@ -284,7 +275,7 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
               label={<Req label="Current Grade" required />}
               value={fields.studyingGradeId}
               onValueChange={set("studyingGradeId")}
-              options={grades.data || []}
+              options={CURRENT_GRADE_OPTIONS}
               error={errors.studyingGradeId}
             />
             <FloatingLabelSelect

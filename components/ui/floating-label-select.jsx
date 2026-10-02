@@ -55,7 +55,7 @@ function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, 
             className={`!h-12 rounded-md w-full pt-1 ${Icon ? "pl-10" : "pl-3.5"} pr-3.5 ${
               disabled
                 ? "cursor-not-allowed bg-slate-100 text-black disabled:opacity-100"
-                : `bg-white ${error ? "border-2 border-red-500" : open ? "border-2 border-slate-900" : "border-slate-300"}`
+                : `bg-white ${error ? "border-2 border-red-500" : open ? "border-2 border-slate-900" : value ? "border-2 border-emerald-500" : "border-slate-300"}`
             }`}
           >
             <SelectValue>{selected?.label ?? ""}</SelectValue>
@@ -122,7 +122,7 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
             className={`flex !h-12 w-full items-center rounded-md border pr-8 pt-1 text-left text-sm ${Icon ? "pl-10" : "pl-3.5"} ${
               disabled
                 ? "cursor-not-allowed bg-slate-100 text-black disabled:opacity-100"
-                : `bg-white ${error ? "border-2 border-red-500" : open ? "border-2 border-slate-900" : "border-slate-300"}`
+                : `bg-white ${error ? "border-2 border-red-500" : open ? "border-2 border-slate-900" : value ? "border-2 border-emerald-500" : "border-slate-300"}`
             }`}
           >
             <span className="truncate">{selected?.label ?? ""}</span>
