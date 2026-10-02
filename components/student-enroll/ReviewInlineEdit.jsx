@@ -56,13 +56,16 @@ function Req({ label, required }) {
 function EditCard({ title, saving, onSave, onCancel, formError, children }) {
   return (
     <Dialog open onOpenChange={(open) => !open && !saving && onCancel()}>
-      <DialogContent showCloseButton={!saving} className="max-h-[90vh] gap-0 overflow-y-auto px-7 py-6 sm:max-w-[1112px]">
-        <DialogHeader>
+      {/* Below md the title and the Save button stay pinned while only the form body scrolls. */}
+      <DialogContent showCloseButton={!saving} className="flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-[1112px]">
+        <DialogHeader className="shrink-0 border-b border-slate-200 px-7 py-4 md:border-0 md:pb-0 md:pt-6">
           <DialogTitle className="text-xl font-bold text-slate-900">{title}</DialogTitle>
         </DialogHeader>
-        <div className="mt-6">{children}</div>
-        {formError && <p className="mt-4 text-center text-sm font-semibold text-red-600">{formError}</p>}
-        <div className="mt-8 flex justify-center">
+        <div className="min-h-0 flex-1 overflow-y-auto px-7 pt-6 md:pb-2">
+          {children}
+          {formError && <p className="mt-4 text-center text-sm font-semibold text-red-600">{formError}</p>}
+        </div>
+        <div className="flex shrink-0 justify-center border-t border-slate-200 bg-white px-7 py-4 md:border-0 md:pb-6 md:pt-6">
           <Button type="button" onClick={onSave} disabled={saving} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
             {saving ? "Saving…" : "Save"}
           </Button>
@@ -180,8 +183,9 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
             options={grades.data || []}
             error={errors.standardId}
             searchable
+            disabled
           />
-          {/* Only Date of Birth and Email are locked; everything else is editable. */}
+          {/* Grade, Date of Birth and Email are locked; everything else is editable. */}
           <DatePicker
             icon={Cake}
             label={<Req label="Date of Birth" required />}
@@ -211,7 +215,7 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
             value={fields.communicationEmail}
             readOnly
             disabled
-            inputClassName="cursor-not-allowed bg-slate-100 text-slate-500"
+            inputClassName="cursor-not-allowed bg-slate-100 text-slate-500 disabled:pointer-events-auto disabled:opacity-100"
           />
           <PhoneNumberField
             label={<Req label="Mobile Number" required />}

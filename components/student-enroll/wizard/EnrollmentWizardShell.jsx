@@ -134,9 +134,6 @@ function StepRow({ currentIndex }) {
   return (
     <div className="mx-auto mt-2 max-w-2xl px-4 md:mt-4 md:px-0">
       <div className="relative flex items-start justify-between">
-        {/* Steps are fixed-width columns (circle-wide on mobile, w-16 from md), so circle centres sit
-            a fixed distance from each end; the track runs exactly first-centre to last-centre and the
-            green bar is a % of that track. */}
         <div className="absolute inset-x-[18px] top-[18px] -translate-y-1/2 md:inset-x-8 md:top-5" aria-hidden="true">
           <div className="h-[3px] w-full bg-slate-200 md:h-px" />
           <div
