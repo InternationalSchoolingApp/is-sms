@@ -177,7 +177,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
       <h2 className="text-center text-2xl font-bold text-slate-900">{heading}</h2>
 
       {isOneToOneFlex ? (
-        <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3 [&_label]:max-w-[calc(100%-3.5rem)]">
           <FloatingLabelSelect
             icon={GraduationCap}
             label={<Req label="Are you a student or a working professional?" required />}
