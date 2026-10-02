@@ -79,6 +79,10 @@ export function getLearningProgramShortCode(value) {
   return findLearningProgram(value)?.routeCode || "O";
 }
 
+export function getLearningProgramLabel(value) {
+  return findLearningProgram(value)?.learningProgramLabel || "Enrollment";
+}
+
 export function getLearningProgramsForSelect() {
   return [...LEARNING_PROGRAMS]
     .sort((left, right) => left.orderId - right.orderId)

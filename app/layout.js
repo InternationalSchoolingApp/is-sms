@@ -5,20 +5,16 @@ import { QueryProvider } from "@/components/providers/QueryProvider";
 import { AuthSessionProvider } from "@/components/providers/AuthSessionProvider";
 import { GlobalLoader } from "@/components/common/GlobalLoader";
 import { MaintenanceBanner } from "@/components/common/MaintenanceBanner";
+import { PageTitle } from "@/components/common/PageTitle";
 import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 
-// Matches the existing JSP app's font (Google Fonts "Open Sans", loaded via
-// <link> in SignupStudent.jsp / SignupCommon.jsp) — confirmed at source.
 const openSans = Open_Sans({
   variable: "--font-open-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
 });
 
-export const metadata = {
-  title: "Student Signup",
-  description: "Student Signup — Next.js migration",
-};
+export const metadata = {};
 
 export default function RootLayout({ children }) {
   return (
@@ -29,6 +25,7 @@ export default function RootLayout({ children }) {
         <AnalyticsScripts />
         <AuthSessionProvider>
           <QueryProvider>
+            <PageTitle />
             <MaintenanceBanner />
             {children}
           </QueryProvider>
