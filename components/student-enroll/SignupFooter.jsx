@@ -9,7 +9,7 @@ export function SignupFooter({ whatsAppNumber, schoolName }) {
   const copyrightYear = new Date().getFullYear();
 
   return (
-    <div id="signupMobileFooter" className="md:hidden fixed bottom-0 left-0 w-full  bg-white">
+    <div id="signupMobileFooter" className="md:hidden fixed bottom-0 left-0 z-20 w-full bg-white">
       {whatsAppNumber && (
         <a
           href={`https://api.whatsapp.com/send?phone=${whatsAppNumber}`}
