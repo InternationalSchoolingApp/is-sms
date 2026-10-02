@@ -38,6 +38,13 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
     referralCode: context?.referralCode || "",
   }));
   const [errors, setErrors] = useState({});
+  // Per-field "has the user interacted with this yet" flag — a field's own
+  // live validity check (below) only renders as a red error once it's been
+  // touched (blurred, or a submit was attempted), matching the previous
+  // "only show after Next" UX. Once shown though, every error here is
+  // recomputed live from `fields` on every render, so fixing the value
+  // clears the red state immediately — no second blur/click needed.
+  const [touched, setTouched] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
@@ -73,8 +80,32 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
   const passwordIsValid = useMemo(() => getPasswordStrength(fields.password).isValid, [fields.password]);
   const confirmMismatch = fields.confirmPassword.length > 0 && fields.confirmPassword !== fields.password;
 
+  // Live per-field validity — recomputed every render from the current
+  // `fields` value, so a field clears its red state the instant it becomes
+  // valid, without waiting for another blur or a Next click. Each is only
+  // ever shown once `touched[field]` is true (set on blur/submit below),
+  // so an untouched field stays neutral exactly like before.
+  const emailInvalid = !isValidEmail(fields.email);
+  const confirmEmailInvalid = !emailsMatch || !isValidEmail(fields.confirmEmail);
+  const captchaInvalid = !fields.captcha.trim();
+  const checkTermsInvalid = !fields.checkTerms;
+
+  const emailError = touched.email && emailInvalid ? "Email is either empty or invalid" : undefined;
+  const confirmEmailError =
+    touched.confirmEmail && confirmEmailInvalid
+      ? !emailsMatch
+        ? "Email and confirm email are not same"
+        : "Email is either empty or invalid"
+      : undefined;
+  const captchaError = touched.captcha && captchaInvalid ? "Please enter captcha" : undefined;
+  const checkTermsError = touched.checkTerms && checkTermsInvalid ? "Please accept terms and conditions" : undefined;
+
   function setField(name, value) {
     setFields((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function touchField(name) {
+    setTouched((prev) => (prev[name] ? prev : { ...prev, [name]: true }));
   }
 
   function refreshCaptcha() {
@@ -161,8 +192,13 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
         setFields(domFields);
       }
 
-      const { valid, errors: validationErrors } = validateAccountFormOnline(domFields);
-      setErrors(validationErrors);
+      // Mark every field touched so a first-click Next shows every live
+      // error immediately, same as the old one-shot setErrors(...) did —
+      // but each one now keeps clearing live afterward instead of staying
+      // frozen at whatever validateAccountFormOnline saw at this instant.
+      setTouched({ email: true, confirmEmail: true, password: true, confirmPassword: true, captcha: true, checkTerms: true });
+
+      const { valid } = validateAccountFormOnline(domFields);
       if (!valid) return;
 
       const response = await signup.mutateAsync(domFields);
@@ -238,8 +274,11 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           value={fields.email}
           disabled={Boolean(context?.username)}
           onChange={(e) => setField("email", e.target.value)}
-          onBlur={(e) => handleEmailBlur(e.target.value)}
-          error={errors.email}
+          onBlur={(e) => {
+            touchField("email");
+            handleEmailBlur(e.target.value);
+          }}
+          error={emailError}
         />
 
         <AccountInput
@@ -251,7 +290,8 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           value={fields.confirmEmail}
           disabled={Boolean(context?.username)}
           onChange={(e) => setField("confirmEmail", e.target.value)}
-          error={!emailsMatch ? "Email and confirm email are not same" : errors.confirmEmail}
+          onBlur={() => touchField("confirmEmail")}
+          error={confirmEmailError}
         />
 
         <div className="relative">
@@ -269,9 +309,12 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
             autoComplete="new-password"
             value={fields.password}
             onFocus={() => setPasswordFocused(true)}
-            onBlur={() => setPasswordFocused(false)}
+            onBlur={() => {
+              setPasswordFocused(false);
+              touchField("password");
+            }}
             onChange={(e) => setField("password", e.target.value)}
-            error={!passwordFocused && !passwordIsValid ? errors.password : undefined}
+            error={touched.password && !passwordFocused && !passwordIsValid ? "Password is either empty or invalid" : undefined}
             trailing={
               <button
                 type="button"
@@ -310,6 +353,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           autoComplete="new-password"
           value={fields.confirmPassword}
           onChange={(e) => setField("confirmPassword", e.target.value)}
+          onBlur={() => touchField("confirmPassword")}
           error={confirmMismatch ? "Please re-enter the same password" : undefined}
           trailing={
             <button
@@ -329,7 +373,8 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           schoolUUID={context.schoolUUID}
           value={fields.captcha}
           onChange={(v) => setField("captcha", v)}
-          error={errors.captcha}
+          onBlur={() => touchField("captcha")}
+          error={captchaError}
           cacheBust={captchaCacheBust}
           onRefresh={refreshCaptcha}
         />
@@ -339,7 +384,10 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
         <label className="flex items-start gap-2.5 text-[13px] leading-relaxed text-slate-600">
           <Checkbox
             checked={fields.checkTerms}
-            onCheckedChange={(checked) => setField("checkTerms", checked === true)}
+            onCheckedChange={(checked) => {
+              setField("checkTerms", checked === true);
+              touchField("checkTerms");
+            }}
             className="mt-0.5 shrink-0"
           />
           <span>
@@ -365,7 +413,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
             </a>
           </span>
         </label>
-        {errors.checkTerms && <p className="text-xs text-red-600">{errors.checkTerms}</p>}
+        {checkTermsError && <p className="text-xs text-red-600">{checkTermsError}</p>}
 
         <div className="flex justify-center pt-1">
           <Button

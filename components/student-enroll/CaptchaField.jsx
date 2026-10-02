@@ -5,7 +5,7 @@ import { FaShieldAlt } from "react-icons/fa";
 import { AccountInput } from "@/components/student-enroll/AccountInput";
 import { getCaptchaImageUrl } from "@/services/studentSignupClientApi";
 
-export function CaptchaField({ schoolUUID, value, onChange, error, cacheBust, onRefresh }) {
+export function CaptchaField({ schoolUUID, value, onChange, onBlur, error, cacheBust, onRefresh }) {
   return (
     <div className="flex items-start gap-2.5">
       <AccountInput
@@ -15,6 +15,7 @@ export function CaptchaField({ schoolUUID, value, onChange, error, cacheBust, on
         maxLength={6}
         value={value}
         onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, ""))}
+        onBlur={onBlur}
         error={error}
         className="min-w-0 flex-1"
       />
