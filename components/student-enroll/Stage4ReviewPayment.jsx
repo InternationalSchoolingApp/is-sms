@@ -376,9 +376,6 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
     }
   }, [failure, context?.schoolUUID, userId, onSessionExpired]);
 
-  // getSignupStatusFinal(): "3" = session out; anything other than 0/2/3 means
-  // the stage moved server-side (enrollment complete / custom plan confirmed)
-  // and the response carries the page to go to.
   const stageStatusData = stageStatus.data;
   useEffect(() => {
     if (!stageStatusData || context.customPaymentEnabled) return;
