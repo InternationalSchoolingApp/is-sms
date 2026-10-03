@@ -305,6 +305,23 @@ function OfflineForm({ option, details, onUploadProof, onSubmitOffline, busy }) 
   );
 }
 
+// Back / Pay Now action row — rendered by the parent in a sticky footer so it
+// stays pinned to the bottom of the modal while the panel above it scrolls.
+function GatewayActions({ option, busy, onPay, onClose }) {
+  return (
+    <div className="flex items-center justify-end gap-3">
+      <Button type="button" variant="outline" onClick={onClose} disabled={busy} className="gap-2">
+        <ArrowLeft className="h-4 w-4" /> Back
+      </Button>
+      {!NO_PAY_BUTTON.includes(option.name) && (
+        <Button type="button" onClick={() => onPay(option)} disabled={busy} className="gap-2 px-6">
+          {busy ? "Please wait…" : "Pay Now"} <ArrowRight className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function GatewayPanel({ option, details, airwallexMethods, busy, onPay, onClose, onUploadProof, onSubmitOffline }) {
   const pay = () => onPay(option);
   const hasBanner = ["STRIPE", "Airwallex", "YOCO", "WIRETRANSFER", "CONVERA", "AFS", "CASH"].includes(option.name);
@@ -395,17 +412,6 @@ function GatewayPanel({ option, details, airwallexMethods, busy, onPay, onClose,
           busy={busy}
         />
       )}
-
-      <div className="mt-8 flex items-center justify-end gap-3">
-        <Button type="button" variant="outline" onClick={onClose} disabled={busy} className="gap-2">
-          <ArrowLeft className="h-4 w-4" /> Back
-        </Button>
-        {!NO_PAY_BUTTON.includes(option.name) && (
-          <Button type="button" onClick={pay} disabled={busy} className="gap-2 px-6">
-            {busy ? "Please wait…" : "Pay Now"} <ArrowRight className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
     </div>
   );
 }
@@ -433,10 +439,15 @@ export function PaymentGatewayPickerModal({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !busy && onOpenChange(next)}>
-      <DialogContent showCloseButton={false} className="max-h-[92vh] gap-0 overflow-y-auto p-0 sm:max-w-5xl">
+      <DialogContent
+        showCloseButton={false}
+        className="flex h-[92vh] max-h-[92vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl"
+      >
         <DialogTitle className="sr-only">Choose Your Payment Method</DialogTitle>
-        <div className="grid md:grid-cols-[18rem_minmax(0,1fr)]">
-          <aside className="border-b border-slate-200 bg-white p-5 md:border-r md:border-b-0">
+        {/* Fills the dialog's remaining height; each column scrolls independently so the
+            Pay Now / Back bar below can stay pinned to the bottom instead of scrolling away. */}
+        <div className="grid flex-1 overflow-hidden md:grid-cols-[18rem_minmax(0,1fr)]">
+          <aside className="overflow-y-auto border-b border-slate-200 bg-white p-5 md:border-r md:border-b-0">
             <div className="md:hidden">
               <h3 className="text-xl font-extrabold text-slate-900">Choose Your Payment Method</h3>
               <p className="mt-1 text-sm text-slate-500">{subHeading}</p>
@@ -480,34 +491,43 @@ export function PaymentGatewayPickerModal({
             </div>
           </aside>
 
-          <section className="p-5 sm:p-8">
-            <div className="hidden md:block">
-              <h3 className="text-3xl font-extrabold text-slate-900">Choose Your Payment Method</h3>
-              <p className="mt-2 text-slate-600">{subHeading}</p>
-            </div>
-            {details?.paymentLabel && (
-              <p className="mt-5 text-lg font-semibold text-slate-800">
-                <PaymentLabel>{details.paymentLabel}</PaymentLabel>
-              </p>
-            )}
-            <div className="mt-3">
-              <CurrencyCard details={details || {}} payerCountryCode={payerCountryCode} />
-            </div>
-            <div className="mt-5">
-              {active && (
-                <GatewayPanel
-                  key={active.name}
-                  option={active}
-                  details={details}
-                  airwallexMethods={airwallexMethods}
-                  busy={busy}
-                  onPay={onPay}
-                  onClose={() => onOpenChange(false)}
-                  onUploadProof={onUploadProof}
-                  onSubmitOffline={onSubmitOffline}
-                />
+          {/* Right column: scrollable payment-option content on top, Back / Pay Now
+              pinned in a sticky footer below so it's always reachable without scrolling. */}
+          <section className="flex min-h-0 flex-col">
+            <div className="flex-1 overflow-y-auto p-5 sm:p-8">
+              <div className="hidden md:block">
+                <h3 className="text-3xl font-extrabold text-slate-900">Choose Your Payment Method</h3>
+                <p className="mt-2 text-slate-600">{subHeading}</p>
+              </div>
+              {details?.paymentLabel && (
+                <p className="mt-5 text-lg font-semibold text-slate-800">
+                  <PaymentLabel>{details.paymentLabel}</PaymentLabel>
+                </p>
               )}
+              <div className="mt-3">
+                <CurrencyCard details={details || {}} payerCountryCode={payerCountryCode} />
+              </div>
+              <div className="mt-5">
+                {active && (
+                  <GatewayPanel
+                    key={active.name}
+                    option={active}
+                    details={details}
+                    airwallexMethods={airwallexMethods}
+                    busy={busy}
+                    onPay={onPay}
+                    onClose={() => onOpenChange(false)}
+                    onUploadProof={onUploadProof}
+                    onSubmitOffline={onSubmitOffline}
+                  />
+                )}
+              </div>
             </div>
+            {active && (
+              <div className="shrink-0 border-t border-slate-200 bg-white p-5 sm:px-8">
+                <GatewayActions option={active} busy={busy} onPay={onPay} onClose={() => onOpenChange(false)} />
+              </div>
+            )}
           </section>
         </div>
       </DialogContent>
