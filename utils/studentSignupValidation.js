@@ -10,7 +10,6 @@ const SPECIAL_CHAR_REGEX = /[!@#$%&*]/;
 const LOWERCASE_REGEX = /[a-z]/;
 const UPPERCASE_REGEX = /[A-Z]/;
 const DIGIT_REGEX = /\d/;
-const CAPTCHA_REGEX = /^[0-9]{6}$/;
 
 export function isValidEmail(value) {
   return EMAIL_REGEX.test((value ?? "").trim());
@@ -67,8 +66,10 @@ export function getPasswordStrength(password, confirmPassword) {
   };
 }
 
+// reCAPTCHA v3 is invisible — there's no 6-digit code to check anymore, just
+// that AccountForm actually got a token back from Google before submitting.
 export function isValidCaptcha(value) {
-  return CAPTCHA_REGEX.test((value ?? "").trim());
+  return Boolean((value ?? "").trim());
 }
 
 /**
