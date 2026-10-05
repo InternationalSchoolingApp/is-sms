@@ -122,10 +122,7 @@ export function AccountCreationForm({ school, program, query }) {
         }
       }
 
-      // Preserve the route abbreviation in the public bootstrap URL (e.g.
-      // /student/enrollment/A); the shared constant is only for internal
-      // program behavior and signup payload mapping.
-      getEnrollmentSignupInfo(schoolUUID, program, apiParams)
+      getEnrollmentSignupInfo(schoolUUID, program, apiParams.toString())
         .then((response) => {
           if (cancelled) return;
           if (response?.status === "SUCCESS") {
