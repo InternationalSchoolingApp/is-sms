@@ -48,7 +48,6 @@ export function useCourseDetails({ context, userId, standardId }) {
   return useQuery({
     queryKey: courseDetailsKey(userId, standardId),
     queryFn: async () => {
-      debugger
       const response = await chooseCoursesByGrade(context.schoolUUID, buildCourseDetailsRequest(userId, { standardId }));
       console.log("response===>",response)
       if (!response) throw new Error("course-details-by-standard-id returned no response");

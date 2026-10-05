@@ -385,7 +385,6 @@ function Stage3Skeleton({ header }) {
  * on and the call fails with a generic error.
  */
 export function Stage3CourseSelection({ context, userId, standardId: initialStandardId, onNext, onBack, onSessionExpired, inReview = false }) {
-  debugger
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   // Starts from the prop (Stage 1's saved grade at mount — see the doc
@@ -399,7 +398,6 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   const update = useUpdateCourseSelection({ context, userId });
   const recommended = useRecommendedCourses({ context, userId });
   const proceed = useProceedToReview({ context, userId });
-  debugger
   // Change Grade & DOB modal (changeSelectedGrade()/saveSelectedGradeAndDob()
   // in signupStudentStage3.js) — reuses Stage 1's own prefill/save hooks
   // rather than a separate request builder, same as Stage 1 itself does.
