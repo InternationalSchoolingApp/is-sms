@@ -6,7 +6,6 @@ import { AccountInput } from "@/components/student-enroll/AccountInput";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { PasswordStrengthChecklist } from "@/components/student-enroll/PasswordStrengthChecklist";
-import { CaptchaField } from "@/components/student-enroll/CaptchaField";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { InfoModal, getWelcomeBackMessage } from "@/components/student-enroll/InfoModal";
 import { EmailValidatorModal } from "@/components/student-enroll/EmailValidatorModal";
@@ -15,13 +14,13 @@ import { checkEmailAvailability } from "@/services/studentSignupBackendApi";
 import { validateAccountFormOnline, isValidEmail, getPasswordStrength } from "@/utils/studentSignupValidation";
 import { captureUtmParamsFromUrl } from "@/utils/utmCookies";
 import { getHash } from "@/utils/common";
+import { getRecaptchaToken, loadRecaptchaScript } from "@/utils/recaptcha";
 
 const INITIAL_FIELDS = {
   email: "",
   confirmEmail: "",
   password: "",
   confirmPassword: "",
-  captcha: "",
   referralCode: "",
   checkTerms: false,
 };
@@ -49,13 +48,6 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
-  // Stays 0 (stable for SSR) until the user explicitly clicks "refresh" —
-  // no cache-busting is needed for the very first image load. Setting this
-  // from Date.now() inside a mount effect caused both a hydration mismatch
-  // (server/client render at different instants) AND an eslint
-  // react-hooks/set-state-in-effect error — a real user-event-driven
-  // refresh avoids both problems entirely.
-  const [captchaCacheBust, setCaptchaCacheBust] = useState(0);
   const [flaggedModal, setFlaggedModal] = useState(null);
   const [welcomeBackModal, setWelcomeBackModal] = useState(null);
   const [emailValidatorModal, setEmailValidatorModal] = useState(null);
@@ -69,6 +61,9 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
 
   useEffect(() => {
     captureUtmParamsFromUrl();
+    // Warm up the reCAPTCHA v3 script ahead of submit so execute() on click
+    // doesn't pay the script-load latency on top of the network round trip.
+    loadRecaptchaScript().catch((err) => console.error("reCAPTCHA preload failed:", err));
   }, []);
 
   const emailsMatch = useMemo(
@@ -90,7 +85,6 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
   // so an untouched field stays neutral exactly like before.
   const emailInvalid = !isValidEmail(fields.email);
   const confirmEmailInvalid = !emailsMatch || !isValidEmail(fields.confirmEmail);
-  const captchaInvalid = !fields.captcha.trim();
   const checkTermsInvalid = !fields.checkTerms;
 
   const emailError = touched.email && emailInvalid ? "Please enter a valid email" : undefined;
@@ -98,7 +92,6 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
     fields.confirmEmail.trim() && (!emailsMatch || (touched.confirmEmail && confirmEmailInvalid))
       ? "Please re-enter the same email"
       : undefined;
-  const captchaError = touched.captcha && captchaInvalid ? "Please enter captcha" : undefined;
   const checkTermsError = touched.checkTerms && checkTermsInvalid ? "Please accept terms and conditions" : undefined;
 
   function setField(name, value) {
@@ -107,11 +100,6 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
 
   function touchField(name) {
     setTouched((prev) => (prev[name] ? prev : { ...prev, [name]: true }));
-  }
-
-  function refreshCaptcha() {
-    setCaptchaCacheBust(Date.now());
-    setField("captcha", "");
   }
 
   // Mirrors callEmailCheck() in jquery.commonFunction.js, fired on the
@@ -207,7 +195,15 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
       // error immediately, same as the old one-shot setErrors(...) did —
       // but each one now keeps clearing live afterward instead of staying
       // frozen at whatever validateAccountFormOnline saw at this instant.
-      setTouched({ email: true, confirmEmail: true, password: true, confirmPassword: true, captcha: true, checkTerms: true });
+      setTouched({ email: true, confirmEmail: true, password: true, confirmPassword: true, checkTerms: true });
+
+      // reCAPTCHA v3 is invisible — no field for the student to fill in, a
+      // fresh token is fetched right before every submit instead of once up
+      // front, matching the "score per action" model.
+      domFields.captcha = await getRecaptchaToken("student_signup").catch((err) => {
+        console.error("reCAPTCHA token fetch failed:", err);
+        return "";
+      });
 
       const { valid } = validateAccountFormOnline(domFields);
       if (!valid) return;
@@ -227,9 +223,6 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           // in signupCommon.js (welcome-back / deactivated / in-progress copy).
           setWelcomeBackModal({ msgFlag: response.fr, extra1: response.extra1 });
           return;
-        }
-        if (response.statusCode === "0041" || response.statusCode === "0038") {
-          refreshCaptcha();
         }
         setErrors((prev) => ({ ...prev, form: response.message }));
         return;
@@ -257,7 +250,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
         noValidate
         onKeyDown={(e) => {
           // Enter / the mobile keyboard's Next key must behave like a normal form: from a text field it moves
-          // to the next enabled text field (email -> confirm email -> password -> confirm password -> captcha),
+          // to the next enabled text field (email -> confirm email -> password -> confirm password),
           // and only from the last one does it submit. There is no type="submit" button, so the native
           // behaviour is suppressed here and handled explicitly; the terms checkbox/links are never involved.
           if (e.key === "Enter" && e.target.tagName === "INPUT") {
@@ -403,15 +396,20 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           }
         />
 
-        <CaptchaField
-          schoolUUID={context.schoolUUID}
-          value={fields.captcha}
-          onChange={(v) => setField("captcha", v)}
-          onBlur={() => touchField("captcha")}
-          error={captchaError}
-          cacheBust={captchaCacheBust}
-          onRefresh={refreshCaptcha}
-        />
+        {/* reCAPTCHA v3 has no checkbox/widget of its own — Google's default
+            floating corner badge stays visible (untouched), this is just the
+            required attribution text placed inline instead. */}
+        <p className="text-xs text-slate-500">
+          This site is protected by reCAPTCHA and the Google{" "}
+          <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="text-primary underline">
+            Privacy Policy
+          </a>{" "}
+          and{" "}
+          <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer" className="text-primary underline">
+            Terms of Service
+          </a>{" "}
+          apply.
+        </p>
 
         {errors.form && <p className="text-center text-sm font-semibold text-red-600">{errors.form}</p>}
 
