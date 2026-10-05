@@ -63,7 +63,7 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
         }}
       />
 
-      <div className="flex-1 bg-[#f2f5fa] px-4 pb-28 md:px-6 md:py-8 md:pb-24 md:pt-[62px]">
+      <div className="flex-1 bg-[#f2f5fa] px-4 pb-6 md:px-6 md:py-8 md:pb-24 md:pt-[62px]">
         <div className="sticky top-0 z-20 -mx-4 bg-[#f2f5fa] px-4 pb-3 md:static md:mx-0 md:bg-transparent md:px-0 md:pb-0">
         <header className="grid grid-cols-[2rem_1fr_2rem] items-center gap-2 px-1 py-4 md:hidden">
           <Image src="/images/is_fav_logo_200.png" alt={schoolName || ""} width={28} height={28} className="h-7 w-auto" unoptimized />
