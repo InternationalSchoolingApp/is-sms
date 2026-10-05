@@ -47,38 +47,6 @@ import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOri
  *     failure reasons — distinguish only by the `message` string.
  */
 
-// reCAPTCHA v3 server-side verification — see signupStage1 below. Secret key
-// is read here only (RECAPTCHA_SECRET_KEY, no NEXT_PUBLIC_ prefix) so it
-// never reaches the client bundle; this module is only ever imported from
-// this "use server" file.
-const RECAPTCHA_VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify";
-const RECAPTCHA_EXPECTED_ACTION = "student_signup";
-
-async function verifyRecaptchaToken(token) {
-  console.log("captcha token", token);
-  if (!token) return false;
-  const secret = process.env.RECAPTCHA_SECRET_KEY;
-  if (!secret) {
-    console.error("RECAPTCHA_SECRET_KEY is not set — rejecting signup rather than skipping verification.");
-    return false;
-  }
-  const minScore = Number(process.env.RECAPTCHA_MIN_SCORE) || 0.5;
-  try {
-    const response = await fetch(RECAPTCHA_VERIFY_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ secret, response: token }),
-    });
-    const result = await response.json();
-    // hostname isn't checked here — there's no expected-hostname config
-    // anywhere in this project yet to validate it against.
-    return result?.success === true && result.action === RECAPTCHA_EXPECTED_ACTION && (result.score ?? 0) >= minScore;
-  } catch (err) {
-    console.error("reCAPTCHA verification request failed:", err);
-    return false;
-  }
-}
-
 function backendUrl(schoolUUID, path, { includeSchoolId = true } = {}) {
   const baseUrl = resolveServerBackendOrigin();
   if (!hasBackendOrigin() || (includeSchoolId && !schoolUUID)) {
@@ -321,18 +289,7 @@ export async function getStudentCommissionPayBy(schoolUUID, request) {
   return postPayload(schoolUUID, "student/enrollment/get-commission-pay-by", request);
 }
 
-// Online signups carry a reCAPTCHA v3 token in request.data.captcha (see
-// AccountForm.jsx/useAccountSignup.js) — verified against Google here,
-// server-side, before the request ever reaches the real backend. Offline/B2B
-// signups (AccountFormOfflineB2B.jsx) go through this same function but never
-// generate a token, so they're left untouched (signupType !== "Online").
 export async function signupStage1(schoolUUID, request) {
-  if (request?.data?.signupType === "Online") {
-    const captchaOk = await verifyRecaptchaToken(request?.data?.captcha);
-    if (!captchaOk) {
-      return { status: "0", statusCode: "RECAPTCHA_FAILED", message: "Security check failed. Please refresh and try again." };
-    }
-  }
   return postPayload(schoolUUID, "api/v1/student/enrollment/stage-1", request);
 }
 
