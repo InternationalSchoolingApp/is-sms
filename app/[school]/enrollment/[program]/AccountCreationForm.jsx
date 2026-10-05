@@ -11,7 +11,6 @@ import { SignupFooter } from "@/components/student-enroll/SignupFooter";
 import { getEnrollmentSignupInfo, getPublicSchoolInfo } from "@/services/studentSignupApi";
 import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 import { getLearningProgramTheme } from "@/utils/learningProgramTheme";
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
 
 // Client half of the /{school}/enrollment/{program} route. The route params
 // (`school`, `program`) and the raw query string come from the Server
@@ -82,7 +81,7 @@ export function AccountCreationForm({ school, program, query }) {
         learningProgramLabel: signupInfo.learningProgramLabel,
         unregisteredId: signupInfo.unregisteredId,
         schoolSettingsLinks,
-        loginUrl: `${resolveBackendOrigin()}/${signupInfo.schoolUuid || schoolUUID}/common/login`,
+        loginUrl: `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/${signupInfo.schoolUuid || schoolUUID}/common/login`,
         termsOfUseUrl: schoolSettingsLinks.termasOfUserUrl || FALLBACK_POLICY_LINKS.termsOfUseUrl,
         privacyPolicyUrl: schoolSettingsLinks.privacyPolicyUrl || FALLBACK_POLICY_LINKS.privacyPolicyUrl,
         enrollmentPolicyUrl: schoolSettingsLinks.enrollmentPolicyUrl || FALLBACK_POLICY_LINKS.enrollmentPolicyUrl,

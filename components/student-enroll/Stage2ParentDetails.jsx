@@ -188,7 +188,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
   const locationDisabled = fields.sameAsStudent;
 
   return (
-    <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-12">
+    <div className="mx-auto mt-6 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-12">
       <h2 className="text-center text-2xl font-bold text-slate-900">{heading}</h2>
 
       {isOneToOneFlex ? (

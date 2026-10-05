@@ -99,7 +99,7 @@ function subjectNotes(subject, data, showPaymentOption) {
 
 function upgradeHint(courseType) {
   if (courseType === "ADV") {
-    return "Advanced courses have more assessments & assignments as compared to regular courses and contribute to a higher GPA.";
+    return "Advance courses have more assessments & assignments as compared to regular courses and contribute to a higher GPA.";
   }
   if (courseType === "HON") {
     return "Honors courses have more assessments & assignments as compared to regular courses and contribute to a higher GPA.";
@@ -143,14 +143,14 @@ function categoryIcon(name) {
 // categories.
 function summarizeSelection(selectedCourses) {
   
-  const counts = { Required: 0, Regular: 0, Electives: 0, Honors: 0, Advanced: 0 };
+  const counts = { Required: 0, Regular: 0, Electives: 0, Honors: 0, Advance: 0 };
   selectedCourses.forEach((course) => {
     if (course.courseMandatory === 1) {
       counts.Required += 1;
       return;
     }
     if (course.courseCategory === "Electives") counts.Electives += 1;
-    else if (course.courseCategory === "Advanced Placement") counts.Advanced += 1;
+    else if (course.courseCategory === "Advanced Placement") counts.Advance += 1;
     else if (course.courseTypeOriginal === "Regular") counts.Regular += 1;
     else if (course.courseTypeOriginal === "Honors") counts.Honors += 1;
   });
@@ -159,7 +159,7 @@ function summarizeSelection(selectedCourses) {
     { label: "Regular", count: counts.Regular, dot: "bg-primary" },
     { label: "Electives", count: counts.Electives, dot: "bg-purple-500" },
     { label: "Honors", count: counts.Honors, dot: "bg-amber-500" },
-    { label: "Advanced", count: counts.Advanced, dot: "bg-indigo-700" },
+    { label: "Advance", count: counts.Advance, dot: "bg-indigo-700" },
   ];
 }
 
@@ -186,9 +186,9 @@ function CreditProgressRing({ value, max }) {
 function VariantToggle({ course, target, onToggle, disabled }) {
   const isTarget = course.courseTypeOriginal !== "Regular";
   // Off: label names the variant you'd switch TO (target); on: names the
-  // variant the course currently is. Width follows the label, so "Honor" and
+  // variant the course currently is. Width follows the label, so "Honors" and
   // "Advanced" both fit with the knob on the opposite side.
-  const label = /adv/i.test(isTarget ? course.courseTypeOriginal : target.courseType) ? "Advanced" : "Honor";
+  const label = /adv/i.test(isTarget ? course.courseTypeOriginal : target.courseType) ? "Advance" : "Honors";
   return (
     <div className="flex shrink-0 items-center gap-2">
       <button
@@ -343,7 +343,7 @@ function Stage3Skeleton({ header }) {
  * plan (see useProceedToReview) so the next step is the review page.
  *
  * Visual design (summary bar with credit ring/legend, category sidebar +
- * detail pane for available courses, Regular/Honor toggle) matches the
+ * detail pane for available courses, Regular/Honors toggle) matches the
  * reference screenshots — see categoryIcon/summarizeSelection/
  * CreditProgressRing/VariantToggle above for what's presentational-only vs.
  * the untouched business logic below (add/remove/upgrade/recommended/
@@ -598,7 +598,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
       courseId: course.categoryId,
     });
     if (switched) {
-      toast.success(course.courseTypeOriginal === "Regular" ? "Switch to Honor" : "Switch to Regular");
+      toast.success(course.courseTypeOriginal === "Regular" ? "Switch to Honors" : "Switch to Regular");
     }
   }
 

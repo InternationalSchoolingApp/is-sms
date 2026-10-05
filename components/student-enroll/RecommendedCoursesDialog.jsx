@@ -99,7 +99,7 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
                           <span className="flex-1 font-bold text-black-900">{course.subjectName}</span>
                           <span className="shrink-0 text-xs text-slate-500">{course.subjectCredit} Credit</span>
                         </div>
-                      <span className="shrink-0 rounded-md bg-emerald-50 px-2 py-1 text-center text-xs font-semibold text-emerald-700">
+                      <span className="shrink-0 rounded-md bg-emerald-50 px-2 py-1 text-center text-xs font-semibold text-emerald-700 ml-auto">
                         Mandatory
                       </span>
                     </li>

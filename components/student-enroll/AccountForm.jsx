@@ -32,6 +32,7 @@ const INITIAL_FIELDS = {
  * wired to the confirmed POST enrollment/stage-1 endpoint.
  */
 export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
+  debugger
   const [fields, setFields] = useState(() => ({
     ...INITIAL_FIELDS,
     email: context?.username || "",
@@ -332,29 +333,29 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
             onChange={(e) => setField("password", e.target.value)}
             error={touched.password && !passwordFocused && !passwordIsValid ? "Please enter a valid password" : undefined}
             trailing={
-              <button
-                type="button"
-                // Prevent the password input from blurring on tap: on
-                // mobile, blurring closes the keyboard, which resizes the
-                // viewport under the user's finger between touchstart and
-                // touchend — the browser then cancels the click entirely,
-                // so onClick silently never fires (desktop has no keyboard
-                // resize, so it always worked there). Blocking the default
-                // mousedown/touch focus-change keeps the input focused and
-                // the click reliable.
+              <>
+              <div className="absolute right-1 top-1/2 z-20">
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="group cursor-pointer absolute right-1 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 touch-manipulation items-center justify-center text-slate-500 hover:text-slate-700"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <Eye className="h-[18px] w-[18px]" />
+                  ) : (
+                    <EyeOff className="h-[18px] w-[18px]" />
+                  )}
 
-                onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                // Bigger hit area (not just the icon) + explicit z-index +
-                // touch-manipulation — on a real mobile device the
-                // icon-sized-only hit area was too small to reliably tap,
-                // and taps could land on the input underneath instead (no
-                // visible feedback, looked like "the button doesn't work").
-                className="absolute right-1 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 cursor-pointer touch-manipulation items-center justify-center text-slate-500 hover:text-slate-700"
-                tabIndex={-1}
-              >
-                {showPassword ? <Eye className="h-[18px] w-[18px]" /> : <EyeOff className="h-[18px] w-[18px]" />}
-              </button>
+                  <span role="tooltip" className="pointer-events-none absolute bottom-full right-0 mb-2 whitespace-nowrap rounded-md bg-slate-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                    {showPassword ? "Hide password" : "Show password"}
+                    <span className="absolute right-4 top-full border-4 border-transparent border-t-slate-900" />
+                  </span>
+                </button>
+              </div>
+              </>
+
             }
           />
           {passwordFocused && fields.password.length > 0 && !passwordIsValid && (
@@ -373,16 +374,25 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           onBlur={() => touchField("confirmPassword")}
           error={confirmMismatch || (errors.confirmPassword && confirmWeak) ? "Please re-enter the same password" : undefined}
           trailing={
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => setShowConfirmPassword((v) => !v)}
-              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-              className="absolute right-1 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 touch-manipulation items-center justify-center text-slate-500 hover:text-slate-700"
-              tabIndex={-1}
-            >
-              {showConfirmPassword ? <Eye className="h-[18px] w-[18px]" /> : <EyeOff className="h-[18px] w-[18px]" />}
-            </button>
+            <>
+              <div className="absolute right-1 top-1/2 z-20">
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  className="group cursor-pointer absolute right-1 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 touch-manipulation items-center justify-center text-slate-500 hover:text-slate-700"
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? <Eye className="h-[18px] w-[18px]" /> : <EyeOff className="h-[18px] w-[18px]" />}
+                  <span role="tooltip" className="pointer-events-none absolute bottom-full right-0 mb-2 whitespace-nowrap rounded-md bg-slate-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                    {showConfirmPassword ? "Hide password" : "Show password"}
+                    <span className="absolute right-4 top-full border-4 border-transparent border-t-slate-900" />
+                  </span>
+                </button>
+              </div>
+            </>
+            
           }
         />
 
@@ -445,7 +455,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
 
         <p className="text-center text-sm text-slate-600">
           Already Enrolled?{" "}
-          <a href={process.env.NEXT_PUBLIC_BACKEND_BASE_URL + "/international-schooling/common/login"} className="font-semibold text-primary hover:underline">
+          <a href={process.env.NEXT_PUBLIC_BACKEND_BASE_URL +"/"+ context.schoolUUID+"/common/login"} className="font-semibold text-primary hover:underline">
             Log in here.
           </a>
         </p>
