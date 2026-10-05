@@ -141,37 +141,57 @@ function categoryIcon(name) {
 // courseTypeOriginal) specifically; Regular/Honors still come from
 // courseTypeOriginal as before, for anything not in one of those two
 // categories.
-function summarizeSelection(selectedCourses) {
-  
-  const counts = { Required: 0, Regular: 0, Electives: 0, Honors: 0, Advance: 0 };
+function getGradeBand(standardName, standardId) {
+  const name = String(standardName || "").toLowerCase();
+  if (/kindergarten|\bgrade\s*k\b|\bk\s*to\s*\d/.test(name)) return "elementary";
+  const grade = name.match(/(?:grade\s*)?(\d{1,2})/);
+  if (grade) {
+    const value = Number(grade[1]);
+    if (value <= 5) return "elementary";
+    if (value <= 8) return "middle";
+    if (value <= 12) return "high";
+  }
+  return hidesCourseCredits(standardId) ? "elementary" : "high";
+}
+
+function summarizeSelection(selectedCourses, gradeBand) {
+  const counts = { Mandatory: 0, Electives: 0, Honors: 0, Advance: 0, AP: 0 };
   selectedCourses.forEach((course) => {
-    if (course.courseMandatory === 1) {
-      counts.Required += 1;
-      return;
-    }
-    if (course.courseCategory === "Electives") counts.Electives += 1;
-    else if (course.courseCategory === "Advanced Placement") counts.Advance += 1;
-    else if (course.courseTypeOriginal === "Regular") counts.Regular += 1;
-    else if (course.courseTypeOriginal === "Honors") counts.Honors += 1;
+    if (course.courseMandatory === 1 || course.courseMandatory === "1") counts.Mandatory += 1;
+
+    const category = String(course.courseCategory || "").toUpperCase();
+    const courseType = String(course.courseTypeOriginal || "").toUpperCase();
+    if (category === "ELECTIVES") counts.Electives += 1;
+
+    const isAp = category === "ADVANCED PLACEMENT" || courseType === "ADVANCED PLACEMENT" || courseType === "AP";
+    const isAdvance = /\bADV(?:ANCE|ANCED)?\b/.test(courseType) || category === "ADVANCE";
+    if (isAp) {
+      counts[gradeBand === "high" ? "AP" : "Advance"] += 1;
+    } else if (isAdvance && gradeBand !== "high") counts.Advance += 1;
+    else if (/\bHON(?:OR|ORS)?\b/.test(courseType) && gradeBand === "high") counts.Honors += 1;
   });
-  return [
-    { label: "Required", count: counts.Required, dot: "bg-emerald-500" },
-    { label: "Regular", count: counts.Regular, dot: "bg-primary" },
+  const buckets = [
+    { label: "Mandatory", count: counts.Mandatory, dot: "bg-emerald-500" },
     { label: "Electives", count: counts.Electives, dot: "bg-purple-500" },
-    { label: "Honors", count: counts.Honors, dot: "bg-amber-500" },
-    { label: "Advance", count: counts.Advance, dot: "bg-indigo-700" },
   ];
+  if (gradeBand === "high") {
+    buckets.push(
+      { label: "Honors", count: counts.Honors, dot: "bg-amber-500" },
+      { label: "AP", count: counts.AP, dot: "bg-indigo-700" },
+    );
+  } else buckets.push({ label: "Advance", count: counts.Advance, dot: "bg-indigo-700" });
+  return buckets;
 }
 
 // CSS conic-gradient ring, no chart library needed.
-function CreditProgressRing({ value, max }) {
+function CreditProgressRing({ value, max, unit = "credits" }) {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
     <div
       className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
       style={{ background: `conic-gradient(var(--primary) ${pct * 3.6}deg, #dbeafe ${pct * 3.6}deg)` }}
       role="img"
-      aria-label={`${value} of ${max} credits selected`}
+      aria-label={`${value} of ${max} ${unit} selected`}
     >
       <div className="h-9 w-9 rounded-full bg-white" />
     </div>
@@ -729,6 +749,9 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
 
   const fixed = Boolean(data.requiredFixedCourses);
   const hideCredits = hidesCourseCredits(data.standardId);
+  const gradeBand = getGradeBand(data.standardName, data.standardId);
+  const showCourseCredits = gradeBand === "high";
+  const showCourseRequirement = gradeBand === "middle";
   const batchOrProvider39 = data.registrationType === "BATCH" || Number(data.courseProviderId) === 39;
   const selectedCourses = data.selectedSubjects || [];
   const mandatoryCount = selectedCourses.filter((course) => course.courseMandatory === 1).length;
@@ -737,8 +760,12 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
   const showAvailable = !fixed && availableCourses.length > 0;
   const effectiveOpenId = openCourseId ?? availableCourses[0]?.courseId;
   const showMinBanner = Number(data.courseProviderId) !== 39 && Number(data.minCourseLimit) > Number(data.totalCredit);
-  const showCreditSummary = !hideCredits && !batchOrProvider39 && Number(data.minCourseLimit) > 0;
-  const summaryBuckets = summarizeSelection(selectedCourses);
+  const showCreditSummary = showCourseCredits && !batchOrProvider39 && Number(data.minCourseLimit) > 0;
+  const showCourseCountSummary = showCourseRequirement && !batchOrProvider39;
+  const summaryBuckets = summarizeSelection(selectedCourses, gradeBand);
+  const selectedCourseCount = selectedCourses.length;
+  const courseCountTarget = Number(data.maxCourseLimit) || 6;
+  const displayCourseCountTarget = Math.max(courseCountTarget, selectedCourseCount);
 
   // Display-only filter — matches a category by its own name, or by any of
   // its subjects' names, and only affects what's rendered in the "Choose
@@ -766,7 +793,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
           border, no progress ring, no Selection Summary legend. */}
       <div className="mt-4 space-y-2 md:hidden">
         {data.standardName && (
-          <div className="flex items-center justify-between gap-3 rounded-xl bg-[#e6f3ff] px-3 py-2.5">
+          <div className={`flex items-center gap-3 rounded-xl bg-[#e6f3ff] px-3 py-2.5 ${gradeBand === "elementary" ? "justify-center" : "justify-between"}`}>
             <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
               <GraduationCap className="h-5 w-5 text-primary" />
               {data.standardName}
@@ -782,15 +809,34 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
           </div>
         )}
 
-        {showCreditSummary && (
+        {(showCreditSummary || showCourseCountSummary) && (
           <div className="flex items-center justify-between px-1">
             <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
               <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary text-white">
                 <Info className="h-2.5 w-2.5" />
               </span>
-              Credits Requirement:
+              {showCourseCountSummary ? "Course Requirement:" : "Credit Requirement:"}
             </span>
-            <span className="text-sm font-bold text-slate-900">Minimum {data.minCourseLimit} Credits</span>
+            <span className="text-sm font-bold text-slate-900">
+              {showCourseCountSummary ? "Minimum 5 Courses" : `Minimum ${data.minCourseLimit} Credits`}
+            </span>
+          </div>
+        )}
+
+        {showCourseCountSummary && (
+          <p className="px-1 text-xs font-semibold text-slate-600">{selectedCourseCount}/{displayCourseCountTarget} courses selected</p>
+        )}
+
+        {!fixed && !batchOrProvider39 && gradeBand !== "elementary" && (
+          <div className="rounded-lg bg-[#e6f3ff] px-3 py-2 md:hidden">
+            <p className="text-xs font-semibold text-slate-500">Selection Summary</p>
+            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+              {summaryBuckets.map((bucket) => (
+                <span key={bucket.label} className="inline-flex items-center gap-1 text-slate-700">
+                  <span className={`h-2 w-2 rounded-full ${bucket.dot}`} /> {bucket.label}: {bucket.count}
+                </span>
+              ))}
+            </div>
           </div>
         )}
 
@@ -805,7 +851,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
           requirement, progress ring, Selection Summary legend) — untouched. */}
       <div className="mt-4 hidden gap-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:flex md:flex-row md:flex-wrap md:items-center md:gap-8 md:p-5">
         {data.standardName && (
-          <div className="flex items-center gap-2 rounded-lg py-2 px-3 bg-[#e6f3ff]">
+          <div className={`flex items-center gap-2 rounded-lg py-2 px-3 bg-[#e6f3ff] ${gradeBand === "elementary" ? "mx-auto" : ""}`}>
             <span className="inline-flex items-center gap-2  text-sm font-semibold text-slate-900">
               <GraduationCap className="h-5 w-5 text-primary" />
               {data.standardName}
@@ -816,22 +862,31 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
               disabled={busy}
               className="inline-flex items-center gap-1.5 ml-auto rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
             >
-              Change <RefreshCw className="h-3.5 w-3.5" />
+              Change Grade <RefreshCw className="h-3.5 w-3.5" />
             </button>
           </div>
         )}
 
-        {showCreditSummary && (
+        {(showCreditSummary || showCourseCountSummary) && (
           <div className="flex items-center gap-2 border-slate-300 sm:border-l sm:pl-8">
             
             <div>
               <div className="flex">
-                <p className="text-xs text-slate-500">Credits Requirement</p>
-                <span className="flex h-5 w-5 ml-5 shrink-0 items-center justify-center rounded-full bg-primary text-white">
-                    <Info className="h-3 w-3" />
-                  </span>
+                <p className="text-xs text-slate-500">{showCourseCountSummary ? "Course Requirement" : "Credit Requirement"}</p>
               </div>
-              <p className="text-sm font-bold text-slate-900">Minimum {data.minCourseLimit} Credits</p>
+              <p className="text-sm font-bold text-slate-900">
+                {showCourseCountSummary ? "Minimum 5 Courses" : `Minimum ${data.minCourseLimit} Credits`}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {showCourseCountSummary && (
+          <div className="flex items-center gap-3 border-slate-300 sm:border-l sm:px-8">
+            <CreditProgressRing value={selectedCourseCount} max={displayCourseCountTarget} unit="courses" />
+            <div>
+              <p className="text-xl font-bold text-primary">{selectedCourseCount}/{displayCourseCountTarget}</p>
+              <p className="text-sm font-bold text-slate-900">Courses Selected</p>
             </div>
           </div>
         )}
@@ -860,7 +915,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
               {summaryBuckets.map((bucket) => (
                 <span key={bucket.label} className="inline-flex items-center gap-1 text-slate-700">
-                  <span className={`h-2 w-2 rounded-full ${bucket.dot}`} /> {bucket.label}:{bucket.count}
+                  <span className={`h-2 w-2 rounded-full ${bucket.dot}`} /> {bucket.label}: {bucket.count}
                 </span>
               ))}
             </div>
@@ -868,7 +923,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
         )}
         
       </div>
-      {showMinBanner && !showCreditSummary && (
+      {showMinBanner && !showCreditSummary && gradeBand === "high" && (
           <div className="md:last:w-full rounded-lg py-1 text-center mt-4 tracking-wide bg-amber-100 text-dark-900">
           <span className="  px-3 py-1 text-md font-semibold uppercas">
             You need a minimum of {data.minCourseLimit} credits
@@ -879,9 +934,10 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
       <div className={`mt-4 grid gap-6 ${showAvailable ? "lg:grid-cols-[1fr_1.6fr]" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
         <section className="self-start overflow-hidden rounded-xl border border-slate-200 bg-white">
           <header className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
-            <h2 className="text-sm font-bold text-slate-900">Your Selected Courses</h2>
+            <h2 className="text-sm font-bold text-slate-900">
+              {showCourseCredits ? `Your Selected Courses: ${data.totalCredit} credits` : "Your Selected Courses"}
+            </h2>
             <div className="flex items-center gap-3">
-              {!hideCredits && <span className="text-sm font-semibold text-primary">{data.totalCredit} Credit</span>}
               {canRemoveAll && (
                 <button
                   type="button"
@@ -909,7 +965,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-slate-900">{course.courseName}</p>
-                        {!hideCredits && <p className="text-xs text-slate-500">{course.creditScore} Credit</p>}
+                        {showCourseCredits && <p className="text-xs text-slate-500">{course.creditScore} Credit</p>}
                         <CourseSummaryLink url={course.courseDescriptionUrl} />
                       </div>
                       {!fixed && course.courseMandatory === 0 && (
