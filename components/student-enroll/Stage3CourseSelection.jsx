@@ -906,9 +906,9 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
         )}
 
         {!fixed && !batchOrProvider39 && (
-          <div className={`hidden bg-[#e6f3ff] rounded-lg xl:ml-2  py-4 ${showMinBanner && !showCreditSummary ? ``:`flex-1`} sm:px-3 md:block`}>
+          <div className={`hidden bg-[#e6f3ff] rounded-lg xl:ml-2 py-4 ${showCourseCountSummary || !(showMinBanner && !showCreditSummary) ? "flex-1" : ""} sm:px-3 md:block`}>
             <p className="text-xs font-semibold text-slate-500">Selection Summary</p>
-            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+            <div className={`mt-1 flex flex-wrap gap-y-1 text-xs ${showCourseCountSummary ? "justify-between gap-x-6" : "gap-x-3"}`}>
               {summaryBuckets.map((bucket) => (
                 <span key={bucket.label} className="inline-flex items-center gap-1 text-slate-700">
                   <span className={`h-2 w-2 rounded-full ${bucket.dot}`} /> {bucket.label}: {bucket.count}
@@ -1053,7 +1053,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
                 is full-width instead, and there's no search box (matches the
                 reference mobile design). */}
             <div className="border-b border-slate-200 px-4 py-3 md:hidden">
-              <h2 className="text-sm font-bold text-slate-900">Choose Courses</h2>
+              <h2 className="text-sm font-bold text-slate-900">{data.totalCredit >= data.maxCourseLimit ? 'Select Extra Courses':'Select Courses'}</h2>
             </div>
             {data.eligibleForRecommendedCourse && (
               <div className="px-4 pt-4 md:hidden">
