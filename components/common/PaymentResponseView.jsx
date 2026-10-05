@@ -201,10 +201,49 @@ function SuccessBody({ data }) {
   }
 }
 
+// contentFor sets that drive the Stage7 JSP's <c:choose> branching for the
+// primary CTA, kept exactly as named in the JSP so the mapping is traceable.
+const DASHBOARD_REDIRECT_TYPES = new Set([
+  "FIRST-PAYMENT",
+  "RECURRING_SESSION_FEE",
+  "INSTALLMENT-FEE",
+  "TEACHER REQUEST FEE",
+  "BOOKSESSION_FEE",
+  "EXTENSION_FEE",
+]);
+
+/**
+ * Primary CTA on the Success card — mirrors Stage7.jsp's status==1 <c:choose>
+ * exactly:
+ *   - BOOK-SEAT: a second button after the receipt download, picked off
+ *     `enrollmentFeePaid` (U -> enroll now, A -> dashboard, F/else -> review
+ *     and payment), always rendered regardless of `initiatedVia`.
+ *   - FIRST-PAYMENT/RECURRING_SESSION_FEE/INSTALLMENT-FEE/TEACHER REQUEST FEE/
+ *     BOOKSESSION_FEE/EXTENSION_FEE: no separate button here — the JSP's own
+ *     block for this case is commented out, since the countdown
+ *     (showReloadOption) already owns navigation for these.
+ *   - everything else (OTHER_PAYMENT, ADDITIONAL_COURSE_PAYMENT,
+ *     NOTARIZATION_FEE, ADVANCE/registration flows, ...): "Click here to
+ *     review and payment", but only when initiatedVia != 'Link' (a Link-
+ *     initiated payment has no session to return into).
+ */
+function successPrimaryCta(data) {
+  if (!data.returnUrl) return null;
+  if (data.contentFor === "BOOK-SEAT") {
+    if (data.enrollmentFeePaid === "U") return { href: data.returnUrl, label: "Click here to enroll now" };
+    if (data.enrollmentFeePaid === "A") return { href: data.returnUrl, label: "Click here to dashboard" };
+    return { href: data.returnUrl, label: "Click here to review and payment" };
+  }
+  if (DASHBOARD_REDIRECT_TYPES.has(data.contentFor)) return null;
+  if (data.initiatedVia === "Link") return null;
+  return { href: data.returnUrl, label: "Click here to review and payment" };
+}
+
 function SuccessCard({ data }) {
   const showReload = data.showReloadOption === "Y";
   const returnUrl = data.returnUrl;
   const [countdown, redirected] = useCountdownRedirect(showReload && !!returnUrl, returnUrl);
+  const primaryCta = successPrimaryCta(data);
 
   return (
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
@@ -223,7 +262,7 @@ function SuccessCard({ data }) {
           <SuccessBody data={data} />
         </div>
 
-        <ReceiptButtons data={data} />
+        <ReceiptButtons data={data} primaryCta={primaryCta} />
 
         {showReload && returnUrl && !redirected && (
           <div className="mt-5 flex items-center justify-center gap-4 rounded-2xl bg-blue-50 px-5 py-4 text-left ring-1 ring-blue-100">
@@ -235,7 +274,10 @@ function SuccessCard({ data }) {
           </div>
         )}
 
-        {returnUrl && (
+        {/* Scoped to the countdown case only — mirrors the JSP's #redirectToDashboard, which
+            only exists as a manual fallback for the auto-redirect, not a universal returnUrl
+            link (that would duplicate the primary CTA button above for every other case). */}
+        {showReload && returnUrl && (
           <a
             href={returnUrl}
             className="mt-5 inline-block text-sm font-semibold text-primary underline underline-offset-4"
@@ -248,14 +290,15 @@ function SuccessCard({ data }) {
   );
 }
 
-// Receipt / dashboard / enroll links used on the success card (BOOK-SEAT etc.).
-function ReceiptButtons({ data }) {
+// Receipt download (BOOK-SEAT) + the primary CTA resolved by successPrimaryCta().
+function ReceiptButtons({ data, primaryCta }) {
   const links = [];
   if (data.contentFor === "BOOK-SEAT" && data.receiptUrl) {
-    links.push({ href: data.receiptUrl, label: "Download receipt", primary: true });
+    links.push({ href: data.receiptUrl, label: "Click here to download receipt", primary: false, external: true });
   }
-  if (data.viewRecipt) links.push({ href: data.viewRecipt, label: "View receipt", primary: false });
-  if (data.viewFormDataUrl) links.push({ href: data.viewFormDataUrl, label: "View submitted form", primary: false });
+  if (data.viewRecipt) links.push({ href: data.viewRecipt, label: "View receipt", primary: false, external: true });
+  if (data.viewFormDataUrl) links.push({ href: data.viewFormDataUrl, label: "View submitted form", primary: false, external: true });
+  if (primaryCta) links.push({ ...primaryCta, primary: true, external: false });
 
   if (links.length === 0) return null;
   return (
@@ -264,8 +307,7 @@ function ReceiptButtons({ data }) {
         <a
           key={l.href + l.label}
           href={l.href}
-          target="_blank"
-          rel="noreferrer"
+          {...(l.external ? { target: "_blank", rel: "noreferrer" } : {})}
           className={
             l.primary
               ? "rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
@@ -281,7 +323,36 @@ function ReceiptButtons({ data }) {
 
 /* -------------------------- Under Verification ------------------------- */
 
+// contentFor set shared by status==2 (Under Verification) and the failed
+// status's <c:choose> in Stage7.jsp — both pick "Click here for Dashboard"
+// vs "Click here to review and payment" off this same set + initiatedVia.
+const DASHBOARD_OR_REVIEW_TYPES = new Set([
+  "FIRST-PAYMENT",
+  "INSTALLMENT-FEE",
+  "TEACHER REQUEST FEE",
+  "BOOK-SEAT",
+  "BOOKSESSION_FEE",
+  "EXTENSION_FEE",
+]);
+
+// Mirrors the <c:choose> shared by status==2 and the failed branch: for the
+// listed contentFor values, initiatedVia != 'Link' -> "Click here for
+// Dashboard"; initiatedVia == 'Link' (or any other contentFor) -> "Click
+// here to review and payment". Note this set is missing EXTENSION_FEE's
+// sibling RECURRING_SESSION_FEE and ADDITIONAL_COURSE_PAYMENT/NOTARIZATION_FEE/
+// OTHER_PAYMENT compared to the Success branch's own set — kept exactly as
+// the JSP has it (not harmonized), since those fall into the "review and
+// payment" `c:otherwise` here, same end destination either way.
+function dashboardOrReviewCta(data) {
+  if (!data.returnUrl) return null;
+  if (DASHBOARD_OR_REVIEW_TYPES.has(data.contentFor) && data.initiatedVia !== "Link") {
+    return { href: data.returnUrl, label: "Click here for Dashboard" };
+  }
+  return { href: data.returnUrl, label: "Click here to review and payment" };
+}
+
 function UnderVerificationCard({ data }) {
+  const cta = dashboardOrReviewCta(data);
   return (
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
@@ -301,7 +372,7 @@ function UnderVerificationCard({ data }) {
             <b>Fee Failed Reason:</b> {data.feeFailedReason}
           </p>
         )}
-        <ReturnButton data={data} label="Continue" />
+        <ReturnButton cta={cta} />
       </div>
     </PageShell>
   );
@@ -310,6 +381,7 @@ function UnderVerificationCard({ data }) {
 /* -------------------------------- Failed ------------------------------- */
 
 function FailedCard({ data }) {
+  const cta = dashboardOrReviewCta(data);
   return (
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
@@ -332,12 +404,7 @@ function FailedCard({ data }) {
           </p>
           {data.feeFailedReason && <p className="font-medium text-rose-700">{data.feeFailedReason}</p>}
         </div>
-        {data.returnUrl && <a
-          href={data.returnUrl}
-          className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-7 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        >
-          Try again
-        </a>}
+        <ReturnButton cta={cta} />
       </div>
     </PageShell>
   );
@@ -399,14 +466,14 @@ function useCountdownRedirect(active, returnUrl) {
   return [countdown, redirected];
 }
 
-function ReturnButton({ data, label }) {
-  if (!data.returnUrl) return null;
+function ReturnButton({ cta }) {
+  if (!cta) return null;
   return (
     <a
-      href={data.returnUrl}
-      className="mt-6 inline-block rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
+      href={cta.href}
+      className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-7 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
-      {label}
+      {cta.label}
     </a>
   );
 }
