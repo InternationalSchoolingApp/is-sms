@@ -131,7 +131,7 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
                 : `bg-white ${error ? "border-2 border-red-500" : open ? "border-2 border-primary" : value ? "border-2 border-emerald-500" : "border-slate-300"}`
             }`}
           >
-            <span className="truncate">{selected?.label ?? ""}</span>
+            <span className="truncate relative bottom-0.75">{selected?.label ?? ""}</span>
           </PopoverTrigger>
           <ChevronDown className={`pointer-events-none absolute right-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 ${disabled ? "text-slate-400" : "text-slate-500"}`} />
           <PopoverContent className="w-(--anchor-width) min-w-56 p-0" sideOffset={4}>

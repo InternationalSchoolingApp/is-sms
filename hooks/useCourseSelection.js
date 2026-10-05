@@ -14,8 +14,11 @@ import { isKnownPaymentMode } from "@/utils/studentSignupValidation";
 export const STATUS_SUCCESS = "1";
 export const STATUS_SESSION_OUT = "3";
 
-function courseDetailsKey(userId) {
-  return ["course-details", userId];
+// standardId is part of the key: without it, changing grade on Stage 1 and
+// returning to Stage 3 would keep serving the previous grade's cached
+// response (staleTime: Infinity below) instead of refetching for the new one.
+function courseDetailsKey(userId, standardId) {
+  return ["course-details", userId, standardId];
 }
 
 /**
@@ -43,9 +46,11 @@ function buildCourseDetailsRequest(userId, { standardId, selectedSubjects = "", 
 
 export function useCourseDetails({ context, userId, standardId }) {
   return useQuery({
-    queryKey: courseDetailsKey(userId),
+    queryKey: courseDetailsKey(userId, standardId),
     queryFn: async () => {
+      debugger
       const response = await chooseCoursesByGrade(context.schoolUUID, buildCourseDetailsRequest(userId, { standardId }));
+      console.log("response===>",response)
       if (!response) throw new Error("course-details-by-standard-id returned no response");
       return response;
     },
@@ -61,9 +66,9 @@ export function useUpdateCourseSelection({ context, userId }) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (change) => chooseCoursesByGrade(context.schoolUUID, buildCourseDetailsRequest(userId, change)),
-    onSuccess: (response) => {
+    onSuccess: (response, change) => {
       if (response?.status === STATUS_SUCCESS) {
-        queryClient.setQueryData(courseDetailsKey(userId), response);
+        queryClient.setQueryData(courseDetailsKey(userId, change?.standardId), response);
       }
     },
   });
