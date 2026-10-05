@@ -892,10 +892,10 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         {showFee && (
           <div>
             <hr className="mb-4 border-slate-200 md:hidden" />
-            <h2 className="hidden text-lg font-semibold text-slate-900 md:block">
+            <h2 className="text-lg font-semibold text-slate-900">
               {data.customPaymentEnabled ? data.feeSetionTitile || "Fee Payment" : "Choose Payment Option"}
             </h2>
-            <div className="md:mt-3">
+            <div className="mt-3">
               {data.customPaymentEnabled ? (
                 <FeeSummaryCard>
                   <CustomPlanTable fee={fee} />
