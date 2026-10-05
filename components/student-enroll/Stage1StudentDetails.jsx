@@ -295,7 +295,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           />
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3 [&_label]:max-w-[calc(100%-3.5rem)]">
+        <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3 [&_label]:max-w-[calc(100%-5rem)]">
           <FloatingLabelInput
             icon={Mail}
             label={<Req label="Email Address" required />}

@@ -43,7 +43,7 @@ function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, 
             className={`pointer-events-none absolute z-10 bg-white px-1 transition-all ${
               floated
                 ? `left-3 top-0 -translate-y-1/2 text-xs max-[319px]:text-[10px] ${error ? "text-red-500" : "text-primary"}`
-                : `top-1/2 -translate-y-1/2 text-sm max-[319px]:text-xs text-slate-500 ${Icon ? "left-10" : "left-3.5"}`
+                : `top-1/2 -translate-y-1/2 text-sm max-[319px]:text-xs text-slate-500 ${Icon ? "left-10 max-w-[calc(100%-5rem)]" : "left-3.5 max-w-[calc(100%-3.5rem)]"}`
             }`}
           >
             {label}
@@ -108,7 +108,7 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
             className={`pointer-events-none absolute z-1 bg-white px-1 transition-all ${
               floated
                 ? `left-3 top-0 -translate-y-1/2 text-xs max-[319px]:text-[10px] ${error ? "text-red-500" : "text-primary"}`
-                : `top-1/2 -translate-y-1/2 text-sm max-[319px]:text-xs ${error ? "text-red-500" : "text-slate-500"} ${Icon ? "left-10" : "left-3.5"}`
+                : `top-1/2 -translate-y-1/2 text-sm max-[319px]:text-xs ${error ? "text-red-500" : "text-slate-500"} ${Icon ? "left-10 max-w-[calc(100%-5rem)]" : "left-3.5 max-w-[calc(100%-3.5rem)]"}`
             }`}
           >
             {label}
