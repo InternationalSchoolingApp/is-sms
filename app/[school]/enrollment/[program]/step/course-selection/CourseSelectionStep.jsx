@@ -24,7 +24,7 @@ export function CourseSelectionStep() {
   const router = useRouter();
   const { school, program } = useParams();
   const { session, context, ready } = useEnrollmentContext();
-  useWizardResume({ currentStep: 3, context, uniqueId: session?.uniqueId, ready });
+  const { redirecting } = useWizardResume({ currentStep: 3, context, uniqueId: session?.uniqueId, ready });
   const [standardId, setStandardId] = useState(null);
   const [hydrated, setHydrated] = useState(false);
 
@@ -34,7 +34,7 @@ export function CourseSelectionStep() {
     setHydrated(true);
   }, [ready, context?.schoolUUID, session?.userId]);
 
-  if (!ready || context.customPaymentEnabled || !hydrated) {
+  if (!ready || redirecting || context.customPaymentEnabled || !hydrated) {
     return <FullScreenLoader />;
   }
 

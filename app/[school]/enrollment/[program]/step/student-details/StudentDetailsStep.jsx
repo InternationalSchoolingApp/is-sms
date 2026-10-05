@@ -33,7 +33,7 @@ export function StudentDetailsStep() {
   const router = useRouter();
   const { school, program } = useParams();
   const { session, context, ready } = useEnrollmentContext();
-  useWizardResume({ currentStep: 1, context, uniqueId: session?.uniqueId, ready });
+  const { redirecting } = useWizardResume({ currentStep: 1, context, uniqueId: session?.uniqueId, ready });
   const prefill = useStudentDetailsPrefill({ context, userId: session?.userId });
   const [initialFields, setInitialFields] = useState(null);
   const [hydrated, setHydrated] = useState(false);
@@ -45,7 +45,7 @@ export function StudentDetailsStep() {
     setHydrated(true);
   }, [ready, prefill.isPending, prefill.data, context?.schoolUUID, session?.userId, session?.email]);
 
-  if (!ready || context.customPaymentEnabled || !hydrated) {
+  if (!ready || redirecting || context.customPaymentEnabled || !hydrated) {
     return <FullScreenLoader />;
   }
 

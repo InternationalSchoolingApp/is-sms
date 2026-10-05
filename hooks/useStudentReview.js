@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   choosePaymentPlan,
@@ -93,10 +94,18 @@ export function useProceedToDashboard({ context, userId }) {
  * hook only fetches.
  */
 export function useSignupStageStatusPoll({ context, uniqueId, enabled = true }) {
+  // First call only after one full interval, so a page refresh doesn't hit
+  // enrollment-stage-status (resume uses enrollment/process' signupPage instead).
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!enabled) return;
+    const t = setTimeout(() => setArmed(true), 180000);
+    return () => clearTimeout(t);
+  }, [enabled]);
   return useQuery({
     queryKey: ["signup-stage-status", uniqueId],
     queryFn: () => getSignupStageStatus(context.schoolUUID, uniqueId),
-    enabled: Boolean(context?.schoolUUID && uniqueId && enabled),
+    enabled: Boolean(context?.schoolUUID && uniqueId && enabled && armed),
     refetchInterval: 180000,
     refetchOnWindowFocus: false,
     retry: false,

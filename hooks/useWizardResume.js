@@ -1,9 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getSignupStageStatus } from "@/services/studentSignupBackendApi";
-import { expireSession } from "@/utils/logout";
 import { stepPath } from "@/utils/wizardSteps";
 
 /**
@@ -24,18 +22,32 @@ function resolveResumeStep(currentStep, marker) {
  * like the legacy resume page ({schoolId}/student/enrollment/process/{UUID}),
  * which reads StudentStandard.nextSessionStage on every load and renders that
  * step (`signupPage`). Here, a full page load (refresh, typed URL, reopened
- * tab) asks enrollment-stage-status — its `wizardStep` is that same marker —
- * and moves to that step if it differs. A finished enrollment answers with a
- * `redirectUri` (dashboard / custom plan), which is followed the same way
- * getSignupStatusFinal() does.
+ * tab) reads `signupPage` from student/enrollment/process (already loaded into
+ * the context) and moves to that step if it differs. enrollment-stage-status is
+ * NOT called here; only the review step's 3-minute poll uses it.
  *
  * Moving Back/Continue inside the app never reloads the document, so only
- * the first hook run per document load asks. If the call fails the page just
+ * the first hook run per document load asks. Without a signupPage the page just
  * stays where it is.
  */
 export function useWizardResume({ currentStep, context, uniqueId, ready }) {
   const router = useRouter();
   const { school, program } = useParams();
+
+  // Decided synchronously on the first ready render (before any effect), so the step can show
+  // a loader instead of flashing its own content and then moving. Latched until this step
+  // unmounts after the redirect.
+  const redirecting = useRef(null);
+  if (redirecting.current === null && ready && uniqueId && typeof window !== "undefined") {
+    let block = false;
+    if (context?.customPaymentEnabled) {
+      block = currentStep !== 4;
+    } else if (!window.__wizardResumeChecked) {
+      const signupPage = Number(context?.signupPage);
+      block = signupPage >= 1 && signupPage <= 4 && resolveResumeStep(currentStep, signupPage) !== currentStep;
+    }
+    redirecting.current = block;
+  }
 
   useEffect(() => {
     if (!ready || !uniqueId || typeof window === "undefined") return;
@@ -54,47 +66,8 @@ export function useWizardResume({ currentStep, context, uniqueId, ready }) {
       return;
     }
 
-    // Deliberately no cancel-on-cleanup: React Strict Mode (dev) runs this effect twice,
-    // and the once-per-document flag above makes the second run a no-op — cancelling in
-    // the first run's cleanup would throw away the only response we ever act on.
-    getSignupStageStatus(context.schoolUUID, uniqueId)
-      .then((response) => {
-        if (!response) return;
-        // status "3" = session-out: the backend session is gone, so send them to login.
-        if (response.status === "3") {
-          expireSession(school);
-          return;
-        }
-        if (response.status === "1" && response.redirectUri) {
-          // Defensive: the backend has been observed sending a redirectUri that
-          // points at THIS app's own wizard step route with an extra uniqueId
-          // path segment appended (e.g. ".../step/student-details/{uuid}") —
-          // none of these routes accept one (schoolUUID/userId come from the
-          // session, not the URL), so following it verbatim 404s. Anything
-          // that isn't a same-origin, unrecognized step path (the legacy
-          // app's own dashboard URL on a different port, or an /api/sso
-          // handoff URL) is still followed exactly as before; only this one
-          // malformed shape gets normalized via the response's own wizardStep.
-          let redirectTarget = response.redirectUri;
-          try {
-            const url = new URL(response.redirectUri, window.location.origin);
-            const knownStepRoutes = [1, 2, 3, 4].map((s) => stepPath(school, program, s));
-            const sameOriginStepUrl = url.origin === window.location.origin && url.pathname.includes("/step/");
-            const knownStepRoute = knownStepRoutes.includes(url.pathname);
-            if (sameOriginStepUrl && !knownStepRoute) {
-              const ws = response.wizardStep >= 1 && response.wizardStep <= 4 ? response.wizardStep : currentStep;
-              router.replace(stepPath(school, program, ws));
-              return;
-            }
-          } catch {
-            // Relative/malformed URL string — fall through and follow it as-is.
-          }
-          window.location.replace(redirectTarget);
-          return;
-        }
-        const target = resolveResumeStep(currentStep, response.wizardStep);
-        if (target !== currentStep) router.replace(stepPath(school, program, target));
-      })
-      .catch((err) => console.error("Wizard resume check failed:", err));
-  }, [ready, uniqueId, currentStep, context?.schoolUUID, context?.customPaymentEnabled, context?.signupPage, router, school, program]);
+    // No signupPage (enrollment/process failed or returned none): stay on this step.
+  }, [ready, uniqueId, currentStep, context?.customPaymentEnabled, context?.signupPage, router, school, program]);
+
+  return { redirecting: redirecting.current === true };
 }

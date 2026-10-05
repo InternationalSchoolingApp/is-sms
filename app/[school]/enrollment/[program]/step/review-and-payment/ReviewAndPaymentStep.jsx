@@ -22,9 +22,9 @@ export function ReviewAndPaymentStep() {
   const router = useRouter();
   const { school, program } = useParams();
   const { session, context, ready } = useEnrollmentContext();
-  useWizardResume({ currentStep: 4, context, uniqueId: session?.uniqueId, ready });
+  const { redirecting } = useWizardResume({ currentStep: 4, context, uniqueId: session?.uniqueId, ready });
 
-  if (!ready) {
+  if (!ready || redirecting) {
     return <FullScreenLoader />;
   }
 
