@@ -267,7 +267,8 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVari
 
   return (
     <div>
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4">
+      {/* A single plan option spans the full width instead of leaving an empty second column. */}
+      <div className={`grid grid-cols-1 gap-2 md:gap-4 ${options.length > 1 ? "md:grid-cols-2" : ""}`}>
         {options.map((option) => {
           const checked = option.key === selected;
           const chips = option.variants?.length > 1 ? option.variants : null;

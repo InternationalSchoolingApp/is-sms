@@ -13,13 +13,15 @@ const RULES = [
 /** Live checklist mirroring the existing app's password-suggestion popup (jquery.commonFunction.js). */
 export function PasswordStrengthChecklist({ password, confirmPassword, showConfirmRule = false }) {
   const strength = getPasswordStrength(password, confirmPassword);
+  // Nothing typed yet: every rule stays gray until the first keystroke, then it turns green / red.
+  const untouched = !password;
 
   return (
     <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
       <p className="mb-2 font-semibold text-slate-700">Password must include at least:</p>
       <ul className="space-y-1">
         {RULES.map((rule) => (
-          <RuleRow key={rule.key} passed={strength[rule.key]} label={rule.label} />
+          <RuleRow key={rule.key} passed={strength[rule.key]} untouched={untouched} label={rule.label} />
         ))}
         {showConfirmRule && (
           <RuleRow passed={strength.matchesConfirm} label="Password and confirm password should be same" />
@@ -29,7 +31,15 @@ export function PasswordStrengthChecklist({ password, confirmPassword, showConfi
   );
 }
 
-function RuleRow({ passed, label }) {
+function RuleRow({ passed, label, untouched = false }) {
+  if (untouched) {
+    return (
+      <li className="flex items-center gap-2">
+        <Check className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+        <span className="text-slate-500">{label}</span>
+      </li>
+    );
+  }
   return (
     <li className="flex items-center gap-2">
       {passed ? (
