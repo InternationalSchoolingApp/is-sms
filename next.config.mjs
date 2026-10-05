@@ -37,10 +37,6 @@ const nextConfig = {
     if (!backendBaseUrl || process.env.NEXT_PUBLIC_USE_LOCAL_PROXY !== "true") return [];
     return {
       afterFiles: [
-        { 
-          source: "/api/backend/:path*", 
-          destination: `${backendBaseUrl}*`
-        },
         { source: "/api/v1/:path*", destination: `${backendBaseUrl}/api/v1/:path*` },
         { source: "/:schoolId/api/:path*", destination: `${backendBaseUrl}/:schoolId/api/:path*` },
         // Leave school-prefixed /common routes to the App Router first. Any
