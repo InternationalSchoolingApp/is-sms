@@ -307,7 +307,15 @@ function OfflineForm({ option, details, onUploadProof, onSubmitOffline, busy }) 
 
 // Back / Pay Now action row — rendered by the parent in a sticky footer so it
 // stays pinned to the bottom of the modal while the panel above it scrolls.
-function GatewayActions({ option, busy, onPay, onClose }) {
+function GatewayActions({ option, details, busy, onPay, onClose }) {
+  // "Pay USD 4,550": the base-currency (USD) amount from the "Payment Amount" card, not the converted local
+  // one — payAmount in currencyConversion.base. Whole amounts show no decimals.
+  const payAmount = Number(details?.payAmount) || 0;
+  const payCurrency = details?.currencyConversion?.base || "USD";
+  const payAmountLabel = payAmount.toLocaleString("en-US", {
+    minimumFractionDigits: Number.isInteger(payAmount) ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
   return (
     <div className="flex items-center justify-end gap-3">
       <Button type="button" variant="outline" onClick={onClose} disabled={busy} className="gap-2">
@@ -315,7 +323,7 @@ function GatewayActions({ option, busy, onPay, onClose }) {
       </Button>
       {!NO_PAY_BUTTON.includes(option.name) && (
         <Button type="button" onClick={() => onPay(option)} disabled={busy} className="gap-2 px-6">
-          {busy ? "Please wait…" : "Pay Now"} <ArrowRight className="h-4 w-4" />
+          {busy ? "Please wait…" : `Pay ${payCurrency} ${payAmountLabel}`} <ArrowRight className="h-4 w-4" />
         </Button>
       )}
     </div>
@@ -525,7 +533,7 @@ export function PaymentGatewayPickerModal({
             </div>
             {active && (
               <div className="shrink-0 border-t border-slate-200 bg-white p-5 sm:px-8">
-                <GatewayActions option={active} busy={busy} onPay={onPay} onClose={() => onOpenChange(false)} />
+                <GatewayActions option={active} details={details} busy={busy} onPay={onPay} onClose={() => onOpenChange(false)} />
               </div>
             )}
           </section>
