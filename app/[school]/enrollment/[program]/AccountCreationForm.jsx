@@ -231,9 +231,13 @@ export function AccountCreationForm({ school, program, query }) {
       </div>
       <div
         id="signupMobileHeader"
-        className="fixed left-0 top-[var(--maintenance-banner-h,0px)] z-20 flex w-full flex-col items-center gap-2 bg-white px-4 py-3 backdrop-blur md:hidden"
+        className="fixed left-0 top-[var(--maintenance-banner-h,0px)] z-20 flex w-full flex-col items-center gap-1 border-b border-slate-100 bg-white px-4 py-2.5 backdrop-blur md:hidden"
       >
         <SchoolLogo schoolName={displayedSchoolName} width={180} />
+        <div className="text-center mt-2">
+          <h1 className="text-base font-bold leading-tight text-slate-800">{displayedProgramLabel}</h1>
+          <p className="text-sm font-semibold leading-tight text-primary">Complete your enrollment in just 5 minutes.</p>
+        </div>
       </div>
 
       {/* Content row: hero (left, fixed) + form (right, scrollable). This row
@@ -287,9 +291,6 @@ export function AccountCreationForm({ school, program, query }) {
           className="relative flex flex-1 items-start justify-center overflow-y-auto p-4 md:p-8"
         >
           <div className="mb-4 w-full max-w-lg rounded-3xl bg-white p-3 shadow-xl shadow-slate-900/5 md:ring-1 ring-slate-900/5 sm:p-8 md:my-auto md:p-10">
-            <p className="text-base font-bold text-slate-800 text-center md:hidden">
-              {displayedProgramLabel}
-            </p>
             {!signupInfo ? (
               signupInfoError ? (
                 <div className="space-y-4 py-6 text-center" role="alert">
