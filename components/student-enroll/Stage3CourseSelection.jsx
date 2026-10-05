@@ -1053,7 +1053,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
                 is full-width instead, and there's no search box (matches the
                 reference mobile design). */}
             <div className="border-b border-slate-200 px-4 py-3 md:hidden">
-              <h2 className="text-sm font-bold text-slate-900">Choose Courses</h2>
+              <h2 className="text-sm font-bold text-slate-900">{data.totalCredit >= data.maxCourseLimit ? 'Select Extra Courses':'Select Courses'}</h2>
             </div>
             {data.eligibleForRecommendedCourse && (
               <div className="px-4 pt-4 md:hidden">
