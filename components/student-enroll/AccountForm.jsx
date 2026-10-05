@@ -7,9 +7,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { PasswordStrengthChecklist } from "@/components/student-enroll/PasswordStrengthChecklist";
 import { CaptchaField } from "@/components/student-enroll/CaptchaField";
+// import { EmailValidatorModal } from "@/components/student-enroll/EmailValidatorModal"; // email-invalid confirm modal disabled
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { InfoModal, getWelcomeBackMessage } from "@/components/student-enroll/InfoModal";
-import { EmailValidatorModal } from "@/components/student-enroll/EmailValidatorModal";
 import { useAccountSignup } from "@/hooks/useAccountSignup";
 import { checkEmailAvailability } from "@/services/studentSignupBackendApi";
 import { validateAccountFormOnline, isValidEmail, getPasswordStrength } from "@/utils/studentSignupValidation";
@@ -58,7 +58,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
   const [captchaCacheBust, setCaptchaCacheBust] = useState(0);
   const [flaggedModal, setFlaggedModal] = useState(null);
   const [welcomeBackModal, setWelcomeBackModal] = useState(null);
-  const [emailValidatorModal, setEmailValidatorModal] = useState(null);
+  // const [emailValidatorModal, setEmailValidatorModal] = useState(null); // email-invalid confirm modal disabled
   const formRef = useRef(null);
   // Mirrors signupCommon.js's `prevValue` closure var — avoids re-firing
   // the availability check when the email field blurs without its value
@@ -76,8 +76,8 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
     [fields.email, fields.confirmEmail]
   );
 
-  // Mirrors checkPasswordStrength() in jquery.commonFunction.js: the checklist shows only while the
-  // field is focused, non-empty and still invalid (it hides once every rule passes); the confirm
+  // Mirrors checkPasswordStrength() in jquery.commonFunction.js: the checklist shows from page load
+  // while the password is still invalid (it hides once every rule passes); the confirm
   // field is a plain live comparison ("Please re-enter the same password"), silent while empty.
   const passwordIsValid = useMemo(() => getPasswordStrength(fields.password).isValid, [fields.password]);
   const confirmMismatch = fields.confirmPassword.length > 0 && fields.confirmPassword !== fields.password;
@@ -102,7 +102,9 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
   const checkTermsError = touched.checkTerms && checkTermsInvalid ? "Please accept terms and conditions" : undefined;
 
   function setField(name, value) {
-    setFields((prev) => ({ ...prev, [name]: value }));
+    // "Confirm your email" is hidden from the UI: it always carries the same value as "Enter your
+    // email", so the payload and validation (which still expect confirmEmail) keep working.
+    setFields((prev) => ({ ...prev, [name]: value, ...(name === "email" ? { confirmEmail: value } : {}) }));
   }
 
   function touchField(name) {
@@ -119,8 +121,9 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
   // (CommonUtil.isUserAvailable in is-rest-api):
   //   - status "1" (statusCode "0002", "REQUESTED EMAIL IS AVAILABLE"): no
   //     existing user/parent for this email. If `emailVerified` is false —
-  //     the deliverability check couldn't confirm it — show the
-  //     "appears to be invalid, continue?" confirm (EmailValidatorModal).
+  //     the deliverability check couldn't confirm it — the
+  //     "appears to be invalid, continue?" confirm (EmailValidatorModal) used
+  //     to show; it is currently disabled (commented out below).
   //     If emailVerified is true, there's nothing to show; just continue.
   //   - status "0"/"2" with statusCode 0044/0043/02 ("already registered"/
   //     "declined"): the "Welcome back" modal, same as before.
@@ -142,9 +145,10 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
       if (!response) return;
 
       if (response.status === "1") {
-        if (!response.emailVerified) {
-          setEmailValidatorModal({ email: trimmed });
-        }
+        // EmailValidatorModal disabled: no "appears to be invalid, continue?" confirm.
+        // if (!response.emailVerified) {
+        //   setEmailValidatorModal({ email: trimmed });
+        // }
         return;
       }
 
@@ -187,10 +191,12 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
       // or not, so validation and the submit payload are always correct
       // even when React's state missed the update.
       const formData = new FormData(formRef.current);
+      const submittedEmail = formData.get("email") || fields.email;
       const domFields = {
         ...fields,
-        email: formData.get("email") || fields.email,
-        confirmEmail: formData.get("confirmEmail") || fields.confirmEmail,
+        email: submittedEmail,
+        // Confirm-email field is commented out of the UI: reuse the email as its value.
+        confirmEmail: submittedEmail,
         password: formData.get("password") || fields.password,
         confirmPassword: formData.get("confirmPassword") || fields.confirmPassword,
       };
@@ -280,7 +286,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
 
         <AccountInput
           icon={Mail}
-          label="Enter your email"
+          label="Enter student's email"
           required
           name="email"
           type="email"
@@ -296,6 +302,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           status={touched.email && !emailInvalid ? "valid" : undefined}
         />
 
+        {/* Confirm your email — hidden; its value is mirrored from "Enter your email" (see setField).
         <AccountInput
           icon={Mail}
           label="Confirm your email"
@@ -310,6 +317,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           error={confirmEmailError}
           status={touched.confirmEmail && !confirmEmailInvalid ? "valid" : undefined}
         />
+        */}
 
         <div className="relative">
           <AccountInput
@@ -360,7 +368,8 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
 
             }
           />
-          {passwordFocused && fields.password.length > 0 && !passwordIsValid && (
+          {/* Visible from page load, under the field, until every rule is green; then it disappears. */}
+          {!passwordIsValid && (
             <PasswordStrengthChecklist password={fields.password} />
           )}
         </div>
@@ -461,7 +470,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
         </div>
 
         <p className="text-center text-sm text-slate-600">
-          Already Enrolled?{" "}
+          Already have an account?{" "}
           <a href={process.env.NEXT_PUBLIC_BACKEND_BASE_URL +"/"+ context.schoolUUID+"/common/login"} className="font-semibold text-primary hover:underline">
             Log in here.
           </a>
@@ -480,26 +489,25 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           getWelcomeBackMessage({ ...welcomeBackModal, loginHref: context.loginUrl })}
       </InfoModal>
 
+      {/* EmailValidatorModal disabled — "appears to be invalid, continue?" confirm no longer shown.
       <EmailValidatorModal
         open={!!emailValidatorModal}
         onOpenChange={(open) => !open && setEmailValidatorModal(null)}
         email={emailValidatorModal?.email}
         onContinue={() => {
-          // Mirrors validMailPermission(true): keep the typed email as-is,
-          // and also carry it into Confirm Email so the student doesn't
-          // have to retype the exact same address a second time.
+          // Mirrors validMailPermission(true): keep the typed email as-is.
           setFields((prev) => ({ ...prev, confirmEmail: emailValidatorModal?.email ?? prev.confirmEmail }));
           setEmailValidatorModal(null);
         }}
         onChangeEmail={() => {
           // Mirrors validMailPermission(false): clear both email fields so
-          // the student re-enters a different address, and let that fresh
-          // value get re-checked on its own next blur.
+          // the student re-enters a different address.
           lastCheckedEmailRef.current = "";
           setFields((prev) => ({ ...prev, email: "", confirmEmail: "" }));
           setEmailValidatorModal(null);
         }}
       />
+      */}
     </>
   );
 }

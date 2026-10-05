@@ -13,7 +13,7 @@ import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal
 import { PhoneNumberField } from "@/components/student-enroll/PhoneNumberField";
 import { Req } from "@/components/common/Req";
 import { CURRENT_GRADE_OPTIONS, GENDER_OPTIONS } from "@/components/student-enroll/Stage1StudentDetails";
-import { RELATION_OPTIONS, WORKING_PROFESSION_OPTIONS } from "@/components/student-enroll/Stage2ParentDetails";
+import { ParentRelationFields, WORKING_PROFESSION_OPTIONS } from "@/components/student-enroll/Stage2ParentDetails";
 import {
   mapSignupStudentToFields,
   useCityOptions,
@@ -26,6 +26,7 @@ import { mapSignupParentToFields, useParentDetailsSignup } from "@/hooks/usePare
 import { getDobPickerBounds, validateAge } from "@/utils/ageValidation";
 import { validateParentDetails, validateStudentDetails } from "@/utils/studentSignupValidation";
 import { nameFieldProps } from "@/utils/nameInput";
+import { seedOtherParentFields } from "@/utils/parentRelation";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
@@ -164,7 +165,7 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
       <EditCard title="Student Details" saving={signup.isPending} onSave={save} onCancel={onCancel} formError={formError}>
         <div className={GRID}>
           <FloatingLabelInput icon={User} label={<Req label="First Name" required />} value={fields.firstName} {...nameFieldProps(set("firstName"))} error={errors.firstName} />
-          <FloatingLabelInput icon={User} label="Middle Name" value={fields.middleName} {...nameFieldProps(set("middleName"))} />
+          {/* Middle Name removed from student signup */}
           <FloatingLabelInput icon={User} label={<Req label="Last Name" required />} value={fields.lastName} {...nameFieldProps(set("lastName"))} error={errors.lastName} />
           <FloatingLabelSelect
             icon={GraduationCap}
@@ -297,7 +298,10 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
 }
 
 export function ParentInlineEdit({ context, userId, parent, title = "Parent/Guardian Details", onSaved, onCancel, onSessionExpired }) {
-  const [initial] = useState(() => mapSignupParentToFields(parent));
+  const [initial] = useState(() => {
+    const mapped = mapSignupParentToFields(parent);
+    return mapped && seedOtherParentFields(mapped, context.schoolUUID, userId);
+  });
   const [fields, setFields] = useState(initial);
   const [errors, setErrors] = useState({});
   // The read-only table decides the same way: working-professional fields replace the parent ones.
@@ -365,31 +369,14 @@ export function ParentInlineEdit({ context, userId, parent, title = "Parent/Guar
           </div>
         ) : (
           <>
-            <div className={GRID}>
-              <FloatingLabelInput icon={User} label={<Req label="First Name" required />} value={fields.firstName} {...nameFieldProps(set("firstName"))} error={errors.firstName} />
-              <FloatingLabelInput icon={User} label="Middle Name" value={fields.middleName} {...nameFieldProps(set("middleName"))} />
-              <FloatingLabelInput icon={User} label={<Req label="Last Name" required />} value={fields.lastName} {...nameFieldProps(set("lastName"))} error={errors.lastName} />
-              <FloatingLabelSelect
-                icon={Briefcase}
-                label={<Req label="Relation with Student" required />}
-                value={fields.relation}
-                onValueChange={set("relation")}
-                options={RELATION_OPTIONS}
-                error={errors.relation}
-                searchable
-              />
-              <FloatingLabelInput icon={Mail} label="Parent Email" type="email" value={fields.email} onChange={(e) => set("email")(e.target.value)} error={errors.email} />
-              <PhoneNumberField
-                label="Parent Mobile Number (Optional)"
-                value={fields.contactNumber}
-                className="w-full pb-1.5"
-                initialCountry={initial?.countryCode ? initial.countryCode.toLowerCase() : undefined}
-                onChange={({ contactNumber, countryIsdCode, countryCode, isValid }) =>
-                  setFields((prev) => ({ ...prev, contactNumber, countryIsdCode, countryCode, phoneValid: isValid }))
-                }
-                error={errors.contactNumber}
-              />
-            </div>
+            <ParentRelationFields
+              schoolUUID={context.schoolUUID}
+              userId={userId}
+              fields={fields}
+              setFields={setFields}
+              errors={errors}
+              clearErrors={(...names) => setErrors((prev) => Object.fromEntries(Object.entries(prev).filter(([key]) => !names.includes(key))))}
+            />
 
             <div className={`mt-6 ${GRID}`}>
               <FloatingLabelSelect
@@ -421,26 +408,29 @@ export function ParentInlineEdit({ context, userId, parent, title = "Parent/Guar
               />
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-              <h3 className="text-base font-bold text-slate-900">How to Contact You?<span className="relative top-1 text-red-500"> *</span></h3>
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-                <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
-                  <IoLogoWhatsapp className="h-4 w-4 text-emerald-600" /> WhatsApp
-                  <Checkbox checked={fields.communicationWhatsApp} onCheckedChange={(v) => set("communicationWhatsApp")(Boolean(v))} />
-                </label>
-                <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
-                  <PhoneIcon className="h-4 w-4 text-slate-900" /> Call
-                  <Checkbox checked={fields.communicationCall} onCheckedChange={(v) => set("communicationCall")(Boolean(v))} />
-                </label>
-                <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
-                  <Mail className="h-4 w-4 text-slate-900" /> Email
-                  <Checkbox checked={fields.communicationEmail} onCheckedChange={(v) => set("communicationEmail")(Boolean(v))} />
-                </label>
-              </div>
-            </div>
-            {errors.communication && <p className="mt-2 text-xs text-red-600">{errors.communication}</p>}
           </>
         )}
+
+        {/* Shown for every variant, like getParentDetailsContent() */}
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+        <h3 className="text-base font-bold text-slate-900">How to Contact You?<span className="relative top-1 text-red-500"> *</span></h3>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+            <IoLogoWhatsapp className="h-4 w-4 text-emerald-600" /> WhatsApp
+            <Checkbox checked={fields.communicationWhatsApp} onCheckedChange={(v) => set("communicationWhatsApp")(Boolean(v))} />
+          </label>
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+            <PhoneIcon className="h-4 w-4 text-slate-900" /> Call
+            <Checkbox checked={fields.communicationCall} onCheckedChange={(v) => set("communicationCall")(Boolean(v))} />
+          </label>
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+            <Mail className="h-4 w-4 text-slate-900" /> Email
+            <Checkbox checked={fields.communicationEmail} onCheckedChange={(v) => set("communicationEmail")(Boolean(v))} />
+          </label>
+        </div>
+      </div>
+      {errors.communication && <p className="mt-2 text-xs text-red-600">{errors.communication}</p>}
+
       </EditCard>
       {modal}
     </>

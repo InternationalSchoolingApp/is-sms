@@ -160,6 +160,13 @@ export function validateStudentDetails(fields, { isDualDiploma = false } = {}) {
  * verification gate before submit (skipParent="Y" path — see
  * hooks/useParentDetailsSignup.js).
  */
+// "How to Contact You?" is asked on every variant of the parent step (validateRequestForSignupParent()).
+const CONTACT_PREFERENCE_MESSAGE = "How would you like us to contact you? Please select atleast one";
+
+function hasContactPreference(fields) {
+  return Boolean(fields.communicationWhatsApp || fields.communicationCall || fields.communicationEmail);
+}
+
 export function validateParentDetails(fields, { isOneToOneFlex = false } = {}) {
   const errors = {};
 
@@ -167,24 +174,28 @@ export function validateParentDetails(fields, { isOneToOneFlex = false } = {}) {
     if (!fields.workingProfession) errors.workingProfession = "This field is required";
     if (!fields.institutionName?.trim()) errors.institutionName = "Name of the School/College/Organization is required";
     if (!fields.institutionCountryId) errors.institutionCountryId = "Country of the School/College/Organization is required";
+    if (!hasContactPreference(fields)) errors.communication = CONTACT_PREFERENCE_MESSAGE;
     return { valid: Object.keys(errors).length === 0, errors };
   }
 
   if (!fields.firstName?.trim()) errors.firstName = "First name is required";
   if (!fields.lastName?.trim()) errors.lastName = "Last name is required";
   if (!fields.relation) errors.relation = "Relation with student is required";
-  if (fields.contactNumber && fields.phoneValid === false) {
+  // The (selected relation's) mobile number is mandatory.
+  if (!fields.contactNumber) {
+    errors.contactNumber = "Mobile Number is required";
+  } else if (fields.phoneValid === false) {
     errors.contactNumber = "Please enter a valid phone number";
   }
-  if (fields.email && !isValidEmail(fields.email)) {
-    errors.email = "Email is either empty or invalid";
+  // Father / Mother also show an optional "other parent" mobile number: empty is fine, a
+  // typed one must still be a valid number.
+  if (fields.otherContactNumber && fields.otherPhoneValid === false) {
+    errors.otherContactNumber = "Please enter a valid phone number";
   }
   if (!fields.countryId) errors.countryId = "Country is required";
   if (!fields.stateId) errors.stateId = "State is required";
   if (!fields.cityId) errors.cityId = "City is required";
-  if (!fields.communicationWhatsApp && !fields.communicationCall && !fields.communicationEmail) {
-    errors.communication = "How would you like us to contact you? Please select atleast one";
-  }
+  if (!hasContactPreference(fields)) errors.communication = CONTACT_PREFERENCE_MESSAGE;
 
   return { valid: Object.keys(errors).length === 0, errors };
 }

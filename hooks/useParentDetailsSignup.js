@@ -3,6 +3,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getParentDetails, saveParentDetails } from "@/services/studentSignupBackendApi";
 import { buildAuthenticatedRequest } from "@/utils/authentication";
+import {
+  clearOtherParentCache,
+  getOtherRelation,
+  otherBucketFromFields,
+  saveOtherParentBucket,
+} from "@/utils/parentRelation";
 
 /**
  * Inverse of buildCommunications(): turns a SignupParentDTO (as returned in
@@ -20,10 +26,8 @@ export function mapSignupParentToFields(signupParent) {
   const flag = (key, explicit) => explicit === "Y" || new RegExp(`${key}=Y`).test(comm);
   return {
     firstName: signupParent.firstName || "",
-    middleName: signupParent.middleName || "",
     lastName: signupParent.lastName || "",
     relation: signupParent.relationship || "",
-    email: signupParent.email || "",
     contactNumber: signupParent.contactNumber || "",
     // The DTO's countryCode is the dial code ("1") and countryIsdCode2 the ISO2 ("us"); the form state
     // is the other way round (countryCode = ISO2, countryIsdCode = "+dial"), as the widget emits it.
@@ -101,9 +105,7 @@ function buildSaveParentDetailsRequest({ fields, context, userId, isOneToOneFlex
     // always empty -- kept because the backend DTO still expects the key.
     signupParent.otherRelationName = "";
     signupParent.firstName = fields.firstName;
-    signupParent.middleName = fields.middleName || "";
     signupParent.lastName = fields.lastName;
-    signupParent.email = fields.email || "";
     // useIntlTelInput's onChange (see PhoneNumberField) hands back
     // countryCode = ISO2 ("IN") and countryIsdCode = dial code with a
     // leading "+" ("+91") — the OPPOSITE of what these DTO fields mean on
@@ -122,14 +124,45 @@ function buildSaveParentDetailsRequest({ fields, context, userId, isOneToOneFlex
     // #referralCode element doesn't exist, so getRequestForSignupParent()
     // always falls back to '').
     signupParent.referralCode = "";
-    signupParent.communications = buildCommunications({
-      whatsapp: fields.communicationWhatsApp,
-      call: fields.communicationCall,
-      email: fields.communicationEmail,
-    });
   }
 
-  return { authentication: buildAuthenticatedRequest(context, userId), signupParent };
+  // Sent for every variant (getRequestForSignupParent() sets `communications` outside the program branch).
+  signupParent.communications = buildCommunications({
+    whatsapp: fields.communicationWhatsApp,
+    call: fields.communicationCall,
+    email: fields.communicationEmail,
+  });
+
+  return { authentication: buildAuthenticatedRequest(context, userId), signupParent, additionalParent: buildAdditionalParent(fields, isOneToOneFlex) };
+}
+
+/**
+ * The optional "other parent" (the Mother under Father, the Father under Mother), matching
+ * getRequestForSignupParent() in signupStudentStage2.js: Father / Mother send the other parent's
+ * name + mobile, Guardian sends the same keys blank, and ONE_TO_ONE_FLEX (no relation at all)
+ * sends an empty object. SaveParentDetailsRequestDTO.additionalParent is a SignupParentDTO, and the
+ * backend skips it unless a name or number is present (saveAdditionalSignupParent). The other
+ * parent's own phone country goes along the same way as the primary's (ISO2 lowercase in
+ * countryIsdCode2, dial code without "+" in countryCode); without them the backend would fall back
+ * to the primary parent's country.
+ */
+function buildAdditionalParent(fields, isOneToOneFlex) {
+  if (isOneToOneFlex) return {};
+  const otherRelation = getOtherRelation(fields.relation);
+  if (!otherRelation) {
+    return { firstName: "", lastName: "", contactNumber: "", relationship: "" };
+  }
+  const additionalParent = {
+    firstName: fields.otherFirstName || "",
+    lastName: fields.otherLastName || "",
+    contactNumber: fields.otherContactNumber || "",
+    relationship: otherRelation,
+  };
+  if (additionalParent.contactNumber.trim()) {
+    additionalParent.countryIsdCode2 = fields.otherCountryCode ? fields.otherCountryCode.toLowerCase() : "";
+    additionalParent.countryCode = fields.otherCountryIsdCode ? fields.otherCountryIsdCode.replace(/^\+/, "") : "";
+  }
+  return additionalParent;
 }
 
 export function useParentDetailsSignup({ context, userId, isOneToOneFlex }) {
@@ -142,9 +175,18 @@ export function useParentDetailsSignup({ context, userId, isOneToOneFlex }) {
     // the background refetch lands -- and the form only takes its initial values once. Drop the
     // stale entry (same as useProceedToReview does for the review data) so the next visit waits
     // for the freshly saved parent. A rejected save (status "0"/"2", or no response) saved nothing.
-    onSuccess: (response) => {
+    onSuccess: (response, fields) => {
       if (!response || response.status === "0" || response.status === "2") return;
       queryClient.removeQueries({ queryKey: ["parent-details-prefill", userId] });
+      // The backend keeps ONE parent record: a saved Guardian makes any cached Father / Mother data
+      // stale (so switching back starts blank); a saved Father / Mother caches the OTHER parent so it
+      // survives a refresh and shows on the review screen.
+      if (isOneToOneFlex) return;
+      if (fields.relation === "Guardian") {
+        clearOtherParentCache(context.schoolUUID, userId);
+      } else if (getOtherRelation(fields.relation)) {
+        saveOtherParentBucket(context.schoolUUID, userId, getOtherRelation(fields.relation), otherBucketFromFields(fields));
+      }
     },
   });
 }

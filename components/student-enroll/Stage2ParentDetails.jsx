@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { User, Briefcase, Mail, MapPin, Map, Building2, Phone as PhoneIcon, GraduationCap, School } from "lucide-react";
 import { IoLogoWhatsapp } from "react-icons/io";
 
@@ -17,6 +17,17 @@ import { useParentDetailsSignup } from "@/hooks/useParentDetailsSignup";
 import { validateParentDetails } from "@/utils/studentSignupValidation";
 import { nameFieldProps } from "@/utils/nameInput";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
+import {
+  getOtherRelation,
+  getPrimaryParentLabels,
+  loadOtherParentCache,
+  otherBucketFromFields,
+  otherFieldsFromBucket,
+  primaryBucketFromFields,
+  primaryFieldsFromBucket,
+  saveOtherParentBucket,
+  seedOtherParentFields,
+} from "@/utils/parentRelation";
 
 // "Other" is commented out on the is-rest-api form too (masterContent.js
 // getRelationshipContent()) -- only these three are actually selectable.
@@ -38,14 +49,20 @@ export const WORKING_PROFESSION_OPTIONS = [
 function defaultFields(studentAddress) {
   return {
     firstName: "",
-    middleName: "",
     lastName: "",
     relation: "",
-    email: "",
     contactNumber: "",
-    countryCode: "",
-    countryIsdCode: "",
+    // The phone widget defaults to US when nothing is saved.
+    countryCode: "US",
+    countryIsdCode: "+1",
     phoneValid: undefined,
+    // Optional "other parent" (Mother under Father, Father under Mother) — see utils/parentRelation.js.
+    otherFirstName: "",
+    otherLastName: "",
+    otherContactNumber: "",
+    otherCountryCode: "US",
+    otherCountryIsdCode: "+1",
+    otherPhoneValid: undefined,
     sameAsStudent: Boolean(studentAddress?.countryId),
     countryId: studentAddress?.countryId || "",
     stateId: studentAddress?.stateId || "",
@@ -57,6 +74,153 @@ function defaultFields(studentAddress) {
     institutionName: "",
     institutionCountryId: "",
   };
+}
+
+/**
+ * The relation-driven name / mobile fields of "Parent | Guardian Details", shared by Step 2 and the
+ * review screen's Parent edit popup. Port of the "Relation-based Father/Mother/Guardian parent
+ * fields" block in signupStudentStage2.js plus getParentDetailsContent() in signupStudentContent.js:
+ *
+ *  - Relation sits alone on a centred row (max 420px).
+ *  - Below it: First Name / Last Name / Mobile Number (mandatory) of whichever person the Relation
+ *    names, labelled "Father's First Name" etc. (generic labels until a Relation is chosen).
+ *  - Father / Mother also show the OTHER parent's First Name / Last Name / Mobile Number, all
+ *    optional; Guardian shows none.
+ *  - Switching Relation swaps the values: what was typed for the old person is kept in `buckets`
+ *    (in memory for the visit, the other parent also in localStorage — utils/parentRelation.js), and
+ *    the new person's values come back (Father -> Mother -> Father returns the original Father).
+ *
+ * `fields` keeps the SELECTED person in firstName / lastName / contactNumber (unchanged
+ * save-parent-details contract) and the other parent in the other* fields.
+ */
+export function ParentRelationFields({ schoolUUID, userId, fields, setFields, errors, clearErrors }) {
+  // Seeded once, on mount, from what the form opened with: the selected relation's values from
+  // `fields`, the other Father / Mother from the cache. Only read and mutated in event handlers
+  // (handleRelationChange / persistOther), never during render.
+  const bucketsRef = useRef({ Father: {}, Mother: {}, Guardian: {} });
+  useEffect(() => {
+    const seeded = { Father: {}, Mother: {}, Guardian: {} };
+    if (seeded[fields.relation]) seeded[fields.relation] = primaryBucketFromFields(fields);
+    const cached = loadOtherParentCache(schoolUUID, userId);
+    ["Father", "Mother"].forEach((key) => {
+      if (key !== fields.relation && cached[key]) seeded[key] = cached[key];
+    });
+    bucketsRef.current = seeded;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const labels = getPrimaryParentLabels(fields.relation);
+  const otherRelation = getOtherRelation(fields.relation);
+
+  // persistOtherParentFieldsToCache(): keep the other parent across a refresh.
+  function persistOther(nextFields) {
+    if (!otherRelation) return;
+    const bucket = otherBucketFromFields(nextFields);
+    bucketsRef.current[otherRelation] = bucket;
+    saveOtherParentBucket(schoolUUID, userId, otherRelation, bucket);
+  }
+
+  // onParentRelationChanged()
+  function handleRelationChange(newRelation) {
+    const buckets = bucketsRef.current;
+    const oldRelation = fields.relation;
+    if (oldRelation && buckets[oldRelation]) buckets[oldRelation] = primaryBucketFromFields(fields);
+    if (getOtherRelation(oldRelation)) persistOther(fields);
+
+    // Choosing a Relation for the first time keeps anything already typed instead of blanking it.
+    const keepTyped = !oldRelation && !buckets[newRelation]?.firstName && !buckets[newRelation]?.lastName && !buckets[newRelation]?.contactNumber;
+    const nextOther = getOtherRelation(newRelation);
+    setFields((prev) => ({
+      ...prev,
+      relation: newRelation,
+      ...(keepTyped ? {} : primaryFieldsFromBucket(buckets[newRelation])),
+      ...otherFieldsFromBucket(nextOther ? buckets[nextOther] : null),
+    }));
+    clearErrors?.("relation", "firstName", "lastName", "contactNumber", "otherContactNumber");
+  }
+
+  const set = (name, value) => setFields((prev) => ({ ...prev, [name]: value }));
+
+  return (
+    <>
+      <div className="mx-auto mt-8 max-w-[420px]">
+        <FloatingLabelSelect
+          icon={Briefcase}
+          label={<Req label="Relation with student" required />}
+          value={fields.relation}
+          onValueChange={handleRelationChange}
+          options={RELATION_OPTIONS}
+          error={errors.relation}
+          searchable
+        />
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+        <FloatingLabelInput
+          icon={User}
+          label={<Req label={labels.firstName} required />}
+          value={fields.firstName}
+          {...nameFieldProps((v) => set("firstName", v))}
+          error={errors.firstName}
+        />
+        <FloatingLabelInput
+          icon={User}
+          label={<Req label={labels.lastName} required />}
+          value={fields.lastName}
+          {...nameFieldProps((v) => set("lastName", v))}
+          error={errors.lastName}
+        />
+        {/* Remounted per relation: the phone widget only reads its value / country at mount. */}
+        <PhoneNumberField
+          key={`primary-${fields.relation}`}
+          label={<Req label={labels.mobile} required />}
+          value={fields.contactNumber}
+          className="pb-1.5 w-full"
+          initialCountry={(fields.countryCode || "US").toLowerCase()}
+          onChange={({ contactNumber, countryIsdCode, countryCode, isValid }) =>
+            setFields((prev) => ({ ...prev, contactNumber, countryIsdCode, countryCode, phoneValid: isValid }))
+          }
+          error={errors.contactNumber}
+        />
+      </div>
+
+      {otherRelation && (
+        <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+          <FloatingLabelInput
+            icon={User}
+            label={<>{otherRelation}&apos;s First Name <span className="text-black">(Optional)</span></>}
+            value={fields.otherFirstName}
+            {...nameFieldProps((v) => set("otherFirstName", v))}
+            onBlur={() => persistOther(fields)}
+          />
+          <FloatingLabelInput
+            icon={User}
+            label={<>{otherRelation}&apos;s Last Name <span className="text-black">(Optional)</span></>}
+            value={fields.otherLastName}
+            {...nameFieldProps((v) => set("otherLastName", v))}
+            onBlur={() => persistOther(fields)}
+          />
+          <PhoneNumberField
+            key={`other-${fields.relation}`}
+            label={<>{otherRelation}&apos;s Mobile Number <span className="text-black">(Optional)</span></>}
+            value={fields.otherContactNumber}
+            className="pb-1.5 w-full"
+            initialCountry={(fields.otherCountryCode || "US").toLowerCase()}
+            onChange={({ contactNumber, countryIsdCode, countryCode, isValid }) =>
+              setFields((prev) => ({
+                ...prev,
+                otherContactNumber: contactNumber,
+                otherCountryIsdCode: countryIsdCode,
+                otherCountryCode: countryCode,
+                otherPhoneValid: contactNumber ? isValid : undefined,
+              }))
+            }
+            error={errors.otherContactNumber}
+          />
+        </div>
+      )}
+    </>
+  );
 }
 
 /**
@@ -88,7 +252,9 @@ function defaultFields(studentAddress) {
  * save/reload-on-mount pattern Stage 1 uses for its own fields.
  */
 export function Stage2ParentDetails({ context, userId, studentAddress, courseProviderId, initialFields, onNext, onBack }) {
-  const [fields, setFields] = useState(() => ({ ...defaultFields(studentAddress), ...initialFields }));
+  const [fields, setFields] = useState(() =>
+    seedOtherParentFields({ ...defaultFields(studentAddress), ...initialFields }, context.schoolUUID, userId)
+  );
   const [errors, setErrors] = useState({});
   const [flaggedModal, setFlaggedModal] = useState(null);
 
@@ -183,7 +349,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
       ? "Communication Details"
       : isOneToOneFlex
         ? "Academic & Communication Details"
-        : "Parents Details";
+        : "Parent/Guardian Details";
 
   const locationDisabled = fields.sameAsStudent;
 
@@ -221,60 +387,18 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
         </div>
       ) : (
         <>
-          <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-            <FloatingLabelInput
-              icon={User}
-              label={<Req label="First Name" required />}
-              value={fields.firstName}
-              {...nameFieldProps((v) => setField("firstName", v))}
-              error={errors.firstName}
-            />
-            <FloatingLabelInput
-              icon={User}
-              label="Middle Name"
-              value={fields.middleName}
-              {...nameFieldProps((v) => setField("middleName", v))}
-            />
-            <FloatingLabelInput
-              icon={User}
-              label={<Req label="Last Name" required />}
-              value={fields.lastName}
-              {...nameFieldProps((v) => setField("lastName", v))}
-              error={errors.lastName}
-            />
-            <FloatingLabelSelect
-              icon={Briefcase}
-              label={<Req label="Relation with Student" required />}
-              value={fields.relation}
-              onValueChange={(v) => setField("relation", v)}
-              options={RELATION_OPTIONS}
-              error={errors.relation}
-              searchable
-            />
-            <FloatingLabelInput
-              icon={Mail}
-              label="Parent Email"
-              type="email"
-              value={fields.email}
-              onChange={(e) => setField("email", e.target.value)}
-              error={errors.email}
-            />
-            <PhoneNumberField
-              label="Parent Mobile Number (Optional)"
-              value={fields.contactNumber}
-              className="pb-1.5 w-full"
-              // Only takes effect at mount (see useIntlTelInput) — restores the saved phone country.
-              initialCountry={initialFields?.countryCode ? initialFields.countryCode.toLowerCase() : undefined}
-              onChange={({ contactNumber, countryIsdCode, countryCode, isValid }) =>
-                setFields((prev) => ({ ...prev, contactNumber, countryIsdCode, countryCode, phoneValid: isValid }))
-              }
-              error={errors.contactNumber}
-            />
-          </div>
+          <ParentRelationFields
+            schoolUUID={context.schoolUUID}
+            userId={userId}
+            fields={fields}
+            setFields={setFields}
+            errors={errors}
+            clearErrors={clearErrors}
+          />
 
           <label className="mt-8 mb-4 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-900">
             <Checkbox checked={!fields.sameAsStudent} onCheckedChange={(v) => toggleSameAsStudent(!v)} />
-            Change your Location
+            Change your location
           </label>
           <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
             <FloatingLabelSelect
@@ -328,38 +452,41 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
             />
           </div>
 
-          <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
-            <h3 className="text-base font-bold text-slate-900">How to Contact You?<span className="relative top-1 text-red-500"> *</span></h3>
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-              <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                <IoLogoWhatsapp className="h-4 w-4 text-emerald-600" />
-                WhatsApp
-                <Checkbox
-                  checked={fields.communicationWhatsApp}
-                  onCheckedChange={(v) => setField("communicationWhatsApp", Boolean(v))}
-                />
-              </label>
-              <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                <PhoneIcon className="h-4 w-4 text-slate-900" />
-                Call
-                <Checkbox
-                  checked={fields.communicationCall}
-                  onCheckedChange={(v) => setField("communicationCall", Boolean(v))}
-                />
-              </label>
-              <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                <Mail className="h-4 w-4 text-slate-900" />
-                Email
-                <Checkbox
-                  checked={fields.communicationEmail}
-                  onCheckedChange={(v) => setField("communicationEmail", Boolean(v))}
-                />
-              </label>
-            </div>
-          </div>
-          {errors.communication && <p className="mt-2 text-xs text-red-600">{errors.communication}</p>}
         </>
       )}
+
+      {/* getParentDetailsContent() appends this after every variant (Communication Details,
+          Academic & Communication Details, Parent | Guardian Details). */}
+      <div className="mt-8 flex flex-col items-center gap-3 text-center">
+        <h3 className="text-base font-bold text-slate-900">How to Contact You?<span className="relative top-1 text-red-500"> *</span></h3>
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+          <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+            <IoLogoWhatsapp className="h-4 w-4 text-emerald-600" />
+            WhatsApp
+            <Checkbox
+              checked={fields.communicationWhatsApp}
+              onCheckedChange={(v) => setField("communicationWhatsApp", Boolean(v))}
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+            <PhoneIcon className="h-4 w-4 text-slate-900" />
+            Call
+            <Checkbox
+              checked={fields.communicationCall}
+              onCheckedChange={(v) => setField("communicationCall", Boolean(v))}
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+            <Mail className="h-4 w-4 text-slate-900" />
+            Email
+            <Checkbox
+              checked={fields.communicationEmail}
+              onCheckedChange={(v) => setField("communicationEmail", Boolean(v))}
+            />
+          </label>
+        </div>
+      </div>
+      {errors.communication && <p className="mt-2 text-center text-xs text-red-600">{errors.communication}</p>}
 
       {errors.form && <p className="mt-4 text-center text-sm font-semibold text-red-600">{errors.form}</p>}
 

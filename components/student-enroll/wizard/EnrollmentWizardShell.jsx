@@ -69,7 +69,7 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
           <Image src="/images/is_fav_logo_200.png" alt={schoolName || ""} width={28} height={28} className="h-7 w-auto" unoptimized />
           <div className="text-center">
             {programLabel && <h1 className="text-base font-extrabold leading-tight text-slate-900">{programLabel}</h1>}
-            <p className="mt-0.5 text-[13px] leading-tight text-slate-500">Complete in under 1 minute</p>
+            <p className="mt-0.5 text-[13px] leading-tight text-slate-500">Complete in under 5 minute</p>
           </div>
           <button
             type="button"
@@ -84,7 +84,7 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
         {programLabel && (
           <div className="hidden text-center md:block">
             <h1 className="text-1.5xl font-extrabold text-slate-900 sm:text-2xl">{programLabel}</h1>
-            <p className="mt-1 text-sm text-slate-500">Complete in under 1 minute</p>
+            <p className="mt-1 text-sm text-slate-500">Complete in under 5 minute</p>
           </div>
         )}
 

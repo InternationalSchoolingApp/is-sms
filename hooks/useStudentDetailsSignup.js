@@ -195,7 +195,6 @@ function buildSaveStudentDetailsRequest({ fields, context, userId, isDualDiploma
   const signupStudent = {
     themeType: "theme2",
     firstName: fields.firstName,
-    middleName: fields.middleName || "",
     lastName: fields.lastName,
     dob: formatDobForRequest(fields.dob),
     gender: fields.gender,
