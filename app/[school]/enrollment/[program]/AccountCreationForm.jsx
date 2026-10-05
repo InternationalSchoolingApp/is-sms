@@ -231,13 +231,14 @@ export function AccountCreationForm({ school, program, query }) {
       </div>
       <div
         id="signupMobileHeader"
-        className="fixed left-0 top-[var(--maintenance-banner-h,0px)] z-20 flex w-full flex-col items-center gap-1 border-b border-slate-100 bg-white px-4 py-2.5 backdrop-blur md:hidden"
+        className="fixed left-0 top-[var(--maintenance-banner-h,0px)] z-20 grid w-full grid-cols-[2rem_1fr_2rem] items-center gap-2 bg-white px-4 py-4 md:hidden"
       >
-        <SchoolLogo schoolName={displayedSchoolName} width={180} />
-        <div className="text-center mt-2">
-          <h1 className="text-base font-bold leading-tight text-slate-800">{displayedProgramLabel}</h1>
-          <p className="text-sm font-semibold leading-tight text-primary">Complete your enrollment in just 5 minutes.</p>
+        <Image src="/images/is_fav_logo_200.png" alt={displayedSchoolName || ""} width={28} height={28} className="h-7 w-auto" unoptimized />
+        <div className="text-center">
+          <h1 className="text-base font-extrabold leading-tight text-slate-900">{displayedProgramLabel}</h1>
+          <p className="mt-0.5 text-[12px] leading-tight text-primary font-semibold">Complete your enrollment in just 5 minutes</p>
         </div>
+        <div aria-hidden="true" />
       </div>
 
       {/* Content row: hero (left, fixed) + form (right, scrollable). This row
