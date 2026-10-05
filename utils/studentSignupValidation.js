@@ -143,7 +143,7 @@ export function validateStudentDetails(fields, { isDualDiploma = false } = {}) {
     if (!fields.nationality) errors.nationality = "Nationality is required";
     if (!isValidEmail(fields.communicationEmail)) errors.communicationEmail = "Email is either empty or invalid";
     if (!fields.contactNumber || fields.phoneValid === false) {
-      errors.contactNumber = "A valid phone number is required";
+      errors.contactNumber = "A valid mobile number is required";
     }
   }
 
