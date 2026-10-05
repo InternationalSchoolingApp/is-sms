@@ -66,7 +66,7 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
       <div className="flex-1 bg-[#f2f5fa] px-4 pb-6 md:px-6 md:py-8 md:pb-24 md:pt-[62px]">
         <div className="sticky top-0 z-20 -mx-4 bg-[#f2f5fa] px-4 pb-3 md:static md:mx-0 md:bg-transparent md:px-0 md:pb-0">
         <header className="grid grid-cols-[2rem_1fr_2rem] items-center gap-2 px-1 py-4 md:hidden">
-          <Image src="/images/is_fav_logo_200.png" alt={schoolName || ""} width={28} height={28} className="h-7 w-auto" unoptimized />
+          <Image src="/images/Fav_Icon.png" alt={schoolName || ""} width={28} height={28} className="h-7 w-auto" unoptimized />
           <div className="text-center">
             {programLabel && <h1 className="text-base font-extrabold leading-tight text-slate-900">{programLabel}</h1>}
             <p className="mt-0.5 text-[12px] leading-tight text-primary font-semibold">Complete your enrollment in just 5 minutes</p>

@@ -233,7 +233,7 @@ export function AccountCreationForm({ school, program, query }) {
         id="signupMobileHeader"
         className="fixed left-0 top-[var(--maintenance-banner-h,0px)] z-20 grid w-full grid-cols-[2rem_1fr_2rem] items-center gap-2 bg-white px-4 py-4 md:hidden"
       >
-        <Image src="/images/is_fav_logo_200.png" alt={displayedSchoolName || ""} width={28} height={28} className="h-7 w-auto" unoptimized />
+        <Image src="/images/Fav_Icon.png" alt={displayedSchoolName || ""} width={28} height={28} className="h-7 w-auto" unoptimized />
         <div className="text-center">
           <h1 className="text-base font-extrabold leading-tight text-slate-900">{displayedProgramLabel}</h1>
           <p className="mt-0.5 text-[12px] leading-tight text-primary font-semibold">Complete your enrollment in just 5 minutes</p>
