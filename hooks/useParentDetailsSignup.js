@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getParentDetails, saveParentDetails } from "@/services/studentSignupBackendApi";
 import { buildAuthenticatedRequest } from "@/utils/authentication";
 
@@ -133,8 +133,18 @@ function buildSaveParentDetailsRequest({ fields, context, userId, isOneToOneFlex
 }
 
 export function useParentDetailsSignup({ context, userId, isOneToOneFlex }) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (fields) =>
       saveParentDetails(context.schoolUUID, buildSaveParentDetailsRequest({ fields, context, userId, isOneToOneFlex })),
+    // The prefill query still holds the parent as it was BEFORE this save, and the step reads
+    // its cache as soon as it remounts (Back from Step 3), so it would show the old values until
+    // the background refetch lands -- and the form only takes its initial values once. Drop the
+    // stale entry (same as useProceedToReview does for the review data) so the next visit waits
+    // for the freshly saved parent. A rejected save (status "0"/"2", or no response) saved nothing.
+    onSuccess: (response) => {
+      if (!response || response.status === "0" || response.status === "2") return;
+      queryClient.removeQueries({ queryKey: ["parent-details-prefill", userId] });
+    },
   });
 }
