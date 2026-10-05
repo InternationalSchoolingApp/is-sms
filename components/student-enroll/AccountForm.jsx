@@ -32,7 +32,6 @@ const INITIAL_FIELDS = {
  * wired to the confirmed POST enrollment/stage-1 endpoint.
  */
 export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
-  debugger
   const [fields, setFields] = useState(() => ({
     ...INITIAL_FIELDS,
     email: context?.username || "",
