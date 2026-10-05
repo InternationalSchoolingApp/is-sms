@@ -23,7 +23,7 @@ export function ParentDetailsStep() {
   const router = useRouter();
   const { school, program } = useParams();
   const { session, context, ready } = useEnrollmentContext();
-  useWizardResume({ currentStep: 2, context, uniqueId: session?.uniqueId, ready });
+  const { redirecting } = useWizardResume({ currentStep: 2, context, uniqueId: session?.uniqueId, ready });
   const parentPrefill = useParentDetailsPrefill({ context, userId: session?.userId });
   // Same query the enrollment context already runs, so this is normally already cached.
   const studentPrefill = useStudentDetailsPrefill({ context: { schoolUUID: session?.schoolUUID }, userId: session?.userId });
@@ -47,7 +47,7 @@ export function ParentDetailsStep() {
     setHydrated(true);
   }, [ready, parentPrefill.isPending, parentPrefill.data, studentPrefill.isPending, studentPrefill.data, context?.schoolUUID, session?.userId]);
 
-  if (!ready || context.customPaymentEnabled || !hydrated) {
+  if (!ready || redirecting || context.customPaymentEnabled || !hydrated) {
     return <FullScreenLoader />;
   }
 
