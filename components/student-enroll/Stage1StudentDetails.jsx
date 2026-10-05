@@ -192,6 +192,12 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
     setFields((prev) => ({ ...prev, [name]: value }));
   }
 
+  // Changing the grade clears the already-picked DOB rather than leaving a
+  // value selected for the previous grade.
+  function setGrade(standardId) {
+    setFields((prev) => ({ ...prev, standardId, dob: null }));
+  }
+
   function setCountry(countryId) {
     setFields((prev) => ({ ...prev, countryId, stateId: "", cityId: "" }));
   }
@@ -267,7 +273,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
             icon={GraduationCap}
             label={<Req label="Grade" required />}
             value={fields.standardId}
-            onValueChange={(v) => setField("standardId", v)}
+            onValueChange={setGrade}
             options={grades.data || []}
             error={errors.standardId || (grades.isError ? "Could not load grades" : undefined)}
             searchable
