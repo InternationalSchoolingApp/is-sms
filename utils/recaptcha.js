@@ -16,7 +16,6 @@ export const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || 
 let scriptPromise = null;
 
 export function loadRecaptchaScript() {
-  debugger
   if (typeof window === "undefined") return Promise.resolve();
   if (window.grecaptcha) return Promise.resolve();
   if (!scriptPromise) {
