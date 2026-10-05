@@ -22,7 +22,7 @@ export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDat
           type="button"
           disabled={disabled}
           className={`relative flex h-12 w-full items-center rounded-md border ${disabled ? "cursor-not-allowed bg-slate-100 text-slate-500" : "bg-white"} ${Icon ? "pl-10" : "pl-3.5"} pr-3.5 pt-1 text-left text-sm ${
-            error ? "border-2 border-red-500" : open ? "border-2 border-slate-900" : value && !disabled ? "border-2 border-emerald-500" : "border-slate-300"
+            error ? "border-2 border-red-500" : open ? "border-2 border-primary" : value && !disabled ? "border-2 border-emerald-500" : "border-slate-300"
           }`}
         >
           {Icon && <Icon className="pointer-events-none absolute left-3.5 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-slate-500" />}

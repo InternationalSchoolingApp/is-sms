@@ -1039,7 +1039,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search for courses..."
-                    className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-slate-900"
+                    className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-primary"
                   />
                 </div>
                 {data.eligibleForRecommendedCourse && (
