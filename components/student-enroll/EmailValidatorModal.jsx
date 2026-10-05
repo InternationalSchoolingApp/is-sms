@@ -24,7 +24,7 @@ export function EmailValidatorModal({ open, onOpenChange, email, onContinue, onC
           <p className="text-sm text-slate-700 sm:text-base">
             The email <span className="font-semibold text-primary">{email}</span> appears to be invalid.
             <br />
-            Do you want to continue with it?
+            Do you want to continue with it? 
           </p>
         </div>
         <DialogFooter className="sm:justify-center">
