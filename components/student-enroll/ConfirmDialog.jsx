@@ -34,11 +34,11 @@ export function ConfirmDialog({ request: incoming, onResolve }) {
         <div className="space-y-2 text-center text-sm text-slate-700">{request?.message}</div>
         <DialogFooter className="sm:justify-center">
             <div className="flex justify-center gap-3">
-              <Button type="button" variant="outline" onClick={() => onResolve(false)}>
-                {request?.cancelLabel || "No"}
-              </Button>
               <Button type="button" onClick={() => {onResolve(true)}} className="rounded-md bg-primary hover:bg-primary/90">
                 {request?.confirmLabel || "I understand and agree"}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => onResolve(false)}>
+                {request?.cancelLabel || "No"}
               </Button>
             </div>
         </DialogFooter>
