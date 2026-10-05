@@ -6,7 +6,7 @@ import { AccountInput } from "@/components/student-enroll/AccountInput";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { PasswordStrengthChecklist } from "@/components/student-enroll/PasswordStrengthChecklist";
-import { CaptchaField } from "@/components/student-enroll/CaptchaField";
+// import { CaptchaField } from "@/components/student-enroll/CaptchaField";
 // import { EmailValidatorModal } from "@/components/student-enroll/EmailValidatorModal"; // email-invalid confirm modal disabled
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { InfoModal, getWelcomeBackMessage } from "@/components/student-enroll/InfoModal";
