@@ -881,7 +881,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
                   type="button"
                   onClick={removeAll}
                   disabled={busy}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 hover:text-red-700"
+                  className="inline-flex items-center gap-1 cursor-pointer text-xs font-semibold text-red-600 hover:text-red-700"
                   aria-label="Remove all courses"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -896,53 +896,64 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
                 const CourseIcon = categoryIcon(course.courseName);
                 const singleUpgradeTarget = course.upgradeCourses?.length === 1 ? course.upgradeCourses[0] : null;
                 return (
-                  <li
-                    key={course.courseId}
-                    className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 shadow-sm md:rounded-none md:border-0 md:bg-transparent md:p-0 md:px-4 md:py-3 md:shadow-none"
-                  >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
-                      <CourseIcon className="h-4 w-4" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-900">{course.courseName}</p>
-                      {!hideCredits && <p className="text-xs text-slate-500">{course.creditScore} Credit</p>}
-                      <CourseSummaryLink url={course.courseDescriptionUrl} />
-                    </div>
-                    {singleUpgradeTarget ? (
-                      <VariantToggle course={course} target={singleUpgradeTarget} onToggle={upgrade} disabled={busy} />
-                    ) : (
-                      (course.upgradeCourses || []).map((target) => (
-                        <Button
-                          key={target.courseId}
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          title={upgradeHint(target.courseType)}
-                          onClick={() => upgrade(course, target)}
-                          disabled={busy}
-                        >
-                          {target.buttonLabel}
-                          {course.courseTypeOriginal === "Regular" ? <ArrowUp /> : <ArrowDown />}
-                        </Button>
-                      ))
-                    )}
-                    {!fixed && course.courseMandatory === 1 && !batchOrProvider39 && (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
-                        <Lock className="h-3 w-3" /> Mandatory
+                  <li key={course.courseId} className="flex flex-col gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 shadow-sm sm:flex-row sm:flex-wrap sm:items-center md:rounded-none md:border-0 md:bg-transparent md:p-0 md:px-4 md:py-3 md:shadow-none">
+                    <div className="flex min-w-0 flex-1 items-start gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
+                        <CourseIcon className="h-4 w-4" />
                       </span>
-                    )}
-                    {!fixed && course.courseMandatory === 0 && (
-                      <Button
-                        type="button"
-                        size="icon-sm"
-                        variant="ghost"
-                        aria-label={`Remove ${course.courseName}`}
-                        onClick={() => removeSubject(course)}
-                        disabled={busy}
-                      >
-                        <Trash2 className="text-red-600" />
-                      </Button>
-                    )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-slate-900">{course.courseName}</p>
+                        {!hideCredits && <p className="text-xs text-slate-500">{course.creditScore} Credit</p>}
+                        <CourseSummaryLink url={course.courseDescriptionUrl} />
+                      </div>
+                      {!fixed && course.courseMandatory === 0 && (
+                        <button
+                          type="button"
+                          onClick={() => removeSubject(course)}
+                          disabled={busy}
+                          className="inline-flex sm:hidden items-center cursor-pointer gap-1 text-xs font-semibold text-red-600 hover:text-red-700"
+                          aria-label="Remove all courses"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 pl-12 sm:pl-0">
+                      {singleUpgradeTarget ? (
+                        <VariantToggle course={course} target={singleUpgradeTarget} onToggle={upgrade} disabled={busy} />
+                      ) : (
+                        (course.upgradeCourses || []).map((target) => (
+                          <Button
+                            key={target.courseId}
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            title={upgradeHint(target.courseType)}
+                            onClick={() => upgrade(course, target)}
+                            disabled={busy}
+                          >
+                            {target.buttonLabel}
+                            {course.courseTypeOriginal === "Regular" ? <ArrowUp /> : <ArrowDown />}
+                          </Button>
+                        ))
+                      )}
+                      {!fixed && course.courseMandatory === 1 && !batchOrProvider39 && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
+                          <Lock className="h-3 w-3" /> Mandatory
+                        </span>
+                      )}
+                      {!fixed && course.courseMandatory === 0 && (
+                        <button
+                          type="button"
+                          onClick={() => removeSubject(course)}
+                          disabled={busy}
+                          className="hidden sm:inline-flex items-center cursor-pointer gap-1 text-xs font-semibold text-red-600 hover:text-red-700"
+                          aria-label="Remove all courses"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
                   </li>
                 );
               })}

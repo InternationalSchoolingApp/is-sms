@@ -4,26 +4,12 @@ import Image from "next/image";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-/**
- * Mirrors `.emailValidatorModal` from SignupCommon.jsp + callEmailCheck()'s
- * `!data.emailVerified && data.status == "1"` branch in
- * jquery.commonFunction.js: shown when is-user-available confirms the email
- * is available (statusCode "0002") but the deliverability check could not
- * verify it — the student is syntactically-valid-but-unconfirmed, not
- * "already registered" (that's InfoModal/getWelcomeBackMessage, a separate
- * flow). Legacy has no icon here; `valid-email.png` is this migration's own
- * illustration for the same confirm prompt.
- *
- * `onContinue` keeps the typed email as-is (legacy's validMailPermission(true)
- * — just marks the field valid). `onChangeEmail` mirrors
- * validMailPermission(false) ("I want to change student email"): clears
- * email/confirmEmail so the student re-enters a different address.
- */
+
 export function EmailValidatorModal({ open, onOpenChange, email, onContinue, onChangeEmail }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+        <DialogHeader className="-mx-4 -mt-4 border-b p-4">
           <DialogTitle className="text-xl">Information</DialogTitle>
         </DialogHeader>
         <div className="flex items-center gap-4 py-2">
