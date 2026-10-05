@@ -815,19 +815,12 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
         {(showCreditSummary || showCourseCountSummary) && (
           <div className="flex items-center justify-between px-1">
             <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary text-white">
-                <Info className="h-2.5 w-2.5" />
-              </span>
               {showCourseCountSummary ? "Course Requirement:" : "Credit Requirement:"}
             </span>
             <span className="text-sm font-bold text-slate-900">
               {showCourseCountSummary ? "Minimum 5 Courses" : `Minimum ${data.minCourseLimit} Credits`}
             </span>
           </div>
-        )}
-
-        {showCourseCountSummary && (
-          <p className="px-1 text-xs font-semibold text-slate-600">{selectedCourseCount}/{displayCourseCountTarget} courses selected</p>
         )}
 
         {!fixed && !batchOrProvider39 && gradeBand !== "elementary" && (
@@ -938,7 +931,14 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
         <section className="self-start overflow-hidden rounded-xl border border-slate-200 bg-white">
           <header className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
             <h2 className="text-sm font-bold text-slate-900">
-              {showCourseCredits ? `Your Selected Courses: ${data.totalCredit} credits` : "Your Selected Courses"}
+              {showCourseCountSummary ? (
+                <>
+                  <span className="md:hidden">Your Selected Courses: <span className="text-primary">{selectedCourseCount} Courses</span></span>
+                  <span className="hidden md:inline">Your Selected Courses</span>
+                </>
+              ) : showCourseCredits ? (
+                <>Your Selected Courses: <span className="text-primary">{data.totalCredit} credits </span></>
+              ) : "Your Selected Courses"}
             </h2>
             <div className="flex items-center gap-3">
               {canRemoveAll && (
