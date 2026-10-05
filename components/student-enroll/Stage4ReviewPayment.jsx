@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BiSolidBookAdd, BiSolidPencil, BiSolidUserDetail } from "react-icons/bi";
-import { ChevronDown, Info } from "lucide-react";
+import { BiSolidBookAdd, BiSolidUserDetail } from "react-icons/bi";
+import { Info } from "lucide-react";
 import { FaNotesMedical } from "react-icons/fa6";
 import { IoMdPeople } from "react-icons/io";
 import { FullScreenLoader } from "@/components/common/Loader";
@@ -18,6 +18,7 @@ import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGa
 import { getPaymentPaidStatus } from "@/services/studentSignupBackendApi";
 import { useShowPaymentOption } from "@/hooks/useCourseSelection";
 import { saveWizardParentFields, saveWizardStudentFields } from "@/utils/wizardStorage";
+import { getOtherRelation, loadOtherParentCache, relationPossessive } from "@/utils/parentRelation";
 import {
   STATUS_ELIGIBLE_CUSTOM_PLAN,
   STATUS_FLAGGED,
@@ -112,22 +113,17 @@ function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
       }}
       className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 md:rounded-none md:border-0 md:py-3"
     >
-      <div className="flex items-center gap-4">
+      <div className="flex min-w-0 items-center gap-2 md:gap-4">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary md:h-10 md:w-10">
           <Icon className="h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />
         </span>
         <h2 className="text-[clamp(12px,3.5vw,15px)] font-bold text-slate-900 md:text-base md:font-semibold">{title}</h2>
       </div>
-      <ChevronDown
-        className={`h-4 w-4 shrink-0 text-slate-900 transition-transform duration-300 motion-reduce:transition-none md:hidden ${open ? "rotate-180" : ""}`}
-        strokeWidth={3}
-        aria-hidden="true"
-      />
-      <div className="hidden gap-2 md:flex">
+      <div className="flex shrink-0 gap-2">
         <Button
           type="button"
           variant="outline"
-          className="cursor-pointer"
+          className="h-8 cursor-pointer px-3 text-xs md:h-9 md:px-4 md:text-sm"
           onClick={(e) => {
             e.stopPropagation();
             onToggle();
@@ -138,7 +134,7 @@ function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
         {onEdit && (
           <Button
             type="button"
-            className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90"
+            className="h-8 rounded-md cursor-pointer bg-primary px-3 text-xs hover:bg-primary/90 md:h-9 md:px-4 md:text-sm"
             onClick={(e) => {
               e.stopPropagation();
               onEdit();
@@ -152,19 +148,6 @@ function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
   );
 }
 
-// Mobile-only "Edit Details  ✎ Edit" line above an expanded section (the header's Edit button is desktop-only).
-function MobileEditRow({ onEdit }) {
-  if (!onEdit) return null;
-  return (
-    <div className="mt-4 flex items-center justify-between md:hidden">
-      <h3 className="text-sm font-bold text-slate-900">Edit Details</h3>
-      <button type="button" onClick={onEdit} className="flex items-center gap-1.5 text-sm font-semibold text-primary">
-        <BiSolidPencil className="h-4 w-4" aria-hidden="true" /> Edit
-      </button>
-    </div>
-  );
-}
-
 // getPaymentPaidStatus() polling in commonPaymentGateway.js: every 10s, gives up after 10 checks.
 const PAID_STATUS_POLL_MS = 10000;
 const PAID_STATUS_MAX_CHECKS = 10;
@@ -173,7 +156,8 @@ const GENERIC_ERROR ="Something went wrong. Please check your connection and try
 
 function fullName(person) {
   if (!person) return "";
-  return [person.firstName, person.middleName, person.lastName].filter(Boolean).join(" ");
+  // Middle name is no longer collected (student or parent): First + Last only.
+  return [person.firstName, person.lastName].filter(Boolean).join(" ");
 }
 
 function locationLine(person) {
@@ -743,6 +727,11 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       : student?.courseProviderId === 39
         ? "Communication Details"
         : "Parent/Guardian Details";
+  // parentDetailsPreview(): rows are titled after the relation ("Father's Name"); Father / Mother also list
+  // the other parent, which the review response does not carry, so it comes from the client-side cache.
+  const relationNoun = relationPossessive(parent?.relationship) || parent?.relationship || "Parent/Guardian";
+  const otherRelation = getOtherRelation(parent?.relationship);
+  const otherParent = otherRelation ? loadOtherParentCache(context.schoolUUID, userId)[otherRelation] : null;
   const paymentPending = showPaymentOption === "Y";
 
   const showFee = paymentPending && fee;
@@ -787,7 +776,6 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
             onEdit={data.customPaymentEnabled ? undefined : () => startEdit("student")}
           />
           <Collapse open={openSectionFor() === "student"}>
-          <MobileEditRow onEdit={data.customPaymentEnabled ? undefined : () => startEdit("student")} />
           <dl className="py-2 text-sm md:divide-y md:divide-slate-100 md:border-t md:border-slate-100 md:px-4 md:text-sm">
             <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Name</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{fullName(student)}</dd></div>
             {course?.standardName && (
@@ -823,7 +811,6 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
             onEdit={data.customPaymentEnabled ? undefined : () => startEdit("parent")}
           />
           <Collapse open={openSectionFor() === "parent"}>
-          <MobileEditRow onEdit={data.customPaymentEnabled ? undefined : () => startEdit("parent")} />
           <dl className="px-1 py-2 text-sm md:divide-y md:divide-slate-100 md:border-t md:border-slate-100 md:px-4 md:text-sm">
             {parent?.workingProfessionName ? (
               <>
@@ -833,10 +820,15 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
               </>
             ) : (
               <>
-                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Name</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{fullName(parent)}</dd></div>
+                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{relationNoun} Name</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{fullName(parent)}</dd></div>
                 <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Relation with student</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{parent?.relationshipName}</dd></div>
-                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Email</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{parent?.email || "N/A"}</dd></div>
-                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Phone Number</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{phoneLine(parent)}</dd></div>
+                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{relationNoun} Mobile Number</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{phoneLine(parent)}</dd></div>
+                {otherRelation && (
+                  <>
+                    <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{otherRelation}&apos;s Name</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{fullName(otherParent) || "N/A"}</dd></div>
+                    <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{otherRelation}&apos;s Mobile Number</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{otherParent?.contactNumber ? phoneLine({ countryCode: otherParent.countryIsdCode?.replace(/^\+/, ""), contactNumber: otherParent.contactNumber }) : "N/A"}</dd></div>
+                  </>
+                )}
                 <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Country | State | City</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{locationLine(parent)}</dd></div>
                 {parent?.referralCode && (
                   <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Referral Code</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{parent.referralCode}</dd></div>
@@ -856,7 +848,6 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
             onEdit={data.customPaymentEnabled || !onBack ? undefined : () => onBack(3)}
           />
           <Collapse open={openSectionFor() === "course"}>
-          <MobileEditRow onEdit={data.customPaymentEnabled || !onBack ? undefined : () => onBack(3)} />
           <div className="py-3 md:border-t md:border-slate-100 md:px-4">
             <h3 className="mb-2 text-sm font-semibold text-slate-900">{course?.standardName}</h3>
             <table className="w-full text-sm">

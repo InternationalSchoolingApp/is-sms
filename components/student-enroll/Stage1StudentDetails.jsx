@@ -240,7 +240,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
       <div className="mx-auto mt-6 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
         <h2 className="text-center text-1.5xl text-2xl font-extrabold text-slate-900">Student Details</h2>
 
-        <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-2">
           <FloatingLabelInput
             icon={User}
             label={<Req label="First Name" required />}
@@ -248,12 +248,12 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
             {...nameFieldProps((v) => setField("firstName", v))}
             error={errors.firstName}
           />
-          <FloatingLabelInput
+          {/* <FloatingLabelInput
             icon={User}
             label="Middle Name"
             value={fields.middleName}
             {...nameFieldProps((v) => setField("middleName", v))}
-          />
+          /> */}
           <FloatingLabelInput
             icon={User}
             label={<Req label="Last Name" required />}
@@ -261,6 +261,8 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
             {...nameFieldProps((v) => setField("lastName", v))}
             error={errors.lastName}
           />
+          </div>
+          <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
           <FloatingLabelSelect
             icon={GraduationCap}
             label={<Req label="Grade" required />}
@@ -298,7 +300,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
         <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3 [&_label]:max-w-[calc(100%-5rem)]">
           <FloatingLabelInput
             icon={Mail}
-            label={<Req label="Email Address" required />}
+            label={<Req label="Student's email" required />}
             type="email"
             value={fields.communicationEmail}
             onChange={(e) => setField("communicationEmail", e.target.value)}
