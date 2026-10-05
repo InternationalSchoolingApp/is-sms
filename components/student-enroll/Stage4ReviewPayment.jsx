@@ -927,7 +927,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
             <p className="text-sm text-slate-500">Loading…</p>
           ) : paymentPending && paymentUnderReview ? null : paymentPending ? (
             <Button type="button" onClick={confirmAndPay} disabled={busy || !!editing} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
-              {busy ? "Please wait…" : "Final Step"}
+              {busy ? "Please wait…" : "Continue to Payment"}
             </Button>
           ) : (
             <Button type="button" onClick={() => setConfirmSubmit(true)} disabled={busy || !!editing} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
