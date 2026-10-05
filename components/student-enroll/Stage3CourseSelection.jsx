@@ -384,15 +384,22 @@ function Stage3Skeleton({ header }) {
  * doc comment) or the backend's grade/fee mapping lookup has nothing to key
  * on and the call fails with a generic error.
  */
-export function Stage3CourseSelection({ context, userId, standardId, onNext, onBack, onSessionExpired, inReview = false }) {
+export function Stage3CourseSelection({ context, userId, standardId: initialStandardId, onNext, onBack, onSessionExpired, inReview = false }) {
+  debugger
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
+  // Starts from the prop (Stage 1's saved grade at mount — see the doc
+  // comment above), but tracks its own state from here so an in-page grade
+  // change (handleGradeChange below) can switch useCourseDetails to the new
+  // grade's cache entry immediately, without waiting for this component to
+  // remount with a fresh prop.
+  const [standardId, setStandardId] = useState(initialStandardId);
   const courseQuery = useCourseDetails({ context, userId, standardId });
   const paymentOption = useShowPaymentOption({ context, userId });
   const update = useUpdateCourseSelection({ context, userId });
   const recommended = useRecommendedCourses({ context, userId });
   const proceed = useProceedToReview({ context, userId });
-
+  debugger
   // Change Grade & DOB modal (changeSelectedGrade()/saveSelectedGradeAndDob()
   // in signupStudentStage3.js) — reuses Stage 1's own prefill/save hooks
   // rather than a separate request builder, same as Stage 1 itself does.
@@ -659,6 +666,11 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
       // after #signupStage3 #standardId/#selectedSubjects/#controlType are reset.
       saveWizardStudentFields(context.schoolUUID, userId, fields);
       setChangeGradeOpen(false);
+      // Switch useCourseDetails to the new grade's cache entry before the
+      // mutation below writes its response there (useCourseSelection.js's
+      // courseDetailsKey is keyed by standardId) — otherwise the write lands
+      // on a cache entry this component isn't subscribed to.
+      setStandardId(newStandardId);
       const courseResponse = await update.mutateAsync({ standardId: newStandardId, selectedSubjects: "", controlType: "remove" });
       if (courseResponse?.status !== STATUS_SUCCESS) {
         handleFailure(courseResponse, "Grade saved, but could not refresh courses for it. Please try again.");
@@ -722,7 +734,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
   if (courseQuery.isLoading) {
     return <Stage3Skeleton header={header} />;
   }
-
+  console.log("data", data)
   if (!data) {
     return (
       <div>
