@@ -12,7 +12,7 @@ export function EmailValidatorModal({ open, onOpenChange, email, onContinue, onC
         <DialogHeader className="-mx-4 -mt-4 border-b p-4">
           <DialogTitle className="text-xl">Information</DialogTitle>
         </DialogHeader>
-        <div className="flex items-center gap-4 py-2">
+        <div className="flex items-center gap-4">
           <Image
             src="/images/valid-email.png"
             alt=""
@@ -29,11 +29,11 @@ export function EmailValidatorModal({ open, onOpenChange, email, onContinue, onC
         </div>
         <DialogFooter className="sm:justify-center">
           <div className="flex flex-wrap justify-center gap-3">
-            <Button type="button" variant="outline" onClick={onChangeEmail}>
-              I want to change student email
-            </Button>
             <Button type="button" onClick={onContinue} className="bg-primary hover:bg-primary/90">
               Yes
+            </Button>
+            <Button type="button" variant="outline" onClick={onChangeEmail}>
+              I want to change student email
             </Button>
           </div>
         </DialogFooter>
