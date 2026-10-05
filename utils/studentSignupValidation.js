@@ -84,18 +84,24 @@ export function validateAccountFormOnline(fields) {
     errors.email = "Email is either empty or invalid";
   }
 
+  // Messages match the legacy SignupCommon.jsp flow: an empty confirm field shows no text (only the
+  // field is flagged), anything typed that is invalid or different shows the "re-enter" message.
   if (!isValidEmail(fields.confirmEmail)) {
-    errors.confirmEmail = fields.confirmEmail ? "Email and confirm email should be same" : "";
+    errors.confirmEmail = fields.confirmEmail ? "Please re-enter the same email" : "";
   } else if (fields.email.trim() !== fields.confirmEmail.trim()) {
-    errors.confirmEmail = "Email and confirm email are not same";
+    errors.confirmEmail = "Please re-enter the same email";
   }
 
   const passwordStrength = getPasswordStrength(fields.password, fields.confirmPassword);
+  if (!getPasswordStrength(fields.password).isValid) {
+    errors.password = "Please enter a valid password";
+  }
   if (!passwordStrength.isValid) {
-    errors.password = "Password is either empty or invalid";
-    if (!passwordStrength.matchesConfirm && fields.confirmPassword) {
-      errors.confirmPassword = "Create your password and Confirm your password do not match";
-    }
+    // Empty confirm password: flagged but no text. Otherwise invalid-or-different -> the legacy message.
+    errors.confirmPassword =
+      fields.confirmPassword && (!passwordStrength.matchesConfirm || !getPasswordStrength(fields.confirmPassword).isValid)
+        ? "Please re-enter the same password"
+        : "";
   }
 
   if (!isValidCaptcha(fields.captcha)) {

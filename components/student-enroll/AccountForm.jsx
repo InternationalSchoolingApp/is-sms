@@ -81,6 +81,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
   // field is a plain live comparison ("Please re-enter the same password"), silent while empty.
   const passwordIsValid = useMemo(() => getPasswordStrength(fields.password).isValid, [fields.password]);
   const confirmMismatch = fields.confirmPassword.length > 0 && fields.confirmPassword !== fields.password;
+  const confirmWeak = fields.confirmPassword.length > 0 && !getPasswordStrength(fields.confirmPassword).isValid;
 
   // Live per-field validity — recomputed every render from the current
   // `fields` value, so a field clears its red state the instant it becomes
@@ -94,10 +95,8 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
 
   const emailError = touched.email && emailInvalid ? "Email is either empty or invalid" : undefined;
   const confirmEmailError =
-    touched.confirmEmail && confirmEmailInvalid
-      ? !emailsMatch
-        ? "Email and confirm email are not same"
-        : "Email is either empty or invalid"
+    fields.confirmEmail.trim() && (!emailsMatch || (touched.confirmEmail && confirmEmailInvalid))
+      ? "Please re-enter the same email"
       : undefined;
   const captchaError = touched.captcha && captchaInvalid ? "Please enter captcha" : undefined;
   const checkTermsError = touched.checkTerms && checkTermsInvalid ? "Please accept terms and conditions" : undefined;
@@ -370,7 +369,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           value={fields.confirmPassword}
           onChange={(e) => setField("confirmPassword", e.target.value)}
           onBlur={() => touchField("confirmPassword")}
-          error={confirmMismatch ? "Please re-enter the same password" : undefined}
+          error={confirmMismatch || (errors.confirmPassword && confirmWeak) ? "Please re-enter the same password" : undefined}
           trailing={
             <button
               type="button"

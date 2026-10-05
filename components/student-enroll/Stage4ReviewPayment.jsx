@@ -788,7 +788,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
           />
           <Collapse open={openSectionFor() === "student"}>
           <MobileEditRow onEdit={data.customPaymentEnabled ? undefined : () => startEdit("student")} />
-          <dl className="py-2 text-[13px] md:divide-y md:divide-slate-100 md:border-t md:border-slate-100 md:px-4 md:text-sm">
+          <dl className="py-2 text-sm md:divide-y md:divide-slate-100 md:border-t md:border-slate-100 md:px-4 md:text-sm">
             <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Name</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{fullName(student)}</dd></div>
             {course?.standardName && (
               <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Grade</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{course.standardName}</dd></div>
@@ -824,7 +824,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
           />
           <Collapse open={openSectionFor() === "parent"}>
           <MobileEditRow onEdit={data.customPaymentEnabled ? undefined : () => startEdit("parent")} />
-          <dl className="px-1 py-2 text-base md:divide-y md:divide-slate-100 md:border-t md:border-slate-100 md:px-4 md:text-sm">
+          <dl className="px-1 py-2 text-sm md:divide-y md:divide-slate-100 md:border-t md:border-slate-100 md:px-4 md:text-sm">
             {parent?.workingProfessionName ? (
               <>
                 <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Student or a working professional</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{parent.workingProfessionName}</dd></div>

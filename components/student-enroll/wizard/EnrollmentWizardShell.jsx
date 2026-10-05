@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { BookOpen, CreditCard, LogOut, User, Users } from "lucide-react";
 import { Footer } from "@/components/common/Footer";
@@ -128,7 +128,15 @@ function stepState(index, currentIndex) {
   return "upcoming";
 }
 
+// The step the student was on before the current one, kept across route changes (the shell may remount per
+// step page). A fresh page load has none, so a refresh shows the check marks without replaying the gif.
+let previousStepIndex = null;
+
 function StepRow({ currentIndex }) {
+  const arrivedForward = previousStepIndex !== null && currentIndex === previousStepIndex + 1;
+  useEffect(() => {
+    previousStepIndex = currentIndex;
+  }, [currentIndex]);
   const progressPercent = STEPS.length > 1 ? (Math.max(currentIndex, 0) / (STEPS.length - 1)) * 100 : 0;
 
   return (
@@ -143,7 +151,12 @@ function StepRow({ currentIndex }) {
         </div>
         {STEPS.map((step, index) => (
           <div key={step.key} className="relative z-10 flex w-9 flex-col items-center gap-2 md:w-16">
-            <StepCircle icon={step.icon} state={stepState(index, currentIndex)} justCompleted={index === currentIndex - 1} />
+            <StepCircle
+              icon={step.icon}
+              state={stepState(index, currentIndex)}
+              justCompleted={index === currentIndex - 1}
+              animate={arrivedForward && index === currentIndex - 1}
+            />
             <span className="hidden text-[11px] font-semibold uppercase tracking-wide text-slate-500 md:block">Step {index + 1}</span>
           </div>
         ))}
@@ -152,7 +165,23 @@ function StepRow({ currentIndex }) {
   );
 }
 
-function StepCircle({ icon: Icon, state, justCompleted }) {
+// OrderSuccess.gif loops and runs about 2.8s per cycle, so a moving-forward celebration plays for one cycle.
+const STEP_GIF_MS = 2900;
+
+function StepCircle({ icon: Icon, state, justCompleted, animate }) {
+  // Every time the student moves forward a step, the step they just finished plays the gif once and then
+  // settles on the static check mark. "idle" -> "playing" (set during render, React's derive-state pattern)
+  // -> "done" (timer); it returns to "idle" once the step is no longer the just-completed one.
+  const [gifPhase, setGifPhase] = useState("idle");
+  if (animate && gifPhase === "idle") setGifPhase("playing");
+  if (!justCompleted && gifPhase !== "idle") setGifPhase("idle");
+  useEffect(() => {
+    if (gifPhase !== "playing") return undefined;
+    const timer = setTimeout(() => setGifPhase("done"), STEP_GIF_MS);
+    return () => clearTimeout(timer);
+  }, [gifPhase]);
+  const playGif = gifPhase === "playing";
+
   // Finished steps are drawn as images centred on the step circle. The step completed just before
   // the current one plays OrderSuccess.gif (transparent background, ends as a 64px green circle with
   // a tick inside its 150px canvas); every earlier finished step shows the static check_box.svg
@@ -162,7 +191,7 @@ function StepCircle({ icon: Icon, state, justCompleted }) {
   if (state === "done") {
     return (
       <div className="relative h-9 w-9 shrink-0 md:h-10 md:w-10">
-        {justCompleted ? (
+        {playGif ? (
           <Image
             src="/images/OrderSuccess.gif"
             alt="Step completed"
