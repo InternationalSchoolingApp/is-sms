@@ -54,7 +54,7 @@ export function ChangeGradeDialog({ open, onOpenChange, grades, courseProviderId
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader className="items-center text-center">
           <span className="mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white">
             <RefreshCw className="h-6 w-6" />
@@ -72,7 +72,7 @@ export function ChangeGradeDialog({ open, onOpenChange, grades, courseProviderId
           />
           <DatePicker
             label={<Req label={
-              <>Date of Birth{" "} <span className="text-black text-[10px]">(Month Day, Year)</span></>
+              <>Date of Birth{" "} <span className="text-black text-[12px]">(Month Day, Year)</span></>
             } required />}
             value={dob}
             onChange={(v) => setDob(v)}
@@ -85,11 +85,11 @@ export function ChangeGradeDialog({ open, onOpenChange, grades, courseProviderId
         
         <DialogFooter className="flex flex-row justify-center">
           <div className="inline-flex gap-2 mx-auto">
-            <Button type="button" className="w-fit" variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
-              Cancel
-            </Button>
             <Button type="button" className="w-fit" onClick={handleSave} disabled={busy}>
               {busy ? "Saving…" : "Save"}
+            </Button>
+            <Button type="button" className="w-fit" variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
+              Cancel
             </Button>
           </div>
         </DialogFooter>

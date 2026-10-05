@@ -380,7 +380,6 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
   const changeGrade = useStudentDetailsSignup({ context, userId, isDualDiploma, countries: countries.data });
   const [changeGradeOpen, setChangeGradeOpen] = useState(false);
 
-  const [notice, setNotice] = useState(null);
   const [flaggedModal, setFlaggedModal] = useState(null);
   const [recommendedData, setRecommendedData] = useState(null);
   const [openCourseId, setOpenCourseId] = useState(null);
@@ -443,12 +442,6 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
     else if (initialFailure.statusCode === "FLAGGED") setFlaggedModal({ sessionName: initialFailure.message });
   }, [initialFailure, onSessionExpired]);
 
-  useEffect(() => {
-    if (notice?.tone !== "success" && notice?.tone !== "info") return;
-    const timer = setTimeout(() => setNotice(null), 3000);
-    return () => clearTimeout(timer);
-  }, [notice]);
-
   function ask(request) {
     return new Promise((resolve) => {
       resolverRef.current = resolve;
@@ -464,7 +457,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
 
   function handleFailure(response, fallback) {
     if (!response) {
-      setNotice({ tone: "error", text: GENERIC_ERROR });
+      toast.error(GENERIC_ERROR);
       return;
     }
     if (response.status === STATUS_SESSION_OUT) {
@@ -475,24 +468,23 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
       setFlaggedModal({ sessionName: response.message });
       return;
     }
-    setNotice({ tone: "error", text: response.categoryMandatoryMessage || response.message || fallback });
+    toast.error(response.categoryMandatoryMessage || response.message || fallback);
   }
 
   async function applyChange(change) {
-    setNotice(null);
     try {
       const response = await update.mutateAsync({ standardId: data.standardId, ...change });
       if (response?.status !== STATUS_SUCCESS) {
         handleFailure(response, "Could not update your courses. Please try again.");
         return false;
       }
-      if (response.message) {
-        setNotice({ tone: response.message === "No changes to save" ? "info" : "success", text: response.message });
-      }
+      // The backend's own "Course added"/"Course removed" message used to also render as an
+      // inline banner under "Your Selected Courses" — redundant with the toast each caller
+      // (addSubject/removeSubject/upgrade/removeAll) already shows, so it's dropped here.
       return true;
     } catch (err) {
       console.error("Stage3CourseSelection update failed:", err);
-      setNotice({ tone: "error", text: GENERIC_ERROR });
+      toast.error(GENERIC_ERROR);
       return false;
     }
   }
@@ -501,23 +493,27 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
 
   async function addSubject(course, subject) {
     if (busy) return;
-    setNotice(null);
     const check = getCourseAddCheck(data);
     if (check.blockedMessage) {
       toast.error(check.blockedMessage);
       return;
     }
     if (check.extraFee && showPaymentOption === "Y") {
+      const selectedCount = data.selectedSubjects?.length || 0;
       const confirmed = await ask({
         title: "Extra fee",
         message: (
           <>
             {!extraFeeNoticeShownRef.current && (
-              <p>{selectedSummary(data)}. Now extra fee will be charged for choosing extra courses.</p>
+              <p>
+                You have selected {selectedCount} course{selectedCount === 1 ? "" : "s"} worth {data.totalCredit}{" "}
+                credit{Number(data.totalCredit) === 1 ? "" : "s"}. Selecting more than {selectedCount} course
+                {selectedCount === 1 ? "" : "s"} will have extra fees.
+              </p>
             )}
             <p>
-              Extra fee of {subject.courseFeeString} will be charged for selecting {subject.subjectName}. Kindly confirm this
-              selection.
+              {subject.subjectName} will add an extra fee of {subject.courseFeeString} to the course fee. Would you like to add
+              this course?
             </p>
           </>
         ),
@@ -547,7 +543,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
     if (isNoLiveClasses(subject, data.registrationType)) {
       const confirmed = await ask({
         title: "No live classes",
-        message: <p>This course does not offer live classes. Do you wish to select this course?</p>,
+        message: <p>This course does not offer live classes. Would you like to add this course?</p>,
       });
       if (!confirmed) return;
     }
@@ -579,15 +575,19 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
     });
     if (!confirmed) return;
     apAcknowledgedRef.current = false;
-    await applyChange({ selectedSubjects: "", controlType: "remove" });
+    const removed = await applyChange({ selectedSubjects: "", controlType: "remove" });
+    if (removed) toast.success("All courses removed");
   }
 
   async function upgrade(course, target) {
     if (busy) return;
     if (target.warningMessage && showPaymentOption === "Y") {
+      const variant = target.courseType === "ADV" ? "Advanced" : "Honors";
+      const fee = target.additionalFeeString || target.courseFeeString || target.subjectPriceString ||
+        target.warningMessage.match(/\$[\d,.]+/)?.[0] || "an additional fee";
       const confirmed = await ask({
         title: target.buttonLabel || "Change course",
-        message: <p>{target.warningMessage}</p>,
+        message: <p>Upgrading to {course.courseName} {variant} will add an additional {fee} to your course fee. Would you like to continue?</p>,
         confirmLabel: "Yes",
       });
       if (!confirmed) return;
@@ -598,12 +598,25 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
       courseId: course.categoryId,
     });
     if (switched) {
-      toast.success(course.courseTypeOriginal === "Regular" ? "Switch to Honors" : "Switch to Regular");
+      // Names the actual resulting subject (e.g. "English I Honors added" / "English I added"),
+      // not a generic "Switch to Honors"/"Switch to Regular" — course.courseName is the subject's
+      // own display name (e.g. "English I"), and courseTypeOriginal === "Regular" means this
+      // upgrade is switching TO the alternate (Honors/Advanced) variant named by target.courseType.
+      const currentType = String(course.courseTypeOriginal || "").toUpperCase();
+      const targetType = String(target.courseType || "").toUpperCase();
+      const subjectName = String(course.courseName || "").replace(/\s+(?:honou?rs?|advanced?)$/i, "");
+      const variantSuffix = currentType === "REGULAR"
+        ? /ADV|ADVANCED/.test(targetType)
+          ? " Advanced"
+          : /HON|HONORS/.test(targetType)
+            ? " Honors"
+            : ""
+        : "";
+      toast.success(`${subjectName}${variantSuffix} added`);
     }
   }
 
   async function handleGradeChange(newStandardId, newDob) {
-    setNotice(null);
     try {
       const fields = { ...(studentPrefill.data || {}), standardId: newStandardId, dob: newDob };
       const saveResponse = await changeGrade.mutateAsync(fields);
@@ -629,13 +642,12 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
       }
     } catch (err) {
       console.error("Stage3CourseSelection change-grade failed:", err);
-      setNotice({ tone: "error", text: GENERIC_ERROR });
+      toast.error(GENERIC_ERROR);
     }
   }
 
   async function openRecommended() {
     if (busy) return;
-    setNotice(null);
     try {
       const response = await recommended.mutateAsync();
       if (response?.status !== STATUS_SUCCESS) {
@@ -645,7 +657,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
       setRecommendedData(response);
     } catch (err) {
       console.error("Stage3CourseSelection recommended-courses failed:", err);
-      setNotice({ tone: "error", text: GENERIC_ERROR });
+      toast.error(GENERIC_ERROR);
     }
   }
 
@@ -657,10 +669,9 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
 
   async function handleNext() {
     if (busy) return;
-    setNotice(null);
     const creditError = validateCourseCredits(data);
     if (creditError) {
-      setNotice({ tone: "error", text: creditError });
+      toast.error(creditError);
       return;
     }
     try {
@@ -672,7 +683,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
       onNext?.();
     } catch (err) {
       console.error("Stage3CourseSelection proceed failed:", err);
-      setNotice({ tone: "error", text: GENERIC_ERROR });
+      toast.error(GENERIC_ERROR);
     }
   }
 
@@ -680,8 +691,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
     <>
       {/* Program name is now shown by EnrollmentWizardShell's own hero above this card. */}
       <h2 className="text-center text-2xl font-bold text-slate-900">
-        <span className="md:hidden">Select Courses</span>
-        <span className="hidden md:inline">Course selection</span>
+        <span className="inline">Course selection</span>
       </h2>
     </>
   );
@@ -728,7 +738,6 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
   const effectiveOpenId = openCourseId ?? availableCourses[0]?.courseId;
   const showMinBanner = Number(data.courseProviderId) !== 39 && Number(data.minCourseLimit) > Number(data.totalCredit);
   const showCreditSummary = !hideCredits && !batchOrProvider39 && Number(data.minCourseLimit) > 0;
-  const materialFee = data.courseMaterialFeeDetails;
   const summaryBuckets = summarizeSelection(selectedCourses);
 
   // Display-only filter — matches a category by its own name, or by any of
@@ -829,10 +838,16 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
 
         {showCreditSummary && (
           <div className="hidden items-center gap-3 border-slate-300 lg:border-r-1 sm:border-l sm:px-8 md:flex">
-            <CreditProgressRing value={Number(data.totalCredit) || 0} max={Number(data.minCourseLimit) || 1} />
+            {/* Once extra (over-the-minimum) courses are selected, the denominator should track
+                what's actually been picked (e.g. 8/8), not stay pinned at the original minimum
+                (8/6) — the ring and the fraction below both use this same adjusted max. */}
+            <CreditProgressRing
+              value={Number(data.totalCredit) || 0}
+              max={Math.max(Number(data.minCourseLimit) || 1, Number(data.totalCredit) || 0)}
+            />
             <div>
               <p className="text-xl font-bold text-primary">
-                {data.totalCredit}/{data.minCourseLimit}
+                {data.totalCredit}/{Math.max(Number(data.minCourseLimit) || 0, Number(data.totalCredit) || 0)}
               </p>
               <p className="text-sm font-bold text-slate-900">Credits Selected</p>
             </div>
@@ -860,15 +875,6 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
           </span>
           </div>
         )}
-      {
-      notice && (
-        <p
-          role={notice.tone === "error" ? "alert" : "status"}
-          className={`mt-4 text-sm font-semibold ${notice.tone === "error" ? "text-red-600" : notice.tone === "success" ? "text-emerald-700" : "text-slate-600"}`}
-        >
-          {notice.text}
-        </p>
-      )}
 
       <div className={`mt-4 grid gap-6 ${showAvailable ? "lg:grid-cols-[1fr_1.6fr]" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
         <section className="self-start overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -959,19 +965,6 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
               })}
             </ol>
           )}
-          {materialFee?.totalEntityFee > 0 && (
-            <div className="border-t border-slate-200 px-4 py-3 text-sm">
-              <p className="font-semibold text-slate-900">External material fee</p>
-              <ul className="mt-1 space-y-0.5 text-xs text-slate-600">
-                {(materialFee.description || []).map((line, index) => (
-                  <li key={index}>{line}</li>
-                ))}
-              </ul>
-              <p className="mt-1">
-                External material fee: <span className="font-semibold">{materialFee.totalEntityFeeString}</span>
-              </p>
-            </div>
-          )}
         </section>
 
         {showAvailable && (
@@ -1035,6 +1028,8 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
                             <CategoryIcon className="h-4 w-4 shrink-0" />
                             <span className="min-w-0 flex-1 truncate">{course.courseName}</span>
                             <span
+                              title={`${course.subjects.length} course${course.subjects.length === 1 ? "" : "s"} available`}
+                              aria-label={`${course.subjects.length} course${course.subjects.length === 1 ? "" : "s"} available`}
                               className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
                                 active ? "bg-primary text-white" : "bg-slate-100 text-slate-500"
                               }`}
@@ -1054,7 +1049,7 @@ export function Stage3CourseSelection({ context, userId, standardId, onNext, onB
                       <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
                         <span className="text-sm font-semibold text-primary">{activeCourse.courseName}</span>
                         <span className="flex items-center gap-1 text-xs text-slate-500">
-                          {activeCourse.subjects.length} Courses <ChevronDown className="h-3.5 w-3.5" />
+                          {activeCourse.subjects.length} course{activeCourse.subjects.length === 1 ? "" : "s"} available <ChevronDown className="h-3.5 w-3.5" />
                         </span>
                       </div>
                       <div className="space-y-2 p-4" style={detailPaneHeight>250 ? { height: detailPaneHeight, overflowY: "auto" } : { maxHeight: "300px", overflowY: "auto" }}>
