@@ -9,7 +9,7 @@ import { mapSignupStudentToFields } from "@/hooks/useStudentDetailsSignup";
 import { getLearningProgramLabel, getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 
 export function PageTitle() {
-  const { program } = useParams();
+  const { program } = useParams(); 
   const { data: session, status } = useSession();
   const authenticated = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
 
