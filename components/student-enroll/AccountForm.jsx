@@ -293,6 +293,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
             handleEmailBlur(e.target.value);
           }}
           error={emailError}
+          status={touched.email && !emailInvalid ? "valid" : undefined}
         />
 
         <AccountInput
@@ -307,6 +308,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           onChange={(e) => setField("confirmEmail", e.target.value)}
           onBlur={() => touchField("confirmEmail")}
           error={confirmEmailError}
+          status={touched.confirmEmail && !confirmEmailInvalid ? "valid" : undefined}
         />
 
         <div className="relative">
@@ -331,6 +333,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
             }}
             onChange={(e) => setField("password", e.target.value)}
             error={touched.password && !passwordFocused && !passwordIsValid ? "Please enter a valid password" : undefined}
+            status={touched.password && passwordIsValid ? "valid" : undefined}
             trailing={
               <>
               <div className="absolute right-1 top-1/2 z-20">
@@ -372,6 +375,11 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           onChange={(e) => setField("confirmPassword", e.target.value)}
           onBlur={() => touchField("confirmPassword")}
           error={confirmMismatch || (errors.confirmPassword && confirmWeak) ? "Please re-enter the same password" : undefined}
+          status={
+            touched.confirmPassword && fields.confirmPassword.length > 0 && !confirmMismatch && !confirmWeak
+              ? "valid"
+              : undefined
+          }
           trailing={
             <>
               <div className="absolute right-1 top-1/2 z-20">

@@ -23,12 +23,14 @@ export function AccountInput({
   required = false,
   trailing,
   error,
+  status,
   className = "",
   inputClassName = "",
   onChange,
   ...inputProps
 }) {
   const hasError = Boolean(error);
+  const isValid = !hasError && status === "valid";
 
   return (
     <div className={className}>
@@ -44,7 +46,9 @@ export function AccountInput({
           } ${trailing ? "pr-11" : "pr-4"} ${
             hasError
               ? "border-red-400 focus:border-red-500"
-              : "border-slate-200 hover:border-slate-300 focus:border-2 focus:border-primary"
+              : isValid
+                ? "border-emerald-500 focus:border-emerald-500 border-2"
+                : "border-slate-200 hover:border-slate-300 focus:border-2 focus:border-primary"
           } disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 disabled:opacity-80 ${inputClassName}`}
           {...inputProps}
         />
@@ -62,7 +66,9 @@ export function AccountInput({
             } ${
               hasError
                 ? "text-red-500"
-                : "text-slate-400 peer-focus:font-semibold peer-focus:text-primary peer-[&:not(:placeholder-shown)]:text-primary peer-autofill:text-primary peer-[:-internal-autofill-selected]:text-primary"
+                : isValid
+                  ? "text-emerald-600 peer-focus:font-semibold"
+                  : "text-slate-400 peer-focus:font-semibold peer-focus:text-primary peer-[&:not(:placeholder-shown)]:text-primary peer-autofill:text-primary peer-[:-internal-autofill-selected]:text-primary"
             }`}
           >
             {label}
