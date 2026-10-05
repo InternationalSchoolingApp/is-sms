@@ -14,11 +14,15 @@ import { isKnownPaymentMode } from "@/utils/studentSignupValidation";
 export const STATUS_SUCCESS = "1";
 export const STATUS_SESSION_OUT = "3";
 
+function isSuccessResponse(response) {
+  return String(response?.status) === STATUS_SUCCESS;
+}
+
 // standardId is part of the key: without it, changing grade on Stage 1 and
 // returning to Stage 3 would keep serving the previous grade's cached
 // response (staleTime: Infinity below) instead of refetching for the new one.
 function courseDetailsKey(userId, standardId) {
-  return ["course-details", userId, standardId];
+  return ["course-details", userId, standardId == null ? "" : String(standardId)];
 }
 
 /**
@@ -49,7 +53,6 @@ export function useCourseDetails({ context, userId, standardId }) {
     queryKey: courseDetailsKey(userId, standardId),
     queryFn: async () => {
       const response = await chooseCoursesByGrade(context.schoolUUID, buildCourseDetailsRequest(userId, { standardId }));
-      console.log("response===>",response)
       if (!response) throw new Error("course-details-by-standard-id returned no response");
       return response;
     },
@@ -61,13 +64,18 @@ export function useCourseDetails({ context, userId, standardId }) {
 }
 
 /** Every add/remove/upgrade/recommended change; a successful response replaces the cached page. */
-export function useUpdateCourseSelection({ context, userId }) {
+export function useUpdateCourseSelection({ context, userId, standardId: activeStandardId }) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (change) => chooseCoursesByGrade(context.schoolUUID, buildCourseDetailsRequest(userId, change)),
+    mutationFn: ({ cacheStandardId, ...change }) => chooseCoursesByGrade(context.schoolUUID, buildCourseDetailsRequest(userId, change)),
     onSuccess: (response, change) => {
-      if (response?.status === STATUS_SUCCESS) {
-        queryClient.setQueryData(courseDetailsKey(userId, change?.standardId), response);
+      if (isSuccessResponse(response)) {
+        // Write into the exact query entry this screen observes. API grade IDs
+        // can differ in type or be absent from the request's update response.
+        const cacheStandardId = Object.prototype.hasOwnProperty.call(change, "cacheStandardId")
+          ? change.cacheStandardId
+          : activeStandardId;
+        queryClient.setQueryData(courseDetailsKey(userId, cacheStandardId), response);
       }
     },
   });

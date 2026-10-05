@@ -46,6 +46,10 @@ import { saveWizardStudentFields } from "@/utils/wizardStorage";
 
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
 
+function isSuccessResponse(response) {
+  return String(response?.status) === STATUS_SUCCESS;
+}
+
 function parseIds(csv) {
   return (csv || "")
     .split(",")
@@ -395,7 +399,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   const [standardId, setStandardId] = useState(initialStandardId);
   const courseQuery = useCourseDetails({ context, userId, standardId });
   const paymentOption = useShowPaymentOption({ context, userId });
-  const update = useUpdateCourseSelection({ context, userId });
+  const update = useUpdateCourseSelection({ context, userId, standardId });
   const recommended = useRecommendedCourses({ context, userId });
   const proceed = useProceedToReview({ context, userId });
   // Change Grade & DOB modal (changeSelectedGrade()/saveSelectedGradeAndDob()
@@ -453,8 +457,8 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     };
   }, []);
 
-  const data = courseQuery.data?.status === STATUS_SUCCESS ? courseQuery.data : null;
-  const initialFailure = courseQuery.data && courseQuery.data.status !== STATUS_SUCCESS ? courseQuery.data : null;
+  const data = isSuccessResponse(courseQuery.data) ? courseQuery.data : null;
+  const initialFailure = courseQuery.data && !isSuccessResponse(courseQuery.data) ? courseQuery.data : null;
   const showPaymentOption = paymentOption.data;
   const busy = update.isPending || recommended.isPending || proceed.isPending;
 
@@ -502,7 +506,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   async function applyChange(change) {
     try {
       const response = await update.mutateAsync({ standardId: data.standardId, ...change });
-      if (response?.status !== STATUS_SUCCESS) {
+      if (!isSuccessResponse(response)) {
         handleFailure(response, "Could not update your courses. Please try again.");
         return false;
       }
@@ -648,7 +652,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     try {
       const fields = { ...(studentPrefill.data || {}), standardId: newStandardId, dob: newDob };
       const saveResponse = await changeGrade.mutateAsync(fields);
-      if (saveResponse?.status !== STATUS_SUCCESS) {
+      if (!isSuccessResponse(saveResponse)) {
         handleFailure(saveResponse, "Could not save the new grade. Please try again.");
         return;
       }
@@ -669,8 +673,13 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       // courseDetailsKey is keyed by standardId) — otherwise the write lands
       // on a cache entry this component isn't subscribed to.
       setStandardId(newStandardId);
-      const courseResponse = await update.mutateAsync({ standardId: newStandardId, selectedSubjects: "", controlType: "remove" });
-      if (courseResponse?.status !== STATUS_SUCCESS) {
+      const courseResponse = await update.mutateAsync({
+        standardId: newStandardId,
+        cacheStandardId: newStandardId,
+        selectedSubjects: "",
+        controlType: "remove",
+      });
+      if (!isSuccessResponse(courseResponse)) {
         handleFailure(courseResponse, "Grade saved, but could not refresh courses for it. Please try again.");
       }
     } catch (err) {
@@ -683,7 +692,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     if (busy) return;
     try {
       const response = await recommended.mutateAsync();
-      if (response?.status !== STATUS_SUCCESS) {
+      if (!isSuccessResponse(response)) {
         handleFailure(response, "Could not load recommended courses.");
         return;
       }
@@ -775,6 +784,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   const showMinBanner = Number(data.courseProviderId) !== 39 && Number(data.minCourseLimit) > Number(data.totalCredit);
   const showCreditSummary = showCourseCredits && !batchOrProvider39 && Number(data.minCourseLimit) > 0;
   const showCourseCountSummary = showCourseRequirement && !batchOrProvider39;
+  const centerGradeHeader = !showCreditSummary && !showCourseCountSummary && (fixed || batchOrProvider39);
   const summaryBuckets = summarizeSelection(selectedCourses, gradeBand);
   const selectedCourseCount = selectedCourses.length;
   const courseCountTarget = Number(data.maxCourseLimit) || 6;
@@ -806,7 +816,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           border, no progress ring, no Selection Summary legend. */}
       <div className="mt-4 space-y-2 md:hidden">
         {data.standardName && (
-          <div className={`flex items-center gap-3 rounded-xl bg-[#e6f3ff] px-3 py-2.5 ${gradeBand === "elementary" ? "justify-center" : "justify-between"}`}>
+          <div className={`flex items-center gap-3 rounded-xl bg-[#e6f3ff] px-3 py-2.5 ${gradeBand === "elementary" || centerGradeHeader ? "justify-center" : "justify-between"}`}>
             <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
               <GraduationCap className="h-5 w-5 text-primary" />
               {data.standardName}
@@ -857,7 +867,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           requirement, progress ring, Selection Summary legend) — untouched. */}
       <div className="mt-4 hidden gap-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:flex md:flex-row md:flex-wrap md:items-center md:gap-8 md:p-5">
         {data.standardName && (
-          <div className={`flex items-center gap-2 rounded-lg py-2 px-3 bg-[#e6f3ff] ${gradeBand === "elementary" ? "mx-auto" : ""}`}>
+          <div className={`flex items-center gap-2 rounded-lg py-2 px-3 bg-[#e6f3ff] ${gradeBand === "elementary" || centerGradeHeader ? "mx-auto" : ""}`}>
             <span className="inline-flex items-center gap-2  text-sm font-semibold text-slate-900">
               <GraduationCap className="h-5 w-5 text-primary" />
               {data.standardName}
