@@ -93,7 +93,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
   const captchaInvalid = !fields.captcha.trim();
   const checkTermsInvalid = !fields.checkTerms;
 
-  const emailError = touched.email && emailInvalid ? "Email is either empty or invalid" : undefined;
+  const emailError = touched.email && emailInvalid ? "Please enter a valid email" : undefined;
   const confirmEmailError =
     fields.confirmEmail.trim() && (!emailsMatch || (touched.confirmEmail && confirmEmailInvalid))
       ? "Please re-enter the same email"
@@ -256,13 +256,18 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
         ref={formRef}
         noValidate
         onKeyDown={(e) => {
-          // Preserve "press Enter to submit" now that there's no
-          // type="submit" button — but only from a plain text field, never
-          // from the terms checkbox/links, and never let the browser treat
-          // Enter as a native submit trigger.
+          // Enter / the mobile keyboard's Next key must behave like a normal form: from a text field it moves
+          // to the next enabled text field (email -> confirm email -> password -> confirm password -> captcha),
+          // and only from the last one does it submit. There is no type="submit" button, so the native
+          // behaviour is suppressed here and handled explicitly; the terms checkbox/links are never involved.
           if (e.key === "Enter" && e.target.tagName === "INPUT") {
             e.preventDefault();
-            handleSubmit(e);
+            const inputs = [...formRef.current.querySelectorAll("input")].filter(
+              (input) => !input.disabled && !["checkbox", "hidden", "radio"].includes(input.type)
+            );
+            const next = inputs[inputs.indexOf(e.target) + 1];
+            if (next) next.focus();
+            else handleSubmit(e);
           }
         }}
         className="mx-auto w-full  space-y-5"
@@ -328,7 +333,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
               touchField("password");
             }}
             onChange={(e) => setField("password", e.target.value)}
-            error={touched.password && !passwordFocused && !passwordIsValid ? "Password is either empty or invalid" : undefined}
+            error={touched.password && !passwordFocused && !passwordIsValid ? "Please enter a valid password" : undefined}
             trailing={
               <button
                 type="button"
