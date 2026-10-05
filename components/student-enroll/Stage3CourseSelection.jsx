@@ -290,6 +290,9 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-900">{subject.subjectName}</p>
                   {!hidesCourseCredits(data.standardId) && <p className="text-xs text-slate-500">{subject.subjectCredit} Credit</p>}
+                  {data.showCourseFee === "Y" && (
+                    <p className="text-xs font-semibold text-slate-900">{subject.subjectPriceString}</p>
+                  )}
                   {notes.map((note, index) => (
                     <p key={index} className="text-xs font-medium text-primary">
                       {note}
