@@ -229,7 +229,7 @@ function VariantToggle({ course, target, onToggle, disabled }) {
         }`}
       >
         <span className="h-4 w-4 shrink-0 rounded-full bg-white shadow" />
-        <span className="px-1 text-xs font-medium leading-none text-black">{label}</span>
+        <span className={`px-1 text-xs font-medium leading-none ${isTarget ? 'text-white':'text-black'}`}>{label}</span>
       </button>
     </div>
   );
@@ -289,14 +289,14 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
             const notes = subjectNotes(subject, data, showPaymentOption);
             return (
               <div key={id} className="flex items-center gap-3 px-4 py-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg  text-black">
+                {/* <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg  text-black">
                   <BookOpen className="h-4 w-4" />
-                </span>
+                </span> */}
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-slate-900">{subject.subjectName}</p>
+                  <p className="text-sm font-semibold text-black">{subject.subjectName}</p>
                   {/* {!hidesCourseCredits(data.standardId) && <p className="text-xs text-slate-500">{subject.subjectCredit} Credit</p>} */}
                   {data.showCourseFee === "Y" && (
-                    <p className="text-xs font-semibold text-slate-900">{subject.subjectPriceString}</p>
+                    <p className="text-xs font-semibold text-black">{subject.subjectPriceString}</p>
                   )}
                   {notes.map((note, index) => (
                     <p key={index} className="text-xs font-medium text-primary">
@@ -504,27 +504,21 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       toast.error(check.blockedMessage);
       return;
     }
-    if (check.extraFee && showPaymentOption === "Y") {
-      const selectedCount = data.selectedSubjects?.length || 0;
-      const confirmed = await ask({
-        title: "Extra fee",
-        message: (
-          <>
-            {!extraFeeNoticeShownRef.current && (
-              <p>
-                You have selected {selectedCount} course{selectedCount === 1 ? "" : "s"}. Selecting more than {selectedCount} course
-                {selectedCount === 1 ? "" : "s"} will have extra fees.
-              </p>
-            )}
-            <p>
-              {subject.subjectName} will add an extra fee of {subject.courseFeeString} to the course fee. Would you like to add
-              this course?
-            </p>
-          </>
-        ),
-        confirmLabel: "Confirm & add",
-        cancelLabel: "Close",
-      });
+  if (check.extraFee && showPaymentOption === "Y") {
+    const selectedCount = data.selectedSubjects?.length || 0;
+    const confirmed = await ask({
+      title: "Extra fee",
+      message: (
+        <>
+          {!extraFeeNoticeShownRef.current && (
+            <p>Any course you add after the first {selectedCount} course{selectedCount === 1 ? "" : "s"} will have an extra fee.</p>
+          )}
+          <p>{subject.subjectName} has an extra fee of {subject.courseFeeString}. Would you like to add it?</p>
+        </>
+      ),
+      confirmLabel: "Confirm & add",
+      cancelLabel: "Close",
+    });
       if (!confirmed) return;
       extraFeeNoticeShownRef.current = true;
     }
@@ -592,7 +586,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         target.warningMessage.match(/\$[\d,.]+/)?.[0] || "an additional fee";
       const confirmed = await ask({
         title: target.buttonLabel || "Change course",
-        message: <p>Upgrading to {course.courseName} {variant} will add an additional {fee} to your course fee. Would you like to continue?</p>,
+        message: <p>{course.courseName} {variant} has an extra fee of {fee}. Would you like to switch to this course?</p>,
         confirmLabel: "Yes",
       });
       if (!confirmed) return;
@@ -708,7 +702,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   const header = inReview ? null : (
     <>
       {/* Program name is now shown by EnrollmentWizardShell's own hero above this card. */}
-      <h2 className="text-center text-2xl font-bold text-slate-900">
+      <h2 className="text-center text-2xl font-bold text-black">
         <span className="inline">Course Selection</span>
       </h2>
     </>
@@ -794,7 +788,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       <div className="mt-4 space-y-2 md:hidden">
         {data.standardName && (
           <div className={`flex items-center gap-3 rounded-xl bg-[#e6f3ff] px-3 py-2.5 ${gradeBand === "elementary" || centerGradeHeader ? "justify-center" : "justify-between"}`}>
-            <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <span className="inline-flex items-center gap-2 text-sm font-semibold text-black">
               <GraduationCap className="h-5 w-5 text-primary" />
               {data.standardName}
             </span>
@@ -811,7 +805,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
         {(showCreditSummary || showCourseCountSummary) && (
           <div className="flex items-center justify-center px-1">
-            <span className="inline-flex items-center font-bold mb-2 gap-1.5 text-sm md:text-xs text-slate-900">
+            <span className="inline-flex items-center font-bold mb-2 gap-1.5 text-sm md:text-xs text-black">
               You need to select at least {data.minCourseLimit} courses
             </span>
           </div>
@@ -819,10 +813,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
         {!fixed && !batchOrProvider39 && gradeBand !== "elementary" && (
           <div className="rounded-lg bg-[#e6f3ff] px-3 py-2 md:hidden">
-            <p className="text-sm font-bold text-slate-900 text-center">Selection Summary</p>
+            <p className="text-sm font-bold text-black text-center">Selection Summary</p>
             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
               {summaryBuckets.map((bucket) => (
-                <span key={bucket.label} className="inline-flex items-center gap-1 text-slate-900">
+                <span key={bucket.label} className="inline-flex items-center gap-1 text-black">
                   <span className={`h-2 w-2 rounded-full ${bucket.dot}`} /> {bucket.label}: <span className="font-bold">{bucket.count}</span>
                 </span>
               ))}
@@ -842,7 +836,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       <div className="mt-4 hidden gap-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:flex md:flex-row md:flex-wrap md:items-center md:gap-8 md:p-5">
         {data.standardName && (
           <div className={`flex items-center gap-2 rounded-lg py-2 px-3 bg-[#e6f3ff] ${gradeBand === "elementary" || centerGradeHeader ? "mx-auto" : ""}`}>
-            <span className="inline-flex items-center gap-2  text-sm font-semibold text-slate-900">
+            <span className="inline-flex items-center gap-2  text-sm font-semibold text-black">
               <GraduationCap className="h-5 w-5 text-primary" />
               {data.standardName}
             </span>
@@ -862,9 +856,9 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             
             <div>
               <div className="flex">
-                <p className="text-xs text-slate-900">You need to select</p>
+                <p className="text-xs text-black">You need to select</p>
               </div>
-              <p className="text-sm font-bold text-slate-900">
+              <p className="text-sm font-bold text-black">
                 at least {data.minCourseLimit} courses
               </p>
             </div>
@@ -876,7 +870,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             <CreditProgressRing value={selectedCourseCount} max={displayCourseCountTarget} unit="courses" />
             <div>
               <p className="text-xl font-bold text-primary">{selectedCourseCount}/{displayCourseCountTarget}</p>
-              <p className="text-sm font-bold text-slate-900">Courses Selected</p>
+              <p className="text-sm font-bold text-black">Courses Selected</p>
             </div>
           </div>
         )}
@@ -895,17 +889,17 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               <p className="text-xl font-bold text-primary">
                 {selectedCourseCount}/{Math.max(Number(data.minCourseLimit) || 0, selectedCourseCount)}
               </p>
-              <p className="text-sm font-bold text-slate-900">Courses Selected</p>
+              <p className="text-sm font-bold text-black">Courses Selected</p>
             </div>
           </div>
         )}
 
         {!fixed && !batchOrProvider39 && (
           <div className={`hidden bg-[#e6f3ff] rounded-lg xl:ml-2 py-4 ${showCourseCountSummary || !(showMinBanner && !showCreditSummary) ? "flex-1" : ""} sm:px-3 md:block`}>
-            <p className="text-sm text-slate-900 font-bold">Selection Summary</p>
+            <p className="text-sm text-black font-bold">Selection Summary</p>
             <div className={`mt-1 flex flex-wrap gap-y-1 text-xs ${showCourseCountSummary ? "justify-between gap-x-6" : "gap-x-3"}`}>
               {summaryBuckets.map((bucket) => (
-                <span key={bucket.label} className="inline-flex items-center gap-1 text-slate-900">
+                <span key={bucket.label} className="inline-flex items-center gap-1 text-black">
                   <span className={`h-2 w-2 rounded-full ${bucket.dot}`} /> {bucket.label}: <span className="font-bold">{bucket.count}</span>
                 </span>
               ))}
@@ -925,7 +919,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       <div className={`mt-4 grid gap-6 ${showAvailable ? "lg:grid-cols-[1fr_1.6fr]" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
         <section className="self-start overflow-hidden rounded-xl border border-slate-200 bg-white">
           <header className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
-            <h2 className="text-sm font-bold text-slate-900">
+            <h2 className="text-sm font-bold text-black">
               {showCourseCountSummary || showCourseCredits ? (
                 <>
                   <span className="md:hidden">Your Selected Courses: <span className="text-primary">{selectedCourseCount}/{displayCourseCountTarget} courses</span></span>
@@ -947,7 +941,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               )}
             </div>
           </header>
-          {selectedCourses.length === 0 && <p className="px-4 py-6 text-sm text-slate-900">{selectedSummary(data)}</p>}
+          {selectedCourses.length === 0 && <p className="px-4 py-6 text-sm text-black">{selectedSummary(data)}</p>}
           {selectedCourses.length > 0 && (
             <ol className="space-y-2 p-3 md:space-y-0 md:divide-y md:divide-slate-100 md:p-0">
               {selectedCourses.map((course) => {
@@ -960,7 +954,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                         <CourseIcon className="h-4 w-4" />
                       </span> */}
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-slate-900">{course.courseName}</p>
+                        <p className="text-sm font-medium text-black">{course.courseName}</p>
                         {/* {showCourseCredits && <p className="text-xs text-slate-500">{course.creditScore} Credit</p>} */}
                         <CourseSummaryLink url={course.courseDescriptionUrl} />
                       </div>
@@ -1024,7 +1018,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             {/* Desktop/tablet header: title + search + recommended button inline. */}
             <header className="hidden flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 md:flex">
               <div>
-                <h2 className="text-sm font-bold text-slate-900">
+                <h2 className="text-sm font-bold text-black">
                   {data.totalCredit >= data.maxCourseLimit
                     ? "Select Extra Courses"
                     : "Select Courses"}
@@ -1057,7 +1051,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 is full-width instead, and there's no search box (matches the
                 reference mobile design). */}
             <div className="border-b border-slate-200 px-4 py-3 md:hidden">
-              <h2 className="text-sm font-bold text-slate-900">{data.totalCredit >= data.maxCourseLimit ? 'Select Extra Courses':'Select Courses'} <span className="text-primary">{(showCreditSummary || showCourseCountSummary) && remainingCourses > 0 && data.totalCredit >= data.maxCourseLimit ? ``: ` · select minimum ${remainingCourses} more`}</span></h2>
+              <h2 className="text-sm font-bold text-black">{data.totalCredit >= data.maxCourseLimit ? 'Select Extra Courses':'Select Courses'} <span className="text-primary">{(showCreditSummary || showCourseCountSummary) && remainingCourses >= 0 && (  data.totalCredit >= data.maxCourseLimit) ? ``: ` · select minimum ${remainingCourses} more`}</span></h2>
             </div>
             {data.eligibleForRecommendedCourse && (
               <div className="px-4 pt-4 md:hidden">
@@ -1089,12 +1083,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                             }`}
                           >
                             <CategoryIcon className="h-4 w-4 shrink-0" />
-                            <Tooltip>
-                              <TooltipTrigger delay={100} render={<span className="min-w-0 flex-1 truncate text-left" />}>
-                                {course.courseName}
-                              </TooltipTrigger>
-                              <TooltipContent>{course.courseName}</TooltipContent>
-                            </Tooltip>
+                            <span className="min-w-0 flex-1 truncate">{course.courseName}</span>
                             <span
                               title={`${course.subjects.length} course${course.subjects.length === 1 ? "" : "s"} available`}
                               aria-label={`${course.subjects.length} course${course.subjects.length === 1 ? "" : "s"} available`}
@@ -1132,7 +1121,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                                   <BookOpen className="h-4 w-4" />
                                 </span>
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-medium text-slate-900">{subject.subjectName}</p>
+                                  <p className="text-sm font-medium text-black">{subject.subjectName}</p>
                                   {notes.length > 0 && (
                                     <ul className="mt-1 space-y-0.5 font-semibold text-xs text-primary">
                                       {notes.map((note, index) => (
@@ -1145,7 +1134,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                                 {!hideCredits && (
                                   <div className="shrink-0 text-right text-xs text-slate-600">
                                     {data.showCourseFee === "Y" && (
-                                      <p className="font-semibold text-slate-900">{subject.subjectPriceString}</p>
+                                      <p className="font-semibold text-black">{subject.subjectPriceString}</p>
                                     )}
                                     {/* <p>{subject.subjectCredit} credit</p> */}
                                   </div>

@@ -235,7 +235,7 @@ export function AccountCreationForm({ school, program, query }) {
       >
         <Image src="/images/Fav_Icon.png" alt={displayedSchoolName || ""} width={28} height={28} className="h-7 w-auto" unoptimized />
         <div className="text-center">
-          <h1 className="text-base font-extrabold leading-tight text-slate-900">{displayedProgramLabel}</h1>
+          <h1 className="text-base font-extrabold leading-tight text-black">{displayedProgramLabel}</h1>
           <p className="mt-0.5 text-[12px] leading-tight text-primary font-semibold">Complete your enrollment in just 5 minutes</p>
         </div>
         <div aria-hidden="true" />

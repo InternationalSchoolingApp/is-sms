@@ -16,7 +16,7 @@ export default function GlobalError({ error, retry }) {
       <body className="min-h-screen bg-[#eef4fb] font-sans antialiased">
         <main className="flex min-h-screen flex-col items-center justify-center p-6">
           <div className="w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-xl shadow-slate-900/5 ring-1 ring-slate-900/5 sm:p-10">
-            <h1 className="text-xl font-bold text-slate-900">Something went wrong</h1>
+            <h1 className="text-xl font-bold text-black">Something went wrong</h1>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
               A critical error occurred while loading the application. Please try again.
             </p>

@@ -15,7 +15,7 @@ import { ReceiptText } from "lucide-react";
  * `feeAlreayPaid`).
  */
 
-const TH = "px-3 py-2 md:px-4 md:py-3 text-xs font-bold text-slate-900";
+const TH = "px-3 py-2 md:px-4 md:py-3 text-xs font-bold text-black";
 const TD = "border-t border-slate-100 px-3 py-3 md:px-4 align-top text-[11px] text-slate-800 md:text-xs";
 const RIGHT = "text-right whitespace-nowrap";
 
@@ -44,7 +44,7 @@ function currencyOf(fee) {
 export function FeeSummaryCard({ children }) {
   return (
     <section className="mt-4 md:mt-5 md:rounded-xl md:border md:border-slate-200 md:bg-white md:px-7 md:py-6">
-      <h3 className="flex items-center gap-3 text-lg font-bold text-slate-900 md:font-semibold">
+      <h3 className="flex items-center gap-3 text-lg font-bold text-black md:font-semibold">
         <ReceiptText className="h-5 w-5 text-primary md:h-6 md:w-6" aria-hidden="true" /> Fee Summary
       </h3>
       <div className="mt-3 md:mt-4">{children}</div>
@@ -195,7 +195,7 @@ function InstallmentTables({ fee, details, multi, standardId, isFlexOrDual }) {
       <div className={multi ? "overflow-hidden rounded-b-lg border border-slate-200" : "mt-4 overflow-hidden rounded-lg border border-slate-200"}>
         <h3
           className={`px-4 text-left text-xs font-bold tracking-wide ${
-            multi ? "bg-primary py-2 text-white" : "bg-slate-50 py-3 text-slate-900"
+            multi ? "bg-primary py-2 text-white" : "bg-slate-50 py-3 text-black"
           }`}
         >
           FEE SCHEDULE
@@ -302,9 +302,9 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVari
               )}
               <span className={`text-[clamp(12px,3.4vw,14px)] text-slate-700 md:text-sm ${chips ? "col-span-2" : ""}`}>{option.label}</span>
               <span className={`mt-1 flex items-center gap-2 md:mt-1 ${chips ? "col-span-2" : "col-start-2"} ${hasChips ? "md:flex-col md:items-start md:gap-1" : ""}`}>
-                <span className="text-[clamp(15px,4.2vw,18px)] font-bold leading-tight text-slate-900 md:text-2xl">{amount}</span>
+                <span className="text-[clamp(15px,4.2vw,18px)] font-bold leading-tight text-black md:text-2xl">{amount}</span>
                 {option.badge && (
-                  <span className="rounded-md border border-yellow-400 bg-yellow-200 px-2 py-0.5 text-xs font-bold text-slate-900 md:rounded md:border-0 md:bg-yellow-300 md:font-semibold">
+                  <span className="rounded-md border border-yellow-400 bg-yellow-200 px-2 py-0.5 text-xs font-bold text-black md:rounded md:border-0 md:bg-yellow-300 md:font-semibold">
                     {option.badge}
                   </span>
                 )}

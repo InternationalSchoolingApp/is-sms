@@ -121,7 +121,7 @@ function CurrencyCard({ details, payerCountryCode }) {
           <div className="flex items-center gap-2 font-semibold text-primary">
             <ArrowRightLeft className="h-4 w-4" /> Conversion Rate
           </div>
-          <div className="mt-1 font-bold text-slate-900">
+          <div className="mt-1 font-bold text-black">
             1 {conversion.base} = {conversion.rate} {conversion.to}
           </div>
           <div className="mt-1 flex items-start gap-1 text-xs text-slate-500">
@@ -231,7 +231,7 @@ function OfflineForm({ option, details, onUploadProof, onSubmitOffline, busy }) 
   if (confirming) {
     return (
       <div className="mt-4 rounded-xl border border-slate-200 p-5">
-        <h4 className="text-base font-semibold text-slate-900">Confirmation!</h4>
+        <h4 className="text-base font-semibold text-black">Confirmation!</h4>
         <p className="mt-2 text-sm text-slate-700">
           Are you sure you want to submit this reference number? Once submitted, you won’t be able to change this number
           again.
@@ -364,7 +364,7 @@ function GatewayPanel({ option, details, airwallexMethods, busy, onPay, onClose,
       {option.name === "CONVERA" && (
         <div className="mt-4 text-sm text-slate-700">
           {instructions && <div dangerouslySetInnerHTML={{ __html: instructions }} />}
-          <h3 className="mt-3 font-semibold text-slate-900">
+          <h3 className="mt-3 font-semibold text-black">
             Pay money from the comfort of your own home - Reliable, convenient international money transfer using your
             home/local currency
           </h3>
@@ -452,7 +452,7 @@ export function PaymentGatewayPickerModal({
         <div className="grid flex-1 overflow-hidden md:grid-cols-[18rem_minmax(0,1fr)]">
           <aside className="overflow-y-auto border-b border-slate-200 bg-white p-5 md:border-r md:border-b-0">
             <div className="md:hidden">
-              <h3 className="text-xl font-extrabold text-slate-900">Select Your Payment Method</h3>
+              <h3 className="text-xl font-extrabold text-black">Select Your Payment Method</h3>
             </div>
             <ul className="mt-4 space-y-3 md:mt-0" role="tablist">
               {options.map((option, index) => {
@@ -480,7 +480,7 @@ export function PaymentGatewayPickerModal({
               })}
             </ul>
             <div className="mt-6 rounded-xl border border-slate-200 p-4">
-              <div className="flex items-center gap-2 font-semibold text-slate-900">
+              <div className="flex items-center gap-2 font-semibold text-black">
                 <ShieldCheck className="h-5 w-5 text-primary" /> Secure &amp; Trusted
               </div>
               <ul className="mt-3 space-y-2 text-sm text-slate-700">
@@ -498,7 +498,7 @@ export function PaymentGatewayPickerModal({
           <section className="flex min-h-0 flex-col">
             <div className="flex-1 overflow-y-auto p-5 sm:p-6">
               <div className="hidden md:block">
-                <h3 className="text-2xl font-extrabold text-slate-900">Select Your Payment Method</h3>
+                <h3 className="text-2xl font-extrabold text-black">Select Your Payment Method</h3>
               </div>
               {details?.paymentLabel && (
                 <p className="mt-5 text-lg font-semibold text-slate-800">

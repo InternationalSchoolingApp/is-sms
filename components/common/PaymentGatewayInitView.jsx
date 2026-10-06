@@ -167,7 +167,7 @@ export function PaymentGatewayInitView({ gateway, schoolUUID: schoolUUIDFromRout
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-50 via-white to-indigo-50 px-5 py-12 text-slate-900">
+    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-50 via-white to-indigo-50 px-5 py-12 text-black">
       <section className="w-full max-w-lg rounded-3xl border border-slate-200/80 bg-white p-8 text-center shadow-[0_24px_80px_-32px_rgba(15,23,42,0.28)] sm:p-10">
         <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-2xl bg-sky-50 text-sky-700 ring-1 ring-sky-100">
           {state === "loading" ? <LoaderCircle className="size-8 animate-spin" aria-hidden="true" /> : state === "error" ? <RefreshCw className="size-7" aria-hidden="true" /> : <ShieldCheck className="size-8" aria-hidden="true" />}

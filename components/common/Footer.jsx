@@ -5,7 +5,7 @@ export function Footer({ schoolName, fixed = false }) {
     <footer
       className={`border-t border-slate-200/70 text-center text-xs text-slate-500 ${
         fixed
-          ? "relative w-full whitespace-nowrap border-t-0 bg-[#f2f5fa] pb-[72px] pt-2 text-[clamp(9px,3vw,13px)] leading-4 text-slate-900 md:fixed md:bottom-0 md:left-0 md:z-20 md:border-t md:bg-white md:py-4 md:text-sm md:leading-normal md:text-slate-500"
+          ? "relative w-full whitespace-nowrap border-t-0 bg-[#f2f5fa] pb-[72px] pt-2 text-[clamp(9px,3vw,13px)] leading-4 text-black md:fixed md:bottom-0 md:left-0 md:z-20 md:border-t md:bg-white md:py-4 md:text-sm md:leading-normal md:text-slate-500"
           : "relative z-10 hidden bg-white py-4 md:block"
       }`}
     >

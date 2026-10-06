@@ -54,7 +54,7 @@ const ROW_CLASS = "md:overflow-hidden md:rounded-lg md:border md:border-slate-20
 function ReviewDetailsSkeleton() {
   return (
     <div className="space-y-3">
-      <h2 className="hidden text-lg font-semibold text-slate-900 md:block">Kindly Review your details</h2>
+      <h2 className="hidden text-lg font-semibold text-black md:block">Kindly Review your details</h2>
       {Array.from({ length: 3 }).map((_, i) => (
         <div key={i} className="h-[62px] w-full animate-pulse rounded-lg bg-slate-200" />
       ))}
@@ -66,7 +66,7 @@ function ReviewDetailsSkeleton() {
 function PaymentOptionsSkeleton() {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-slate-900">Select Payment Option</h2>
+      <h2 className="text-lg font-semibold text-black">Select Payment Option</h2>
       <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="h-[80px] animate-pulse rounded-xl bg-slate-200" />
         <div className="h-[80px] animate-pulse rounded-xl bg-slate-200" />
@@ -117,7 +117,7 @@ function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary md:h-10 md:w-10">
           <Icon className="h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />
         </span>
-        <h2 className="text-[clamp(12px,3.5vw,15px)] font-bold text-slate-900 md:text-base md:font-semibold">{title}</h2>
+        <h2 className="text-[clamp(12px,3.5vw,15px)] font-bold text-black md:text-base md:font-semibold">{title}</h2>
       </div>
       <div className="flex shrink-0 gap-2">
         <Button
@@ -740,7 +740,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 md:mb-0 md:rounded-none md:border-0 md:bg-transparent md:p-0">
-      <h1 className="mb-4 text-center text-1.5xl font-extrabold text-slate-900 sm:text-2xl md:hidden">Review Your Details &amp; Pay</h1>
+      <h1 className="mb-4 text-center text-1.5xl font-extrabold text-black sm:text-2xl md:hidden">Review Your Details &amp; Pay</h1>
       {notice && (
         <p
           role={notice.tone === "error" ? "alert" : "status"}
@@ -757,7 +757,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         aria-busy={busy}
       >
         <div className="space-y-2 md:space-y-3">
-        <h2 className="hidden text-lg font-semibold text-slate-900 md:block">Kindly Review your details</h2>
+        <h2 className="hidden text-lg font-semibold text-black md:block">Kindly Review your details</h2>
         {editing === "student" && (
           <StudentInlineEdit
             context={context}
@@ -779,16 +779,16 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
           />
           <Collapse open={openSectionFor() === "student"}>
           <dl className="py-2 text-sm md:divide-y md:divide-slate-100 md:border-t md:border-slate-100 md:px-4 md:text-sm">
-            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Name</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{fullName(student)}</dd></div>
+            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Name</dt><dd className="text-right font-bold text-black md:font-medium">{fullName(student)}</dd></div>
             {course?.standardName && (
-              <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Grade</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{course.standardName}</dd></div>
+              <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Grade</dt><dd className="text-right font-bold text-black md:font-medium">{course.standardName}</dd></div>
             )}
-            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Date of Birth</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{student?.dob}</dd></div>
-            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Gender</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{student?.genderName}</dd></div>
-            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Email</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{student?.communicationEmail}</dd></div>
-            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Phone Number</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{phoneLine(student)}</dd></div>
-            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Nationality</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{student?.nationality}</dd></div>
-            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Country | State | City</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{locationLine(student)}</dd></div>
+            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Date of Birth</dt><dd className="text-right font-bold text-black md:font-medium">{student?.dob}</dd></div>
+            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Gender</dt><dd className="text-right font-bold text-black md:font-medium">{student?.genderName}</dd></div>
+            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Email</dt><dd className="text-right font-bold text-black md:font-medium">{student?.communicationEmail}</dd></div>
+            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Phone Number</dt><dd className="text-right font-bold text-black md:font-medium">{phoneLine(student)}</dd></div>
+            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Nationality</dt><dd className="text-right font-bold text-black md:font-medium">{student?.nationality}</dd></div>
+            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Country | State | City</dt><dd className="text-right font-bold text-black md:font-medium">{locationLine(student)}</dd></div>
           </dl>
           </Collapse>
         </section>
@@ -816,24 +816,24 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
           <dl className="px-1 py-2 text-sm md:divide-y md:divide-slate-100 md:border-t md:border-slate-100 md:px-4 md:text-sm">
             {parent?.workingProfessionName ? (
               <>
-                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Student or a working professional</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{parent.workingProfessionName}</dd></div>
-                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">School/College/Organization</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{parent.institutionName}</dd></div>
-                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Country</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{parent.institutionCountryName}</dd></div>
+                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Student or a working professional</dt><dd className="text-right font-bold text-black md:font-medium">{parent.workingProfessionName}</dd></div>
+                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">School/College/Organization</dt><dd className="text-right font-bold text-black md:font-medium">{parent.institutionName}</dd></div>
+                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Country</dt><dd className="text-right font-bold text-black md:font-medium">{parent.institutionCountryName}</dd></div>
               </>
             ) : (
               <>
-                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{relationNoun} Name</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{fullName(parent)}</dd></div>
-                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500"> Relationship to Student</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{parent?.relationshipName}</dd></div>
-                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{relationNoun} Mobile Number</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{phoneLine(parent)}</dd></div>
+                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{relationNoun} Name</dt><dd className="text-right font-bold text-black md:font-medium">{fullName(parent)}</dd></div>
+                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500"> Relationship to Student</dt><dd className="text-right font-bold text-black md:font-medium">{parent?.relationshipName}</dd></div>
+                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{relationNoun} Mobile Number</dt><dd className="text-right font-bold text-black md:font-medium">{phoneLine(parent)}</dd></div>
                 {otherRelation && (
                   <>
-                    <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{otherRelation}&apos;s Name</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{fullName(otherParent) || "--"}</dd></div>
-                    <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{otherRelation}&apos;s Mobile Number</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{otherParent?.contactNumber ? phoneLine({ countryCode: otherParent.countryIsdCode?.replace(/^\+/, ""), contactNumber: otherParent.contactNumber }) : "--"}</dd></div>
+                    <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{otherRelation}&apos;s Name</dt><dd className="text-right font-bold text-black md:font-medium">{fullName(otherParent) || "--"}</dd></div>
+                    <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{otherRelation}&apos;s Mobile Number</dt><dd className="text-right font-bold text-black md:font-medium">{otherParent?.contactNumber ? phoneLine({ countryCode: otherParent.countryIsdCode?.replace(/^\+/, ""), contactNumber: otherParent.contactNumber }) : "--"}</dd></div>
                   </>
                 )}
-                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Country | State | City</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{locationLine(parent)}</dd></div>
+                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Country | State | City</dt><dd className="text-right font-bold text-black md:font-medium">{locationLine(parent)}</dd></div>
                 {parent?.referralCode && (
-                  <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Referral Code</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{parent.referralCode}</dd></div>
+                  <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Referral Code</dt><dd className="text-right font-bold text-black md:font-medium">{parent.referralCode}</dd></div>
                 )}
               </>
             )}
@@ -843,7 +843,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
 
         <section className={ROW_CLASS}>
           <SectionHeader
-            title="Selected Courses"
+            title="Grade & Selected Courses"
             icon={FaNotesMedical}
             open={openSectionFor() === "course"}
             onToggle={() => toggleSection("course")}
@@ -851,30 +851,30 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
           />
           <Collapse open={openSectionFor() === "course"}>
           <div className="py-3 md:border-t md:border-slate-100 md:px-4">
-            <h3 className="mb-2 text-sm font-semibold text-slate-900">{course?.standardName}</h3>
+            <h3 className="mb-2 text-sm font-semibold text-black">{course?.standardName}</h3>
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-slate-500">
+                <tr className="text-left text-black">
                   <th className="py-1">Course Name</th>
-                  {!hideCredits && <th className="py-1 text-right">Credit</th>}
+                  {/* {!hideCredits && <th className="py-1 text-right">Credit</th>} */}
                 </tr>
               </thead>
               <tbody>
                 {(course?.courseDTO || []).map((c, index) => (
                   <tr key={index} className="border-t border-slate-100">
                     <td className="py-1">{c.courseName}</td>
-                    {!hideCredits && <td className="py-1 text-right">{c.creditScore}</td>}
+                    {/* {!hideCredits && <td className="py-1 text-right">{c.creditScore}</td>} */}
                   </tr>
                 ))}
               </tbody>
-              {!hideCredits && (
+              {/* {!hideCredits && (
                 <tfoot>
                   <tr className="border-t border-slate-200 font-semibold">
                     <td className="py-1">Total Credit</td>
                     <td className="py-1 text-right">{course?.totalCredit}</td>
                   </tr>
                 </tfoot>
-              )}
+              )} */}
             </table>
           </div>
           </Collapse>
@@ -885,7 +885,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         {showFee && (
           <div>
             <hr className="mb-4 border-slate-200 md:hidden" />
-            <h2 className="text-center text-lg font-semibold text-slate-900 md:text-left">
+            <h2 className="text-center text-lg font-semibold text-black md:text-left">
               {data.customPaymentEnabled ? data.feeSetionTitile || "Fee Payment" : "Select Payment Option"}
             </h2>
             <div className="mt-3">

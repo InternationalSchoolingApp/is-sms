@@ -54,7 +54,7 @@ function EditCard({ title, saving, onSave, onCancel, formError, children }) {
         {/* Title and close button share one row (the dialog's own absolutely-positioned close button sat
             above the title's centre line). */}
         <DialogHeader className="flex shrink-0 flex-row items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-7 md:border-0 md:pb-0 md:pt-6">
-          <DialogTitle className="text-xl font-bold leading-7 text-slate-900">{title}</DialogTitle>
+          <DialogTitle className="text-xl font-bold leading-7 text-black">{title}</DialogTitle>
           {!saving && (
             <DialogClose
               aria-label="Close"
@@ -273,7 +273,7 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
 
         {isDualDiploma && (
           <>
-            <strong className="mt-6 block text-base font-bold text-slate-900">Current School Details</strong>
+            <strong className="mt-6 block text-base font-bold text-black">Current School Details</strong>
           <div className={`mt-3 ${GRID}`}>
             <FloatingLabelInput
               icon={School}
@@ -424,18 +424,18 @@ export function ParentInlineEdit({ context, userId, parent, title = "Parent/Guar
 
         {/* Shown for every variant, like getParentDetailsContent() */}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-        <h3 className="text-base font-bold text-slate-900">Preferred Contact Method <RequiredAsterisk /></h3>
+        <h3 className="text-base font-bold text-black">Preferred Contact Method <RequiredAsterisk /></h3>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
           <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
             <IoLogoWhatsapp className="h-4 w-4 text-emerald-600" /> WhatsApp
             <Checkbox checked={fields.communicationWhatsApp} onCheckedChange={(v) => set("communicationWhatsApp")(Boolean(v))} />
           </label>
           <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
-            <PhoneIcon className="h-4 w-4 text-slate-900" /> Call
+            <PhoneIcon className="h-4 w-4 text-black" /> Call
             <Checkbox checked={fields.communicationCall} onCheckedChange={(v) => set("communicationCall")(Boolean(v))} />
           </label>
           <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
-            <Mail className="h-4 w-4 text-slate-900" /> Email
+            <Mail className="h-4 w-4 text-black" /> Email
             <Checkbox checked={fields.communicationEmail} onCheckedChange={(v) => set("communicationEmail")(Boolean(v))} />
           </label>
         </div>

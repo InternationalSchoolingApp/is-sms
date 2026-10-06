@@ -13,7 +13,7 @@ export default function Error({ error, retry }) {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-[#eef4fb] bg-gradient-to-b from-[#eaf2fc] via-[#eef5fc] to-[#e7f0fb] p-6">
       <div className="w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-xl shadow-slate-900/5 ring-1 ring-slate-900/5 sm:p-10">
-        <h1 className="text-xl font-bold text-slate-900">Something went wrong</h1>
+        <h1 className="text-xl font-bold text-black">Something went wrong</h1>
         <p className="mt-2 text-sm leading-relaxed text-slate-600">
           We hit an unexpected error. Please try again — if the problem continues, reopen the link or contact support.
         </p>

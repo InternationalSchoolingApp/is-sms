@@ -139,7 +139,7 @@ function PaymentLabel({ children }) {
 
 // Body copy per contentFor — mirrors the JSP's <c:choose> blocks.
 function SuccessBody({ data }) {
-  const amount = <b className="text-slate-900">{data.payAmount}</b>;
+  const amount = <b className="text-black">{data.payAmount}</b>;
   switch (data.contentFor) {
     case "FIRST-PAYMENT":
       return (
@@ -253,7 +253,7 @@ function SuccessCard({ data }) {
           {successTitle(data)}!
         </h2>
 
-        {data.userName && <p className="mt-4 text-base font-bold text-slate-900">Dear, {data.userName}</p>}
+        {data.userName && <p className="mt-4 text-base font-bold text-black">Dear, {data.userName}</p>}
         {data.displaySchoolName && (
           <p className="mt-3 text-sm font-semibold text-slate-700">Thank you for choosing {data.displaySchoolName}!</p>
         )}
@@ -357,7 +357,7 @@ function UnderVerificationCard({ data }) {
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
         <StatusIcon variant="pending" />
-        <h2 className="mt-4 text-2xl font-extrabold text-slate-900">Payment Under Verification</h2>
+        <h2 className="mt-4 text-2xl font-extrabold text-black">Payment Under Verification</h2>
         {data.userName && <p className="mt-3 font-semibold text-primary">Dear {data.userName},</p>}
         {data.displaySchoolName && (
           <p className="mt-1 text-sm italic text-slate-600">Greetings from {data.displaySchoolName}!</p>
@@ -389,13 +389,13 @@ function FailedCard({ data }) {
         <h2 className="text-2xl font-extrabold tracking-tight text-rose-600 sm:text-3xl">
           {data.failedTitle || "Payment Unsuccessful"}
         </h2>
-        {data.userName && <p className="mt-4 text-base font-bold text-slate-900">Dear, {data.userName}</p>}
+        {data.userName && <p className="mt-4 text-base font-bold text-black">Dear, {data.userName}</p>}
         {data.displaySchoolName && (
           <p className="mt-3 text-sm font-semibold text-slate-700">Greetings from {data.displaySchoolName}</p>
         )}
         <div className="mt-5 space-y-2 rounded-2xl bg-rose-50/80 px-5 py-4 text-sm leading-relaxed text-slate-700 ring-1 ring-rose-100">
           {data.paymentName && (
-            <p className="font-semibold text-slate-900">
+            <p className="font-semibold text-black">
               <PaymentLabel>{data.paymentName}</PaymentLabel>{data.payAmount ? ` · ${data.payAmount}` : ""}
             </p>
           )}
@@ -422,7 +422,7 @@ function ErrorCard({ data }) {
     <PageShell>
       <div className="text-center">
         <StatusIcon variant="failed" />
-        <h2 className="mt-4 text-2xl font-extrabold text-slate-900">Something went wrong</h2>
+        <h2 className="mt-4 text-2xl font-extrabold text-black">Something went wrong</h2>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
           {message || "We are experiencing a technical issue. Please try again later."}
         </p>

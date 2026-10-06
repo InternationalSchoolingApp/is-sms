@@ -356,7 +356,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
 
   return (
     <div className={`mx-auto mt-6 ${isOneToOneFlex ? "max-w-7xl" : "max-w-7xl"} rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-12`}>
-      <h2 className="text-center text-2xl font-bold text-slate-900">{heading}</h2>
+      <h2 className="text-center text-2xl font-bold text-black">{heading}</h2>
 
       {isOneToOneFlex ? (
         <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3 [&_label]:max-w-[calc(100%-5rem)]">
@@ -397,7 +397,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
             clearErrors={clearErrors}
           />
 
-          <label className="mt-8 mb-4 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-900">
+          <label className="mt-8 mb-4 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-black">
             <Checkbox checked={!fields.sameAsStudent} onCheckedChange={(v) => toggleSameAsStudent(!v)} />
             Edit Location
           </label>
@@ -459,7 +459,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
       {/* getParentDetailsContent() appends this after every variant (Communication Details,
           Academic & Communication Details, Parent | Guardian Details). */}
       <div className="mt-8 flex flex-col items-center gap-3 text-center">
-        <h3 className="text-base font-bold text-slate-900">Preferred Contact Method <RequiredAsterisk /></h3>
+        <h3 className="text-base font-bold text-black">Preferred Contact Method <RequiredAsterisk /></h3>
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
           <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
             <IoLogoWhatsapp className="h-4 w-4 text-emerald-600" />
@@ -470,7 +470,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
             />
           </label>
           <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-            <PhoneIcon className="h-4 w-4 text-slate-900" />
+            <PhoneIcon className="h-4 w-4 text-black" />
             Call
             <Checkbox
               checked={fields.communicationCall}
@@ -478,7 +478,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
             />
           </label>
           <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-            <Mail className="h-4 w-4 text-slate-900" />
+            <Mail className="h-4 w-4 text-black" />
             Email
             <Checkbox
               checked={fields.communicationEmail}

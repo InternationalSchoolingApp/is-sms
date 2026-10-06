@@ -54,7 +54,7 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
         <header className="grid grid-cols-[2rem_1fr_2rem] items-center gap-2 px-1 py-4 md:hidden">
           <Image src="/images/Fav_Icon.png" alt={schoolName || ""} width={28} height={28} className="h-7 w-auto" unoptimized />
           <div className="text-center">
-            {programLabel && <h1 className="text-base font-extrabold leading-tight text-slate-900">{programLabel}</h1>}
+            {programLabel && <h1 className="text-base font-extrabold leading-tight text-black">{programLabel}</h1>}
             <p className="mt-0.5 text-[12px] leading-tight text-primary font-semibold">Complete your enrollment in just 5 minutes</p>
           </div>
           <button
@@ -69,7 +69,7 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
 
         {programLabel && (
           <div className="hidden text-center md:block">
-            <h1 className="text-1.5xl font-extrabold text-slate-900 sm:text-2xl">{programLabel}</h1>
+            <h1 className="text-1.5xl font-extrabold text-black sm:text-2xl">{programLabel}</h1>
             <p className="mt-1 text-sm text-slate-500">Complete your enrollment in just 5 minutes</p>
           </div>
         )}
@@ -225,7 +225,7 @@ function LogoMark({ schoolName, logoUrl }) {
     <div className="flex items-center gap-3">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-bold text-white">IS</div>
       <div>
-        <p className="text-sm font-bold leading-tight text-slate-900">{schoolName || "International Schooling"}</p>
+        <p className="text-sm font-bold leading-tight text-black">{schoolName || "International Schooling"}</p>
         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Admissions Portal</p>
       </div>
     </div>

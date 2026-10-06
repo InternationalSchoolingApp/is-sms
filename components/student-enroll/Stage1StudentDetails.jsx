@@ -83,7 +83,7 @@ function FieldSkeleton() {
 function Stage1Skeleton({ isDualDiploma }) {
   return (
     <div className="mx-auto mt-6 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
-      <h2 className="text-center text-2xl font-extrabold text-slate-900">Student Details</h2>
+      <h2 className="text-center text-2xl font-extrabold text-black">Student Details</h2>
       <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
           <FieldSkeleton key={`identity-${i}`} />
@@ -251,7 +251,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
   return (
     
       <div className="mx-auto mt-6 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
-        <h2 className="text-center text-1.5xl text-2xl font-extrabold text-slate-900">Student Details</h2>
+        <h2 className="text-center text-1.5xl text-2xl font-extrabold text-black">Student Details</h2>
 
         <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-2">
           <FloatingLabelInput
@@ -404,7 +404,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
 
         {isDualDiploma && (
           <>
-            <strong className="mt-6 block text-base font-bold text-slate-900">Current School Details</strong>
+            <strong className="mt-6 block text-base font-bold text-black">Current School Details</strong>
           <div className="mt-3 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
             <FloatingLabelInput
               icon={School}

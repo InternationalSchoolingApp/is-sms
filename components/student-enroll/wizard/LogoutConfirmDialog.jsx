@@ -25,7 +25,7 @@ export function LogoutConfirmDialog({ open, busy, onConfirm, onCancel }) {
           priority
           className="pointer-events-none absolute -top-9 left-1/2 h-[80px] w-auto sm:-top-14 sm:h-[104px] -translate-x-1/2"
         />
-        <DialogTitle className="text-base font-extrabold leading-snug text-slate-900 sm:text-lg">
+        <DialogTitle className="text-base font-extrabold leading-snug text-black sm:text-lg">
           Are you sure you want to Logout?
         </DialogTitle>
         <DialogDescription className="mx-auto mt-1.5 max-w-[16rem] text-xs leading-relaxed text-slate-500 sm:mt-2 sm:max-w-[17rem] sm:text-sm">
