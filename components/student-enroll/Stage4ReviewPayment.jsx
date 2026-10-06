@@ -667,7 +667,11 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
     setConfirmSubmit(false);
     setNotice(null);
     try {
-      const isOffline = data.registrationType !== "ONLINE" && data.enrollmentType !== "ONLINE";
+      // Legacy signupStudentStage3.js#callForApplicationSubmit keys this off
+      // $('#signupType').val() === 'Online'. "Online" = student self-signup
+      // (incl. partner URLs) → waits for admin/partner to Move to Dashboard.
+      // "Offline" = admin/B2B-created student → proceeds straight to dashboard.
+      const isOffline = context.signupType === "Offline";
       const response = isOffline ? await proceedToDashboard.mutateAsync() : await submitApplication.mutateAsync();
       if (response?.status !== STATUS_SUCCESS) {
         handleFailure(response, "Could not submit your application. Please try again.");
