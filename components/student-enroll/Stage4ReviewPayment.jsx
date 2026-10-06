@@ -234,7 +234,7 @@ function buildPlanOptions(fee, currencyCode) {
       key: fee.monthlyFeeDetails?.paymentKey || "monthly",
       kind: "monthly",
       mode: variants[0].mode,
-      label: "Pay in installments",
+      label: "Pay in Installments",
       amount: variants[0].amount,
       variants,
     });
