@@ -181,7 +181,7 @@ function summarizeSelection(selectedCourses, gradeBand) {
   if (gradeBand === "high") {
     buckets.push(
       { label: "Honors", count: counts.Honors, dot: "bg-amber-500" },
-      { label: "AP", count: counts.AP, dot: "bg-indigo-700" },
+      { label: "AP (college-level)", count: counts.AP, dot: "bg-indigo-700" },
     );
   } else buckets.push({ label: "Advance", count: counts.Advance, dot: "bg-indigo-700" });
   return buckets;
@@ -277,9 +277,9 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-md">
-        <DialogHeader className="flex-row items-center gap-2 space-y-0 bg-[#eef4ff] px-4 py-3">
-          <CategoryIcon className="h-5 w-5 shrink-0 text-primary" />
-          <DialogTitle className="text-base font-semibold text-primary">{course.courseName}</DialogTitle>
+        <DialogHeader className="flex-row items-center gap-2 space-y-0  px-4 py-3">
+          <CategoryIcon className="h-5 w-5 shrink-0 text-black" />
+          <DialogTitle className="text-base font-semibold text-black">{course.courseName}</DialogTitle>
         </DialogHeader>
         <div className="max-h-[60vh] divide-y divide-slate-100 overflow-y-auto">
           {course.subjects.map((subject) => {
@@ -288,7 +288,7 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
             const notes = subjectNotes(subject, data, showPaymentOption);
             return (
               <div key={id} className="flex items-center gap-3 px-4 py-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg  text-black">
                   <BookOpen className="h-4 w-4" />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -361,33 +361,6 @@ function Stage3Skeleton({ header }) {
   );
 }
 
-/**
- * Stage 3 of the enrollment wizard ("Course Selection"). Mirrors
- * getAllCourseDetails()/addCourse()/removeCourse() in signupStudentStage3.js
- * and getCourseSelectionContent() in signupStudentContent.js: every change
- * re-posts the full selection to course-details-by-standard-id, which
- * persists it and returns the recomputed page. Continuing saves a payment
- * plan (see useProceedToReview) so the next step is the review page.
- *
- * Visual design (summary bar with credit ring/legend, category sidebar +
- * detail pane for available courses, Regular/Honors toggle) matches the
- * reference screenshots — see categoryIcon/summarizeSelection/
- * CreditProgressRing/VariantToggle above for what's presentational-only vs.
- * the untouched business logic below (add/remove/upgrade/recommended/
- * change-grade/proceed all call the exact same hooks/handlers as before).
- *
- * Not built here yet: the ONE_TO_ONE_FLEX grade switcher and the
- * enrollment-documents gate (legacy lets the student skip that one, so
- * proceeding without it matches the skip path). The change-grade modal
- * (changeSelectedGrade()/saveSelectedGradeAndDob() in signupStudentStage3.js)
- * is built — see ChangeGradeDialog and handleGradeChange below.
- *
- * `standardId` is Stage 1's saved grade (see app/step/3/page.jsx) — the
- * initial course-details-by-standard-id read must carry it (confirmed
- * against a real captured legacy-app payload; see useCourseSelection.js's
- * doc comment) or the backend's grade/fee mapping lookup has nothing to key
- * on and the call fails with a generic error.
- */
 export function Stage3CourseSelection({ context, userId, standardId: initialStandardId, onNext, onBack, onSessionExpired, inReview = false }) {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
@@ -538,8 +511,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           <>
             {!extraFeeNoticeShownRef.current && (
               <p>
-                You have selected {selectedCount} course{selectedCount === 1 ? "" : "s"} worth {data.totalCredit}{" "}
-                credit{Number(data.totalCredit) === 1 ? "" : "s"}. Selecting more than {selectedCount} course
+                You have selected {selectedCount} course{selectedCount === 1 ? "" : "s"}. Selecting more than {selectedCount} course
                 {selectedCount === 1 ? "" : "s"} will have extra fees.
               </p>
             )}
@@ -706,7 +678,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   async function confirmRecommended(ids) {
     apAcknowledgedRef.current = false;
     const saved = await applyChange({ selectedSubjects: ids.join(","), controlType: "add" });
-    if (saved) setRecommendedData(null);
+    if (saved) {
+      setRecommendedData(null);
+      toast.success("Recommended courses added");
+    }
   }
 
   async function handleNext() {
@@ -733,7 +708,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     <>
       {/* Program name is now shown by EnrollmentWizardShell's own hero above this card. */}
       <h2 className="text-center text-2xl font-bold text-slate-900">
-        <span className="inline">Course selection</span>
+        <span className="inline">Course Selection</span>
       </h2>
     </>
   );
@@ -834,22 +809,22 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
         {(showCreditSummary || showCourseCountSummary) && (
           <div className="flex items-center justify-between px-1">
-            <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
-              {showCourseCountSummary ? "Course Requirement:" : "Credit Requirement:"}
+            <span className="inline-flex items-center gap-1.5 text-sm md:text-xs text-slate-900">
+              You need to select
             </span>
             <span className="text-sm font-bold text-slate-900">
-              {showCourseCountSummary ? "Minimum 5 Courses" : `Minimum ${data.minCourseLimit} Credits`}
+              at least {data.minCourseLimit} courses
             </span>
           </div>
         )}
 
         {!fixed && !batchOrProvider39 && gradeBand !== "elementary" && (
           <div className="rounded-lg bg-[#e6f3ff] px-3 py-2 md:hidden">
-            <p className="text-xs font-semibold text-slate-500">Selection Summary</p>
+            <p className="text-sm font-bold text-slate-900">Selection Summary</p>
             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
               {summaryBuckets.map((bucket) => (
-                <span key={bucket.label} className="inline-flex items-center gap-1 text-slate-700">
-                  <span className={`h-2 w-2 rounded-full ${bucket.dot}`} /> {bucket.label}: {bucket.count}
+                <span key={bucket.label} className="inline-flex items-center gap-1 text-slate-900">
+                  <span className={`h-2 w-2 rounded-full ${bucket.dot}`} /> {bucket.label}: <span className="font-bold">{bucket.count}</span>
                 </span>
               ))}
             </div>
@@ -888,10 +863,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             
             <div>
               <div className="flex">
-                <p className="text-xs text-slate-500">{showCourseCountSummary ? "Course Requirement" : "Credit Requirement"}</p>
+                <p className="text-xs text-slate-900">You need to select</p>
               </div>
               <p className="text-sm font-bold text-slate-900">
-                {showCourseCountSummary ? "Minimum 5 Courses" : `Minimum ${data.minCourseLimit} Credits`}
+                at least {data.minCourseLimit} courses
               </p>
             </div>
           </div>
@@ -913,25 +888,26 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 what's actually been picked (e.g. 8/8), not stay pinned at the original minimum
                 (8/6) — the ring and the fraction below both use this same adjusted max. */}
             <CreditProgressRing
-              value={Number(data.totalCredit) || 0}
-              max={Math.max(Number(data.minCourseLimit) || 1, Number(data.totalCredit) || 0)}
+              value={selectedCourseCount}
+              max={Math.max(Number(data.minCourseLimit) || 1, selectedCourseCount)}
+              unit="courses"
             />
             <div>
               <p className="text-xl font-bold text-primary">
-                {data.totalCredit}/{Math.max(Number(data.minCourseLimit) || 0, Number(data.totalCredit) || 0)}
+                {selectedCourseCount}/{Math.max(Number(data.minCourseLimit) || 0, selectedCourseCount)}
               </p>
-              <p className="text-sm font-bold text-slate-900">Credits Selected</p>
+              <p className="text-sm font-bold text-slate-900">Courses Selected</p>
             </div>
           </div>
         )}
 
         {!fixed && !batchOrProvider39 && (
           <div className={`hidden bg-[#e6f3ff] rounded-lg xl:ml-2 py-4 ${showCourseCountSummary || !(showMinBanner && !showCreditSummary) ? "flex-1" : ""} sm:px-3 md:block`}>
-            <p className="text-xs font-semibold text-slate-500">Selection Summary</p>
+            <p className="text-sm text-slate-900 font-bold">Selection Summary</p>
             <div className={`mt-1 flex flex-wrap gap-y-1 text-xs ${showCourseCountSummary ? "justify-between gap-x-6" : "gap-x-3"}`}>
               {summaryBuckets.map((bucket) => (
-                <span key={bucket.label} className="inline-flex items-center gap-1 text-slate-700">
-                  <span className={`h-2 w-2 rounded-full ${bucket.dot}`} /> {bucket.label}: {bucket.count}
+                <span key={bucket.label} className="inline-flex items-center gap-1 text-slate-900">
+                  <span className={`h-2 w-2 rounded-full ${bucket.dot}`} /> {bucket.label}: <span className="font-bold">{bucket.count}</span>
                 </span>
               ))}
             </div>
@@ -951,13 +927,11 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         <section className="self-start overflow-hidden rounded-xl border border-slate-200 bg-white">
           <header className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
             <h2 className="text-sm font-bold text-slate-900">
-              {showCourseCountSummary ? (
+              {showCourseCountSummary || showCourseCredits ? (
                 <>
-                  <span className="md:hidden">Your Selected Courses: <span className="text-primary">{selectedCourseCount} Courses</span></span>
+                  <span className="md:hidden">Your Selected Courses: <span className="text-primary">{selectedCourseCount}/{displayCourseCountTarget} courses</span></span>
                   <span className="hidden md:inline">Your Selected Courses</span>
                 </>
-              ) : showCourseCredits ? (
-                <>Your Selected Courses: <span className="text-primary">{data.totalCredit} credits </span></>
               ) : "Your Selected Courses"}
             </h2>
             <div className="flex items-center gap-3">
@@ -974,7 +948,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               )}
             </div>
           </header>
-          {selectedCourses.length === 0 && <p className="px-4 py-6 text-sm text-slate-500">{selectedSummary(data)}</p>}
+          {selectedCourses.length === 0 && <p className="px-4 py-6 text-sm text-slate-900">{selectedSummary(data)}</p>}
           {selectedCourses.length > 0 && (
             <ol className="space-y-2 p-3 md:space-y-0 md:divide-y md:divide-slate-100 md:p-0">
               {selectedCourses.map((course) => {
@@ -1064,7 +1038,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 </div>
                 {data.eligibleForRecommendedCourse && (
                   <Button type="button" size="sm" onClick={openRecommended} disabled={busy} className="shrink-0 rounded-md bg-primary hover:bg-primary/90">
-                    <Plus className="h-4 w-4" /> Add recommended Courses
+                    <Plus className="h-4 w-4" /> View Our Recommendations
                   </Button>
                 )}
               </div>
@@ -1078,7 +1052,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             {data.eligibleForRecommendedCourse && (
               <div className="px-4 pt-4 md:hidden">
                 <Button type="button" onClick={openRecommended} disabled={busy} className="w-full rounded-md bg-primary hover:bg-primary/90">
-                  <Plus className="h-4 w-4" /> Add recommended Courses
+                  <Plus className="h-4 w-4" /> View Our Recommendations
                 </Button>
               </div>
             )}

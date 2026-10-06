@@ -6,17 +6,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
-/**
- * Recommended-courses picker, mirroring recommendedCourseModalContent() /
- * chooseRecomendedCourse() in the legacy signup JS. Mandatory courses are
- * always included; already-selected ones start checked.
- *
- * On confirm, the recommended selection REPLACES the student's current
- * course selection entirely (matches legacy: it computes a merge with the
- * previous selection, then immediately overwrites that with just the
- * recommended list, dropping any other previously-selected course) — see
- * the warning note in the dialog body.
- */
+
 export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm, busy }) {
   const courses = data?.recommendedCourses || [];
   const isMandatory = (course) => course.courseMandatory === 1;
@@ -79,7 +69,7 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
                 <GraduationCap className="h-4 w-4" />
               </span>
               <div className="inline-flex flex-col">
-                  <p className="flex-1 text-sm font-bold text-black-900">Total Credits</p>
+                  <p className="flex-1 text-sm font-bold text-black-900">Total Courses</p>
                   <p className="flex-1 text-xs text-black-900">Including all recommended courses</p>
               </div>
               <span className="flex h-8 w-8 ml-auto shrink-0 items-center justify-center rounded-md bg-[#d8e4fb] text-black-900 text-2xl font-bold">
@@ -89,7 +79,7 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
 
             {mandatoryCourses.length > 0 && (
               <div>
-                <p className="mb-2 text-sm font-semibold text-black-900">Mandatory Courses ({mandatoryCourses.length})</p>
+                <p className="mb-2 text-sm font-semibold text-black-900">These courses are mandatory ({mandatoryCourses.length})</p>
                 <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200">
                   {mandatoryCourses.map((course) => (
                     <li key={course.subjectId} className="flex items-center gap-3 px-3 py-2 text-sm">
@@ -112,7 +102,7 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
             {optionalCourses.length > 0 && (
               <div>
                 <div className="mb-2 flex items-center justify-between gap-3 mt-2">
-                  <p className="text-sm font-semibold text-black-900">We recommend these courses for {data?.gradeName}</p>
+                  <p className="text-sm font-semibold text-black-900">We also recommend these courses</p>
                   <Button type="button" size="sm" onClick={toggleAll} className="rounded-md bg-primary hover:bg-primary/90">
                     {allOptionalChecked ? "Remove All" : "+ Add All"}
                   </Button>
@@ -138,8 +128,8 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
               </div>
             )}
           </div>   
-          <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs border border-amber-400 text-black-900">
-            <strong>Note:</strong> By adding the above recommended courses, your current course selection will be replaced. You can still add or remove courses.
+          <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs border border-amber-400 text-black-900 mt-2">
+            <strong>Note:</strong> Adding these will replace the courses you've already selected. You can still change them afterwards.
           </p>
         </div>
         <DialogFooter className="mx-0 mb-0 shrink-0 border-t bg-white px-4 py-3 sm:justify-center">

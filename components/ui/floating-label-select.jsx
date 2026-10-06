@@ -50,7 +50,7 @@ function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, 
             style={floated ? undefined : { maxWidth: Icon ? "calc(100% - 5rem)" : "calc(100% - 3.5rem)" }}
           >
             {label}
-            {required && <span className="text-red-500"> *</span>}
+            {required && <span className="ml-1 text-red-500">*</span>}
           </label>
         )}
         <Select className="" value={value} onValueChange={onValueChange} onOpenChange={setOpen} disabled={disabled}>
@@ -118,7 +118,7 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
             style={floated ? undefined : { maxWidth: Icon ? "calc(100% - 5rem)" : "calc(100% - 3.5rem)" }}
           >
             {label}
-            {required && <span className="text-red-500"> *</span>}
+            {required && <span className="ml-1 text-red-500">*</span>}
           </label>
         )}
         <Popover open={open} onOpenChange={handleOpenChange}>

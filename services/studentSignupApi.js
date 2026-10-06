@@ -2,27 +2,6 @@
 
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
-/**
- * Student Signup API surface that's safe to import directly from a Client
- * Component (AccountCreationForm.jsx, hooks/useEnrollmentContext.js — no
- * cookies()/next/headers). Follows the plain "use server" pattern
- * demonstrated by services/serverApi.js (see app/test/TestComponent.js)
- * exactly — the directive lives at the top of the file, same as that
- * reference, so every export below is a real Server Action: a plain fetch, a
- * straight `response.json()`-style parse, nothing session/cookie-related.
- * That's safe here specifically because every endpoint in this file is
- * public/pre-auth (see each function's own doc comment) — none of them ever
- * depended on the backend's session cookie for identity.
- *
- * Every OTHER Student Signup endpoint (the authenticated ones — save/get
- * student & parent details, course selection, payment, review, etc.) lives
- * in services/studentSignupBackendApi.js, also a file-level "use server"
- * module, called directly by Client Components too — there is no separate
- * actions/ wrapper layer; this file and that one together make up "the
- * Student Signup API", split into two files only because of how these
- * public endpoints were introduced, not because either needs the other.
- */
-
 function backendUrl(schoolUUID, path) {
   const baseUrl = resolveServerBackendOrigin();
   if (!hasBackendOrigin() || !schoolUUID) {

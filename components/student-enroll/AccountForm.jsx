@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 import { AccountInput } from "@/components/student-enroll/AccountInput";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,8 +12,8 @@ import { InfoModal, getWelcomeBackMessage } from "@/components/student-enroll/In
 import { useAccountSignup } from "@/hooks/useAccountSignup";
 import { checkEmailAvailability } from "@/services/studentSignupBackendApi";
 import { validateAccountFormOnline, isValidEmail, getPasswordStrength } from "@/utils/studentSignupValidation";
-import { captureUtmParamsFromUrl } from "@/utils/utmCookies";
 import { getHash } from "@/utils/common";
+import { callLocationForPaymentPromise, getLocationValue, loadLocationGlobals } from "@/utils/locationFinder";
 
 // The captcha field is hidden from the UI; the form submits a random 6-digit number in its place
 // (it still has to satisfy the 6-digit check in isValidCaptcha).
@@ -29,6 +29,7 @@ const INITIAL_FIELDS = {
   captcha: "",
   referralCode: "",
   checkTerms: false,
+  location: "{}",
 };
 
 /**
@@ -76,6 +77,26 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
   useEffect(() => {
     captureUtmParamsFromUrl();
   }, []);
+
+  // callLocationAndSelectCountryNew(): the signup page fills its hidden #location input with the payer's
+  // location (LOCATION_SERVICE_BYPASS ? DEFAULT_LOCATION : the location from constant/LocationConstant.js) and
+  // sends it with stage-1. Same here: capture it on load and keep it in the hidden `location` field below.
+  useEffect(() => {
+    let cancelled = false;
+    loadLocationGlobals({ schoolUUID: context.schoolUUID, userId: 0 })
+      .catch((err) => console.error("Location globals failed (using the constant location):", err))
+      .then(() => callLocationForPaymentPromise())
+      .then(() => {
+        if (cancelled) return;
+        const captured = getLocationValue();
+        console.log("Captured location:", captured);
+        setFields((prev) => ({ ...prev, location: captured || "{}" }));
+      })
+      .catch((err) => console.error("Location capture failed:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [context.schoolUUID]);
 
   const emailsMatch = useMemo(
     () => !fields.confirmEmail || fields.email.trim() === fields.confirmEmail.trim(),
@@ -198,8 +219,12 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
       // even when React's state missed the update.
       const formData = new FormData(formRef.current);
       const submittedEmail = formData.get("email") || fields.email;
+      // The location is captured asynchronously on load; if the user submits before it landed, resolve it now so the
+      // saved record never gets "{}" (see the location effect above).
+      if (!getLocationValue()) await callLocationForPaymentPromise();
       const domFields = {
         ...fields,
+        location: getLocationValue() || fields.location,
         email: submittedEmail,
         // Confirm-email field is commented out of the UI: reuse the email as its value.
         confirmEmail: submittedEmail,
@@ -279,6 +304,8 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
         }}
         className="mx-auto w-full  space-y-5"
       >
+        <input type="hidden" name="location" id="location" value={fields.location} readOnly />
+
         <div className="hidden text-center md:block">
           <h2 className="text-sm md:text-lg font-bold leading-tight text-primary md:text-slate-800">
             Complete your enrollment in just 5 minutes

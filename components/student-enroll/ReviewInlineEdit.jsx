@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Briefcase, Building2, BookOpen, Cake, GraduationCap, Globe, Mail, Map, MapPin, Phone as PhoneIcon, School, User, VenusAndMars } from "lucide-react";
+import { Briefcase, Building2, BookOpen, Cake, GraduationCap, Globe, Mail, Map, MapPin, Phone as PhoneIcon, School, User, VenusAndMars, X } from "lucide-react";
 import { IoLogoWhatsapp } from "react-icons/io";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
@@ -49,15 +49,25 @@ function EditCard({ title, saving, onSave, onCancel, formError, children }) {
   return (
     <Dialog open onOpenChange={(open) => !open && !saving && onCancel()}>
       {/* Below md the title and the Save button stay pinned while only the form body scrolls. */}
-      <DialogContent showCloseButton={!saving} className="flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-[1112px]">
-        <DialogHeader className="shrink-0 border-b border-slate-200 px-7 py-4 md:border-0 md:pb-0 md:pt-6">
-          <DialogTitle className="text-xl font-bold text-slate-900">{title}</DialogTitle>
+      <DialogContent showCloseButton={false} className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[1112px]">
+        {/* Title and close button share one row (the dialog's own absolutely-positioned close button sat
+            above the title's centre line). */}
+        <DialogHeader className="flex shrink-0 flex-row items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-7 md:border-0 md:pb-0 md:pt-6">
+          <DialogTitle className="text-xl font-bold leading-7 text-slate-900">{title}</DialogTitle>
+          {!saving && (
+            <DialogClose
+              aria-label="Close"
+              className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md bg-red-500 text-white hover:bg-red-600"
+            >
+              <X className="h-4 w-4" />
+            </DialogClose>
+          )}
         </DialogHeader>
-        <div className="min-h-0 flex-1 overflow-y-auto px-7 pt-6 md:pb-2">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-6 sm:px-7 md:pb-2">
           {children}
           {formError && <p className="mt-4 text-center text-sm font-semibold text-red-600">{formError}</p>}
         </div>
-        <div className="flex shrink-0 justify-center border-t border-slate-200 bg-white px-7 py-4 md:border-0 md:pb-6 md:pt-6">
+        <div className="flex shrink-0 justify-center border-t border-slate-200 bg-white px-4 py-4 sm:px-7 md:border-0 md:pb-6 md:pt-6">
           <Button type="button" onClick={onSave} disabled={saving} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
             {saving ? "Saving…" : "Save"}
           </Button>

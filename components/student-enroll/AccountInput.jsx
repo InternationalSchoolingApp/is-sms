@@ -72,7 +72,7 @@ export function AccountInput({
             }`}
           >
             {label}
-            {required && <span className="text-red-500"> *</span>}
+            {required && <span className="ml-1 text-red-500">*</span>}
           </label>
         )}
 
