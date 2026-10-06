@@ -277,9 +277,9 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-md">
-        <DialogHeader className="flex-row items-center gap-2 space-y-0 bg-[#eef4ff] px-4 py-3">
-          <CategoryIcon className="h-5 w-5 shrink-0 text-primary" />
-          <DialogTitle className="text-base font-semibold text-primary">{course.courseName}</DialogTitle>
+        <DialogHeader className="flex-row items-center gap-2 space-y-0  px-4 py-3">
+          <CategoryIcon className="h-5 w-5 shrink-0 text-black" />
+          <DialogTitle className="text-base font-semibold text-black">{course.courseName}</DialogTitle>
         </DialogHeader>
         <div className="max-h-[60vh] divide-y divide-slate-100 overflow-y-auto">
           {course.subjects.map((subject) => {
@@ -288,7 +288,7 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
             const notes = subjectNotes(subject, data, showPaymentOption);
             return (
               <div key={id} className="flex items-center gap-3 px-4 py-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg  text-black">
                   <BookOpen className="h-4 w-4" />
                 </span>
                 <div className="min-w-0 flex-1">
