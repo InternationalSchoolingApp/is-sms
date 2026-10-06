@@ -1,6 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { ChangeGradeDialog } from "@/components/student-enroll/ChangeGradeDialog";
+import { ConfirmDialog } from "@/components/student-enroll/ConfirmDialog";
+import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
+import { RecommendedCoursesDialog } from "@/components/student-enroll/RecommendedCoursesDialog";
+import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  STATUS_SESSION_OUT,
+  STATUS_SUCCESS,
+  useCourseDetails,
+  useLocalCourseUpdate,
+  useProceedToReview,
+  useRecommendedCourses,
+  useShowPaymentOption,
+  useUpdateCourseSelection,
+} from "@/hooks/useCourseSelection";
+import { useCountryOptions, useGradeOptions, useStudentDetailsPrefill, useStudentDetailsSignup } from "@/hooks/useStudentDetailsSignup";
+import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
+import { getCourseAddCheck, hidesCourseCredits, validateCourseCredits } from "@/utils/studentSignupValidation";
+import { saveWizardStudentFields } from "@/utils/wizardStorage";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDown,
@@ -14,7 +34,6 @@ import {
   Globe2,
   GraduationCap,
   HeartPulse,
-  Info,
   Languages,
   Lock,
   Palette,
@@ -22,31 +41,11 @@ import {
   RefreshCw,
   Search,
   Sparkles,
-  Trash2,
+  Trash2
 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { Button } from "@/components/ui/button";
-import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
-import { ConfirmDialog } from "@/components/student-enroll/ConfirmDialog";
-import { RecommendedCoursesDialog } from "@/components/student-enroll/RecommendedCoursesDialog";
-import { ChangeGradeDialog } from "@/components/student-enroll/ChangeGradeDialog";
-import {
-  STATUS_SESSION_OUT,
-  STATUS_SUCCESS,
-  useCourseDetails,
-  useProceedToReview,
-  useRecommendedCourses,
-  useShowPaymentOption,
-  useLocalCourseUpdate,
-  useUpdateCourseSelection,
-} from "@/hooks/useCourseSelection";
-import { useGradeOptions, useCountryOptions, useStudentDetailsPrefill, useStudentDetailsSignup } from "@/hooks/useStudentDetailsSignup";
-import { getCourseAddCheck, hidesCourseCredits, validateCourseCredits } from "@/utils/studentSignupValidation";
-import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
-import { saveWizardStudentFields } from "@/utils/wizardStorage";
+import { FaArrowDown } from "react-icons/fa";
 
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
 
@@ -68,7 +67,7 @@ function isNoLiveClasses(subject, registrationType) {
 // Header over the selected list, as in getCourseSelectionContent() (signupStudentContent.js).
 function selectedSummary(data) {
   const count = data.selectedSubjects?.length || 0;
-  if (count === 0) return "Please select a course";
+  if (count === 0) return "Select Courses from below";
   if (data.registrationType === "BATCH" || Number(data.courseProviderId) === 39) {
     return `${count} fixed ${count > 1 ? "courses" : "course"}`;
   }
@@ -1336,29 +1335,29 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           <div className="mt-0 space-y-2 md:hidden">
             {(showCreditSummary || showCourseCountSummary) && (
               <div className="rounded rounded-bl-none rounded-br-none bg-primary px-4 py-3.5 text-white">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 justify-center">
                   {courseMinMet ? (
-                    <span className="inline-flex items-center gap-2 text-sm font-bold">
+                    <span className="inline-flex flex-1 items-center gap-2 text-sm font-bold">
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-400">
                         <Check className="h-3 w-3 text-primary" strokeWidth={3} />
                       </span>
                       {selectedCourseCount} courses selected
                     </span>
                   ) : (
-                    <span className="text-sm font-bold">Select at least {minCourseCount} courses</span>
+                    <span className="inline-flex flex-1 ml-4 justify-center items-center gap-2 text-sm font-bold">Select at least {minCourseCount} courses</span>
                   )}
                   {canRemoveAll && (
                     <button
                       type="button"
                       onClick={removeAll}
                       disabled={busy}
-                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/20 text-white hover:bg-white/30 disabled:opacity-60 ${
+                      className={`inline-flex shrink-0 ml-auto items-center gap-1.5 rounded-full bg-white/20 text-white hover:bg-white/30 disabled:opacity-60 ${
                         courseMinMet ? "px-3 py-0.5" : "px-3 py-1.5 text-xs font-semibold"
                       }`}
                       aria-label="Remove all courses"
-                    >
+                    > All
                       <Trash2 className="h-4 w-4" />
-                      All
+                      
                       {/* {!courseMinMet && "Clear all"} */}
                     </button>
                   )}
@@ -1400,7 +1399,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               </span>
             )} */}
           </div>
-          {selectedCourses.length === 0 && (<p className={`px-4 py-6 text-sm text-black ${selectedCourses.length === 0 ? `text-center` : ``}`}>{selectedSummary(data)}</p>)}
+          {selectedCourses.length === 0 && (<p className={`px-4 py-6 text-sm text-black flex items-center ${selectedCourses.length === 0 ? `justify-center` : ``}`}>{selectedSummary(data)} <FaArrowDown className="ml-2" /></p>)}
           {selectedCourses.length > 0 && (
             <ol className="space-y-2 p-3 md:space-y-0 md:divide-y md:divide-slate-100 md:p-0">
               {selectedCourses.map((course) => {
