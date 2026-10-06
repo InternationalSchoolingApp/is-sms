@@ -413,7 +413,7 @@ export function ParentInlineEdit({ context, userId, parent, title = "Parent/Guar
 
         {/* Shown for every variant, like getParentDetailsContent() */}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-        <h3 className="text-base font-bold text-slate-900">How to Contact You?<span className="relative top-1 text-red-500"> *</span></h3>
+        <h3 className="text-base font-bold text-slate-900">Preferred Contact Method<span className="relative top-1 text-red-500"> *</span></h3>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
           <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
             <IoLogoWhatsapp className="h-4 w-4 text-emerald-600" /> WhatsApp

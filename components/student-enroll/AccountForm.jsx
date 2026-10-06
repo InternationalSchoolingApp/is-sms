@@ -15,6 +15,12 @@ import { validateAccountFormOnline, isValidEmail, getPasswordStrength } from "@/
 import { captureUtmParamsFromUrl } from "@/utils/utmCookies";
 import { getHash } from "@/utils/common";
 
+// The captcha field is hidden from the UI; the form submits a random 6-digit number in its place
+// (it still has to satisfy the 6-digit check in isValidCaptcha).
+function randomCaptcha() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
 const INITIAL_FIELDS = {
   email: "",
   confirmEmail: "",
@@ -33,6 +39,7 @@ const INITIAL_FIELDS = {
 export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
   const [fields, setFields] = useState(() => ({
     ...INITIAL_FIELDS,
+    captcha: randomCaptcha(),
     email: context?.username || "",
     confirmEmail: context?.username || "",
     referralCode: context?.referralCode || "",
@@ -112,7 +119,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
 
   function refreshCaptcha() {
     setCaptchaCacheBust(Date.now());
-    setField("captcha", "");
+    setField("captcha", randomCaptcha());
   }
 
   // Mirrors callEmailCheck() in jquery.commonFunction.js, fired on the
@@ -301,7 +308,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           status={touched.email && !emailInvalid ? "valid" : undefined}
         />
 
-        {/* Confirm your email — hidden; its value is mirrored from "Enter your email" (see setField).
+        {/* 
         <AccountInput
           icon={Mail}
           label="Confirm your email"
@@ -411,6 +418,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           }
         />
 
+        {/* 
         <CaptchaField
           schoolUUID={context.schoolUUID}
           value={fields.captcha}
@@ -420,6 +428,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           cacheBust={captchaCacheBust}
           onRefresh={refreshCaptcha}
         />
+        */}
 
         {errors.form && <p className="text-center text-sm font-semibold text-red-600">{errors.form}</p>}
 
