@@ -4,7 +4,8 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
-import { getEnrollmentProcess, getPublicSchoolInfo } from "@/services/studentSignupApi";
+import { getEnrollmentProcess, getPublicSchoolInfo, isEnrollmentViaNextjs } from "@/services/studentSignupApi";
+import { legacyEnrollmentProcessUrl } from "@/utils/backendOrigin";
 import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
 import { useStudentDetailsPrefill } from "@/hooks/useStudentDetailsSignup";
 import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
@@ -46,15 +47,40 @@ function useResolveEnrollmentContext() {
     userId: session?.userId,
   });
 
-  const enrollmentProcess = useQuery({
-    queryKey: ["enrollment-process", session?.schoolUUID, session?.uniqueId],
-    queryFn: () => getEnrollmentProcess(session.schoolUUID, session.uniqueId),
-    enabled: Boolean(authenticated && session?.uniqueId),
+  // CONFIGURATION/ENROLLMENT_VIA_NEXTJS decides whether this wizard runs at all,
+  // the same switch the backend branches on (CommonUtil#getFinalEnrollmentUrl).
+  // `undefined` while it is still in flight — and on failure, since the query
+  // doesn't retry — so everything below keeps the existing Next.js behaviour
+  // unless the setting explicitly comes back false.
+  const enrollmentViaNextjs = useQuery({
+    queryKey: ["enrollment-via-nextjs", session?.schoolUUID],
+    queryFn: () => isEnrollmentViaNextjs(session.schoolUUID),
+    enabled: authenticated,
     staleTime: Infinity,
     gcTime: Infinity,
     refetchOnWindowFocus: false,
     retry: false,
   });
+  const viaLegacyFlow = enrollmentViaNextjs.data === false;
+
+  const enrollmentProcess = useQuery({
+    queryKey: ["enrollment-process", session?.schoolUUID, session?.uniqueId],
+    queryFn: () => getEnrollmentProcess(session.schoolUUID, session.uniqueId),
+    enabled: Boolean(authenticated && session?.uniqueId && !viaLegacyFlow),
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+
+  // Setting is off: hand the student back to the legacy JSP continuation page
+  // instead of resolving a context for a wizard that must not run. replace() so
+  // Back doesn't bounce them straight into this page again.
+  useEffect(() => {
+    if (!viaLegacyFlow) return;
+    const legacyUrl = legacyEnrollmentProcessUrl(session?.schoolUUID, session?.uniqueId);
+    if (legacyUrl) window.location.replace(legacyUrl);
+  }, [viaLegacyFlow, session?.schoolUUID, session?.uniqueId]);
 
   useEffect(() => {
     if (!session?.schoolNumericId) return;
@@ -85,7 +111,9 @@ function useResolveEnrollmentContext() {
   }, [session?.schoolUUID]);
 
   const processReady = !session?.uniqueId || enrollmentProcess.isFetched;
-  const ready = authenticated && processReady;
+  // Never report ready while the legacy redirect above is in flight — the wizard
+  // would otherwise flash a step before the browser leaves the page.
+  const ready = authenticated && processReady && !viaLegacyFlow;
 
   // Legacy fills the hidden `#location` input when the wizard page loads (the student form's
   // callLocationAndSelectCountryNew() -> LOCATION_SERVICE_BYPASS ? DEFAULT_LOCATION : the IP
