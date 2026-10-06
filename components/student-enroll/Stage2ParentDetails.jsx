@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { User, Briefcase, Mail, MapPin, Map, Building2, Phone as PhoneIcon, GraduationCap, School } from "lucide-react";
 import { IoLogoWhatsapp } from "react-icons/io";
+import { MdFamilyRestroom } from "react-icons/md";
 
 import { Button } from "@/components/ui/button";
 import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
@@ -33,9 +34,9 @@ import {
 // "Other" is commented out on the is-rest-api form too (masterContent.js
 // getRelationshipContent()) -- only these three are actually selectable.
 export const RELATION_OPTIONS = [
-  { value: "Mother", label: "I am a Mother" },
-  { value: "Father", label: "I am a Father" },
-  { value: "Guardian", label: "I am a Guardian" },
+  { value: "Mother", label: "Mother" },
+  { value: "Father", label: "Father" },
+  { value: "Guardian", label: "Guardian" },
 ];
 
 // SS/CS/WP confirmed at SignupUtil.java's display-name mapping
@@ -146,7 +147,7 @@ export function ParentRelationFields({ schoolUUID, userId, fields, setFields, er
     <>
       <div className="mt-8 sm:mx-auto sm:max-w-[420px]">
         <FloatingLabelSelect
-          icon={Briefcase}
+          icon={MdFamilyRestroom}
           label={<Req label="Relationship to student" required />}
           value={fields.relation}
           onValueChange={handleRelationChange}
@@ -356,7 +357,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
 
   return (
     <div className={`mx-auto mt-6 ${isOneToOneFlex ? "max-w-7xl" : "max-w-7xl"} rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-12`}>
-      <h2 className="text-center text-2xl font-bold text-black">{heading}</h2>
+      <h2 className="text-center text-xl font-bold text-black md:text-2xl">{heading}</h2>
 
       {isOneToOneFlex ? (
         <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3 [&_label]:max-w-[calc(100%-5rem)]">
