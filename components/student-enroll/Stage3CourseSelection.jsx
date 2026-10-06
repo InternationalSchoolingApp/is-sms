@@ -845,10 +845,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
         {!fixed && !batchOrProvider39 && gradeBand !== "elementary" && (
           <div className="rounded-lg bg-[#e6f3ff] px-3 py-2 md:hidden">
-            <p className="text-xs font-semibold text-slate-500">Selection Summary</p>
+            <p className="text-sm font-bold text-slate-900">Selection Summary</p>
             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
               {summaryBuckets.map((bucket) => (
-                <span key={bucket.label} className="inline-flex items-center gap-1 text-slate-700">
+                <span key={bucket.label} className="inline-flex items-center gap-1 text-slate-900">
                   <span className={`h-2 w-2 rounded-full ${bucket.dot}`} /> {bucket.label}: <span className="font-bold">{bucket.count}</span>
                 </span>
               ))}
@@ -928,10 +928,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
         {!fixed && !batchOrProvider39 && (
           <div className={`hidden bg-[#e6f3ff] rounded-lg xl:ml-2 py-4 ${showCourseCountSummary || !(showMinBanner && !showCreditSummary) ? "flex-1" : ""} sm:px-3 md:block`}>
-            <p className="text-xs font-semibold text-slate-500">Selection Summary</p>
+            <p className="text-sm text-slate-900 font-bold">Selection Summary</p>
             <div className={`mt-1 flex flex-wrap gap-y-1 text-xs ${showCourseCountSummary ? "justify-between gap-x-6" : "gap-x-3"}`}>
               {summaryBuckets.map((bucket) => (
-                <span key={bucket.label} className="inline-flex items-center gap-1 text-slate-700">
+                <span key={bucket.label} className="inline-flex items-center gap-1 text-slate-900">
                   <span className={`h-2 w-2 rounded-full ${bucket.dot}`} /> {bucket.label}: <span className="font-bold">{bucket.count}</span>
                 </span>
               ))}
