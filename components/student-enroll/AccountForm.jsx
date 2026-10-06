@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 import { AccountInput } from "@/components/student-enroll/AccountInput";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -73,10 +73,6 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
   const lastCheckedEmailRef = useRef("");
 
   const signup = useAccountSignup({ mode: "online", context });
-
-  useEffect(() => {
-    captureUtmParamsFromUrl();
-  }, []);
 
   // callLocationAndSelectCountryNew(): the signup page fills its hidden #location input with the payer's
   // location (LOCATION_SERVICE_BYPASS ? DEFAULT_LOCATION : the location from constant/LocationConstant.js) and
