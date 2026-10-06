@@ -66,7 +66,7 @@ function ReviewDetailsSkeleton() {
 function PaymentOptionsSkeleton() {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-slate-900">Choose Payment Option</h2>
+      <h2 className="text-lg font-semibold text-slate-900">Select Payment Option</h2>
       <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="h-[80px] animate-pulse rounded-xl bg-slate-200" />
         <div className="h-[80px] animate-pulse rounded-xl bg-slate-200" />
@@ -204,7 +204,7 @@ function buildMonthlyVariants(fee) {
     .sort((x, y) => (x.months || 0) - (y.months || 0));
 }
 
-function buildPlanOptions(fee) {
+function buildPlanOptions(fee, currencyCode) {
   if (!fee) return [];
   const options = [];
   if (fee.bookASeatOpted === 1 && fee.enrollmentFee?.enrollmentFee > 0 && !fee.bookAnEnrollmentPaidStatus) {
@@ -223,7 +223,7 @@ function buildPlanOptions(fee) {
       kind: "annual",
       mode: "annually",
       label: discount
-        ? `Pay ${fee.oneTimePayment.paymentMode} & save ${fee.oneTimePayment.paymentOptionDiscountString}`
+        ? `Pay in Full — Save ${currencyCode || "USD"} ${String(fee.oneTimePayment.paymentOptionDiscountString ?? "").replace(/^[^\d]+/, "")}`
         : `Pay ${fee.oneTimePayment.paymentMode}`,
       amount: fee.oneTimePayment.payableFeeString,
       badge: discount ? "Best Value" : undefined,
@@ -320,7 +320,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
     reviewQuery.isFetching ||
     choosePlan.isPending || submitApplication.isPending || proceedToDashboard.isPending || gatewayOptions.isPending || airwallexMethods.isPending || invokeGateway.isPending;
 
-  const planOptions = useMemo(() => buildPlanOptions(data?.feePaymentDetailsResponse), [data]);
+  const planOptions = useMemo(() => buildPlanOptions(data?.feePaymentDetailsResponse, data?.currencyIsoCode), [data]);
 
   // Same "derive a default, let the user's own choice override it" pattern
   // Stage3CourseSelection uses for effectiveOpenId — avoids a setState-in-effect.
@@ -738,7 +738,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 md:mb-0 md:rounded-none md:border-0 md:bg-transparent md:p-0">
-      <h1 className="mb-4 text-center text-1.5xl font-extrabold text-slate-900 sm:text-2xl md:hidden">Review Your Details &amp; Payment</h1>
+      <h1 className="mb-4 text-center text-1.5xl font-extrabold text-slate-900 sm:text-2xl md:hidden">Review Your Details &amp; Pay</h1>
       {notice && (
         <p
           role={notice.tone === "error" ? "alert" : "status"}
@@ -884,7 +884,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
           <div>
             <hr className="mb-4 border-slate-200 md:hidden" />
             <h2 className="text-lg font-semibold text-slate-900">
-              {data.customPaymentEnabled ? data.feeSetionTitile || "Fee Payment" : "Choose Payment Option"}
+              {data.customPaymentEnabled ? data.feeSetionTitile || "Fee Payment" : "Select Payment Option"}
             </h2>
             <div className="mt-3">
               {data.customPaymentEnabled ? (

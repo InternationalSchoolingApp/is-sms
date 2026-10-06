@@ -451,13 +451,13 @@ export function PaymentGatewayPickerModal({
         showCloseButton={false}
         className="flex h-[92vh] max-h-[92vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl"
       >
-        <DialogTitle className="sr-only">Choose Your Payment Method</DialogTitle>
+        <DialogTitle className="sr-only">Select Your Payment Method</DialogTitle>
         {/* Fills the dialog's remaining height; each column scrolls independently so the
             Pay Now / Back bar below can stay pinned to the bottom instead of scrolling away. */}
         <div className="grid flex-1 overflow-hidden md:grid-cols-[18rem_minmax(0,1fr)]">
           <aside className="overflow-y-auto border-b border-slate-200 bg-white p-5 md:border-r md:border-b-0">
             <div className="md:hidden">
-              <h3 className="text-xl font-extrabold text-slate-900">Choose Your Payment Method</h3>
+              <h3 className="text-xl font-extrabold text-slate-900">Select Your Payment Method</h3>
               <p className="mt-1 text-sm text-slate-500">{subHeading}</p>
             </div>
             <ul className="mt-4 space-y-3 md:mt-0" role="tablist">
@@ -504,7 +504,7 @@ export function PaymentGatewayPickerModal({
           <section className="flex min-h-0 flex-col">
             <div className="flex-1 overflow-y-auto p-5 sm:p-8">
               <div className="hidden md:block">
-                <h3 className="text-3xl font-extrabold text-slate-900">Choose Your Payment Method</h3>
+                <h3 className="text-3xl font-extrabold text-slate-900">Select Your Payment Method</h3>
                 <p className="mt-2 text-slate-600">{subHeading}</p>
               </div>
               {details?.paymentLabel && (
