@@ -24,10 +24,21 @@ export function getCookie(name) {
   return match ? decodeURIComponent(match[1]) : "";
 }
 
+function getCookieDomain() {
+  const host = window.location.hostname;
+
+  if (!host || host.indexOf(".") === -1 || /^[0-9.]+$/.test(host) || host === "localhost") {
+    return "";
+  }
+
+  return host.split(".").slice(-2).join(".");
+}
+
 function setCookie(name, value) {
   if (typeof document === "undefined") return;
   const expires = new Date(Date.now() + COOKIE_MAX_AGE_DAYS * 24 * 60 * 60 * 1000).toUTCString();
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
+  const domain = getCookieDomain();
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}${domain ? `; domain=${domain}` : ""}; path=/`;
 }
 
 export function captureUtmParamsFromUrl() {

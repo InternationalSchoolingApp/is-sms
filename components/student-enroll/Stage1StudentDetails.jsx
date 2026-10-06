@@ -64,6 +64,13 @@ const INITIAL_FIELDS = {
   studyingSchoolName: "",
   studyingGradeId: "",
   countryIdOfSchool: "",
+  utmSource:"",
+  utmDescription:"",
+  originalUrl:"",
+  gclid:"",
+  utmCampaign:"",
+  utmTerm :"",
+  landingPage:"",
 };
 
 // Gray placeholder block matching one field's footprint — used only while

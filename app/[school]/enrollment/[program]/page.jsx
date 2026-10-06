@@ -1,5 +1,4 @@
 import { AccountCreationForm } from "./AccountCreationForm";
-
 // Public account-creation page at /{school}/enrollment/{program}. This runs
 // BEFORE any login, so there's no session yet — schoolUUID comes from the
 // {school} path segment and the public bootstrap fetch is driven client-side
@@ -9,7 +8,8 @@ import { AccountCreationForm } from "./AccountCreationForm";
 //
 // Server Component: it only resolves the route params/query (Next 16 async
 // params + searchParams) and hands them to the client form as plain props.
-function searchParamsToQueryString(searchParams) {
+function  searchParamsToQueryString(searchParams) {
+  
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(searchParams || {})) {
     // Next passes repeated query keys as arrays — preserve every occurrence,
@@ -23,6 +23,7 @@ function searchParamsToQueryString(searchParams) {
 export default async function AccountCreationPage({ params, searchParams }) {
   const { school, program } = await params;
   const resolvedSearchParams = await searchParams;
+  
 
   return (
     <AccountCreationForm

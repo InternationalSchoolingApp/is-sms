@@ -211,7 +211,8 @@ function buildSaveStudentDetailsRequest({ fields, context, userId, isDualDiploma
     studyCenter: context.schoolNumericId,
     ...getUtmFieldsForSignup(),
   };
-
+  
+console.log("signupStudent", signupStudent)
   // communicationEmail/nationality/countryCode/countryIsdCode/contactNumber
   // are sent for EVERY learning program, Dual Diploma included — legacy's
   // getStudentDetailsContent() renders those fields unconditionally (only
@@ -239,7 +240,8 @@ function buildSaveStudentDetailsRequest({ fields, context, userId, isDualDiploma
     signupStudent.studyingGradeId = fields.studyingGradeId;
     signupStudent.countryIdOfSchool = fields.countryIdOfSchool;
   }
-
+  
+  console.log("signupStudent", signupStudent)
   return { authentication: buildAuthenticatedRequest(context, userId), signupStudent };
 }
 
