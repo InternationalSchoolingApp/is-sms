@@ -97,7 +97,7 @@ function CurrencyCard({ details, payerCountryCode }) {
           <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 md:flex-none md:px-3">
             <Flag country={localFlag} alt={conversion.to} />
             <div className="min-w-0 leading-tight">
-              <span className="block break-words text-[13px] font-semibold sm:text-base">
+              <span className="block break-words text-[13px] font-semibold sm:text-sm">
                 {getCurrencyDisplaySymbol(conversion.to)}
                 {formatMoneyWithCommas(details.payAmountWithCurrency)}
               </span>
@@ -108,7 +108,7 @@ function CurrencyCard({ details, payerCountryCode }) {
           <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 md:flex-none md:px-3">
             <Flag country={baseFlag} alt={conversion.base} />
             <div className="min-w-0 leading-tight">
-              <span className="block break-words text-[13px] font-semibold sm:text-base">
+              <span className="block break-words text-[13px] font-semibold sm:text-sm">
                 {getCurrencyDisplaySymbol(conversion.base)}
                 {formatMoneyWithCommas(details.payAmount)}
               </span>
@@ -116,8 +116,8 @@ function CurrencyCard({ details, payerCountryCode }) {
             </div>
           </div>
         </div>
-        <div className="hidden h-12 w-px bg-blue-100 md:block" />
-        <div className="text-sm">
+        {/* <div className="hidden h-12 w-px bg-blue-100 md:block" /> */}
+        <div className="text-sm ml-2">
           <div className="flex items-center gap-2 font-semibold text-primary">
             <ArrowRightLeft className="h-4 w-4" /> Conversion Rate
           </div>
@@ -502,7 +502,7 @@ export function PaymentGatewayPickerModal({
           {/* Right column: scrollable payment-option content on top, Back / Pay Now
               pinned in a sticky footer below so it's always reachable without scrolling. */}
           <section className="flex min-h-0 flex-col">
-            <div className="flex-1 overflow-y-auto p-5 sm:p-8">
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6">
               <div className="hidden md:block">
                 <h3 className="text-2xl font-extrabold text-slate-900">Select Your Payment Method</h3>
                 <p className="mt-2 text-slate-600">{subHeading}</p>
