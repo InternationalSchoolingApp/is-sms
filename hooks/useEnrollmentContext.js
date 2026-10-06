@@ -152,6 +152,7 @@ function useResolveEnrollmentContext() {
         enrollmentFor: "enrollment",
         customPaymentEnabled: enrollmentProcess.data?.customPaymentEnabled === true,
         signupPage: enrollmentProcess.data?.signupPage,
+        signupType: enrollmentProcess.data?.signupType,
         learningProgram: prefill.data?.learningProgram
           ? getLearningProgramShortCode(prefill.data.learningProgram)
           : "O",
