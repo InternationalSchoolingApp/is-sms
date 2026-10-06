@@ -357,7 +357,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
 
   return (
     <div className={`mx-auto mt-6 ${isOneToOneFlex ? "max-w-7xl" : "max-w-7xl"} rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-12`}>
-      <h2 className="text-center text-2xl font-bold text-black">{heading}</h2>
+      <h2 className="text-center text-xl font-bold text-black md:text-2xl">{heading}</h2>
 
       {isOneToOneFlex ? (
         <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3 [&_label]:max-w-[calc(100%-5rem)]">

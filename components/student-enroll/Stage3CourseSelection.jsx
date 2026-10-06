@@ -720,7 +720,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   const header = inReview ? null : (
     <>
       {/* Program name is now shown by EnrollmentWizardShell's own hero above this card. */}
-      <h2 className="text-center text-2xl font-bold text-black">
+      <h2 className="text-center text-xl font-bold text-black md:text-2xl">
         <span className="inline">Course Selection</span>
       </h2>
     </>

@@ -66,7 +66,7 @@ function ReviewDetailsSkeleton() {
 function PaymentOptionsSkeleton() {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-black">Select Payment Option</h2>
+      <h2 className="text-base font-semibold text-black md:text-lg">Select Payment Option</h2>
       <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="h-[80px] animate-pulse rounded-xl bg-slate-200" />
         <div className="h-[80px] animate-pulse rounded-xl bg-slate-200" />
@@ -739,7 +739,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 md:mb-0 md:rounded-none md:border-0 md:bg-transparent md:p-0">
-      <h1 className="mb-4 text-center text-1.5xl font-extrabold text-black sm:text-2xl md:hidden">Review Your Details &amp; Pay</h1>
+      <h1 className="mb-4 text-center text-xl font-bold text-black sm:text-2xl md:hidden">Review Your Details &amp; Pay</h1>
       {notice && (
         <p
           role={notice.tone === "error" ? "alert" : "status"}
@@ -889,7 +889,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         {showFee && (
           <div className="min-w-0">
             <hr className="mb-4 border-slate-200 md:hidden" />
-            <h2 className="text-center text-lg font-semibold text-black md:text-left">
+            <h2 className="text-center text-base font-semibold text-black md:text-left md:text-lg">
               {data.customPaymentEnabled ? data.feeSetionTitile || "Fee Payment" : "Select Payment Option"}
             </h2>
             <div className="mt-3">
