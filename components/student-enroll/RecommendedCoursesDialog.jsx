@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
-
+ 
 export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm, busy }) {
   const courses = data?.recommendedCourses || [];
   const isMandatory = (course) => course.courseMandatory === 1;
