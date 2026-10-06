@@ -40,3 +40,17 @@ export function loginPageUrl(schoolUUID) {
   const backend = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
   return schoolUUID && backend ? `${backend}/${schoolUUID}/common/login` : "/";
 }
+
+/**
+ * The Java app's own legacy enrollment continuation page
+ * (http://localhost:8080/{school}/student/enrollment/process/{uniqueId}) — where a
+ * student belongs when CONFIGURATION/ENROLLMENT_VIA_NEXTJS is off and this Next.js
+ * wizard must not run. Like loginPageUrl() it is a JSP page the Java app has to
+ * serve itself, so it uses the real backend origin and not the dev proxy. Returns
+ * "" when anything needed to build it is missing, so callers can skip the redirect.
+ */
+export function legacyEnrollmentProcessUrl(schoolUUID, uniqueId) {
+  const backend = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
+  if (!backend || !schoolUUID || !uniqueId) return "";
+  return `${backend}/${schoolUUID}/student/enrollment/process/${encodeURIComponent(uniqueId)}`;
+}
