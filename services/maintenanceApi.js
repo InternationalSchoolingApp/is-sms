@@ -1,24 +1,10 @@
-import { hasBackendOrigin, resolveBackendOrigin } from "@/utils/backendOrigin";
+"use server";
 
-/**
- * Maintenance / downtime status — the small public banner feed shown
- * site-wide (see components/common/MaintenanceBanner.jsx).
- *
- * Endpoint: GET {schoolId}/api/v1/maintenance-downtime-status
- * Response: { active: boolean, message: string }
- *
- * Client-safe module (no next/headers), same shape as services/paymentApi.js:
- * it's a plain browser-facing GET so the banner can poll it from a
- * "use client" component. Goes through resolveBackendOrigin() so the local
- * dev proxy keeps it same-origin, exactly like the other browser-facing
- * backend calls.
- *
- * `schoolUUID` is the {schoolId} URL-path segment, passed in by the caller
- * (resolved from the URL/session), never read from an env var here.
- */
+import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+
 
 function backendUrl(schoolUUID, path) {
-  const baseUrl = resolveBackendOrigin();
+  const baseUrl = resolveServerBackendOrigin();
   if (!hasBackendOrigin() || !schoolUUID) {
     throw new Error("A backend origin and a schoolUUID (from the URL) are required");
   }
@@ -26,10 +12,7 @@ function backendUrl(schoolUUID, path) {
 }
 
 export async function getMaintenanceDowntimeStatus(schoolUUID) {
-  const response = await fetch(backendUrl(schoolUUID, "api/v1/maintenance-downtime-status"), {
-    method: "GET",
-    credentials: "include",
-  });
+  const response = await fetch(backendUrl(schoolUUID, "api/v1/maintenance-downtime-status"));
   if (!response.ok) return null;
   const text = await response.text();
   if (!text) return null;
