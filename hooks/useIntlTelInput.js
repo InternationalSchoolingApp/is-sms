@@ -45,6 +45,7 @@ export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry = "in
       });
       input.addEventListener("countrychange", handleChange);
       input.addEventListener("input", handleChange);
+      handleChange();
     });
 
     return () => {
