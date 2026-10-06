@@ -56,6 +56,30 @@ export async function getEnrollmentProcess(schoolUUID, uniqueId) {
   return parseJsonResponse(response);
 }
 
+// CommonController.getSettingsByTypeKey(): GET /{schoolId}/api/v1/get-setting.
+// The Next.js equivalent of legacy jquery.commonFunction.js's
+// getSettingsByTypeAndKey() + getSettingMetaValue() pair — the endpoint answers
+// {data: {metaValue}}, and a missing/deleted SETTINGS row comes back as "".
+// Public/pre-auth like the rest of this file (login.js calls it logged out too).
+export async function getSettingValue(schoolUUID, metaType, metaKey) {
+  const query = `metaType=${encodeURIComponent(metaType)}&metaKey=${encodeURIComponent(metaKey)}`;
+  const response = await fetch(backendUrl(schoolUUID, `api/v1/get-setting?${query}`));
+  const body = await parseJsonResponse(response);
+  return body?.data?.metaValue ?? "";
+}
+
+// CONFIGURATION/ENROLLMENT_VIA_NEXTJS — the master switch the backend already
+// branches on (CommonUtil#getFinalEnrollmentUrl, is-rest-api): true = students
+// enroll through this Next.js wizard, false = through the legacy JSP flow at
+// {schoolId}/student/enrollment/process/{uniqueId}. Matched to
+// CommonUtil#getSettingValueByTypeAndKeyAsBoolean: only the literal "true"
+// (case-insensitive, trimmed) counts, everything else — including an
+// unreachable backend — is false.
+export async function isEnrollmentViaNextjs(schoolUUID) {
+  const metaValue = await getSettingValue(schoolUUID, "CONFIGURATION", "ENROLLMENT_VIA_NEXTJS");
+  return String(metaValue).trim().toLowerCase() === "true";
+}
+
 // Public, pre-auth resolution of the {schoolId} URL slug/UUID into the
 // numeric row id/name/WhatsApp number — see PublicSchoolInfoDTO in
 // is-rest-api. Called directly from AccountCreationForm.jsx and
