@@ -233,8 +233,8 @@ export function validateCourseCredits(courseData) {
   const total = Number(courseData?.totalCredit) || 0;
   const min = Number(courseData?.minCourseLimit) || 0;
   const upperBand = Number(courseData?.upperBandLimit) || 0;
-  if (total < min) return `Please select a minimum of ${min} credits.`;
-  if (upperBand > 0 && total > upperBand) return `You can select a maximum of ${upperBand} credits.`;
+  if (total < min) return `Please select a minimum of ${min} courses.`;
+  if (upperBand > 0 && total > upperBand) return `You can select a maximum of ${upperBand} courses.`;
   return null;
 }
 
@@ -249,7 +249,7 @@ export function getCourseAddCheck(courseData) {
   const maxLimit = Number(courseData?.maxCourseLimit) || 0;
   const upperBand = Number(courseData?.upperBandLimit) || 0;
   if (upperBand > 0 && total >= upperBand) {
-    return { blockedMessage: `You can select a maximum of ${upperBand} credits.`, extraFee: false };
+    return { blockedMessage: `You can select a maximum of ${upperBand} courses.`, extraFee: false };
   }
   return { blockedMessage: null, extraFee: maxLimit > 0 && total >= maxLimit };
 }
