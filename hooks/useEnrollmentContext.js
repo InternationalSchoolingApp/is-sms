@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { getEnrollmentProcess, getPublicSchoolInfo, isEnrollmentViaNextjs } from "@/services/studentSignupApi";
 import { legacyEnrollmentProcessUrl } from "@/utils/backendOrigin";
+import { expireSession } from "@/utils/logout";
 import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
 import { useStudentDetailsPrefill } from "@/hooks/useStudentDetailsSignup";
 import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
@@ -82,6 +83,20 @@ function useResolveEnrollmentContext() {
     if (legacyUrl) window.location.replace(legacyUrl);
   }, [viaLegacyFlow, session?.schoolUUID, session?.uniqueId]);
 
+  // enrollment/process answers {status:"REDIRECT"} once the student is past the wizard — e.g.
+  // paid from the invoice link in another tab and then refreshed this page. "dashboard" carries
+  // a ready-made view-as-user URL that logs them into the Java dashboard; "login" (withdrawn)
+  // drops the session. replace() so Back doesn't bounce them into the wizard again.
+  const processRedirect = enrollmentProcess.data?.status === "REDIRECT" ? enrollmentProcess.data : null;
+  useEffect(() => {
+    if (!processRedirect) return;
+    if (processRedirect.redirectTo === "dashboard" && processRedirect.url) {
+      window.location.replace(processRedirect.url);
+    } else if (processRedirect.redirectTo === "login") {
+      expireSession(session?.schoolUUID);
+    }
+  }, [processRedirect, session?.schoolUUID]);
+
   useEffect(() => {
     if (!session?.schoolNumericId) return;
     let cancelled = false;
@@ -113,7 +128,9 @@ function useResolveEnrollmentContext() {
   const processReady = !session?.uniqueId || enrollmentProcess.isFetched;
   // Never report ready while the legacy redirect above is in flight — the wizard
   // would otherwise flash a step before the browser leaves the page.
-  const ready = authenticated && processReady && !viaLegacyFlow;
+  // Same for the post-enrollment redirect, so the step never fires its own calls
+  // (get-student-review-details would answer "Request not valid" for a paid student).
+  const ready = authenticated && processReady && !viaLegacyFlow && !processRedirect;
 
   // Legacy fills the hidden `#location` input when the wizard page loads (the student form's
   // callLocationAndSelectCountryNew() -> LOCATION_SERVICE_BYPASS ? DEFAULT_LOCATION : the IP

@@ -350,11 +350,13 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       onSessionExpired?.();
       return;
     }
-    const baseUrl = resolveBackendOrigin();
-    if (failure.statusCode === STATUS_REDIRECT_TO_DASHBOARD && baseUrl) {
-      window.location.href = `${baseUrl}/${context.schoolUUID}/dashboard/student/${userId}`;
+    // Enrollment already completed: reload like legacy does — enrollment/process then answers
+    // REDIRECT and useEnrollmentContext sends the student to their dashboard.
+    if (failure.statusCode === STATUS_REDIRECT_TO_DASHBOARD) {
+      window.location.reload();
       return;
     }
+    const baseUrl = resolveBackendOrigin();
     if (failure.statusCode === STATUS_ELIGIBLE_CUSTOM_PLAN && baseUrl) {
       window.location.href = `${baseUrl}/${context.schoolUUID}/student/enrollment/process/${userId}`;
     }
@@ -432,11 +434,11 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       return;
     }
     // choosePaymentOption()/invokePaymentGateway(): the enrollment moved on server-side -> reload.
-    const baseUrl = resolveBackendOrigin();
-    if (response.statusCode === STATUS_REDIRECT_TO_DASHBOARD && baseUrl) {
-      window.location.href = `${baseUrl}/${context.schoolUUID}/dashboard/student/${userId}`;
+    if (response.statusCode === STATUS_REDIRECT_TO_DASHBOARD) {
+      window.location.reload();
       return;
     }
+    const baseUrl = resolveBackendOrigin();
     if (response.statusCode === STATUS_ELIGIBLE_CUSTOM_PLAN && baseUrl) {
       window.location.href = `${baseUrl}/${context.schoolUUID}/student/enrollment/process/${userId}`;
       return;
