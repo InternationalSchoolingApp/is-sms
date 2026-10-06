@@ -32,9 +32,9 @@ import {
 // "Other" is commented out on the is-rest-api form too (masterContent.js
 // getRelationshipContent()) -- only these three are actually selectable.
 export const RELATION_OPTIONS = [
-  { value: "Mother", label: "Mother" },
-  { value: "Father", label: "Father" },
-  { value: "Guardian", label: "Guardian" },
+  { value: "Mother", label: "I am a Mother" },
+  { value: "Father", label: "I am a Father" },
+  { value: "Guardian", label: "I am a Guardian" },
 ];
 
 // SS/CS/WP confirmed at SignupUtil.java's display-name mapping
