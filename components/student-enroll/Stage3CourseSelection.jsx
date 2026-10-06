@@ -7,6 +7,7 @@ import {
   ArrowUp,
   BookOpen,
   Calculator,
+  Check,
   ChevronDown,
   FlaskConical,
   Globe2,
@@ -339,7 +340,7 @@ function SkeletonBlock({ className = "" }) {
 /** Structural skeleton mirroring the real layout, shown while course-details-by-standard-id is loading. */
 function Stage3Skeleton({ header }) {
   return (
-    <div className="mx-auto mt-6 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
+    <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white px-4 py-2 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       {header}
       <SkeletonBlock className="mt-4 h-20 w-full rounded-xl" />
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.6fr]">
@@ -777,7 +778,11 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   const selectedCourseCount = selectedCourses.length;
   const courseCountTarget = Number(data.maxCourseLimit) || 6;
   const displayCourseCountTarget = Math.max(courseCountTarget, selectedCourseCount);
-  const remainingCourses = Math.max(0, (Number(data.minCourseLimit) || 0) - selectedCourseCount);
+  const minCourseCount = Number(data.minCourseLimit) || 0;
+  const remainingCourses = Math.max(0, minCourseCount - selectedCourseCount);
+  const extraCourseCount = Math.max(0, selectedCourseCount - minCourseCount);
+  const courseMinMet = minCourseCount > 0 && selectedCourseCount >= minCourseCount;
+  const courseProgressSegments = Math.max(minCourseCount, selectedCourseCount, 1);
 
   // Display-only filter — matches a category by its own name, or by any of
   // its subjects' names, and only affects what's rendered in the "Choose
@@ -797,48 +802,89 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   // is null/-1 in that closed state, not defaulted to the first category.
   const mobileActiveCourse = openCourseId && openCourseId !== -1 ? visibleCourses.find((course) => course.courseId === openCourseId) || null : null;
   return (
-    <div className="mx-auto mt-6 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
+    <>
+      {/* Mobile-only: the grade chip sits outside/above the white card per
+          the mobile reference design — not inside it like desktop/tablet. */}
+      {data.standardName && (
+        <div className={`mt-0 flex items-center gap-3 rounded-sm border pl-3 md:hidden ${gradeBand === "elementary" || centerGradeHeader ? "justify-center" : "justify-between"}`}>
+          <span className="inline-flex items-center gap-2 text-sm font-semibold text-black">
+            <GraduationCap className="h-5 w-5 text-primary" />
+            {data.standardName}
+          </span>
+          <button
+            type="button"
+            onClick={() => setChangeGradeOpen(true)}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
+          >
+            Change <RefreshCw className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+    <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white px-4 py-2 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       {header}
 
-      {/* Mobile-only: the simple stacked "Grade chip" + plain "Credits
-          Requirement" line from the mobile reference design — no card
-          border, no progress ring, no Selection Summary legend. */}
+      {/* Mobile-only: plain "Credits Requirement" banner from the mobile
+          reference design — no card border, no progress ring, no Selection
+          Summary legend. */}
       <div className="mt-4 space-y-2 md:hidden">
-        {data.standardName && (
-          <div className={`flex items-center gap-3 rounded-xl bg-[#e6f3ff] px-3 py-2.5 ${gradeBand === "elementary" || centerGradeHeader ? "justify-center" : "justify-between"}`}>
-            <span className="inline-flex items-center gap-2 text-sm font-semibold text-black">
-              <GraduationCap className="h-5 w-5 text-primary" />
-              {data.standardName}
-            </span>
-            <button
-              type="button"
-              onClick={() => setChangeGradeOpen(true)}
-              disabled={busy}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
-            >
-              Change <RefreshCw className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        )}
-
         {(showCreditSummary || showCourseCountSummary) && (
-          <div className="flex items-center justify-center px-1">
-            <span className="inline-flex items-center font-bold mb-2 gap-1.5 text-sm md:text-xs text-black">
-              You need to select at least {data.minCourseLimit} courses
-            </span>
-          </div>
-        )}
-
-        {!fixed && !batchOrProvider39 && gradeBand !== "elementary" && (
-          <div className="rounded-lg bg-[#e6f3ff] px-3 py-2 md:hidden">
-            <p className="text-sm font-bold text-black text-center">Selection Summary</p>
-            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
-              {summaryBuckets.map((bucket) => (
-                <span key={bucket.label} className="inline-flex items-center gap-1 text-black">
-                  <span className={`h-2 w-2 rounded-full ${bucket.dot}`} /> {bucket.label}: <span className="font-bold">{bucket.count}</span>
+          <div className="rounded-2xl bg-primary px-4 py-3.5 text-white">
+            <div className="flex items-center justify-between gap-3">
+              {courseMinMet ? (
+                <span className="inline-flex items-center gap-2 text-sm font-bold">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-400">
+                    <Check className="h-3 w-3 text-primary" strokeWidth={3} />
+                  </span>
+                  {selectedCourseCount} courses selected
                 </span>
+              ) : (
+                <span className="text-sm font-bold">Select at least {minCourseCount} courses</span>
+              )}
+              {canRemoveAll && (
+                <button
+                  type="button"
+                  onClick={removeAll}
+                  disabled={busy}
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/20 text-white hover:bg-white/30 disabled:opacity-60 ${
+                    courseMinMet ? "px-3 py-0.5" : "px-3 py-1.5 text-xs font-semibold"
+                  }`}
+                  aria-label="Remove all courses"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  All
+                  {/* {!courseMinMet && "Clear all"} */}
+                </button>
+              )}
+            </div>
+
+            <div className="mt-2.5 flex gap-1">
+              {Array.from({ length: courseProgressSegments }).map((_, index) => (
+                <span
+                  key={index}
+                  className={`h-1.5 flex-1 rounded-full ${
+                    index >= selectedCourseCount
+                      ? "bg-white/30"
+                      : index < minCourseCount
+                      ? courseMinMet
+                        ? "bg-emerald-400"
+                        : "bg-white"
+                      : "bg-orange-400"
+                  }`}
+                />
               ))}
             </div>
+
+            {!courseMinMet ? (
+              <div className="mt-2.5 flex items-center justify-between gap-3">
+                <span className="text-xs font-medium text-white/90">{selectedCourseCount} selected</span>
+                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-primary">{remainingCourses} more needed</span>
+              </div>
+            ) : extraCourseCount > 0 ? (
+              <p className="mt-2 text-xs font-medium text-white/90">
+                Min {data.minCourseLimit} selected · {extraCourseCount} extra course{extraCourseCount === 1 ? "" : "s"}
+              </p>
+            ) : null}
           </div>
         )}
 
@@ -853,7 +899,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           requirement, progress ring, Selection Summary legend) — untouched. */}
       <div className="mt-4 hidden gap-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:flex md:flex-row md:flex-wrap md:items-center md:gap-8 md:p-5">
         {data.standardName && (
-          <div className={`flex items-center gap-2 rounded-lg py-2 px-3 bg-[#e6f3ff] ${gradeBand === "elementary" || centerGradeHeader ? "mx-auto" : ""}`}>
+          <div className={`flex items-center gap-2 rounded-lg py-2 px-3 bg-[#e6f3ff] flex-1 ${gradeBand === "elementary" || centerGradeHeader ? "mx-auto" : ""}`}>
             <span className="inline-flex items-center gap-2  text-sm font-semibold text-black">
               <GraduationCap className="h-5 w-5 text-primary" />
               {data.standardName}
@@ -870,7 +916,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         )}
 
         {(showCreditSummary || showCourseCountSummary) && (
-          <div className="flex items-center gap-2 border-slate-300 sm:border-l sm:pl-8">
+          <div className="flex items-center gap-2 justify-center border-slate-300 flex-1 sm:border-l sm:pl-8">
             
             <div>
               <div className="flex">
@@ -884,7 +930,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         )}
 
         {showCourseCountSummary && (
-          <div className="flex items-center gap-3 border-slate-300 sm:border-l sm:px-8">
+          <div className="flex items-center gap-3 border-slate-300 flex-1 sm:border-l sm:px-8">
             <CreditProgressRing value={selectedCourseCount} max={displayCourseCountTarget} unit="courses" />
             <div>
               <p className="text-xl font-bold text-primary">{selectedCourseCount}/{displayCourseCountTarget}</p>
@@ -912,7 +958,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           </div>
         )}
 
-        {!fixed && !batchOrProvider39 && (
+        {/* {!fixed && !batchOrProvider39 && (
           <div className={`hidden bg-[#e6f3ff] rounded-lg xl:ml-2 py-4 ${showCourseCountSummary || !(showMinBanner && !showCreditSummary) ? "flex-1" : ""} sm:px-3 md:block`}>
             <p className="text-sm text-black font-bold">Selection Summary</p>
             <div className={`mt-1 flex flex-wrap gap-y-1 text-xs ${showCourseCountSummary ? "justify-between gap-x-6" : "gap-x-3"}`}>
@@ -923,7 +969,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               ))}
             </div>
           </div>
-        )}
+        )} */}
         
       </div>
       {showMinBanner && !showCreditSummary && gradeBand === "high" && (
@@ -936,7 +982,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
       <div className={`mt-4 grid gap-6 ${showAvailable ? "lg:grid-cols-[1fr_1.6fr]" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
         <section className="self-start overflow-hidden rounded-xl border border-slate-200 bg-white">
-          <header className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+          <header className={`items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 ${(showCreditSummary || showCourseCountSummary) ? "hidden md:flex" : "flex"}`}>
             <h2 className="text-sm font-bold text-black">
               {showCourseCountSummary || showCourseCredits ? (
                 <>
@@ -966,18 +1012,44 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 const CourseIcon = categoryIcon(course.courseName);
                 const singleUpgradeTarget = course.upgradeCourses?.length === 1 ? course.upgradeCourses[0] : null;
                 return (
-                  <li key={course.courseId} className="flex flex-col gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 shadow-sm sm:flex-row sm:flex-wrap sm:items-center md:rounded-none md:border-0 md:bg-transparent md:p-0 md:px-4 md:py-3 md:shadow-none">
-                    <div className="flex min-w-0 flex-1 items-start gap-3">
+                  <li key={course.courseId} className={`flex flex-col ${!fixed && course.courseMandatory === 1 && !batchOrProvider39 ? 'gap-3' : ''} rounded-xl border border-slate-100 bg-blue-50 p-3 shadow-sm sm:flex-row sm:flex-wrap sm:items-center md:rounded-none md:border-0 md:bg-transparent md:p-0 md:px-4 md:py-3 md:shadow-none`}>
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
                       {/* <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
                         <CourseIcon className="h-4 w-4" />
                       </span> */}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-black">
-                          {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}
-                        </p>
+                      <div className="min-w-0 inline-flex flex-1">
+                        <div className="text-sm inline-flex font-medium text-black">
+                          <span> {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}</span> 
+
+                          <div className="flex shrink-0 ml-2 flex-1 items-center mr-auto gap-2 sm:hidden">
+                            {singleUpgradeTarget ? (
+                              <VariantToggle course={course} target={singleUpgradeTarget} onToggle={upgrade} disabled={busy} />
+                            ) : (
+                              (course.upgradeCourses || []).map((target) => (
+                                <Button
+                                  key={target.courseId}
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  title={upgradeHint(target.courseType)}
+                                  onClick={() => upgrade(course, target)}
+                                  disabled={busy}
+                                >
+                                  {target.buttonLabel}
+                                  {course.courseTypeOriginal === "Regular" ? <ArrowUp /> : <ArrowDown />}
+                                </Button>
+                              ))
+                            )}
+                          </div>
+                        </div>
+
                         {/* {showCourseCredits && <p className="text-xs text-slate-500">{course.creditScore} Credit</p>} */}
                         <CourseSummaryLink url={course.courseDescriptionUrl} />
                       </div>
+                      {/* Mobile-only: the Advance/Honors toggle sits beside the
+                          course name here; on sm+ it moves down into the badges
+                          row below (same toggle, just hidden on the other breakpoint). */}
+                      
                       {!fixed && course.courseMandatory === 0 && (
                         <button
                           type="button"
@@ -991,29 +1063,32 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                       )}
                     </div>
                     <div className="flex flex-wrap items-center gap-2 sm:pl-0">
-                      {singleUpgradeTarget ? (
-                        <VariantToggle course={course} target={singleUpgradeTarget} onToggle={upgrade} disabled={busy} />
-                      ) : (
-                        (course.upgradeCourses || []).map((target) => (
-                          <Button
-                            key={target.courseId}
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            title={upgradeHint(target.courseType)}
-                            onClick={() => upgrade(course, target)}
-                            disabled={busy}
-                          >
-                            {target.buttonLabel}
-                            {course.courseTypeOriginal === "Regular" ? <ArrowUp /> : <ArrowDown />}
-                          </Button>
-                        ))
-                      )}
                       {!fixed && course.courseMandatory === 1 && !batchOrProvider39 && (
                         <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-100 px-2 py-1 text-xs font-semibold text-emerald">
                           <Lock className="h-3 w-3" /> Mandatory
                         </span>
                       )}
+                      <div className="hidden items-center gap-2 sm:flex">
+                        {singleUpgradeTarget ? (
+                          <VariantToggle course={course} target={singleUpgradeTarget} onToggle={upgrade} disabled={busy} />
+                        ) : (
+                          (course.upgradeCourses || []).map((target) => (
+                            <Button
+                              key={target.courseId}
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              title={upgradeHint(target.courseType)}
+                              onClick={() => upgrade(course, target)}
+                              disabled={busy}
+                            >
+                              {target.buttonLabel}
+                              {course.courseTypeOriginal === "Regular" ? <ArrowUp /> : <ArrowDown />}
+                            </Button>
+                          ))
+                        )}
+                      </div>
+
                       {!fixed && course.courseMandatory === 0 && (
                         <button
                           type="button"
@@ -1141,7 +1216,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                                   <BookOpen className="h-4 w-4" />
                                 </span>
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-medium text-black">{subject.subjectName}</p>
+                                  <p className="text-sm font-medium text-black subject_name">{subject.subjectName}</p>
                                   {notes.length > 0 && (
                                     <ul className="mt-1 space-y-0.5 font-semibold text-xs text-primary">
                                       {notes.map((note, index) => (
@@ -1186,7 +1261,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                           </span>
                           <span className="min-w-0 flex-1 truncate text-black">{course.courseName}</span>
                           <span className="flex px-2  shrink-0 items-center justify-center rounded-full border border-black-300 bg-white text-[11px] font-semibold text-black">
-                            {course.subjects.length} {course.subjects.length>1?'Courses':'Course'}
+                            {course.subjects.length} {course.subjects.length>1?'Courses':'Course'} available
                           </span>
                         </button>
                       </li>
@@ -1266,5 +1341,6 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         sessionName={flaggedModal?.sessionName}
       />
     </div>
+    </>
   );
 }
