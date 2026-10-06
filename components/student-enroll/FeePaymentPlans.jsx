@@ -15,8 +15,8 @@ import { ReceiptText } from "lucide-react";
  * `feeAlreayPaid`).
  */
 
-const TH = "px-3 py-2 md:px-4 md:py-3 text-xs font-bold text-black";
-const TD = "border-t border-slate-100 px-3 py-3 md:px-4 align-top text-[11px] text-slate-800 md:text-xs";
+const TH = "px-3 py-2 max-[367px]:px-1.5 max-[367px]:text-[11px] md:px-4 md:py-3 text-xs font-bold text-black";
+const TD = "border-t border-slate-100 px-3 py-3 max-[367px]:px-1.5 max-[367px]:text-[10px] md:px-4 align-top text-[11px] text-slate-800 md:text-xs";
 const RIGHT = "text-right whitespace-nowrap";
 
 // The backend sends labels like "1<sup>st</sup> month fee"; render the <sup> as real superscript
