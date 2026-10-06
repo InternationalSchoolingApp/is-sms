@@ -88,7 +88,7 @@ function CurrencyCard({ details, payerCountryCode }) {
   return (
     <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
       <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-        <Info className="h-4 w-4" /> Payable Amount
+        <Info className="h-4 w-4" /> Payable Fee
       </div>
       <div className="mt-3 flex flex-col gap-4 md:flex-row md:items-center">
         {/* Both amount boxes share the row equally below md (min-w-0 lets them shrink instead of the text

@@ -313,7 +313,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
         <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3 [&_label]:max-w-[calc(100%-5rem)]">
           <FloatingLabelInput
             icon={Mail}
-            label={<Req label="Student's email" required />}
+            label={<Req label="Student's Email" required />}
             type="email"
             value={fields.communicationEmail}
             onChange={(e) => setField("communicationEmail", e.target.value)}

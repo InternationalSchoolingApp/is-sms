@@ -175,12 +175,12 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
     <>
       <EditCard title="Student Details" saving={signup.isPending} onSave={save} onCancel={onCancel} formError={formError}>
         <div className={GRID}>
-          <FloatingLabelInput icon={User} label={<Req label="First Name" required />} value={fields.firstName} {...nameFieldProps(set("firstName"))} error={errors.firstName} />
+          <FloatingLabelInput icon={User} label={<Req label="Student's First Name" required />} value={fields.firstName} {...nameFieldProps(set("firstName"))} error={errors.firstName} />
           {/* Middle Name removed from student signup */}
-          <FloatingLabelInput icon={User} label={<Req label="Last Name" required />} value={fields.lastName} {...nameFieldProps(set("lastName"))} error={errors.lastName} />
+          <FloatingLabelInput icon={User} label={<Req label="Student's Last Name" required />} value={fields.lastName} {...nameFieldProps(set("lastName"))} error={errors.lastName} />
           <FloatingLabelSelect
             icon={GraduationCap}
-            label={<Req label="Grade" required />}
+            label={<Req label="Select Grade" required />}
             value={fields.standardId}
             onValueChange={set("standardId")}
             options={grades.data || []}
@@ -191,7 +191,7 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
           {/* Grade, Date of Birth and Email are locked; everything else is editable. */}
           <DatePicker
             icon={Cake}
-            label={<Req label="Date of Birth" required />}
+            label={<Req label={<>Date of Birth{" "}<span className="text-black text-[12px]">(Month Day, Year)</span></>} required />}
             value={fields.dob}
             onChange={set("dob")}
             fromDate={dobBounds.fromDate}
@@ -201,7 +201,7 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
           />
           <FloatingLabelSelect
             icon={VenusAndMars}
-            label={<Req label="Gender" required />}
+            label={<Req label="Select Gender" required />}
             value={fields.gender}
             onValueChange={set("gender")}
             options={GENDER_OPTIONS}
@@ -213,15 +213,15 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
         <div className={`mt-6 ${GRID}`}>
           <FloatingLabelInput
             icon={Mail}
-            label="Enter your email"
+            label={<Req label="Student's Email" required />}
             type="email"
             value={fields.communicationEmail}
             readOnly
             disabled
-            inputClassName="cursor-not-allowed bg-slate-100 text-slate-500 disabled:pointer-events-auto disabled:opacity-100"
+            inputClassName="cursor-not-allowed bg-slate-100 text-black disabled:pointer-events-auto disabled:opacity-100"
           />
           <PhoneNumberField
-            label={<Req label="Mobile Number" required />}
+            label={<Req label={<>Mobile Number{" "}<span className="text-black text-[12px]">(Student or Parent)</span></>} required />}
             value={fields.contactNumber}
             className="w-full pb-1.5"
             initialCountry={initial?.countryCode ? initial.countryCode.toLowerCase() : undefined}
@@ -232,7 +232,7 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
           />
           <FloatingLabelSelect
             icon={Globe}
-            label={<Req label="Nationality" required />}
+            label={<Req label={<>Nationality{" "}<span className="text-black text-[12px]">(You must have a valid National ID)</span></>} required />}
             value={current.nationality}
             onValueChange={set("nationality")}
             options={countries.data || []}
@@ -244,7 +244,7 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
         <div className={`mt-6 ${GRID}`}>
           <FloatingLabelSelect
             icon={MapPin}
-            label={<Req label="Country" required />}
+            label={<Req label={<>Country{" "}<span className="text-black text-[12px]">(Student&apos;s Current Location)</span></>} required />}
             value={fields.countryId}
             onValueChange={(countryId) => setFields((prev) => ({ ...prev, countryId, stateId: "", cityId: "" }))}
             options={countries.data || []}
@@ -392,7 +392,7 @@ export function ParentInlineEdit({ context, userId, parent, title = "Parent/Guar
             <div className={`mt-6 ${GRID}`}>
               <FloatingLabelSelect
                 icon={MapPin}
-                label={<Req label="Country" required />}
+                label={<Req label={<>Country{" "}<span className="text-black text-[12px]">(Parent&apos;s Current Location)</span></>} required />}
                 value={fields.countryId}
                 onValueChange={(countryId) => setFields((prev) => ({ ...prev, countryId, stateId: "", cityId: "" }))}
                 options={countries.data || []}

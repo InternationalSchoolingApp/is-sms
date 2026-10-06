@@ -18,7 +18,7 @@ import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGa
 import { getPaymentPaidStatus } from "@/services/studentSignupBackendApi";
 import { useShowPaymentOption } from "@/hooks/useCourseSelection";
 import { saveWizardParentFields, saveWizardStudentFields } from "@/utils/wizardStorage";
-import { getOtherRelation, loadOtherParentCache, relationPossessive } from "@/utils/parentRelation";
+import { getOtherRelation, getPrimaryParentLabels, loadOtherParentCache } from "@/utils/parentRelation";
 import {
   STATUS_ELIGIBLE_CUSTOM_PLAN,
   STATUS_FLAGGED,
@@ -154,15 +154,14 @@ const PAID_STATUS_MAX_CHECKS = 10;
 
 const GENERIC_ERROR ="Something went wrong. Please check your connection and try again.";
 
-function fullName(person) {
-  if (!person) return "";
-  // Middle name is no longer collected (student or parent): First + Last only.
-  return [person.firstName, person.lastName].filter(Boolean).join(" ");
-}
-
-function locationLine(person) {
-  if (!person) return "";
-  return [person.countryName, person.stateName, person.cityName].filter(Boolean).join(" | ");
+// One "label  value" line of the review tables. Labels mirror the Step 1 / Step 2 form fields.
+function ReviewRow({ label, children }) {
+  return (
+    <div className="flex justify-between gap-4 py-2">
+      <dt className="text-slate-500">{label}</dt>
+      <dd className="text-right font-bold text-black md:font-medium">{children}</dd>
+    </div>
+  );
 }
 
 function phoneLine(person) {
@@ -731,7 +730,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         : "Parent|Guardian Details";
   // parentDetailsPreview(): rows are titled after the relation ("Father's Name"); Father / Mother also list
   // the other parent, which the review response does not carry, so it comes from the client-side cache.
-  const relationNoun = relationPossessive(parent?.relationship) || parent?.relationship || "Parent/Guardian";
+  const parentLabels = getPrimaryParentLabels(parent?.relationship);
   const otherRelation = getOtherRelation(parent?.relationship);
   const otherParent = otherRelation ? loadOtherParentCache(context.schoolUUID, userId)[otherRelation] : null;
   const paymentPending = showPaymentOption === "Y";
@@ -779,16 +778,17 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
           />
           <Collapse open={openSectionFor() === "student"}>
           <dl className="py-2 text-sm md:divide-y md:divide-slate-100 md:border-t md:border-slate-100 md:px-4 md:text-sm">
-            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Name</dt><dd className="text-right font-bold text-black md:font-medium">{fullName(student)}</dd></div>
-            {course?.standardName && (
-              <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Grade</dt><dd className="text-right font-bold text-black md:font-medium">{course.standardName}</dd></div>
-            )}
-            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Date of Birth</dt><dd className="text-right font-bold text-black md:font-medium">{student?.dob}</dd></div>
-            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Gender</dt><dd className="text-right font-bold text-black md:font-medium">{student?.genderName}</dd></div>
-            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Email</dt><dd className="text-right font-bold text-black md:font-medium">{student?.communicationEmail}</dd></div>
-            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Phone Number</dt><dd className="text-right font-bold text-black md:font-medium">{phoneLine(student)}</dd></div>
-            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Nationality</dt><dd className="text-right font-bold text-black md:font-medium">{student?.nationality}</dd></div>
-            <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Country | State | City</dt><dd className="text-right font-bold text-black md:font-medium">{locationLine(student)}</dd></div>
+            <ReviewRow label="Student's First Name">{student?.firstName}</ReviewRow>
+            <ReviewRow label="Student's Last Name">{student?.lastName}</ReviewRow>
+            {course?.standardName && <ReviewRow label="Select Grade">{course.standardName}</ReviewRow>}
+            <ReviewRow label="Date of Birth">{student?.dob}</ReviewRow>
+            <ReviewRow label="Select Gender">{student?.genderName}</ReviewRow>
+            <ReviewRow label="Student's Email">{student?.communicationEmail}</ReviewRow>
+            <ReviewRow label="Mobile Number">{phoneLine(student)}</ReviewRow>
+            <ReviewRow label="Nationality">{student?.nationality}</ReviewRow>
+            <ReviewRow label="Country (Student's Current Location)">{student?.countryName}</ReviewRow>
+            <ReviewRow label="Province / State">{student?.stateName}</ReviewRow>
+            <ReviewRow label="City">{student?.cityName}</ReviewRow>
           </dl>
           </Collapse>
         </section>
@@ -816,25 +816,29 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
           <dl className="px-1 py-2 text-sm md:divide-y md:divide-slate-100 md:border-t md:border-slate-100 md:px-4 md:text-sm">
             {parent?.workingProfessionName ? (
               <>
-                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Student or a working professional</dt><dd className="text-right font-bold text-black md:font-medium">{parent.workingProfessionName}</dd></div>
-                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">School/College/Organization</dt><dd className="text-right font-bold text-black md:font-medium">{parent.institutionName}</dd></div>
-                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Country</dt><dd className="text-right font-bold text-black md:font-medium">{parent.institutionCountryName}</dd></div>
+                <ReviewRow label="Are you a student or a working professional?">{parent.workingProfessionName}</ReviewRow>
+                <ReviewRow label="School / College / Organization Name">{parent.institutionName}</ReviewRow>
+                <ReviewRow label="Country of School / College / Organization">{parent.institutionCountryName}</ReviewRow>
               </>
             ) : (
               <>
-                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{relationNoun} Name</dt><dd className="text-right font-bold text-black md:font-medium">{fullName(parent)}</dd></div>
-                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500"> Relationship to Student</dt><dd className="text-right font-bold text-black md:font-medium">{parent?.relationshipName}</dd></div>
-                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{relationNoun} Mobile Number</dt><dd className="text-right font-bold text-black md:font-medium">{phoneLine(parent)}</dd></div>
+                <ReviewRow label="Relationship to student">{parent?.relationshipName}</ReviewRow>
+                <ReviewRow label={parentLabels.firstName}>{parent?.firstName}</ReviewRow>
+                <ReviewRow label={parentLabels.lastName}>{parent?.lastName}</ReviewRow>
+                <ReviewRow label={parentLabels.mobile}>{phoneLine(parent)}</ReviewRow>
                 {otherRelation && (
                   <>
-                    <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{otherRelation}&apos;s Name</dt><dd className="text-right font-bold text-black md:font-medium">{fullName(otherParent) || "--"}</dd></div>
-                    <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{otherRelation}&apos;s Mobile Number</dt><dd className="text-right font-bold text-black md:font-medium">{otherParent?.contactNumber ? phoneLine({ countryCode: otherParent.countryIsdCode?.replace(/^\+/, ""), contactNumber: otherParent.contactNumber }) : "--"}</dd></div>
+                    <ReviewRow label={`${otherRelation}'s First Name`}>{otherParent?.firstName || "--"}</ReviewRow>
+                    <ReviewRow label={`${otherRelation}'s Last Name`}>{otherParent?.lastName || "--"}</ReviewRow>
+                    <ReviewRow label={`${otherRelation}'s Mobile Number`}>
+                      {otherParent?.contactNumber ? phoneLine({ countryCode: otherParent.countryIsdCode?.replace(/^\+/, ""), contactNumber: otherParent.contactNumber }) : "--"}
+                    </ReviewRow>
                   </>
                 )}
-                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Country | State | City</dt><dd className="text-right font-bold text-black md:font-medium">{locationLine(parent)}</dd></div>
-                {parent?.referralCode && (
-                  <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Referral Code</dt><dd className="text-right font-bold text-black md:font-medium">{parent.referralCode}</dd></div>
-                )}
+                <ReviewRow label="Country (Parent's Current Location)">{parent?.countryName}</ReviewRow>
+                <ReviewRow label="Province / State">{parent?.stateName}</ReviewRow>
+                <ReviewRow label="City">{parent?.cityName}</ReviewRow>
+                {parent?.referralCode && <ReviewRow label="Referral Code">{parent.referralCode}</ReviewRow>}
               </>
             )}
           </dl>
