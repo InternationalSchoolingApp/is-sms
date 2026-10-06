@@ -239,7 +239,11 @@ function VariantToggle({ course, target, onToggle, disabled }) {
           isTarget ? "flex-row-reverse bg-primary text-white" : "bg-slate-300 text-slate-600"
         }`}
       >
-        <span className="h-4 w-4 shrink-0 rounded-full bg-white shadow" />
+        {isTarget ? 
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white">
+          <Check className="h-3 w-3 text-[#3fa43c]" strokeWidth={5} />
+        </span>:<span className="h-4 w-4 shrink-0 rounded-full bg-white shadow" />}
+        
         <span className={`px-1 text-xs font-medium leading-none ${isTarget ? 'text-white':'text-black'}`}>{label}</span>
       </button>
     </div>
@@ -965,8 +969,8 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 <div className="flex items-center gap-3 justify-center">
                   {courseMinMet ? (
                     <span className="inline-flex flex-1 items-center gap-2 text-sm font-bold">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-400">
-                        <Check className="h-3 w-3 text-primary" strokeWidth={3} />
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white">
+                        <Check className="h-3 w-3 text-[#3fa43c]" strokeWidth={5} />
                       </span>
                       {selectedCourseCount} courses selected
                     </span>
@@ -999,7 +1003,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                           ? "bg-white/30"
                           : index < minCourseCount
                           ? courseMinMet
-                            ? "bg-emerald-400"
+                            ? "bg-[#3fa43c]"
                             : "bg-white"
                           : "bg-orange-400"
                       }`}
@@ -1039,7 +1043,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                         <CourseIcon className="h-4 w-4" />
                       </span> */}
                       <div className="min-w-0 inline-flex flex-1">
-                        <div className="text-sm inline-flex font-medium text-black">
+                        <div className="text-sm inline-flex font-medium text-black items-center">
                           <span> {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}</span> 
 
                           <div className="flex shrink-0 ml-2 flex-1 items-center mr-auto gap-2">
@@ -1198,7 +1202,12 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                             }`}
                           >
                             <CategoryIcon className="h-4 w-4 shrink-0" />
-                            <span className="min-w-0 flex-1 truncate">{course.courseName}</span>
+                            <Tooltip>
+                              <TooltipTrigger delay={100} render={<span className="min-w-0 flex-1 truncate text-left" />}>
+                                {course.courseName}
+                              </TooltipTrigger>
+                              <TooltipContent>{course.courseName}</TooltipContent>
+                            </Tooltip>
                             <span
                               title={`${course.subjects.length} course${course.subjects.length === 1 ? "" : "s"} available`}
                               aria-label={`${course.subjects.length} course${course.subjects.length === 1 ? "" : "s"} available`}
