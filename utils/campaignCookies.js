@@ -1,3 +1,5 @@
+import { readCookie, writeCookie } from "@/utils/cookieDomain";
+
 function getUrlParam(name) {
   if (name === undefined || name === "") {
     return false;
@@ -14,47 +16,16 @@ function getUrlParam(name) {
   return decodeURIComponent(results[1]) || null;
 }
 
-function getCookieDomain() {
-  var host = window.location.hostname;
-
-  // localhost and IP address
-  if (
-    !host ||
-    host.indexOf(".") === -1 ||
-    /^[0-9.]+$/.test(host) ||
-    host === "localhost"
-  ) {
-    return "";
-  }
-
-  var parts = host.split(".");
-
-  return parts.slice(-2).join(".");
-}
-
 function setCookie(key, value) {
   if (value === undefined || value === "") {
     return false;
   }
 
-  var expires = new Date();
-
-  expires.setTime(
-    expires.getTime() + 31 * 24 * 60 * 60 * 1000
-  );
-
-  var cookie =
-    key +
-    "=" +
-    encodeURIComponent(value) +
-    ";expires=" +
-    expires.toUTCString() +
-    (getCookieDomain()
-      ? ";domain=" + getCookieDomain()
-      : "") +
-    ";path=/";
-
-  document.cookie = cookie;
+  // Domain/expiry/SameSite all live in utils/cookieDomain.js — this used to
+  // compute the domain as "last two labels of the hostname", which the
+  // browser rejects on any host whose last two labels are a public suffix
+  // (UAT's is-sms.vercel.app -> vercel.app), so nothing was stored there.
+  writeCookie(key, value);
 }
 
 function getCookie(key) {
@@ -62,11 +33,10 @@ function getCookie(key) {
     return false;
   }
 
-  var keyValue = document.cookie.match(
-    "(^|;) ?" + key + "=([^;]*)(;|$)"
-  );
-
-  return keyValue ? decodeURIComponent(keyValue[2]) : "Test";
+  // "Test" is the legacy sentinel for "not set" — the backend's
+  // isAttributionValue() (SignupStudentUtil.java) already treats it, "N/A",
+  // "0" and "undefined" as absent, so it's kept as-is.
+  return readCookie(key) || "Test";
 }
 
 function isCookieEmpty(value) {
