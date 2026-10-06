@@ -112,6 +112,15 @@ function upgradeHint(courseType) {
   return undefined;
 }
 
+// Drops a trailing "Honors"/"Advance(d)" from a course name. Only used where the
+// variant already has its own control next to the name (the VariantToggle), so the
+// name doesn't repeat what the toggle is already saying: "English II Honors" beside
+// an on-state Honors toggle reads as "English II". A course with no toggle keeps its
+// full name — there the suffix is the ONLY thing marking it as the Honors variant.
+function stripVariantSuffix(name) {
+  return String(name || "").replace(/\s+(?:honou?rs?|advanced?)$/i, "");
+}
+
 function CourseSummaryLink({ url }) {
   if (!url) return null;
   return (
@@ -591,8 +600,17 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       });
       if (!confirmed) return;
     }
+    // Substitute the variant IN PLACE rather than dropping the old id and appending
+    // the new one: the backend renders "Your Selected Courses" in exactly the order
+    // of this CSV (getOrderedSubjects' `ORDER BY FIELD(SUBJECT_ID, ...)`, then
+    // CTECourseUtil.reorderSelectedCourses), so appending made a course jump to the
+    // bottom of the list the moment its Honors/Advanced toggle was flipped.
+    const upgradedIds = selectedIds.map((id) => (id === String(course.courseId) ? String(target.courseId) : id));
+    // The current course should always be in the selected list, but don't silently
+    // drop the upgrade if it somehow isn't.
+    if (!upgradedIds.includes(String(target.courseId))) upgradedIds.push(String(target.courseId));
     const switched = await applyChange({
-      selectedSubjects: [...selectedIds.filter((id) => id !== String(course.courseId)), String(target.courseId)].join(","),
+      selectedSubjects: upgradedIds.join(","),
       controlType: "add",
       courseId: course.categoryId,
     });
@@ -603,7 +621,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       // upgrade is switching TO the alternate (Honors/Advanced) variant named by target.courseType.
       const currentType = String(course.courseTypeOriginal || "").toUpperCase();
       const targetType = String(target.courseType || "").toUpperCase();
-      const subjectName = String(course.courseName || "").replace(/\s+(?:honou?rs?|advanced?)$/i, "");
+      const subjectName = stripVariantSuffix(course.courseName);
       const variantSuffix = currentType === "REGULAR"
         ? /ADV|ADVANCED/.test(targetType)
           ? " Advanced"
@@ -954,7 +972,9 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                         <CourseIcon className="h-4 w-4" />
                       </span> */}
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-black">{course.courseName}</p>
+                        <p className="text-sm font-medium text-black">
+                          {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}
+                        </p>
                         {/* {showCourseCredits && <p className="text-xs text-slate-500">{course.creditScore} Credit</p>} */}
                         <CourseSummaryLink url={course.courseDescriptionUrl} />
                       </div>
