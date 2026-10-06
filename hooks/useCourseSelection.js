@@ -63,19 +63,40 @@ export function useCourseDetails({ context, userId, standardId }) {
   });
 }
 
+/**
+ * Local-only edit of the cached course page — no request, no save. Add/remove use
+ * this so the buttons never hit course-details-by-standard-id; the accumulated
+ * selection is written to the server in one call later (see flushSelection in
+ * Stage3CourseSelection). Returns false when there's no cached page to edit.
+ */
+export function useLocalCourseUpdate({ userId, standardId }) {
+  const queryClient = useQueryClient();
+  return function applyLocal(updater) {
+    const queryKey = courseDetailsKey(userId, standardId);
+    const previous = queryClient.getQueryData(queryKey);
+    if (previous === undefined) return false;
+    queryClient.setQueryData(queryKey, updater(previous));
+    return true;
+  };
+}
+
 /** Every add/remove/upgrade/recommended change; a successful response replaces the cached page. */
 export function useUpdateCourseSelection({ context, userId, standardId: activeStandardId }) {
   const queryClient = useQueryClient();
+  // Write into the exact query entry this screen observes. API grade IDs
+  // can differ in type or be absent from the request's update response.
+  function keyForChange(change) {
+    const cacheStandardId = Object.prototype.hasOwnProperty.call(change, "cacheStandardId")
+      ? change.cacheStandardId
+      : activeStandardId;
+    return courseDetailsKey(userId, cacheStandardId);
+  }
   return useMutation({
-    mutationFn: ({ cacheStandardId, ...change }) => chooseCoursesByGrade(context.schoolUUID, buildCourseDetailsRequest(userId, change)),
+    mutationFn: ({ cacheStandardId, ...change }) =>
+      chooseCoursesByGrade(context.schoolUUID, buildCourseDetailsRequest(userId, change)),
     onSuccess: (response, change) => {
       if (isSuccessResponse(response)) {
-        // Write into the exact query entry this screen observes. API grade IDs
-        // can differ in type or be absent from the request's update response.
-        const cacheStandardId = Object.prototype.hasOwnProperty.call(change, "cacheStandardId")
-          ? change.cacheStandardId
-          : activeStandardId;
-        queryClient.setQueryData(courseDetailsKey(userId, cacheStandardId), response);
+        queryClient.setQueryData(keyForChange(change), response);
       }
     },
   });
