@@ -42,6 +42,7 @@ export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry = "in
       itiRef.current = intlTelInput(input, {
         initialCountry: initialCountry || "in",
         separateDialCode: true,
+        dropdownParent: document.body,
       });
       input.addEventListener("countrychange", handleChange);
       input.addEventListener("input", handleChange);
