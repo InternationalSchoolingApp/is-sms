@@ -268,7 +268,7 @@ export function AccountCreationForm({ school, program, query }) {
           {/* Image takes all remaining column height (flex-1) and is pinned
               bottom-left, so on desktop the whole illustration stays inside
               the viewport instead of scrolling away. */}
-          <div className="pointer-events-none relative mt-6 -ml-10 min-h-0 flex-1 w-[calc(100%+20rem)]">
+          <div className="pointer-events-none relative mt-6 -mx-10 min-h-0 flex-1">
             <Image
               src="/images/enrollement_bg.png"
               alt=""
