@@ -319,6 +319,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
             onChange={(e) => setField("communicationEmail", e.target.value)}
             error={errors.communicationEmail}
             disabled
+            inputClassName="text-black/90 disabled:text-black disabled:opacity-100"
           />
           <PhoneNumberField
             label={<Req 
