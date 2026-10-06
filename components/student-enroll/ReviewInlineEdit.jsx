@@ -46,7 +46,7 @@ const GRID = "grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3";
  * changed since Edit was clicked.
  */
 
-function EditCard({ title, saving, onSave, onCancel, formError, children }) {
+function EditCard({ title, saving, onSave, onCancel, formError, children, centerTitle = false }) {
   return (
     <Dialog open onOpenChange={(open) => !open && !saving && onCancel()}>
       {/* Below md the title and the Save button stay pinned while only the form body scrolls. */}
@@ -54,7 +54,7 @@ function EditCard({ title, saving, onSave, onCancel, formError, children }) {
         {/* Title and close button share one row (the dialog's own absolutely-positioned close button sat
             above the title's centre line). */}
         <DialogHeader className="flex shrink-0 flex-row items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-7 md:border-0 md:pb-0 md:pt-6">
-          <DialogTitle className="text-xl font-bold leading-7 text-black">{title}</DialogTitle>
+          <DialogTitle className={`text-xl font-bold leading-7 text-black ${centerTitle ? "flex-1 text-center" : ""}`}>{title}</DialogTitle>
           {!saving && (
             <DialogClose
               aria-label="Close"
@@ -173,11 +173,14 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
 
   return (
     <>
-      <EditCard title="Student Details" saving={signup.isPending} onSave={save} onCancel={onCancel} formError={formError}>
-        <div className={GRID}>
+      <EditCard title="Student Details" saving={signup.isPending} onSave={save} onCancel={onCancel} formError={formError} centerTitle>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
           <FloatingLabelInput icon={User} label={<Req label="Student's First Name" required />} value={fields.firstName} {...nameFieldProps(set("firstName"))} error={errors.firstName} />
           {/* Middle Name removed from student signup */}
           <FloatingLabelInput icon={User} label={<Req label="Student's Last Name" required />} value={fields.lastName} {...nameFieldProps(set("lastName"))} error={errors.lastName} />
+        </div>
+
+        <div className={`mt-6 ${GRID}`}>
           <FloatingLabelSelect
             icon={GraduationCap}
             label={<Req label="Select Grade" required />}

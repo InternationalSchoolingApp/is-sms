@@ -27,9 +27,9 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
           <button
             type="button"
             onClick={() => setConfirmLogout(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-2 py-1.5 cursor-pointer text-sm font-semibold text-white hover:bg-slate-800"
+            className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-2 py-1.5 cursor-pointer text-sm font-semibold text-white hover:bg-red-700 duration-150"
           >
-            <LogOut className="h-4 w-4" /> Log Out
+            <LogOut className="h-4 w-4 stroke-3" /> Log Off
           </button>
         </div>
       </header>
@@ -50,8 +50,8 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
       />
 
       <div className="flex-1 bg-[#f2f5fa] px-4 pb-6 md:px-6 md:py-8 md:pb-24 md:pt-[62px]">
-        <div className="sticky top-0 z-20 -mx-4 bg-[#f2f5fa] px-4 pb-3 md:static md:mx-0 md:bg-transparent md:px-0 md:pb-0">
-        <header className="grid grid-cols-[2rem_1fr_2rem] items-center gap-2 px-1 py-4 md:hidden">
+        <div className="sticky top-0 z-20 -mx-4 bg-[#f2f5fa] px-4 pb-3 max-[579px]:pb-1 md:static md:mx-0 md:bg-transparent md:px-0 md:pb-0">
+        <header className="grid grid-cols-[2rem_1fr_2rem] items-center gap-2 px-1 py-4 max-[579px]:py-2 md:hidden">
           <Image src="/images/Fav_Icon.png" alt={schoolName || ""} width={28} height={28} className="h-7 w-auto" unoptimized />
           <div className="text-center">
             {programLabel && <h1 className="text-base font-extrabold leading-tight text-black">{programLabel}</h1>}
@@ -61,9 +61,9 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
             type="button"
             aria-label="Log Out"
             onClick={() => setConfirmLogout(true)}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white hover:bg-slate-800"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700"
           >
-            <LogOut className="h-4 w-4" aria-hidden="true" />
+            <LogOut className="h-4 w-4 stroke-3" aria-hidden="true" />
           </button>
         </header>
 
@@ -126,8 +126,9 @@ function StepRow({ currentIndex }) {
   const progressPercent = STEPS.length > 1 ? (Math.max(currentIndex, 0) / (STEPS.length - 1)) * 100 : 0;
 
   return (
-    <div className="mx-auto mt-2 max-w-2xl px-4 md:mt-4 md:px-0">
-      <div className="relative flex items-start justify-between">
+    <div className="mx-auto mt-2 max-w-2xl px-4 max-[579px]:mt-0 md:mt-4 md:px-0">
+      {/* Below 580px the whole stepper (circles, line, icons) is drawn at 70% of its size. */}
+      <div className="relative mx-auto flex items-start justify-between max-[579px]:[zoom:0.7]">
         <div className="absolute inset-x-[18px] top-[18px] -translate-y-1/2 md:inset-x-8 md:top-5" aria-hidden="true">
           <div className="h-[3px] w-full bg-slate-200 md:h-px" />
           <div

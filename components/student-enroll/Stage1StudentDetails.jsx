@@ -82,8 +82,8 @@ function FieldSkeleton() {
 /** Structural skeleton mirroring the real form's grid, shown until grades + countries have loaded. */
 function Stage1Skeleton({ isDualDiploma }) {
   return (
-    <div className="mx-auto mt-6 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
-      <h2 className="text-center text-2xl font-extrabold text-black">Student Details</h2>
+    <div className="mx-auto mt-0 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
+      <h2 className="text-center text-xl font-bold text-black md:text-2xl">Student Details</h2>
       <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
           <FieldSkeleton key={`identity-${i}`} />
@@ -250,8 +250,8 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
 
   return (
     
-      <div className="mx-auto mt-6 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
-        <h2 className="text-center text-1.5xl text-2xl font-extrabold text-black">Student Details</h2>
+      <div className="mx-auto mt-0 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
+        <h2 className="text-center text-xl font-extrabold text-black md:text-2xl">Student Details</h2>
 
         <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-2">
           <FloatingLabelInput

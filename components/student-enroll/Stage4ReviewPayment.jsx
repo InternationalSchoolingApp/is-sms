@@ -66,7 +66,7 @@ function ReviewDetailsSkeleton() {
 function PaymentOptionsSkeleton() {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-black">Select Payment Option</h2>
+      <h2 className="text-base font-semibold text-black md:text-lg">Select Payment Option</h2>
       <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="h-[80px] animate-pulse rounded-xl bg-slate-200" />
         <div className="h-[80px] animate-pulse rounded-xl bg-slate-200" />
@@ -111,19 +111,19 @@ function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
           onToggle();
         }
       }}
-      className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 md:rounded-none md:border-0 md:py-3"
+      className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 max-[367px]:gap-2 max-[367px]:px-2 md:rounded-none md:border-0 md:py-3"
     >
       <div className="flex min-w-0 items-center gap-2 md:gap-4">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary md:h-10 md:w-10">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary max-[367px]:h-7 max-[367px]:w-7 md:h-10 md:w-10">
           <Icon className="h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />
         </span>
         <h2 className="text-[clamp(12px,3.5vw,15px)] font-bold text-black md:text-base md:font-semibold">{title}</h2>
       </div>
-      <div className="flex shrink-0 gap-2">
+      <div className="flex shrink-0 gap-2 max-[367px]:gap-1">
         <Button
           type="button"
           variant="outline"
-          className="h-8 cursor-pointer px-3 text-xs md:h-9 md:px-4 md:text-sm"
+          className="h-8 cursor-pointer px-3 text-xs max-[367px]:h-7 max-[367px]:px-2 md:h-9 md:px-4 md:text-sm"
           onClick={(e) => {
             e.stopPropagation();
             onToggle();
@@ -134,7 +134,7 @@ function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
         {onEdit && (
           <Button
             type="button"
-            className="h-8 rounded-md cursor-pointer bg-primary px-3 text-xs hover:bg-primary/90 md:h-9 md:px-4 md:text-sm"
+            className="h-8 rounded-md cursor-pointer bg-primary px-3 text-xs hover:bg-primary/90 max-[367px]:h-7 max-[367px]:px-2 md:h-9 md:px-4 md:text-sm"
             onClick={(e) => {
               e.stopPropagation();
               onEdit();
@@ -667,7 +667,11 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
     setConfirmSubmit(false);
     setNotice(null);
     try {
-      const isOffline = data.registrationType !== "ONLINE" && data.enrollmentType !== "ONLINE";
+      // Legacy signupStudentStage3.js#callForApplicationSubmit keys this off
+      // $('#signupType').val() === 'Online'. "Online" = student self-signup
+      // (incl. partner URLs) → waits for admin/partner to Move to Dashboard.
+      // "Offline" = admin/B2B-created student → proceeds straight to dashboard.
+      const isOffline = context.signupType === "Offline";
       const response = isOffline ? await proceedToDashboard.mutateAsync() : await submitApplication.mutateAsync();
       if (response?.status !== STATUS_SUCCESS) {
         handleFailure(response, "Could not submit your application. Please try again.");
@@ -739,7 +743,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 md:mb-0 md:rounded-none md:border-0 md:bg-transparent md:p-0">
-      <h1 className="mb-4 text-center text-1.5xl font-extrabold text-black sm:text-2xl md:hidden">Review Your Details &amp; Pay</h1>
+      <h1 className="mb-4 text-center text-xl font-bold text-black sm:text-2xl md:hidden">Review Your Details &amp; Pay</h1>
       {notice && (
         <p
           role={notice.tone === "error" ? "alert" : "status"}
@@ -750,12 +754,12 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       )}
 
       <div
-        className={`grid gap-x-8 gap-y-4 md:mt-6 md:gap-y-8 ${
+        className={`grid grid-cols-1 gap-x-8 gap-y-4 md:mt-6 md:gap-y-8 ${
           showFee ? "lg:grid-cols-[555fr_723fr]" : "mx-auto max-w-2xl"
         } ${busy ? "opacity-60" : ""}`}
         aria-busy={busy}
       >
-        <div className="space-y-2 md:space-y-3">
+        <div className="min-w-0 space-y-2 md:space-y-3">
         <h2 className="hidden text-lg font-semibold text-black md:block">Kindly Review your details</h2>
         {editing === "student" && (
           <StudentInlineEdit
@@ -887,9 +891,9 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         </div>
 
         {showFee && (
-          <div>
+          <div className="min-w-0">
             <hr className="mb-4 border-slate-200 md:hidden" />
-            <h2 className="text-center text-lg font-semibold text-black md:text-left">
+            <h2 className="text-center text-base font-semibold text-black md:text-left md:text-lg">
               {data.customPaymentEnabled ? data.feeSetionTitile || "Fee Payment" : "Select Payment Option"}
             </h2>
             <div className="mt-3">
