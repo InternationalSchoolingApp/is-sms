@@ -111,19 +111,19 @@ function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
           onToggle();
         }
       }}
-      className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 md:rounded-none md:border-0 md:py-3"
+      className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 max-[367px]:gap-2 max-[367px]:px-2 md:rounded-none md:border-0 md:py-3"
     >
       <div className="flex min-w-0 items-center gap-2 md:gap-4">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary md:h-10 md:w-10">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary max-[367px]:h-7 max-[367px]:w-7 md:h-10 md:w-10">
           <Icon className="h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />
         </span>
         <h2 className="text-[clamp(12px,3.5vw,15px)] font-bold text-black md:text-base md:font-semibold">{title}</h2>
       </div>
-      <div className="flex shrink-0 gap-2">
+      <div className="flex shrink-0 gap-2 max-[367px]:gap-1">
         <Button
           type="button"
           variant="outline"
-          className="h-8 cursor-pointer px-3 text-xs md:h-9 md:px-4 md:text-sm"
+          className="h-8 cursor-pointer px-3 text-xs max-[367px]:h-7 max-[367px]:px-2 md:h-9 md:px-4 md:text-sm"
           onClick={(e) => {
             e.stopPropagation();
             onToggle();
@@ -134,7 +134,7 @@ function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
         {onEdit && (
           <Button
             type="button"
-            className="h-8 rounded-md cursor-pointer bg-primary px-3 text-xs hover:bg-primary/90 md:h-9 md:px-4 md:text-sm"
+            className="h-8 rounded-md cursor-pointer bg-primary px-3 text-xs hover:bg-primary/90 max-[367px]:h-7 max-[367px]:px-2 md:h-9 md:px-4 md:text-sm"
             onClick={(e) => {
               e.stopPropagation();
               onEdit();
@@ -750,12 +750,12 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       )}
 
       <div
-        className={`grid gap-x-8 gap-y-4 md:mt-6 md:gap-y-8 ${
+        className={`grid grid-cols-1 gap-x-8 gap-y-4 md:mt-6 md:gap-y-8 ${
           showFee ? "lg:grid-cols-[555fr_723fr]" : "mx-auto max-w-2xl"
         } ${busy ? "opacity-60" : ""}`}
         aria-busy={busy}
       >
-        <div className="space-y-2 md:space-y-3">
+        <div className="min-w-0 space-y-2 md:space-y-3">
         <h2 className="hidden text-lg font-semibold text-black md:block">Kindly Review your details</h2>
         {editing === "student" && (
           <StudentInlineEdit
@@ -887,7 +887,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         </div>
 
         {showFee && (
-          <div>
+          <div className="min-w-0">
             <hr className="mb-4 border-slate-200 md:hidden" />
             <h2 className="text-center text-lg font-semibold text-black md:text-left">
               {data.customPaymentEnabled ? data.feeSetionTitile || "Fee Payment" : "Select Payment Option"}
