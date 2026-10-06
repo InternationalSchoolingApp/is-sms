@@ -84,6 +84,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   if (loading) return <ProcessingLoader />;
 
   // Network/parse failure, or the backend's own transport-level ERROR.
+  debugger
   if (failed || !data || String(data.status).toUpperCase() === "ERROR") {
     return <ErrorCard data={data} />;
   }

@@ -199,12 +199,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
         password: formData.get("password") || fields.password,
         confirmPassword: formData.get("confirmPassword") || fields.confirmPassword,
       };
-      if (
-        domFields.email !== fields.email ||
-        domFields.confirmEmail !== fields.confirmEmail ||
-        domFields.password !== fields.password ||
-        domFields.confirmPassword !== fields.confirmPassword
-      ) {
+      if(domFields.email !== fields.email || domFields.confirmEmail !== fields.confirmEmail || domFields.password !== fields.password || domFields.confirmPassword !== fields.confirmPassword) {
         setFields(domFields);
       }
 

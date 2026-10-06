@@ -7,6 +7,8 @@ import { GlobalLoader } from "@/components/common/GlobalLoader";
 import { MaintenanceBanner } from "@/components/common/MaintenanceBanner";
 import { PageTitle } from "@/components/common/PageTitle";
 import { AnalyticsScripts } from "@/components/AnalyticsScripts";
+import CampaignCookieInitializer from "@/components/CampaignCookieInitializer";
+
 
 const openSans = Open_Sans({
   variable: "--font-open-sans",
@@ -27,6 +29,7 @@ export default function RootLayout({ children }) {
           <QueryProvider>
             <PageTitle />
             <MaintenanceBanner />
+            <CampaignCookieInitializer/>
             {children}
           </QueryProvider>
           <GlobalLoader />

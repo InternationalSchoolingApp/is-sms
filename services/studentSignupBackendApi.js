@@ -2,6 +2,7 @@
 
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { cookies } from "next/headers";
 
 /**
  * Thin fetch wrappers, one per confirmed Student Signup backend endpoint.
