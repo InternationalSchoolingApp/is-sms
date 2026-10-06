@@ -290,7 +290,12 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
       <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-md">
         <DialogHeader className="flex-row items-center gap-2 space-y-0  px-4 py-3">
           <CategoryIcon className="h-5 w-5 shrink-0 text-black" />
-          <DialogTitle className="text-base font-semibold text-black">{course.courseName}</DialogTitle>
+          <div className="min-w-0 flex-1">
+            <DialogTitle className="text-base font-semibold text-black">{course.courseName}</DialogTitle>
+            <p className="text-xs text-slate-500">
+              {course.subjects.length} course{course.subjects.length === 1 ? "" : "s"} available
+            </p>
+          </div>
         </DialogHeader>
         <div className="max-h-[60vh] divide-y divide-slate-100 overflow-y-auto">
           {course.subjects.map((subject) => {
@@ -1020,7 +1025,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               </span>
             )} */}
           </div>
-          {selectedCourses.length === 0 && <p className="px-4 py-6 text-sm text-black">{selectedSummary(data)}</p>}
+          {selectedCourses.length === 0 && (<p className={`px-4 py-6 text-sm text-black ${selectedCourses.length === 0 ? `text-center` : ``}`}>{selectedSummary(data)}</p>)}
           {selectedCourses.length > 0 && (
             <ol className="space-y-2 p-3 md:space-y-0 md:divide-y md:divide-slate-100 md:p-0">
               {selectedCourses.map((course) => {
