@@ -256,7 +256,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
         <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-2">
           <FloatingLabelInput
             icon={User}
-            label={<Req label="Student First Name" required />}
+            label={<Req label="Student's First Name" required />}
             value={fields.firstName}
             {...nameFieldProps((v) => setField("firstName", v))}
             error={errors.firstName}
@@ -269,7 +269,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           /> */}
           <FloatingLabelInput
             icon={User}
-            label={<Req label="Student Last Name" required />}
+            label={<Req label="Student's Last Name" required />}
             value={fields.lastName}
             {...nameFieldProps((v) => setField("lastName", v))}
             error={errors.lastName}
