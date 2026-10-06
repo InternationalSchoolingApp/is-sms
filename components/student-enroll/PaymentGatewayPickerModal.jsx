@@ -449,7 +449,7 @@ export function PaymentGatewayPickerModal({
     <Dialog open={open} onOpenChange={(next) => !busy && onOpenChange(next)}>
       <DialogContent
         showCloseButton={false}
-        className="flex h-[92vh] max-h-[92vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl"
+        className="flex h-[92dvh] max-h-[92dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl lg:h-[80vh] lg:max-h-[80vh] lg:max-w-5xl"
       >
         <DialogTitle className="sr-only">Select Your Payment Method</DialogTitle>
         {/* Fills the dialog's remaining height; each column scrolls independently so the
@@ -479,7 +479,7 @@ export function PaymentGatewayPickerModal({
                         <img src={assetUrl(IMAGES, tabIcon(option))} alt="" className="max-h-7 max-w-7 object-contain" />
                       </span>
                       <span className="flex-1">{option.label}</span>
-                      {selected && <ChevronRight className="absolute -right-3 hidden h-5 w-5 rounded-full bg-primary text-white md:block" />}
+                      {selected}
                     </button>
                   </li>
                 );
@@ -504,7 +504,7 @@ export function PaymentGatewayPickerModal({
           <section className="flex min-h-0 flex-col">
             <div className="flex-1 overflow-y-auto p-5 sm:p-8">
               <div className="hidden md:block">
-                <h3 className="text-3xl font-extrabold text-slate-900">Select Your Payment Method</h3>
+                <h3 className="text-2xl font-extrabold text-slate-900">Select Your Payment Method</h3>
                 <p className="mt-2 text-slate-600">{subHeading}</p>
               </div>
               {details?.paymentLabel && (

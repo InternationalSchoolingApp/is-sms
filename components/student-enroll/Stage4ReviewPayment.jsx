@@ -166,7 +166,7 @@ function locationLine(person) {
 }
 
 function phoneLine(person) {
-  if (!person?.contactNumber) return "N/A";
+  if (!person?.contactNumber) return "--";
   const code = person.countryIsdCode || person.countryCode || "";
   return `+${code} ${person.contactNumber}`;
 }
@@ -825,8 +825,8 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
                 <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{relationNoun} Mobile Number</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{phoneLine(parent)}</dd></div>
                 {otherRelation && (
                   <>
-                    <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{otherRelation}&apos;s Name</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{fullName(otherParent) || "N/A"}</dd></div>
-                    <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{otherRelation}&apos;s Mobile Number</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{otherParent?.contactNumber ? phoneLine({ countryCode: otherParent.countryIsdCode?.replace(/^\+/, ""), contactNumber: otherParent.contactNumber }) : "N/A"}</dd></div>
+                    <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{otherRelation}&apos;s Name</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{fullName(otherParent) || "--"}</dd></div>
+                    <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{otherRelation}&apos;s Mobile Number</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{otherParent?.contactNumber ? phoneLine({ countryCode: otherParent.countryIsdCode?.replace(/^\+/, ""), contactNumber: otherParent.contactNumber }) : "--"}</dd></div>
                   </>
                 )}
                 <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Country | State | City</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{locationLine(parent)}</dd></div>
