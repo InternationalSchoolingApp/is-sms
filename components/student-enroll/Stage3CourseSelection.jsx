@@ -678,7 +678,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   async function confirmRecommended(ids) {
     apAcknowledgedRef.current = false;
     const saved = await applyChange({ selectedSubjects: ids.join(","), controlType: "add" });
-    if (saved) setRecommendedData(null);
+    if (saved) {
+      setRecommendedData(null);
+      toast.success("Recommended courses added");
+    }
   }
 
   async function handleNext() {
