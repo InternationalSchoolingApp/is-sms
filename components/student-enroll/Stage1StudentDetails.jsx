@@ -278,7 +278,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
           <FloatingLabelSelect
             icon={GraduationCap}
-            label={<Req label="Select Grade" required />}
+            label={<Req label={fields.standardId != null && fields.standardId != undefined && fields.standardId != "" ? `Grade`:`Select Grade`} required />}
             value={fields.standardId}
             onValueChange={setGrade}
             options={grades.data || []}
@@ -301,7 +301,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           />
           <FloatingLabelSelect
             icon={VenusAndMars}
-            label={<Req label="Select Gender" required />}
+            label={<Req label={fields.gender != null && fields.gender != undefined && fields.gender != "" ? `Gender`:`Select Gender`} required />}
             value={fields.gender}
             onValueChange={(v) => setField("gender", v)}
             options={GENDER_OPTIONS}
