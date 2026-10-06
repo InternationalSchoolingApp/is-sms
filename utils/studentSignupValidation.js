@@ -180,7 +180,7 @@ export function validateParentDetails(fields, { isOneToOneFlex = false } = {}) {
 
   if (!fields.firstName?.trim()) errors.firstName = "First name is required";
   if (!fields.lastName?.trim()) errors.lastName = "Last name is required";
-  if (!fields.relation) errors.relation = "Relation with student is required";
+  if (!fields.relation) errors.relation = " Relationship to Student is required";
   // The (selected relation's) mobile number is mandatory.
   if (!fields.contactNumber) {
     errors.contactNumber = "Mobile Number is required";

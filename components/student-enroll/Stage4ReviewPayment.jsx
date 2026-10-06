@@ -821,7 +821,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
             ) : (
               <>
                 <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{relationNoun} Name</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{fullName(parent)}</dd></div>
-                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Relation with student</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{parent?.relationshipName}</dd></div>
+                <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500"> Relationship to Student</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{parent?.relationshipName}</dd></div>
                 <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">{relationNoun} Mobile Number</dt><dd className="text-right font-bold text-slate-900 md:font-medium">{phoneLine(parent)}</dd></div>
                 {otherRelation && (
                   <>

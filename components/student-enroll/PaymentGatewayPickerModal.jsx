@@ -311,7 +311,7 @@ function GatewayActions({ option, details, busy, onPay, onClose }) {
   // "Pay USD 4,550": the base-currency (USD) amount from the "Payment Amount" card, not the converted local
   // one — payAmount in currencyConversion.base. Whole amounts show no decimals.
   const payAmount = Number(details?.payAmount) || 0;
-  const payCurrency = details?.currencyConversion?.base || "USD";
+  const payCurrency = "$";
   const payAmountLabel = payAmount.toLocaleString("en-US", {
     minimumFractionDigits: Number.isInteger(payAmount) ? 0 : 2,
     maximumFractionDigits: 2,
