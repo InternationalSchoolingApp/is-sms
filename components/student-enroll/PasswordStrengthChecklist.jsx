@@ -47,7 +47,7 @@ function RuleRow({ passed, label, untouched = false }) {
       ) : (
         <X className="h-3.5 w-3.5 shrink-0 text-red-500" />
       )}
-      <span className={passed ? "text-emerald-700" : "text-red-600"}>{label}</span>
+      <span className={passed ? "text-emerald-900" : "text-red-600"}>{label}</span>
     </li>
   );
 }

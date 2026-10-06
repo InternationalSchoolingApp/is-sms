@@ -744,7 +744,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       {notice && (
         <p
           role={notice.tone === "error" ? "alert" : "status"}
-          className={`mt-4 text-sm font-semibold ${notice.tone === "error" ? "text-red-600" : notice.tone === "success" ? "text-emerald-700" : "text-slate-600"}`}
+          className={`mt-4 text-sm font-semibold ${notice.tone === "error" ? "text-red-600" : notice.tone === "success" ? "text-emerald-900" : "text-slate-600"}`}
         >
           {notice.text}
         </p>

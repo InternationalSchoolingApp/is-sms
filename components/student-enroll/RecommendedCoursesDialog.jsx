@@ -88,9 +88,9 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
                       </span>
                       <div className="inline-flex flex-col">
                           <span className="flex-1 font-bold text-black-900">{course.subjectName}</span>
-                          <span className="shrink-0 text-xs text-slate-500">{course.subjectCredit} Credit</span>
+                          {/* <span className="shrink-0 text-xs text-slate-500">{course.subjectCredit} Credit</span> */}
                         </div>
-                      <span className="shrink-0 rounded-md bg-emerald-50 px-2 py-1 text-center text-xs font-semibold text-emerald-700 ml-auto">
+                      <span className="shrink-0 rounded-md bg-emerald-50 px-2 py-1 text-center text-xs font-semibold text-emerald ml-auto">
                         Mandatory
                       </span>
                     </li>
@@ -118,7 +118,7 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
                         </span>
                         <div className="inline-flex flex-col">
                           <span className="flex-1 font-bold text-black-900">{course.subjectName}</span>
-                          <span className="shrink-0 text-xs text-slate-500">{course.subjectCredit} Credit</span>
+                          {/* <span className="shrink-0 text-xs text-slate-500">{course.subjectCredit} Credit</span> */}
                         </div>
                         <Checkbox className="ml-auto" checked={selected} onCheckedChange={() => toggle(id)} />
                       </li>

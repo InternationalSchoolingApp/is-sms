@@ -26,6 +26,7 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { ConfirmDialog } from "@/components/student-enroll/ConfirmDialog";
 import { RecommendedCoursesDialog } from "@/components/student-enroll/RecommendedCoursesDialog";
@@ -228,7 +229,7 @@ function VariantToggle({ course, target, onToggle, disabled }) {
         }`}
       >
         <span className="h-4 w-4 shrink-0 rounded-full bg-white shadow" />
-        <span className="px-1 text-xs font-medium leading-none">{label}</span>
+        <span className="px-1 text-xs font-medium leading-none text-black">{label}</span>
       </button>
     </div>
   );
@@ -293,7 +294,7 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-900">{subject.subjectName}</p>
-                  {!hidesCourseCredits(data.standardId) && <p className="text-xs text-slate-500">{subject.subjectCredit} Credit</p>}
+                  {/* {!hidesCourseCredits(data.standardId) && <p className="text-xs text-slate-500">{subject.subjectCredit} Credit</p>} */}
                   {data.showCourseFee === "Y" && (
                     <p className="text-xs font-semibold text-slate-900">{subject.subjectPriceString}</p>
                   )}
@@ -764,6 +765,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   const selectedCourseCount = selectedCourses.length;
   const courseCountTarget = Number(data.maxCourseLimit) || 6;
   const displayCourseCountTarget = Math.max(courseCountTarget, selectedCourseCount);
+  const remainingCourses = Math.max(0, (Number(data.minCourseLimit) || 0) - selectedCourseCount);
 
   // Display-only filter — matches a category by its own name, or by any of
   // its subjects' names, and only affects what's rendered in the "Choose
@@ -808,19 +810,16 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         )}
 
         {(showCreditSummary || showCourseCountSummary) && (
-          <div className="flex items-center justify-between px-1">
-            <span className="inline-flex items-center gap-1.5 text-sm md:text-xs text-slate-900">
-              You need to select
-            </span>
-            <span className="text-sm font-bold text-slate-900">
-              at least {data.minCourseLimit} courses
+          <div className="flex items-center justify-center px-1">
+            <span className="inline-flex items-center font-bold mb-2 gap-1.5 text-sm md:text-xs text-slate-900">
+              You need to select at least {data.minCourseLimit} courses
             </span>
           </div>
         )}
 
         {!fixed && !batchOrProvider39 && gradeBand !== "elementary" && (
           <div className="rounded-lg bg-[#e6f3ff] px-3 py-2 md:hidden">
-            <p className="text-sm font-bold text-slate-900">Selection Summary</p>
+            <p className="text-sm font-bold text-slate-900 text-center">Selection Summary</p>
             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
               {summaryBuckets.map((bucket) => (
                 <span key={bucket.label} className="inline-flex items-center gap-1 text-slate-900">
@@ -957,12 +956,12 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 return (
                   <li key={course.courseId} className="flex flex-col gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 shadow-sm sm:flex-row sm:flex-wrap sm:items-center md:rounded-none md:border-0 md:bg-transparent md:p-0 md:px-4 md:py-3 md:shadow-none">
                     <div className="flex min-w-0 flex-1 items-start gap-3">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
+                      {/* <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
                         <CourseIcon className="h-4 w-4" />
-                      </span>
+                      </span> */}
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-slate-900">{course.courseName}</p>
-                        {showCourseCredits && <p className="text-xs text-slate-500">{course.creditScore} Credit</p>}
+                        {/* {showCourseCredits && <p className="text-xs text-slate-500">{course.creditScore} Credit</p>} */}
                         <CourseSummaryLink url={course.courseDescriptionUrl} />
                       </div>
                       {!fixed && course.courseMandatory === 0 && (
@@ -977,7 +976,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                         </button>
                       )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 pl-12 sm:pl-0">
+                    <div className="flex flex-wrap items-center gap-2 sm:pl-0">
                       {singleUpgradeTarget ? (
                         <VariantToggle course={course} target={singleUpgradeTarget} onToggle={upgrade} disabled={busy} />
                       ) : (
@@ -997,7 +996,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                         ))
                       )}
                       {!fixed && course.courseMandatory === 1 && !batchOrProvider39 && (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-100 px-2 py-1 text-xs font-semibold text-emerald">
                           <Lock className="h-3 w-3" /> Mandatory
                         </span>
                       )}
@@ -1024,7 +1023,18 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           <section className="self-start overflow-hidden rounded-xl border border-slate-200 bg-white">
             {/* Desktop/tablet header: title + search + recommended button inline. */}
             <header className="hidden flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 md:flex">
-              <h2 className="text-sm font-bold text-slate-900">{data.totalCredit >= data.maxCourseLimit ? 'Select Extra Courses':'Select Courses'}</h2>
+              <div>
+                <h2 className="text-sm font-bold text-slate-900">
+                  {data.totalCredit >= data.maxCourseLimit
+                    ? "Select Extra Courses"
+                    : "Select Courses"}
+
+                  <span className="text-primary">{data.totalCredit >= data.maxCourseLimit ? ``: ` · select minimum ${remainingCourses} more`}</span>
+                </h2>
+                {(showCreditSummary || showCourseCountSummary) && remainingCourses > 0 && (
+                  <p className="text-xs font-medium text-primary"></p>
+                )}
+              </div>
               <div className="flex flex-1 items-center gap-3 md:flex-none">
                 <div className="relative flex-1 md:w-56 md:flex-none">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -1047,7 +1057,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 is full-width instead, and there's no search box (matches the
                 reference mobile design). */}
             <div className="border-b border-slate-200 px-4 py-3 md:hidden">
-              <h2 className="text-sm font-bold text-slate-900">{data.totalCredit >= data.maxCourseLimit ? 'Select Extra Courses':'Select Courses'}</h2>
+              <h2 className="text-sm font-bold text-slate-900">{data.totalCredit >= data.maxCourseLimit ? 'Select Extra Courses':'Select Courses'} <span className="text-primary">{(showCreditSummary || showCourseCountSummary) && remainingCourses > 0 && data.totalCredit >= data.maxCourseLimit ? ``: ` · select minimum ${remainingCourses} more`}</span></h2>
             </div>
             {data.eligibleForRecommendedCourse && (
               <div className="px-4 pt-4 md:hidden">
@@ -1079,7 +1089,12 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                             }`}
                           >
                             <CategoryIcon className="h-4 w-4 shrink-0" />
-                            <span className="min-w-0 flex-1 truncate">{course.courseName}</span>
+                            <Tooltip>
+                              <TooltipTrigger delay={100} render={<span className="min-w-0 flex-1 truncate text-left" />}>
+                                {course.courseName}
+                              </TooltipTrigger>
+                              <TooltipContent>{course.courseName}</TooltipContent>
+                            </Tooltip>
                             <span
                               title={`${course.subjects.length} course${course.subjects.length === 1 ? "" : "s"} available`}
                               aria-label={`${course.subjects.length} course${course.subjects.length === 1 ? "" : "s"} available`}
@@ -1132,7 +1147,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                                     {data.showCourseFee === "Y" && (
                                       <p className="font-semibold text-slate-900">{subject.subjectPriceString}</p>
                                     )}
-                                    <p>{subject.subjectCredit} credit</p>
+                                    {/* <p>{subject.subjectCredit} credit</p> */}
                                   </div>
                                 )}
                                 <Button type="button" size="sm" onClick={() => addSubject(activeCourse, subject)} disabled={busy} className="rounded-md bg-primary hover:bg-primary/90">
@@ -1160,9 +1175,9 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
                             <CategoryIcon className="h-4 w-4" />
                           </span>
-                          <span className="min-w-0 flex-1 truncate">{course.courseName}</span>
-                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-[11px] font-semibold text-slate-700">
-                            {course.subjects.length}
+                          <span className="min-w-0 flex-1 truncate text-black">{course.courseName}</span>
+                          <span className="flex px-2  shrink-0 items-center justify-center rounded-full border border-black-300 bg-white text-[11px] font-semibold text-black">
+                            {course.subjects.length} {course.subjects.length>1?'Courses':'Course'}
                           </span>
                         </button>
                       </li>
