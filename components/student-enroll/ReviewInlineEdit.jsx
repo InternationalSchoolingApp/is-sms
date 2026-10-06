@@ -12,6 +12,7 @@ import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { PhoneNumberField } from "@/components/student-enroll/PhoneNumberField";
 import { Req } from "@/components/common/Req";
+import { RequiredAsterisk } from "@/components/common/RequiredAsterisk";
 import { CURRENT_GRADE_OPTIONS, GENDER_OPTIONS } from "@/components/student-enroll/Stage1StudentDetails";
 import { ParentRelationFields, WORKING_PROFESSION_OPTIONS } from "@/components/student-enroll/Stage2ParentDetails";
 import {
@@ -423,7 +424,7 @@ export function ParentInlineEdit({ context, userId, parent, title = "Parent/Guar
 
         {/* Shown for every variant, like getParentDetailsContent() */}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-        <h3 className="text-base font-bold text-slate-900">Preferred Contact Method<span className="relative top-1 text-red-500"> *</span></h3>
+        <h3 className="text-base font-bold text-slate-900">Preferred Contact Method <RequiredAsterisk /></h3>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
           <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
             <IoLogoWhatsapp className="h-4 w-4 text-emerald-600" /> WhatsApp

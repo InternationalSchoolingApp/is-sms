@@ -11,6 +11,7 @@ import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { PhoneNumberField } from "@/components/student-enroll/PhoneNumberField";
 import { Req } from "@/components/common/Req";
+import { RequiredAsterisk } from "@/components/common/RequiredAsterisk";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { useCountryOptions, useStateOptions, useCityOptions } from "@/hooks/useStudentDetailsSignup";
 import { useParentDetailsSignup } from "@/hooks/useParentDetailsSignup";
@@ -458,7 +459,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
       {/* getParentDetailsContent() appends this after every variant (Communication Details,
           Academic & Communication Details, Parent | Guardian Details). */}
       <div className="mt-8 flex flex-col items-center gap-3 text-center">
-        <h3 className="text-base font-bold text-slate-900">Preferred Contact Method<span className="relative top-1 text-red-500"> *</span></h3>
+        <h3 className="text-base font-bold text-slate-900">Preferred Contact Method <RequiredAsterisk /></h3>
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
           <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
             <IoLogoWhatsapp className="h-4 w-4 text-emerald-600" />

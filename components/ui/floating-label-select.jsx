@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Check, ChevronDown, Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { RequiredAsterisk } from "@/components/common/RequiredAsterisk";
 
 /**
  * Select/dropdown counterpart to FloatingLabelInput — same visual language
@@ -50,7 +51,7 @@ function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, 
             style={floated ? undefined : { maxWidth: Icon ? "calc(100% - 5rem)" : "calc(100% - 3.5rem)" }}
           >
             {label}
-            {required && <span className="ml-1 text-red-500">*</span>}
+            {required && <RequiredAsterisk className="ml-1" />}
           </label>
         )}
         <Select className="" value={value} onValueChange={onValueChange} onOpenChange={setOpen} disabled={disabled}>
@@ -118,7 +119,7 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
             style={floated ? undefined : { maxWidth: Icon ? "calc(100% - 5rem)" : "calc(100% - 3.5rem)" }}
           >
             {label}
-            {required && <span className="ml-1 text-red-500">*</span>}
+            {required && <RequiredAsterisk className="ml-1" />}
           </label>
         )}
         <Popover open={open} onOpenChange={handleOpenChange}>

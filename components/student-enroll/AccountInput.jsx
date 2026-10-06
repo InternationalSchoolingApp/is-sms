@@ -1,5 +1,7 @@
 "use client";
 
+import { RequiredAsterisk } from "@/components/common/RequiredAsterisk";
+
 /**
  * Presentational input for the Account Creation card.
  *
@@ -72,7 +74,7 @@ export function AccountInput({
             }`}
           >
             {label}
-            {required && <span className="ml-1 text-red-500">*</span>}
+            {required && <RequiredAsterisk className="ml-1" />}
           </label>
         )}
 
