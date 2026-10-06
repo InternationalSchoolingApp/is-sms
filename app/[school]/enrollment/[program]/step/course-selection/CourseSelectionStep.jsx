@@ -10,16 +10,6 @@ import { useWizardResume } from "@/hooks/useWizardResume";
 import { loadWizardStudentFields } from "@/utils/wizardStorage";
 import { stepPath } from "@/utils/wizardSteps";
 
-/**
- * Stage 3 ("Course Selection") step content, rendered inside the shared
- * EnrollmentWizardShell from the step-group layout. Course choices are
- * persisted by the backend on every add/remove, so unlike steps 1 and 2
- * there's nothing of Stage 3's OWN fields to keep in sessionStorage here —
- * but the initial course-details-by-standard-id read still needs Stage 1's
- * saved grade (see Stage3CourseSelection.jsx's doc comment and
- * useCourseSelection.js), so that one field is loaded the same way step 2
- * loads it for its own "same as student" default.
- */
 export function CourseSelectionStep() {
   const router = useRouter();
   const { school, program } = useParams();

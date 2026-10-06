@@ -6,17 +6,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
-/**
- * Recommended-courses picker, mirroring recommendedCourseModalContent() /
- * chooseRecomendedCourse() in the legacy signup JS. Mandatory courses are
- * always included; already-selected ones start checked.
- *
- * On confirm, the recommended selection REPLACES the student's current
- * course selection entirely (matches legacy: it computes a merge with the
- * previous selection, then immediately overwrites that with just the
- * recommended list, dropping any other previously-selected course) — see
- * the warning note in the dialog body.
- */
+
 export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm, busy }) {
   const courses = data?.recommendedCourses || [];
   const isMandatory = (course) => course.courseMandatory === 1;

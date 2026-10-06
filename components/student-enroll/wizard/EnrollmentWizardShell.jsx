@@ -7,20 +7,6 @@ import { Footer } from "@/components/common/Footer";
 import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
 import { getLearningProgramTheme } from "@/utils/learningProgramTheme";
 
-/**
- * Wizard chrome for the post-login enrollment flow (Student profile →
- * Parent information → Course Selection → Review and Payment). Visual
- * design matches the reference screenshot: a slim white top bar (logo +
- * Log Out), a centered program title + horizontal icon-step row below it,
- * then a single centered white card holding the step's own content.
- *
- * Below md the top bar becomes a plain header on the page background (favicon, centered title and
- * subtitle, round log-out button) and the step row drops its labels and shows check marks.
- *
- * `context` is only read for `context.learningProgram` (via
- * getLearningProgramTheme) to resolve the title text — every other prop is
- * unchanged from before this redesign, so no step page's data flow changes.
- */
 const STEPS = [
   { key: "student", label: "Student profile", icon: User },
   { key: "parent", label: "Parent information", icon: Users },

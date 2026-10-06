@@ -361,33 +361,6 @@ function Stage3Skeleton({ header }) {
   );
 }
 
-/**
- * Stage 3 of the enrollment wizard ("Course Selection"). Mirrors
- * getAllCourseDetails()/addCourse()/removeCourse() in signupStudentStage3.js
- * and getCourseSelectionContent() in signupStudentContent.js: every change
- * re-posts the full selection to course-details-by-standard-id, which
- * persists it and returns the recomputed page. Continuing saves a payment
- * plan (see useProceedToReview) so the next step is the review page.
- *
- * Visual design (summary bar with credit ring/legend, category sidebar +
- * detail pane for available courses, Regular/Honors toggle) matches the
- * reference screenshots — see categoryIcon/summarizeSelection/
- * CreditProgressRing/VariantToggle above for what's presentational-only vs.
- * the untouched business logic below (add/remove/upgrade/recommended/
- * change-grade/proceed all call the exact same hooks/handlers as before).
- *
- * Not built here yet: the ONE_TO_ONE_FLEX grade switcher and the
- * enrollment-documents gate (legacy lets the student skip that one, so
- * proceeding without it matches the skip path). The change-grade modal
- * (changeSelectedGrade()/saveSelectedGradeAndDob() in signupStudentStage3.js)
- * is built — see ChangeGradeDialog and handleGradeChange below.
- *
- * `standardId` is Stage 1's saved grade (see app/step/3/page.jsx) — the
- * initial course-details-by-standard-id read must carry it (confirmed
- * against a real captured legacy-app payload; see useCourseSelection.js's
- * doc comment) or the backend's grade/fee mapping lookup has nothing to key
- * on and the call fails with a generic error.
- */
 export function Stage3CourseSelection({ context, userId, standardId: initialStandardId, onNext, onBack, onSessionExpired, inReview = false }) {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
@@ -732,7 +705,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     <>
       {/* Program name is now shown by EnrollmentWizardShell's own hero above this card. */}
       <h2 className="text-center text-2xl font-bold text-slate-900">
-        <span className="inline">Course selection</span>
+        <span className="inline">Course Selection</span>
       </h2>
     </>
   );
@@ -833,7 +806,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
         {(showCreditSummary || showCourseCountSummary) && (
           <div className="flex items-center justify-between px-1">
-            <span className="inline-flex items-center gap-1.5 text-sm md:text-xs text-slate-500">
+            <span className="inline-flex items-center gap-1.5 text-sm md:text-xs text-slate-900">
               You need to select
             </span>
             <span className="text-sm font-bold text-slate-900">
@@ -887,7 +860,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             
             <div>
               <div className="flex">
-                <p className="text-xs text-slate-500">You need to select</p>
+                <p className="text-xs text-slate-900">You need to select</p>
               </div>
               <p className="text-sm font-bold text-slate-900">
                 at least {data.minCourseLimit} courses
@@ -972,7 +945,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               )}
             </div>
           </header>
-          {selectedCourses.length === 0 && <p className="px-4 py-6 text-sm text-slate-500">{selectedSummary(data)}</p>}
+          {selectedCourses.length === 0 && <p className="px-4 py-6 text-sm text-slate-900">{selectedSummary(data)}</p>}
           {selectedCourses.length > 0 && (
             <ol className="space-y-2 p-3 md:space-y-0 md:divide-y md:divide-slate-100 md:p-0">
               {selectedCourses.map((course) => {
