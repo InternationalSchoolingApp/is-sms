@@ -1062,7 +1062,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 </div>
                 {data.eligibleForRecommendedCourse && (
                   <Button type="button" size="sm" onClick={openRecommended} disabled={busy} className="shrink-0 rounded-md bg-primary hover:bg-primary/90">
-                    <Plus className="h-4 w-4" /> View our recommendations
+                    <Plus className="h-4 w-4" /> View Our Recommendations
                   </Button>
                 )}
               </div>
@@ -1076,7 +1076,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             {data.eligibleForRecommendedCourse && (
               <div className="px-4 pt-4 md:hidden">
                 <Button type="button" onClick={openRecommended} disabled={busy} className="w-full rounded-md bg-primary hover:bg-primary/90">
-                  <Plus className="h-4 w-4" /> View our recommendations
+                  <Plus className="h-4 w-4" /> View Our Recommendations
                 </Button>
               </div>
             )}
