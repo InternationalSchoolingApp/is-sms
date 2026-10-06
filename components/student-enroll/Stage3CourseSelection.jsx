@@ -538,8 +538,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           <>
             {!extraFeeNoticeShownRef.current && (
               <p>
-                You have selected {selectedCount} course{selectedCount === 1 ? "" : "s"} worth {data.totalCredit}{" "}
-                credit{Number(data.totalCredit) === 1 ? "" : "s"}. Selecting more than {selectedCount} course
+                You have selected {selectedCount} course{selectedCount === 1 ? "" : "s"}. Selecting more than {selectedCount} course
                 {selectedCount === 1 ? "" : "s"} will have extra fees.
               </p>
             )}
