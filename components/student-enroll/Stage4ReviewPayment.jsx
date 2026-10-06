@@ -728,7 +728,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       ? "Academic & Communication Details"
       : student?.courseProviderId === 39
         ? "Communication Details"
-        : "Parent/Guardian Details";
+        : "Parent|Guardian Details";
   // parentDetailsPreview(): rows are titled after the relation ("Father's Name"); Father / Mother also list
   // the other parent, which the review response does not carry, so it comes from the client-side cache.
   const relationNoun = relationPossessive(parent?.relationship) || parent?.relationship || "Parent/Guardian";
@@ -885,7 +885,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         {showFee && (
           <div>
             <hr className="mb-4 border-slate-200 md:hidden" />
-            <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-center text-lg font-semibold text-slate-900 md:text-left">
               {data.customPaymentEnabled ? data.feeSetionTitile || "Fee Payment" : "Select Payment Option"}
             </h2>
             <div className="mt-3">

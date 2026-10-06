@@ -143,7 +143,7 @@ function CommonRows({ fee, standardId, isFlexOrDual }) {
         <td className={`${TD} ${RIGHT}`}>{courseFee}</td>
       </tr>
       {fee.courseExtraFeeDetails?.totalEntityFee > 0 && (
-        <BreakdownRow title="Extra Course Fee" totalLabel="Total Extra Course Fee" details={fee.courseExtraFeeDetails} sign="+" />
+        <BreakdownRow title="Extra Course Fee" totalLabel="Total" details={fee.courseExtraFeeDetails} sign="+" />
       )}
       {fee.courseMaterialFeeDetails?.totalEntityFee > 0 && (
         <BreakdownRow title="External Material Fee" totalLabel="Total External Material Fee" details={fee.courseMaterialFeeDetails} sign="+" />

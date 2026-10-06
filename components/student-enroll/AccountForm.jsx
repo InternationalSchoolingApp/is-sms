@@ -75,7 +75,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
   const signup = useAccountSignup({ mode: "online", context });
 
   // callLocationAndSelectCountryNew(): the signup page fills its hidden #location input with the payer's
-  // location (LOCATION_SERVICE_BYPASS ? DEFAULT_LOCATION : the location from constant/LocationConstant.js) and
+  // location (LOCATION_SERVICE_BYPASS ? DEFAULT_LOCATION : the /api/v1/ip-location lookup) and
   // sends it with stage-1. Same here: capture it on load and keep it in the hidden `location` field below.
   useEffect(() => {
     let cancelled = false;
@@ -85,7 +85,6 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
       .then(() => {
         if (cancelled) return;
         const captured = getLocationValue();
-        console.log("Captured location:", captured);
         setFields((prev) => ({ ...prev, location: captured || "{}" }));
       })
       .catch((err) => console.error("Location capture failed:", err));

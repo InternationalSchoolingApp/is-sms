@@ -350,7 +350,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
       ? "Communication Details"
       : isOneToOneFlex
         ? "Academic & Communication Details"
-        : "Parent/Guardian Details";
+        : "Parent|Guardian Details";
 
   const locationDisabled = fields.sameAsStudent;
 
@@ -409,7 +409,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
                   label={
                     <>
                       Country{" "}
-                      <span className="text-black">(Parent's Current Location)</span>
+                      <span className="text-black">(Parent&apos;s Current Location)</span>
                     </>
                   }
                   required

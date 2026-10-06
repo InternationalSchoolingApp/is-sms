@@ -370,7 +370,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
                 label={
                   <>
                     Country{" "}
-                    <span className="text-black text-[12px]">(Student's Current Location)</span>
+                    <span className="text-black text-[12px]">(Student&apos;s Current Location)</span>
                   </>
                 }
                 required

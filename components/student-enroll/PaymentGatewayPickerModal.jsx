@@ -88,7 +88,7 @@ function CurrencyCard({ details, payerCountryCode }) {
   return (
     <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
       <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-        <Info className="h-4 w-4" /> Payment Amount
+        <Info className="h-4 w-4" /> Payable Amount
       </div>
       <div className="mt-3 flex flex-col gap-4 md:flex-row md:items-center">
         {/* Both amount boxes share the row equally below md (min-w-0 lets them shrink instead of the text
@@ -440,11 +440,6 @@ export function PaymentGatewayPickerModal({
   const [activeIndex, setActiveIndex] = useState(0);
   const options = details?.paymentOptions || [];
   const active = options[Math.min(activeIndex, Math.max(options.length - 1, 0))];
-  const subHeading =
-    Number(schoolNumericId) === 1
-      ? "Powered by trusted global payment gateways for a secure and seamless experience."
-      : `${details?.schoolNameOfPaymentGateway || schoolName || "Our school"} is trusted by the safest and most reputed payment gateway and bank`;
-
   return (
     <Dialog open={open} onOpenChange={(next) => !busy && onOpenChange(next)}>
       <DialogContent
@@ -458,7 +453,6 @@ export function PaymentGatewayPickerModal({
           <aside className="overflow-y-auto border-b border-slate-200 bg-white p-5 md:border-r md:border-b-0">
             <div className="md:hidden">
               <h3 className="text-xl font-extrabold text-slate-900">Select Your Payment Method</h3>
-              <p className="mt-1 text-sm text-slate-500">{subHeading}</p>
             </div>
             <ul className="mt-4 space-y-3 md:mt-0" role="tablist">
               {options.map((option, index) => {
@@ -505,7 +499,6 @@ export function PaymentGatewayPickerModal({
             <div className="flex-1 overflow-y-auto p-5 sm:p-6">
               <div className="hidden md:block">
                 <h3 className="text-2xl font-extrabold text-slate-900">Select Your Payment Method</h3>
-                <p className="mt-2 text-slate-600">{subHeading}</p>
               </div>
               {details?.paymentLabel && (
                 <p className="mt-5 text-lg font-semibold text-slate-800">

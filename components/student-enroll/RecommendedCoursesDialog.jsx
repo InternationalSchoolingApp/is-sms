@@ -129,7 +129,7 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
             )}
           </div>   
           <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs border border-amber-400 text-black-900 mt-2">
-            <strong>Note:</strong> Adding these will replace the courses you've already selected. You can still change them afterwards.
+            <strong>Note:</strong> Adding these will replace the courses you&apos;ve already selected. You can still change them afterwards.
           </p>
         </div>
         <DialogFooter className="mx-0 mb-0 shrink-0 border-t bg-white px-4 py-3 sm:justify-center">
