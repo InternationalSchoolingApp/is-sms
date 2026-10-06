@@ -27,9 +27,9 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
           <button
             type="button"
             onClick={() => setConfirmLogout(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-2 py-1.5 cursor-pointer text-sm font-semibold text-white hover:bg-slate-800"
+            className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-2 py-1.5 cursor-pointer text-sm font-semibold text-white hover:bg-red-700 duration-150"
           >
-            <LogOut className="h-4 w-4" /> Log Out
+            <LogOut className="h-4 w-4 stroke-3" /> Log Off
           </button>
         </div>
       </header>
@@ -61,9 +61,9 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
             type="button"
             aria-label="Log Out"
             onClick={() => setConfirmLogout(true)}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white hover:bg-slate-800"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700"
           >
-            <LogOut className="h-4 w-4" aria-hidden="true" />
+            <LogOut className="h-4 w-4 stroke-3" aria-hidden="true" />
           </button>
         </header>
 
