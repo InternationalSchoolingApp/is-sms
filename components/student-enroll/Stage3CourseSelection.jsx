@@ -589,6 +589,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   }
 
   async function upgrade(course, target) {
+    debugger
     if (busy) return;
     if (target.warningMessage && showPaymentOption === "Y") {
       const variant = target.courseType === "ADV" ? "Advanced" : "Honors";
@@ -623,14 +624,27 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       const currentType = String(course.courseTypeOriginal || "").toUpperCase();
       const targetType = String(target.courseType || "").toUpperCase();
       const subjectName = stripVariantSuffix(course.courseName);
-      const variantSuffix = currentType === "REGULAR"
-        ? /ADV|ADVANCED/.test(targetType)
-          ? " Advanced"
-          : /HON|HONORS/.test(targetType)
-            ? " Honors"
-            : ""
-        : "";
-      toast.success(`${subjectName}${variantSuffix} added`);
+      // const variantSuffix = currentType === "REGULAR" ? /ADV|ADVANCED/.test(targetType) ? " Advanced" : /HON|HONORS/.test(targetType) ? " Honors" : "" : "";
+      const variantSuffix = (() => {
+        if (currentType === "REGULAR") {
+          if (/ADV|ADVANCED/.test(targetType)) {
+            return " Advanced";
+          } else if (/HON|HONORS/.test(targetType)) {
+            return " Honors";
+          }
+        }else if(currentType == "HONORS" || currentType == "ADVANCED"){
+          if (/FT|REGULAR/.test(targetType)) {
+            return " Regular";
+          }
+        }else{
+          return "";
+        }
+      })();
+      if (/FT|REGULAR/.test(targetType)) {
+        toast.success(`Switched back to ${subjectName}`);
+      }else{
+        toast.success(`${subjectName}${variantSuffix} added`);
+      }
     }
   }
 
@@ -824,76 +838,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white px-4 py-2 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       {header}
 
-      {/* Mobile-only: plain "Credits Requirement" banner from the mobile
-          reference design — no card border, no progress ring, no Selection
-          Summary legend. */}
-      <div className="mt-4 space-y-2 md:hidden">
-        {(showCreditSummary || showCourseCountSummary) && (
-          <div className="rounded-2xl bg-primary px-4 py-3.5 text-white">
-            <div className="flex items-center justify-between gap-3">
-              {courseMinMet ? (
-                <span className="inline-flex items-center gap-2 text-sm font-bold">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-400">
-                    <Check className="h-3 w-3 text-primary" strokeWidth={3} />
-                  </span>
-                  {selectedCourseCount} courses selected
-                </span>
-              ) : (
-                <span className="text-sm font-bold">Select at least {minCourseCount} courses</span>
-              )}
-              {canRemoveAll && (
-                <button
-                  type="button"
-                  onClick={removeAll}
-                  disabled={busy}
-                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/20 text-white hover:bg-white/30 disabled:opacity-60 ${
-                    courseMinMet ? "px-3 py-0.5" : "px-3 py-1.5 text-xs font-semibold"
-                  }`}
-                  aria-label="Remove all courses"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  All
-                  {/* {!courseMinMet && "Clear all"} */}
-                </button>
-              )}
-            </div>
-
-            <div className="mt-2.5 flex gap-1">
-              {Array.from({ length: courseProgressSegments }).map((_, index) => (
-                <span
-                  key={index}
-                  className={`h-1.5 flex-1 rounded-full ${
-                    index >= selectedCourseCount
-                      ? "bg-white/30"
-                      : index < minCourseCount
-                      ? courseMinMet
-                        ? "bg-emerald-400"
-                        : "bg-white"
-                      : "bg-orange-400"
-                  }`}
-                />
-              ))}
-            </div>
-
-            {!courseMinMet ? (
-              <div className="mt-2.5 flex items-center justify-between gap-3">
-                <span className="text-xs font-medium text-white/90">{selectedCourseCount} selected</span>
-                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-primary">{remainingCourses} more needed</span>
-              </div>
-            ) : extraCourseCount > 0 ? (
-              <p className="mt-2 text-xs font-medium text-white/90">
-                Min {data.minCourseLimit} selected · {extraCourseCount} extra course{extraCourseCount === 1 ? "" : "s"}
-              </p>
-            ) : null}
-          </div>
-        )}
-
-        {/* {showMinBanner && !showCreditSummary && (
-          <span className="inline-block rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-800">
-            You need a minimum of {data.minCourseLimit} credits
-          </span>
-        )} */}
-      </div>
+      
 
       {/* Desktop/tablet: the full summary card (grade chip, credits
           requirement, progress ring, Selection Summary legend) — untouched. */}
@@ -980,14 +925,14 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           </div>
         )}
 
-      <div className={`mt-4 grid gap-6 ${showAvailable ? "lg:grid-cols-[1fr_1.6fr]" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
+      <div className={`mt-2 grid gap-6 ${showAvailable ? "lg:grid-cols-[1fr_1.6fr]" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
         <section className="self-start overflow-hidden rounded-xl border border-slate-200 bg-white">
           <header className={`items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 ${(showCreditSummary || showCourseCountSummary) ? "hidden md:flex" : "flex"}`}>
             <h2 className="text-sm font-bold text-black">
               {showCourseCountSummary || showCourseCredits ? (
                 <>
-                  <span className="md:hidden">Your Selected Courses: <span className="text-primary">{selectedCourseCount}/{displayCourseCountTarget} courses</span></span>
-                  <span className="hidden md:inline">Your Selected Courses</span>
+                  <span className="md:hidden">Selected Courses: <span className="text-primary">{selectedCourseCount}/{displayCourseCountTarget} courses</span></span>
+                  <span className="hidden md:inline">Selected Courses</span>
                 </>
               ) : "Your Selected Courses"}
             </h2>
@@ -1005,6 +950,76 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               )}
             </div>
           </header>
+          {/* Mobile-only: plain "Credits Requirement" banner from the mobile
+          reference design — no card border, no progress ring, no Selection
+          Summary legend. */}
+          <div className="mt-0 space-y-2 md:hidden">
+            {(showCreditSummary || showCourseCountSummary) && (
+              <div className="rounded rounded-bl-none rounded-br-none bg-primary px-4 py-3.5 text-white">
+                <div className="flex items-center justify-between gap-3">
+                  {courseMinMet ? (
+                    <span className="inline-flex items-center gap-2 text-sm font-bold">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-400">
+                        <Check className="h-3 w-3 text-primary" strokeWidth={3} />
+                      </span>
+                      {selectedCourseCount} courses selected
+                    </span>
+                  ) : (
+                    <span className="text-sm font-bold">Select at least {minCourseCount} courses</span>
+                  )}
+                  {canRemoveAll && (
+                    <button
+                      type="button"
+                      onClick={removeAll}
+                      disabled={busy}
+                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/20 text-white hover:bg-white/30 disabled:opacity-60 ${
+                        courseMinMet ? "px-3 py-0.5" : "px-3 py-1.5 text-xs font-semibold"
+                      }`}
+                      aria-label="Remove all courses"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      All
+                      {/* {!courseMinMet && "Clear all"} */}
+                    </button>
+                  )}
+                </div>
+
+                <div className="mt-2.5 flex gap-1">
+                  {Array.from({ length: courseProgressSegments }).map((_, index) => (
+                    <span
+                      key={index}
+                      className={`h-1.5 flex-1 rounded-full ${
+                        index >= selectedCourseCount
+                          ? "bg-white/30"
+                          : index < minCourseCount
+                          ? courseMinMet
+                            ? "bg-emerald-400"
+                            : "bg-white"
+                          : "bg-orange-400"
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                {!courseMinMet ? (
+                  <div className="mt-2.5 flex items-center justify-between gap-3">
+                    <span className="text-xs font-medium text-white/90">{selectedCourseCount} selected</span>
+                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-primary">{remainingCourses} more needed</span>
+                  </div>
+                ) : extraCourseCount > 0 ? (
+                  <p className="mt-2 text-xs font-medium text-white/90">
+                    Min {data.minCourseLimit} selected · {extraCourseCount} extra course{extraCourseCount === 1 ? "" : "s"}
+                  </p>
+                ) : null}
+              </div>
+            )}
+
+            {/* {showMinBanner && !showCreditSummary && (
+              <span className="inline-block rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-800">
+                You need a minimum of {data.minCourseLimit} credits
+              </span>
+            )} */}
+          </div>
           {selectedCourses.length === 0 && <p className="px-4 py-6 text-sm text-black">{selectedSummary(data)}</p>}
           {selectedCourses.length > 0 && (
             <ol className="space-y-2 p-3 md:space-y-0 md:divide-y md:divide-slate-100 md:p-0">
@@ -1012,7 +1027,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 const CourseIcon = categoryIcon(course.courseName);
                 const singleUpgradeTarget = course.upgradeCourses?.length === 1 ? course.upgradeCourses[0] : null;
                 return (
-                  <li key={course.courseId} className={`flex flex-col ${!fixed && course.courseMandatory === 1 && !batchOrProvider39 ? 'gap-3' : ''} rounded-xl border border-slate-100 bg-blue-50 p-3 shadow-sm sm:flex-row sm:flex-wrap sm:items-center md:rounded-none md:border-0 md:bg-transparent md:p-0 md:px-4 md:py-3 md:shadow-none`}>
+                  <li key={course.courseId} className={`flex flex-col ${!fixed && course.courseMandatory === 1 && !batchOrProvider39 ? 'gap-3' : ''} rounded-md border border-slate-100 bg-blue-50 px-3 py-1.5 shadow-sm sm:flex-row sm:flex-wrap sm:items-center md:rounded-none md:border-0 md:bg-transparent md:p-0 md:px-4 md:py-3 md:shadow-none`}>
                     <div className="flex min-w-0 flex-1 items-center gap-3">
                       {/* <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
                         <CourseIcon className="h-4 w-4" />
@@ -1021,7 +1036,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                         <div className="text-sm inline-flex font-medium text-black">
                           <span> {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}</span> 
 
-                          <div className="flex shrink-0 ml-2 flex-1 items-center mr-auto gap-2 sm:hidden">
+                          <div className="flex shrink-0 ml-2 flex-1 items-center mr-auto gap-2">
                             {singleUpgradeTarget ? (
                               <VariantToggle course={course} target={singleUpgradeTarget} onToggle={upgrade} disabled={busy} />
                             ) : (
@@ -1063,12 +1078,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                       )}
                     </div>
                     <div className="flex flex-wrap items-center gap-2 sm:pl-0">
-                      {!fixed && course.courseMandatory === 1 && !batchOrProvider39 && (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-100 px-2 py-1 text-xs font-semibold text-emerald">
-                          <Lock className="h-3 w-3" /> Mandatory
-                        </span>
-                      )}
-                      <div className="hidden items-center gap-2 sm:flex">
+                      {/* <div className="hidden items-center gap-2">
                         {singleUpgradeTarget ? (
                           <VariantToggle course={course} target={singleUpgradeTarget} onToggle={upgrade} disabled={busy} />
                         ) : (
@@ -1087,8 +1097,12 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                             </Button>
                           ))
                         )}
-                      </div>
-
+                      </div> */}
+                      {!fixed && course.courseMandatory === 1 && !batchOrProvider39 && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-100 px-2 py-1 text-xs font-semibold text-emerald">
+                          <Lock className="h-3 w-3" /> Mandatory
+                        </span>
+                      )}
                       {!fixed && course.courseMandatory === 0 && (
                         <button
                           type="button"
@@ -1146,7 +1160,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 is full-width instead, and there's no search box (matches the
                 reference mobile design). */}
             <div className="border-b border-slate-200 px-4 py-3 md:hidden">
-              <h2 className="text-sm font-bold text-black">{data.totalCredit >= data.maxCourseLimit ? 'Select Extra Courses':'Select Courses'} <span className="text-primary">{(showCreditSummary || showCourseCountSummary) && remainingCourses >= 0 && (  data.totalCredit >= data.maxCourseLimit) ? ``: ` · select minimum ${remainingCourses} more`}</span></h2>
+              <h2 className="text-sm font-bold text-black">{data.totalCredit >= data.maxCourseLimit ? 'Select Extra Courses':'Select Courses'}</h2>
             </div>
             {data.eligibleForRecommendedCourse && (
               <div className="px-4 pt-4 md:hidden">
