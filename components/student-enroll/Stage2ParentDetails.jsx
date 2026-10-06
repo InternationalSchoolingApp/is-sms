@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { User, Briefcase, Mail, MapPin, Map, Building2, Phone as PhoneIcon, GraduationCap, School } from "lucide-react";
 import { IoLogoWhatsapp } from "react-icons/io";
+import { MdFamilyRestroom } from "react-icons/md";
 
 import { Button } from "@/components/ui/button";
 import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
@@ -33,9 +34,9 @@ import {
 // "Other" is commented out on the is-rest-api form too (masterContent.js
 // getRelationshipContent()) -- only these three are actually selectable.
 export const RELATION_OPTIONS = [
-  { value: "Mother", label: "I am a Mother" },
-  { value: "Father", label: "I am a Father" },
-  { value: "Guardian", label: "I am a Guardian" },
+  { value: "Mother", label: "Mother" },
+  { value: "Father", label: "Father" },
+  { value: "Guardian", label: "Guardian" },
 ];
 
 // SS/CS/WP confirmed at SignupUtil.java's display-name mapping
@@ -146,7 +147,7 @@ export function ParentRelationFields({ schoolUUID, userId, fields, setFields, er
     <>
       <div className="mt-8 sm:mx-auto sm:max-w-[420px]">
         <FloatingLabelSelect
-          icon={Briefcase}
+          icon={MdFamilyRestroom}
           label={<Req label="Relationship to student" required />}
           value={fields.relation}
           onValueChange={handleRelationChange}
