@@ -323,7 +323,7 @@ function GatewayActions({ option, details, busy, onPay, onClose }) {
       </Button>
       {!NO_PAY_BUTTON.includes(option.name) && (
         <Button type="button" onClick={() => onPay(option)} disabled={busy} className="gap-2 px-6">
-          {busy ? "Please wait…" : `Pay ${payCurrency} ${payAmountLabel}`} <ArrowRight className="h-4 w-4" />
+          {busy ? "Please wait…" : `Pay ${payCurrency}${payAmountLabel}`} <ArrowRight className="h-4 w-4" />
         </Button>
       )}
     </div>
