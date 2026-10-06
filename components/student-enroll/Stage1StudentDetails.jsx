@@ -256,7 +256,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
         <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-2">
           <FloatingLabelInput
             icon={User}
-            label={<Req label="First Name" required />}
+            label={<Req label="Student First Name" required />}
             value={fields.firstName}
             {...nameFieldProps((v) => setField("firstName", v))}
             error={errors.firstName}
@@ -269,7 +269,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           /> */}
           <FloatingLabelInput
             icon={User}
-            label={<Req label="Last Name" required />}
+            label={<Req label="Student Last Name" required />}
             value={fields.lastName}
             {...nameFieldProps((v) => setField("lastName", v))}
             error={errors.lastName}
@@ -278,7 +278,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
           <FloatingLabelSelect
             icon={GraduationCap}
-            label={<Req label="Grade" required />}
+            label={<Req label="Select Grade" required />}
             value={fields.standardId}
             onValueChange={setGrade}
             options={grades.data || []}
@@ -301,7 +301,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           />
           <FloatingLabelSelect
             icon={VenusAndMars}
-            label={<Req label="Gender" required />}
+            label={<Req label="Select Gender" required />}
             value={fields.gender}
             onValueChange={(v) => setField("gender", v)}
             options={GENDER_OPTIONS}
