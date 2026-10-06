@@ -309,7 +309,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
 
         <AccountInput
           icon={Mail}
-          label="Enter student's Email"
+          label="Enter student's email"
           required
           name="email"
           type="email"
