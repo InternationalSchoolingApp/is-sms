@@ -1107,7 +1107,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                       <div className="flex shrink-0 items-center">
                         {!fixed && course.courseMandatory === 1 && data.registrationType !== "BATCH" && gradeBand !== "elementary" && (
                           <span className="flex h-5 w-5 items-center justify-center rounded bg-[#3fa43c] text-[11px] font-bold text-white">
-                            M
+                            F
                           </span>
                         )}
                         {!fixed && course.courseMandatory === 0 && (
