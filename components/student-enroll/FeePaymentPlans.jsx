@@ -143,7 +143,17 @@ function CommonRows({ fee, standardId, isFlexOrDual }) {
         <td className={`${TD} ${RIGHT}`}>{courseFee}</td>
       </tr>
       {fee.courseExtraFeeDetails?.totalEntityFee > 0 && (
-        <BreakdownRow title="Extra Course Fee" totalLabel="Total" details={fee.courseExtraFeeDetails} sign="+" />
+        <BreakdownRow
+          title="Extra Course Fee"
+          totalLabel="Total"
+          details={{
+            ...fee.courseExtraFeeDetails,
+            description: (fee.courseExtraFeeDetails.description || []).map((desc) =>
+              String(desc).replace(/\s*\(\s*\d+(?:\.\d+)?\s*Credits?\s*\)/gi, ""),
+            ),
+          }}
+          sign="+"
+        />
       )}
       {fee.courseMaterialFeeDetails?.totalEntityFee > 0 && (
         <BreakdownRow title="External Material Fee" totalLabel="Total External Material Fee" details={fee.courseMaterialFeeDetails} sign="+" />
@@ -295,12 +305,12 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVari
               {!chips && (
                 <span
                   aria-hidden="true"
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${checked ? "border-primary" : "border-slate-400"}`}
+                  className={`row-span-2 flex h-7 w-7 items-center justify-center self-center md:h-5 md:w-5 rounded-full border-2 ${checked ? "border-primary" : "border-slate-400"}`}
                 >
-                  {checked && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                  {checked && <span className="h-3.5 w-3.5 rounded-full bg-primary md:h-2.5 md:w-2.5" />}
                 </span>
               )}
-              <span className={`text-center text-[clamp(12px,3.4vw,14px)] text-slate-700 md:text-left md:text-sm ${chips ? "col-span-2" : ""}`}>{option.label}</span>
+              <span className={`text-center text-[clamp(14px,4vw,16px)] text-slate-700 md:text-left md:text-sm ${chips ? "col-span-2" : ""}`}>{option.label}</span>
               <span className={`mt-1 flex items-center justify-center gap-2 md:mt-1 md:justify-start ${chips ? "col-span-2" : "col-start-2"} ${hasChips ? "md:flex-col md:items-start md:gap-1" : ""}`}>
                 <span className="text-[clamp(15px,4.2vw,18px)] font-bold leading-tight text-black md:text-2xl">{amount}</span>
                 {option.badge && (

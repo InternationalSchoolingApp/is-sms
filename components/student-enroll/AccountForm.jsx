@@ -303,13 +303,13 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
 
         <div className="hidden text-center md:block">
           <h2 className="text-sm md:text-lg font-bold leading-tight text-primary md:text-slate-800">
-            Complete your enrollment in just 5 minutes
+            Complete in just 5 minutes
           </h2>
         </div>
 
         <AccountInput
           icon={Mail}
-          label="Enter student's Email"
+          label="Enter student's email"
           required
           name="email"
           type="email"

@@ -33,7 +33,7 @@ export default function RootLayout({ children }) {
             {children}
           </QueryProvider>
           <GlobalLoader />
-          <Toaster position="top-center" />
+          <Toaster position="top-center" containerStyle={{ top: "30vh" }} />
         </AuthSessionProvider>
       </body>
     </html>

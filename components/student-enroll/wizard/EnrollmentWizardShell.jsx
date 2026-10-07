@@ -49,13 +49,13 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
         }}
       />
 
-      <div className="flex-1 bg-[#f2f5fa] px-4 pb-6 md:px-6 md:py-8 md:pb-24 md:pt-[62px]">
+      <div className="flex-1 bg-[#f2f5fa] px-4 pb-28 md:px-6 md:py-8 md:pb-24 md:pt-[62px]">
         <div className="sticky top-0 z-20 -mx-4 bg-[#f2f5fa] px-4 pb-3 max-[579px]:pb-1 md:static md:mx-0 md:bg-transparent md:px-0 md:pb-0">
         <header className="grid grid-cols-[2rem_1fr_2rem] items-center gap-2 px-1 py-4 max-[579px]:py-2 md:hidden">
           <Image src="/images/Fav_Icon.png" alt={schoolName || ""} width={28} height={28} className="h-7 w-auto" unoptimized />
           <div className="text-center">
             {programLabel && <h1 className="text-base font-extrabold leading-tight text-black">{programLabel}</h1>}
-            <p className="mt-0.5 text-[12px] leading-tight text-primary font-semibold">Complete your enrollment in just 5 minutes</p>
+            <p className="mt-0.5 text-[12px] leading-tight text-primary font-semibold">Complete in just 5 minutes</p>
           </div>
           <button
             type="button"
@@ -70,7 +70,7 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
         {programLabel && (
           <div className="hidden text-center md:block">
             <h1 className="text-1.5xl font-extrabold text-black sm:text-2xl">{programLabel}</h1>
-            <p className="mt-1 text-sm text-slate-500">Complete your enrollment in just 5 minutes</p>
+            <p className="mt-1 text-sm text-slate-500">Complete in just 5 minutes</p>
           </div>
         )}
 

@@ -826,7 +826,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
               </>
             ) : (
               <>
-                <ReviewRow label="Relationship to student">{parent?.relationshipName}</ReviewRow>
+                <ReviewRow label="Relationship to Student">{parent?.relationshipName}</ReviewRow>
                 <ReviewRow label={parentLabels.firstName}>{parent?.firstName}</ReviewRow>
                 <ReviewRow label={parentLabels.lastName}>{parent?.lastName}</ReviewRow>
                 <ReviewRow label={parentLabels.mobile}>{phoneLine(parent)}</ReviewRow>
@@ -863,14 +863,13 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-black">
-                  <th className="py-1">Course Name</th>
-                  {/* {!hideCredits && <th className="py-1 text-right">Credit</th>} */}
+                  <th className="py-1">Selected Courses</th>
                 </tr>
               </thead>
               <tbody>
                 {(course?.courseDTO || []).map((c, index) => (
                   <tr key={index} className="border-t border-slate-100">
-                    <td className="py-1">{c.courseName}</td>
+                    <td className="py-1">{index + 1}. {c.courseName}</td>
                     {/* {!hideCredits && <td className="py-1 text-right">{c.creditScore}</td>} */}
                   </tr>
                 ))}
