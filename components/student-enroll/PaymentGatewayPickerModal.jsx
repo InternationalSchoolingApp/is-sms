@@ -317,7 +317,7 @@ function GatewayActions({ option, details, busy, onPay, onClose }) {
     maximumFractionDigits: 2,
   });
   return (
-    <div className="flex items-center justify-end gap-3">
+    <div className="flex items-center justify-center gap-3">
       <Button type="button" variant="outline" onClick={onClose} disabled={busy} className="gap-2">
         <ArrowLeft className="h-4 w-4" /> Back
       </Button>
