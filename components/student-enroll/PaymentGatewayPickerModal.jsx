@@ -87,7 +87,7 @@ function CurrencyCard({ details, payerCountryCode }) {
 
   return (
     <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
-      <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+      <div className="flex items-center justify-center gap-2 text-sm font-semibold text-primary">
         <Info className="h-4 w-4" /> Payable Fee
       </div>
       <div className="mt-3 flex flex-col gap-4 md:flex-row md:items-center">
@@ -118,13 +118,13 @@ function CurrencyCard({ details, payerCountryCode }) {
         </div>
         {/* <div className="hidden h-12 w-px bg-blue-100 md:block" /> */}
         <div className="text-sm ml-2">
-          <div className="flex items-center gap-2 font-semibold text-primary">
+          <div className="flex items-center justify-center gap-2 font-semibold text-primary">
             <ArrowRightLeft className="h-4 w-4" /> Conversion Rate
           </div>
-          <div className="mt-1 font-bold text-black">
+          <div className="mt-1 font-bold text-black text-center">
             1 {conversion.base} = {conversion.rate} {conversion.to}
           </div>
-          <div className="mt-1 flex items-start gap-1 text-xs text-slate-500">
+          <div className="mt-1 flex items-center justify-center gap-1 text-xs text-slate-500">
             <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>
               Exchange rate and fees of your bank may apply{fee > 0 ? ` (includes ${fee}% conversion fee)` : ""}
@@ -453,7 +453,7 @@ export function PaymentGatewayPickerModal({
         <div className="grid flex-1 content-start overflow-y-auto md:grid-cols-[18rem_minmax(0,1fr)] md:content-stretch md:overflow-hidden">
           <aside className="border-b border-slate-200 bg-white p-5 md:overflow-y-auto md:border-r md:border-b-0">
             <div className="md:hidden">
-              <h3 className="text-xl font-extrabold text-black">Select Your Payment Method</h3>
+              <h3 className="text-xl font-extrabold text-black text-center">Select Your Payment Method</h3>
             </div>
             <ul className="mt-4 space-y-3 md:mt-0" role="tablist">
               {options.map((option, index) => {
@@ -476,10 +476,10 @@ export function PaymentGatewayPickerModal({
                       <span className="flex flex-1 flex-col items-center gap-1.5">
                         <span className="text-center text-2xl md:text-[17px]">{option.label}</span>
                         {String(option.name).toUpperCase() === "STRIPE" && (
-                          <span className="flex items-center justify-center gap-1.5">
+                          <span className="flex items-center justify-center gap-1.5 md:hidden">
                             {[["visa.png", "Visa"], ["master-card.png", "Mastercard"], ["american-express.png", "Amex"]].map(([file, alt]) => (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img key={file} src={assetUrl(IMAGES, file)} alt={alt} className="h-7 w-auto rounded-sm bg-white object-contain p-1 md:h-5 md:p-0.5" />
+                              <img key={file} src={assetUrl(IMAGES, file)} alt={alt} className="h-7 w-auto rounded-sm bg-white object-contain p-1" />
                             ))}
                           </span>
                         )}
