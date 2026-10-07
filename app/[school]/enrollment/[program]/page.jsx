@@ -1,4 +1,7 @@
 import { AccountCreationForm } from "./AccountCreationForm";
+import { redirect } from "next/navigation";
+import { isEnrollmentViaNextjs } from "@/services/studentSignupApi";
+import { legacyEnrollmentSignupUrl } from "@/utils/backendOrigin";
 // Public account-creation page at /{school}/enrollment/{program}. This runs
 // BEFORE any login, so there's no session yet — schoolUUID comes from the
 // {school} path segment and the public bootstrap fetch is driven client-side
@@ -23,13 +26,26 @@ function  searchParamsToQueryString(searchParams) {
 export default async function AccountCreationPage({ params, searchParams }) {
   const { school, program } = await params;
   const resolvedSearchParams = await searchParams;
-  
+  const query = searchParamsToQueryString(resolvedSearchParams);
+
+  let enrollmentViaNextjs;
+  try {
+    enrollmentViaNextjs = await isEnrollmentViaNextjs(school);
+  } catch {
+    // Keep the signup page available if the feature-flag service is temporarily
+    // unreachable; the normal bootstrap request will surface its own errors.
+  }
+
+  if (enrollmentViaNextjs === false) {
+    const legacyUrl = legacyEnrollmentSignupUrl(school, program, query);
+    if (legacyUrl) redirect(legacyUrl);
+  }
 
   return (
     <AccountCreationForm
       school={school}
       program={program}
-      query={searchParamsToQueryString(resolvedSearchParams)}
+      query={query}
     />
   );
 }
