@@ -830,7 +830,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       {/* Mobile-only: the grade chip sits outside/above the white card per
           the mobile reference design — not inside it like desktop/tablet. */}
       {data.standardName && (
-        <div className={`mt-0 flex items-center gap-3 rounded-sm border pl-3 md:hidden ${gradeBand === "elementary" || centerGradeHeader ? "justify-center" : "justify-between"}`}>
+        <div className={`mt-0 flex items-center gap-3 rounded-sm  pl-3 justify-center md:hidden`}>
           <span className="inline-flex items-center gap-2 text-sm font-semibold text-black">
             <GraduationCap className="h-5 w-5 text-primary" />
             {data.standardName}
