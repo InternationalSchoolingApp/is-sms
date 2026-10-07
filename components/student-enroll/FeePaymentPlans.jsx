@@ -305,9 +305,9 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVari
               {!chips && (
                 <span
                   aria-hidden="true"
-                  className={`row-span-2 flex h-8 w-8 items-center justify-center self-center rounded-full border-2 ${checked ? "border-primary" : "border-slate-400"}`}
+                  className={`row-span-2 flex h-8 w-8 items-center justify-center self-center md:h-5 md:w-5 rounded-full border-2 ${checked ? "border-primary" : "border-slate-400"}`}
                 >
-                  {checked && <span className="h-4 w-4 rounded-full bg-primary" />}
+                  {checked && <span className="h-4 w-4 rounded-full bg-primary md:h-2.5 md:w-2.5" />}
                 </span>
               )}
               <span className={`text-center text-[clamp(14px,4vw,16px)] text-slate-700 md:text-left md:text-sm ${chips ? "col-span-2" : ""}`}>{option.label}</span>

@@ -447,10 +447,11 @@ export function PaymentGatewayPickerModal({
         className="flex h-[92dvh] max-h-[92dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl lg:h-[80vh] lg:max-h-[80vh] lg:max-w-5xl"
       >
         <DialogTitle className="sr-only">Select Your Payment Method</DialogTitle>
-        {/* Fills the dialog's remaining height; each column scrolls independently so the
-            Pay Now / Back bar below can stay pinned to the bottom instead of scrolling away. */}
-        <div className="grid flex-1 overflow-hidden md:grid-cols-[18rem_minmax(0,1fr)]">
-          <aside className="overflow-y-auto border-b border-slate-200 bg-white p-5 md:border-r md:border-b-0">
+        {/* Fills the dialog's remaining height. From md each column scrolls independently so the Pay Now / Back
+            bar can stay pinned to the bottom; below md the whole body (gateway list + selected gateway) is one
+            scroll area, with the Pay Now / Back bar sticky at its bottom. */}
+        <div className="grid flex-1 content-start overflow-y-auto md:grid-cols-[18rem_minmax(0,1fr)] md:content-stretch md:overflow-hidden">
+          <aside className="border-b border-slate-200 bg-white p-5 md:overflow-y-auto md:border-r md:border-b-0">
             <div className="md:hidden">
               <h3 className="text-xl font-extrabold text-black">Select Your Payment Method</h3>
             </div>
@@ -495,8 +496,8 @@ export function PaymentGatewayPickerModal({
 
           {/* Right column: scrollable payment-option content on top, Back / Pay Now
               pinned in a sticky footer below so it's always reachable without scrolling. */}
-          <section className="flex min-h-0 flex-col">
-            <div className="flex-1 overflow-y-auto p-5 sm:p-6">
+          <section className="flex flex-col md:min-h-0">
+            <div className="p-5 sm:p-6 md:flex-1 md:overflow-y-auto">
               <div className="hidden md:block">
                 <h3 className="text-2xl font-extrabold text-black">Select Your Payment Method</h3>
               </div>
@@ -525,7 +526,7 @@ export function PaymentGatewayPickerModal({
               </div>
             </div>
             {active && (
-              <div className="shrink-0 border-t border-slate-200 bg-white p-5 sm:px-8">
+              <div className="sticky bottom-0 z-10 shrink-0 border-t border-slate-200 bg-white p-5 sm:px-8 md:static">
                 <GatewayActions option={active} details={details} busy={busy} onPay={onPay} onClose={() => onOpenChange(false)} />
               </div>
             )}
