@@ -301,7 +301,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           />
           <FloatingLabelSelect
             icon={VenusAndMars}
-            label={<Req label={fields.standardId != null && fields.standardId != undefined && fields.standardId != "" ? `Selected Gender`:`Select Gender`} required />}
+            label={<Req label={fields.gender != null && fields.gender != undefined && fields.gender != "" ? `Selected Gender`:`Select Gender`} required />}
             value={fields.gender}
             onValueChange={(v) => setField("gender", v)}
             options={GENDER_OPTIONS}
