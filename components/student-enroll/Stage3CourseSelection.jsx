@@ -23,6 +23,9 @@ import {
   Sparkles,
   Trash2,
 } from "lucide-react";
+import { RxDividerVertical } from "react-icons/rx";
+import { PiBooksLight  } from "react-icons/pi";
+
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
@@ -48,6 +51,12 @@ import { saveWizardStudentFields } from "@/utils/wizardStorage";
 import { FaAngleRight, FaArrowDown, FaRegEyeSlash } from "react-icons/fa";
 
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
+
+// Mobile category-sheet (CourseCategoryDialog) behavior after a successful
+// "Add": true closes the dialog and returns to the category list (one course
+// per visit); false keeps it open so multiple subjects can be added from the
+// same category in one go. Flip this single flag to change the behavior.
+const CLOSE_CATEGORY_DIALOG_ON_ADD = true;
 
 function isSuccessResponse(response) {
   return String(response?.status) === STATUS_SUCCESS;
@@ -141,7 +150,7 @@ function categoryIcon(name) {
   if (n.includes("science")) return FlaskConical;
   if (n.includes("language")) return Languages;
   if (n.includes("social") || n.includes("history")) return Globe2;
-  if (n.includes("elective")) return Sparkles;
+  if (n.includes("elective")) return PiBooksLight;
   if (n.includes("health") || n.includes("physical")) return HeartPulse;
   if (n.includes("art")) return Palette;
   return BookOpen;
@@ -234,7 +243,7 @@ function VariantToggle({ course, target, onToggle, disabled }) {
       aria-label={target.buttonLabel || "Switch course variant"}
       onClick={() => onToggle(course, target)}
       disabled={disabled}
-      className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-1 transition-colors disabled:opacity-50 ${
+      className={`inline-flex cursor-pointer h-6 shrink-0 items-center gap-1 rounded-full px-1 transition-colors disabled:opacity-50 ${
         isTarget ? "flex-row-reverse bg-primary text-white" : "bg-slate-300"
       }`}
     >
@@ -283,7 +292,7 @@ function useIsMobile(breakpointPx = 768) {
 // everywhere else, immediately — same extra-fee/AP/no-live-class confirm
 // gates, same request per subject, just triggered per-row instead of via a
 // checkbox + batch "Add" button.
-function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentOption, busy, onAddSubject }) {
+function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentOption, busy, onAddSubject, closeOnAdd }) {
   const [addingId, setAddingId] = useState(null);
 
   if (!course) return null;
@@ -295,7 +304,8 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
     const id = String(subject.subjectId);
     setAddingId(id);
     try {
-      await onAddSubject(course, subject);
+      const added = await onAddSubject(course, subject);
+      if (added && closeOnAdd) onClose();
     } finally {
       setAddingId(null);
     }
@@ -528,11 +538,11 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   const selectedIds = parseIds(data?.selectedSubjectsAsString);
 
   async function addSubject(course, subject) {
-    if (busy) return;
+    if (busy) return false;
     const check = getCourseAddCheck(data);
     if (check.blockedMessage) {
       toast.error(check.blockedMessage);
-      return;
+      return false;
     }
   if (check.extraFee && showPaymentOption === "Y") {
     const selectedCount = data.selectedSubjects?.length || 0;
@@ -549,7 +559,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       confirmLabel: "Confirm & add",
       cancelLabel: "Close",
     });
-      if (!confirmed) return;
+      if (!confirmed) return false;
       extraFeeNoticeShownRef.current = true;
     }
     if (Number(context.schoolNumericId) === 1 && subject.courseType === "Advanced Placement" && !apAcknowledgedRef.current) {
@@ -566,7 +576,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           </p>
         ),
       });
-      if (!confirmed) return;
+      if (!confirmed) return false;
       apAcknowledgedRef.current = true;
     }
     if (isNoLiveClasses(subject, data.registrationType)) {
@@ -574,7 +584,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         title: "No live classes",
         message: <p>This course does not offer live classes. Would you like to add this course?</p>,
       });
-      if (!confirmed) return;
+      if (!confirmed) return false;
     }
     setOpenCourseId(course.courseId);
     const added = await applyChange({
@@ -583,6 +593,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       courseId: course.courseId,
     });
     if (added) toast.success(`${subject.subjectName} added`);
+    return added;
   }
 
   async function removeSubject(course) {
@@ -983,7 +994,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           Summary legend. */}
           <div className="mt-0 space-y-2 md:hidden">
             {(showCreditSummary || showCourseCountSummary) && (
-              <div className="rounded rounded-bl-none rounded-br-none bg-primary px-4 py-3.5 text-white">
+              <div className="rounded rounded-bl-none rounded-br-none bg-primary px-4 py-2.25 pb-2.25 text-white">
                 <div className="flex items-center gap-3 justify-center">
                   {courseMinMet ? (
                     <span className="inline-flex flex-1 items-center gap-2 text-sm font-bold justify-center ml-3">
@@ -1035,9 +1046,12 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                     <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-primary">{remainingCourses} more needed</span>
                   </div>
                 ) : extraCourseCount > 0 ? (
-                  <p className="mt-2 text-xs text-white/90 text-center font-bold">
-                    <span className="inline-flex bg-white px-2 pt-0.5 pb-0.75 rounded-lg text-black items-center"><label className="text-[#3fa43c] mr-0.5">{data.minCourseLimit} selected</label> | <label className="text-orange-400">{extraCourseCount} extra course{extraCourseCount === 1 ? "" : "s"} added</label></span> 
-                  </p>
+                  // <p className="mt-2 text-xs text-white/90 text-center font-bold">
+                  //   <span className="inline-flex bg-white px-2 pt-0.5 pb-0.75 rounded-lg text-black items-center"><label className="text-[#3fa43c] mr-0.5">{data.minCourseLimit} selected</label> | <label className="text-orange-400">{extraCourseCount} extra course{extraCourseCount === 1 ? "" : "s"} added</label></span> 
+                  // </p>
+                  <p className="mt-2 flex justify-center flex-1 text-xs text-white/90 text-center font-bold">
+                    {data.minCourseLimit} selected <RxDividerVertical className="w-4 h-4 stroke-1" /> {extraCourseCount} extra course{extraCourseCount === 1 ? "" : "s"} added
+                  </p>  
                 ) : null}
               </div>
             )}
@@ -1265,8 +1279,8 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             {/* Mobile header: title only — the recommended-courses button below
                 is full-width instead, and there's no search box (matches the
                 reference mobile design). */}
-            <div className="border-b border-slate-200 px-4 py-3 md:hidden">
-              <h2 className="text-sm font-bold text-black text-center">{data.totalCredit >= data.maxCourseLimit ? 'Select Extra Courses':'Select Your Courses Below'}</h2>
+            <div className="border-b border-slate-200 bg-primary px-4 py-2.25 md:hidden">
+              <h2 className="text-sm font-bold text-white text-center">{data.totalCredit >= data.maxCourseLimit ? 'Select Extra Courses':'Select Your Courses Below'}</h2>
             </div>
             {/* {data.eligibleForRecommendedCourse && (
               <div className="px-4 pt-4 md:hidden">
@@ -1418,6 +1432,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           showPaymentOption={showPaymentOption}
           busy={busy}
           onAddSubject={addSubject}
+          closeOnAdd={CLOSE_CATEGORY_DIALOG_ON_ADD}
         />
       )}
 
