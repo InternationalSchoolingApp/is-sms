@@ -1140,7 +1140,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 <h2 className="text-sm font-bold text-black">
                   {data.totalCredit >= data.maxCourseLimit
                     ? "Select Extra Courses"
-                    : "Select Courses"}
+                    : "Select Your Courses below"}
 
                   <span className="text-primary">{data.totalCredit >= data.maxCourseLimit ? ``: ` · select minimum ${remainingCourses} more`}</span>
                 </h2>
