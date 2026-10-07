@@ -1076,7 +1076,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                   {data.registrationType !== "BATCH" && gradeBand !== "elementary" && (
                     <>
                       {" "}|{" "}
-                      <span className="inline-flex items-center gap-1.5 align-middle font-medium text-black">
+                      <span className="inline-flex items-center gap-1.5  font-medium text-black">
                         <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded bg-[#3fa43c] text-[10px] font-bold text-white">F</span>
                         Fixed
                       </span>
