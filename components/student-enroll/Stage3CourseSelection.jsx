@@ -45,7 +45,7 @@ import { useGradeOptions, useCountryOptions, useStudentDetailsPrefill, useStuden
 import { getCourseAddCheck, hidesCourseCredits, validateCourseCredits } from "@/utils/studentSignupValidation";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { saveWizardStudentFields } from "@/utils/wizardStorage";
-import { FaAngleRight, FaArrowDown } from "react-icons/fa";
+import { FaAngleRight, FaArrowDown, FaRegEyeSlash } from "react-icons/fa";
 
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
 
@@ -1063,8 +1063,8 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                     <>
                       {" "}|{" "}
                       <span className="inline-flex items-center gap-1.5 align-middle font-medium text-black">
-                        <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded bg-[#3fa43c] text-[10px] font-bold text-white">M</span>
-                        Mandatory
+                        <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded bg-[#3fa43c] text-[10px] font-bold text-white">F</span>
+                        Fixed
                       </span>
                     </>
                   )}
@@ -1255,11 +1255,11 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                     className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-primary"
                   />
                 </div>
-                {data.eligibleForRecommendedCourse && (
+                {/* {data.eligibleForRecommendedCourse && (
                   <Button type="button" size="sm" onClick={openRecommended} disabled={busy} className="shrink-0 rounded-md bg-primary hover:bg-primary/90">
-                    <Plus className="h-4 w-4" /> View Our Recommendations
+                    <FaRegEyeSlash  className="h-4 w-4" /> View Our Recommendations
                   </Button>
-                )}
+                )} */}
               </div>
             </header>
             {/* Mobile header: title only — the recommended-courses button below
@@ -1268,7 +1268,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             <div className="border-b border-slate-200 px-4 py-3 md:hidden">
               <h2 className="text-sm font-bold text-black text-center">{data.totalCredit >= data.maxCourseLimit ? 'Select Extra Courses':'Select Your Courses Below'}</h2>
             </div>
-            {data.eligibleForRecommendedCourse && (
+            {/* {data.eligibleForRecommendedCourse && (
               <div className="px-4 pt-4 md:hidden">
                 <Button
                   type="button"
@@ -1276,10 +1276,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                   disabled={busy}
                   className="h-auto w-full whitespace-normal rounded-md bg-primary py-2 text-center leading-snug hover:bg-primary/90"
                 >
-                  <Plus className="h-4 w-4 shrink-0" /> View Our Recommendations
+                  <FaRegEyeSlash className="h-4 w-4 shrink-0 stroke-3" /> View Our Recommendations
                 </Button>
               </div>
-            )}
+            )} */}
             {data.registrationType === "SCHOLARSHIP" && (
               <p className="px-4 pt-3 text-xs text-slate-500">Please note: live classes are not offered in this program.</p>
             )}
@@ -1395,7 +1395,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                               {course.subjects.length} {course.subjects.length>1?'Courses':'Course'} available
                             </span>
                           </div>
-                          <FaAngleRight />
+                          <span className="inline-flex px-2 cursor py-1 rounded-md bg-primary text-white text-xs"><Plus className="h-4 w-4" /> Add</span>
                         </button>
                       </li>
                     );
