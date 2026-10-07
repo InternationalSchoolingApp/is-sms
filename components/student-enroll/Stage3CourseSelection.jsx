@@ -209,16 +209,17 @@ function summarizeSelection(selectedCourses, gradeBand) {
 }
 
 // CSS conic-gradient ring, no chart library needed.
-function CreditProgressRing({ value, max, unit = "credits" }) {
+function CreditProgressRing({ value, max, unit = "credits", size = 12 }) {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
+  const innerSize = size - 3;
   return (
     <div
-      className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
-      style={{ background: `conic-gradient(var(--primary) ${pct * 3.6}deg, #dbeafe ${pct * 3.6}deg)` }}
+      className="relative flex shrink-0 items-center justify-center rounded-full"
+      style={{ height: `${size * 0.25}rem`, width: `${size * 0.25}rem`, background: `conic-gradient(var(--primary) ${pct * 3.6}deg, #dbeafe ${pct * 3.6}deg)` }}
       role="img"
       aria-label={`${value} of ${max} ${unit} selected`}
     >
-      <div className="h-9 w-9 rounded-full bg-white" />
+      <div className="rounded-full bg-white" style={{ height: `${innerSize * 0.25}rem`, width: `${innerSize * 0.25}rem` }} />
     </div>
   );
 }
@@ -879,50 +880,49 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
       {/* Desktop/tablet: the full summary card (grade chip, credits
           requirement, progress ring, Selection Summary legend) — untouched. */}
-      <div className={`hidden gap-1 rounded-2xl ${gradeBand === "elementary" || centerGradeHeader ? "mx-auto md:pt-2" : "mt-4 border border-slate-200 bg-white p-4 shadow-sm md:p-5"} md:flex md:flex-row md:flex-wrap md:items-center md:gap-8`}>
+      <div className={`hidden gap-1 rounded-2xl ${gradeBand === "elementary" || centerGradeHeader ? "mx-auto md:pt-2" : "mt-3 border border-slate-200 bg-white p-2.5 shadow-sm md:mx-auto md:w-fit md:max-w-full md:p-3"} md:flex md:flex-row md:flex-wrap md:items-center md:gap-4`}>
         {data.standardName && (
-          <div className={`flex items-center gap-2 rounded-lg py-2 px-3 bg-[#e6f3ff] ${gradeBand === "elementary" || centerGradeHeader ? "mx-auto" : "flex-1"}`}>
-            <span className="inline-flex items-center gap-2  text-sm font-semibold text-black">
-              <GraduationCap className="h-5 w-5 text-primary" />
+          <div className={`flex items-center gap-2 rounded-lg py-1.5 px-2.5 bg-[#e6f3ff] ${gradeBand === "elementary" || centerGradeHeader ? "mx-auto" : ""}`}>
+            <span className="inline-flex items-center gap-2 text-xs font-semibold text-black">
+              <GraduationCap className="h-4 w-4 text-primary" />
               {data.standardName}
             </span>
             <button
               type="button"
               onClick={() => setChangeGradeOpen(true)}
               disabled={busy}
-              className="inline-flex items-center gap-1.5 ml-auto rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 ml-auto rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
             >
-              Change Grade <RefreshCw className="h-3.5 w-3.5 stroke-3" />
+              Change Grade <RefreshCw className="h-3 w-3 stroke-3" />
             </button>
           </div>
         )}
 
         {(showCreditSummary || showCourseCountSummary) && (
-          <div className="flex items-center gap-2 justify-center border-slate-300 flex-1 sm:border-l sm:pl-8">
-            
+          <div className="flex items-center gap-2 justify-center border-slate-300 sm:border-l sm:pl-4">
             <div>
               <div className="flex">
                 <p className="text-xs text-black">You need to select</p>
               </div>
-              <p className="text-sm font-bold text-black">
-                at least {data.minCourseLimit} courses
+              <p className="text-xs font-bold text-black">
+                at least {data.minCourseLimit} course{data.minCourseLimit == 1 ? "" : "s"}
               </p>
             </div>
           </div>
         )}
 
         {showCourseCountSummary && (
-          <div className="flex items-center gap-3 border-slate-300 flex-1 sm:border-l sm:px-8">
-            <CreditProgressRing value={selectedCourseCount} max={displayCourseCountTarget} unit="courses" />
+          <div className="flex items-center gap-2 border-slate-300 sm:border-l sm:px-4">
+            <CreditProgressRing value={selectedCourseCount} max={displayCourseCountTarget} unit="courses" size={10} />
             <div>
-              <p className="text-xl font-bold text-primary">{selectedCourseCount}/{displayCourseCountTarget}</p>
-              <p className="text-sm font-bold text-black">Courses Selected</p>
+              <p className="text-base font-bold text-primary">{selectedCourseCount}/{displayCourseCountTarget}</p>
+              <p className="text-xs font-bold text-black">Courses Selected</p>
             </div>
           </div>
         )}
 
         {showCreditSummary && (
-          <div className="hidden items-center gap-3 border-slate-300 sm:border-l sm:px-8 md:flex">
+          <div className="hidden items-center gap-2 border-slate-300 sm:border-l sm:px-4 md:flex">
             {/* Once extra (over-the-minimum) courses are selected, the denominator should track
                 what's actually been picked (e.g. 8/8), not stay pinned at the original minimum
                 (8/6) — the ring and the fraction below both use this same adjusted max. */}
@@ -930,12 +930,13 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               value={selectedCourseCount}
               max={Math.max(Number(data.minCourseLimit) || 1, selectedCourseCount)}
               unit="courses"
+              size={10}
             />
             <div>
-              <p className="text-xl font-bold text-primary">
+              <p className="text-base font-bold text-primary">
                 {selectedCourseCount}/{Math.max(Number(data.minCourseLimit) || 0, selectedCourseCount)}
               </p>
-              <p className="text-sm font-bold text-black">Courses Selected</p>
+              <p className="text-xs font-bold text-black">Courses Selected</p>
             </div>
           </div>
         )}
@@ -968,8 +969,9 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             <h2 className="text-sm font-bold text-black">
               {showCourseCountSummary || showCourseCredits ? (
                 <>
-                  <span className="md:hidden">Selected Courses: <span className="text-primary">{selectedCourseCount}/{displayCourseCountTarget} courses</span></span>
-                  <span className="hidden md:inline">Selected Courses</span>
+                  {/* <span className="md:hidden">Selected Courses: <span className="text-primary">{selectedCourseCount}/{displayCourseCountTarget} courses</span></span>
+                  <span className="hidden md:inline">Selected Courses</span> */}
+                  <div className="text-center md:text-center w-full">Your <span className="text-primary">{selectedCourseCount}</span> Selected Courses</div>
                 </>
               ) : <><div className="text-center md:text-center w-full">Your <span className="text-primary">{selectedCourseCount}</span> Selected Courses</div></>}
             </h2>
@@ -1009,10 +1011,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white">
                         <Check className="h-3 w-3 text-[#3fa43c]" strokeWidth={5} />
                       </span>
-                      {selectedCourseCount} Courses selected
+                      {selectedCourseCount} Course{selectedCourseCount === 1 ? "" : "s"} selected
                     </span>
                   ) : (
-                    <span className="inline-flex flex-1 ml-4 justify-center items-center gap-2 text-sm font-bold">Select at least {minCourseCount} courses</span>
+                    <span className="inline-flex flex-1 ml-4 justify-center items-center gap-2 text-sm font-bold">Select at least {minCourseCount} course{minCourseCount === 1 ? "" : "s"}</span>
                   )}
                   {canRemoveAll && (
                     <button
@@ -1272,11 +1274,11 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             <header className="hidden flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 md:flex">
               <div>
                 <h2 className="text-sm font-bold text-black">
-                  {data.totalCredit >= data.maxCourseLimit
+                  {data.totalCredit >= data.minCourseLimit
                     ? "Select Extra Courses"
                     : "Select Your Courses Below"}
 
-                  <span className="text-primary">{data.totalCredit >= data.maxCourseLimit ? ``: ` · ${remainingCourses} more needed`}</span>
+                  <span className="text-primary">{data.totalCredit >= data.minCourseLimit ? ``: ` · ${remainingCourses} More needed`}</span>
                 </h2>
                 {(showCreditSummary || showCourseCountSummary) && remainingCourses > 0 && (
                   <p className="text-xs font-medium text-primary"></p>
@@ -1304,7 +1306,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 is full-width instead, and there's no search box (matches the
                 reference mobile design). */}
             <div className="border-b border-slate-200 bg-primary px-4 py-2.25 md:hidden">
-              <h2 className="text-sm font-bold text-white text-center">{data.totalCredit >= data.maxCourseLimit ? 'Select Extra Courses':'Select Your Courses Below'}</h2>
+              <h2 className="text-sm font-bold text-white text-center">{data.totalCredit >= data.minCourseLimit ? 'Select Extra Courses':'Select Your Courses Below'}</h2>
             </div>
             {/* {data.eligibleForRecommendedCourse && (
               <div className="px-4 pt-4 md:hidden">
@@ -1319,7 +1321,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               </div>
             )} */}
             {data.registrationType === "SCHOLARSHIP" && (
-              <p className="px-4 pt-3 text-xs text-black">Please note: live classes are not offered in this program.</p>
+              <p className="px-4 py-2 text-[11px] text-primary font-bold"><span className="text-black">Please note:</span> Live classes are not offered in this program.</p>
             )}
             {visibleCourses.length === 0 ? (
               <p className="px-4 py-6 text-sm text-black">No courses match your search.</p>
