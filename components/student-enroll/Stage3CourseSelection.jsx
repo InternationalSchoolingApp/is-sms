@@ -962,19 +962,21 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 </>
               ) : <><div className="text-center md:text-center w-full">Your <span className="text-primary">{selectedCourseCount}</span> Selected Courses</div></>}
             </h2>
-            <div className="flex items-center gap-3 ml-auto">
+            
               {canRemoveAll && (
-                <button
-                  type="button"
-                  onClick={removeAll}
-                  disabled={busy}
-                  className="inline-flex items-center gap-1 cursor-pointer text-xs font-semibold rounded-xl px-4 py-1 border border-red-600 text-red-600 hover:text-red-700"
-                  aria-label="Remove all courses"
-                >
-                  All <Trash2 className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-3 ml-auto">
+                  <button
+                    type="button"
+                    onClick={removeAll}
+                    disabled={busy}
+                    className="inline-flex items-center gap-1 cursor-pointer text-xs font-semibold rounded-xl px-4 py-1 border border-red-600 text-red-600 hover:text-red-700"
+                    aria-label="Remove all courses"
+                  >
+                    All <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               )}
-            </div>
+            
           </header>
           {/* Mobile-only: plain "Credits Requirement" banner from the mobile
           reference design — no card border, no progress ring, no Selection
@@ -1054,22 +1056,30 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                   the upgrade toggle (or buttons) underneath the course name,
                   row dividers instead of per-row card backgrounds. Desktop
                   keeps the existing card-style rows below, untouched. */}
-              {!fixed && !batchOrProvider39 && (selectedCourses.some((course) => course.courseMandatory === 1) || selectedCourses.some((course) => (course.upgradeCourses || []).length > 0)) && (
-                <div className="flex items-center justify-center gap-2 p-4 bg-blue-50 text-xs text-black md:hidden">
-                  <span>Tap &quot; <b className="font-bold">{gradeBand === "high" ? "Honors" : "Advance"}</b> &quot; to upgrade |</span>
-                  <span className="inline-flex items-center gap-1.5 font-medium text-black">
-                    <span className="flex h-4 w-4 pt-0.5 shrink-0 items-center justify-center  rounded bg-[#3fa43c] text-[10px] font-bold text-white">M</span>
-                    Mandatory Course
-                  </span>
-                </div>
+              {!fixed && (selectedCourses.some((course) => course.courseMandatory === 1) || selectedCourses.some((course) => (course.upgradeCourses || []).length > 0)) && (
+                <p className="p-1 bg-blue-50 text-center text-[10px] leading-relaxed sm:text-xs text-black md:hidden">
+                  Tap &quot;<b className="font-bold">{gradeBand === "high" ? "Honors" : "Advance"}</b>&quot; to upgrade
+                  {data.registrationType !== "BATCH" && gradeBand !== "elementary" && (
+                    <>
+                      {" "}|{" "}
+                      <span className="inline-flex items-center gap-1.5 align-middle font-medium text-black">
+                        <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded bg-[#3fa43c] text-[10px] font-bold text-white">M</span>
+                        Mandatory
+                      </span>
+                    </>
+                  )}
+                </p>
               )}
               <ol className="divide-y divide-slate-100 md:hidden">
-                {selectedCourses.map((course) => {
+                {selectedCourses.map((course, index) => {
                   const singleUpgradeTarget = course.upgradeCourses?.length === 1 ? course.upgradeCourses[0] : null;
                   return (
                     <li key={course.courseId} className="flex items-start justify-between gap-3 px-4 py-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#e6f3ff] text-xs font-semibold text-primary">
+                            {index + 1}
+                          </span>
                           <p className="text-sm font-medium text-black course_name">
                             {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}
                           </p>
@@ -1095,8 +1105,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                         <CourseSummaryLink url={course.courseDescriptionUrl} />
                       </div>
                       <div className="flex shrink-0 items-center">
-                        {!fixed && course.courseMandatory === 1 && !batchOrProvider39 && (
-                          <span className="flex h-5 w-5 items-center justify-center rounded bg-[#3fa43c] text-[11px] font-bold text-white">M</span>
+                        {!fixed && course.courseMandatory === 1 && data.registrationType !== "BATCH" && gradeBand !== "elementary" && (
+                          <span className="flex h-5 w-5 items-center justify-center rounded bg-[#3fa43c] text-[11px] font-bold text-white">
+                            M
+                          </span>
                         )}
                         {!fixed && course.courseMandatory === 0 && (
                           <button
@@ -1121,15 +1133,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 return (
                   <li key={course.courseId} className={`flex flex-col ${!fixed && course.courseMandatory === 1 && !batchOrProvider39 ? 'gap-3' : ''} rounded-md border border-slate-100 bg-blue-50 px-3 py-1.5 shadow-sm sm:flex-row sm:flex-wrap sm:items-center md:rounded-none md:border-0 md:bg-transparent md:p-0 md:px-4 md:py-3 md:shadow-none`}>
                     <div className="flex min-w-0 flex-1 items-center gap-3">
-                      {gradeBand === "elementary"?
-                        <>
-                          <span className="flex h-5 w-5 shrink-0 items-center text-sm justify-center rounded bg-[#e6f3ff] text-primary">
-                            {index+1}
-                          </span>
-                        </>
-                        :''
-                      }
-                      
+                      <span className="flex h-5 w-5 shrink-0 items-center text-sm justify-center rounded bg-[#e6f3ff] text-primary">
+                        {index + 1}
+                      </span>
+
                       <div className="min-w-0 inline-flex flex-1">
                         <div className="text-sm inline-flex font-medium text-black items-center">
                           <span> {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}</span> 
@@ -1263,8 +1270,13 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             </div>
             {data.eligibleForRecommendedCourse && (
               <div className="px-4 pt-4 md:hidden">
-                <Button type="button" onClick={openRecommended} disabled={busy} className="w-full rounded-md bg-primary hover:bg-primary/90">
-                  <Plus className="h-4 w-4" /> View Our Recommendations
+                <Button
+                  type="button"
+                  onClick={openRecommended}
+                  disabled={busy}
+                  className="h-auto w-full whitespace-normal rounded-md bg-primary py-2 text-center leading-snug hover:bg-primary/90"
+                >
+                  <Plus className="h-4 w-4 shrink-0" /> View Our Recommendations
                 </Button>
               </div>
             )}
@@ -1377,10 +1389,12 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
                             <CategoryIcon className="h-4 w-4" />
                           </span>
-                          <span className="min-w-0 flex-1 truncate text-black">{course.courseName}</span>
-                          <span className="flex px-2  shrink-0 items-center justify-center rounded-full border border-black-300 bg-white text-[11px] font-semibold text-black">
-                            {course.subjects.length} {course.subjects.length>1?'Courses':'Course'} available
-                          </span>
+                          <div className="flex-1 flex-col flex">
+                            <span className="min-w-0 flex-1 truncate text-black">{course.courseName}</span>
+                            <span className="px-2 w-fit shrink-0 items-center justify-center rounded-full border border-black-300 bg-white text-[11px] font-semibold text-black">
+                              {course.subjects.length} {course.subjects.length>1?'Courses':'Course'} available
+                            </span>
+                          </div>
                           <FaAngleRight />
                         </button>
                       </li>
