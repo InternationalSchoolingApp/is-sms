@@ -317,8 +317,8 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
           <CategoryIcon className="h-5 w-5 shrink-0 text-black" />
           <div className="min-w-0 flex-1">
             <DialogTitle className="text-base font-semibold text-black">{course.courseName}</DialogTitle>
-            <p className="text-xs text-slate-500">
-              {course.subjects.length} course{course.subjects.length === 1 ? "" : "s"} available
+            <p className="text-xs text-black">
+              {course.subjects.length} Course{course.subjects.length === 1 ? "" : "s"} available
             </p>
           </div>
         </DialogHeader>
@@ -334,7 +334,7 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
                 </span> */}
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-black">{subject.subjectName}</p>
-                  {/* {!hidesCourseCredits(data.standardId) && <p className="text-xs text-slate-500">{subject.subjectCredit} Credit</p>} */}
+                  {/* {!hidesCourseCredits(data.standardId) && <p className="text-xs text-black">{subject.subjectCredit} Credit</p>} */}
                   {data.showCourseFee === "Y" && (
                     <p className="text-xs font-semibold text-black">{subject.subjectPriceString}</p>
                   )}
@@ -370,7 +370,7 @@ function SkeletonBlock({ className = "" }) {
 /** Structural skeleton mirroring the real layout, shown while course-details-by-standard-id is loading. */
 function Stage3Skeleton({ header }) {
   return (
-    <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white px-4 py-2 shadow-sm sm:p-4 lg:py-6 lg:px-8">
+    <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white px-4 pt-2 pb-3 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       {header}
       <SkeletonBlock className="mt-4 h-20 w-full rounded-xl" />
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.6fr]">
@@ -872,7 +872,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           </button>
         </div>
       )}
-    <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white px-4 py-2 shadow-sm sm:p-4 lg:py-6 lg:px-8">
+    <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white px-4 pt-2 pb-3 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       {header}
 
       
@@ -976,15 +976,23 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             
               {canRemoveAll && (
                 <div className="flex items-center gap-3 ml-auto">
-                  <button
-                    type="button"
-                    onClick={removeAll}
-                    disabled={busy}
-                    className="inline-flex items-center gap-1 cursor-pointer text-xs font-semibold rounded-xl px-4 py-1 border border-red-600 text-red-600 hover:text-red-700"
-                    aria-label="Remove all courses"
-                  >
-                    All <Trash2 className="h-4 w-4" />
-                  </button>
+                  <Tooltip>
+                    <TooltipTrigger
+                      delay={100}
+                      render={
+                        <button
+                          type="button"
+                          onClick={removeAll}
+                          disabled={busy}
+                          className="inline-flex items-center gap-1 cursor-pointer text-xs font-semibold rounded-xl px-4 py-1 border border-red-600 text-red-600 hover:text-red-700"
+                          aria-label="Remove all courses"
+                        />
+                      }
+                    >
+                      All <Trash2 className="h-4 w-4" />
+                    </TooltipTrigger>
+                    <TooltipContent>Remove all course</TooltipContent>
+                  </Tooltip>
                 </div>
               )}
             
@@ -1001,7 +1009,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white">
                         <Check className="h-3 w-3 text-[#3fa43c]" strokeWidth={5} />
                       </span>
-                      {selectedCourseCount} courses selected
+                      {selectedCourseCount} Courses selected
                     </span>
                   ) : (
                     <span className="inline-flex flex-1 ml-4 justify-center items-center gap-2 text-sm font-bold">Select at least {minCourseCount} courses</span>
@@ -1042,15 +1050,15 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
                 {!courseMinMet ? (
                   <div className="mt-2.5 flex items-center justify-center gap-3">
-                    <span className="text-xs font-bold  text-white/90">{selectedCourseCount} selected</span>
-                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-primary">{remainingCourses} more needed</span>
+                    <span className="text-xs font-bold  text-white/90">{selectedCourseCount} Selected</span>
+                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-primary">{remainingCourses} More needed</span>
                   </div>
                 ) : extraCourseCount > 0 ? (
                   // <p className="mt-2 text-xs text-white/90 text-center font-bold">
                   //   <span className="inline-flex bg-white px-2 pt-0.5 pb-0.75 rounded-lg text-black items-center"><label className="text-[#3fa43c] mr-0.5">{data.minCourseLimit} selected</label> | <label className="text-orange-400">{extraCourseCount} extra course{extraCourseCount === 1 ? "" : "s"} added</label></span> 
                   // </p>
                   <p className="mt-2 flex justify-center flex-1 text-xs text-white/90 text-center font-bold">
-                    {data.minCourseLimit} selected <RxDividerVertical className="w-4 h-4 stroke-1" /> {extraCourseCount} extra course{extraCourseCount === 1 ? "" : "s"} added
+                    {data.minCourseLimit} Selected <RxDividerVertical className="w-4 h-4 stroke-1" /> {extraCourseCount} Extra course{extraCourseCount === 1 ? "" : "s"} added
                   </p>  
                 ) : null}
               </div>
@@ -1177,7 +1185,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                           </div>
                         </div>
 
-                        {/* {showCourseCredits && <p className="text-xs text-slate-500">{course.creditScore} Credit</p>} */}
+                        {/* {showCourseCredits && <p className="text-xs text-black">{course.creditScore} Credit</p>} */}
                         <CourseSummaryLink url={course.courseDescriptionUrl} />
                       </div>
                       {/* Mobile-only: the Advance/Honors toggle sits beside the
@@ -1185,15 +1193,23 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                           row below (same toggle, just hidden on the other breakpoint). */}
                       
                       {!fixed && course.courseMandatory === 0 && (
-                        <button
-                          type="button"
-                          onClick={() => removeSubject(course)}
-                          disabled={busy}
-                          className="inline-flex sm:hidden items-center cursor-pointer gap-1 text-xs font-semibold text-red-600 hover:text-red-700"
-                          aria-label="Remove all courses"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <Tooltip>
+                          <TooltipTrigger
+                            delay={100}
+                            render={
+                              <button
+                                type="button"
+                                onClick={() => removeSubject(course)}
+                                disabled={busy}
+                                className="inline-flex sm:hidden items-center cursor-pointer gap-1 text-xs font-semibold text-red-600 hover:text-red-700"
+                                aria-label={`Remove ${course.courseName}`}
+                              />
+                            }
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </TooltipTrigger>
+                          <TooltipContent>Remove {course.courseName}</TooltipContent>
+                        </Tooltip>
                       )}
                     </div>
                     <div className="flex flex-wrap items-center gap-2 sm:pl-0">
@@ -1223,15 +1239,23 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                         </span>
                       )}
                       {!fixed && course.courseMandatory === 0 && (
-                        <button
-                          type="button"
-                          onClick={() => removeSubject(course)}
-                          disabled={busy}
-                          className="hidden sm:inline-flex items-center cursor-pointer gap-1 text-xs font-semibold text-red-600 hover:text-red-700"
-                          aria-label="Remove all courses"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <Tooltip>
+                          <TooltipTrigger
+                            delay={100}
+                            render={
+                              <button
+                                type="button"
+                                onClick={() => removeSubject(course)}
+                                disabled={busy}
+                                className="hidden sm:inline-flex items-center cursor-pointer gap-1 text-xs font-semibold text-red-600 hover:text-red-700"
+                                aria-label={`Remove ${course.courseName}`}
+                              />
+                            }
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </TooltipTrigger>
+                          <TooltipContent>Remove {course.courseName}</TooltipContent>
+                        </Tooltip>
                       )}
                     </div>
                   </li>
@@ -1295,10 +1319,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               </div>
             )} */}
             {data.registrationType === "SCHOLARSHIP" && (
-              <p className="px-4 pt-3 text-xs text-slate-500">Please note: live classes are not offered in this program.</p>
+              <p className="px-4 pt-3 text-xs text-black">Please note: live classes are not offered in this program.</p>
             )}
             {visibleCourses.length === 0 ? (
-              <p className="px-4 py-6 text-sm text-slate-500">No courses match your search.</p>
+              <p className="px-4 py-6 text-sm text-black">No courses match your search.</p>
             ) : (
               <>
                 {/* Desktop/tablet: category sidebar + inline detail pane. */}
@@ -1323,15 +1347,24 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                               </TooltipTrigger>
                               <TooltipContent>{course.courseName}</TooltipContent>
                             </Tooltip>
-                            <span
-                              title={`${course.subjects.length} course${course.subjects.length === 1 ? "" : "s"} available`}
-                              aria-label={`${course.subjects.length} course${course.subjects.length === 1 ? "" : "s"} available`}
-                              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-                                active ? "bg-primary text-white" : "bg-slate-100 text-slate-500"
-                              }`}
-                            >
-                              {course.subjects.length}
-                            </span>
+                            <Tooltip>
+                              <TooltipTrigger
+                                delay={100}
+                                render={
+                                  <span
+                                    aria-label={`${course.subjects.length} course${course.subjects.length === 1 ? "" : "s"} available`}
+                                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
+                                      active ? "bg-primary text-white" : "bg-slate-100 text-black"
+                                    }`}
+                                  />
+                                }
+                              >
+                                {course.subjects.length}
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {course.subjects.length} course{course.subjects.length === 1 ? "" : "s"} available
+                              </TooltipContent>
+                            </Tooltip>
                           </button>
                         </li>
                       );
@@ -1344,12 +1377,12 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                     >
                       <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
                         <span className="text-sm font-semibold text-primary">{activeCourse.courseName}</span>
-                        <span className="flex items-center gap-1 text-xs text-slate-500">
+                        <span className="flex items-center gap-1 text-xs text-black">
                           {activeCourse.subjects.length} course{activeCourse.subjects.length === 1 ? "" : "s"} available <ChevronDown className="h-3.5 w-3.5" />
                         </span>
                       </div>
                       <div className="space-y-2 p-4" style={detailPaneHeight>250 ? { height: detailPaneHeight, overflowY: "auto" } : { maxHeight: "300px", overflowY: "auto" }}>
-                        {activeCourse.courseDescription && <p className="text-xs text-slate-500">{activeCourse.courseDescription}</p>}
+                        {activeCourse.courseDescription && <p className="text-xs text-black">{activeCourse.courseDescription}</p>}
                         {activeCourse.subjects
                           .filter((subject) => !query || subject.subjectName?.toLowerCase().includes(query) || activeCourse.courseName?.toLowerCase().includes(query))
                           .map((subject) => {
@@ -1445,8 +1478,8 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         </p>
       )}
 
-      <div className="mt-10 flex flex-col-reverse items-center justify-center gap-4 pt-6 sm:flex-row">
-        {/* <p className="text-xs text-slate-500">Your course choices are saved as you make them.</p> */}
+      <div className="flex flex-col-reverse items-center justify-center gap-4 md:mt-10 md:pt-6 sm:flex-row">
+        {/* <p className="text-xs text-black">Your course choices are saved as you make them.</p> */}
         <MobileActionBar context={context}>
           {onBack && (
             <Button type="button" variant="outline" className="cursor-pointer" onClick={onBack} disabled={busy}>
