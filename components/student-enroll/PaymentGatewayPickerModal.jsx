@@ -156,7 +156,7 @@ function MethodTile({ image, label, onClick, disabled }) {
 function CardTiles({ option, onPay, disabled }) {
   const pay = () => onPay(option);
   return (
-    <div className="mt-4 flex flex-wrap gap-3">
+    <div className="mt-4 flex flex-wrap gap-3 item-center justify-center">
       <MethodTile image={assetUrl(IMAGES, "visa.png")} label="Visa" onClick={pay} disabled={disabled} />
       <MethodTile image={assetUrl(IMAGES, "master-card.png")} label="Mastercard" onClick={pay} disabled={disabled} />
       {option.name === "AFS" && (
@@ -338,16 +338,16 @@ function GatewayPanel({ option, details, airwallexMethods, busy, onPay, onClose,
   return (
     <div>
       {hasBanner && (
-        <div className="rounded-xl bg-slate-100 px-5 py-4">
+        <div className="flex justify-center rounded-xl bg-slate-100 px-5 py-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={assetUrl(IMAGES, option.icon)} alt={option.label} className="h-9 max-w-[220px] object-contain object-left" />
+          <img src={assetUrl(IMAGES, option.icon)} alt={option.label} className="h-9 max-w-[220px] object-contain object-center" />
         </div>
       )}
 
       {["STRIPE", "YOCO", "AFS"].includes(option.name) && <CardTiles option={option} onPay={onPay} disabled={busy} />}
 
       {option.name === "Airwallex" && (
-        <div className="mt-4 flex flex-wrap gap-3">
+        <div className="mt-4 flex flex-wrap gap-3 item-center justify-center">
           {(airwallexMethods || []).length === 0 && <p className="text-sm text-slate-500">No Payment Methods Available</p>}
           {(airwallexMethods || []).map((method, index) => (
             <MethodTile
