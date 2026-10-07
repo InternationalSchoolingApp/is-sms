@@ -148,7 +148,7 @@ export function ParentRelationFields({ schoolUUID, userId, fields, setFields, er
       <div className="mt-8 sm:mx-auto sm:max-w-[420px]">
         <FloatingLabelSelect
           icon={MdFamilyRestroom}
-          label={<Req label="Relationship to student" required />}
+          label={<Req label="Relationship to Student" required />}
           value={fields.relation}
           onValueChange={handleRelationChange}
           options={RELATION_OPTIONS}
