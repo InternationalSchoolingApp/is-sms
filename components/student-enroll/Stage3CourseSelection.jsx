@@ -1076,7 +1076,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                   return (
                     <li key={course.courseId} className="flex items-start justify-between gap-3 px-4 py-3">
                       <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex items-center gap-2">
                           <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#e6f3ff] text-xs font-semibold text-primary">
                             {index + 1}
                           </span>
