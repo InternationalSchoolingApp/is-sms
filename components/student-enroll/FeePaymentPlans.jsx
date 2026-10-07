@@ -305,12 +305,12 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVari
               {!chips && (
                 <span
                   aria-hidden="true"
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${checked ? "border-primary" : "border-slate-400"}`}
+                  className={`row-span-2 flex h-8 w-8 items-center justify-center self-center rounded-full border-2 ${checked ? "border-primary" : "border-slate-400"}`}
                 >
-                  {checked && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                  {checked && <span className="h-4 w-4 rounded-full bg-primary" />}
                 </span>
               )}
-              <span className={`text-center text-[clamp(12px,3.4vw,14px)] text-slate-700 md:text-left md:text-sm ${chips ? "col-span-2" : ""}`}>{option.label}</span>
+              <span className={`text-center text-[clamp(14px,4vw,16px)] text-slate-700 md:text-left md:text-sm ${chips ? "col-span-2" : ""}`}>{option.label}</span>
               <span className={`mt-1 flex items-center justify-center gap-2 md:mt-1 md:justify-start ${chips ? "col-span-2" : "col-start-2"} ${hasChips ? "md:flex-col md:items-start md:gap-1" : ""}`}>
                 <span className="text-[clamp(15px,4.2vw,18px)] font-bold leading-tight text-black md:text-2xl">{amount}</span>
                 {option.badge && (

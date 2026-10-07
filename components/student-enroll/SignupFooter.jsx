@@ -4,6 +4,9 @@
 // whatsAppCode+whatsAppContact configured; those aren't wired into the
 // frontend context yet, so whatsAppNumber is a plain env-driven value for
 // now (see .env.local.example) — same TODO-until-real-backend-wiring
+
+import { Stage1StudentDetails } from "./Stage1StudentDetails";
+
 // pattern as SIGNUP_CONTEXT in page.jsx.
 export function SignupFooter({ whatsAppNumber, schoolName }) {
   const copyrightYear = new Date().getFullYear();
@@ -31,3 +34,4 @@ export function SignupFooter({ whatsAppNumber, schoolName }) {
     </div>
   );
 }
+

@@ -472,7 +472,7 @@ export function PaymentGatewayPickerModal({
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={assetUrl(IMAGES, tabIcon(option))} alt="" className="max-h-7 max-w-7 object-contain" />
                       </span>
-                      <span className="flex-1">{option.label}</span>
+                      <span className="flex-1 text-center text-xl">{option.label}</span>
                       {selected}
                     </button>
                   </li>
