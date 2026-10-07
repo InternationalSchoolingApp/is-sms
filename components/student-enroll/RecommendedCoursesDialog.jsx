@@ -70,7 +70,7 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
               </span>
               <div className="inline-flex flex-col">
                   <p className="flex-1 text-sm font-bold text-black-900">Total Courses</p>
-                  <p className="flex-1 text-xs text-black-900">Including all recommended courses</p>
+                  {/* <p className="flex-1 text-xs text-black-900">Including all recommended courses</p> */}
               </div>
               <span className="flex h-8 w-8 ml-auto shrink-0 items-center justify-center rounded-md bg-[#d8e4fb] text-black-900 text-2xl font-bold">
                 {totalCredit}
