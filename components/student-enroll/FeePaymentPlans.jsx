@@ -156,7 +156,7 @@ function CommonRows({ fee, standardId, isFlexOrDual }) {
         />
       )}
       {fee.courseMaterialFeeDetails?.totalEntityFee > 0 && (
-        <BreakdownRow title="External Material Fee" totalLabel="Total Fee" details={fee.courseMaterialFeeDetails} sign="+" />
+        <BreakdownRow title="External Material Fee" totalLabel="Total" details={fee.courseMaterialFeeDetails} sign="+" />
       )}
       {fee.feeAlreayPaid?.totalEntityFee > 0 && (
         <BreakdownRow title="Fee Already Paid" totalLabel="Total Paid" details={fee.feeAlreayPaid} sign="-" />
