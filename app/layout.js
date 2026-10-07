@@ -1,5 +1,5 @@
 import { Open_Sans } from "next/font/google";
-import { Toaster } from "react-hot-toast";
+import { AppToaster } from "@/components/common/AppToaster";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { AuthSessionProvider } from "@/components/providers/AuthSessionProvider";
@@ -33,7 +33,7 @@ export default function RootLayout({ children }) {
             {children}
           </QueryProvider>
           <GlobalLoader />
-          <Toaster position="top-center" containerStyle={{ top: "30vh" }} />
+          <AppToaster />
         </AuthSessionProvider>
       </body>
     </html>
