@@ -240,7 +240,7 @@ function VariantToggle({ course, target, onToggle, disabled }) {
         }`}
       >
         {isTarget ? 
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white">
+        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white">
           <Check className="h-3 w-3 text-[#3fa43c]" strokeWidth={5} />
         </span>:<span className="h-4 w-4 shrink-0 rounded-full bg-white shadow" />}
         
