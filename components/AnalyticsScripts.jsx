@@ -24,6 +24,18 @@ export function AnalyticsScripts() {
 
   return (
     <>
+      <Script id="zsiqchat-init" strategy="lazyOnload">
+        {`
+          window.$zoho = window.$zoho || {};
+          window.$zoho.salesiq = window.$zoho.salesiq || { ready: function() {} };
+        `}
+      </Script>
+      <Script
+        id="zsiqscript"
+        src="https://salesiq.zohopublic.com/widget?wc=siq7bc39ae43d3489bd53fbf395c756a095218b02d78a6cbbc8ad8c544bc95fbb9e1b73bef729bf2614f7e60cbfbe8872cb"
+        strategy="lazyOnload"
+      />
+
       {gtmId && (
         <>
           {/* Google Tag Manager */}
