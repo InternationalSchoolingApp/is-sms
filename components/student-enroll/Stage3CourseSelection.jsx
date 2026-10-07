@@ -171,7 +171,7 @@ function getGradeBand(standardName, standardId) {
 }
 
 function summarizeSelection(selectedCourses, gradeBand) {
-  const counts = { Mandatory: 0, Electives: 0, Honors: 0, Advance: 0, AP: 0 };
+  const counts = { Fixed: 0, Electives: 0, Honors: 0, Advance: 0, AP: 0 };
   selectedCourses.forEach((course) => {
     if (course.courseMandatory === 1 || course.courseMandatory === "1") counts.Mandatory += 1;
 
@@ -187,7 +187,7 @@ function summarizeSelection(selectedCourses, gradeBand) {
     else if (/\bHON(?:OR|ORS)?\b/.test(courseType) && gradeBand === "high") counts.Honors += 1;
   });
   const buckets = [
-    { label: "Mandatory", count: counts.Mandatory, dot: "bg-emerald-500" },
+    { label: "Fixed", count: counts.Mandatory, dot: "bg-emerald-500" },
     { label: "Electives", count: counts.Electives, dot: "bg-purple-500" },
   ];
   if (gradeBand === "high") {
@@ -1036,7 +1036,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                   </div>
                 ) : extraCourseCount > 0 ? (
                   <p className="mt-2 text-xs text-white/90 text-center font-bold">
-                    {data.minCourseLimit} selected · {extraCourseCount} extra course{extraCourseCount === 1 ? "" : "s"}
+                    <span className="inline-flex bg-white px-2 pt-0.5 pb-0.75 rounded-lg text-black items-center"><label className="text-[#3fa43c] mr-0.5">{data.minCourseLimit} selected</label> | <label className="text-orange-400">{extraCourseCount} extra course{extraCourseCount === 1 ? "" : "s"} added</label></span> 
                   </p>
                 ) : null}
               </div>
@@ -1205,7 +1205,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                       </div> */}
                       {!fixed && course.courseMandatory === 1 && !batchOrProvider39 && (
                         <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-100 px-2 py-1 text-xs font-semibold text-emerald">
-                          <Lock className="h-3 w-3" /> Mandatory
+                          <Lock className="h-3 w-3" /> Fixed
                         </span>
                       )}
                       {!fixed && course.courseMandatory === 0 && (
@@ -1384,18 +1384,20 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                         <button
                           type="button"
                           onClick={() => setOpenCourseId(course.courseId)}
-                          className="flex shadow-sm w-full items-center space-x-3 px-4 py-3 text-left border rounded-lg text-sm font-medium text-slate-700"
+                          className="flex flex-wrap gap-2 shadow-sm w-full items-center space-x-3 px-4 py-3 text-left border rounded-lg text-sm font-medium text-slate-700"
                         >
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
-                            <CategoryIcon className="h-4 w-4" />
-                          </span>
-                          <div className="flex-1 flex-col flex">
-                            <span className="min-w-0 flex-1 truncate text-black">{course.courseName}</span>
-                            <span className="px-2 w-fit shrink-0 items-center justify-center rounded-full border border-black-300 bg-white text-[11px] font-semibold text-black">
-                              {course.subjects.length} {course.subjects.length>1?'Courses':'Course'} available
+                          <div className="inline-flex gap-2">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
+                              <CategoryIcon className="h-4 w-4" />
                             </span>
+                            <div className="flex-1 flex-col flex">
+                              <span className="min-w-0 flex-1 truncate text-black">{course.courseName}</span>
+                              <span className="px-2 w-fit shrink-0 items-center justify-center rounded-full border border-black-300 bg-white text-[11px] font-semibold text-black">
+                                {course.subjects.length} {course.subjects.length>1?'Courses':'Course'} available
+                              </span>
+                            </div>
                           </div>
-                          <span className="inline-flex px-2 cursor py-1 rounded-md bg-primary text-white text-xs"><Plus className="h-4 w-4" /> Add</span>
+                          <span className="inline-flex px-2 cursor py-1 ml-auto rounded-md bg-primary text-white text-xs"><Plus className="h-4 w-4" /> Add</span>
                         </button>
                       </li>
                     );
