@@ -13,8 +13,8 @@ import { Footer } from "@/components/common/Footer";
 export function MobileActionBar({ context, className = "", children }) {
   return (
     <div className={`fixed inset-x-0 bottom-0 z-20 bg-white md:static md:z-auto md:bg-transparent ${className}`}>
-      <div className="flex items-center justify-between gap-3 px-4 py-2 max-[367px]:gap-2 max-[367px]:px-2 md:justify-center md:p-0">
-        {context?.whatsAppNumber ? (
+      <div className="flex items-center justify-between gap-3 px-4 py-2 max-[367px]:gap-2 max-[367px]:px-2 justify-center md:p-0">
+        {/* {context?.whatsAppNumber ? (
           <a
             href={`https://api.whatsapp.com/send?phone=${context.whatsAppNumber}`}
             target="_blank"
@@ -26,7 +26,7 @@ export function MobileActionBar({ context, className = "", children }) {
           </a>
         ) : (
           <span className="md:hidden" />
-        )}
+        )} */}
         <div className="flex min-w-0 items-center gap-4 max-[367px]:gap-2">{children}</div>
       </div>
       <Footer schoolName={context?.schoolName} inBar />

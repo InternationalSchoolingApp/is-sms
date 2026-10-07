@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BiSolidBookAdd, BiSolidUserDetail } from "react-icons/bi";
+import { BiSolidBookAdd, BiSolidUserDetail} from "react-icons/bi";
+import { TfiAngleDown, TfiAngleUp } from "react-icons/tfi";
 import { Info } from "lucide-react";
 import { FaNotesMedical } from "react-icons/fa6";
 import { IoMdPeople } from "react-icons/io";
@@ -119,7 +120,7 @@ function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
         </span>
         <h2 className="text-[clamp(12px,3.5vw,15px)] font-bold text-black md:text-base md:font-semibold">{title}</h2>
       </div>
-      <div className="flex shrink-0 gap-2 max-[367px]:gap-1">
+      <div className="flex shrink-0 items-center gap-2 max-[367px]:gap-1">
         <Button
           type="button"
           variant="outline"
@@ -143,6 +144,9 @@ function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
             Edit
           </Button>
         )}
+        <span className="flex h-8 w-6 shrink-0 items-center justify-center text-slate-600 max-[367px]:h-7 max-[367px]:w-5 md:h-9 md:w-7" aria-hidden="true">
+          {open ? <TfiAngleUp className="h-3.5 w-3.5 md:h-4 md:w-4" /> : <TfiAngleDown className="h-3.5 w-3.5 md:h-4 md:w-4" />}
+        </span>
       </div>
     </header>
   );
@@ -784,7 +788,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
           <dl className="py-2 text-sm md:divide-y md:divide-slate-100 md:border-t md:border-slate-100 md:px-4 md:text-sm">
             <ReviewRow label="Student's First Name">{student?.firstName}</ReviewRow>
             <ReviewRow label="Student's Last Name">{student?.lastName}</ReviewRow>
-            {course?.standardName && <ReviewRow label="Select Grade">{course.standardName}</ReviewRow>}
+            {course?.standardName && <ReviewRow label="Selected Grade">{course.standardName}</ReviewRow>}
             <ReviewRow label="Date of Birth">{student?.dob}</ReviewRow>
             <ReviewRow label="Select Gender">{student?.genderName}</ReviewRow>
             <ReviewRow label="Student's Email">{student?.communicationEmail}</ReviewRow>
@@ -936,7 +940,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
             <p className="text-sm text-slate-500">Loading…</p>
           ) : paymentPending && paymentUnderReview ? null : paymentPending ? (
             <Button type="button" onClick={confirmAndPay} disabled={busy || !!editing} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
-              {busy ? "Please wait…" : "Continue to Payment"}
+              {busy ? "Please wait…" : "Continue to Pay"}
             </Button>
           ) : (
             <Button type="button" onClick={() => setConfirmSubmit(true)} disabled={busy || !!editing} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">

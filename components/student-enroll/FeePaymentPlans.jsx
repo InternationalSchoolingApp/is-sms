@@ -242,7 +242,7 @@ function RegistrationTable({ fee }) {
       <FeeTable>
         <PayableRow amount={fee.enrollmentFee.enrollmentFeeString} />
       </FeeTable>
-      <p className="p-2 text-xs">
+      <p className="p-2 text-xs text-center">
         Reserve an Enrollment Seat Fee of&nbsp;<b>{fee.enrollmentFee.enrollmentFeeString}</b>&nbsp;is non-refundable.
       </p>
     </>

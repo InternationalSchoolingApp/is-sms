@@ -469,24 +469,34 @@ export function PaymentGatewayPickerModal({
                         selected ? "border-primary bg-primary text-white shadow" : "border-slate-200 bg-white text-slate-800 hover:border-primary/50"
                       }`}
                     >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                      <span className="flex h-12 w-12 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 p-1">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={assetUrl(IMAGES, tabIcon(option))} alt="" className="max-h-7 max-w-7 object-contain" />
+                        <img src={assetUrl(IMAGES, tabIcon(option))} alt="" className=" md:max-h-7 md:max-w-7 max-h-7.2 max-w-7.2 object-contain" />
                       </span>
-                      <span className="flex-1 text-center text-xl md:text-[17px]">{option.label}</span>
+                      <span className="flex flex-1 flex-col items-center gap-1.5">
+                        <span className="text-center text-2xl md:text-[17px]">{option.label}</span>
+                        {String(option.name).toUpperCase() === "STRIPE" && (
+                          <span className="flex items-center justify-center gap-1.5">
+                            {[["visa.png", "Visa"], ["master-card.png", "Mastercard"], ["american-express.png", "Amex"]].map(([file, alt]) => (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img key={file} src={assetUrl(IMAGES, file)} alt={alt} className="h-7 w-auto rounded-sm bg-white object-contain p-1 md:h-5 md:p-0.5" />
+                            ))}
+                          </span>
+                        )}
+                      </span>
                       {selected}
                     </button>
                   </li>
                 );
               })}
             </ul>
-            <div className="mt-6 rounded-xl border border-slate-200 p-4">
-              <div className="flex items-center gap-2 font-semibold text-black">
+            <div className="mt-6 rounded-xl border border-slate-200 p-4 text-center">
+              <div className="flex items-center justify-center gap-2 font-semibold text-black">
                 <ShieldCheck className="h-5 w-5 text-primary" /> Secure &amp; Trusted
               </div>
               <ul className="mt-3 space-y-2 text-sm text-slate-700">
                 {["SSL Encrypted", "PCI-DSS Certified", "Global Payment Gateways"].map((text) => (
-                  <li key={text} className="flex items-center gap-2">
+                  <li key={text} className="flex items-center justify-center gap-2">
                     <CircleCheckBig className="h-5 w-5 text-green-500" /> {text}
                   </li>
                 ))}
@@ -502,7 +512,7 @@ export function PaymentGatewayPickerModal({
                 <h3 className="text-2xl font-extrabold text-black">Select Your Payment Method</h3>
               </div>
               {details?.paymentLabel && (
-                <p className="mt-5 text-lg font-semibold text-slate-800">
+                <p className="mt-5 md:text-lg text-[17px] font-semibold text-slate-800 text-center">
                   <PaymentLabel>{details.paymentLabel}</PaymentLabel>
                 </p>
               )}

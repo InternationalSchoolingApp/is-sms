@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { BookOpen, CreditCard, LogOut, User, Users } from "lucide-react";
+import { BookOpen, CreditCard, LogOut, User, Users, TfiAngleDown} from "lucide-react";
 import { Footer } from "@/components/common/Footer";
 import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
 import { getLearningProgramTheme } from "@/utils/learningProgramTheme";
@@ -91,7 +91,7 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
 
       {/* Desktop floating WhatsApp support button, fixed above the fixed footer. Below md every step's
           fixed action bar (MobileActionBar) carries the icon instead. */}
-      {context?.whatsAppNumber && (
+      {/* {context?.whatsAppNumber && (
         <a
           href={`https://api.whatsapp.com/send?phone=${context.whatsAppNumber}`}
           target="_blank"
@@ -101,7 +101,7 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
         >
           <Image src="/images/whatsapp-new.webp" alt="" width={50} height={50} unoptimized className="h-[50px] w-[50px]" />
         </a>
-      )}
+      )} */}
 
       <Footer schoolName={schoolName} fixed />
     </div>
