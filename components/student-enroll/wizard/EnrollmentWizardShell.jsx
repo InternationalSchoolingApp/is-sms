@@ -134,7 +134,7 @@ function StepRow({ currentIndex }) {
       {/* Below 580px the whole stepper (circles, line, icons) is drawn at 70% of its size. */}
       <div className="relative mx-auto flex items-start justify-between max-[579px]:[zoom:0.7]">
         <div className="absolute inset-x-[18px] top-[18px] -translate-y-1/2 md:inset-x-8 md:top-5" aria-hidden="true">
-          <div className="h-[3px] w-full bg-slate-200 md:h-px" />
+          <div className="h-[3px] w-full bg-slate-400 md:h-px" />
           <div
             className="absolute left-0 top-1/2 h-[3px] -translate-y-1/2 bg-green-600 transition-[width] md:h-1"
             style={{ width: `${progressPercent}%` }}
@@ -209,10 +209,10 @@ function StepCircle({ icon: Icon, state, justCompleted, animate }) {
       className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 md:h-10 md:w-10 ${
         state === "active"
           ? "border-primary bg-white text-primary ring-4 ring-primary/20 md:ring-0"
-          : "border-slate-300 bg-[#f2f5fa] text-slate-400"
+          : "border-slate-400 bg-[#f2f5fa] text-slate-600"
       }`}
     >
-      <Icon className="h-4 w-4 md:h-6 md:w-6" aria-hidden="true" />
+      <Icon className="h-5 w-5 md:h-7 md:w-7" aria-hidden="true" />
     </div>
   );
 }
