@@ -84,23 +84,23 @@ function Stage1Skeleton({ isDualDiploma }) {
   return (
     <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       <h2 className="text-center text-xl font-bold text-black md:text-2xl">Student Details</h2>
-      <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-8 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
           <FieldSkeleton key={`identity-${i}`} />
         ))}
       </div>
-      <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
           <FieldSkeleton key={`contact-${i}`} />
         ))}
       </div>
-      <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
           <FieldSkeleton key={`residence-${i}`} />
         ))}
       </div>
       {isDualDiploma && (
-        <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <FieldSkeleton key={`school-${i}`} />
           ))}
@@ -264,7 +264,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
       <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
         <h2 className="text-center text-xl font-extrabold text-black md:text-2xl">Student Details</h2>
 
-        <div className="mt-4.5 grid grid-cols-1 gap-x-6 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-2">
+        <div className="mt-4.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-2">
           <FloatingLabelInput
             icon={User}
             label={<Req label="Student's First Name" required />}
@@ -288,7 +288,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
             error={errors.lastName}
           />
           </div>
-          <div className="mt-3.5 grid grid-cols-1 gap-x-6 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-3.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
           <FloatingLabelSelect
             icon={GraduationCap}
             label={<Req label={fields.standardId != null && fields.standardId != undefined && fields.standardId != "" ? `Selected Grade`:`Select Grade`} required />}
@@ -323,7 +323,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           />
         </div>
 
-        <div className="mt-3.5 grid grid-cols-1 gap-x-6 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-3.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
           <FloatingLabelInput
             icon={Mail}
             label={<Req label="Student's Email" required />}
@@ -375,7 +375,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           />
         </div>
 
-        <div className="mt-3.5 grid grid-cols-1 gap-x-6 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-3.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
           <FloatingLabelSelect
             icon={MapPin}
             label={
@@ -418,7 +418,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
         {isDualDiploma && (
           <>
             <strong className="mt-6 block text-base font-bold text-black">Current School Details</strong>
-          <div className="mt-3 grid grid-cols-1 gap-x-6 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-3 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
             <FloatingLabelInput
               icon={School}
               label={<Req label="Current School Name" required />}

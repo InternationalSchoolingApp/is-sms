@@ -157,7 +157,7 @@ export function ParentRelationFields({ schoolUUID, userId, fields, setFields, er
         />
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-3.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
         <FloatingLabelInput
           icon={User}
           label={<Req label={labels.firstName} required />}
@@ -187,7 +187,7 @@ export function ParentRelationFields({ schoolUUID, userId, fields, setFields, er
       </div>
 
       {otherRelation && (
-        <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-3.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
           <FloatingLabelInput
             icon={User}
             label={<>{otherRelation}&apos;s First Name <span className="text-black">(Optional)</span></>}
@@ -372,7 +372,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
       <h2 className="text-center text-xl font-bold text-black md:text-2xl">{heading}</h2>
 
       {isOneToOneFlex ? (
-        <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
           <FloatingLabelSelect
             icon={GraduationCap}
             label={<Req label="Are you a student or a working professional?" required />}
@@ -410,11 +410,11 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
             clearErrors={clearErrors}
           />
 
-          <label className="mt-8 mb-4 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-black">
+          <label className="mt-3.5 mb-2.5 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-black">
             <Checkbox checked={!fields.sameAsStudent} onCheckedChange={(v) => toggleSameAsStudent(!v)} />
             Edit Location
           </label>
-          <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
             <FloatingLabelSelect
               icon={MapPin}
               label={
@@ -471,7 +471,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
 
       {/* getParentDetailsContent() appends this after every variant (Communication Details,
           Academic & Communication Details, Parent | Guardian Details). */}
-      <div className="mt-8 flex flex-col items-center gap-3 text-center">
+      <div className="mt-4 flex flex-col items-center gap-3 text-center">
         <h3 className="text-base font-bold text-black">Preferred Contact Method <RequiredAsterisk /></h3>
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
           <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
