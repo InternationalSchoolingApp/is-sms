@@ -1,13 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { Footer } from "@/components/common/Footer";
 
 /**
  * A step's Back / Next row. Below md it is a white bar fixed to the bottom of the screen — WhatsApp
- * support icon on the left, the buttons on the right, and the copyright line underneath (the wizard's own
- * footer is hidden on mobile). From md it is an ordinary centred row in the page flow; `className` carries
- * that desktop spacing (e.g. "md:mt-10"), and the WhatsApp icon and copyright line are hidden there because
+ * support icon on the left, the buttons on the right, (the mobile copyright line is rendered by the shell, right after the step card). From md it is an ordinary centred row in the page flow; `className` carries
+ * that desktop spacing (e.g. "md:mt-10"), and the WhatsApp icon is hidden there because
  * the shell shows its own floating icon and fixed footer.
  */
 export function MobileActionBar({ context, className = "", children }) {
@@ -29,7 +27,6 @@ export function MobileActionBar({ context, className = "", children }) {
         )} */}
         <div className="flex min-w-0 items-center gap-4 max-[367px]:gap-2">{children}</div>
       </div>
-      <Footer schoolName={context?.schoolName} inBar />
     </div>
   );
 }

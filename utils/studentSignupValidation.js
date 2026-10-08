@@ -18,8 +18,9 @@ export function isValidEmail(value) {
 
 /**
  * Mirrors hasSequentialChars() from jquery.commonFunction.js:6319 — flags any
- * 3–5 char run that's alphabetically or numerically sequential, forward or
- * reversed (catches "abc", "cba", "123", "321", etc.).
+ * 5-char run that's alphabetically or numerically sequential, forward or
+ * reversed (catches "abcde", "edcba", "12345", "54321"; runs of up to 4 like
+ * "1234" are allowed).
  */
 export function hasSequentialChars(password) {
   const value = (password || "").toLowerCase();
@@ -29,7 +30,8 @@ export function hasSequentialChars(password) {
   const reverseNumbers = [...numbers].reverse().join("");
 
   for (let i = 0; i < value.length - 2; i++) {
-    for (let size = 3; size <= 5; size++) {
+    // Up to 4 sequential chars (1234, abcd) are allowed; 5 or more (12345, abcde) are not.
+    for (let size = 5; size <= 5; size++) {
       if (i + size > value.length) continue;
       const part = value.substring(i, i + size);
       if (

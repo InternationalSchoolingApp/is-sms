@@ -325,6 +325,7 @@ export function AccountForm({ context, canSubmit = false, onVerificationEmailSen
         <AccountInput
           icon={Mail}
           label="Enter student's email"
+          filledLabel="Student's Email"
           required
           name="email"
           type="email"

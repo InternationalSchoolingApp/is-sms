@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 export function FloatingLabelInput({
   icon: Icon,
   label,
+  filledLabel,
   status,
   error,
   trailing,
@@ -63,7 +64,7 @@ export function FloatingLabelInput({
         )}
         {label && (
           <label
-            className={`pointer-events-none absolute top-1/2 z-0 -translate-y-1/2 bg-white px-1 text-sm max-[319px]:text-xs transition-all peer-focus:top-0 peer-focus:text-xs max-[319px]:peer-focus:!text-[10px] peer-[&:not(:placeholder-shown)]:top-0 peer-[&:not(:placeholder-shown)]:text-xs max-[319px]:peer-[&:not(:placeholder-shown)]:!text-[10px] peer-autofill:top-0 peer-autofill:text-xs max-[319px]:peer-autofill:!text-[10px] peer-[:-internal-autofill-selected]:top-0 peer-[:-internal-autofill-selected]:text-xs max-[319px]:peer-[:-internal-autofill-selected]:!text-[10px] ${
+            className={`${filledLabel ? "[&>.lf]:hidden peer-[&:not(:placeholder-shown)]:[&>.le]:hidden peer-[&:not(:placeholder-shown)]:[&>.lf]:inline peer-autofill:[&>.le]:hidden peer-autofill:[&>.lf]:inline " : ""}pointer-events-none absolute top-1/2 z-0 -translate-y-1/2 bg-white px-1 text-sm max-[319px]:text-xs transition-all peer-focus:top-0 peer-focus:text-xs max-[319px]:peer-focus:!text-[10px] peer-[&:not(:placeholder-shown)]:top-0 peer-[&:not(:placeholder-shown)]:text-xs max-[319px]:peer-[&:not(:placeholder-shown)]:!text-[10px] peer-autofill:top-0 peer-autofill:text-xs max-[319px]:peer-autofill:!text-[10px] peer-[:-internal-autofill-selected]:top-0 peer-[:-internal-autofill-selected]:text-xs max-[319px]:peer-[:-internal-autofill-selected]:!text-[10px] ${
               Icon
                 ? "left-10 peer-focus:left-3 peer-[&:not(:placeholder-shown)]:left-3 peer-autofill:left-3 peer-[:-internal-autofill-selected]:left-3"
                 : "left-3.5 peer-focus:left-3 peer-[&:not(:placeholder-shown)]:left-3 peer-autofill:left-3 peer-[:-internal-autofill-selected]:left-3"
@@ -73,7 +74,14 @@ export function FloatingLabelInput({
                 : "text-slate-500 peer-focus:text-primary peer-[&:not(:placeholder-shown)]:text-primary peer-autofill:text-primary peer-[:-internal-autofill-selected]:text-primary"
             }`}
           >
-            {label}
+            {filledLabel ? (
+              <>
+                <span className="le">{label}</span>
+                <span className="lf">{filledLabel}</span>
+              </>
+            ) : (
+              label
+            )}
           </label>
         )}
         {trailing}
