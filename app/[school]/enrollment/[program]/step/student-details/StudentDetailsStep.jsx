@@ -3,6 +3,7 @@
 import { FullScreenLoader } from "@/components/common/Loader";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Stage1StudentDetails } from "@/components/student-enroll/Stage1StudentDetails";
 import { useEnrollmentContext } from "@/hooks/useEnrollmentContext";
 import { useWizardResume } from "@/hooks/useWizardResume";
@@ -35,6 +36,7 @@ export function StudentDetailsStep() {
   const { session, context, ready } = useEnrollmentContext();
   const { redirecting } = useWizardResume({ currentStep: 1, context, uniqueId: session?.uniqueId, ready });
   const prefill = useStudentDetailsPrefill({ context, userId: session?.userId });
+  const queryClient = useQueryClient();
   const [initialFields, setInitialFields] = useState(null);
   const [hydrated, setHydrated] = useState(false);
 
@@ -56,6 +58,9 @@ export function StudentDetailsStep() {
       initialFields={initialFields}
       onNext={(fields) => {
         saveWizardStudentFields(context.schoolUUID, session.userId, fields);
+        // Stage 1 just saved these server-side; keep the shared prefill cache in step so Back
+        // from Stage 2 doesn't show the pre-save values now that the query isn't always refetched.
+        queryClient.setQueryData(["student-details-prefill", session.userId], (old) => ({ ...(old || {}), ...fields }));
         router.push(stepPath(school, program, 2));
       }}
     />

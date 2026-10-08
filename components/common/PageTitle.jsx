@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { getStudentDetails } from "@/services/studentSignupBackendApi";
-import { mapSignupStudentToFields } from "@/hooks/useStudentDetailsSignup";
+import { mapSignupStudentToFields, STUDENT_PREFILL_STALE_MS } from "@/hooks/useStudentDetailsSignup";
 import { getLearningProgramLabel, getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 
 export function PageTitle() {
@@ -25,7 +25,7 @@ export function PageTitle() {
       return mapSignupStudentToFields(response.signupStudent);
     },
     enabled: Boolean(authenticated && session?.userId),
-    staleTime: 0,
+    staleTime: STUDENT_PREFILL_STALE_MS,
     refetchOnWindowFocus: false,
     retry: false,
   });

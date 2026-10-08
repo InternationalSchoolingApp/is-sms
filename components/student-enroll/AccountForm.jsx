@@ -37,7 +37,7 @@ const INITIAL_FIELDS = {
  * / signupCommon.js's #userSignupForm), rebuilt with shadcn/ui + Tailwind,
  * wired to the confirmed POST enrollment/stage-1 endpoint.
  */
-export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
+export function AccountForm({ context, canSubmit = false, onVerificationEmailSent, onRedirect }) {
   const [fields, setFields] = useState(() => ({
     ...INITIAL_FIELDS,
     captcha: randomCaptcha(),
@@ -67,10 +67,22 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
   const [welcomeBackModal, setWelcomeBackModal] = useState(null);
   // const [emailValidatorModal, setEmailValidatorModal] = useState(null); // email-invalid confirm modal disabled
   const formRef = useRef(null);
+  const emailEditedRef = useRef(false);
   // Mirrors signupCommon.js's `prevValue` closure var — avoids re-firing
   // the availability check when the email field blurs without its value
   // actually changing (e.g. tabbing through without editing).
   const lastCheckedEmailRef = useRef("");
+
+  useEffect(() => {
+    if (!canSubmit) return;
+    setFields((prev) => ({
+      ...prev,
+      ...(emailEditedRef.current
+        ? {}
+        : { email: context.username || prev.email, confirmEmail: context.username || prev.confirmEmail }),
+      referralCode: context.referralCode || prev.referralCode,
+    }));
+  }, [canSubmit, context.username, context.referralCode]);
 
   const signup = useAccountSignup({ mode: "online", context });
 
@@ -124,6 +136,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
   const checkTermsError = touched.checkTerms && checkTermsInvalid ? "Please accept terms and conditions" : undefined;
 
   function setField(name, value) {
+    if (name === "email") emailEditedRef.current = true;
     // "Confirm your email" is hidden from the UI: it always carries the same value as "Enter your
     // email", so the payload and validation (which still expect confirmEmail) keep working.
     setFields((prev) => ({ ...prev, [name]: value, ...(name === "email" ? { confirmEmail: value } : {}) }));
@@ -150,6 +163,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
   //   - status "0"/"2" with statusCode 0044/0043/02 ("already registered"/
   //     "declined"): the "Welcome back" modal, same as before.
   async function handleEmailBlur(email) {
+    if (!canSubmit) return;
     const trimmed = email.trim();
     if (!trimmed || !isValidEmail(trimmed) || trimmed === lastCheckedEmailRef.current) return;
     lastCheckedEmailRef.current = trimmed;
@@ -202,6 +216,7 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
     // wiring and the form's onKeyDown (Enter-to-submit) below.
     e?.preventDefault?.();
     e?.stopPropagation?.();
+    if (!canSubmit) return;
 
     try {
       // Read the REAL submitted values straight from the DOM via FormData,
@@ -487,7 +502,6 @@ export function AccountForm({ context, onVerificationEmailSent, onRedirect }) {
           <Button
             type="button"
             onClick={handleSubmit}
-            disabled={signup.isPending}
             className="h-11 min-w-[110px] rounded-xl bg-primary px-7 text-[15px] font-semibold text-white shadow-sm hover:bg-primary/90"
           >
             {signup.isPending ? "Please wait…" : "Next"}

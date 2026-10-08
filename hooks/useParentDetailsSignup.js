@@ -170,14 +170,15 @@ export function useParentDetailsSignup({ context, userId, isOneToOneFlex }) {
   return useMutation({
     mutationFn: (fields) =>
       saveParentDetails(context.schoolUUID, buildSaveParentDetailsRequest({ fields, context, userId, isOneToOneFlex })),
-    // The prefill query still holds the parent as it was BEFORE this save, and the step reads
-    // its cache as soon as it remounts (Back from Step 3), so it would show the old values until
-    // the background refetch lands -- and the form only takes its initial values once. Drop the
-    // stale entry (same as useProceedToReview does for the review data) so the next visit waits
-    // for the freshly saved parent. A rejected save (status "0"/"2", or no response) saved nothing.
+    // The prefill query still holds the parent as it was BEFORE this save, and the step reads its
+    // cache as soon as it remounts (Back from Step 3); the form only takes its initial values once.
+    // Write the just-saved fields into the cache (same as Stage 1/3 do for the student prefill) so
+    // Back renders instantly with the saved values instead of waiting on a get-parent-details
+    // round trip -- staleTime 0 still reconciles with the server in the background. A rejected save
+    // (status "0"/"2", or no response) saved nothing, so the cache is left alone.
     onSuccess: (response, fields) => {
       if (!response || response.status === "0" || response.status === "2") return;
-      queryClient.removeQueries({ queryKey: ["parent-details-prefill", userId] });
+      queryClient.setQueryData(["parent-details-prefill", userId], fields);
       // The backend keeps ONE parent record: a saved Guardian makes any cached Father / Mother data
       // stale (so switching back starts blank); a saved Father / Mother caches the OTHER parent so it
       // survives a refresh and shows on the review screen.
