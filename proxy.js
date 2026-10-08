@@ -36,5 +36,6 @@ export default auth((req) => {
 export const config = {
   matcher: [
     "/:school/enrollment/:program/step/:path*",
+    "/:school/add-enrollment/:parentId/:sessionUserId/step/:path*",
   ],
 };

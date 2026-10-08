@@ -915,12 +915,11 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       if (!confirmed) return false;
     }
     setOpenCourseId(course.courseId);
-    const added = await applyChange({
-      selectedSubjects: [...selectedIds, String(subject.subjectId)].join(","),
-      controlType: "add",
-      courseId: course.courseId,
-    });
-    if (added) toast.success(`${subject.subjectName} added`);
+    const added = applyLocal((previous) => optimisticAdd(previous, course, subject));
+    if (added) {
+      unsavedRef.current = true;
+      toast.success(`${subject.subjectName} added`);
+    }
     return added;
   }
 

@@ -14,10 +14,30 @@ const STEPS = [
   { key: "review_and_payment", label: "Review and Payment", icon: CreditCard },
 ];
 
-export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentStepKey, onLogout, plain = false, hideStepper = false, children }) {
+// Icon/label lookup for callers (e.g. the add-enrollment wizard) that pass a
+// shorter `steps` override — reuses the same icons/labels instead of
+// duplicating them, keyed the same as STEPS above.
+export const WIZARD_STEP_META = {
+  student: { label: "Student profile", icon: User },
+  parent: { label: "Parent information", icon: Users },
+  course_selection: { label: "Course Selection", icon: BookOpen },
+  review_and_payment: { label: "Review and Payment", icon: CreditCard },
+};
+
+export function EnrollmentWizardShell({
+  schoolName,
+  logoUrl,
+  context,
+  currentStepKey,
+  onLogout,
+  plain = false,
+  hideStepper = false,
+  steps = STEPS,
+  children,
+}) {
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const currentIndex = STEPS.findIndex((step) => step.key === currentStepKey);
+  const currentIndex = steps.findIndex((step) => step.key === currentStepKey);
   const programLabel = context ? getLearningProgramTheme(context.learningProgram).label : null;
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -74,7 +94,7 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
           </div>
         )}
 
-        {!hideStepper && <StepRow currentIndex={currentIndex} />}
+        {!hideStepper && <StepRow currentIndex={currentIndex} steps={steps} />}
         </div>
 
         {plain ? (
@@ -118,12 +138,12 @@ function stepState(index, currentIndex) {
 // step page). A fresh page load has none, so a refresh shows the check marks without replaying the gif.
 let previousStepIndex = null;
 
-function StepRow({ currentIndex }) {
+function StepRow({ currentIndex, steps }) {
   const arrivedForward = previousStepIndex !== null && currentIndex === previousStepIndex + 1;
   useEffect(() => {
     previousStepIndex = currentIndex;
   }, [currentIndex]);
-  const progressPercent = STEPS.length > 1 ? (Math.max(currentIndex, 0) / (STEPS.length - 1)) * 100 : 0;
+  const progressPercent = steps.length > 1 ? (Math.max(currentIndex, 0) / (steps.length - 1)) * 100 : 0;
 
   return (
     <div className="mx-auto mt-2 max-w-2xl px-4 max-[579px]:mt-0 md:mt-4 md:px-0">
@@ -136,7 +156,7 @@ function StepRow({ currentIndex }) {
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-        {STEPS.map((step, index) => (
+        {steps.map((step, index) => (
           <div key={step.key} className="relative z-10 flex w-9 flex-col items-center gap-2 md:w-16">
             <StepCircle
               icon={step.icon}
