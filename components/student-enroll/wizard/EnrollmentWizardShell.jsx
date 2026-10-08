@@ -49,7 +49,8 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
         }}
       />
 
-      <div className="flex-1 bg-[#f2f5fa] px-4 pb-28 md:px-6 md:py-8 md:pb-24 md:pt-[62px]">
+      <div className="flex flex-1 flex-col bg-[#f2f5fa] px-4 pb-0 md:block md:px-6 md:py-8 md:pb-24 md:pt-[62px]">
+        <div className="flex-1">
         <div className="sticky top-0 z-20 -mx-4 bg-[#f2f5fa] px-4 pb-3 max-[579px]:pb-1 md:static md:mx-0 md:bg-transparent md:px-0 md:pb-0">
         <header className="grid grid-cols-[2rem_1fr_2rem] items-center gap-2 px-1 py-4 max-[579px]:py-2 md:hidden">
           <Image src="/images/Fav_Icon.png" alt={schoolName || ""} width={28} height={28} className="h-7 w-auto" unoptimized />
@@ -87,6 +88,9 @@ export function EnrollmentWizardShell({ schoolName, logoUrl, context, currentSte
             </>
           
         )}
+        </div>
+
+        <Footer schoolName={schoolName} inFlow />
       </div>
 
       {/* Desktop floating WhatsApp support button, fixed above the fixed footer. Below md every step's

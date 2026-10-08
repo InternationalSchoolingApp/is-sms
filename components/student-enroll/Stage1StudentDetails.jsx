@@ -257,6 +257,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           <FloatingLabelInput
             icon={User}
             label={<Req label="Student's First Name" required />}
+            filledLabel={<Req label="First Name" required />}
             value={fields.firstName}
             {...nameFieldProps((v) => setField("firstName", v))}
             error={errors.firstName}
@@ -270,6 +271,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           <FloatingLabelInput
             icon={User}
             label={<Req label="Student's Last Name" required />}
+            filledLabel={<Req label="Last Name" required />}
             value={fields.lastName}
             {...nameFieldProps((v) => setField("lastName", v))}
             error={errors.lastName}

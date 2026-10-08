@@ -7,7 +7,7 @@ const RULES = [
   { key: "case", label: "1 UPPER and lower case letter (A-Z, a-z)" },
   { key: "digitAndSpecial", label: "1 number and 1 special character (! @ # $ % & *)" },
   { key: "length", label: "Minimum 8 to 20 characters" },
-  { key: "noSequence", label: "No back-to-back patterns (123, abc, zyx)" },
+  { key: "noSequence", label: "No back-to-back patterns (12345, abcde, zyxwv)" },
 ];
 
 /** Live checklist mirroring the existing app's password-suggestion popup (jquery.commonFunction.js). */
