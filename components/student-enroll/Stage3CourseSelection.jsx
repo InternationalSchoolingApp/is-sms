@@ -18,7 +18,6 @@ import {
   Lock,
   Palette,
   Plus,
-  RefreshCw,
   Search,
   Sparkles,
   Trash2,
@@ -48,7 +47,7 @@ import { useGradeOptions, useCountryOptions, useStudentDetailsPrefill, useStuden
 import { getCourseAddCheck, hidesCourseCredits, validateCourseCredits } from "@/utils/studentSignupValidation";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { saveWizardStudentFields } from "@/utils/wizardStorage";
-import { FaAngleRight, FaArrowDown, FaRegEyeSlash } from "react-icons/fa";
+import { FaAngleRight, FaArrowDown, FaExchangeAlt, FaRegEyeSlash } from "react-icons/fa";
 
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
 
@@ -869,7 +868,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             disabled={busy}
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
           >
-            Change <RefreshCw className="h-3.5 w-3.5 stroke-3" />
+            Change <FaExchangeAlt className="h-3.5 w-3.5 stroke-3" />
           </button>
         </div>
       )}
@@ -893,7 +892,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               disabled={busy}
               className="inline-flex items-center gap-1.5 ml-auto rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
             >
-              Change Grade <RefreshCw className="h-3 w-3 stroke-3" />
+              Change Grade <FaExchangeAlt className="h-3 w-3 stroke-3" />
             </button>
           </div>
         )}
