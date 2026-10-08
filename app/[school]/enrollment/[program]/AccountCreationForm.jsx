@@ -76,7 +76,7 @@ export function AccountCreationForm({ school, program, query }) {
         username: signupInfo.username || "",
         uniqueId: signupInfo.UNIQUEUUID,
         ras: signupInfo.ras,
-        referralCode: signupInfo.referralCode || new URLSearchParams(search).get("referralCode") || "",
+        referralCode: signupInfo.referralCode || searchParams.get("referralCode") || "",
         signupType: signupInfo.signupType,
         learningProgramLabel: signupInfo.learningProgramLabel,
         unregisteredId: signupInfo.unregisteredId,
@@ -88,7 +88,19 @@ export function AccountCreationForm({ school, program, query }) {
         schoolPolicyUrl: schoolSettingsLinks.schoolPolicyUrl || FALLBACK_POLICY_LINKS.schoolPolicyUrl,
         studentPolicyUrl: schoolSettingsLinks.studentPolicytUrl || FALLBACK_POLICY_LINKS.studentPolicyUrl,
       }
-    : null;
+    : {
+        schoolUUID,
+        schoolNumericId: schoolInfo.schoolNumericId,
+        schoolName: schoolInfo.schoolName,
+        whatsAppNumber: schoolInfo.whatsAppNumber,
+        enrollmentFor,
+        learningProgram,
+        username: "",
+        referralCode: searchParams.get("referralCode") || "",
+        schoolSettingsLinks: {},
+        loginUrl: `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/${schoolUUID}/common/login`,
+        ...FALLBACK_POLICY_LINKS,
+      };
 
   // Public enrollment bootstrap. The exact URL query (including referralCode,
   // ras, payload, and v when present) is sent to the backend; its response
@@ -292,35 +304,30 @@ export function AccountCreationForm({ school, program, query }) {
           className="relative flex flex-1 items-start justify-center overflow-y-auto p-4 md:p-8"
         >
           <div className="my-auto w-full max-w-lg rounded-3xl bg-white p-3 shadow-[0_0_24px_rgba(15,23,42,0.12)] md:shadow-xl md:shadow-slate-900/5 md:ring-1 ring-slate-900/5 sm:p-8 md:p-10">
-            {!signupInfo ? (
-              signupInfoError ? (
-                <div className="space-y-4 py-6 text-center" role="alert">
-                  <p className="text-sm font-medium text-rose-700">{signupInfoError}</p>
-                  <button
-                    type="button"
-                    onClick={() => setSignupInfoAttempt((attempt) => attempt + 1)}
-                    className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
-                  >
-                    Try again
-                  </button>
-                </div>
-              ) : (
-                <div className="flex min-h-44 flex-col items-center justify-center gap-3 text-center" role="status" aria-live="polite">
-                  <span className="size-9 animate-spin rounded-full border-[3px] border-primary/20 border-t-primary" />
-                  <p className="text-sm font-medium text-slate-600">Preparing your enrollment form...</p>
-                </div>
-              )
-            ) : verificationEmail ? (
+            {!signupInfo && signupInfoError && (
+              <div className="mb-5 space-y-3 text-center" role="alert">
+                <p className="text-sm font-medium text-rose-700">{signupInfoError}</p>
+                <button
+                  type="button"
+                  onClick={() => setSignupInfoAttempt((attempt) => attempt + 1)}
+                  className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
+                >
+                  Retry setup
+                </button>
+              </div>
+            )}
+            {verificationEmail ? (
               <EmailVerificationPanel
                 email={verificationEmail}
                 context={context}
                 onClose={() => setVerificationEmail(null)}
               />
             ) : isOffline ? (
-              <AccountFormOfflineB2B context={context} onRedirect={(url) => url && (window.location.href = url)} />
+              <AccountFormOfflineB2B context={context} canSubmit={Boolean(signupInfo)} onRedirect={(url) => url && (window.location.href = url)} />
             ) : (
               <AccountForm
                 context={context}
+                canSubmit={Boolean(signupInfo)}
                 onVerificationEmailSent={setVerificationEmail}
                 onRedirect={(url) => url && (window.location.href = url)}
               />

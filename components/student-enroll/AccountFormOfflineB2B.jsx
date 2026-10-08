@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Mail, GraduationCap } from "lucide-react";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
@@ -19,13 +19,18 @@ const INITIAL_FIELDS = { communicationEmail: "", learningProgram: "", referralCo
  * email/password entirely and only requires a learning-program selection.
  * Confirmed in scope for this migration (see the plan doc's decision log).
  */
-export function AccountFormOfflineB2B({ context, onRedirect }) {
+export function AccountFormOfflineB2B({ context, canSubmit = false, onRedirect }) {
   const [fields, setFields] = useState(() => ({
     ...INITIAL_FIELDS,
     referralCode: context?.referralCode || "",
   }));
   const [errors, setErrors] = useState({});
   const signup = useAccountSignup({ mode: "offline", context });
+
+  useEffect(() => {
+    if (!canSubmit || !context.referralCode) return;
+    setFields((prev) => ({ ...prev, referralCode: context.referralCode }));
+  }, [canSubmit, context.referralCode]);
 
   function setField(name, value) {
     setFields((prev) => ({ ...prev, [name]: value }));
@@ -39,6 +44,7 @@ export function AccountFormOfflineB2B({ context, onRedirect }) {
     // field to trigger Chrome's login-heuristic specifically.
     e?.preventDefault?.();
     e?.stopPropagation?.();
+    if (!canSubmit) return;
 
     try {
       const { valid, errors: validationErrors } = validateAccountFormOfflineB2B(fields);
@@ -94,7 +100,6 @@ export function AccountFormOfflineB2B({ context, onRedirect }) {
       <Button
         type="button"
         onClick={handleSubmit}
-        disabled={signup.isPending}
         className="mx-auto block w-32 rounded-full bg-primary hover:bg-primary/90"
       >
         {signup.isPending ? "Please wait…" : "Next"}
