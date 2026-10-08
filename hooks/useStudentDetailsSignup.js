@@ -151,6 +151,13 @@ export function mapSignupStudentToFields(signupStudent) {
  * up so far (AccountFormOfflineB2B exists but Offline resume into this
  * page isn't); revisit once Offline reaches Stage 1.
  */
+// Several observers share this query (EnrollmentProvider, PageTitle and each step page). With
+// staleTime 0 every observer that mounted after the first fetch re-ran get-student-details
+// (a duplicate Server Action, and Server Actions run one at a time). Within this window they
+// reuse the cache; Stage 1/3 write their saved fields back with setQueryData, so it never lags
+// behind what the student just saved.
+export const STUDENT_PREFILL_STALE_MS = 30 * 1000;
+
 export function useStudentDetailsPrefill({ context, userId }) {
   return useQuery({
     queryKey: ["student-details-prefill", userId],
@@ -164,7 +171,7 @@ export function useStudentDetailsPrefill({ context, userId }) {
       return mapSignupStudentToFields(response.signupStudent);
     },
     enabled: Boolean(context?.schoolUUID && userId),
-    staleTime: 0,
+    staleTime: STUDENT_PREFILL_STALE_MS,
     refetchOnWindowFocus: false,
     retry: false,
   });
