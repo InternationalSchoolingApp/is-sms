@@ -989,6 +989,11 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   }
 
   async function handleGradeChange(newStandardId, newDob) {
+    // Courses are grade-specific, so they're only reset below when the grade
+    // itself actually changed — saving the dialog with the same grade (e.g.
+    // only the DOB changed, or nothing changed at all) must leave the
+    // existing selection untouched.
+    const gradeChanged = String(newStandardId) !== String(standardId);
     try {
       const fields = { ...(studentPrefill.data || {}), standardId: newStandardId, dob: newDob };
       const saveResponse = await changeGrade.mutateAsync(fields);
@@ -1002,12 +1007,15 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       // remounts), and the Grade select shows the grade from before this
       // change instead of preselecting what was just saved.
       queryClient.setQueryData(["student-details-prefill", userId], fields);
+      saveWizardStudentFields(context.schoolUUID, userId, fields);
+      setChangeGradeOpen(false);
+
+      if (!gradeChanged) return;
+
       // Mirrors saveSelectedGradeAndDob(): grade saved, so refresh Step 3's
       // course list for the new grade, clearing the old grade's selection
       // (courses are grade-specific) — same as getAllCourseDetails('Y', '')
       // after #signupStage3 #standardId/#selectedSubjects/#controlType are reset.
-      saveWizardStudentFields(context.schoolUUID, userId, fields);
-      setChangeGradeOpen(false);
       // Switch useCourseDetails to the new grade's cache entry before the
       // mutation below writes its response there (useCourseSelection.js's
       // courseDetailsKey is keyed by standardId) — otherwise the write lands
