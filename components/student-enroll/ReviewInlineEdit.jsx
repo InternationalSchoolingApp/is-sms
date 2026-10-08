@@ -32,7 +32,7 @@ import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
 const STATUS_SESSION_OUT = "3";
-const GRID = "grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3";
+const GRID = "grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3";
 
 /**
  * Edit popups for the review screen's Student / Parent sections —
@@ -209,13 +209,13 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
   return (
     <>
       <EditCard title="Student Details" saving={signup.isPending} onSave={save} onCancel={onCancel} formError={formError} centerTitle>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
           <FloatingLabelInput icon={User} label={<Req label="Student's First Name" required />} filledLabel={<Req label="First Name" required />} value={fields.firstName} {...nameFieldProps(set("firstName"))} error={errors.firstName} />
           {/* Middle Name removed from student signup */}
           <FloatingLabelInput icon={User} label={<Req label="Student's Last Name" required />} filledLabel={<Req label="Last Name" required />} value={fields.lastName} {...nameFieldProps(set("lastName"))} error={errors.lastName} />
         </div>
 
-        <div className={`mt-6 ${GRID}`}>
+        <div className={`mt-3.5 ${GRID}`}>
           <FloatingLabelSelect
             icon={GraduationCap}
             label={<Req label={fields.standardId ? "Selected Grade" : "Select Grade"} required />}
@@ -248,7 +248,7 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
           />
         </div>
 
-        <div className={`mt-6 ${GRID}`}>
+        <div className={`mt-3.5 ${GRID}`}>
           <FloatingLabelInput
             icon={Mail}
             label={<Req label="Student's Email" required />}
@@ -279,7 +279,7 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
           />
         </div>
 
-        <div className={`mt-6 ${GRID}`}>
+        <div className={`mt-3.5 ${GRID}`}>
           <FloatingLabelSelect
             icon={MapPin}
             label={<Req label={<>Country{" "}<span className="text-black text-[12px]">(Student&apos;s Current Location)</span></>} required />}
@@ -459,7 +459,7 @@ export function ParentInlineEdit({ context, userId, parent, title = "Parent/Guar
               clearErrors={(...names) => setErrors((prev) => Object.fromEntries(Object.entries(prev).filter(([key]) => !names.includes(key))))}
             />
 
-            <div className={`mt-6 ${GRID}`}>
+            <div className={`mt-3.5 ${GRID}`}>
               <FloatingLabelSelect
                 icon={MapPin}
                 label={<Req label={<>Country{" "}<span className="text-black text-[12px]">(Parent&apos;s Current Location)</span></>} required />}
