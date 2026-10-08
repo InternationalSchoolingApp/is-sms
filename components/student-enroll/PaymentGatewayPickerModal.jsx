@@ -90,13 +90,12 @@ function CurrencyCard({ details, payerCountryCode }) {
       <div className="flex items-center justify-center gap-2 text-sm font-semibold text-primary">
         <Info className="h-4 w-4" /> Payable Fee
       </div>
-      <div className="mt-3 flex flex-col gap-4 md:flex-row md:items-center">
-        {/* Both amount boxes share the row equally below md (min-w-0 lets them shrink instead of the text
-            spilling out) and have the same structure: flag + amount over its currency code. */}
-        <div className="flex w-full items-center gap-2 md:w-auto md:gap-3">
-          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 md:flex-none md:px-3">
+      <div className="mt-3 flex min-w-0 flex-col items-center gap-4 xl:flex-row xl:justify-center">
+        {/* Stack local and base currency on mobile so the amount cards stay readable in a narrow modal. */}
+        <div className="flex w-full min-w-0 flex-col items-center gap-2 sm:flex-row sm:justify-center sm:gap-3 md:w-auto">
+          <div className="flex w-full min-w-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 sm:w-auto sm:max-w-[13rem] sm:flex-1 md:flex-none md:px-3">
             <Flag country={localFlag} alt={conversion.to} />
-            <div className="min-w-0 leading-tight">
+            <div className="min-w-0 text-center leading-tight">
               <span className="block break-words text-[13px] font-semibold sm:text-sm">
                 {getCurrencyDisplaySymbol(conversion.to)}
                 {formatMoneyWithCommas(details.payAmountWithCurrency)}
@@ -104,10 +103,10 @@ function CurrencyCard({ details, payerCountryCode }) {
               <small className="block text-xs text-slate-500">({conversion.to})</small>
             </div>
           </div>
-          <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
-          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 md:flex-none md:px-3">
+          <ArrowRight className="h-4 w-4 shrink-0 rotate-90 text-primary sm:rotate-0" />
+          <div className="flex w-full min-w-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 sm:w-auto sm:max-w-[13rem] sm:flex-1 md:flex-none md:px-3">
             <Flag country={baseFlag} alt={conversion.base} />
-            <div className="min-w-0 leading-tight">
+            <div className="min-w-0 text-center leading-tight">
               <span className="block break-words text-[13px] font-semibold sm:text-sm">
                 {getCurrencyDisplaySymbol(conversion.base)}
                 {formatMoneyWithCommas(details.payAmount)}
@@ -117,7 +116,7 @@ function CurrencyCard({ details, payerCountryCode }) {
           </div>
         </div>
         {/* <div className="hidden h-12 w-px bg-blue-100 md:block" /> */}
-        <div className="text-sm ml-2">
+        <div className="ml-0 min-w-0 text-sm xl:ml-2 xl:flex-1">
           <div className="flex items-center justify-center gap-2 font-semibold text-primary">
             <ArrowRightLeft className="h-4 w-4" /> Conversion Rate
           </div>
@@ -317,12 +316,12 @@ function GatewayActions({ option, details, busy, onPay, onClose }) {
     maximumFractionDigits: 2,
   });
   return (
-    <div className="flex items-center justify-center gap-3">
-      <Button type="button" variant="outline" onClick={onClose} disabled={busy} className="gap-2">
+    <div className="flex min-w-0 items-center justify-center gap-2 sm:gap-3">
+      <Button type="button" variant="outline" onClick={onClose} disabled={busy} className="shrink-0 gap-2 px-3 text-xs sm:text-sm">
         <ArrowLeft className="h-4 w-4" /> Back
       </Button>
       {!NO_PAY_BUTTON.includes(option.name) && (
-        <Button type="button" onClick={() => onPay(option)} disabled={busy} className="gap-2 px-6">
+        <Button type="button" onClick={() => onPay(option)} disabled={busy} className="shrink-0 gap-1.5 px-3 text-xs sm:gap-2 sm:px-6 sm:text-sm">
           {busy ? "Please wait…" : `Pay ${payCurrency}${payAmountLabel}`} <ArrowRight className="h-4 w-4" />
         </Button>
       )}
@@ -336,7 +335,7 @@ function GatewayPanel({ option, details, airwallexMethods, busy, onPay, onClose,
   const instructions = option.additionalDetails ?? option.addtionalDetails; // backend spells it both ways
 
   return (
-    <div>
+    <div className="min-w-0">
       {hasBanner && (
         <div className="flex justify-center rounded-xl bg-slate-100 px-5 py-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -444,14 +443,14 @@ export function PaymentGatewayPickerModal({
     <Dialog open={open} onOpenChange={(next) => !busy && onOpenChange(next)}>
       <DialogContent
         showCloseButton={false}
-        className="flex h-[92dvh] max-h-[92dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl lg:h-[80vh] lg:max-h-[80vh] lg:max-w-5xl"
+        className="flex h-[92dvh] max-h-[92dvh] flex-col gap-0 overflow-x-hidden overflow-y-hidden p-0 sm:max-w-4xl lg:h-[80vh] lg:max-h-[80vh] lg:max-w-5xl"
       >
         <DialogTitle className="sr-only">Select Your Payment Method</DialogTitle>
         {/* Fills the dialog's remaining height. From md each column scrolls independently so the Pay Now / Back
             bar can stay pinned to the bottom; below md the whole body (gateway list + selected gateway) is one
             scroll area, with the Pay Now / Back bar sticky at its bottom. */}
-        <div className="grid flex-1 content-start overflow-y-auto md:grid-cols-[18rem_minmax(0,1fr)] md:content-stretch md:overflow-hidden">
-          <aside className="border-b border-slate-200 bg-white p-5 md:overflow-y-auto md:border-r md:border-b-0">
+        <div className="grid min-w-0 flex-1 content-start overflow-x-hidden overflow-y-auto md:grid-cols-[18rem_minmax(0,1fr)] md:content-stretch md:overflow-hidden">
+          <aside className="min-w-0 border-b border-slate-200 bg-white p-5 md:overflow-y-auto md:border-r md:border-b-0">
             <div className="md:hidden">
               <h3 className="text-xl font-extrabold text-black text-center">Select Your Payment Method</h3>
             </div>
@@ -465,7 +464,7 @@ export function PaymentGatewayPickerModal({
                       role="tab"
                       aria-selected={selected}
                       onClick={() => setActiveIndex(index)}
-                      className={`relative flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left font-semibold transition ${
+                      className={`relative flex w-full min-w-0 items-center gap-3 rounded-xl border px-4 py-3 text-left font-semibold transition ${
                         selected ? "border-primary bg-primary text-white shadow" : "border-slate-200 bg-white text-slate-800 hover:border-primary/50"
                       }`}
                     >
@@ -473,8 +472,8 @@ export function PaymentGatewayPickerModal({
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={assetUrl(IMAGES, tabIcon(option))} alt="" className=" md:max-h-7 md:max-w-7 max-h-7.2 max-w-7.2 object-contain" />
                       </span>
-                      <span className="flex flex-1 flex-col items-center gap-1.5">
-                        <span className="text-center text-2xl md:text-[17px]">{option.label}</span>
+                      <span className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
+                        <span className="max-w-full break-words text-center text-2xl md:text-[17px]">{option.label}</span>
                         {String(option.name).toUpperCase() === "STRIPE" && (
                           <span className="flex items-center justify-center gap-1.5 md:hidden">
                             {[["visa.png", "Visa"], ["master-card.png", "Mastercard"], ["american-express.png", "Amex"]].map(([file, alt]) => (
@@ -506,8 +505,8 @@ export function PaymentGatewayPickerModal({
 
           {/* Right column: scrollable payment-option content on top, Back / Pay Now
               pinned in a sticky footer below so it's always reachable without scrolling. */}
-          <section className="flex flex-col md:min-h-0">
-            <div className="p-5 sm:p-6 md:flex-1 md:overflow-y-auto">
+          <section className="flex min-w-0 flex-col md:min-h-0">
+            <div className="min-w-0 p-5 sm:p-6 md:flex-1 md:overflow-y-auto">
               <div className="hidden md:block">
                 <h3 className="text-2xl font-extrabold text-black">Select Your Payment Method</h3>
               </div>
@@ -519,7 +518,7 @@ export function PaymentGatewayPickerModal({
               <div className="mt-3">
                 <CurrencyCard details={details || {}} payerCountryCode={payerCountryCode} />
               </div>
-              <div className="mt-5">
+              <div className="mt-5 min-w-0">
                 {active && (
                   <GatewayPanel
                     key={active.name}
@@ -536,7 +535,7 @@ export function PaymentGatewayPickerModal({
               </div>
             </div>
             {active && (
-              <div className="sticky bottom-0 z-10 shrink-0 border-t border-slate-200 bg-white p-5 sm:px-8 md:static">
+              <div className="sticky bottom-0 z-10 shrink-0 border-t border-slate-200 bg-white p-3 sm:px-8 sm:py-5 md:static">
                 <GatewayActions option={active} details={details} busy={busy} onPay={onPay} onClose={() => onOpenChange(false)} />
               </div>
             )}
