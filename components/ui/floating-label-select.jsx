@@ -112,7 +112,11 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
             className={`pointer-events-none absolute z-1 max-w-[calc(100%-1.5rem)] overflow-hidden text-ellipsis bg-white px-1 transition-all ${
               floated
                 ? `left-3 top-0 -translate-y-1/2 whitespace-nowrap text-xs max-[319px]:text-[10px] ${error ? "text-red-500" : "text-primary"}`
-                : `top-1/2 -translate-y-1/2 text-sm max-[319px]:text-xs ${error ? "text-red-500" : "text-slate-500"} ${Icon ? "left-10" : "left-3.5"}`
+                // Unfocused + empty, an invalid field's label would otherwise sit
+                // oversized and red right where the selected value goes — hidden
+                // there, it fades in already floated the instant the field is
+                // focused (opened) or gets a value.
+                : `top-1/2 -translate-y-1/2 text-sm max-[319px]:text-xs ${error ? "text-red-500 opacity-0" : "text-slate-500"} ${Icon ? "left-10" : "left-3.5"}`
             }`}
             // Unfloated, the label sits between the leading icon and the trailing chevron: cap its
             // width so a long label wraps instead of running under the chevron / required asterisk.

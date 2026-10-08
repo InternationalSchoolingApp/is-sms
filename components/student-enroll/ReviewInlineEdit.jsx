@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Briefcase, Building2, BookOpen, Cake, GraduationCap, Globe, Mail, Map, MapPin, Phone as PhoneIcon, School, User, VenusAndMars, X } from "lucide-react";
 import { IoLogoWhatsapp } from "react-icons/io";
 import { Button } from "@/components/ui/button";
@@ -123,6 +123,10 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
   });
   const [fields, setFields] = useState(initial);
   const [errors, setErrors] = useState({});
+  // Every field name that has ever shown an error this session (set grows,
+  // never shrinks) — see the live-revalidation effect below for why this is
+  // needed separately from `errors` itself.
+  const everErroredFieldsRef = useRef(new Set());
   const isDualDiploma =
     getLearningProgramBackendValue(context.learningProgram) === "DUAL_DIPLOMA" || Boolean(student?.studyingSchoolName);
 
@@ -145,11 +149,42 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
 
   const set = (name) => (value) => setFields((prev) => ({ ...prev, [name]: value }));
 
+  // Re-checks every field that currently shows an error OR has ever shown
+  // one this session, against the same validators save() uses — so a
+  // message clears (and the field turns green) as soon as the value becomes
+  // valid, AND comes back if the user then re-invalidates it, instead of
+  // only ever being able to clear. Mirrors Stage1StudentDetails.jsx.
+  useEffect(() => {
+    setErrors((prev) => {
+      const keys = [...everErroredFieldsRef.current];
+      if (keys.length === 0) return prev;
+      const { errors: liveErrors } = validateStudentDetails(current, { isDualDiploma });
+      const dobError = validateAge(current.dob);
+      if (dobError && !liveErrors.dob) liveErrors.dob = dobError;
+      const next = { ...prev };
+      let changed = false;
+      keys.forEach((key) => {
+        if (!liveErrors[key]) {
+          if (key in next) {
+            delete next[key];
+            changed = true;
+          }
+        } else if (liveErrors[key] !== prev[key]) {
+          next[key] = liveErrors[key];
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fields, isDualDiploma]);
+
   async function save() {
     setFormError(null);
     const { valid, errors: fieldErrors } = validateStudentDetails(current, { isDualDiploma });
     const dobError = validateAge(current.dob);
     const allErrors = dobError ? { ...fieldErrors, dob: fieldErrors.dob || dobError } : fieldErrors;
+    Object.keys(allErrors).forEach((key) => everErroredFieldsRef.current.add(key));
     setErrors(allErrors);
     if (!valid || dobError) {
       setFormError(allErrors.form || allErrors.dob || null);
@@ -318,6 +353,10 @@ export function ParentInlineEdit({ context, userId, parent, title = "Parent/Guar
   });
   const [fields, setFields] = useState(initial);
   const [errors, setErrors] = useState({});
+  // Every field name that has ever shown an error this session (set grows,
+  // never shrinks) — see the live-revalidation effect below for why this is
+  // needed separately from `errors` itself.
+  const everErroredFieldsRef = useRef(new Set());
   // The read-only table decides the same way: working-professional fields replace the parent ones.
   const isOneToOneFlex =
     getLearningProgramBackendValue(context.learningProgram) === "ONE_TO_ONE_FLEX" || Boolean(parent?.workingProfessionName);
@@ -330,9 +369,37 @@ export function ParentInlineEdit({ context, userId, parent, title = "Parent/Guar
 
   const set = (name) => (value) => setFields((prev) => ({ ...prev, [name]: value }));
 
+  // Re-checks every field that currently shows an error OR has ever shown
+  // one this session, against the same validator save() uses — so a message
+  // clears (and the field turns green) as soon as the value becomes valid,
+  // AND comes back if the user then re-invalidates it. Mirrors
+  // Stage2ParentDetails.jsx.
+  useEffect(() => {
+    setErrors((prev) => {
+      const keys = [...everErroredFieldsRef.current];
+      if (keys.length === 0) return prev;
+      const { errors: liveErrors } = validateParentDetails(fields, { isOneToOneFlex });
+      const next = { ...prev };
+      let changed = false;
+      keys.forEach((key) => {
+        if (!liveErrors[key]) {
+          if (key in next) {
+            delete next[key];
+            changed = true;
+          }
+        } else if (liveErrors[key] !== prev[key]) {
+          next[key] = liveErrors[key];
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [fields, isOneToOneFlex]);
+
   async function save() {
     setFormError(null);
     const { valid, errors: fieldErrors } = validateParentDetails(fields, { isOneToOneFlex });
+    Object.keys(fieldErrors).forEach((key) => everErroredFieldsRef.current.add(key));
     setErrors(fieldErrors);
     if (!valid) {
       setFormError(fieldErrors.form || fieldErrors.communication || null);
