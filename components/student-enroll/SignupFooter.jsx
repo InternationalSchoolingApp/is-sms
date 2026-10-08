@@ -13,7 +13,7 @@ export function SignupFooter({ whatsAppNumber, schoolName }) {
 
   return (
     <div id="signupMobileFooter" className="md:hidden fixed bottom-0 left-0 z-20 w-full bg-white">
-      {whatsAppNumber && (
+      {/* {whatsAppNumber && (
         <a
           href={`https://api.whatsapp.com/send?phone=${whatsAppNumber}`}
           target="_blank"
@@ -27,7 +27,7 @@ export function SignupFooter({ whatsAppNumber, schoolName }) {
           </svg>
           WhatsApp
         </a>
-      )}
+      )} */}
       <p className="bg-white-900 py-2 text-center text-xs text-black">
         Copyright © {copyrightYear} - {schoolName} - All Rights Reserved.
       </p>
