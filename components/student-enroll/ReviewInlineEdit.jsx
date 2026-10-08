@@ -175,9 +175,9 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
     <>
       <EditCard title="Student Details" saving={signup.isPending} onSave={save} onCancel={onCancel} formError={formError} centerTitle>
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
-          <FloatingLabelInput icon={User} label={<Req label="Student's First Name" required />} value={fields.firstName} {...nameFieldProps(set("firstName"))} error={errors.firstName} />
+          <FloatingLabelInput icon={User} label={<Req label="Student's First Name" required />} filledLabel={<Req label="First Name" required />} value={fields.firstName} {...nameFieldProps(set("firstName"))} error={errors.firstName} />
           {/* Middle Name removed from student signup */}
-          <FloatingLabelInput icon={User} label={<Req label="Student's Last Name" required />} value={fields.lastName} {...nameFieldProps(set("lastName"))} error={errors.lastName} />
+          <FloatingLabelInput icon={User} label={<Req label="Student's Last Name" required />} filledLabel={<Req label="Last Name" required />} value={fields.lastName} {...nameFieldProps(set("lastName"))} error={errors.lastName} />
         </div>
 
         <div className={`mt-6 ${GRID}`}>
