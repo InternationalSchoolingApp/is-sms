@@ -145,7 +145,7 @@ export function ParentRelationFields({ schoolUUID, userId, fields, setFields, er
 
   return (
     <>
-      <div className="mt-8 sm:mx-auto sm:max-w-[420px]">
+      <div className="mt-4.5 sm:mx-auto sm:max-w-[420px]">
         <FloatingLabelSelect
           icon={MdFamilyRestroom}
           label={<Req label="Relationship to Student" required />}
@@ -259,6 +259,10 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
   );
   const [errors, setErrors] = useState({});
   const [flaggedModal, setFlaggedModal] = useState(null);
+  // Every field name that has ever shown an error this session (set grows,
+  // never shrinks) — see the live-revalidation effect below for why this is
+  // needed separately from `errors` itself.
+  const everErroredFieldsRef = useRef(new Set());
 
   const isOneToOneFlex = getLearningProgramBackendValue(context.learningProgram) === "ONE_TO_ONE_FLEX";
 
@@ -267,20 +271,27 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
   const states = useStateOptions(context, fields.countryId);
   const cities = useCityOptions(context, fields.stateId);
 
-  // Re-checks only fields that currently show an error, against the same
-  // validator handleSubmit uses, so the message clears (and the field can
-  // turn green) as soon as the value becomes valid.
+  // Re-checks every field that currently shows an error OR has ever shown
+  // one this session, against the same validator handleSubmit uses — so a
+  // message clears (and the field turns green) as soon as the value becomes
+  // valid, AND comes back if the user then re-invalidates it (e.g. clears a
+  // field they'd just fixed), instead of only ever being able to clear.
+  // `keys` must come from everErroredFieldsRef, not just `Object.keys(prev)`:
+  // once a field's error is deleted from `prev` it would otherwise never be
+  // re-checked again even if it becomes invalid a second time.
   useEffect(() => {
     setErrors((prev) => {
-      const keys = Object.keys(prev).filter((key) => key !== "form");
+      const keys = [...everErroredFieldsRef.current];
       if (keys.length === 0) return prev;
       const { errors: current } = validateParentDetails(fields, { isOneToOneFlex });
       const next = { ...prev };
       let changed = false;
       keys.forEach((key) => {
         if (!current[key]) {
-          delete next[key];
-          changed = true;
+          if (key in next) {
+            delete next[key];
+            changed = true;
+          }
         } else if (current[key] !== prev[key]) {
           next[key] = current[key];
           changed = true;
@@ -318,6 +329,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
 
   async function handleSubmit() {
     const { valid, errors: fieldErrors } = validateParentDetails(fields, { isOneToOneFlex });
+    Object.keys(fieldErrors).forEach((key) => everErroredFieldsRef.current.add(key));
     setErrors(fieldErrors);
     if (!valid) return;
 
@@ -360,7 +372,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
       <h2 className="text-center text-xl font-bold text-black md:text-2xl">{heading}</h2>
 
       {isOneToOneFlex ? (
-        <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3 [&_label]:max-w-[calc(100%-5rem)]">
+        <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
           <FloatingLabelSelect
             icon={GraduationCap}
             label={<Req label="Are you a student or a working professional?" required />}

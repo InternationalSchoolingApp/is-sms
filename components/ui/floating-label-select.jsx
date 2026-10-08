@@ -41,10 +41,10 @@ function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, 
         )}
         {label && (
           <label
-            className={`pointer-events-none absolute z-10 bg-white px-1 transition-all ${
+            className={`pointer-events-none absolute z-10 max-w-[calc(100%-1.5rem)] overflow-hidden text-ellipsis bg-white px-1 transition-all ${
               floated
-                ? `left-3 top-0 -translate-y-1/2 text-xs max-[319px]:text-[10px] ${error ? "text-red-500" : "text-primary"}`
-                : `top-1/2 -translate-y-1/2 text-sm max-[319px]:text-xs text-slate-500 ${Icon ? "left-10" : "left-3.5"}`
+                ? `left-3 top-0 -translate-y-1/2 whitespace-nowrap text-xs max-[319px]:text-[10px] ${error ? "text-red-500" : "text-primary"}`
+                : `top-1/2 -translate-y-1/2 text-sm max-[319px]:text-[xs] text-slate-500 ${Icon ? "left-10" : "left-3.5"}`
             }`}
             // Unfloated, the label sits between the leading icon and the trailing chevron: cap its
             // width so a long label wraps instead of running under the chevron / required asterisk.
@@ -56,10 +56,10 @@ function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, 
         )}
         <Select className="" value={value} onValueChange={onValueChange} onOpenChange={setOpen} disabled={disabled}>
           <SelectTrigger
-            className={`!h-12 rounded-md w-full pt-1 ${Icon ? "pl-10" : "pl-3.5"} pr-3.5 ${
+            className={`!h-12 rounded-md w-full pt-1 text-[17px] ${Icon ? "pl-10" : "pl-3.5"} pr-3.5 ${
               disabled
                 ? "cursor-not-allowed bg-slate-100 text-black disabled:opacity-100"
-                : `bg-white ${error ? "border-2 border-red-500" : open ? "border-2 border-primary" : value ? "border-2 border-emerald-500" : "border-slate-300"}`
+                : `bg-white ${error ? "border-2 border-red-500 focus:!border-red-500 focus-visible:!border-red-500" : open ? "border-2 border-primary" : value ? "border-2 border-emerald-500" : "border-slate-300"}`
             }`}
           >
             <SelectValue>{selected?.label ?? ""}</SelectValue>
@@ -109,9 +109,9 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
         )}
         {label && (
           <label
-            className={`pointer-events-none absolute z-1 bg-white px-1 transition-all ${
+            className={`pointer-events-none absolute z-1 max-w-[calc(100%-1.5rem)] overflow-hidden text-ellipsis bg-white px-1 transition-all ${
               floated
-                ? `left-3 top-0 -translate-y-1/2 text-xs max-[319px]:text-[10px] ${error ? "text-red-500" : "text-primary"}`
+                ? `left-3 top-0 -translate-y-1/2 whitespace-nowrap text-xs max-[319px]:text-[10px] ${error ? "text-red-500" : "text-primary"}`
                 : `top-1/2 -translate-y-1/2 text-sm max-[319px]:text-xs ${error ? "text-red-500" : "text-slate-500"} ${Icon ? "left-10" : "left-3.5"}`
             }`}
             // Unfloated, the label sits between the leading icon and the trailing chevron: cap its
@@ -126,10 +126,10 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
           <PopoverTrigger
             type="button"
             disabled={disabled}
-            className={`flex !h-12 w-full items-center rounded-md border pr-8 pt-1 text-left text-sm ${Icon ? "pl-10" : "pl-3.5"} ${
+            className={`flex !h-12 w-full items-center rounded-md border pr-8 pt-1 text-left text-[17px] ${Icon ? "pl-10" : "pl-3.5"} ${
               disabled
                 ? "cursor-not-allowed bg-slate-100 text-black disabled:opacity-100"
-                : `bg-white ${error ? "border-2 border-red-500" : open ? "border-2 border-primary" : value ? "border-2 border-emerald-500" : "border-slate-300"}`
+                : `bg-white ${error ? "border-2 border-red-500 focus:!border-red-500 focus-visible:!border-red-500" : open ? "border-2 border-primary" : value ? "border-2 border-emerald-500" : "border-slate-300"}`
             }`}
           >
             <span className="truncate relative bottom-0.75">{selected?.label ?? ""}</span>

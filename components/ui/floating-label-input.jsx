@@ -50,11 +50,11 @@ export function FloatingLabelInput({
           onAnimationStart={(e) => {
             if (e.animationName === "onAutoFillStart") onChange?.({ target: e.target });
           }}
-          className={`peer h-12 rounded-md bg-white  border pt-1 transition-colors ${Icon ? "pl-10" : "pl-3.5"} ${
+          className={`peer h-12 rounded-md bg-white border pt-1 text-[17px] transition-colors ${Icon ? "pl-10" : "pl-3.5"} ${
             trailing ? "pr-10" : status ? "pr-10" : "pr-3.5"
           } ${
             hasError
-              ? "border-2 border-red-500"
+              ? "border-2 border-red-500 focus:!border-red-500 focus-visible:!border-red-500"
               : "border-slate-300 focus:border-2 focus:!border-primary [&:not(:placeholder-shown):not(:focus):not(:disabled)]:border-2 [&:not(:placeholder-shown):not(:focus):not(:disabled)]:border-emerald-500"
           } focus-visible:ring-0 ${inputClassName}`}
           {...inputProps}
@@ -70,7 +70,11 @@ export function FloatingLabelInput({
                 : "left-3.5 peer-focus:left-3 peer-[&:not(:placeholder-shown)]:left-3 peer-autofill:left-3 peer-[:-internal-autofill-selected]:left-3"
             } ${
               hasError
-                ? "text-red-500"
+                // Unfocused + empty, an invalid field's label would otherwise sit
+                // oversized and red right where the caret goes — hidden there, it
+                // fades in already floated the instant the field is focused (or
+                // gets a value), instead of ever being shown inline.
+                ? "text-red-500 opacity-0 peer-focus:opacity-100 peer-[&:not(:placeholder-shown)]:opacity-100 peer-autofill:opacity-100 peer-[:-internal-autofill-selected]:opacity-100"
                 : "text-slate-500 peer-focus:text-primary peer-[&:not(:placeholder-shown)]:text-primary peer-autofill:text-primary peer-[:-internal-autofill-selected]:text-primary"
             }`}
           >
