@@ -209,7 +209,7 @@ function StepCircle({ icon: Icon, state, justCompleted, animate }) {
       className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 md:h-10 md:w-10 ${
         state === "active"
           ? "border-primary bg-white text-primary ring-4 ring-primary/20 md:ring-0"
-          : "border-slate-400 bg-[#f2f5fa] text-slate-600"
+          : "border-slate-400 bg-[#f2f5fa] text-slate-400"
       }`}
     >
       <Icon className="h-5 w-5 md:h-7 md:w-7" aria-hidden="true" />
