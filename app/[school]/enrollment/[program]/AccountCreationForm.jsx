@@ -291,7 +291,7 @@ export function AccountCreationForm({ school, program, query }) {
           id="enrollmentFormWrapper"
           className="relative flex flex-1 items-start justify-center overflow-y-auto p-4 md:p-8"
         >
-          <div className="mb-4 w-full max-w-lg rounded-3xl bg-white p-3 shadow-xl shadow-slate-900/5 md:ring-1 ring-slate-900/5 sm:p-8 md:my-auto md:p-10">
+          <div className="my-auto w-full max-w-lg rounded-3xl bg-white p-3 shadow-[0_0_24px_rgba(15,23,42,0.12)] md:shadow-xl md:shadow-slate-900/5 md:ring-1 ring-slate-900/5 sm:p-8 md:p-10">
             {!signupInfo ? (
               signupInfoError ? (
                 <div className="space-y-4 py-6 text-center" role="alert">

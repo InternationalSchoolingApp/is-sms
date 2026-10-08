@@ -7,6 +7,7 @@ import { RecommendedCoursesDialog } from "@/components/student-enroll/Recommende
 import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   STATUS_SESSION_OUT,
   STATUS_SUCCESS,
@@ -43,32 +44,19 @@ import {
   Sparkles,
   Trash2
 } from "lucide-react";
+import { RxDividerVertical } from "react-icons/rx";
+import { PiBooksLight } from "react-icons/pi";
+import { FaAngleRight, FaArrowDown, FaRegEyeSlash } from "react-icons/fa";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { Button } from "@/components/ui/button";
-import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
-import { ConfirmDialog } from "@/components/student-enroll/ConfirmDialog";
-import { RecommendedCoursesDialog } from "@/components/student-enroll/RecommendedCoursesDialog";
-import { ChangeGradeDialog } from "@/components/student-enroll/ChangeGradeDialog";
-import {
-  STATUS_SESSION_OUT,
-  STATUS_SUCCESS,
-  useCourseDetails,
-  useProceedToReview,
-  useRecommendedCourses,
-  useShowPaymentOption,
-  useUpdateCourseSelection,
-} from "@/hooks/useCourseSelection";
-import { useGradeOptions, useCountryOptions, useStudentDetailsPrefill, useStudentDetailsSignup } from "@/hooks/useStudentDetailsSignup";
-import { getCourseAddCheck, hidesCourseCredits, validateCourseCredits } from "@/utils/studentSignupValidation";
-import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
-import { saveWizardStudentFields } from "@/utils/wizardStorage";
-import { FaAngleRight, FaArrowDown } from "react-icons/fa";
 
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
+
+// Mobile category-sheet (CourseCategoryDialog) behavior after a successful
+// "Add": true closes the dialog and returns to the category list (one course
+// per visit); false keeps it open so multiple subjects can be added from the
+// same category in one go. Flip this single flag to change the behavior.
+const CLOSE_CATEGORY_DIALOG_ON_ADD = true;
 
 function isSuccessResponse(response) {
   return String(response?.status) === STATUS_SUCCESS;
@@ -411,7 +399,7 @@ function categoryIcon(name) {
   if (n.includes("science")) return FlaskConical;
   if (n.includes("language")) return Languages;
   if (n.includes("social") || n.includes("history")) return Globe2;
-  if (n.includes("elective")) return Sparkles;
+  if (n.includes("elective")) return PiBooksLight;
   if (n.includes("health") || n.includes("physical")) return HeartPulse;
   if (n.includes("art")) return Palette;
   return BookOpen;
@@ -441,7 +429,7 @@ function getGradeBand(standardName, standardId) {
 }
 
 function summarizeSelection(selectedCourses, gradeBand) {
-  const counts = { Mandatory: 0, Electives: 0, Honors: 0, Advance: 0, AP: 0 };
+  const counts = { Fixed: 0, Electives: 0, Honors: 0, Advance: 0, AP: 0 };
   selectedCourses.forEach((course) => {
     if (course.courseMandatory === 1 || course.courseMandatory === "1") counts.Mandatory += 1;
 
@@ -457,7 +445,7 @@ function summarizeSelection(selectedCourses, gradeBand) {
     else if (/\bHON(?:OR|ORS)?\b/.test(courseType) && gradeBand === "high") counts.Honors += 1;
   });
   const buckets = [
-    { label: "Mandatory", count: counts.Mandatory, dot: "bg-emerald-500" },
+    { label: "Fixed", count: counts.Mandatory, dot: "bg-emerald-500" },
     { label: "Electives", count: counts.Electives, dot: "bg-purple-500" },
   ];
   if (gradeBand === "high") {
@@ -470,16 +458,17 @@ function summarizeSelection(selectedCourses, gradeBand) {
 }
 
 // CSS conic-gradient ring, no chart library needed.
-function CreditProgressRing({ value, max, unit = "credits" }) {
+function CreditProgressRing({ value, max, unit = "credits", size = 12 }) {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
+  const innerSize = size - 3;
   return (
     <div
-      className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
-      style={{ background: `conic-gradient(var(--primary) ${pct * 3.6}deg, #dbeafe ${pct * 3.6}deg)` }}
+      className="relative flex shrink-0 items-center justify-center rounded-full"
+      style={{ height: `${size * 0.25}rem`, width: `${size * 0.25}rem`, background: `conic-gradient(var(--primary) ${pct * 3.6}deg, #dbeafe ${pct * 3.6}deg)` }}
       role="img"
       aria-label={`${value} of ${max} ${unit} selected`}
     >
-      <div className="h-9 w-9 rounded-full bg-white" />
+      <div className="rounded-full bg-white" style={{ height: `${innerSize * 0.25}rem`, width: `${innerSize * 0.25}rem` }} />
     </div>
   );
 }
@@ -504,7 +493,7 @@ function VariantToggle({ course, target, onToggle, disabled }) {
       aria-label={target.buttonLabel || "Switch course variant"}
       onClick={() => onToggle(course, target)}
       disabled={disabled}
-      className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-1 transition-colors disabled:opacity-50 ${
+      className={`inline-flex cursor-pointer h-6 shrink-0 items-center gap-1 rounded-full px-1 transition-colors disabled:opacity-50 ${
         isTarget ? "flex-row-reverse bg-primary text-white" : "bg-slate-300"
       }`}
     >
@@ -553,7 +542,7 @@ function useIsMobile(breakpointPx = 768) {
 // everywhere else, immediately — same extra-fee/AP/no-live-class confirm
 // gates, same request per subject, just triggered per-row instead of via a
 // checkbox + batch "Add" button.
-function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentOption, busy, onAddSubject, onRemoveSubject }) {
+function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentOption, busy, onAddSubject, onRemoveSubject, closeOnAdd }) {
   const [addingId, setAddingId] = useState(null);
   const [removingId, setRemovingId] = useState(null);
 
@@ -566,7 +555,8 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
     const id = String(subject.subjectId);
     setAddingId(id);
     try {
-      await onAddSubject(course, subject);
+      const added = await onAddSubject(course, subject);
+      if (added && closeOnAdd) onClose();
     } finally {
       setAddingId(null);
     }
@@ -589,7 +579,9 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
           <CategoryIcon className="h-5 w-5 shrink-0 text-black" />
           <div className="min-w-0 flex-1">
             <DialogTitle className="text-base font-semibold text-black">{course.courseName}</DialogTitle>
-            <p className="text-xs text-slate-500">{addableCountLabel(course.subjects.length)}</p>
+            <p className="text-xs text-black">
+              {course.subjects.length} Course{course.subjects.length === 1 ? "" : "s"} available
+            </p>
           </div>
         </DialogHeader>
         <div className="max-h-[60vh] divide-y divide-slate-100 overflow-y-auto">
@@ -604,7 +596,7 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
                 </span> */}
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-black">{subject.subjectName}</p>
-                  {/* {!hidesCourseCredits(data.standardId) && <p className="text-xs text-slate-500">{subject.subjectCredit} Credit</p>} */}
+                  {/* {!hidesCourseCredits(data.standardId) && <p className="text-xs text-black">{subject.subjectCredit} Credit</p>} */}
                   {data.showCourseFee === "Y" && (
                     <p className="text-xs font-semibold text-black">{subject.subjectPriceString}</p>
                   )}
@@ -661,7 +653,7 @@ function SkeletonBlock({ className = "" }) {
 /** Structural skeleton mirroring the real layout, shown while course-details-by-standard-id is loading. */
 function Stage3Skeleton({ header }) {
   return (
-    <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white px-4 py-2 shadow-sm sm:p-4 lg:py-6 lg:px-8">
+    <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white px-4 pt-2 pb-3 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       {header}
       <SkeletonBlock className="mt-4 h-20 w-full rounded-xl" />
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.6fr]">
@@ -874,11 +866,11 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   }
 
   async function addSubject(course, subject) {
-    if (busy) return;
+    if (busy) return false;
     const check = getCourseAddCheck(data);
     if (check.blockedMessage) {
       toast.error(check.blockedMessage);
-      return;
+      return false;
     }
   if (check.extraFee && showPaymentOption === "Y") {
     const selectedCount = data.selectedSubjects?.length || 0;
@@ -895,7 +887,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       confirmLabel: "Confirm & add",
       cancelLabel: "Close",
     });
-      if (!confirmed) return;
+      if (!confirmed) return false;
       extraFeeNoticeShownRef.current = true;
     }
     if (Number(context.schoolNumericId) === 1 && subject.courseType === "Advanced Placement" && !apAcknowledgedRef.current) {
@@ -912,7 +904,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           </p>
         ),
       });
-      if (!confirmed) return;
+      if (!confirmed) return false;
       apAcknowledgedRef.current = true;
     }
     if (isNoLiveClasses(subject, data.registrationType)) {
@@ -920,14 +912,16 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         title: "No live classes",
         message: <p>This course does not offer live classes. Would you like to add this course?</p>,
       });
-      if (!confirmed) return;
+      if (!confirmed) return false;
     }
     setOpenCourseId(course.courseId);
-    const added = applyLocal((previous) => optimisticAdd(previous, course, subject));
-    if (added) {
-      unsavedRef.current = true;
-      toast.success(`${subject.subjectName} added`);
-    }
+    const added = await applyChange({
+      selectedSubjects: [...selectedIds, String(subject.subjectId)].join(","),
+      controlType: "add",
+      courseId: course.courseId,
+    });
+    if (added) toast.success(`${subject.subjectName} added`);
+    return added;
   }
 
   async function removeSubject(course) {
@@ -1255,57 +1249,56 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           </button>
         </div>
       )}
-    <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white px-4 py-2 shadow-sm sm:p-4 lg:py-6 lg:px-8">
+    <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white px-4 pt-2 pb-3 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       {header}
 
       
 
       {/* Desktop/tablet: the full summary card (grade chip, credits
           requirement, progress ring, Selection Summary legend) — untouched. */}
-      <div className={`hidden gap-1 rounded-2xl ${gradeBand === "elementary" || centerGradeHeader ? "mx-auto md:pt-2" : "mt-4 border border-slate-200 bg-white p-4 shadow-sm md:p-5"} md:flex md:flex-row md:flex-wrap md:items-center md:gap-8`}>
+      <div className={`hidden gap-1 rounded-2xl ${gradeBand === "elementary" || centerGradeHeader ? "mx-auto md:pt-2" : "mt-3 border border-slate-200 bg-white p-2.5 shadow-sm md:mx-auto md:w-fit md:max-w-full md:p-3"} md:flex md:flex-row md:flex-wrap md:items-center md:gap-4`}>
         {data.standardName && (
-          <div className={`flex items-center gap-2 rounded-lg py-2 px-3 bg-[#e6f3ff] ${gradeBand === "elementary" || centerGradeHeader ? "mx-auto" : "flex-1"}`}>
-            <span className="inline-flex items-center gap-2  text-sm font-semibold text-black">
-              <GraduationCap className="h-5 w-5 text-primary" />
+          <div className={`flex items-center gap-2 rounded-lg py-1.5 px-2.5 bg-[#e6f3ff] ${gradeBand === "elementary" || centerGradeHeader ? "mx-auto" : ""}`}>
+            <span className="inline-flex items-center gap-2 text-xs font-semibold text-black">
+              <GraduationCap className="h-4 w-4 text-primary" />
               {data.standardName}
             </span>
             <button
               type="button"
               onClick={() => setChangeGradeOpen(true)}
               disabled={busy}
-              className="inline-flex items-center gap-1.5 ml-auto rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 ml-auto rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
             >
-              Change Grade <RefreshCw className="h-3.5 w-3.5 stroke-3" />
+              Change Grade <RefreshCw className="h-3 w-3 stroke-3" />
             </button>
           </div>
         )}
 
         {(showCreditSummary || showCourseCountSummary) && (
-          <div className="flex items-center gap-2 justify-center border-slate-300 flex-1 sm:border-l sm:pl-8">
-            
+          <div className="flex items-center gap-2 justify-center border-slate-300 sm:border-l sm:pl-4">
             <div>
               <div className="flex">
                 <p className="text-xs text-black">You need to select</p>
               </div>
-              <p className="text-sm font-bold text-black">
-                at least {data.minCourseLimit} courses
+              <p className="text-xs font-bold text-black">
+                at least {data.minCourseLimit} course{data.minCourseLimit == 1 ? "" : "s"}
               </p>
             </div>
           </div>
         )}
 
         {showCourseCountSummary && (
-          <div className="flex items-center gap-3 border-slate-300 flex-1 sm:border-l sm:px-8">
-            <CreditProgressRing value={selectedCourseCount} max={displayCourseCountTarget} unit="courses" />
+          <div className="flex items-center gap-2 border-slate-300 sm:border-l sm:px-4">
+            <CreditProgressRing value={selectedCourseCount} max={displayCourseCountTarget} unit="courses" size={10} />
             <div>
-              <p className="text-xl font-bold text-primary">{selectedCourseCount}/{displayCourseCountTarget}</p>
-              <p className="text-sm font-bold text-black">Courses Selected</p>
+              <p className="text-base font-bold text-primary">{selectedCourseCount}/{displayCourseCountTarget}</p>
+              <p className="text-xs font-bold text-black">Courses Selected</p>
             </div>
           </div>
         )}
 
         {showCreditSummary && (
-          <div className="hidden items-center gap-3 border-slate-300 sm:border-l sm:px-8 md:flex">
+          <div className="hidden items-center gap-2 border-slate-300 sm:border-l sm:px-4 md:flex">
             {/* Once extra (over-the-minimum) courses are selected, the denominator should track
                 what's actually been picked (e.g. 8/8), not stay pinned at the original minimum
                 (8/6) — the ring and the fraction below both use this same adjusted max. */}
@@ -1313,12 +1306,13 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               value={selectedCourseCount}
               max={Math.max(Number(data.minCourseLimit) || 1, selectedCourseCount)}
               unit="courses"
+              size={10}
             />
             <div>
-              <p className="text-xl font-bold text-primary">
+              <p className="text-base font-bold text-primary">
                 {selectedCourseCount}/{Math.max(Number(data.minCourseLimit) || 0, selectedCourseCount)}
               </p>
-              <p className="text-sm font-bold text-black">Courses Selected</p>
+              <p className="text-xs font-bold text-black">Courses Selected</p>
             </div>
           </div>
         )}
@@ -1351,23 +1345,32 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             <h2 className="text-sm font-bold text-black">
               {showCourseCountSummary || showCourseCredits ? (
                 <>
-                  <span className="md:hidden">Selected Courses: <span className="text-primary">{selectedCourseCount}/{displayCourseCountTarget} courses</span></span>
-                  <span className="hidden md:inline">Selected Courses</span>
+                  {/* <span className="md:hidden">Selected Courses: <span className="text-primary">{selectedCourseCount}/{displayCourseCountTarget} courses</span></span>
+                  <span className="hidden md:inline">Selected Courses</span> */}
+                  <div className="text-center md:text-center w-full">Your <span className="text-primary">{selectedCourseCount}</span> Selected Courses</div>
                 </>
               ) : <><div className="text-center md:text-center w-full">Your <span className="text-primary">{selectedCourseCount}</span> Selected Courses</div></>}
             </h2>
             
               {canRemoveAll && (
                 <div className="flex items-center gap-3 ml-auto">
-                  <button
-                    type="button"
-                    onClick={removeAll}
-                    disabled={busy}
-                    className="inline-flex items-center gap-1 cursor-pointer text-xs font-semibold rounded-xl px-4 py-1 border border-red-600 text-red-600 hover:text-red-700"
-                    aria-label="Remove all courses"
-                  >
-                    All <Trash2 className="h-4 w-4" />
-                  </button>
+                  <Tooltip>
+                    <TooltipTrigger
+                      delay={100}
+                      render={
+                        <button
+                          type="button"
+                          onClick={removeAll}
+                          disabled={busy}
+                          className="inline-flex items-center gap-1 cursor-pointer text-xs font-semibold rounded-xl px-4 py-1 border border-red-600 text-red-600 hover:text-red-700"
+                          aria-label="Remove all courses"
+                        />
+                      }
+                    >
+                      All <Trash2 className="h-4 w-4" />
+                    </TooltipTrigger>
+                    <TooltipContent>Remove all course</TooltipContent>
+                  </Tooltip>
                 </div>
               )}
             
@@ -1377,17 +1380,17 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           Summary legend. */}
           <div className="mt-0 space-y-2 md:hidden">
             {(showCreditSummary || showCourseCountSummary) && (
-              <div className="rounded rounded-bl-none rounded-br-none bg-primary px-4 py-3.5 text-white">
+              <div className="rounded rounded-bl-none rounded-br-none bg-primary px-4 py-2.25 pb-2.25 text-white">
                 <div className="flex items-center gap-3 justify-center">
                   {courseMinMet ? (
                     <span className="inline-flex flex-1 items-center gap-2 text-sm font-bold justify-center ml-3">
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white">
                         <Check className="h-3 w-3 text-[#3fa43c]" strokeWidth={5} />
                       </span>
-                      {selectedCourseCount} courses selected
+                      {selectedCourseCount} Course{selectedCourseCount === 1 ? "" : "s"} selected
                     </span>
                   ) : (
-                    <span className="inline-flex flex-1 ml-4 justify-center items-center gap-2 text-sm font-bold">Select at least {minCourseCount} courses</span>
+                    <span className="inline-flex flex-1 ml-4 justify-center items-center gap-2 text-sm font-bold">Select at least {minCourseCount} course{minCourseCount === 1 ? "" : "s"}</span>
                   )}
                   {canRemoveAll && (
                     <button
@@ -1425,13 +1428,16 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
                 {!courseMinMet ? (
                   <div className="mt-2.5 flex items-center justify-center gap-3">
-                    <span className="text-xs font-bold  text-white/90">{selectedCourseCount} selected</span>
-                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-primary">{remainingCourses} more needed</span>
+                    <span className="text-xs font-bold  text-white/90">{selectedCourseCount} Selected</span>
+                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-primary">{remainingCourses} More needed</span>
                   </div>
                 ) : extraCourseCount > 0 ? (
-                  <p className="mt-2 text-xs text-white/90 text-center font-bold">
-                    {data.minCourseLimit} selected · {extraCourseCount} extra course{extraCourseCount === 1 ? "" : "s"}
-                  </p>
+                  // <p className="mt-2 text-xs text-white/90 text-center font-bold">
+                  //   <span className="inline-flex bg-white px-2 pt-0.5 pb-0.75 rounded-lg text-black items-center"><label className="text-[#3fa43c] mr-0.5">{data.minCourseLimit} selected</label> | <label className="text-orange-400">{extraCourseCount} extra course{extraCourseCount === 1 ? "" : "s"} added</label></span> 
+                  // </p>
+                  <p className="mt-2 flex justify-center flex-1 text-xs text-white/90 text-center font-bold">
+                    {data.minCourseLimit} Selected <RxDividerVertical className="w-4 h-4 stroke-1" /> {extraCourseCount} Extra course{extraCourseCount === 1 ? "" : "s"} added
+                  </p>  
                 ) : null}
               </div>
             )}
@@ -1456,9 +1462,9 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                   {data.registrationType !== "BATCH" && gradeBand !== "elementary" && (
                     <>
                       {" "}|{" "}
-                      <span className="inline-flex items-center gap-1.5 align-middle font-medium text-black">
-                        <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded bg-[#3fa43c] text-[10px] font-bold text-white">M</span>
-                        Mandatory
+                      <span className="inline-flex items-center gap-1.5  font-medium text-black">
+                        <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded bg-[#3fa43c] text-[10px] font-bold text-white">F</span>
+                        Fixed
                       </span>
                     </>
                   )}
@@ -1501,7 +1507,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                       <div className="flex shrink-0 items-center">
                         {!fixed && course.courseMandatory === 1 && data.registrationType !== "BATCH" && gradeBand !== "elementary" && (
                           <span className="flex h-5 w-5 items-center justify-center rounded bg-[#3fa43c] text-[11px] font-bold text-white">
-                            M
+                            F
                           </span>
                         )}
                         {!fixed && course.courseMandatory === 0 && (
@@ -1561,7 +1567,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                           </div>
                         </div>
 
-                        {/* {showCourseCredits && <p className="text-xs text-slate-500">{course.creditScore} Credit</p>} */}
+                        {/* {showCourseCredits && <p className="text-xs text-black">{course.creditScore} Credit</p>} */}
                         <CourseSummaryLink url={course.courseDescriptionUrl} />
                       </div>
                       {/* Mobile-only: the Advance/Honors toggle sits beside the
@@ -1569,15 +1575,23 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                           row below (same toggle, just hidden on the other breakpoint). */}
                       
                       {!fixed && course.courseMandatory === 0 && (
-                        <button
-                          type="button"
-                          onClick={() => removeSubject(course)}
-                          disabled={busy}
-                          className="inline-flex sm:hidden items-center cursor-pointer gap-1 text-xs font-semibold text-red-600 hover:text-red-700"
-                          aria-label="Remove all courses"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <Tooltip>
+                          <TooltipTrigger
+                            delay={100}
+                            render={
+                              <button
+                                type="button"
+                                onClick={() => removeSubject(course)}
+                                disabled={busy}
+                                className="inline-flex sm:hidden items-center cursor-pointer gap-1 text-xs font-semibold text-red-600 hover:text-red-700"
+                                aria-label={`Remove ${course.courseName}`}
+                              />
+                            }
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </TooltipTrigger>
+                          <TooltipContent>Remove {course.courseName}</TooltipContent>
+                        </Tooltip>
                       )}
                     </div>
                     <div className="flex flex-wrap items-center gap-2 sm:pl-0">
@@ -1603,19 +1617,27 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                       </div> */}
                       {!fixed && course.courseMandatory === 1 && !batchOrProvider39 && (
                         <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-100 px-2 py-1 text-xs font-semibold text-emerald">
-                          <Lock className="h-3 w-3" /> Mandatory
+                          <Lock className="h-3 w-3" /> Fixed
                         </span>
                       )}
                       {!fixed && course.courseMandatory === 0 && (
-                        <button
-                          type="button"
-                          onClick={() => removeSubject(course)}
-                          disabled={busy}
-                          className="hidden sm:inline-flex items-center cursor-pointer gap-1 text-xs font-semibold text-red-600 hover:text-red-700"
-                          aria-label="Remove all courses"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <Tooltip>
+                          <TooltipTrigger
+                            delay={100}
+                            render={
+                              <button
+                                type="button"
+                                onClick={() => removeSubject(course)}
+                                disabled={busy}
+                                className="hidden sm:inline-flex items-center cursor-pointer gap-1 text-xs font-semibold text-red-600 hover:text-red-700"
+                                aria-label={`Remove ${course.courseName}`}
+                              />
+                            }
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </TooltipTrigger>
+                          <TooltipContent>Remove {course.courseName}</TooltipContent>
+                        </Tooltip>
                       )}
                     </div>
                   </li>
@@ -1632,11 +1654,11 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             <header className="hidden flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 md:flex">
               <div>
                 <h2 className="text-sm font-bold text-black">
-                  {data.totalCredit >= data.maxCourseLimit
+                  {data.totalCredit >= data.minCourseLimit
                     ? "Select Extra Courses"
                     : "Select Your Courses Below"}
 
-                  <span className="text-primary">{data.totalCredit >= data.maxCourseLimit ? ``: ` · ${remainingCourses} more needed`}</span>
+                  <span className="text-primary">{data.totalCredit >= data.minCourseLimit ? ``: ` · ${remainingCourses} More needed`}</span>
                 </h2>
                 {(showCreditSummary || showCourseCountSummary) && remainingCourses > 0 && (
                   <p className="text-xs font-medium text-primary"></p>
@@ -1653,20 +1675,20 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                     className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-primary"
                   />
                 </div>
-                {data.eligibleForRecommendedCourse && (
+                {/* {data.eligibleForRecommendedCourse && (
                   <Button type="button" size="sm" onClick={openRecommended} disabled={busy} className="shrink-0 rounded-md bg-primary hover:bg-primary/90">
-                    <Plus className="h-4 w-4" /> View Our Recommendations
+                    <FaRegEyeSlash  className="h-4 w-4" /> View Our Recommendations
                   </Button>
-                )}
+                )} */}
               </div>
             </header>
             {/* Mobile header: title only — the recommended-courses button below
                 is full-width instead, and there's no search box (matches the
                 reference mobile design). */}
-            <div className="border-b border-slate-200 px-4 py-3 md:hidden">
-              <h2 className="text-sm font-bold text-black text-center">{data.totalCredit >= data.maxCourseLimit ? 'Select Extra Courses':'Select Your Courses Below'}</h2>
+            <div className="border-b border-slate-200 bg-primary px-4 py-2.25 md:hidden">
+              <h2 className="text-sm font-bold text-white text-center">{data.totalCredit >= data.minCourseLimit ? 'Select Extra Courses':'Select Your Courses Below'}</h2>
             </div>
-            {data.eligibleForRecommendedCourse && (
+            {/* {data.eligibleForRecommendedCourse && (
               <div className="px-4 pt-4 md:hidden">
                 <Button
                   type="button"
@@ -1674,15 +1696,15 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                   disabled={busy}
                   className="h-auto w-full whitespace-normal rounded-md bg-primary py-2 text-center leading-snug hover:bg-primary/90"
                 >
-                  <Plus className="h-4 w-4 shrink-0" /> View Our Recommendations
+                  <FaRegEyeSlash className="h-4 w-4 shrink-0 stroke-3" /> View Our Recommendations
                 </Button>
               </div>
-            )}
+            )} */}
             {data.registrationType === "SCHOLARSHIP" && (
-              <p className="px-4 pt-3 text-xs text-slate-500">Please note: live classes are not offered in this program.</p>
+              <p className="px-4 py-2 text-[11px] text-primary font-bold"><span className="text-black">Please note:</span> Live classes are not offered in this program.</p>
             )}
             {visibleCourses.length === 0 ? (
-              <p className="px-4 py-6 text-sm text-slate-500">No courses match your search.</p>
+              <p className="px-4 py-6 text-sm text-black">No courses match your search.</p>
             ) : (
               <>
                 {/* Desktop/tablet: category sidebar + inline detail pane. */}
@@ -1707,15 +1729,24 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                               </TooltipTrigger>
                               <TooltipContent>{course.courseName}</TooltipContent>
                             </Tooltip>
-                            <span
-                              title={addableCountLabel(course.subjects.length)}
-                              aria-label={addableCountLabel(course.subjects.length)}
-                              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-                                active ? "bg-primary text-white" : "bg-slate-100 text-slate-500"
-                              }`}
-                            >
-                              {course.subjects.length === 0 ? <Check className="h-3 w-3" aria-hidden="true" /> : course.subjects.length}
-                            </span>
+                            <Tooltip>
+                              <TooltipTrigger
+                                delay={100}
+                                render={
+                                  <span
+                                    aria-label={`${course.subjects.length} course${course.subjects.length === 1 ? "" : "s"} available`}
+                                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
+                                      active ? "bg-primary text-white" : "bg-slate-100 text-black"
+                                    }`}
+                                  />
+                                }
+                              >
+                                {course.subjects.length}
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {course.subjects.length} course{course.subjects.length === 1 ? "" : "s"} available
+                              </TooltipContent>
+                            </Tooltip>
                           </button>
                         </li>
                       );
@@ -1728,13 +1759,13 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                     >
                       <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
                         <span className="text-sm font-semibold text-primary">{activeCourse.courseName}</span>
-                        <span className="flex items-center gap-1 text-xs text-slate-500">
-                          {addableCountLabel(activeCourse.subjects.length)} <ChevronDown className="h-3.5 w-3.5" />
+                        <span className="flex items-center gap-1 text-xs text-black">
+                          {activeCourse.subjects.length} course{activeCourse.subjects.length === 1 ? "" : "s"} available <ChevronDown className="h-3.5 w-3.5" />
                         </span>
                       </div>
                       <div className="space-y-2 p-4" style={detailPaneHeight>250 ? { height: detailPaneHeight, overflowY: "auto" } : { maxHeight: "300px", overflowY: "auto" }}>
-                        {activeCourse.courseDescription && <p className="text-xs text-slate-500">{activeCourse.courseDescription}</p>}
-                        {activeCourse.displaySubjects
+                        {activeCourse.courseDescription && <p className="text-xs text-black">{activeCourse.courseDescription}</p>}
+                        {activeCourse.subjects
                           .filter((subject) => !query || subject.subjectName?.toLowerCase().includes(query) || activeCourse.courseName?.toLowerCase().includes(query))
                           .map((subject) => {
                             const notes = subjectNotes(subject, data, showPaymentOption);
@@ -1803,20 +1834,20 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                         <button
                           type="button"
                           onClick={() => setOpenCourseId(course.courseId)}
-                          className="flex shadow-sm w-full items-center space-x-3 px-4 py-3 text-left border rounded-lg text-sm font-medium text-slate-700"
+                          className="flex flex-wrap gap-2 shadow-sm w-full items-center space-x-3 px-4 py-3 text-left border rounded-lg text-sm font-medium text-slate-700"
                         >
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
-                            <CategoryIcon className="h-4 w-4" />
-                          </span>
-                          <div className="flex-1 flex-col flex">
-                            <span className="min-w-0 flex-1 truncate text-black">{course.courseName}</span>
-                            <span className="px-2 w-fit shrink-0 items-center justify-center rounded-full border border-black-300 bg-white text-[11px] font-semibold text-black">
-                              {course.subjects.length === 0
-                              ? "All selected"
-                              : `${course.subjects.length} ${course.subjects.length > 1 ? "Courses" : "Course"}`}
+                          <div className="inline-flex gap-2">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
+                              <CategoryIcon className="h-4 w-4" />
                             </span>
+                            <div className="flex-1 flex-col flex">
+                              <span className="min-w-0 flex-1 truncate text-black">{course.courseName}</span>
+                              <span className="px-2 w-fit shrink-0 items-center justify-center rounded-full border border-black-300 bg-white text-[11px] font-semibold text-black">
+                                {course.subjects.length} {course.subjects.length>1?'Courses':'Course'} available
+                              </span>
+                            </div>
                           </div>
-                          <FaAngleRight />
+                          <span className="inline-flex px-2 cursor py-1 ml-auto rounded-md bg-primary text-white text-xs"><Plus className="h-4 w-4" /> Add</span>
                         </button>
                       </li>
                     );
@@ -1838,6 +1869,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           busy={busy}
           onAddSubject={addSubject}
           onRemoveSubject={removeSubject}
+          closeOnAdd={CLOSE_CATEGORY_DIALOG_ON_ADD}
         />
       )}
 
@@ -1850,8 +1882,8 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         </p>
       )}
 
-      <div className="mt-10 flex flex-col-reverse items-center justify-center gap-4 pt-6 sm:flex-row">
-        {/* <p className="text-xs text-slate-500">Your course choices are saved as you make them.</p> */}
+      <div className="flex flex-col-reverse items-center justify-center gap-4 md:mt-10 md:pt-6 sm:flex-row">
+        {/* <p className="text-xs text-black">Your course choices are saved as you make them.</p> */}
         <MobileActionBar context={context}>
           {onBack && (
             <Button type="button" variant="outline" className="cursor-pointer" onClick={handleBack} disabled={busy}>

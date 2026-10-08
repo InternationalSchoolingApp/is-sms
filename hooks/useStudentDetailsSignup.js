@@ -127,10 +127,10 @@ export function mapSignupStudentToFields(signupStudent) {
     nationality: signupStudent.nationality || "",
     communicationEmail: signupStudent.communicationEmail || "",
     contactNumber: signupStudent.contactNumber || "",
-    countryCode: signupStudent.countryCode || "",
-    // countryIsdCode2 (ISO2, e.g. "IN") is what intl-tel-input needs to
-    // restore the right flag — see PhoneNumberField's initialCountry prop.
-    countryIsdCode: signupStudent.countryIsdCode2 || signupStudent.countryIsdCode || "",
+    countryCode: signupStudent.countryCode || signupStudent.countryIsdCode2 || "",
+    // countryIsdCode stores the phone dial code; countryIsdCode2 is based on
+    // the student's address and must not override the selected phone country.
+    countryIsdCode: signupStudent.countryIsdCode || "",
     studyingSchoolName: signupStudent.studyingSchoolName || "",
     studyingGradeId: signupStudent.studyingGradeId ? String(signupStudent.studyingGradeId) : "",
     countryIdOfSchool: signupStudent.countryIdOfSchool ? String(signupStudent.countryIdOfSchool) : "",
@@ -212,7 +212,6 @@ function buildSaveStudentDetailsRequest({ fields, context, userId, isDualDiploma
     ...getUtmFieldsForSignup(),
   };
   
-console.log("signupStudent", signupStudent)
   // communicationEmail/nationality/countryCode/countryIsdCode/contactNumber
   // are sent for EVERY learning program, Dual Diploma included — legacy's
   // getStudentDetailsContent() renders those fields unconditionally (only
@@ -241,7 +240,6 @@ console.log("signupStudent", signupStudent)
     signupStudent.countryIdOfSchool = fields.countryIdOfSchool;
   }
   
-  console.log("signupStudent", signupStudent)
   return { authentication: buildAuthenticatedRequest(context, userId), signupStudent };
 }
 

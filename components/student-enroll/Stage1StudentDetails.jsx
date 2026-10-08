@@ -82,7 +82,7 @@ function FieldSkeleton() {
 /** Structural skeleton mirroring the real form's grid, shown until grades + countries have loaded. */
 function Stage1Skeleton({ isDualDiploma }) {
   return (
-    <div className="mx-auto mt-0 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
+    <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       <h2 className="text-center text-xl font-bold text-black md:text-2xl">Student Details</h2>
       <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
@@ -250,7 +250,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
 
   return (
     
-      <div className="mx-auto mt-0 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
+      <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
         <h2 className="text-center text-xl font-extrabold text-black md:text-2xl">Student Details</h2>
 
         <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-2">
@@ -278,7 +278,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
           <FloatingLabelSelect
             icon={GraduationCap}
-            label={<Req label={fields.standardId != null && fields.standardId != undefined && fields.standardId != "" ? `Grade`:`Select Grade`} required />}
+            label={<Req label={fields.standardId != null && fields.standardId != undefined && fields.standardId != "" ? `Selected Grade`:`Select Grade`} required />}
             value={fields.standardId}
             onValueChange={setGrade}
             options={grades.data || []}
@@ -301,7 +301,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           />
           <FloatingLabelSelect
             icon={VenusAndMars}
-            label={<Req label={fields.gender != null && fields.gender != undefined && fields.gender != "" ? `Gender`:`Select Gender`} required />}
+            label={<Req label={fields.gender != null && fields.gender != undefined && fields.gender != "" ? `Selected Gender`:`Select Gender`} required />}
             value={fields.gender}
             onValueChange={(v) => setField("gender", v)}
             options={GENDER_OPTIONS}

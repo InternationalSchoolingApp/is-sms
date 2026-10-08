@@ -183,7 +183,7 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
         <div className={`mt-6 ${GRID}`}>
           <FloatingLabelSelect
             icon={GraduationCap}
-            label={<Req label="Select Grade" required />}
+            label={<Req label={fields.standardId ? "Selected Grade" : "Select Grade"} required />}
             value={fields.standardId}
             onValueChange={set("standardId")}
             options={grades.data || []}
@@ -204,7 +204,7 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
           />
           <FloatingLabelSelect
             icon={VenusAndMars}
-            label={<Req label="Select Gender" required />}
+            label={<Req label={fields.standardId ? "Selected Gender" : "Select Gender"} required />}
             value={fields.gender}
             onValueChange={set("gender")}
             options={GENDER_OPTIONS}

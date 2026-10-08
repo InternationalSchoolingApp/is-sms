@@ -156,7 +156,7 @@ function CommonRows({ fee, standardId, isFlexOrDual }) {
         />
       )}
       {fee.courseMaterialFeeDetails?.totalEntityFee > 0 && (
-        <BreakdownRow title="External Material Fee" totalLabel="Total External Material Fee" details={fee.courseMaterialFeeDetails} sign="+" />
+        <BreakdownRow title="External Material Fee" totalLabel="Total" details={fee.courseMaterialFeeDetails} sign="+" />
       )}
       {fee.feeAlreayPaid?.totalEntityFee > 0 && (
         <BreakdownRow title="Fee Already Paid" totalLabel="Total Paid" details={fee.feeAlreayPaid} sign="-" />
@@ -242,7 +242,7 @@ function RegistrationTable({ fee }) {
       <FeeTable>
         <PayableRow amount={fee.enrollmentFee.enrollmentFeeString} />
       </FeeTable>
-      <p className="p-2 text-xs">
+      <p className="p-2 text-xs text-center">
         Reserve an Enrollment Seat Fee of&nbsp;<b>{fee.enrollmentFee.enrollmentFeeString}</b>&nbsp;is non-refundable.
       </p>
     </>

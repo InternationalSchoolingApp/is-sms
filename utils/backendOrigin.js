@@ -54,3 +54,15 @@ export function legacyEnrollmentProcessUrl(schoolUUID, uniqueId) {
   if (!backend || !schoolUUID || !uniqueId) return "";
   return `${backend}/${schoolUUID}/student/enrollment/process/${encodeURIComponent(uniqueId)}`;
 }
+
+/**
+ * Public legacy enrollment start page for a school/program. The original
+ * signup query is forwarded intact because the JSP reads values such as
+ * payload, referralCode, ras, and v directly from the URL.
+ */
+export function legacyEnrollmentSignupUrl(schoolUUID, program, query = "") {
+  const backend = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
+  if (!backend || !schoolUUID || !program) return "";
+  const base = `${backend.replace(/\/+$/, "")}/${encodeURIComponent(schoolUUID)}/student/enrollment/${encodeURIComponent(program)}`;
+  return query ? `${base}?${query}` : base;
+}
