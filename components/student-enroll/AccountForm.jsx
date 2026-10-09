@@ -362,6 +362,7 @@ export function AccountForm({ context, canSubmit = false, onVerificationEmailSen
           <AccountInput
             icon={LockKeyhole}
             label="Enter your password"
+            filledLabel="Your Password"
             required
             name="password"
             type={showPassword ? "text" : "password"}
