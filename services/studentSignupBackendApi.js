@@ -290,7 +290,46 @@ export async function getStudentCommissionPayBy(schoolUUID, request) {
   return postPayload(schoolUUID, "student/enrollment/get-commission-pay-by", request);
 }
 
-export async function signupStage1(schoolUUID, request) {
+async function verifyEnrollmentRecaptcha(token) {
+  const secret = process.env.RECAPTCHA_SECRET_KEY;
+  if (!secret || !token) return false;
+
+  const configuredThreshold = Number(process.env.RECAPTCHA_MIN_SCORE);
+  const minimumScore = Number.isFinite(configuredThreshold) && configuredThreshold >= 0 && configuredThreshold <= 1
+    ? configuredThreshold
+    : 0.5;
+
+  try {
+    const response = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ secret, response: token }),
+      cache: "no-store",
+    });
+    if (!response.ok) return false;
+
+    const result = await response.json();
+    return result.success === true && result.action === "enrollment_signup" && Number(result.score) >= minimumScore;
+  } catch {
+    return false;
+  }
+}
+
+export async function signupStage1(schoolUUID, request, recaptchaToken) {
+  // Only the public online signup has reCAPTCHA enabled. Keep the existing
+  // offline/B2B enrollment request contract unchanged.
+  const isProdDeployment = String(process.env.NEXT_PUBLIC_DEPLOYMENT_MODE || "").trim().toUpperCase() === "PROD";
+  if (isProdDeployment && request?.data?.signupType === "Online") {
+    const verified = await verifyEnrollmentRecaptcha(recaptchaToken);
+    if (!verified) {
+      return {
+        status: "0",
+        statusCode: "RECAPTCHA_FAILED",
+        message: "We couldn't verify your request. Please try again.",
+      };
+    }
+  }
+
   return postPayload(schoolUUID, "api/v1/student/enrollment/stage-1", request);
 }
 

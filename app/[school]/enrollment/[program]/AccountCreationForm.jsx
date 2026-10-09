@@ -38,7 +38,7 @@ const FALLBACK_POLICY_LINKS = {
 
 // Matches the enum values ClientSignupStudentController resolves
 // learningProgramNew/learningProgram into — see utils/learningProgramTheme.js.
-export function AccountCreationForm({ school, program, query }) {
+export function AccountCreationForm({ school, program, query, recaptchaSiteKey }) {
   const searchParams = useMemo(() => new URLSearchParams(query || ""), [query]);
   const search = searchParams.toString();
 
@@ -330,6 +330,7 @@ export function AccountCreationForm({ school, program, query }) {
               <AccountForm
                 context={context}
                 canSubmit={Boolean(signupInfo)}
+                recaptchaSiteKey={recaptchaSiteKey}
                 onVerificationEmailSent={setVerificationEmail}
                 onRedirect={(url) => url && (window.location.href = url)}
               />

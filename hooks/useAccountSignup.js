@@ -80,6 +80,11 @@ function buildStage1Request({ mode, fields, context }) {
 
 export function useAccountSignup({ mode, context }) {
   return useMutation({
-    mutationFn: (fields) => signupStage1(context.schoolUUID, buildStage1Request({ mode, fields, context })),
+    mutationFn: (fields) =>
+      signupStage1(
+        context.schoolUUID,
+        buildStage1Request({ mode, fields, context }),
+        fields.recaptchaToken
+      ),
   });
 }

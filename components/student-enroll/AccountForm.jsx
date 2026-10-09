@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useEffect } from "react";
+import Script from "next/script";
 import { Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 import { AccountInput } from "@/components/student-enroll/AccountInput";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -37,7 +38,8 @@ const INITIAL_FIELDS = {
  * / signupCommon.js's #userSignupForm), rebuilt with shadcn/ui + Tailwind,
  * wired to the confirmed POST enrollment/stage-1 endpoint.
  */
-export function AccountForm({ context, canSubmit = false, onVerificationEmailSent, onRedirect }) {
+export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVerificationEmailSent, onRedirect }) {
+  const isProdDeployment = String(process.env.NEXT_PUBLIC_DEPLOYMENT_MODE || "").trim().toUpperCase() === "PROD";
   const [fields, setFields] = useState(() => ({
     ...INITIAL_FIELDS,
     captcha: randomCaptcha(),
@@ -254,7 +256,24 @@ export function AccountForm({ context, canSubmit = false, onVerificationEmailSen
       const { valid } = validateAccountFormOnline(domFields);
       if (!valid) return;
 
-      const response = await signup.mutateAsync(domFields);
+      let recaptchaToken;
+      if (isProdDeployment) {
+        if (!recaptchaSiteKey || !window.grecaptcha) {
+          setErrors((prev) => ({ ...prev, form: "Security verification is unavailable. Please refresh the page and try again." }));
+          return;
+        }
+
+        recaptchaToken = await new Promise((resolve, reject) => {
+          window.grecaptcha.ready(() => {
+            window.grecaptcha
+              .execute(recaptchaSiteKey, { action: "enrollment_signup" })
+              .then(resolve)
+              .catch(reject);
+          });
+        });
+      }
+
+      const response = await signup.mutateAsync({ ...domFields, ...(recaptchaToken ? { recaptchaToken } : {}) });
 
       if (response.status === "0" || response.status === "2") {
         if (response.statusCode === "FLAGGED") {
@@ -294,6 +313,12 @@ export function AccountForm({ context, canSubmit = false, onVerificationEmailSen
 
   return (
     <>
+      {isProdDeployment && recaptchaSiteKey && (
+        <Script
+          src={`https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(recaptchaSiteKey)}`}
+          strategy="afterInteractive"
+        />
+      )}
       <form
         ref={formRef}
         noValidate
