@@ -1317,7 +1317,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               </div>
             )} */}
             {data.registrationType === "SCHOLARSHIP" && (
-              <p className="px-4 py-2 text-[11px] text-primary font-bold"><span className="text-black">Please note:</span> Live classes are not offered in this program.</p>
+              <p className="px-4 py-2 text-[11px] text-primary font-bold"><span className="text-black">Note:</span> Live classes are not offered in this program.</p>
             )}
             {visibleCourses.length === 0 ? (
               <p className="px-4 py-6 text-sm text-black">No courses match your search.</p>
