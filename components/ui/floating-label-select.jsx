@@ -78,6 +78,15 @@ function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, 
   );
 }
 
+// On touch devices focusing the search box pops the on-screen keyboard, which covers the lower half of the
+// screen: the list (and a field near the bottom such as City) ends up hidden behind it. So the box is only
+// auto-focused where there is a real pointer + physical keyboard; on touch the user taps it when they
+// actually want to type.
+function canAutoFocusSearch() {
+  if (typeof window === "undefined" || !window.matchMedia) return true;
+  return !window.matchMedia("(pointer: coarse)").matches;
+}
+
 function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, value, onValueChange, options, error, disabled = false, className }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -143,7 +152,7 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
             <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-2">
               <Search className="h-4 w-4 shrink-0 text-slate-400" />
               <input
-                autoFocus
+                autoFocus={canAutoFocusSearch()}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search..."
