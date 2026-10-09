@@ -160,7 +160,7 @@ function PaymentScheduleList({ items, total, note }) {
               <span aria-hidden="true" className="absolute left-[15px] top-8 h-[calc(100%-18px)] w-px bg-slate-200" />
             )}
             <span
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs border border-slate-300 font-bold ${
                 index === 0 ? "bg-primary text-white" : "bg-slate-100 text-slate-500"
               }`}
             >
@@ -417,14 +417,14 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVari
                   <span className="block truncate text-xs font-semibold text-slate-700 md:text-sm">{option.label}</span>
                   {chips ? (
                     checked ? (
-                      <span className="mt-1 block text-base font-extrabold text-black md:text-2xl">
+                      <span className="mt-1 block text-base font-bold text-black md:text-2xl">
                         {(shownVariant ?? chips[0]).amount} total
                       </span>
                     ) : (
                       <span className="mt-1 block text-xs font-medium text-slate-500 md:text-sm">{describeMonths(chips)}</span>
                     )
                   ) : (
-                    <span className="mt-1 block text-base font-extrabold text-black md:text-2xl">{option.amount}</span>
+                    <span className="mt-1 block text-base font-bold text-black md:text-2xl">{option.amount}</span>
                   )}
                   {option.savings && (
                     <span className="mt-1 block text-[11px] w-fit px-3 py-1 rounded-2xl font-bold bg-[#3fa43c] text-white md:text-xs">{option.savings}</span>
