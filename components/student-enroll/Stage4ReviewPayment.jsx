@@ -323,7 +323,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
     reviewQuery.isFetching ||
     choosePlan.isPending || submitApplication.isPending || proceedToDashboard.isPending || gatewayOptions.isPending || airwallexMethods.isPending || invokeGateway.isPending;
 
-  const planOptions = useMemo(() => buildPlanOptions(data?.feePaymentDetailsResponse, data?.currencyIsoCode), [data]);
+  const planOptions = useMemo(() => buildPlanOptions(data?.feePaymentDetailsResponse, data?.currencySymbol), [data]);
 
   // Same "derive a default, let the user's own choice override it" pattern
   // Stage3CourseSelection uses for effectiveOpenId — avoids a setState-in-effect.

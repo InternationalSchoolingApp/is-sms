@@ -70,7 +70,7 @@ function DueNowCard({ eyebrow, amount, subtitle }) {
 function SummaryRow({ label, amount, tone, bold }) {
   return (
     <div className="flex items-baseline justify-between gap-4 py-1.5 text-sm">
-      <span className={bold ? "font-bold text-black md:text-base" : "text-slate-600"}>{label}</span>
+      <span className={bold ? "font-bold text-black md:text-base" : "text-black-700"}>{label}</span>
       <span
         className={`whitespace-nowrap ${
           bold
@@ -133,7 +133,7 @@ function FeeSummaryFlat({ rows, total, savings, note }) {
       <h3 className="text-base font-bold text-black md:text-lg">Fee summary</h3>
       <div className="mt-2 divide-y divide-slate-100">
         {rows.map((row, index) =>
-          row.items ? <BreakdownBlock key={index} {...row} /> : <SummaryRow key={index} {...row} />
+          row.items ? <BreakdownBlock key={index} {...row} /> : <SummaryRow key={index} {...row}  />
         )}
         {total && (
           <div className="pt-2">
@@ -290,7 +290,7 @@ function AnnualSummary({ fee, standardId, isFlexOrDual }) {
 function InstallmentSummary({ fee, details, standardId, isFlexOrDual }) {
   const monthly = details || fee.monthlyFeeDetails;
   const monthlyFees = monthly.monthlyFees || [];
-  const rows = buildExtraRows(fee);
+  const rows = [baseRow({ fee, standardId, isFlexOrDual }), ...buildExtraRows(fee)];
   if (isFlexOrDual && fee.enrollmentFee?.enrollmentFee > 0) {
     rows.push({ label: "Enrollment fee", amount: fee.enrollmentFee.enrollmentFeeString });
   }
@@ -310,13 +310,11 @@ function InstallmentSummary({ fee, details, standardId, isFlexOrDual }) {
         amount={monthlyFees[0]?.amountString}
         subtitle={fee.enrollmentFee?.enrollmentFee > 0 ? "Enrollment fee + first installment" : "First installment"}
       />
-      {rows.length > 0 && (
-        <FeeSummaryFlat
-          rows={rows}
-          total={null}
-          savings={discount ? `You save ${monthly.youSave.totalEntityFeeString}` : undefined}
-        />
-      )}
+      <FeeSummaryFlat
+        rows={rows}
+        total={{ label: "Payable Fee", amount: monthly.payableFeeString }}
+        savings={discount ? `You save ${monthly.youSave.totalEntityFeeString}` : undefined}
+      />
       <PaymentScheduleList
         items={scheduleItems}
         total={{ label: "Total program fee", amount: monthly.payableFeeString }}
