@@ -306,14 +306,3 @@ export async function verifyReferralCode(schoolUUID, request) {
   return postPayload(schoolUUID, "api/v1/common/verify-referral", request);
 }
 
-// ParentChildEnrollmentUtil#saveEnrollAnotherChild (ClientSignupStudentController
-// {schoolId}/api/v1/enroll/another/child): resolves the parent's
-// already-partially-enrolled child if one exists (resume, no new row) or
-// creates a new child user skeleton (new enrollment). Response data:
-// {schoolId, schoolUUID, signupPage, userId, uniqueId} — signupPage is the
-// resume step (1/2/3), userId/uniqueId identify the child being enrolled,
-// NOT the caller. Safe to call on every add-enrollment wizard mount/refresh —
-// a parent with an in-progress child always resumes the same one.
-export async function enrollAnotherChild(schoolUUID, parentId) {
-  return postPayload(schoolUUID, "api/v1/enroll/another/child", { parentId });
-}

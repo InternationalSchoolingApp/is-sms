@@ -4,7 +4,7 @@ import { createContext, useContext } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
-import { enrollAnotherChild } from "@/services/studentSignupBackendApi";
+import { enrollAnotherChild } from "@/services/addEnrollmentBackendApi";
 
 /**
  * Context for the "Add Another Student" wizard
@@ -29,11 +29,12 @@ const AddEnrollmentContext = createContext(null);
 function useResolveAddEnrollmentContext() {
   const { parentId, sessionUserId } = useParams();
   const { data: session, status } = useSession();
-  const authenticated = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
+  const authenticated =
+    status === "authenticated" && Boolean(session?.userId && session?.schoolUUID && session?.uniqueId);
 
   const enrollChild = useQuery({
-    queryKey: ["add-enrollment-child", session?.schoolUUID, parentId],
-    queryFn: () => enrollAnotherChild(session.schoolUUID, parentId),
+    queryKey: ["add-enrollment-child", session?.schoolUUID, parentId, session?.uniqueId],
+    queryFn: () => enrollAnotherChild(session.schoolUUID, parentId, session.uniqueId),
     enabled: Boolean(authenticated && parentId),
     staleTime: Infinity,
     gcTime: Infinity,
@@ -52,6 +53,7 @@ function useResolveAddEnrollmentContext() {
         parentId,
         sessionUserId,
         signupPage: childData.signupPage,
+        enrollmentFor: "enrollment", // same value as hooks/useEnrollmentContext.js — gates useGradeOptions
         learningProgram: "O", // resolved from get-student-details inside each stage, same as the main flow
       }
     : null;

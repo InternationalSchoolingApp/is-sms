@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AddStage1StudentDetails } from "@/components/add-enrollment/AddStage1StudentDetails";
 import { useAddEnrollmentContext } from "@/hooks/add-enrollment/useAddEnrollmentContext";
 import { useAddWizardResume } from "@/hooks/add-enrollment/useAddWizardResume";
-import { useStudentDetailsPrefill } from "@/hooks/useStudentDetailsSignup";
+import { useAddStudentDetailsPrefill } from "@/hooks/add-enrollment/useAddStage1";
 import { saveAddEnrollmentStudentFields, loadAddEnrollmentStudentFields } from "@/utils/addEnrollmentStorage";
 import { addEnrollmentStepPath } from "@/utils/addEnrollmentSteps";
 
@@ -24,7 +24,7 @@ export function AddStudentDetailsStep() {
   const { school, parentId, sessionUserId } = useParams();
   const { context, ready, childUserId, childUniqueId } = useAddEnrollmentContext();
   const { redirecting } = useAddWizardResume({ currentStep: 1, context, childUniqueId, ready });
-  const prefill = useStudentDetailsPrefill({ context, userId: childUserId });
+  const prefill = useAddStudentDetailsPrefill({ context, userId: childUserId });
   const queryClient = useQueryClient();
   const [initialFields, setInitialFields] = useState(null);
   const [hydrated, setHydrated] = useState(false);
@@ -44,10 +44,11 @@ export function AddStudentDetailsStep() {
     <AddStage1StudentDetails
       context={context}
       userId={childUserId}
+      uniqueId={childUniqueId}
       initialFields={initialFields}
       onNext={(fields) => {
         saveAddEnrollmentStudentFields(context.schoolUUID, childUserId, fields);
-        queryClient.setQueryData(["student-details-prefill", childUserId], (old) => ({ ...(old || {}), ...fields }));
+        queryClient.setQueryData(["add-enrollment-student-details-prefill", childUserId], (old) => ({ ...(old || {}), ...fields }));
         router.push(addEnrollmentStepPath(school, parentId, sessionUserId, 2));
       }}
     />
