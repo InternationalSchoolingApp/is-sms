@@ -459,7 +459,7 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVari
         </div>
       )}
 
-      <div ref={summaryRef}>
+      <div ref={summaryRef} className="scroll-mt-28 md:scroll-mt-20">
         {active?.kind === "registration" && <RegistrationSummary fee={fee} />}
         {active?.kind === "annual" && <AnnualSummary fee={fee} standardId={standardId} isFlexOrDual={isFlexOrDual} />}
         {active?.kind === "monthly" && (
