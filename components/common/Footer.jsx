@@ -8,7 +8,7 @@ export function Footer({ schoolName, fixed = false, inBar = false, inFlow = fals
     <footer
       className={`border-t border-slate-200/70 text-center text-xs text-slate-500 ${
         inFlow
-          ? "border-t-0 px-4 pb-16 pt-6 text-[clamp(11px,3.4vw,14px)] leading-4 text-slate-600 md:hidden"
+          ? "whitespace-nowrap border-t-0 px-4 pb-16 pt-6 text-[clamp(8px,2.8vw,14px)] leading-4 text-slate-600 md:hidden"
           : inBar
           ? "whitespace-nowrap border-t-0 px-2 pb-2 text-[clamp(9px,3vw,13px)] leading-4 text-black md:hidden"
           : fixed
