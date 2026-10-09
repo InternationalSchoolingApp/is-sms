@@ -11,8 +11,9 @@ Everything ships **off**. A stage goes live only by changing rows in `SETTINGS`,
    3. `external-resource/63_6_0_COURSE_ADVISOR_RECOMMENDATION.sql`
    4. `external-resource/63_6_0_COURSE_ADVISOR_CHAT.sql`
 3. **Frontend (`is-sms`):** deploy. The AI Suggester card stays hidden until the backend flag says otherwise.
-4. **Anthropic key:** set it in `SETTINGS`. Use `ANTHROPIC_API_KEY_COURSE_ADVISOR`; if that is empty, the existing `ANTHROPIC_API_KEY` is used.
-   - A key starting with `sk-ant-usr-…` is not scoped to a workspace. With one of those, also set `ANTHROPIC_WORKSPACE_ID_COURSE_ADVISOR`, otherwise every call fails with HTTP 400.
+4. **Anthropic key:** nothing new to set. Leave `ANTHROPIC_API_KEY_COURSE_ADVISOR` and `ANTHROPIC_WORKSPACE_ID_COURSE_ADVISOR` empty, and the advisor uses the existing `ANTHROPIC_API_KEY` (`sk-ant-api03-…`). This is the setup verified on UAT.
+   - Don't use an `sk-ant-usr-…` key. It isn't scoped to a workspace, and the Anthropic API rejects it (HTTP 400).
+5. **Go live:** run `external-resource/63_6_0_COURSE_ADVISOR_ENABLE.sql`. To switch everything off again, run `63_6_0_COURSE_ADVISOR_RESET_DEFAULTS.sql`.
 
 ## 2. Live AI check (before switching anything on)
 
