@@ -183,13 +183,15 @@ export function AccountCreationForm({ school, program, query }) {
 
   // Below md (768px) the header/footer are `fixed`, so #enrollmentFormWrapper
   // needs real padding to avoid content sliding underneath them. Measuring
-  // their actual rendered height (rather than a hardcoded px value) keeps
-  // this correct if their content — badge text, WhatsApp bar presence —
-  // ever changes their height. A ResizeObserver (not a "resize" listener)
-  // is used deliberately: it fires with the correct size the instant
+  // the header's actual rendered height (rather than a hardcoded px value)
+  // keeps this correct if its content — badge text — ever changes its
+  // height; the same header-height + 10px breathing room is mirrored onto
+  // paddingBottom so the wrapper stays evenly inset top/bottom regardless of
+  // the footer's own height. A ResizeObserver (not a "resize" listener) is
+  // used deliberately: it fires with the correct size the instant
   // observation starts, so there's no race against layout/webfonts not
   // being ready yet on first render, and it re-fires on any later size
-  // change even without a window resize (e.g. the WhatsApp bar appearing).
+  // change even without a window resize.
   useEffect(() => {
     const wrapper = document.getElementById("enrollmentFormWrapper");
     const header = document.getElementById("signupMobileHeader");
@@ -210,15 +212,15 @@ export function AccountCreationForm({ school, program, query }) {
         wrapper.style.paddingTop = "";
         wrapper.style.paddingBottom = "";
       } else {
-        wrapper.style.paddingTop = `${header.offsetHeight}px`;
-        wrapper.style.paddingBottom = `${footer.offsetHeight}px`;
+        const padding = `${header.offsetHeight + 10}px`;
+        wrapper.style.paddingTop = padding;
+        wrapper.style.paddingBottom = padding;
       }
     }
 
     syncPadding();
     const resizeObserver = new ResizeObserver(syncPadding);
     resizeObserver.observe(header);
-    resizeObserver.observe(footer);
     desktopQuery.addEventListener("change", syncPadding);
 
     return () => {
