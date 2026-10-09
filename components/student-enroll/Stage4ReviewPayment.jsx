@@ -48,7 +48,7 @@ import {
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import { isDummyStudentMode, showDummyStripeCheckoutPage } from "@/utils/paymentGatewayChecks";
 
-const ROW_CLASS = "md:overflow-hidden md:rounded-lg md:border md:border-slate-200 md:bg-white";
+const ROW_CLASS = "md:overflow-hidden md:rounded-xl md:border md:border-slate-200 md:bg-white";
 
 // Gray placeholder blocks matching the three review rows (same idea as Stage 1's FieldSkeleton),
 // shown under the real heading while get-student-review-details loads.
@@ -160,7 +160,7 @@ const GENERIC_ERROR ="Something went wrong. Please check your connection and try
 function ReviewRow({ label, children }) {
   return (
     <div className="flex justify-between gap-4 py-2">
-      <dt className="text-slate-500">{label}</dt>
+      <dt className="text-black">{label}</dt>
       <dd className="text-right font-bold text-black md:font-medium">{children}</dd>
     </div>
   );

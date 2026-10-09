@@ -238,8 +238,8 @@ export function AccountForm({ context, canSubmit = false, onVerificationEmailSen
         email: submittedEmail,
         // Confirm-email field is commented out of the UI: reuse the email as its value.
         confirmEmail: submittedEmail,
-        password: formData.get("password") || fields.password,
-        confirmPassword: formData.get("confirmPassword") || fields.confirmPassword,
+        password: (formData.get("password") || fields.password).replace(/ /g, ""),
+        confirmPassword: (formData.get("confirmPassword") || fields.confirmPassword).replace(/ /g, ""),
       };
       if(domFields.email !== fields.email || domFields.confirmEmail !== fields.confirmEmail || domFields.password !== fields.password || domFields.confirmPassword !== fields.confirmPassword) {
         setFields(domFields);
@@ -379,7 +379,10 @@ export function AccountForm({ context, canSubmit = false, onVerificationEmailSen
               setPasswordFocused(false);
               touchField("password");
             }}
-            onChange={(e) => setField("password", e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === " ") e.preventDefault();
+            }}
+            onChange={(e) => setField("password", e.target.value.replace(/ /g, ""))}
             error={touched.password && !passwordFocused && !passwordIsValid ? "Please enter a valid password" : undefined}
             status={touched.password && passwordIsValid ? "valid" : undefined}
             trailing={
@@ -421,7 +424,10 @@ export function AccountForm({ context, canSubmit = false, onVerificationEmailSen
           type={showConfirmPassword ? "text" : "password"}
           autoComplete="new-password"
           value={fields.confirmPassword}
-          onChange={(e) => setField("confirmPassword", e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === " ") e.preventDefault();
+          }}
+          onChange={(e) => setField("confirmPassword", e.target.value.replace(/ /g, ""))}
           onBlur={() => touchField("confirmPassword")}
           error={confirmMismatch || (errors.confirmPassword && confirmWeak) ? "Please re-enter the same password" : undefined}
           status={
