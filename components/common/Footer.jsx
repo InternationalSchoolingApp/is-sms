@@ -12,7 +12,7 @@ export function Footer({ schoolName, fixed = false, inBar = false, inFlow = fals
           : inBar
           ? "whitespace-nowrap border-t-0 px-2 pb-2 text-[clamp(9px,3vw,13px)] leading-4 text-black md:hidden"
           : fixed
-          ? "hidden whitespace-nowrap md:fixed md:bottom-0 md:left-0 md:z-20 md:block md:w-full md:border-t md:bg-white md:py-4 md:text-sm md:leading-normal md:text-slate-500"
+          ? "hidden whitespace-nowrap md:fixed md:bottom-0 md:left-0 md:z-20 md:block md:w-full md:border-t md:bg-white md:py-2 md:text-xs md:leading-normal md:text-slate-500"
           : "relative z-10 hidden bg-white py-4 md:block"
       }`}
     >
