@@ -1356,9 +1356,9 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               <h2 className="text-sm font-bold text-white text-center">{data.totalCredit >= data.minCourseLimit ? 'Add Extra Courses':'Select Your Courses Below'}</h2>
               {minCreditsReached && (
                 extraCoursesOpen ? (
-                  <TfiAngleUp className="h-4 w-4 shrink-0 text-white" aria-hidden="true" />
+                  <TfiAngleUp className="h-4 w-4 shrink-0 text-white stroke-2" aria-hidden="true" />
                 ) : (
-                  <TfiAngleDown className="h-4 w-4 shrink-0 text-white" aria-hidden="true" />
+                  <TfiAngleDown className="h-4 w-4 shrink-0 text-white stroke-2" aria-hidden="true" />
                 )
               )}
             </div>
