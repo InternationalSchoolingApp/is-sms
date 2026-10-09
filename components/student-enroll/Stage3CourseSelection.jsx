@@ -1437,7 +1437,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                             </span> */}
                             <div className="flex-1 flex-col flex">
                               <span className="min-w-0 flex-1 truncate text-black">{course.courseName}</span>
-                              <span className="px-2 w-fit shrink-0 items-center justify-center rounded-full border border-black-300 bg-white text-[11px] font-semibold text-black">
+                              <span className="px-2 w-fit shrink-0 items-center justify-center rounded-full border border-black-300 bg-white text-[11px] font-semibold text-black mt-2">
                                 {course.subjects.length} {course.subjects.length>1?'Courses':'Course'} available
                               </span>
                             </div>
