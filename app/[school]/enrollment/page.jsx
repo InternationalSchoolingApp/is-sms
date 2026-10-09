@@ -9,7 +9,7 @@ export default async function  page({params}) {
   // `program` is only present when this page is re-exported at /{school}/enrollment/{program}/step.
   const {school, program = DEFAULT_PROGRAM} = await params;
   if (!session){
-    redirect(loginPageUrl(school));
+    redirect(`/${school}/enrollment/${program}`);
   }
 
   let response = null;
