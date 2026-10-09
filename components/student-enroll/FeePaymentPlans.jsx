@@ -392,7 +392,7 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVari
           return (
             <label
               key={option.key}
-              className={`block min-w-0 rounded-2xl border-2 px-3 py-3 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40 md:px-5 md:py-5 ${
+              className={`block min-w-0 min-h-[104px] rounded-2xl border-2 px-3 py-3 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40 md:min-h-[136px] md:px-5 md:py-5 ${
                 checked ? "border-primary bg-primary/5" : "border-slate-200 bg-white hover:border-primary/40"
               } ${disabled ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
             >
