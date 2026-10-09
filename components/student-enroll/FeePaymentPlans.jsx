@@ -176,7 +176,7 @@ function PaymentScheduleList({ items, total, note }) {
                     </span>
                   )}
                 </p>
-                {item.caption && <p className="text-xs text-slate-500">{item.caption}</p>}
+                {item.caption && <p className="text-xs text-black-700">{item.caption}</p>}
               </div>
               <span className="shrink-0 text-sm font-bold text-black">{item.amount}</span>
             </div>
