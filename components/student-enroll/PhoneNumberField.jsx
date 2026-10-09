@@ -53,7 +53,12 @@ export function PhoneNumberField({ label = "Contact Number", name = "contactNumb
         <label
           htmlFor={id}
           className={`pointer-events-none absolute z-1 bg-white px-1 transition-all ${
-            floated ? `left-3 top-0 -translate-y-1/2 text-xs max-[319px]:text-[10px] ${error ? "text-red-500" : "text-primary"}` : `left-20 top-1/2 -translate-y-1/2 text-sm max-[319px]:text-xs ${error ? "text-red-500" : "text-slate-500"}`
+            floated
+              ? `left-3 top-0 -translate-y-1/2 text-xs max-[319px]:text-[10px] ${error ? "text-red-500" : "text-primary"}`
+              // Unfocused + empty, an invalid field's label would otherwise sit
+              // oversized and red right where the caret goes — hidden there, it
+              // fades in already floated the instant the field is focused.
+              : `left-20 top-1/2 -translate-y-1/2 text-sm max-[319px]:text-xs ${error ? "text-red-500 opacity-0" : "text-slate-500"}`
           }`}
           style={!floated && labelLeft != null ? { left: labelLeft } : undefined}
         >
@@ -67,7 +72,7 @@ export function PhoneNumberField({ label = "Contact Number", name = "contactNumb
           defaultValue={value}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          className={`h-12 w-full rounded-md bg-white pl-10 pr-3.5 pt-1 text-sm outline-none ${className} ${
+          className={`h-12 w-full rounded-md bg-white pl-10 pr-3.5 pt-1 text-[17px] outline-none ${className} ${
             error ? "border-2 border-red-500" : focused ? "border-2 border-primary" : value ? "border-2 border-emerald-500" : "border border-slate-300"
           }`}
         />

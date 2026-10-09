@@ -69,7 +69,8 @@ export function EnrollmentWizardShell({
         }}
       />
 
-      <div className="flex-1 bg-[#f2f5fa] px-4 pb-28 md:px-6 md:py-8 md:pb-24 md:pt-[62px]">
+      <div className="flex flex-1 flex-col bg-[#f2f5fa] px-4 pb-0 md:block md:px-6 md:py-8 md:pb-24 md:pt-[62px]">
+        <div className="flex-1">
         <div className="sticky top-0 z-20 -mx-4 bg-[#f2f5fa] px-4 pb-3 max-[579px]:pb-1 md:static md:mx-0 md:bg-transparent md:px-0 md:pb-0">
         <header className="grid grid-cols-[2rem_1fr_2rem] items-center gap-2 px-1 py-4 max-[579px]:py-2 md:hidden">
           <Image src="/images/Fav_Icon.png" alt={schoolName || ""} width={28} height={28} className="h-7 w-auto" unoptimized />
@@ -107,6 +108,9 @@ export function EnrollmentWizardShell({
             </>
           
         )}
+        </div>
+
+        <Footer schoolName={schoolName} inFlow />
       </div>
 
       {/* Desktop floating WhatsApp support button, fixed above the fixed footer. Below md every step's
@@ -150,7 +154,7 @@ function StepRow({ currentIndex, steps }) {
       {/* Below 580px the whole stepper (circles, line, icons) is drawn at 70% of its size. */}
       <div className="relative mx-auto flex items-start justify-between max-[579px]:[zoom:0.7]">
         <div className="absolute inset-x-[18px] top-[18px] -translate-y-1/2 md:inset-x-8 md:top-5" aria-hidden="true">
-          <div className="h-[3px] w-full bg-slate-200 md:h-px" />
+          <div className="h-[3px] w-full bg-slate-400 md:h-px" />
           <div
             className="absolute left-0 top-1/2 h-[3px] -translate-y-1/2 bg-green-600 transition-[width] md:h-1"
             style={{ width: `${progressPercent}%` }}
@@ -225,10 +229,10 @@ function StepCircle({ icon: Icon, state, justCompleted, animate }) {
       className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 md:h-10 md:w-10 ${
         state === "active"
           ? "border-primary bg-white text-primary ring-4 ring-primary/20 md:ring-0"
-          : "border-slate-300 bg-[#f2f5fa] text-slate-400"
+          : "border-slate-400 bg-[#f2f5fa] text-slate-400"
       }`}
     >
-      <Icon className="h-4 w-4 md:h-6 md:w-6" aria-hidden="true" />
+      <Icon className="h-5 w-5 md:h-7 md:w-7" aria-hidden="true" />
     </div>
   );
 }

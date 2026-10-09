@@ -8,6 +8,7 @@ import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Req } from "@/components/common/Req";
 import { validateAge, getDobPickerBounds } from "@/utils/ageValidation";
+import { FaExchangeAlt } from "react-icons/fa";
 
 
 /**
@@ -58,7 +59,7 @@ export function ChangeGradeDialog({ open, onOpenChange, grades, courseProviderId
       <DialogContent className="sm:max-w-lg">
         <DialogHeader className="items-center text-center">
           <span className="mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white">
-            <RefreshCw className="h-6 w-6" />
+            <FaExchangeAlt className="h-6 w-6 stroke-3" />
           </span>
           <DialogTitle className="text-lg">Change Grade &amp; Date of Birth</DialogTitle>
         </DialogHeader>

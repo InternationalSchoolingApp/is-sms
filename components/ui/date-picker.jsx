@@ -21,7 +21,7 @@ export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDat
         <PopoverTrigger
           type="button"
           disabled={disabled}
-          className={`relative flex h-12 w-full items-center rounded-md border ${disabled ? "cursor-not-allowed bg-slate-100 text-black" : "bg-white"} ${Icon ? "pl-10" : "pl-3.5"} pr-3.5 pt-1 text-left text-sm ${
+          className={`relative flex h-12 w-full items-center rounded-md border ${disabled ? "cursor-not-allowed bg-slate-100 text-black" : "bg-white"} ${Icon ? "pl-10" : "pl-3.5"} pr-3.5 pt-1 text-left text-[17px] ${
             error ? "border-2 border-red-500" : open ? "border-2 border-primary" : value && !disabled ? "border-2 border-emerald-500" : "border-slate-300"
           }`}
         >
@@ -31,7 +31,10 @@ export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDat
               className={`pointer-events-none absolute z-1 bg-white px-1 transition-all ${
                 floated
                   ? `left-3 top-0 -translate-y-1/2 text-xs max-[319px]:text-[10px] ${error ? "text-red-500" : "text-primary"}`
-                  : `top-1/2 -translate-y-1/2 text-sm max-[319px]:text-xs ${error ? "text-red-500" : "text-slate-500"} ${Icon ? "left-10" : "left-3.5"}`
+                  // Unfocused + empty, an invalid field's label would otherwise sit
+                  // oversized and red right where the picker trigger text goes — hidden
+                  // there, it fades in already floated the instant the field is focused.
+                  : `top-1/2 -translate-y-1/2 text-sm max-[319px]:text-xs ${error ? "text-red-500 opacity-0" : "text-slate-500"} ${Icon ? "left-10" : "left-3.5"}`
               }`}
             >
               {label}

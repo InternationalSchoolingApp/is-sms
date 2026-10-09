@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { User, GraduationCap, VenusAndMars, Mail, Globe, Cake, MapPin, Map, Building2, School, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
@@ -84,23 +84,23 @@ function Stage1Skeleton({ isDualDiploma }) {
   return (
     <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       <h2 className="text-center text-xl font-bold text-black md:text-2xl">Student Details</h2>
-      <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-8 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
           <FieldSkeleton key={`identity-${i}`} />
         ))}
       </div>
-      <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
           <FieldSkeleton key={`contact-${i}`} />
         ))}
       </div>
-      <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
           <FieldSkeleton key={`residence-${i}`} />
         ))}
       </div>
       {isDualDiploma && (
-        <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <FieldSkeleton key={`school-${i}`} />
           ))}
@@ -137,6 +137,10 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
   const [fields, setFields] = useState(() => ({ ...INITIAL_FIELDS, ...initialFields }));
   const [errors, setErrors] = useState({});
   const [flaggedModal, setFlaggedModal] = useState(null);
+  // Every field name that has ever shown an error this session (set grows,
+  // never shrinks) — see the live-revalidation effect below for why this is
+  // needed separately from `errors` itself.
+  const everErroredFieldsRef = useRef(new Set());
 
   const isDualDiploma = getLearningProgramBackendValue(context.learningProgram) === "DUAL_DIPLOMA";
 
@@ -169,13 +173,17 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countries.data]);
 
-  // Re-checks only fields that currently show an error, against the same
-  // validators handleSubmit uses, so the message clears (and the field can
-  // turn green) as soon as the value becomes valid instead of lingering
-  // until the next submit.
+  // Re-checks every field that currently shows an error OR has ever shown
+  // one this session, against the same validators handleSubmit uses — so a
+  // message clears (and the field turns green) as soon as the value becomes
+  // valid, AND comes back if the user then re-invalidates it (e.g. clears a
+  // field they'd just fixed), instead of only ever being able to clear.
+  // `keys` must come from everErroredFieldsRef, not just `Object.keys(prev)`:
+  // once a field's error is deleted from `prev` it would otherwise never be
+  // re-checked again even if it becomes invalid a second time.
   useEffect(() => {
     setErrors((prev) => {
-      const keys = Object.keys(prev).filter((key) => key !== "form");
+      const keys = [...everErroredFieldsRef.current];
       if (keys.length === 0) return prev;
       const { errors: current } = validateStudentDetails(fields, { isDualDiploma });
       const dobError = validateAge(fields.dob);
@@ -184,8 +192,10 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
       let changed = false;
       keys.forEach((key) => {
         if (!current[key]) {
-          delete next[key];
-          changed = true;
+          if (key in next) {
+            delete next[key];
+            changed = true;
+          }
         } else if (current[key] !== prev[key]) {
           next[key] = current[key];
           changed = true;
@@ -218,6 +228,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
     const dobError = validateAge(fields.dob);
     const allErrors = dobError ? { ...fieldErrors, dob: fieldErrors.dob || dobError } : fieldErrors;
 
+    Object.keys(allErrors).forEach((key) => everErroredFieldsRef.current.add(key));
     setErrors(allErrors);
     if (!valid || dobError) return;
 
@@ -253,10 +264,11 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
       <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
         <h2 className="text-center text-xl font-extrabold text-black md:text-2xl">Student Details</h2>
 
-        <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-2">
+        <div className="mt-4.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-2">
           <FloatingLabelInput
             icon={User}
             label={<Req label="Student's First Name" required />}
+            filledLabel={<Req label="First Name" required />}
             value={fields.firstName}
             {...nameFieldProps((v) => setField("firstName", v))}
             error={errors.firstName}
@@ -270,12 +282,13 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           <FloatingLabelInput
             icon={User}
             label={<Req label="Student's Last Name" required />}
+            filledLabel={<Req label="Last Name" required />}
             value={fields.lastName}
             {...nameFieldProps((v) => setField("lastName", v))}
             error={errors.lastName}
           />
           </div>
-          <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-3.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
           <FloatingLabelSelect
             icon={GraduationCap}
             label={<Req label={fields.standardId != null && fields.standardId != undefined && fields.standardId != "" ? `Selected Grade`:`Select Grade`} required />}
@@ -310,7 +323,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           />
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3 [&_label]:max-w-[calc(100%-5rem)]">
+        <div className="mt-3.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
           <FloatingLabelInput
             icon={Mail}
             label={<Req label="Student's Email" required />}
@@ -350,7 +363,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
                   <>
                     Nationality{" "}
                     <span className="text-black text-[12px]">
-                      (You must have a valid National ID)
+                      (Must have valid National ID)
                     </span>
                   </>
                 } required />}
@@ -362,7 +375,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
           />
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-3.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
           <FloatingLabelSelect
             icon={MapPin}
             label={
@@ -405,7 +418,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
         {isDualDiploma && (
           <>
             <strong className="mt-6 block text-base font-bold text-black">Current School Details</strong>
-          <div className="mt-3 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-3 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
             <FloatingLabelInput
               icon={School}
               label={<Req label="Current School Name" required />}

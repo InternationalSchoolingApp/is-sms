@@ -39,14 +39,13 @@ import {
   Lock,
   Palette,
   Plus,
-  RefreshCw,
   Search,
   Sparkles,
   Trash2
 } from "lucide-react";
 import { RxDividerVertical } from "react-icons/rx";
 import { PiBooksLight } from "react-icons/pi";
-import { FaAngleRight, FaArrowDown, FaRegEyeSlash } from "react-icons/fa";
+import { FaAngleRight, FaArrowDown, FaExchangeAlt, FaRegEyeSlash } from "react-icons/fa";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -548,8 +547,6 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
 
   if (!course) return null;
 
-  const CategoryIcon = categoryIcon(course.courseName);
-
   async function handleAdd(subject) {
     if (busy || addingId || removingId) return;
     const id = String(subject.subjectId);
@@ -576,7 +573,6 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-md">
         <DialogHeader className="flex-row items-center gap-2 space-y-0  px-4 py-3">
-          <CategoryIcon className="h-5 w-5 shrink-0 text-black" />
           <div className="min-w-0 flex-1">
             <DialogTitle className="text-base font-semibold text-black">{course.courseName}</DialogTitle>
             <p className="text-xs text-black">
@@ -1252,7 +1248,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             disabled={busy}
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
           >
-            Change <RefreshCw className="h-3.5 w-3.5 stroke-3" />
+            Change <FaExchangeAlt className="h-3.5 w-3.5 stroke-3" />
           </button>
         </div>
       )}
@@ -1276,7 +1272,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               disabled={busy}
               className="inline-flex items-center gap-1.5 ml-auto rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
             >
-              Change Grade <RefreshCw className="h-3 w-3 stroke-3" />
+              Change Grade <FaExchangeAlt className="h-3 w-3 stroke-3" />
             </button>
           </div>
         )}
@@ -1729,7 +1725,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                               active ? "bg-[#e6f3ff] text-primary" : "text-slate-700 hover:bg-slate-50"
                             }`}
                           >
-                            <CategoryIcon className="h-4 w-4 shrink-0" />
+                            {/* <CategoryIcon className="h-4 w-4 shrink-0" /> */}
                             <Tooltip>
                               <TooltipTrigger delay={100} render={<span className="min-w-0 flex-1 truncate text-left" />}>
                                 {course.courseName}
@@ -1844,9 +1840,9 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                           className="flex flex-wrap gap-2 shadow-sm w-full items-center space-x-3 px-4 py-3 text-left border rounded-lg text-sm font-medium text-slate-700"
                         >
                           <div className="inline-flex gap-2">
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
+                            {/* <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
                               <CategoryIcon className="h-4 w-4" />
-                            </span>
+                            </span> */}
                             <div className="flex-1 flex-col flex">
                               <span className="min-w-0 flex-1 truncate text-black">{course.courseName}</span>
                               <span className="px-2 w-fit shrink-0 items-center justify-center rounded-full border border-black-300 bg-white text-[11px] font-semibold text-black">

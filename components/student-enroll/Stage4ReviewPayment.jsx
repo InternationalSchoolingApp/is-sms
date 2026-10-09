@@ -124,13 +124,14 @@ function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
         <Button
           type="button"
           variant="outline"
-          className="h-8 cursor-pointer px-3 text-xs max-[408px]:h-7 max-[408px]:px-2 max-[367px]:h-7 max-[367px]:px-2 md:h-9 md:px-4 md:text-sm"
+          className="h-8 cursor-pointer gap-1.5 px-3 text-xs max-[408px]:h-7 max-[408px]:px-2 max-[367px]:h-7 max-[367px]:px-2 md:h-9 md:px-4 md:text-sm"
           onClick={(e) => {
             e.stopPropagation();
             onToggle();
           }}
         >
           Review
+          {open ? <TfiAngleUp className="h-2.5 w-2.5 md:h-4 md:w-4" aria-hidden="true" /> : <TfiAngleDown className="h-2.5 w-2.5 md:h-4 md:w-4" aria-hidden="true" />}
         </Button>
         {onEdit && (
           <Button
@@ -144,9 +145,6 @@ function SectionHeader({ title, icon: Icon, open, onToggle, onEdit }) {
             Edit
           </Button>
         )}
-        <span className="flex h-8 w-6 shrink-0 items-center justify-center text-slate-600 max-[408px]:w-4 max-[367px]:h-7 max-[367px]:w-5 md:h-9 md:w-7" aria-hidden="true">
-          {open ? <TfiAngleUp className="h-3.5 w-3.5 md:h-4 md:w-4" /> : <TfiAngleDown className="h-3.5 w-3.5 md:h-4 md:w-4" />}
-        </span>
       </div>
     </header>
   );
