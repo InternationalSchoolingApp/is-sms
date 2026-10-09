@@ -31,6 +31,17 @@ const QUICK_QUESTIONS = [
   "Which elective fits my goals?",
   "Is my course load too heavy?",
 ];
+// Why each question is asked, keyed by the backend's question id (AdvisorQuestions.java).
+const QUESTION_HINTS = {
+  recoverSubjects: "We'll put these first so you can earn back the credits you need.",
+  career: "This helps us pick electives and course levels that lead toward that path.",
+  college: "Colleges in different countries look for different courses, so we'll match them.",
+  favoriteSubjects: "We'll lean toward higher levels or extra electives in these subjects.",
+  hardSubjects: "We'll keep these at a comfortable level so your year isn't overloaded.",
+  homeSchoolSubjects: "We'll avoid suggesting courses you're already taking at your school.",
+  challenge: "This decides how many Honors or advanced courses we suggest.",
+  freeTime: "This helps us find electives you'll actually enjoy.",
+};
 const ACTION_BADGE = {
   ADD: "Add",
   UPGRADE: "Upgrade",
@@ -140,6 +151,86 @@ function Chip({ selected, onClick, children, multi }) {
     >
       {children}
     </button>
+  );
+}
+
+function OptionCard({ selected, onClick, children, multi }) {
+  return (
+    <button
+      type="button"
+      role={multi ? "checkbox" : "radio"}
+      aria-checked={selected}
+      onClick={onClick}
+      className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+        selected ? "border-primary bg-[#e6f3ff] text-black" : "border-slate-300 bg-white text-black hover:border-primary"
+      }`}
+    >
+      <span
+        aria-hidden="true"
+        className={`flex h-5 w-5 shrink-0 items-center justify-center border-2 ${multi ? "rounded" : "rounded-full"} ${
+          selected ? "border-primary bg-primary text-white" : "border-slate-400 bg-white"
+        }`}
+      >
+        {selected && (multi ? <Check className="h-3 w-3" strokeWidth={4} /> : <span className="h-2 w-2 rounded-full bg-white" />)}
+      </span>
+      {children}
+    </button>
+  );
+}
+
+/** One questionnaire question per screen, with progress, a hint and a select-all for multi-choice. */
+function QuestionStep({ question, index, total, answers, onToggle, onSetAll }) {
+  const picked = answers[question.id] || [];
+  const allPicked = question.options.length > 0 && picked.length === question.options.length;
+  const hint = question.hint || QUESTION_HINTS[question.id];
+  return (
+    <div className="space-y-4">
+      <div className="space-y-1.5">
+        <p className="text-xs font-semibold text-slate-600">
+          Question {index + 1} of {total}
+        </p>
+        <div className="flex gap-1" aria-hidden="true">
+          {Array.from({ length: total }).map((_, i) => (
+            <span key={i} className={`h-1.5 flex-1 rounded-full ${i <= index ? "bg-[#0f8a74]" : "bg-slate-200"}`} />
+          ))}
+        </div>
+      </div>
+      <fieldset key={question.id} className="ai-rise space-y-3">
+        <legend className="space-y-1">
+          <span className="block text-base font-semibold text-black">{question.text}</span>
+          {hint && <span className="mt-1 block text-sm text-slate-700">{hint}</span>}
+        </legend>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+            {question.multi ? "Choose all that apply" : "Choose one"}
+          </span>
+          {question.multi && (
+            <button
+              type="button"
+              onClick={() => onSetAll(allPicked ? [] : question.options.map((o) => o.value))}
+              className="text-xs font-semibold text-primary underline-offset-2 hover:underline"
+            >
+              {allPicked ? "Clear all" : "Select all"}
+            </button>
+          )}
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2" role={question.multi ? "group" : "radiogroup"}>
+          {question.options.map((option) => (
+            <OptionCard
+              key={option.value}
+              multi={question.multi}
+              selected={picked.includes(option.value)}
+              onClick={() => onToggle(question, option.value)}
+            >
+              {option.label}
+            </OptionCard>
+          ))}
+        </div>
+        {question.multi && picked.length > 0 && (
+          <p className="text-xs text-slate-600">{picked.length} selected</p>
+        )}
+      </fieldset>
+    </div>
   );
 }
 
@@ -299,6 +390,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
   const [marksheet, setMarksheet] = useState(null);
   const [marksheetId, setMarksheetId] = useState(null);
   const [answers, setAnswers] = useState({});
+  const [questionIndex, setQuestionIndex] = useState(0);
   const [result, setResult] = useState(null);
   const [checked, setChecked] = useState(new Set());
   const [pending, setPending] = useState(null);
@@ -333,6 +425,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
           return setStep("error");
         }
         setSetup(response);
+        setQuestionIndex(0);
         setStep(response.marksheetEnabled ? "marksheet" : "questions");
       })
       .catch(() => {
@@ -393,10 +486,36 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
       }
       setMarksheetId(response.marksheetId);
       setNotice("");
-      setStep("questions");
+      goToQuestions();
     } catch {
       setNotice(GENERIC_ERROR);
     }
+  }
+
+  function goToQuestions() {
+    setQuestionIndex(0);
+    setStep("questions");
+  }
+
+  const questions = setup?.questions || [];
+  const currentQuestion = questions[questionIndex];
+  const onLastQuestion = questionIndex >= questions.length - 1;
+
+  function nextQuestion() {
+    if (onLastQuestion) return handleSuggest();
+    setQuestionIndex((i) => i + 1);
+  }
+
+  /** Skip drops any answer to this question, so nothing half-picked is sent. */
+  function skipQuestion() {
+    if (currentQuestion) {
+      setAnswers((prev) => {
+        const next = { ...prev };
+        delete next[currentQuestion.id];
+        return next;
+      });
+    }
+    nextQuestion();
   }
 
   function toggleAnswer(question, value) {
@@ -590,7 +709,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                     size="sm"
                     onClick={() => {
                       setMarksheetId(setup.confirmedMarksheet.marksheetId);
-                      setStep("questions");
+                      goToQuestions();
                     }}
                   >
                     Use it
@@ -650,26 +769,18 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
           )}
 
           {step === "questions" && setup && (
-            <div className="space-y-5">
-              <p className="text-sm text-slate-700">A few quick questions. Skip any you like.</p>
-              {setup.questions.map((question) => (
-                <fieldset key={question.id} className="space-y-2">
-                  <legend className="text-sm font-semibold text-black">{question.text}</legend>
-                  <div className="flex flex-wrap gap-2" role={question.multi ? "group" : "radiogroup"}>
-                    {question.options.map((option) => (
-                      <Chip
-                        key={option.value}
-                        multi={question.multi}
-                        selected={(answers[question.id] || []).includes(option.value)}
-                        onClick={() => toggleAnswer(question, option.value)}
-                      >
-                        {option.label}
-                      </Chip>
-                    ))}
-                  </div>
-                </fieldset>
-              ))}
-            </div>
+            currentQuestion ? (
+              <QuestionStep
+                question={currentQuestion}
+                index={questionIndex}
+                total={questions.length}
+                answers={answers}
+                onToggle={toggleAnswer}
+                onSetAll={(values) => setAnswers((prev) => ({ ...prev, [currentQuestion.id]: values }))}
+              />
+            ) : (
+              <p className="text-sm text-slate-700">We have everything we need. Get your suggestions when you&apos;re ready.</p>
+            )
           )}
 
           {step === "thinking" && (
@@ -828,13 +939,13 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
 
         <DialogFooter className="mx-0 mb-0 shrink-0 flex-row flex-wrap justify-end gap-2 border-t bg-white px-4 py-3">
           {step === "marksheet" && (
-            <Button type="button" variant="outline" onClick={() => setStep("questions")}>
+            <Button type="button" variant="outline" onClick={() => goToQuestions()}>
               Skip this step
             </Button>
           )}
           {step === "confirmMarks" && (
             <>
-              <Button type="button" variant="outline" onClick={() => setStep("questions")} disabled={busy}>
+              <Button type="button" variant="outline" onClick={() => goToQuestions()} disabled={busy}>
                 Skip marksheet
               </Button>
               <Button type="button" onClick={handleConfirmMarks} disabled={busy}>
@@ -842,7 +953,42 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
               </Button>
             </>
           )}
-          {step === "questions" && (
+          {step === "questions" && currentQuestion && (
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleSuggest}
+                disabled={busy}
+                className="order-last w-full text-slate-600 sm:order-first sm:mr-auto sm:w-auto"
+              >
+                Skip all questions
+              </Button>
+              {questionIndex > 0 && (
+                <Button type="button" variant="outline" onClick={() => setQuestionIndex((i) => i - 1)} disabled={busy}>
+                  Back
+                </Button>
+              )}
+              <Button type="button" variant="outline" onClick={skipQuestion} disabled={busy}>
+                Skip
+              </Button>
+              {onLastQuestion ? (
+                <Button
+                  type="button"
+                  onClick={handleSuggest}
+                  disabled={busy || !(answers[currentQuestion.id] || []).length}
+                  className="bg-[#0f8a74] hover:bg-[#0f8a74]/90"
+                >
+                  <Sparkles className="h-4 w-4" /> Get suggestions
+                </Button>
+              ) : (
+                <Button type="button" onClick={nextQuestion} disabled={busy || !(answers[currentQuestion.id] || []).length}>
+                  Next
+                </Button>
+              )}
+            </>
+          )}
+          {step === "questions" && !currentQuestion && (
             <Button type="button" onClick={handleSuggest} disabled={busy} className="bg-[#0f8a74] hover:bg-[#0f8a74]/90">
               <Sparkles className="h-4 w-4" /> Get suggestions
             </Button>
