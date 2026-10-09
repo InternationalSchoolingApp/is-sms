@@ -201,6 +201,42 @@ input:-internal-autofill-selected {
 
 .iti{width: 100%;}
 
+/* Phone country list on phones (intl-tel-input's full-screen popup): 60% of the visible height, red close
+   button next to the search box (added in hooks/useIntlTelInput.js), and 1px above the keyboard while typing. */
+.iti--fullscreen-popup.iti--detached-country-selector {
+  --iti-mobile-popup-margin: 16px;
+}
+.iti--fullscreen-popup .iti__country-selector {
+  max-height: 60%;
+  overflow: hidden;
+}
+.iti--fullscreen-popup.iti--kb-open.iti--detached-country-selector {
+  padding-bottom: 1px;
+}
+.iti--fullscreen-popup.iti--kb-open .iti__country-selector {
+  max-height: 100%;
+}
+.iti--fullscreen-popup .iti__search-input-wrapper {
+  padding-right: 44px;
+}
+.iti--fullscreen-popup .iti__popup-close {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  height: 32px;
+  width: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: #dc2626;
+  color: #fff;
+}
+.iti--fullscreen-popup .iti__popup-close:hover {
+  background-color: #b91c1c;
+}
+
 /*
  * Maintenance-notice marquee (components/common/MaintenanceBanner.jsx).
  * The message is repeated enough times to overflow the track; min-width:200%

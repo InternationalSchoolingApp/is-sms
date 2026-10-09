@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { Check, ChevronDown, Search } from "lucide-react";
+import { Check, ChevronDown, Search, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RequiredAsterisk } from "@/components/common/RequiredAsterisk";
@@ -106,21 +106,36 @@ function MobileSelectSheet({ options, value, onSelect, onClose, searchable }) {
         role="dialog"
         aria-modal="true"
       >
-        {showSearch && (
-          <div className="flex shrink-0 items-center gap-2 border-b border-slate-200 px-3 py-2.5">
-            <Search className="h-4 w-4 shrink-0 text-slate-400" />
-            <input
-              ref={searchRef}
-              autoFocus={searchable}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search..."
-              className="w-full text-base outline-none placeholder:text-slate-400"
-            />
-          </div>
-        )}
+        <div className="flex shrink-0 items-center gap-2 border-b border-slate-200 py-2 pl-3 pr-2">
+          {showSearch ? (
+            <>
+              <Search className="h-4 w-4 shrink-0 text-slate-400" />
+              <input
+                ref={searchRef}
+                autoFocus={searchable}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search..."
+                className="min-w-0 flex-1 py-1 text-base outline-none placeholder:text-slate-400"
+              />
+            </>
+          ) : (
+            <span className="flex-1" />
+          )}
+          {/* Fixed-size, never shrinks and sits outside the input, so typing can't run underneath it. */}
+          <button
+            type="button"
+            // Keep the search box focused on press: otherwise it blurs first, the panel resizes and the click misses.
+            onPointerDown={(e) => e.preventDefault()}
+            onClick={onClose}
+            aria-label="Close"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700"
+          >
+            <X className="h-5 w-5 stroke-3" />
+          </button>
+        </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-1">
           {filtered.length === 0 && <p className="px-4 py-3 text-center text-sm text-slate-400">No results</p>}
           {filtered.map((option) => (
