@@ -1,5 +1,6 @@
 "use client";
 
+import { forwardRef, useRef } from "react";
 import { ReceiptText } from "lucide-react";
 
 /**
@@ -41,9 +42,9 @@ function currencyOf(fee) {
 }
 
 // The bordered card around every fee table ("Fee Summary" in the design), note included.
-export function FeeSummaryCard({ children }) {
+export const FeeSummaryCard = forwardRef(function FeeSummaryCard({ children }, ref) {
   return (
-    <section className="mt-4 md:mt-5 md:rounded-xl md:border md:border-slate-200 md:bg-white md:px-7 md:py-6">
+    <section ref={ref} className="mt-4 md:mt-5 md:rounded-xl md:border md:border-slate-200 md:bg-white md:px-7 md:py-6">
       <h3 className="flex items-center justify-center gap-3 text-lg font-bold text-black md:justify-start md:font-semibold">
         <ReceiptText className="h-5 w-5 text-primary md:h-6 md:w-6" aria-hidden="true" /> Fee Summary
       </h3>
@@ -53,7 +54,7 @@ export function FeeSummaryCard({ children }) {
       </p>
     </section>
   );
-}
+});
 
 function FeeTable({ children, className = "overflow-hidden rounded-lg border border-slate-200" }) {
   return (
@@ -275,6 +276,15 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVari
   const hasChips = options.some((option) => option.variants?.length > 1);
   const activeVariant = active?.variants?.find((variant) => variant.mode === selectedVariant) || active?.variants?.[0];
 
+  // Scrolls the Fee Summary into view on a user click — never on the initial/prefilled
+  // selection — so picking a radio on mobile (where the summary starts off-screen below the
+  // cards) brings its breakdown into view.
+  const summaryRef = useRef(null);
+  function selectAndScroll(key) {
+    onSelect(key);
+    summaryRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
     <div>
       {/* A single plan option spans the full width instead of leaving an empty second column. */}
@@ -298,7 +308,7 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVari
                 name="payModeCheckboxes"
                 className="sr-only"
                 checked={checked}
-                onChange={() => onSelect(option.key)}
+                onChange={() => selectAndScroll(option.key)}
                 disabled={disabled}
               />
               {/* Visible radio on every size (the chip card draws its own chip radios instead). */}
@@ -330,7 +340,7 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVari
                         disabled={disabled}
                         onClick={(e) => {
                           e.preventDefault();
-                          onSelect(option.key);
+                          selectAndScroll(option.key);
                           onSelectVariant?.(variant.mode);
                         }}
                         className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium text-slate-800 transition-colors ${
@@ -351,7 +361,7 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVari
         })}
       </div>
 
-      <FeeSummaryCard>
+      <FeeSummaryCard ref={summaryRef}>
         {active?.kind === "registration" && <RegistrationTable fee={fee} />}
         {active?.kind === "annual" && <AnnualTable fee={fee} standardId={standardId} isFlexOrDual={isFlexOrDual} />}
         {active?.kind === "monthly" && (
