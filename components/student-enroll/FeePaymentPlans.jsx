@@ -17,8 +17,6 @@ import { CheckCircle2 } from "lucide-react";
  * `feeAlreayPaid`).
  */
 
-const ORDINAL_WORDS = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth"];
-
 // The backend sends labels like "1<sup>st</sup> month fee"; render the <sup> as real superscript
 // without injecting the string as HTML.
 function SupText({ children }) {
@@ -38,10 +36,6 @@ function money(currency, amount) {
 function currencyOf(fee) {
   const match = String(fee?.courseFeeString || "").match(/^[^\d-]*/);
   return match ? match[0].trim() : "";
-}
-
-function ordinal(index) {
-  return ORDINAL_WORDS[index] || `${index + 1}th`;
 }
 
 // "3, 4 or 5 months" — the Installments card's subtitle while it isn't the selected option yet
@@ -147,12 +141,12 @@ function FeeSummaryFlat({ rows, total, savings, note }) {
   );
 }
 
-// "Your payment schedule" numbered timeline — replaces the old FEE SCHEDULE table for installment
+// "Fee schedule" numbered timeline — replaces the old FEE SCHEDULE table for installment
 // and custom (admin-set) plans. `items` is [{ title, caption, amount }], first entry is "due now".
 function PaymentScheduleList({ items, total, note }) {
   return (
     <section className="mt-4 rounded-xl border border-slate-200 bg-white px-3 py-2 md:mt-5 md:px-4 md:py-3">
-      <h3 className="text-base font-bold text-black md:text-lg">Your payment schedule</h3>
+      <h3 className="text-base font-bold text-black md:text-lg">Fee schedule</h3>
       <ol className="mt-3">
         {items.map((item, index) => (
           <li key={index} className="relative flex gap-3 pb-5 last:pb-0">
@@ -169,7 +163,10 @@ function PaymentScheduleList({ items, total, note }) {
             <div className="flex min-w-0 flex-1 items-start justify-between gap-3 pt-1">
               <div className="min-w-0">
                 <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-black">
-                  {item.title}
+                  {/* `item.title` can be a SupText fragment array (text, <sup>, text, ...) — wrapped in
+                      its own span so those fragments stay one inline run instead of each becoming a
+                      separate flex child (which broke the text mid-word against the "Pay today" pill). */}
+                  <span>{item.title}</span>
                   {index === 0 && (
                     <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
                       Pay today
@@ -297,9 +294,11 @@ function InstallmentSummary({ fee, details, standardId, isFlexOrDual }) {
   const discount = discountRow(monthly.youSave, "Fee discount");
   if (discount) rows.push(discount);
 
-  const scheduleItems = monthlyFees.map((monthlyFee, index) => ({
-    title: `${ordinal(index)} payment`,
-    caption: index === 0 ? "Due now" : `${index * 30} days after start date`,
+  // The backend's own paymentLabel already reads "1<sup>st</sup> month fee (Enrollment Fee + 1st
+  // Installment)" / "2<sup>nd</sup> month fee - to be paid 30 days after start date" etc — used
+  // verbatim instead of a re-derived "First/Second payment" + day-offset caption.
+  const scheduleItems = monthlyFees.map((monthlyFee) => ({
+    title: <SupText>{monthlyFee.paymentLabel}</SupText>,
     amount: monthlyFee.amountString,
   }));
 
@@ -317,7 +316,7 @@ function InstallmentSummary({ fee, details, standardId, isFlexOrDual }) {
       />
       <PaymentScheduleList
         items={scheduleItems}
-        total={{ label: "Total program fee", amount: monthly.payableFeeString }}
+        total={{ label: "Total Fee", amount: monthly.payableFeeString }}
         note="Note: All fees mentioned above are in US Dollars"
       />
     </>
@@ -358,7 +357,7 @@ export function CustomPlanTable({ fee }) {
       />
       <PaymentScheduleList
         items={scheduleItems}
-        total={{ label: "Total program fee", amount: details.totalPayableAmountString }}
+        total={{ label: "Total Fee", amount: details.totalPayableAmountString }}
         note="Note: All fees mentioned above are in US Dollars"
       />
     </div>
