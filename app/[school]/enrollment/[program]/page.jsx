@@ -41,6 +41,11 @@ export default async function AccountCreationPage({ params, searchParams }) {
     if (legacyUrl) redirect(legacyUrl);
   }
 
+  // Server-only kill switch (RECAPTCHA_BYPASS=true): withholding the site key
+  // is enough to disable reCAPTCHA client-side, since AccountForm only ever
+  // runs it when both isProdDeployment AND recaptchaSiteKey are truthy.
+  const recaptchaBypassed = String(process.env.RECAPTCHA_BYPASS || "").trim().toLowerCase() === "true";
+
   return (
     <AccountCreationForm
       school={school}
@@ -48,7 +53,7 @@ export default async function AccountCreationPage({ params, searchParams }) {
       query={query}
       // Read server-side (never inlined into the client bundle directly by
       // AccountForm) and handed down as a plain prop instead.
-      recaptchaSiteKey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+      recaptchaSiteKey={recaptchaBypassed ? undefined : process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
     />
   );
 }
