@@ -12,22 +12,45 @@ function decorateFullscreenPopup(closePopup) {
   if (!popup) return () => {};
   const vv = window.visualViewport;
 
-  const syncViewport = () => {
-    if (!vv) return;
-    popup.style.top = `${vv.offsetTop}px`;
-    popup.style.bottom = "auto";
-    popup.style.height = `${vv.height}px`;
+  // The panel and its list get explicit pixel heights (60% of the visible area, all of it while the keyboard is
+  // up, which leaves 1px above the keyboard). WebKit does not shrink the list inside a percentage max-height flex
+  // column, so the list would be clipped instead of scrolling and the later countries could not be reached.
+  const layout = () => {
+    const visibleHeight = vv ? vv.height : window.innerHeight;
+    if (vv) {
+      popup.style.top = `${vv.offsetTop}px`;
+      popup.style.bottom = "auto";
+      popup.style.height = `${vv.height}px`;
+    }
+    const keyboardOpen = popup.classList.contains("iti--kb-open");
+    const available = visibleHeight - 16 - (keyboardOpen ? 1 : 16);
+    const panelMax = Math.max(160, Math.floor(keyboardOpen ? available : available * 0.6));
+    const selector = popup.querySelector(".iti__country-selector");
+    const list = popup.querySelector(".iti__country-list");
+    const searchWrapper = popup.querySelector(".iti__search-input-wrapper");
+    if (selector) selector.style.maxHeight = `${panelMax}px`;
+    if (list) list.style.maxHeight = `${panelMax - (searchWrapper ? searchWrapper.offsetHeight : 49)}px`;
   };
-  syncViewport();
-  vv?.addEventListener("resize", syncViewport);
-  vv?.addEventListener("scroll", syncViewport);
+  layout();
+  vv?.addEventListener("resize", layout);
+  vv?.addEventListener("scroll", layout);
 
   const onFocusIn = (e) => {
-    if (e.target.matches?.(".iti__search-input")) popup.classList.add("iti--kb-open");
+    if (!e.target.matches?.(".iti__search-input")) return;
+    popup.classList.add("iti--kb-open");
+    layout();
   };
   const onFocusOut = (e) => {
-    if (e.target.matches?.(".iti__search-input")) popup.classList.remove("iti--kb-open");
+    if (!e.target.matches?.(".iti__search-input")) return;
+    popup.classList.remove("iti--kb-open");
+    layout();
   };
+  // Same reason as the select popup: pressing a country must not blur the search box, or the popup resizes
+  // between press and release and the tap never selects the country.
+  const keepFocus = (e) => {
+    if (!e.target.closest?.(".iti__search-input")) e.preventDefault();
+  };
+  popup.addEventListener("mousedown", keepFocus);
   popup.addEventListener("focusin", onFocusIn);
   popup.addEventListener("focusout", onFocusOut);
 
@@ -47,8 +70,9 @@ function decorateFullscreenPopup(closePopup) {
   }
 
   return () => {
-    vv?.removeEventListener("resize", syncViewport);
-    vv?.removeEventListener("scroll", syncViewport);
+    vv?.removeEventListener("resize", layout);
+    vv?.removeEventListener("scroll", layout);
+    popup.removeEventListener("mousedown", keepFocus);
     popup.removeEventListener("focusin", onFocusIn);
     popup.removeEventListener("focusout", onFocusOut);
     button?.remove();

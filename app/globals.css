@@ -207,14 +207,10 @@ input:-internal-autofill-selected {
   --iti-mobile-popup-margin: 16px;
 }
 .iti--fullscreen-popup .iti__country-selector {
-  max-height: 60%;
   overflow: hidden;
 }
 .iti--fullscreen-popup.iti--kb-open.iti--detached-country-selector {
   padding-bottom: 1px;
-}
-.iti--fullscreen-popup.iti--kb-open .iti__country-selector {
-  max-height: 100%;
 }
 .iti--fullscreen-popup .iti__search-input-wrapper {
   padding-right: 44px;
