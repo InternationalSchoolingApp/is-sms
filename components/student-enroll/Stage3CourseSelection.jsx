@@ -8,6 +8,7 @@ import {
   BookOpen,
   Calculator,
   Check,
+  CheckCircle2,
   ChevronDown,
   FlaskConical,
   Globe2,
@@ -48,6 +49,7 @@ import { getCourseAddCheck, hidesCourseCredits, validateCourseCredits } from "@/
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { saveWizardStudentFields } from "@/utils/wizardStorage";
 import { FaAngleRight, FaArrowDown, FaExchangeAlt, FaRegEyeSlash } from "react-icons/fa";
+import { TfiAngleDown, TfiAngleUp } from "react-icons/tfi";
 
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
 
@@ -430,6 +432,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   // Display-only filter over the "Choose Courses" panel (category names +
   // subject names) — never touches selection state or any request payload.
   const [search, setSearch] = useState("");
+  const [extraCoursesOpen, setExtraCoursesOpen] = useState(false);
   const resolverRef = useRef(null);
   // Legacy apCourseSelectionFlag: the AP warning shows once per selection session.
   const apAcknowledgedRef = useRef(false);
@@ -472,6 +475,16 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   const initialFailure = courseQuery.data && !isSuccessResponse(courseQuery.data) ? courseQuery.data : null;
   const showPaymentOption = paymentOption.data;
   const busy = update.isPending || recommended.isPending || proceed.isPending;
+  // Needed up here (not just further down with the rest of the derived course-selection
+  // state) so the "Course Selection" header title can react to it too.
+  const minCreditsReached = Boolean(data) && Number(data.minCourseLimit) > 0 && Number(data.totalCredit) >= Number(data.minCourseLimit);
+  // Only true in the exact scenario where the "Add Extra Courses" accordion itself shows up
+  // (requires the available-courses panel, same condition `showAvailable` computes below) —
+  // the "Course Selection Completed" title and its toast should only ever follow this, not
+  // `minCreditsReached` alone, since some flows (fixed courses, batch/provider 39, no courses
+  // left to add) never show that accordion at all.
+  const showExtraCoursesToggle =
+    minCreditsReached && Boolean(data) && !data.requiredFixedCourses && (data.availableCourses || []).some((course) => course.subjects?.length > 0);
 
   useEffect(() => {
     if (data?.selectedSubjects?.some((course) => course.courseTypeOriginal === "Advanced Placement")) {
@@ -484,6 +497,24 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     if (initialFailure.status === STATUS_SESSION_OUT) onSessionExpired?.();
     else if (initialFailure.statusCode === "FLAGGED") setFlaggedModal({ sessionName: initialFailure.message });
   }, [initialFailure, onSessionExpired]);
+
+  const minCreditsReachedRef = useRef(null);
+  useEffect(() => {
+    if (!data) return;
+    if (minCreditsReachedRef.current === null) {
+      minCreditsReachedRef.current = showExtraCoursesToggle;
+      return;
+    }
+    if (showExtraCoursesToggle && !minCreditsReachedRef.current) {
+      toast.success(
+        <div>
+          <p className="text-lg font-bold text-black">You are all set!</p>
+        </div>,
+        { duration: 4000 }
+      );
+    }
+    minCreditsReachedRef.current = showExtraCoursesToggle;
+  }, [data, showExtraCoursesToggle]);
 
   function ask(request) {
     return new Promise((resolve) => {
@@ -589,7 +620,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       controlType: "add",
       courseId: course.courseId,
     });
-    if (added) toast.success(`${subject.subjectName} added`);
+    if (added) toast.success(`${subject.subjectName} Added`);
     return added;
   }
 
@@ -600,7 +631,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       controlType: "remove",
       courseId: course.categoryId,
     });
-    if (removed) toast.success(`${course.courseName} removed`);
+    if (removed) toast.success(`${course.courseName} Removed`);
   }
 
   async function removeAll() {
@@ -613,11 +644,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     if (!confirmed) return;
     apAcknowledgedRef.current = false;
     const removed = await applyChange({ selectedSubjects: "", controlType: "remove" });
-    if (removed) toast.success("All courses removed");
+    if (removed) toast.success("All Courses Removed");
   }
 
   async function upgrade(course, target) {
-    debugger
     if (busy) return;
     if (target.warningMessage && showPaymentOption === "Y") {
       const variant = target.courseType === "ADV" ? "Advanced" : "Honors";
@@ -671,7 +701,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       if (/FT|REGULAR/.test(targetType)) {
         toast.success(`Switched back to ${subjectName}`);
       }else{
-        toast.success(`${subjectName}${variantSuffix} added`);
+        toast.success(`${subjectName}${variantSuffix} Added`);
       }
     }
   }
@@ -763,8 +793,9 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   const header = inReview ? null : (
     <>
       {/* Program name is now shown by EnrollmentWizardShell's own hero above this card. */}
-      <h2 className="text-center text-xl font-bold text-black md:text-2xl">
-        <span className="inline">Course Selection</span>
+      <h2 className={`flex items-center justify-center gap-2 text-center text-xl font-bold md:text-2xl ${showExtraCoursesToggle ? "text-[#3fa43c]" : "text-black"}`}>
+        {showExtraCoursesToggle && <CheckCircle2 className="h-5 w-5 shrink-0 md:h-6 md:w-6 stroke-3" aria-hidden="true" />}
+        <span className="inline">{showExtraCoursesToggle ? "Course Selection Completed" : "Course Selection"}</span>
       </h2>
     </>
   );
@@ -1266,12 +1297,16 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
         {showAvailable && (
           <section className="self-start overflow-hidden rounded-xl border border-slate-200 bg-white">
-            {/* Desktop/tablet header: title + search + recommended button inline. */}
-            <header className="hidden flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 md:flex">
+            <header
+              className={`hidden flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 md:flex ${minCreditsReached ? "cursor-pointer" : ""}`}
+              onClick={minCreditsReached ? () => setExtraCoursesOpen((open) => !open) : undefined}
+              role={minCreditsReached ? "button" : undefined}
+              aria-expanded={minCreditsReached ? extraCoursesOpen : undefined}
+            >
               <div>
                 <h2 className="text-sm font-bold text-black">
                   {data.totalCredit >= data.minCourseLimit
-                    ? "Select Extra Courses"
+                    ? "Add Extra Courses"
                     : "Select Your Courses Below"}
 
                   <span className="text-primary">{data.totalCredit >= data.minCourseLimit ? ``: ` · ${remainingCourses} More needed`}</span>
@@ -1281,29 +1316,57 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 )}
               </div>
               <div className="flex flex-1 items-center gap-3 md:flex-none">
-                <div className="relative flex-1 md:w-56 md:flex-none">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search for courses..."
-                    className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-primary"
-                  />
-                </div>
+                {(!minCreditsReached || extraCoursesOpen) && (
+                  <div className="relative flex-1 md:w-56 md:flex-none">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={search}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search for courses..."
+                      className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-primary"
+                    />
+                  </div>
+                )}
                 {/* {data.eligibleForRecommendedCourse && (
                   <Button type="button" size="sm" onClick={openRecommended} disabled={busy} className="shrink-0 rounded-md bg-primary hover:bg-primary/90">
                     <FaRegEyeSlash  className="h-4 w-4" /> View Our Recommendations
                   </Button>
                 )} */}
+                {minCreditsReached && (
+                  extraCoursesOpen ? (
+                    <TfiAngleUp className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                  ) : (
+                    <TfiAngleDown className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                  )
+                )}
               </div>
             </header>
             {/* Mobile header: title only — the recommended-courses button below
                 is full-width instead, and there's no search box (matches the
-                reference mobile design). */}
-            <div className="border-b border-slate-200 bg-primary px-4 py-2.25 md:hidden">
-              <h2 className="text-sm font-bold text-white text-center">{data.totalCredit >= data.minCourseLimit ? 'Select Extra Courses':'Select Your Courses Below'}</h2>
+                reference mobile design). Same accordion-toggle behavior as the
+                desktop header once the minimum is met. */}
+            <div
+              className={`flex items-center justify-center gap-2 border-b border-slate-200 bg-primary px-4 py-2.25 md:hidden ${minCreditsReached ? "cursor-pointer" : ""}`}
+              onClick={minCreditsReached ? () => setExtraCoursesOpen((open) => !open) : undefined}
+              role={minCreditsReached ? "button" : undefined}
+              aria-expanded={minCreditsReached ? extraCoursesOpen : undefined}
+            >
+              <h2 className="text-sm font-bold text-white text-center">{data.totalCredit >= data.minCourseLimit ? 'Add Extra Courses':'Select Your Courses Below'}</h2>
+              {minCreditsReached && (
+                extraCoursesOpen ? (
+                  <TfiAngleUp className="h-4 w-4 shrink-0 text-white" aria-hidden="true" />
+                ) : (
+                  <TfiAngleDown className="h-4 w-4 shrink-0 text-white" aria-hidden="true" />
+                )
+              )}
             </div>
+            {minCreditsReached && !extraCoursesOpen && (
+              <p className="px-4 py-1.5 text-center text-xs font-medium text-slate-500 md:text-left">(Optional)</p>
+            )}
+            {(!minCreditsReached || extraCoursesOpen) && (
+              <>
             {/* {data.eligibleForRecommendedCourse && (
               <div className="px-4 pt-4 md:hidden">
                 <Button
@@ -1448,6 +1511,8 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                     );
                   })}
                 </ul>
+              </>
+            )}
               </>
             )}
           </section>
