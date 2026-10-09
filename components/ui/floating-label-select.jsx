@@ -69,6 +69,8 @@ const SHEET_SEARCH_MIN_OPTIONS = 8;
 function MobileSelectSheet({ options, value, onSelect, onClose, searchable }) {
   const { top, height } = useVisualViewportBox();
   const [query, setQuery] = useState("");
+  // True while the search box has focus, i.e. the on-screen keyboard is up.
+  const [searchFocused, setSearchFocused] = useState(false);
   const searchRef = useRef(null);
   const showSearch = searchable || options.length >= SHEET_SEARCH_MIN_OPTIONS;
 
@@ -93,13 +95,13 @@ function MobileSelectSheet({ options, value, onSelect, onClose, searchable }) {
 
   return createPortal(
     <div
-      className="fixed inset-x-0 z-[100] bg-black/50 p-4"
+      className={`fixed inset-x-0 z-[100] bg-black/50 px-4 pt-4 ${searchFocused ? "pb-px" : "pb-4"}`}
       style={{ top, height: height ?? "100dvh" }}
       onClick={handleBackdrop}
       role="presentation"
     >
       <div
-        className="mx-auto flex max-h-[60%] max-w-md flex-col overflow-hidden rounded-lg bg-white shadow-xl"
+        className={`mx-auto flex ${searchFocused ? "max-h-full" : "max-h-[60%]"} max-w-md flex-col overflow-hidden rounded-lg bg-white shadow-xl`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -110,6 +112,8 @@ function MobileSelectSheet({ options, value, onSelect, onClose, searchable }) {
             <input
               ref={searchRef}
               autoFocus={searchable}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search..."
