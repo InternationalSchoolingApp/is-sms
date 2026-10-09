@@ -344,7 +344,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
               }
             required />}
             value={fields.contactNumber}
-            className="pb-1.5 w-full"
+            className="pb-[7px] w-full"
             // Only takes effect at mount (see useIntlTelInput's doc
             // comment) — restores the saved country flag when Stage 1
             // was prefilled from get-student-details (initialFields
