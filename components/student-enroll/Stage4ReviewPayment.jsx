@@ -12,7 +12,7 @@ import { MobileActionBar } from "@/components/student-enroll/wizard/MobileAction
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/student-enroll/ConfirmDialog";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
-import { CustomPlanTable, FeePaymentPlans, FeeSummaryCard } from "@/components/student-enroll/FeePaymentPlans";
+import { CustomPlanTable, FeePaymentPlans } from "@/components/student-enroll/FeePaymentPlans";
 import { InfoModal } from "@/components/student-enroll/InfoModal";
 import { ParentInlineEdit, StudentInlineEdit } from "@/components/student-enroll/ReviewInlineEdit";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
@@ -63,16 +63,18 @@ function ReviewDetailsSkeleton() {
   );
 }
 
-// Right column placeholder: two plan cards and the Fee Summary card.
+// Right column placeholder: two plan cards, the "due now" hero card, and the Fee Summary /
+// payment-schedule card below it.
 function PaymentOptionsSkeleton() {
   return (
     <div>
-      <h2 className="text-base font-semibold text-black md:text-lg">Select Payment Option</h2>
-      <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="h-[80px] animate-pulse rounded-xl bg-slate-200" />
-        <div className="h-[80px] animate-pulse rounded-xl bg-slate-200" />
+      <h2 className="text-base font-semibold text-black md:text-lg">Choose how to pay</h2>
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4">
+        <div className="h-[92px] animate-pulse rounded-2xl bg-slate-200" />
+        <div className="h-[92px] animate-pulse rounded-2xl bg-slate-200" />
       </div>
-      <div className="mt-5 h-[360px] animate-pulse rounded-xl bg-slate-200" />
+      <div className="mt-4 h-[150px] animate-pulse rounded-2xl bg-slate-200 md:mt-5" />
+      <div className="mt-4 h-[180px] animate-pulse rounded-xl bg-slate-200 md:mt-5" />
     </div>
   );
 }
@@ -223,11 +225,11 @@ function buildPlanOptions(fee, currencyCode) {
       key: fee.oneTimePayment.paymentKey || "annual",
       kind: "annual",
       mode: "annually",
-      label: discount
-        ? `Pay in Full — Save ${currencyCode || "USD"} ${String(fee.oneTimePayment.paymentOptionDiscountString ?? "").replace(/^[^\d]+/, "")}`
-        : `Pay ${fee.oneTimePayment.paymentMode}`,
+      label: "Pay in full",
       amount: fee.oneTimePayment.payableFeeString,
-      badge: discount ? "Best Value" : undefined,
+      savings: discount
+        ? `Save ${currencyCode || "USD"} ${String(fee.oneTimePayment.paymentOptionDiscountString ?? "").replace(/^[^\d]+/, "")}`
+        : undefined,
     });
   }
   const variants = buildMonthlyVariants(fee);
@@ -236,7 +238,7 @@ function buildPlanOptions(fee, currencyCode) {
       key: fee.monthlyFeeDetails?.paymentKey || "monthly",
       kind: "monthly",
       mode: variants[0].mode,
-      label: "Pay in Installments",
+      label: "Installments",
       amount: variants[0].amount,
       variants,
     });
@@ -894,14 +896,12 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         {showFee && (
           <div className="min-w-0">
             <hr className="mb-4 border-slate-200 md:hidden" />
-            <h2 className="text-center text-base font-semibold text-black md:text-left md:text-lg">
-              {data.customPaymentEnabled ? data.feeSetionTitile || "Fee Payment" : "Select Payment Option"}
+            <h2 className="text-base font-semibold text-black md:text-left md:text-lg">
+              {data.customPaymentEnabled ? data.feeSetionTitile || "Fee Payment" : "Choose how to pay"}
             </h2>
             <div className="mt-3">
               {data.customPaymentEnabled ? (
-                <FeeSummaryCard>
-                  <CustomPlanTable fee={fee} />
-                </FeeSummaryCard>
+                <CustomPlanTable fee={fee} />
               ) : (
                 <FeePaymentPlans
                   fee={fee}
