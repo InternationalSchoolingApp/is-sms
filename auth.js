@@ -114,7 +114,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const response = await exchangeSsoToken(credentials.schoolUUID, credentials.ssoToken);
         // Temporary diagnostic — this is the first live run of this path;
         // remove once the handoff is confirmed working end to end.
-        console.log("sso-token authorize: exchangeSsoToken response:", response);
+        // console.log("sso-token authorize: exchangeSsoToken response:", response);
         if (!response || response.status === "0") return null;
 
         return {

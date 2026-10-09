@@ -75,7 +75,6 @@ function buildStage1Request({ mode, fields, context }) {
     data.learningProgram = getLearningProgramBackendValue(context.learningProgram);
     data.enrollmentFor = context.enrollmentFor;
   }
-  console.log("data", data)
   return { authentication, data };
 }
 

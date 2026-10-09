@@ -9,7 +9,6 @@ import { candidateCookieDomains } from "../utils/cookieDomain.js";
 let allPassed = true;
 
 function assert(name, condition) {
-  console.log(condition ? "PASS" : "FAIL", name);
   if (!condition) allPassed = false;
 }
 
@@ -17,7 +16,8 @@ function assertCandidates(hostname, expected) {
   const actual = candidateCookieDomains(hostname);
   const ok = JSON.stringify(actual) === JSON.stringify(expected);
   assert(`${hostname || "(empty)"} -> [${expected.join(", ")}]`, ok);
-  if (!ok) console.log("     got:", JSON.stringify(actual));
+  if (!ok) 
+    // console.log("     got:", JSON.stringify(actual));
 }
 
 // 1. The three real enrollment environments.
@@ -61,5 +61,5 @@ assert(
   prod[prod.length - 1] === "enrollment.internationalschooling.org"
 );
 
-console.log(allPassed ? "\nAll checks passed." : "\nSome checks FAILED.");
+// console.log(allPassed ? "\nAll checks passed." : "\nSome checks FAILED.");
 process.exit(allPassed ? 0 : 1);

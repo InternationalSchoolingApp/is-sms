@@ -64,7 +64,7 @@ export function ParentDetailsStep() {
       initialFields={parentFields}
       onNext={(fields) => {
         saveWizardParentFields(context.schoolUUID, session.userId, fields);
-        console.log("Stage 2 complete, TODO Stage 3:", fields);
+        // console.log("Stage 2 complete, TODO Stage 3:", fields);
         router.push(stepPath(school, program, 3));
       }}
       onBack={() => router.push(stepPath(school, program, 1))}

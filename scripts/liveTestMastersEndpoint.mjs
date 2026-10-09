@@ -17,15 +17,10 @@ const request = {
 const url = `${BASE_URL}/${SCHOOL_UUID}/api/v1/common/masters`;
 const body = JSON.stringify({ payload: encodePayload(request) });
 
-console.log("POST", url);
-console.log("body:", body);
 
 const res = await fetch(url, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body,
 });
-
-console.log("HTTP status:", res.status);
 const text = await res.text();
-console.log("response (first 500 chars):", text.slice(0, 500));
