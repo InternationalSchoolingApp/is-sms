@@ -34,9 +34,13 @@ import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal
 import { ConfirmDialog } from "@/components/student-enroll/ConfirmDialog";
 import { RecommendedCoursesDialog } from "@/components/student-enroll/RecommendedCoursesDialog";
 import { ChangeGradeDialog } from "@/components/student-enroll/ChangeGradeDialog";
+import { AiSuggesterCard } from "@/components/student-enroll/ai-advisor/AiSuggesterCard";
+import { AiAdvisorDialog } from "@/components/student-enroll/ai-advisor/AiAdvisorDialog";
+import { useParams } from "next/navigation";
 import {
   STATUS_SESSION_OUT,
   STATUS_SUCCESS,
+  courseDetailsKey,
   useCourseDetails,
   useProceedToReview,
   useRecommendedCourses,
@@ -179,7 +183,7 @@ function getGradeBand(standardName, standardId) {
 }
 
 function summarizeSelection(selectedCourses, gradeBand) {
-  const counts = { Fixed: 0, Electives: 0, Honors: 0, Advance: 0, AP: 0 };
+  const counts = { Mandatory: 0, Electives: 0, Honors: 0, Advance: 0, AP: 0 };
   selectedCourses.forEach((course) => {
     if (course.courseMandatory === 1 || course.courseMandatory === "1") counts.Mandatory += 1;
 
@@ -422,6 +426,13 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   const countries = useCountryOptions(context);
   const changeGrade = useStudentDetailsSignup({ context, userId, isDualDiploma, countries: countries.data });
   const [changeGradeOpen, setChangeGradeOpen] = useState(false);
+  // AI Suggester: the dialog mounts only while open, so each visit starts fresh.
+  const { school, program } = useParams();
+  const [aiOpen, setAiOpen] = useState(false);
+  // Course ids the AI Suggester just added, for the slide-in highlight in "Your Selected Courses".
+  const [aiLanded, setAiLanded] = useState(() => new Set());
+  const aiLandedTimer = useRef(null);
+  useEffect(() => () => clearTimeout(aiLandedTimer.current), []);
 
   const [flaggedModal, setFlaggedModal] = useState(null);
   const [recommendedData, setRecommendedData] = useState(null);
@@ -480,10 +491,19 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   }, [data]);
 
   useEffect(() => {
-    if (!initialFailure) return;
-    if (initialFailure.status === STATUS_SESSION_OUT) onSessionExpired?.();
-    else if (initialFailure.statusCode === "FLAGGED") setFlaggedModal({ sessionName: initialFailure.message });
+    if (initialFailure?.status === STATUS_SESSION_OUT) onSessionExpired?.();
   }, [initialFailure, onSessionExpired]);
+
+  // Flagged-seats notice: from the first load (derived here, no setState in an effect) or from a
+  // later call (flaggedModal state, set in handleFailure). Closing it dismisses both.
+  const [initialFlaggedDismissed, setInitialFlaggedDismissed] = useState(false);
+  const shownFlagged =
+    flaggedModal ||
+    (initialFailure?.statusCode === "FLAGGED" && !initialFlaggedDismissed ? { sessionName: initialFailure.message } : null);
+  function closeFlagged() {
+    setFlaggedModal(null);
+    setInitialFlaggedDismissed(true);
+  }
 
   function ask(request) {
     return new Promise((resolve) => {
@@ -617,15 +637,18 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   }
 
   async function upgrade(course, target) {
-    debugger
     if (busy) return;
+    const targetType = String(target.courseType || "").toUpperCase();
+    const backToRegular = /^(FT|REGULAR)$/.test(targetType);
+    // The variant's own title (e.g. "Algebra I Honors", "AP Biology") when the backend sends it.
+    const variantLabel = /^AP$|ADVANCED PLACEMENT/.test(targetType) ? "AP" : /ADV/.test(targetType) ? "Advanced" : "Honors";
+    const targetName = target.courseName || `${stripVariantSuffix(course.courseName)}${backToRegular ? "" : ` ${variantLabel}`}`;
     if (target.warningMessage && showPaymentOption === "Y") {
-      const variant = target.courseType === "ADV" ? "Advanced" : "Honors";
       const fee = target.additionalFeeString || target.courseFeeString || target.subjectPriceString ||
         target.warningMessage.match(/\$[\d,.]+/)?.[0] || "an additional fee";
       const confirmed = await ask({
         title: target.buttonLabel || "Change course",
-        message: <p>{course.courseName} {variant} has an extra fee of {fee}. Would you like to switch to this course?</p>,
+        message: <p>{targetName} has an extra fee of {fee}. Would you like to switch to this course?</p>,
         confirmLabel: "Yes",
       });
       if (!confirmed) return;
@@ -645,34 +668,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       courseId: course.categoryId,
     });
     if (switched) {
-      // Names the actual resulting subject (e.g. "English I Honors added" / "English I added"),
-      // not a generic "Switch to Honors"/"Switch to Regular" — course.courseName is the subject's
-      // own display name (e.g. "English I"), and courseTypeOriginal === "Regular" means this
-      // upgrade is switching TO the alternate (Honors/Advanced) variant named by target.courseType.
-      const currentType = String(course.courseTypeOriginal || "").toUpperCase();
-      const targetType = String(target.courseType || "").toUpperCase();
-      const subjectName = stripVariantSuffix(course.courseName);
-      // const variantSuffix = currentType === "REGULAR" ? /ADV|ADVANCED/.test(targetType) ? " Advanced" : /HON|HONORS/.test(targetType) ? " Honors" : "" : "";
-      const variantSuffix = (() => {
-        if (currentType === "REGULAR") {
-          if (/ADV|ADVANCED/.test(targetType)) {
-            return " Advanced";
-          } else if (/HON|HONORS/.test(targetType)) {
-            return " Honors";
-          }
-        }else if(currentType == "HONORS" || currentType == "ADVANCED"){
-          if (/FT|REGULAR/.test(targetType)) {
-            return " Regular";
-          }
-        }else{
-          return "";
-        }
-      })();
-      if (/FT|REGULAR/.test(targetType)) {
-        toast.success(`Switched back to ${subjectName}`);
-      }else{
-        toast.success(`${subjectName}${variantSuffix} added`);
-      }
+      // Names the actual resulting subject ("English I Honors added" / "Switched back to English I")
+      // rather than a generic "Switch to Honors". The old suffix logic returned undefined for some
+      // pairs (e.g. Honors -> Advanced) and showed "English Iundefined added".
+      toast.success(backToRegular ? `Switched back to ${targetName}` : `${targetName} added`);
     }
   }
 
@@ -740,6 +739,16 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     }
   }
 
+  function handleAiApplied(courseDetails, landedSubjectIds) {
+    if (isSuccessResponse(courseDetails)) {
+      // Same cache entry Step 3 renders from; the backend already saved this selection.
+      queryClient.setQueryData(courseDetailsKey(userId, standardId), courseDetails);
+    }
+    setAiLanded(new Set((landedSubjectIds || []).map(String)));
+    clearTimeout(aiLandedTimer.current);
+    aiLandedTimer.current = setTimeout(() => setAiLanded(new Set()), 4000);
+  }
+
   async function handleNext() {
     if (busy) return;
     const creditError = validateCourseCredits(data);
@@ -772,7 +781,6 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   if (courseQuery.isLoading) {
     return <Stage3Skeleton header={header} />;
   }
-  console.log("data", data)
   if (!data) {
     return (
       <div>
@@ -791,10 +799,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           </Button>
         </div>
         <FlaggedSeatsModal
-          open={!!flaggedModal}
-          onOpenChange={(open) => !open && setFlaggedModal(null)}
+          open={!!shownFlagged}
+          onOpenChange={(open) => !open && closeFlagged()}
           schoolName={context.schoolName}
-          sessionName={flaggedModal?.sessionName}
+          sessionName={shownFlagged?.sessionName}
         />
       </div>
     );
@@ -959,6 +967,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           </div>
         )}
 
+      {data.aiAdvisor?.visible && !fixed && (
+        <AiSuggesterCard onOpen={() => setAiOpen(true)} disabled={busy} />
+      )}
+
       <div className={`mt-2 grid gap-6 ${showAvailable ? "lg:grid-cols-[1fr_1.6fr]" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
         <section className="self-start overflow-hidden rounded-xl border border-slate-200 bg-white">
           <header className={`items-center gap-3 border-b border-slate-200 px-4 py-3 w-full ${(showCreditSummary || showCourseCountSummary) ? "hidden md:flex" : "flex md:justify-start justify-center"}`}>
@@ -1094,7 +1106,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 {selectedCourses.map((course, index) => {
                   const singleUpgradeTarget = course.upgradeCourses?.length === 1 ? course.upgradeCourses[0] : null;
                   return (
-                    <li key={course.courseId} className="flex items-start justify-between gap-3 px-4 py-3">
+                    <li key={course.courseId} className={`flex items-start justify-between gap-3 px-4 py-3 ${aiLanded.has(String(course.courseId)) ? "ai-land" : ""}`}>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#e6f3ff] text-xs font-semibold text-primary">
@@ -1103,6 +1115,9 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                           <p className="text-sm font-medium text-black course_name">
                             {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}
                           </p>
+                          {aiLanded.has(String(course.courseId)) && (
+                            <span className="ai-rise rounded bg-[#0f8a74] px-1.5 py-0.5 text-[10px] font-semibold text-white">AI pick</span>
+                          )}
                           {singleUpgradeTarget ? (
                             <VariantToggle course={course} target={singleUpgradeTarget} onToggle={upgrade} disabled={busy} />
                           ) : (
@@ -1151,7 +1166,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 const CourseIcon = categoryIcon(course.courseName);
                 const singleUpgradeTarget = course.upgradeCourses?.length === 1 ? course.upgradeCourses[0] : null;
                 return (
-                  <li key={course.courseId} className={`flex flex-col ${!fixed && course.courseMandatory === 1 && !batchOrProvider39 ? 'gap-3' : ''} rounded-md border border-slate-100 bg-blue-50 px-3 py-1.5 shadow-sm sm:flex-row sm:flex-wrap sm:items-center md:rounded-none md:border-0 md:bg-transparent md:p-0 md:px-4 md:py-3 md:shadow-none`}>
+                  <li key={course.courseId} className={`flex flex-col ${aiLanded.has(String(course.courseId)) ? "ai-land" : ""} ${!fixed && course.courseMandatory === 1 && !batchOrProvider39 ? 'gap-3' : ''} rounded-md border border-slate-100 bg-blue-50 px-3 py-1.5 shadow-sm sm:flex-row sm:flex-wrap sm:items-center md:rounded-none md:border-0 md:bg-transparent md:p-0 md:px-4 md:py-3 md:shadow-none`}>
                     <div className="flex min-w-0 flex-1 items-center gap-3">
                       <span className="flex h-5 w-5 shrink-0 items-center text-sm justify-center rounded bg-[#e6f3ff] text-primary">
                         {index + 1}
@@ -1159,7 +1174,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
                       <div className="min-w-0 inline-flex flex-1">
                         <div className="text-sm inline-flex font-medium text-black items-center">
-                          <span> {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}</span> 
+                          <span> {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}</span>
+                          {aiLanded.has(String(course.courseId)) && (
+                            <span className="ai-rise ml-2 rounded bg-[#0f8a74] px-1.5 py-0.5 text-[10px] font-semibold text-white">AI pick</span>
+                          )}
 
                           <div className="flex shrink-0 ml-2 flex-1 items-center mr-auto gap-2">
                             {singleUpgradeTarget ? (
@@ -1506,6 +1524,18 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         busy={changeGrade.isPending || update.isPending}
         onSave={handleGradeChange}
       />
+      {aiOpen && (
+        <AiAdvisorDialog
+          open
+          onClose={() => setAiOpen(false)}
+          context={context}
+          school={school}
+          program={program}
+          gradeName={data.standardName}
+          onApplied={handleAiApplied}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
       {recommendedData && (
         <RecommendedCoursesDialog
           data={recommendedData}
@@ -1516,10 +1546,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         />
       )}
       <FlaggedSeatsModal
-        open={!!flaggedModal}
-        onOpenChange={(open) => !open && setFlaggedModal(null)}
+        open={!!shownFlagged}
+        onOpenChange={(open) => !open && closeFlagged()}
         schoolName={context.schoolName}
-        sessionName={flaggedModal?.sessionName}
+        sessionName={shownFlagged?.sessionName}
       />
     </div>
     </>

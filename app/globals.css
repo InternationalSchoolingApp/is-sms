@@ -253,3 +253,38 @@ input:-internal-autofill-selected {
     animation: none;
   }
 }
+
+/* AI Course Advisor transitions (Step 3). Every element is fully visible at
+   rest; these only animate it in. All switch off under prefers-reduced-motion. */
+@keyframes ai-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ai-land {
+  from { opacity: 0.2; transform: translateX(24px); background-color: #e2f5f0; }
+  70% { background-color: #e2f5f0; }
+  to { opacity: 1; transform: none; background-color: transparent; }
+}
+@keyframes ai-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@keyframes ai-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes ai-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(15 138 116 / 0); }
+  50% { box-shadow: 0 0 0 5px rgb(15 138 116 / 0.18); }
+}
+.ai-rise { animation: ai-rise 450ms ease-out both; }
+.ai-land { animation: ai-land 1600ms ease-out both; }
+.ai-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 0%, #e6f3ff 50%, #f1f5f9 100%);
+  background-size: 200% 100%;
+  animation: ai-shimmer 1.1s linear infinite;
+}
+.ai-spin { animation: ai-spin 700ms linear infinite; }
+.ai-pulse { animation: ai-pulse 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .ai-rise, .ai-land, .ai-shimmer, .ai-spin, .ai-pulse { animation: none; }
+}
