@@ -29,13 +29,20 @@ export function FloatingLabelSelect({ searchable = false, ...props }) {
   return searchable ? <SearchableFloatingLabelSelect {...props} /> : <PlainFloatingLabelSelect {...props} />;
 }
 
-// Touch devices get the same popup the phone-number country picker uses: a dimmed backdrop with a white panel
+// Mobile screens get the same popup the phone-number country picker uses: a dimmed backdrop with a white panel
 // (search on top, list below) sized to the *visible* part of the screen. An anchored dropdown cannot work with the
 // on-screen keyboard, which on iOS does not shrink the layout viewport and so covers the list / the last field.
+// Phone-sized screens only (below md, 768px): the popup is for mobile; tablets / desktops keep the dropdown.
+const MOBILE_QUERY = "(max-width: 767px)";
+
 function useIsTouch() {
   return useSyncExternalStore(
-    () => () => {},
-    () => Boolean(window.matchMedia?.("(pointer: coarse)").matches),
+    (notify) => {
+      const mq = window.matchMedia(MOBILE_QUERY);
+      mq.addEventListener("change", notify);
+      return () => mq.removeEventListener("change", notify);
+    },
+    () => window.matchMedia(MOBILE_QUERY).matches,
     () => false
   );
 }
@@ -62,6 +69,8 @@ const SHEET_SEARCH_MIN_OPTIONS = 8;
 function MobileSelectSheet({ options, value, onSelect, onClose, searchable }) {
   const { top, height } = useVisualViewportBox();
   const [query, setQuery] = useState("");
+  // True while the search box has focus, i.e. the on-screen keyboard is up.
+  const [searchFocused, setSearchFocused] = useState(false);
   const searchRef = useRef(null);
   const showSearch = searchable || options.length >= SHEET_SEARCH_MIN_OPTIONS;
 
@@ -86,13 +95,13 @@ function MobileSelectSheet({ options, value, onSelect, onClose, searchable }) {
 
   return createPortal(
     <div
-      className="fixed inset-x-0 z-[100] bg-black/50 p-4"
+      className={`fixed inset-x-0 z-[100] bg-black/50 px-4 pt-4 ${searchFocused ? "pb-px" : "pb-4"}`}
       style={{ top, height: height ?? "100dvh" }}
       onClick={handleBackdrop}
       role="presentation"
     >
       <div
-        className="mx-auto flex max-h-full max-w-md flex-col overflow-hidden rounded-lg bg-white shadow-xl"
+        className={`mx-auto flex ${searchFocused ? "max-h-full" : "max-h-[60%]"} max-w-md flex-col overflow-hidden rounded-lg bg-white shadow-xl`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -103,6 +112,8 @@ function MobileSelectSheet({ options, value, onSelect, onClose, searchable }) {
             <input
               ref={searchRef}
               autoFocus={searchable}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search..."
