@@ -8,6 +8,7 @@ import { MaintenanceBanner } from "@/components/common/MaintenanceBanner";
 import { PageTitle } from "@/components/common/PageTitle";
 import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import CampaignCookieInitializer from "@/components/CampaignCookieInitializer";
+import ConsentBanner from "@/components/ConsentBanner";
 
 
 const openSans = Open_Sans({
@@ -37,6 +38,7 @@ export default function RootLayout({ children }) {
             <PageTitle />
             <MaintenanceBanner />
             <CampaignCookieInitializer/>
+            <ConsentBanner />
             {children}
           </QueryProvider>
           <GlobalLoader />
