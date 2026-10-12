@@ -263,6 +263,7 @@ function discountRow(youSave, label) {
   return { label, amount: `- ${youSave.totalEntityFeeString}`, tone: "discount" };
 }
 
+
 // getAnnualPaymentTable() — one-time "Pay in Full" plan.
 function AnnualSummary({ fee, standardId, isFlexOrDual }) {
   const rows = [baseRow({ fee, standardId, isFlexOrDual }), ...buildExtraRows(fee)];
