@@ -1,4 +1,70 @@
 /**
+ * UAT-only "pick a backend" override — lets testers point this same
+ * deployment at any of several UAT Spring Boot instances (different
+ * IP:port combos) without a separate build/deploy per backend. Gated by
+ * NEXT_PUBLIC_DEPLOYMENT_MODE being DEV or UAT — never deployed as PROD, so
+ * it's dead code (and inert even if a stray cookie exists) on production.
+ * See components/common/BackendSwitcher.jsx for the picker UI.
+ *
+ * Stored as a plain (non-httpOnly) cookie, not localStorage: the login flow
+ * (services/authApi.js's login()) must hit the SAME backend that served the
+ * captcha image, and login() runs server-side (next-auth authorize()), so
+ * the choice has to travel to the server. A cookie read via next/headers
+ * does that; localStorage never leaves the browser. This cookie is only
+ * ever read by OUR Next.js server to pick which origin string to call — it
+ * is never forwarded to the backend itself, unlike the real session cookie.
+ */
+const BACKEND_OVERRIDE_COOKIE = "uat_backend_override";
+
+export function isBackendOverrideAllowed() {
+  const mode = String(process.env.NEXT_PUBLIC_DEPLOYMENT_MODE || "").trim().toUpperCase();
+  return mode === "DEV" || mode === "UAT";
+}
+
+export function getBackendOverrideCookieName() {
+  return BACKEND_OVERRIDE_COOKIE;
+}
+
+/** Client-only read (document.cookie). Returns "" when absent/not allowed/on the server. */
+export function getClientBackendOverride() {
+  if (!isBackendOverrideAllowed() || typeof document === "undefined") return "";
+  const match = document.cookie.match(new RegExp(`(?:^|; )${BACKEND_OVERRIDE_COOKIE}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : "";
+}
+
+/** Client-only write/clear — used by the BackendSwitcher picker. */
+export function setClientBackendOverride(url) {
+  if (typeof document === "undefined") return;
+  const trimmed = (url || "").trim().replace(/\/+$/, "");
+  if (!trimmed) {
+    document.cookie = `${BACKEND_OVERRIDE_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+    return;
+  }
+  document.cookie = `${BACKEND_OVERRIDE_COOKIE}=${encodeURIComponent(trimmed)}; Path=/; Max-Age=2592000; SameSite=Lax`;
+}
+
+/**
+ * The REAL backend origin — never "" — for full-page navigations to a page
+ * the Java app itself serves (its native login page, the legacy enrollment
+ * continuation page, logout, ...). Used by loginPageUrl()/
+ * legacyEnrollment*Url() below and directly by utils/logout.js.
+ *
+ * Deliberately NOT resolveBackendOrigin(): that one returns "" under
+ * NEXT_PUBLIC_USE_LOCAL_PROXY so same-origin fetch()/XHR calls get forwarded
+ * by next.config.mjs's rewrites() — exactly wrong for a navigation, which
+ * must land on the Java app's own origin directly, not a relative path that
+ * resolves against the Next.js app's own origin.
+ *
+ * Sync (not resolveServerBackendOrigin()'s async cookie read) since this is
+ * called from both Server Components and client components; it only sees
+ * the override when called from the client (document is defined) — a
+ * Server Component call falls back to the configured default backend.
+ */
+export function resolveBackendNavigationOrigin() {
+  return getClientBackendOverride() || process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
+}
+
+/**
  * Resolves the prefix used by browser-facing backend requests.
  *
  * With the local proxy enabled, requests use the app origin directly (for
@@ -6,12 +72,15 @@
  * match a Next.js route to the backend while keeping session cookies same-origin.
  */
 export function resolveBackendOrigin() {
+  const override = getClientBackendOverride();
+  if (override) return override;
   const useLocalProxy = process.env.NEXT_PUBLIC_USE_LOCAL_PROXY === "true";
   if (useLocalProxy) return "";
   return process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
 }
 
 export function hasBackendOrigin() {
+  if (getClientBackendOverride()) return true;
   return process.env.NEXT_PUBLIC_USE_LOCAL_PROXY === "true" || Boolean(process.env.NEXT_PUBLIC_BACKEND_BASE_URL);
 }
 
@@ -24,7 +93,12 @@ export function hasBackendOrigin() {
  * the existing NEXT_PUBLIC_BACKEND_BASE_URL/NEXTAUTH_URL logic so nothing
  * breaks for deployments that haven't set BACKEND_BASE_URL yet.
  */
-export function resolveServerBackendOrigin() {
+export async function resolveServerBackendOrigin() {
+  if (isBackendOverrideAllowed()) {
+    const { cookies } = await import("next/headers");
+    const override = (await cookies()).get(BACKEND_OVERRIDE_COOKIE)?.value;
+    if (override) return override;
+  }
   if (process.env.BACKEND_BASE_URL) return process.env.BACKEND_BASE_URL;
   const useLocalProxy = process.env.NEXT_PUBLIC_USE_LOCAL_PROXY === "true";
   if (!useLocalProxy) return process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
@@ -37,7 +111,7 @@ export function resolveServerBackendOrigin() {
  * not the "/backend" dev proxy. Safe for both server and client callers.
  */
 export function loginPageUrl(schoolUUID) {
-  const backend = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
+  const backend = resolveBackendNavigationOrigin();
   return schoolUUID && backend ? `${backend}/${schoolUUID}/common/login` : "/";
 }
 
@@ -50,7 +124,7 @@ export function loginPageUrl(schoolUUID) {
  * "" when anything needed to build it is missing, so callers can skip the redirect.
  */
 export function legacyEnrollmentProcessUrl(schoolUUID, uniqueId) {
-  const backend = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
+  const backend = resolveBackendNavigationOrigin();
   if (!backend || !schoolUUID || !uniqueId) return "";
   return `${backend}/${schoolUUID}/student/enrollment/process/${encodeURIComponent(uniqueId)}`;
 }
@@ -61,7 +135,7 @@ export function legacyEnrollmentProcessUrl(schoolUUID, uniqueId) {
  * payload, referralCode, ras, and v directly from the URL.
  */
 export function legacyEnrollmentSignupUrl(schoolUUID, program, query = "") {
-  const backend = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
+  const backend = resolveBackendNavigationOrigin();
   if (!backend || !schoolUUID || !program) return "";
   const base = `${backend.replace(/\/+$/, "")}/${encodeURIComponent(schoolUUID)}/student/enrollment/${encodeURIComponent(program)}`;
   return query ? `${base}?${query}` : base;

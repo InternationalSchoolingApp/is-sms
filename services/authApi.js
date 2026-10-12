@@ -26,7 +26,7 @@ import { getHash, getSystemTimezone } from "@/utils/common";
  *   schoolName?: string, message?: string}|null>}
  */
 export async function exchangeSsoToken(schoolUUID, ssoToken) {
-  const baseUrl = resolveServerBackendOrigin();
+  const baseUrl = await resolveServerBackendOrigin();
   if (!baseUrl || !schoolUUID || !ssoToken) {
     console.error("exchangeSsoToken: missing baseUrl, schoolUUID or ssoToken", {
       baseUrl,
@@ -100,7 +100,7 @@ export async function login(
   serverOptions = {}
 ) {
   // console.log("LOGIN FUNCTION CALLED");
-  const baseUrl = resolveServerBackendOrigin();
+  const baseUrl = await resolveServerBackendOrigin();
   if (!baseUrl || !schoolUUID || !schoolNumericId) {
     throw new Error("NEXT_PUBLIC_BACKEND_BASE_URL, schoolUUID and schoolNumericId are all required");
   }

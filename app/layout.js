@@ -6,6 +6,7 @@ import { QueryProvider } from "@/components/providers/QueryProvider";
 import { AuthSessionProvider } from "@/components/providers/AuthSessionProvider";
 import { GlobalLoader } from "@/components/common/GlobalLoader";
 import { MaintenanceBanner } from "@/components/common/MaintenanceBanner";
+import { BackendSwitcher } from "@/components/common/BackendSwitcher";
 import { PageTitle } from "@/components/common/PageTitle";
 import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import CampaignCookieInitializer from "@/components/CampaignCookieInitializer";
@@ -44,6 +45,7 @@ export default function RootLayout({ children }) {
           <GlobalLoader />
           <AppToaster />
         </AuthSessionProvider>
+        <BackendSwitcher />
       </body>
     </html>
   );

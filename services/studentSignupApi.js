@@ -2,8 +2,8 @@
 
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
-function backendUrl(schoolUUID, path) {
-  const baseUrl = resolveServerBackendOrigin();
+async function backendUrl(schoolUUID, path) {
+  const baseUrl = await resolveServerBackendOrigin();
   if (!hasBackendOrigin() || !schoolUUID) {
     throw new Error(
       "A backend origin (BACKEND_BASE_URL/NEXT_PUBLIC_BACKEND_BASE_URL) and a schoolUUID are required — schoolUUID must come from the URL, not an env var"
@@ -31,7 +31,7 @@ async function parseJsonResponse(response) {
 // hooks/useEnrollmentContext.js, the context hook every Stage1-4 step page
 // shares, not just StudentDetailsStep.jsx.
 export async function getEnrollmentProcess(schoolUUID, uniqueId) {
-  const response = await fetch(backendUrl(schoolUUID, `api/v1/student/enrollment/process/${encodeURIComponent(uniqueId)}`));
+  const response = await fetch(await backendUrl(schoolUUID, `api/v1/student/enrollment/process/${encodeURIComponent(uniqueId)}`));
   return parseJsonResponse(response);
 }
 
@@ -42,7 +42,7 @@ export async function getEnrollmentProcess(schoolUUID, uniqueId) {
 // Public/pre-auth like the rest of this file (login.js calls it logged out too).
 export async function getSettingValue(schoolUUID, metaType, metaKey) {
   const query = `metaType=${encodeURIComponent(metaType)}&metaKey=${encodeURIComponent(metaKey)}`;
-  const response = await fetch(backendUrl(schoolUUID, `api/v1/get-setting?${query}`));
+  const response = await fetch(await backendUrl(schoolUUID, `api/v1/get-setting?${query}`));
   const body = await parseJsonResponse(response);
   return body?.data?.metaValue ?? "";
 }
@@ -64,7 +64,7 @@ export async function isEnrollmentViaNextjs(schoolUUID) {
 // is-rest-api. Called directly from AccountCreationForm.jsx and
 // hooks/useEnrollmentContext.js.
 export async function getPublicSchoolInfo(schoolUUID) {
-  const response = await fetch(backendUrl(schoolUUID, "api/v1/student/enrollment/public-info"));
+  const response = await fetch(await backendUrl(schoolUUID, "api/v1/student/enrollment/public-info"));
   return parseJsonResponse(response);
 }
 
@@ -80,7 +80,7 @@ export async function getPublicSchoolInfo(schoolUUID) {
  * AccountCreationForm.jsx.
  */
 export async function getEnrollmentSignupInfo(schoolUUID, learningProgram, params) {
-  const baseUrl = resolveServerBackendOrigin();
+  const baseUrl = await resolveServerBackendOrigin();
   if (!hasBackendOrigin() || !schoolUUID) {
     throw new Error("A backend origin and a schoolUUID are required for enrollment setup");
   }

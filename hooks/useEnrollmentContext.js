@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { getEnrollmentProcess, getPublicSchoolInfo, isEnrollmentViaNextjs } from "@/services/studentSignupApi";
 import { legacyEnrollmentProcessUrl } from "@/utils/backendOrigin";
+import { trackRequest } from "@/utils/loaderStore";
 import { expireSession } from "@/utils/logout";
 import { STATUS_SESSION_OUT, STATUS_SUCCESS, useSignupStageStatusPoll } from "@/hooks/useStudentReview";
 import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
@@ -101,7 +102,7 @@ function useResolveEnrollmentContext() {
   useEffect(() => {
     if (!session?.schoolNumericId) return;
     let cancelled = false;
-    getSchoolSettingsLinks(session.schoolNumericId)
+    trackRequest(() => getSchoolSettingsLinks(session.schoolNumericId))
       .then((links) => {
         if (!cancelled && links?.logoUrl) setLogoUrl(links.logoUrl);
       })

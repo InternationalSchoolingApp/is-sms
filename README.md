@@ -24,6 +24,14 @@ location ~ ^/[^/]+/student/[^/]+/[^/]+ {
 
 Once that's in place, set `NEXT_PUBLIC_BACKEND_BASE_URL` to the direct backend origin for local development, or to the same origin when a reverse proxy routes backend paths there.
 
+## UAT backend switcher
+
+UAT previously had to be configured with exactly one backend URL at a time (`NEXT_PUBLIC_BACKEND_BASE_URL`), so testing against a different UAT instance meant a redeploy. A floating "UAT backend" picker (bottom-right of every page) lets each tester point their own browser at any backend origin instead — pick one from the preset list in `constant/UatBackendUrls.js` or type a custom `http://ip:port`. The choice is stored per-browser (a cookie, so it also reaches server-side calls) and persists until reset.
+
+The picker only renders when `NEXT_PUBLIC_DEPLOYMENT_MODE` is `DEV` or `UAT` — it's always off on `PROD`, where the cookie is ignored even if somehow present.
+
+A browser calling a UAT backend directly runs into that backend's own CORS policy (it never put this app's origin in its allow-list), so every backend-touching call in this app — including ip-location (`services/ipLocationApi.js`), school settings links (`utils/schoolSettings.js`) and the payment-response/init polling (`services/paymentResponseApi.js`, `services/paymentInitApi.js`) — is a Server Action: the browser calls our own Next.js server, which makes the real cross-origin request itself. Server-to-server calls never go through CORS, so the override Just Works the same way the rest of the app's backend calls already do. The one exception is ip-location, which needs the real site visitor's IP (not this server's) — that Server Action forwards the incoming request's `X-Forwarded-For` header through to the backend. Full-page navigations (login links, logout) still go straight to the overridden origin via `resolveBackendOrigin()`, since navigation isn't subject to CORS at all.
+
 **Route change**: the student-signup account page moved off the `/student-enroll` prefix onto the exact same URL pattern the JSP app itself serves — `/{schoolId}/student/{enrollmentFor}/{learningProgram}` (`app/[schoolId]/student/[enrollmentFor]/[learningProgram]/page.jsx`), matching `ClientSignupStudentController#signupStudent` in is-rest-api. This means Next.js and the JSP app now claim the **same root-level path space**; whoever owns the real reverse proxy needs to route that specific pattern to the Next.js origin instead of (or ahead of) the JSP backend for it to actually take over those URLs — this repo cannot configure that itself, same as the `/backend` proxy above.
 
 ## Getting Started

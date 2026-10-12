@@ -49,7 +49,7 @@ import { useGradeOptions, useCountryOptions, useStudentDetailsPrefill, useStuden
 import { getCourseAddCheck, hidesCourseCredits, validateCourseCredits } from "@/utils/studentSignupValidation";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { saveWizardStudentFields } from "@/utils/wizardStorage";
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
+import { legacyEnrollmentProcessUrl } from "@/utils/backendOrigin";
 import { FaAngleRight, FaArrowDown, FaExchangeAlt, FaRegEyeSlash } from "react-icons/fa";
 import { TfiAngleDown, TfiAngleUp } from "react-icons/tfi";
 
@@ -512,8 +512,8 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       return;
     }
     if (initialFailure.statusCode === STATUS_ELIGIBLE_CUSTOM_PLAN) {
-      const baseUrl = resolveBackendOrigin();
-      if (baseUrl) window.location.href = `${baseUrl}/${context.schoolUUID}/student/enrollment/process/${userId}`;
+      const url = legacyEnrollmentProcessUrl(context?.schoolUUID, userId);
+      if (url) window.location.href = url;
     }
   }, [initialFailure, onSessionExpired, context?.schoolUUID, userId]);
 
