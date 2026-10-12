@@ -913,6 +913,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   // sheet must stay closed until a category is explicitly tapped — openCourseId
   // is null/-1 in that closed state, not defaulted to the first category.
   const mobileActiveCourse = openCourseId && openCourseId !== -1 ? visibleCourses.find((course) => course.courseId === openCourseId) || null : null;
+  console.log("Course Selection", data)
   return (
     <>
       {/* Mobile-only: the grade chip sits outside/above the white card per
@@ -1172,7 +1173,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                             {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}
                           </p>
                           {aiLanded.has(String(course.courseId)) && (
-                            <span className="ai-rise rounded bg-[#0f8a74] px-1.5 py-0.5 text-[10px] font-semibold text-white">AI pick</span>
+                            <span className="ai-rise rounded bg-[#3fa43c] px-1.5 py-0.5 text-[10px] font-semibold text-white">AI pick</span>
                           )}
                           {singleUpgradeTarget ? (
                             <VariantToggle course={course} target={singleUpgradeTarget} onToggle={upgrade} disabled={busy} />
@@ -1232,7 +1233,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                         <div className="text-sm inline-flex font-medium text-black items-center">
                           <span> {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}</span>
                           {aiLanded.has(String(course.courseId)) && (
-                            <span className="ai-rise ml-2 rounded bg-[#0f8a74] px-1.5 py-0.5 text-[10px] font-semibold text-white">AI pick</span>
+                            <span className="ai-rise ml-2 rounded bg-[#3fa43c] px-1.5 py-0.5 text-[10px] font-semibold text-white">AI pick</span>
                           )}
 
                           <div className="flex shrink-0 ml-2 flex-1 items-center mr-auto gap-2">
