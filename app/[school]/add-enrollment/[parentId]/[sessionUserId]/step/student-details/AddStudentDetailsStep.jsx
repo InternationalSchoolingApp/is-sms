@@ -22,7 +22,7 @@ import { addEnrollmentStepPath } from "@/utils/addEnrollmentSteps";
 export function AddStudentDetailsStep() {
   const router = useRouter();
   const { school, parentId, sessionUserId } = useParams();
-  const { context, ready, childUserId, childUniqueId } = useAddEnrollmentContext();
+  const { session, context, ready, childUserId, childUniqueId } = useAddEnrollmentContext();
   const { redirecting } = useAddWizardResume({ currentStep: 1, context, childUniqueId, ready });
   const prefill = useAddStudentDetailsPrefill({ context, userId: childUserId });
   const queryClient = useQueryClient();
@@ -46,9 +46,17 @@ export function AddStudentDetailsStep() {
       userId={childUserId}
       uniqueId={childUniqueId}
       initialFields={initialFields}
-      onNext={(fields) => {
-        saveAddEnrollmentStudentFields(context.schoolUUID, childUserId, fields);
-        queryClient.setQueryData(["add-enrollment-student-details-prefill", childUserId], (old) => ({ ...(old || {}), ...fields }));
+      onNext={(fields, saveResponse) => {
+        const nextChildUserId = saveResponse?.data?.userId ?? saveResponse?.userId ?? childUserId;
+        const nextChildUniqueId = saveResponse?.data?.uniqueId ?? saveResponse?.uniqueId ?? childUniqueId;
+        if (nextChildUserId !== childUserId || nextChildUniqueId !== childUniqueId) {
+          queryClient.setQueryData(["add-enrollment-child", context.schoolUUID, parentId, session?.uniqueId], (old) => {
+            const prevData = old?.data || {};
+            return { ...(old || {}), data: { ...prevData, userId: nextChildUserId, uniqueId: nextChildUniqueId, signupPage: 2 } };
+          });
+        }
+        saveAddEnrollmentStudentFields(context.schoolUUID, nextChildUserId, fields);
+        queryClient.setQueryData(["add-enrollment-student-details-prefill", nextChildUserId], (old) => ({ ...(old || {}), ...fields }));
         router.push(addEnrollmentStepPath(school, parentId, sessionUserId, 2));
       }}
     />

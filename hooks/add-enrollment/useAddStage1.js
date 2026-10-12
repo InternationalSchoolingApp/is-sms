@@ -126,7 +126,8 @@ function resolveNationalityName(countries, nationalityId) {
  * the controller doesn't have to coerce it.
  */
 function buildAddSaveRequest({ fields, context, userId, uniqueId, countries }) {
-  return {
+  const nationalityName = resolveNationalityName(countries, fields.nationality);
+  const payload = {
     parentId: context.parentId,
     userId,
     uniqueId,
@@ -136,8 +137,9 @@ function buildAddSaveRequest({ fields, context, userId, uniqueId, countries }) {
     gender: fields.gender,
     standardId: fields.standardId ? Number(fields.standardId) : null,
     learningProgram: getLearningProgramBackendValue(fields.learningProgram),
-    nationality: resolveNationalityName(countries, fields.nationality),
+    nationality: nationalityName,
   };
+  return payload;
 }
 
 export function useAddStudentDetailsSignup({ context, userId, uniqueId, countries }) {

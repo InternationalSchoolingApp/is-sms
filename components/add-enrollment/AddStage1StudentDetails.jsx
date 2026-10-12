@@ -201,7 +201,7 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, initialFiel
         return;
       }
 
-      onNext?.(fields);
+      onNext?.(fields, response);
     } catch (err) {
       console.error("AddStage1StudentDetails submit failed:", err);
       setErrors((prev) => ({ ...prev, form: "Something went wrong. Please check your connection and try again." }));
