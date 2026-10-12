@@ -17,7 +17,6 @@ import { addEnrollmentStepPath } from "@/utils/addEnrollmentSteps";
  * but prefill/save use the CHILD's identity (childUserId/childUniqueId from
  * enrollAnotherChild's response) instead of the logged-in session's own
  * userId/uniqueId — the caller (parent or sibling student) is never the
- * student being enrolled here.
  */
 export function AddStudentDetailsStep() {
   const router = useRouter();
