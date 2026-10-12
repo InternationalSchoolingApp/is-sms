@@ -8,17 +8,18 @@ import { FaNotesMedical } from "react-icons/fa6";
 import { IoMdPeople } from "react-icons/io";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { Button } from "@/components/ui/button";
-import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
+import { MobileActionBar } from "@/components/add-enrollment/MobileActionBar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ConfirmDialog } from "@/components/student-enroll/ConfirmDialog";
-import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
-import { CustomPlanTable, FeePaymentPlans, FeeSummaryCard } from "@/components/student-enroll/FeePaymentPlans";
-import { InfoModal } from "@/components/student-enroll/InfoModal";
-import { ParentInlineEdit, StudentInlineEdit } from "@/components/student-enroll/ReviewInlineEdit";
-import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
+import { ConfirmDialog } from "@/components/add-enrollment/ConfirmDialog";
+import { FlaggedSeatsModal } from "@/components/add-enrollment/FlaggedSeatsModal";
+import { CustomPlanTable, FeePaymentPlans } from "@/components/add-enrollment/FeePaymentPlans";
+import { InfoModal } from "@/components/add-enrollment/InfoModal";
+import { ParentInlineEdit, StudentInlineEdit } from "@/components/add-enrollment/ReviewInlineEdit";
+import { PaymentGatewayPickerModal } from "@/components/add-enrollment/PaymentGatewayPickerModal";
 import { getPaymentPaidStatus } from "@/services/studentSignupBackendApi";
 import { useShowPaymentOption } from "@/hooks/useCourseSelection";
-import { saveWizardParentFields, saveWizardStudentFields } from "@/utils/wizardStorage";
+import { saveWizardParentFields } from "@/utils/wizardStorage";
+import { saveAddEnrollmentStudentFields } from "@/utils/addEnrollmentStorage";
 import { getOtherRelation, getPrimaryParentLabels, loadOtherParentCache } from "@/utils/parentRelation";
 import {
   STATUS_ELIGIBLE_CUSTOM_PLAN,
@@ -48,7 +49,7 @@ import {
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import { isDummyStudentMode, showDummyStripeCheckoutPage } from "@/utils/paymentGatewayChecks";
 
-const ROW_CLASS = "md:overflow-hidden md:rounded-lg md:border md:border-slate-200 md:bg-white";
+const ROW_CLASS = "md:overflow-hidden md:rounded-xl md:border md:border-slate-200 md:bg-white";
 
 // Gray placeholder blocks matching the three review rows (same idea as Stage 1's FieldSkeleton),
 // shown under the real heading while get-student-review-details loads.
@@ -63,16 +64,18 @@ function ReviewDetailsSkeleton() {
   );
 }
 
-// Right column placeholder: two plan cards and the Fee Summary card.
+// Right column placeholder: two plan cards, the "due now" hero card, and the Fee Summary /
+// payment-schedule card below it.
 function PaymentOptionsSkeleton() {
   return (
     <div>
-      <h2 className="text-base font-semibold text-black md:text-lg">Select Payment Option</h2>
-      <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="h-[80px] animate-pulse rounded-xl bg-slate-200" />
-        <div className="h-[80px] animate-pulse rounded-xl bg-slate-200" />
+      <h2 className="text-base font-semibold text-black md:text-lg">Choose how to pay</h2>
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4">
+        <div className="h-[92px] animate-pulse rounded-2xl bg-slate-200" />
+        <div className="h-[92px] animate-pulse rounded-2xl bg-slate-200" />
       </div>
-      <div className="mt-5 h-[360px] animate-pulse rounded-xl bg-slate-200" />
+      <div className="mt-4 h-[150px] animate-pulse rounded-2xl bg-slate-200 md:mt-5" />
+      <div className="mt-4 h-[180px] animate-pulse rounded-xl bg-slate-200 md:mt-5" />
     </div>
   );
 }
@@ -160,7 +163,7 @@ const GENERIC_ERROR ="Something went wrong. Please check your connection and try
 function ReviewRow({ label, children }) {
   return (
     <div className="flex justify-between gap-4 py-2">
-      <dt className="text-slate-500">{label}</dt>
+      <dt className="text-black">{label}</dt>
       <dd className="text-right font-bold text-black md:font-medium">{children}</dd>
     </div>
   );
@@ -223,11 +226,11 @@ function buildPlanOptions(fee, currencyCode) {
       key: fee.oneTimePayment.paymentKey || "annual",
       kind: "annual",
       mode: "annually",
-      label: discount
-        ? `Pay in Full — Save ${currencyCode || "USD"} ${String(fee.oneTimePayment.paymentOptionDiscountString ?? "").replace(/^[^\d]+/, "")}`
-        : `Pay ${fee.oneTimePayment.paymentMode}`,
+      label: "Pay in full",
       amount: fee.oneTimePayment.payableFeeString,
-      badge: discount ? "Best Value" : undefined,
+      savings: discount
+        ? `Save ${currencyCode || "USD"} ${String(fee.oneTimePayment.paymentOptionDiscountString ?? "").replace(/^[^\d]+/, "")}`
+        : undefined,
     });
   }
   const variants = buildMonthlyVariants(fee);
@@ -236,7 +239,7 @@ function buildPlanOptions(fee, currencyCode) {
       key: fee.monthlyFeeDetails?.paymentKey || "monthly",
       kind: "monthly",
       mode: variants[0].mode,
-      label: "Pay in Installments",
+      label: "Installments",
       amount: variants[0].amount,
       variants,
     });
@@ -321,7 +324,7 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, onBack, onSe
     reviewQuery.isFetching ||
     choosePlan.isPending || submitApplication.isPending || proceedToDashboard.isPending || gatewayOptions.isPending || airwallexMethods.isPending || invokeGateway.isPending;
 
-  const planOptions = useMemo(() => buildPlanOptions(data?.feePaymentDetailsResponse, data?.currencyIsoCode), [data]);
+  const planOptions = useMemo(() => buildPlanOptions(data?.feePaymentDetailsResponse, data?.currencySymbol), [data]);
 
   // Same "derive a default, let the user's own choice override it" pattern
   // Stage3CourseSelection uses for effectiveOpenId — avoids a setState-in-effect.
@@ -413,7 +416,7 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, onBack, onSe
   }
 
   function finishEdit(type, fields) {
-    if (type === "student" && fields) saveWizardStudentFields(context.schoolUUID, userId, fields);
+    if (type === "student" && fields) saveAddEnrollmentStudentFields(context.schoolUUID, userId, fields);
     if (type === "parent" && fields) saveWizardParentFields(context.schoolUUID, userId, fields);
     setEditing(null);
     setSelectedPlan(null);
@@ -767,6 +770,7 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, onBack, onSe
           <StudentInlineEdit
             context={context}
             userId={userId}
+            uniqueId={uniqueId}
             student={student}
             standardId={course?.standardId}
             onSaved={(fields) => finishEdit("student", fields)}
@@ -894,14 +898,12 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, onBack, onSe
         {showFee && (
           <div className="min-w-0">
             <hr className="mb-4 border-slate-200 md:hidden" />
-            <h2 className="text-center text-base font-semibold text-black md:text-left md:text-lg">
-              {data.customPaymentEnabled ? data.feeSetionTitile || "Fee Payment" : "Select Payment Option"}
+            <h2 className="text-base font-semibold text-black md:text-left md:text-lg">
+              {data.customPaymentEnabled ? data.feeSetionTitile || "Fee Payment" : "Choose how to pay"}
             </h2>
             <div className="mt-3">
               {data.customPaymentEnabled ? (
-                <FeeSummaryCard>
-                  <CustomPlanTable fee={fee} />
-                </FeeSummaryCard>
+                <CustomPlanTable fee={fee} />
               ) : (
                 <FeePaymentPlans
                   fee={fee}
