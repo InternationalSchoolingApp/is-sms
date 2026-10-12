@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { Check, ChevronDown, Search } from "lucide-react";
+import { Check, ChevronDown, Search, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RequiredAsterisk } from "@/components/common/RequiredAsterisk";
@@ -65,6 +65,10 @@ function useVisualViewportBox() {
 }
 
 const SHEET_SEARCH_MIN_OPTIONS = 8;
+// Popup height as a share of the visible area (the full area while the keyboard is up), and the height of its
+// search / close row (py-2 + 32px button + 1px border).
+const SHEET_HEIGHT_RATIO = 0.6;
+const SHEET_HEADER_PX = 49;
 
 function MobileSelectSheet({ options, value, onSelect, onClose, searchable }) {
   const { top, height } = useVisualViewportBox();
@@ -73,6 +77,12 @@ function MobileSelectSheet({ options, value, onSelect, onClose, searchable }) {
   const [searchFocused, setSearchFocused] = useState(false);
   const searchRef = useRef(null);
   const showSearch = searchable || options.length >= SHEET_SEARCH_MIN_OPTIONS;
+  // The list gets an explicit pixel max-height (rather than relying on a percentage max-height + flex-1 shrinking):
+  // WebKit does not shrink the flex child in that setup, so the list grew to full height, was clipped by the panel
+  // and could not be scrolled, leaving only the first few options reachable.
+  const available = (height ?? (typeof window !== "undefined" ? window.innerHeight : 600)) - 16 - (searchFocused ? 1 : 16);
+  const panelMax = Math.max(160, Math.floor(searchFocused ? available : available * SHEET_HEIGHT_RATIO));
+  const listMax = panelMax - SHEET_HEADER_PX;
 
   useEffect(() => {
     const previous = document.body.style.overflow;
@@ -101,27 +111,50 @@ function MobileSelectSheet({ options, value, onSelect, onClose, searchable }) {
       role="presentation"
     >
       <div
-        className={`mx-auto flex ${searchFocused ? "max-h-full" : "max-h-[60%]"} max-w-md flex-col overflow-hidden rounded-lg bg-white shadow-xl`}
+        className="mx-auto flex max-w-md flex-col overflow-hidden rounded-lg bg-white shadow-xl"
+        style={{ maxHeight: panelMax }}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
       >
-        {showSearch && (
-          <div className="flex shrink-0 items-center gap-2 border-b border-slate-200 px-3 py-2.5">
-            <Search className="h-4 w-4 shrink-0 text-slate-400" />
-            <input
-              ref={searchRef}
-              autoFocus={searchable}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search..."
-              className="w-full text-base outline-none placeholder:text-slate-400"
-            />
-          </div>
-        )}
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-1">
+        <div className="flex shrink-0 items-center gap-2 border-b border-slate-200 py-2 pl-3 pr-2">
+          {showSearch ? (
+            <>
+              <Search className="h-4 w-4 shrink-0 text-slate-400" />
+              <input
+                ref={searchRef}
+                autoFocus={searchable}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search..."
+                className="min-w-0 flex-1 py-1 text-base outline-none placeholder:text-slate-400"
+              />
+            </>
+          ) : (
+            <span className="flex-1" />
+          )}
+          {/* Fixed-size, never shrinks and sits outside the input, so typing can't run underneath it. */}
+          <button
+            type="button"
+            // Keep the search box focused on press: otherwise it blurs first, the panel resizes and the click misses.
+            onPointerDown={(e) => e.preventDefault()}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={onClose}
+            aria-label="Close"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700"
+          >
+            <X className="h-5 w-5 stroke-3" />
+          </button>
+        </div>
+        <div
+          className="overflow-y-auto overscroll-contain py-1"
+          style={{ maxHeight: listMax, WebkitOverflowScrolling: "touch" }}
+          // Tapping an option must not blur the search box: blur drops "keyboard open", the panel resizes and the
+          // list moves between press and release, so the tap lands on nothing and the option is never selected.
+          onMouseDown={(e) => e.preventDefault()}
+        >
           {filtered.length === 0 && <p className="px-4 py-3 text-center text-sm text-slate-400">No results</p>}
           {filtered.map((option) => (
             <button

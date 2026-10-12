@@ -75,12 +75,16 @@ function buildStage1Request({ mode, fields, context }) {
     data.learningProgram = getLearningProgramBackendValue(context.learningProgram);
     data.enrollmentFor = context.enrollmentFor;
   }
-  console.log("data", data)
   return { authentication, data };
 }
 
 export function useAccountSignup({ mode, context }) {
   return useMutation({
-    mutationFn: (fields) => signupStage1(context.schoolUUID, buildStage1Request({ mode, fields, context })),
+    mutationFn: (fields) =>
+      signupStage1(
+        context.schoolUUID,
+        buildStage1Request({ mode, fields, context }),
+        fields.recaptchaToken
+      ),
   });
 }

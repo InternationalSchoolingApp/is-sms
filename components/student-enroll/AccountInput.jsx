@@ -68,7 +68,11 @@ export function AccountInput({
                 : "left-4 peer-focus:left-3 peer-[&:not(:placeholder-shown)]:left-3 peer-autofill:left-3 peer-[:-internal-autofill-selected]:left-3"
             } ${
               hasError
-                ? "text-red-500"
+                // Unfocused + empty, an invalid field's label would otherwise sit
+                // oversized and red right where the caret goes — hidden there, it
+                // fades in already floated the instant the field is focused (or
+                // gets a value). Mirrors components/ui/floating-label-input.jsx.
+                ? "text-red-500 opacity-0 peer-focus:opacity-100 peer-[&:not(:placeholder-shown)]:opacity-100 peer-autofill:opacity-100 peer-[:-internal-autofill-selected]:opacity-100"
                 : isValid
                   ? "text-emerald-600 peer-focus:font-semibold"
                   : "text-slate-400 peer-focus:font-semibold peer-focus:text-primary peer-[&:not(:placeholder-shown)]:text-primary peer-autofill:text-primary peer-[:-internal-autofill-selected]:text-primary"

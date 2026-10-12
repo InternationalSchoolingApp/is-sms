@@ -28,7 +28,7 @@ export function LogoutConfirmDialog({ open, busy, onConfirm, onCancel }) {
         <DialogTitle className="text-base font-extrabold leading-snug text-black sm:text-lg">
           Are you sure you want to Log off?
         </DialogTitle>
-        <DialogDescription className="mx-auto mt-1.5 max-w-[16rem] text-xs leading-relaxed text-slate-500 sm:mt-2 sm:max-w-[17rem] sm:text-sm">
+        <DialogDescription className="mx-auto mt-1.5 max-w-[16rem] text-xs leading-relaxed text-black-800 sm:mt-2 sm:max-w-[17rem] sm:text-sm">
           You will be signed out of your account and redirected to the login page.
         </DialogDescription>
         <div className="mt-4 flex justify-center gap-2.5 sm:mt-5 sm:gap-3">

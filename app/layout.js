@@ -1,5 +1,6 @@
 import { Open_Sans } from "next/font/google";
 import { AppToaster } from "@/components/common/AppToaster";
+import { DisableZoom } from "@/components/common/DisableZoom";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { AuthSessionProvider } from "@/components/providers/AuthSessionProvider";
@@ -32,6 +33,7 @@ export default function RootLayout({ children }) {
         {/* GTM + Clarity — only fire when NEXT_PUBLIC_DEPLOYMENT_MODE=PROD,
             mirroring the JSP's <c:if test="${DEPLOYMENT_MODE=='PROD'}">. */}
         <AnalyticsScripts />
+        <DisableZoom />
         <AuthSessionProvider>
           <QueryProvider>
             <PageTitle />
