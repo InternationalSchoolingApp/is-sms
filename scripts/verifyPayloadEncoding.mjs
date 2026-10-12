@@ -14,7 +14,7 @@ function roundTrip(original) {
 let allPassed = true;
 
 function assert(name, condition) {
-  console.log(condition ? "PASS" : "FAIL", name);
+  // console.log(condition ? "PASS" : "FAIL", name);
   if (!condition) allPassed = false;
 }
 
@@ -55,5 +55,5 @@ assert(
   noPlusResult.countryCode === "91"
 );
 
-console.log(allPassed ? "\nAll checks passed." : "\nSome checks failed.");
+// console.log(allPassed ? "\nAll checks passed." : "\nSome checks failed.");
 process.exit(allPassed ? 0 : 1);

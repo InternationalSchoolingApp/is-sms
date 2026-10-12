@@ -99,7 +99,7 @@ export async function login(
   { email, password, captcha, schoolUUID, schoolNumericId, userType = "STUDENT" },
   serverOptions = {}
 ) {
-  console.log("LOGIN FUNCTION CALLED");
+  // console.log("LOGIN FUNCTION CALLED");
   const baseUrl = resolveServerBackendOrigin();
   if (!baseUrl || !schoolUUID || !schoolNumericId) {
     throw new Error("NEXT_PUBLIC_BACKEND_BASE_URL, schoolUUID and schoolNumericId are all required");
