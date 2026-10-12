@@ -913,7 +913,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   // sheet must stay closed until a category is explicitly tapped — openCourseId
   // is null/-1 in that closed state, not defaulted to the first category.
   const mobileActiveCourse = openCourseId && openCourseId !== -1 ? visibleCourses.find((course) => course.courseId === openCourseId) || null : null;
-  console.log("Course Selection", data)
+  // console.log("Course Selection", data)
   return (
     <>
       {/* Mobile-only: the grade chip sits outside/above the white card per
