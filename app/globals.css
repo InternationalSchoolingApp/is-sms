@@ -285,6 +285,26 @@ input:-internal-autofill-selected {
 }
 .ai-spin { animation: ai-spin 700ms linear infinite; }
 .ai-pulse { animation: ai-pulse 2.4s ease-in-out infinite; }
+
+/* AI Suggester drawer: swings in on a Y-axis, like a door hinged at the
+   screen edge, instead of a flat slide. */
+@keyframes ai-sheet-in-right {
+  from { opacity: 0; transform: perspective(1400px) translateX(60%) rotateY(-28deg); }
+  to { opacity: 1; transform: perspective(1400px) translateX(0) rotateY(0deg); }
+}
+@keyframes ai-sheet-out-right {
+  from { opacity: 1; transform: perspective(1400px) translateX(0) rotateY(0deg); }
+  to { opacity: 0; transform: perspective(1400px) translateX(60%) rotateY(-28deg); }
+}
+.ai-sheet-right {
+  transform-origin: right center;
+  transform-style: preserve-3d;
+}
+.ai-sheet-right[data-open] { animation: ai-sheet-in-right 480ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.ai-sheet-right[data-closed] { animation: ai-sheet-out-right 280ms ease-in both; }
+
 @media (prefers-reduced-motion: reduce) {
   .ai-rise, .ai-land, .ai-shimmer, .ai-spin, .ai-pulse { animation: none; }
+  .ai-sheet-right[data-open],
+  .ai-sheet-right[data-closed] { animation: none; }
 }

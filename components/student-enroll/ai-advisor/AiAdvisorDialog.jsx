@@ -167,14 +167,6 @@ function OptionCard({ selected, onClick, children, multi }) {
         selected ? "border-primary bg-[#e6f3ff] text-black" : "border-slate-300 bg-white text-black hover:border-primary"
       }`}
     >
-      <span
-        aria-hidden="true"
-        className={`flex h-5 w-5 shrink-0 items-center justify-center border-2 ${multi ? "rounded" : "rounded-full"} ${
-          selected ? "border-primary bg-primary text-white" : "border-slate-400 bg-white"
-        }`}
-      >
-        {selected && (multi ? <Check className="h-3 w-3" strokeWidth={4} /> : <span className="h-2 w-2 rounded-full bg-white" />)}
-      </span>
       {children}
     </button>
   );
@@ -213,7 +205,7 @@ function QuestionStep({ question, index, total, answers, onToggle, onSetAll }) {
             <button
               type="button"
               onClick={() => onSetAll(allPicked ? [] : question.options.map((o) => o.value))}
-              className="text-xs font-semibold text-primary underline-offset-2 hover:underline"
+              className="text-xs font-semibold text-primary cursor-pointer underline-offset-2 hover:underline"
             >
               {allPicked ? "Clear all" : "Select all"}
             </button>

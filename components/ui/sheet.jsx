@@ -48,13 +48,14 @@ function SheetOverlay({
 }
 
 const SIDE_CLASSES = {
-  right:
-    "inset-y-0 right-0 h-full w-full border-l data-open:slide-in-from-right data-closed:slide-out-to-right sm:max-w-md",
+  // The right drawer gets a 3D hinge-swing (see .ai-sheet-right in globals.css)
+  // instead of a flat slide, so it needs no animate-in/out utility classes.
+  right: "inset-y-0 right-0 h-full w-full border-l ai-sheet-right sm:max-w-md",
   left:
-    "inset-y-0 left-0 h-full w-full border-r data-open:slide-in-from-left data-closed:slide-out-to-left sm:max-w-md",
-  top: "inset-x-0 top-0 h-auto w-full border-b data-open:slide-in-from-top data-closed:slide-out-to-top",
+    "inset-y-0 left-0 h-full w-full border-r duration-300 ease-in-out data-open:animate-in data-open:slide-in-from-left data-closed:animate-out data-closed:slide-out-to-left sm:max-w-md",
+  top: "inset-x-0 top-0 h-auto w-full border-b duration-300 ease-in-out data-open:animate-in data-open:slide-in-from-top data-closed:animate-out data-closed:slide-out-to-top",
   bottom:
-    "inset-x-0 bottom-0 h-auto w-full border-t data-open:slide-in-from-bottom data-closed:slide-out-to-bottom",
+    "inset-x-0 bottom-0 h-auto w-full border-t duration-300 ease-in-out data-open:animate-in data-open:slide-in-from-bottom data-closed:animate-out data-closed:slide-out-to-bottom",
 }
 
 function SheetContent({
@@ -70,7 +71,7 @@ function SheetContent({
       <DialogPrimitive.Popup
         data-slot="sheet-content"
         className={cn(
-          "fixed z-50 flex flex-col gap-4 bg-popover p-4 text-sm text-popover-foreground shadow-lg ring-1 ring-foreground/10 duration-300 ease-in-out outline-none data-open:animate-in data-closed:animate-out",
+          "fixed z-50 flex flex-col gap-4 bg-popover p-4 text-sm text-popover-foreground shadow-lg ring-1 ring-foreground/10 outline-none",
           SIDE_CLASSES[side],
           className
         )}
