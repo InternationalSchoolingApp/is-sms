@@ -252,8 +252,14 @@ function buildExtraRows(fee) {
   return rows;
 }
 
+// When more than one discount applies (e.g. Pay-in-Full + a Scholarship code), each must be
+// listed on its own line like the old table did — collapsing them into one summed row hides
+// the scholarship discount inside the pay-in-full amount.
 function discountRow(youSave, label) {
   if (!youSave?.description?.length) return null;
+  if (youSave.description.length > 1) {
+    return breakdownBlock({ title: label, totalLabel: "Total you saved", details: youSave, sign: "-", tone: "discount" });
+  }
   return { label, amount: `- ${youSave.totalEntityFeeString}`, tone: "discount" };
 }
 
@@ -263,7 +269,7 @@ function AnnualSummary({ fee, standardId, isFlexOrDual }) {
   if (isFlexOrDual && fee.enrollmentFee?.enrollmentFee > 0) {
     rows.push({ label: "Enrollment fee", amount: fee.enrollmentFee.enrollmentFeeString });
   }
-  const discount = discountRow(fee.oneTimePayment?.youSave, "Pay-in-full discount");
+  const discount = discountRow(fee.oneTimePayment?.youSave, "Fee Discount");
   if (discount) rows.push(discount);
 
   return (
