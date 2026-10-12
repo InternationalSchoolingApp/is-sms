@@ -7,6 +7,7 @@ import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { getEnrollmentProcess, getPublicSchoolInfo, isEnrollmentViaNextjs } from "@/services/studentSignupApi";
 import { legacyEnrollmentProcessUrl } from "@/utils/backendOrigin";
 import { expireSession } from "@/utils/logout";
+import { STATUS_SESSION_OUT, STATUS_SUCCESS, useSignupStageStatusPoll } from "@/hooks/useStudentReview";
 import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
 import { useStudentDetailsPrefill } from "@/hooks/useStudentDetailsSignup";
 import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
@@ -158,6 +159,32 @@ function useResolveEnrollmentContext() {
           : "O",
       }
     : null;
+
+  // Cross-browser/cross-tab completion watcher: matches legacy's single getSignupStatus()
+  // call in signupStudentContent.js, which runs for the whole wizard session (every step,
+  // not just the review/payment screen) and polls enrollment-stage-status every 3 minutes.
+  // Mounted once here instead of per-step so a student finishing enrollment+payment in one
+  // browser (another device/tab, same account) gets this tab redirected automatically — the
+  // status is DB-authoritative per uniqueId (see SignupStudentUtil#signupStageStatus), not
+  // tied to this browser's own session/cookies. Skipped for confirmed custom plans: their
+  // stage-status redirectUri points back into this same wizard, not the dashboard, so polling
+  // it would just bounce the student in a loop (same exception Stage 4 carved out before this
+  // was centralized here).
+  const stageStatus = useSignupStageStatusPoll({
+    context,
+    uniqueId: session?.uniqueId,
+    enabled: ready && !context?.customPaymentEnabled,
+  });
+  const stageStatusData = stageStatus.data;
+  useEffect(() => {
+    if (!stageStatusData) return;
+    if (stageStatusData.status === STATUS_SESSION_OUT) {
+      expireSession(session?.schoolUUID);
+    } else if (stageStatusData.status === STATUS_SUCCESS && stageStatusData.redirectUri) {
+      window.location.replace(stageStatusData.redirectUri);
+    }
+  }, [stageStatusData, session?.schoolUUID]);
+
   return { status, session, context, logoUrl, ready };
 }
 
