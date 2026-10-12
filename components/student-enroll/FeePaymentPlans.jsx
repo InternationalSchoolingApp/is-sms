@@ -252,15 +252,12 @@ function buildExtraRows(fee) {
   return rows;
 }
 
-// When more than one discount applies (e.g. Pay-in-Full + a Scholarship code), each must be
-// listed on its own line like the old table did — collapsing them into one summed row hides
-// the scholarship discount inside the pay-in-full amount.
+// Always itemized under the "Fee discount" / "Pay-in-full discount" heading — even a single
+// discount (e.g. just a Scholarship code) is listed as its own line under that heading rather
+// than replacing it, same as Extra Course Fee / Fee Already Paid above.
 function discountRow(youSave, label) {
   if (!youSave?.description?.length) return null;
-  if (youSave.description.length > 1) {
-    return breakdownBlock({ title: label, totalLabel: "Total you saved", details: youSave, sign: "-", tone: "discount" });
-  }
-  return { label, amount: `- ${youSave.totalEntityFeeString}`, tone: "discount" };
+  return breakdownBlock({ title: label, totalLabel: "Total you saved", details: youSave, sign: "-", tone: "discount" });
 }
 
 
