@@ -31,7 +31,7 @@ export function AddCourseSelectionStep() {
     setHydrated(true);
   }, [ready, context?.schoolUUID, childUserId]);
 
-  if (!ready || redirecting || context.customPaymentEnabled || !hydrated) {
+  if (!ready || redirecting || !hydrated) {
     return <FullScreenLoader />;
   }
 

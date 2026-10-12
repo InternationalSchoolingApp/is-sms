@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useParams, useSelectedLayoutSegment } from "next/navigation";
 import { FullScreenLoader } from "@/components/common/Loader";
-import { AddEnrollmentWizardShell, WIZARD_STEP_META } from "@/components/add-enrollment/AddEnrollmentWizardShell";
+import { EnrollmentWizardShell, WIZARD_STEP_META } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
 import { AddEnrollmentProvider, useAddEnrollmentContext } from "@/hooks/add-enrollment/useAddEnrollmentContext";
 import { expireSession, logoutEverywhere } from "@/utils/logout";
 
@@ -26,7 +26,7 @@ const ADD_WIZARD_STEPS = ["student", "course_selection", "review_and_payment"].m
 function AddWizardFrame({ children }) {
   const { school } = useParams();
   const segment = useSelectedLayoutSegment();
-  const { status, session, context, logoUrl, ready, isError } = useAddEnrollmentContext();
+  const { status, session, context, ready, isError } = useAddEnrollmentContext();
 
   useEffect(() => {
     if (status === "unauthenticated") expireSession(school);
@@ -49,25 +49,17 @@ function AddWizardFrame({ children }) {
   }
 
   const currentStepKey = SEGMENT_TO_STEP_KEY[segment];
-  // Review & payment keeps its own full-width "plain" layout, and hides the
-  // stepper for custom-payment students — same as the main WizardChrome.
-  const isReview = segment === "review-and-payment";
-  const plain = isReview;
-  const hideStepper = isReview && context?.customPaymentEnabled === true;
 
   return (
-    <AddEnrollmentWizardShell
+    <EnrollmentWizardShell
       schoolName={context.schoolName}
-      logoUrl={logoUrl}
       context={context}
       currentStepKey={currentStepKey}
       steps={ADD_WIZARD_STEPS}
-      plain={plain}
-      hideStepper={hideStepper}
       onLogout={() => logoutEverywhere(session)}
     >
       {children}
-    </AddEnrollmentWizardShell>
+    </EnrollmentWizardShell>
   );
 }
 
