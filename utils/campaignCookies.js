@@ -1,4 +1,5 @@
-import { readCookie, writeCookie } from "@/utils/cookieDomain";
+import { readCookie, writeCookie, writeRawCookie } from "@/utils/cookieDomain";
+import { readConsent } from "@/utils/marketingConsent";
 
 function getUrlParam(name) {
   if (name === undefined || name === "") {
@@ -49,10 +50,44 @@ function isCookieEmpty(value) {
   );
 }
 
+// Meta Conversions API match keys, in Meta's own format
+// (fb.<subdomain_index>.<creation_time_ms>.<value>). Captured on the first page load so the
+// signup can send them to the backend. A value the Meta Pixel already set is never overwritten,
+// and _fbc is case sensitive, so the fbclid is used exactly as it came in the URL.
+const META_COOKIE_DAYS = 90;
+
+function readRawCookie(key) {
+  var match = document.cookie.match("(?:^|; )" + key + "=([^;]*)");
+  return match ? match[1] : "";
+}
+
+// Opt-in: nothing Meta-related is created before the visitor accepts (is_marketing_consent=granted).
+export function captureMetaCookies() {
+  if (readConsent() !== "granted") return;
+  var subdomainIndex = window.location.hostname.indexOf(".") === -1 ? 0 : 1;
+
+  if (!readRawCookie("_fbp")) {
+    var rand = Math.floor(1000000000 + Math.random() * 9000000000);
+    writeRawCookie("_fbp", "fb." + subdomainIndex + "." + Date.now() + "." + rand, META_COOKIE_DAYS);
+  }
+
+  var m = /[?&]fbclid=([^&#]+)/.exec(window.location.search);
+  if (m) {
+    var current = readRawCookie("_fbc");
+    // Meta's client library appends an appendix to the stored value ("<fbclid>.<appendix>")
+    var stored = current ? current.split(".").slice(3).join(".") : "";
+    if (!current || (stored !== m[1] && stored.indexOf(m[1] + ".") !== 0)) {
+      writeRawCookie("_fbc", "fb." + subdomainIndex + "." + Date.now() + "." + m[1], META_COOKIE_DAYS);
+    }
+  }
+}
+
 export function initializeCampaignCookies() {
   if (typeof window === "undefined") {
     return;
   }
+
+  captureMetaCookies();
 
   var us = getCookie("us");
   var utmSource = getUrlParam("utm_source");

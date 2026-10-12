@@ -116,3 +116,15 @@ export function readCookie(name) {
   const match = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
   return match ? decodeURIComponent(match[1]) : "";
 }
+
+/**
+ * Writes a cookie whose value must stay byte-for-byte as given (no URI encoding), at the resolved
+ * domain. Used for Meta's _fbp / _fbc, which are case sensitive and must not be altered.
+ */
+export function writeRawCookie(name, value, days = COOKIE_MAX_AGE_DAYS) {
+  if (typeof document === "undefined") return;
+  if (!name || value === undefined || value === "") return;
+
+  const maxAge = Math.round(days * 24 * 60 * 60);
+  document.cookie = `${name}=${value}${cookieAttributes(resolveCookieDomain(), maxAge)}`;
+}
