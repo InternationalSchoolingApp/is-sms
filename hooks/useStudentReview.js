@@ -97,6 +97,7 @@ const STAGE_STATUS_POLL_MS = 30000;
  * STAGE_STATUS_POLL_MS). Caller is responsible for acting on a non-failure
  * `redirectUri` (window.location.replace) — this hook only fetches.
  */
+
 export function useSignupStageStatusPoll({ context, uniqueId, enabled = true }) {
   // First call only after one full interval, so a page refresh doesn't hit
   // enrollment-stage-status (resume uses enrollment/process' signupPage instead).
