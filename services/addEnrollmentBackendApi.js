@@ -1,7 +1,7 @@
 "use server";
 
-import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { encodePayload } from "@/utils/payloadEncoding";
 
 /**
  * Add-Another-Student backend wrappers. Kept separate from the main
@@ -49,23 +49,22 @@ async function postPayload(schoolUUID, path, data) {
 
 /**
  * ParentChildEnrollmentUtil#saveEnrollAnotherChild (ClientSignupStudentController
- * {schoolId}/api/v1/enroll/another/child/{parentId}/{sessionUserUniqueId}):
+ * {schoolId}/api/v1/enroll/another/child):
  * resolves the parent's already-partially-enrolled child if one exists
  * (resume, no new row) or creates a new child user skeleton (new enrollment).
- * Both ids travel as path segments, NOT in a body payload — parentId is the
- * numeric parent id from the URL, sessionUserUniqueId is the UNIQUEUUID of
- * the logged-in caller (parent themselves, or a sibling student). Response
- * data: {schoolId, schoolUUID, signupPage, userId, uniqueId} — signupPage is
- * the resume step (1/2/3), userId/uniqueId identify the child being enrolled,
+ * parentId (numeric parent id) and sessionUserId (the UNIQUEUUID of the
+ * logged-in caller — the parent themselves, or a sibling student) travel in
+ * the Base64 request payload, NOT as URL path segments. Response data:
+ * {schoolId, schoolUUID, signupPage, userId, uniqueId} — signupPage is the
+ * resume step (1/2/3), userId/uniqueId identify the child being enrolled,
  * NOT the caller. Safe to call on every add-enrollment wizard mount/refresh —
  * a parent with an in-progress child always resumes the same one.
  */
 export async function enrollAnotherChild(schoolUUID, parentId, sessionUserUniqueId) {
-  return postPayload(
-    schoolUUID,
-    `api/v1/enroll/another/child/${encodeURIComponent(parentId)}/${encodeURIComponent(sessionUserUniqueId)}`,
-    {}
-  );
+  return postPayload(schoolUUID, "api/v1/enroll/another/child", {
+    parentId: Number(parentId),
+    sessionUserId: sessionUserUniqueId,
+  });
 }
 
 /**

@@ -1,15 +1,15 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
+import { useAddStudentDetailsPrefill } from "@/hooks/add-enrollment/useAddStage1";
 import { enrollAnotherChild } from "@/services/addEnrollmentBackendApi";
 import { getEnrollmentProcess, getPublicSchoolInfo } from "@/services/studentSignupApi";
-import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
-import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
 import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
-import { useAddStudentDetailsPrefill } from "@/hooks/add-enrollment/useAddStage1";
+import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
+import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
+import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import { useParams } from "next/navigation";
+import { createContext, useContext, useEffect, useState } from "react";
 
 /**
  * Context for the "Add Another Student" wizard
@@ -80,7 +80,16 @@ function useResolveAddEnrollmentContext() {
   // from the invoice link in another tab). "dashboard" carries a ready-made view-as-user URL.
   // A "login" redirect (child withdrawn) is surfaced as an error instead of dropping the session:
   // here the session belongs to the parent/sibling, not the child.
-  const processRedirect = enrollmentProcess.data?.status === "REDIRECT" ? enrollmentProcess.data : null;
+  //
+  // BUT: a freshly reserved / still-in-progress child (enrollAnotherChild returned a resume step
+  // signupPage 1-3) has no started standard yet, which makes enrollment/process answer "dashboard"
+  // for it. Honoring that would bounce the parent to the :8080 parent dashboard instead of opening
+  // the wizard. So we only follow a "dashboard" redirect when the child is NOT resumable here
+  // (no valid signupPage), i.e. genuinely past the wizard.
+  const childResumeStep = Number(childData?.signupPage);
+  const childIsResumable = childResumeStep >= 1 && childResumeStep <= 3;
+  const processRedirect =
+    enrollmentProcess.data?.status === "REDIRECT" && !childIsResumable ? enrollmentProcess.data : null;
   useEffect(() => {
     if (processRedirect?.redirectTo === "dashboard" && processRedirect.url) {
       window.location.replace(processRedirect.url);

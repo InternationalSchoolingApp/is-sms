@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import { signIn } from "@/auth";
 import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
+import { NextResponse } from "next/server";
 
 const VALID_STEPS = new Set(["1", "2", "3", "4"]);
 
@@ -20,12 +20,34 @@ const VALID_STEPS = new Set(["1", "2", "3", "4"]);
  * comment for why this route needs it despite not otherwise being
  * schoolId-scoped.
  *
+ * Optional `next` param: a relative in-app path to forward to AFTER the
+ * session is established, used by the legacy parent dashboard's "Add another
+ * child" flow to land the authenticated tab on
+ * /{school}/add-enrollment/{parentId}/{sessionUserId} instead of the main
+ * wizard step path. It is validated to be a same-origin relative path under
+ * the given school (`/{school}/...`) to avoid open-redirect; anything else is
+ * ignored and we fall back to the step path.
+ *
  * Handles BOTH GET and POST: Login.jsp's goAhead() (login.js) doesn't
  * navigate the browser via a plain link/redirect — it builds a real
  * `<form method="POST">` (carrying a `hash` field we don't need, since
  * token/step already ride the query string) and submits it, so this is hit
  * as a POST in practice. Both handlers share the same logic.
  */
+
+/**
+ * Validate an optional `next` redirect target. Only a same-origin RELATIVE
+ * path scoped to this school is allowed (must start with "/{school}/"), so a
+ * crafted `next` can never redirect the browser to another origin.
+ * Returns the safe path or null.
+ */
+function safeNextPath(next, schoolUUID) {
+  if (!next || typeof next !== "string") return null;
+  // Reject absolute URLs and protocol-relative ("//evil.com") targets.
+  if (!next.startsWith("/") || next.startsWith("//")) return null;
+  if (!next.startsWith(`/${schoolUUID}/`)) return null;
+  return next;
+}
 // Explicit 303 (See Other) on every redirect below — the request that
 // reaches this handler may be a POST (see doc comment above), and only 303
 // tells the browser to follow up with a GET regardless of the original
@@ -43,6 +65,7 @@ async function handleSsoHandoff(request) {
   const schoolName = url.searchParams.get("schoolName");
   const step = url.searchParams.get("step");
   const targetStep = VALID_STEPS.has(step) ? step : "1";
+  const nextPath = safeNextPath(url.searchParams.get("next"), schoolUUID);
 
   // console.log("request", request)
   // console.log("url======>", url)
@@ -65,6 +88,12 @@ async function handleSsoHandoff(request) {
   } catch (err) {
     console.error("SSO token exchange threw:", err);
     return redirectTo("/", request);
+  }
+
+  // A validated `next` (e.g. the add-another-child entry) wins over the step
+  // path. Otherwise forward to the main wizard step the backend asked for.
+  if (nextPath) {
+    return redirectTo(nextPath, request);
   }
 
   // The enrollment program isn't part of the SSO handoff (the backend only
