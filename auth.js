@@ -105,13 +105,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // doesn't reliably carry a schoolName field, so this URL-provided
         // value is the real source, not response.schoolName.
         schoolName: { label: "School name", type: "text" },
+        // UAT multi-backend detection (see app/api/sso/route.js and
+        // services/authApi.js's exchangeSsoToken doc comment) — same
+        // "must be declared here or next-auth drops it" reasoning.
+        backendOverride: { label: "Backend override", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.ssoToken || !credentials?.schoolUUID) {
           console.error("sso-token authorize: missing ssoToken or schoolUUID in credentials");
           return null;
         }
-        const response = await exchangeSsoToken(credentials.schoolUUID, credentials.ssoToken);
+        const response = await exchangeSsoToken(credentials.schoolUUID, credentials.ssoToken, credentials.backendOverride);
         // Temporary diagnostic — this is the first live run of this path;
         // remove once the handoff is confirmed working end to end.
         // console.log("sso-token authorize: exchangeSsoToken response:", response);
