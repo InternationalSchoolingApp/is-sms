@@ -3,8 +3,8 @@
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
 
-function backendUrl(schoolUUID, path) {
-  const baseUrl = resolveServerBackendOrigin();
+async function backendUrl(schoolUUID, path) {
+  const baseUrl = await resolveServerBackendOrigin();
   if (!hasBackendOrigin() || !schoolUUID) {
     throw new Error("A backend origin and a schoolUUID (from the URL) are required");
   }
@@ -12,13 +12,19 @@ function backendUrl(schoolUUID, path) {
 }
 
 export async function getMaintenanceDowntimeStatus(schoolUUID) {
-  const response = await fetch(backendUrl(schoolUUID, "api/v1/maintenance-downtime-status"));
-  if (!response.ok) return null;
-  const text = await response.text();
-  if (!text) return null;
   try {
-    return JSON.parse(text);
+    const response = await fetch(await backendUrl(schoolUUID, "api/v1/maintenance-downtime-status"));
+    if (!response.ok) return null;
+    const text = await response.text();
+    if (!text) return null;
+    try {
+      return JSON.parse(text);
+    } catch {
+      return null;
+    }
   } catch {
+    // Backend unreachable (e.g. a tester's UAT override points at a dead
+    // host) — the banner just has nothing to show, not a crash.
     return null;
   }
 }

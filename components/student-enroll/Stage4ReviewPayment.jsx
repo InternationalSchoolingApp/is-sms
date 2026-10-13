@@ -44,7 +44,7 @@ import {
   getPayerCountryCodePromise,
   loadLocationGlobals,
 } from "@/utils/locationFinder";
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
+import { legacyEnrollmentProcessUrl } from "@/utils/backendOrigin";
 import { isDummyStudentMode, showDummyStripeCheckoutPage } from "@/utils/paymentGatewayChecks";
 
 const ROW_CLASS = "md:overflow-hidden md:rounded-xl md:border md:border-slate-200 md:bg-white";
@@ -350,9 +350,9 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       window.location.reload();
       return;
     }
-    const baseUrl = resolveBackendOrigin();
-    if (failure.statusCode === STATUS_ELIGIBLE_CUSTOM_PLAN && baseUrl) {
-      window.location.href = `${baseUrl}/${context.schoolUUID}/student/enrollment/process/${userId}`;
+    const legacyUrl = legacyEnrollmentProcessUrl(context?.schoolUUID, userId);
+    if (failure.statusCode === STATUS_ELIGIBLE_CUSTOM_PLAN && legacyUrl) {
+      window.location.href = legacyUrl;
     }
   }, [failure, context?.schoolUUID, userId, onSessionExpired]);
 
@@ -422,9 +422,9 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       window.location.reload();
       return;
     }
-    const baseUrl = resolveBackendOrigin();
-    if (response.statusCode === STATUS_ELIGIBLE_CUSTOM_PLAN && baseUrl) {
-      window.location.href = `${baseUrl}/${context.schoolUUID}/student/enrollment/process/${userId}`;
+    const legacyUrl = legacyEnrollmentProcessUrl(context?.schoolUUID, userId);
+    if (response.statusCode === STATUS_ELIGIBLE_CUSTOM_PLAN && legacyUrl) {
+      window.location.href = legacyUrl;
       return;
     }
     setNotice({ tone: "error", text: response.categoryMandatoryMessage || response.message || fallback });

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { getBackendOverrideCookieName, isBackendOverrideAllowed } from "@/utils/backendOrigin";
 
 /**
  * Server-side guard for the post-login enrollment wizard's step routes
@@ -28,7 +29,8 @@ export default auth((req) => {
   if (req.auth) return NextResponse.next();
   // First path segment is the {school}; send them to that school's Java login page.
   const school = req.nextUrl.pathname.split("/")[1];
-  const backend = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
+  const override = isBackendOverrideAllowed() ? req.cookies.get(getBackendOverrideCookieName())?.value : undefined;
+  const backend = override || process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
   if (school && backend) return NextResponse.redirect(`${backend}/${school}/common/login`);
   return NextResponse.redirect(new URL("/", req.url));
 });
@@ -36,5 +38,6 @@ export default auth((req) => {
 export const config = {
   matcher: [
     "/:school/enrollment/:program/step/:path*",
+    "/:school/add-enrollment/:parentId/:sessionUserId/step/:path*",
   ],
 };

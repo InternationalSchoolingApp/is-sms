@@ -260,3 +260,23 @@ input:-internal-autofill-selected {
     animation: none;
   }
 }
+
+/* Cookie consent card: slides up and fades in; no motion for visitors who prefer reduced motion */
+@keyframes consent-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.consent-card {
+  animation: consent-card-in 0.35s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .consent-card {
+    animation: none;
+  }
+}

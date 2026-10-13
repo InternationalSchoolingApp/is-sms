@@ -1,5 +1,5 @@
 import { signOut } from "next-auth/react";
-import { loginPageUrl } from "@/utils/backendOrigin";
+import { loginPageUrl, resolveBackendNavigationOrigin } from "@/utils/backendOrigin";
 
 // Session expired / missing: drop the Next.js session and land on the school's login page.
 // redirect:false + a manual navigation because the login page lives on another origin, which
@@ -24,7 +24,7 @@ export async function logoutEverywhere(session) {
   // expireSession() -> login page; the flag keeps that from racing the logout navigation below.
   window.__loggingOut = true;
   await signOut({ redirect: false });
-  const backend = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
+  const backend = resolveBackendNavigationOrigin();
   if (session?.schoolUUID && session?.uniqueId && backend) {
     window.location.assign(`${backend}/${session.schoolUUID}/common/logout/${encodeURIComponent(session.uniqueId)}`);
     return;

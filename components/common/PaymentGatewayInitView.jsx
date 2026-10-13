@@ -129,11 +129,7 @@ export function PaymentGatewayInitView({ gateway, schoolUUID: schoolUUIDFromRout
 
   const startPayment = useCallback(async () => {
     try {
-      const response = await config.request(
-        uniqueUuid,
-        new URLSearchParams(searchParams.toString()),
-        schoolUUID
-      );
+      const response = await config.request(uniqueUuid, searchParams.toString(), schoolUUID);
       if (response?.status === config.successStatus) {
         if (gateway === "airwallex") {
           await startAirwallexCheckout(response.airwallexCheckoutUrl);

@@ -15,6 +15,7 @@ import { checkEmailAvailability } from "@/services/studentSignupBackendApi";
 import { validateAccountFormOnline, isValidEmail, getPasswordStrength } from "@/utils/studentSignupValidation";
 import { getHash } from "@/utils/common";
 import { callLocationForPaymentPromise, getLocationValue, loadLocationGlobals } from "@/utils/locationFinder";
+import { loginPageUrl } from "@/utils/backendOrigin";
 
 // The captcha field is hidden from the UI; the form submits a random 6-digit number in its place
 // (it still has to satisfy the 6-digit check in isValidCaptcha).
@@ -557,7 +558,7 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
 
         <p className="text-center text-sm text-slate-600">
           Already have an account?{" "}
-          <a href={process.env.NEXT_PUBLIC_BACKEND_BASE_URL +"/"+ context.schoolUUID+"/common/login"} className="font-semibold text-primary hover:underline">
+          <a href={loginPageUrl(context.schoolUUID)} className="font-semibold text-primary hover:underline">
             Log in here.
           </a>
         </p>

@@ -1,5 +1,5 @@
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import { getCommonScriptVariables } from "@/services/studentSignupBackendApi";
+import { getIpLocation } from "@/services/ipLocationApi";
 
 /**
  * Port of the payer-location functions in the Java frontend —
@@ -15,8 +15,6 @@ import { getCommonScriptVariables } from "@/services/studentSignupBackendApi";
  * (what getCommonCustomScript() calls). The `#location` hidden input the legacy code
  * keeps the resolved location in is the module-level `location` string here.
  */
-const PRO_IP_API_URL = "/api/v1/ip-location";
-
 let LOCATION_SERVICE_BYPASS;
 let DEFAULT_LOCATION;
 let loaded = false;
@@ -42,11 +40,12 @@ export function getCountryISOCode() {
   return region ? region.toLowerCase() : "";
 }
 
-// GET PRO_IP_API_URL — the $.ajax({ global:false, type:"GET", url: PRO_IP_API_URL }) call.
+// GET PRO_IP_API_URL — the $.ajax({ global:false, type:"GET", url: PRO_IP_API_URL }) call,
+// now a Server Action (services/ipLocationApi.js) so it still works under a UAT backend override.
 async function fetchIpLocation() {
-  const response = await fetch(`${resolveBackendOrigin()}${PRO_IP_API_URL}`, { credentials: "include" });
-  if (!response.ok) throw new Error(`ip-location responded ${response.status}`);
-  return response.json();
+  const data = await getIpLocation();
+  if (!data) throw new Error("ip-location returned no data");
+  return data;
 }
 
 // callLocationForPaymentFill(data): only a non-empty value is stored, as JSON.
