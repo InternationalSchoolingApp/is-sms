@@ -43,6 +43,7 @@ import {
   STATUS_SUCCESS,
   courseDetailsKey,
   useCourseDetails,
+  useLocalCourseUpdate,
   useProceedToReview,
   useRecommendedCourses,
   useShowPaymentOption,
@@ -63,7 +64,10 @@ const GENERIC_ERROR = "Something went wrong. Please check your connection and tr
 // "Add": true closes the dialog and returns to the category list (one course
 // per visit); false keeps it open so multiple subjects can be added from the
 // same category in one go. Flip this single flag to change the behavior.
-const CLOSE_CATEGORY_DIALOG_ON_ADD = true;
+// Kept open: the added row flips to a tick in place (displaySubjects re-sorts
+// the selected course back into the list), so closing the sheet would hide the
+// confirmation and make adding several courses from one category a chore.
+const CLOSE_CATEGORY_DIALOG_ON_ADD = false;
 
 function isSuccessResponse(response) {
   return String(response?.status) === STATUS_SUCCESS;
@@ -137,6 +141,250 @@ function upgradeHint(courseType) {
 // full name — there the suffix is the ONLY thing marking it as the Honors variant.
 function stripVariantSuffix(name) {
   return String(name || "").replace(/\s+(?:honou?rs?|advanced?)$/i, "");
+}
+
+// A category whose courses are ALL already selected has an addable count of zero
+// (counts stay addable-only by design), and "0 courses available" reads as if the
+// category were empty when it's really full. Name that state instead.
+function addableCountLabel(count) {
+  if (count === 0) return "All selected";
+  return `${count} course${count === 1 ? "" : "s"} available`;
+}
+
+// A ticked row in the "choose courses" pane can be removed from there as well as
+// from the selected list — EXCEPT when the course is mandatory, which has no remove
+// control anywhere (the selected list hides its trash icon on the same condition).
+// `selectedCourse` is the original CourseDTO, which is what removeSubject() needs.
+function canRemoveSelected(subject) {
+  return Boolean(subject.selectedCourse) && subject.courseMandatory === 0;
+}
+
+/**
+ * Local add/remove/upgrade: pure prev -> next transforms over the cached course
+ * page. Add/remove/toggle/remove-all edit the cache only; the accumulated selection
+ * is written to the server in ONE call when the step is left (flushSelection).
+ *
+ * These model LIST MEMBERSHIP and the credit total — what the screen derives
+ * everything visible from (selected list, each row's tick/Add state, the counts, the
+ * progress ring, the Selection Summary buckets). Fee breakdowns and the backend's
+ * own limit messages are NOT recomputed here; they refresh on the next save.
+ */
+function optimisticAdd(courseData, category, subject) {
+  const id = String(subject.subjectId);
+  const ids = parseIds(courseData.selectedSubjectsAsString);
+  if (ids.includes(id)) return courseData;
+  const credit = Number(subject.subjectCredit) || 0;
+  // Shaped like a CourseDTO, because that's what the selected list reads.
+  // upgradeCourses is left empty: whether this subject has a Honors/Advanced
+  // sibling is the server's answer, and guessing would flash a toggle that may
+  // then vanish.
+  const entry = {
+    courseId: subject.subjectId,
+    categoryId: category.courseId,
+    courseName: subject.subjectName,
+    courseCategory: category.courseName,
+    courseMandatory: subject.courseMandatory === 1 || subject.isMandatorySubject === true ? 1 : 0,
+    courseType: subject.courseType,
+    courseTypeOriginal: subject.courseType,
+    creditScore: subject.subjectCredit,
+    creditScoreFloat: credit,
+    coursePriceSelectedString: subject.subjectPriceString,
+    courseDescriptionUrl: subject.courseDescriptionUrl,
+    upgradeCourses: [],
+  };
+  return {
+    ...courseData,
+    selectedSubjectsAsString: [...ids, id].join(","),
+    selectedSubjects: [...(courseData.selectedSubjects || []), entry],
+    totalCredit: Number(courseData.totalCredit || 0) + credit,
+  };
+}
+
+function optimisticRemove(courseData, selectedCourse) {
+  const id = String(selectedCourse.courseId);
+  const credit = Number(selectedCourse.creditScoreFloat ?? selectedCourse.creditScore) || 0;
+  // The server strips selected subjects out of availableCourses, so a course
+  // selected at page load has no addable record to fall back to. Put one back, or
+  // removing it would blank the row until the next save instead of flipping it to
+  // "+ Add". A course added earlier in this session is still in that list, hence
+  // the contains check.
+  const categoryId = String(selectedCourse.categoryId);
+  const availableCourses = (courseData.availableCourses || []).map((category) => {
+    if (String(category.courseId) !== categoryId) return category;
+    const subjects = category.subjects || [];
+    if (subjects.some((subject) => String(subject.subjectId) === id)) return category;
+    return {
+      ...category,
+      subjects: [
+        ...subjects,
+        {
+          subjectId: selectedCourse.courseId,
+          subjectName: selectedCourse.courseName,
+          subjectPriceString: selectedCourse.coursePriceSelectedString,
+          subjectCredit: credit,
+          courseType: selectedCourse.courseType,
+          courseDescriptionUrl: selectedCourse.courseDescriptionUrl,
+        },
+      ],
+    };
+  });
+  return {
+    ...courseData,
+    availableCourses,
+    selectedSubjectsAsString: parseIds(courseData.selectedSubjectsAsString).filter((x) => x !== id).join(","),
+    selectedSubjects: (courseData.selectedSubjects || []).filter((course) => String(course.courseId) !== id),
+    totalCredit: Math.max(0, Number(courseData.totalCredit || 0) - credit),
+  };
+}
+
+/**
+ * "Remove all", applied locally. Mandatory courses stay: sending an empty selection
+ * makes the backend re-populate the compulsory subjects for the grade
+ * (CTECourseUtil, getCompulsarySubjectsByStandardId), so clearing them here would
+ * only diverge from whatever the eventual save returns.
+ */
+function optimisticRemoveAll(courseData) {
+  return (courseData.selectedSubjects || [])
+    .filter((course) => course.courseMandatory !== 1)
+    .reduce((next, course) => optimisticRemove(next, course), courseData);
+}
+
+// A selected CourseDTO's `courseType` is overwritten with Compulsory/Optional, so
+// the variant has to come back out of `courseTypeOriginal`.
+function variantTypeCode(courseTypeOriginal) {
+  const name = String(courseTypeOriginal || "");
+  if (/hon/i.test(name)) return "HON";
+  if (/adv/i.test(name)) return "ADV";
+  return "FT";
+}
+
+/**
+ * Describes `course` as an upgrade target, so that after switching away from it the
+ * student can switch back. Shaped like the CourseWithSameParentDTO the server sends.
+ */
+function variantReturnTarget(course, target) {
+  const courseType = variantTypeCode(course.courseTypeOriginal);
+  const isRegular = courseType === "FT";
+  const hasFee = Number(course.additionalFee) > 0;
+  return {
+    courseId: course.courseId,
+    categoryId: course.categoryId,
+    courseName: course.courseName,
+    courseType,
+    courseTypeOriginal: course.courseTypeOriginal,
+    courseCode: course.courseCode,
+    creditScore: course.creditScore,
+    creditScoreFloat: course.creditScoreFloat,
+    courseMandatory: course.courseMandatory,
+    courseDescriptionUrl: course.courseDescriptionUrl,
+    additionalFee: course.additionalFee,
+    additionalFeeString: course.additionalFeeString,
+    buttonLabel: isRegular ? "Switch to Regular" : `Choose ${course.courseTypeOriginal}`,
+    // upgrade() only raises the fee confirmation when this is non-empty, and
+    // dropping back to the Regular variant never adds a fee — matching the server,
+    // which sends an empty warning on exactly that direction.
+    warningMessage:
+      isRegular || !hasFee
+        ? ""
+        : `You are about to choose ${course.courseTypeOriginal} version of ${course.courseName}. An additional ${course.additionalFeeString} will be added to your Course Fee. Kindly confirm this selection`,
+    // Lets the NEXT toggle restore this exact target object — fee wording included —
+    // rather than rebuilding it from a selected course that no longer carries it.
+    restoreTarget: target,
+  };
+}
+
+/**
+ * Honors/Advance switch, applied locally. Swaps the course for its sibling variant
+ * IN PLACE (same list position, same CSV position) and hands the new entry an
+ * upgradeCourses list pointing back at the variant just left, so the toggle keeps
+ * working without a server round trip.
+ */
+function optimisticUpgrade(courseData, course, target) {
+  const fromId = String(course.courseId);
+  const toId = String(target.courseId);
+  const selected = courseData.selectedSubjects || [];
+  const index = selected.findIndex((entry) => String(entry.courseId) === fromId);
+  if (index === -1) return courseData;
+  const back = target.restoreTarget || variantReturnTarget(course, target);
+  const swapped = {
+    ...course,
+    courseId: target.courseId,
+    categoryId: target.categoryId ?? course.categoryId,
+    courseName: target.courseName ?? course.courseName,
+    // courseType stays as-is: on a selected course it holds Compulsory/Optional,
+    // which describes the slot and doesn't change with the variant.
+    courseTypeOriginal: target.courseTypeOriginal,
+    courseCode: target.courseCode ?? course.courseCode,
+    creditScore: target.creditScore ?? course.creditScore,
+    creditScoreFloat: target.creditScoreFloat ?? course.creditScoreFloat,
+    additionalFee: target.additionalFee,
+    additionalFeeString: target.additionalFeeString,
+    courseDescriptionUrl: target.courseDescriptionUrl ?? course.courseDescriptionUrl,
+    upgradeCourses: [
+      ...(course.upgradeCourses || []).filter((entry) => String(entry.courseId) !== toId),
+      { ...back, restoreTarget: target },
+    ],
+  };
+  const selectedSubjects = [...selected];
+  selectedSubjects[index] = swapped;
+  const creditDelta = (Number(target.creditScoreFloat) || 0) - (Number(course.creditScoreFloat) || 0);
+  return {
+    ...courseData,
+    selectedSubjects,
+    selectedSubjectsAsString: parseIds(courseData.selectedSubjectsAsString)
+      .map((id) => (id === fromId ? toId : id))
+      .join(","),
+    totalCredit: Math.max(0, Number(courseData.totalCredit || 0) + creditDelta),
+  };
+}
+
+/**
+ * Confirming the recommended-courses dialog, applied locally. That dialog REPLACES
+ * the selection outright (see its own note), so this drops whatever isn't in the
+ * confirmed set and adds whatever is missing.
+ *
+ * New courses are built from the catalogue entry in availableCourses where possible,
+ * since RecommendedCourseDTO carries no category, price band or description URL. A
+ * recommendation with no catalogue match still joins the selected list, but can't be
+ * filed under a category in the right-hand pane until the next save refreshes it.
+ */
+function optimisticApplyRecommended(courseData, ids, recommendedCourses = []) {
+  const wanted = ids.map(String);
+  const wantedSet = new Set(wanted);
+  let next = (courseData.selectedSubjects || [])
+    .filter((course) => !wantedSet.has(String(course.courseId)))
+    .reduce((acc, course) => optimisticRemove(acc, course), courseData);
+
+  const catalogue = new Map();
+  for (const category of next.availableCourses || []) {
+    for (const subject of category.subjects || []) {
+      catalogue.set(String(subject.subjectId), { category, subject });
+    }
+  }
+  const recommended = new Map(recommendedCourses.map((course) => [String(course.subjectId), course]));
+
+  for (const id of wanted) {
+    if (parseIds(next.selectedSubjectsAsString).includes(id)) continue;
+    const match = catalogue.get(id);
+    if (match) {
+      next = optimisticAdd(next, match.category, match.subject);
+      continue;
+    }
+    const recommendation = recommended.get(id);
+    if (!recommendation) continue;
+    next = optimisticAdd(
+      next,
+      { courseId: undefined, courseName: "" },
+      {
+        subjectId: recommendation.subjectId,
+        subjectName: recommendation.subjectName,
+        subjectCredit: recommendation.subjectCredit,
+        subjectPriceString: recommendation.subjectPriceString,
+        courseMandatory: recommendation.courseMandatory,
+      }
+    );
+  }
+  return next;
 }
 
 function CourseSummaryLink({ url }) {
@@ -300,13 +548,14 @@ function useIsMobile(breakpointPx = 768) {
 // everywhere else, immediately — same extra-fee/AP/no-live-class confirm
 // gates, same request per subject, just triggered per-row instead of via a
 // checkbox + batch "Add" button.
-function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentOption, busy, onAddSubject, closeOnAdd }) {
+function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentOption, busy, onAddSubject, onRemoveSubject, closeOnAdd }) {
   const [addingId, setAddingId] = useState(null);
+  const [removingId, setRemovingId] = useState(null);
 
   if (!course) return null;
 
   async function handleAdd(subject) {
-    if (busy || addingId) return;
+    if (busy || addingId || removingId) return;
     const id = String(subject.subjectId);
     setAddingId(id);
     try {
@@ -316,21 +565,41 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
       setAddingId(null);
     }
   }
+
+  async function handleRemove(subject) {
+    if (busy || addingId || removingId) return;
+    const id = String(subject.subjectId);
+    setRemovingId(id);
+    try {
+      await onRemoveSubject(subject.selectedCourse);
+    } finally {
+      setRemovingId(null);
+    }
+  }
+  // Base UI asks to close for several reasons, "focus-out" among them. Adding or
+  // removing a course unmounts the very control that was just pressed (Add becomes
+  // a tick, the tick becomes Add), focus falls back to the body, and the sheet
+  // would close on its own mid-selection. Honour only a deliberate dismissal.
+  function handleOpenChange(open, eventDetails) {
+    if (open) return;
+    const reason = eventDetails?.reason;
+    if (reason === "escape-key" || reason === "outside-press" || reason === "close-press" || reason === "trigger-press") {
+      onClose();
+    }
+  }
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
+    <Dialog open onOpenChange={handleOpenChange}>
       <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-md">
         <DialogHeader className="flex-row items-center gap-2 space-y-0  px-4 py-3">
           <div className="min-w-0 flex-1">
             <DialogTitle className="text-base font-semibold text-black">{course.courseName}</DialogTitle>
-            <p className="text-xs text-black">
-              {course.subjects.length} Course{course.subjects.length === 1 ? "" : "s"} available
-            </p>
+            <p className="text-xs text-black">{addableCountLabel(course.subjects.length)}</p>
           </div>
         </DialogHeader>
         <div className="max-h-[60vh] divide-y divide-slate-100 overflow-y-auto">
-          {course.subjects.map((subject) => {
+          {(course.displaySubjects || course.subjects).map((subject) => {
             const id = String(subject.subjectId);
-            const alreadySelected = selectedIds.includes(id);
+            const alreadySelected = subject.alreadySelected || selectedIds.includes(id);
             const notes = subjectNotes(subject, data, showPaymentOption);
             return (
               <div key={id} className="flex items-center gap-3 px-4 py-3">
@@ -349,15 +618,36 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
                     </p>
                   ))}
                 </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => handleAdd(subject)}
-                  disabled={alreadySelected || busy || Boolean(addingId)}
-                  className="shrink-0 rounded-md bg-primary hover:bg-primary/90"
-                >
-                  <Plus className="h-4 w-4" /> {alreadySelected ? "Added" : addingId === id ? "Adding…" : "Add"}
-                </Button>
+                {alreadySelected ? (
+                  <span className="flex shrink-0 items-center gap-3">
+                    <span title="Already selected" className="flex items-center text-emerald-600">
+                      <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+                      <span className="sr-only">Already selected</span>
+                    </span>
+                    {canRemoveSelected(subject) && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemove(subject)}
+                        disabled={busy || Boolean(addingId) || Boolean(removingId)}
+                        title="Remove course"
+                        aria-label={`Remove ${subject.subjectName}`}
+                        className="inline-flex cursor-pointer items-center text-red-600 hover:text-red-700 disabled:opacity-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </span>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => handleAdd(subject)}
+                    disabled={busy || Boolean(addingId) || Boolean(removingId)}
+                    className="shrink-0 rounded-md bg-primary hover:bg-primary/90"
+                  >
+                    <Plus className="h-4 w-4" /> {addingId === id ? "Adding…" : "Add"}
+                  </Button>
+                )}
               </div>
             );
           })}
@@ -419,6 +709,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   const courseQuery = useCourseDetails({ context, userId, standardId });
   const paymentOption = useShowPaymentOption({ context, userId });
   const update = useUpdateCourseSelection({ context, userId, standardId });
+  const applyLocal = useLocalCourseUpdate({ userId, standardId });
   const recommended = useRecommendedCourses({ context, userId });
   const proceed = useProceedToReview({ context, userId });
   // Change Grade & DOB modal (changeSelectedGrade()/saveSelectedGradeAndDob()
@@ -451,6 +742,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   const apAcknowledgedRef = useRef(false);
   // Legacy oneTimeModal: the "extra fee from now on" notice shows once.
   const extraFeeNoticeShownRef = useRef(false);
+  // Add/remove/toggle only edit the cached page; nothing is persisted until
+  // flushSelection writes the whole selection in one call. True means the cached
+  // page is ahead of what's in the database.
+  const unsavedRef = useRef(false);
 
   // Desktop/tablet only (>767px): .course-category's height is pinned to
   // whatever height .suject-category (the sidebar) naturally renders at —
@@ -504,6 +799,19 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       apAcknowledgedRef.current = true;
     }
   }, [data]);
+
+  // Courses now live only in the cache until Next/Back saves them, so a reload or
+  // tab close would drop them without this. The browser shows its own generic
+  // "leave site?" prompt; the string is ignored by every current browser.
+  useEffect(() => {
+    function warnIfUnsaved(event) {
+      if (!unsavedRef.current) return;
+      event.preventDefault();
+      event.returnValue = "";
+    }
+    window.addEventListener("beforeunload", warnIfUnsaved);
+    return () => window.removeEventListener("beforeunload", warnIfUnsaved);
+  }, []);
 
   useEffect(() => {
     if (!initialFailure) return;
@@ -586,21 +894,46 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     toast.error(response.categoryMandatoryMessage || response.message || fallback);
   }
 
-  async function applyChange(change) {
+  /**
+   * Writes the accumulated selection to the server in ONE
+   * course-details-by-standard-id call. Called before leaving the step (Next/Back),
+   * since add/remove/toggle/remove-all no longer save as you go.
+   *
+   * Resolves { ok, courseData } — courseData is the server's fresh page on a flush,
+   * or the current page when there was nothing to save, so callers don't act on a
+   * stale closure.
+   */
+  async function flushSelection() {
+    if (!unsavedRef.current) return { ok: true, courseData: data };
+    const ids = parseIds(data?.selectedSubjectsAsString);
     try {
-      const response = await update.mutateAsync({ standardId: data.standardId, ...change });
+      const response = await update.mutateAsync({
+        standardId: data.standardId,
+        selectedSubjects: ids.join(","),
+        // An empty selection is a "remove", anything else an "add" — the backend
+        // uses controlType only for its own messaging, and the recommended-courses
+        // flow already saved a whole set this way.
+        controlType: ids.length === 0 ? "remove" : "add",
+      });
       if (!isSuccessResponse(response)) {
-        handleFailure(response, "Could not update your courses. Please try again.");
-        return false;
+        handleFailure(response, "Could not save your courses. Please try again.");
+        return { ok: false, courseData: data };
       }
-      // The backend's own "Course added"/"Course removed" message used to also render as an
-      // inline banner under "Your Selected Courses" — redundant with the toast each caller
-      // (addSubject/removeSubject/upgrade/removeAll) already shows, so it's dropped here.
-      return true;
+      unsavedRef.current = false;
+      // The backend can drop courses it won't accept (AP below the credit minimum,
+      // over-limit rows). If what came back isn't what we sent, the student is now
+      // looking at a different selection than they picked, so stop rather than
+      // carrying on to payment with it.
+      const savedIds = parseIds(response.selectedSubjectsAsString);
+      if (savedIds.length !== ids.length || savedIds.some((id) => !ids.includes(id))) {
+        toast.error("Some courses could not be saved. Please review your selection.");
+        return { ok: false, courseData: response };
+      }
+      return { ok: true, courseData: response };
     } catch (err) {
-      console.error("Stage3CourseSelection update failed:", err);
+      console.error("Stage3CourseSelection save failed:", err);
       toast.error(GENERIC_ERROR);
-      return false;
+      return { ok: false, courseData: data };
     }
   }
 
@@ -656,23 +989,21 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       if (!confirmed) return false;
     }
     setOpenCourseId(course.courseId);
-    const added = await applyChange({
-      selectedSubjects: [...selectedIds, String(subject.subjectId)].join(","),
-      controlType: "add",
-      courseId: course.courseId,
-    });
-    if (added) toast.success(`${subject.subjectName} Added`);
+    const added = applyLocal((previous) => optimisticAdd(previous, course, subject));
+    if (added) {
+      unsavedRef.current = true;
+      toast.success(`${subject.subjectName} Added`);
+    }
     return added;
   }
 
   async function removeSubject(course) {
     if (busy) return;
-    const removed = await applyChange({
-      selectedSubjects: selectedIds.filter((id) => id !== String(course.courseId)).join(","),
-      controlType: "remove",
-      courseId: course.categoryId,
-    });
-    if (removed) toast.success(`${course.courseName} Removed`);
+    const removed = applyLocal((previous) => optimisticRemove(previous, course));
+    if (removed) {
+      unsavedRef.current = true;
+      toast.success(`${course.courseName} Removed`);
+    }
   }
 
   async function removeAll() {
@@ -684,8 +1015,11 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     });
     if (!confirmed) return;
     apAcknowledgedRef.current = false;
-    const removed = await applyChange({ selectedSubjects: "", controlType: "remove" });
-    if (removed) toast.success("All Courses Removed");
+    const removed = applyLocal(optimisticRemoveAll);
+    if (removed) {
+      unsavedRef.current = true;
+      toast.success("All Courses Removed");
+    }
   }
 
   async function upgrade(course, target) {
@@ -710,43 +1044,21 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     // of this CSV (getOrderedSubjects' `ORDER BY FIELD(SUBJECT_ID, ...)`, then
     // CTECourseUtil.reorderSelectedCourses), so appending made a course jump to the
     // bottom of the list the moment its Honors/Advanced toggle was flipped.
-    const upgradedIds = selectedIds.map((id) => (id === String(course.courseId) ? String(target.courseId) : id));
-    // The current course should always be in the selected list, but don't silently
-    // drop the upgrade if it somehow isn't.
-    if (!upgradedIds.includes(String(target.courseId))) upgradedIds.push(String(target.courseId));
-    const switched = await applyChange({
-      selectedSubjects: upgradedIds.join(","),
-      controlType: "add",
-      courseId: course.categoryId,
-    });
+    const switched = applyLocal((previous) => optimisticUpgrade(previous, course, target));
     if (switched) {
+      unsavedRef.current = true;
       // Names the actual resulting subject (e.g. "English I Honors added" / "English I added"),
       // not a generic "Switch to Honors"/"Switch to Regular" — course.courseName is the subject's
       // own display name (e.g. "English I"), and courseTypeOriginal === "Regular" means this
       // upgrade is switching TO the alternate (Honors/Advanced) variant named by target.courseType.
-      const currentType = String(course.courseTypeOriginal || "").toUpperCase();
-      const targetType = String(target.courseType || "").toUpperCase();
       const subjectName = stripVariantSuffix(course.courseName);
-      // const variantSuffix = currentType === "REGULAR" ? /ADV|ADVANCED/.test(targetType) ? " Advanced" : /HON|HONORS/.test(targetType) ? " Honors" : "" : "";
-      const variantSuffix = (() => {
-        if (currentType === "REGULAR") {
-          if (/ADV|ADVANCED/.test(targetType)) {
-            return " Advanced";
-          } else if (/HON|HONORS/.test(targetType)) {
-            return " Honors";
-          }
-        }else if(currentType == "HONORS" || currentType == "ADVANCED"){
-          if (/FT|REGULAR/.test(targetType)) {
-            return " Regular";
-          }
-        }else{
-          return "";
-        }
-      })();
-      if (/FT|REGULAR/.test(targetType)) {
+      if (backToRegular) {
         toast.success(`Switched back to ${subjectName}`);
-      }else{
-        toast.success(`${subjectName}${variantSuffix} Added`);
+      } else {
+        // Named from the TARGET alone. Keying this off the course's current type
+        // left several branches with no return — Honors -> Advanced among them —
+        // and the undefined reached the toast as "<course> undefined Added".
+        toast.success(`${subjectName} ${variantLabel} Added`);
       }
     }
   }
@@ -784,7 +1096,13 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       });
       if (!isSuccessResponse(courseResponse)) {
         handleFailure(courseResponse, "Grade saved, but could not refresh courses for it. Please try again.");
+        return;
       }
+      // Courses are grade-specific, so the new grade's page replaces the old one
+      // outright — any local, unsaved picks for the PREVIOUS grade are gone on
+      // purpose, and the flag has to drop with them or Next would re-save a
+      // selection that's already server-fresh.
+      unsavedRef.current = false;
     } catch (err) {
       console.error("Stage3CourseSelection change-grade failed:", err);
       toast.error(GENERIC_ERROR);
@@ -808,8 +1126,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
   async function confirmRecommended(ids) {
     apAcknowledgedRef.current = false;
-    const saved = await applyChange({ selectedSubjects: ids.join(","), controlType: "add" });
+    const recommendedCourses = recommendedData?.recommendedCourses || [];
+    const saved = applyLocal((previous) => optimisticApplyRecommended(previous, ids, recommendedCourses));
     if (saved) {
+      unsavedRef.current = true;
       setRecommendedData(null);
       toast.success("Recommended courses added");
     }
@@ -817,12 +1137,24 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
   function handleAiApplied(courseDetails, landedSubjectIds) {
     if (isSuccessResponse(courseDetails)) {
-      // Same cache entry Step 3 renders from; the backend already saved this selection.
+      // Same cache entry Step 3 renders from; the backend already saved this
+      // selection, so any locally-pending edits are superseded by it.
       queryClient.setQueryData(courseDetailsKey(userId, standardId), courseDetails);
+      unsavedRef.current = false;
     }
     setAiLanded(new Set((landedSubjectIds || []).map(String)));
     clearTimeout(aiLandedTimer.current);
     aiLandedTimer.current = setTimeout(() => setAiLanded(new Set()), 4000);
+  }
+
+  // Leaving the step in either direction has to persist the selection, otherwise
+  // everything picked since the page loaded is gone. A failed save keeps the student
+  // here with the error rather than silently discarding their courses.
+  async function handleBack() {
+    if (busy) return;
+    const saved = await flushSelection();
+    if (!saved.ok) return;
+    onBack?.();
   }
 
   async function handleNext() {
@@ -832,8 +1164,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       toast.error(creditError);
       return;
     }
+    const saved = await flushSelection();
+    if (!saved.ok) return;
     try {
-      const { ok, response } = await proceed.mutateAsync({ courseData: data, showPaymentOption });
+      const { ok, response } = await proceed.mutateAsync({ courseData: saved.courseData, showPaymentOption });
       if (!ok) {
         handleFailure(response, "Could not continue. Please try again.");
         return;
@@ -867,7 +1201,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         </p>
         <div className="mt-6 flex gap-3">
           {onBack && (
-            <Button type="button" variant="outline" onClick={onBack}>
+            <Button type="button" variant="outline" onClick={handleBack} disabled={busy}>
               Back
             </Button>
           )}
@@ -900,7 +1234,55 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   const selectedCourses = data.selectedSubjects || [];
   const mandatoryCount = selectedCourses.filter((course) => course.courseMandatory === 1).length;
   const canRemoveAll = !fixed && selectedCourses.length > mandatoryCount;
-  const availableCourses = (data.availableCourses || []).filter((course) => course.subjects?.length > 0);
+  // The backend strips every already-selected subject out of availableCourses
+  // (CTECourseUtil's `selectedIdsCopy.contains(...)` / parentId checks), so this
+  // pane never receives them and a category silently shrinks as you pick from it.
+  // Re-attach them from data.selectedSubjects for DISPLAY only: they render with a
+  // tick instead of an Add button, so the student sees a category's full set rather
+  // than only what's left. CourseDTO (selected) and SubjectB2CDTO (available) don't
+  // share field names, hence the remap.
+  const selectedIdSet = new Set(parseIds(data?.selectedSubjectsAsString));
+  const selectedByCategory = new Map();
+  for (const course of selectedCourses) {
+    const key = String(course.categoryId);
+    const entry = {
+      subjectId: course.courseId,
+      subjectName: course.courseName,
+      subjectPriceString: course.coursePriceSelectedString,
+      courseDescriptionUrl: course.courseDescriptionUrl,
+      alreadySelected: true,
+      courseMandatory: course.courseMandatory,
+      // Kept whole so the row's remove button can hand removeSubject() the exact
+      // object it expects (it reads courseId AND categoryId off it).
+      selectedCourse: course,
+    };
+    const existing = selectedByCategory.get(key);
+    if (existing) existing.push(entry);
+    else selectedByCategory.set(key, [entry]);
+  }
+  const availableCourses = (data.availableCourses || [])
+    .map((course) => {
+      // Selection wins: a subject that is selected is never also offered as
+      // addable. The backend already strips those, but a local add leaves the
+      // subject in `subjects` until the next save, and without this filter the
+      // same course would render twice — once with Add, once with a tick.
+      const addable = (course.subjects || []).filter(
+        (subject) => !selectedIdSet.has(String(subject.subjectId))
+      );
+      const picked = selectedByCategory.get(String(course.courseId)) || [];
+      return {
+        ...course,
+        subjects: addable,
+        // Addable + already-selected, A-Z. `subjects` deliberately stays
+        // addable-only so the category counts keep meaning "available to add".
+        displaySubjects: [...addable, ...picked].sort((a, b) =>
+          String(a.subjectName || "").localeCompare(String(b.subjectName || ""))
+        ),
+      };
+    })
+    // A category whose courses are now ALL selected has an empty `subjects` but a
+    // non-empty `displaySubjects`, and still belongs in the list.
+    .filter((course) => course.displaySubjects.length > 0);
   const showAvailable = !fixed && availableCourses.length > 0;
   const effectiveOpenId = openCourseId ?? availableCourses[0]?.courseId;
   const showMinBanner = Number(data.courseProviderId) !== 39 && Number(data.minCourseLimit) > Number(data.totalCredit);
@@ -925,7 +1307,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     ? availableCourses.filter(
         (course) =>
           course.courseName?.toLowerCase().includes(query) ||
-          course.subjects?.some((subject) => subject.subjectName?.toLowerCase().includes(query))
+          course.displaySubjects?.some((subject) => subject.subjectName?.toLowerCase().includes(query))
       )
     : availableCourses;
   const activeCourse = visibleCourses.find((course) => course.courseId === effectiveOpenId) || visibleCourses[0];
@@ -1183,6 +1565,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               <ol className="divide-y divide-slate-100 md:hidden">
                 {selectedCourses.map((course, index) => {
                   const singleUpgradeTarget = course.upgradeCourses?.length === 1 ? course.upgradeCourses[0] : null;
+                  // Any variant control at all — the toggle (exactly one alternate) or
+                  // the arrow buttons (more than one). Either way the control names the
+                  // variant, so the course name doesn't have to.
+                  const hasVariantControl = (course.upgradeCourses?.length || 0) > 0;
                   return (
                     <li key={course.courseId} className={`flex items-start justify-between gap-3 px-4 py-3 ${aiLanded.has(String(course.courseId)) ? "ai-land" : ""}`}>
                       <div className="min-w-0 flex-1">
@@ -1191,7 +1577,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                             {index + 1}
                           </span>
                           <p className="text-sm font-medium text-black course_name">
-                            {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}
+                            {hasVariantControl ? stripVariantSuffix(course.courseName) : course.courseName}
                           </p>
                           {aiLanded.has(String(course.courseId)) && (
                             <span className="ai-rise rounded bg-[#3fa43c] px-1.5 py-0.5 text-[10px] font-semibold text-white">AI pick</span>
@@ -1243,6 +1629,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               {selectedCourses.map((course, index) => {
                 const CourseIcon = categoryIcon(course.courseName);
                 const singleUpgradeTarget = course.upgradeCourses?.length === 1 ? course.upgradeCourses[0] : null;
+                // Any variant control at all — the toggle (exactly one alternate) or the
+                // arrow buttons (more than one). Either way the control names the variant,
+                // so the course name doesn't have to.
+                const hasVariantControl = (course.upgradeCourses?.length || 0) > 0;
                 return (
                   <li key={course.courseId} className={`flex flex-col ${aiLanded.has(String(course.courseId)) ? "ai-land" : ""} ${!fixed && course.courseMandatory === 1 && !batchOrProvider39 ? 'gap-3' : ''} rounded-md border border-slate-100 bg-blue-50 px-3 py-1.5 shadow-sm sm:flex-row sm:flex-wrap sm:items-center md:rounded-none md:border-0 md:bg-transparent md:p-0 md:px-4 md:py-3 md:shadow-none`}>
                     <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -1252,7 +1642,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
                       <div className="min-w-0 inline-flex flex-1">
                         <div className="text-sm inline-flex font-medium text-black items-center">
-                          <span> {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}</span>
+                          <span> {hasVariantControl ? stripVariantSuffix(course.courseName) : course.courseName}</span>
                           {aiLanded.has(String(course.courseId)) && (
                             <span className="ai-rise ml-2 rounded bg-[#3fa43c] px-1.5 py-0.5 text-[10px] font-semibold text-white">AI pick</span>
                           )}
@@ -1478,17 +1868,17 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                                 delay={100}
                                 render={
                                   <span
-                                    aria-label={`${course.subjects.length} course${course.subjects.length === 1 ? "" : "s"} available`}
+                                    aria-label={addableCountLabel(course.subjects.length)}
                                     className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
                                       active ? "bg-primary text-white" : "bg-slate-100 text-black"
                                     }`}
                                   />
                                 }
                               >
-                                {course.subjects.length}
+                                {course.subjects.length === 0 ? <Check className="h-3 w-3" aria-hidden="true" /> : course.subjects.length}
                               </TooltipTrigger>
                               <TooltipContent>
-                                {course.subjects.length} course{course.subjects.length === 1 ? "" : "s"} available
+                                {addableCountLabel(course.subjects.length)}
                               </TooltipContent>
                             </Tooltip>
                           </button>
@@ -1504,12 +1894,12 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                       <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
                         <span className="text-sm font-semibold text-primary">{activeCourse.courseName}</span>
                         <span className="flex items-center gap-1 text-xs text-black">
-                          {activeCourse.subjects.length} course{activeCourse.subjects.length === 1 ? "" : "s"} available <ChevronDown className="h-3.5 w-3.5" />
+                          {addableCountLabel(activeCourse.subjects.length)} <ChevronDown className="h-3.5 w-3.5" />
                         </span>
                       </div>
                       <div className="space-y-2 p-4" style={detailPaneHeight>250 ? { height: detailPaneHeight, overflowY: "auto" } : { maxHeight: "300px", overflowY: "auto" }}>
                         {activeCourse.courseDescription && <p className="text-xs text-black">{activeCourse.courseDescription}</p>}
-                        {activeCourse.subjects
+                        {activeCourse.displaySubjects
                           .filter((subject) => !query || subject.subjectName?.toLowerCase().includes(query) || activeCourse.courseName?.toLowerCase().includes(query))
                           .map((subject) => {
                             const notes = subjectNotes(subject, data, showPaymentOption);
@@ -1537,9 +1927,30 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                                     {/* <p>{subject.subjectCredit} credit</p> */}
                                   </div>
                                 )}
-                                <Button type="button" size="sm" onClick={() => addSubject(activeCourse, subject)} disabled={busy} className="rounded-md bg-primary hover:bg-primary/90">
-                                  <Plus className="h-4 w-4" /> Add
-                                </Button>
+                                {subject.alreadySelected ? (
+                                  <span className="flex shrink-0 items-center gap-2">
+                                    <span title="Already selected" className="flex items-center text-emerald-600">
+                                      <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+                                      <span className="sr-only">Already selected</span>
+                                    </span>
+                                    {canRemoveSelected(subject) && (
+                                      <button
+                                        type="button"
+                                        onClick={() => removeSubject(subject.selectedCourse)}
+                                        disabled={busy}
+                                        title="Remove course"
+                                        aria-label={`Remove ${subject.subjectName}`}
+                                        className="inline-flex cursor-pointer items-center text-red-600 hover:text-red-700 disabled:opacity-50"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </button>
+                                    )}
+                                  </span>
+                                ) : (
+                                  <Button type="button" size="sm" onClick={() => addSubject(activeCourse, subject)} disabled={busy} className="rounded-md bg-primary hover:bg-primary/90">
+                                    <Plus className="h-4 w-4" /> Add
+                                  </Button>
+                                )}
                               </div>
                             );
                           })}
@@ -1566,7 +1977,9 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                             <div className="flex-1 flex-col flex">
                               <span className="min-w-0 flex-1 truncate text-black">{course.courseName}</span>
                               <span className="px-2 w-fit shrink-0 items-center justify-center rounded-full border border-black-300 bg-white text-[11px] font-semibold text-black mt-2">
-                                {course.subjects.length} {course.subjects.length>1?'Courses':'Course'} available
+                                {course.subjects.length === 0
+                                  ? "All selected"
+                                  : `${course.subjects.length} ${course.subjects.length > 1 ? "Courses" : "Course"} available`}
                               </span>
                             </div>
                           </div>
@@ -1593,6 +2006,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           showPaymentOption={showPaymentOption}
           busy={busy}
           onAddSubject={addSubject}
+          onRemoveSubject={removeSubject}
           closeOnAdd={CLOSE_CATEGORY_DIALOG_ON_ADD}
         />
       )}
@@ -1610,7 +2024,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         {/* <p className="text-xs text-black">Your course choices are saved as you make them.</p> */}
         <MobileActionBar context={context}>
           {onBack && (
-            <Button type="button" variant="outline" className="cursor-pointer" onClick={onBack} disabled={busy}>
+            <Button type="button" variant="outline" className="cursor-pointer" onClick={handleBack} disabled={busy}>
               {inReview ? "Cancel" : "Back"}
             </Button>
           )}
