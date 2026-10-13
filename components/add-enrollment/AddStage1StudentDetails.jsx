@@ -230,7 +230,7 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, ini
 
         <FloatingLabelSelect
           icon={BookOpen}
-          label={<Req label="Select Learning Program" required />}
+          label={<Req label={fields.learningProgram ? "Selected Learning Program" : "Select Learning Program"} required />}
           value={fields.learningProgram}
           onValueChange={setLearningProgram}
           options={LEARNING_PROGRAMS}
@@ -254,7 +254,7 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, ini
         />
         <FloatingLabelSelect
           icon={GraduationCap}
-          label={<Req label="Select Grade" required />}
+          label={<Req label={fields.standardId ? "Selected Grade" : "Select Grade"} required />}
           value={fields.standardId}
           onValueChange={setGrade}
           options={grades.data || []}
@@ -273,7 +273,7 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, ini
         />
         <FloatingLabelSelect
           icon={VenusAndMars}
-          label={<Req label="Select Gender" required />}
+          label={<Req label={fields.gender ? "Selected Gender" : "Select Gender"} required />}
           value={fields.gender}
           onValueChange={(v) => setField("gender", v)}
           options={GENDER_OPTIONS}

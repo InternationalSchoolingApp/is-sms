@@ -5,7 +5,6 @@ import { ArrowLeft, ArrowRight, ArrowRightLeft, ChevronRight, CircleCheckBig, In
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import {
   CURRENCY_TO_FLAG_COUNTRY,
   FLAG_COUNTRY_TO_CURRENCY,
@@ -35,7 +34,9 @@ import {
 // Backend static assets (legacy PATH_FOLDER_IMAGE2 / PATH_FOLDER_FONT2).
 const IMAGES = "static/theme2/images/";
 const FLAGS = "static/theme2/fonts/";
-const assetUrl = (folder, file) => `${resolveBackendOrigin()}/${folder}${file}`;
+// Same-origin path, proxied to the backend by the /static/theme2 rewrite in next.config.mjs. The backend
+// origin itself is plain http (IP:port) on UAT, which an https page blocks as mixed content.
+const assetUrl = (folder, file) => `/${folder}${file}`;
 
 // Gateways with no Pay Now button here: YOCO's is hidden (its own SDK flow), offline ones submit a form.
 const NO_PAY_BUTTON = ["YOCO", "CASH", "WIRETRANSFER"];
