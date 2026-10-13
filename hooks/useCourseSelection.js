@@ -21,7 +21,7 @@ function isSuccessResponse(response) {
 // standardId is part of the key: without it, changing grade on Stage 1 and
 // returning to Stage 3 would keep serving the previous grade's cached
 // response (staleTime: Infinity below) instead of refetching for the new one.
-function courseDetailsKey(userId, standardId) {
+export function courseDetailsKey(userId, standardId) {
   return ["course-details", userId, standardId == null ? "" : String(standardId)];
 }
 
