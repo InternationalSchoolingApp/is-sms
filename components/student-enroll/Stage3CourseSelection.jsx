@@ -48,10 +48,12 @@ import {
   useShowPaymentOption,
   useUpdateCourseSelection,
 } from "@/hooks/useCourseSelection";
+import { STATUS_ELIGIBLE_CUSTOM_PLAN, STATUS_REDIRECT_TO_DASHBOARD } from "@/hooks/useStudentReview";
 import { useGradeOptions, useCountryOptions, useStudentDetailsPrefill, useStudentDetailsSignup } from "@/hooks/useStudentDetailsSignup";
 import { getCourseAddCheck, hidesCourseCredits, validateCourseCredits } from "@/utils/studentSignupValidation";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { saveWizardStudentFields } from "@/utils/wizardStorage";
+import { legacyEnrollmentProcessUrl } from "@/utils/backendOrigin";
 import { FaAngleRight, FaArrowDown, FaExchangeAlt, FaRegEyeSlash } from "react-icons/fa";
 import { TfiAngleDown, TfiAngleUp } from "react-icons/tfi";
 
@@ -504,8 +506,27 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   }, [data]);
 
   useEffect(() => {
-    if (initialFailure?.status === STATUS_SESSION_OUT) onSessionExpired?.();
-  }, [initialFailure, onSessionExpired]);
+    if (!initialFailure) return;
+    if (initialFailure.status === STATUS_SESSION_OUT) {
+      onSessionExpired?.();
+      return;
+    }
+    if (initialFailure.statusCode === "FLAGGED") {
+      setFlaggedModal({ sessionName: initialFailure.message });
+      return;
+    }
+    // Enrollment already completed/withdrawn: reload like legacy's signupStudentStage3.js does —
+    // enrollment/process then answers REDIRECT and useEnrollmentContext sends the student to
+    // their dashboard (same handling as Stage4ReviewPayment's review-details failure).
+    if (initialFailure.statusCode === STATUS_REDIRECT_TO_DASHBOARD) {
+      window.location.reload();
+      return;
+    }
+    if (initialFailure.statusCode === STATUS_ELIGIBLE_CUSTOM_PLAN) {
+      const url = legacyEnrollmentProcessUrl(context?.schoolUUID, userId);
+      if (url) window.location.href = url;
+    }
+  }, [initialFailure, onSessionExpired, context?.schoolUUID, userId]);
 
   const minCreditsReachedRef = useRef(null);
   useEffect(() => {

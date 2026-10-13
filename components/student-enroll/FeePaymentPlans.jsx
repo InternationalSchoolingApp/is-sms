@@ -252,10 +252,14 @@ function buildExtraRows(fee) {
   return rows;
 }
 
+// Always itemized under the "Fee discount" / "Pay-in-full discount" heading — even a single
+// discount (e.g. just a Scholarship code) is listed as its own line under that heading rather
+// than replacing it, same as Extra Course Fee / Fee Already Paid above.
 function discountRow(youSave, label) {
   if (!youSave?.description?.length) return null;
-  return { label, amount: `- ${youSave.totalEntityFeeString}`, tone: "discount" };
+  return breakdownBlock({ title: label, totalLabel: "Total you saved", details: youSave, sign: "-", tone: "discount" });
 }
+
 
 // getAnnualPaymentTable() — one-time "Pay in Full" plan.
 function AnnualSummary({ fee, standardId, isFlexOrDual }) {
@@ -263,7 +267,7 @@ function AnnualSummary({ fee, standardId, isFlexOrDual }) {
   if (isFlexOrDual && fee.enrollmentFee?.enrollmentFee > 0) {
     rows.push({ label: "Enrollment fee", amount: fee.enrollmentFee.enrollmentFeeString });
   }
-  const discount = discountRow(fee.oneTimePayment?.youSave, "Pay-in-full discount");
+  const discount = discountRow(fee.oneTimePayment?.youSave, "Fee Discount");
   if (discount) rows.push(discount);
 
   return (

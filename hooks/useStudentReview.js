@@ -87,26 +87,31 @@ export function useProceedToDashboard({ context, userId }) {
   });
 }
 
+// Resume-poll interval — shortened from legacy's getSignupStatusFinal() (180000ms/3min) to give
+// a cross-browser/cross-tab completion redirect (see useEnrollmentContext.js) a timelier response.
+const STAGE_STATUS_POLL_MS = 30000;
+
 /**
  * Background resume poll, matching getSignupStatusFinal() in
- * signupStudentStage3.js (every 180000ms/3min). Caller is responsible for
- * acting on a non-failure `redirectUri` (window.location.replace) — this
- * hook only fetches.
+ * signupStudentStage3.js (originally every 3min, now every 30s — see
+ * STAGE_STATUS_POLL_MS). Caller is responsible for acting on a non-failure
+ * `redirectUri` (window.location.replace) — this hook only fetches.
  */
+
 export function useSignupStageStatusPoll({ context, uniqueId, enabled = true }) {
   // First call only after one full interval, so a page refresh doesn't hit
   // enrollment-stage-status (resume uses enrollment/process' signupPage instead).
   const [armed, setArmed] = useState(false);
   useEffect(() => {
     if (!enabled) return;
-    const t = setTimeout(() => setArmed(true), 180000);
+    const t = setTimeout(() => setArmed(true), STAGE_STATUS_POLL_MS);
     return () => clearTimeout(t);
   }, [enabled]);
   return useQuery({
     queryKey: ["signup-stage-status", uniqueId],
     queryFn: () => getSignupStageStatus(context.schoolUUID, uniqueId),
     enabled: Boolean(context?.schoolUUID && uniqueId && enabled && armed),
-    refetchInterval: 180000,
+    refetchInterval: STAGE_STATUS_POLL_MS,
     refetchOnWindowFocus: false,
     retry: false,
   });

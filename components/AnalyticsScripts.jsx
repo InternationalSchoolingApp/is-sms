@@ -1,4 +1,5 @@
 import Script from "next/script";
+import { MetaParamBuilder } from "@/components/MetaParamBuilder";
 
 /**
  * Google Tag Manager + Microsoft Clarity loaders — the Next.js equivalent of
@@ -69,6 +70,8 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
         </Script>
       )}
 
+      <MetaParamBuilder />
+
       {fbPixelId && (
         <>
           {/* Facebook Pixel — standard init + PageView. The JSP only showed
@@ -83,19 +86,11 @@ n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];
 s.parentNode.insertBefore(t,s)}(window,document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init','${fbPixelId}');fbq('track','PageView');`}
+fbq('consent','revoke');fbq('init','${fbPixelId}');
+if(document.cookie.indexOf('is_marketing_consent=granted')!==-1){fbq('consent','grant');}
+fbq('track','PageView');`}
           </Script>
-          {/* Facebook Pixel (noscript) */}
-          <noscript>
-            {/* eslint-disable-next-line @next/next/no-img-element -- tracking pixel */}
-            <img
-              height="1"
-              width="1"
-              style={{ display: "none" }}
-              src={`https://www.facebook.com/tr?id=${fbPixelId}&ev=PageView&noscript=1`}
-              alt=""
-            />
-          </noscript>
+          {/* The <noscript> tracking image was removed: it fires without JavaScript and without consent. */}
         </>
       )}
     </>

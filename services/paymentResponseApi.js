@@ -1,4 +1,6 @@
-import { hasBackendOrigin, resolveBackendOrigin } from "@/utils/backendOrigin";
+"use server";
+
+import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
 /**
  * JSON payment-response endpoints from PaymentResponseApiController.java.
@@ -20,8 +22,8 @@ import { hasBackendOrigin, resolveBackendOrigin } from "@/utils/backendOrigin";
  * page's raw searchParams straight through, so nothing is dropped.
  */
 
-function backendUrl(schoolUUID, path) {
-  const baseUrl = resolveBackendOrigin();
+async function backendUrl(schoolUUID, path) {
+  const baseUrl = await resolveServerBackendOrigin();
   if (!hasBackendOrigin() || !schoolUUID) {
     throw new Error("A backend origin and a schoolUUID (from the URL) are required");
   }
@@ -29,7 +31,7 @@ function backendUrl(schoolUUID, path) {
 }
 
 async function getJson(url) {
-  const response = await fetch(url, { method: "GET", credentials: "include" });
+  const response = await fetch(url, { method: "GET" });
   if (!response.ok) return null;
   const text = await response.text();
   if (!text) return null;
@@ -41,13 +43,16 @@ async function getJson(url) {
 }
 
 /**
- * Turn a set of params (object or URLSearchParams) into a query string,
- * skipping empty/nullish values so we never send `?foo=&bar=`.
+ * Turn the page's raw query string into a forwardable one, skipping
+ * empty/nullish values so we never send `?foo=&bar=`. `paramsString` is a
+ * plain string, not a URLSearchParams instance — Server Actions can only
+ * accept serializable arguments (see services/studentSignupApi.js's
+ * getEnrollmentSignupInfo for the same pattern).
  */
-function buildQuery(params) {
+function buildQuery(paramsString) {
+  const params = new URLSearchParams(paramsString || "");
   const search = new URLSearchParams();
-  const entries = params instanceof URLSearchParams ? params.entries() : Object.entries(params || {});
-  for (const [key, value] of entries) {
+  for (const [key, value] of params.entries()) {
     if (value !== undefined && value !== null && String(value) !== "") {
       search.append(key, value);
     }
@@ -59,8 +64,8 @@ function buildQuery(params) {
 /**
  * All four frontend success variants use the API's response-success route.
  */
-export function getPaymentResponseSuccess(schoolUUID, endpointPath, params) {
-  return getJson(`${backendUrl(schoolUUID, endpointPath)}${buildQuery(params)}`);
+export async function getPaymentResponseSuccess(schoolUUID, endpointPath, paramsString) {
+  return getJson(`${await backendUrl(schoolUUID, endpointPath)}${buildQuery(paramsString)}`);
 }
 
 /**
@@ -68,7 +73,7 @@ export function getPaymentResponseSuccess(schoolUUID, endpointPath, params) {
  * customReference and UNIQUEUUID are PATH segments; everything else
  * (paymentGateway, token, gateway signature fields, ...) rides in the query.
  */
-export function getPaymentResponseFailure(schoolUUID, customReference, uniqueUuid, params) {
+export async function getPaymentResponseFailure(schoolUUID, customReference, uniqueUuid, paramsString) {
   const path = `response-failure/${encodeURIComponent(customReference)}/${encodeURIComponent(uniqueUuid)}`;
-  return getJson(`${backendUrl(schoolUUID, path)}${buildQuery(params)}`);
+  return getJson(`${await backendUrl(schoolUUID, path)}${buildQuery(paramsString)}`);
 }
