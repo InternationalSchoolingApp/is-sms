@@ -57,6 +57,7 @@ function useResolveAddEnrollmentContext() {
   const childData = enrollChild.data?.data;
   const childUserId = childData?.userId;
   const childUniqueId = childData?.uniqueId;
+  const childRollNo = childData?.rollNo;
 
   // learningProgram comes from the CHILD's saved details (get-student-details), mapped back to
   // our short code — same shared cache entry Stage 1/2 use, so no extra network call.
@@ -164,6 +165,7 @@ function useResolveAddEnrollmentContext() {
     // Child identity — stage pages use these instead of session.userId/uniqueId.
     childUserId,
     childUniqueId,
+    childRollNo,
     isError: enrollChild.isError || processRedirect?.redirectTo === "login",
   };
 }

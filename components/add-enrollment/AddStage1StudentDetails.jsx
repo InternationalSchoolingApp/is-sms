@@ -99,7 +99,7 @@ function validateAddStudentFields(fields) {
  * from the same hardcoded constant/LearningPrograms.js that the Offline/B2B
  * account form uses, and grade options re-fetch when LP changes.
  */
-export function AddStage1StudentDetails({ context, userId, uniqueId, initialFields, onNext }) {
+export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, initialFields, onNext }) {
   const [fields, setFields] = useState(() => ({ ...INITIAL_FIELDS, ...initialFields }));
   const [errors, setErrors] = useState({});
   // Every field name that has ever shown an error this session (set grows,
@@ -217,6 +217,17 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, initialFiel
       <h2 className="text-center text-xl font-extrabold text-black md:text-2xl">Student Details</h2>
 
       <div className="mt-4.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-2">
+        {rollNo && (
+          <FloatingLabelInput
+            icon={BookOpen}
+            label={<Req label="Roll Number" />}
+            value={rollNo}
+            readOnly
+            disabled
+            inputClassName="cursor-not-allowed bg-slate-100 text-black disabled:pointer-events-auto disabled:opacity-100"
+          />
+        )}
+
         <FloatingLabelSelect
           icon={BookOpen}
           label={<Req label="Select Learning Program" required />}

@@ -21,7 +21,7 @@ import { addEnrollmentStepPath } from "@/utils/addEnrollmentSteps";
 export function AddStudentDetailsStep() {
   const router = useRouter();
   const { school, parentId, sessionUserId } = useParams();
-  const { session, context, ready, childUserId, childUniqueId } = useAddEnrollmentContext();
+  const { session, context, ready, childUserId, childUniqueId, childRollNo } = useAddEnrollmentContext();
   const { redirecting } = useAddWizardResume({ currentStep: 1, context, childUniqueId, ready });
   const prefill = useAddStudentDetailsPrefill({ context, userId: childUserId });
   const queryClient = useQueryClient();
@@ -44,6 +44,7 @@ export function AddStudentDetailsStep() {
       context={context}
       userId={childUserId}
       uniqueId={childUniqueId}
+      rollNo={childRollNo}
       initialFields={initialFields}
       onNext={(fields, saveResponse) => {
         const nextChildUserId = saveResponse?.data?.userId ?? saveResponse?.userId ?? childUserId;

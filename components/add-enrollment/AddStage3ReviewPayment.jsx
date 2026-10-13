@@ -788,22 +788,23 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, onBack, onSe
           />
           <Collapse open={openSectionFor() === "student"}>
           <dl className="py-2 text-sm md:divide-y md:divide-slate-100 md:border-t md:border-slate-100 md:px-4 md:text-sm">
+            
             <ReviewRow label="Student's First Name">{student?.firstName}</ReviewRow>
             <ReviewRow label="Student's Last Name">{student?.lastName}</ReviewRow>
             {course?.standardName && <ReviewRow label="Selected Grade">{course.standardName}</ReviewRow>}
             <ReviewRow label="Date of Birth">{student?.dob}</ReviewRow>
             <ReviewRow label="Select Gender">{student?.genderName}</ReviewRow>
-            <ReviewRow label="Student's Email">{student?.communicationEmail}</ReviewRow>
-            <ReviewRow label="Mobile Number">{phoneLine(student)}</ReviewRow>
+            {/* <ReviewRow label="Student's Email">{student?.communicationEmail}</ReviewRow> */}
+            {/* <ReviewRow label="Mobile Number">{phoneLine(student)}</ReviewRow> */}
             <ReviewRow label="Nationality">{student?.nationality}</ReviewRow>
-            <ReviewRow label="Country (Student's Current Location)">{student?.countryName}</ReviewRow>
+            {/* <ReviewRow label="Country (Student's Current Location)">{student?.countryName}</ReviewRow>
             <ReviewRow label="Province / State">{student?.stateName}</ReviewRow>
-            <ReviewRow label="City">{student?.cityName}</ReviewRow>
+            <ReviewRow label="City">{student?.cityName}</ReviewRow> */}
           </dl>
           </Collapse>
         </section>
 
-        {editing === "parent" && (
+        {/* {editing === "parent" && (
           <ParentInlineEdit
             context={context}
             userId={userId}
@@ -813,8 +814,8 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, onBack, onSe
             onCancel={() => setEditing(null)}
             onSessionExpired={onSessionExpired}
           />
-        )}
-        <section className={ROW_CLASS}>
+        )} */}
+        {/* <section className={ROW_CLASS}>
           <SectionHeader
             title={parentTitle}
             icon={IoMdPeople}
@@ -853,7 +854,7 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, onBack, onSe
             )}
           </dl>
           </Collapse>
-        </section>
+        </section> */}
 
         <section className={ROW_CLASS}>
           <SectionHeader
