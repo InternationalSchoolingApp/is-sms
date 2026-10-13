@@ -46,7 +46,7 @@ export async function POST(request) {
   files.forEach((file) => outgoing.append("files", file, file.name || "marksheet"));
 
   const response = await fetch(
-    `${resolveServerBackendOrigin()}/${session.schoolUUID}/student/enrollment/ai-course-advisor/marksheet/upload`,
+    `${await resolveServerBackendOrigin()}/${session.schoolUUID}/student/enrollment/ai-course-advisor/marksheet/upload`,
     { method: "POST", body: outgoing }
   );
   if (!response.ok) {
