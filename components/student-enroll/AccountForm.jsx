@@ -532,6 +532,20 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
         </label>
         {checkTermsError && <p className="text-xs text-red-600">{checkTermsError}</p>}
 
+        {isProdDeployment && recaptchaSiteKey && (
+          <p className="text-center text-[11px] leading-relaxed text-slate-400">
+            This site is protected by reCAPTCHA and the Google{" "}
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline">
+              Privacy Policy
+            </a>{" "}
+            and{" "}
+            <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer" className="underline">
+              Terms of Service
+            </a>{" "}
+            apply.
+          </p>
+        )}
+
         <div className="flex justify-center pt-1">
           <Button
             type="button"
