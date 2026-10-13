@@ -220,7 +220,7 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, ini
         {rollNo && (
           <FloatingLabelInput
             icon={BookOpen}
-            label={<Req label="Roll Number" />}
+            label={<Req label="Student Id" />}
             value={rollNo}
             readOnly
             disabled
