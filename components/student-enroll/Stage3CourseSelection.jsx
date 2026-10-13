@@ -51,6 +51,14 @@ import {
 } from "@/hooks/useCourseSelection";
 import { STATUS_ELIGIBLE_CUSTOM_PLAN, STATUS_REDIRECT_TO_DASHBOARD } from "@/hooks/useStudentReview";
 import { useGradeOptions, useCountryOptions, useStudentDetailsPrefill, useStudentDetailsSignup } from "@/hooks/useStudentDetailsSignup";
+import {
+  optimisticAdd,
+  optimisticApplyRecommended,
+  optimisticRemove,
+  optimisticRemoveAll,
+  optimisticUpgrade,
+  parseIds,
+} from "@/utils/courseSelectionLocal";
 import { getCourseAddCheck, hidesCourseCredits, validateCourseCredits } from "@/utils/studentSignupValidation";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { saveWizardStudentFields } from "@/utils/wizardStorage";
@@ -72,14 +80,6 @@ const CLOSE_CATEGORY_DIALOG_ON_ADD = false;
 function isSuccessResponse(response) {
   return String(response?.status) === STATUS_SUCCESS;
 }
-
-function parseIds(csv) {
-  return (csv || "")
-    .split(",")
-    .map((id) => id.trim())
-    .filter(Boolean);
-}
-
 function isNoLiveClasses(subject, registrationType) {
   return registrationType !== "SCHOLARSHIP" && (subject.remarks === 0 || subject.remarks === "0");
 }
@@ -158,235 +158,6 @@ function addableCountLabel(count) {
 function canRemoveSelected(subject) {
   return Boolean(subject.selectedCourse) && subject.courseMandatory === 0;
 }
-
-/**
- * Local add/remove/upgrade: pure prev -> next transforms over the cached course
- * page. Add/remove/toggle/remove-all edit the cache only; the accumulated selection
- * is written to the server in ONE call when the step is left (flushSelection).
- *
- * These model LIST MEMBERSHIP and the credit total — what the screen derives
- * everything visible from (selected list, each row's tick/Add state, the counts, the
- * progress ring, the Selection Summary buckets). Fee breakdowns and the backend's
- * own limit messages are NOT recomputed here; they refresh on the next save.
- */
-function optimisticAdd(courseData, category, subject) {
-  const id = String(subject.subjectId);
-  const ids = parseIds(courseData.selectedSubjectsAsString);
-  if (ids.includes(id)) return courseData;
-  const credit = Number(subject.subjectCredit) || 0;
-  // Shaped like a CourseDTO, because that's what the selected list reads.
-  // upgradeCourses is left empty: whether this subject has a Honors/Advanced
-  // sibling is the server's answer, and guessing would flash a toggle that may
-  // then vanish.
-  const entry = {
-    courseId: subject.subjectId,
-    categoryId: category.courseId,
-    courseName: subject.subjectName,
-    courseCategory: category.courseName,
-    courseMandatory: subject.courseMandatory === 1 || subject.isMandatorySubject === true ? 1 : 0,
-    courseType: subject.courseType,
-    courseTypeOriginal: subject.courseType,
-    creditScore: subject.subjectCredit,
-    creditScoreFloat: credit,
-    coursePriceSelectedString: subject.subjectPriceString,
-    courseDescriptionUrl: subject.courseDescriptionUrl,
-    upgradeCourses: [],
-  };
-  return {
-    ...courseData,
-    selectedSubjectsAsString: [...ids, id].join(","),
-    selectedSubjects: [...(courseData.selectedSubjects || []), entry],
-    totalCredit: Number(courseData.totalCredit || 0) + credit,
-  };
-}
-
-function optimisticRemove(courseData, selectedCourse) {
-  const id = String(selectedCourse.courseId);
-  const credit = Number(selectedCourse.creditScoreFloat ?? selectedCourse.creditScore) || 0;
-  // The server strips selected subjects out of availableCourses, so a course
-  // selected at page load has no addable record to fall back to. Put one back, or
-  // removing it would blank the row until the next save instead of flipping it to
-  // "+ Add". A course added earlier in this session is still in that list, hence
-  // the contains check.
-  const categoryId = String(selectedCourse.categoryId);
-  const availableCourses = (courseData.availableCourses || []).map((category) => {
-    if (String(category.courseId) !== categoryId) return category;
-    const subjects = category.subjects || [];
-    if (subjects.some((subject) => String(subject.subjectId) === id)) return category;
-    return {
-      ...category,
-      subjects: [
-        ...subjects,
-        {
-          subjectId: selectedCourse.courseId,
-          subjectName: selectedCourse.courseName,
-          subjectPriceString: selectedCourse.coursePriceSelectedString,
-          subjectCredit: credit,
-          courseType: selectedCourse.courseType,
-          courseDescriptionUrl: selectedCourse.courseDescriptionUrl,
-        },
-      ],
-    };
-  });
-  return {
-    ...courseData,
-    availableCourses,
-    selectedSubjectsAsString: parseIds(courseData.selectedSubjectsAsString).filter((x) => x !== id).join(","),
-    selectedSubjects: (courseData.selectedSubjects || []).filter((course) => String(course.courseId) !== id),
-    totalCredit: Math.max(0, Number(courseData.totalCredit || 0) - credit),
-  };
-}
-
-/**
- * "Remove all", applied locally. Mandatory courses stay: sending an empty selection
- * makes the backend re-populate the compulsory subjects for the grade
- * (CTECourseUtil, getCompulsarySubjectsByStandardId), so clearing them here would
- * only diverge from whatever the eventual save returns.
- */
-function optimisticRemoveAll(courseData) {
-  return (courseData.selectedSubjects || [])
-    .filter((course) => course.courseMandatory !== 1)
-    .reduce((next, course) => optimisticRemove(next, course), courseData);
-}
-
-// A selected CourseDTO's `courseType` is overwritten with Compulsory/Optional, so
-// the variant has to come back out of `courseTypeOriginal`.
-function variantTypeCode(courseTypeOriginal) {
-  const name = String(courseTypeOriginal || "");
-  if (/hon/i.test(name)) return "HON";
-  if (/adv/i.test(name)) return "ADV";
-  return "FT";
-}
-
-/**
- * Describes `course` as an upgrade target, so that after switching away from it the
- * student can switch back. Shaped like the CourseWithSameParentDTO the server sends.
- */
-function variantReturnTarget(course, target) {
-  const courseType = variantTypeCode(course.courseTypeOriginal);
-  const isRegular = courseType === "FT";
-  const hasFee = Number(course.additionalFee) > 0;
-  return {
-    courseId: course.courseId,
-    categoryId: course.categoryId,
-    courseName: course.courseName,
-    courseType,
-    courseTypeOriginal: course.courseTypeOriginal,
-    courseCode: course.courseCode,
-    creditScore: course.creditScore,
-    creditScoreFloat: course.creditScoreFloat,
-    courseMandatory: course.courseMandatory,
-    courseDescriptionUrl: course.courseDescriptionUrl,
-    additionalFee: course.additionalFee,
-    additionalFeeString: course.additionalFeeString,
-    buttonLabel: isRegular ? "Switch to Regular" : `Choose ${course.courseTypeOriginal}`,
-    // upgrade() only raises the fee confirmation when this is non-empty, and
-    // dropping back to the Regular variant never adds a fee — matching the server,
-    // which sends an empty warning on exactly that direction.
-    warningMessage:
-      isRegular || !hasFee
-        ? ""
-        : `You are about to choose ${course.courseTypeOriginal} version of ${course.courseName}. An additional ${course.additionalFeeString} will be added to your Course Fee. Kindly confirm this selection`,
-    // Lets the NEXT toggle restore this exact target object — fee wording included —
-    // rather than rebuilding it from a selected course that no longer carries it.
-    restoreTarget: target,
-  };
-}
-
-/**
- * Honors/Advance switch, applied locally. Swaps the course for its sibling variant
- * IN PLACE (same list position, same CSV position) and hands the new entry an
- * upgradeCourses list pointing back at the variant just left, so the toggle keeps
- * working without a server round trip.
- */
-function optimisticUpgrade(courseData, course, target) {
-  const fromId = String(course.courseId);
-  const toId = String(target.courseId);
-  const selected = courseData.selectedSubjects || [];
-  const index = selected.findIndex((entry) => String(entry.courseId) === fromId);
-  if (index === -1) return courseData;
-  const back = target.restoreTarget || variantReturnTarget(course, target);
-  const swapped = {
-    ...course,
-    courseId: target.courseId,
-    categoryId: target.categoryId ?? course.categoryId,
-    courseName: target.courseName ?? course.courseName,
-    // courseType stays as-is: on a selected course it holds Compulsory/Optional,
-    // which describes the slot and doesn't change with the variant.
-    courseTypeOriginal: target.courseTypeOriginal,
-    courseCode: target.courseCode ?? course.courseCode,
-    creditScore: target.creditScore ?? course.creditScore,
-    creditScoreFloat: target.creditScoreFloat ?? course.creditScoreFloat,
-    additionalFee: target.additionalFee,
-    additionalFeeString: target.additionalFeeString,
-    courseDescriptionUrl: target.courseDescriptionUrl ?? course.courseDescriptionUrl,
-    upgradeCourses: [
-      ...(course.upgradeCourses || []).filter((entry) => String(entry.courseId) !== toId),
-      { ...back, restoreTarget: target },
-    ],
-  };
-  const selectedSubjects = [...selected];
-  selectedSubjects[index] = swapped;
-  const creditDelta = (Number(target.creditScoreFloat) || 0) - (Number(course.creditScoreFloat) || 0);
-  return {
-    ...courseData,
-    selectedSubjects,
-    selectedSubjectsAsString: parseIds(courseData.selectedSubjectsAsString)
-      .map((id) => (id === fromId ? toId : id))
-      .join(","),
-    totalCredit: Math.max(0, Number(courseData.totalCredit || 0) + creditDelta),
-  };
-}
-
-/**
- * Confirming the recommended-courses dialog, applied locally. That dialog REPLACES
- * the selection outright (see its own note), so this drops whatever isn't in the
- * confirmed set and adds whatever is missing.
- *
- * New courses are built from the catalogue entry in availableCourses where possible,
- * since RecommendedCourseDTO carries no category, price band or description URL. A
- * recommendation with no catalogue match still joins the selected list, but can't be
- * filed under a category in the right-hand pane until the next save refreshes it.
- */
-function optimisticApplyRecommended(courseData, ids, recommendedCourses = []) {
-  const wanted = ids.map(String);
-  const wantedSet = new Set(wanted);
-  let next = (courseData.selectedSubjects || [])
-    .filter((course) => !wantedSet.has(String(course.courseId)))
-    .reduce((acc, course) => optimisticRemove(acc, course), courseData);
-
-  const catalogue = new Map();
-  for (const category of next.availableCourses || []) {
-    for (const subject of category.subjects || []) {
-      catalogue.set(String(subject.subjectId), { category, subject });
-    }
-  }
-  const recommended = new Map(recommendedCourses.map((course) => [String(course.subjectId), course]));
-
-  for (const id of wanted) {
-    if (parseIds(next.selectedSubjectsAsString).includes(id)) continue;
-    const match = catalogue.get(id);
-    if (match) {
-      next = optimisticAdd(next, match.category, match.subject);
-      continue;
-    }
-    const recommendation = recommended.get(id);
-    if (!recommendation) continue;
-    next = optimisticAdd(
-      next,
-      { courseId: undefined, courseName: "" },
-      {
-        subjectId: recommendation.subjectId,
-        subjectName: recommendation.subjectName,
-        subjectCredit: recommendation.subjectCredit,
-        subjectPriceString: recommendation.subjectPriceString,
-        courseMandatory: recommendation.courseMandatory,
-      }
-    );
-  }
-  return next;
-}
-
 function CourseSummaryLink({ url }) {
   if (!url) return null;
   return (
