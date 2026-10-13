@@ -21,8 +21,8 @@ function isSuccessResponse(response) {
 // standardId is part of the key: without it, changing grade on Stage 1 and
 // returning to Stage 3 would keep serving the previous grade's cached
 // response (staleTime: Infinity below) instead of refetching for the new one.
-export function courseDetailsKey(userId, standardId) {
-  return ["course-details", userId, standardId == null ? "" : String(standardId)];
+export function courseDetailsKey(userId, standardId, reEnrollment = false) {
+  return ["course-details", userId, standardId == null ? "" : String(standardId), reEnrollment ? "re-enrollment" : "enrollment"];
 }
 
 /**
@@ -43,16 +43,26 @@ export function courseDetailsKey(userId, standardId) {
  * nothing to key on and it NPEs (surfaces as the generic "technical
  * glitch" message).
  */
-function buildCourseDetailsRequest(userId, { standardId, selectedSubjects = "", controlType = "", courseId = "" } = {}) {
-  const request = { userId, courseId, callFrom: "signup", standardId: standardId || "", selectedSubjects, controlType, requestFromMigration: "N" };
+// Re-enrollment (existing student, FIRST_RESET=0): the backend answers REDIRECT_TO_DASHBOOARD to any
+// callFrom "signup" call for such a student, so it must be "dashboard" with requestFromMigration "Y".
+function buildCourseDetailsRequest(userId, { standardId, selectedSubjects = "", controlType = "", courseId = "" } = {}, reEnrollment = false) {
+  const request = {
+    userId,
+    courseId,
+    callFrom: reEnrollment ? "dashboard" : "signup",
+    standardId: standardId || "",
+    selectedSubjects,
+    controlType,
+    requestFromMigration: reEnrollment ? "Y" : "N",
+  };
   return request;
 }
 
-export function useCourseDetails({ context, userId, standardId }) {
+export function useCourseDetails({ context, userId, standardId, reEnrollment = false }) {
   return useQuery({
-    queryKey: courseDetailsKey(userId, standardId),
+    queryKey: courseDetailsKey(userId, standardId, reEnrollment),
     queryFn: async () => {
-      const response = await chooseCoursesByGrade(context.schoolUUID, buildCourseDetailsRequest(userId, { standardId }));
+      const response = await chooseCoursesByGrade(context.schoolUUID, buildCourseDetailsRequest(userId, { standardId }, reEnrollment));
       if (!response) throw new Error("course-details-by-standard-id returned no response");
       return response;
     },
@@ -81,7 +91,7 @@ export function useLocalCourseUpdate({ userId, standardId }) {
 }
 
 /** Every add/remove/upgrade/recommended change; a successful response replaces the cached page. */
-export function useUpdateCourseSelection({ context, userId, standardId: activeStandardId }) {
+export function useUpdateCourseSelection({ context, userId, standardId: activeStandardId, reEnrollment = false }) {
   const queryClient = useQueryClient();
   // Write into the exact query entry this screen observes. API grade IDs
   // can differ in type or be absent from the request's update response.
@@ -92,11 +102,15 @@ export function useUpdateCourseSelection({ context, userId, standardId: activeSt
     return courseDetailsKey(userId, cacheStandardId);
   }
   return useMutation({
-    mutationFn: ({ cacheStandardId, ...change }) =>
-      chooseCoursesByGrade(context.schoolUUID, buildCourseDetailsRequest(userId, change)),
+    mutationFn: ({ cacheStandardId, ...change }) => chooseCoursesByGrade(context.schoolUUID, buildCourseDetailsRequest(userId, change, reEnrollment)),
     onSuccess: (response, change) => {
       if (isSuccessResponse(response)) {
-        queryClient.setQueryData(keyForChange(change), response);
+        // Write into the exact query entry this screen observes. API grade IDs
+        // can differ in type or be absent from the request's update response.
+        const cacheStandardId = Object.prototype.hasOwnProperty.call(change, "cacheStandardId")
+          ? change.cacheStandardId
+          : activeStandardId;
+        queryClient.setQueryData(courseDetailsKey(userId, cacheStandardId, reEnrollment), response);
       }
     },
   });
@@ -128,10 +142,10 @@ export function useShowPaymentOption({ context, userId }) {
  * (sessionUtil.getUserId() in CTECourseUtil.getRecommendedCourse), not from
  * this userId, so it answers status "3" if the SESSION cookie is missing.
  */
-export function useRecommendedCourses({ context, userId }) {
+export function useRecommendedCourses({ context, userId, reEnrollment = false }) {
   return useMutation({
     mutationFn: () =>
-      getRecommendedCourses(context.schoolUUID, { userId, reloadRequired: "", requestFromMigration: "N" }),
+      getRecommendedCourses(context.schoolUUID, { userId, reloadRequired: "", requestFromMigration: reEnrollment ? "Y" : "N" }),
   });
 }
 

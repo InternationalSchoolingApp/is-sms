@@ -206,7 +206,7 @@ function buildMonthlyVariants(fee) {
     .sort((x, y) => (x.months || 0) - (y.months || 0));
 }
 
-function buildPlanOptions(fee, currencyCode) {
+export function buildPlanOptions(fee, currencyCode) {
   if (!fee) return [];
   const options = [];
   if (fee.bookASeatOpted === 1 && fee.enrollmentFee?.enrollmentFee > 0 && !fee.bookAnEnrollmentPaidStatus) {

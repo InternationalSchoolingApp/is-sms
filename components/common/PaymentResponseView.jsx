@@ -1,5 +1,6 @@
 "use client";
 
+import { isFramed, navigateTop, useFramed } from "@/utils/embed";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -239,6 +240,7 @@ function successPrimaryCta(data) {
 }
 
 function SuccessCard({ data }) {
+  const framed = useFramed();
   const showReload = data.showReloadOption === "Y";
   const returnUrl = data.returnUrl;
   const [countdown, redirected] = useCountdownRedirect(showReload && !!returnUrl, returnUrl);
@@ -279,6 +281,7 @@ function SuccessCard({ data }) {
         {showReload && returnUrl && (
           <a
             href={returnUrl}
+            target={framed ? "_top" : undefined}
             className="mt-5 inline-block text-sm font-semibold text-primary underline underline-offset-4"
           >
             If you are not redirected automatically, click here
@@ -452,7 +455,11 @@ function useCountdownRedirect(active, returnUrl) {
         if (c <= 1) {
           clearInterval(timerRef.current);
           setRedirected(true);
-          if (returnUrl && returnUrl.trim()) window.location.href = returnUrl;
+          // Inside the dashboard's iframe the dashboard / review page it returns to must replace the whole page.
+          if (returnUrl && returnUrl.trim()) {
+            if (isFramed()) navigateTop(returnUrl, { replace: false });
+            else window.location.href = returnUrl;
+          }
           else window.location.reload();
           return 0;
         }
@@ -466,10 +473,12 @@ function useCountdownRedirect(active, returnUrl) {
 }
 
 function ReturnButton({ cta }) {
+  const framed = useFramed();
   if (!cta) return null;
   return (
     <a
       href={cta.href}
+      target={framed ? "_top" : undefined}
       className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-7 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       {cta.label}

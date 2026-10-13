@@ -19,7 +19,7 @@ import { CheckCircle2 } from "lucide-react";
 
 // The backend sends labels like "1<sup>st</sup> month fee"; render the <sup> as real superscript
 // without injecting the string as HTML.
-function SupText({ children }) {
+export function SupText({ children }) {
   return String(children ?? "")
     .split(/(<sup>.*?<\/sup>)/gi)
     .map((part, index) => {

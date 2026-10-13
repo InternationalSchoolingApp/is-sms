@@ -43,3 +43,22 @@ export async function getStripePaymentInit(uniqueUuid, paramsString, schoolUUID)
 export async function getAirwallexPaymentInit(uniqueUuid, paramsString, schoolUUID) {
   return getPaymentInitResponse("airwallex", uniqueUuid, paramsString, schoolUUID);
 }
+
+/**
+ * Stripe Embedded Checkout init (is-rest-api PaymentResponseApiController#stripeEmbeddedInit): same parameters as the hosted
+ * stripe-payment-init, answers {status: "SUCCESS", clientSecret, publishableKey} for the embedded payment page.
+ * Same Server Action shape as the functions above: `paramsString` is the page's query string.
+ */
+export async function getStripeEmbeddedInit(uniqueUuid, paramsString, schoolUUID) {
+  const baseUrl = await resolveServerBackendOrigin();
+  if (!hasBackendOrigin() || !schoolUUID || !uniqueUuid) return null;
+  const query = buildQuery(paramsString);
+  const url = `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/payment/stripe-embedded-init/${encodeURIComponent(uniqueUuid)}${query ? `?${query}` : ""}`;
+  try {
+    const response = await fetch(url, { method: "GET" });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  }
+}

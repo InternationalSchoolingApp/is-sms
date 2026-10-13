@@ -407,7 +407,13 @@ function Stage3Skeleton({ header }) {
   );
 }
 
-export function Stage3CourseSelection({ context, userId, standardId: initialStandardId, onNext, onBack, onSessionExpired, inReview = false }) {
+// `reEnrollment`: the same screen for an existing student's re-enrollment. The grade is fixed (no Change Grade),
+// the course calls go out as a migration request (see buildCourseDetailsRequest) and "Next" only hands over to
+// onNext: payment/review are separate re-enrollment steps, not the enrollment wizard's get-payment-details.
+// `reEnrollmentGrades` ([{id, label}]): the grades a Flexy student can switch between, shown as a dropdown above the courses
+// (legacy "Course Selection For [Flexy - High School]"); `reEnrollmentGradeLocked` disables it (Take Individual Course);
+// `onReEnrollmentGradeChange(id)` tells the page the backend record now has that grade.
+export function Stage3CourseSelection({ context, userId, standardId: initialStandardId, onNext, onBack, onSessionExpired, inReview = false, reEnrollment = false, reEnrollmentGrades, reEnrollmentGradeLocked = false, onReEnrollmentGradeChange }) {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   // Starts from the prop (Stage 1's saved grade at mount — see the doc
@@ -416,10 +422,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   // grade's cache entry immediately, without waiting for this component to
   // remount with a fresh prop.
   const [standardId, setStandardId] = useState(initialStandardId);
-  const courseQuery = useCourseDetails({ context, userId, standardId });
+  const courseQuery = useCourseDetails({ context, userId, standardId, reEnrollment });
   const paymentOption = useShowPaymentOption({ context, userId });
-  const update = useUpdateCourseSelection({ context, userId, standardId });
-  const recommended = useRecommendedCourses({ context, userId });
+  const update = useUpdateCourseSelection({ context, userId, standardId, reEnrollment });
+  const recommended = useRecommendedCourses({ context, userId, reEnrollment });
   const proceed = useProceedToReview({ context, userId });
   // Change Grade & DOB modal (changeSelectedGrade()/saveSelectedGradeAndDob()
   // in signupStudentStage3.js) — reuses Stage 1's own prefill/save hooks
@@ -791,6 +797,44 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     }
   }
 
+  // Legacy switchGrade()/switchGradeYes(): switching Flexy grade clears the selection (courses are grade-specific) and reloads
+  // the course list for the new grade, with the same course-details call (controlType "remove", empty selection).
+  async function handleReEnrollmentGradeChange(value) {
+    const newStandardId = Number(value);
+    const previousStandardId = standardId;
+    if (busy || !newStandardId || String(newStandardId) === String(data.standardId)) return;
+    if (selectedIds.length > 0) {
+      const target = reEnrollmentGrades?.find((grade) => grade.id === newStandardId);
+      const confirmed = await ask({
+        title: "Change grade",
+        message: <p>You are about to switch to {target?.short || target?.label} courses. Please note that your course selection will be lost. Do you wish to proceed?</p>,
+        confirmLabel: "Yes",
+        cancelLabel: "No",
+      });
+      if (!confirmed) return;
+    }
+    setStandardId(newStandardId);
+    try {
+      const response = await update.mutateAsync({
+        standardId: newStandardId,
+        cacheStandardId: newStandardId,
+        selectedSubjects: "",
+        controlType: "remove",
+      });
+      if (!isSuccessResponse(response)) {
+        setStandardId(previousStandardId);
+        handleFailure(response, "Could not switch the grade. Please try again.");
+        return;
+      }
+      apAcknowledgedRef.current = false;
+      onReEnrollmentGradeChange?.(newStandardId);
+    } catch (err) {
+      console.error("Stage3CourseSelection re-enrollment grade change failed:", err);
+      setStandardId(previousStandardId);
+      toast.error(GENERIC_ERROR);
+    }
+  }
+
   async function openRecommended() {
     if (busy) return;
     try {
@@ -832,6 +876,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       toast.error(creditError);
       return;
     }
+    if (reEnrollment) {
+      onNext?.();
+      return;
+    }
     try {
       const { ok, response } = await proceed.mutateAsync({ courseData: data, showPaymentOption });
       if (!ok) {
@@ -845,7 +893,8 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     }
   }
 
-  const header = inReview ? null : (
+  // Re-enrollment shows its own title bar above this screen.
+  const header = inReview || reEnrollment ? null : (
     <>
       {/* Program name is now shown by EnrollmentWizardShell's own hero above this card. */}
       <h2 className={`flex items-center justify-center gap-2 text-center text-xl font-bold md:text-2xl ${showExtraCoursesToggle ? "text-[#3fa43c]" : "text-black"}`}>
@@ -945,6 +994,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             <GraduationCap className="h-5 w-5 text-primary" />
             {data.standardName}
           </span>
+          {!reEnrollment && (
           <button
             type="button"
             onClick={() => setChangeGradeOpen(true)}
@@ -953,10 +1003,31 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           >
             Change <FaExchangeAlt className="h-3.5 w-3.5 stroke-3" />
           </button>
+          )}
         </div>
       )}
     <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white px-4 pt-2 pb-3 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       {header}
+      {reEnrollment && reEnrollmentGrades?.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
+          <label htmlFor="re-enrollment-grade" className="text-base font-semibold text-primary">
+            Course Selection For
+          </label>
+          <select
+            id="re-enrollment-grade"
+            value={String(data.standardId)}
+            onChange={(event) => handleReEnrollmentGradeChange(event.target.value)}
+            disabled={busy || reEnrollmentGradeLocked}
+            className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-black disabled:opacity-60"
+          >
+            {reEnrollmentGrades.map((grade) => (
+              <option key={grade.id} value={String(grade.id)}>
+                {grade.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       
 
@@ -969,6 +1040,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               <GraduationCap className="h-4 w-4 text-primary" />
               {data.standardName}
             </span>
+            {!reEnrollment && (
             <button
               type="button"
               onClick={() => setChangeGradeOpen(true)}
@@ -977,6 +1049,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             >
               Change Grade <FaExchangeAlt className="h-3 w-3 stroke-3" />
             </button>
+            )}
           </div>
         )}
 
@@ -1444,6 +1517,18 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 </Button>
               </div>
             )} */}
+            {reEnrollment && data.eligibleForRecommendedCourse && (
+              <div className="px-4 pt-4 md:hidden">
+                <Button
+                  type="button"
+                  onClick={openRecommended}
+                  disabled={busy}
+                  className="h-auto w-full whitespace-normal rounded-md bg-primary py-2 text-center leading-snug hover:bg-primary/90"
+                >
+                  Add Recommended Courses
+                </Button>
+              </div>
+            )}
             {data.registrationType === "SCHOLARSHIP" && (
               <p className="px-4 py-2 text-[11px] text-primary font-bold"><span className="text-black">Note:</span> Live classes are not offered in this program.</p>
             )}

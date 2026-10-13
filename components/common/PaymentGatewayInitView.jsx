@@ -30,7 +30,7 @@ function getSafeRedirectUrl(value) {
   }
 }
 
-function getAirwallexCheckoutIntentUrl(value) {
+export function getAirwallexCheckoutIntentUrl(value) {
   if (typeof value !== "string") return null;
 
   try {
@@ -54,7 +54,7 @@ function getAirwallexCheckoutIntentUrl(value) {
   }
 }
 
-function loadAirwallexSdk() {
+export function loadAirwallexSdk() {
   if (window.Airwallex) return Promise.resolve(window.Airwallex);
   if (window.__airwallexSdkPromise) return window.__airwallexSdkPromise;
 
@@ -112,7 +112,7 @@ async function startAirwallexCheckout(checkoutUrl) {
   });
 }
 
-function getFailureMessage(response) {
+export function getFailureMessage(response) {
   const message = typeof response?.message === "string" ? response.message : "";
   const cleanMessage = message.replace(/^FAILED\|/, "").trim();
   return cleanMessage || "We couldn’t start your payment. Please try again in a moment.";

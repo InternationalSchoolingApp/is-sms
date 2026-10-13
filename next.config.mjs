@@ -13,6 +13,14 @@
  */
 
 /** @type {import('next').NextConfig} */
+const backendOrigin = (() => {
+  try {
+    return process.env.NEXT_PUBLIC_BACKEND_BASE_URL ? new URL(process.env.NEXT_PUBLIC_BACKEND_BASE_URL).origin : "";
+  } catch {
+    return "";
+  }
+})();
+
 const nextConfig = {
   // Next.js dev server only trusts localhost/127.0.0.1 by default; testing
   // from a real phone over LAN (e.g. http://192.168.8.155:3000) hits a
@@ -29,6 +37,15 @@ const nextConfig = {
       {
         source: "/:school/enrollment/:path*",
         headers: [{ key: "Cache-Control", value: "no-store, must-revalidate" }],
+      },
+      // The embed re-enrollment pages are shown inside the Java dashboard's iframe: only that origin (and this app itself) may frame them.
+      {
+        source: "/:school/embed/re-enrollment/:path*",
+        headers: [{ key: "Content-Security-Policy", value: `frame-ancestors 'self' ${backendOrigin}`.trim() }],
+      },
+      {
+        source: "/:school/embed/re-enrollment",
+        headers: [{ key: "Content-Security-Policy", value: `frame-ancestors 'self' ${backendOrigin}`.trim() }],
       },
     ];
   },

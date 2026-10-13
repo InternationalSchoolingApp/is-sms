@@ -1,5 +1,6 @@
 import { signOut } from "next-auth/react";
 import { loginPageUrl, resolveBackendNavigationOrigin } from "@/utils/backendOrigin";
+import { navigateTop } from "@/utils/embed";
 
 // Session expired / missing: drop the Next.js session and land on the school's login page.
 // redirect:false + a manual navigation because the login page lives on another origin, which
@@ -11,7 +12,8 @@ export async function expireSession(schoolUUID) {
   } catch (err) {
     console.error("Sign out failed:", err);
   }
-  window.location.assign(loginPageUrl(schoolUUID));
+  // Inside an iframe (re-enrollment embedded in the dashboard) the login page must replace the whole page.
+  navigateTop(loginPageUrl(schoolUUID), { replace: false });
 }
 
 // Legacy signupLogout() / logoutConfimation(true, ...common/logout/UNIQUEUUID): the logout endpoint

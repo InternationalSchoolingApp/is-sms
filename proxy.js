@@ -39,5 +39,8 @@ export const config = {
   matcher: [
     "/:school/enrollment/:program/step/:path*",
     "/:school/add-enrollment/:parentId/:sessionUserId/step/:path*",
+    // Re-enrollment (existing students): the option screen and its step screens.
+    "/:school/:mode(embed|share)/re-enrollment",
+    "/:school/:mode(embed|share)/re-enrollment/:path*",
   ],
 };
