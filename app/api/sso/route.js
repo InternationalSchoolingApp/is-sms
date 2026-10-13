@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { signIn } from "@/auth";
 import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
+import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 
 const VALID_STEPS = new Set(["1", "2", "3", "4"]);
 
@@ -13,12 +14,17 @@ const VALID_STEPS = new Set(["1", "2", "3", "4"]);
  * -> services/authApi.js's exchangeSsoToken), then forwards the browser on
  * to the actual wizard step the backend said to resume at.
  *
- * Expected URL: /api/sso?token=<oneTimeToken>&step=<1|2|3|4>&school=<schoolUUID>
+ * Expected URL: /api/sso?token=<oneTimeToken>&step=<1|2|3|4>&school=<schoolUUID>&program=<routeCode>
  * `step` is validated against the routes that actually exist and defaults
  * to "1" if missing/invalid — never trust it blindly as a redirect target.
  * `school` is required — see services/authApi.js's exchangeSsoToken doc
  * comment for why this route needs it despite not otherwise being
- * schoolId-scoped.
+ * schoolId-scoped. `program` (added alongside CommonUtil#resolveProgramRouteCode
+ * on the backend) is the student's actual enrollment program's short URL code
+ * (constant/LearningPrograms.js) — validated against that same table and
+ * falling back to DEFAULT_PROGRAM if missing/unrecognized, so a stale/old
+ * backend build (or a hand-built URL) without this param still works exactly
+ * as before.
  *
  * Handles BOTH GET and POST: Login.jsp's goAhead() (login.js) doesn't
  * navigate the browser via a plain link/redirect — it builds a real
@@ -43,6 +49,7 @@ async function handleSsoHandoff(request) {
   const schoolName = url.searchParams.get("schoolName");
   const step = url.searchParams.get("step");
   const targetStep = VALID_STEPS.has(step) ? step : "1";
+  const program = getLearningProgramRouteCode(url.searchParams.get("program")) || DEFAULT_PROGRAM;
 
   // console.log("request", request)
   // console.log("url======>", url)
@@ -67,10 +74,7 @@ async function handleSsoHandoff(request) {
     return redirectTo("/", request);
   }
 
-  // The enrollment program isn't part of the SSO handoff (the backend only
-  // sends token/step/school), so the URL uses the default program segment;
-  // the wizard resolves the real school/program from the session on load.
-  return redirectTo(stepPath(schoolUUID, DEFAULT_PROGRAM, targetStep), request);
+  return redirectTo(stepPath(schoolUUID, program, targetStep), request);
 }
 
 export const GET = handleSsoHandoff;
