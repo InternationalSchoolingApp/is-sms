@@ -17,8 +17,8 @@ import { encodePayload } from "@/utils/payloadEncoding";
  * never a forwarded session cookie.
  */
 
-function backendUrl(schoolUUID, path) {
-  const baseUrl = resolveServerBackendOrigin();
+async function backendUrl(schoolUUID, path) {
+  const baseUrl = await resolveServerBackendOrigin();
   if (!hasBackendOrigin() || !schoolUUID) {
     throw new Error(
       "A backend origin (BACKEND_BASE_URL/NEXT_PUBLIC_BACKEND_BASE_URL) and a schoolUUID are required — schoolUUID must come from the URL, not an env var"
@@ -39,7 +39,7 @@ async function parseJsonResponse(response) {
 }
 
 async function postPayload(schoolUUID, path, data) {
-  const response = await fetch(backendUrl(schoolUUID, path), {
+  const response = await fetch(await backendUrl(schoolUUID, path), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ payload: encodePayload(data) }),

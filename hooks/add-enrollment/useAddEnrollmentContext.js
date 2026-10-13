@@ -3,6 +3,7 @@
 import { useAddStudentDetailsPrefill } from "@/hooks/add-enrollment/useAddStage1";
 import { enrollAnotherChild } from "@/services/addEnrollmentBackendApi";
 import { getEnrollmentProcess, getPublicSchoolInfo } from "@/services/studentSignupApi";
+import { normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
 import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
 import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
@@ -86,8 +87,8 @@ function useResolveAddEnrollmentContext() {
   // for it. Honoring that would bounce the parent to the :8080 parent dashboard instead of opening
   // the wizard. So we only follow a "dashboard" redirect when the child is NOT resumable here
   // (no valid signupPage), i.e. genuinely past the wizard.
-  const childResumeStep = Number(childData?.signupPage);
-  const childIsResumable = childResumeStep >= 1 && childResumeStep <= 3;
+  const childResumeStep = normalizeAddSignupPage(childData?.signupPage);
+  const childIsResumable = childResumeStep !== null;
   const processRedirect =
     enrollmentProcess.data?.status === "REDIRECT" && !childIsResumable ? enrollmentProcess.data : null;
   useEffect(() => {
@@ -144,8 +145,9 @@ function useResolveAddEnrollmentContext() {
         sessionUserId,
         enrollmentFor: "enrollment",
         customPaymentEnabled: enrollmentProcess.data?.customPaymentEnabled === true,
-        // Resume step comes from enrollAnotherChild (1-3), not enrollment/process (1-4).
-        signupPage: childData.signupPage,
+        // Resume step comes from enrollAnotherChild, mapped from the backend's 4-step numbering
+        // onto this wizard's 3 steps (4 = review -> 3); see normalizeAddSignupPage.
+        signupPage: normalizeAddSignupPage(childData.signupPage),
         signupType: enrollmentProcess.data?.signupType,
         learningProgram: prefill.data?.learningProgram
           ? getLearningProgramShortCode(prefill.data.learningProgram)
