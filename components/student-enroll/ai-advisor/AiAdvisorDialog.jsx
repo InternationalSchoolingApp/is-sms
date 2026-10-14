@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Check, FileUp, MessageCircle, Plus, Send, Sparkles, X } from "lucide-react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -15,6 +15,8 @@ import {
   useDismissSuggestions,
   useMarksheetUpload,
 } from "@/hooks/useCourseAdvisor";
+import { BsStars } from "react-icons/bs";
+import { HiOutlineLightBulb } from "react-icons/hi";
 import { prepareMarksheetFiles } from "@/utils/marksheetFiles";
 
 const STATUS_SUCCESS = "1";
@@ -110,7 +112,7 @@ function ThinkingChecklist({ steps, finished }) {
           <li key={label} className={`flex items-center gap-2 text-sm ${done || current ? "text-black" : "text-slate-400"}`}>
             <span
               className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
-                done ? "border-[#0f8a74] bg-[#0f8a74] text-white" : current ? "ai-spin border-[#0f8a74] border-t-transparent" : "border-slate-300"
+                done ? "border-[#3fa43c] bg-[#3fa43c] text-white" : current ? "ai-spin border-[#3fa43c] border-t-transparent" : "border-slate-300"
               }`}
             >
               {done && <Check className="h-3 w-3" strokeWidth={4} />}
@@ -161,18 +163,10 @@ function OptionCard({ selected, onClick, children, multi }) {
       role={multi ? "checkbox" : "radio"}
       aria-checked={selected}
       onClick={onClick}
-      className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+      className={`flex w-full items-center cursor-pointer gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
         selected ? "border-primary bg-[#e6f3ff] text-black" : "border-slate-300 bg-white text-black hover:border-primary"
       }`}
     >
-      <span
-        aria-hidden="true"
-        className={`flex h-5 w-5 shrink-0 items-center justify-center border-2 ${multi ? "rounded" : "rounded-full"} ${
-          selected ? "border-primary bg-primary text-white" : "border-slate-400 bg-white"
-        }`}
-      >
-        {selected && (multi ? <Check className="h-3 w-3" strokeWidth={4} /> : <span className="h-2 w-2 rounded-full bg-white" />)}
-      </span>
       {children}
     </button>
   );
@@ -191,24 +185,27 @@ function QuestionStep({ question, index, total, answers, onToggle, onSetAll }) {
         </p>
         <div className="flex gap-1" aria-hidden="true">
           {Array.from({ length: total }).map((_, i) => (
-            <span key={i} className={`h-1.5 flex-1 rounded-full ${i <= index ? "bg-[#0f8a74]" : "bg-slate-200"}`} />
+            <span key={i} className={`h-1.5 flex-1 rounded-full ${i <= index ? "bg-[#3fa43c]" : "bg-slate-200"}`} />
           ))}
         </div>
       </div>
       <fieldset key={question.id} className="ai-rise space-y-3">
-        <legend className="space-y-1">
-          <span className="block text-base font-semibold text-black">{question.text}</span>
-          {hint && <span className="mt-1 block text-sm text-slate-700">{hint}</span>}
+        <legend className="space-y-1 flex bg-[#3fa43c]/15 gap-2 w-full items-center p-3 text-[#062305] rounded-lg">
+          <HiOutlineLightBulb className="w-12 h-12 hidden sm:inline-flex" /> 
+          <div>
+            <span className="block text-base font-extrabold">{question.text}</span>
+            {hint && <span className="mt-1 block text-sm">{hint}</span>}
+          </div>
         </legend>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+          <span className="rounded-md bg-primary px-2 py-0.5 text-xs font-semibold text-white">
             {question.multi ? "Choose all that apply" : "Choose one"}
           </span>
           {question.multi && (
             <button
               type="button"
               onClick={() => onSetAll(allPicked ? [] : question.options.map((o) => o.value))}
-              className="text-xs font-semibold text-primary underline-offset-2 hover:underline"
+              className="text-xs font-semibold text-primary cursor-pointer underline-offset-2 hover:underline"
             >
               {allPicked ? "Clear all" : "Select all"}
             </button>
@@ -314,7 +311,7 @@ function MarksheetTable({ marksheet, onChange }) {
 function SuggestionCard({ suggestion, checked, onToggle, index, extra, onNoThanks, busy }) {
   return (
     <li
-      className={`ai-rise rounded-lg border px-3 py-2.5 ${extra ? "border-[#0f8a74] bg-[#e2f5f0]" : "border-slate-200 bg-white"}`}
+      className={`ai-rise rounded-lg border px-3 py-2.5 ${extra ? "border-[#3fa43c] bg-[#e2f5f0]" : "border-slate-200 bg-white"}`}
       style={{ animationDelay: `${index * 140}ms` }}
     >
       <div className="flex items-start gap-3">
@@ -330,7 +327,7 @@ function SuggestionCard({ suggestion, checked, onToggle, index, extra, onNoThank
             <span className="text-sm font-semibold text-black">{suggestion.title}</span>
             <span
               className={`rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${
-                extra ? "bg-[#0f8a74] text-white" : "bg-[#e6f3ff] text-primary"
+                extra ? "bg-[#3fa43c] text-white" : "bg-[#e6f3ff] text-primary"
               }`}
             >
               {ACTION_BADGE[suggestion.action] || "AI pick"}
@@ -665,16 +662,17 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
   const extras = result?.suggestions.filter((s) => s.action === "ADDITIONAL") || [];
 
   return (
-    <Dialog open={open} onOpenChange={(next) => !next && !apply.isPending && onClose()}>
-      <DialogContent className="flex max-h-[88vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
-        <DialogHeader className="shrink-0 border-b px-4 py-3 pr-12">
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0f8a74] text-white">
+    <Sheet open={open} onOpenChange={(next) => !next && !apply.isPending && onClose()}>
+      <SheetContent side="right" className="flex max-h-dvh flex-col gap-0 overflow-hidden p-0 sm:max-w-xl">
+        <SheetHeader className="shrink-0 border-b px-4 py-3 pr-12">
+          <SheetTitle className="flex items-center gap-2 text-lg">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#3fa43c] text-white">
               <Sparkles className="h-4 w-4" />
             </span>
-            AI Suggester <span className="text-[#9a5b00]">*</span>
-          </DialogTitle>
-        </DialogHeader>
+            AI Suggester 
+            <BsStars className="text-[#ffcd2b]" />
+          </SheetTitle>
+        </SheetHeader>
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
           {step === "loading" && (
@@ -937,7 +935,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
           )}
         </div>
 
-        <DialogFooter className="mx-0 mb-0 shrink-0 flex-row flex-wrap justify-end gap-2 border-t bg-white px-4 py-3">
+        <SheetFooter className="mx-0 mb-0 shrink-0 flex-row flex-wrap justify-end gap-2 border-t bg-white px-4 py-3">
           {step === "marksheet" && (
             <Button type="button" variant="outline" onClick={() => goToQuestions()}>
               Skip this step
@@ -977,7 +975,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                   type="button"
                   onClick={handleSuggest}
                   disabled={busy || !(answers[currentQuestion.id] || []).length}
-                  className="bg-[#0f8a74] hover:bg-[#0f8a74]/90"
+                  className="bg-[#3fa43c] hover:bg-[#3fa43c]/90"
                 >
                   <Sparkles className="h-4 w-4" /> Get suggestions
                 </Button>
@@ -989,12 +987,12 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
             </>
           )}
           {step === "questions" && !currentQuestion && (
-            <Button type="button" onClick={handleSuggest} disabled={busy} className="bg-[#0f8a74] hover:bg-[#0f8a74]/90">
+            <Button type="button" onClick={handleSuggest} disabled={busy} className="bg-[#3fa43c] hover:bg-[#3fa43c]/90">
               <Sparkles className="h-4 w-4" /> Get suggestions
             </Button>
           )}
           {step === "suggestions" && setup?.chatEnabled && (
-            <Button type="button" variant="ghost" onClick={openChat} disabled={busy} className="mr-auto text-[#0f8a74]">
+            <Button type="button" variant="ghost" onClick={openChat} disabled={busy} className="mr-auto text-[#3fa43c]">
               <MessageCircle className="h-4 w-4" /> Ask a question
             </Button>
           )}
@@ -1065,8 +1063,8 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
               Close
             </Button>
           )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
