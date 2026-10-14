@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
 import { signIn } from "@/auth";
-import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
-import { addEnrollmentStepPath, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
 import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
+import { addEnrollmentStepPath, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
 import { getBackendOverrideCookieName, isBackendOverrideAllowed } from "@/utils/backendOrigin";
+import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
+import { NextResponse } from "next/server";
 
 const VALID_STEPS = new Set(["1", "2", "3", "4"]);
 
@@ -110,6 +110,22 @@ async function handleSsoHandoff(request) {
   const targetStep = VALID_STEPS.has(step) ? step : "1";
   const program = getLearningProgramRouteCode(url.searchParams.get("program")) || DEFAULT_PROGRAM;
   const backendOverride = detectOriginatingBackend(request);
+  // ae=Y means this student was enrolled by someone else (a parent adding a child),
+  // so after the session is established the browser must land on the 3-step
+  // /{school}/add-enrollment/{parentId}/{sessionUserId}/step/... wizard instead of the
+  // student's own 4-step /{school}/enrollment/... one. parentId + sessionUserId ride the URL.
+  const isAddEnrollment = url.searchParams.get("ae") === "Y";
+  // The caller may pass the full add-enrollment destination as `next` (dashboard "Add child"
+  // button) OR just parentId + sessionUserId for us to build it (backend getFinalEnrollmentUrl).
+  // Prefer a validated same-origin `next`, else build from the ids.
+  let addEnrollmentPath = null;
+  if (isAddEnrollment) {
+    addEnrollmentPath = safeNextPath(url.searchParams.get("next"), schoolUUID);
+    if (addEnrollmentPath == null) {
+      addEnrollmentPath = safeAddEnrollmentPath(schoolUUID, url.searchParams.get("parentId"),
+        url.searchParams.get("sessionUserId"), step);
+    }
+  }
 
   // console.log("request", request)
   // console.log("url======>", url)
@@ -134,7 +150,12 @@ async function handleSsoHandoff(request) {
     return redirectTo("/", request);
   }
 
-  const response = redirectTo(stepPath(schoolUUID, program, targetStep), request);
+  // Add-another-child wizard wins when ae=Y and the path could be built; otherwise the
+  // student's own enrollment step path.
+  const destination = addEnrollmentPath != null
+    ? addEnrollmentPath
+    : stepPath(schoolUUID, program, targetStep);
+  const response = redirectTo(destination, request);
   // The rest of this student's session (every Server Action after this
   // point) must keep hitting the SAME backend that issued the token, not
   // whatever NEXT_PUBLIC_BACKEND_BASE_URL defaults to — persist it the same
