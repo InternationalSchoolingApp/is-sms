@@ -57,6 +57,8 @@ Partner students only get the extra-course suggestion when `COURSE_ADVISOR_ADDIT
 - [ ] Opening it shows the marksheet step with the `*` note. "Skip this step" goes to the questions.
 - [ ] Uploading a phone photo of a real marksheet shows the subjects table, and you can edit it.
 - [ ] "Get suggestions" shows a checklist, then cards with reasons. Any extra course appears in a separate "Try this" card and is unticked.
+- [ ] Use "Remove all", then open the AI Suggester and skip every question. The suggestions bring the list back to the full count ("6 of 6 courses"), the reasons don't claim the student said anything, and there are no prices in the reasons.
+- [ ] If a suggestion call fails, the error screen shows "Try again", and it works.
 - [ ] Untick one card and use "Apply selected". The fee confirmation appears, and after confirming the courses slide in with an "AI pick" badge.
 - [ ] "Ask a question" answers, and an "elective" question can propose a course that applies from the chat.
 - [ ] An SSO-login student can use it. If the backend logs `no session user or login hash`, check that `userLoginHash` is in the next-auth session.

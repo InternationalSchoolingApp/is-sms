@@ -590,10 +590,8 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       onSessionExpired?.();
       return;
     }
-    if (initialFailure.statusCode === "FLAGGED") {
-      setFlaggedModal({ sessionName: initialFailure.message });
-      return;
-    }
+    // Shown through shownFlagged below (derived, not set here).
+    if (initialFailure.statusCode === "FLAGGED") return;
     // Enrollment already completed/withdrawn: reload like legacy's signupStudentStage3.js does —
     // enrollment/process then answers REDIRECT and useEnrollmentContext sends the student to
     // their dashboard (same handling as Stage4ReviewPayment's review-details failure).
@@ -906,6 +904,15 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     }
   }
 
+  // The advisor reads the saved selection from the backend, so local edits (e.g.
+  // "Remove all") are saved first; otherwise it would suggest against the old list.
+  async function openAiSuggester() {
+    if (busy) return;
+    const saved = await flushSelection();
+    if (!saved.ok) return;
+    setAiOpen(true);
+  }
+
   function handleAiApplied(courseDetails, landedSubjectIds) {
     if (isSuccessResponse(courseDetails)) {
       // Same cache entry Step 3 renders from; the backend already saved this
@@ -1199,7 +1206,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         )}
 
       {data.aiAdvisor?.visible && !fixed && (
-        <AiSuggesterCard onOpen={() => setAiOpen(true)} disabled={busy} />
+        <AiSuggesterCard onOpen={openAiSuggester} disabled={busy} />
       )}
 
       <div className={`mt-2 grid gap-6 ${showAvailable ? "lg:grid-cols-[1fr_1.6fr]" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
