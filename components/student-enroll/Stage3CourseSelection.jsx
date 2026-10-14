@@ -858,12 +858,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     }
   }
 
-  // The advisor reads the saved selection from the backend, so local edits (e.g.
-  // "Remove all") are saved first; otherwise it would suggest against the old list.
-  async function openAiSuggester() {
+  // The advisor reads the saved selection from the backend; every add/remove here
+  // (including "Remove all") is saved right away, so it sees the current list.
+  function openAiSuggester() {
     if (busy) return;
-    const saved = await flushSelection();
-    if (!saved.ok) return;
     setAiOpen(true);
   }
 
