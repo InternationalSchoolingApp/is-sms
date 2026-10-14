@@ -109,7 +109,7 @@ function useSaveOutcome({ context, onSessionExpired }) {
   return { formError, setFormError, outcome, modal };
 }
 
-export function StudentInlineEdit({ context, userId, uniqueId, student, standardId, onSaved, onCancel, onSessionExpired }) {
+export function StudentInlineEdit({ context, userId, uniqueId, rollNo, student, standardId, onSaved, onCancel, onSessionExpired }) {
   // The review payload keeps the grade on the course block when the student block lacks it.
   const [initial] = useState(() => {
     const mapped = mapSignupStudentToFields(student);
@@ -204,7 +204,17 @@ export function StudentInlineEdit({ context, userId, uniqueId, student, standard
           <FloatingLabelInput icon={User} label={<Req label="Student's Last Name" required />} filledLabel={<Req label="Last Name" required />} value={fields.lastName} {...nameFieldProps(set("lastName"))} error={errors.lastName} />
         </div>
 
-        <div className={`mt-3.5 ${GRID}`}>
+        <div className="mt-3.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+          {rollNo && (
+            <FloatingLabelInput
+              icon={BookOpen}
+              label={<Req label="Student ID" />}
+              value={rollNo}
+              readOnly
+              disabled
+              inputClassName="cursor-not-allowed bg-slate-100 text-black disabled:pointer-events-auto disabled:opacity-100"
+            />
+          )}
           <FloatingLabelSelect
             icon={GraduationCap}
             label={<Req label={fields.standardId ? "Selected Grade" : "Select Grade"} required />}
@@ -228,16 +238,13 @@ export function StudentInlineEdit({ context, userId, uniqueId, student, standard
           />
           <FloatingLabelSelect
             icon={VenusAndMars}
-            label={<Req label={fields.standardId ? "Selected Gender" : "Select Gender"} required />}
+            label={<Req label={fields.gender ? "Selected Gender" : "Select Gender"} required />}
             value={fields.gender}
             onValueChange={set("gender")}
             options={GENDER_OPTIONS}
             error={errors.gender}
             searchable
           />
-        </div>
-
-        <div className={`mt-3.5 ${GRID}`}>
           <FloatingLabelSelect
             icon={Globe}
             label={<Req label="Nationality" required />}
