@@ -199,7 +199,7 @@ function QuestionStep({ question, index, total, answers, onToggle, onSetAll }) {
             {hint && <span className="mt-1 block text-sm">{hint}</span>}
           </div>
         </legend>
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <span className="rounded-md bg-primary px-2 py-0.5 text-xs font-semibold text-white">
             {question.multi ? "Choose all that apply" : "Choose one"}
           </span>
@@ -724,8 +724,8 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#3fa43c] text-white">
               <Sparkles className="h-4 w-4" />
             </span>
-            AI Suggester 
-            <BsStars className="text-[#ffcd2b]" />
+            Smart Course Picker
+            {/* <BsStars className="text-[#ffcd2b]" /> */}
           </SheetTitle>
         </SheetHeader>
 
@@ -998,7 +998,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
           )}
         </div>
 
-        <SheetFooter className="mx-0 mb-0 shrink-0 flex-row flex-wrap justify-end gap-2 border-t bg-white px-4 py-3">
+        <SheetFooter className="mx-0 mb-0 shrink-0 flex-row flex-wrap justify-center gap-2 border-t bg-white px-4 py-3">
           {step === "marksheet" && (
             <Button type="button" variant="outline" onClick={() => goToQuestions()}>
               Skip this step
@@ -1016,18 +1016,20 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
           )}
           {step === "questions" && currentQuestion && (
             <>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  setAnswers({});
-                  handleSuggest({});
-                }}
-                disabled={busy}
-                className="order-last w-full text-slate-600 sm:order-first sm:mr-auto sm:w-auto"
-              >
-                Skip all questions
-              </Button>
+              <span className="order-last w-full  text-center sm:order-first sm:w-auto">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setAnswers({});
+                    handleSuggest({});
+                  }}
+                  disabled={busy}
+                  className="w-auto"
+                >
+                  Skip all questions
+                </Button>
+              </span>
               {questionIndex > 0 && (
                 <Button type="button" variant="outline" onClick={() => setQuestionIndex((i) => i - 1)} disabled={busy}>
                   Back
@@ -1058,7 +1060,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
             </Button>
           )}
           {step === "suggestions" && setup?.chatEnabled && (
-            <Button type="button" variant="ghost" onClick={openChat} disabled={busy} className="mr-auto text-[#3fa43c]">
+            <Button type="button" variant="ghost" onClick={openChat} disabled={busy} className="text-[#3fa43c]">
               <MessageCircle className="h-4 w-4" /> Ask a question
             </Button>
           )}
