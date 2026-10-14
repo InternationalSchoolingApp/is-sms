@@ -33,7 +33,7 @@ async function postAdvisor(schoolUUID, path, data) {
   if (!hasBackendOrigin() || !schoolUUID) {
     throw new Error("A backend origin and a schoolUUID are required for the AI Course Advisor");
   }
-  const response = await fetch(`${resolveServerBackendOrigin()}/${schoolUUID}/${BASE_PATH}/${path}`, {
+  const response = await fetch(`${await resolveServerBackendOrigin()}/${schoolUUID}/${BASE_PATH}/${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     // `who` last, so nothing the browser sent can replace the session's identity.

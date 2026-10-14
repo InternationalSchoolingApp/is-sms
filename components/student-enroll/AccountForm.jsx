@@ -15,6 +15,7 @@ import { checkEmailAvailability } from "@/services/studentSignupBackendApi";
 import { validateAccountFormOnline, isValidEmail, getPasswordStrength } from "@/utils/studentSignupValidation";
 import { getHash } from "@/utils/common";
 import { callLocationForPaymentPromise, getLocationValue, loadLocationGlobals } from "@/utils/locationFinder";
+import { loginPageUrl } from "@/utils/backendOrigin";
 
 // The captcha field is hidden from the UI; the form submits a random 6-digit number in its place
 // (it still has to satisfy the 6-digit check in isValidCaptcha).
@@ -531,6 +532,20 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
         </label>
         {checkTermsError && <p className="text-xs text-red-600">{checkTermsError}</p>}
 
+        {isProdDeployment && recaptchaSiteKey && (
+          <p className="text-center text-[11px] leading-relaxed text-slate-400">
+            This site is protected by reCAPTCHA and the Google{" "}
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline">
+              Privacy Policy
+            </a>{" "}
+            and{" "}
+            <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer" className="underline">
+              Terms of Service
+            </a>{" "}
+            apply.
+          </p>
+        )}
+
         <div className="flex justify-center pt-1">
           <Button
             type="button"
@@ -543,7 +558,7 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
 
         <p className="text-center text-sm text-slate-600">
           Already have an account?{" "}
-          <a href={process.env.NEXT_PUBLIC_BACKEND_BASE_URL +"/"+ context.schoolUUID+"/common/login"} className="font-semibold text-primary hover:underline">
+          <a href={loginPageUrl(context.schoolUUID)} className="font-semibold text-primary hover:underline">
             Log in here.
           </a>
         </p>

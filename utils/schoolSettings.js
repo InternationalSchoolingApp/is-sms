@@ -1,6 +1,7 @@
-import { trackRequest } from "@/utils/loaderStore";
+"use server";
+
 import { encodePayload } from "@/utils/payloadEncoding";
-import { hasBackendOrigin, resolveBackendOrigin } from "@/utils/backendOrigin";
+import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
 /**
  * Mirrors jquery.commonFunction.js's getSchoolSettingsLinks() (is-rest-api,
@@ -30,7 +31,7 @@ import { hasBackendOrigin, resolveBackendOrigin } from "@/utils/backendOrigin";
  * signup-specific.
  */
 export async function getSchoolSettingsLinks(schoolNumericId) {
-  const baseUrl = resolveBackendOrigin();
+  const baseUrl = await resolveServerBackendOrigin();
   if (!hasBackendOrigin()) {
     throw new Error("A backend origin (NEXT_PUBLIC_BACKEND_BASE_URL) is required");
   }
@@ -43,14 +44,11 @@ export async function getSchoolSettingsLinks(schoolNumericId) {
     throw new Error("getSchoolSettingsLinks: schoolNumericId is required (getPublicSchoolInfo must resolve first)");
   }
 
-  const response = await trackRequest(() =>
-    fetch(`${baseUrl}/${schoolNumericId}/api/v1/links`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ payload: encodePayload({ schoolId: schoolNumericId }) }),
-    })
-  );
+  const response = await fetch(`${baseUrl}/${schoolNumericId}/api/v1/links`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ payload: encodePayload({ schoolId: schoolNumericId }) }),
+  });
   // A non-2xx response (e.g. a 404) can still have a valid-JSON body —
   // Spring's default error page is JSON — so `response.ok` must be
   // checked explicitly; parsing alone would "succeed" with a useless,

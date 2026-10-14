@@ -1,8 +1,14 @@
-import { hasBackendOrigin, resolveBackendOrigin } from "@/utils/backendOrigin";
+"use server";
+
+import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
 // School-prefixed gateway pages pass their URL school segment explicitly.
 // Older unprefixed pages can still fall back to the query param or env value.
-function buildQuery(params) {
+// `paramsString` is a plain string, not a URLSearchParams instance — Server
+// Actions can only accept serializable arguments (see
+// services/studentSignupApi.js's getEnrollmentSignupInfo for the same pattern).
+function buildQuery(paramsString) {
+  const params = new URLSearchParams(paramsString || "");
   const query = new URLSearchParams();
   for (const [key, value] of params.entries()) {
     if (key === "schoolUUID") continue;
@@ -12,20 +18,17 @@ function buildQuery(params) {
   return query.toString();
 }
 
-async function getPaymentInitResponse(gateway, uniqueUuid, params, schoolUUIDFromRoute) {
-  const baseUrl = resolveBackendOrigin();
+async function getPaymentInitResponse(gateway, uniqueUuid, paramsString, schoolUUIDFromRoute) {
+  const baseUrl = await resolveServerBackendOrigin();
   const schoolUUID =
-    schoolUUIDFromRoute || params?.get("schoolUUID") || process.env.NEXT_PUBLIC_SCHOOL_ID;
+    schoolUUIDFromRoute || new URLSearchParams(paramsString || "").get("schoolUUID") || process.env.NEXT_PUBLIC_SCHOOL_ID;
   if (!hasBackendOrigin() || !schoolUUID || !uniqueUuid) return null;
 
-  const query = buildQuery(params);
+  const query = buildQuery(paramsString);
   const url = `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/payment/${gateway}-payment-init/${encodeURIComponent(uniqueUuid)}${query ? `?${query}` : ""}`;
 
   try {
-    const response = await fetch(url, {
-      method: "GET",
-      credentials: "include",
-    });
+    const response = await fetch(url, { method: "GET" });
     if (!response.ok) return null;
     return await response.json();
   } catch {
@@ -33,10 +36,10 @@ async function getPaymentInitResponse(gateway, uniqueUuid, params, schoolUUIDFro
   }
 }
 
-export function getStripePaymentInit(uniqueUuid, params, schoolUUID) {
-  return getPaymentInitResponse("stripe", uniqueUuid, params, schoolUUID);
+export async function getStripePaymentInit(uniqueUuid, paramsString, schoolUUID) {
+  return getPaymentInitResponse("stripe", uniqueUuid, paramsString, schoolUUID);
 }
 
-export function getAirwallexPaymentInit(uniqueUuid, params, schoolUUID) {
-  return getPaymentInitResponse("airwallex", uniqueUuid, params, schoolUUID);
+export async function getAirwallexPaymentInit(uniqueUuid, paramsString, schoolUUID) {
+  return getPaymentInitResponse("airwallex", uniqueUuid, paramsString, schoolUUID);
 }

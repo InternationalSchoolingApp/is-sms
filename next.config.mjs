@@ -34,7 +34,12 @@ const nextConfig = {
   },
   async rewrites() {
     const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
-    if (!backendBaseUrl || process.env.NEXT_PUBLIC_USE_LOCAL_PROXY !== "true") return [];
+    // Backend static assets (payment gateway logos, flags, card icons) are loaded same-origin so an https
+    // deployment never requests them from the backend's plain-http origin (blocked as mixed content).
+    const staticAssetRewrites = backendBaseUrl
+      ? [{ source: "/static/theme2/:path*", destination: `${backendBaseUrl}/static/theme2/:path*` }]
+      : [];
+    if (!backendBaseUrl || process.env.NEXT_PUBLIC_USE_LOCAL_PROXY !== "true") return staticAssetRewrites;
     return {
       afterFiles: [
         { source: "/api/v1/:path*", destination: `${backendBaseUrl}/api/v1/:path*` },

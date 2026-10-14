@@ -1,11 +1,12 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Clock, LoaderCircle, XCircle } from "lucide-react";
 import { getPaymentResponseSuccess, getPaymentResponseFailure } from "@/services/paymentResponseApi";
+import { resolveBackendOrigin } from "@/utils/backendOrigin";
 
 /**
  * Shared view for every /common/*payment-response-* route. Ports the render
@@ -47,13 +48,11 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   const [failed, setFailed] = useState(false);
 
   const search = searchParams.toString();
-  // Keep a stable snapshot so unrelated renders don't issue another payment lookup.
-  const query = useMemo(() => new URLSearchParams(search), [search]);
   const schoolUUID =
     schoolUUIDFromRoute ||
     params.school ||
     params.schoolId ||
-    query.get("schoolUUID") ||
+    searchParams.get("schoolUUID") ||
     process.env.NEXT_PUBLIC_SCHOOL_ID;
 
   useEffect(() => {
@@ -62,8 +61,8 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       setLoading(true);
       const request =
         mode === "failure"
-          ? getPaymentResponseFailure(schoolUUID, customReference, uniqueUuid, query)
-          : getPaymentResponseSuccess(schoolUUID, endpointPath, query);
+          ? getPaymentResponseFailure(schoolUUID, customReference, uniqueUuid, search)
+          : getPaymentResponseSuccess(schoolUUID, endpointPath, search);
 
       request
         .then((res) => {
@@ -79,7 +78,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       cancelled = true;
       window.clearTimeout(requestTimer);
     };
-  }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, query]);
+  }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, search]);
 
   if (loading) return <ProcessingLoader />;
 
@@ -550,14 +549,8 @@ function parseHtmlMessage(htmlMessage) {
 // redirectTo like "/common/login/abc-school-uuid-123" -> absolute backend URL.
 function buildRedirectHref(redirectTo) {
   if (/^https?:\/\//i.test(redirectTo)) return redirectTo;
-  const base = resolveBackendOriginSafe();
+  const base = resolveBackendOrigin() || "";
   return `${base}${redirectTo.startsWith("/") ? "" : "/"}${redirectTo}`;
-}
-
-function resolveBackendOriginSafe() {
-  const useLocalProxy = process.env.NEXT_PUBLIC_USE_LOCAL_PROXY === "true";
-  if (useLocalProxy) return "";
-  return process.env.NEXT_PUBLIC_BACKEND_BASE_URL || "";
 }
 
 /* ------------------------------- Shell --------------------------------- */

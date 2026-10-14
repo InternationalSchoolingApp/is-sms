@@ -199,6 +199,13 @@ input:-internal-autofill-selected {
   -webkit-text-fill-color: oklch(0.145 0 0) !important;
 }
 
+/* Google reCAPTCHA v3's floating badge (invisible reCAPTCHA) is hidden here —
+   the required attribution text is rendered inline instead, next to the
+   terms checkbox in AccountForm.jsx, per Google's reCAPTCHA ToS. */
+.grecaptcha-badge {
+  visibility: hidden;
+}
+
 .iti{width: 100%;}
 
 /* Phone country list on phones (intl-tel-input's full-screen popup): 60% of the visible height, red close
@@ -307,4 +314,23 @@ input:-internal-autofill-selected {
   .ai-rise, .ai-land, .ai-shimmer, .ai-spin, .ai-pulse { animation: none; }
   .ai-sheet-right[data-open],
   .ai-sheet-right[data-closed] { animation: none; }
+}
+/* Cookie consent card: slides up and fades in; no motion for visitors who prefer reduced motion */
+@keyframes consent-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.consent-card {
+  animation: consent-card-in 0.35s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .consent-card {
+    animation: none;
+  }
 }

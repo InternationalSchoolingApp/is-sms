@@ -1,12 +1,13 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { DEFAULT_PROGRAM } from "@/utils/wizardSteps";
+import { resolveBackendNavigationOrigin } from "@/utils/backendOrigin";
 
 export default async function Home() {
   const session = await auth()
   if (!session){
     const schoolUUID = process.env.NEXT_PUBLIC_SCHOOL_ID;
-    redirect(schoolUUID ? `/${schoolUUID}/enrollment/${DEFAULT_PROGRAM}` : process.env.NEXT_PUBLIC_BACKEND_BASE_URL);
+    redirect(schoolUUID ? `/${schoolUUID}/enrollment/${DEFAULT_PROGRAM}` : resolveBackendNavigationOrigin());
   }
   // The wizard lives under /{school}/enrollment/{program}/step/{slug}. The
   // session carries the school but not the enrollment program (the backend

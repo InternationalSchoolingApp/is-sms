@@ -32,7 +32,6 @@ import {
   useOfflinePayment,
   usePaymentGatewayOptions,
   useProceedToDashboard,
-  useSignupStageStatusPoll,
   useStudentReviewDetails,
   useSubmitApplication,
 } from "@/hooks/useStudentReview";
@@ -45,7 +44,7 @@ import {
   getPayerCountryCodePromise,
   loadLocationGlobals,
 } from "@/utils/locationFinder";
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
+import { legacyEnrollmentProcessUrl } from "@/utils/backendOrigin";
 import { isDummyStudentMode, showDummyStripeCheckoutPage } from "@/utils/paymentGatewayChecks";
 
 const ROW_CLASS = "md:overflow-hidden md:rounded-xl md:border md:border-slate-200 md:bg-white";
@@ -270,17 +269,9 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
     // A confirmed custom plan must bypass the API's reloadRequired=Y redirect guard.
     reloadRequired: context.customPaymentEnabled ? "N" : "Y",
   });
-  // API order on this screen: get-payment-details and choose-payment-plan run
-  // on Stage 3's "Continue" (useProceedToReview), then get-student-review-details
-  // above, then enrollment-stage-status — held back until the review call has
-  // succeeded so it always fires 4th, then repeats every 3 min (getSignupStatus()).
-  const stageStatus = useSignupStageStatusPoll({
-    context,
-    uniqueId,
-    // Custom plans always return the backend's SSO redirect from stage-status;
-    // polling it here would send the user straight back into this page forever.
-    enabled: reviewQuery.isSuccess && !context.customPaymentEnabled,
-  });
+  // enrollment-stage-status (getSignupStatus()/getSignupStatusFinal() in legacy) is now polled
+  // once for the whole wizard session by EnrollmentProvider (useEnrollmentContext.js), covering
+  // every step instead of just this one — see that file for the cross-browser-redirect handling.
   const paymentOption = useShowPaymentOption({ context, userId });
   const choosePlan = useChoosePaymentPlan({ context, userId });
   const submitApplication = useSubmitApplication({ context, userId });
@@ -359,21 +350,11 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       window.location.reload();
       return;
     }
-    const baseUrl = resolveBackendOrigin();
-    if (failure.statusCode === STATUS_ELIGIBLE_CUSTOM_PLAN && baseUrl) {
-      window.location.href = `${baseUrl}/${context.schoolUUID}/student/enrollment/process/${userId}`;
+    const legacyUrl = legacyEnrollmentProcessUrl(context?.schoolUUID, userId);
+    if (failure.statusCode === STATUS_ELIGIBLE_CUSTOM_PLAN && legacyUrl) {
+      window.location.href = legacyUrl;
     }
   }, [failure, context?.schoolUUID, userId, onSessionExpired]);
-
-  const stageStatusData = stageStatus.data;
-  useEffect(() => {
-    if (!stageStatusData || context.customPaymentEnabled) return;
-    if (stageStatusData.status === STATUS_SESSION_OUT) {
-      onSessionExpired?.();
-    } else if (stageStatusData.status === STATUS_SUCCESS && stageStatusData.redirectUri) {
-      window.location.replace(stageStatusData.redirectUri);
-    }
-  }, [stageStatusData, context.customPaymentEnabled, onSessionExpired]);
 
   // Coming back from the payment gateway (browser Back / bfcache) restores this page exactly as it
   // was left — with the payment modal open and busy. Reset it when the page is restored from the cache.
@@ -441,9 +422,9 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       window.location.reload();
       return;
     }
-    const baseUrl = resolveBackendOrigin();
-    if (response.statusCode === STATUS_ELIGIBLE_CUSTOM_PLAN && baseUrl) {
-      window.location.href = `${baseUrl}/${context.schoolUUID}/student/enrollment/process/${userId}`;
+    const legacyUrl = legacyEnrollmentProcessUrl(context?.schoolUUID, userId);
+    if (response.statusCode === STATUS_ELIGIBLE_CUSTOM_PLAN && legacyUrl) {
+      window.location.href = legacyUrl;
       return;
     }
     setNotice({ tone: "error", text: response.categoryMandatoryMessage || response.message || fallback });
@@ -751,7 +732,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       {notice && (
         <p
           role={notice.tone === "error" ? "alert" : "status"}
-          className={`mt-4 text-sm font-semibold ${notice.tone === "error" ? "text-red-600" : notice.tone === "success" ? "text-emerald-900" : "text-slate-600"}`}
+          className={`my-4 text-sm font-semibold ${notice.tone === "error" ? "text-red-600 text-center text-xl" : notice.tone === "success" ? "text-emerald-900" : "text-slate-600"}`}
         >
           {notice.text}
         </p>
