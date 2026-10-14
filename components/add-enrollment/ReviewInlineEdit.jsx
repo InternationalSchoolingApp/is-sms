@@ -23,10 +23,14 @@ import { validateParentDetails, validateStudentDetails } from "@/utils/studentSi
 import { nameFieldProps } from "@/utils/nameInput";
 import { seedOtherParentFields } from "@/utils/parentRelation";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
+import { getLearningProgramsForSelect } from "@/constant/LearningPrograms";
 
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
 const STATUS_SESSION_OUT = "3";
 const GRID = "grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3";
+// Student Details edit card reads in a plain 2-column grid (no lg:3), unlike the Parent card's GRID.
+const STUDENT_GRID = "grid grid-cols-1 gap-3.5 sm:grid-cols-2";
+const LEARNING_PROGRAM_OPTIONS = getLearningProgramsForSelect();
 
 /**
  * Edit popups for the review screen's Student / Parent sections —
@@ -109,7 +113,7 @@ function useSaveOutcome({ context, onSessionExpired }) {
   return { formError, setFormError, outcome, modal };
 }
 
-export function StudentInlineEdit({ context, userId, uniqueId, rollNo, student, standardId, onSaved, onCancel, onSessionExpired }) {
+export function StudentInlineEdit({ context, userId, uniqueId, student, rollNo, standardId, onSaved, onCancel, onSessionExpired }) {
   // The review payload keeps the grade on the course block when the student block lacks it.
   const [initial] = useState(() => {
     const mapped = mapSignupStudentToFields(student);
@@ -199,22 +203,32 @@ export function StudentInlineEdit({ context, userId, uniqueId, rollNo, student, 
   return (
     <>
       <EditCard title="Student Details" saving={signup.isPending} onSave={save} onCancel={onCancel} formError={formError} centerTitle>
-        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-          <FloatingLabelInput icon={User} label={<Req label="Student's First Name" required />} filledLabel={<Req label="First Name" required />} value={fields.firstName} {...nameFieldProps(set("firstName"))} error={errors.firstName} />
-          <FloatingLabelInput icon={User} label={<Req label="Student's Last Name" required />} filledLabel={<Req label="Last Name" required />} value={fields.lastName} {...nameFieldProps(set("lastName"))} error={errors.lastName} />
-        </div>
-
-        <div className="mt-3.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+        {/* Single auto-flowing grid, same field order as AddStage1StudentDetails: Student Id pairs
+            with Learning Program, then First/Last Name, Grade/DOB, Gender/Nationality. */}
+        <div className={STUDENT_GRID}>
           {rollNo && (
             <FloatingLabelInput
               icon={BookOpen}
-              label={<Req label="Student ID" />}
+              label={<Req label="Student Id" />}
               value={rollNo}
               readOnly
               disabled
               inputClassName="cursor-not-allowed bg-slate-100 text-black disabled:pointer-events-auto disabled:opacity-100"
             />
           )}
+          {/* Learning Program is locked together with Grade — changing it would orphan the
+              already-saved grade, which this card doesn't let the user re-pick. */}
+          <FloatingLabelSelect
+            icon={BookOpen}
+            label={<Req label="Selected Learning Program" required />}
+            value={learningProgram}
+            options={LEARNING_PROGRAM_OPTIONS}
+            error={errors.learningProgram}
+            searchable
+            disabled
+          />
+          <FloatingLabelInput icon={User} label={<Req label="Student's First Name" required />} filledLabel={<Req label="First Name" required />} value={fields.firstName} {...nameFieldProps(set("firstName"))} error={errors.firstName} />
+          <FloatingLabelInput icon={User} label={<Req label="Student's Last Name" required />} filledLabel={<Req label="Last Name" required />} value={fields.lastName} {...nameFieldProps(set("lastName"))} error={errors.lastName} />
           <FloatingLabelSelect
             icon={GraduationCap}
             label={<Req label={fields.standardId ? "Selected Grade" : "Select Grade"} required />}
@@ -225,7 +239,7 @@ export function StudentInlineEdit({ context, userId, uniqueId, rollNo, student, 
             searchable
             disabled
           />
-          {/* Grade and Date of Birth are locked; everything else is editable. */}
+          {/* Date of Birth is locked; Gender remains editable. */}
           <DatePicker
             icon={Cake}
             label={<Req label={<>Date of Birth{" "}<span className="text-black text-[12px]">(Month Day, Year)</span></>} required />}
