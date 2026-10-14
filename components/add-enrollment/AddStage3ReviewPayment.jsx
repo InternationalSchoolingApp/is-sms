@@ -39,6 +39,7 @@ import {
 } from "@/hooks/useStudentReview";
 import { hidesCourseCredits, isKnownPaymentMode } from "@/utils/studentSignupValidation";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
+import { getLearningProgramLabel } from "@/constant/LearningPrograms";
 import {
   callLocationForPaymentPromise,
   getAirwallexCountryCode,
@@ -263,7 +264,7 @@ function buildPlanOptions(fee, currencyCode) {
  * the radio only updates local state, and choose-payment-plan is only
  * called when the primary action button is pressed.
  */
-export function AddStage3ReviewPayment({ context, userId, uniqueId, onBack, onSessionExpired, onOfflineSignup }) {
+export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onBack, onSessionExpired, onOfflineSignup }) {
   const reviewQuery = useStudentReviewDetails({
     context,
     userId,
@@ -771,7 +772,9 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, onBack, onSe
             context={context}
             userId={userId}
             uniqueId={uniqueId}
+            rollNo={rollNo}
             student={student}
+            rollNo={rollNo}
             standardId={course?.standardId}
             onSaved={(fields) => finishEdit("student", fields)}
             onCancel={() => setEditing(null)}
@@ -788,7 +791,10 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, onBack, onSe
           />
           <Collapse open={openSectionFor() === "student"}>
           <dl className="py-2 text-sm md:divide-y md:divide-slate-100 md:border-t md:border-slate-100 md:px-4 md:text-sm">
-            
+            {rollNo && <ReviewRow label="Student ID">{rollNo}</ReviewRow>}
+            {student?.learningProgram && (
+              <ReviewRow label="Selected Learning Program">{getLearningProgramLabel(student.learningProgram)}</ReviewRow>
+            )}
             <ReviewRow label="Student's First Name">{student?.firstName}</ReviewRow>
             <ReviewRow label="Student's Last Name">{student?.lastName}</ReviewRow>
             {course?.standardName && <ReviewRow label="Selected Grade">{course.standardName}</ReviewRow>}

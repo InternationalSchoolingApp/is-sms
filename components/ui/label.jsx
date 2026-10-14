@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { cn } from "cn"
-
 function Label({
   className,
   ...props
