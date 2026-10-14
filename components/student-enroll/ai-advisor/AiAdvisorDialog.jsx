@@ -37,7 +37,7 @@ const QUICK_QUESTIONS = [
 ];
 // Why each question is asked, keyed by the backend's question id (AdvisorQuestions.java).
 const QUESTION_HINTS = {
-  recoverSubjects: "We'll put these first so you can earn back the credits you need.",
+  recoverSubjects: "We'll put these first so you can earn back the courses you need.",
   career: "This helps us pick electives and course levels that lead toward that path.",
   college: "Colleges in different countries look for different courses, so we'll match them.",
   favoriteSubjects: "We'll lean toward higher levels or extra electives in these courses.",
@@ -416,14 +416,18 @@ function TypingDots() {
  * normal course-save path and come back as a fresh course-details response,
  * which onApplied hands to Stage3 to show.
  */
-export function AiAdvisorDialog({ open, onClose, context, school, program, gradeName, onApplied, onSessionExpired }) {
-  const start = useAdvisorStart({ context });
-  const upload = useMarksheetUpload({ school, program });
-  const confirmMarks = useConfirmMarksheet({ context });
-  const suggest = useAdvisorSuggestions({ context });
-  const apply = useApplySuggestions({ context });
-  const dismiss = useDismissSuggestions({ context });
-  const chat = useAdvisorChat({ context });
+/**
+ * studentUserId: set by Add Another Student (the child being enrolled while a
+ * parent or sibling is logged in); left out on the main signup.
+ */
+export function AiAdvisorDialog({ open, onClose, context, school, program, gradeName, onApplied, onSessionExpired, studentUserId }) {
+  const start = useAdvisorStart({ context, studentUserId });
+  const upload = useMarksheetUpload({ school, program, studentUserId });
+  const confirmMarks = useConfirmMarksheet({ context, studentUserId });
+  const suggest = useAdvisorSuggestions({ context, studentUserId });
+  const apply = useApplySuggestions({ context, studentUserId });
+  const dismiss = useDismissSuggestions({ context, studentUserId });
+  const chat = useAdvisorChat({ context, studentUserId });
 
   const [step, setStep] = useState("loading");
   const [setup, setSetup] = useState(null);
