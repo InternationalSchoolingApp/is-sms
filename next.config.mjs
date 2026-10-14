@@ -34,14 +34,16 @@ const nextConfig = {
   },
   async rewrites() {
     const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
-    // Backend static assets (payment gateway logos, flags, card icons) are loaded same-origin so an https
-    // deployment never requests them from the backend's plain-http origin (blocked as mixed content).
+    // Add Another Student only: its payment-method modal loads backend static assets (gateway logos, flags,
+    // card icons) through this same-origin prefix, so an https deployment never requests them from the
+    // backend's plain-http origin (blocked as mixed content). Nothing else uses this path.
     const staticAssetRewrites = backendBaseUrl
-      ? [{ source: "/static/theme2/:path*", destination: `${backendBaseUrl}/static/theme2/:path*` }]
+      ? [{ source: "/add-enrollment-assets/:path*", destination: `${backendBaseUrl}/static/theme2/:path*` }]
       : [];
     if (!backendBaseUrl || process.env.NEXT_PUBLIC_USE_LOCAL_PROXY !== "true") return staticAssetRewrites;
     return {
       afterFiles: [
+        ...staticAssetRewrites,
         { source: "/api/v1/:path*", destination: `${backendBaseUrl}/api/v1/:path*` },
         { source: "/:schoolId/api/:path*", destination: `${backendBaseUrl}/:schoolId/api/:path*` },
         // Leave school-prefixed /common routes to the App Router first. Any

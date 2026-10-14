@@ -264,7 +264,7 @@ function buildPlanOptions(fee, currencyCode) {
  * the radio only updates local state, and choose-payment-plan is only
  * called when the primary action button is pressed.
  */
-export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onBack, onSessionExpired, onOfflineSignup }) {
+export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEnrollmentCompleted, onBack, onSessionExpired, onOfflineSignup }) {
   const reviewQuery = useStudentReviewDetails({
     context,
     userId,
@@ -358,7 +358,8 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onBa
     // Enrollment already completed: reload like legacy does — enrollment/process then answers
     // REDIRECT and useEnrollmentContext sends the student to their dashboard.
     if (failure.statusCode === STATUS_REDIRECT_TO_DASHBOARD) {
-      window.location.reload();
+      if (onEnrollmentCompleted) onEnrollmentCompleted();
+      else window.location.reload();
       return;
     }
     const baseUrl = resolveBackendOrigin();
@@ -440,7 +441,8 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onBa
     }
     // choosePaymentOption()/invokePaymentGateway(): the enrollment moved on server-side -> reload.
     if (response.statusCode === STATUS_REDIRECT_TO_DASHBOARD) {
-      window.location.reload();
+      if (onEnrollmentCompleted) onEnrollmentCompleted();
+      else window.location.reload();
       return;
     }
     const baseUrl = resolveBackendOrigin();

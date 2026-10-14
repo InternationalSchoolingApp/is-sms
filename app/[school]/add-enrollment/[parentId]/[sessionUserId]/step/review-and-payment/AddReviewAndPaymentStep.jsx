@@ -5,7 +5,7 @@ import { FullScreenLoader } from "@/components/common/Loader";
 import { AddStage3ReviewPayment } from "@/components/add-enrollment/AddStage3ReviewPayment";
 import { useAddEnrollmentContext } from "@/hooks/add-enrollment/useAddEnrollmentContext";
 import { useAddWizardResume } from "@/hooks/add-enrollment/useAddWizardResume";
-import { addEnrollmentStepPath } from "@/utils/addEnrollmentSteps";
+import { addEnrollmentStepPath, addEnrollmentThankYouPath } from "@/utils/addEnrollmentSteps";
 import { expireSession } from "@/utils/logout";
 
 /**
@@ -31,6 +31,8 @@ export function AddReviewAndPaymentStep() {
       userId={childUserId}
       uniqueId={childUniqueId}
       rollNo={childRollNo}
+      // Backend says the enrollment is already complete (REDIRECT_TO_DASHBOOARD) -> thank-you page.
+      onEnrollmentCompleted={() => router.replace(addEnrollmentThankYouPath(school, parentId, sessionUserId, childUniqueId))}
       onBack={(step) => {
         // AddStage3ReviewPayment is a hard copy of the main 4-step Stage 4,
         // so its onBack arg uses the main-flow numbering (1=student-details,

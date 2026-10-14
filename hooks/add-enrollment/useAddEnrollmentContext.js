@@ -1,15 +1,17 @@
 "use client";
 
 import { useAddStudentDetailsPrefill } from "@/hooks/add-enrollment/useAddStage1";
-import { enrollAnotherChild } from "@/services/addEnrollmentBackendApi";
-import { getEnrollmentProcess, getPublicSchoolInfo } from "@/services/studentSignupApi";
-import { normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
+import { STATUS_REDIRECT_TO_DASHBOARD } from "@/hooks/useStudentReview";
+import { enrollAnotherChild, getAddEnrollmentProcess } from "@/services/addEnrollmentBackendApi";
+import { getPublicSchoolInfo } from "@/services/studentSignupApi";
+import { loadAddEnrollmentRollNo, saveAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
+import { addEnrollmentThankYouPath, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
 import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
 import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 
 /**
@@ -37,7 +39,8 @@ import { createContext, useContext, useEffect, useState } from "react";
 const AddEnrollmentContext = createContext(null);
 
 function useResolveAddEnrollmentContext() {
-  const { parentId, sessionUserId } = useParams();
+  const router = useRouter();
+  const { school, parentId, sessionUserId } = useParams();
   const { data: session, status } = useSession();
   const [logoUrl, setLogoUrl] = useState(null);
   const [whatsAppNumber, setWhatsAppNumber] = useState(undefined);
@@ -46,7 +49,17 @@ function useResolveAddEnrollmentContext() {
 
   const enrollChild = useQuery({
     queryKey: ["add-enrollment-child", session?.schoolUUID, parentId, session?.uniqueId],
-    queryFn: () => enrollAnotherChild(session.schoolUUID, parentId, session.uniqueId),
+    queryFn: async () => {
+      const response = await enrollAnotherChild(
+        session.schoolUUID,
+        parentId,
+        session.uniqueId,
+        childData?.rollNo,
+        loadAddEnrollmentRollNo(session.schoolUUID, parentId)
+      );
+      saveAddEnrollmentRollNo(session.schoolUUID, parentId, response?.data?.rollNo);
+      return response;
+    },
     enabled: Boolean(authenticated && parentId),
     staleTime: Infinity,
     gcTime: Infinity,
@@ -70,7 +83,12 @@ function useResolveAddEnrollmentContext() {
   // the logged-in student (student/enrollment/process keyed by the student's own uniqueId).
   const enrollmentProcess = useQuery({
     queryKey: ["add-enrollment-process", session?.schoolUUID, childUniqueId],
-    queryFn: () => getEnrollmentProcess(session.schoolUUID, childUniqueId),
+    queryFn: async () => {
+      const response = await getAddEnrollmentProcess(session.schoolUUID, childUniqueId);
+      // TEMP-DEBUG: enrollment/process response (remove after checking statusCode / redirectTo)
+      console.log("[add-enrollment] enrollment/process response", { childUniqueId, response });
+      return response;
+    },
     enabled: Boolean(authenticated && childUniqueId),
     staleTime: Infinity,
     gcTime: Infinity,
@@ -90,13 +108,22 @@ function useResolveAddEnrollmentContext() {
   // (no valid signupPage), i.e. genuinely past the wizard.
   const childResumeStep = normalizeAddSignupPage(childData?.signupPage);
   const childIsResumable = childResumeStep !== null;
+  // statusCode REDIRECT_TO_DASHBOOARD = enrollment completed (a withdrawn child carries it too, but with
+  // redirectTo "login"). It is authoritative, so it is NOT subject to the resumable guard above — a
+  // completed child's saved stage still reads as 1-4.
+  const enrollmentCompleted =
+    enrollmentProcess.data?.statusCode === STATUS_REDIRECT_TO_DASHBOARD && enrollmentProcess.data?.redirectTo !== "login";
   const processRedirect =
-    enrollmentProcess.data?.status === "REDIRECT" && !childIsResumable ? enrollmentProcess.data : null;
+    enrollmentCompleted || (enrollmentProcess.data?.status === "REDIRECT" && !childIsResumable)
+      ? enrollmentProcess.data
+      : null;
+  // enrollment/process says REDIRECT -> dashboard once the child's enrollment is complete: that is
+  // this wizard's thank-you page, not the :8080 dashboard.
   useEffect(() => {
-    if (processRedirect?.redirectTo === "dashboard" && processRedirect.url) {
-      window.location.replace(processRedirect.url);
+    if (processRedirect?.redirectTo === "dashboard" || enrollmentCompleted) {
+      router.replace(addEnrollmentThankYouPath(school, parentId, sessionUserId, childUniqueId));
     }
-  }, [processRedirect]);
+  }, [processRedirect, enrollmentCompleted, router, school, parentId, sessionUserId, childUniqueId]);
 
   useEffect(() => {
     if (!session?.schoolNumericId) return;
