@@ -42,7 +42,12 @@ export async function POST(request) {
   }
 
   const outgoing = new FormData();
-  outgoing.append("payload", encodePayload({ userId: session.userId, loginHash: session.userLoginHash || "" }));
+  // Add Another Student names the child; the backend checks it belongs to this parent.
+  const studentUserId = Number(form.get("studentUserId")) || null;
+  outgoing.append(
+    "payload",
+    encodePayload({ userId: session.userId, loginHash: session.userLoginHash || "", ...(studentUserId ? { studentUserId } : {}) })
+  );
   files.forEach((file) => outgoing.append("files", file, file.name || "marksheet"));
 
   const response = await fetch(

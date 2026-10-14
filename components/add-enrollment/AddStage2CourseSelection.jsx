@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDown,
@@ -34,10 +35,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { FlaggedSeatsModal } from "@/components/add-enrollment/FlaggedSeatsModal";
 import { ConfirmDialog } from "@/components/add-enrollment/ConfirmDialog";
 import { RecommendedCoursesDialog } from "@/components/add-enrollment/RecommendedCoursesDialog";
+import { AiSuggesterCard } from "@/components/student-enroll/ai-advisor/AiSuggesterCard";
+import { AiAdvisorDialog } from "@/components/student-enroll/ai-advisor/AiAdvisorDialog";
 import { ChangeGradeDialog } from "@/components/add-enrollment/ChangeGradeDialog";
 import {
   STATUS_SESSION_OUT,
   STATUS_SUCCESS,
+  courseDetailsKey,
   useCourseDetails,
   useProceedToReview,
   useRecommendedCourses,
@@ -455,6 +459,12 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
   // grade's cache entry immediately, without waiting for this component to
   // remount with a fresh prop.
   const [standardId, setStandardId] = useState(initialStandardId);
+  const { school } = useParams();
+  // AI Suggester: works on this child (userId), never on the logged-in parent or a sibling.
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiLanded, setAiLanded] = useState(() => new Set());
+  const aiLandedTimer = useRef(null);
+  useEffect(() => () => clearTimeout(aiLandedTimer.current), []);
   const courseQuery = useCourseDetails({ context, userId, standardId });
   const paymentOption = useShowPaymentOption({ context, userId });
   const update = useUpdateCourseSelection({ context, userId, standardId });
@@ -540,10 +550,36 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
   useEffect(() => {
     if (!initialFailure) return;
     if (initialFailure.status === STATUS_SESSION_OUT) onSessionExpired?.();
-    else if (initialFailure.statusCode === "FLAGGED") setFlaggedModal({ sessionName: initialFailure.message });
+    // FLAGGED on the first load is shown through shownFlagged below (derived, not set here).
   }, [initialFailure, onSessionExpired]);
 
+  // Flagged-seats notice: from the first load, or from a later call (flaggedModal, set in
+  // the failure handler). Closing it dismisses both.
+  const [initialFlaggedDismissed, setInitialFlaggedDismissed] = useState(false);
+  const shownFlagged =
+    flaggedModal ||
+    (initialFailure?.statusCode === "FLAGGED" && !initialFlaggedDismissed ? { sessionName: initialFailure.message } : null);
+  function closeFlagged() {
+    setFlaggedModal(null);
+    setInitialFlaggedDismissed(true);
+  }
+
   const minCreditsReachedRef = useRef(null);
+
+  function openAiSuggester() {
+    if (busy) return;
+    setAiOpen(true);
+  }
+
+  // The backend saved the child's new selection; show it and mark what the AI added.
+  function handleAiApplied(courseDetails, landedSubjectIds) {
+    if (isSuccessResponse(courseDetails)) {
+      queryClient.setQueryData(courseDetailsKey(userId, standardId), courseDetails);
+    }
+    setAiLanded(new Set((landedSubjectIds || []).map(String)));
+    clearTimeout(aiLandedTimer.current);
+    aiLandedTimer.current = setTimeout(() => setAiLanded(new Set()), 4000);
+  }
 
   function ask(request) {
     return new Promise((resolve) => {
@@ -840,10 +876,10 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
           </Button>
         </div>
         <FlaggedSeatsModal
-          open={!!flaggedModal}
-          onOpenChange={(open) => !open && setFlaggedModal(null)}
+          open={!!shownFlagged}
+          onOpenChange={(open) => !open && closeFlagged()}
           schoolName={context.schoolName}
-          sessionName={flaggedModal?.sessionName}
+          sessionName={shownFlagged?.sessionName}
         />
       </div>
     );
@@ -1016,6 +1052,10 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
           </div>
         )}
 
+      {data.aiAdvisor?.visible && !fixed && !inReview && (
+        <AiSuggesterCard onOpen={openAiSuggester} disabled={busy} />
+      )}
+
       <div className={`mt-2 grid gap-6 ${showAvailable ? "lg:grid-cols-[1fr_1.6fr]" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
         <section className="self-start overflow-hidden rounded-xl border border-slate-200 bg-white">
           <header className={`items-center gap-3 border-b border-slate-200 px-4 py-3 w-full ${(showCreditSummary || showCourseCountSummary) ? "hidden md:flex" : "flex md:justify-start justify-center"}`}>
@@ -1151,7 +1191,7 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
                 {selectedCourses.map((course, index) => {
                   const singleUpgradeTarget = course.upgradeCourses?.length === 1 ? course.upgradeCourses[0] : null;
                   return (
-                    <li key={course.courseId} className="flex items-start justify-between gap-3 px-4 py-3">
+                    <li key={course.courseId} className={`flex items-start justify-between gap-3 px-4 py-3 ${aiLanded.has(String(course.courseId)) ? "ai-land" : ""}`}>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#e6f3ff] text-xs font-semibold text-primary">
@@ -1208,7 +1248,7 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
                 const CourseIcon = categoryIcon(course.courseName);
                 const singleUpgradeTarget = course.upgradeCourses?.length === 1 ? course.upgradeCourses[0] : null;
                 return (
-                  <li key={course.courseId} className={`flex flex-col ${!fixed && course.courseMandatory === 1 && !batchOrProvider39 ? 'gap-3' : ''} rounded-md border border-slate-100 bg-blue-50 px-3 py-1.5 shadow-sm sm:flex-row sm:flex-wrap sm:items-center md:rounded-none md:border-0 md:bg-transparent md:p-0 md:px-4 md:py-3 md:shadow-none`}>
+                  <li key={course.courseId} className={`flex flex-col ${aiLanded.has(String(course.courseId)) ? "ai-land" : ""} ${!fixed && course.courseMandatory === 1 && !batchOrProvider39 ? 'gap-3' : ''} rounded-md border border-slate-100 bg-blue-50 px-3 py-1.5 shadow-sm sm:flex-row sm:flex-wrap sm:items-center md:rounded-none md:border-0 md:bg-transparent md:p-0 md:px-4 md:py-3 md:shadow-none`}>
                     <div className="flex min-w-0 flex-1 items-center gap-3">
                       <span className="flex h-5 w-5 shrink-0 items-center text-sm justify-center rounded bg-[#e6f3ff] text-primary">
                         {index + 1}
@@ -1621,6 +1661,21 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
         busy={changeGrade.isPending || update.isPending}
         onSave={handleGradeChange}
       />
+      {aiOpen && (
+        <AiAdvisorDialog
+          open
+          onClose={() => setAiOpen(false)}
+          context={context}
+          school={school}
+          // The upload Route Handler lives under /[school]/enrollment/[program]/; it ignores the
+          // program segment, so the Add wizard (which has no program in its URL) uses a fixed one.
+          program="add-student"
+          gradeName={data.standardName}
+          studentUserId={userId}
+          onApplied={handleAiApplied}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
       {recommendedData && (
         <RecommendedCoursesDialog
           data={recommendedData}
@@ -1631,10 +1686,10 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
         />
       )}
       <FlaggedSeatsModal
-        open={!!flaggedModal}
-        onOpenChange={(open) => !open && setFlaggedModal(null)}
+        open={!!shownFlagged}
+        onOpenChange={(open) => !open && closeFlagged()}
         schoolName={context.schoolName}
-        sessionName={flaggedModal?.sessionName}
+        sessionName={shownFlagged?.sessionName}
       />
     </div>
     </>
