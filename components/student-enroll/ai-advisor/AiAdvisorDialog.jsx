@@ -1016,7 +1016,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
           )}
           {step === "questions" && currentQuestion && (
             <>
-              <span className="order-last w-full  text-center sm:order-first sm:w-auto">
+              <span className="order-last w-full text-center sm:order-first sm:w-auto">
                 <Button
                   type="button"
                   variant="outline"
