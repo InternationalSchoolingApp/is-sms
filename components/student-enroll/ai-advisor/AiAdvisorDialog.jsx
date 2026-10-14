@@ -743,7 +743,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
 
           {step === "error" && (
             <div className="space-y-3">
-              <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-black">{notice || GENERIC_ERROR} {step}</p>
+              <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-black">{notice || GENERIC_ERROR}</p>
               {!/choose your courses/i.test(notice) && (
                 <p className="text-sm text-slate-700">You can still choose your courses yourself on this page.</p>
               )}
