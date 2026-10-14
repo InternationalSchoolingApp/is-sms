@@ -1,6 +1,7 @@
+import { NextResponse } from "next/server";
 import { signIn } from "@/auth";
-import { addEnrollmentStepPath, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
 import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
+import { addEnrollmentStepPath, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
 import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 import { getBackendOverrideCookieName, isBackendOverrideAllowed } from "@/utils/backendOrigin";
 
