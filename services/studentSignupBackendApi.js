@@ -80,16 +80,31 @@ async function parseJsonResponse(response) {
   }
 }
 
+/**
+ * The SMS access token travels from the page to this Server Action inside `authentication.accessToken` (the one
+ * place every authenticated request already carries identity; see utils/authentication.js). It is taken out of the
+ * body here and sent as `Authorization: Bearer`, so the backend sees an authenticated caller and the token is not
+ * repeated as body data. Absent when the backend does not issue tokens: the request is then exactly as before.
+ * No cookies are read or forwarded: the page already holds the token.
+ */
+function splitAccessToken(data) {
+  const accessToken = data?.authentication?.accessToken;
+  if (!accessToken) return { body: data, headers: {} };
+  const { accessToken: _token, ...authentication } = data.authentication;
+  return { body: { ...data, authentication }, headers: { Authorization: `Bearer ${accessToken}` } };
+}
+
 async function postPayload(schoolUUID, path, data, options) {
   // Legacy's $.ajaxSetup beforeSend sends the session's UNIQUEUUID as a header on every call;
   // a few payment endpoints read it (e.g. common/offline-payment), so callers that need it
   // pass `uniqueId`.
-  const headers = { "Content-Type": "application/json" };
+  const { body, headers: authHeaders } = splitAccessToken(data);
+  const headers = { "Content-Type": "application/json", ...authHeaders };
   if (options?.uniqueId) headers.UNIQUEUUID = options.uniqueId;
   const response = await fetch(await backendUrl(schoolUUID, path, options), {
     method: "POST",
     headers,
-    body: JSON.stringify({ payload: encodePayload(data) }),
+    body: JSON.stringify({ payload: encodePayload(body) }),
   });
   return parseJsonResponse(response);
 }

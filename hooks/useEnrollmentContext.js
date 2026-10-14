@@ -150,6 +150,7 @@ function useResolveEnrollmentContext() {
         schoolUUID: session.schoolUUID,
         schoolNumericId: session.schoolNumericId,
         schoolName: session.schoolName,
+        accessToken: session.accessToken,
         whatsAppNumber,
         enrollmentFor: "enrollment",
         customPaymentEnabled: enrollmentProcess.data?.customPaymentEnabled === true,

@@ -1,6 +1,17 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { login, exchangeSsoToken } from "@/services/authApi";
+import { login, exchangeSsoToken, refreshBackendTokens, logoutBackendTokens } from "@/services/authApi";
+import { applyTokens, createRefresher, needsRefresh } from "@/utils/tokenRefresh";
+
+/**
+ * SMS token API (see docs/sms-token-auth.md). When the SSO exchange returns an access and a refresh token, they are
+ * kept in the Auth.js JWT and refreshed here. The refresh token never leaves the server; only the short-lived access
+ * token is exposed to the page, which passes it to Server Actions in the request payload.
+ * The refresher is shared by the whole process so racing requests do not replay a one-time refresh token.
+ */
+const refreshTokens = createRefresher({
+  refresh: (token) => refreshBackendTokens(token.schoolUUID, token.refreshToken, token.backendOrigin),
+});
 
 /**
  * Central Auth.js (next-auth v5) config — the single source used by:
@@ -130,12 +141,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           schoolUUID: response.schoolUUID,
           schoolNumericId: response.schoolNumericId,
           schoolName: credentials.schoolName || response.schoolName || "",
+          // Present only when the backend has auth.sso.issue-tokens on; otherwise this is the old handoff unchanged.
+          accessToken: response.accessToken,
+          refreshToken: response.refreshToken,
+          expiresIn: response.expiresIn,
+          backendOrigin: response.backendOrigin,
         };
       },
     }),
   ],
   session: {
     strategy: "jwt",
+  },
+  events: {
+    // Sign-out ends the login on SMS too, using the refresh token that only this server holds.
+    async signOut(message) {
+      const token = message && "token" in message ? message.token : null;
+      if (token?.refreshToken) await logoutBackendTokens(token.schoolUUID, token.refreshToken, token.backendOrigin);
+    },
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -148,7 +171,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.schoolUUID = user.schoolUUID;
         token.schoolNumericId = user.schoolNumericId;
         token.schoolName = user.schoolName;
+        token.backendOrigin = user.backendOrigin;
+        // A fresh sign-in replaces any tokens a previous one left in the cookie.
+        delete token.accessToken;
+        delete token.refreshToken;
+        delete token.accessTokenExpires;
+        delete token.tokenError;
+        return applyTokens(token, user);
       }
+      // Runs when the session is read: the SessionProvider's poll of /api/auth/session and the proxy. Both write
+      // the cookie back, which a one-time refresh token needs (utils/tokenRefresh.js explains why).
+      if (needsRefresh(token)) return refreshTokens(token);
       return token;
     },
     async session({ session, token }) {
@@ -160,6 +193,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.schoolUUID = token.schoolUUID;
       session.schoolNumericId = token.schoolNumericId;
       session.schoolName = token.schoolName;
+      // Short-lived and meant for the page: it is passed to Server Actions, which send it to SMS as a bearer token.
+      // The refresh token is deliberately not here.
+      session.accessToken = token.accessToken;
+      session.tokenError = token.tokenError;
       return session;
     },
   },

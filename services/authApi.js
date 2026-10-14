@@ -66,7 +66,57 @@ export async function exchangeSsoToken(schoolUUID, ssoToken, backendOverride) {
     console.error("exchangeSsoToken: non-OK response", url, response.status, text);
     return null;
   }
-  return response.json();
+  const result = await response.json();
+  // Remember which backend issued the tokens: a refresh or logout later has to go back to the SAME instance
+  // (on UAT several backends share this deployment), and it runs where the picker cookie is not readable.
+  if (result && typeof result === "object") result.backendOrigin = baseUrl;
+  return result;
+}
+
+/**
+ * Trades the refresh token for a new access + refresh token pair: POST {schoolUUID}/auth/refresh on the SMS token
+ * API. The refresh token is single-use, so the caller must keep the NEW one (see utils/tokenRefresh.js, which
+ * also makes concurrent callers share one call). Server-side only, called from auth.js's jwt callback.
+ *
+ * @returns {Promise<{status: number, body?: object}>} the HTTP status and, for a JSON answer, its body
+ */
+export async function refreshBackendTokens(schoolUUID, refreshToken, backendOrigin) {
+  const baseUrl = backendOrigin || (await resolveServerBackendOrigin());
+  if (!baseUrl || !schoolUUID || !refreshToken) return { status: 0 };
+  const response = await fetch(`${baseUrl}/${schoolUUID}/auth/refresh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+    cache: "no-store",
+  });
+  const text = await response.text();
+  let body;
+  try {
+    body = text ? JSON.parse(text) : undefined;
+  } catch {
+    body = undefined;
+  }
+  return { status: response.status, body };
+}
+
+/**
+ * Ends this login on SMS (POST {schoolUUID}/auth/logout): the refresh token stops working and the access token is
+ * cut off at once. Idempotent on the server. Called from auth.js's signOut event, so the refresh token never
+ * leaves the server. Never throws: signing out must always succeed locally.
+ */
+export async function logoutBackendTokens(schoolUUID, refreshToken, backendOrigin) {
+  try {
+    const baseUrl = backendOrigin || (await resolveServerBackendOrigin());
+    if (!baseUrl || !schoolUUID || !refreshToken) return;
+    await fetch(`${baseUrl}/${schoolUUID}/auth/logout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+      cache: "no-store",
+    });
+  } catch (err) {
+    console.error("logoutBackendTokens: could not reach the backend", err);
+  }
 }
 
 /**

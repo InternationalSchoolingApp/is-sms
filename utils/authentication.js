@@ -13,6 +13,9 @@ export function buildAuthentication(context) {
     schoolId: context.schoolNumericId,
     schoolUUID: context.schoolUUID,
     userType: "STUDENT",
+    // The SMS access token (only when the backend issues tokens). studentSignupBackendApi.js lifts it out of the
+    // payload into an Authorization header before the request is sent, so it never reaches the backend as body data.
+    ...(context.accessToken ? { accessToken: context.accessToken } : {}),
   };
 }
 

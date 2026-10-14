@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "verify:payload-encoding": "node scripts/verifyPayloadEncoding.mjs",
+    "verify:token-refresh": "node scripts/verifyTokenRefresh.mjs",
     "verify:cookie-domain": "node scripts/verifyCookieDomain.mjs"
   },
   "dependencies": {
