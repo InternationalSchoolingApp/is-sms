@@ -525,7 +525,11 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       return;
     }
     function measure() {
-      setDetailPaneHeight(window.innerWidth > 767 ? node.offsetHeight : null);
+      // Capped at 70% of the viewport height: a category catalog with unusually many top-level
+      // categories (or a transient oversized measurement during a re-render/category switch) would
+      // otherwise pin this pane — and so the whole page — to that full height with no visible
+      // scrollbar, leaving a large blank gap below the visible content instead of actually scrolling.
+      setDetailPaneHeight(window.innerWidth > 767 ? Math.min(node.offsetHeight, window.innerHeight * 0.7) : null);
     }
     measure();
     const observer = new ResizeObserver(measure);
@@ -1618,7 +1622,15 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                           {addableCountLabel(activeCourse.subjects.length)} <ChevronDown className="h-3.5 w-3.5" />
                         </span>
                       </div>
-                      <div className="space-y-2 p-4" style={detailPaneHeight>250 ? { height: detailPaneHeight, overflowY: "auto" } : { maxHeight: "300px", overflowY: "auto" }}>
+                      {/* `relative` is load-bearing: without a positioned ancestor here, this pane's
+                          `position:absolute` descendants (e.g. the sr-only "Already selected" labels)
+                          fall back to `html` as their containing block. That doesn't change what's
+                          painted (the pane's own overflow-y:auto still clips them visually), but it DOES
+                          let their layout box keep inflating `document.documentElement.scrollHeight` by
+                          however far down the full (unscrolled) subject list they'd fall — confirmed live:
+                          a category with many subjects (e.g. 37 Electives) pushed the page thousands of
+                          pixels taller than the visible card, even though this pane itself stayed capped. */}
+                      <div className="relative space-y-2 p-4" style={detailPaneHeight>250 ? { height: detailPaneHeight, overflowY: "auto" } : { maxHeight: "300px", overflowY: "auto" }}>
                         {activeCourse.courseDescription && <p className="text-xs text-black">{activeCourse.courseDescription}</p>}
                         {activeCourse.displaySubjects
                           .filter((subject) => !query || subject.subjectName?.toLowerCase().includes(query) || activeCourse.courseName?.toLowerCase().includes(query))
