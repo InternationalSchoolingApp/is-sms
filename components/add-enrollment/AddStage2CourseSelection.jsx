@@ -39,7 +39,6 @@ import {
   STATUS_SESSION_OUT,
   STATUS_SUCCESS,
   useCourseDetails,
-  useLocalCourseUpdate,
   useProceedToReview,
   useRecommendedCourses,
   useShowPaymentOption,
@@ -50,9 +49,6 @@ import { useAddStudentDetailsPrefill, useAddStudentDetailsSignup } from "@/hooks
 import {
   addableCountLabel,
   canRemoveSelected,
-  optimisticAdd,
-  optimisticRemove,
-  optimisticUpgrade,
   parseIds,
   withSelectedMerged,
 } from "@/utils/courseSelectionLocal";
@@ -462,7 +458,6 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
   const courseQuery = useCourseDetails({ context, userId, standardId });
   const paymentOption = useShowPaymentOption({ context, userId });
   const update = useUpdateCourseSelection({ context, userId, standardId });
-  const applyLocal = useLocalCourseUpdate({ userId, standardId });
   const recommended = useRecommendedCourses({ context, userId });
   const proceed = useProceedToReview({ context, userId });
   // Change Grade & DOB modal (changeSelectedGrade()/saveSelectedGradeAndDob()
@@ -488,10 +483,6 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
   const apAcknowledgedRef = useRef(false);
   // Legacy oneTimeModal: the "extra fee from now on" notice shows once.
   const extraFeeNoticeShownRef = useRef(false);
-  // Add/remove/upgrade only edit the cached page; nothing is persisted until
-  // flushSelection writes the whole selection in one call on Next/Back. True means
-  // the cached page is ahead of what's in the database.
-  const unsavedRef = useRef(false);
 
   // Desktop/tablet only (>767px): .course-category's height is pinned to
   // whatever height .suject-category (the sidebar) naturally renders at —
@@ -554,35 +545,6 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
 
   const minCreditsReachedRef = useRef(null);
 
-  // Courses now live only in the cache until Next/Back saves them, so a reload or
-  // tab close would drop them without this. The browser shows its own generic
-  // "leave site?" prompt; the string is ignored by every current browser.
-  useEffect(() => {
-    function warnIfUnsaved(event) {
-      if (!unsavedRef.current) return;
-      event.preventDefault();
-      event.returnValue = "";
-    }
-    window.addEventListener("beforeunload", warnIfUnsaved);
-    return () => window.removeEventListener("beforeunload", warnIfUnsaved);
-  }, []);
-  useEffect(() => {
-    if (!data) return;
-    if (minCreditsReachedRef.current === null) {
-      minCreditsReachedRef.current = showExtraCoursesToggle;
-      return;
-    }
-    if (showExtraCoursesToggle && !minCreditsReachedRef.current) {
-      toast.success(
-        <div>
-          <p className="text-lg font-bold text-black">You are all set!</p>
-        </div>,
-        { duration: 4000 }
-      );
-    }
-    minCreditsReachedRef.current = showExtraCoursesToggle;
-  }, [data, showExtraCoursesToggle]);
-
   function ask(request) {
     return new Promise((resolve) => {
       resolverRef.current = resolve;
@@ -619,10 +581,9 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
         handleFailure(response, "Could not update your courses. Please try again.");
         return false;
       }
-      // Remaining callers (removeAll, confirmRecommended) send the FULL selection
-      // CSV, so a success means the server now holds exactly what the page shows —
-      // including any locally added/removed/upgraded courses still unsaved.
-      unsavedRef.current = false;
+      // The backend's own "Course added"/"Course removed" message used to also render as an
+      // inline banner under "Your Selected Courses" — redundant with the toast each caller
+      // already shows, so it's dropped here.
       return true;
     } catch (err) {
       console.error("AddStage2CourseSelection update failed:", err);
@@ -632,44 +593,6 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
   }
 
   const selectedIds = parseIds(data?.selectedSubjectsAsString);
-
-  /**
-   * Writes the accumulated selection to the server in ONE
-   * course-details-by-standard-id call, before the step is left — add, remove and
-   * the Honors/Advance toggle no longer save as you go.
-   *
-   * Resolves { ok, courseData } so callers don't act on a stale closure.
-   */
-  async function flushSelection() {
-    if (!unsavedRef.current) return { ok: true, courseData: data };
-    const ids = parseIds(data?.selectedSubjectsAsString);
-    try {
-      const response = await update.mutateAsync({
-        standardId: data.standardId,
-        selectedSubjects: ids.join(","),
-        controlType: ids.length === 0 ? "remove" : "add",
-      });
-      if (!isSuccessResponse(response)) {
-        handleFailure(response, "Could not save your courses. Please try again.");
-        return { ok: false, courseData: data };
-      }
-      unsavedRef.current = false;
-      // The backend can drop courses it won't accept (AP below the credit minimum,
-      // over-limit rows). If what came back isn't what we sent, the student is
-      // looking at a different selection than they picked, so stop rather than
-      // carrying on with it.
-      const savedIds = parseIds(response.selectedSubjectsAsString);
-      if (savedIds.length !== ids.length || savedIds.some((id) => !ids.includes(id))) {
-        toast.error("Some courses could not be saved. Please review your selection.");
-        return { ok: false, courseData: response };
-      }
-      return { ok: true, courseData: response };
-    } catch (err) {
-      console.error("AddStage2CourseSelection save failed:", err);
-      toast.error(GENERIC_ERROR);
-      return { ok: false, courseData: data };
-    }
-  }
 
   async function addSubject(course, subject) {
     if (busy) return false;
@@ -721,21 +644,23 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
       if (!confirmed) return false;
     }
     setOpenCourseId(course.courseId);
-    const added = applyLocal((previous) => optimisticAdd(previous, course, subject));
-    if (added) {
-      unsavedRef.current = true;
-      toast.success(`${subject.subjectName} Added`);
-    }
+    const added = await applyChange({
+      selectedSubjects: [...selectedIds, String(subject.subjectId)].join(","),
+      controlType: "add",
+      courseId: course.courseId,
+    });
+    if (added) toast.success(`${subject.subjectName} Added`);
     return added;
   }
 
   async function removeSubject(course) {
     if (busy) return;
-    const removed = applyLocal((previous) => optimisticRemove(previous, course));
-    if (removed) {
-      unsavedRef.current = true;
-      toast.success(`${course.courseName} Removed`);
-    }
+    const removed = await applyChange({
+      selectedSubjects: selectedIds.filter((id) => id !== String(course.courseId)).join(","),
+      controlType: "remove",
+      courseId: course.categoryId,
+    });
+    if (removed) toast.success(`${course.courseName} Removed`);
   }
 
   async function removeAll() {
@@ -769,9 +694,18 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
     // of this CSV (getOrderedSubjects' `ORDER BY FIELD(SUBJECT_ID, ...)`, then
     // CTECourseUtil.reorderSelectedCourses), so appending made a course jump to the
     // bottom of the list the moment its Honors/Advanced toggle was flipped.
-    const switched = applyLocal((previous) => optimisticUpgrade(previous, course, target));
+    // Substitute the variant IN PLACE rather than dropping the old id and appending
+    // the new one: the backend renders "Your Selected Courses" in exactly the order
+    // of this CSV, so appending made a course jump to the bottom of the list the
+    // moment its Honors/Advanced toggle was flipped.
+    const upgradedIds = selectedIds.map((id) => (id === String(course.courseId) ? String(target.courseId) : id));
+    if (!upgradedIds.includes(String(target.courseId))) upgradedIds.push(String(target.courseId));
+    const switched = await applyChange({
+      selectedSubjects: upgradedIds.join(","),
+      controlType: "add",
+      courseId: course.categoryId,
+    });
     if (switched) {
-      unsavedRef.current = true;
       // Names the actual resulting subject (e.g. "English I Honors added" / "English I added"),
       // not a generic "Switch to Honors"/"Switch to Regular" — course.courseName is the subject's
       // own display name (e.g. "English I"), and courseTypeOriginal === "Regular" means this
@@ -823,12 +757,7 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
       });
       if (!isSuccessResponse(courseResponse)) {
         handleFailure(courseResponse, "Grade saved, but could not refresh courses for it. Please try again.");
-        return;
       }
-      // Courses are grade-specific, so the new grade's page replaces the old one
-      // outright — local, unsaved picks for the PREVIOUS grade are gone on purpose,
-      // and the flag drops with them.
-      unsavedRef.current = false;
     } catch (err) {
       console.error("AddStage2CourseSelection change-grade failed:", err);
       toast.error(GENERIC_ERROR);
@@ -859,16 +788,6 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
     }
   }
 
-  // Leaving the step in either direction has to persist the selection, otherwise
-  // everything picked since the page loaded is gone. A failed save keeps the user
-  // here with the error rather than silently discarding the courses.
-  async function handleBack() {
-    if (busy) return;
-    const saved = await flushSelection();
-    if (!saved.ok) return;
-    onBack?.();
-  }
-
   async function handleNext() {
     if (busy) return;
     const creditError = validateCourseCredits(data);
@@ -876,10 +795,8 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
       toast.error(creditError);
       return;
     }
-    const saved = await flushSelection();
-    if (!saved.ok) return;
     try {
-      const { ok, response } = await proceed.mutateAsync({ courseData: saved.courseData, showPaymentOption });
+      const { ok, response } = await proceed.mutateAsync({ courseData: data, showPaymentOption });
       if (!ok) {
         handleFailure(response, "Could not continue. Please try again.");
         return;
@@ -914,7 +831,7 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
         </p>
         <div className="mt-6 flex gap-3">
           {onBack && (
-            <Button type="button" variant="outline" onClick={handleBack} disabled={busy}>
+            <Button type="button" variant="outline" onClick={onBack} disabled={busy}>
               Back
             </Button>
           )}
@@ -950,7 +867,13 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
   // Selected courses are merged back into their categories as ticked rows, and a
   // locally added course drops out of the addable list so it can't be added twice.
   const availableCourses = withSelectedMerged(data);
-  const showAvailable = !fixed && availableCourses.length > 0;
+  // Keyed off `subjects` (addable) and NOT `displaySubjects`: a category stays in
+  // availableCourses once every course in it is selected, so it can still render its
+  // ticked rows. But when NOTHING is addable anywhere — a fixed/group program, or a
+  // selection that has exhausted the catalogue — there is nothing to add and the
+  // whole "Add Extra Courses" panel should disappear rather than open onto an empty
+  // list.
+  const showAvailable = !fixed && availableCourses.some((course) => course.subjects.length > 0);
   const effectiveOpenId = openCourseId ?? availableCourses[0]?.courseId;
   const showMinBanner = Number(data.courseProviderId) !== 39 && Number(data.minCourseLimit) > Number(data.totalCredit);
   const showCreditSummary = showCourseCredits && !batchOrProvider39 && Number(data.minCourseLimit) > 0;
@@ -1672,7 +1595,7 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
         {/* <p className="text-xs text-black">Your course choices are saved as you make them.</p> */}
         <MobileActionBar context={context}>
           {onBack && (
-            <Button type="button" variant="outline" className="cursor-pointer" onClick={handleBack} disabled={busy}>
+            <Button type="button" variant="outline" className="cursor-pointer" onClick={onBack} disabled={busy}>
               {inReview ? "Cancel" : "Back"}
             </Button>
           )}
