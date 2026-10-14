@@ -21,10 +21,10 @@ export function AiSuggesterCard({ onOpen, disabled }) {
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-black">Not sure which courses to pick?</p>
-          <p className="text-xs text-slate-700">Answer a few quick questions and let AI suggest courses for you.</p>
+          <p className="text-xs text-slate-700">Answer a few quick questions and let our smart course picker suggest courses for you.</p>
         </div>
         <Button type="button" onClick={onOpen} disabled={disabled} className="shrink-0 bg-[#3fa43c] hover:bg-[#3fa43c]/90">
-          <Sparkles className="h-4 w-4" /> AI Suggester
+          <Sparkles className="h-4 w-4" /> Smart Course Picker
         </Button>
       </div>
 
