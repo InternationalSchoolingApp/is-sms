@@ -47,10 +47,15 @@ export function PageTitle() {
   });
 
   const studentName = [prefill.data?.firstName, prefill.data?.lastName].filter(Boolean).join(" ");
-  const programSource = isAddEnrollment ? prefill.data?.learningProgram : program;
-  const learningProgram = studentName ? null : getLearningProgramRouteCode(programSource) || programSource;
-  const fallbackLabel = isAddEnrollment ? "Student" : "Enrollment";
-  const title = `${studentName || (learningProgram ? getLearningProgramLabel(learningProgram) : fallbackLabel)} | Enrollment`;
+  // Prefer the student's actual confirmed program (same get-student-details call, already
+  // fetched above) over the `program` URL segment: the SSO handoff/post-signup redirect can
+  // land here with a placeholder segment (see app/api/sso/route.js), so trusting the URL alone
+  // showed the wrong program (e.g. "One-to-One" for a Self Study Plus student). Only falls back
+  // to the URL param while prefill hasn't resolved yet.
+  const learningProgram = studentName
+    ? null
+    : getLearningProgramRouteCode(prefill.data?.learningProgram) || getLearningProgramRouteCode(program) || program;
+  const title = `${studentName || getLearningProgramLabel(learningProgram)} | Enrollment`;
 
   useEffect(() => {
     document.title = title;
