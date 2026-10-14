@@ -10,6 +10,7 @@ Everything ships **off**. A stage goes live only by changing rows in `SETTINGS`,
    2. `external-resource/63_6_0_COURSE_ADVISOR_MARKSHEET.sql` (also adds `COURSE_ADVISOR_REQUIRE_SESSION`)
    3. `external-resource/63_6_0_COURSE_ADVISOR_RECOMMENDATION.sql`
    4. `external-resource/63_6_0_COURSE_ADVISOR_CHAT.sql`
+   5. `external-resource/63_6_0_COURSE_ADVISOR_GLPM_COLUMN.sql` (adds `GRADE_LEARNING_PROGRAM_MAPPING.AI_COURSE_ADVISOR_ENABLED`, `'Y'` on every row)
 3. **Frontend (`is-sms`):** deploy. The AI Suggester card stays hidden until the backend flag says otherwise.
 4. **Anthropic key:** nothing new to set. Leave `ANTHROPIC_API_KEY_COURSE_ADVISOR` and `ANTHROPIC_WORKSPACE_ID_COURSE_ADVISOR` empty, and the advisor uses the existing `ANTHROPIC_API_KEY` (`sk-ant-api03-…`). This is the setup verified on UAT.
    - Don't use an `sk-ant-usr-…` key. It isn't scoped to a workspace, and the Anthropic API rejects it (HTTP 400).
@@ -31,15 +32,20 @@ It checks four things:
 
 Read the printed answers. They are what students will see.
 
-## 3. Stages
+## 3. Who sees it
 
-| Stage | Settings to change | Who sees it |
-|---|---|---|
-| UAT | `COURSE_ADVISOR_AI_ENABLED=Y`, `…_SCHOOL_IDS=1`, `…_LEARNING_PROGRAMS=ONE_TO_ONE`, `…_MARKSHEET_ENABLED=Y`, `…_ADDITIONAL_COURSE_ENABLED=Y`, `…_CHAT_ENABLED=Y` | UAT testers |
-| 1 | The same settings on production | School 1, One-to-One (Grades 6–12; KG–5 and Exact Path are always excluded) |
-| 2 | `…_LEARNING_PROGRAMS=ONE_TO_ONE,DUAL_DIPLOMA` | Adds Dual Diploma |
-| 3 | add `SCHOLARSHIP,SSP,ONE_TO_ONE_FLEX,BATCH` | All programs at school 1 |
-| 4 | `…_SCHOOL_IDS=1,4,…` | Other schools |
+The advisor shows only when **both** of these are on:
+- `SETTINGS.COURSE_ADVISOR_AI_ENABLED = 'Y'`: the global switch, and the kill switch.
+- `GRADE_LEARNING_PROGRAM_MAPPING.AI_COURSE_ADVISOR_ENABLED = 'Y'` on the student's row (school + enrollment type + learning program + grade).
+
+No grade or program is hardcoded. KG–5 and Exact Path follow the column like every other grade. The one exception is a Step 3 screen whose course list is fixed (`requiredFixedCourses`): there is nothing to choose there, so the card does not show.
+
+```sql
+-- Turn off a program at a school
+UPDATE GRADE_LEARNING_PROGRAM_MAPPING SET AI_COURSE_ADVISOR_ENABLED = 'N' WHERE SCHOOL_ID = 1 AND LEARNING_PROGRAM = 'BATCH';
+-- Turn off KG - Grade 5
+UPDATE GRADE_LEARNING_PROGRAM_MAPPING SET AI_COURSE_ADVISOR_ENABLED = 'N' WHERE STANDARD_ID BETWEEN 11 AND 17;
+```
 
 Partner students only get the extra-course suggestion when `COURSE_ADVISOR_ADDITIONAL_COURSE_FOR_PARTNER=Y`.
 
@@ -47,7 +53,7 @@ Partner students only get the extra-course suggestion when `COURSE_ADVISOR_ADDIT
 
 ## 4. Smoke test per stage (about 10 minutes)
 
-- [ ] Step 3 shows the "AI Suggester" card. A KG–5 student does **not** see it.
+- [ ] Step 3 shows the "AI Suggester" card for grades whose mapping row is `Y`, and hides it for a row set to `N`.
 - [ ] Opening it shows the marksheet step with the `*` note. "Skip this step" goes to the questions.
 - [ ] Uploading a phone photo of a real marksheet shows the subjects table, and you can edit it.
 - [ ] "Get suggestions" shows a checklist, then cards with reasons. Any extra course appears in a separate "Try this" card and is unticked.
