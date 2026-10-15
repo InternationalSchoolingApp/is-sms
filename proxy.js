@@ -39,6 +39,5 @@ export const config = {
   matcher: [
     "/:school/enrollment/:program/step/:path*",
     "/:school/add-enrollment/:parentId/:sessionUserId/step/:path*",
-    "/:school/add-enrollment/:parentId/:sessionUserId/thank-you",
   ],
 };

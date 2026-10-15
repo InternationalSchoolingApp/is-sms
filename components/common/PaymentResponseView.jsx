@@ -6,6 +6,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { Clock, LoaderCircle, XCircle } from "lucide-react";
 import { getPaymentResponseSuccess, getPaymentResponseFailure } from "@/services/paymentResponseApi";
+import { useSession } from "next-auth/react";
+import { getAddEnrollmentThankYou } from "@/services/addEnrollmentBackendApi";
+import { loadAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
+import { AccountSetupSection } from "@/components/add-enrollment/AccountSetupSection";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
 
 /**
@@ -41,7 +45,17 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   const searchParams = useSearchParams();
 
   const customReference = params.customReference;
-  const uniqueUuid = params.UNIQUEUUID;
+
+  // Add Another Student: the return URL carries ae=Y (+ parentId, sessionUserId = the caller's UNIQUEUUID).
+  // On the path-based failure URL those arrive glued onto the UNIQUEUUID segment ("{uuid}&ae=Y&parentId=..").
+  const [uuidSegment, ...gluedParts] = decodeURIComponent(params.UNIQUEUUID ?? "").split("&");
+  const glued = new URLSearchParams(gluedParts.join("&"));
+  const addEnrollmentParam = (key) => searchParams.get(key) || glued.get(key) || "";
+  const addEnrollment =
+    addEnrollmentParam("ae").toUpperCase() === "Y" && addEnrollmentParam("parentId") && addEnrollmentParam("sessionUserId")
+      ? { parentId: addEnrollmentParam("parentId"), sessionUniqueId: addEnrollmentParam("sessionUserId") }
+      : null;
+  const uniqueUuid = addEnrollment ? uuidSegment : params.UNIQUEUUID;
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -88,7 +102,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   }
 
   const responseStatus = String(data.responseStatus ?? "");
-  if (responseStatus === "1") return <SuccessCard data={data} />;
+  if (responseStatus === "1") return <SuccessCard data={data} addEnrollment={addEnrollment} schoolUUID={schoolUUID} />;
   if (responseStatus === "2") return <UnderVerificationCard data={data} />;
   return <FailedCard data={data} />;
 }
@@ -238,7 +252,7 @@ function successPrimaryCta(data) {
   return { href: data.returnUrl, label: "Click here to review and payment" };
 }
 
-function SuccessCard({ data }) {
+export function SuccessCard({ data, addEnrollment, schoolUUID }) {
   // Thank-you page stays as-is: no countdown and no auto-redirect to the dashboard.
   const showReload = false;
   const returnUrl = data.returnUrl;
@@ -262,9 +276,18 @@ function SuccessCard({ data }) {
           <SuccessBody data={data} />
         </div>
 
-        <AccountInfoCard data={data} />
+        {data.accountSetup ? <AccountSetupSection data={data.accountSetup} /> : !addEnrollment && <AccountInfoCard data={data} />}
 
         <ReceiptButtons data={data} primaryCta={primaryCta} />
+
+        {/* Add Another Student: the account-setup section replaces the timer. */}
+        {addEnrollment && (
+          <AddEnrollmentAccountInfo
+            schoolUUID={schoolUUID}
+            parentId={addEnrollment.parentId}
+            sessionUniqueId={addEnrollment.sessionUniqueId}
+          />
+        )}
 
         {showReload && returnUrl && !redirected && (
           <div className="mt-5 flex items-center justify-center gap-4 rounded-2xl bg-blue-50 px-5 py-4 text-left ring-1 ring-blue-100">
@@ -290,6 +313,41 @@ function SuccessCard({ data }) {
       </div>
     </PageShell>
   );
+}
+
+// Add Another Student: loads the thank-you details (api/v1/enroll/another/child/thank-you) and shows the
+// account-setup section when the response says isFirstPayment = Y. The numeric user id comes from the login session, the roll number from the add-enrollment
+// wizard's sessionStorage; without either the section simply stays hidden.
+function AddEnrollmentAccountInfo({ schoolUUID, parentId, sessionUniqueId }) {
+  const { data: session } = useSession();
+  const sessionUserId = session?.userId;
+  const [info, setInfo] = useState(null);
+
+  useEffect(() => {
+    if (!sessionUserId) return undefined;
+    let cancelled = false;
+    getAddEnrollmentThankYou(schoolUUID, {
+      parentId,
+      sessionUserId,
+      sessionUniqueId,
+      studentRollNumber: loadAddEnrollmentRollNo(schoolUUID, parentId),
+    })
+      .then((res) => {
+        if (!cancelled && res?.status === "1" && res.data) setInfo(res.data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [schoolUUID, parentId, sessionUserId, sessionUniqueId]);
+
+  // The account-setup section is only for the child's first payment (flag comes from the thank-you API).
+  if (!isFirstPayment(info)) return null;
+  return <AccountSetupSection data={info} />;
+}
+
+export function isFirstPayment(info) {
+  return String(info?.isFirstPayment ?? "").toUpperCase() === "Y";
 }
 
 // Added-student (sibling) enrollment: same info as the invite mail — SMS password + Outlook account.

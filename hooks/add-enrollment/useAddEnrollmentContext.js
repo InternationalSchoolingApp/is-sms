@@ -5,13 +5,13 @@ import { STATUS_REDIRECT_TO_DASHBOARD } from "@/hooks/useStudentReview";
 import { enrollAnotherChild, getAddEnrollmentProcess } from "@/services/addEnrollmentBackendApi";
 import { getPublicSchoolInfo } from "@/services/studentSignupApi";
 import { loadAddEnrollmentRollNo, saveAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
-import { addEnrollmentThankYouPath, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
+import { normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
 import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
 import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 
 /**
@@ -39,7 +39,6 @@ import { createContext, useContext, useEffect, useState } from "react";
 const AddEnrollmentContext = createContext(null);
 
 function useResolveAddEnrollmentContext() {
-  const router = useRouter();
   const { school, parentId, sessionUserId } = useParams();
   const { data: session, status } = useSession();
   const [logoUrl, setLogoUrl] = useState(null);
@@ -117,13 +116,12 @@ function useResolveAddEnrollmentContext() {
     enrollmentCompleted || (enrollmentProcess.data?.status === "REDIRECT" && !childIsResumable)
       ? enrollmentProcess.data
       : null;
-  // enrollment/process says REDIRECT -> dashboard once the child's enrollment is complete: that is
-  // this wizard's thank-you page, not the :8080 dashboard.
-  useEffect(() => {
-    if (processRedirect?.redirectTo === "dashboard" || enrollmentCompleted) {
-      router.replace(addEnrollmentThankYouPath(school, parentId, sessionUserId, childUniqueId));
-    }
-  }, [processRedirect, enrollmentCompleted, router, school, parentId, sessionUserId, childUniqueId]);
+  // enrollment/process says REDIRECT -> dashboard once the child's enrollment is complete (e.g. paid from the
+  // payment link in another browser). The wizard stays where it is and shows its thank-you view in place of
+  // the steps (see AddEnrollmentChrome) instead of navigating to the :8080 dashboard. markCompleted lets the
+  // review step flip the same switch when the backend answers REDIRECT_TO_DASHBOOARD mid-payment.
+  const [completedLocal, setCompletedLocal] = useState(false);
+  const completed = completedLocal || processRedirect?.redirectTo === "dashboard" || enrollmentCompleted;
 
   useEffect(() => {
     if (!session?.schoolNumericId) return;
@@ -193,6 +191,8 @@ function useResolveAddEnrollmentContext() {
     childUserId,
     childUniqueId,
     childRollNo,
+    completed,
+    markCompleted: () => setCompletedLocal(true),
     isError: enrollChild.isError || processRedirect?.redirectTo === "login",
   };
 }

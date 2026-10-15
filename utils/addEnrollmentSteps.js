@@ -35,8 +35,3 @@ export function normalizeAddSignupPage(signupPage) {
   if (page === 4) return 3;
   return page >= 1 && page <= 3 ? page : null;
 }
-
-export function addEnrollmentThankYouPath(school, parentId, sessionUserId, childUniqueId) {
-  const base = `/${school}/add-enrollment/${parentId}/${sessionUserId}/thank-you`;
-  return childUniqueId ? `${base}?child=${encodeURIComponent(childUniqueId)}` : base;
-}
