@@ -21,3 +21,22 @@ export function addEnrollmentStepPath(school, parentId, sessionUserId, step) {
   const slug = ADD_STEP_SLUGS[step] ?? ADD_STEP_SLUGS[1];
   return `${addEnrollmentBasePath(school, parentId, sessionUserId)}/${slug}`;
 }
+
+/**
+ * The backend's nextSessionStage uses the main flow's 4-step numbering
+ * (1 student, 2 parent, 3 course, 4 review). This wizard has no parent step,
+ * so the add flow's own marker is 1 student, 2 course, 3 review. The backend
+ * already writes 2 after student details (= course here) and 4 after course
+ * selection (= review here); 3 is only ever written by the parent step, which
+ * this flow never runs. Returns the 1-3 marker, or null when out of range.
+ */
+export function normalizeAddSignupPage(signupPage) {
+  const page = Number(signupPage);
+  if (page === 4) return 3;
+  return page >= 1 && page <= 3 ? page : null;
+}
+
+export function addEnrollmentThankYouPath(school, parentId, sessionUserId, childUniqueId) {
+  const base = `/${school}/add-enrollment/${parentId}/${sessionUserId}/thank-you`;
+  return childUniqueId ? `${base}?child=${encodeURIComponent(childUniqueId)}` : base;
+}

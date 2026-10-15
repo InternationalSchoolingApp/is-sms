@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
 import { signIn } from "@/auth";
-import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
 import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
+import { addEnrollmentStepPath, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
 import { getBackendOverrideCookieName, isBackendOverrideAllowed } from "@/utils/backendOrigin";
+import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
+import { NextResponse } from "next/server";
 
 const VALID_STEPS = new Set(["1", "2", "3", "4"]);
 
@@ -33,6 +34,37 @@ const VALID_STEPS = new Set(["1", "2", "3", "4"]);
  * token/step already ride the query string) and submits it, so this is hit
  * as a POST in practice. Both handlers share the same logic.
  */
+
+/**
+ * Validate an optional `next` redirect target. Only a same-origin RELATIVE
+ * path scoped to this school is allowed (must start with "/{school}/"), so a
+ * crafted `next` can never redirect the browser to another origin.
+ * Returns the safe path or null.
+ */
+function safeNextPath(next, schoolUUID) {
+  if (!next || typeof next !== "string") return null;
+  // Reject absolute URLs and protocol-relative ("//evil.com") targets.
+  if (!next.startsWith("/") || next.startsWith("//")) return null;
+  if (!next.startsWith(`/${schoolUUID}/`)) return null;
+  return next;
+}
+/**
+ * Build /{school}/add-enrollment/{parentId}/{sessionUserId}/step/{slug} from the
+ * two URL params. Both are validated into narrow character sets — a numeric id
+ * and a uniqueId — so neither can smuggle a "/" or ".." into the path and send
+ * the browser somewhere else. Returns null when either is unusable.
+ *
+ * `step` arrives on the MAIN flow's 1-4 numbering; the add wizard has no parent
+ * step, hence normalizeAddSignupPage.
+ */
+function safeAddEnrollmentPath(schoolUUID, parentId, sessionUserId, step) {
+  const parent = String(parentId || "").trim();
+  const sessionUser = String(sessionUserId || "").trim();
+  if (!/^\d+$/.test(parent)) return null;
+  if (!/^[A-Za-z0-9_-]+$/.test(sessionUser)) return null;
+  return addEnrollmentStepPath(schoolUUID, parent, sessionUser, normalizeAddSignupPage(step) ?? 1);
+}
+
 // Explicit 303 (See Other) on every redirect below — the request that
 // reaches this handler may be a POST (see doc comment above), and only 303
 // tells the browser to follow up with a GET regardless of the original
@@ -78,6 +110,22 @@ async function handleSsoHandoff(request) {
   const targetStep = VALID_STEPS.has(step) ? step : "1";
   const program = getLearningProgramRouteCode(url.searchParams.get("program")) || DEFAULT_PROGRAM;
   const backendOverride = detectOriginatingBackend(request);
+  // ae=Y means this student was enrolled by someone else (a parent adding a child),
+  // so after the session is established the browser must land on the 3-step
+  // /{school}/add-enrollment/{parentId}/{sessionUserId}/step/... wizard instead of the
+  // student's own 4-step /{school}/enrollment/... one. parentId + sessionUserId ride the URL.
+  const isAddEnrollment = url.searchParams.get("ae") === "Y";
+  // The caller may pass the full add-enrollment destination as `next` (dashboard "Add child"
+  // button) OR just parentId + sessionUserId for us to build it (backend getFinalEnrollmentUrl).
+  // Prefer a validated same-origin `next`, else build from the ids.
+  let addEnrollmentPath = null;
+  if (isAddEnrollment) {
+    addEnrollmentPath = safeNextPath(url.searchParams.get("next"), schoolUUID);
+    if (addEnrollmentPath == null) {
+      addEnrollmentPath = safeAddEnrollmentPath(schoolUUID, url.searchParams.get("parentId"),
+        url.searchParams.get("sessionUserId"), step);
+    }
+  }
 
   // console.log("request", request)
   // console.log("url======>", url)
@@ -102,7 +150,12 @@ async function handleSsoHandoff(request) {
     return redirectTo("/", request);
   }
 
-  const response = redirectTo(stepPath(schoolUUID, program, targetStep), request);
+  // Add-another-child wizard wins when ae=Y and the path could be built; otherwise the
+  // student's own enrollment step path.
+  const destination = addEnrollmentPath != null
+    ? addEnrollmentPath
+    : stepPath(schoolUUID, program, targetStep);
+  const response = redirectTo(destination, request);
   // The rest of this student's session (every Server Action after this
   // point) must keep hitting the SAME backend that issued the token, not
   // whatever NEXT_PUBLIC_BACKEND_BASE_URL defaults to — persist it the same

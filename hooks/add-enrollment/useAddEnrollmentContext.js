@@ -1,23 +1,35 @@
 "use client";
 
-import { createContext, useContext } from "react";
-import { useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useAddStudentDetailsPrefill } from "@/hooks/add-enrollment/useAddStage1";
+import { STATUS_REDIRECT_TO_DASHBOARD } from "@/hooks/useStudentReview";
+import { enrollAnotherChild, getAddEnrollmentProcess } from "@/services/addEnrollmentBackendApi";
+import { getPublicSchoolInfo } from "@/services/studentSignupApi";
+import { loadAddEnrollmentRollNo, saveAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
+import { addEnrollmentThankYouPath, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
+import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
+import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
+import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { useQuery } from "@tanstack/react-query";
-import { enrollAnotherChild } from "@/services/studentSignupBackendApi";
+import { useSession } from "next-auth/react";
+import { useParams, useRouter } from "next/navigation";
+import { createContext, useContext, useEffect, useState } from "react";
 
 /**
  * Context for the "Add Another Student" wizard
  * (/{school}/add-enrollment/{parentId}/{sessionUserId}/step/...).
  *
- * Unlike hooks/useEnrollmentContext.js (the main enrollment flow), the
- * student being enrolled here is NOT the logged-in session user:
- *   - session.userId   -> the CALLER (the parent themselves, or a sibling
- *                         student adding a brother/sister) — only used for
- *                         the sessionUserId URL-vs-session match (proxy.js).
+ * Mirrors hooks/useEnrollmentContext.js (logo, WhatsApp number, enrollment
+ * process -> customPaymentEnabled/signupType, payer-location capture, learning
+ * program from the saved student) with ONE difference: the student being
+ * enrolled is NOT the logged-in session user.
+ *   - session.userId/uniqueId -> the CALLER (the parent themselves, or a
+ *                         sibling student adding a brother/sister) — only used
+ *                         to call enrollAnotherChild.
  *   - childUserId/childUniqueId -> the child actually being enrolled, read
- *                         from enrollAnotherChild()'s response, never from
- *                         the session.
+ *                         from enrollAnotherChild()'s response (and replaced by
+ *                         the save response after Stage 1), never from the
+ *                         session. Everything the main context keys off
+ *                         session.userId/uniqueId is keyed off these instead.
  *
  * `parentId` is the URL param (always the real parent, in both caller
  * scenarios). enrollAnotherChild() resumes the parent's existing
@@ -27,13 +39,27 @@ import { enrollAnotherChild } from "@/services/studentSignupBackendApi";
 const AddEnrollmentContext = createContext(null);
 
 function useResolveAddEnrollmentContext() {
-  const { parentId, sessionUserId } = useParams();
+  const router = useRouter();
+  const { school, parentId, sessionUserId } = useParams();
   const { data: session, status } = useSession();
-  const authenticated = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
+  const [logoUrl, setLogoUrl] = useState(null);
+  const [whatsAppNumber, setWhatsAppNumber] = useState(undefined);
+  const authenticated =
+    status === "authenticated" && Boolean(session?.userId && session?.schoolUUID && session?.uniqueId);
 
   const enrollChild = useQuery({
-    queryKey: ["add-enrollment-child", session?.schoolUUID, parentId],
-    queryFn: () => enrollAnotherChild(session.schoolUUID, parentId),
+    queryKey: ["add-enrollment-child", session?.schoolUUID, parentId, session?.uniqueId],
+    queryFn: async () => {
+      const response = await enrollAnotherChild(
+        session.schoolUUID,
+        parentId,
+        session.uniqueId,
+        childData?.rollNo,
+        loadAddEnrollmentRollNo(session.schoolUUID, parentId)
+      );
+      saveAddEnrollmentRollNo(session.schoolUUID, parentId, response?.data?.rollNo);
+      return response;
+    },
     enabled: Boolean(authenticated && parentId),
     staleTime: Infinity,
     gcTime: Infinity,
@@ -42,17 +68,118 @@ function useResolveAddEnrollmentContext() {
   });
 
   const childData = enrollChild.data?.data;
-  const ready = authenticated && enrollChild.isFetched && Boolean(childData);
+  const childUserId = childData?.userId;
+  const childUniqueId = childData?.uniqueId;
+  const childRollNo = childData?.rollNo;
+
+  // learningProgram comes from the CHILD's saved details (get-student-details), mapped back to
+  // our short code — same shared cache entry Stage 1/2 use, so no extra network call.
+  const prefill = useAddStudentDetailsPrefill({
+    context: { schoolUUID: session?.schoolUUID },
+    userId: childUserId,
+  });
+
+  // customPaymentEnabled / signupType / REDIRECT for the child, like the main context does for
+  // the logged-in student (student/enrollment/process keyed by the student's own uniqueId).
+  const enrollmentProcess = useQuery({
+    queryKey: ["add-enrollment-process", session?.schoolUUID, childUniqueId],
+    queryFn: async () => {
+      const response = await getAddEnrollmentProcess(session.schoolUUID, childUniqueId);
+      // TEMP-DEBUG: enrollment/process response (remove after checking statusCode / redirectTo)
+      console.log("[add-enrollment] enrollment/process response", { childUniqueId, response });
+      return response;
+    },
+    enabled: Boolean(authenticated && childUniqueId),
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+
+  // enrollment/process answers {status:"REDIRECT"} once the child is past the wizard (e.g. paid
+  // from the invoice link in another tab). "dashboard" carries a ready-made view-as-user URL.
+  // A "login" redirect (child withdrawn) is surfaced as an error instead of dropping the session:
+  // here the session belongs to the parent/sibling, not the child.
+  //
+  // BUT: a freshly reserved / still-in-progress child (enrollAnotherChild returned a resume step
+  // signupPage 1-3) has no started standard yet, which makes enrollment/process answer "dashboard"
+  // for it. Honoring that would bounce the parent to the :8080 parent dashboard instead of opening
+  // the wizard. So we only follow a "dashboard" redirect when the child is NOT resumable here
+  // (no valid signupPage), i.e. genuinely past the wizard.
+  const childResumeStep = normalizeAddSignupPage(childData?.signupPage);
+  const childIsResumable = childResumeStep !== null;
+  // statusCode REDIRECT_TO_DASHBOOARD = enrollment completed (a withdrawn child carries it too, but with
+  // redirectTo "login"). It is authoritative, so it is NOT subject to the resumable guard above — a
+  // completed child's saved stage still reads as 1-4.
+  const enrollmentCompleted =
+    enrollmentProcess.data?.statusCode === STATUS_REDIRECT_TO_DASHBOARD && enrollmentProcess.data?.redirectTo !== "login";
+  const processRedirect =
+    enrollmentCompleted || (enrollmentProcess.data?.status === "REDIRECT" && !childIsResumable)
+      ? enrollmentProcess.data
+      : null;
+  // enrollment/process says REDIRECT -> dashboard once the child's enrollment is complete: that is
+  // this wizard's thank-you page, not the :8080 dashboard.
+  useEffect(() => {
+    if (processRedirect?.redirectTo === "dashboard" || enrollmentCompleted) {
+      router.replace(addEnrollmentThankYouPath(school, parentId, sessionUserId, childUniqueId));
+    }
+  }, [processRedirect, enrollmentCompleted, router, school, parentId, sessionUserId, childUniqueId]);
+
+  useEffect(() => {
+    if (!session?.schoolNumericId) return;
+    let cancelled = false;
+    getSchoolSettingsLinks(session.schoolNumericId)
+      .then((links) => {
+        if (!cancelled && links?.logoUrl) setLogoUrl(links.logoUrl);
+      })
+      .catch((err) => console.error("School links fetch failed:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.schoolNumericId]);
+
+  // Support number for the mobile action bar's WhatsApp button.
+  useEffect(() => {
+    if (!session?.schoolUUID) return;
+    let cancelled = false;
+    getPublicSchoolInfo(session.schoolUUID)
+      .then((info) => {
+        if (!cancelled && info?.whatsAppNumber) setWhatsAppNumber(info.whatsAppNumber);
+      })
+      .catch((err) => console.error("School public info fetch failed:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.schoolUUID]);
+
+  const processReady = !childUniqueId || enrollmentProcess.isFetched;
+  const ready = authenticated && enrollChild.isFetched && Boolean(childData) && processReady && !processRedirect;
+
+  // Same payer-location capture as the main context, so the payment step finds it already there.
+  useEffect(() => {
+    if (!ready) return;
+    loadLocationGlobals({ schoolUUID: session.schoolUUID, userId: childUserId })
+      .then(() => callLocationForPaymentPromise())
+      .catch((err) => console.error("Payer location capture failed:", err));
+  }, [ready, session?.schoolUUID, childUserId]);
 
   const context = ready
     ? {
         schoolUUID: session.schoolUUID,
         schoolNumericId: session.schoolNumericId,
         schoolName: session.schoolName,
+        whatsAppNumber,
         parentId,
         sessionUserId,
-        signupPage: childData.signupPage,
-        learningProgram: "O", // resolved from get-student-details inside each stage, same as the main flow
+        enrollmentFor: "enrollment",
+        customPaymentEnabled: enrollmentProcess.data?.customPaymentEnabled === true,
+        // Resume step comes from enrollAnotherChild, mapped from the backend's 4-step numbering
+        // onto this wizard's 3 steps (4 = review -> 3); see normalizeAddSignupPage.
+        signupPage: normalizeAddSignupPage(childData.signupPage),
+        signupType: enrollmentProcess.data?.signupType,
+        learningProgram: prefill.data?.learningProgram
+          ? getLearningProgramShortCode(prefill.data.learningProgram)
+          : "O",
       }
     : null;
 
@@ -60,11 +187,13 @@ function useResolveAddEnrollmentContext() {
     status,
     session,
     context,
+    logoUrl,
     ready,
     // Child identity — stage pages use these instead of session.userId/uniqueId.
-    childUserId: childData?.userId,
-    childUniqueId: childData?.uniqueId,
-    isError: enrollChild.isError,
+    childUserId,
+    childUniqueId,
+    childRollNo,
+    isError: enrollChild.isError || processRedirect?.redirectTo === "login",
   };
 }
 

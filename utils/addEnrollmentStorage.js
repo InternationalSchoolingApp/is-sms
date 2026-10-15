@@ -39,3 +39,25 @@ export function loadAddEnrollmentStudentFields(schoolUUID, childUserId) {
     return null;
   }
 }
+
+// The roll number enrollAnotherChild() last returned for this parent, so the next call (refresh / re-entry)
+// can send it back in the payload. sessionStorage only — it just identifies the child already being enrolled.
+const ROLL_NO_PREFIX = "is-sms:add-enrollment-roll-no:";
+
+export function saveAddEnrollmentRollNo(schoolUUID, parentId, rollNo) {
+  if (typeof window === "undefined" || !schoolUUID || !parentId || !rollNo) return;
+  try {
+    window.sessionStorage.setItem(`${ROLL_NO_PREFIX}${schoolUUID}:${parentId}`, String(rollNo));
+  } catch {
+    // no-op — storage can throw in private browsing / blocked storage
+  }
+}
+
+export function loadAddEnrollmentRollNo(schoolUUID, parentId) {
+  if (typeof window === "undefined" || !schoolUUID || !parentId) return "";
+  try {
+    return window.sessionStorage.getItem(`${ROLL_NO_PREFIX}${schoolUUID}:${parentId}`) || "";
+  } catch {
+    return "";
+  }
+}

@@ -239,7 +239,8 @@ function successPrimaryCta(data) {
 }
 
 function SuccessCard({ data }) {
-  const showReload = data.showReloadOption === "Y";
+  // Thank-you page stays as-is: no countdown and no auto-redirect to the dashboard.
+  const showReload = false;
   const returnUrl = data.returnUrl;
   const [countdown, redirected] = useCountdownRedirect(showReload && !!returnUrl, returnUrl);
   const primaryCta = successPrimaryCta(data);
@@ -260,6 +261,8 @@ function SuccessCard({ data }) {
         <div className="mt-5 space-y-2 rounded-2xl bg-emerald-50/80 px-5 py-4 text-sm leading-relaxed text-slate-700 ring-1 ring-emerald-100">
           <SuccessBody data={data} />
         </div>
+
+        <AccountInfoCard data={data} />
 
         <ReceiptButtons data={data} primaryCta={primaryCta} />
 
@@ -286,6 +289,52 @@ function SuccessCard({ data }) {
         )}
       </div>
     </PageShell>
+  );
+}
+
+// Added-student (sibling) enrollment: same info as the invite mail — SMS password + Outlook account.
+function AccountInfoCard({ data }) {
+  if (data.showAccountInfo !== "Y") return null;
+  const hasOutlook = data.outlookEmail && data.outlookPassword;
+  return (
+    <div className="mt-5 space-y-4 rounded-2xl bg-blue-50/80 px-5 py-4 text-left text-sm leading-relaxed text-slate-700 ring-1 ring-blue-100">
+      <div>
+        <p className="font-bold text-slate-900">Step 1: Create your SMS password</p>
+        {data.createPasswordUrl && (
+          <a
+            href={data.createPasswordUrl}
+            className="mt-2 inline-block rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
+          >
+            Create Password
+          </a>
+        )}
+      </div>
+      <div>
+        <p className="font-bold text-slate-900">Step 2: Sign in to Outlook and set your new password</p>
+        {hasOutlook ? (
+          <dl className="mt-2 space-y-1">
+            <div>
+              <dt className="inline font-semibold">Outlook login URL: </dt>
+              <dd className="inline">
+                <a href={data.outlookLoginUrl} target="_blank" rel="noreferrer" className="text-primary underline">
+                  {data.outlookLoginUrl}
+                </a>
+              </dd>
+            </div>
+            <div>
+              <dt className="inline font-semibold">Email: </dt>
+              <dd className="inline break-all">{data.outlookEmail}</dd>
+            </div>
+            <div>
+              <dt className="inline font-semibold">Temporary password: </dt>
+              <dd className="inline font-mono">{data.outlookPassword}</dd>
+            </div>
+          </dl>
+        ) : (
+          <p className="mt-2">Your Outlook account is being prepared. The details will be shared with you by email.</p>
+        )}
+      </div>
+    </div>
   );
 }
 
