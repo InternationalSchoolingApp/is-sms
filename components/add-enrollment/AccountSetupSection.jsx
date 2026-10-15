@@ -25,6 +25,17 @@ export function AccountSetupSection({ data }) {
         </span>
       </div>
       <ol className="flex flex-col gap-3.5">
+         <Step
+          num={hasPasswordStep ? 2 : 1}
+          title="Sign in to your school Outlook"
+          text={
+            hasOutlook
+              ? "Use these details once, then choose a new password when prompted."
+              : "Your Outlook account is being prepared. The details will be shared with you by email."
+          }
+        >
+          {hasOutlook && <OutlookCredentials email={data.outlookEmail} password={data.outlookPassword} url={data.outlookLoginUrl} />}
+        </Step>
         {hasPasswordStep && (
           <Step
             num={1}
@@ -40,17 +51,6 @@ export function AccountSetupSection({ data }) {
             </a>
           </Step>
         )}
-        <Step
-          num={hasPasswordStep ? 2 : 1}
-          title="Sign in to your school Outlook"
-          text={
-            hasOutlook
-              ? "Use these details once, then choose a new password when prompted."
-              : "Your Outlook account is being prepared. The details will be shared with you by email."
-          }
-        >
-          {hasOutlook && <OutlookCredentials email={data.outlookEmail} password={data.outlookPassword} url={data.outlookLoginUrl} />}
-        </Step>
       </ol>
     </section>
   );
