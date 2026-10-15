@@ -59,6 +59,7 @@ function DueNowCard({ eyebrow, amount, subtitle }) {
   );
 }
 
+
 // One "label  amount" line inside the flat Fee Summary / schedule total — replaces the old bordered
 // table rows with the design's plain description : value list.
 function SummaryRow({ label, amount, tone, bold }) {

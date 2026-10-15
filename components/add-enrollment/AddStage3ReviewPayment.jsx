@@ -264,6 +264,7 @@ function buildPlanOptions(fee, currencyCode) {
  * the radio only updates local state, and choose-payment-plan is only
  * called when the primary action button is pressed.
  */
+
 export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEnrollmentCompleted, onBack, onSessionExpired, onOfflineSignup }) {
   const reviewQuery = useStudentReviewDetails({
     context,
