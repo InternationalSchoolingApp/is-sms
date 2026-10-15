@@ -26,7 +26,7 @@ export function AccountSetupSection({ data }) {
       </div>
       <ol className="flex flex-col gap-3.5">
          <Step
-          num={hasPasswordStep ? 2 : 1}
+          num={hasPasswordStep ? 1: 1}
           title="Sign in to your school Outlook"
           text={
             hasOutlook
@@ -38,7 +38,7 @@ export function AccountSetupSection({ data }) {
         </Step>
         {hasPasswordStep && (
           <Step
-            num={1}
+            num={2}
             current
             title="Create your SMS password"
             text="The Student Management System is where you'll find classes, schedules and grades."
