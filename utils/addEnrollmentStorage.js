@@ -51,6 +51,25 @@ export function saveAddEnrollmentRollNo(schoolUUID, parentId, rollNo) {
   } catch {
     // no-op — storage can throw in private browsing / blocked storage
   }
+  // The payment-response page opens in another tab (payment link / gateway return), which has no copy of this
+  // tab's sessionStorage. Keep the latest roll number in localStorage too, read only by that page.
+  try {
+    window.localStorage.setItem(`${LAST_ROLL_NO_PREFIX}${schoolUUID}:${parentId}`, String(rollNo));
+  } catch {
+    // no-op
+  }
+}
+
+const LAST_ROLL_NO_PREFIX = "is-sms:add-enrollment-last-roll-no:";
+
+// Cross-tab (same browser) roll number of the child last worked on, for the payment-response page.
+export function loadLastAddEnrollmentRollNo(schoolUUID, parentId) {
+  if (typeof window === "undefined" || !schoolUUID || !parentId) return "";
+  try {
+    return window.localStorage.getItem(`${LAST_ROLL_NO_PREFIX}${schoolUUID}:${parentId}`) || "";
+  } catch {
+    return "";
+  }
 }
 
 export function loadAddEnrollmentRollNo(schoolUUID, parentId) {

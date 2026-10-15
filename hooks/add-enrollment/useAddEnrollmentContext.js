@@ -71,6 +71,13 @@ function useResolveAddEnrollmentContext() {
   const childUniqueId = childData?.uniqueId;
   const childRollNo = childData?.rollNo;
 
+  // The roll number shown as "Student Id" can arrive after the first enrollAnotherChild call (the Stage 1 save
+  // swaps the child into this cache), so persist it whenever it changes, not only in that query's queryFn.
+  // The payment-response page reads it back to ask for the thank-you details.
+  useEffect(() => {
+    saveAddEnrollmentRollNo(session?.schoolUUID, parentId, childRollNo);
+  }, [session?.schoolUUID, parentId, childRollNo]);
+
   // learningProgram comes from the CHILD's saved details (get-student-details), mapped back to
   // our short code — same shared cache entry Stage 1/2 use, so no extra network call.
   const prefill = useAddStudentDetailsPrefill({
@@ -192,6 +199,8 @@ function useResolveAddEnrollmentContext() {
     childUniqueId,
     childRollNo,
     completed,
+    // read straight off enrollment/process: `context` is null once the wizard has been replaced by the completed view
+    customPaymentEnabled: enrollmentProcess.data?.customPaymentEnabled === true,
     markCompleted: () => setCompletedLocal(true),
     isError: enrollChild.isError || processRedirect?.redirectTo === "login",
   };

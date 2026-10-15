@@ -31,7 +31,7 @@ const ADD_WIZARD_STEPS = ["student", "course_selection", "review_and_payment"].m
 // payment-response page shows, filled from the thank-you details API, in place of the wizard steps.
 function AddEnrollmentCompleted() {
   const { parentId } = useParams();
-  const { session, childRollNo } = useAddEnrollmentContext();
+  const { session, childRollNo, childUniqueId } = useAddEnrollmentContext();
   const rollNo = childRollNo || loadAddEnrollmentRollNo(session?.schoolUUID, parentId);
   const details = useQuery({
     queryKey: ["add-enrollment-completed", session?.schoolUUID, parentId, rollNo],
@@ -41,6 +41,7 @@ function AddEnrollmentCompleted() {
         sessionUserId: session.userId,
         sessionUniqueId: session.uniqueId,
         studentRollNumber: rollNo,
+        childUniqueId,
       }),
     enabled: Boolean(session?.userId && session?.uniqueId && session?.schoolUUID),
     staleTime: Infinity,
@@ -60,6 +61,7 @@ function AddEnrollmentCompleted() {
         grade: info?.grade,
         learningProgram: info?.learningProgram,
         displaySchoolName: session.schoolName,
+        // first payment only: registration fee (incl. customized) on a fresh enrollment, as decided by the backend
         accountSetup: isFirstPayment(info) ? info : null,
       }}
     />

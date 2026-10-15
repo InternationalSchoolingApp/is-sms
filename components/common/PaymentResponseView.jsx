@@ -8,7 +8,7 @@ import { Clock, LoaderCircle, XCircle } from "lucide-react";
 import { getPaymentResponseSuccess, getPaymentResponseFailure } from "@/services/paymentResponseApi";
 import { useSession } from "next-auth/react";
 import { getAddEnrollmentThankYou } from "@/services/addEnrollmentBackendApi";
-import { loadAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
+import { loadAddEnrollmentRollNo, loadLastAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
 import { AccountSetupSection } from "@/components/add-enrollment/AccountSetupSection";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
 
@@ -51,6 +51,8 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   const [uuidSegment, ...gluedParts] = decodeURIComponent(params.UNIQUEUUID ?? "").split("&");
   const glued = new URLSearchParams(gluedParts.join("&"));
   const addEnrollmentParam = (key) => searchParams.get(key) || glued.get(key) || "";
+  // TEMP DEBUG: what the URL gave us
+  console.log("[add-enrollment] url flags", { ae: addEnrollmentParam("ae"), parentId: addEnrollmentParam("parentId"), sessionUserId: addEnrollmentParam("sessionUserId") });
   const addEnrollment =
     addEnrollmentParam("ae").toUpperCase() === "Y" && addEnrollmentParam("parentId") && addEnrollmentParam("sessionUserId")
       ? { parentId: addEnrollmentParam("parentId"), sessionUniqueId: addEnrollmentParam("sessionUserId") }
@@ -319,29 +321,58 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
 // account-setup section when the response says isFirstPayment = Y. The numeric user id comes from the login session, the roll number from the add-enrollment
 // wizard's sessionStorage; without either the section simply stays hidden.
 function AddEnrollmentAccountInfo({ schoolUUID, parentId, sessionUniqueId }) {
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const sessionUserId = session?.userId;
   const [info, setInfo] = useState(null);
 
   useEffect(() => {
+    // The wizard stores the roll number under the SESSION's school uuid; this common route has no {school}
+    // segment, so its own schoolUUID can be a different spelling — try both.
+    const rollNo =
+      loadAddEnrollmentRollNo(session?.schoolUUID, parentId) ||
+      loadAddEnrollmentRollNo(schoolUUID, parentId) ||
+      // opened in another tab: no sessionStorage there, so use the copy the wizard left in localStorage
+      loadLastAddEnrollmentRollNo(session?.schoolUUID || schoolUUID, parentId);
+    // The URL's sessionUserId is the enrolled CHILD's unique id; the thank-you API wants the caller's
+    // (sessionUserId and sessionUniqueId must be the same user), i.e. the logged-in session.
+    const callerUniqueId = session?.uniqueId || sessionUniqueId;
+    // TEMP DEBUG (remove once the section shows): which of the gates is closing?
+    console.log("[add-enrollment account section] gates", {
+      sessionStatus,
+      sessionUserId,
+      parentId,
+      callerUniqueId,
+      urlSessionUniqueId: sessionUniqueId,
+      rollNo,
+    });
     if (!sessionUserId) return undefined;
     let cancelled = false;
     getAddEnrollmentThankYou(schoolUUID, {
       parentId,
       sessionUserId,
-      sessionUniqueId,
-      studentRollNumber: loadAddEnrollmentRollNo(schoolUUID, parentId),
+      sessionUniqueId: callerUniqueId,
+      studentRollNumber: rollNo,
     })
       .then((res) => {
+        console.log("[add-enrollment account section] thank-you API response", res);
         if (!cancelled && res?.status === "1" && res.data) setInfo(res.data);
       })
-      .catch(() => {});
+      .catch((err) => console.log("[add-enrollment account section] thank-you API failed", err));
     return () => {
       cancelled = true;
     };
-  }, [schoolUUID, parentId, sessionUserId, sessionUniqueId]);
+  }, [schoolUUID, parentId, sessionUserId, sessionUniqueId, session?.schoolUUID, session?.uniqueId]);
 
-  // The account-setup section is only for the child's first payment (flag comes from the thank-you API).
+  // Only for the child's first payment, decided by the backend: payment title REGISTRATION_SUBJECT_FEE or
+  // CUSTOMIZED_REGISTRATION_SUBJECT_FEE on a REGISTRATION_FRESH / REGISTRATION_FLEX_COURSE enrollment.
+  // TEMP DEBUG (remove once the section shows): the gate that decides visibility
+  console.log("[add-enrollment account section] visibility", {
+    hasInfo: Boolean(info),
+    isFirstPayment: info?.isFirstPayment,
+    paymentTitle: info?.paymentTitle,
+    hasCreatePasswordUrl: Boolean(info?.createPasswordUrl),
+    hasOutlook: Boolean(info?.outlookEmail && info?.outlookPassword),
+  });
   if (!isFirstPayment(info)) return null;
   return <AccountSetupSection data={info} />;
 }

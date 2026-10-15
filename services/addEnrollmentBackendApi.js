@@ -89,12 +89,14 @@ export async function saveAnotherChildStudentDetails(schoolUUID, request) {
  * just finished. Must NOT go through enrollAnotherChild: for a finished child that
  * call would create a brand-new skeleton child.
  */
-export async function getAddEnrollmentThankYou(schoolUUID, { parentId, sessionUserId, sessionUniqueId, studentRollNumber }) {
+export async function getAddEnrollmentThankYou(schoolUUID, { parentId, sessionUserId, sessionUniqueId, studentRollNumber, childUniqueId }) {
   return postPayload(schoolUUID, "api/v1/enroll/another/child/thank-you", {
     parentId: Number(parentId),
     sessionUserId: String(sessionUserId),
     sessionUniqueId,
-    studentRollNumber,
+    // roll number when the caller has it; else the backend finds the child by this unique id
+    studentRollNumber: studentRollNumber || "",
+    childUniqueId: childUniqueId || "",
   });
 }
 
