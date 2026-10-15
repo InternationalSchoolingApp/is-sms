@@ -1200,6 +1200,9 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
                           <p className="text-sm font-medium text-black course_name">
                             {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}
                           </p>
+                          {aiLanded.has(String(course.courseId)) && (
+                            <span className="ai-rise rounded bg-[#3fa43c] px-1.5 py-0.5 text-[10px] font-semibold text-white whitespace-nowrap">AI pick</span>
+                          )}
                           {singleUpgradeTarget ? (
                             <VariantToggle course={course} target={singleUpgradeTarget} onToggle={upgrade} disabled={busy} />
                           ) : (
@@ -1256,7 +1259,10 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
 
                       <div className="min-w-0 inline-flex flex-1">
                         <div className="text-sm inline-flex font-medium text-black items-center">
-                          <span> {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}</span> 
+                          <span> {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}</span>
+                          {aiLanded.has(String(course.courseId)) && (
+                            <span className="ai-rise ml-2 rounded bg-[#3fa43c] px-1.5 py-0.5 text-[10px] font-semibold text-white whitespace-nowrap">AI pick</span>
+                          )}
 
                           <div className="flex shrink-0 ml-2 flex-1 items-center mr-auto gap-2">
                             {singleUpgradeTarget ? (
