@@ -63,7 +63,6 @@ function buildStage1Request({ mode, fields, context }) {
     // this field, after decoding the outer payload).
     data.password = encodeRawString(fields.password);
     data.confirmPassword = encodeRawString(fields.confirmPassword);
-    data.captcha = fields.captcha;
     // The location captured on the signup page (see AccountForm), "{}" until/unless it resolves.
     data.location = fields.location || "{}";
     data.referralCode = fields.referralCode;

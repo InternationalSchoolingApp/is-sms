@@ -1,8 +1,7 @@
 /**
  * Local-dev reverse proxy: forwards unmatched paths to the real Spring Boot
  * origin so the browser sees Next.js and the backend as the SAME origin
- * (no CORS, and — critically — the same session cookie for both the
- * captcha image and the JSON API calls that validate it).
+ * (no CORS, and the same session cookie for all API calls).
  *
  * This is the buildable, testable equivalent of what the plan calls for in
  * production ("same-domain reverse proxy" — see the migration plan's

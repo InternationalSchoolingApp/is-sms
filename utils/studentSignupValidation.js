@@ -10,7 +10,6 @@ const SPECIAL_CHAR_REGEX = /[!@#$%&*]/;
 const LOWERCASE_REGEX = /[a-z]/;
 const UPPERCASE_REGEX = /[A-Z]/;
 const DIGIT_REGEX = /\d/;
-const CAPTCHA_REGEX = /^[0-9]{6}$/;
 
 export function isValidEmail(value) {
   return EMAIL_REGEX.test((value ?? "").trim());
@@ -69,10 +68,6 @@ export function getPasswordStrength(password, confirmPassword) {
   };
 }
 
-export function isValidCaptcha(value) {
-  return CAPTCHA_REGEX.test((value ?? "").trim());
-}
-
 /**
  * Full account-creation ("stage-1", Online mode) form validation, mirroring
  * validateRequestForSignup() in signupCommon.js. Returns { valid, errors }
@@ -104,10 +99,6 @@ export function validateAccountFormOnline(fields) {
       fields.confirmPassword && (!passwordStrength.matchesConfirm || !getPasswordStrength(fields.confirmPassword).isValid)
         ? "Please re-enter the same password"
         : "";
-  }
-
-  if (!isValidCaptcha(fields.captcha)) {
-    errors.captcha = "Please enter captcha";
   }
 
   if (!fields.checkTerms) {

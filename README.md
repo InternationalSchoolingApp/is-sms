@@ -4,7 +4,7 @@ Student Signup migration for `is-rest-api` (International Schooling) — see the
 
 ## Reverse proxy / same-domain requirement (Step 2)
 
-The Spring Boot backend authenticates via a plain server-side session cookie — no Spring Security/JWT. For captcha validation and login to work, this app and the backend **must share that session cookie**, which requires being on the **same domain** in production.
+The Spring Boot backend authenticates via a plain server-side session cookie — no Spring Security/JWT. For login to work, this app and the backend **must share that session cookie**, which requires being on the **same domain** in production.
 
 **Local dev**: `next.config.mjs`'s fallback `rewrites()` forwards paths not handled by a Next.js route to `NEXT_PUBLIC_BACKEND_BASE_URL`, without adding a URL prefix. The browser sees Next.js and the backend as one origin. Enable it with `NEXT_PUBLIC_USE_LOCAL_PROXY=true` in `.env.local` (see `utils/backendOrigin.js`).
 

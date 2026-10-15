@@ -7,7 +7,6 @@ import { AccountInput } from "@/components/student-enroll/AccountInput";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { PasswordStrengthChecklist } from "@/components/student-enroll/PasswordStrengthChecklist";
-import { CaptchaField } from "@/components/student-enroll/CaptchaField";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { InfoModal, getWelcomeBackMessage } from "@/components/student-enroll/InfoModal";
 import { useAccountSignup } from "@/hooks/useAccountSignup";
@@ -17,18 +16,11 @@ import { getHash } from "@/utils/common";
 import { callLocationForPaymentPromise, getLocationValue, loadLocationGlobals } from "@/utils/locationFinder";
 import { loginPageUrl } from "@/utils/backendOrigin";
 
-// The captcha field is hidden from the UI; the form submits a random 6-digit number in its place
-// (it still has to satisfy the 6-digit check in isValidCaptcha).
-function randomCaptcha() {
-  return String(Math.floor(100000 + Math.random() * 900000));
-}
-
 const INITIAL_FIELDS = {
   email: "",
   confirmEmail: "",
   password: "",
   confirmPassword: "",
-  captcha: "",
   referralCode: "",
   checkTerms: false,
   location: "{}",
@@ -43,7 +35,6 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
   const isProdDeployment = String(process.env.NEXT_PUBLIC_DEPLOYMENT_MODE || "").trim().toUpperCase() === "PROD";
   const [fields, setFields] = useState(() => ({
     ...INITIAL_FIELDS,
-    captcha: randomCaptcha(),
     email: context?.username || "",
     confirmEmail: context?.username || "",
     referralCode: context?.referralCode || "",
@@ -59,13 +50,6 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
-  // Stays 0 (stable for SSR) until the user explicitly clicks "refresh" —
-  // no cache-busting is needed for the very first image load. Setting this
-  // from Date.now() inside a mount effect caused both a hydration mismatch
-  // (server/client render at different instants) AND an eslint
-  // react-hooks/set-state-in-effect error — a real user-event-driven
-  // refresh avoids both problems entirely.
-  const [captchaCacheBust, setCaptchaCacheBust] = useState(0);
   const [flaggedModal, setFlaggedModal] = useState(null);
   const [welcomeBackModal, setWelcomeBackModal] = useState(null);
   // const [emailValidatorModal, setEmailValidatorModal] = useState(null); // email-invalid confirm modal disabled
@@ -127,7 +111,6 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
   // so an untouched field stays neutral exactly like before.
   const emailInvalid = !isValidEmail(fields.email);
   const confirmEmailInvalid = !emailsMatch || !isValidEmail(fields.confirmEmail);
-  const captchaInvalid = !fields.captcha.trim();
   const checkTermsInvalid = !fields.checkTerms;
 
   const emailError = touched.email && emailInvalid ? "Please enter a valid email" : undefined;
@@ -135,7 +118,6 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
     fields.confirmEmail.trim() && (!emailsMatch || (touched.confirmEmail && confirmEmailInvalid))
       ? "Please re-enter the same email"
       : undefined;
-  const captchaError = touched.captcha && captchaInvalid ? "Please enter captcha" : undefined;
   const checkTermsError = touched.checkTerms && checkTermsInvalid ? "Please accept terms and conditions" : undefined;
 
   function setField(name, value) {
@@ -147,11 +129,6 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
 
   function touchField(name) {
     setTouched((prev) => (prev[name] ? prev : { ...prev, [name]: true }));
-  }
-
-  function refreshCaptcha() {
-    setCaptchaCacheBust(Date.now());
-    setField("captcha", randomCaptcha());
   }
 
   // Mirrors callEmailCheck() in jquery.commonFunction.js, fired on the
@@ -252,7 +229,7 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
       // error immediately, same as the old one-shot setErrors(...) did —
       // but each one now keeps clearing live afterward instead of staying
       // frozen at whatever validateAccountFormOnline saw at this instant.
-      setTouched({ email: true, confirmEmail: true, password: true, confirmPassword: true, captcha: true, checkTerms: true });
+      setTouched({ email: true, confirmEmail: true, password: true, confirmPassword: true, checkTerms: true });
 
       const { valid } = validateAccountFormOnline(domFields);
       if (!valid) return;
@@ -290,9 +267,6 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
           setWelcomeBackModal({ msgFlag: response.fr, extra1: response.extra1 });
           return;
         }
-        if (response.statusCode === "0041" || response.statusCode === "0038") {
-          refreshCaptcha();
-        }
         setErrors((prev) => ({ ...prev, form: response.message }));
         return;
       }
@@ -325,7 +299,7 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
         noValidate
         onKeyDown={(e) => {
           // Enter / the mobile keyboard's Next key must behave like a normal form: from a text field it moves
-          // to the next enabled text field (email -> confirm email -> password -> confirm password -> captcha),
+          // to the next enabled text field (email -> confirm email -> password -> confirm password),
           // and only from the last one does it submit. There is no type="submit" button, so the native
           // behaviour is suppressed here and handled explicitly; the terms checkbox/links are never involved.
           if (e.key === "Enter" && e.target.tagName === "INPUT") {
@@ -483,18 +457,6 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
             
           }
         />
-
-        {/* 
-        <CaptchaField
-          schoolUUID={context.schoolUUID}
-          value={fields.captcha}
-          onChange={(v) => setField("captcha", v)}
-          onBlur={() => touchField("captcha")}
-          error={captchaError}
-          cacheBust={captchaCacheBust}
-          onRefresh={refreshCaptcha}
-        />
-        */}
 
         {errors.form && <p className="text-center text-sm font-semibold text-red-600">{errors.form}</p>}
 

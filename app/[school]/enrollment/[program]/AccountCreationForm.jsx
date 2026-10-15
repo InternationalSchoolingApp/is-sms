@@ -73,7 +73,6 @@ export function AccountCreationForm({ school, program, query, recaptchaSiteKey }
         programLabel: signupInfo.programLabel,
         moduleNameToDisplay: signupInfo.moduleNameToDisplay,
         moduleId: signupInfo.moduleId,
-        captchaRandomNumber: signupInfo.captchaRandomNumber,
         username: signupInfo.username || "",
         uniqueId: signupInfo.UNIQUEUUID,
         ras: signupInfo.ras,

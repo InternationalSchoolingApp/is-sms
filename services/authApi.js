@@ -125,15 +125,6 @@ export async function logoutBackendTokens(schoolUUID, refreshToken, backendOrigi
  * from LoginDTO.java / LoginResponse.java and getRequestForLogin() in
  * login.js — not guessed.
  *
- * IMPORTANT: the backend reads the captcha value from the SAME HttpSession
- * that generated the captcha image (`session.getAttribute("captcha")`).
- * This call must be made with the session cookie that was present when the
- * captcha image was fetched — i.e. it must go through the SAME origin as
- * the captcha <img>, or the captcha will never validate. See
- * utils/backendOrigin.js and next.config.mjs's rewrites() for the local-dev
- * same-origin proxy that makes this work; in production this needs the
- * real reverse proxy from Step 2 (infra-managed, not built here).
- *
  * IMPORTANT (confirmed via a live server stack trace, not guessed):
  * `Authentication.schoolId` is typed `Integer` in the backend — the
  * NUMERIC school row id (e.g. 1 for the default/primary school), a
@@ -141,7 +132,7 @@ export async function logoutBackendTokens(schoolUUID, refreshToken, backendOrigi
  * Sending the UUID string into `schoolId` throws a Jackson
  * InvalidFormatException server-side and the whole request 500s.
  *
- * @param {{email: string, password: string, captcha: string, schoolUUID: string, schoolNumericId: number}} fields
+ * @param {{email: string, password: string, schoolUUID: string, schoolNumericId: number}} fields
  *   `schoolUUID` here is the URL-path slug/UUID; `schoolNumericId` is the
  *   backend's numeric row id — do not conflate them.
  * @param {{cookie?: string}} [serverOptions] pass the incoming request's Cookie
@@ -156,7 +147,7 @@ export async function logoutBackendTokens(schoolUUID, refreshToken, backendOrigi
  * elsewhere — see utils/backendOrigin.js's doc comments).
  */
 export async function login(
-  { email, password, captcha, schoolUUID, schoolNumericId, userType = "STUDENT" },
+  { email, password, schoolUUID, schoolNumericId, userType = "STUDENT" },
   serverOptions = {}
 ) {
   // console.log("LOGIN FUNCTION CALLED");
@@ -176,7 +167,6 @@ export async function login(
       timezone: getSystemTimezone(),
       userName: email,
       password: encodeRawString(password), // double-encoded, same as signup — see payloadEncoding.js
-      captcha: (captcha || "").toUpperCase().trim(),
       location: "{}",
       fromSpoof: "",
     },

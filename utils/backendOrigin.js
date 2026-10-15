@@ -7,8 +7,8 @@
  * See components/common/BackendSwitcher.jsx for the picker UI.
  *
  * Stored as a plain (non-httpOnly) cookie, not localStorage: the login flow
- * (services/authApi.js's login()) must hit the SAME backend that served the
- * captcha image, and login() runs server-side (next-auth authorize()), so
+ * (services/authApi.js's login()) must hit the SAME backend the browser is
+ * using, and login() runs server-side (next-auth authorize()), so
  * the choice has to travel to the server. A cookie read via next/headers
  * does that; localStorage never leaves the browser. This cookie is only
  * ever read by OUR Next.js server to pick which origin string to call — it

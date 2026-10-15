@@ -29,10 +29,7 @@ import { cookies } from "next/headers";
  * getPublicSchoolInfo, getEnrollmentProcess) live in the sibling
  * services/studentSignupApi.js instead — same "use server" pattern, just a
  * separate file for no reason other than how they were introduced; nothing
- * requires them to be split from this one anymore. The captcha <img> URL,
- * which must execute in the browser itself, lives in
- * services/studentSignupClientApi.js, which is genuinely client-only.
- *
+ * requires them to be split from this one anymore.  *
  * `schoolUUID` is the {schoolId} URL-PATH segment (school UUID/slug) and is
  * taken as an explicit argument on every call, NOT read from an env var —
  * the real value comes from the URL the user is on.

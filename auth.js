@@ -29,9 +29,7 @@ const refreshTokens = createRefresher({
  * always the source of truth. This is a confirmed High risk in the plan
  * doc (see "Two parallel session systems") — do not change this ordering.
  *
- * The forwarded cookie header below is required because the backend's
- * login call validates the captcha against the SAME HttpSession that
- * rendered the captcha image the user solved — see services/authApi.js.
+ * The incoming cookie header is forwarded to the backend login call.
  * `authorize()`'s second argument is a Web API Request in v5 (was a plain
  * Node req object in v4), so the cookie header is read via
  * `request.headers.get("cookie")`, not `req.headers.cookie`.
@@ -53,7 +51,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
-        captcha: { label: "Captcha", type: "text" },
         schoolUUID: { label: "School", type: "text" }, // URL-path slug/UUID
         schoolNumericId: { label: "School (numeric)", type: "text" }, // backend's Integer row id — see authApi.js
         schoolName: { label: "School name", type: "text" }, // display-only, passed through so session carries it without an extra fetch
@@ -63,7 +60,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           {
             email: credentials.email,
             password: credentials.password,
-            captcha: credentials.captcha,
             schoolUUID: credentials.schoolUUID,
             schoolNumericId: Number(credentials.schoolNumericId),
           },
