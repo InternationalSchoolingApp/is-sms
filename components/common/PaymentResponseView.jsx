@@ -255,8 +255,8 @@ function successPrimaryCta(data) {
 }
 
 export function SuccessCard({ data, addEnrollment, schoolUUID }) {
-  // Thank-you page stays as-is: no countdown and no auto-redirect to the dashboard.
-  const showReload = false;
+  // Normal enrollment: countdown + auto-redirect. Add Another Student: the account-setup section replaces the timer.
+  const showReload = data.showReloadOption === "Y" && !addEnrollment;
   const returnUrl = data.returnUrl;
   const [countdown, redirected] = useCountdownRedirect(showReload && !!returnUrl, returnUrl);
   const primaryCta = successPrimaryCta(data);
