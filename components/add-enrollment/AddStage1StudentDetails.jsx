@@ -177,11 +177,11 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, ini
     setFields((prev) => ({ ...prev, [name]: value }));
   }
 
-  // Changing the learning program clears the already-picked grade — grade
-  // options are LP-specific, so a stale standardId from a different LP's
-  // list must not survive the switch.
+  // Changing the learning program clears the already-picked grade and date of
+  // birth — grade options are LP-specific, so a stale standardId from a different
+  // LP's list must not survive the switch, and the DOB belongs to that grade.
   function setLearningProgram(learningProgram) {
-    setFields((prev) => ({ ...prev, learningProgram, standardId: "" }));
+    setFields((prev) => ({ ...prev, learningProgram, standardId: "", dob: null }));
   }
 
   // Changing the grade clears the already-picked DOB rather than leaving a

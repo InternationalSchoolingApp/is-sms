@@ -15,6 +15,7 @@ import { FlaggedSeatsModal } from "@/components/add-enrollment/FlaggedSeatsModal
 import { CustomPlanTable, FeePaymentPlans } from "@/components/add-enrollment/FeePaymentPlans";
 import { InfoModal } from "@/components/add-enrollment/InfoModal";
 import { ParentInlineEdit, StudentInlineEdit } from "@/components/add-enrollment/ReviewInlineEdit";
+import { mapSignupParentToFields } from "@/hooks/useParentDetailsSignup";
 import { PaymentGatewayPickerModal } from "@/components/add-enrollment/PaymentGatewayPickerModal";
 import { getPaymentPaidStatus } from "@/services/studentSignupBackendApi";
 import { useShowPaymentOption } from "@/hooks/useCourseSelection";
@@ -170,6 +171,18 @@ function ReviewRow({ label, children }) {
       <dd className="text-right font-bold text-black md:font-medium">{children}</dd>
     </div>
   );
+}
+
+// "WhatsApp, Call, Email" from the parent step's Preferred Contact Method checkboxes (same flags the form reads).
+function preferredContactLine(parent) {
+  if (!parent) return "--";
+  const fields = mapSignupParentToFields(parent);
+  const methods = [
+    fields.communicationWhatsApp && "WhatsApp",
+    fields.communicationCall && "Call",
+    fields.communicationEmail && "Email",
+  ].filter(Boolean);
+  return methods.length ? methods.join(", ") : "--";
 }
 
 function phoneLine(person) {
@@ -886,6 +899,8 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
                 {parent?.referralCode && <ReviewRow label="Referral Code">{parent.referralCode}</ReviewRow>}
               </>
             )}
+            {/* The parent step asks this after every variant, so it is listed after every variant here too. */}
+            <ReviewRow label="Preferred Contact Method">{preferredContactLine(parent)}</ReviewRow>
           </dl>
           </Collapse>
         </section>}
