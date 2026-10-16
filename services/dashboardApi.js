@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { getSettingValue } from "@/services/studentSignupApi";
@@ -61,4 +62,132 @@ export async function getDashboardMenu({ schoolId, roleId, userId }) {
  */
 export async function getStudentDashboardToggle(schoolUUID) {
   return getSettingValue(schoolUUID, "CONFIGURATION", "STUDENT_DASHBOARD_VIA_NEXTJS");
+}
+
+/**
+ * Student home calendar (Phase B) — POST /{schoolUUID}/dashboard/school-calendar
+ * (ClientSchoolCalendarController.getSchoolCalendar -> SchoolCalendarDTO).
+ * The controller decodes the body via Payload/AesUtil, i.e. the SAME
+ * {payload: encodePayload(...)} envelope used by every other BFF call here —
+ * not the raw-JSON body the legacy JS actually sends (that mismatch looks
+ * like dead/broken legacy code; AesUtil.decode is what the server is written
+ * against, so we encode for it).
+ *
+ * Only userId/startDate/endDate are read server-side (SchoolCalendarDTO has
+ * more fields but getSchoolCalendar ignores them); schoolId comes from the
+ * session, not the path or body.
+ *
+ * UNLIKE every other call in this file, getSchoolCalendar's Java method also
+ * gates on sessionUtil.getUserId() — i.e. a real HTTP session, not just the
+ * decoded payload — so the browser's own session cookie must be forwarded on
+ * this server-to-server call (see getSessionCookieHeader doc comment).
+ */
+async function getSessionCookieHeader() {
+  // Deliberately forwards every cookie the browser sent on the incoming
+  // request (not just one known name): the Java backend's own session
+  // cookie's name isn't something this codebase owns/controls, and the
+  // local dev proxy (next.config.mjs's /:schoolId/dashboard/:path* rewrite)
+  // keeps it same-origin, so it rides along with everything else next-auth
+  // already sets on this origin.
+  try {
+    return (await cookies()).toString();
+  } catch {
+    return "";
+  }
+}
+
+// Shared by every call below: POST {schoolUUID}<path> with the standard
+// {payload: encodePayload(body)} envelope + forwarded session cookie. Verified
+// live (see git history) that these dashboard-family endpoints need the
+// wrapped envelope — the legacy JS actually posts a raw/unwrapped body to the
+// same endpoints, which throws server-side (NPE on the null-decoded payload).
+async function postDashboardPayload(schoolUUID, path, body) {
+  const baseUrl = await resolveServerBackendOrigin();
+  const response = await fetch(`${baseUrl}/${schoolUUID}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Cookie: await getSessionCookieHeader() },
+    body: JSON.stringify({ payload: encodePayload(body) }),
+  });
+  return parseJsonResponse(response);
+}
+
+/**
+ * The dashboard orchestrator's first call — StudentDashboardOrMigrationDTO.
+ * Carries the graduation-ceremony-popup / batch-announcement / re-enrollment
+ * trigger flags read on every dashboard load. Re-enrollment fields
+ * (showBatchReEnrollmentPopUp/Date) are read but never acted on here — that
+ * flow is owned by a separate branch.
+ */
+export async function getStudentDashboardOrMigration({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/student/dashboard/dashboard-or-migration", { userId });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The dashboard orchestrator's second call — StudentDetailsDTO. We only need
+ * `videoUrl` (the onboarding mandatory-video URL, or the sentinel "N" for
+ * "no video to show") from this for Phase B's home widgets.
+ */
+export async function getStudentDashboardDetails({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/student/dashboard/get-student-dashboard", { userId });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * POST /{schoolUUID}/dashboard/get-announcement-details — recent school
+ * announcements (HTML body in `teacherRemarks`, sanitize before rendering).
+ */
+export async function getAnnouncementDetails({ schoolUUID, userId, startFrom = 0, pageSize = 5 }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/get-announcement-details", { userId, startFrom, pageSize });
+  } catch {
+    return null;
+  }
+}
+
+export async function getSchoolCalendar({ schoolUUID, userId, startDate, endDate }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    const baseUrl = await resolveServerBackendOrigin();
+    const body = { payload: encodePayload({ userId, startDate, endDate }) };
+    const response = await fetch(`${baseUrl}/${schoolUUID}/dashboard/school-calendar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: await getSessionCookieHeader() },
+      body: JSON.stringify(body),
+    });
+    return parseJsonResponse(response);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Attendance refresh for a just-ended class — POST
+ * /{schoolUUID}/dashboard/live-class-attendance-status. Response.details is
+ * an AttendanceStatusDTO-shaped object: { attended, onTime, lateSeconds }.
+ * Same session-cookie requirement as getSchoolCalendar.
+ */
+export async function getLiveClassAttendanceStatus({ schoolUUID, entityId, entityType, classDate, classStartTime }) {
+  if (!hasBackendOrigin() || !schoolUUID || !entityId) return null;
+  try {
+    const baseUrl = await resolveServerBackendOrigin();
+    const body = { payload: encodePayload({ entityId, entityType, classDate, classStartTime }) };
+    const response = await fetch(`${baseUrl}/${schoolUUID}/dashboard/live-class-attendance-status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: await getSessionCookieHeader() },
+      body: JSON.stringify(body),
+    });
+    return parseJsonResponse(response);
+  } catch {
+    return null;
+  }
 }
