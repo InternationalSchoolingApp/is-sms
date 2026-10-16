@@ -1,6 +1,7 @@
 "use client";
 
 import { getTodayGroups } from "@/utils/calendarEvents";
+import { CalendarDatepicker } from "@/components/dashboard/calendar/CalendarDatepicker";
 
 function FilterRow({ label, color, checked, onToggle }) {
   return (
@@ -36,13 +37,15 @@ function FilterSection({ title, children }) {
  * Course color picker popup is intentionally deferred (visibility toggle only
  * for now).
  */
-export function CalendarFilters({ events, courseRegistry, filters, toggleFilter, toggleCourseVisibility }) {
+export function CalendarFilters({ events, courseRegistry, filters, toggleFilter, toggleCourseVisibility, selectedDate, onSelectDate }) {
   const courses = Object.values(courseRegistry);
   const todayGroups = getTodayGroups(events);
   const todayItems = [...todayGroups.live, ...todayGroups.upcoming, ...todayGroups.completed].slice(0, 5);
 
   return (
     <aside className="w-full flex-shrink-0 space-y-4 border-slate-200 p-3 lg:w-72 lg:border-r">
+      <CalendarDatepicker selectedDate={selectedDate} onSelectDate={onSelectDate} events={events} />
+
       <FilterSection title="Today">
         {todayItems.length === 0 ? (
           <p className="px-2 text-xs text-black/50">Nothing scheduled today.</p>

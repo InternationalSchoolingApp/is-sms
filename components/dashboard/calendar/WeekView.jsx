@@ -12,18 +12,25 @@ function EventChip({ event, courseRegistry, onSelect }) {
   const color = getEventColor(event, courseRegistry);
   const status = getEventStatus(event);
   const isClass = event.eventKind === "class";
+  const isLive = status === "live";
   return (
     <button
       type="button"
       onClick={() => onSelect?.(event)}
-      className="block w-full truncate rounded px-1.5 py-1 text-left text-[11px] font-semibold text-white"
-      style={{
-        background: color,
-        borderStyle: isClass ? "dashed" : "solid",
-        borderWidth: isClass ? 2 : 0,
-        borderColor: "#fff",
-        opacity: status === "completed" ? 0.75 : 1,
-      }}
+      className={`block w-full truncate rounded px-1.5 py-1 text-left text-[11px] font-semibold text-white ${
+        isLive ? "calendar-live-dashed" : ""
+      }`}
+      style={
+        isLive
+          ? { background: color, "--live-color": "#fff" }
+          : {
+              background: color,
+              borderStyle: isClass ? "dashed" : "solid",
+              borderWidth: isClass ? 2 : 0,
+              borderColor: "#fff",
+              opacity: status === "completed" ? 0.75 : 1,
+            }
+      }
       title={event.title || event.eventTitle}
     >
       {event.title || event.eventTitle || "Untitled"}

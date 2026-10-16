@@ -10,6 +10,8 @@ import { WeekView } from "@/components/dashboard/calendar/WeekView";
 import { WeekDayDrilldown } from "@/components/dashboard/calendar/WeekDayDrilldown";
 import { MonthView } from "@/components/dashboard/calendar/MonthView";
 import { EventDetailModal } from "@/components/dashboard/calendar/EventDetailModal";
+import { JoinClassModal } from "@/components/dashboard/calendar/JoinClassModal";
+import { getEventStatus } from "@/utils/calendarEvents";
 
 const VIEW_TABS = [
   { key: "today", label: "Today" },
@@ -22,6 +24,13 @@ function titleFor(viewName, selectedDate) {
   return format(selectedDate, "MMMM yyyy");
 }
 
+// A non-completed class with a join link goes straight to the join flow on
+// click (legacy openDashboardCalendarEvent's "has event.url" branch) instead
+// of the read-only detail modal, which completed classes still get.
+function isJoinableClass(event) {
+  return event.eventKind === "class" && Boolean(event.url) && getEventStatus(event) !== "completed";
+}
+
 /**
  * Student home calendar — classes, activities, assignments, holidays and
  * school events. Today view is fully built; Week/Month land in a follow-up
@@ -32,6 +41,12 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
   const calendar = useStudentCalendar({ schoolUUID, userId });
   const [drilldownDate, setDrilldownDate] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [joiningEvent, setJoiningEvent] = useState(null);
+
+  const handleSelectEvent = (event) => {
+    if (isJoinableClass(event)) setJoiningEvent(event);
+    else setSelectedEvent(event);
+  };
 
   // Any date/view navigation drops the drilldown back to the week/month grid.
   const goPrev = () => {
@@ -115,6 +130,12 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
           filters={calendar.filters}
           toggleFilter={calendar.toggleFilter}
           toggleCourseVisibility={calendar.toggleCourseVisibility}
+          selectedDate={calendar.selectedDate}
+          onSelectDate={(date) => {
+            setDrilldownDate(null);
+            calendar.setViewName("today");
+            calendar.setSelectedDate(date);
+          }}
         />
         <div
           className={`min-h-[360px] flex-1 ${
@@ -134,14 +155,14 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
               courseRegistry={calendar.courseRegistry}
               onBack={() => setDrilldownDate(null)}
               backLabel={calendar.viewName === "month" ? "Back to month" : "Back to week"}
-              onSelectEvent={setSelectedEvent}
+              onSelectEvent={handleSelectEvent}
             />
           ) : calendar.viewName === "today" ? (
             <TodayView
               events={calendar.filteredEvents}
               selectedDate={calendar.selectedDate}
               courseRegistry={calendar.courseRegistry}
-              onSelectEvent={setSelectedEvent}
+              onSelectEvent={handleSelectEvent}
             />
           ) : calendar.viewName === "week" ? (
             <WeekView
@@ -149,7 +170,7 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
               selectedDate={calendar.selectedDate}
               courseRegistry={calendar.courseRegistry}
               onSelectDay={setDrilldownDate}
-              onSelectEvent={setSelectedEvent}
+              onSelectEvent={handleSelectEvent}
             />
           ) : (
             <MonthView
@@ -157,7 +178,7 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
               selectedDate={calendar.selectedDate}
               courseRegistry={calendar.courseRegistry}
               onSelectDay={setDrilldownDate}
-              onSelectEvent={setSelectedEvent}
+              onSelectEvent={handleSelectEvent}
             />
           )}
         </div>
@@ -165,6 +186,7 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
       {selectedEvent && (
         <EventDetailModal event={selectedEvent} courseRegistry={calendar.courseRegistry} onClose={() => setSelectedEvent(null)} />
       )}
+      {joiningEvent && <JoinClassModal event={joiningEvent} schoolUUID={schoolUUID} onClose={() => setJoiningEvent(null)} />}
     </section>
   );
 }

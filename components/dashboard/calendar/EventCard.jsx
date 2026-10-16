@@ -61,6 +61,7 @@ function getSubtitle(event, courseRegistry) {
 export function EventCard({ event, courseRegistry, now = new Date(), onSelect }) {
   const color = getEventColor(event, courseRegistry);
   const isClass = event.eventKind === "class";
+  const isLive = getEventStatus(event, now) === "live";
   const title = event.title || event.eventTitle || getSubtitle(event, courseRegistry).split(" · ")[0];
 
   return (
@@ -69,8 +70,10 @@ export function EventCard({ event, courseRegistry, now = new Date(), onSelect })
       tabIndex={0}
       onClick={() => onSelect?.(event)}
       onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onSelect?.(event)}
-      className="flex min-h-[52px] cursor-pointer items-start gap-3 rounded-lg border bg-white p-3 shadow-sm hover:shadow-md"
-      style={isClass ? { borderStyle: "dashed", borderColor: color } : { borderColor: color }}
+      className={`flex min-h-[52px] cursor-pointer items-start gap-3 rounded-lg border bg-white p-3 shadow-sm hover:shadow-md ${
+        isLive ? "calendar-live-dashed" : ""
+      }`}
+      style={isLive ? { "--live-color": color } : isClass ? { borderStyle: "dashed", borderColor: color } : { borderColor: color }}
     >
       <span className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: color }} aria-hidden="true" />
       <div className="min-w-0 flex-1">
