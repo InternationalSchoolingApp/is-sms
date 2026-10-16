@@ -48,13 +48,13 @@ export function AddEnrollmentWizardShell({
       <header className="fixed top-[var(--maintenance-banner-h,0px)] z-11 hidden w-full border-b border-slate-200 bg-white px-4 py-3 sm:px-6 md:block">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <LogoMark schoolName={schoolName} logoUrl={logoUrl} />
-          {/* <button
+          <button
             type="button"
             onClick={() => setConfirmLogout(true)}
             className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-2 py-1.5 cursor-pointer text-sm font-semibold text-white hover:bg-red-700 duration-150"
           >
             <LogOut className="h-4 w-4 stroke-3" /> Log Off
-          </button> */}
+          </button>
         </div>
       </header>
 
