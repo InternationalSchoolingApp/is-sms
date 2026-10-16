@@ -2,6 +2,7 @@
 
 import { getTodayGroups } from "@/utils/calendarEvents";
 import { CalendarDatepicker } from "@/components/dashboard/calendar/CalendarDatepicker";
+import { CourseColorPicker } from "@/components/dashboard/calendar/CourseColorPicker";
 
 function FilterRow({ label, color, checked, onToggle }) {
   return (
@@ -21,6 +22,29 @@ function FilterRow({ label, color, checked, onToggle }) {
   );
 }
 
+// "My Courses" row: numbered, a plain check/uncheck box PLUS a separate color
+// swatch that opens a palette (legacy renderCourseFilters) — two different
+// controls, unlike every other FilterRow where the swatch itself is the
+// checkbox.
+function CourseRow({ index, course, checked, onToggleVisibility, onPickColor }) {
+  return (
+    <div className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-black/5">
+      <span className="w-4 flex-shrink-0 text-xs font-bold text-black/40">{index}.</span>
+      <button
+        type="button"
+        onClick={onToggleVisibility}
+        aria-label={checked ? "Hide course" : "Show course"}
+        className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border-2 border-black/20"
+        style={{ background: checked ? "#1b5e20" : "transparent" }}
+      >
+        {checked && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+      </button>
+      <CourseColorPicker color={course.color} onPick={onPickColor} />
+      <span className="truncate text-xs font-semibold text-black">{course.label}</span>
+    </div>
+  );
+}
+
 function FilterSection({ title, children }) {
   return (
     <div className="border-t border-slate-200 pt-3 first:border-t-0 first:pt-0">
@@ -37,7 +61,16 @@ function FilterSection({ title, children }) {
  * Course color picker popup is intentionally deferred (visibility toggle only
  * for now).
  */
-export function CalendarFilters({ events, courseRegistry, filters, toggleFilter, toggleCourseVisibility, selectedDate, onSelectDate }) {
+export function CalendarFilters({
+  events,
+  courseRegistry,
+  filters,
+  toggleFilter,
+  toggleCourseVisibility,
+  setCourseColor,
+  selectedDate,
+  onSelectDate,
+}) {
   const courses = Object.values(courseRegistry);
   const todayGroups = getTodayGroups(events);
   const todayItems = [...todayGroups.live, ...todayGroups.upcoming, ...todayGroups.completed].slice(0, 5);
@@ -61,13 +94,14 @@ export function CalendarFilters({ events, courseRegistry, filters, toggleFilter,
 
       {courses.length > 0 && (
         <FilterSection title="My Courses">
-          {courses.map((course) => (
-            <FilterRow
+          {courses.map((course, index) => (
+            <CourseRow
               key={course.id}
-              label={course.label}
-              color={course.color}
+              index={index + 1}
+              course={course}
               checked={filters.courseVisibility[course.id] !== false}
-              onToggle={() => toggleCourseVisibility(course.id)}
+              onToggleVisibility={() => toggleCourseVisibility(course.id)}
+              onPickColor={(color) => setCourseColor(course.id, color)}
             />
           ))}
         </FilterSection>

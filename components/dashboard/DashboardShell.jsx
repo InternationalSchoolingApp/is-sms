@@ -21,7 +21,8 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
 export function DashboardShell({ children }) {
   const { ready, context, menu, logoUrl, session } = useDashboardContext();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  // Defaults to the collapsed icon-rail, matching the legacy dashboard.
+  const [collapsed, setCollapsed] = useState(true);
 
   useEffect(() => {
     const onPageShow = (e) => {

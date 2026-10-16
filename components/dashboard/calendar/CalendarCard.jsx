@@ -11,6 +11,7 @@ import { WeekDayDrilldown } from "@/components/dashboard/calendar/WeekDayDrilldo
 import { MonthView } from "@/components/dashboard/calendar/MonthView";
 import { EventDetailModal } from "@/components/dashboard/calendar/EventDetailModal";
 import { JoinClassModal } from "@/components/dashboard/calendar/JoinClassModal";
+import { CalendarClockPill } from "@/components/dashboard/calendar/CalendarClockPill";
 import { getEventStatus } from "@/utils/calendarEvents";
 
 const VIEW_TABS = [
@@ -69,6 +70,7 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
       <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-4 py-3">
+        <CalendarClockPill timezone={calendar.timezone} />
         <div className="flex items-center gap-1 rounded-full bg-black/5 p-1">
           <button
             type="button"
@@ -130,6 +132,7 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
           filters={calendar.filters}
           toggleFilter={calendar.toggleFilter}
           toggleCourseVisibility={calendar.toggleCourseVisibility}
+          setCourseColor={calendar.setCourseColor}
           selectedDate={calendar.selectedDate}
           onSelectDate={(date) => {
             setDrilldownDate(null);
