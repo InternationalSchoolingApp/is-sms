@@ -2,25 +2,14 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { format, parseISO } from "date-fns";
 import { Megaphone } from "lucide-react";
-import DOMPurify from "dompurify";
 import { getAnnouncementDetails } from "@/services/dashboardApi";
-import { CalendarModal } from "@/components/dashboard/calendar/CalendarModal";
-
-function formatAnnouncementDate(value) {
-  if (!value) return "";
-  // Backend sends "yyyy-MM-dd HH:mm:ss.S" — swap the space for "T" so it parses.
-  const iso = String(value).replace(" ", "T");
-  const parsed = parseISO(iso);
-  return Number.isNaN(parsed.getTime()) ? "" : format(parsed, "MMM d, yyyy");
-}
+import { AnnouncementDetailModal, formatAnnouncementDate } from "@/components/dashboard/AnnouncementDetailModal";
 
 /**
  * Recent school announcements (legacy announcement.js / getAnnouncementDatails).
- * Shows the latest few titles; clicking one opens the full HTML body
- * (teacherRemarks), sanitized before rendering since it's rich-text content
- * authored by school staff.
+ * Shows the latest few titles; clicking one opens the full HTML body via
+ * AnnouncementDetailModal.
  */
 export function AnnouncementsWidget({ schoolUUID, userId }) {
   const [selected, setSelected] = useState(null);
@@ -60,15 +49,7 @@ export function AnnouncementsWidget({ schoolUUID, userId }) {
         </ul>
       )}
 
-      {selected && (
-        <CalendarModal title={selected.announceTitle} onClose={() => setSelected(null)}>
-          <p className="mb-2 text-xs text-black/50">{formatAnnouncementDate(selected.createdDate)}</p>
-          <div
-            className="max-h-[50vh] overflow-y-auto text-sm leading-relaxed text-black [&_a]:text-primary [&_a]:underline [&_strong]:font-bold [&_ul]:list-disc [&_ul]:pl-5"
-            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selected.teacherRemarks || "") }}
-          />
-        </CalendarModal>
-      )}
+      {selected && <AnnouncementDetailModal announcement={selected} onClose={() => setSelected(null)} />}
     </section>
   );
 }

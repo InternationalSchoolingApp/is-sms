@@ -113,7 +113,8 @@ export function DashboardShell({ children }) {
 
       <RightActionRail
         chatUrl={context.chatUrl}
-        announcementCount={context.announcementCount}
+        schoolUUID={context.schoolUUID}
+        userId={context.userId}
         newsCount={context.newsCount}
       />
     </div>
