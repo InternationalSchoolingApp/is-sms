@@ -3,22 +3,27 @@
 import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getStudentDetails } from "@/services/studentSignupBackendApi";
-import { enrollAnotherChild } from "@/services/addEnrollmentBackendApi";
 import { mapSignupStudentToFields, STUDENT_PREFILL_STALE_MS } from "@/hooks/useStudentDetailsSignup";
 import { getLearningProgramLabel, getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 
 export function PageTitle() {
   const { program, parentId } = useParams();
   const { data: session, status } = useSession();
+  const queryClient = useQueryClient();
   const authenticated = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
   const isAddEnrollment = Boolean(parentId);
 
+  // Read-only view of the add-enrollment wizard's child (useAddEnrollmentContext fills this cache entry). It must
+  // NEVER fetch by itself: enrollAnotherChild reserves a child, and calling it here — on every page load, before
+  // the wizard's own refresh checks and without the roll number / allowCreate guard — created a new child on
+  // each refresh (and sent the thank-you page to that new child instead of the paid one).
   const enrollChild = useQuery({
     queryKey: ["add-enrollment-child", session?.schoolUUID, parentId, session?.uniqueId],
-    queryFn: () => enrollAnotherChild(session.schoolUUID, parentId, session.uniqueId),
-    enabled: Boolean(isAddEnrollment && authenticated && session?.uniqueId),
+    // never called (enabled: false); if anything ever refetches this key through us, keep what is cached
+    queryFn: ({ queryKey }) => queryClient.getQueryData(queryKey) ?? null,
+    enabled: false,
     staleTime: Infinity,
     gcTime: Infinity,
     refetchOnWindowFocus: false,

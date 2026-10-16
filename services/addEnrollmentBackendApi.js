@@ -60,12 +60,16 @@ async function postPayload(schoolUUID, path, data) {
  * NOT the caller. Safe to call on every add-enrollment wizard mount/refresh —
  * a parent with an in-progress child always resumes the same one.
  */
-export async function enrollAnotherChild(schoolUUID, parentId, sessionUserUniqueId, rollNo = "") {
+export async function enrollAnotherChild(schoolUUID, parentId, sessionUserUniqueId, rollNo = "", allowCreate = true) {
   return postPayload(schoolUUID, "api/v1/enroll/another/child", {
+    // false on a reload of the wizard: the backend then never reserves a new child (resumes / returns the paid one)
+    allowCreate,
     parentId: Number(parentId),
     sessionUserId: sessionUserUniqueId,
     // roll number the previous call returned for this parent's child ("" on the very first call)
     rollNo: rollNo || "",
+    // the key the backend actually reads: a roll number that is already paid comes back as S003 instead of a new child
+    studentRollNumber: rollNo || "",
   });
 }
 

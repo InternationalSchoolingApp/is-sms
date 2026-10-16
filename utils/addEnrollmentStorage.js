@@ -80,3 +80,38 @@ export function loadAddEnrollmentRollNo(schoolUUID, parentId) {
     return "";
   }
 }
+
+// The child being enrolled (uniqueId), kept in sessionStorage so a refresh can ask "is this child already paid?"
+// BEFORE enrollAnotherChild runs (which could otherwise reserve a brand-new child).
+const CHILD_UNIQUE_ID_PREFIX = "is-sms:add-enrollment-child-unique-id:";
+
+export function saveAddEnrollmentChildUniqueId(schoolUUID, parentId, childUniqueId) {
+  if (typeof window === "undefined" || !schoolUUID || !parentId || !childUniqueId) return;
+  try {
+    window.sessionStorage.setItem(`${CHILD_UNIQUE_ID_PREFIX}${schoolUUID}:${parentId}`, String(childUniqueId));
+  } catch {
+    // no-op — storage can throw in private browsing / blocked storage
+  }
+}
+
+export function loadAddEnrollmentChildUniqueId(schoolUUID, parentId) {
+  if (typeof window === "undefined" || !schoolUUID || !parentId) return "";
+  try {
+    return window.sessionStorage.getItem(`${CHILD_UNIQUE_ID_PREFIX}${schoolUUID}:${parentId}`) || "";
+  } catch {
+    return "";
+  }
+}
+
+
+// Called once the thank-you has been shown: that enrollment is finished, so the next entry into the wizard in this
+// tab must not pick the finished child up again (a refresh of the thank-you page uses its own URL params).
+export function clearAddEnrollmentChildState(schoolUUID, parentId) {
+  if (typeof window === "undefined" || !schoolUUID || !parentId) return;
+  try {
+    window.sessionStorage.removeItem(`${CHILD_UNIQUE_ID_PREFIX}${schoolUUID}:${parentId}`);
+    window.sessionStorage.removeItem(`${ROLL_NO_PREFIX}${schoolUUID}:${parentId}`);
+  } catch {
+    // no-op
+  }
+}

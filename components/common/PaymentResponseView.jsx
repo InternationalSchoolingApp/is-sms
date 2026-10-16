@@ -8,7 +8,11 @@ import { Clock, LoaderCircle, XCircle } from "lucide-react";
 import { getPaymentResponseSuccess, getPaymentResponseFailure } from "@/services/paymentResponseApi";
 import { useSession } from "next-auth/react";
 import { getAddEnrollmentThankYou } from "@/services/addEnrollmentBackendApi";
-import { loadAddEnrollmentRollNo, loadLastAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
+import {
+  clearAddEnrollmentChildState,
+  loadAddEnrollmentRollNo,
+  loadLastAddEnrollmentRollNo,
+} from "@/utils/addEnrollmentStorage";
 import { AccountSetupSection } from "@/components/add-enrollment/AccountSetupSection";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
 
@@ -58,6 +62,9 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       ? { parentId: addEnrollmentParam("parentId"), sessionUniqueId: addEnrollmentParam("sessionUserId") }
       : null;
   const uniqueUuid = addEnrollment ? uuidSegment : params.UNIQUEUUID;
+  // replay=Y: the wizard found this child already paid (refresh / paid via the payment link) and sent the user
+  // here WITHOUT gateway params, so there is nothing to verify — show the thank-you from the thank-you API.
+  const isReplay = Boolean(addEnrollment) && addEnrollmentParam("replay").toUpperCase() === "Y";
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -72,6 +79,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
     process.env.NEXT_PUBLIC_SCHOOL_ID;
 
   useEffect(() => {
+    if (isReplay) return undefined;
     let cancelled = false;
     const requestTimer = window.setTimeout(() => {
       setLoading(true);
@@ -94,7 +102,14 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       cancelled = true;
       window.clearTimeout(requestTimer);
     };
-  }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, search]);
+  }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, search, isReplay]);
+
+  if (isReplay) return <AddEnrollmentThankYouReplay
+        schoolUUID={schoolUUID}
+        parentId={addEnrollment.parentId}
+        rollNo={searchParams.get("rollNo") || ""}
+        childUniqueId={searchParams.get("childUniqueId") || ""}
+      />;
 
   if (loading) return <ProcessingLoader />;
 
@@ -107,6 +122,59 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   if (responseStatus === "1") return <SuccessCard data={data} addEnrollment={addEnrollment} schoolUUID={schoolUUID} />;
   if (responseStatus === "2") return <UnderVerificationCard data={data} />;
   return <FailedCard data={data} />;
+}
+
+// Thank-you for an add-enrollment child that is already paid, built from the thank-you details API (child found
+// by the roll number the wizard left in storage). Same SuccessCard as a live payment return, incl. the
+// account-setup section on a first payment.
+function AddEnrollmentThankYouReplay({ schoolUUID, parentId, rollNo, childUniqueId }) {
+  const { data: session, status } = useSession();
+  const [info, setInfo] = useState(undefined);
+
+  useEffect(() => {
+    if (!session?.userId || !session?.uniqueId) return undefined;
+    let cancelled = false;
+    const sessionSchool = session.schoolUUID || schoolUUID;
+    const studentRollNumber =
+      rollNo || loadAddEnrollmentRollNo(sessionSchool, parentId) || loadLastAddEnrollmentRollNo(sessionSchool, parentId);
+    getAddEnrollmentThankYou(sessionSchool, {
+      parentId,
+      sessionUserId: session.userId,
+      sessionUniqueId: session.uniqueId,
+      studentRollNumber,
+      childUniqueId,
+    })
+      .then((res) => {
+        // TEMP-DEBUG: what the replay asked for and what the thank-you API answered
+        console.log("[add-enrollment] replay thank-you", { studentRollNumber, childUniqueId, res });
+        const ok = res?.status === "1" && res.data;
+        // Finished: the next wizard entry in this tab must not pick this child up again (this page's own refresh
+        // keeps working from the rollNo / childUniqueId in its URL).
+        if (ok) clearAddEnrollmentChildState(sessionSchool, parentId);
+        if (!cancelled) setInfo(ok ? res.data : null);
+      })
+      .catch(() => !cancelled && setInfo(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.userId, session?.uniqueId, session?.schoolUUID, schoolUUID, parentId, rollNo, childUniqueId]);
+
+  if (status === "unauthenticated" || info === null) return <ErrorCard data={null} />;
+  if (info === undefined) return <ProcessingLoader />;
+  return (
+    <SuccessCard
+      data={{
+        contentFor: "FIRST-PAYMENT",
+        advanceFeePaid: "N",
+        userName: info.studentName,
+        payAmount: info.payAmount,
+        grade: info.grade,
+        learningProgram: info.learningProgram,
+        displaySchoolName: session?.schoolName,
+        accountSetup: isFirstPayment(info) ? info : null,
+      }}
+    />
+  );
 }
 
 /* ------------------------------- Loader -------------------------------- */

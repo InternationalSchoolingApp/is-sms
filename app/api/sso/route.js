@@ -152,8 +152,10 @@ async function handleSsoHandoff(request) {
 
   // Add-another-child wizard wins when ae=Y and the path could be built; otherwise the
   // student's own enrollment step path.
+  // fresh=1 marks a real "start" of the add-enrollment wizard (dashboard button / enrollment link). Only such an
+  // entry may reserve a new child; a reload of the wizard never does (see useAddEnrollmentContext).
   const destination = addEnrollmentPath != null
-    ? addEnrollmentPath
+    ? `${addEnrollmentPath}${addEnrollmentPath.includes("?") ? "&" : "?"}fresh=1`
     : stepPath(schoolUUID, program, targetStep);
   const response = redirectTo(destination, request);
   // The rest of this student's session (every Server Action after this
