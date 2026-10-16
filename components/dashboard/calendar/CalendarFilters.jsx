@@ -116,7 +116,7 @@ export function CalendarFilters({
   const todayGroups = getTodayGroups(events);
 
   return (
-    <aside className="w-full flex-shrink-0 space-y-4 overflow-y-auto border-slate-200 p-3 lg:sticky lg:top-0 lg:max-h-[calc(100vh-150px)] lg:w-72 lg:self-start lg:border-r">
+    <aside className="w-full flex-shrink-0 space-y-4 overflow-y-auto border-slate-200 p-3 lg:sticky lg:top-0 lg:max-h-[calc(100vh-170px-var(--dash-footer-h,0px))] lg:w-72 lg:self-start lg:border-r">
       <CalendarDatepicker selectedDate={selectedDate} onSelectDate={onSelectDate} events={events} />
 
       <FilterSection title="Today">

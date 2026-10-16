@@ -78,7 +78,7 @@ export function DashboardShell({ children }) {
   if (!ready) return <FullScreenLoader />;
 
   return (
-    <div className="min-h-screen bg-[#f2f5fa]" style={{ "--dash-header-h": "56px" }}>
+    <div className="min-h-screen bg-[#f2f5fa]" style={{ "--dash-header-h": "56px", "--dash-footer-h": `${footerHeight}px` }}>
       <DashboardTopHeader
         schoolName={context.schoolName}
         logoUrl={logoUrl}
