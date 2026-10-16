@@ -72,7 +72,7 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
     // sticky-positioning boundary, breaking CalendarFilters' `lg:sticky`
     // (the sidebar needs to track the page's real scroll container, not
     // just scroll within this card's own box).
-    <section className="rounded-2xl border border-slate-200 bg-white">
+    <section className="rounded-2xl border border-slate-200 bg-white lg:min-h-[calc(100vh-150px)]">
       <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-4 py-3">
         <CalendarClockPill timezone={calendar.timezone} />
         <div className="flex items-center gap-1 rounded-full bg-black/5 p-1">
