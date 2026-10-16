@@ -252,20 +252,32 @@ function diffDaysDateOnly(dueDate, submittedDate) {
 
 // ── Course registration / colors ────────────────────────────────────────────
 
-export function buildCourseRegistry(events, storedColors = {}) {
+/**
+ * "My Courses" registry. `courseDetails` (SchoolCalendarDTO.courseDetails,
+ * { subjectId, subjectName }) lists EVERY course the student is enrolled in,
+ * regardless of whether it has an event in the currently-fetched window —
+ * the legacy sidebar always shows all of a student's subjects, not just ones
+ * with visible events — so it seeds the registry first; any CLASS event's
+ * course not already covered (e.g. a BATCH class without a matching subject)
+ * is added on top.
+ */
+export function buildCourseRegistry(events, storedColors = {}, courseDetails = []) {
   const registry = {};
   let colorIndex = 0;
-  for (const event of events) {
-    if (event.eventKind !== "class") continue;
-    const courseId = event.courseId;
-    if (registry[courseId]) continue;
+
+  const addCourse = (id, label, eventColor) => {
+    if (registry[id]) return;
     const defaultColor = DEFAULT_COURSE_PALETTE[colorIndex % DEFAULT_COURSE_PALETTE.length];
     colorIndex += 1;
-    registry[courseId] = {
-      id: courseId,
-      label: getCourseLabel(event),
-      color: storedColors[courseId] || event.color || defaultColor,
-    };
+    registry[id] = { id, label, color: storedColors[id] || eventColor || defaultColor };
+  };
+
+  for (const course of courseDetails) {
+    addCourse(getCourseId(course), getCourseLabel(course));
+  }
+  for (const event of events) {
+    if (event.eventKind !== "class") continue;
+    addCourse(event.courseId, getCourseLabel(event), event.color);
   }
   return registry;
 }

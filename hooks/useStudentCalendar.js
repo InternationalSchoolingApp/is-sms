@@ -73,7 +73,10 @@ export function useStudentCalendar({ schoolUUID, userId }) {
     [query.data, timezone]
   );
 
-  const courseRegistry = useMemo(() => buildCourseRegistry(normalizedEvents, courseColors), [normalizedEvents, courseColors]);
+  const courseRegistry = useMemo(
+    () => buildCourseRegistry(normalizedEvents, courseColors, query.data?.courseDetails),
+    [normalizedEvents, courseColors, query.data?.courseDetails]
+  );
 
   useEffect(() => {
     saveStoredPrefs({ filters, courseColors });
