@@ -35,7 +35,7 @@ function formatRelativeAgo(value) {
  * count badge, a list of items each with a New badge, a relative-time
  * stamp and a "Learn More" link that opens the full body.
  */
-export function AnnouncementsPanel({ announcements, newCount, onClose }) {
+export function AnnouncementsPanel({ announcements, newCount, schoolUUID, userId, onClose }) {
   const [selected, setSelected] = useState(null);
 
   return (
@@ -85,7 +85,9 @@ export function AnnouncementsPanel({ announcements, newCount, onClose }) {
         </div>
       </div>
 
-      {selected && <AnnouncementDetailModal announcement={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <AnnouncementDetailModal announcement={selected} schoolUUID={schoolUUID} userId={userId} onClose={() => setSelected(null)} />
+      )}
     </div>
   );
 }

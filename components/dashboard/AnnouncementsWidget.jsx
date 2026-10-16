@@ -49,7 +49,9 @@ export function AnnouncementsWidget({ schoolUUID, userId }) {
         </ul>
       )}
 
-      {selected && <AnnouncementDetailModal announcement={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <AnnouncementDetailModal announcement={selected} schoolUUID={schoolUUID} userId={userId} onClose={() => setSelected(null)} />
+      )}
     </section>
   );
 }

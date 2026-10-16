@@ -217,3 +217,21 @@ export async function getClassJoinDetails({ schoolUUID, url }) {
     return null;
   }
 }
+
+/**
+ * POST /{schoolUUID}/dashboard/save-acknowledge-request — legacy
+ * announcement.js's saveAnnouncementAcknowledge(). Verified stateless
+ * (payload-based, no session read) via source: ClientDashboardCommonController
+ * -> DashboardSchoolAnnounceUtil.submitSchoolAnnounceReply resolves the user
+ * from userId in the body, never sessionUtil. Response is a generic
+ * {status, message} — no list/count data, so the caller updates its own
+ * cached announcement list optimistically (same as the legacy JS does).
+ */
+export async function submitAnnouncementAcknowledge({ schoolUUID, announceId, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !announceId || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/save-acknowledge-request", { announceId, userId, moduleId: 0 });
+  } catch {
+    return null;
+  }
+}

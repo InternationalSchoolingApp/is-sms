@@ -58,6 +58,8 @@ export function RightActionRail({ chatUrl, schoolUUID, userId, newsCount }) {
         <AnnouncementsPanel
           announcements={announcements}
           newCount={newAnnouncementCount}
+          schoolUUID={schoolUUID}
+          userId={userId}
           onClose={() => setAnnouncementsOpen(false)}
         />
       )}
