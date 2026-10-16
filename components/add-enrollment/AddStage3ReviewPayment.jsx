@@ -19,7 +19,7 @@ import { PaymentGatewayPickerModal } from "@/components/add-enrollment/PaymentGa
 import { getPaymentPaidStatus } from "@/services/studentSignupBackendApi";
 import { useShowPaymentOption } from "@/hooks/useCourseSelection";
 import { saveWizardParentFields } from "@/utils/wizardStorage";
-import { saveAddEnrollmentStudentFields } from "@/utils/addEnrollmentStorage";
+import { saveAddEnrollmentStudentFields, loadAddEnrollmentStudentFields } from "@/utils/addEnrollmentStorage";
 import { getOtherRelation, getPrimaryParentLabels, loadOtherParentCache } from "@/utils/parentRelation";
 import {
   STATUS_ELIGIBLE_CUSTOM_PLAN,
@@ -40,6 +40,8 @@ import {
 import { hidesCourseCredits, isKnownPaymentMode } from "@/utils/studentSignupValidation";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { getLearningProgramLabel } from "@/constant/LearningPrograms";
+import { useAddCountryOptions } from "@/hooks/add-enrollment/useAddStage1";
+import { CURRENT_GRADE_OPTIONS } from "@/components/student-enroll/Stage1StudentDetails";
 import {
   callLocationForPaymentPromise,
   getAirwallexCountryCode,
@@ -293,6 +295,7 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
   const airwallexMethods = useAirwallexPaymentMethods({ context });
   const offlinePayment = useOfflinePayment({ context, uniqueId });
 
+  const countryOptions = useAddCountryOptions(context);
   const [notice, setNotice] = useState(null);
   const [flaggedModal, setFlaggedModal] = useState(null);
   const [infoDismissed, setInfoDismissed] = useState(false);
@@ -730,6 +733,15 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
   }
 
   const student = data.signupStudent;
+  const isDualDiplomaProgram =
+    getLearningProgramBackendValue(student?.learningProgram || context.learningProgram) === "DUAL_DIPLOMA";
+  // Prefer what the backend returned; fall back to what this browser saved at Step 1.
+  const savedStudent = loadAddEnrollmentStudentFields(context.schoolUUID, userId);
+  const school = {
+    studyingSchoolName: student?.studyingSchoolName || savedStudent?.studyingSchoolName,
+    studyingGradeId: student?.studyingGradeId || savedStudent?.studyingGradeId,
+    countryIdOfSchool: student?.countryIdOfSchool || savedStudent?.countryIdOfSchool,
+  };
   const parent = data.signupParent;
   const course = data.signupCourse;
   const fee = data.feePaymentDetailsResponse;
@@ -776,7 +788,7 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
             userId={userId}
             uniqueId={uniqueId}
             rollNo={rollNo}
-            student={student}
+            student={{ ...student, ...(isDualDiplomaProgram ? school : {}) }}
             rollNo={rollNo}
             standardId={course?.standardId}
             onSaved={(fields) => finishEdit("student", fields)}
@@ -806,6 +818,17 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
             {/* <ReviewRow label="Student's Email">{student?.communicationEmail}</ReviewRow> */}
             {/* <ReviewRow label="Mobile Number">{phoneLine(student)}</ReviewRow> */}
             <ReviewRow label="Nationality">{student?.nationality}</ReviewRow>
+            {isDualDiplomaProgram && (
+              <>
+                <ReviewRow label="Current School Name">{school.studyingSchoolName || "--"}</ReviewRow>
+                <ReviewRow label="Current Grade">
+                  {CURRENT_GRADE_OPTIONS.find((g) => g.value === String(school.studyingGradeId))?.label || school.studyingGradeId || "--"}
+                </ReviewRow>
+                <ReviewRow label="Country of Current School">
+                  {countryOptions.data?.find((c) => c.value === String(school.countryIdOfSchool))?.label || school.countryIdOfSchool || "--"}
+                </ReviewRow>
+              </>
+            )}
             {/* <ReviewRow label="Country (Student's Current Location)">{student?.countryName}</ReviewRow>
             <ReviewRow label="Province / State">{student?.stateName}</ReviewRow>
             <ReviewRow label="City">{student?.cityName}</ReviewRow> */}
