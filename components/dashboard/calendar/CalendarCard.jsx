@@ -68,7 +68,11 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
   };
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+    // No overflow-hidden here: it would turn this card into its own
+    // sticky-positioning boundary, breaking CalendarFilters' `lg:sticky`
+    // (the sidebar needs to track the page's real scroll container, not
+    // just scroll within this card's own box).
+    <section className="rounded-2xl border border-slate-200 bg-white">
       <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-4 py-3">
         <CalendarClockPill timezone={calendar.timezone} />
         <div className="flex items-center gap-1 rounded-full bg-black/5 p-1">
