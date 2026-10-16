@@ -260,6 +260,8 @@ function useResolveAddEnrollmentContext() {
         learningProgram: prefill.data?.learningProgram
           ? getLearningProgramShortCode(prefill.data.learningProgram)
           : "O",
+        // false until the child's learning program is saved (Step 1); the wizard header shows a generic title till then.
+        learningProgramSaved: Boolean(prefill.data?.learningProgram),
       }
     : null;
 

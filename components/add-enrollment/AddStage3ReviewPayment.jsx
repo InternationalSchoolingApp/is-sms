@@ -733,6 +733,8 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
   }
 
   const student = data.signupStudent;
+  const isFlexProgram =
+    getLearningProgramBackendValue(student?.learningProgram || context.learningProgram) === "ONE_TO_ONE_FLEX";
   const isDualDiplomaProgram =
     getLearningProgramBackendValue(student?.learningProgram || context.learningProgram) === "DUAL_DIPLOMA";
   // Prefer what the backend returned; fall back to what this browser saved at Step 1.
@@ -836,7 +838,7 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
           </Collapse>
         </section>
 
-        {/* {editing === "parent" && (
+        {isFlexProgram && editing === "parent" && (
           <ParentInlineEdit
             context={context}
             userId={userId}
@@ -846,8 +848,8 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
             onCancel={() => setEditing(null)}
             onSessionExpired={onSessionExpired}
           />
-        )} */}
-        {/* <section className={ROW_CLASS}>
+        )}
+        {isFlexProgram && <section className={ROW_CLASS}>
           <SectionHeader
             title={parentTitle}
             icon={IoMdPeople}
@@ -886,7 +888,7 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
             )}
           </dl>
           </Collapse>
-        </section> */}
+        </section>}
 
         <section className={ROW_CLASS}>
           <SectionHeader

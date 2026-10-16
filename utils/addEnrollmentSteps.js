@@ -35,3 +35,11 @@ export function normalizeAddSignupPage(signupPage) {
   if (page === 4) return 3;
   return page >= 1 && page <= 3 ? page : null;
 }
+
+/**
+ * ONE_TO_ONE_FLEX only: an extra "Academic & Communication Details" step sits between student-details and
+ * course-selection. It is a route, not a numbered step, so the 1-3 resume markers above stay unchanged.
+ */
+export function addEnrollmentParentPath(school, parentId, sessionUserId) {
+  return `${addEnrollmentBasePath(school, parentId, sessionUserId)}/parent-details`;
+}

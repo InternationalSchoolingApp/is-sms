@@ -6,6 +6,7 @@ import { FullScreenLoader } from "@/components/common/Loader";
 import { loadAddEnrollmentChildUniqueId, loadAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
 import { AddEnrollmentWizardShell, WIZARD_STEP_META } from "@/components/add-enrollment/AddEnrollmentWizardShell";
 import { AddEnrollmentProvider, useAddEnrollmentContext } from "@/hooks/add-enrollment/useAddEnrollmentContext";
+import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { expireSession, logoutEverywhere } from "@/utils/logout";
 
 /**
@@ -15,14 +16,15 @@ import { expireSession, logoutEverywhere } from "@/utils/logout";
  */
 const SEGMENT_TO_STEP_KEY = {
   "student-details": "student",
+  "parent-details": "parent",
   "course-selection": "course_selection",
   "review-and-payment": "review_and_payment",
 };
 
-const ADD_WIZARD_STEPS = ["student", "course_selection", "review_and_payment"].map((key) => ({
-  key,
-  ...WIZARD_STEP_META[key],
-}));
+const toSteps = (keys) => keys.map((key) => ({ key, ...WIZARD_STEP_META[key] }));
+const ADD_WIZARD_STEPS = toSteps(["student", "course_selection", "review_and_payment"]);
+// One-to-One Flex adds the "Academic & Communication Details" step.
+const ADD_WIZARD_STEPS_FLEX = toSteps(["student", "parent", "course_selection", "review_and_payment"]);
 
 function AddWizardFrame({ children }) {
   const router = useRouter();
@@ -83,7 +85,7 @@ function AddWizardFrame({ children }) {
       logoUrl={logoUrl}
       context={context}
       currentStepKey={currentStepKey}
-      steps={ADD_WIZARD_STEPS}
+      steps={getLearningProgramBackendValue(context.learningProgram) === "ONE_TO_ONE_FLEX" ? ADD_WIZARD_STEPS_FLEX : ADD_WIZARD_STEPS}
       plain={plain}
       hideStepper={hideStepper}
       onLogout={() => logoutEverywhere(session)}

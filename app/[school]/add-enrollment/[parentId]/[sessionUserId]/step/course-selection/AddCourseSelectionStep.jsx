@@ -7,7 +7,8 @@ import { AddStage2CourseSelection } from "@/components/add-enrollment/AddStage2C
 import { useAddEnrollmentContext } from "@/hooks/add-enrollment/useAddEnrollmentContext";
 import { useAddWizardResume } from "@/hooks/add-enrollment/useAddWizardResume";
 import { loadAddEnrollmentStudentFields } from "@/utils/addEnrollmentStorage";
-import { addEnrollmentStepPath } from "@/utils/addEnrollmentSteps";
+import { addEnrollmentStepPath, addEnrollmentParentPath } from "@/utils/addEnrollmentSteps";
+import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { expireSession } from "@/utils/logout";
 
 /**
@@ -42,7 +43,13 @@ export function AddCourseSelectionStep() {
       uniqueId={childUniqueId}
       standardId={standardId}
       onNext={() => router.push(addEnrollmentStepPath(school, parentId, sessionUserId, 3))}
-      onBack={() => router.push(addEnrollmentStepPath(school, parentId, sessionUserId, 1))}
+      onBack={() =>
+        router.push(
+          getLearningProgramBackendValue(context.learningProgram) === "ONE_TO_ONE_FLEX"
+            ? addEnrollmentParentPath(school, parentId, sessionUserId)
+            : addEnrollmentStepPath(school, parentId, sessionUserId, 1)
+        )
+      }
       onSessionExpired={() => expireSession(school)}
     />
   );
