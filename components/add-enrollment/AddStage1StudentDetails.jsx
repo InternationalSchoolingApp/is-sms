@@ -270,11 +270,11 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, ini
           options={grades.data || []}
           disabled={!fields.learningProgram || grades.isPending}
           error={errors.standardId}
+          searchable
         />
         <DatePicker
           icon={Cake}
-          label={<Req label="Date of Birth" required />}
-          placeholder="MMM DD, YYYY"
+          label={<Req label={<>Date of Birth{" "}<span className="text-black text-[12px]">(Month Day, Year)</span></>} required />}
           value={fields.dob}
           onChange={(value) => setField("dob", value)}
           fromDate={dobBounds.fromDate}
@@ -288,10 +288,11 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, ini
           onValueChange={(v) => setField("gender", v)}
           options={GENDER_OPTIONS}
           error={errors.gender}
+          searchable
         />
         <FloatingLabelSelect
           icon={Globe}
-          label={<Req label="Nationality" required />}
+          label={<Req label={<>Nationality{" "}<span className="text-black text-[12px]">(Must have valid National ID)</span></>} required />}
           value={fields.nationality}
           onValueChange={(v) => setField("nationality", v)}
           options={countries.data || []}
@@ -303,11 +304,11 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, ini
       {isDualDiploma && (
         <>
           <strong className="mt-6 block text-base font-bold text-black">Current School Details</strong>
-          <div className="mt-3 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-2">
+          <div className="mt-3 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
             <FloatingLabelInput
               icon={School}
               label={<Req label="Current School Name" required />}
-              className="sm:col-span-2"
+              className="sm:col-span-2 lg:col-span-1"
               value={fields.studyingSchoolName}
               onChange={(e) => setField("studyingSchoolName", e.target.value)}
               error={errors.studyingSchoolName}

@@ -267,7 +267,7 @@ export function StudentInlineEdit({ context, userId, uniqueId, student, rollNo, 
           />
           <FloatingLabelSelect
             icon={Globe}
-            label={<Req label="Nationality" required />}
+            label={<Req label={<>Nationality{" "}<span className="text-black text-[12px]">(Must have valid National ID)</span></>} required />}
             value={current.nationality}
             onValueChange={set("nationality")}
             options={countries.data || []}
@@ -278,11 +278,11 @@ export function StudentInlineEdit({ context, userId, uniqueId, student, rollNo, 
         {getLearningProgramBackendValue(learningProgram) === "DUAL_DIPLOMA" && (
           <>
             <strong className="mt-6 block text-base font-bold text-black">Current School Details</strong>
-            <div className="mt-3 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+            <div className="mt-3 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
               <FloatingLabelInput
                 icon={School}
                 label={<Req label="Current School Name" required />}
-                className="sm:col-span-2"
+                className="sm:col-span-2 lg:col-span-1"
                 value={fields.studyingSchoolName}
                 onChange={(e) => set("studyingSchoolName")(e.target.value)}
                 error={errors.studyingSchoolName}
