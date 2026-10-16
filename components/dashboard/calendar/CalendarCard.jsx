@@ -186,7 +186,14 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
       {selectedEvent && (
         <EventDetailModal event={selectedEvent} courseRegistry={calendar.courseRegistry} onClose={() => setSelectedEvent(null)} />
       )}
-      {joiningEvent && <JoinClassModal event={joiningEvent} schoolUUID={schoolUUID} onClose={() => setJoiningEvent(null)} />}
+      {joiningEvent && (
+        <JoinClassModal
+          event={joiningEvent}
+          schoolUUID={schoolUUID}
+          courseRegistry={calendar.courseRegistry}
+          onClose={() => setJoiningEvent(null)}
+        />
+      )}
     </section>
   );
 }
