@@ -50,6 +50,7 @@ import {
 } from "@/hooks/useCourseSelection";
 import { STATUS_ELIGIBLE_CUSTOM_PLAN, STATUS_REDIRECT_TO_DASHBOARD } from "@/hooks/useStudentReview";
 import { useGradeOptions, useCountryOptions, useStudentDetailsPrefill, useStudentDetailsSignup } from "@/hooks/useStudentDetailsSignup";
+import { parseIds } from "@/utils/courseSelectionLocal";
 import { getCourseAddCheck, hidesCourseCredits, validateCourseCredits } from "@/utils/studentSignupValidation";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { saveWizardStudentFields } from "@/utils/wizardStorage";
@@ -63,19 +64,14 @@ const GENERIC_ERROR = "Something went wrong. Please check your connection and tr
 // "Add": true closes the dialog and returns to the category list (one course
 // per visit); false keeps it open so multiple subjects can be added from the
 // same category in one go. Flip this single flag to change the behavior.
-const CLOSE_CATEGORY_DIALOG_ON_ADD = true;
+// Kept open: the added row flips to a tick in place (displaySubjects re-sorts
+// the selected course back into the list), so closing the sheet would hide the
+// confirmation and make adding several courses from one category a chore.
+const CLOSE_CATEGORY_DIALOG_ON_ADD = false;
 
 function isSuccessResponse(response) {
   return String(response?.status) === STATUS_SUCCESS;
 }
-
-function parseIds(csv) {
-  return (csv || "")
-    .split(",")
-    .map((id) => id.trim())
-    .filter(Boolean);
-}
-
 function isNoLiveClasses(subject, registrationType) {
   return registrationType !== "SCHOLARSHIP" && (subject.remarks === 0 || subject.remarks === "0");
 }
@@ -139,6 +135,21 @@ function stripVariantSuffix(name) {
   return String(name || "").replace(/\s+(?:honou?rs?|advanced?)$/i, "");
 }
 
+// A category whose courses are ALL already selected has an addable count of zero
+// (counts stay addable-only by design), and "0 courses available" reads as if the
+// category were empty when it's really full. Name that state instead.
+function addableCountLabel(count) {
+  if (count === 0) return "All selected";
+  return `${count} course${count === 1 ? "" : "s"} available`;
+}
+
+// A ticked row in the "choose courses" pane can be removed from there as well as
+// from the selected list — EXCEPT when the course is mandatory, which has no remove
+// control anywhere (the selected list hides its trash icon on the same condition).
+// `selectedCourse` is the original CourseDTO, which is what removeSubject() needs.
+function canRemoveSelected(subject) {
+  return Boolean(subject.selectedCourse) && subject.courseMandatory === 0;
+}
 function CourseSummaryLink({ url }) {
   if (!url) return null;
   return (
@@ -300,13 +311,14 @@ function useIsMobile(breakpointPx = 768) {
 // everywhere else, immediately — same extra-fee/AP/no-live-class confirm
 // gates, same request per subject, just triggered per-row instead of via a
 // checkbox + batch "Add" button.
-function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentOption, busy, onAddSubject, closeOnAdd }) {
+function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentOption, busy, onAddSubject, onRemoveSubject, closeOnAdd }) {
   const [addingId, setAddingId] = useState(null);
+  const [removingId, setRemovingId] = useState(null);
 
   if (!course) return null;
 
   async function handleAdd(subject) {
-    if (busy || addingId) return;
+    if (busy || addingId || removingId) return;
     const id = String(subject.subjectId);
     setAddingId(id);
     try {
@@ -316,21 +328,41 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
       setAddingId(null);
     }
   }
+
+  async function handleRemove(subject) {
+    if (busy || addingId || removingId) return;
+    const id = String(subject.subjectId);
+    setRemovingId(id);
+    try {
+      await onRemoveSubject(subject.selectedCourse);
+    } finally {
+      setRemovingId(null);
+    }
+  }
+  // Base UI asks to close for several reasons, "focus-out" among them. Adding or
+  // removing a course unmounts the very control that was just pressed (Add becomes
+  // a tick, the tick becomes Add), focus falls back to the body, and the sheet
+  // would close on its own mid-selection. Honour only a deliberate dismissal.
+  function handleOpenChange(open, eventDetails) {
+    if (open) return;
+    const reason = eventDetails?.reason;
+    if (reason === "escape-key" || reason === "outside-press" || reason === "close-press" || reason === "trigger-press") {
+      onClose();
+    }
+  }
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
+    <Dialog open onOpenChange={handleOpenChange}>
       <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-md">
         <DialogHeader className="flex-row items-center gap-2 space-y-0  px-4 py-3">
           <div className="min-w-0 flex-1">
             <DialogTitle className="text-base font-semibold text-black">{course.courseName}</DialogTitle>
-            <p className="text-xs text-black">
-              {course.subjects.length} Course{course.subjects.length === 1 ? "" : "s"} available
-            </p>
+            <p className="text-xs text-black">{addableCountLabel(course.subjects.length)}</p>
           </div>
         </DialogHeader>
         <div className="max-h-[60vh] divide-y divide-slate-100 overflow-y-auto">
-          {course.subjects.map((subject) => {
+          {(course.displaySubjects || course.subjects).map((subject) => {
             const id = String(subject.subjectId);
-            const alreadySelected = selectedIds.includes(id);
+            const alreadySelected = subject.alreadySelected || selectedIds.includes(id);
             const notes = subjectNotes(subject, data, showPaymentOption);
             return (
               <div key={id} className="flex items-center gap-3 px-4 py-3">
@@ -349,15 +381,36 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
                     </p>
                   ))}
                 </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => handleAdd(subject)}
-                  disabled={alreadySelected || busy || Boolean(addingId)}
-                  className="shrink-0 rounded-md bg-primary hover:bg-primary/90"
-                >
-                  <Plus className="h-4 w-4" /> {alreadySelected ? "Added" : addingId === id ? "Adding…" : "Add"}
-                </Button>
+                {alreadySelected ? (
+                  <span className="flex shrink-0 items-center gap-3">
+                    <span title="Already selected" className="flex items-center text-emerald-600">
+                      <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+                      <span className="sr-only">Already selected</span>
+                    </span>
+                    {canRemoveSelected(subject) && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemove(subject)}
+                        disabled={busy || Boolean(addingId) || Boolean(removingId)}
+                        title="Remove course"
+                        aria-label={`Remove ${subject.subjectName}`}
+                        className="inline-flex cursor-pointer items-center text-red-600 hover:text-red-700 disabled:opacity-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </span>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => handleAdd(subject)}
+                    disabled={busy || Boolean(addingId) || Boolean(removingId)}
+                    className="shrink-0 rounded-md bg-primary hover:bg-primary/90"
+                  >
+                    <Plus className="h-4 w-4" /> {addingId === id ? "Adding…" : "Add"}
+                  </Button>
+                )}
               </div>
             );
           })}
@@ -478,7 +531,11 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       return;
     }
     function measure() {
-      setDetailPaneHeight(window.innerWidth > 767 ? node.offsetHeight : null);
+      // Capped at 70% of the viewport height: a category catalog with unusually many top-level
+      // categories (or a transient oversized measurement during a re-render/category switch) would
+      // otherwise pin this pane — and so the whole page — to that full height with no visible
+      // scrollbar, leaving a large blank gap below the visible content instead of actually scrolling.
+      setDetailPaneHeight(window.innerWidth > 767 ? Math.min(node.offsetHeight, window.innerHeight * 0.7) : null);
     }
     measure();
     const observer = new ResizeObserver(measure);
@@ -517,10 +574,8 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       onSessionExpired?.();
       return;
     }
-    if (initialFailure.statusCode === "FLAGGED") {
-      setFlaggedModal({ sessionName: initialFailure.message });
-      return;
-    }
+    // Shown through shownFlagged below (derived, not set here).
+    if (initialFailure.statusCode === "FLAGGED") return;
     // Enrollment already completed/withdrawn: reload like legacy's signupStudentStage3.js does —
     // enrollment/process then answers REDIRECT and useEnrollmentContext sends the student to
     // their dashboard (same handling as Stage4ReviewPayment's review-details failure).
@@ -610,6 +665,8 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     }
   }
 
+  // The selection as plain id strings, in the order the list renders. Read by the
+  // change handlers, the mobile category sheet and the recommended-courses dialog.
   const selectedIds = parseIds(data?.selectedSubjectsAsString);
 
   async function addSubject(course, subject) {
@@ -716,6 +773,11 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     // of this CSV (getOrderedSubjects' `ORDER BY FIELD(SUBJECT_ID, ...)`, then
     // CTECourseUtil.reorderSelectedCourses), so appending made a course jump to the
     // bottom of the list the moment its Honors/Advanced toggle was flipped.
+    // Substitute the variant IN PLACE rather than dropping the old id and appending
+    // the new one: the backend renders "Your Selected Courses" in exactly the order
+    // of this CSV (getOrderedSubjects' `ORDER BY FIELD(SUBJECT_ID, ...)`, then
+    // CTECourseUtil.reorderSelectedCourses), so appending made a course jump to the
+    // bottom of the list the moment its Honors/Advanced toggle was flipped.
     const upgradedIds = selectedIds.map((id) => (id === String(course.courseId) ? String(target.courseId) : id));
     // The current course should always be in the selected list, but don't silently
     // drop the upgrade if it somehow isn't.
@@ -730,29 +792,14 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       // not a generic "Switch to Honors"/"Switch to Regular" — course.courseName is the subject's
       // own display name (e.g. "English I"), and courseTypeOriginal === "Regular" means this
       // upgrade is switching TO the alternate (Honors/Advanced) variant named by target.courseType.
-      const currentType = String(course.courseTypeOriginal || "").toUpperCase();
-      const targetType = String(target.courseType || "").toUpperCase();
       const subjectName = stripVariantSuffix(course.courseName);
-      // const variantSuffix = currentType === "REGULAR" ? /ADV|ADVANCED/.test(targetType) ? " Advanced" : /HON|HONORS/.test(targetType) ? " Honors" : "" : "";
-      const variantSuffix = (() => {
-        if (currentType === "REGULAR") {
-          if (/ADV|ADVANCED/.test(targetType)) {
-            return " Advanced";
-          } else if (/HON|HONORS/.test(targetType)) {
-            return " Honors";
-          }
-        }else if(currentType == "HONORS" || currentType == "ADVANCED"){
-          if (/FT|REGULAR/.test(targetType)) {
-            return " Regular";
-          }
-        }else{
-          return "";
-        }
-      })();
-      if (/FT|REGULAR/.test(targetType)) {
+      if (backToRegular) {
         toast.success(`Switched back to ${subjectName}`);
-      }else{
-        toast.success(`${subjectName}${variantSuffix} Added`);
+      } else {
+        // Named from the TARGET alone. Keying this off the course's current type
+        // left several branches with no return — Honors -> Advanced among them —
+        // and the undefined reached the toast as "<course> undefined Added".
+        toast.success(`${subjectName} ${variantLabel} Added`);
       }
     }
   }
@@ -859,6 +906,13 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     }
   }
 
+  // The advisor reads the saved selection from the backend; every add/remove here
+  // (including "Remove all") is saved right away, so it sees the current list.
+  function openAiSuggester() {
+    if (busy) return;
+    setAiOpen(true);
+  }
+
   function handleAiApplied(courseDetails, landedSubjectIds) {
     if (isSuccessResponse(courseDetails)) {
       // Same cache entry Step 3 renders from; the backend already saved this selection.
@@ -916,7 +970,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         </p>
         <div className="mt-6 flex gap-3">
           {onBack && (
-            <Button type="button" variant="outline" onClick={onBack}>
+            <Button type="button" variant="outline" onClick={onBack} disabled={busy}>
               Back
             </Button>
           )}
@@ -949,8 +1003,62 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   const selectedCourses = data.selectedSubjects || [];
   const mandatoryCount = selectedCourses.filter((course) => course.courseMandatory === 1).length;
   const canRemoveAll = !fixed && selectedCourses.length > mandatoryCount;
-  const availableCourses = (data.availableCourses || []).filter((course) => course.subjects?.length > 0);
-  const showAvailable = !fixed && availableCourses.length > 0;
+  // The backend strips every already-selected subject out of availableCourses
+  // (CTECourseUtil's `selectedIdsCopy.contains(...)` / parentId checks), so this
+  // pane never receives them and a category silently shrinks as you pick from it.
+  // Re-attach them from data.selectedSubjects for DISPLAY only: they render with a
+  // tick instead of an Add button, so the student sees a category's full set rather
+  // than only what's left. CourseDTO (selected) and SubjectB2CDTO (available) don't
+  // share field names, hence the remap.
+  const selectedIdSet = new Set(parseIds(data?.selectedSubjectsAsString));
+  const selectedByCategory = new Map();
+  for (const course of selectedCourses) {
+    const key = String(course.categoryId);
+    const entry = {
+      subjectId: course.courseId,
+      subjectName: course.courseName,
+      subjectPriceString: course.coursePriceSelectedString,
+      courseDescriptionUrl: course.courseDescriptionUrl,
+      alreadySelected: true,
+      courseMandatory: course.courseMandatory,
+      // Kept whole so the row's remove button can hand removeSubject() the exact
+      // object it expects (it reads courseId AND categoryId off it).
+      selectedCourse: course,
+    };
+    const existing = selectedByCategory.get(key);
+    if (existing) existing.push(entry);
+    else selectedByCategory.set(key, [entry]);
+  }
+  const availableCourses = (data.availableCourses || [])
+    .map((course) => {
+      // Selection wins: a subject that is selected is never also offered as
+      // addable. The backend already strips those, but a local add leaves the
+      // subject in `subjects` until the next save, and without this filter the
+      // same course would render twice — once with Add, once with a tick.
+      const addable = (course.subjects || []).filter(
+        (subject) => !selectedIdSet.has(String(subject.subjectId))
+      );
+      const picked = selectedByCategory.get(String(course.courseId)) || [];
+      return {
+        ...course,
+        subjects: addable,
+        // Addable + already-selected, A-Z. `subjects` deliberately stays
+        // addable-only so the category counts keep meaning "available to add".
+        displaySubjects: [...addable, ...picked].sort((a, b) =>
+          String(a.subjectName || "").localeCompare(String(b.subjectName || ""))
+        ),
+      };
+    })
+    // A category whose courses are now ALL selected has an empty `subjects` but a
+    // non-empty `displaySubjects`, and still belongs in the list.
+    .filter((course) => course.displaySubjects.length > 0);
+  // Keyed off `subjects` (addable) and NOT `displaySubjects`: a category stays in
+  // availableCourses once every course in it is selected, so it can still render its
+  // ticked rows. But when NOTHING is addable anywhere — a fixed/group program, or a
+  // selection that has exhausted the catalogue — there is nothing to add and the
+  // whole "Add Extra Courses" panel should disappear rather than open onto an empty
+  // list.
+  const showAvailable = !fixed && availableCourses.some((course) => course.subjects.length > 0);
   const effectiveOpenId = openCourseId ?? availableCourses[0]?.courseId;
   const showMinBanner = Number(data.courseProviderId) !== 39 && Number(data.minCourseLimit) > Number(data.totalCredit);
   const showCreditSummary = showCourseCredits && !batchOrProvider39 && Number(data.minCourseLimit) > 0;
@@ -974,7 +1082,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     ? availableCourses.filter(
         (course) =>
           course.courseName?.toLowerCase().includes(query) ||
-          course.subjects?.some((subject) => subject.subjectName?.toLowerCase().includes(query))
+          course.displaySubjects?.some((subject) => subject.subjectName?.toLowerCase().includes(query))
       )
     : availableCourses;
   const activeCourse = visibleCourses.find((course) => course.courseId === effectiveOpenId) || visibleCourses[0];
@@ -1119,7 +1227,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         )}
 
       {data.aiAdvisor?.visible && !fixed && (
-        <AiSuggesterCard onOpen={() => setAiOpen(true)} disabled={busy} />
+        <AiSuggesterCard onOpen={openAiSuggester} disabled={busy} />
       )}
 
       <div className={`mt-2 grid gap-6 ${showAvailable ? "lg:grid-cols-[1fr_1.6fr]" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
@@ -1256,6 +1364,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               <ol className="divide-y divide-slate-100 md:hidden">
                 {selectedCourses.map((course, index) => {
                   const singleUpgradeTarget = course.upgradeCourses?.length === 1 ? course.upgradeCourses[0] : null;
+                  // Any variant control at all — the toggle (exactly one alternate) or
+                  // the arrow buttons (more than one). Either way the control names the
+                  // variant, so the course name doesn't have to.
+                  const hasVariantControl = (course.upgradeCourses?.length || 0) > 0;
                   return (
                     <li key={course.courseId} className={`flex items-start justify-between gap-3 px-4 py-3 ${aiLanded.has(String(course.courseId)) ? "ai-land" : ""}`}>
                       <div className="min-w-0 flex-1">
@@ -1264,10 +1376,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                             {index + 1}
                           </span>
                           <p className="text-sm font-medium text-black course_name">
-                            {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}
+                            {hasVariantControl ? stripVariantSuffix(course.courseName) : course.courseName}
                           </p>
                           {aiLanded.has(String(course.courseId)) && (
-                            <span className="ai-rise rounded bg-[#3fa43c] px-1.5 py-0.5 text-[10px] font-semibold text-white">AI pick</span>
+                            <span className="ai-rise rounded bg-[#3fa43c] px-1.5 py-0.5 text-[10px] font-semibold text-white whitespace-nowrap">AI pick</span>
                           )}
                           {singleUpgradeTarget ? (
                             <VariantToggle course={course} target={singleUpgradeTarget} onToggle={upgrade} disabled={busy} />
@@ -1316,6 +1428,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               {selectedCourses.map((course, index) => {
                 const CourseIcon = categoryIcon(course.courseName);
                 const singleUpgradeTarget = course.upgradeCourses?.length === 1 ? course.upgradeCourses[0] : null;
+                // Any variant control at all — the toggle (exactly one alternate) or the
+                // arrow buttons (more than one). Either way the control names the variant,
+                // so the course name doesn't have to.
+                const hasVariantControl = (course.upgradeCourses?.length || 0) > 0;
                 return (
                   <li key={course.courseId} className={`flex flex-col ${aiLanded.has(String(course.courseId)) ? "ai-land" : ""} ${!fixed && course.courseMandatory === 1 && !batchOrProvider39 ? 'gap-3' : ''} rounded-md border border-slate-100 bg-blue-50 px-3 py-1.5 shadow-sm sm:flex-row sm:flex-wrap sm:items-center md:rounded-none md:border-0 md:bg-transparent md:p-0 md:px-4 md:py-3 md:shadow-none`}>
                     <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -1325,11 +1441,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
                       <div className="min-w-0 inline-flex flex-1">
                         <div className="text-sm inline-flex font-medium text-black items-center">
-                          <span> {singleUpgradeTarget ? stripVariantSuffix(course.courseName) : course.courseName}</span>
+                          <span> {hasVariantControl ? stripVariantSuffix(course.courseName) : course.courseName}</span>
                           {aiLanded.has(String(course.courseId)) && (
-                            <span className="ai-rise ml-2 rounded bg-[#3fa43c] px-1.5 py-0.5 text-[10px] font-semibold text-white">AI pick</span>
+                            <span className="ai-rise ml-2 rounded bg-[#3fa43c] px-1.5 py-0.5 text-[10px] font-semibold text-white whitespace-nowrap">AI pick</span>
                           )}
-
                           <div className="flex shrink-0 ml-2 flex-1 items-center mr-auto gap-2">
                             {singleUpgradeTarget ? (
                               <VariantToggle course={course} target={singleUpgradeTarget} onToggle={upgrade} disabled={busy} />
@@ -1563,17 +1678,17 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                                 delay={100}
                                 render={
                                   <span
-                                    aria-label={`${course.subjects.length} course${course.subjects.length === 1 ? "" : "s"} available`}
+                                    aria-label={addableCountLabel(course.subjects.length)}
                                     className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
                                       active ? "bg-primary text-white" : "bg-slate-100 text-black"
                                     }`}
                                   />
                                 }
                               >
-                                {course.subjects.length}
+                                {course.subjects.length === 0 ? <Check className="h-3 w-3" aria-hidden="true" /> : course.subjects.length}
                               </TooltipTrigger>
                               <TooltipContent>
-                                {course.subjects.length} course{course.subjects.length === 1 ? "" : "s"} available
+                                {addableCountLabel(course.subjects.length)}
                               </TooltipContent>
                             </Tooltip>
                           </button>
@@ -1589,12 +1704,20 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                       <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
                         <span className="text-sm font-semibold text-primary">{activeCourse.courseName}</span>
                         <span className="flex items-center gap-1 text-xs text-black">
-                          {activeCourse.subjects.length} course{activeCourse.subjects.length === 1 ? "" : "s"} available <ChevronDown className="h-3.5 w-3.5" />
+                          {addableCountLabel(activeCourse.subjects.length)} <ChevronDown className="h-3.5 w-3.5" />
                         </span>
                       </div>
-                      <div className="space-y-2 p-4" style={detailPaneHeight>250 ? { height: detailPaneHeight, overflowY: "auto" } : { maxHeight: "300px", overflowY: "auto" }}>
+                      {/* `relative` is load-bearing: without a positioned ancestor here, this pane's
+                          `position:absolute` descendants (e.g. the sr-only "Already selected" labels)
+                          fall back to `html` as their containing block. That doesn't change what's
+                          painted (the pane's own overflow-y:auto still clips them visually), but it DOES
+                          let their layout box keep inflating `document.documentElement.scrollHeight` by
+                          however far down the full (unscrolled) subject list they'd fall — confirmed live:
+                          a category with many subjects (e.g. 37 Electives) pushed the page thousands of
+                          pixels taller than the visible card, even though this pane itself stayed capped. */}
+                      <div className="relative space-y-2 p-4" style={detailPaneHeight>250 ? { height: detailPaneHeight, overflowY: "auto" } : { maxHeight: "300px", overflowY: "auto" }}>
                         {activeCourse.courseDescription && <p className="text-xs text-black">{activeCourse.courseDescription}</p>}
-                        {activeCourse.subjects
+                        {activeCourse.displaySubjects
                           .filter((subject) => !query || subject.subjectName?.toLowerCase().includes(query) || activeCourse.courseName?.toLowerCase().includes(query))
                           .map((subject) => {
                             const notes = subjectNotes(subject, data, showPaymentOption);
@@ -1622,9 +1745,30 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                                     {/* <p>{subject.subjectCredit} credit</p> */}
                                   </div>
                                 )}
-                                <Button type="button" size="sm" onClick={() => addSubject(activeCourse, subject)} disabled={busy} className="rounded-md bg-primary hover:bg-primary/90">
-                                  <Plus className="h-4 w-4" /> Add
-                                </Button>
+                                {subject.alreadySelected ? (
+                                  <span className="flex shrink-0 items-center gap-2">
+                                    <span title="Already selected" className="flex items-center text-emerald-600">
+                                      <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+                                      <span className="sr-only">Already selected</span>
+                                    </span>
+                                    {canRemoveSelected(subject) && (
+                                      <button
+                                        type="button"
+                                        onClick={() => removeSubject(subject.selectedCourse)}
+                                        disabled={busy}
+                                        title="Remove course"
+                                        aria-label={`Remove ${subject.subjectName}`}
+                                        className="inline-flex cursor-pointer items-center text-red-600 hover:text-red-700 disabled:opacity-50"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </button>
+                                    )}
+                                  </span>
+                                ) : (
+                                  <Button type="button" size="sm" onClick={() => addSubject(activeCourse, subject)} disabled={busy} className="rounded-md bg-primary hover:bg-primary/90">
+                                    <Plus className="h-4 w-4" /> Add
+                                  </Button>
+                                )}
                               </div>
                             );
                           })}
@@ -1651,7 +1795,9 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                             <div className="flex-1 flex-col flex">
                               <span className="min-w-0 flex-1 truncate text-black">{course.courseName}</span>
                               <span className="px-2 w-fit shrink-0 items-center justify-center rounded-full border border-black-300 bg-white text-[11px] font-semibold text-black mt-2">
-                                {course.subjects.length} {course.subjects.length>1?'Courses':'Course'} available
+                                {course.subjects.length === 0
+                                  ? "All selected"
+                                  : `${course.subjects.length} ${course.subjects.length > 1 ? "Courses" : "Course"} available`}
                               </span>
                             </div>
                           </div>
@@ -1678,6 +1824,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           showPaymentOption={showPaymentOption}
           busy={busy}
           onAddSubject={addSubject}
+          onRemoveSubject={removeSubject}
           closeOnAdd={CLOSE_CATEGORY_DIALOG_ON_ADD}
         />
       )}

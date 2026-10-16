@@ -1,5 +1,6 @@
 import Script from "next/script";
 import { MetaParamBuilder } from "@/components/MetaParamBuilder";
+import EnrollmentPixel from "@/components/EnrollmentPixel";
 
 /**
  * Google Tag Manager + Microsoft Clarity loaders — the Next.js equivalent of
@@ -72,27 +73,8 @@ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
 
       <MetaParamBuilder />
 
-      {fbPixelId && (
-        <>
-          {/* Facebook Pixel — standard init + PageView. The JSP only showed
-              the <noscript> fallback, but that alone does nothing without the
-              init script, so the full snippet is included here. */}
-          <Script id="fb-pixel-loader" strategy="afterInteractive">
-            {`!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window,document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('consent','revoke');fbq('init','${fbPixelId}');
-if(document.cookie.indexOf('is_marketing_consent=granted')!==-1){fbq('consent','grant');}
-fbq('track','PageView');`}
-          </Script>
-          {/* The <noscript> tracking image was removed: it fires without JavaScript and without consent. */}
-        </>
-      )}
+      {/* Meta Pixel: enrollment routes only (see EnrollmentPixel); consent-gated there. */}
+      <EnrollmentPixel pixelId={fbPixelId} />
     </>
   );
 }

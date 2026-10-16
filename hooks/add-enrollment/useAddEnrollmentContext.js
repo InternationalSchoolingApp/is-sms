@@ -1,8 +1,16 @@
 "use client";
 
 import { useAddStudentDetailsPrefill } from "@/hooks/add-enrollment/useAddStage1";
-import { enrollAnotherChild } from "@/services/addEnrollmentBackendApi";
-import { getEnrollmentProcess, getPublicSchoolInfo } from "@/services/studentSignupApi";
+import { STATUS_REDIRECT_TO_DASHBOARD } from "@/hooks/useStudentReview";
+import { enrollAnotherChild, getAddEnrollmentProcess, getAddEnrollmentThankYou } from "@/services/addEnrollmentBackendApi";
+import { getPublicSchoolInfo } from "@/services/studentSignupApi";
+import {
+  clearAddEnrollmentChildState,
+  loadAddEnrollmentChildUniqueId,
+  loadAddEnrollmentRollNo,
+  saveAddEnrollmentChildUniqueId,
+  saveAddEnrollmentRollNo,
+} from "@/utils/addEnrollmentStorage";
 import { normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
 import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
 import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
@@ -36,18 +44,101 @@ import { createContext, useContext, useEffect, useState } from "react";
  */
 const AddEnrollmentContext = createContext(null);
 
+// Whether this page load is a fresh start of the wizard (/api/sso appends fresh=1 for the dashboard button / the
+// enrollment link). Read once per page load, then the marker is dropped from the URL so a reload is NOT fresh.
+let freshEntry;
+function isFreshEntry() {
+  if (freshEntry === undefined) {
+    const url = new URL(window.location.href);
+    freshEntry = url.searchParams.get("fresh") === "1";
+    if (freshEntry) {
+      url.searchParams.delete("fresh");
+      window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+  }
+  return freshEntry;
+}
+
 function useResolveAddEnrollmentContext() {
-  const { parentId, sessionUserId } = useParams();
+  const { school, parentId, sessionUserId } = useParams();
   const { data: session, status } = useSession();
   const [logoUrl, setLogoUrl] = useState(null);
   const [whatsAppNumber, setWhatsAppNumber] = useState(undefined);
   const authenticated =
     status === "authenticated" && Boolean(session?.userId && session?.schoolUUID && session?.uniqueId);
 
+  // Refresh guard: before enrollAnotherChild (which could reserve a brand-new child), ask the thank-you details API
+  // about the child this tab was enrolling (uniqueId + roll number kept in sessionStorage). It answers status "1"
+  // only when that child has a successful payment (e.g. paid via the payment link), so a paid child goes straight
+  // to the thank-you page and no new child is created. This looks at the payment itself, so unlike
+  // enrollment/process it does not lag behind the payment.
+  const paidCheck = useQuery({
+    queryKey: ["add-enrollment-paid-check", session?.schoolUUID, parentId],
+    queryFn: async () => {
+      // A fresh start must not pick up a child remembered from an earlier run in this tab.
+      if (isFreshEntry()) {
+        clearAddEnrollmentChildState(session.schoolUUID, parentId);
+        return { storedUniqueId: "", paid: false };
+      }
+      const storedUniqueId = loadAddEnrollmentChildUniqueId(session.schoolUUID, parentId);
+      const storedRollNo = loadAddEnrollmentRollNo(session.schoolUUID, parentId);
+      if (!storedUniqueId && !storedRollNo) return { storedUniqueId: "", paid: false };
+      // 1) Completed enrollment (enrollment/process statusCode REDIRECT_TO_DASHBOOARD) — needs no caller check, so it
+      //    also works when the logged-in user IS that child (it came in through its own enrollment link).
+      if (storedUniqueId) {
+        const process = await getAddEnrollmentProcess(session.schoolUUID, storedUniqueId);
+        // TEMP-DEBUG
+        console.log("[add-enrollment] paidCheck process", { storedUniqueId, statusCode: process?.statusCode, redirectTo: process?.redirectTo });
+        if (process?.statusCode === STATUS_REDIRECT_TO_DASHBOARD && process?.redirectTo !== "login") {
+          return { storedUniqueId, paid: true };
+        }
+      }
+      // 2) Paid but not marked complete yet: the thank-you API looks at the payment itself.
+      const res = await getAddEnrollmentThankYou(session.schoolUUID, {
+        parentId,
+        sessionUserId: session.userId,
+        sessionUniqueId: session.uniqueId,
+        studentRollNumber: storedRollNo,
+        childUniqueId: storedUniqueId,
+      });
+      // TEMP-DEBUG: which stored child the refresh checked and what the thank-you API said
+      console.log("[add-enrollment] paidCheck", { storedUniqueId, storedRollNo, message: res?.message, status: res?.status });
+      return { storedUniqueId, paid: res?.status === "1" };
+    },
+    enabled: Boolean(authenticated && parentId),
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+  const paidBeforeEnroll = paidCheck.data?.paid === true;
+
   const enrollChild = useQuery({
     queryKey: ["add-enrollment-child", session?.schoolUUID, parentId, session?.uniqueId],
-    queryFn: () => enrollAnotherChild(session.schoolUUID, parentId, session.uniqueId),
-    enabled: Boolean(authenticated && parentId),
+    queryFn: async () => {
+      const response = await enrollAnotherChild(
+        session.schoolUUID,
+        parentId,
+        session.uniqueId,
+        // On a refresh childData is still empty, so fall back to the roll number kept in sessionStorage: the
+        // backend answers S003 (already paid) for it instead of reserving a brand-new child.
+        childData?.rollNo || loadAddEnrollmentRollNo(session.schoolUUID, parentId),
+        // Only a fresh start may reserve a new child; on a reload the backend resumes the in-progress child or
+        // returns the paid one (S003), and never creates a new user.
+        isFreshEntry()
+      );
+      // TEMP-DEBUG: what refresh sent and what the backend answered (S003 = already paid, S002 = resumed, S001/other = new)
+      console.log("[add-enrollment] enroll/another/child", {
+        sentRollNo: childData?.rollNo || loadAddEnrollmentRollNo(session.schoolUUID, parentId),
+        sessionUniqueId: session.uniqueId,
+        statusCode: response?.statusCode,
+        message: response?.message,
+        response,
+      });
+      saveAddEnrollmentRollNo(session.schoolUUID, parentId, response?.data?.rollNo);
+      return response;
+    },
+    enabled: Boolean(authenticated && parentId && paidCheck.isFetched && !paidBeforeEnroll),
     staleTime: Infinity,
     gcTime: Infinity,
     refetchOnWindowFocus: false,
@@ -58,6 +149,17 @@ function useResolveAddEnrollmentContext() {
   const childUserId = childData?.userId;
   const childUniqueId = childData?.uniqueId;
   const childRollNo = childData?.rollNo;
+
+  useEffect(() => {
+    saveAddEnrollmentChildUniqueId(session?.schoolUUID, parentId, childUniqueId);
+  }, [session?.schoolUUID, parentId, childUniqueId]);
+
+  // The roll number shown as "Student Id" can arrive after the first enrollAnotherChild call (the Stage 1 save
+  // swaps the child into this cache), so persist it whenever it changes, not only in that query's queryFn.
+  // The payment-response page reads it back to ask for the thank-you details.
+  useEffect(() => {
+    saveAddEnrollmentRollNo(session?.schoolUUID, parentId, childRollNo);
+  }, [session?.schoolUUID, parentId, childRollNo]);
 
   // learningProgram comes from the CHILD's saved details (get-student-details), mapped back to
   // our short code — same shared cache entry Stage 1/2 use, so no extra network call.
@@ -70,7 +172,12 @@ function useResolveAddEnrollmentContext() {
   // the logged-in student (student/enrollment/process keyed by the student's own uniqueId).
   const enrollmentProcess = useQuery({
     queryKey: ["add-enrollment-process", session?.schoolUUID, childUniqueId],
-    queryFn: () => getEnrollmentProcess(session.schoolUUID, childUniqueId),
+    queryFn: async () => {
+      const response = await getAddEnrollmentProcess(session.schoolUUID, childUniqueId);
+      // TEMP-DEBUG: enrollment/process response (remove after checking statusCode / redirectTo)
+      console.log("[add-enrollment] enrollment/process response", { childUniqueId, response });
+      return response;
+    },
     enabled: Boolean(authenticated && childUniqueId),
     staleTime: Infinity,
     gcTime: Infinity,
@@ -78,25 +185,24 @@ function useResolveAddEnrollmentContext() {
     retry: false,
   });
 
-  // enrollment/process answers {status:"REDIRECT"} once the child is past the wizard (e.g. paid
-  // from the invoice link in another tab). "dashboard" carries a ready-made view-as-user URL.
-  // A "login" redirect (child withdrawn) is surfaced as an error instead of dropping the session:
-  // here the session belongs to the parent/sibling, not the child.
-  //
-  // BUT: a freshly reserved / still-in-progress child (enrollAnotherChild returned a resume step
-  // signupPage 1-3) has no started standard yet, which makes enrollment/process answer "dashboard"
-  // for it. Honoring that would bounce the parent to the :8080 parent dashboard instead of opening
-  // the wizard. So we only follow a "dashboard" redirect when the child is NOT resumable here
-  // (no valid signupPage), i.e. genuinely past the wizard.
-  const childResumeStep = normalizeAddSignupPage(childData?.signupPage);
-  const childIsResumable = childResumeStep !== null;
+  // enrollment/process (asked with ?from=add-enrollment) answers statusCode REDIRECT_TO_DASHBOOARD once the child's
+  // enrollment is complete. That statusCode is the only completion signal here: a bare {status:"REDIRECT",
+  // redirectTo:"dashboard"} (no statusCode) also comes back for a freshly reserved child whose standard has not
+  // started, so honoring it sent brand-new, unpaid children to the thank-you page. A withdrawn child carries the
+  // same statusCode with redirectTo "login": surfaced as an error (the session here is the parent's/sibling's).
+  const enrollmentCompleted =
+    enrollmentProcess.data?.statusCode === STATUS_REDIRECT_TO_DASHBOARD && enrollmentProcess.data?.redirectTo !== "login";
   const processRedirect =
-    enrollmentProcess.data?.status === "REDIRECT" && !childIsResumable ? enrollmentProcess.data : null;
-  useEffect(() => {
-    if (processRedirect?.redirectTo === "dashboard" && processRedirect.url) {
-      window.location.replace(processRedirect.url);
-    }
-  }, [processRedirect]);
+    enrollmentProcess.data?.statusCode === STATUS_REDIRECT_TO_DASHBOARD ? enrollmentProcess.data : null;
+  // enrollment/process says REDIRECT -> dashboard once the child's enrollment is complete (e.g. paid from the
+  // payment link in another browser). The wizard stays where it is and shows its thank-you view in place of
+  // the steps (see AddEnrollmentChrome) instead of navigating to the :8080 dashboard. markCompleted lets the
+  // review step flip the same switch when the backend answers REDIRECT_TO_DASHBOOARD mid-payment.
+  const [completedLocal, setCompletedLocal] = useState(false);
+  // S003 = enroll/another/child found the child this tab was enrolling already paid (e.g. via the payment link).
+  const alreadyPaid = enrollChild.data?.statusCode === "S003";
+  const completed = completedLocal || alreadyPaid || paidBeforeEnroll || enrollmentCompleted;
+
 
   useEffect(() => {
     if (!session?.schoolNumericId) return;
@@ -126,7 +232,8 @@ function useResolveAddEnrollmentContext() {
   }, [session?.schoolUUID]);
 
   const processReady = !childUniqueId || enrollmentProcess.isFetched;
-  const ready = authenticated && enrollChild.isFetched && Boolean(childData) && processReady && !processRedirect;
+  const ready =
+    authenticated && enrollChild.isFetched && Boolean(childData) && processReady && !processRedirect && !alreadyPaid;
 
   // Same payer-location capture as the main context, so the payment step finds it already there.
   useEffect(() => {
@@ -164,9 +271,14 @@ function useResolveAddEnrollmentContext() {
     ready,
     // Child identity — stage pages use these instead of session.userId/uniqueId.
     childUserId,
-    childUniqueId,
+    childUniqueId: childUniqueId || (paidBeforeEnroll ? paidCheck.data.storedUniqueId : undefined),
     childRollNo,
-    isError: enrollChild.isError || processRedirect?.redirectTo === "login",
+    completed,
+    // read straight off enrollment/process: `context` is null once the wizard has been replaced by the completed view
+    customPaymentEnabled: enrollmentProcess.data?.customPaymentEnabled === true,
+    markCompleted: () => setCompletedLocal(true),
+    // E005: a reload with nothing to resume and no paid child (only a fresh "Add child" entry may create one)
+    isError: enrollChild.isError || enrollChild.data?.statusCode === "E005" || processRedirect?.redirectTo === "login",
   };
 }
 

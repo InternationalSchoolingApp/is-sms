@@ -31,12 +31,12 @@ import {
  *   onSubmitOffline(option, form, spec) -> { ok, message }   (CASH / WIRETRANSFER)
  */
 
-// Backend static assets (legacy PATH_FOLDER_IMAGE2 / PATH_FOLDER_FONT2).
-const IMAGES = "static/theme2/images/";
-const FLAGS = "static/theme2/fonts/";
-// Same-origin path, proxied to the backend by the /static/theme2 rewrite in next.config.mjs. The backend
-// origin itself is plain http (IP:port) on UAT, which an https page blocks as mixed content.
-const assetUrl = (folder, file) => `/${folder}${file}`;
+// Backend static assets (legacy PATH_FOLDER_IMAGE2 / PATH_FOLDER_FONT2), served same-origin through the
+// /add-enrollment-assets rewrite in next.config.mjs (-> backend /static/theme2/...). The backend origin
+// itself is plain http (IP:port) on UAT, which an https page blocks as mixed content.
+const IMAGES = "images/";
+const FLAGS = "fonts/";
+const assetUrl = (folder, file) => `/add-enrollment-assets/${folder}${file}`;
 
 // Gateways with no Pay Now button here: YOCO's is hidden (its own SDK flow), offline ones submit a form.
 const NO_PAY_BUTTON = ["YOCO", "CASH", "WIRETRANSFER"];

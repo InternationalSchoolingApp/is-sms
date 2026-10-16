@@ -22,6 +22,8 @@ import { prepareMarksheetFiles } from "@/utils/marksheetFiles";
 const STATUS_SUCCESS = "1";
 const STATUS_SESSION_OUT = "3";
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
+// Answers a retry cannot change, so the error screen offers only "Close".
+const NO_RETRY_CODES = new Set(["LIMIT_REACHED", "CHAT_LIMIT_REACHED", "NOT_AVAILABLE"]);
 const BANDS = [
   { value: "strong", label: "Strong" },
   { value: "average", label: "Average" },
@@ -35,10 +37,10 @@ const QUICK_QUESTIONS = [
 ];
 // Why each question is asked, keyed by the backend's question id (AdvisorQuestions.java).
 const QUESTION_HINTS = {
-  recoverSubjects: "We'll put these first so you can earn back the credits you need.",
+  recoverSubjects: "We'll put these first so you can earn back the courses you need.",
   career: "This helps us pick electives and course levels that lead toward that path.",
   college: "Colleges in different countries look for different courses, so we'll match them.",
-  favoriteSubjects: "We'll lean toward higher levels or extra electives in these subjects.",
+  favoriteSubjects: "We'll lean toward higher levels or extra electives in these courses.",
   hardSubjects: "We'll keep these at a comfortable level so your year isn't overloaded.",
   homeSchoolSubjects: "We'll avoid suggesting courses you're already taking at your school.",
   challenge: "This decides how many Honors or advanced courses we suggest.",
@@ -197,7 +199,7 @@ function QuestionStep({ question, index, total, answers, onToggle, onSetAll }) {
             {hint && <span className="mt-1 block text-sm">{hint}</span>}
           </div>
         </legend>
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <span className="rounded-md bg-primary px-2 py-0.5 text-xs font-semibold text-white">
             {question.multi ? "Choose all that apply" : "Choose one"}
           </span>
@@ -241,7 +243,7 @@ function MarksheetTable({ marksheet, onChange }) {
       <table className="w-full min-w-[420px] text-sm">
         <thead>
           <tr className="text-left text-xs text-slate-600">
-            <th className="py-1 pr-2 font-semibold">Subject</th>
+            <th className="py-1 pr-2 font-semibold">Course</th>
             <th className="py-1 pr-2 font-semibold">Result</th>
             <th className="py-1 pr-2 font-semibold">How you did</th>
             <th className="py-1" aria-label="Remove" />
@@ -252,7 +254,7 @@ function MarksheetTable({ marksheet, onChange }) {
             <tr key={index} className="border-t border-slate-100">
               <td className="py-1.5 pr-2">
                 <input
-                  aria-label="Subject"
+                  aria-label="Course"
                   value={row.name}
                   onChange={(e) => update(index, { name: e.target.value })}
                   className="h-8 w-full rounded-md border border-slate-300 px-2 outline-none focus:border-primary"
@@ -286,7 +288,7 @@ function MarksheetTable({ marksheet, onChange }) {
               <td className="py-1.5 text-right">
                 <button
                   type="button"
-                  aria-label={`Remove ${row.name || "subject"}`}
+                  aria-label={`Remove ${row.name || "course"}`}
                   onClick={() => onChange({ ...marksheet, subjects: rows.filter((_, i) => i !== index) })}
                   className="rounded p-1 text-slate-500 hover:text-red-600"
                 >
@@ -302,8 +304,50 @@ function MarksheetTable({ marksheet, onChange }) {
         onClick={() => onChange({ ...marksheet, subjects: [...rows, { name: "", score: "", maxScore: "", letterGrade: "", band: "unknown" }] })}
         className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary"
       >
-        <Plus className="h-4 w-4" /> Add a subject
+        <Plus className="h-4 w-4" /> Add a course
       </button>
+    </div>
+  );
+}
+
+function formatCredit(value) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+/**
+ * "X of Y courses" for the ticked suggestions, so a student who emptied the
+ * list (Remove all) sees that applying them gives a complete list again.
+ * Shown only when the list was short; the extra course is counted separately.
+ */
+function ListProgress({ currentCredit, fullListCredit, suggestions, checked }) {
+  const full = Number(fullListCredit) || 0;
+  const current = Number(currentCredit) || 0;
+  if (full <= 0 || current >= full) return null;
+  const change = (s) => (checked.has(s.itemId) ? Number(s.creditChange) || 0 : 0);
+  const inList = Math.max(0, current + suggestions.filter((s) => s.action !== "ADDITIONAL").reduce((sum, s) => sum + change(s), 0));
+  const extra = suggestions.filter((s) => s.action === "ADDITIONAL").reduce((sum, s) => sum + change(s), 0);
+  const complete = inList >= full;
+  const percent = Math.min(100, Math.round((inList / full) * 100));
+  return (
+    <div className="ai-rise rounded-lg border border-[#cdf1cb] bg-white px-3 py-2" aria-live="polite">
+      <div className="flex items-center justify-between gap-2 text-sm text-black">
+        <span className="flex items-center gap-1.5 font-semibold">
+          {complete && <Check className="h-4 w-4 text-[#3fa43c]" />}
+          {complete ? "Your list will be complete" : "Your list after applying"}
+        </span>
+        <span className="shrink-0 font-semibold">
+          {formatCredit(Math.min(inList, full))} of {formatCredit(full)} courses
+          {extra > 0 && <span className="font-normal text-slate-600"> + {formatCredit(extra)} extra</span>}
+        </span>
+      </div>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+        <div className="h-full rounded-full bg-[#3fa43c] transition-all duration-300" style={{ width: `${percent}%` }} />
+      </div>
+      {!complete && (
+        <p className="mt-1.5 text-xs text-slate-600">
+          Tick more suggestions, or add courses yourself on this page, to complete your list.
+        </p>
+      )}
     </div>
   );
 }
@@ -372,18 +416,24 @@ function TypingDots() {
  * normal course-save path and come back as a fresh course-details response,
  * which onApplied hands to Stage3 to show.
  */
-export function AiAdvisorDialog({ open, onClose, context, school, program, gradeName, onApplied, onSessionExpired }) {
-  const start = useAdvisorStart({ context });
-  const upload = useMarksheetUpload({ school, program });
-  const confirmMarks = useConfirmMarksheet({ context });
-  const suggest = useAdvisorSuggestions({ context });
-  const apply = useApplySuggestions({ context });
-  const dismiss = useDismissSuggestions({ context });
-  const chat = useAdvisorChat({ context });
+/**
+ * studentUserId: set by Add Another Student (the child being enrolled while a
+ * parent or sibling is logged in); left out on the main signup.
+ */
+export function AiAdvisorDialog({ open, onClose, context, school, program, gradeName, onApplied, onSessionExpired, studentUserId }) {
+  const start = useAdvisorStart({ context, studentUserId });
+  const upload = useMarksheetUpload({ school, program, studentUserId });
+  const confirmMarks = useConfirmMarksheet({ context, studentUserId });
+  const suggest = useAdvisorSuggestions({ context, studentUserId });
+  const apply = useApplySuggestions({ context, studentUserId });
+  const dismiss = useDismissSuggestions({ context, studentUserId });
+  const chat = useAdvisorChat({ context, studentUserId });
 
   const [step, setStep] = useState("loading");
   const [setup, setSetup] = useState(null);
   const [notice, setNotice] = useState("");
+  // What "Try again" on the error screen re-runs (null when retrying can't help).
+  const [retry, setRetry] = useState(null);
   const [marksheet, setMarksheet] = useState(null);
   const [marksheetId, setMarksheetId] = useState(null);
   const [answers, setAnswers] = useState({});
@@ -410,25 +460,35 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
     onSessionExpired?.();
   }
 
-  useEffect(() => {
-    if (!open || startedRef.current) return;
-    startedRef.current = true;
+  /**
+   * Shows the error screen. A limit or "not available" answer won't change on
+   * a retry, so those get no "Try again"; network glitches and AI hiccups do.
+   */
+  function showError(message, statusCode, again) {
+    setNotice(message || GENERIC_ERROR);
+    setRetry(() => (NO_RETRY_CODES.has(statusCode) ? null : again));
+    setStep("error");
+  }
+
+  function loadStart() {
+    setNotice("");
+    setStep("loading");
     start
       .mutateAsync()
       .then((response) => {
         if (response.status === STATUS_SESSION_OUT) return sessionOut();
-        if (response.status !== STATUS_SUCCESS) {
-          setNotice(response.message || GENERIC_ERROR);
-          return setStep("error");
-        }
+        if (response.status !== STATUS_SUCCESS) return showError(response.message, response.statusCode, loadStart);
         setSetup(response);
         setQuestionIndex(0);
         setStep(response.marksheetEnabled ? "marksheet" : "questions");
       })
-      .catch(() => {
-        setNotice(GENERIC_ERROR);
-        setStep("error");
-      });
+      .catch(() => showError(GENERIC_ERROR, null, loadStart));
+  }
+
+  useEffect(() => {
+    if (!open || startedRef.current) return;
+    startedRef.current = true;
+    loadStart();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -466,7 +526,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
   async function handleConfirmMarks() {
     const subjects = marksheet.subjects.filter((row) => row.name.trim());
     if (subjects.length === 0) {
-      setNotice("Please keep at least one subject, or skip this step.");
+      setNotice("Please keep at least one course, or skip this step.");
       return;
     }
     try {
@@ -526,15 +586,15 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
     });
   }
 
-  async function handleSuggest() {
+  /** chosen: the answers to send; "Skip all questions" sends none, even ones picked before going back. */
+  async function handleSuggest(chosen = answers) {
     setNotice("");
     setStep("thinking");
     try {
-      const response = await suggest.mutateAsync({ answers, marksheetId });
+      const response = await suggest.mutateAsync({ answers: chosen, marksheetId });
       if (response.status === STATUS_SESSION_OUT) return sessionOut();
       if (response.status !== STATUS_SUCCESS) {
-        setNotice(response.message || GENERIC_ERROR);
-        setStep("error");
+        showError(response.message, response.statusCode, () => handleSuggest(chosen));
         return;
       }
       const suggestions = response.suggestions || [];
@@ -543,8 +603,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
       setChecked(new Set(suggestions.filter((s) => s.action !== "ADDITIONAL").map((s) => s.itemId)));
       setStep("suggestions");
     } catch {
-      setNotice(GENERIC_ERROR);
-      setStep("error");
+      showError(GENERIC_ERROR, null, () => handleSuggest(chosen));
     }
   }
 
@@ -669,8 +728,8 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#3fa43c] text-white">
               <Sparkles className="h-4 w-4" />
             </span>
-            AI Suggester 
-            <BsStars className="text-[#ffcd2b]" />
+            Smart Course Picker
+            {/* <BsStars className="text-[#ffcd2b]" /> */}
           </SheetTitle>
         </SheetHeader>
 
@@ -695,12 +754,12 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
             <div className="space-y-3">
               <div>
                 <h3 className="text-base font-semibold text-black">Add last year&apos;s marksheet (optional)</h3>
-                <p className="text-sm text-slate-700">We&apos;ll read your marks to suggest the right level for each subject.</p>
+                <p className="text-sm text-slate-700">We&apos;ll read your marks to suggest the right level for each course.</p>
               </div>
               {setup?.confirmedMarksheet && (
                 <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-[#e6f3ff] px-3 py-2">
                   <p className="text-sm text-black">
-                    We already have your marksheet ({setup.confirmedMarksheet.subjects?.length || 0} subjects).
+                    We already have your marksheet ({setup.confirmedMarksheet.subjects?.length || 0} courses).
                   </p>
                   <Button
                     type="button"
@@ -744,7 +803,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
 
           {step === "reading" && (
             <>
-              <ThinkingChecklist steps={["Uploading your marksheet", "Reading subjects and marks", "Checking the results"]} finished={false} />
+              <ThinkingChecklist steps={["Uploading your marksheet", "Reading courses and marks", "Checking the results"]} finished={false} />
               <ShimmerCards count={3} />
             </>
           )}
@@ -794,6 +853,14 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                 <p className="ai-rise rounded-lg bg-[#e6f3ff] px-3 py-2 text-sm text-black">
                   <TypedText text={result.summary} />
                 </p>
+              )}
+              {result.suggestions.length > 0 && (
+                <ListProgress
+                  currentCredit={result.currentCredit}
+                  fullListCredit={result.fullListCredit}
+                  suggestions={result.suggestions}
+                  checked={checked}
+                />
               )}
               {result.suggestions.length === 0 ? (
                 <p className="text-sm text-black">{result.message || "Your current courses already look like a good fit."}</p>
@@ -935,7 +1002,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
           )}
         </div>
 
-        <SheetFooter className="mx-0 mb-0 shrink-0 flex-row flex-wrap justify-end gap-2 border-t bg-white px-4 py-3">
+        <SheetFooter className="mx-0 mb-0 shrink-0 flex-row flex-wrap justify-center gap-2 border-t bg-white px-4 py-3">
           {step === "marksheet" && (
             <Button type="button" variant="outline" onClick={() => goToQuestions()}>
               Skip this step
@@ -953,15 +1020,20 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
           )}
           {step === "questions" && currentQuestion && (
             <>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleSuggest}
-                disabled={busy}
-                className="order-last w-full text-slate-600 sm:order-first sm:mr-auto sm:w-auto"
-              >
-                Skip all questions
-              </Button>
+              <span className="order-last w-full text-center sm:order-first sm:w-auto">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setAnswers({});
+                    handleSuggest({});
+                  }}
+                  disabled={busy}
+                  className="w-auto"
+                >
+                  Skip all questions
+                </Button>
+              </span>
               {questionIndex > 0 && (
                 <Button type="button" variant="outline" onClick={() => setQuestionIndex((i) => i - 1)} disabled={busy}>
                   Back
@@ -973,7 +1045,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
               {onLastQuestion ? (
                 <Button
                   type="button"
-                  onClick={handleSuggest}
+                  onClick={() => handleSuggest()}
                   disabled={busy || !(answers[currentQuestion.id] || []).length}
                   className="bg-[#3fa43c] hover:bg-[#3fa43c]/90"
                 >
@@ -987,12 +1059,12 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
             </>
           )}
           {step === "questions" && !currentQuestion && (
-            <Button type="button" onClick={handleSuggest} disabled={busy} className="bg-[#3fa43c] hover:bg-[#3fa43c]/90">
+            <Button type="button" onClick={() => handleSuggest()} disabled={busy} className="bg-[#3fa43c] hover:bg-[#3fa43c]/90">
               <Sparkles className="h-4 w-4" /> Get suggestions
             </Button>
           )}
           {step === "suggestions" && setup?.chatEnabled && (
-            <Button type="button" variant="ghost" onClick={openChat} disabled={busy} className="mr-auto text-[#3fa43c]">
+            <Button type="button" variant="ghost" onClick={openChat} disabled={busy} className="text-[#3fa43c]">
               <MessageCircle className="h-4 w-4" /> Ask a question
             </Button>
           )}
@@ -1057,6 +1129,11 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                 {apply.isPending ? "Adding…" : "Confirm & add"}
               </Button>
             </>
+          )}
+          {step === "error" && retry && (
+            <Button type="button" variant="outline" onClick={() => retry()} disabled={busy}>
+              Try again
+            </Button>
           )}
           {(step === "error" || (step === "suggestions" && result?.suggestions.length === 0)) && (
             <Button type="button" onClick={onClose}>

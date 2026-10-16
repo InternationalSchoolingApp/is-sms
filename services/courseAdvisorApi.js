@@ -16,6 +16,10 @@ import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOri
  * All endpoints answer 200 with { status, statusCode, message, ... };
  * status "3" means session out. Every call here is user-initiated — nothing
  * runs until the student opens the AI Suggester.
+ *
+ * Add Another Student: the session is the parent's (or a sibling's), so each
+ * call also names the child in `studentUserId`. The backend only accepts it
+ * for a child of the same parent and then works entirely as that child.
  */
 
 const BASE_PATH = "student/enrollment/ai-course-advisor";
@@ -25,6 +29,11 @@ async function identity() {
   const session = await auth();
   if (!session?.userId) return null;
   return { userId: session.userId, loginHash: session.userLoginHash || "" };
+}
+
+/** Adds studentUserId only when a child is named, so the main signup sends exactly what it did before. */
+function forStudent(data, studentUserId) {
+  return studentUserId ? { ...data, studentUserId: Number(studentUserId) } : data;
 }
 
 async function postAdvisor(schoolUUID, path, data) {
@@ -50,29 +59,41 @@ async function postAdvisor(schoolUUID, path, data) {
 }
 
 /** Questions, marksheet limits, consent note, last confirmed marksheet. No AI call. */
-export async function getAdvisorStart(schoolUUID) {
-  return postAdvisor(schoolUUID, "init", {});
+export async function getAdvisorStart(schoolUUID, { studentUserId } = {}) {
+  return postAdvisor(schoolUUID, "init", forStudent({}, studentUserId));
 }
 
 /** answers: { questionId: [optionValue, ...] }; marksheetId: a confirmed marksheet, optional. */
-export async function getAdvisorSuggestions(schoolUUID, { answers, marksheetId }) {
-  return postAdvisor(schoolUUID, "recommend", { answers: answers || {}, marksheetId: marksheetId ?? null });
+export async function getAdvisorSuggestions(schoolUUID, { answers, marksheetId, studentUserId }) {
+  return postAdvisor(schoolUUID, "recommend", forStudent({ answers: answers || {}, marksheetId: marksheetId ?? null }, studentUserId));
 }
 
 /** itemIds: all suggestions or only the ticked ones; confirmations: types the student agreed to. */
-export async function applyAdvisorSuggestions(schoolUUID, { recommendationId, itemIds, confirmations }) {
-  return postAdvisor(schoolUUID, "apply", { recommendationId, itemIds: itemIds || [], confirmations: confirmations || [] });
+export async function applyAdvisorSuggestions(schoolUUID, { recommendationId, itemIds, confirmations, studentUserId }) {
+  return postAdvisor(
+    schoolUUID,
+    "apply",
+    forStudent({ recommendationId, itemIds: itemIds || [], confirmations: confirmations || [] }, studentUserId)
+  );
 }
 
-export async function dismissAdvisorSuggestions(schoolUUID, { recommendationId, itemIds }) {
-  return postAdvisor(schoolUUID, "dismiss", { recommendationId, itemIds: itemIds || [] });
+export async function dismissAdvisorSuggestions(schoolUUID, { recommendationId, itemIds, studentUserId }) {
+  return postAdvisor(schoolUUID, "dismiss", forStudent({ recommendationId, itemIds: itemIds || [] }, studentUserId));
 }
 
-export async function confirmAdvisorMarksheet(schoolUUID, { marksheetId, board, gradeLevel, subjects }) {
-  return postAdvisor(schoolUUID, "marksheet/confirm", { marksheetId, board, gradeLevel, subjects: subjects || [] });
+export async function confirmAdvisorMarksheet(schoolUUID, { marksheetId, board, gradeLevel, subjects, studentUserId }) {
+  return postAdvisor(
+    schoolUUID,
+    "marksheet/confirm",
+    forStudent({ marksheetId, board, gradeLevel, subjects: subjects || [] }, studentUserId)
+  );
 }
 
 /** history: earlier turns [{ role: "student" | "advisor", text }]; the backend caps and normalises it. */
-export async function askAdvisor(schoolUUID, { question, history, marksheetId }) {
-  return postAdvisor(schoolUUID, "chat", { question, history: history || [], marksheetId: marksheetId ?? null });
+export async function askAdvisor(schoolUUID, { question, history, marksheetId, studentUserId }) {
+  return postAdvisor(
+    schoolUUID,
+    "chat",
+    forStudent({ question, history: history || [], marksheetId: marksheetId ?? null }, studentUserId)
+  );
 }

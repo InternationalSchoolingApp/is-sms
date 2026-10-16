@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { useParams, useSelectedLayoutSegment } from "next/navigation";
+import { useParams, useRouter, useSelectedLayoutSegment } from "next/navigation";
 import { FullScreenLoader } from "@/components/common/Loader";
+import { loadAddEnrollmentChildUniqueId, loadAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
 import { AddEnrollmentWizardShell, WIZARD_STEP_META } from "@/components/add-enrollment/AddEnrollmentWizardShell";
 import { AddEnrollmentProvider, useAddEnrollmentContext } from "@/hooks/add-enrollment/useAddEnrollmentContext";
 import { expireSession, logoutEverywhere } from "@/utils/logout";
@@ -24,13 +25,30 @@ const ADD_WIZARD_STEPS = ["student", "course_selection", "review_and_payment"].m
 }));
 
 function AddWizardFrame({ children }) {
-  const { school } = useParams();
+  const router = useRouter();
+  const { school, parentId, sessionUserId } = useParams();
   const segment = useSelectedLayoutSegment();
-  const { status, session, context, logoUrl, ready, isError } = useAddEnrollmentContext();
+  const { status, session, context, logoUrl, ready, isError, completed, childUniqueId, childRollNo } =
+    useAddEnrollmentContext();
 
   useEffect(() => {
     if (status === "unauthenticated") expireSession(school);
   }, [status, school]);
+
+  // The child is already enrolled (paid here, or via the payment link in another browser): send the user to the
+  // payment-response thank-you page (ae=Y = add-enrollment, replay=Y = no gateway params to verify) so the URL
+  // is the thank-you one and a refresh stays there instead of re-entering the wizard.
+  useEffect(() => {
+    if (!completed) return;
+    // Name the finished child explicitly: the thank-you API finds it by roll number / unique id.
+    // The child the backend resolved for this load (S003 = the paid one) first, the remembered one as fallback.
+    const rollNo = childRollNo || loadAddEnrollmentRollNo(session?.schoolUUID, parentId);
+    const uniqueId = childUniqueId || loadAddEnrollmentChildUniqueId(session?.schoolUUID, parentId);
+    const query = new URLSearchParams({ ae: "Y", replay: "Y", parentId, sessionUserId });
+    if (rollNo) query.set("rollNo", rollNo);
+    if (uniqueId) query.set("childUniqueId", uniqueId);
+    router.replace(`/${school}/common/payment-response-success?${query.toString()}`);
+  }, [completed, router, school, parentId, sessionUserId, childRollNo, childUniqueId, session?.schoolUUID]);
 
   useEffect(() => {
     const onPageShow = (e) => {
@@ -42,6 +60,10 @@ function AddWizardFrame({ children }) {
 
   if (isError) {
     return <FullScreenLoader message="Something went wrong. Please refresh the page." />;
+  }
+
+  if (completed) {
+    return <FullScreenLoader />;
   }
 
   if (!ready) {

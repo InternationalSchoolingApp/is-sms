@@ -59,6 +59,7 @@ function DueNowCard({ eyebrow, amount, subtitle }) {
   );
 }
 
+
 // One "label  amount" line inside the flat Fee Summary / schedule total — replaces the old bordered
 // table rows with the design's plain description : value list.
 function SummaryRow({ label, amount, tone, bold }) {
@@ -254,16 +255,18 @@ function buildExtraRows(fee) {
 
 function discountRow(youSave, label) {
   if (!youSave?.description?.length) return null;
-  return { label, amount: `- ${youSave.totalEntityFeeString}`, tone: "discount" };
+  // return { label, amount: `- ${youSave.totalEntityFeeString}`, tone: "discount" };
+  return breakdownBlock({ title: label, totalLabel: "Total you saved", details: youSave, sign: "-", tone: "discount" });
 }
 
 // getAnnualPaymentTable() — one-time "Pay in Full" plan.
 function AnnualSummary({ fee, standardId, isFlexOrDual }) {
+  debugger
   const rows = [baseRow({ fee, standardId, isFlexOrDual }), ...buildExtraRows(fee)];
   if (isFlexOrDual && fee.enrollmentFee?.enrollmentFee > 0) {
     rows.push({ label: "Enrollment fee", amount: fee.enrollmentFee.enrollmentFeeString });
   }
-  const discount = discountRow(fee.oneTimePayment?.youSave, "Pay-in-full discount");
+  const discount = discountRow(fee.oneTimePayment?.youSave, "Fee Discount");
   if (discount) rows.push(discount);
 
   return (

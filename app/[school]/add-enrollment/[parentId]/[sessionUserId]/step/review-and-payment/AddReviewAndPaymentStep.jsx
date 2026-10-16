@@ -18,7 +18,7 @@ import { expireSession } from "@/utils/logout";
 export function AddReviewAndPaymentStep() {
   const router = useRouter();
   const { school, parentId, sessionUserId } = useParams();
-  const { context, ready, childUserId, childUniqueId } = useAddEnrollmentContext();
+  const { context, ready, childUserId, childUniqueId, childRollNo, markCompleted } = useAddEnrollmentContext();
   const { redirecting } = useAddWizardResume({ currentStep: 3, context, childUniqueId, ready });
 
   if (!ready || redirecting) {
@@ -30,6 +30,9 @@ export function AddReviewAndPaymentStep() {
       context={context}
       userId={childUserId}
       uniqueId={childUniqueId}
+      rollNo={childRollNo}
+      // Backend says the enrollment is already complete (REDIRECT_TO_DASHBOOARD) -> thank-you view in place.
+      onEnrollmentCompleted={markCompleted}
       onBack={(step) => {
         // AddStage3ReviewPayment is a hard copy of the main 4-step Stage 4,
         // so its onBack arg uses the main-flow numbering (1=student-details,

@@ -60,10 +60,16 @@ async function postPayload(schoolUUID, path, data) {
  * NOT the caller. Safe to call on every add-enrollment wizard mount/refresh —
  * a parent with an in-progress child always resumes the same one.
  */
-export async function enrollAnotherChild(schoolUUID, parentId, sessionUserUniqueId) {
+export async function enrollAnotherChild(schoolUUID, parentId, sessionUserUniqueId, rollNo = "", allowCreate = true) {
   return postPayload(schoolUUID, "api/v1/enroll/another/child", {
+    // false on a reload of the wizard: the backend then never reserves a new child (resumes / returns the paid one)
+    allowCreate,
     parentId: Number(parentId),
     sessionUserId: sessionUserUniqueId,
+    // roll number the previous call returned for this parent's child ("" on the very first call)
+    rollNo: rollNo || "",
+    // the key the backend actually reads: a roll number that is already paid comes back as S003 instead of a new child
+    studentRollNumber: rollNo || "",
   });
 }
 
@@ -77,4 +83,35 @@ export async function enrollAnotherChild(schoolUUID, parentId, sessionUserUnique
  */
 export async function saveAnotherChildStudentDetails(schoolUUID, request) {
   return postPayload(schoolUUID, "api/v1/parent/child/student-details", request);
+}
+
+/**
+ * Details for the Add Another Student thank-you page. The endpoint path is a
+ * placeholder until the backend one is final — change it here only.
+ * parentId + sessionUserId (the caller's UNIQUEUUID) travel in the Base64
+ * payload like enrollAnotherChild; childUniqueId (optional) names the child that
+ * just finished. Must NOT go through enrollAnotherChild: for a finished child that
+ * call would create a brand-new skeleton child.
+ */
+export async function getAddEnrollmentThankYou(schoolUUID, { parentId, sessionUserId, sessionUniqueId, studentRollNumber, childUniqueId }) {
+  return postPayload(schoolUUID, "api/v1/enroll/another/child/thank-you", {
+    parentId: Number(parentId),
+    sessionUserId: String(sessionUserId),
+    sessionUniqueId,
+    // roll number when the caller has it; else the backend finds the child by this unique id
+    studentRollNumber: studentRollNumber || "",
+    childUniqueId: childUniqueId || "",
+  });
+}
+
+/**
+ * enrollment/process for the Add Another Student wizard. Same endpoint as the main flow's
+ * getEnrollmentProcess, plus ?from=add-enrollment so the backend answers a completed/withdrawn child with
+ * statusCode REDIRECT_TO_DASHBOOARD. The main flow never sends the param, so its answer is unchanged.
+ */
+export async function getAddEnrollmentProcess(schoolUUID, uniqueId) {
+  const response = await fetch(
+    `${await backendUrl(schoolUUID, `api/v1/student/enrollment/process/${encodeURIComponent(uniqueId)}`)}?from=add-enrollment`
+  );
+  return parseJsonResponse(response);
 }

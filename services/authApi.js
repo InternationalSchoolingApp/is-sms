@@ -1,5 +1,5 @@
 import { encodePayload, encodeRawString } from "@/utils/payloadEncoding";
-import { resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { isBackendOverrideAllowed, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { getHash, getSystemTimezone } from "@/utils/common";
 
 /**
@@ -21,12 +21,22 @@ import { getHash, getSystemTimezone } from "@/utils/common";
  *
  * @param {string} schoolUUID
  * @param {string} ssoToken
+ * @param {string} [backendOverride] On a UAT deployment with multiple
+ *   backend instances (see components/common/BackendSwitcher.jsx), a
+ *   student can land on Login.jsp on ANY of them directly — there is no
+ *   picker involved, so the uat_backend_override cookie is never set before
+ *   this handoff happens. app/api/sso/route.js detects which instance the
+ *   browser came from (via the Referer header on the handoff navigation)
+ *   and passes it explicitly here, so the exchange call hits the SAME
+ *   instance that issued the token — not whatever NEXT_PUBLIC_BACKEND_BASE_URL
+ *   happens to be configured to. Falls back to resolveServerBackendOrigin()
+ *   (the cookie/env chain) when absent, same as every other caller.
  * @returns {Promise<{status: string, uniqueId?: string, userId?: number,
  *   userLoginHash?: string, schoolUUID?: string, schoolNumericId?: number,
  *   schoolName?: string, message?: string}|null>}
  */
-export async function exchangeSsoToken(schoolUUID, ssoToken) {
-  const baseUrl = await resolveServerBackendOrigin();
+export async function exchangeSsoToken(schoolUUID, ssoToken, backendOverride) {
+  const baseUrl = (isBackendOverrideAllowed() && backendOverride) || (await resolveServerBackendOrigin());
   if (!baseUrl || !schoolUUID || !ssoToken) {
     console.error("exchangeSsoToken: missing baseUrl, schoolUUID or ssoToken", {
       baseUrl,
