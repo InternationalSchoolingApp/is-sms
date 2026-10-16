@@ -115,7 +115,7 @@ export function normalizeCalendarEvent(rawEvent, { timezone, courseDetails = [] 
   const allDay = rawEvent.allDay === true || eventKind === "holiday";
 
   let courseId = getCourseId(rawEvent);
-  if (eventKind === "class" && !rawEvent.subjectId && rawEvent.eventTitle && courseDetails.length) {
+  if (eventKind === "class" && !rawEvent.subjectId && rawEvent.eventTitle && courseDetails?.length) {
     const match = courseDetails.find((c) => getCourseLabel(c) === rawEvent.eventTitle);
     if (match) courseId = getCourseId(match);
   }
@@ -272,7 +272,10 @@ export function buildCourseRegistry(events, storedColors = {}, courseDetails = [
     registry[id] = { id, label, color: storedColors[id] || eventColor || defaultColor };
   };
 
-  for (const course of courseDetails) {
+  // Backend can send `courseDetails: null` explicitly (e.g. depending on
+  // role/date-range) rather than omitting it, which bypasses the default
+  // parameter above — guard here too.
+  for (const course of courseDetails || []) {
     addCourse(getCourseId(course), getCourseLabel(course));
   }
   for (const event of events) {
