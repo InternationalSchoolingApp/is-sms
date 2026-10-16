@@ -14,7 +14,7 @@ import {
   loadLastAddEnrollmentRollNo,
 } from "@/utils/addEnrollmentStorage";
 import { AccountSetupSection } from "@/components/add-enrollment/AccountSetupSection";
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
+import { loginPageUrl, resolveBackendOrigin } from "@/utils/backendOrigin";
 
 /**
  * Shared view for every /common/*payment-response-* route. Ports the render
@@ -121,6 +121,9 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   const responseStatus = String(data.responseStatus ?? "");
   if (responseStatus === "1") return <SuccessCard data={data} addEnrollment={addEnrollment} schoolUUID={schoolUUID} />;
   if (responseStatus === "2") return <UnderVerificationCard data={data} />;
+  if (responseStatus === "4" || String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID") {
+    return <LinkExpiredCard data={data} schoolUUID={schoolUUID} />;
+  }
   return <FailedCard data={data} />;
 }
 
@@ -578,6 +581,30 @@ function UnderVerificationCard({ data }) {
           </p>
         )}
         <ReturnButton cta={cta} />
+      </div>
+    </PageShell>
+  );
+}
+
+/* ----------------------------- Link expired ---------------------------- */
+
+function LinkExpiredCard({ data, schoolUUID }) {
+  const loginHref = loginPageUrl(schoolUUID);
+  return (
+    <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
+      <div className="text-center">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-amber-500 text-white">
+          <Clock className="h-11 w-11" strokeWidth={2} aria-hidden="true" />
+        </div>
+        <h2 className="mt-5 text-2xl font-extrabold text-amber-700 sm:text-3xl">Link Expired</h2>
+        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+          Please{" "}
+          <a href={loginHref} className="font-semibold text-blue-600 underline underline-offset-2">
+            log in
+          </a>{" "}
+          to continue or contact <ContactEmail email={data.contactEmail || "support@internationalschooling.org"} /> for any
+          assistance.
+        </p>
       </div>
     </PageShell>
   );
