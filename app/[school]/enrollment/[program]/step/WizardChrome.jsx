@@ -5,6 +5,7 @@ import { useParams, useSelectedLayoutSegment } from "next/navigation";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
 import { EnrollmentProvider, useEnrollmentContext } from "@/hooks/useEnrollmentContext";
+import { useBackendSessionGuard } from "@/hooks/useBackendSessionGuard";
 import { expireSession, logoutEverywhere } from "@/utils/logout";
 
 /**
@@ -41,6 +42,10 @@ function WizardFrame({ children }) {
   useEffect(() => {
     if (status === "unauthenticated") expireSession(school);
   }, [status, school]);
+
+  // Cross-app single-logout: periodically confirm this user is still logged
+  // in on the Java backend (is-rest-api) too, forcing a local logout if not.
+  useBackendSessionGuard(school, session, status);
 
   // Back/forward can restore this page from the browser's back/forward cache with its old
   // in-memory session (e.g. after logout); reload so the server re-checks the session.

@@ -6,6 +6,7 @@ import { FullScreenLoader } from "@/components/common/Loader";
 import { loadAddEnrollmentChildUniqueId, loadAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
 import { AddEnrollmentWizardShell, WIZARD_STEP_META } from "@/components/add-enrollment/AddEnrollmentWizardShell";
 import { AddEnrollmentProvider, useAddEnrollmentContext } from "@/hooks/add-enrollment/useAddEnrollmentContext";
+import { useBackendSessionGuard } from "@/hooks/useBackendSessionGuard";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { expireSession, logoutEverywhere } from "@/utils/logout";
 
@@ -36,6 +37,10 @@ function AddWizardFrame({ children }) {
   useEffect(() => {
     if (status === "unauthenticated") expireSession(school);
   }, [status, school]);
+
+  // Cross-app single-logout: periodically confirm this user is still logged
+  // in on the Java backend (is-rest-api) too, forcing a local logout if not.
+  useBackendSessionGuard(school, session, status);
 
   // The child is already enrolled (paid here, or via the payment link in another browser): send the user to the
   // payment-response thank-you page (ae=Y = add-enrollment, replay=Y = no gateway params to verify) so the URL
