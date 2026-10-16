@@ -160,13 +160,25 @@ async function handleSsoHandoff(request) {
     return redirectTo("/", request);
   }
 
-  // Add-another-child wizard wins when ae=Y and the path could be built; then an
-  // existing student's re-enrollment; otherwise the student's own enrollment step path.
+  // A general, validated same-origin `next` (e.g. the Java dashboard redirect sends
+  // `next=/{school}/student` once STUDENT_DASHBOARD_VIA_NEXTJS is on) — lets any
+  // post-login destination ride the SAME one-time-token handoff that establishes the
+  // Auth.js session, so proxy.js doesn't bounce the student back to login. Only for
+  // the non-add-enrollment case (ae=Y keeps its dedicated builder + fresh=1 above).
+  const nextPath = isAddEnrollment ? null : safeNextPath(url.searchParams.get("next"), schoolUUID);
+
+  // Destination priority: add-another-child wizard (ae=Y) -> validated `next`
+  // (e.g. the student dashboard) -> the student's own enrollment step path.
   // fresh=1 marks a real "start" of the add-enrollment wizard (dashboard button / enrollment link). Only such an
   // entry may reserve a new child; a reload of the wizard never does (see useAddEnrollmentContext).
   let destination;
   if (addEnrollmentPath != null) {
     destination = `${addEnrollmentPath}${addEnrollmentPath.includes("?") ? "&" : "?"}fresh=1`;
+  } else if (nextPath != null) {
+    // An explicit, validated destination from the backend (e.g. the student
+    // dashboard redirect, CommonUtil#getFinalStudentDashboardUrl's
+    // next=/{school}/student) always wins over the enrollment-wizard default.
+    destination = nextPath;
   } else if (target === "re-enrollment") {
     destination = `${reEnrollmentBasePath(schoolUUID, mode)}${resume === "1" ? "?resume=1" : ""}`;
   } else {

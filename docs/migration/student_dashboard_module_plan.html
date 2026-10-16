@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Student Dashboard — Next.js Migration Plan</title>
+<style>
+  :root{--bg:#0f1420;--panel:#151c2c;--panel2:#1b2436;--ink:#e8edf6;--mut:#9fb0c9;--line:#2a364d;--acc:#5b9dff;
+    --in:#2fbf71;--out:#ff4d5e;--rec:#5b9dff;--warn:#e0a52b;}
+  @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f5f7fb;--panel:#fff;--panel2:#eef2f8;--ink:#17202e;--mut:#536079;--line:#d7deea;--acc:#1f5fd6;--in:#1f9d57;--out:#d61f36;--rec:#1f5fd6;--warn:#b5821a;}}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.85em;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:.03em .4em}
+  .wrap{display:flex;max-width:1200px;margin:0 auto}
+  aside{position:sticky;top:0;align-self:flex-start;height:100vh;overflow:auto;width:250px;flex:0 0 250px;background:var(--panel);border-right:1px solid var(--line);padding:16px 12px}
+  aside .brand{font-weight:800;font-size:15px;padding:4px 6px 10px;line-height:1.3}
+  aside ol{list-style:none;margin:0;padding:0;counter-reset:s}
+  aside ol li a{display:block;padding:5px 8px;border-radius:7px;color:var(--mut);font-size:13.5px}
+  aside ol li a::before{counter-increment:s;content:counter(s) ". ";color:var(--acc)}
+  aside ol li a:hover,aside ol li a.active{background:var(--panel2);color:var(--ink);text-decoration:none}
+  main{flex:1 1 auto;min-width:0;padding:24px 32px 120px}
+  header.top{border:1px solid var(--line);background:linear-gradient(135deg,var(--panel),var(--panel2));border-radius:16px;padding:22px 24px;margin-bottom:20px}
+  header.top h1{margin:0 0 6px;font-size:24px}
+  header.top .sub{color:var(--mut);font-size:14px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-size:12.5px;color:var(--mut)}
+  .meta b{color:var(--ink)}
+  section{border-top:1px solid var(--line);padding-top:22px;margin-top:26px;scroll-margin-top:12px}
+  section>h2{font-size:20px;margin:0 0 6px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  section>h2 .n{color:var(--acc);font-size:14px}
+  h3{font-size:16px;margin:18px 0 8px}
+  p{margin:8px 0}.lead{color:var(--mut)}
+  ul,ol{margin:8px 0;padding-left:22px}li{margin:3px 0}
+  .b{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;border:1px solid transparent;white-space:nowrap}
+  .b.in{color:var(--in);border-color:var(--in);background:color-mix(in srgb,var(--in) 14%,transparent)}
+  .b.out{color:#fff;background:var(--out);border-color:var(--out)}
+  .b.rec{color:var(--rec);border-color:var(--rec);background:color-mix(in srgb,var(--rec) 14%,transparent)}
+  .b.warn{color:var(--warn);border-color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+  .b.ph{background:var(--panel2);color:var(--ink);border-color:var(--line)}
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:12px 0}
+  table{border-collapse:collapse;width:100%;font-size:13px;min-width:620px}
+  th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--panel2);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  tbody tr:hover{background:color-mix(in srgb,var(--acc) 7%,transparent)}
+  tr.excl{opacity:.72}
+  tr.excl td{text-decoration:line-through;text-decoration-color:var(--out)}
+  tr.excl td:last-child,tr.excl td:first-child{text-decoration:none}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:14px 0}
+  .card{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:14px 16px}
+  .card .big{font-size:26px;font-weight:800}.card .lbl{color:var(--mut);font-size:12.5px;margin-top:2px}
+  .note{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--panel);border-radius:10px;padding:12px 15px;margin:14px 0}
+  .note.out{border-left-color:var(--out)}.note.ok{border-left-color:var(--in)}.note.warn{border-left-color:var(--warn)}
+  .note b.t{display:block;margin-bottom:3px}
+  figure{margin:16px 0;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:14px}
+  figure svg{display:block;width:100%;height:auto}
+  figcaption{color:var(--mut);font-size:12.5px;margin-top:8px}
+  pre{overflow:auto;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:12.5px;line-height:1.5}
+  .svgbox{fill:var(--panel2);stroke:var(--line);stroke-width:1.4}
+  .svgbox.acc{stroke:var(--acc)}.svgbox.in{stroke:var(--in)}.svgbox.out{stroke:var(--out)}
+  .svgtxt{fill:var(--ink);font:12px -apple-system,Segoe UI,Roboto,sans-serif}.svgtxt.s{font-size:10.5px;fill:var(--mut)}.svgtxt.b{font-weight:700}
+  .svgedge{stroke:var(--mut);stroke-width:1.4;fill:none}.svgedge.dash{stroke-dasharray:5 4}
+  .mobtoggle{display:none}
+  @media (max-width:980px){aside{position:fixed;z-index:30;transform:translateX(-102%);transition:transform .2s;box-shadow:0 0 40px rgba(0,0,0,.5)}aside.open{transform:none}.mobtoggle{display:inline-block;position:fixed;top:12px;left:12px;z-index:31}main{padding:56px 16px 90px}}
+  @media print{aside,.mobtoggle{display:none}main{padding:0}body{background:#fff;color:#000}a{color:#000}section{break-inside:avoid}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>
+</defs></svg>
+<button class="mobtoggle b ph" id="navToggle">☰ Contents</button>
+<div class="wrap">
+<aside id="sidebar">
+  <div class="brand">Student Dashboard<br/>Migration Plan</div>
+  <ol id="toc">
+    <li><a href="#s1">Context &amp; Scope</a></li>
+    <li><a href="#s2">Approach &amp; Toggle</a></li>
+    <li><a href="#s3">Phase A — Foundation</a></li>
+    <li><a href="#s4">Phase B — Home &amp; Calendar</a></li>
+    <li><a href="#s5">Phase C — Left-side Modules</a></li>
+    <li><a href="#s6">Backend Changes</a></li>
+    <li><a href="#s7">Proposed Next.js Routes</a></li>
+    <li><a href="#s8">Migration Order</a></li>
+    <li><a href="#s9">Open Decisions</a></li>
+    <li><a href="#s10">Verification</a></li>
+    <li><a href="#s11">Green-Signal Gate</a></li>
+  </ol>
+</aside>
+<main>
+<header class="top">
+  <h1>Student Dashboard → Next.js — Migration Plan</h1>
+  <div class="sub">Copy the entire post-login <b>Student dashboard</b> (home + all left-side modules) from the Java/JSP app into <code>is-sms</code>, matching existing behavior. <b>Re-enrollment excluded</b> (separate branch). <b>Plan only — awaiting your green signal before any code.</b></div>
+  <div class="meta">
+    <span><b>Generated:</b> 2026-10-15</span>
+    <span><b>Legacy:</b> <code>is-rest-api</code> @ <code>8f0e2a1836</code></span>
+    <span><b>New:</b> <code>is-sms</code> @ <code>baaffd4</code></span>
+  </div>
+  <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+    <span class="b in">IN scope</span><span class="b out">OUT (re-enrollment)</span><span class="b rec">Recommended</span><span class="b ph">Phase</span>
+  </div>
+</header>
+
+<section id="s1" style="border-top:none;margin-top:0;padding-top:0">
+<h2><span class="n">01</span> Context &amp; Scope</h2>
+<p class="lead">The Java app serves the Student dashboard at <code>/dashboard/student/{uuid}</code> (<code>ClientDashboardStudentController</code>, ~80 mappings, 39 JSPs, shared <code>Dashboard.jsp</code> shell, DB-driven sidebar). <code>is-sms</code> currently has only the signup/enrollment module. Goal: faithfully copy the whole Student dashboard into Next.js, behind the project's proven coexistence toggle.</p>
+<div class="grid">
+  <div class="card"><div class="big">16</div><div class="lbl">left-side Student modules (IN scope)</div></div>
+  <div class="card"><div class="big">1</div><div class="lbl">home screen + calendar (IN scope)</div></div>
+  <div class="card"><div class="big">4+</div><div class="lbl">re-enrollment files (OUT — other branch)</div></div>
+  <div class="card"><div class="big">3</div><div class="lbl">phases (Foundation → Home → Modules)</div></div>
+</div>
+<div class="tw"><table>
+<thead><tr><th>Scope</th><th>Items</th></tr></thead>
+<tbody>
+<tr><td><span class="b in">IN</span></td><td>Student <b>home/landing</b> incl. the <b>calendar</b> (classes / activities / assignments / school-events) + announcements, onboarding video, graduation popup, holidays; and <b>all left-sidebar Student modules</b> (syllabus, tasks, course timings, events, exams, performance, PTM, transcript, course selection, book-a-session, cart/buy, LMS, ID card, confirmation of studies, academic-year extension, profile).</td></tr>
+<tr><td><span class="b out">OUT</span></td><td><b>Re-enrollment</b> (separate branch): home <code>batchReEnrollmentModal()</code> popup + <code>reEnrollmentCountdown</code>/discount wrapper (<code>showBatchReEnrollmentPopUp</code>), and module files <code>reEnrollmentList(.|Content).js</code>, <code>studentMigration(.|Content).js</code>, <code>studentEnrollmentDashboard(.|Content).js</code>, <code>reserveSeatContent.js</code>. A clean hook/placeholder is left for that branch.</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="s2">
+<h2><span class="n">02</span> Approach &amp; Coexistence Toggle</h2>
+<p>Reuse the already-proven <code>is-sms</code> scaffold. Add a <b>Dashboard Foundation</b> (built once, reused by every future role), then migrate home (calendar first) and each module, each consuming existing Java endpoints via the <code>services/*Api.js</code> BFF. A new backend <code>CONFIGURATION / STUDENT_DASHBOARD_VIA_NEXTJS</code> toggle routes students to Next.js vs legacy JSP per school — exactly like the working <code>ENROLLMENT_VIA_NEXTJS</code> switch — giving per-school rollout and instant rollback.</p>
+<figure>
+<svg viewBox="0 0 860 220" role="img" aria-label="Coexistence toggle flow">
+ <g color="var(--mut)">
+  <rect class="svgbox acc" x="20" y="24" width="200" height="46" rx="10"/><text class="svgtxt b" x="36" y="46">Student login / SSO</text><text class="svgtxt s" x="36" y="62">reaches /dashboard/student</text>
+  <polygon class="svgbox acc" points="330,20 430,47 330,74 230,47"/><text class="svgtxt b" x="300" y="44">toggle?</text><text class="svgtxt s" x="268" y="60">STUDENT_DASHBOARD_VIA_NEXTJS</text>
+  <rect class="svgbox in" x="470" y="6" width="370" height="44" rx="10"/><text class="svgtxt b" x="486" y="26">ON → Next.js Student dashboard (is-sms)</text><text class="svgtxt s" x="486" y="42">home+calendar + migrated modules</text>
+  <rect class="svgbox" x="470" y="66" width="370" height="40" rx="10"/><text class="svgtxt b" x="486" y="90">OFF → legacy JSP dashboard (unchanged)</text>
+  <line class="svgedge" x1="220" y1="47" x2="230" y2="47" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="430" y1="40" x2="470" y2="28" marker-end="url(#arrow)"/>
+  <line class="svgedge dash" x1="430" y1="55" x2="470" y2="86" marker-end="url(#arrow)"/>
+  <rect class="svgbox" x="230" y="150" width="400" height="50" rx="10"/><text class="svgtxt b" x="246" y="172">Both served same-origin (reverse proxy)</text><text class="svgtxt s" x="246" y="190">shared Redis session cookie · Java backend + DB unchanged · rollback = toggle OFF</text>
+ </g>
+</svg>
+<figcaption>Strangler-fig coexistence: no big-bang, instant per-school rollback.</figcaption>
+</figure>
+<p><b>Reuse as-is (do NOT rebuild):</b> <code>auth.js</code>, <code>proxy.js</code>, <code>utils/backendOrigin.js</code>, <code>utils/payloadEncoding.js</code>, <code>utils/authentication.js</code>, <code>components/providers/QueryProvider.jsx</code>, <code>components/ui/**</code>, <code>components/common/**</code>, <code>globals.css</code> theme, <code>useIntlTelInput</code>, TanStack Query conventions, payment pages.</p>
+</section>
+
+<section id="s3">
+<h2><span class="n">03</span> Phase A — Dashboard Foundation <span class="b ph">prerequisite</span></h2>
+<p>Built once; reused by all future dashboard roles (Teacher, Counselor, etc.).</p>
+<ol>
+<li><b>Role shell</b> — route group <code>app/[school]/(dashboard)/</code> → <code>layout.jsx</code> → <code>DashboardShell</code> (TopHeader + Sidebar + content), mirrors <code>Dashboard.jsp</code> includes.</li>
+<li><b>Dynamic sidebar</b> from <code>USER_RIGHTS</code> — a BFF wrapper over <code>ModulesUtil.getRoleAssignModuleList(school, roleId, "M", 0, userId)</code> → renders the menu; <code>&lt;PermissionGate&gt;</code> for add/update/view/delete. <span class="b rec">Recommended: faithful DB-driven menu</span> (alt: static student menu — faster but diverges from Java).</li>
+<li><b><code>useDashboardContext</code></b> — clone of <code>useEnrollmentContext</code>: session + school settings + logo + theme.</li>
+<li><b>Dashboard-role SSO</b> — extend <code>auth.js</code>/<code>app/api/sso</code> to carry <code>role/roleId/parentUserRole</code>; route student → <code>/{school}/student</code>.</li>
+<li><b>Toggle</b> — backend <code>STUDENT_DASHBOARD_VIA_NEXTJS</code> + a <code>getFinalUrl</code>-style redirect branch on the student dashboard entry.</li>
+</ol>
+</section>
+
+<section id="s4">
+<h2><span class="n">04</span> Phase B — Student Home &amp; Calendar</h2>
+<p>Legacy <code>studentDashboardContent.js</code> → <code>rendereDashboardContent()</code>/<code>renderStudentDashboard()</code>.</p>
+<div class="tw"><table>
+<thead><tr><th>Home widget</th><th>Legacy source</th><th>Migrate?</th></tr></thead>
+<tbody>
+<tr><td><b>Calendar</b> (classes/activities/assignments/school-events)</td><td><code>dashboardCalendarNew.js</code> (FullCalendar) + dashboard data</td><td><span class="b in">YES — core</span></td></tr>
+<tr><td>Announcements</td><td><code>dashboardAnnouncement()</code></td><td><span class="b in">YES</span></td></tr>
+<tr><td>Onboarding mandatory video</td><td><code>onBordingMandotryVideo()</code></td><td><span class="b in">YES</span></td></tr>
+<tr><td>Graduation ceremony popup</td><td><code>studentGraduationCeremontPopup()</code></td><td><span class="b in">YES</span></td></tr>
+<tr><td>Holidays / school calendar strip</td><td><code>dashboardSchoolCalendar()</code>, <code>holidayOne()</code></td><td><span class="b in">YES</span></td></tr>
+<tr class="excl"><td>Batch re-enrollment popup + discount countdown</td><td><code>batchReEnrollmentModal()</code>, <code>reEnrollmentCountdown</code></td><td><span class="b out">EXCLUDE</span></td></tr>
+</tbody></table></div>
+<h3>Calendar detail (highest-effort home piece)</h3>
+<p><code>dashboardCalendarNew.js</code> is a rich FullCalendar: event kinds <b>class / activity / assignment / schoolEvent</b>; per-kind filters; status badges (live pulse, Expired / Missed / Late via attendance); "Rate this class/activity" feedback button; Today-summary; week drill-down; assignment due/pace dates.</p>
+<p><b>Target:</b> <b>FullCalendar React (v6)</b> in a client component; event source = the student dashboard data endpoint (+ <code>student-dashboard-management/*</code> for student-added items). Keep the same event-kind model, filters, and status/feedback behavior.</p>
+<p><b>Component split:</b> <code>StudentCalendar.jsx</code> (FullCalendar + rendering) · <code>useStudentCalendar.js</code> (fetch / filters / feedback) · presentational event/badge helpers.</p>
+</section>
+
+<section id="s5">
+<h2><span class="n">05</span> Phase C — Left-side Student Modules <span class="b in">IN scope</span></h2>
+<p>Clone the signup scaffold per module: <code>page.jsx</code> (server) + <code>{X}.jsx</code> (client) + <code>components/student/**</code>, <code>hooks/student/use*.js</code>, <code>services/studentDashboardApi.js</code> (BFF). Consume existing endpoints.</p>
+<div class="tw"><table>
+<thead><tr><th>Module</th><th>Legacy route / key endpoint</th><th>Proposed Next.js route</th></tr></thead>
+<tbody>
+<tr><td>Syllabus</td><td><code>student-syllabus</code></td><td><code>/{school}/student/syllabus</code></td></tr>
+<tr><td>Tasks (view/submit)</td><td><code>student-task</code>, <code>student-task-request</code></td><td><code>/student/tasks</code></td></tr>
+<tr><td>Course Timings</td><td><code>student-coursetimings</code></td><td><code>/student/course-timings</code></td></tr>
+<tr><td>Events</td><td><code>student-events</code></td><td><code>/student/events</code></td></tr>
+<tr><td>Exam Details</td><td><code>student-examination-details</code></td><td><code>/student/exams</code></td></tr>
+<tr><td>Performance</td><td><code>student-performance-content</code></td><td><code>/student/performance</code></td></tr>
+<tr><td>PTM Report</td><td><code>student-PTM-report</code></td><td><code>/student/ptm-report</code></td></tr>
+<tr><td>Transcript</td><td><code>student-transcript-content</code></td><td><code>/student/transcript</code></td></tr>
+<tr><td>Course Selection (dashboard)</td><td><code>student-course-selection-content-theme2</code></td><td><code>/student/course-selection</code></td></tr>
+<tr><td>Book a Session/Class</td><td><code>get-student-free-slots</code> → <code>student-book-session-slots-submit-new</code></td><td><code>/student/book-session</code></td></tr>
+<tr><td>Cart / Buy extra class</td><td><code>add-to-cart</code>, <code>cart-payment</code>, <code>buy-extra-class</code></td><td><code>/student/cart</code></td></tr>
+<tr><td>LMS (content + SSO launch)</td><td><code>student-lms-content</code>, <code>student-view-lms-content</code></td><td><code>/student/lms</code></td></tr>
+<tr><td>ID Card</td><td><code>student/id-card</code></td><td><code>/student/id-card</code></td></tr>
+<tr><td>Confirmation of Studies</td><td><code>confirmation-of-studies</code></td><td><code>/student/confirmation-of-studies</code></td></tr>
+<tr><td>Academic Year Extension</td><td><code>academic-year-extention</code></td><td><code>/student/academic-year-extension</code></td></tr>
+<tr><td>Profile / Update Profile</td><td>student <code>ProfileView</code> / <code>UpdateProfile</code></td><td><code>/student/profile</code></td></tr>
+<tr class="excl"><td>Re-enrollment / Migration / Reserve seat</td><td><code>reEnrollment*</code>, <code>studentMigration*</code>, <code>reserveSeat*</code></td><td><span class="b out">EXCLUDE</span></td></tr>
+</tbody></table></div>
+<p class="lead">Exact per-module request/response confirmed at implementation. Highest-risk: <b>Book-a-Session</b>, <b>Cart/Payment</b>, <b>LMS-SSO</b>.</p>
+</section>
+
+<section id="s6">
+<h2><span class="n">06</span> Backend Changes</h2>
+<ul>
+<li><b>None required to "copy"</b> — reuse existing endpoints via the BFF. Add the <code>STUDENT_DASHBOARD_VIA_NEXTJS</code> toggle + redirect branch.</li>
+<li><b>HTML-fragment / Gson endpoints:</b> <span class="b rec">Recommended</span> — reuse JSON/Gson endpoints directly; for pure HTML-fragment modules add a <b>thin JSON endpoint per module as reached</b> (small addition, not a rewrite). <em>(Alt: parse HTML — rejected as brittle.)</em></li>
+<li><b>Security (parallel):</b> session-derived identity (no body-trusted <code>userId</code>); never send <code>DATABASE_NAME</code>/<code>SESSION_ID</code> to the client.</li>
+</ul>
+</section>
+
+<section id="s7">
+<h2><span class="n">07</span> Proposed Next.js Route / File Structure <span class="b rec">Proposed</span></h2>
+<pre>app/[school]/(dashboard)/
+  layout.jsx                 // DashboardShell (TopHeader + Sidebar + content)
+  student/
+    page.jsx                 // HOME (server shell) -> StudentHome.jsx (client)
+    syllabus/ tasks/ course-timings/ events/ exams/
+    performance/ ptm-report/ transcript/ course-selection/
+    book-session/ cart/ lms/ id-card/
+    confirmation-of-studies/ academic-year-extension/ profile/
+      page.jsx + {Module}.jsx
+
+components/
+  dashboard/  DashboardShell.jsx, Sidebar.jsx (dynamic), PermissionGate.jsx, DataTable.jsx
+  student/    StudentHome.jsx, StudentCalendar.jsx, Announcements.jsx, ... (per module)
+hooks/
+  useDashboardContext.js, student/useStudentCalendar.js, student/use*.js
+services/
+  studentDashboardApi.js     // "use server" BFF wrappers for the endpoints above
+utils/
+  studentDashboardNav.js     // role -> menu/route source of truth
+proxy.js  // add  /:school/student/:path*  to config.matcher
+// EXCLUDED (other branch): re-enrollment routes/components/services</pre>
+</section>
+
+<section id="s8">
+<h2><span class="n">08</span> Recommended Migration Order <span class="b rec">phased</span></h2>
+<ol>
+<li><b>Phase A</b> — Foundation (shell, dynamic sidebar, context, SSO, toggle).</li>
+<li><b>Phase B</b> — Home + Calendar.</li>
+<li><b>Phase C, batch 1</b> (read-heavy): Syllabus, Course Timings, Events, Exam, Performance, PTM, Transcript.</li>
+<li><b>Phase C, batch 2</b> (interactive): Tasks, Book-a-Session, Course Selection.</li>
+<li><b>Phase C, batch 3</b>: Cart/Buy, LMS, ID Card, Confirmation, Academic-Year-Extension, Profile.</li>
+</ol>
+<p>All behind the toggle; enable per pilot school first. <b>Not big-bang.</b></p>
+</section>
+
+<section id="s9">
+<h2><span class="n">09</span> Open Decisions <span class="b warn">confirm before coding</span></h2>
+<div class="tw"><table>
+<thead><tr><th>#</th><th>Decision</th><th>Recommended</th><th>Alternative</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Sidebar</td><td><span class="b rec">Dynamic DB-driven</span> (faithful copy of Java <code>USER_RIGHTS</code> menu)</td><td>Static student menu (faster, diverges)</td></tr>
+<tr><td>2</td><td>HTML-fragment endpoints</td><td><span class="b rec">Thin JSON per module</span> (small backend add)</td><td>Parse HTML in React (brittle)</td></tr>
+<tr><td>3</td><td>Delivery</td><td><span class="b rec">Home+Calendar first, then module batches</span></td><td>All modules at once (big-bang)</td></tr>
+</tbody></table></div>
+<p class="lead">Agar aap in teeno par agree hain to main recommended approach se shuru karूँga; koi badlav chahiye to batayein.</p>
+</section>
+
+<section id="s10">
+<h2><span class="n">10</span> Verification</h2>
+<ul>
+<li>Run <code>is-sms</code> locally through the same-origin proxy; SSO/login as a student for a pilot school; enable <code>STUDENT_DASHBOARD_VIA_NEXTJS</code>.</li>
+<li>Walk the <b>home calendar</b> (each event kind, filter, "rate class", status badges) + <b>every migrated module</b> against the legacy JSP as the parity baseline.</li>
+<li>Cross-check against the existing Student test-case suite: <code>docs/migration/sms_next_js_migration_student_test_cases.html</code> (STU-DASH-* cases).</li>
+<li><b>Rollback</b> = toggle OFF (instant, per school).</li>
+</ul>
+</section>
+
+<section id="s11">
+<h2><span class="n">11</span> 🟢 Green-Signal Gate</h2>
+<div class="note out"><b class="t">STOP — planning only</b> No application code has been written. The Student dashboard will be implemented <b>only after you review this plan and give the go-ahead</b>, confirming the 3 open decisions (or your changes). Re-enrollment stays out (your other branch).</div>
+<p>Reply with your green signal (e.g. "START PHASE A" / "go ahead with recommended") and I'll begin with the Foundation.</p>
+</section>
+
+<p style="margin-top:36px;border-top:1px solid var(--line);padding-top:14px;font-size:12.5px;color:var(--mut)">
+Generated 2026-10-15 · Scope: Student dashboard (home + left-side modules) · Re-enrollment EXCLUDED · Legacy <code>8f0e2a1836</code> · New <code>baaffd4</code> · Self-contained, offline. No secret values included.
+</p>
+</main>
+</div>
+<script>
+(function(){
+  var tog=document.getElementById('navToggle'),sb=document.getElementById('sidebar');
+  if(tog)tog.addEventListener('click',function(){sb.classList.toggle('open');});
+  document.querySelectorAll('#toc a').forEach(function(a){a.addEventListener('click',function(){if(window.innerWidth<=980)sb.classList.remove('open');});});
+  var links=[].slice.call(document.querySelectorAll('#toc a')),map={};
+  links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  var obs=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.remove('active');});if(map[e.target.id])map[e.target.id].classList.add('active');}});},{rootMargin:'-15% 0px -75% 0px'});
+  document.querySelectorAll('section[id]').forEach(function(s){obs.observe(s);});
+})();
+</script>
+</body>
+</html>

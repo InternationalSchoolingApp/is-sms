@@ -76,6 +76,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // save-*-details endpoints, which cannot resolve the user from
           // uniqueId alone (confirmed at SignupStudentUtil.java:1606).
           userId: response.userId,
+          // Dashboard-role identity (post-login dashboards read these). The
+          // login response may not carry them for a signup-only flow, so they
+          // default to null and are simply absent from the session until the
+          // backend includes them.
+          userRole: response.userRole ?? response.parentUserRole ?? null,
+          roleId: response.roleId ?? null,
           schoolUUID: credentials.schoolUUID,
           schoolNumericId: Number(credentials.schoolNumericId),
           schoolName: credentials.schoolName || "",
@@ -127,6 +133,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           userLoginHash: response.userLoginHash,
           redirectUrl: response.redirectUrl || "",
           userId: response.userId,
+          userRole: response.userRole ?? response.parentUserRole ?? null,
+          roleId: response.roleId ?? null,
           schoolUUID: response.schoolUUID,
           schoolNumericId: response.schoolNumericId,
           schoolName: credentials.schoolName || response.schoolName || "",
@@ -145,6 +153,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.userLoginHash = user.userLoginHash;
         token.redirectUrl = user.redirectUrl;
         token.userId = user.userId;
+        token.userRole = user.userRole;
+        token.roleId = user.roleId;
         token.schoolUUID = user.schoolUUID;
         token.schoolNumericId = user.schoolNumericId;
         token.schoolName = user.schoolName;
@@ -157,6 +167,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.userLoginHash = token.userLoginHash;
       session.redirectUrl = token.redirectUrl;
       session.userId = token.userId;
+      session.userRole = token.userRole;
+      session.roleId = token.roleId;
       session.schoolUUID = token.schoolUUID;
       session.schoolNumericId = token.schoolNumericId;
       session.schoolName = token.schoolName;
