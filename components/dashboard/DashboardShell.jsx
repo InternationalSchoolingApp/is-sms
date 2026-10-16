@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { Footer } from "@/components/common/Footer";
 import { DashboardTopHeader } from "@/components/dashboard/DashboardTopHeader";
@@ -40,7 +40,14 @@ export function DashboardShell({ children }) {
   // Defaults to the collapsed icon-rail, matching the legacy dashboard.
   const [collapsed, setCollapsed] = useState(true);
   const isWideLayout = useWideLayout();
-  const footerRef = useRef(null);
+  // A callback ref (not useRef): `ready` is false on the first render (the
+  // component returns <FullScreenLoader/> before the footer div exists at
+  // all), so a plain ref stays null through that pass. useRef changing
+  // doesn't trigger a re-render, so once `ready` flips true and the footer
+  // finally mounts, an effect keyed only on `isWideLayout` (unchanged) would
+  // never re-run to pick it up — footerHeight would stay stuck at 0 forever.
+  // This way the node itself is state, so it's a real effect dependency.
+  const [footerNode, setFooterNode] = useState(null);
   const [footerHeight, setFooterHeight] = useState(0);
 
   useEffect(() => {
@@ -54,15 +61,11 @@ export function DashboardShell({ children }) {
   // Measured (not hardcoded) so the scrollable content area always ends
   // exactly above the footer, however tall its text wraps to.
   useEffect(() => {
-    if (!isWideLayout || !footerRef.current) {
-      setFooterHeight(0);
-      return;
-    }
-    const el = footerRef.current;
+    if (!isWideLayout || !footerNode) return;
     const observer = new ResizeObserver(([entry]) => setFooterHeight(entry.contentRect.height));
-    observer.observe(el);
+    observer.observe(footerNode);
     return () => observer.disconnect();
-  }, [isWideLayout]);
+  }, [isWideLayout, footerNode]);
 
   const onHamburger = () => {
     if (typeof window !== "undefined" && window.innerWidth < 768) {
@@ -103,7 +106,7 @@ export function DashboardShell({ children }) {
           {children}
         </main>
         {isWideLayout ? (
-          <div ref={footerRef} className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white">
+          <div ref={setFooterNode} className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white">
             <Footer schoolName={context.schoolName} />
           </div>
         ) : (
