@@ -15,11 +15,13 @@ function statusLabel(dateStatus) {
 
 /**
  * Join-class flow (legacy classDetailsOnModal -> getActualURL ->
- * proceedwithControll -> calendarMeetingLinkValidateStudent). Shows the same
- * Course/Date/Time/Teacher/Status summary plus a copyable class link and an
- * explicit "Join Class" button, instead of auto-redirecting.
+ * proceedwithControll -> calendarMeetingLinkValidateStudent). Auto-opens the
+ * meeting in the tab the caller already opened on click (see `popup` doc
+ * below) once we know it's live, while this modal stays open as a
+ * Course/Date/Time/Teacher/Status reference with a copyable link and a
+ * manual "Join Class" fallback button.
  */
-export function JoinClassModal({ event, schoolUUID, courseRegistry, onClose }) {
+export function JoinClassModal({ event, schoolUUID, courseRegistry, popup, onClose }) {
   const [details, setDetails] = useState(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -29,13 +31,27 @@ export function JoinClassModal({ event, schoolUUID, courseRegistry, onClose }) {
     let cancelled = false;
     getClassJoinDetails({ schoolUUID, url: event.url }).then((data) => {
       if (cancelled) return;
-      if (data?.dateStatus) setDetails(data);
-      else setLoadFailed(true);
+      if (data?.dateStatus) {
+        setDetails(data);
+        const url = data.redirectUrl || data.commonJoinUrlOfSMS;
+        // `popup` is the blank tab opened synchronously in the click handler
+        // (see CalendarCard's handleSelectEvent) — navigating it now still
+        // counts as part of that original gesture, so it isn't blocked the
+        // way a fresh window.open() after this async fetch would be.
+        if (data.dateStatus === "between" && url && popup && !popup.closed) {
+          popup.location.href = url;
+        } else if (popup && !popup.closed) {
+          popup.close();
+        }
+      } else {
+        setLoadFailed(true);
+        if (popup && !popup.closed) popup.close();
+      }
     });
     return () => {
       cancelled = true;
     };
-  }, [schoolUUID, event.url]);
+  }, [schoolUUID, event.url, popup]);
 
   const title = event.title || event.eventTitle || details?.className || "Join class";
   // Verified live: the real field is `redirectUrl` — `commonJoinUrlOfSMS`
@@ -55,12 +71,22 @@ export function JoinClassModal({ event, schoolUUID, courseRegistry, onClose }) {
     }
   };
 
+  // Manual fallback (e.g. the auto-opened tab was itself blocked, or the
+  // user closed it) — a fresh window.open here IS a direct result of this
+  // click, so it isn't blocked.
   const handleJoin = () => {
     if (joinUrl) window.open(joinUrl, "_blank", "noopener,noreferrer");
   };
 
+  // If the user dismisses this modal before the fetch resolves (or it never
+  // turned out to be live), don't leave the pre-opened blank tab hanging.
+  const handleClose = () => {
+    if (!isLive && popup && !popup.closed) popup.close();
+    onClose();
+  };
+
   return (
-    <CalendarModal title={title} onClose={onClose}>
+    <CalendarModal title={title} onClose={handleClose}>
       {!details && !loadFailed && (
         <div className="flex flex-col items-center gap-3 py-6 text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -103,7 +129,7 @@ export function JoinClassModal({ event, schoolUUID, courseRegistry, onClose }) {
           )}
 
           <div className="mt-4 flex justify-end gap-2">
-            <button type="button" onClick={onClose} className="rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-black hover:bg-black/5">
+            <button type="button" onClick={handleClose} className="rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-black hover:bg-black/5">
               Close
             </button>
             {isLive && joinUrl && (
