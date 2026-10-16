@@ -45,17 +45,8 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
   const [joiningEvent, setJoiningEvent] = useState(null);
 
   const handleSelectEvent = (event) => {
-    if (isJoinableClass(event)) {
-      // Open the tab SYNCHRONOUSLY, inside the click handler itself — once
-      // the join URL comes back from an async fetch, calling window.open at
-      // that point is no longer "a direct result of the user's gesture" and
-      // most browsers silently block it. Opening a blank tab now and
-      // navigating it later keeps it tied to this click.
-      const popup = window.open("", "_blank");
-      setJoiningEvent({ event, popup });
-    } else {
-      setSelectedEvent(event);
-    }
+    if (isJoinableClass(event)) setJoiningEvent(event);
+    else setSelectedEvent(event);
   };
 
   // Any date/view navigation drops the drilldown back to the week/month grid.
@@ -200,8 +191,7 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
       )}
       {joiningEvent && (
         <JoinClassModal
-          event={joiningEvent.event}
-          popup={joiningEvent.popup}
+          event={joiningEvent}
           schoolUUID={schoolUUID}
           courseRegistry={calendar.courseRegistry}
           onClose={() => setJoiningEvent(null)}
