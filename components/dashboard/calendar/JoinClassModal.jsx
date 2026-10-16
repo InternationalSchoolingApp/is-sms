@@ -20,7 +20,11 @@ export function JoinClassModal({ event, schoolUUID, onClose }) {
     getClassJoinDetails({ schoolUUID, url: event.url }).then((details) => {
       if (cancelled) return;
       const dateStatus = details?.dateStatus;
-      const joinUrl = details?.commonJoinUrlOfSMS;
+      // Verified live: the real field is `redirectUrl` — `commonJoinUrlOfSMS`
+      // exists on the response too but is empty for joinType "A" (student
+      // join), only `redirectUrl` is populated. Keep the fallback in case
+      // another joinType behaves differently.
+      const joinUrl = details?.redirectUrl || details?.commonJoinUrlOfSMS;
       if (dateStatus === "between" && joinUrl) {
         window.open(joinUrl, "_blank", "noopener,noreferrer");
         setState("joined");

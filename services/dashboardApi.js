@@ -194,14 +194,14 @@ export async function getLiveClassAttendanceStatus({ schoolUUID, entityId, entit
 
 /**
  * Class/meeting join validation — legacy getActualURL(url): a plain GET on
- * the event's own `url` field (CalendarEventDTO.url), which returns a
- * calendarMeetingLinkValidateStudent-shaped JSON (status, dateStatus:
- * "past"|"future"|"between", commonJoinUrlOfSMS, meetingJoinModalHideMin,
- * joinType, userRole) rather than an HTML page — the browser is sent to
- * `commonJoinUrlOfSMS` only once we know dateStatus is "between" (live).
- * Ported from static analysis of dashboardCalendarNew.js's
- * classDetailsOnModal/proceedwithControll — not yet confirmed against a
- * live class session, so treat unexpected response shapes defensively.
+ * the event's own `url` field (CalendarEventDTO.url, e.g.
+ * join-personalized-class/{date}/{type}/{id}/{uniqueId}), which returns JSON
+ * (not HTML): { status, dateStatus: "past"|"future"|"between", redirectUrl,
+ * commonJoinUrlOfSMS, meetingJoinModalHideMin, joinType, userRole, ... }.
+ * VERIFIED LIVE against a real "between" (live) class: the actual join link
+ * is in `redirectUrl` — `commonJoinUrlOfSMS` was present but empty for
+ * joinType "A" (student join). The browser is sent to that URL only once
+ * dateStatus is "between".
  */
 export async function getClassJoinDetails({ schoolUUID, url }) {
   if (!hasBackendOrigin() || !url) return null;
