@@ -5,8 +5,9 @@ import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Clock, LoaderCircle, XCircle } from "lucide-react";
-import { getPaymentResponseSuccess, getPaymentResponseFailure } from "@/services/paymentResponseApi";
+import { getPaymentResponseSuccess, getPaymentResponseFailure, savePurchaseBrowserDetails } from "@/services/paymentResponseApi";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
+import { getBrowserDetailsForSignup } from "@/utils/utmCookies";
 
 /**
  * Shared view for every /common/*payment-response-* route. Ports the render
@@ -68,7 +69,12 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
         .then((res) => {
           if (cancelled) return;
           if (!res) setFailed(true);
-          else setData(res);
+          else {
+            setData(res);
+            if (String(res.responseStatus) === "1" && res.userPaymentDetailsId) {
+              savePurchaseBrowserDetails(schoolUUID, res.userPaymentDetailsId, getBrowserDetailsForSignup()).catch(() => {});
+            }
+          }
         })
         .catch(() => !cancelled && setFailed(true))
         .finally(() => !cancelled && setLoading(false));
