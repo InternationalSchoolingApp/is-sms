@@ -1,5 +1,7 @@
 "use server";
 
+import { withSmsAuth } from "@/lib/auth/session";
+
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
 /**
@@ -31,7 +33,7 @@ async function backendUrl(schoolUUID, path) {
 }
 
 async function getJson(url) {
-  const response = await fetch(url, { method: "GET" });
+  const response = await fetch(url, await withSmsAuth({ method: "GET" }));
   if (!response.ok) return null;
   const text = await response.text();
   if (!text) return null;
@@ -89,11 +91,11 @@ export async function savePurchaseBrowserDetails(schoolUUID, userPaymentDetailsI
   if (!hasBackendOrigin() || !schoolUUID) return null;
   const url = `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/payment/${userPaymentDetailsId}/purchase-browser-details`;
   try {
-    const response = await fetch(url, {
+    const response = await fetch(url, await withSmsAuth({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ browserDetails }),
-    });
+    }));
     return response.ok ? "OK" : null;
   } catch {
     return null;

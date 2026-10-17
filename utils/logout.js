@@ -1,16 +1,16 @@
-import { signOut } from "next-auth/react";
 import { loginPageUrl, resolveBackendNavigationOrigin } from "@/utils/backendOrigin";
 
-// Session expired / missing: drop the Next.js session and land on the school's login page.
-// redirect:false + a manual navigation because the login page lives on another origin, which
-// signOut's own callbackUrl handling would refuse.
+// Signs one user out of this browser (lib/auth: ends the SMS login, clears that user's cookies). Other
+// users signed in to other tabs are not affected.
+async function signOutAccount(uniqueId) {
+  if (!uniqueId) return;
+  await fetch("/api/session/logout", { method: "POST", headers: { "X-Account": uniqueId } });
+}
+
+// Session expired / missing: land on the school's login page. The expired account's cookies were
+// already cleared by proxy.js when it found the login ended.
 export async function expireSession(schoolUUID) {
   if (window.__loggingOut) return;
-  try {
-    await signOut({ redirect: false });
-  } catch (err) {
-    console.error("Sign out failed:", err);
-  }
   window.location.assign(loginPageUrl(schoolUUID));
 }
 
@@ -20,10 +20,13 @@ export async function expireSession(schoolUUID) {
 // Action call can't carry that cookie). It then 302s to /{schoolId}/common/login, so one navigation
 // both kills the session and lands on the login page.
 export async function logoutEverywhere(session) {
-  // signOut flips useSession() to "unauthenticated", which WizardChrome answers with
-  // expireSession() -> login page; the flag keeps that from racing the logout navigation below.
+  // The flag keeps expireSession() from racing the logout navigation below.
   window.__loggingOut = true;
-  await signOut({ redirect: false });
+  try {
+    await signOutAccount(session?.uniqueId);
+  } catch (err) {
+    console.error("Sign out failed:", err);
+  }
   const backend = resolveBackendNavigationOrigin();
   if (session?.schoolUUID && session?.uniqueId && backend) {
     window.location.assign(`${backend}/${session.schoolUUID}/common/logout/${encodeURIComponent(session.uniqueId)}`);

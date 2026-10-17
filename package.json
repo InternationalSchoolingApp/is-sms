@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "verify:payload-encoding": "node scripts/verifyPayloadEncoding.mjs",
-    "verify:cookie-domain": "node scripts/verifyCookieDomain.mjs"
+    "verify:cookie-domain": "node scripts/verifyCookieDomain.mjs",
+    "verify:account-auth": "node scripts/verifyAccountAuth.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

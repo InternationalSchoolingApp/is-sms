@@ -1,5 +1,7 @@
 "use server";
 
+import { withSmsAuth } from "@/lib/auth/session";
+
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
 async function backendUrl(schoolUUID, path) {
@@ -31,7 +33,7 @@ async function parseJsonResponse(response) {
 // hooks/useEnrollmentContext.js, the context hook every Stage1-4 step page
 // shares, not just StudentDetailsStep.jsx.
 export async function getEnrollmentProcess(schoolUUID, uniqueId) {
-  const response = await fetch(await backendUrl(schoolUUID, `api/v1/student/enrollment/process/${encodeURIComponent(uniqueId)}`));
+  const response = await fetch(await backendUrl(schoolUUID, `api/v1/student/enrollment/process/${encodeURIComponent(uniqueId)}`), await withSmsAuth());
   return parseJsonResponse(response);
 }
 

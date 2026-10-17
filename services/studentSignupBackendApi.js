@@ -1,5 +1,7 @@
 "use server";
 
+import { withSmsAuth } from "@/lib/auth/session";
+
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
@@ -85,17 +87,17 @@ async function postPayload(schoolUUID, path, data, options) {
   // pass `uniqueId`.
   const headers = { "Content-Type": "application/json" };
   if (options?.uniqueId) headers.UNIQUEUUID = options.uniqueId;
-  const response = await fetch(await backendUrl(schoolUUID, path, options), {
+  const response = await fetch(await backendUrl(schoolUUID, path, options), await withSmsAuth({
     method: "POST",
     headers,
     body: JSON.stringify({ payload: encodePayload(data) }),
-  });
+  }));
   return parseJsonResponse(response);
 }
 
 async function getPayload(schoolUUID, path, params, options) {
   const query = params ? `?${new URLSearchParams(params).toString()}` : "";
-  const response = await fetch(await backendUrl(schoolUUID, `${path}${query}`, options));
+  const response = await fetch(await backendUrl(schoolUUID, `${path}${query}`, options), await withSmsAuth());
   return parseJsonResponse(response);
 }
 
@@ -213,10 +215,10 @@ export async function invokePaymentGateway(schoolUUID, request) {
 // the user's login hash, records the logout and invalidates its HTTP session (found via the
 // forwarded session cookie). The 302 to the Java login page is deliberately not followed.
 export async function logoutSignup(schoolUUID, uniqueId) {
-  await fetch(await backendUrl(schoolUUID, `common/logout/${encodeURIComponent(uniqueId)}`), {
+  await fetch(await backendUrl(schoolUUID, `common/logout/${encodeURIComponent(uniqueId)}`), await withSmsAuth({
     method: "GET",
     redirect: "manual",
-  });
+  }));
 }
 
 export async function getPaymentPaidStatus(schoolUUID, request) {
@@ -249,10 +251,10 @@ export async function uploadPaymentProof(schoolUUID, uniqueId, { file, uploadInd
     JSON.stringify({ payload: encodePayload({ uploadCategory, uploadUserId, skipSession: true }) })
   );
   form.append(`fileupload${uploadIndex}`, file);
-  const response = await fetch(await backendUrl(schoolUUID, `api/upload/${uniqueId}`), {
+  const response = await fetch(await backendUrl(schoolUUID, `api/upload/${uniqueId}`), await withSmsAuth({
     method: "POST",
     body: form,
-  });
+  }));
   return parseJsonResponse(response);
 }
 

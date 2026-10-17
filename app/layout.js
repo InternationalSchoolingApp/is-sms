@@ -4,6 +4,7 @@ import { DisableZoom } from "@/components/common/DisableZoom";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { AuthSessionProvider } from "@/components/providers/AuthSessionProvider";
+import { getAccountSession, publicSession } from "@/lib/auth/session";
 import { GlobalLoader } from "@/components/common/GlobalLoader";
 import { MaintenanceBanner } from "@/components/common/MaintenanceBanner";
 import { BackendSwitcher } from "@/components/common/BackendSwitcher";
@@ -28,7 +29,8 @@ export const viewport = {
   userScalable: false,
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const session = publicSession(await getAccountSession());
   return (
     <html lang="en" className={`${openSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
@@ -36,7 +38,7 @@ export default function RootLayout({ children }) {
             mirroring the JSP's <c:if test="${DEPLOYMENT_MODE=='PROD'}">. */}
         <AnalyticsScripts />
         <DisableZoom />
-        <AuthSessionProvider>
+        <AuthSessionProvider session={session}>
           <QueryProvider>
             <PageTitle />
             <MaintenanceBanner />

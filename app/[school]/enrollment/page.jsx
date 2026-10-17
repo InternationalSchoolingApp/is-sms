@@ -1,11 +1,11 @@
-import { auth } from '@/auth';
+import { getAccountSession } from '@/lib/auth/session';
 import { redirect } from 'next/navigation';
 import { getSignupStageStatus } from '@/services/studentSignupBackendApi';
 import { DEFAULT_PROGRAM, stepPath } from '@/utils/wizardSteps';
 import { loginPageUrl } from '@/utils/backendOrigin';
 
 export default async function  page({params}) {
-  const session = await auth();
+  const session = await getAccountSession();
   // `program` is only present when this page is re-exported at /{school}/enrollment/{program}/step.
   const {school, program = DEFAULT_PROGRAM} = await params;
   if (!session){

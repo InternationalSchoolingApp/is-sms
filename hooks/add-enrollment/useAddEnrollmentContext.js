@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from "react";
 import { useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/components/providers/AuthSessionProvider";
 import { useQuery } from "@tanstack/react-query";
 import { enrollAnotherChild } from "@/services/studentSignupBackendApi";
 
