@@ -1,0 +1,1207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>International Schooling SMS → Next.js — Migration Plan</title>
+<style>
+  :root{
+    --bg:#0f1420; --panel:#151c2c; --panel2:#1b2436; --ink:#e8edf6; --mut:#9fb0c9;
+    --line:#2a364d; --acc:#5b9dff; --acc2:#8b6cff;
+    --v:#2fbf71; --p:#5b9dff; --u:#e0a52b; --oq:#b07cff;
+    --crit:#ff4d5e; --high:#ff8a3d; --med:#e0c23a; --low:#58c0a8; --info:#7f93b3;
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --bg:#f5f7fb; --panel:#ffffff; --panel2:#eef2f8; --ink:#17202e; --mut:#536079;
+      --line:#d7deea; --acc:#1f5fd6; --acc2:#6a44e0;
+      --v:#1f9d57; --p:#1f5fd6; --u:#b5821a; --oq:#7a4fd0;
+      --crit:#d61f36; --high:#c75a12; --med:#9a861a; --low:#1f8f78; --info:#5a6b88;
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  a{color:var(--acc);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.86em;
+    background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:.05em .4em;color:var(--ink)}
+  .wrap{display:flex;gap:0;max-width:1500px;margin:0 auto}
+  /* sidebar */
+  aside{position:sticky;top:0;align-self:flex-start;height:100vh;overflow:auto;width:300px;
+    flex:0 0 300px;background:var(--panel);border-right:1px solid var(--line);padding:18px 14px}
+  aside h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:14px 6px 6px}
+  aside .brand{font-weight:800;font-size:16px;color:var(--ink);padding:4px 6px 10px;line-height:1.3}
+  aside ol{list-style:none;margin:0;padding:0;counter-reset:s}
+  aside ol li a{display:block;padding:5px 8px;border-radius:7px;color:var(--mut);font-size:13.5px}
+  aside ol li a::before{counter-increment:s;content:counter(s) ". ";color:var(--acc);font-variant-numeric:tabular-nums}
+  aside ol li a:hover,aside ol li a.active{background:var(--panel2);color:var(--ink);text-decoration:none}
+  main{flex:1 1 auto;min-width:0;padding:26px 34px 120px}
+  header.top{border:1px solid var(--line);background:linear-gradient(135deg,var(--panel),var(--panel2));
+    border-radius:16px;padding:24px 26px;margin-bottom:22px}
+  header.top h1{margin:0 0 6px;font-size:26px;line-height:1.2}
+  header.top .sub{color:var(--mut);font-size:14px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:14px;font-size:12.5px;color:var(--mut)}
+  .meta b{color:var(--ink);font-weight:600}
+  section{border-top:1px solid var(--line);padding-top:26px;margin-top:30px;scroll-margin-top:12px}
+  section>h2{font-size:21px;margin:0 0 4px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  section>h2 .n{color:var(--acc);font-variant-numeric:tabular-nums;font-size:16px}
+  h3{font-size:16.5px;margin:22px 0 8px;color:var(--ink)}
+  h4{font-size:14px;margin:16px 0 6px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+  p{margin:8px 0}
+  ul,ol{margin:8px 0;padding-left:22px}
+  li{margin:3px 0}
+  .lead{color:var(--mut);font-size:15px}
+  /* badges */
+  .b{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;border-radius:999px;
+    padding:2px 9px;border:1px solid transparent;white-space:nowrap;vertical-align:middle}
+  .b.v{color:var(--v);border-color:var(--v);background:color-mix(in srgb,var(--v) 14%,transparent)}
+  .b.p{color:var(--p);border-color:var(--p);background:color-mix(in srgb,var(--p) 14%,transparent)}
+  .b.u{color:var(--u);border-color:var(--u);background:color-mix(in srgb,var(--u) 14%,transparent)}
+  .b.oq{color:var(--oq);border-color:var(--oq);background:color-mix(in srgb,var(--oq) 14%,transparent)}
+  .b.crit{color:#fff;background:var(--crit);border-color:var(--crit)}
+  .b.high{color:#191a10;background:var(--high);border-color:var(--high)}
+  .b.med{color:#191a10;background:var(--med);border-color:var(--med)}
+  .b.low{color:#07140f;background:var(--low);border-color:var(--low)}
+  .b.info{color:#fff;background:var(--info);border-color:var(--info)}
+  .b.pr{background:var(--panel2);color:var(--ink);border-color:var(--line)}
+  /* tables */
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:12px 0}
+  table{border-collapse:collapse;width:100%;font-size:13px;min-width:560px}
+  th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--panel2);position:sticky;top:0;color:var(--ink);font-size:12px;
+    text-transform:uppercase;letter-spacing:.04em;z-index:1}
+  tbody tr:hover{background:color-mix(in srgb,var(--acc) 7%,transparent)}
+  td code{white-space:nowrap}
+  /* callouts */
+  .note{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--panel);
+    border-radius:10px;padding:12px 15px;margin:14px 0}
+  .note.warn{border-left-color:var(--high)}
+  .note.bad{border-left-color:var(--crit)}
+  .note.ok{border-left-color:var(--v)}
+  .note b.t{display:block;margin-bottom:3px}
+  /* cards */
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin:12px 0}
+  .card{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:14px 16px}
+  .card .big{font-size:26px;font-weight:800}
+  .card .lbl{color:var(--mut);font-size:12.5px;margin-top:2px}
+  /* diagrams */
+  figure{margin:16px 0;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:14px}
+  figure svg{display:block;width:100%;height:auto}
+  figcaption{color:var(--mut);font-size:12.5px;margin-top:8px}
+  details{border:1px solid var(--line);border-radius:10px;padding:0 12px;margin:8px 0;background:var(--panel)}
+  details>summary{cursor:pointer;padding:9px 0;font-weight:600;color:var(--acc)}
+  details pre{overflow:auto;background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+    padding:10px;font-size:12px;line-height:1.5}
+  /* svg flow primitives */
+  .svgbox{fill:var(--panel2);stroke:var(--line);stroke-width:1.4}
+  .svgbox.acc{stroke:var(--acc)}
+  .svgbox.v{stroke:var(--v)} .svgbox.p{stroke:var(--p)} .svgbox.u{stroke:var(--u)} .svgbox.bad{stroke:var(--crit)}
+  .svgtxt{fill:var(--ink);font:12px -apple-system,Segoe UI,Roboto,sans-serif}
+  .svgtxt.s{font-size:10.5px;fill:var(--mut)}
+  .svgtxt.b{font-weight:700}
+  .svgedge{stroke:var(--mut);stroke-width:1.4;fill:none}
+  .svgedge.dash{stroke-dasharray:5 4}
+  .svglbl{fill:var(--mut);font:10px -apple-system,Segoe UI,sans-serif}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0;font-size:12.5px;color:var(--mut)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:14px;height:14px;border-radius:4px;display:inline-block;border:1px solid var(--line)}
+  .filter{margin:10px 0}
+  .filter input{width:100%;max-width:420px;padding:8px 12px;border-radius:9px;border:1px solid var(--line);
+    background:var(--panel);color:var(--ink);font-size:14px}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:4px 0 2px}
+  .btn{border:1px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:8px;
+    padding:6px 12px;font-size:13px;cursor:pointer}
+  .mobtoggle{display:none}
+  .small{font-size:12.5px;color:var(--mut)}
+  .evref{font-size:12px;color:var(--mut)}
+  .evref code{white-space:normal}
+  hr.soft{border:none;border-top:1px dashed var(--line);margin:18px 0}
+  @media (max-width:980px){
+    aside{position:fixed;z-index:30;transform:translateX(-102%);transition:transform .2s;box-shadow:0 0 40px rgba(0,0,0,.5)}
+    aside.open{transform:none}
+    .mobtoggle{display:inline-block;position:fixed;top:12px;left:12px;z-index:31}
+    main{padding:60px 16px 100px}
+  }
+  @media print{
+    aside,.mobtoggle,.toolbar,.filter{display:none!important}
+    main{padding:0}
+    section{break-inside:avoid-page}
+    details[open] pre,details>summary{display:block}
+    details>*{display:revert!important}
+    body{background:#fff;color:#000}
+    .card,.note,figure,.tw{break-inside:avoid}
+    a{color:#000}
+  }
+</style>
+</head>
+<body>
+
+<!-- shared SVG defs (arrowheads) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0 0L10 5L0 10z" fill="currentColor"/>
+  </marker>
+</defs></svg>
+
+<button class="btn mobtoggle" id="navToggle" aria-label="Toggle navigation">☰ Contents</button>
+
+<div class="wrap">
+<aside id="sidebar">
+  <div class="brand">IS SMS → Next.js<br/>Migration Plan</div>
+  <div class="toolbar"><button class="btn" id="expandAll" type="button">Expand all</button></div>
+  <h2>Sections</h2>
+  <ol id="toc">
+    <li><a href="#s1">Executive summary</a></li>
+    <li><a href="#s2">Scope &amp; methodology</a></li>
+    <li><a href="#s3">Repository inventory</a></li>
+    <li><a href="#s4">Current legacy architecture</a></li>
+    <li><a href="#s5">Current Next.js architecture</a></li>
+    <li><a href="#s6">Legacy → Next.js feature mapping</a></li>
+    <li><a href="#s7">Role-wise functional inventory</a></li>
+    <li><a href="#s8">Role-to-module matrix</a></li>
+    <li><a href="#s9">School-wise functional inventory</a></li>
+    <li><a href="#s10">School-to-module matrix</a></li>
+    <li><a href="#s11">Module-wise migration analysis</a></li>
+    <li><a href="#s12">API contract inventory</a></li>
+    <li><a href="#s13">Authentication &amp; session</a></li>
+    <li><a href="#s14">Enrollment workflow deep dive</a></li>
+    <li><a href="#s15">Payments &amp; financial workflows</a></li>
+    <li><a href="#s16">External integrations</a></li>
+    <li><a href="#s17">Database &amp; data-access</a></li>
+    <li><a href="#s18">Security findings</a></li>
+    <li><a href="#s19">Performance &amp; operations</a></li>
+    <li><a href="#s20">Proposed target architecture</a></li>
+    <li><a href="#s21">Proposed Next.js directory</a></li>
+    <li><a href="#s22">Migration dependency graph</a></li>
+    <li><a href="#s23">Phase-wise roadmap</a></li>
+    <li><a href="#s24">Testing &amp; acceptance</a></li>
+    <li><a href="#s25">Deployment, rollout, rollback</a></li>
+    <li><a href="#s26">Open questions &amp; assumptions</a></li>
+    <li><a href="#s27">Risk register</a></li>
+    <li><a href="#s28">Readiness checklist</a></li>
+    <li><a href="#s29">Evidence index</a></li>
+    <li><a href="#s30">Final recommendations</a></li>
+  </ol>
+</aside>
+
+<main>
+<header class="top">
+  <h1>International Schooling SMS → Next.js Migration Plan</h1>
+  <div class="sub">Deep, evidence-based architecture audit &amp; role-/school-/module-wise migration roadmap. <b>Planning only — no implementation.</b></div>
+  <div class="meta">
+    <span><b>Generated:</b> 2026-10-15</span>
+    <span><b>Legacy:</b> <code>D:\Workspace\is-rest-api</code> · branch <code>feature/63_0_0_STUDENT_ENROLLEMNT_NEXTJS_PHASE2</code> @ <code>8f0e2a1836</code></span>
+    <span><b>New:</b> <code>D:\Workspace\is-sms</code> · branch <code>feature/version_1_1_0_phase2</code> @ <code>baaffd4</code></span>
+  </div>
+  <div class="legend" style="margin-top:14px">
+    <span><span class="b v">Verified</span> from source</span>
+    <span><span class="b p">Proposed</span> future design</span>
+    <span><span class="b u">Unverified</span> needs validation</span>
+    <span><span class="b oq">Open Question</span></span>
+    <span style="margin-left:8px"><span class="b crit">Critical</span><span class="b high">High</span><span class="b med">Medium</span><span class="b low">Low</span><span class="b info">Info</span></span>
+  </div>
+</header>
+
+<!-- ============ 1 ============ -->
+<section id="s1">
+<h2><span class="n">01</span> Executive Summary</h2>
+<p class="lead">International Schooling runs a large multi-school SMS on Spring Boot 3.5.6 / Java 25 (WAR) with a JSP + jQuery + Bootstrap 4 frontend. A separate Next.js 16 app (<code>is-sms</code>) already exists and has migrated <b>one</b> module end-to-end — the student enrollment/signup wizard — using a proven, repeatable scaffold. This plan audits both repositories and lays out how to migrate the remaining role dashboards module-by-module, backend stable, with per-module coexistence and instant rollback.</p>
+
+<div class="grid">
+  <div class="card"><div class="big">3,403</div><div class="lbl">Java files · 126 controllers · ~1,898 mappings <span class="b v">V</span></div></div>
+  <div class="card"><div class="big">395</div><div class="lbl">JSP views · ~1,091 JS files <span class="b v">V</span></div></div>
+  <div class="card"><div class="big">~20</div><div class="lbl">roles (enum + DB) across the app <span class="b v">V</span></div></div>
+  <div class="card"><div class="big">5–6</div><div class="lbl">schools in legacy seed (2 in is-sms) <span class="b v">V</span></div></div>
+  <div class="card"><div class="big">1 / ~11</div><div class="lbl">role modules migrated (signup) <span class="b v">V</span></div></div>
+  <div class="card"><div class="big">9</div><div class="lbl">payment gateways · ~20 integrations <span class="b v">V</span></div></div>
+</div>
+
+<h3>Five findings that shape the whole plan</h3>
+<div class="tw"><table>
+<thead><tr><th>#</th><th>Finding</th><th>Status</th><th>Impact on migration</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Backend auth is a custom server-side <b>Redis HttpSession cookie</b> — <b>no Spring Security, no JWT</b>. <code>sessionUtil.getUser()</code> called 586×.</td><td><span class="b v">Verified</span></td><td>NextAuth cannot replace it — it <em>wraps</em> it. Requires same-origin reverse proxy so the cookie is shared.</td></tr>
+<tr><td>2</td><td>Authorization is <b>predominantly frontend-enforced</b> (JSP <code>&lt;c:if&gt;</code>, JS, DB <code>USER_RIGHTS</code> menu/button gating); some backend role guards are dead code.</td><td><span class="b v">Verified</span></td><td>A dynamic menu + permission engine must be built first; backend hardening is a parallel prerequisite.</td></tr>
+<tr><td>3</td><td>~Half the endpoints return <b>server-rendered HTML fragments</b> (352 <code>AJAX_PAGE*</code>) or Gson-string JSON for DataTables, not clean DTO JSON.</td><td><span class="b v">Verified</span></td><td>Per-module JSON contracts needed before each dashboard UI migrates.</td></tr>
+<tr><td>4</td><td>Feature flags live in a <b>global <code>SETTINGS</code> table with no <code>SCHOOL_ID</code></b>; ~30 hardcoded <code>schoolId==1/3/5</code> branches.</td><td><span class="b v">Verified</span></td><td>Multi-school config cannot vary per tenant today — a key architectural gap to resolve.</td></tr>
+<tr><td>5</td><td>Extensive <b>committed secrets</b> + weak crypto (MD5 passwords, reversible password store, hardcoded AES key/IV).</td><td><span class="b v">Verified</span></td><td>Security remediation + secret rotation is a P0 blocker, independent of UI migration.</td></tr>
+</tbody></table></div>
+
+<div class="note ok"><b class="t">Recommended approach</b> Strangler-fig: keep the Java backend and JSP app running; migrate one role module at a time into <code>is-sms</code>, each guarded by a backend <code>&lt;MODULE&gt;_VIA_NEXTJS</code> <code>CONFIGURATION</code> toggle (the proven <code>ENROLLMENT_VIA_NEXTJS</code> pattern) so it can be enabled per school and rolled back instantly. Both apps are served same-origin behind one reverse proxy and share the Redis session cookie.</div>
+
+<p><b>Recommended first implementation phase after approval:</b> <span class="b p">Phase 0/1</span> — secret rotation + <b>Dashboard Foundation</b> (role-aware shell, dynamic menu from <code>USER_RIGHTS</code>, <code>PermissionGate</code>, dashboard-role auth/SSO). Everything else depends on it.</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section id="s2">
+<h2><span class="n">02</span> Scope &amp; Methodology</h2>
+<p>Both repositories were reviewed read-only. No Java, JSP, JS, TS/JSX, config, env, DB, or application source file was modified. The only write performed is this HTML document. No dependencies installed, no branches changed, no production/mutation/payment APIs called, no secret values reproduced.</p>
+<h3>Method</h3>
+<ul>
+  <li>Direct reads of core files in both repos (auth, session, datasource, routing, globals, BFF, payload encoding, wizard, config, git metadata).</li>
+  <li>Parallel targeted exploration across: authentication/security, roles/authorization, JSP/routing, JavaScript/libraries, REST API inventory, CSS/theme + multi-tenancy, payments/uploads/external services, per-role flow mapping, the <code>is-sms</code> scaffold recipe, and multi-school architecture.</li>
+  <li>Evidence-based: statements cite file paths / classes / methods. Anything not confirmed in source is tagged <span class="b u">Unverified</span> or <span class="b oq">Open Question</span>.</li>
+</ul>
+<h3>Coverage &amp; limitations</h3>
+<ul>
+  <li><b>Covered:</b> architecture, auth/session/tenancy, roles &amp; authorization, API surface (grouped), JSP/JS inventory, payments, uploads, external integrations, security, the full <code>is-sms</code> implementation, multi-school config model.</li>
+  <li><b>Not exhaustively covered (sampled/grouped):</b> every one of 126 controllers method-by-method; every one of ~1,898 endpoints' request/response schema; exhaustive per-DAO SQL tenant-filter review. These are explicitly flagged where relevant and listed as follow-ups in §26.</li>
+  <li>Legacy flags marked <span class="b oq">Open Question</span>: three dead/commented dashboard routes (<code>/dashboard/school</code>, <code>/dashboard/auditor</code>, <code>/dashboard/hod</code>), <code>SCHOOL_ID</code> 2 &amp; La Senda numeric id, host→slug routing layer.</li>
+</ul>
+</section>
+
+<!-- ============ 3 ============ -->
+<section id="s3">
+<h2><span class="n">03</span> Repository Inventory</h2>
+<h3>Legacy — <code>is-rest-api</code> <span class="b v">Verified</span></h3>
+<div class="tw"><table>
+<thead><tr><th>Area</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td>Platform</td><td>Spring Boot 3.5.6, Java 25, <b>WAR</b>; main <code>com.c2e.is.v1.app.APIApplication</code></td></tr>
+<tr><td>Packages</td><td>3 controller trees: <code>api/v1/**</code> (newer REST), <code>v1/**</code> (legacy core), <code>client/controller/**</code> (JSP/UI)</td></tr>
+<tr><td>Data</td><td>MariaDB (shared DB, <code>SCHOOL_ID</code> discriminator), JPA/Hibernate, HikariCP; read/write replica routing (<code>RoutingDataSource</code>)</td></tr>
+<tr><td>Session</td><td>Redis (<code>spring-session-data-redis</code>, <code>@EnableRedisIndexedHttpSession</code>, 60m); dev = in-memory</td></tr>
+<tr><td>Security libs</td><td><b>No Spring Security.</b> jjwt present (used only for outbound Lens SSO)</td></tr>
+<tr><td>Build/Deploy</td><td>Maven WAR; Jenkins (Groovy pipelines); 3 systemd JVMs ports 8100/8200/8300; <code>production-read-replica</code> branch</td></tr>
+<tr><td>Counts</td><td>3,403 Java · 126 controllers · ~1,898 mappings · 395 JSP · ~1,091 JS · 123 CSS</td></tr>
+</tbody></table></div>
+
+<h3>New — <code>is-sms</code> (<code>student-signup-ui</code>) <span class="b v">Verified</span></h3>
+<div class="tw"><table>
+<thead><tr><th>Area</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td>Stack</td><td>Next.js 16.3.5, React 19.2.8, next-auth 5.0-beta, TanStack Query 5, Tailwind v4, shadcn/<code>@base-ui/react</code>, intl-tel-input, react-hot-toast, react-day-picker, date-fns, lucide/react-icons</td></tr>
+<tr><td>Auth</td><td><code>auth.js</code> — Credentials provider → Java login + <code>sso-token</code> provider; JWT session</td></tr>
+<tr><td>Route guard</td><td><code>proxy.js</code> (Next 16 renamed middleware)</td></tr>
+<tr><td>BFF</td><td><code>services/*Api.js</code> = <code>"use server"</code> actions; <code>utils/backendOrigin.js</code>, <code>utils/payloadEncoding.js</code></td></tr>
+<tr><td>Dev proxy</td><td><code>next.config.mjs</code> rewrites forward backend paths same-origin (prod needs infra reverse proxy — see README)</td></tr>
+<tr><td>Conventions</td><td>JSX (not TSX); plain JS; no Redux; theme classes only / <code>text-black</code> (no gray); Add-Another-Student is the canonical clone example</td></tr>
+</tbody></table></div>
+
+<h4>Migration status snapshot</h4>
+<div class="tw"><table>
+<thead><tr><th>Feature</th><th>Status</th><th>Evidence</th></tr></thead>
+<tbody>
+<tr><td>Student Signup / Enrollment wizard (4 steps)</td><td><span class="b v">Migrated</span></td><td><code>app/[school]/enrollment/[program]/step/**</code></td></tr>
+<tr><td>Add-Another-Student wizard (3 steps)</td><td><span class="b v">Migrated</span></td><td><code>app/[school]/add-enrollment/[parentId]/[sessionUserId]/**</code></td></tr>
+<tr><td>Payment init/response pages</td><td><span class="b v">Migrated</span></td><td><code>app/[school]/common/*payment*</code>, <code>app/common/*</code></td></tr>
+<tr><td>AI Course Advisor (new feature)</td><td><span class="b v">Built</span></td><td><code>components/student-enroll/ai-advisor/**</code>, <code>docs/ai-course-advisor-*</code></td></tr>
+<tr><td>Student dashboard, Parent, Teacher, Counselor, School, Admin, Director, Auditor, HOD, B2B Partner</td><td><span class="b u">Not migrated</span></td><td>No routes/components/services exist</td></tr>
+<tr><td>Login UI</td><td><span class="b v">Intentionally absent</span></td><td>SSO handoff from legacy <code>Login.jsp</code> (see §13)</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section id="s4">
+<h2><span class="n">04</span> Current Legacy Architecture <span class="b v">Verified</span></h2>
+<figure>
+<svg viewBox="0 0 900 430" role="img" aria-label="Legacy architecture diagram">
+  <g color="var(--mut)">
+  <rect class="svgbox acc" x="20" y="20" width="860" height="56" rx="10"/>
+  <text class="svgtxt b" x="36" y="44">Browser — JSP page</text>
+  <text class="svgtxt s" x="36" y="62">CommonCustomScript.jsp injects ~60 JS globals (USER_ROLE, SCHOOL_ID, SESSION_ID, DATABASE_NAME…)</text>
+
+  <rect class="svgbox" x="20" y="96" width="860" height="52" rx="10"/>
+  <text class="svgtxt b" x="36" y="118">jQuery (31,939×) + Content/logic JS pairs</text>
+  <text class="svgtxt s" x="36" y="136">$.ajax (1,381×) via getDashboardDataBasedUrlAndPayload → /{SCHOOL_UUID}/api/v1/… (session cookie)</text>
+
+  <rect class="svgbox acc" x="20" y="168" width="860" height="52" rx="10"/>
+  <text class="svgtxt b" x="36" y="190">Spring MVC — @Controller (JSP views) + @RestController (JSON)</text>
+  <text class="svgtxt s" x="36" y="208">BaseController.updateModel populates globals · no auth filter — per-method sessionUtil.getUser() checks</text>
+
+  <rect class="svgbox" x="20" y="240" width="420" height="52" rx="10"/>
+  <text class="svgtxt b" x="36" y="262">Services + Util (business logic)</text>
+  <text class="svgtxt s" x="36" y="280">SingleSignOnUtil · ModulesUtil · CommonUtil · SignupStudentUtil</text>
+
+  <rect class="svgbox" x="460" y="240" width="420" height="52" rx="10"/>
+  <text class="svgtxt b" x="476" y="262">Integrations (server-side)</text>
+  <text class="svgtxt s" x="476" y="280">Stripe/PayPal/… · S3 · SendGrid · Zoom · Firebase · OpenAI</text>
+
+  <rect class="svgbox v" x="20" y="312" width="260" height="52" rx="10"/>
+  <text class="svgtxt b" x="36" y="334">MariaDB "ildblive"</text>
+  <text class="svgtxt s" x="36" y="352">shared DB · SCHOOL_ID discriminator</text>
+
+  <rect class="svgbox" x="300" y="312" width="200" height="52" rx="10"/>
+  <text class="svgtxt b" x="316" y="334">Read replica</text>
+  <text class="svgtxt s" x="316" y="352">RoutingDataSource (tx r/o)</text>
+
+  <rect class="svgbox" x="520" y="312" width="160" height="52" rx="10"/>
+  <text class="svgtxt b" x="536" y="334">Redis</text>
+  <text class="svgtxt s" x="536" y="352">HttpSession (60m)</text>
+
+  <rect class="svgbox" x="700" y="312" width="180" height="52" rx="10"/>
+  <text class="svgtxt b" x="716" y="334">3× systemd JVM</text>
+  <text class="svgtxt s" x="716" y="352">8100/8200/8300 + LB</text>
+
+  <line class="svgedge" x1="450" y1="76" x2="450" y2="96" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="450" y1="148" x2="450" y2="168" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="450" y1="220" x2="230" y2="240" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="450" y1="220" x2="670" y2="240" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="230" y1="292" x2="150" y2="312" marker-end="url(#arrow)"/>
+  <line class="svgedge dash" x1="230" y1="292" x2="400" y2="312" marker-end="url(#arrow)"/>
+  <line class="svgedge dash" x1="300" y1="208" x2="600" y2="312" marker-end="url(#arrow)"/>
+  </g>
+</svg>
+<figcaption>Verified current legacy architecture. All rendering is server-side JSP assembled by compile-time includes; the sidebar menu is DB-driven from <code>USER_RIGHTS</code>/<code>MODULES</code>.</figcaption>
+</figure>
+<ul>
+<li><b>Tenancy:</b> shared DB, <code>SCHOOL_ID</code> discriminator; tenant resolved from URL path slug via <code>getSchoolSettingsOfficeBySchoolUUID</code>. <span class="b v">Verified</span></li>
+<li><b>Datasource routing:</b> read/write replica split only (<code>RoutingDataSource</code>); <code>DatabaseContextHolder</code>/<code>ReadOnlyAspect</code> are commented-out dead code. <span class="b v">Verified</span></li>
+<li><b>Shared shell:</b> almost every dashboard renders <code>theme2/dashboard/Dashboard.jsp</code> (TopHeader + LeftSide menu + RightSide content). <span class="b v">Verified</span></li>
+</ul>
+</section>
+
+<!-- ============ 5 ============ -->
+<section id="s5">
+<h2><span class="n">05</span> Current Next.js Architecture <span class="b v">Verified</span></h2>
+<figure>
+<svg viewBox="0 0 900 400" role="img" aria-label="Current Next.js architecture">
+ <g color="var(--mut)">
+  <rect class="svgbox acc" x="20" y="18" width="860" height="48" rx="10"/>
+  <text class="svgtxt b" x="36" y="40">Browser</text>
+  <text class="svgtxt s" x="36" y="57">React 19 client components · TanStack Query · useSession / useEnrollmentContext</text>
+
+  <rect class="svgbox v" x="20" y="88" width="560" height="78" rx="10"/>
+  <text class="svgtxt b" x="36" y="110">Next.js 16 App Router (is-sms)</text>
+  <text class="svgtxt s" x="36" y="128">app/[school]/enrollment/[program]/step/{slug} · page.jsx(server)+Step.jsx(client)</text>
+  <text class="svgtxt s" x="36" y="144">proxy.js route guard · auth.js (next-auth v5 JWT) · QueryProvider</text>
+  <text class="svgtxt s" x="36" y="160">services/*Api.js = "use server" BFF · payloadEncoding · backendOrigin</text>
+
+  <rect class="svgbox" x="600" y="88" width="280" height="78" rx="10"/>
+  <text class="svgtxt b" x="616" y="110">Same-origin reverse proxy</text>
+  <text class="svgtxt s" x="616" y="128">dev: next.config rewrites</text>
+  <text class="svgtxt s" x="616" y="144">prod: Nginx (shares session</text>
+  <text class="svgtxt s" x="616" y="160">cookie) — infra-owned</text>
+
+  <rect class="svgbox u" x="20" y="188" width="860" height="46" rx="10"/>
+  <text class="svgtxt b" x="36" y="210">Java backend (UNCHANGED) — source of truth</text>
+  <text class="svgtxt s" x="36" y="227">POST /api/v1/common/login · /{schoolUUID}/api/v1/student/… · Redis session cookie authoritative</text>
+
+  <rect class="svgbox v" x="20" y="256" width="280" height="46" rx="10"/>
+  <text class="svgtxt b" x="36" y="278">Migrated: Signup wizard</text>
+  <text class="svgtxt s" x="36" y="294">+ Add-Enrollment + Payments</text>
+  <rect class="svgbox" x="320" y="256" width="280" height="46" rx="10"/>
+  <text class="svgtxt b" x="336" y="278">[[ENROLLMENT_VIA_NEXTJS]]</text>
+  <text class="svgtxt s" x="336" y="294">backend toggle → Next.js or JSP</text>
+  <rect class="svgbox u" x="620" y="256" width="260" height="46" rx="10"/>
+  <text class="svgtxt b" x="636" y="278">All dashboards still JSP</text>
+  <text class="svgtxt s" x="636" y="294">proxied to Java today</text>
+
+  <line class="svgedge" x1="300" y1="66" x2="300" y2="88" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="580" y1="127" x2="600" y2="127" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="450" y1="166" x2="450" y2="188" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="740" y1="166" x2="500" y2="188" marker-end="url(#arrow)"/>
+ </g>
+</svg>
+<figcaption>Verified current Next.js app: one module migrated, gated by a backend toggle; everything else still served by JSP through the same-origin proxy.</figcaption>
+</figure>
+<ul>
+<li><b>page.jsx (server) + <code>{X}Step.jsx</code> (client) split</b>; <code>layout.jsx</code>→<code>WizardChrome</code> mounts shell + context once; <code>loading.jsx</code>→<code>FullScreenLoader</code>. <span class="b v">Verified</span></li>
+<li><b>BFF recipe:</b> <code>resolveServerBackendOrigin()</code> → <code>${base}/${schoolUUID}/${path}</code> → body <code>{payload: encodePayload(dto)}</code> (<code>btoa(encodeURI(JSON.stringify()))</code>, mirrors Java <code>AesUtil.decode</code>) → <code>parseJsonResponse</code> (non-ok → null). Identity in the <code>authentication</code> envelope, not cookie. <span class="b v">Verified</span></li>
+<li><b>Root providers:</b> <code>AuthSessionProvider → QueryProvider</code>; PROD-only GTM/Clarity; consent/campaign/maintenance banner; UAT BackendSwitcher. <span class="b v">Verified</span></li>
+<li><b>Layout params</b> <code>[school]/[program]</code> are a navigation container; authoritative IDs come from the session (<code>schoolUUID</code>/<code>schoolNumericId</code>/<code>userId</code>/<code>uniqueId</code>). <span class="b v">Verified</span></li>
+</ul>
+</section>
+
+<!-- ============ 6 ============ -->
+<section id="s6">
+<h2><span class="n">06</span> Legacy → Next.js Feature Mapping</h2>
+<div class="tw"><table>
+<thead><tr><th>Legacy concept</th><th>Next.js equivalent (as built / proposed)</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>JSP server-render + compile-time includes</td><td>App Router server/client components; <code>page.jsx</code>+<code>Step.jsx</code></td><td><span class="b v">V</span></td></tr>
+<tr><td><code>Dashboard.jsp</code> shell + DB menu</td><td><code>DashboardShell</code> route-group + dynamic <code>Sidebar</code> from <code>USER_RIGHTS</code></td><td><span class="b p">Proposed</span></td></tr>
+<tr><td><code>CommonCustomScript.jsp</code> globals</td><td><code>useEnrollmentContext</code>/<code>useDashboardContext</code> + next-auth session</td><td><span class="b v">V</span> (signup) / <span class="b p">P</span></td></tr>
+<tr><td>jQuery <code>$.ajax</code> + commonFunction wrapper</td><td><code>services/*Api.js</code> server actions + TanStack Query hooks</td><td><span class="b v">V</span></td></tr>
+<tr><td><code>xyzContent.js</code> HTML generators</td><td>React components (<code>components/{module}/**</code>)</td><td><span class="b v">V</span> (signup)</td></tr>
+<tr><td>jQuery Validate</td><td>controlled inputs + validation utils (react-hook-form optional)</td><td><span class="b v">V</span></td></tr>
+<tr><td>DataTables <code>*-content-1</code></td><td>TanStack Table consuming existing JSON / new DTO</td><td><span class="b p">Proposed</span></td></tr>
+<tr><td>Select2 / intl-tel-input / FullCalendar / Jodit</td><td>react-select / <code>useIntlTelInput</code> / FullCalendar React / React editor</td><td><span class="b v">V</span> (phone) / <span class="b p">P</span></td></tr>
+<tr><td>PARENT_COLOR theme injection (jQuery)</td><td>CSS variables in <code>globals.css</code> mapped to shadcn tokens; SSR theme</td><td><span class="b v">V</span></td></tr>
+<tr><td>Session cookie auth</td><td>next-auth wraps Java login; same-origin cookie shared</td><td><span class="b v">V</span></td></tr>
+<tr><td>Legacy <code>Login.jsp</code></td><td>kept on Java; <code>sso-token</code> handoff to Next.js</td><td><span class="b v">V</span></td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section id="s7">
+<h2><span class="n">07</span> Role-wise Functional Inventory <span class="b v">Verified</span></h2>
+<p class="lead">Roles exist in two representations: enum <code>com.c2e.is.v1.constant.RoleConstant</code> (string comparisons) + DB table <code>ROLES</code> (numeric IDs, keyed <code>(ROLE, SCHOOL_ID)</code> — same role has a different id per school). Current role = <code>user.getParentUserRole()</code> (column <code>USER_ROLES</code>), loaded from DB each request. Dashboard routing: <code>SingleSignOnUtil.getRedirectUrl</code>. Menu: <code>ModulesUtil.getRoleAssignModuleList</code>.</p>
+<div class="filter"><input id="roleFilter" type="text" placeholder="Filter roles… (type a role name, route, or controller)" oninput="filterTable('roleTbl',this.value)"></div>
+<div class="tw"><table id="roleTbl">
+<thead><tr><th>Role</th><th>ID(s)</th><th>Entry route (post-login)</th><th>Entry controller</th><th>Dedicated JSPs / mappings</th><th>Next.js status</th></tr></thead>
+<tbody>
+<tr><td>STUDENT (signup)</td><td>4 / 30,36</td><td><code>/enrollment/{program}/step/…</code> (Next) or legacy process</td><td><code>ClientSignupStudentController</code></td><td>wizard</td><td><span class="b v">Migrated</span></td></tr>
+<tr><td>STUDENT (dashboard)</td><td>4 / 30,36</td><td><code>/dashboard/student/{uuid}</code></td><td><code>ClientDashboardStudentController:181</code></td><td>39 JSP / 80 map</td><td><span class="b u">Not migrated</span></td></tr>
+<tr><td>PARENT</td><td>5 / 31,37</td><td><code>/dashboard/view-as-user/{uuid}</code> or <code>/parent-dashboard/{uuid}</code></td><td><code>ClientDashboardStudentController:2681</code> / <code>ClientDashoboardParentController:43</code></td><td>~2 JSP + reuse student / 17 map</td><td><span class="b u">Not migrated</span></td></tr>
+<tr><td>TEACHER</td><td>3 / 29,35</td><td><code>/dashboard/teacher/{uuid}</code></td><td><code>ClientDashboardTeacherController:117</code></td><td>37 JSP / 50+17+27+29 map</td><td><span class="b u">Not migrated</span></td></tr>
+<tr><td>COUNSELOR / STUDENT_COUNSELOR / B2B_LEAD</td><td>14 / 24 / —</td><td><code>/dashboard/counselor/{uuid}</code></td><td><code>ClientDashboardCounselorController:55</code></td><td>23 leads JSP / 31 + LeadsApi 81 map</td><td><span class="b u">Not migrated</span></td></tr>
+<tr><td>SCHOOL / SCHOOL_B2B</td><td>11/26/32 · 12</td><td><code>/dashboard/school/{uuid}</code></td><td><span class="b oq">entry commented — verify</span></td><td>89 JSP / —</td><td><span class="b u">Not migrated</span></td></tr>
+<tr><td>SCHOOL_ADMIN</td><td>10 / 28,34</td><td><code>/dashboard/dashboard/{uuid}</code></td><td><code>DashboardCommonClientController:86</code></td><td>13 JSP / DB menu</td><td><span class="b u">Not migrated</span></td></tr>
+<tr><td>ADMIN / SUPER_ADMIN</td><td>9/27/33 · 21</td><td><code>/dashboard/dashboard/{uuid}</code></td><td><code>DashboardCommonClientController:86</code></td><td>common / DB menu</td><td><span class="b u">Not migrated</span></td></tr>
+<tr><td>DIRECTOR</td><td>2</td><td><code>/dashboard/admin-super/{uuid}</code></td><td><code>ClientDashboardAdminController:54</code></td><td>common / 9+11 map</td><td><span class="b u">Not migrated</span></td></tr>
+<tr><td>AUDITOR</td><td>13</td><td><code>/dashboard/auditor/{uuid}</code></td><td><span class="b oq">entry commented — verify</span></td><td>9 JSP / 13 map</td><td><span class="b u">Not migrated</span></td></tr>
+<tr><td>HOD</td><td>6</td><td><code>/dashboard/hod/{uuid}</code></td><td><span class="b oq">no handler found — verify</span></td><td>— / —</td><td><span class="b u">Not migrated</span></td></tr>
+<tr><td>B2B_PARTNER</td><td>—</td><td><code>/dashboard/partner/{uuid}</code></td><td><code>ClientDashboardPartnerController:56</code> (api.v1.b2bdashboard)</td><td>10 JSP / 47+17 map</td><td><span class="b u">Not migrated</span></td></tr>
+<tr><td>AUDITOR/COMMON_PAYMENT/HR/SEO/FIN_ADMIN/BDM/ALUMNI/RATING</td><td>13/19/20/22/25/23/7/8</td><td>via DB role-rights on common dashboard</td><td><code>DashboardCommonClientController</code> (likely)</td><td>DB menu</td><td><span class="b u">Not migrated</span></td></tr>
+</tbody></table></div>
+<div class="note"><b class="t">Authorization caveat</b> A hidden frontend button is <b>not</b> backend enforcement. Backend role/permission checks are ad-hoc string comparisons and some are dead code; the real control today is (a) session presence and (b) which dashboard/menu the user is routed to. The migration must add a central backend authorization layer (§18, §28).</div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section id="s8">
+<h2><span class="n">08</span> Role-to-Module Permission Matrix</h2>
+<p class="lead">Fine-grained permissions are DB-backed: <code>MODULES</code> (menu items) × <code>USER_RIGHTS</code> (<code>ROLE_ID, MODULE_ID, MODULE_ACTIVE, ADD/UPDATE/VIEW/DELETE_RIGHT</code>), scoped by <code>(school, role, module)</code>. <b>The exact per-role menu is tenant data, not static code</b> — the matrix below is representative of modules present in code, with CRUD columns showing where rights are enforced.</p>
+<div class="note warn"><b class="t">Enforcement location</b> Rights currently gate <b>frontend</b> menu + buttons (JSP/JS). No interceptor enforces <code>USER_RIGHTS</code> per request on the backend. Treat every "✓" below as "offered in UI" until backend enforcement is added.</div>
+<div class="tw"><table>
+<thead><tr><th>Module</th><th>Student</th><th>Parent</th><th>Teacher</th><th>Counselor</th><th>School/Admin</th><th>Auditor</th><th>Partner</th><th>Backend enforced?</th></tr></thead>
+<tbody>
+<tr><td>Dashboard overview</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td><span class="b u">session only</span></td></tr>
+<tr><td>Enrollment / Signup</td><td>✓ (self)</td><td>✓ (add child)</td><td>—</td><td>✓ (assist)</td><td>✓ (manage)</td><td>—</td><td>✓ (B2B)</td><td><span class="b u">partial</span></td></tr>
+<tr><td>Attendance</td><td>view</td><td>view</td><td>✓ CRUD</td><td>—</td><td>✓ CRUD</td><td>—</td><td>—</td><td><span class="b u">UI rights</span></td></tr>
+<tr><td>Courses / Syllabus / Tasks</td><td>view/submit</td><td>view</td><td>✓ CRUD</td><td>—</td><td>✓ CRUD</td><td>—</td><td>—</td><td><span class="b u">UI rights</span></td></tr>
+<tr><td>Marks / Assessments</td><td>view</td><td>view</td><td>✓ CRUD</td><td>—</td><td>✓ CRUD</td><td>—</td><td>—</td><td><span class="b u">UI rights</span></td></tr>
+<tr><td>Evaluations</td><td>—</td><td>—</td><td>subject</td><td>—</td><td>✓</td><td>✓ CRUD</td><td>—</td><td><span class="b u">UI rights</span></td></tr>
+<tr><td>Leads / CRM</td><td>—</td><td>—</td><td>—</td><td>✓ CRUD</td><td>✓</td><td>—</td><td>✓ (own)</td><td><span class="b u">UI rights</span></td></tr>
+<tr><td>Payments / Fees</td><td>pay</td><td>pay</td><td>comp.</td><td>view</td><td>✓ CRUD</td><td>—</td><td>✓ (school)</td><td><span class="b u">partial + email allowlist</span></td></tr>
+<tr><td>Reports / Exports</td><td>own</td><td>child</td><td>own</td><td>counselor</td><td>✓ all</td><td>eval</td><td>revenue</td><td><span class="b u">UI rights</span></td></tr>
+<tr><td>Role &amp; Module rights admin</td><td>—</td><td>—</td><td>—</td><td>—</td><td>✓ (admin)</td><td>—</td><td>—</td><td><span class="b u">session only</span></td></tr>
+</tbody></table></div>
+<p class="small">Legend statuses per cell map to: Fully supported in legacy (✓/CRUD), Needs validation (<span class="b u">UI rights</span>), Not applicable (—). "Migrated &amp; verified in Next.js" currently applies only to the Student/Parent enrollment flow (§14).</p>
+</section>
+
+<!-- ============ 9 ============ -->
+<section id="s9">
+<h2><span class="n">09</span> School-wise Functional Inventory <span class="b v">Verified</span></h2>
+<p class="lead">Legacy seed defines at least 5 schools (is-sms surfaces 2). Tenant resolution is URL path-slug only — no Host/domain routing in-repo. Per-school config lives in clean <code>SCHOOL_SETTINGS_*</code> tables; feature flags live in a <b>global <code>SETTINGS</code> table with no <code>SCHOOL_ID</code></b>.</p>
+<div class="tw"><table>
+<thead><tr><th>School</th><th>Slug</th><th>SCHOOL_ID</th><th>Currency/TZ</th><th>Domain</th><th>In is-sms?</th><th>Source</th></tr></thead>
+<tbody>
+<tr><td>International Schooling</td><td><code>international-schooling</code></td><td>1</td><td>USD $ / Singapore</td><td>internationalschooling.org</td><td>✓</td><td><code>SCHOOL_SETTINGS.sql:99</code></td></tr>
+<tr><td>Education Technologies</td><td><code>education-technologies</code></td><td>3</td><td>USD $ / Georgia</td><td>edutechgeorgia.com</td><td>—</td><td><code>SCHOOL_SETTINGS.sql:100</code></td></tr>
+<tr><td>iAGE Academy</td><td><code>iAGE-Academy</code></td><td>4</td><td>USD $ / Florida</td><td>iamglobaleducation.com</td><td>—</td><td><code>23_0_0_IS_346:69</code></td></tr>
+<tr><td>Anchored Education</td><td><code>Anchored-Education</code></td><td>5</td><td>ZAR R / South Africa</td><td>anchoreded.com</td><td>✓</td><td><code>26_5_0_IS-377:46</code></td></tr>
+<tr><td>La Senda Global Academy</td><td><code>la-senda-global-academy</code></td><td><span class="b oq">6? verify</span></td><td>— / Dubai</td><td>lasendaglobalacademy.com</td><td>—</td><td><code>54_13_0_ENROLLMENT:82</code></td></tr>
+<tr><td><span class="b oq">SCHOOL_ID 2 (unknown)</span></td><td>—</td><td>2</td><td>—</td><td>—</td><td>—</td><td>referenced, no clean row</td></tr>
+</tbody></table></div>
+<p class="small">"ABC School" from the prompt was not found as a distinct seeded tenant; the real additional tenants are Education Technologies, iAGE Academy, and La Senda. <span class="b oq">Open Question</span></p>
+
+<h3>Shared vs school-specific vs configurable vs unclear</h3>
+<div class="tw"><table>
+<thead><tr><th>Class</th><th>What</th><th>Mechanism</th></tr></thead>
+<tbody>
+<tr><td><b>Shared</b></td><td>Core business logic, endpoints, workflows</td><td>same code path for all tenants</td></tr>
+<tr><td><b>Configurable (clean)</b></td><td>Branding, theme, currency, timezone, logos, mail routing, LMS, S3, enrollment toggles, per-program labels</td><td><code>SCHOOL_SETTINGS_*</code> tables (per <code>SCHOOL_ID</code>)</td></tr>
+<tr><td><b>Global (gap)</b></td><td>Feature flags, integration toggles, secrets</td><td><code>SETTINGS</code> table — <b>no <code>SCHOOL_ID</code></b> → can't vary per tenant</td></tr>
+<tr><td><b>School-specific (resists config)</b></td><td>~30 hardcoded <code>schoolId==1/3/5</code> branches in reporting/email/evaluation/payment/signup</td><td>e.g. <code>ReportServiceImpl</code> (~14×), <code>EmailUtils</code>, <code>SeriUtil</code>, <code>WeeklyReportUtil</code></td></tr>
+<tr><td><b>Unclear</b></td><td>Host→slug routing (anchoreded.com → <code>/Anchored-Education/…</code>); La Senda &amp; SCHOOL_ID 2 identity; per-school program matrix</td><td>external infra / DB query needed</td></tr>
+</tbody></table></div>
+
+<h3>Per-school config entities <span class="b v">Verified</span></h3>
+<div class="tw"><table>
+<thead><tr><th>Entity</th><th>Table</th><th>Stores</th></tr></thead>
+<tbody>
+<tr><td><code>SchoolSettingsOffice</code></td><td><code>SCHOOL_SETTINGS_OFFICE</code></td><td>tenant identity: UUID, display name, type, <code>PARENT_SCHOOL_ID</code>, contact/whatsapp, setup-complete, <code>MODULE_PERMISSIONS</code></td></tr>
+<tr><td><code>SchoolSettingsTechnical</code></td><td><code>SCHOOL_SETTINGS_TECHNICAL</code></td><td>theme <code>PARENT_COLOR</code> JSON, login bg, currency, timezone, meeting provider, per-program signup labels, course provider, eval/payment config, email domain</td></tr>
+<tr><td><code>SchoolSettingsLinks</code></td><td><code>SCHOOL_SETTINGS_LINKS</code></td><td>logo/favicon/white/receipt/stamp URLs, social, policy URLs, chatbot url</td></tr>
+<tr><td><code>SchoolSettingsMail</code></td><td><code>SCHOOL_SETTINGS_MAILS</code></td><td>per-school email routing (hiring, signup, PPC, installment, demo, B2B, withdrawal)</td></tr>
+<tr><td><code>SchoolSettingsLms</code></td><td><code>SCHOOL_SETTINGS_LMS</code></td><td>LMS provider id, domain, SSO login urls (e.g. <code>anchoreded.agilixbuzz.com</code>)</td></tr>
+<tr><td><code>SchoolSettingsAws</code></td><td><code>SCHOOL_SETTINGS_AWS</code></td><td>per-school S3 creds (by location only), base path, primary bucket</td></tr>
+<tr><td><code>SchoolSettingsEnrollment</code></td><td><code>SCHOOL_SETTINGS_ENROLLMENT</code></td><td>enrollment flow toggles (RAS, advance payment, academic-year/system-training selection, T&amp;C modal)</td></tr>
+<tr><td>+ Meetings / Lens / AcademicYear / Admission-timezone</td><td><code>SCHOOL_SETTINGS_*</code></td><td>meeting, Lens, academic year, timezone-based admission gating</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ 10 ============ -->
+<section id="s10">
+<h2><span class="n">10</span> School-to-Module Matrix</h2>
+<div class="note warn"><b class="t">Key multi-tenant gap</b> Module/program availability per school is data-driven (<code>GRADE_LEARNING_PROGRAM_MAPPING</code> keyed by <code>(schoolId, enrollmentFor, learningProgram)</code> + <code>SchoolSettingsTechnical</code> flags/labels + per-school course-provider id). The exact per-school program matrix needs a DB query. <span class="b oq">Open Question</span></div>
+<div class="tw"><table>
+<thead><tr><th>Area</th><th>Int'l Schooling (1)</th><th>EduTech (3)</th><th>iAGE (4)</th><th>Anchored (5)</th><th>La Senda (6?)</th><th>How configured</th></tr></thead>
+<tbody>
+<tr><td>Branding/theme</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td><code>SCHOOL_SETTINGS_TECHNICAL.PARENT_COLOR</code>, Links</td></tr>
+<tr><td>Currency</td><td>USD</td><td>USD</td><td>USD</td><td>ZAR</td><td><span class="b u">?</span></td><td><code>CURRENCY_SYMBOL/ISO</code></td></tr>
+<tr><td>LMS provider</td><td>Buzz/IS-dev</td><td><span class="b u">?</span></td><td><span class="b u">?</span></td><td>anchoreded.agilixbuzz</td><td><span class="b u">?</span></td><td><code>SCHOOL_SETTINGS_LMS</code></td></tr>
+<tr><td>Enrollment programs</td><td>O/DD/G/F/A/SSP</td><td><span class="b u">subset?</span></td><td><span class="b u">subset?</span></td><td><span class="b u">subset?</span></td><td><span class="b u">subset?</span></td><td><code>GRADE_LEARNING_PROGRAM_MAPPING</code></td></tr>
+<tr><td>Payment gateways</td><td>multiple</td><td><span class="b u">?</span></td><td><span class="b u">?</span></td><td>ZAR-region (Yoco?)</td><td><span class="b u">?</span></td><td><code>PaymentGatewaySettings</code> (per school)</td></tr>
+<tr><td>Feature flags</td><td colspan="5">shared globally — <b>cannot differ per school today</b> (<code>SETTINGS</code>, no SCHOOL_ID)</td><td><code>SETTINGS</code> table</td></tr>
+<tr><td>Hardcoded special-casing</td><td>heavy (==1)</td><td>some (==3)</td><td>—</td><td>some (==5)</td><td>—</td><td>~30 code branches</td></tr>
+<tr><td>Cross-school super view</td><td>✓ (schoolId==1 returns all)</td><td>—</td><td>—</td><td>—</td><td>—</td><td><code>SchoolSettingsOfficeServiceImpl:109</code></td></tr>
+</tbody></table></div>
+<p><b>Config gaps to close in migration:</b> (1) make per-tenant feature flags possible (add <code>SCHOOL_ID</code> scoping to <code>SETTINGS</code> or a new per-school overrides table); (2) replace ~30 hardcoded <code>schoolId==N</code> branches with config; (3) confirm the host→slug routing layer; (4) tighten the silent fallback to school 1.</p>
+</section>
+
+<!-- ============ 11 ============ -->
+<section id="s11">
+<h2><span class="n">11</span> Module-wise Migration Analysis</h2>
+<div class="filter"><input type="text" placeholder="Filter modules…" oninput="filterTable('modTbl',this.value)"></div>
+<div class="tw"><table id="modTbl">
+<thead><tr><th>Module</th><th>Legacy entry</th><th>Roles</th><th>Next.js status</th><th>Gap / dependency</th><th>Priority</th></tr></thead>
+<tbody>
+<tr><td>Auth &amp; session</td><td><code>CommonController.loginUser</code>, <code>SessionUtil</code></td><td>all</td><td><span class="b v">Migrated (wrap)</span></td><td>dashboard-role SSO; cookie hardening</td><td><span class="b pr p0">P0</span></td></tr>
+<tr><td>Enrollment / Signup</td><td><code>ClientSignupStudentController</code></td><td>Student/Parent/B2B</td><td><span class="b v">Migrated</span></td><td>—</td><td><span class="b pr p1">P1</span> done</td></tr>
+<tr><td>Dashboard shell + dynamic menu</td><td><code>Dashboard.jsp</code>, <code>ModulesUtil</code></td><td>all dashboards</td><td><span class="b u">Not started</span></td><td><b>Foundation prereq</b>; <code>USER_RIGHTS</code> API</td><td><span class="b pr p0">P0</span></td></tr>
+<tr><td>Student dashboard</td><td><code>ClientDashboardStudentController</code></td><td>Student</td><td><span class="b u">Not started</span></td><td>foundation; JSON contracts</td><td><span class="b pr p1">P1</span></td></tr>
+<tr><td>Parent dashboard</td><td><code>ClientDashoboardParentController</code> + view-as-user</td><td>Parent</td><td><span class="b u">Not started</span></td><td>reuses Student</td><td><span class="b pr p1">P1</span></td></tr>
+<tr><td>Teacher</td><td><code>ClientDashboardTeacherController</code> (+comp/report/eval)</td><td>Teacher</td><td><span class="b u">Not started</span></td><td>foundation; large</td><td><span class="b pr p1">P1</span></td></tr>
+<tr><td>Counselor / Leads (CRM)</td><td><code>ClientDashboardCounselorController</code>, <code>LeadsApiController</code></td><td>Counselor/BDM</td><td><span class="b u">Not started</span></td><td>foundation; large</td><td><span class="b pr p2">P2</span></td></tr>
+<tr><td>Auditor / Evaluation</td><td><code>ClientDashboardAuditorController</code></td><td>Auditor</td><td><span class="b u">Not started</span></td><td>small, self-contained</td><td><span class="b pr p2">P2</span></td></tr>
+<tr><td>B2B Partner</td><td><code>ClientDashboardPartnerController</code></td><td>Partner</td><td><span class="b u">Not started</span></td><td>self-contained</td><td><span class="b pr p2">P2</span></td></tr>
+<tr><td>Role &amp; module rights admin</td><td><code>ClientDashboardModuleController</code></td><td>Admin/Director</td><td><span class="b u">Not started</span></td><td>needed to configure dynamic menu</td><td><span class="b pr p1">P1</span></td></tr>
+<tr><td>School / School_admin</td><td><code>ClientDashoboardSchoolController</code> (182 map)</td><td>School/Admin</td><td><span class="b u">Not started</span></td><td>largest — last</td><td><span class="b pr p2">P2</span></td></tr>
+<tr><td>Payments / Fees</td><td><code>pg/**</code>, <code>ClientCommonPaymentController</code></td><td>all</td><td><span class="b v">Return pages migrated</span></td><td>keep server-side; webhook fixes</td><td><span class="b pr p1">P1</span></td></tr>
+<tr><td>Reports / Exports</td><td><code>ReportController</code>, <code>DownloadReportController</code></td><td>Admin/School/Teacher</td><td><span class="b u">Not started</span></td><td>cross-cutting; PDF pipeline</td><td><span class="b pr p3">P3</span></td></tr>
+<tr><td>Notifications / Chat</td><td>Sqoora/IS-Chat, Firebase</td><td>all</td><td><span class="b u">Not started</span></td><td>external; link-out today</td><td><span class="b pr p3">P3</span></td></tr>
+<tr><td>Integrations (Zoom/MS Teams/LMS/CRM)</td><td><code>v1/zoom</code>,<code>msteam</code>,<code>util/canvas</code>,<code>aglixbuzz</code>,<code>bitrix</code></td><td>varies</td><td>stay backend-owned</td><td>no UI migration needed</td><td><span class="b pr p3">P3</span></td></tr>
+</tbody></table></div>
+<p class="small">Per-module acceptance criteria are defined in §23 (roadmap) and §24 (testing).</p>
+</section>
+
+<!-- ============ 12 ============ -->
+<section id="s12">
+<h2><span class="n">12</span> API Contract Inventory <span class="b v">Verified (grouped)</span></h2>
+<p class="lead">126 controllers / ~1,898 mappings. URL shape is inconsistent: <code>{schoolId}/dashboard/**</code>, <code>{schoolId}/api/v1/**</code>, <code>{UNIQUEUUID}/api/v1/**</code>, bare <code>/api/v1/**</code>, and integration-specific roots. Three response styles coexist.</p>
+<div class="tw"><table>
+<thead><tr><th>Response style</th><th>What</th><th>Count</th><th>Migration difficulty</th></tr></thead>
+<tbody>
+<tr><td>Typed JSON DTO</td><td><code>@RestController</code> → <code>ResponseEntity&lt;DTO&gt;</code></td><td>48 controllers</td><td><span class="b low">Low</span> — consume directly</td></tr>
+<tr><td>Gson-string JSON</td><td><code>@ResponseBody String</code> = <code>new Gson().toJson()</code> (DataTables <code>*-content-1</code>)</td><td>65 methods</td><td><span class="b med">Medium</span> — semi-structured</td></tr>
+<tr><td>HTML fragment</td><td>view name (no <code>@ResponseBody</code>) → JSP partial</td><td>352 <code>AJAX_PAGE*</code> / 38 controllers</td><td><span class="b high">High</span> — needs JSON contract</td></tr>
+</tbody></table></div>
+<h3>Auth on APIs <span class="b v">Verified</span></h3>
+<p>100% server-side <code>HttpSession</code> cookie. No token/bearer/Spring Security on app endpoints. Identity resolved via <code>SessionUtil</code> (<code>userMasterId</code> session attr → DB). <code>{schoolId}</code>/<code>{UNIQUEUUID}</code> path vars are routing/tenant hints, <b>not</b> auth. Some AJAX dashboard endpoints trust <code>userId</code>/<code>schoolId</code> from the request body — IDOR risk (§18).</p>
+<h3>Representative groups</h3>
+<div class="tw"><table>
+<thead><tr><th>Group</th><th>Controllers</th><th>Style</th></tr></thead>
+<tbody>
+<tr><td>Auth/Login</td><td><code>CommonController</code>, <code>ClientCommonController</code></td><td>Base64 JSON / views</td></tr>
+<tr><td>Enrollment</td><td><code>ClientSignupStudentController</code>, <code>SignupStudentUtil</code></td><td>payload JSON / views</td></tr>
+<tr><td>Leads/CRM</td><td><code>LeadsApiController</code> (81)</td><td>typed JSON</td></tr>
+<tr><td>Dashboards</td><td><code>ClientDashboard*Controller</code></td><td>views + fragments + Gson JSON</td></tr>
+<tr><td>Payments</td><td><code>pg/**</code>, <code>ClientCommonPaymentController</code>, <code>AfsPaymentApiController</code></td><td>redirect + webhooks</td></tr>
+<tr><td>Master/Search</td><td><code>MastersController</code>, <code>CommonController</code></td><td>typed JSON</td></tr>
+<tr><td>Upload</td><td><code>ClientUploadController</code></td><td>multipart → JSON</td></tr>
+<tr><td>Webhooks (public)</td><td><code>ZoomEventsController</code>, <code>webhookController</code>, WATI/CallHippo/Ziwo/Feedback</td><td>signature/token</td></tr>
+<tr><td>Crons (IP-guarded)</td><td><code>CommonSchedularController</code> (126)</td><td><code>CronGuardInterceptor</code></td></tr>
+</tbody></table></div>
+<figure>
+<svg viewBox="0 0 900 230" role="img" aria-label="API request sequence">
+ <g color="var(--mut)" font-size="11">
+  <text class="svgtxt b" x="70" y="24">Browser</text>
+  <text class="svgtxt b" x="250" y="24">Next.js BFF (server action)</text>
+  <text class="svgtxt b" x="500" y="24">Reverse proxy</text>
+  <text class="svgtxt b" x="700" y="24">Java @RestController</text>
+  <line class="svgedge" x1="90" y1="34" x2="90" y2="210"/>
+  <line class="svgedge" x1="300" y1="34" x2="300" y2="210"/>
+  <line class="svgedge" x1="540" y1="34" x2="540" y2="210"/>
+  <line class="svgedge" x1="760" y1="34" x2="760" y2="210"/>
+  <line class="svgedge" x1="90" y1="60" x2="300" y2="60" marker-end="url(#arrow)"/>
+  <text class="svglbl" x="110" y="54">call(dto)</text>
+  <line class="svgedge" x1="300" y1="92" x2="760" y2="92" marker-end="url(#arrow)"/>
+  <text class="svglbl" x="320" y="86">POST {schoolUUID}/api/… {payload: encode(dto)} + cookie</text>
+  <line class="svgedge dash" x1="760" y1="130" x2="300" y2="130" marker-end="url(#arrow)"/>
+  <text class="svglbl" x="320" y="124">JSON (status "1"=ok / "3"=session-out)</text>
+  <line class="svgedge dash" x1="300" y1="168" x2="90" y2="168" marker-end="url(#arrow)"/>
+  <text class="svglbl" x="110" y="162">parsed result (or null)</text>
+  <text class="svglbl" x="110" y="200">TanStack Query caches by ["thing", ...ids]</text>
+ </g>
+</svg>
+<figcaption>Verified request/response path for a migrated endpoint.</figcaption>
+</figure>
+</section>
+
+<!-- ============ 13 ============ -->
+<section id="s13">
+<h2><span class="n">13</span> Authentication &amp; Session Architecture <span class="b v">Verified</span></h2>
+<div class="tw"><table>
+<thead><tr><th>Property</th><th>Legacy (verified)</th></tr></thead>
+<tbody>
+<tr><td>Framework</td><td>Custom — <b>no Spring Security</b></td></tr>
+<tr><td>Login API</td><td><code>POST /api/v1/common/login</code> (<code>CommonController.loginUser</code>); body = Base64 "payload" (<code>AesUtil.decode</code> = Base64+URL-decode, not AES)</td></tr>
+<tr><td>Password check</td><td><b>unsalted MD5</b> (<code>SeriUtil.getMd5Hex</code>); also stores a <b>reversibly-encrypted plaintext</b> copy (<code>setEncryptedPassword</code>) <span class="b crit">Critical</span></td></tr>
+<tr><td>Session store</td><td>Redis indexed HttpSession, 60m; cookie <code>ROUTEID</code> (prod)/<code>JSESSIONID</code> (dev); <b>no Secure/HttpOnly/SameSite</b> configured</td></tr>
+<tr><td>Enforcement</td><td>per-method <code>sessionUtil.getUser()==null</code> → redirect/session-out (586 call sites); no auth filter/interceptor</td></tr>
+<tr><td>Logout</td><td><code>CommonUtil.logout</code> writes history only — <b>no <code>session.invalidate()</code></b> found</td></tr>
+<tr><td>CSRF / CORS</td><td>no CSRF; <code>@CrossOrigin(origins="*")</code> on auth-bearing controllers</td></tr>
+<tr><td>MFA / remember-me</td><td>none (OTP only for withdrawal flow)</td></tr>
+</tbody></table></div>
+<h3>Target auth architecture <span class="b p">Proposed (as built for signup)</span></h3>
+<ul>
+<li>next-auth v5 <b>Credentials provider → Java login</b> (source of truth) + <code>sso-token</code> provider for legacy <code>Login.jsp</code> handoff. JWT session mirrors role/school/user fields.</li>
+<li>Java Redis session cookie stays authoritative; Next.js is a <b>same-origin BFF</b> forwarding the cookie. For dashboard roles, extend the SSO handoff + add <code>role/roleId/parentUserRole</code> to the JWT.</li>
+<li>Backend authorization must become authoritative (central interceptor enforcing role + <code>USER_RIGHTS</code>); Next.js <code>PermissionGate</code> is convenience only.</li>
+</ul>
+<figure>
+<svg viewBox="0 0 900 250" role="img" aria-label="Auth and session flow">
+ <g color="var(--mut)" font-size="11">
+  <text class="svgtxt b" x="70" y="22">User</text>
+  <text class="svgtxt b" x="250" y="22">Next.js (auth.js)</text>
+  <text class="svgtxt b" x="500" y="22">Java login API</text>
+  <text class="svgtxt b" x="720" y="22">Redis</text>
+  <line class="svgedge" x1="85" y1="30" x2="85" y2="235"/>
+  <line class="svgedge" x1="300" y1="30" x2="300" y2="235"/>
+  <line class="svgedge" x1="540" y1="30" x2="540" y2="235"/>
+  <line class="svgedge" x1="760" y1="30" x2="760" y2="235"/>
+  <line class="svgedge" x1="85" y1="52" x2="300" y2="52" marker-end="url(#arrow)"/>
+  <text class="svglbl" x="100" y="46">email/password/captcha</text>
+  <line class="svgedge" x1="300" y1="82" x2="540" y2="82" marker-end="url(#arrow)"/>
+  <text class="svglbl" x="315" y="76">POST /api/v1/common/login + cookie (captcha session)</text>
+  <line class="svgedge" x1="540" y1="110" x2="760" y2="110" marker-end="url(#arrow)"/>
+  <text class="svglbl" x="555" y="104">create HttpSession</text>
+  <line class="svgedge dash" x1="540" y1="138" x2="300" y2="138" marker-end="url(#arrow)"/>
+  <text class="svglbl" x="315" y="132">{uniqueId,userId,redirectUrl,...} + Set-Cookie</text>
+  <line class="svgedge dash" x1="300" y1="166" x2="85" y2="166" marker-end="url(#arrow)"/>
+  <text class="svglbl" x="100" y="160">next-auth JWT session (mirror)</text>
+  <rect class="svgbox bad" x="300" y="186" width="470" height="40" rx="8"/>
+  <text class="svgtxt s" x="315" y="210">SSO handoff variant: Login.jsp → app/api/sso → signIn('sso-token') → exchange one-time token</text>
+ </g>
+</svg>
+<figcaption>Auth = NextAuth wraps the existing Java session; the Java cookie remains the real session.</figcaption>
+</figure>
+</section>
+
+<!-- ============ 14 ============ -->
+<section id="s14">
+<h2><span class="n">14</span> Enrollment Workflow Deep Dive <span class="b v">Verified</span></h2>
+<p class="lead">The one fully-migrated flow. Routes: <code>/{school}/enrollment/{program}/step/{slug}</code>; steps source-of-truth <code>utils/wizardSteps.js</code> (1=student-details, 2=parent-details, 3=course-selection, 4=review-and-payment). Modes: online/offline (<code>signupType</code>) and B2B (partner role) via <code>SignupStudentUtil</code>.</p>
+<figure>
+<svg viewBox="0 0 900 470" role="img" aria-label="Enrollment end-to-end flow">
+ <g color="var(--mut)">
+  <rect class="svgbox acc" x="320" y="12" width="260" height="46" rx="10"/>
+  <text class="svgtxt b" x="336" y="32">/{school}/enrollment/{program}</text>
+  <text class="svgtxt s" x="336" y="48">AccountCreationForm (online/offline/B2B)</text>
+
+  <rect class="svgbox" x="320" y="78" width="260" height="42" rx="10"/>
+  <text class="svgtxt s" x="336" y="104">POST student/{enrollmentFor}/{program} → create account</text>
+
+  <rect class="svgbox p" x="300" y="138" width="300" height="48" rx="10"/>
+  <text class="svgtxt b" x="316" y="158">useEnrollmentContext</text>
+  <text class="svgtxt s" x="316" y="176">GET api/v1/student/enrollment/process/{uuid}</text>
+
+  <path class="svgedge" d="M450 206 L450 226" marker-end="url(#arrow)"/>
+  <polygon class="svgbox" points="450,228 540,268 450,308 360,268"/>
+  <text class="svgtxt b" x="415" y="272">resume?</text>
+  <text class="svgtxt s" x="405" y="288">signupPage</text>
+
+  <rect class="svgbox v" x="40" y="330" width="180" height="44" rx="10"/>
+  <text class="svgtxt b" x="56" y="350">1 student-details</text>
+  <text class="svgtxt s" x="56" y="366">save-student-details</text>
+  <rect class="svgbox v" x="240" y="330" width="170" height="44" rx="10"/>
+  <text class="svgtxt b" x="256" y="350">2 parent-details</text>
+  <text class="svgtxt s" x="256" y="366">save-parent-details</text>
+  <rect class="svgbox v" x="430" y="330" width="180" height="44" rx="10"/>
+  <text class="svgtxt b" x="446" y="350">3 course-selection</text>
+  <text class="svgtxt s" x="446" y="366">save selection</text>
+  <rect class="svgbox v" x="630" y="330" width="230" height="44" rx="10"/>
+  <text class="svgtxt b" x="646" y="350">4 review-and-payment</text>
+  <text class="svgtxt s" x="646" y="366">launch-payment-gateway</text>
+
+  <line class="svgedge" x1="400" y1="300" x2="130" y2="330" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="430" y1="300" x2="325" y2="330" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="470" y1="300" x2="520" y2="330" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="500" y1="300" x2="740" y2="330" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="220" y1="352" x2="240" y2="352" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="410" y1="352" x2="430" y2="352" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="610" y1="352" x2="630" y2="352" marker-end="url(#arrow)"/>
+
+  <rect class="svgbox" x="630" y="398" width="230" height="40" rx="10"/>
+  <text class="svgtxt s" x="646" y="422">→ payment-response-success → Dashboard</text>
+  <line class="svgedge" x1="745" y1="374" x2="745" y2="398" marker-end="url(#arrow)"/>
+  <path class="svgedge dash" d="M745 398 C 620 470, 470 420, 450 374" marker-end="url(#arrow)"/>
+  <text class="svglbl" x="300" y="430">3-min poll: enrollment-stage-status (review step only)</text>
+ </g>
+</svg>
+<figcaption>Verified end-to-end enrollment flow (matches the reference diagram). Resume is driven by backend <code>nextSessionStage</code>/<code>signupPage</code> on full page load only (guarded by <code>window.__wizardResumeChecked</code>).</figcaption>
+</figure>
+
+<h3>State transitions &amp; failure paths</h3>
+<div class="tw"><table>
+<thead><tr><th>Event</th><th>Behaviour</th><th>Evidence</th></tr></thead>
+<tbody>
+<tr><td>Refresh / typed URL / reopened tab</td><td>reads <code>signupPage</code>, <code>router.replace</code> to correct step</td><td><code>useWizardResume.js</code></td></tr>
+<tr><td>Step ahead of marker</td><td>pulled back to marker; behind → resumes at last detail step (min(marker,3))</td><td><code>resolveResumeStep</code></td></tr>
+<tr><td>Custom payment enabled</td><td>forced to step 4</td><td><code>useWizardResume.js</code></td></tr>
+<tr><td>Another browser completes enrollment</td><td>cross-tab completion poller (3-min) redirects</td><td><code>useSignupStageStatusPoll</code></td></tr>
+<tr><td>Session expired</td><td><code>proxy.js</code> → Java login; client <code>unauthenticated</code> → "/"</td><td><code>proxy.js</code></td></tr>
+<tr><td>Session-out from API</td><td>status <code>"3"</code> handled</td><td><code>auth.js</code>, services</td></tr>
+<tr><td>Payment success/failure</td><td>server re-verifies before trusting; return pages migrated</td><td>payment-response pages</td></tr>
+<tr><td>Back after logout</td><td><code>no-store</code> cache header re-hits <code>proxy.js</code></td><td><code>next.config.mjs</code> headers</td></tr>
+</tbody></table></div>
+<div class="note warn"><b class="t">Race-condition watch items</b> Duplicate payment attempts, multi-tab concurrent edits, and redirect-after-completed-in-another-browser are handled via the stage-status poll + server re-verification, but these remain the highest-value regression tests for any future module that saves money or stage state (§24).</div>
+<details><summary>Mermaid source — enrollment flow (for offline re-render)</summary>
+<pre>flowchart TD
+A["/{school}/enrollment/{program}\nAccountCreationForm"] --&gt;|POST student/{enrollmentFor}/{program}| ACC[create account]
+ACC --&gt;|ENROLLMENT_VIA_NEXTJS| CTX[useEnrollmentContext\nGET student/enrollment/process/{uuid}]
+CTX --&gt; R{resume? signupPage}
+R --&gt;|1| S1[student-details\nsave-student-details]
+R --&gt;|2| S2[parent-details\nsave-parent-details]
+R --&gt;|3| S3[course-selection]
+R --&gt;|4| S4[review-and-payment]
+S1 --&gt; S2 --&gt; S3 --&gt; S4
+S4 -.3-min poll.-&gt; P[enrollment-stage-status]
+S4 --&gt;|launch-payment-gateway| PAY[Stripe/Airwallex → response-success]
+PAY --&gt; DASH[Student dashboard]</pre></details>
+</section>
+
+<!-- ============ 15 ============ -->
+<section id="s15">
+<h2><span class="n">15</span> Payments &amp; Financial Workflows <span class="b v">Verified</span></h2>
+<p>9 gateways under <code>v1/pg/**</code>: Stripe, Airwallex, AFS, PayPal, PayTab, SmoovPay, Yoco, Wells Fargo, Western Union. Secrets come per-school from DB (<code>PaymentGatewaySettings</code>) — <b>never sent to the browser</b> (browser gets only a <code>redirectUrl</code>). Server re-verifies status before trusting "paid".</p>
+<figure>
+<svg viewBox="0 0 900 220" role="img" aria-label="Payment flow">
+ <g color="var(--mut)" font-size="11">
+  <rect class="svgbox" x="20" y="30" width="150" height="44" rx="10"/><text class="svgtxt b" x="36" y="52">Review step</text><text class="svgtxt s" x="36" y="68">launch gateway</text>
+  <rect class="svgbox acc" x="210" y="30" width="190" height="44" rx="10"/><text class="svgtxt b" x="226" y="52">Java PG controller</text><text class="svgtxt s" x="226" y="68">reads secret from DB</text>
+  <rect class="svgbox" x="440" y="30" width="170" height="44" rx="10"/><text class="svgtxt b" x="456" y="52">Gateway hosted page</text>
+  <rect class="svgbox v" x="650" y="30" width="230" height="44" rx="10"/><text class="svgtxt b" x="666" y="52">payment-response (Next.js)</text><text class="svgtxt s" x="666" y="68">server re-verifies</text>
+  <line class="svgedge" x1="170" y1="52" x2="210" y2="52" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="400" y1="52" x2="440" y2="52" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="610" y1="52" x2="650" y2="52" marker-end="url(#arrow)"/>
+  <rect class="svgbox bad" x="210" y="110" width="400" height="44" rx="10"/>
+  <text class="svgtxt b" x="226" y="132">Webhook → Java (signature verified)</text>
+  <text class="svgtxt s" x="226" y="148">⚠ Airwallex: no signature check · Stripe: unverified fallback · hardcoded schoolId=1</text>
+  <line class="svgedge dash" x1="520" y1="74" x2="410" y2="110" marker-end="url(#arrow)"/>
+ </g>
+</svg>
+<figcaption>Payment initiation/verification/webhooks stay on Java. Next.js only opens the hosted redirect and renders return pages.</figcaption>
+</figure>
+<div class="tw"><table>
+<thead><tr><th>Finding</th><th>Severity</th><th>Evidence</th></tr></thead>
+<tbody>
+<tr><td>Airwallex webhook has <b>no signature verification</b> (and reads Stripe settings row)</td><td><span class="b high">High</span></td><td><code>pg/airwallex/controller/AirwallexWebhook.java</code></td></tr>
+<tr><td>Stripe webhook falls back to <b>unverified parse</b> if endpointSecret null; both hardcode <code>schoolId=1</code></td><td><span class="b high">High</span></td><td><code>StripeWebhook.java</code></td></tr>
+<tr><td>Wells Fargo collects raw PAN/CVV in-browser (PCI scope)</td><td><span class="b high">High</span></td><td><code>commonPaymentGateway.js</code></td></tr>
+</tbody></table></div>
+<div class="note bad"><b class="t">Migration rule</b> Never move gateway secrets, initiation, verification, or webhook handling into Next.js browser code. The <code>is-sms</code> payment pages already follow this (server re-verification). Fix the webhook signature gaps as part of payment-phase work.</div>
+</section>
+
+<!-- ============ 16 ============ -->
+<section id="s16">
+<h2><span class="n">16</span> External Integrations <span class="b v">Verified</span></h2>
+<figure>
+<svg viewBox="0 0 900 230" role="img" aria-label="External integrations hub">
+ <g color="var(--mut)" font-size="11">
+  <rect class="svgbox acc" x="360" y="92" width="180" height="46" rx="12"/><text class="svgtxt b" x="392" y="120">Java backend</text>
+  <g>
+   <rect class="svgbox" x="20" y="20" width="150" height="34" rx="8"/><text class="svgtxt s" x="32" y="42">Stripe/PayPal/AFS…</text>
+   <rect class="svgbox" x="190" y="12" width="120" height="34" rx="8"/><text class="svgtxt s" x="202" y="34">AWS S3</text>
+   <rect class="svgbox" x="330" y="8" width="150" height="34" rx="8"/><text class="svgtxt s" x="342" y="30">SendGrid/SES/Brevo</text>
+   <rect class="svgbox" x="520" y="12" width="120" height="34" rx="8"/><text class="svgtxt s" x="532" y="34">Firebase</text>
+   <rect class="svgbox" x="700" y="20" width="180" height="34" rx="8"/><text class="svgtxt s" x="712" y="42">Zoom/MS Teams/GoTo</text>
+   <rect class="svgbox" x="20" y="180" width="170" height="34" rx="8"/><text class="svgtxt s" x="32" y="202">Canvas/Edmentum/Buzz</text>
+   <rect class="svgbox" x="210" y="186" width="120" height="34" rx="8"/><text class="svgtxt s" x="222" y="208">Bitrix24 CRM</text>
+   <rect class="svgbox" x="350" y="188" width="170" height="34" rx="8"/><text class="svgtxt s" x="362" y="210">WATI/Gupshup (WhatsApp)</text>
+   <rect class="svgbox" x="540" y="186" width="160" height="34" rx="8"/><text class="svgtxt s" x="552" y="208">Zadarma/CallHippo/Ziwo</text>
+   <rect class="svgbox" x="720" y="180" width="160" height="34" rx="8"/><text class="svgtxt s" x="732" y="202">OpenAI · IS-Chat (Sqoora)</text>
+  </g>
+  <line class="svgedge" x1="450" y1="92" x2="95" y2="54" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="450" y1="92" x2="250" y2="46" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="450" y1="92" x2="405" y2="42" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="460" y1="92" x2="580" y2="46" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="520" y1="100" x2="790" y2="54" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="440" y1="138" x2="105" y2="180" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="450" y1="138" x2="270" y2="186" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="460" y1="138" x2="435" y2="188" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="500" y1="138" x2="620" y2="186" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="520" y1="130" x2="800" y2="180" marker-end="url(#arrow)"/>
+ </g>
+</svg>
+<figcaption>All third-party integrations are server-side and should remain backend-owned. Chat (IS-Chat/Sqoora) is link-out with a <code>uuid</code> query param today.</figcaption>
+</figure>
+<p><b>Migration implication:</b> No integration needs a Next.js rewrite — they stay on Java. Next.js only renders UI and links out (chat) or opens redirects (payments). Credentials for all of these live server-side (many in the global <code>SETTINGS</code> table or <code>SCHOOL_SETTINGS_AWS</code>/<code>_MAILS</code>/<code>_LMS</code>).</p>
+</section>
+
+<!-- ============ 17 ============ -->
+<section id="s17">
+<h2><span class="n">17</span> Database &amp; Data-Access Architecture <span class="b v">Verified</span></h2>
+<ul>
+<li>Single shared MariaDB; multi-tenancy by <code>SCHOOL_ID</code> columns. Read/write replica split via <code>RoutingDataSource</code> (by transaction read-only state).</li>
+<li>Per-school config in <code>SCHOOL_SETTINGS_*</code> tables (clean). Global config/flags/secrets in <code>SETTINGS</code> (no <code>SCHOOL_ID</code>).</li>
+<li>Program availability via <code>GRADE_LEARNING_PROGRAM_MAPPING</code> (per school/program/grade).</li>
+<li>JPA/Hibernate repositories + some raw native SQL DAOs (attendance, roster) — these must each carry a <code>SCHOOL_ID</code> predicate.</li>
+</ul>
+<div class="note bad"><b class="t">Data-isolation risks <span class="b high">High</span></b>
+<ul style="margin-bottom:0">
+<li>Global <code>SETTINGS</code> (no tenant) → flags/secrets shared across all schools.</li>
+<li>Silent fallback: unknown/empty slug resolves to <code>international-schooling</code>/<code>schoolId=1</code> (<code>SchoolSettingsOfficeServiceImpl:62-66</code>).</li>
+<li>Cross-school aggregate reads when <code>schoolId==1</code> (<code>:109</code>) — IS acts as super-tenant; verify every caller is authz-gated.</li>
+<li>Raw concatenated SQL in some DAOs — dedicated query-level isolation review needed (not exhaustively audited).</li>
+</ul></div>
+</section>
+
+<!-- ============ 18 ============ -->
+<section id="s18">
+<h2><span class="n">18</span> Security Findings &amp; Remediation <span class="b v">Verified</span></h2>
+<div class="filter"><input type="text" placeholder="Filter findings…" oninput="filterTable('secTbl',this.value)"></div>
+<div class="tw"><table id="secTbl">
+<thead><tr><th>Finding</th><th>Sev</th><th>Evidence</th><th>Remediation</th><th>Phase</th></tr></thead>
+<tbody>
+<tr><td>Secrets committed to git (all <code>application-*.yml</code>, <code>.env.*</code>, 3 Firebase JSONs, <code>private.key</code>, keystores)</td><td><span class="b crit">Critical</span></td><td>repo (values redacted here)</td><td>rotate all; move to secret manager; purge history</td><td>P0</td></tr>
+<tr><td>Hardcoded API keys in source (OpenAI, WATI JWT, Bitrix token)</td><td><span class="b crit">Critical</span></td><td><code>AiUtil</code>, <code>CommunicationManagerImpl</code>, <code>DashboardBitrix24Util</code></td><td>rotate + externalize</td><td>P0</td></tr>
+<tr><td>Unsalted MD5 passwords + reversible plaintext store</td><td><span class="b crit">Critical</span></td><td><code>CommonUtil.getLogin</code>, <code>setEncryptedPassword</code></td><td>bcrypt/argon2 on next login; drop reversible copy</td><td>P1</td></tr>
+<tr><td>Hardcoded AES key/IV; client-side crypto exposes PASSPHRASE/SALT/IV</td><td><span class="b high">High</span></td><td><code>ApplicationSecurity</code>, <code>AesUtil.getSecureToken</code></td><td>server-side crypto, rotated keys</td><td>P1</td></tr>
+<tr><td>Authorization only frontend-enforced; dead backend guards</td><td><span class="b high">High</span></td><td>§11</td><td>central backend authz interceptor</td><td>P1</td></tr>
+<tr><td>Global <code>SETTINGS</code> no tenant; silent school-1 fallback; cross-school reads</td><td><span class="b high">High</span></td><td><code>SchoolSettingsOfficeServiceImpl</code></td><td>per-tenant config + strict slug resolution</td><td>P1</td></tr>
+<tr><td><code>DATABASE_NAME</code>, <code>SESSION_ID</code> leaked to browser JS</td><td><span class="b high">High</span></td><td><code>CommonCustomScript.jsp</code>, <code>BaseController</code></td><td>remove from client</td><td>P1</td></tr>
+<tr><td>Body-trusted <code>userId</code>/<code>schoolId</code> on AJAX endpoints (IDOR)</td><td><span class="b high">High</span></td><td>dashboard controllers</td><td>derive identity from session server-side</td><td>P1</td></tr>
+<tr><td>No CSRF; <code>@CrossOrigin(origins="*")</code> on auth controllers</td><td><span class="b med">Medium</span></td><td>controllers</td><td>CSRF/SameSite; scope CORS</td><td>P1</td></tr>
+<tr><td>Session cookie not hardened; logout no invalidate</td><td><span class="b med">Medium</span></td><td>yml, <code>CommonUtil.logout</code></td><td>Secure/HttpOnly/SameSite; real logout</td><td>P1</td></tr>
+<tr><td>Payment webhook signature gaps (Airwallex/Stripe)</td><td><span class="b high">High</span></td><td>§15</td><td>enforce signatures; multi-tenant routing</td><td>P2</td></tr>
+<tr><td>S3 uploads <code>PublicRead</code></td><td><span class="b med">Medium</span></td><td><code>AttachmentUtils</code></td><td>private ACL + signed URLs</td><td>P2</td></tr>
+</tbody></table></div>
+<div class="note bad"><b class="t">Do not reproduce secrets</b> This report references secret-bearing files by path only; no key/password/token values are included.</div>
+</section>
+
+<!-- ============ 19 ============ -->
+<section id="s19">
+<h2><span class="n">19</span> Performance &amp; Operational Concerns</h2>
+<div class="tw"><table>
+<thead><tr><th>Concern</th><th>Detail</th><th>Next.js opportunity</th></tr></thead>
+<tbody>
+<tr><td>No bundler in legacy</td><td>~25 CDN libs + ~20 app JS on every dashboard page; render-blocking <code>&lt;head&gt;</code> scripts</td><td>per-route code-splitting, lazy widgets</td></tr>
+<tr><td>Duplicate libs</td><td>3 date libs (moment+moment-timezone+dayjs), multiple jQuery/Bootstrap versions, 2 rich-text editors</td><td>single dependency set</td></tr>
+<tr><td>Theme FOUC</td><td>jQuery injects <code>&lt;style&gt;</code> after load</td><td>SSR CSS variables (no FOUC)</td></tr>
+<tr><td>Polling load</td><td>enrollment-stage-status 3-min poll (verified interval)</td><td>keep bounded; terminate on completion</td></tr>
+<tr><td>Caching of authed responses</td><td>enrollment pages set <code>no-store</code> (correct)</td><td>maintain per-route cache headers</td></tr>
+<tr><td>Observability</td><td>SMS error logger hooks jQuery AJAX; <code>/actuator/health</code> used by pipeline</td><td>structured client + server logging</td></tr>
+<tr><td>Deploy</td><td>3 JVMs + sticky <code>ROUTEID</code>; shared Redis session</td><td>Next.js deploys independently behind same proxy</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ 20 ============ -->
+<section id="s20">
+<h2><span class="n">20</span> Proposed Target Architecture <span class="b p">Proposed</span></h2>
+<figure>
+<svg viewBox="0 0 900 360" role="img" aria-label="Target architecture">
+ <g color="var(--mut)">
+  <rect class="svgbox acc" x="20" y="16" width="860" height="40" rx="10"/>
+  <text class="svgtxt b" x="36" y="40">Reverse proxy (one parent domain, shared Redis session cookie, host→slug routing)</text>
+
+  <rect class="svgbox p" x="20" y="78" width="420" height="150" rx="12"/>
+  <text class="svgtxt b" x="36" y="100">Next.js (is-sms) — BFF + UI</text>
+  <text class="svgtxt s" x="36" y="120">app/[school]/{module}/… route groups</text>
+  <text class="svgtxt s" x="36" y="138">proxy.js guard · auth.js (JWT mirror)</text>
+  <text class="svgtxt s" x="36" y="156">DashboardShell + dynamic menu (USER_RIGHTS)</text>
+  <text class="svgtxt s" x="36" y="174">PermissionGate (UI) · TanStack Query</text>
+  <text class="svgtxt s" x="36" y="192">services/*Api.js server actions → Java</text>
+  <text class="svgtxt s" x="36" y="210">per-module [[&lt;MODULE&gt;_VIA_NEXTJS]] toggle</text>
+
+  <rect class="svgbox u" x="460" y="78" width="420" height="150" rx="12"/>
+  <text class="svgtxt b" x="476" y="100">Java backend (mostly unchanged)</text>
+  <text class="svgtxt s" x="476" y="120">existing APIs + business logic</text>
+  <text class="svgtxt s" x="476" y="138">NEW: central authz interceptor (role + USER_RIGHTS)</text>
+  <text class="svgtxt s" x="476" y="156">NEW: JSON contracts per migrated module</text>
+  <text class="svgtxt s" x="476" y="174">NEW: per-tenant config (SETTINGS + SCHOOL_ID)</text>
+  <text class="svgtxt s" x="476" y="192">payments/webhooks/integrations stay here</text>
+  <text class="svgtxt s" x="476" y="210">Redis session authoritative</text>
+
+  <rect class="svgbox" x="20" y="250" width="270" height="44" rx="10"/><text class="svgtxt b" x="36" y="272">Legacy JSP app</text><text class="svgtxt s" x="36" y="288">serves not-yet-migrated modules</text>
+  <rect class="svgbox v" x="310" y="250" width="270" height="44" rx="10"/><text class="svgtxt b" x="326" y="272">MariaDB (shared + replica)</text>
+  <rect class="svgbox" x="600" y="250" width="280" height="44" rx="10"/><text class="svgtxt b" x="616" y="272">Redis · S3 · integrations</text>
+
+  <line class="svgedge" x1="230" y1="56" x2="230" y2="78" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="650" y1="56" x2="650" y2="78" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="440" y1="150" x2="460" y2="150" marker-end="url(#arrow)"/>
+  <line class="svgedge dash" x1="230" y1="228" x2="230" y2="250" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="670" y1="228" x2="450" y2="250" marker-end="url(#arrow)"/>
+ </g>
+</svg>
+<figcaption>Proposed target: Next.js BFF + UI in front of a mostly-unchanged Java backend; JSP coexists per module; backend gains central authz + JSON contracts + per-tenant config.</figcaption>
+</figure>
+<p><b>Retain:</b> the proven <code>is-sms</code> scaffold (auth.js, proxy.js, backendOrigin, payloadEncoding, QueryProvider, components/ui, theme). <b>Add:</b> dashboard shell, dynamic menu, PermissionGate, dashboard-role SSO. <b>Change on backend:</b> central authz, per-module JSON contracts, per-tenant config. <b>Do not</b> redesign the DB or rewrite business logic.</p>
+</section>
+
+<!-- ============ 21 ============ -->
+<section id="s21">
+<h2><span class="n">21</span> Proposed Next.js Directory Structure <span class="b p">Proposed</span></h2>
+<p class="small">Existing = already in repo; <span class="b p">Proposed</span> = to add per module (Add-Another-Student is the canonical clone example).</p>
+<details open><summary>Directory tree</summary>
+<pre>is-sms/
+  auth.js                      <span class="small">// Existing — extend sso-token for dashboard roles</span>
+  proxy.js                     <span class="small">// Existing — add each module's matcher</span>
+  next.config.mjs              <span class="small">// Existing</span>
+  app/
+    [school]/
+      enrollment/...           <span class="small">// Existing (migrated)</span>
+      add-enrollment/...       <span class="small">// Existing (migrated)</span>
+      (dashboard)/             <span class="b p">Proposed</span> <span class="small">// role route group + DashboardShell layout</span>
+        student/**             <span class="b p">Proposed</span>
+        parent/**              <span class="b p">Proposed</span>
+        teacher/**             <span class="b p">Proposed</span>
+        counselor/**           <span class="b p">Proposed</span>
+        auditor/**             <span class="b p">Proposed</span>
+        partner/**             <span class="b p">Proposed</span>
+        admin/**               <span class="b p">Proposed</span>
+        school/**              <span class="b p">Proposed</span>
+    api/auth, api/sso          <span class="small">// Existing — extend sso branches</span>
+  components/
+    ui/ common/ providers/     <span class="small">// Existing — reuse</span>
+    dashboard/                 <span class="b p">Proposed</span> <span class="small">// Shell, Sidebar(dynamic), PermissionGate, DataTable</span>
+    {module}/                  <span class="b p">Proposed</span>
+  hooks/
+    useEnrollmentContext.js    <span class="small">// Existing (clone per module)</span>
+    useDashboardContext.js     <span class="b p">Proposed</span>
+    {module}/**                <span class="b p">Proposed</span>
+  services/
+    *Api.js                    <span class="small">// Existing (reuse generic) + {module}BackendApi.js</span> <span class="b p">Proposed</span>
+  utils/
+    backendOrigin, payloadEncoding, cookieDomain, authentication, schoolSettings  <span class="small">// Existing — reuse</span>
+    {module}Steps.js, {module}Storage.js  <span class="b p">Proposed</span>
+    moduleRights.js            <span class="b p">Proposed</span> <span class="small">// USER_RIGHTS → PermissionGate</span>
+  constant/
+    SchoolConstants, LearningPrograms, UatBackendUrls  <span class="small">// Existing</span>
+    RoleRoutes.js              <span class="b p">Proposed</span> <span class="small">// role → route (mirrors SingleSignOnUtil)</span></pre>
+</details>
+<h4>Per-module recipe <span class="b p">Proposed</span> (verified against the signup scaffold)</h4>
+<ol>
+<li>Routes: <code>app/[school]/(dashboard)/{module}/…</code> — <code>page.jsx</code> (server) + <code>{X}Page.jsx</code>/<code>{X}Step.jsx</code> (client) + components.</li>
+<li>Add matcher to <code>proxy.js</code>; add <code>{module}Steps.js</code>/route-map.</li>
+<li>Context hook cloning <code>useEnrollmentContext</code>; mount in the module chrome.</li>
+<li><code>services/{module}BackendApi.js</code> (<code>"use server"</code>): <code>backendUrl</code>/<code>parseJsonResponse</code>/<code>postPayload</code>, body <code>{payload: encodePayload(dto)}</code>, identity via <code>buildAuthenticatedRequest</code>.</li>
+<li>Data hooks: TanStack <code>useQuery/useMutation</code>, <code>queryKey ["thing",...ids]</code>, <code>enabled</code> gating.</li>
+<li>UI from <code>components/ui</code>+<code>common</code>; theme classes, <code>text-black</code>; no custom CSS.</li>
+<li>Backend: add <code>&lt;MODULE&gt;_VIA_NEXTJS</code> flag + redirect branch.</li>
+</ol>
+</section>
+
+<!-- ============ 22 ============ -->
+<section id="s22">
+<h2><span class="n">22</span> Migration Dependency Graph</h2>
+<figure>
+<svg viewBox="0 0 900 340" role="img" aria-label="Phase dependency graph">
+ <g color="var(--mut)" font-size="11">
+  <rect class="svgbox bad" x="360" y="12" width="180" height="40" rx="10"/><text class="svgtxt b" x="376" y="36">P0 Security + Secrets</text>
+  <rect class="svgbox acc" x="360" y="74" width="180" height="40" rx="10"/><text class="svgtxt b" x="376" y="98">P3 Dashboard Foundation</text>
+  <rect class="svgbox v" x="40" y="140" width="150" height="38" rx="10"/><text class="svgtxt s" x="52" y="163">Signup (done)</text>
+  <rect class="svgbox p" x="210" y="140" width="150" height="38" rx="10"/><text class="svgtxt s" x="222" y="163">Student dashboard</text>
+  <rect class="svgbox p" x="380" y="140" width="130" height="38" rx="10"/><text class="svgtxt s" x="392" y="163">Parent (reuse)</text>
+  <rect class="svgbox p" x="530" y="140" width="120" height="38" rx="10"/><text class="svgtxt s" x="542" y="163">Auditor</text>
+  <rect class="svgbox p" x="670" y="140" width="120" height="38" rx="10"/><text class="svgtxt s" x="682" y="163">Teacher</text>
+  <rect class="svgbox p" x="210" y="200" width="150" height="38" rx="10"/><text class="svgtxt s" x="222" y="223">Counselor/Leads</text>
+  <rect class="svgbox p" x="380" y="200" width="130" height="38" rx="10"/><text class="svgtxt s" x="392" y="223">B2B Partner</text>
+  <rect class="svgbox p" x="530" y="200" width="160" height="38" rx="10"/><text class="svgtxt s" x="542" y="223">Role-rights admin</text>
+  <rect class="svgbox p" x="300" y="262" width="200" height="38" rx="10"/><text class="svgtxt s" x="312" y="285">School/School_admin (largest)</text>
+  <rect class="svgbox p" x="520" y="262" width="200" height="38" rx="10"/><text class="svgtxt s" x="532" y="285">Reports/Notifications + retire JSP</text>
+
+  <line class="svgedge" x1="450" y1="52" x2="450" y2="74" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="430" y1="114" x2="285" y2="140" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="450" y1="114" x2="590" y2="140" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="470" y1="114" x2="730" y2="140" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="285" y1="178" x2="445" y2="140" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="285" y1="178" x2="285" y2="200" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="730" y1="178" x2="590" y2="200" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="590" y1="238" x2="420" y2="262" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="285" y1="238" x2="400" y2="262" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="450" y1="300" x2="600" y2="300" marker-end="url(#arrow)"/>
+ </g>
+</svg>
+<figcaption>P0 security + P3 foundation gate everything. Student unlocks Parent; Auditor/Partner are self-contained early wins; School is last.</figcaption>
+</figure>
+</section>
+
+<!-- ============ 23 ============ -->
+<section id="s23">
+<h2><span class="n">23</span> Phase-wise Implementation Roadmap</h2>
+<div class="tw"><table>
+<thead><tr><th>Phase</th><th>Objective</th><th>Key work</th><th>Prereq</th><th>Exit criteria</th></tr></thead>
+<tbody>
+<tr><td><b>P0</b> <span class="b pr p0">P0</span></td><td>Security blockers</td><td>rotate committed secrets; secret manager; cookie hardening; real logout</td><td>—</td><td>no secrets in repo; rotated; cookie flags set</td></tr>
+<tr><td><b>P1</b> <span class="b pr p0">P0</span></td><td>Auth + backend authz foundations</td><td>dashboard-role SSO; central authz interceptor; remove browser leaks (DATABASE_NAME/SESSION_ID); IDOR fix</td><td>P0</td><td>backend denies unauthorized role/permission; session-derived identity</td></tr>
+<tr><td><b>P2</b> <span class="b pr p0">P0</span></td><td>Multi-school config</td><td>per-tenant <code>SETTINGS</code> scoping; replace hardcoded <code>schoolId==N</code>; strict slug resolution; confirm host→slug proxy</td><td>P1</td><td>a flag can differ per school; no silent school-1 fallback</td></tr>
+<tr><td><b>P3</b> <span class="b pr p0">P0</span></td><td>Dashboard Foundation</td><td>DashboardShell; dynamic menu from <code>getRoleAssignModuleList</code>; PermissionGate; useDashboardContext; RoleRoutes</td><td>P1</td><td>any role renders correct menu from DB; proxy matcher pattern set</td></tr>
+<tr><td><b>P4</b> <span class="b pr p1">P1</span></td><td>Student dashboard → Parent</td><td>migrate student modules; Parent reuses via view-as-user</td><td>P3</td><td>student+parent journeys pass parity; toggle on for pilot school</td></tr>
+<tr><td><b>P5</b> <span class="b pr p2">P2</span></td><td>Auditor (early self-contained win)</td><td>evaluation modules</td><td>P3</td><td>auditor evaluation parity</td></tr>
+<tr><td><b>P6</b> <span class="b pr p1">P1</span></td><td>Teacher</td><td>class mgmt, attendance, tasks, compensation, evaluations, reports</td><td>P3</td><td>teacher parity; toggle rollout</td></tr>
+<tr><td><b>P7</b> <span class="b pr p2">P2</span></td><td>Counselor + Leads (CRM)</td><td>leads workspace, follow-ups, assignment, reports</td><td>P3</td><td>CRM parity</td></tr>
+<tr><td><b>P8</b> <span class="b pr p2">P2</span></td><td>B2B Partner + Role-rights admin</td><td>partner dashboard; module-rights editor (configures the dynamic menu)</td><td>P3</td><td>partner parity; admin can edit USER_RIGHTS from Next.js</td></tr>
+<tr><td><b>P9</b> <span class="b pr p2">P2</span></td><td>School / School_admin (largest)</td><td>182-mapping module; manage profile, mapping, payments, settings, attendance, marks, transcript</td><td>P3–P8</td><td>school parity; toggle rollout</td></tr>
+<tr><td><b>P10</b> <span class="b pr p3">P3</span></td><td>Reports/Notifications + retire JSP</td><td>cross-cutting reports/exports; chat; decommission migrated JSP</td><td>P4–P9</td><td>JSP removed per migrated module</td></tr>
+</tbody></table></div>
+<p class="small">Relative sizing only (no dates). Assumptions: one dynamic-menu/permission engine reused by all dashboard roles; each module ships behind its own <code>&lt;MODULE&gt;_VIA_NEXTJS</code> toggle; backend JSON contracts produced per module as reached.</p>
+</section>
+
+<!-- ============ 24 ============ -->
+<section id="s24">
+<h2><span class="n">24</span> Testing &amp; Acceptance Strategy</h2>
+<div class="tw"><table>
+<thead><tr><th>Layer</th><th>Scope</th><th>Acceptance</th></tr></thead>
+<tbody>
+<tr><td>Unit</td><td>utils (payloadEncoding, wizardSteps, validation, moduleRights)</td><td><code>verify:payload-encoding</code> round-trips; rights map correctly</td></tr>
+<tr><td>API contract</td><td>each migrated endpoint request/response schema</td><td>schema matches Java DTO; status codes handled</td></tr>
+<tr><td>Component</td><td>step forms, DataTable, PermissionGate</td><td>renders by rights; validation blocks bad input</td></tr>
+<tr><td>Auth/authz</td><td>login, SSO handoff, session expiry, role × route</td><td>backend denies unauthorized; UI hides + API rejects</td></tr>
+<tr><td>Role-wise route access</td><td>every role × every migrated route</td><td>correct dashboard + menu; no cross-role access</td></tr>
+<tr><td>School isolation</td><td>tenant A cannot read tenant B; branding per school</td><td>queries scoped by SCHOOL_ID; theme/currency correct</td></tr>
+<tr><td>Enrollment</td><td>stages 1–4, resume, offline/B2B modes</td><td>resume to correct step; parity with legacy</td></tr>
+<tr><td>Payments</td><td>success/failure/webhook/duplicate</td><td>server re-verifies; no double charge</td></tr>
+<tr><td>Concurrency</td><td>multi-tab, back/forward, another browser completes</td><td>poll redirects; no stale writes</td></tr>
+<tr><td>E2E</td><td>Playwright per-role journeys</td><td>green per role per pilot school</td></tr>
+<tr><td>Responsive/A11y/Perf/Security regression/Smoke</td><td>mobile, contrast, bundle, authz-bypass, deploy</td><td>no horizontal scroll; no regressions; health green</td></tr>
+</tbody></table></div>
+<h4>Minimum regression checklist (per school × role)</h4>
+<p class="small">For each of {International Schooling, Education Technologies, iAGE, Anchored, La Senda} × {Student, Parent, Teacher, Counselor, School/Admin, Auditor, Partner}: login/SSO → correct dashboard → menu matches <code>USER_RIGHTS</code> → one create + one update + one view + one delete gated correctly → logout invalidates session.</p>
+</section>
+
+<!-- ============ 25 ============ -->
+<section id="s25">
+<h2><span class="n">25</span> Deployment, Rollout &amp; Rollback</h2>
+<figure>
+<svg viewBox="0 0 900 220" role="img" aria-label="Deployment and rollback">
+ <g color="var(--mut)" font-size="11">
+  <rect class="svgbox acc" x="330" y="14" width="240" height="40" rx="10"/><text class="svgtxt b" x="346" y="38">Load balancer / reverse proxy</text>
+  <rect class="svgbox p" x="40" y="86" width="240" height="46" rx="10"/><text class="svgtxt b" x="56" y="108">Next.js (Node, PM2/systemd)</text><text class="svgtxt s" x="56" y="124">independent deploy + pipeline</text>
+  <rect class="svgbox u" x="330" y="86" width="240" height="46" rx="10"/><text class="svgtxt b" x="346" y="108">Java WAR ×3 (8100/8200/8300)</text><text class="svgtxt s" x="346" y="124">Jenkins → systemd (unchanged)</text>
+  <rect class="svgbox" x="620" y="86" width="240" height="46" rx="10"/><text class="svgtxt b" x="636" y="108">Redis · MariaDB · S3</text><text class="svgtxt s" x="636" y="124">shared</text>
+  <rect class="svgbox" x="200" y="160" width="500" height="44" rx="10"/>
+  <text class="svgtxt b" x="216" y="182">Rollback = flip &lt;MODULE&gt;_VIA_NEXTJS off (per school)</text>
+  <text class="svgtxt s" x="216" y="198">no data migration — both apps share backend/session</text>
+  <line class="svgedge" x1="420" y1="54" x2="160" y2="86" marker-end="url(#arrow)"/>
+  <line class="svgedge" x1="450" y1="54" x2="450" y2="86" marker-end="url(#arrow)"/>
+  <line class="svgedge dash" x1="160" y1="132" x2="430" y2="160" marker-end="url(#arrow)"/>
+  <line class="svgedge dash" x1="450" y1="132" x2="460" y2="160" marker-end="url(#arrow)"/>
+ </g>
+</svg>
+<figcaption>Two independently deployable apps behind one proxy on one parent domain, sharing Redis session + DB. Rollback is a per-school config flip.</figcaption>
+</figure>
+<ul>
+<li><b>Prerequisite (infra-owned):</b> production reverse proxy routing migrated path patterns to Next.js and everything else to JSP, forwarding the session cookie (README has the Nginx template). <span class="b oq">Open Question</span> — confirm who owns it.</li>
+<li><b>Rollout:</b> enable a module's toggle for one pilot school → monitor → expand → flip off instantly on issue.</li>
+<li><b>Environments:</b> DEV/UAT use the BackendSwitcher + local proxy; PROD uses the real proxy (switcher disabled).</li>
+</ul>
+</section>
+
+<!-- ============ 26 ============ -->
+<section id="s26">
+<h2><span class="n">26</span> Open Questions &amp; Assumptions</h2>
+<div class="tw"><table>
+<thead><tr><th>#</th><th>Item</th><th>Type</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><code>/dashboard/school/{uuid}</code> entry mapping is commented out — how does it resolve at runtime?</td><td><span class="b oq">Open Question</span></td></tr>
+<tr><td>2</td><td><code>/dashboard/auditor/{uuid}</code> entry commented — runtime resolution unconfirmed</td><td><span class="b oq">Open Question</span></td></tr>
+<tr><td>3</td><td><code>/dashboard/hod/{uuid}</code> has no handler/JSP folder anywhere</td><td><span class="b oq">Open Question</span></td></tr>
+<tr><td>4</td><td>Numeric <code>SCHOOL_ID</code> for La Senda; identity of <code>SCHOOL_ID</code> 2</td><td><span class="b oq">Open Question</span></td></tr>
+<tr><td>5</td><td>Host→slug routing layer (anchoreded.com → <code>/Anchored-Education/…</code>) — external, not in repo</td><td><span class="b oq">Open Question</span></td></tr>
+<tr><td>6</td><td>Exact per-school enrollment-program matrix (needs <code>GRADE_LEARNING_PROGRAM_MAPPING</code> query)</td><td><span class="b u">Needs validation</span></td></tr>
+<tr><td>7</td><td>Multi-tenant handling of payment webhooks hardcoded to <code>schoolId=1</code></td><td><span class="b u">Needs validation</span></td></tr>
+<tr><td>8</td><td>Guard on <code>webhook/student/enrollment</code>; reachability of lead-capture/request-demo without session</td><td><span class="b u">Needs validation</span></td></tr>
+<tr><td>9</td><td>Full per-endpoint request/response schemas for all 126 controllers (enumerate per module as reached)</td><td><span class="b u">Needs validation</span></td></tr>
+<tr><td>10</td><td>Does ops run separate instances per school with different <code>DATABASE_NAME</code>, or one shared <code>ildblive</code>?</td><td><span class="b oq">Open Question</span></td></tr>
+</tbody></table></div>
+<p><b>Assumptions:</b> one dynamic-menu/permission engine serves all dashboard roles; the <code>ENROLLMENT_VIA_NEXTJS</code> toggle pattern generalizes per module; both apps are served same-origin; backend business logic is preserved.</p>
+</section>
+
+<!-- ============ 27 ============ -->
+<section id="s27">
+<h2><span class="n">27</span> Risk Register</h2>
+<div class="tw"><table>
+<thead><tr><th>Risk</th><th>Prob</th><th>Impact</th><th>Sev</th><th>Mitigation</th><th>Phase</th></tr></thead>
+<tbody>
+<tr><td>Auth incompatibility (no token path)</td><td>High</td><td>High</td><td><span class="b crit">Critical</span></td><td>BFF cookie pass-through; NextAuth Credentials</td><td>P1</td></tr>
+<tr><td>Frontend-only authz exploited during transition</td><td>High</td><td>High</td><td><span class="b crit">Critical</span></td><td>backend authz hardening before UI cutover</td><td>P1</td></tr>
+<tr><td>Secrets already leaked</td><td>High</td><td>High</td><td><span class="b crit">Critical</span></td><td>rotate + purge history</td><td>P0</td></tr>
+<tr><td>Per-tenant config impossible (global SETTINGS)</td><td>High</td><td>Med</td><td><span class="b high">High</span></td><td>SCHOOL_ID-scoped config; remove hardcoded branches</td><td>P2</td></tr>
+<tr><td>Dynamic menu/permission parity</td><td>Med</td><td>High</td><td><span class="b high">High</span></td><td>build+test PermissionGate against real tenant data in P3</td><td>P3</td></tr>
+<tr><td>HTML-fragment endpoints lack JSON</td><td>High</td><td>Med</td><td><span class="b high">High</span></td><td>per-module JSON contracts; keep JSP until ready</td><td>per-phase</td></tr>
+<tr><td>Multi-tenant IDOR via client SCHOOL_ID/userId</td><td>Med</td><td>High</td><td><span class="b high">High</span></td><td>server-side tenant scoping + session identity</td><td>P1</td></tr>
+<tr><td>Payment webhook signature gaps</td><td>Med</td><td>High</td><td><span class="b high">High</span></td><td>enforce signatures</td><td>P2</td></tr>
+<tr><td>Prod reverse proxy ownership unclear</td><td>Med</td><td>High</td><td><span class="b high">High</span></td><td>confirm infra owner early (blocks prod cutover)</td><td>P0</td></tr>
+<tr><td>Largest module (School, 182 map) regression</td><td>Med</td><td>High</td><td><span class="b high">High</span></td><td>migrate last; heavy E2E; per-school toggle</td><td>P9</td></tr>
+<tr><td>Dead/commented routes (school/auditor/hod)</td><td>Med</td><td>Med</td><td><span class="b med">Medium</span></td><td>verify runtime resolution before migrating</td><td>P3</td></tr>
+<tr><td>Theme/FOUC parity</td><td>Low</td><td>Low</td><td><span class="b low">Low</span></td><td>SSR CSS variables</td><td>P3</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ 28 ============ -->
+<section id="s28">
+<h2><span class="n">28</span> Implementation Readiness Checklist</h2>
+<ul>
+<li>☐ Secrets rotated and externalized; git history purged (P0).</li>
+<li>☐ Production reverse-proxy owner confirmed; same-origin routing + cookie forwarding agreed.</li>
+<li>☐ Backend central authorization interceptor designed (role + <code>USER_RIGHTS</code>).</li>
+<li>☐ Per-tenant config strategy chosen (SCHOOL_ID-scoped <code>SETTINGS</code> or overrides table).</li>
+<li>☐ Dashboard Foundation designed: shell, dynamic menu API, PermissionGate, useDashboardContext, RoleRoutes.</li>
+<li>☐ Dashboard-role SSO handoff extended in <code>auth.js</code>/<code>app/api/sso</code>.</li>
+<li>☐ Per-module toggle convention (<code>&lt;MODULE&gt;_VIA_NEXTJS</code>) + backend redirect branch pattern agreed.</li>
+<li>☐ JSON-contract plan for HTML-fragment/Gson endpoints (per module as reached).</li>
+<li>☐ Pilot school chosen for staged rollout.</li>
+<li>☐ Dead routes (school/auditor/hod) resolved or scoped out.</li>
+<li>☐ E2E harness (Playwright) + per-school/role regression checklist in place.</li>
+</ul>
+</section>
+
+<!-- ============ 29 ============ -->
+<section id="s29">
+<h2><span class="n">29</span> Evidence Index</h2>
+<h4>Legacy (<code>is-rest-api</code>)</h4>
+<p class="evref"><code>v1/app/APIApplication.java</code> · <code>v1/app/DataSourceConfig.java</code>, <code>RoutingDataSource.java</code>, <code>RedisSessionConfig.java</code> · <code>v1/security/ApplicationSecurity.java</code>, <code>AesUtil.java</code>, <code>XSSFilter.java</code> · <code>v1/session/SessionUtil.java</code> · <code>v1/constant/RoleConstant.java</code> · <code>v1/controller/BaseController.java</code> (updateModel), <code>CommonController.java</code> (loginUser) · <code>client/controller/ClientCommonController.java</code>, <code>ClientDashboardStudentController.java</code>, <code>ClientDashboardTeacherController.java</code>, <code>ClientDashboardCounselorController.java</code>, <code>ClientDashoboardSchoolController.java</code>, <code>ClientDashboardAdminController.java</code>, <code>ClientDashboardAuditorController.java</code>, <code>ClientDashoboardParentController.java</code>, <code>DashboardCommonClientController.java</code> · <code>api/v1/b2bdashboard/ClientDashboardPartnerController.java</code> · <code>v1/util/sso/SingleSignOnUtil.java</code>, <code>util/ModulesUtil.java</code>, <code>service/UserRightsServiceImpl.java</code>, <code>util/CommonUtil.java</code>, <code>util/SignupStudentUtil.java</code> · <code>client/constants/ClientConstant.java</code> · <code>api/v1/leads/LeadsApiController.java</code> · <code>v1/pg/**</code>, <code>pg/airwallex/controller/AirwallexWebhook.java</code>, <code>pg/stripe/StripeWebhook.java</code> · <code>entity/SchoolSettings*.java</code>, <code>service/SchoolSettingsOfficeServiceImpl.java</code> · <code>entity/Settings.java</code> · <code>webapp/WEB-INF/views/theme2/dashboard/Dashboard.jsp</code>, <code>DashboardLeftSideContentSchool.jsp</code>, <code>theme2/common/CommonCustomScript.jsp</code> · <code>external-resource/SCHOOL_SETTINGS.sql</code> and migration SQLs · <code>application.yml</code> (+profiles) · <code>build-scirpt/pipeline-prod.groovy</code>.</p>
+<h4>New (<code>is-sms</code>)</h4>
+<p class="evref"><code>auth.js</code> · <code>proxy.js</code> · <code>next.config.mjs</code> · <code>app/layout.js</code> · <code>app/[school]/enrollment/[program]/step/**</code> · <code>app/[school]/add-enrollment/**</code> · <code>app/api/auth/[...nextauth]/route.js</code>, <code>app/api/sso/route.js</code> · <code>services/studentSignupApi.js</code>, <code>studentSignupBackendApi.js</code>, <code>authApi.js</code>, <code>paymentApi.js</code>, <code>addEnrollmentBackendApi.js</code> · <code>utils/payloadEncoding.js</code>, <code>backendOrigin.js</code>, <code>wizardSteps.js</code>, <code>authentication.js</code>, <code>schoolSettings.js</code> · <code>hooks/useEnrollmentContext.js</code>, <code>useWizardResume.js</code>, <code>useStudentDetailsSignup.js</code>, <code>useCourseSelection.js</code> · <code>components/providers/QueryProvider.jsx</code>, <code>components/ui/**</code>, <code>components/common/**</code> · <code>constant/SchoolConstants.js</code>, <code>LearningPrograms.js</code>, <code>UatBackendUrls.js</code> · <code>README.md</code>.</p>
+<p class="small">Audit limitation: per-endpoint schemas for all 126 controllers and exhaustive per-DAO SQL tenant-filter review were sampled/grouped, not fully enumerated (see §2, §26).</p>
+</section>
+
+<!-- ============ 30 ============ -->
+<section id="s30">
+<h2><span class="n">30</span> Final Recommendations &amp; Next Steps</h2>
+<ol>
+<li><b>Treat P0 security as a true blocker.</b> Rotate all committed secrets and confirm the production reverse-proxy owner before any new module ships.</li>
+<li><b>Build the Dashboard Foundation once.</b> The dynamic menu + PermissionGate + dashboard-role SSO is the single most important shared piece; everything downstream reuses it.</li>
+<li><b>Make the backend authoritative for authorization</b> in parallel — do not ship dashboard UIs on top of frontend-only enforcement.</li>
+<li><b>Generalize the proven toggle.</b> Every module ships behind <code>&lt;MODULE&gt;_VIA_NEXTJS</code> for per-school rollout and instant rollback.</li>
+<li><b>Order:</b> Student → Parent → Auditor → Teacher → Counselor/Leads → Partner + Role-rights admin → School (largest, last) → Reports/retire JSP.</li>
+<li><b>Close the multi-tenant gaps:</b> per-school config, remove ~30 hardcoded <code>schoolId==N</code> branches, strict slug resolution, confirm host→slug routing.</li>
+<li><b>Resolve the open questions</b> (§26) — especially the three dead routes and the host→slug layer — before scoping School/Auditor/HOD.</li>
+</ol>
+<div class="note ok"><b class="t">Recommended first implementation phase after approval</b> <b>P0 (secret rotation + proxy owner)</b> and <b>P1/P3 (auth hardening + Dashboard Foundation)</b>. These unblock every role module.</div>
+<div class="note bad"><b class="t">Completion gate</b> This is a planning deliverable only. No application source was modified, no dependencies installed, no production operations triggered. <b>Do not begin implementation</b> until explicitly instructed.</div>
+</section>
+
+<p class="small" style="margin-top:40px;border-top:1px solid var(--line);padding-top:16px">
+Generated 2026-10-15 · Legacy <code>8f0e2a1836</code> (<code>feature/63_0_0_STUDENT_ENROLLEMNT_NEXTJS_PHASE2</code>) · New <code>baaffd4</code> (<code>feature/version_1_1_0_phase2</code>) · Self-contained, offline. No secret values included.
+</p>
+
+</main>
+</div>
+
+<script>
+(function(){
+  // mobile nav toggle
+  var tog=document.getElementById('navToggle'), sb=document.getElementById('sidebar');
+  if(tog){tog.addEventListener('click',function(){sb.classList.toggle('open');});}
+  // close sidebar on link click (mobile)
+  document.querySelectorAll('#toc a').forEach(function(a){
+    a.addEventListener('click',function(){ if(window.innerWidth<=980) sb.classList.remove('open'); });
+  });
+  // active section highlight
+  var links=[].slice.call(document.querySelectorAll('#toc a'));
+  var map={};links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  var obs=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(l){l.classList.remove('active');});
+        var id=e.target.id; if(map[id]) map[id].classList.add('active');
+      }
+    });
+  },{rootMargin:'-20% 0px -70% 0px'});
+  document.querySelectorAll('section[id]').forEach(function(s){obs.observe(s);});
+  // expand all details (also for print)
+  var ea=document.getElementById('expandAll');
+  if(ea){ea.addEventListener('click',function(){
+    var open=document.querySelectorAll('details:not([open])').length>0;
+    document.querySelectorAll('details').forEach(function(d){d.open=open;});
+    ea.textContent=open?'Collapse all':'Expand all';
+  });}
+  window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.open=true;});});
+})();
+// table filter
+function filterTable(id,q){
+  q=(q||'').toLowerCase();
+  var t=document.getElementById(id); if(!t) return;
+  t.querySelectorAll('tbody tr').forEach(function(tr){
+    tr.style.display = tr.textContent.toLowerCase().indexOf(q)>-1 ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>
