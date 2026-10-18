@@ -83,7 +83,8 @@ async function startAirwallexCheckout(checkoutUrl) {
   const url = getAirwallexCheckoutIntentUrl(checkoutUrl);
   if (!url) throw new Error("The Airwallex checkout URL is invalid.");
 
-  const response = await fetch(url, { method: "GET", credentials: "include" });
+  // A public SMS URL ({school}/create-checkout-intent/...): no cookies needed.
+  const response = await fetch(url, { method: "GET" });
   if (!response.ok) throw new Error("We could not reach the payment gateway. Please try again.");
 
   const intent = await response.json();

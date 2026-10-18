@@ -14,7 +14,7 @@ export function AuthSessionProvider({ session, children }) {
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
 
-/** Same shape as next-auth's useSession(): { data, status }. */
+/** The page's signed-in user: { data, status } (data is null when nobody is signed in). */
 export function useSession() {
   return useContext(SessionContext);
 }
