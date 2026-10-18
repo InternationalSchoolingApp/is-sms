@@ -56,9 +56,15 @@ export async function getSettingValue(schoolUUID, metaType, metaKey) {
 // CommonUtil#getSettingValueByTypeAndKeyAsBoolean: only the literal "true"
 // (case-insensitive, trimmed) counts, everything else — including an
 // unreachable backend — is false.
+// true / false when SMS says so; null when the answer is empty or unknown (setting
+// missing, not readable without sign-in, backend down). Callers only switch to the
+// legacy flow on an explicit false: treating "unknown" as false sent this page and
+// the legacy SMS page redirecting to each other forever.
 export async function isEnrollmentViaNextjs(schoolUUID) {
-  const metaValue = await getSettingValue(schoolUUID, "CONFIGURATION", "ENROLLMENT_VIA_NEXTJS");
-  return String(metaValue).trim().toLowerCase() === "true";
+  const metaValue = String(await getSettingValue(schoolUUID, "CONFIGURATION", "ENROLLMENT_VIA_NEXTJS")).trim().toLowerCase();
+  if (metaValue === "true") return true;
+  if (metaValue === "false") return false;
+  return null;
 }
 
 // Public, pre-auth resolution of the {schoolId} URL slug/UUID into the

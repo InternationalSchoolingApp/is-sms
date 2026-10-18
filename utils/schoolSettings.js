@@ -2,6 +2,7 @@
 
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { withSmsAuth } from "@/lib/auth/session";
 
 /**
  * Mirrors jquery.commonFunction.js's getSchoolSettingsLinks() (is-rest-api,
@@ -44,11 +45,12 @@ export async function getSchoolSettingsLinks(schoolNumericId) {
     throw new Error("getSchoolSettingsLinks: schoolNumericId is required (getPublicSchoolInfo must resolve first)");
   }
 
-  const response = await fetch(`${baseUrl}/${schoolNumericId}/api/v1/links`, {
+  // Signed-in call (SMS answers 401 to nobody): the wizard's student's token, like every other wizard call.
+  const response = await fetch(`${baseUrl}/${schoolNumericId}/api/v1/links`, await withSmsAuth({
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ payload: encodePayload({ schoolId: schoolNumericId }) }),
-  });
+  }));
   // A non-2xx response (e.g. a 404) can still have a valid-JSON body —
   // Spring's default error page is JSON — so `response.ok` must be
   // checked explicitly; parsing alone would "succeed" with a useless,

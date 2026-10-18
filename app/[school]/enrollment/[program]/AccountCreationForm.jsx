@@ -144,6 +144,13 @@ export function AccountCreationForm({ school, program, query, recaptchaSiteKey }
           }
           if (response?.status === "REDIRECT" && response.redirectTo) {
             if (bootstrap) window.sessionStorage.removeItem(bootstrapStorageKey);
+            // Never "redirect" to the page we are on: that reloads it forever (SMS answers
+            // REDIRECT to /{school}/enrollment/O when the program has no grade mapping).
+            const target = new URL(response.redirectTo, window.location.href);
+            if (target.origin === window.location.origin && target.pathname === window.location.pathname) {
+              setSignupInfoError("Enrollment for this program isn’t available right now. Please contact support.");
+              return;
+            }
             window.location.assign(response.redirectTo);
             return;
           }
