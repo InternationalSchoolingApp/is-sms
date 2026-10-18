@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { exchangeSsoToken } from "@/services/authApi";
-import { MAX_ACCOUNTS, clearAccount, heldAccounts, isAccountId, writeAccount } from "@/lib/auth/accountCookies";
+import { MAX_ACCOUNTS, clearAccount, heldAccounts, isAccountId, writeAccount, writePick } from "@/lib/auth/accountCookies";
 import { defaultBackend, logoutAtSms, trustedBackend } from "@/lib/auth/smsTokens";
 import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
 import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
@@ -110,8 +110,12 @@ async function handleSsoHandoff(request) {
     return redirectTo("/", request);
   }
 
-  const response = redirectTo(stepPath(schoolUUID, program, targetStep), request);
+  const target = stepPath(schoolUUID, program, targetStep);
+  const response = redirectTo(target, request);
   const account = exchanged.uniqueId;
+  // The step page right after this redirect is for the user who just signed in, even when the browser holds
+  // other signed-in users: no "Choose account" page (proxy.js reads this one-time pick).
+  writePick(response.cookies, account, target);
   const backend = backendOverride || defaultBackend();
   // At most MAX_ACCOUNTS users per browser: signing in one more ends the oldest login here.
   const others = heldAccounts(request.cookies).filter((a) => a.account !== account);

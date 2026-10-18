@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import { getBackendOverrideCookieName, isBackendOverrideAllowed } from "@/utils/backendOrigin";
 import {
   ACCOUNT_HEADER,
+  TAB_ACCOUNT_HEADER,
   clearAccount,
   clearPick,
   heldAccounts,
+  isAccountId,
   pickedAccount,
   writeAccount,
 } from "@/lib/auth/accountCookies";
@@ -13,9 +15,11 @@ import { TokenError, refreshTokens, trustedBackend, verifyAccessToken } from "@/
 /**
  * Browser sign-in for the protected routes (SMS plan section 27, Phase 4). Several users can be signed in
  * to one browser; each has its own token cookies (lib/auth/accountCookies.js). For each request this:
- *   1. picks the account the URL is for: the account chosen on /account/choose for exactly this path, a
- *      path segment equal to an account's UNIQUEUUID or numeric user id, else the browser's only account
- *      for this school; with several and nothing naming one it sends the browser to /account/choose;
+ *   1. picks the account the request is for, as SMS does (no URL change): the X-Account header the tab's own
+ *      calls carry (server actions, step navigations; components/auth/TabAccount.jsx), the account chosen on
+ *      /account/choose for exactly this path, a path segment equal to an account's UNIQUEUUID or numeric user
+ *      id, else the browser's only account for this school; with several and nothing naming one it sends the
+ *      browser to /account/choose. Naming an account the browser holds no cookie for signs nobody in;
  *   2. checks the account belongs to the school in the URL (first path segment);
  *   3. verifies its SMS access token, and when it has expired renews it at SMS with the refresh token and
  *      writes the new cookies onto the response;
@@ -31,7 +35,14 @@ export default async function proxy(request) {
 
   let entry = null;
   let clearPickCookie = false;
-  const picked = pickedAccount(request.cookies, path);
+  const named = request.headers.get(TAB_ACCOUNT_HEADER);
+  if (isAccountId(named)) {
+    // The tab says whose page this is. Never fall back to another account: the tab would then save its form
+    // into someone else's enrollment.
+    entry = accounts.find((a) => a.account === named) || null;
+    if (!entry) return toLogin(request, school);
+  }
+  const picked = entry ? null : pickedAccount(request.cookies, path);
   if (picked) {
     entry = accounts.find((a) => a.account === picked) || null;
     clearPickCookie = true;

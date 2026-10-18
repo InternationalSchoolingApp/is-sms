@@ -103,6 +103,16 @@ export function AccountCreationForm({ school, program, query, recaptchaSiteKey }
         ...FALLBACK_POLICY_LINKS,
       };
 
+  // A new student signs up in this tab: it no longer works for the tab's earlier user (components/auth/TabAccount.jsx),
+  // so the signup is not sent as them.
+  useEffect(() => {
+    try {
+      window.sessionStorage.removeItem("isx-account");
+    } catch {
+      // storage unavailable: nothing was remembered either
+    }
+  }, []);
+
   // Public enrollment bootstrap. The exact URL query (including referralCode,
   // ras, payload, and v when present) is sent to the backend; its response
   // supplies the form defaults and school policy links.

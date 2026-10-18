@@ -12,6 +12,7 @@ import { PageTitle } from "@/components/common/PageTitle";
 import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import CampaignCookieInitializer from "@/components/CampaignCookieInitializer";
 import ConsentBanner from "@/components/ConsentBanner";
+import { TabAccount } from "@/components/auth/TabAccount";
 
 
 const openSans = Open_Sans({
@@ -34,6 +35,8 @@ export default async function RootLayout({ children }) {
   return (
     <html lang="en" className={`${openSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
+        {/* Which signed-in user this tab works for (several can share the browser): X-Account on its calls. */}
+        <TabAccount account={session?.uniqueId} />
         {/* GTM + Clarity — only fire when NEXT_PUBLIC_DEPLOYMENT_MODE=PROD,
             mirroring the JSP's <c:if test="${DEPLOYMENT_MODE=='PROD'}">. */}
         <AnalyticsScripts />
