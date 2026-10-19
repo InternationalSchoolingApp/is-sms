@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
-import { getDashboardMenu, getDashboardUserDetails } from "@/services/dashboardApi";
+import { getDashboardChatLinks, getDashboardMenu, getDashboardUserDetails } from "@/services/dashboardApi";
 import { applyStudentNavRules, mapBackendMenu } from "@/utils/dashboardNav";
 import { expireSession } from "@/utils/logout";
 
@@ -70,6 +70,17 @@ function useResolveDashboardContext({ role = "student" } = {}) {
   // waiting on the (possibly missing) endpoint.
   const menu = menuQuery.data ?? [];
 
+  // CHAT_URL / DIARY_URL — rarely-changing per-school config, fetched once.
+  const chatLinksQuery = useQuery({
+    queryKey: ["dashboard-chat-links", session?.schoolUUID, session?.userId],
+    queryFn: () => getDashboardChatLinks({ schoolUUID: session.schoolUUID, userId: session.userId }),
+    enabled: authenticated,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+
   // Branding logo (not carried in the session) — same source as the wizard/login.
   useEffect(() => {
     if (!session?.schoolNumericId) return;
@@ -96,6 +107,8 @@ function useResolveDashboardContext({ role = "student" } = {}) {
         uniqueId: session.uniqueId,
         userRole: session.userRole ?? null,
         roleId: session.roleId ?? null,
+        chatUrl: chatLinksQuery.data?.chatUrl || "",
+        diaryUrl: chatLinksQuery.data?.diaryUrl || "",
       }
     : null;
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MessageCircle, Megaphone, Newspaper, NotebookText } from "lucide-react";
 import { getAnnouncementDetails } from "@/services/dashboardApi";
@@ -16,11 +16,19 @@ import { DiaryPanel } from "@/components/dashboard/DiaryPanel";
  * real backend data and open their own slide-in panel. Talk to Us opens
  * `chatUrl` directly instead of a panel.
  */
-export function RightActionRail({ chatUrl, schoolUUID, userId, schoolName }) {
+export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, schoolName }) {
   const queryClient = useQueryClient();
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const [newsOpen, setNewsOpen] = useState(false);
   const [diaryOpen, setDiaryOpen] = useState(false);
+  // window.location.origin differs server/client, so the bridge iframe
+  // (which needs it in its query string) only ever renders after mount —
+  // matches server markup on first paint and avoids a hydration mismatch.
+  const [origin, setOrigin] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setOrigin(window.location.origin), 0);
+    return () => clearTimeout(id);
+  }, []);
 
   const announcementsQuery = useQuery({
     queryKey: ["student-announcements", schoolUUID, userId],
@@ -50,11 +58,40 @@ export function RightActionRail({ chatUrl, schoolUUID, userId, schoolName }) {
   });
   const unreadDiaryMessages = diaryCountQuery.data?.details?.unreadMessageCount || 0;
 
-  // The rail badge is only fetched once on mount (no realtime push, unlike
-  // legacy's diary-bridge iframe postMessage). Re-fetch it around a diary
-  // visit so a message that arrived since page load, or one just marked
-  // read inside the panel, isn't left showing a stale count.
-  const refreshDiaryBadge = () => queryClient.invalidateQueries({ queryKey: ["diary-unread-count", userId] });
+  // Belt-and-suspenders refresh around a diary visit, on top of the
+  // postMessage push below — covers the moment between opening the panel
+  // and the bridge iframe actually connecting/posting.
+  const refreshDiaryBadge = () => {
+    queryClient.invalidateQueries({ queryKey: ["diary-unread-count", userId] });
+    queryClient.invalidateQueries({ queryKey: ["diary-threads", userId] });
+  };
+
+  // Legacy's diaryBridgeEnsureConnected(): a hidden iframe at the diary
+  // host's /iframe/diary-bridge, which posts {type: "DAIRY_COUNT_CHANGED",
+  // userId} (the "DAIRY" typo is the wire contract, not ours to fix) whenever
+  // the student's unread diary count changes server-side — real-time push
+  // instead of polling. DIARY_URL is pre-resolved server-side (falls back to
+  // CHAT_URL when unset), so no client-side host fallback is needed here.
+  useEffect(() => {
+    if (!diaryUrl || !userId) return;
+    let bridgeOrigin;
+    try {
+      bridgeOrigin = new URL(diaryUrl).origin;
+    } catch {
+      return;
+    }
+    const onMessage = (event) => {
+      if (event.origin !== bridgeOrigin) return;
+      const msg = event.data;
+      if (!msg || typeof msg !== "object") return;
+      if (msg.type === "DAIRY_COUNT_CHANGED" && String(msg.userId) === String(userId)) {
+        refreshDiaryBadge();
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [diaryUrl, userId]);
 
   const openTalkToUs = () => {
     if (chatUrl) window.open(chatUrl, "_blank", "noopener,noreferrer");
@@ -62,6 +99,15 @@ export function RightActionRail({ chatUrl, schoolUUID, userId, schoolName }) {
 
   return (
     <>
+      {diaryUrl && origin && (
+        <iframe
+          src={`${diaryUrl}/iframe/diary-bridge?userId=${encodeURIComponent(userId)}&origin=${encodeURIComponent(origin)}`}
+          title="diary-bridge"
+          aria-hidden="true"
+          style={{ display: "none" }}
+        />
+      )}
+
       <div className="fixed right-0 top-1/4 z-40 flex -translate-y-1/2 flex-col items-center gap-3 pr-2">
         <RailButton label="Talk to Us" onClick={openTalkToUs} className="bg-green-600 hover:bg-green-700">
           <MessageCircle className="h-5 w-5" />

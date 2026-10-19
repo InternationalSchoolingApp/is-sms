@@ -116,6 +116,7 @@ export function DashboardShell({ children }) {
 
       <RightActionRail
         chatUrl={context.chatUrl}
+        diaryUrl={context.diaryUrl}
         schoolUUID={context.schoolUUID}
         userId={context.userId}
         schoolName={context.schoolName}

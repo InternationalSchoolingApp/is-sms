@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { getSettingValue } from "@/services/studentSignupApi";
+import { getCommonScriptVariables } from "@/services/studentSignupBackendApi";
 
 /**
  * BFF for the dashboard foundation. Same server-action + origin resolution
@@ -82,6 +83,27 @@ export async function getDashboardUserDetails({ schoolUUID, userId }) {
       body: JSON.stringify(body),
     });
     return parseJsonResponse(response);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * CHAT_URL / DIARY_URL — the same "common script variables" bootstrap the
+ * legacy JSP pages read into `var CHAT_URL = ...` / `var DIARY_URL = ...` at
+ * the top of every page (CommonUtil.getCommonCustomScript, behind POST
+ * /{schoolUUID}/api/v1/common-script-variables; already used by the signup
+ * wizard via getCommonScriptVariables for its location/CDN bootstrap).
+ * DIARY_URL is pre-resolved server-side (falls back to CHAT_URL when unset,
+ * per CommonUtil.getDiaryUrl) — callers don't need to replicate that
+ * fallback themselves. Powers the hidden diary-bridge iframe that pushes
+ * live unread-count updates (see RightActionRail).
+ */
+export async function getDashboardChatLinks({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    const response = await getCommonScriptVariables(schoolUUID, { userId });
+    return response ? { chatUrl: response.CHAT_URL || "", diaryUrl: response.DIARY_URL || "" } : null;
   } catch {
     return null;
   }
