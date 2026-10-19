@@ -342,20 +342,32 @@ input:-internal-autofill-selected {
    --live-color custom property set inline per event. */
 @keyframes calendar-marching-ants {
   to {
-    background-position: 16px 0, -16px 100%, 0 -16px, 100% 16px;
+    background-position: 8px 0, -8px 100%, 0 -8px, 100% 8px;
   }
 }
 .calendar-live-dashed {
   border: 0 !important;
   background-image:
-    repeating-linear-gradient(90deg, var(--live-color, #e53935) 0, var(--live-color, #e53935) 8px, transparent 8px, transparent 16px),
-    repeating-linear-gradient(90deg, var(--live-color, #e53935) 0, var(--live-color, #e53935) 8px, transparent 8px, transparent 16px),
-    repeating-linear-gradient(0deg, var(--live-color, #e53935) 0, var(--live-color, #e53935) 8px, transparent 8px, transparent 16px),
-    repeating-linear-gradient(0deg, var(--live-color, #e53935) 0, var(--live-color, #e53935) 8px, transparent 8px, transparent 16px);
+    repeating-linear-gradient(90deg, var(--live-color, #e53935) 0, var(--live-color, #e53935) 4px, transparent 4px, transparent 8px),
+    repeating-linear-gradient(90deg, var(--live-color, #e53935) 0, var(--live-color, #e53935) 4px, transparent 4px, transparent 8px),
+    repeating-linear-gradient(0deg, var(--live-color, #e53935) 0, var(--live-color, #e53935) 4px, transparent 4px, transparent 8px),
+    repeating-linear-gradient(0deg, var(--live-color, #e53935) 0, var(--live-color, #e53935) 4px, transparent 4px, transparent 8px);
   background-size: 100% 2px, 100% 2px, 2px 100%, 2px 100%;
   background-position: 0 0, 0 100%, 0 0, 100% 0;
   background-repeat: no-repeat;
-  animation: calendar-marching-ants 0.6s linear infinite;
+  animation: calendar-marching-ants 0.5s linear infinite;
+}
+.calendar-live-legend {
+  border: 0 !important;
+  background-image:
+    repeating-linear-gradient(90deg, #888 0, #888 4px, transparent 4px, transparent 8px),
+    repeating-linear-gradient(90deg, #888 0, #888 4px, transparent 4px, transparent 8px),
+    repeating-linear-gradient(0deg, #888 0, #888 4px, transparent 4px, transparent 8px),
+    repeating-linear-gradient(0deg, #888 0, #888 4px, transparent 4px, transparent 8px);
+  background-size: 100% 2px, 100% 2px, 2px 100%, 2px 100%;
+  background-position: 0 0, 0 100%, 0 0, 100% 0;
+  background-repeat: no-repeat;
+  animation: calendar-marching-ants 0.5s linear infinite;
 }
 @media (prefers-reduced-motion: reduce) {
   .calendar-live-dashed {

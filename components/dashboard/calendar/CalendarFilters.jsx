@@ -16,7 +16,7 @@ function FilterRow({ label, color, checked, onToggle }) {
         className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border-2"
         style={{ borderColor: color, background: checked ? color : "transparent" }}
       >
-        {checked && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+        {checked && <FaCheck  className="text-white w-2" />}
       </span>
       {label}
     </button>
@@ -60,7 +60,7 @@ function TodaySummaryItem({ event, courseRegistry, onSelectEvent }) {
     <button
       type="button"
       onClick={() => onSelectEvent?.(event)}
-      className={`w-full rounded-lg border bg-white px-2 py-1.5 text-center text-xs hover:bg-black/5 ${isLive ? "calendar-live-dashed" : ""}`}
+      className={`w-full rounded-lg border bg-white cursor-pointer px-2 py-1.5 text-center text-xs hover:bg-black/5 ${isLive ? "calendar-live-dashed" : ""}`}
       style={isLive ? { "--live-color": color } : isClass ? { borderStyle: "dashed", borderColor: color } : { borderColor: color }}
     >
       {title && <span className="block font-bold text-black">{title}</span>}
