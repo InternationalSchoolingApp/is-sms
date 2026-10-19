@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { Newspaper, X } from "lucide-react";
 import { NewsDetailModal } from "@/components/dashboard/NewsDetailModal";
+import { NewsAllModal } from "@/components/dashboard/NewsAllModal";
 import { getArticlesByIds } from "@/services/newsApi";
 
 function formatNewsDate(value) {
@@ -20,18 +21,22 @@ function formatNewsDate(value) {
  */
 export function NewsPanel({ articles, totalNews, userId, onClose }) {
   const [selected, setSelected] = useState(null);
+  const [allArticles, setAllArticles] = useState(null);
   const [markingAll, setMarkingAll] = useState(false);
   const queryClient = useQueryClient();
 
-  // Legacy's "View All News" (showNewsDataByIds): bulk-acknowledges every
-  // currently-listed article, then hides the badge purely client-side — it's
-  // never recomputed from the server, so it reappears with the full total
-  // on the next page load. Mirrored here rather than inventing real
+  // Legacy's "View All News" (showNewsDataByIds): fetches the full detail
+  // of every currently-listed article (get-article-by-ids also bulk-
+  // acknowledges them as a side effect) and shows them stacked in one
+  // modal, then hides the badge purely client-side — it's never
+  // recomputed from the server, so it reappears with the full total on
+  // the next page load. Mirrored here rather than inventing real
   // persistence the backend doesn't have.
   const handleViewAllNews = async () => {
     setMarkingAll(true);
-    await getArticlesByIds({ ids: articles.map((a) => a.id), userId });
+    const result = await getArticlesByIds({ ids: articles.map((a) => a.id), userId });
     setMarkingAll(false);
+    setAllArticles(result?.list || []);
     queryClient.setQueryData(["news-articles"], (data) => (data ? { ...data, totalNews: 0 } : data));
   };
 
@@ -95,6 +100,7 @@ export function NewsPanel({ articles, totalNews, userId, onClose }) {
       </div>
 
       {selected && <NewsDetailModal article={selected} userId={userId} onClose={() => setSelected(null)} />}
+      {allArticles && <NewsAllModal articles={allArticles} onClose={() => setAllArticles(null)} />}
     </div>
   );
 }

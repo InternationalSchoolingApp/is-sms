@@ -74,6 +74,7 @@ export async function getArticleById({ id, userId }) {
  * confirmed for the dashboard-family endpoints.
  */
 export async function getArticlesByIds({ ids, userId }) {
+  console.log("news id", ids)
   if (!hasBackendOrigin() || !ids?.length) return null;
   try {
     const baseUrl = await resolveServerBackendOrigin();
