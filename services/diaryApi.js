@@ -53,7 +53,11 @@ export async function getDiaryUnreadCount({ sessionUserId }) {
 
 // details: { sourceTimezone, page, size, totalPages, totalElements, threads: [...] },
 // each thread carrying its own unreadCount.
-export async function getDiaryThreadList({ sessionUserId, page = 1, size = 20 }) {
+// `page` is 0-indexed server-side (Spring PageRequest, not the 1-indexed
+// convention the website/news endpoints use) — getMyThreads defaults an
+// invalid/missing page to 0, so requesting page 1 here silently skips the
+// only page of results that exists.
+export async function getDiaryThreadList({ sessionUserId, page = 0, size = 20 }) {
   if (!hasBackendOrigin() || !sessionUserId) return null;
   try {
     return await postDiary("/thread/my-list", { sessionUserId, page, size });
@@ -63,7 +67,8 @@ export async function getDiaryThreadList({ sessionUserId, page = 1, size = 20 })
 }
 
 // details: { threadId, threadStatus, courseName, sourceTimezone, page, size, totalPages, totalElements, messages: [...] }.
-export async function getDiaryThreadMessages({ sessionUserId, threadId, page = 1, size = 50 }) {
+// Same 0-indexed paging as getDiaryThreadList (see comment above).
+export async function getDiaryThreadMessages({ sessionUserId, threadId, page = 0, size = 50 }) {
   if (!hasBackendOrigin() || !sessionUserId || !threadId) return null;
   try {
     return await postDiary("/thread/messages", { sessionUserId, threadId, page, size });
