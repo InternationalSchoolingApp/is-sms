@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MessageCircle, Megaphone, Newspaper, NotebookText } from "lucide-react";
 import { getAnnouncementDetails } from "@/services/dashboardApi";
 import { getAllArticles } from "@/services/newsApi";
@@ -17,6 +17,7 @@ import { DiaryPanel } from "@/components/dashboard/DiaryPanel";
  * `chatUrl` directly instead of a panel.
  */
 export function RightActionRail({ chatUrl, schoolUUID, userId, schoolName }) {
+  const queryClient = useQueryClient();
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const [newsOpen, setNewsOpen] = useState(false);
   const [diaryOpen, setDiaryOpen] = useState(false);
@@ -49,6 +50,12 @@ export function RightActionRail({ chatUrl, schoolUUID, userId, schoolName }) {
   });
   const unreadDiaryMessages = diaryCountQuery.data?.details?.unreadMessageCount || 0;
 
+  // The rail badge is only fetched once on mount (no realtime push, unlike
+  // legacy's diary-bridge iframe postMessage). Re-fetch it around a diary
+  // visit so a message that arrived since page load, or one just marked
+  // read inside the panel, isn't left showing a stale count.
+  const refreshDiaryBadge = () => queryClient.invalidateQueries({ queryKey: ["diary-unread-count", userId] });
+
   const openTalkToUs = () => {
     if (chatUrl) window.open(chatUrl, "_blank", "noopener,noreferrer");
   };
@@ -65,7 +72,14 @@ export function RightActionRail({ chatUrl, schoolUUID, userId, schoolName }) {
         <RailButton label="News" onClick={() => setNewsOpen(true)} badge={totalNews}>
           <Newspaper className="h-5 w-5" />
         </RailButton>
-        <RailButton label="Student Diary" onClick={() => setDiaryOpen(true)} badge={unreadDiaryMessages}>
+        <RailButton
+          label="Student Diary"
+          onClick={() => {
+            setDiaryOpen(true);
+            refreshDiaryBadge();
+          }}
+          badge={unreadDiaryMessages}
+        >
           <NotebookText className="h-5 w-5" />
         </RailButton>
       </div>
@@ -82,7 +96,16 @@ export function RightActionRail({ chatUrl, schoolUUID, userId, schoolName }) {
 
       {newsOpen && <NewsPanel articles={articles} totalNews={totalNews} userId={userId} onClose={() => setNewsOpen(false)} />}
 
-      {diaryOpen && <DiaryPanel sessionUserId={userId} schoolName={schoolName} onClose={() => setDiaryOpen(false)} />}
+      {diaryOpen && (
+        <DiaryPanel
+          sessionUserId={userId}
+          schoolName={schoolName}
+          onClose={() => {
+            setDiaryOpen(false);
+            refreshDiaryBadge();
+          }}
+        />
+      )}
     </>
   );
 }
