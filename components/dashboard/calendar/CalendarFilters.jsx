@@ -3,6 +3,7 @@
 import { getEventColor, getEventStatus, getTodayGroups } from "@/utils/calendarEvents";
 import { CalendarDatepicker } from "@/components/dashboard/calendar/CalendarDatepicker";
 import { CourseColorPicker } from "@/components/dashboard/calendar/CourseColorPicker";
+import { FaCheck } from "react-icons/fa";
 
 function FilterRow({ label, color, checked, onToggle }) {
   return (
@@ -34,10 +35,10 @@ function CourseRow({ index, course, checked, onToggleVisibility, onPickColor }) 
         type="button"
         onClick={onToggleVisibility}
         aria-label={checked ? "Hide course" : "Show course"}
-        className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border-2 border-black/20"
-        style={{ background: checked ? "#1b5e20" : "transparent" }}
+        className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border-2 border-black/20 ${checked ? "bg-green-600 border-green-600" : "transparent" }` }
+        style={{ background: checked ? "#bg-green-600" : "transparent" }}
       >
-        {checked && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+        {checked && <FaCheck className="text-white" />}
       </button>
       <CourseColorPicker color={course.color} onPick={onPickColor} />
       <span className="truncate text-xs font-semibold text-black">{course.label}</span>

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { StudentCalendarCard } from "@/components/dashboard/calendar/CalendarCard";
-import { AnnouncementsWidget } from "@/components/dashboard/AnnouncementsWidget";
 import { OnboardingVideoModal } from "@/components/dashboard/OnboardingVideoModal";
 import { GraduationCeremonyModal } from "@/components/dashboard/GraduationCeremonyModal";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
@@ -26,20 +25,10 @@ export function StudentHome() {
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
 
   return (
-    <div className="mx-auto max-w-6xl">
-      <h1 className="text-xl font-extrabold text-black sm:text-2xl">
-        Welcome{context?.schoolName ? ` to ${context.schoolName}` : ""}
-      </h1>
-      <p className="mt-1 text-sm text-black/60">Student dashboard</p>
-
-      <div className="mt-5">
+    <div className="mx-auto w-full">
+      <div>
         <StudentCalendarCard schoolUUID={context?.schoolUUID} userId={context?.userId} />
       </div>
-
-      <div className="mt-5">
-        <AnnouncementsWidget schoolUUID={context?.schoolUUID} userId={context?.userId} />
-      </div>
-
       {/* Quick links to the migrated modules (also in the left sidebar) */}
       <h3 className="mt-7 text-sm font-bold uppercase tracking-wide text-black/60">Modules</h3>
       <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
