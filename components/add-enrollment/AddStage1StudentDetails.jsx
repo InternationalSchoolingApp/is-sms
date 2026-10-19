@@ -226,79 +226,84 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, ini
     <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       <h2 className="text-center text-xl font-extrabold text-black md:text-2xl">Student Details</h2>
 
-      <div className="mt-4.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-2">
+      <div className="mt-4.5 flex flex-col gap-3.5">
         {rollNo && (
-          <FloatingLabelInput
-            icon={BookOpen}
-            label={<Req label="Student ID" />}
-            value={rollNo}
-            readOnly
-            disabled
-            inputClassName="cursor-not-allowed bg-slate-100 text-black disabled:pointer-events-auto disabled:opacity-100"
-          />
+          <div className="mx-auto w-full max-w-xl rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-center">
+            <p className="text-sm text-black">
+              Student ID: <b>{rollNo}</b>
+            </p>
+            <p className="mt-0.5 text-[11px] leading-snug text-slate-600">
+              This is the student&apos;s unique ID. Share it with us when you need support from our team.
+            </p>
+          </div>
         )}
 
-        <FloatingLabelSelect
-          icon={BookOpen}
-          label={<Req label={fields.learningProgram ? "Selected Learning Program" : "Select Learning Program"} required />}
-          value={fields.learningProgram}
-          onValueChange={setLearningProgram}
-          options={LEARNING_PROGRAMS}
-          error={errors.learningProgram}
-        />
-        <FloatingLabelInput
-          icon={User}
-          label={<Req label="Student's First Name" required />}
-          filledLabel={<Req label="First Name" required />}
-          value={fields.firstName}
-          {...nameFieldProps((v) => setField("firstName", v))}
-          error={errors.firstName}
-        />
-        <FloatingLabelInput
-          icon={User}
-          label={<Req label="Student's Last Name" required />}
-          filledLabel={<Req label="Last Name" required />}
-          value={fields.lastName}
-          {...nameFieldProps((v) => setField("lastName", v))}
-          error={errors.lastName}
-        />
-        <FloatingLabelSelect
-          icon={GraduationCap}
-          label={<Req label={fields.standardId ? "Selected Grade" : "Select Grade"} required />}
-          value={fields.standardId}
-          onValueChange={setGrade}
-          options={grades.data || []}
-          disabled={!fields.learningProgram || grades.isPending}
-          error={errors.standardId}
-          searchable
-        />
-        <DatePicker
-          icon={Cake}
-          label={<Req label={<>Date of Birth{" "}<span className="text-black text-[12px]">(Month Day, Year)</span></>} required />}
-          value={fields.dob}
-          onChange={(value) => setField("dob", value)}
-          fromDate={dobBounds.fromDate}
-          toDate={dobBounds.toDate}
-          error={errors.dob}
-        />
-        <FloatingLabelSelect
-          icon={VenusAndMars}
-          label={<Req label={fields.gender ? "Selected Gender" : "Select Gender"} required />}
-          value={fields.gender}
-          onValueChange={(v) => setField("gender", v)}
-          options={GENDER_OPTIONS}
-          error={errors.gender}
-          searchable
-        />
-        <FloatingLabelSelect
-          icon={Globe}
-          label={<Req label={<>Nationality{" "}<span className="text-black text-[12px]">(Must have valid National ID)</span></>} required />}
-          value={fields.nationality}
-          onValueChange={(v) => setField("nationality", v)}
-          options={countries.data || []}
-          error={errors.nationality}
-          searchable
-        />
+        <div className="mx-auto w-full sm:max-w-xs">
+          <FloatingLabelSelect
+            icon={BookOpen}
+            label={<Req label={fields.learningProgram ? "Selected Learning Program" : "Select Learning Program"} required />}
+            value={fields.learningProgram}
+            onValueChange={setLearningProgram}
+            options={LEARNING_PROGRAMS}
+            error={errors.learningProgram}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+          <FloatingLabelInput
+            icon={User}
+            label={<Req label="Student's First Name" required />}
+            filledLabel={<Req label="First Name" required />}
+            value={fields.firstName}
+            {...nameFieldProps((v) => setField("firstName", v))}
+            error={errors.firstName}
+          />
+          <FloatingLabelInput
+            icon={User}
+            label={<Req label="Student's Last Name" required />}
+            filledLabel={<Req label="Last Name" required />}
+            value={fields.lastName}
+            {...nameFieldProps((v) => setField("lastName", v))}
+            error={errors.lastName}
+          />
+          <FloatingLabelSelect
+            icon={GraduationCap}
+            label={<Req label={fields.standardId ? "Selected Grade" : "Select Grade"} required />}
+            value={fields.standardId}
+            onValueChange={setGrade}
+            options={grades.data || []}
+            disabled={!fields.learningProgram || grades.isPending}
+            error={errors.standardId}
+            searchable
+          />
+          <DatePicker
+            icon={Cake}
+            label={<Req label={<>Date of Birth{" "}<span className="text-black text-[12px]">(Month Day, Year)</span></>} required />}
+            value={fields.dob}
+            onChange={(value) => setField("dob", value)}
+            fromDate={dobBounds.fromDate}
+            toDate={dobBounds.toDate}
+            error={errors.dob}
+          />
+          <FloatingLabelSelect
+            icon={VenusAndMars}
+            label={<Req label={fields.gender ? "Selected Gender" : "Select Gender"} required />}
+            value={fields.gender}
+            onValueChange={(v) => setField("gender", v)}
+            options={GENDER_OPTIONS}
+            error={errors.gender}
+            searchable
+          />
+          <FloatingLabelSelect
+            icon={Globe}
+            label={<Req label={<>Nationality{" "}<span className="text-black text-[12px]">(Must have valid National ID)</span></>} required />}
+            value={fields.nationality}
+            onValueChange={(v) => setField("nationality", v)}
+            options={countries.data || []}
+            error={errors.nationality}
+            searchable
+          />
+        </div>
       </div>
 
       {isDualDiploma && (
