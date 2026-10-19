@@ -111,7 +111,7 @@ function DiaryEntryCard({ message, courseName, schoolName, viewerUserId }) {
  * students never get the reply editor in legacy either (chatDetailsConent only
  * appends getParentSchoolDiaryReplyEditor for USER_ROLE != "STUDENT").
  */
-function ThreadView({ threadId, sessionUserId, schoolName, onBack }) {
+function ThreadView({ threadId, sessionUserId, schoolName }) {
   const messagesQuery = useQuery({
     queryKey: ["diary-thread-messages", sessionUserId, threadId],
     queryFn: () => getDiaryThreadMessages({ sessionUserId, threadId }),
@@ -128,14 +128,6 @@ function ThreadView({ threadId, sessionUserId, schoolName, onBack }) {
 
   return (
     <div className="flex h-full flex-col">
-      <button
-        type="button"
-        onClick={onBack}
-        className="mb-3 flex items-center gap-2 self-start rounded-full bg-primary/10 px-4 py-1.5 text-xs font-bold text-primary hover:bg-primary/20"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" /> Back
-      </button>
-
       <div
         className="relative flex-1 overflow-y-auto rounded-xl border-l-4 border-sky-500 py-4 pl-10 pr-3"
         style={{
@@ -192,6 +184,7 @@ export function DiaryPanel({ sessionUserId, schoolName, onClose }) {
   });
   const threads = threadsQuery.data?.details?.threads || [];
   const [selectedThreadId, setSelectedThreadId] = useState(null);
+  const selectedThreadName = threads.find((thread) => thread.threadId === selectedThreadId)?.teacherName;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -207,18 +200,26 @@ export function DiaryPanel({ sessionUserId, schoolName, onClose }) {
         </button>
 
         <div className="flex items-center gap-2 border-b border-slate-200 px-5 py-4">
-          <NotebookText className="h-5 w-5 text-primary" aria-hidden="true" />
-          <h2 className="text-base font-extrabold text-black">Student Diary</h2>
+          {selectedThreadId && (
+            <button
+              type="button"
+              onClick={() => setSelectedThreadId(null)}
+              aria-label="Back to diary list"
+              className="-ml-1 flex h-6 w-6 flex-shrink-0 items-center justify-center text-black hover:text-primary"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+          )}
+          <NotebookText className="h-5 w-5 flex-shrink-0 text-primary" aria-hidden="true" />
+          <h2 className="truncate text-base font-extrabold text-black">
+            Student Diary
+            {selectedThreadId && selectedThreadName ? ` - ${selectedThreadName}` : ""}
+          </h2>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {selectedThreadId ? (
-            <ThreadView
-              threadId={selectedThreadId}
-              sessionUserId={sessionUserId}
-              schoolName={schoolName}
-              onBack={() => setSelectedThreadId(null)}
-            />
+            <ThreadView threadId={selectedThreadId} sessionUserId={sessionUserId} schoolName={schoolName} />
           ) : threadsQuery.isLoading ? (
             <p className="text-sm text-black/50">Loading…</p>
           ) : (
