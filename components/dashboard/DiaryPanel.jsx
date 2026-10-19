@@ -27,15 +27,15 @@ function formatWhen(value) {
 }
 
 function ThreadList({ threads, onSelect }) {
-  if (threads.length === 0) return <p className="text-sm text-black/50">No diary conversations yet.</p>;
+  if (threads.length === 0) return <p className="text-sm text-black/80 p-3 text-center">No diary conversations yet.</p>;
   return (
     <ul className="divide-y divide-slate-100">
       {threads.map((thread) => (
-        <li key={thread.threadId}>
+        <li key={thread.threadId} className="p-3 hover:bg-black/5">
           <button
             type="button"
             onClick={() => onSelect(thread.threadId)}
-            className="flex w-full items-start gap-2 py-3 text-left hover:bg-black/5"
+            className="flex w-full items-start gap-2 text-left cursor-pointer"
           >
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
@@ -74,7 +74,7 @@ function DiaryEntryCard({ message, courseName, schoolName, viewerUserId }) {
   return (
     <div className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[88%] rounded-2xl border border-slate-300/70 p-4 shadow-sm ${
+        className={`w-full mt-2 rounded-2xl border border-slate-300/70 p-4 shadow-sm ${
           isOwn ? "bg-gradient-to-br from-sky-50 to-sky-100" : "bg-white"
         }`}
       >
@@ -98,7 +98,7 @@ function DiaryEntryCard({ message, courseName, schoolName, viewerUserId }) {
             <p className="font-caveat text-lg text-black">{schoolName} Family</p>
           </div>
         )}
-        <small className="text-[11px] text-black/40">{formatWhen(message.createdAt)}</small>
+        <small className="text-[11px] text-black/80">{formatWhen(message.createdAt)}</small>
       </div>
     </div>
   );
@@ -127,7 +127,7 @@ function ThreadView({ threadId, sessionUserId, schoolName }) {
   const courseName = messagesQuery.data?.details?.courseName;
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col p-3">
       <div
         className="relative flex-1 overflow-y-auto rounded-xl border-l-4 border-sky-500 py-4 pl-10 pr-3"
         style={{
@@ -149,9 +149,9 @@ function ThreadView({ threadId, sessionUserId, schoolName }) {
 
         <div className="space-y-4">
           {messagesQuery.isLoading ? (
-            <p className="text-sm text-black/50">Loading…</p>
+            <p className="text-sm text-black/80 p-5">Loading…</p>
           ) : messages.length === 0 ? (
-            <p className="text-sm text-black/50">No messages yet.</p>
+            <p className="text-sm text-black/80 p-5">No messages yet.</p>
           ) : (
             messages.map((message) => (
               <DiaryEntryCard
@@ -189,7 +189,7 @@ export function DiaryPanel({ sessionUserId, schoolName, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative flex h-full w-full max-w-md flex-col bg-white shadow-xl">
+      <div className="relative flex h-full w-full max-w-[600px] flex-col bg-white shadow-xl">
         <button
           type="button"
           onClick={onClose}
@@ -217,11 +217,11 @@ export function DiaryPanel({ sessionUserId, schoolName, onClose }) {
           </h2>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className="flex-1 overflow-y-auto">
           {selectedThreadId ? (
             <ThreadView threadId={selectedThreadId} sessionUserId={sessionUserId} schoolName={schoolName} />
           ) : threadsQuery.isLoading ? (
-            <p className="text-sm text-black/50">Loading…</p>
+            <p className="text-sm text-black/80 p-4 text-center">Loading…</p>
           ) : (
             <ThreadList threads={threads} onSelect={setSelectedThreadId} />
           )}
