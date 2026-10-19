@@ -119,6 +119,9 @@ export function DashboardShell({ children }) {
         diaryUrl={context.diaryUrl}
         schoolUUID={context.schoolUUID}
         userId={context.userId}
+        uniqueId={context.uniqueId}
+        userRole={session?.userRole}
+        email={session?.email}
         schoolName={context.schoolName}
       />
     </div>

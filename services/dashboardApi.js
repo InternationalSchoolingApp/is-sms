@@ -110,6 +110,34 @@ export async function getDashboardChatLinks({ schoolUUID, userId }) {
 }
 
 /**
+ * Chat unseen-message count — POST /{schoolUUID}/api/v1/chat
+ * (dashboardCommon.js's getChat(), behind RestTemplateUtil.getChat).
+ *
+ * Legacy's own AJAX call sends a bare {role, email, userId} JSON body, but
+ * the controller decodes the request the same way every other payload
+ * endpoint does (AesUtil.decode(payload.getPayload())) — confirmed directly
+ * against the backend that the bare body always fails ("technical glitch",
+ * status "2"), so legacy's #chatUnseenCoutn badge is permanently stuck at 0.
+ * The standard {payload: encode(...)} envelope works and returns the real
+ * sumUnseen; used here rather than reproducing the dead client-side bug.
+ */
+export async function getChatUnseenCount({ schoolUUID, userId, userRole, email }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    const baseUrl = await resolveServerBackendOrigin();
+    const body = { payload: encodePayload({ role: userRole, email, userId }) };
+    const response = await fetch(`${baseUrl}/${schoolUUID}/api/v1/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return parseJsonResponse(response);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * CONFIGURATION/STUDENT_DASHBOARD_VIA_NEXTJS — the per-module coexistence
  * toggle, mirroring ENROLLMENT_VIA_NEXTJS. Returns the raw metaValue string so
  * callers can distinguish "explicitly false" from "row not created yet" ("").

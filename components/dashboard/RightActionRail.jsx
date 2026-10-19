@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MessageCircle, Megaphone, Newspaper, NotebookText } from "lucide-react";
-import { getAnnouncementDetails } from "@/services/dashboardApi";
+import { getAnnouncementDetails, getChatUnseenCount } from "@/services/dashboardApi";
 import { getAllArticles } from "@/services/newsApi";
 import { getDiaryUnreadCount } from "@/services/diaryApi";
+import { buildChatSignInUrl } from "@/utils/chatLink";
 import { AnnouncementsPanel } from "@/components/dashboard/AnnouncementsPanel";
 import { NewsPanel } from "@/components/dashboard/NewsPanel";
 import { DiaryPanel } from "@/components/dashboard/DiaryPanel";
@@ -13,10 +14,10 @@ import { DiaryPanel } from "@/components/dashboard/DiaryPanel";
 /**
  * Fixed right-edge floating action rail — mirrors the legacy student dashboard:
  * Talk to Us (chat), Announcement, News, Student Diary. All four are wired to
- * real backend data and open their own slide-in panel. Talk to Us opens
- * `chatUrl` directly instead of a panel.
+ * real backend data and open their own slide-in panel. Talk to Us opens a
+ * signed sign-in link into the chat app directly instead of a panel.
  */
-export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, schoolName }) {
+export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueId, userRole, email, schoolName }) {
   const queryClient = useQueryClient();
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const [newsOpen, setNewsOpen] = useState(false);
@@ -48,6 +49,15 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, schoolN
   });
   const articles = newsQuery.data?.list || [];
   const totalNews = newsQuery.data?.totalNews || 0;
+
+  const chatCountQuery = useQuery({
+    queryKey: ["chat-unseen-count", schoolUUID, userId],
+    queryFn: () => getChatUnseenCount({ schoolUUID, userId, userRole, email }),
+    enabled: Boolean(schoolUUID && userId),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+  const unseenChatMessages = chatCountQuery.data?.sumUnseen || 0;
 
   const diaryCountQuery = useQuery({
     queryKey: ["diary-unread-count", userId],
@@ -145,7 +155,12 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, schoolN
   }, [diaryUrl, userId]);
 
   const openTalkToUs = () => {
-    if (chatUrl) window.open(chatUrl, "_blank", "noopener,noreferrer");
+    const signInUrl = buildChatSignInUrl({
+      chatUrl,
+      uniqueId,
+      deploymentMode: process.env.NEXT_PUBLIC_DEPLOYMENT_MODE,
+    });
+    if (signInUrl) window.open(signInUrl, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -160,7 +175,12 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, schoolN
       )}
 
       <div className="fixed right-0 top-1/4 z-40 flex -translate-y-1/2 flex-col items-center gap-3 pr-2">
-        <RailButton label="Talk to Us" onClick={openTalkToUs} className="bg-green-600 hover:bg-green-700">
+        <RailButton
+          label="Talk to Us"
+          onClick={openTalkToUs}
+          badge={unseenChatMessages}
+          className="bg-green-600 hover:bg-green-700"
+        >
           <MessageCircle className="h-5 w-5" />
         </RailButton>
         <RailButton label="Announcement" onClick={() => setAnnouncementsOpen(true)} badge={newAnnouncementCount}>
