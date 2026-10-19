@@ -96,7 +96,7 @@ export function DashboardShell({ children }) {
       />
 
       <div
-        className={`flex min-h-screen flex-col pt-[56px] transition-[padding] duration-200 ${collapsed ? "md:pl-16" : "md:pl-64"}`}
+        className={`flex min-h-screen flex-col pt-[56px] pb-[50px] transition-[padding] duration-200 ${collapsed ? "md:pl-16" : "md:pl-64"}`}
         style={isWideLayout ? { height: "100vh", minHeight: "100vh" } : undefined}
       >
         <main
@@ -114,12 +114,7 @@ export function DashboardShell({ children }) {
         )}
       </div>
 
-      <RightActionRail
-        chatUrl={context.chatUrl}
-        schoolUUID={context.schoolUUID}
-        userId={context.userId}
-        newsCount={context.newsCount}
-      />
+      <RightActionRail chatUrl={context.chatUrl} schoolUUID={context.schoolUUID} userId={context.userId} />
     </div>
   );
 }

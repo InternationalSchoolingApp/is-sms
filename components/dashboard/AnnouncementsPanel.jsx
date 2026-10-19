@@ -37,7 +37,6 @@ function formatRelativeAgo(value) {
  */
 export function AnnouncementsPanel({ announcements, newCount, schoolUUID, userId, onClose }) {
   const [selected, setSelected] = useState(null);
-
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
@@ -46,7 +45,7 @@ export function AnnouncementsPanel({ announcements, newCount, schoolUUID, userId
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="absolute -left-3 -top-3 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700"
+          className="absolute -left-4 cursor-pointer top-3 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700"
         >
           <X className="h-4 w-4" />
         </button>

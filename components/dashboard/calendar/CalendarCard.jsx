@@ -113,13 +113,13 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-end gap-3 border-b border-slate-200 px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-black/50">
+      <div className="flex flex-wrap items-center justify-center gap-3 border-b border-slate-200 px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-black/50">
         <span>Legend:</span>
         <span className="flex items-center gap-1">
-          <span className="h-2.5 w-2.5 rounded-sm border-2 border-black/60" /> Assignment
+          <span className="h-4 w-4 border-2 border-black/60" /> Assignment
         </span>
         <span className="flex items-center gap-1">
-          <span className="h-2.5 w-2.5 rounded-sm" style={{ borderWidth: 2, borderStyle: "dashed", borderColor: "#888" }} /> Class
+          <span className="h-4 w-4" style={{ borderWidth: 2, borderStyle: "dashed", borderColor: "#888" }} /> Class
         </span>
         <span className="flex items-center gap-1 text-[#2267f0]">
           <span className="h-2.5 w-2.5 rounded-sm bg-[#2267f0]" /> School Activity

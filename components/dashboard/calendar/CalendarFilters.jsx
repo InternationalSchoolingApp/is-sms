@@ -30,7 +30,7 @@ function FilterRow({ label, color, checked, onToggle }) {
 function CourseRow({ index, course, checked, onToggleVisibility, onPickColor }) {
   return (
     <div className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-black/5">
-      <span className="w-4 flex-shrink-0 text-xs font-bold text-black/40">{index}.</span>
+      {/* <span className="w-4 flex-shrink-0 text-xs font-bold text-black/40">{index}.</span> */}
       <button
         type="button"
         onClick={onToggleVisibility}
@@ -38,7 +38,7 @@ function CourseRow({ index, course, checked, onToggleVisibility, onPickColor }) 
         className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border-2 border-black/20 ${checked ? "bg-green-600 border-green-600" : "transparent" }` }
         style={{ background: checked ? "#bg-green-600" : "transparent" }}
       >
-        {checked && <FaCheck className="text-white" />}
+        {checked && <FaCheck  className="text-white w-2" />}
       </button>
       <CourseColorPicker color={course.color} onPick={onPickColor} />
       <span className="truncate text-xs font-semibold text-black">{course.label}</span>
