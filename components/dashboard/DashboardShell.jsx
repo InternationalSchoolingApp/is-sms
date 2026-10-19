@@ -114,7 +114,12 @@ export function DashboardShell({ children }) {
         )}
       </div>
 
-      <RightActionRail chatUrl={context.chatUrl} schoolUUID={context.schoolUUID} userId={context.userId} />
+      <RightActionRail
+        chatUrl={context.chatUrl}
+        schoolUUID={context.schoolUUID}
+        userId={context.userId}
+        schoolName={context.schoolName}
+      />
     </div>
   );
 }

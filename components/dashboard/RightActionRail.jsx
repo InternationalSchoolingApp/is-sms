@@ -16,7 +16,7 @@ import { DiaryPanel } from "@/components/dashboard/DiaryPanel";
  * real backend data and open their own slide-in panel. Talk to Us opens
  * `chatUrl` directly instead of a panel.
  */
-export function RightActionRail({ chatUrl, schoolUUID, userId }) {
+export function RightActionRail({ chatUrl, schoolUUID, userId, schoolName }) {
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const [newsOpen, setNewsOpen] = useState(false);
   const [diaryOpen, setDiaryOpen] = useState(false);
@@ -82,7 +82,7 @@ export function RightActionRail({ chatUrl, schoolUUID, userId }) {
 
       {newsOpen && <NewsPanel articles={articles} totalNews={totalNews} userId={userId} onClose={() => setNewsOpen(false)} />}
 
-      {diaryOpen && <DiaryPanel sessionUserId={userId} onClose={() => setDiaryOpen(false)} />}
+      {diaryOpen && <DiaryPanel sessionUserId={userId} schoolName={schoolName} onClose={() => setDiaryOpen(false)} />}
     </>
   );
 }
