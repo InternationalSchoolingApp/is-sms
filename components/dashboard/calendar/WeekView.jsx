@@ -87,7 +87,7 @@ export function WeekView({ events, selectedDate, courseRegistry, onSelectDay, on
           const key = format(day, "yyyy-MM-dd");
           const allDayEvents = buckets[key]?.allDay || [];
           return (
-            <div key={key} className="min-h-[28px] space-y-1 border-l border-slate-200 p-1">
+            <div key={key} className="min-h-[28px] min-w-0 space-y-1 border-l border-slate-200 p-1">
               {allDayEvents.map((event) => (
                 <EventChip key={event.id} event={event} courseRegistry={courseRegistry} onSelect={onSelectEvent} />
               ))}
@@ -122,7 +122,7 @@ export function WeekView({ events, selectedDate, courseRegistry, onSelectDay, on
                 // same fixed, compact height instead of stretching.
                 <div
                   key={`${key}-${hour}`}
-                  className="relative space-y-0.5 border-b border-l border-dashed border-slate-100 p-0.5"
+                  className="relative min-w-0 space-y-0.5 border-b border-l border-dashed border-slate-100 p-0.5"
                   style={{ height: ROW_HEIGHT }}
                 >
                   {visible.map((event) => (
