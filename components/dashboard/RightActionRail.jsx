@@ -72,6 +72,20 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, schoolN
   // the student's unread diary count changes server-side — real-time push
   // instead of polling. DIARY_URL is pre-resolved server-side (falls back to
   // CHAT_URL when unset), so no client-side host fallback is needed here.
+  //
+  // The SAME bridge also posts a finer-grained {type: "diary-bridge-update",
+  // count, chatId, lastMessageId, chats} message — legacy's
+  // renderSchoolDaiaryBtnCount() wires this into #schoolDiaryForm's four
+  // hidden inputs, each with its own onchange handler
+  // (checkUnreadMessageCount / refreshSchoolDiaryChat / lastMsgIdUpdated /
+  // showAndHideAcknowledge) that together: paint the badge straight from the
+  // pushed count, and re-render the thread list / the currently-open thread
+  // live when a new message or a closed-thread status arrives for it. React
+  // Query gives us the "only if currently visible" part of that for free —
+  // invalidating a query only triggers a refetch while something has it
+  // mounted, otherwise it just marks it stale for next time — so there is no
+  // need to replicate the jQuery visibility checks (`.is(":visible")` /
+  // `.hasClass("settings-open")`) those handlers run.
   useEffect(() => {
     if (!diaryUrl || !userId) return;
     let bridgeOrigin;
@@ -84,8 +98,39 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, schoolN
       if (event.origin !== bridgeOrigin) return;
       const msg = event.data;
       if (!msg || typeof msg !== "object") return;
+
       if (msg.type === "DAIRY_COUNT_CHANGED" && String(msg.userId) === String(userId)) {
         refreshDiaryBadge();
+        return;
+      }
+
+      if (msg.type === "diary-bridge-update") {
+        // checkUnreadMessageCount: paint the badge straight from the pushed
+        // count rather than round-tripping for it again.
+        if (msg.count !== undefined) {
+          queryClient.setQueryData(["diary-unread-count", userId], (old) => ({
+            ...old,
+            details: { ...old?.details, unreadMessageCount: Number(msg.count) || 0 },
+          }));
+        }
+        // refreshSchoolDiaryChat / lastMsgIdUpdated / showAndHideAcknowledge:
+        // a new message, or a status flip (open/closed — carried in `chats`,
+        // part of the same thread-messages response as `threadStatus`), for
+        // one or more threads. Refetch exactly those if currently open.
+        const changedThreadIds = new Set();
+        if (msg.chatId != null) changedThreadIds.add(String(msg.chatId));
+        if (Array.isArray(msg.chats)) {
+          msg.chats.forEach((chat) => chat?.chatId != null && changedThreadIds.add(String(chat.chatId)));
+        }
+        if (changedThreadIds.size > 0) {
+          queryClient.invalidateQueries({
+            predicate: (query) =>
+              query.queryKey[0] === "diary-thread-messages" && changedThreadIds.has(String(query.queryKey[2])),
+          });
+        }
+        // checkUnreadMessageCount's list-refresh branch: live-update the
+        // thread list (previews/unread badges) while it's being browsed.
+        queryClient.invalidateQueries({ queryKey: ["diary-threads", userId] });
       }
     };
     window.addEventListener("message", onMessage);
