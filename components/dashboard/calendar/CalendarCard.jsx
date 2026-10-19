@@ -139,8 +139,10 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
           setCourseColor={calendar.setCourseColor}
           selectedDate={calendar.selectedDate}
           onSelectDate={(date) => {
+            // Legacy's mini-datepicker changeDate handler: moves the anchor
+            // date within whatever view is already active (today/week/month)
+            // rather than forcing a switch to day view.
             setDrilldownDate(null);
-            calendar.setViewName("today");
             calendar.setSelectedDate(date);
           }}
           onSelectEvent={handleSelectEvent}

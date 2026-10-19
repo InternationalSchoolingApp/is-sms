@@ -7,8 +7,9 @@ import { Calendar } from "@/components/ui/calendar";
 /**
  * Sidebar mini-calendar (legacy bootstrap-datepicker in
  * dashboardCalendarNew.js's updateDatepicker, with the same "dot under days
- * that have an event" decoration). Picking a date jumps the main view to
- * that day (Today view) — same effect as the legacy changeDate handler.
+ * that have an event" decoration). Picking a date moves the anchor date
+ * within whatever view (today/week/month) is already active — same as
+ * legacy's changeDate handler, which never force-switches the view.
  */
 export function CalendarDatepicker({ selectedDate, onSelectDate, events }) {
   const eventDates = useMemo(() => {

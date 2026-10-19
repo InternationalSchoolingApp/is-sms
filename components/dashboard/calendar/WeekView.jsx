@@ -17,18 +17,18 @@ function EventChip({ event, courseRegistry, onSelect }) {
     <button
       type="button"
       onClick={() => onSelect?.(event)}
-      className={`block w-full truncate rounded px-1.5 py-1 text-left text-[11px] font-semibold text-white ${
+      className={`block w-full truncate rounded px-1.5 py-1 text-left text-[11px] font-semibold border-2 ${
         isLive ? "calendar-live-dashed" : ""
       }`}
       style={
         isLive
-          ? { background: color, "--live-color": "#fff" }
+          ? { borderColor: color, "--live-color": "#fff" }
           : {
-              background: color,
+              borderColor: color,
               borderStyle: isClass ? "dashed" : "solid",
-              borderWidth: isClass ? 2 : 0,
-              borderColor: "#fff",
+              borderWidth: isClass ? 2 : 2,
               opacity: status === "completed" ? 0.75 : 1,
+              color:getEventColor(event, courseRegistry)
             }
       }
       title={event.title || event.eventTitle}
@@ -99,7 +99,7 @@ export function WeekView({ events, selectedDate, courseRegistry, onSelectDay, on
       <div ref={bodyRef} className="flex-1 overflow-y-auto">
         <div className="grid" style={{ gridTemplateColumns: "56px repeat(7, 1fr)" }}>
           {HOURS.map((hour) => (
-            <div key={`label-${hour}`} className="border-b border-dashed border-slate-100 pr-2 text-right text-[10px] text-black/40" style={{ height: ROW_HEIGHT }}>
+            <div key={`label-${hour}`} className="border-b border-dashed border-slate-100 pr-2 text-right text-[10px] text-black/40" style={{ minHeight: ROW_HEIGHT }}>
               {format(new Date(2000, 0, 1, hour), "h a")}
             </div>
           )).reduce((rows, label, idx) => {
@@ -114,8 +114,8 @@ export function WeekView({ events, selectedDate, courseRegistry, onSelectDay, on
               rows.push(
                 <div
                   key={`${key}-${hour}`}
-                  className="space-y-0.5 overflow-hidden border-b border-l border-dashed border-slate-100 p-0.5"
-                  style={{ height: ROW_HEIGHT }}
+                  className="space-y-0.5 border-b border-l border-dashed border-slate-100 p-0.5"
+                  style={{ minHeight: ROW_HEIGHT }}
                 >
                   {visible.map((event) => (
                     <EventChip key={event.id} event={event} courseRegistry={courseRegistry} onSelect={onSelectEvent} />
