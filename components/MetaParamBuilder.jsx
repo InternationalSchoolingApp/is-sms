@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
-import Script from "next/script";
 import { CONSENT_EVENT, useMarketingConsent } from "@/utils/marketingConsent";
+import Script from "next/script";
+import { useEffect } from "react";
 
 // Meta Conversions API client library 1.3.2, self-hosted from public/vendor/meta (see README.txt there). Creates /
 // upgrades the _fbp, _fbc and _fbi cookies (with Meta's appendix) so the signup can send them to the backend.
