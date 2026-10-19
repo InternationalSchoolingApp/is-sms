@@ -99,7 +99,7 @@ export function WeekView({ events, selectedDate, courseRegistry, onSelectDay, on
       <div ref={bodyRef} className="flex-1 overflow-y-auto">
         <div className="grid" style={{ gridTemplateColumns: "56px repeat(7, 1fr)" }}>
           {HOURS.map((hour) => (
-            <div key={`label-${hour}`} className="border-b border-dashed border-slate-100 pr-2 text-right text-[10px] text-black/40" style={{ minHeight: ROW_HEIGHT }}>
+            <div key={`label-${hour}`} className="border-b border-dashed border-slate-100 pr-2 text-right text-[10px] text-black/40" style={{ height: ROW_HEIGHT }}>
               {format(new Date(2000, 0, 1, hour), "h a")}
             </div>
           )).reduce((rows, label, idx) => {
@@ -112,10 +112,18 @@ export function WeekView({ events, selectedDate, courseRegistry, onSelectDay, on
               const visible = hourEvents.slice(0, MAX_VISIBLE_PER_HOUR);
               const overflow = hourEvents.length - visible.length;
               rows.push(
+                // Legacy's renderCustomWeekView never grows an hour row for its
+                // "+N more" chip either — events there are absolutely positioned
+                // on one continuous per-day column, and the overflow chip is
+                // placed right past the bottom of its hour's slot, free to
+                // visually spill into the next hour's space. Matched here with
+                // position: relative + an absolutely positioned overflow chip
+                // anchored to this cell's bottom edge, so every row stays the
+                // same fixed, compact height instead of stretching.
                 <div
                   key={`${key}-${hour}`}
-                  className="space-y-0.5 border-b border-l border-dashed border-slate-100 p-0.5"
-                  style={{ minHeight: ROW_HEIGHT }}
+                  className="relative space-y-0.5 border-b border-l border-dashed border-slate-100 p-0.5"
+                  style={{ height: ROW_HEIGHT }}
                 >
                   {visible.map((event) => (
                     <EventChip key={event.id} event={event} courseRegistry={courseRegistry} onSelect={onSelectEvent} />
@@ -124,7 +132,7 @@ export function WeekView({ events, selectedDate, courseRegistry, onSelectDay, on
                     <button
                       type="button"
                       onClick={() => onSelectDay(day)}
-                      className="block text-[10px] font-bold text-primary hover:underline"
+                      className="absolute inset-x-0.5 top-full z-10 block rounded bg-primary/10 px-1 text-[10px] font-bold text-primary hover:underline"
                     >
                       +{overflow} more
                     </button>
