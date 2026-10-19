@@ -108,6 +108,10 @@ function validateAddStudentFields(fields) {
  * from the same hardcoded constant/LearningPrograms.js that the Offline/B2B
  * account form uses, and grade options re-fetch when LP changes.
  */
+// One grid column's width (the grid below is 2 columns with gap-3.5 = 0.875rem), so the Student ID box and the
+// Learning Program field above it are exactly as wide as a normal field, centred; full width on mobile.
+const HALF_WIDTH = "mx-auto w-full sm:w-[calc((100%-0.875rem)/2)]";
+
 export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, initialFields, onNext }) {
   const [fields, setFields] = useState(() => ({ ...INITIAL_FIELDS, ...initialFields }));
   const [errors, setErrors] = useState({});
@@ -228,7 +232,7 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, ini
 
       <div className="mt-4.5 flex flex-col gap-3.5">
         {rollNo && (
-          <div className="mx-auto w-full max-w-xl rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-center">
+          <div className={`${HALF_WIDTH} rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-center`}>
             <p className="text-sm text-black">
               Student ID: <b>{rollNo}</b>
             </p>
@@ -238,7 +242,7 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, ini
           </div>
         )}
 
-        <div className="mx-auto w-full sm:max-w-xs">
+        <div className={HALF_WIDTH}>
           <FloatingLabelSelect
             icon={BookOpen}
             label={<Req label={fields.learningProgram ? "Selected Learning Program" : "Select Learning Program"} required />}

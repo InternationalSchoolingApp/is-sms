@@ -6,6 +6,9 @@ import { loginPageUrl, resolveBackendNavigationOrigin } from "@/utils/backendOri
 // signOut's own callbackUrl handling would refuse.
 export async function expireSession(schoolUUID) {
   if (window.__loggingOut) return;
+  // TEMP-DEBUG: who sent the user to the login page (the Java login page then forwards a still-logged-in parent
+  // to the parent dashboard). Keep "Preserve log" on in DevTools — the page navigates away right after this.
+  console.warn("[expireSession] called -> going to the login page", new Error().stack);
   try {
     await signOut({ redirect: false });
   } catch (err) {

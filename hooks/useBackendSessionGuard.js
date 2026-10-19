@@ -30,6 +30,8 @@ export function useBackendSessionGuard(schoolUUID, session, status) {
     const checkOnce = async () => {
       if (loggingOutRef.current) return;
       const stillValid = await checkBackendSessionStatus(schoolUUID, uniqueId);
+      // TEMP-DEBUG
+      console.log("[session-guard] backend session-status", { uniqueId, stillValid });
       if (!stillValid && !loggingOutRef.current) {
         loggingOutRef.current = true;
         expireSession(schoolUUID);
