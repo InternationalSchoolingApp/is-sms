@@ -1,5 +1,6 @@
 "use server";
 
+import { withServiceKey } from "@/lib/auth/session";
 import { headers } from "next/headers";
 import { resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
@@ -25,10 +26,10 @@ export async function getIpLocation() {
   const incomingHeaders = await headers();
   const forwardedFor = incomingHeaders.get("x-forwarded-for") || "";
 
-  const response = await fetch(`${baseUrl}/api/v1/ip-location`, {
+  const response = await fetch(`${baseUrl}/api/v1/ip-location`, withServiceKey({
     headers: forwardedFor ? { "X-Forwarded-For": forwardedFor } : undefined,
     cache: "no-store",
-  });
+  }));
   if (!response.ok) throw new Error(`ip-location responded ${response.status}`);
   return response.json();
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { withSmsAuth } from "@/lib/auth/session";
+import { withServiceKey, withSmsAuth } from "@/lib/auth/session";
 
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
@@ -44,7 +44,7 @@ export async function getEnrollmentProcess(schoolUUID, uniqueId) {
 // Public/pre-auth like the rest of this file (login.js calls it logged out too).
 export async function getSettingValue(schoolUUID, metaType, metaKey) {
   const query = `metaType=${encodeURIComponent(metaType)}&metaKey=${encodeURIComponent(metaKey)}`;
-  const response = await fetch(await backendUrl(schoolUUID, `api/v1/get-setting?${query}`));
+  const response = await fetch(await backendUrl(schoolUUID, `api/v1/get-setting?${query}`), withServiceKey());
   const body = await parseJsonResponse(response);
   return body?.data?.metaValue ?? "";
 }
@@ -72,7 +72,7 @@ export async function isEnrollmentViaNextjs(schoolUUID) {
 // is-rest-api. Called directly from AccountCreationForm.jsx and
 // hooks/useEnrollmentContext.js.
 export async function getPublicSchoolInfo(schoolUUID) {
-  const response = await fetch(await backendUrl(schoolUUID, "api/v1/student/enrollment/public-info"));
+  const response = await fetch(await backendUrl(schoolUUID, "api/v1/student/enrollment/public-info"), withServiceKey());
   return parseJsonResponse(response);
 }
 
@@ -97,7 +97,8 @@ export async function getEnrollmentSignupInfo(schoolUUID, learningProgram, param
   if (!query.has("ras")) query.set("ras", "N");
 
   const response = await fetch(
-    `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/student/enrollment/${encodeURIComponent(learningProgram)}?${query.toString()}`
+    `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/student/enrollment/${encodeURIComponent(learningProgram)}?${query.toString()}`,
+    withServiceKey()
   );
   return parseJsonResponse(response);
 }

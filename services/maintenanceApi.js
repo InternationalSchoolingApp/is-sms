@@ -1,6 +1,7 @@
 "use server";
 
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { withServiceKey } from "@/lib/auth/session";
 
 
 async function backendUrl(schoolUUID, path) {
@@ -13,7 +14,7 @@ async function backendUrl(schoolUUID, path) {
 
 export async function getMaintenanceDowntimeStatus(schoolUUID) {
   try {
-    const response = await fetch(await backendUrl(schoolUUID, "api/v1/maintenance-downtime-status"));
+    const response = await fetch(await backendUrl(schoolUUID, "api/v1/maintenance-downtime-status"), withServiceKey());
     if (!response.ok) return null;
     const text = await response.text();
     if (!text) return null;

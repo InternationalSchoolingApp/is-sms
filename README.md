@@ -24,6 +24,8 @@ location ~ ^/[^/]+/student/[^/]+/[^/]+ {
 
 Once that's in place, set `NEXT_PUBLIC_BACKEND_BASE_URL` to the direct backend origin for local development, or to the same origin when a reverse proxy routes backend paths there.
 
+**Service key** (`SMS_SERVICE_KEY`, server-only): this server's key for SMS, sent as `X-Service-Key` on its calls made before anyone signs in (school info, settings, the enrollment start, maintenance status, IP location). It must be one of the secrets in SMS's `auth.service.keys` (`AUTH_SERVICE_KEYS`, entries `is-sms-YYYY-MM-DD:<secret>`). Rotate it every 30 days: add the new key on SMS next to the old one, switch `SMS_SERVICE_KEY`, then remove the old one from SMS. Never give it a `NEXT_PUBLIC_` prefix.
+
 ## UAT backend switcher
 
 UAT previously had to be configured with exactly one backend URL at a time (`NEXT_PUBLIC_BACKEND_BASE_URL`), so testing against a different UAT instance meant a redeploy. A floating "UAT backend" picker (bottom-right of every page) lets each tester point their own browser at any backend origin instead — pick one from the preset list in `constant/UatBackendUrls.js` or type a custom `http://ip:port`. The choice is stored per-browser (a cookie, so it also reaches server-side calls) and persists until reset.
