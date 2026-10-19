@@ -143,6 +143,7 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
             calendar.setViewName("today");
             calendar.setSelectedDate(date);
           }}
+          onSelectEvent={handleSelectEvent}
         />
         <div
           className={`min-h-[360px] flex-1 ${

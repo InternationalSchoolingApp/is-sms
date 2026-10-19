@@ -50,27 +50,29 @@ function CourseRow({ index, course, checked, onToggleVisibility, onPickColor }) 
 // color-coded border (dashed for classes, solid otherwise), the live "marching
 // ants" animation when it's happening right now, title (often blank for a
 // plain CLASS event — see normalizeCalendarEvent) and the time range.
-function TodaySummaryItem({ event, courseRegistry }) {
+function TodaySummaryItem({ event, courseRegistry, onSelectEvent }) {
   const color = getEventColor(event, courseRegistry);
   const isClass = event.eventKind === "class";
   const isLive = getEventStatus(event) === "live";
   const title = event.title || event.eventTitle;
 
   return (
-    <div
-      className={`rounded-lg border bg-white px-2 py-1.5 text-center text-xs ${isLive ? "calendar-live-dashed" : ""}`}
+    <button
+      type="button"
+      onClick={() => onSelectEvent?.(event)}
+      className={`w-full rounded-lg border bg-white px-2 py-1.5 text-center text-xs hover:bg-black/5 ${isLive ? "calendar-live-dashed" : ""}`}
       style={isLive ? { "--live-color": color } : isClass ? { borderStyle: "dashed", borderColor: color } : { borderColor: color }}
     >
       {title && <span className="block font-bold text-black">{title}</span>}
       {event.displayTime && <span className="block text-black/60">{event.displayTime}</span>}
-    </div>
+    </button>
   );
 }
 
 // One of the Today panel's three subsections (Live / Upcoming / Completed),
 // each either listing its items or showing the legacy's "No Class & School
 // Activity" placeholder when empty.
-function TodaySubgroup({ label, items, courseRegistry }) {
+function TodaySubgroup({ label, items, courseRegistry, onSelectEvent }) {
   return (
     <div className="mb-3 last:mb-0">
       <h4 className="mb-1 text-xs font-bold text-black">{label}</h4>
@@ -79,7 +81,7 @@ function TodaySubgroup({ label, items, courseRegistry }) {
       ) : (
         <div className="space-y-1.5">
           {items.map((event) => (
-            <TodaySummaryItem key={event.id} event={event} courseRegistry={courseRegistry} />
+            <TodaySummaryItem key={event.id} event={event} courseRegistry={courseRegistry} onSelectEvent={onSelectEvent} />
           ))}
         </div>
       )}
@@ -112,18 +114,18 @@ export function CalendarFilters({
   setCourseColor,
   selectedDate,
   onSelectDate,
+  onSelectEvent,
 }) {
   const courses = Object.values(courseRegistry);
   const todayGroups = getTodayGroups(events);
-
   return (
     <aside className="w-full flex-shrink-0 space-y-4 overflow-y-auto border-slate-200 p-3 lg:sticky lg:top-0 lg:max-h-[calc(100vh-170px-var(--dash-footer-h,0px))] lg:w-72 lg:self-start lg:border-r">
       <CalendarDatepicker selectedDate={selectedDate} onSelectDate={onSelectDate} events={events} />
 
       <FilterSection title="Today">
-        <TodaySubgroup label="Live Class & School Activity" items={todayGroups.live} courseRegistry={courseRegistry} />
-        <TodaySubgroup label="Upcoming Class & School Activity" items={todayGroups.upcoming} courseRegistry={courseRegistry} />
-        <TodaySubgroup label="Completed Class & School Activity" items={todayGroups.completed} courseRegistry={courseRegistry} />
+        <TodaySubgroup label="Live Class & School Activity" items={todayGroups.live} courseRegistry={courseRegistry} onSelectEvent={onSelectEvent} />
+        <TodaySubgroup label="Upcoming Class & School Activity" items={todayGroups.upcoming} courseRegistry={courseRegistry} onSelectEvent={onSelectEvent} />
+        <TodaySubgroup label="Completed Class & School Activity" items={todayGroups.completed} courseRegistry={courseRegistry} onSelectEvent={onSelectEvent} />
       </FilterSection>
 
       {courses.length > 0 && (
