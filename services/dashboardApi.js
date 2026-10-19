@@ -25,30 +25,62 @@ async function parseJsonResponse(response) {
 /**
  * The role-assigned sidebar menu (the faithful DB-driven navigation).
  *
- * Uses the EXISTING backend endpoint — POST /api/v1/module-details
- * (CommonController.getModuleDetails -> ModulesUtil.getRoleAssignModuleList),
- * which returns a RoleAndModuleAssignDTO with each module's children in
- * `chiledRoleModulesDTO`. This is NOT school-slug-scoped (it is a bare
- * /api/v1/... path), and it reads identity from the payload, so no cookie is
- * needed. moduleType "M" + parentId 0 = the top-level menu (with nested
- * children). Returns null (→ caller falls back to static STUDENT_NAV) when the
- * backend/roleId is unavailable.
+ * Uses the EXISTING backend endpoint — POST /{schoolUUID}/api/v1/module-details
+ * (CommonController is class-level @RequestMapping("{schoolId}"), so EVERY
+ * method on it, including getModuleDetails -> ModulesUtil.getRoleAssignModuleList,
+ * is school-slug-scoped — confirmed at CommonController.java:97/466. The path
+ * segment is unused by the method itself (identity comes from the payload), but
+ * it must still be present or routing 404s.
+ *
+ * Returns a RoleAndModuleAssignDTO with each module's children in
+ * `chiledRoleModulesDTO`. moduleType "M" + parentId 0 = the top-level menu
+ * (with nested children). Returns null (→ caller treats it as "no menu") when
+ * the backend/roleId/schoolUUID is unavailable.
  *
  * Request body matches the controller: { payload: encode({schoolId, roleId,
  * userId, moduleType, parentId}) } where encode = base64(encodeURI(json))
  * (AesUtil.decode on the server).
  */
-export async function getDashboardMenu({ schoolId, roleId, userId }) {
-  if (!hasBackendOrigin() || !roleId || !schoolId) return null;
+export async function getDashboardMenu({ schoolUUID, schoolId, roleId, userId }) {
+  if (!hasBackendOrigin() || !roleId || !schoolId || !schoolUUID) return null;
   try {
     const baseUrl = await resolveServerBackendOrigin();
     const body = { payload: encodePayload({ schoolId, roleId, userId, moduleType: "M", parentId: 0 }) };
-    const response = await fetch(`${baseUrl}/api/v1/module-details`, {
+    const response = await fetch(`${baseUrl}/${schoolUUID}/api/v1/module-details`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    console.log(response)
+    return parseJsonResponse(response);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Extra student-profile flags the sidebar needs to replicate the legacy JSP's
+ * per-item visibility/label rules (DashboardLeftSideContentSchool.jsp) that
+ * the role-assigned menu alone can't express — e.g. "only show Fee Details
+ * for an Online signup", "only show Academic Year Extension for certain
+ * providers/standards". See utils/dashboardNav.js's applyStudentNavRules.
+ *
+ * Uses the EXISTING backend endpoint — POST /{schoolUUID}/api/v1/get-demo-dashboard-user-details
+ * (CommonController.getDemoDashboardUserDetails, same class-level school-slug
+ * scoping as getDashboardMenu above). `type: "U"` + `entityId: userId` is the
+ * real-user path (as opposed to "DS"/"DP"/"DT", the demo-data preview paths).
+ * Unlike the other BFF calls here this endpoint returns a plain JSON string
+ * (not wrapped in {payload: ...}), so the response is parsed directly.
+ */
+export async function getDashboardUserDetails({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    const baseUrl = await resolveServerBackendOrigin();
+    const body = { payload: encodePayload({ entityId: userId, type: "U" }) };
+    const response = await fetch(`${baseUrl}/${schoolUUID}/api/v1/get-demo-dashboard-user-details`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
     return parseJsonResponse(response);
   } catch {
     return null;

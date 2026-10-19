@@ -1,20 +1,13 @@
 /**
- * Student dashboard navigation — the left-sidebar module list.
- *
- * Labels/order/grouping mirror the LEGACY Java student dashboard exactly
- * (DashboardLeftSideContentSchool.jsp / the student MODULES). This is the
- * STATIC fallback used until the dynamic DB-driven menu endpoint
- * (getDashboardMenu → mapBackendMenu) exists; once it does, the sidebar
- * switches to it with no component change.
- *
- * RE-ENROLLMENT IS DELIBERATELY EXCLUDED (separate branch). Do not add it.
+ * Student dashboard navigation helpers — the left-sidebar module list comes
+ * ONLY from the dynamic DB-driven menu endpoint (getDashboardMenu →
+ * mapBackendMenu below), the faithful copy of the Java USER_RIGHTS sidebar.
+ * There is no static fallback list.
  *
  * `icon` is a string key resolved to a lucide-react component in
  * components/dashboard/Sidebar.jsx. `module` is the legacy module hint
  * (for later rights-mapping/traceability). An item with `children` renders as
- * an expandable group (accordion). An item with `expandable: true` but no
- * children yet (the Clubs) is a plain link for now — its real children come
- * from the dynamic menu once that endpoint is added.
+ * an expandable group (accordion).
  */
 
 export function dashboardBasePath(school, role = "student") {
@@ -27,76 +20,6 @@ export function studentNavHref(school, segment) {
   return segment ? `${base}/${segment}` : base;
 }
 
-export const STUDENT_NAV = [
-  { key: "home", label: "My Dashboard", segment: "", icon: "dashboard", module: "student-dashboard" },
-  { key: "school-calendar", label: "My School Calendar", segment: "school-calendar", icon: "calendar", module: "my-school-calendar" },
-  { key: "assigned-teacher", label: "My Assigned Teacher", segment: "assigned-teacher", icon: "teacher", module: "my-assigned-teacher" },
-  { key: "book-classes", label: "Book Classes", segment: "book-classes", icon: "book-class", module: "book-classes" },
-  { key: "buy-extra-classes", label: "Buy Extra Classes", segment: "buy-extra-classes", icon: "cart", module: "buy-extra-classes" },
-  { key: "attendance", label: "My Attendance", segment: "attendance", icon: "attendance", module: "my-attendance" },
-  {
-    key: "academic-reports",
-    label: "Academic Reports",
-    icon: "chart",
-    module: "academic-reports",
-    children: [
-      { key: "performance", label: "My Performance", segment: "performance", icon: "chart", module: "my-performance" },
-      { key: "progress-reports", label: "My Progress Reports", segment: "progress-reports", icon: "file", module: "my-progress-reports" },
-    ],
-  },
-  {
-    key: "language-club",
-    label: "Language Club",
-    icon: "globe",
-    module: "language-club",
-    children: [
-      { key: "lc-spanish", label: "Spanish", segment: "language-club/spanish", module: "language-club-spanish" },
-      { key: "lc-french", label: "French", segment: "language-club/french", module: "language-club-french" },
-      { key: "lc-german", label: "German", segment: "language-club/german", module: "language-club-german" },
-      { key: "lc-english", label: "English", segment: "language-club/english", module: "language-club-english" },
-      { key: "lc-chinese", label: "Chinese", segment: "language-club/chinese", module: "language-club-chinese" },
-    ],
-  },
-  {
-    key: "social-club",
-    label: "Social Club",
-    icon: "social",
-    module: "social-club",
-    children: [
-      { key: "sc-student-council", label: "Student Council", segment: "social-club/student-council", module: "social-club-student-council" },
-      { key: "sc-debate", label: "The Debate Club", segment: "social-club/debate-club", module: "social-club-debate-club" },
-      { key: "sc-book", label: "The Book Club", segment: "social-club/book-club", module: "social-club-book-club" },
-      { key: "sc-art", label: "The Art Club", segment: "social-club/art-club", module: "social-club-art-club" },
-      { key: "sc-stem", label: "The STEM Club", segment: "social-club/stem-club", module: "social-club-stem-club" },
-      { key: "sc-gaming", label: "The Gaming Club", segment: "social-club/gaming-club", module: "social-club-gaming-club" },
-      { key: "sc-law", label: "The Law Club", segment: "social-club/law-club", module: "social-club-law-club" },
-      { key: "sc-global-exchange", label: "The Global Exchange Club", segment: "social-club/global-exchange-club", module: "social-club-global-exchange-club" },
-      { key: "sc-wellness", label: "The Wellness Club", segment: "social-club/wellness-club", module: "social-club-wellness-club" },
-      { key: "sc-newsletter", label: "The Newsletter", segment: "social-club/newsletter", module: "social-club-newsletter" },
-      { key: "sc-entrepreneurship", label: "The Entrepreneurship Club", segment: "social-club/entrepreneurship-club", module: "social-club-entrepreneurship-club" },
-    ],
-  },
-  {
-    key: "esports-club",
-    label: "E-Sports Club",
-    icon: "game",
-    module: "esports-club",
-    children: [
-      { key: "es-global-competitions", label: "Global Competitions", segment: "esports-club/global-competitions", module: "esports-club-global-competitions" },
-      { key: "es-game-strategy", label: "Game Strategy & Analysis", segment: "esports-club/game-strategy-analysis", module: "esports-club-game-strategy-analysis" },
-      { key: "es-focus-reaction", label: "Focus & Reaction Training", segment: "esports-club/focus-reaction-training", module: "esports-club-focus-reaction-training" },
-      { key: "es-skill-development", label: "Skill Development", segment: "esports-club/skill-development", module: "esports-club-skill-development" },
-      { key: "es-team-communication", label: "Team Communication", segment: "esports-club/team-communication", module: "esports-club-team-communication" },
-      { key: "es-online-tournaments", label: "Online Tournaments", segment: "esports-club/online-tournaments", module: "esports-club-online-tournaments" },
-      { key: "es-strategy-games", label: "Strategy Games", segment: "esports-club/strategy-games", module: "esports-club-strategy-games" },
-      { key: "es-competitive-gaming", label: "Competitive Gaming", segment: "esports-club/competitive-gaming", module: "esports-club-competitive-gaming" },
-    ],
-  },
-  { key: "fee-details", label: "My Fee Details", segment: "fee-details", icon: "fee", module: "my-fee-details" },
-  { key: "handbook", label: "Student Handbook", segment: "handbook", icon: "handbook", module: "student-handbook" },
-  { key: "login-history", label: "My Log in History", segment: "login-history", icon: "history", module: "my-login-history" },
-];
-
 /**
  * Maps the backend RoleAndModuleAssignDTO (from the EXISTING endpoint
  * POST /api/v1/module-details -> ModulesUtil.getRoleAssignModuleList) onto the
@@ -105,7 +28,7 @@ export const STUDENT_NAV = [
  *   RoleAndModuleDTO { moduleId, moduleName, moduleIcon, pageLink, orderSet,
  *                      activated, added, updated, viewed, deleted,
  *                      chiledRoleModulesDTO: RoleModulesDTO[] }  (typo is in the DTO)
- * Returns null when the payload is missing/empty so callers fall back to STUDENT_NAV.
+ * Returns null when the payload is missing/empty (callers treat that as "no menu").
  */
 export function mapBackendMenu(dto) {
   const list = dto?.roleAndModuleDTO;
@@ -135,6 +58,98 @@ export function mapBackendMenu(dto) {
       rights: mapRights(m),
     };
   });
+}
+
+// pageLinks that only ever belong to teacher/counselor/admin roles in the
+// legacy JSP (DashboardLeftSideContentSchool.jsp child-level switch) — the
+// backend normally wouldn't assign these to a STUDENT's role/module list at
+// all, but this hides them defensively if it ever does. `teacher-feedback`/
+// `ptm` are gated on isDemoUser in the JSP, which this app has no concept of,
+// so they're always hidden here.
+const STUDENT_HIDDEN_SEGMENTS = new Set([
+  "teacher-tips-educator",
+  "teacher-login-details",
+  "COUNS1a",
+  "COUNS1b",
+  "manage-user-list",
+  "counselor-enrollment-list",
+  "add-student-enrollment",
+  "teacher-feedback",
+  "ptm",
+]);
+
+/**
+ * Re-applies, for the STUDENT role, the item-level visibility/label rules
+ * that DashboardLeftSideContentSchool.jsp encodes as pageLink-keyed JSTL
+ * conditions — rules the role-assigned menu (mapBackendMenu) alone can't
+ * express because they depend on student-profile data, not module rights.
+ * `details` is the GET-demo-dashboard-user-details payload (see
+ * services/dashboardApi.js's getDashboardUserDetails); `schoolNumericId`
+ * mirrors the JSP's SCHOOL_ID.
+ *
+ * Field mapping (confirmed against CommonController.getDemoDashboardUserDetails):
+ *   - `signupMode` (studentStandard.getRegistrationType(): "ONE_TO_ONE"/"BATCH")
+ *     is the JSP's `learningProgram`. NOT `isAllSubjectofBatch`, which is a
+ *     different, per-subject eligibility flag (commonUtil.eligibleForOneToOneSession).
+ *   - `signupType` (user.getSignupType(): "Online"/"Offline") is the JSP's
+ *     SIGNUP_TYPE. NOT `signupMode` — easy to confuse since both are
+ *     enrollment-shaped strings, but they're unrelated fields.
+ */
+export function applyStudentNavRules(menu, details = {}, { schoolNumericId } = {}) {
+  if (!Array.isArray(menu)) return menu;
+
+  const providerId = details.providerId;
+  const userStandard = details.userStandard;
+  const isBatchProgram = String(details.signupMode || "").toUpperCase() === "BATCH";
+  const examSheetUploaded = details.examSheetUploaded === "Y";
+  const transcriptVisible = !details.showTranscriptToStudent || details.showTranscriptToStudent === "Y";
+  const isOnlineSignup = String(details.signupType || "").toLowerCase() === "online";
+  const reportsAllowed = providerId !== 39 && userStandard !== 8;
+
+  const isItemVisible = (item) => {
+    switch (item.segment) {
+      case "teacher-feedback":
+      case "ptm":
+        return false;
+      case "batch-schedule":
+        return isBatchProgram;
+      case "fee-details":
+        return isOnlineSignup;
+      case "batch-student-examination-sheet":
+        return isBatchProgram && examSheetUploaded;
+      case "student-transcript":
+      case "parent-student-transcript":
+        return transcriptVisible;
+      case "academic-year-extention":
+        return reportsAllowed;
+      default:
+        return true;
+    }
+  };
+
+  const withLabelOverride = (item) => {
+    if ((item.segment === "evaluation-test-form-details" || item.segment === "student-id-card") && schoolNumericId !== 1) {
+      return { ...item, label: "Evaluation Test" };
+    }
+    return item;
+  };
+
+  return menu
+    .filter((item) => {
+      // The JSP only extra-gates the group literally named "Reports" (every
+      // other expandable group — Language Club, Social Club, ... — passes
+      // through ungated); it identifies that group by pageLink "#" + moduleName.
+      if (item.segment === "#" && /^reports$/i.test(item.label || "")) return reportsAllowed;
+      return isItemVisible(item);
+    })
+    .map(withLabelOverride)
+    .map((item) => {
+      if (!item.children?.length) return item;
+      const children = item.children
+        .filter((c) => !STUDENT_HIDDEN_SEGMENTS.has(c.segment) && (c.segment !== "batch-schedule" || isBatchProgram))
+        .map(withLabelOverride);
+      return { ...item, children };
+    });
 }
 
 function isActiveModule(m) {

@@ -28,7 +28,7 @@ function iconFor(key) {
  * (Academic Reports), a collapsed desktop icon-rail, and a mobile drawer.
  *
  * Props:
- *  - menu: resolved nav items (dynamic DB menu or static STUDENT_NAV)
+ *  - menu: resolved nav items (dynamic DB menu from getDashboardMenu)
  *  - open / onClose: mobile drawer state
  *  - collapsed / onExpand: desktop icon-rail state (clicking a group in the
  *    rail expands it so its children are reachable)

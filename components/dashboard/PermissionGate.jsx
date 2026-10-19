@@ -7,10 +7,9 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
  * the legacy JSP <c:if test="${roleAndModule.added}"> button/menu guards.
  *
  * Rights come from the dynamic menu item (mapBackendMenu carries
- * rights.{view,add,update,delete}). In Phase A the static STUDENT_NAV has no
- * rights, so `fallback` (default: allow) decides — this keeps the dashboard
- * usable before the backend menu endpoint exists, and tightens automatically
- * once it does.
+ * rights.{view,add,update,delete}). When no matching menu item is found (menu
+ * not loaded yet, or the module isn't in it), `fallback` (default: allow)
+ * decides.
  *
  * IMPORTANT: this is UI-only convenience. The backend must remain the
  * authoritative authorization boundary (see the migration plan §18).

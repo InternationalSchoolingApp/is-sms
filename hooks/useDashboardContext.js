@@ -4,8 +4,8 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
-import { getDashboardMenu } from "@/services/dashboardApi";
-import { mapBackendMenu, STUDENT_NAV } from "@/utils/dashboardNav";
+import { getDashboardMenu, getDashboardUserDetails } from "@/services/dashboardApi";
+import { applyStudentNavRules, mapBackendMenu } from "@/utils/dashboardNav";
 import { expireSession } from "@/utils/logout";
 
 /**
@@ -15,10 +15,9 @@ import { expireSession } from "@/utils/logout";
  * school straight from the Auth.js session (no {schoolId} URL param), fetches
  * the branding logo, and resolves the sidebar menu.
  *
- * Sidebar menu: prefers the dynamic DB-driven menu (getDashboardMenu →
- * mapBackendMenu, the faithful copy of the Java USER_RIGHTS sidebar) and falls
- * back to the static STUDENT_NAV when that endpoint isn't available yet (Phase A).
- * Because the fallback always resolves, `ready` never blocks on the menu.
+ * Sidebar menu: always the dynamic DB-driven menu (getDashboardMenu →
+ * mapBackendMenu, the faithful copy of the Java USER_RIGHTS sidebar). Resolves
+ * to an empty array until the query settles, so `ready` never blocks on it.
  *
  * NOTE (Phase A): the STUDENT_DASHBOARD_VIA_NEXTJS coexistence toggle and the
  * "redirect to legacy JSP dashboard when off" behavior are intentionally NOT
@@ -40,16 +39,26 @@ function useResolveDashboardContext({ role = "student" } = {}) {
     if (status === "unauthenticated") expireSession(session?.schoolUUID);
   }, [status, session?.schoolUUID]);
 
-  // Dynamic menu (faithful Java sidebar) with the static STUDENT_NAV fallback.
+  // Dynamic menu (faithful Java sidebar) — the only source for the sidebar now.
+  // For students, item-level visibility/labels are then adjusted to match
+  // DashboardLeftSideContentSchool.jsp's per-pageLink rules (see
+  // applyStudentNavRules), using the student-profile flags from
+  // getDashboardUserDetails (fee-details needs an Online signup, Academic
+  // Year Extension is hidden for certain providers/standards, etc).
   const menuQuery = useQuery({
     queryKey: ["dashboard-menu", role, session?.schoolNumericId, session?.roleId, session?.userId],
     queryFn: async () => {
-      const dto = await getDashboardMenu({
-        schoolId: session.schoolNumericId,
-        roleId: session.roleId,
-        userId: session.userId,
-      });
-      return mapBackendMenu(dto) ?? STUDENT_NAV;
+      const [dto, details] = await Promise.all([
+        getDashboardMenu({
+          schoolUUID: session.schoolUUID,
+          schoolId: session.schoolNumericId,
+          roleId: session.roleId,
+          userId: session.userId,
+        }),
+        role === "student" ? getDashboardUserDetails({ schoolUUID: session.schoolUUID, userId: session.userId }) : null,
+      ]);
+      const mapped = mapBackendMenu(dto) ?? [];
+      return role === "student" ? applyStudentNavRules(mapped, details ?? {}, { schoolNumericId: session.schoolNumericId }) : mapped;
     },
     enabled: authenticated,
     staleTime: Infinity,
@@ -57,9 +66,9 @@ function useResolveDashboardContext({ role = "student" } = {}) {
     refetchOnWindowFocus: false,
     retry: false,
   });
-  // Static fallback is available immediately even before the query settles, so
-  // the sidebar renders without waiting on the (possibly missing) endpoint.
-  const menu = menuQuery.data ?? STUDENT_NAV;
+  // Empty until the query settles, so the sidebar renders (empty) without
+  // waiting on the (possibly missing) endpoint.
+  const menu = menuQuery.data ?? [];
 
   // Branding logo (not carried in the session) — same source as the wizard/login.
   useEffect(() => {
