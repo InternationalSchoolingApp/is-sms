@@ -95,16 +95,22 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, schoolN
       return;
     }
     const onMessage = (event) => {
-      if (event.origin !== bridgeOrigin) return;
       const msg = event.data;
       if (!msg || typeof msg !== "object") return;
 
-      if (msg.type === "DAIRY_COUNT_CHANGED" && String(msg.userId) === String(userId)) {
-        refreshDiaryBadge();
+      if (msg.type === "DAIRY_COUNT_CHANGED") {
+        // This specific message's own listener (diaryBridgeEnsureConnected)
+        // does check event.origin — matched here too.
+        if (event.origin === bridgeOrigin && String(msg.userId) === String(userId)) refreshDiaryBadge();
         return;
       }
 
       if (msg.type === "diary-bridge-update") {
+        // renderSchoolDaiaryBtnCount's own listener does NOT check
+        // event.origin — matched here, not tightened, since that's the one
+        // actually wired to a live iframe (diaryBridgeEnsureConnected above
+        // is never called anywhere in the legacy codebase; this is the real
+        // one) and an origin check here was silently dropping every message.
         // checkUnreadMessageCount: paint the badge straight from the pushed
         // count rather than round-tripping for it again.
         if (msg.count !== undefined) {
