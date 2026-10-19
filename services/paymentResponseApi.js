@@ -77,3 +77,25 @@ export async function getPaymentResponseFailure(schoolUUID, customReference, uni
   const path = `response-failure/${encodeURIComponent(customReference)}/${encodeURIComponent(uniqueUuid)}`;
   return getJson(`${await backendUrl(schoolUUID, path)}${buildQuery(paramsString)}`);
 }
+
+/**
+ * Sends browser details (fbc, fbp, IP, user agent, page URL) captured on the
+ * payment success page so the Meta Conversions API cron can attach fresh match
+ * data to the Purchase event.
+ */
+export async function savePurchaseBrowserDetails(schoolUUID, userPaymentDetailsId, browserDetails) {
+  if (!userPaymentDetailsId || !browserDetails) return null;
+  const baseUrl = await resolveServerBackendOrigin();
+  if (!hasBackendOrigin() || !schoolUUID) return null;
+  const url = `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/payment/${userPaymentDetailsId}/purchase-browser-details`;
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ browserDetails }),
+    });
+    return response.ok ? "OK" : null;
+  } catch {
+    return null;
+  }
+}

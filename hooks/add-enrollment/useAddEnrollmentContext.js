@@ -11,7 +11,7 @@ import {
   saveAddEnrollmentChildUniqueId,
   saveAddEnrollmentRollNo,
 } from "@/utils/addEnrollmentStorage";
-import { normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
+import { isFirstPayment, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
 import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
 import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
@@ -83,17 +83,17 @@ function useResolveAddEnrollmentContext() {
       const storedUniqueId = loadAddEnrollmentChildUniqueId(session.schoolUUID, parentId);
       const storedRollNo = loadAddEnrollmentRollNo(session.schoolUUID, parentId);
       if (!storedUniqueId && !storedRollNo) return { storedUniqueId: "", paid: false };
-      // 1) Completed enrollment (enrollment/process statusCode REDIRECT_TO_DASHBOOARD) — needs no caller check, so it
-      //    also works when the logged-in user IS that child (it came in through its own enrollment link).
+      // statusCode REDIRECT_TO_DASHBOOARD from enrollment/process (asked with ?from=add-enrollment, i.e. ae=Y):
+      // the child's enrollment is complete -> thank-you page, no further check.
       if (storedUniqueId) {
         const process = await getAddEnrollmentProcess(session.schoolUUID, storedUniqueId);
-        // TEMP-DEBUG
-        console.log("[add-enrollment] paidCheck process", { storedUniqueId, statusCode: process?.statusCode, redirectTo: process?.redirectTo });
         if (process?.statusCode === STATUS_REDIRECT_TO_DASHBOARD && process?.redirectTo !== "login") {
           return { storedUniqueId, paid: true };
         }
       }
-      // 2) Paid but not marked complete yet: the thank-you API looks at the payment itself.
+      // The thank-you details API looks at the payment itself. Only a FIRST payment (isFirstPayment = "Y": the
+      // registration fee of a fresh enrollment) takes the user to the thank-you page; for anything else the
+      // wizard stays on the page the user landed on.
       const res = await getAddEnrollmentThankYou(session.schoolUUID, {
         parentId,
         sessionUserId: session.userId,
@@ -102,8 +102,8 @@ function useResolveAddEnrollmentContext() {
         childUniqueId: storedUniqueId,
       });
       // TEMP-DEBUG: which stored child the refresh checked and what the thank-you API said
-      console.log("[add-enrollment] paidCheck", { storedUniqueId, storedRollNo, message: res?.message, status: res?.status });
-      return { storedUniqueId, paid: res?.status === "1" };
+      console.log("[add-enrollment] paidCheck", { storedUniqueId, storedRollNo, message: res?.message, status: res?.status, isFirstPayment: res?.data?.isFirstPayment });
+      return { storedUniqueId, paid: res?.status === "1" && isFirstPayment(res.data) };
     },
     enabled: Boolean(authenticated && parentId),
     staleTime: Infinity,
@@ -201,7 +201,36 @@ function useResolveAddEnrollmentContext() {
   const [completedLocal, setCompletedLocal] = useState(false);
   // S003 = enroll/another/child found the child this tab was enrolling already paid (e.g. via the payment link).
   const alreadyPaid = enrollChild.data?.statusCode === "S003";
-  const completed = completedLocal || alreadyPaid || paidBeforeEnroll || enrollmentCompleted;
+  // These signals only say "this child has paid / finished". The thank-you page is for a FIRST payment
+  // (isFirstPayment = "Y") only, so each one is confirmed with the thank-you details API before it counts.
+  // statusCode REDIRECT_TO_DASHBOOARD (enrollment/process, or a payment call answering it — markCompleted) in the
+  // add-enrollment flow (ae=Y) is final: straight to the thank-you page. Only S003 still needs the check.
+  const statusCodeCompleted = completedLocal || enrollmentCompleted;
+  const completionSignal = alreadyPaid && !statusCodeCompleted;
+  const firstPaymentCheck = useQuery({
+    queryKey: ["add-enrollment-first-payment", session?.schoolUUID, parentId, childUniqueId],
+    queryFn: async () => {
+      const res = await getAddEnrollmentThankYou(session.schoolUUID, {
+        parentId,
+        sessionUserId: session.userId,
+        sessionUniqueId: session.uniqueId,
+        studentRollNumber: childRollNo || loadAddEnrollmentRollNo(session.schoolUUID, parentId),
+        childUniqueId,
+      });
+      console.log("[add-enrollment] first-payment check", { childUniqueId, status: res?.status, isFirstPayment: res?.data?.isFirstPayment });
+      return res?.status === "1" && isFirstPayment(res.data);
+    },
+    enabled: Boolean(authenticated && completionSignal && childUniqueId),
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+  const firstPaymentDone =
+    paidBeforeEnroll || statusCodeCompleted || (completionSignal && firstPaymentCheck.data === true);
+  // while the check runs the wizard is held back (loader); a "not a first payment" answer lets it render normally
+  const completionPending = completionSignal && !firstPaymentCheck.isFetched && !firstPaymentCheck.isError;
+  const completed = firstPaymentDone;
 
 
   useEffect(() => {
@@ -233,7 +262,13 @@ function useResolveAddEnrollmentContext() {
 
   const processReady = !childUniqueId || enrollmentProcess.isFetched;
   const ready =
-    authenticated && enrollChild.isFetched && Boolean(childData) && processReady && !processRedirect && !alreadyPaid;
+    authenticated &&
+    enrollChild.isFetched &&
+    Boolean(childData) &&
+    processReady &&
+    !firstPaymentDone &&
+    !completionPending &&
+    processRedirect?.redirectTo !== "login";
 
   // Same payer-location capture as the main context, so the payment step finds it already there.
   useEffect(() => {
@@ -260,6 +295,8 @@ function useResolveAddEnrollmentContext() {
         learningProgram: prefill.data?.learningProgram
           ? getLearningProgramShortCode(prefill.data.learningProgram)
           : "O",
+        // false until the child's learning program is saved (Step 1); the wizard header shows a generic title till then.
+        learningProgramSaved: Boolean(prefill.data?.learningProgram),
       }
     : null;
 

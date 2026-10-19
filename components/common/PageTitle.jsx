@@ -42,10 +42,14 @@ export function PageTitle() {
         userId: studentUserId,
         signupType: "Online",
       });
+      // TEMP-DEBUG
+      console.log("[payment-response] api response get-student-details (PageTitle)", { studentUserId, response });
       if (response?.status !== "1") return null;
       return mapSignupStudentToFields(response.signupStudent);
     },
-    enabled: Boolean(authenticated && studentUserId),
+    // Only on the enrollment wizards (/enrollment/{program} or /add-enrollment/{parentId}): elsewhere, e.g. the
+    // /common payment-response pages, the logged-in user may be a parent and get-student-details answers E002.
+    enabled: Boolean(authenticated && studentUserId && (program || isAddEnrollment)),
     staleTime: STUDENT_PREFILL_STALE_MS,
     refetchOnWindowFocus: false,
     retry: false,

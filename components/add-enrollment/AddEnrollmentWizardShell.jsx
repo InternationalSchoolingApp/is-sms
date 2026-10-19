@@ -38,7 +38,11 @@ export function AddEnrollmentWizardShell({
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const currentIndex = steps.findIndex((step) => step.key === currentStepKey);
-  const programLabel = context ? getLearningProgramTheme(context.learningProgram).label : null;
+  const programLabel = context
+    ? context.learningProgramSaved
+      ? getLearningProgramTheme(context.learningProgram).label
+      : "Student Enrollment"
+    : null;
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <header className="fixed top-[var(--maintenance-banner-h,0px)] z-11 hidden w-full border-b border-slate-200 bg-white px-4 py-3 sm:px-6 md:block">

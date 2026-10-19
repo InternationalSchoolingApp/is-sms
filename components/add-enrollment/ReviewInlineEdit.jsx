@@ -24,6 +24,7 @@ import { nameFieldProps } from "@/utils/nameInput";
 import { seedOtherParentFields } from "@/utils/parentRelation";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { getLearningProgramsForSelect } from "@/constant/LearningPrograms";
+import { CURRENT_GRADE_OPTIONS } from "@/components/student-enroll/Stage1StudentDetails";
 
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
 const STATUS_SESSION_OUT = "3";
@@ -150,6 +151,11 @@ export function StudentInlineEdit({ context, userId, uniqueId, student, rollNo, 
     if (!values.lastName?.trim()) found.lastName = "Please enter the student's last name.";
     if (!values.gender) found.gender = "Please select a gender.";
     if (!values.nationality) found.nationality = "Please select a nationality.";
+    if (getLearningProgramBackendValue(learningProgram) === "DUAL_DIPLOMA") {
+      if (!values.studyingSchoolName?.trim()) found.studyingSchoolName = "Current school name is required";
+      if (!values.studyingGradeId) found.studyingGradeId = "Current grade is required";
+      if (!values.countryIdOfSchool) found.countryIdOfSchool = "Country of current school is required";
+    }
     return found;
   }
 
@@ -209,7 +215,7 @@ export function StudentInlineEdit({ context, userId, uniqueId, student, rollNo, 
           {rollNo && (
             <FloatingLabelInput
               icon={BookOpen}
-              label={<Req label="Student Id" />}
+              label={<Req label="Student ID" />}
               value={rollNo}
               readOnly
               disabled
@@ -261,7 +267,7 @@ export function StudentInlineEdit({ context, userId, uniqueId, student, rollNo, 
           />
           <FloatingLabelSelect
             icon={Globe}
-            label={<Req label="Nationality" required />}
+            label={<Req label={<>Nationality{" "}<span className="text-black text-[12px]">(Must have valid National ID)</span></>} required />}
             value={current.nationality}
             onValueChange={set("nationality")}
             options={countries.data || []}
@@ -269,6 +275,38 @@ export function StudentInlineEdit({ context, userId, uniqueId, student, rollNo, 
             searchable
           />
         </div>
+        {getLearningProgramBackendValue(learningProgram) === "DUAL_DIPLOMA" && (
+          <>
+            <strong className="mt-6 block text-base font-bold text-black">Current School Details</strong>
+            <div className="mt-3 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+              <FloatingLabelInput
+                icon={School}
+                label={<Req label="Current School Name" required />}
+                className="sm:col-span-2 lg:col-span-1"
+                value={fields.studyingSchoolName}
+                onChange={(e) => set("studyingSchoolName")(e.target.value)}
+                error={errors.studyingSchoolName}
+              />
+              <FloatingLabelSelect
+                icon={BookOpen}
+                label={<Req label="Current Grade" required />}
+                value={fields.studyingGradeId}
+                onValueChange={set("studyingGradeId")}
+                options={CURRENT_GRADE_OPTIONS}
+                error={errors.studyingGradeId}
+              />
+              <FloatingLabelSelect
+                icon={MapPin}
+                label={<Req label="Country of Current School" required />}
+                value={fields.countryIdOfSchool}
+                onValueChange={set("countryIdOfSchool")}
+                options={countries.data || []}
+                error={errors.countryIdOfSchool}
+                searchable
+              />
+            </div>
+          </>
+        )}
       </EditCard>
       {modal}
     </>

@@ -139,6 +139,11 @@ function buildAddSaveRequest({ fields, context, userId, uniqueId, countries }) {
     learningProgram: getLearningProgramBackendValue(fields.learningProgram),
     nationality: nationalityName,
   };
+  if (payload.learningProgram === "DUAL_DIPLOMA") {
+    payload.studyingSchoolName = fields.studyingSchoolName;
+    payload.studyingGradeId = fields.studyingGradeId ? Number(fields.studyingGradeId) : null;
+    payload.countryIdOfSchool = fields.countryIdOfSchool ? Number(fields.countryIdOfSchool) : null;
+  }
   return payload;
 }
 

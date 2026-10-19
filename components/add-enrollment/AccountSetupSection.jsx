@@ -20,13 +20,11 @@ export function AccountSetupSection({ data }) {
         <h2 id="setup-h" className="text-lg font-bold text-slate-900">
           Set up your student accounts
         </h2>
-        <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-          0 of {total} done
-        </span>
       </div>
       <ol className="flex flex-col gap-3.5">
-         <Step
-          num={hasPasswordStep ? 1: 1}
+        <Step
+          num={1}
+          current
           title="Sign in to your school Outlook"
           text={
             hasOutlook
@@ -41,7 +39,7 @@ export function AccountSetupSection({ data }) {
             num={2}
             current
             title="Create your SMS password"
-            text="The Student Management System is where you'll find classes, schedules and grades."
+            text="The School Management System is where you'll find classes, schedules and grades."
           >
             <a
               href={data.createPasswordUrl}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { User, GraduationCap, VenusAndMars, Globe, Cake, BookOpen } from "lucide-react";
+import { User, GraduationCap, VenusAndMars, Globe, Cake, BookOpen, School, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileActionBar } from "@/components/add-enrollment/MobileActionBar";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
@@ -16,6 +16,7 @@ import {
 import { nameFieldProps } from "@/utils/nameInput";
 import { validateAge, getDobPickerBounds } from "@/utils/ageValidation";
 import { getLearningProgramsForSelect } from "@/constant/LearningPrograms";
+import { CURRENT_GRADE_OPTIONS } from "@/components/student-enroll/Stage1StudentDetails";
 
 // Backend's MastersController.resolveOneMaster() doesn't recognize
 // LEARNING_PROGRAM_LIST yet (an unknown key falls through to the states
@@ -45,6 +46,9 @@ const INITIAL_FIELDS = {
   dob: null, // Date object — DatePicker (shadcn Calendar+Popover) works with Date, not a string
   gender: "",
   nationality: "",
+  studyingSchoolName: "",
+  studyingGradeId: "",
+  countryIdOfSchool: "",
 };
 
 // Gray placeholder block matching one field's footprint — used only while
@@ -83,6 +87,11 @@ function validateAddStudentFields(fields) {
   if (!fields.dob) errors.dob = "Please select a date of birth.";
   if (!fields.gender) errors.gender = "Please select a gender.";
   if (!fields.nationality) errors.nationality = "Please select a nationality.";
+  if (fields.learningProgram === "DUAL_DIPLOMA") {
+    if (!fields.studyingSchoolName?.trim()) errors.studyingSchoolName = "Current school name is required";
+    if (!fields.studyingGradeId) errors.studyingGradeId = "Current grade is required";
+    if (!fields.countryIdOfSchool) errors.countryIdOfSchool = "Country of current school is required";
+  }
   return { valid: Object.keys(errors).length === 0, errors };
 }
 
@@ -90,8 +99,8 @@ function validateAddStudentFields(fields) {
  * Stage 1 of the Add Another Student wizard ("Student profile") — a trimmed,
  * 7-field version of components/student-enroll/Stage1StudentDetails.jsx:
  * learning program, first/last name, grade, DOB, gender, nationality. No
- * address / contact / email / dual-diploma studying-school block — those are
- * not collected for an add-another-child flow. Content only; rendered inside
+ * address / contact / email. The Dual Diploma "Current School Details" block
+ * is shown additionally when that learning program is selected. Content only; rendered inside
  * EnrollmentWizardShell by AddStudentDetailsStep.
  *
  * Structure, validation flow, grid/skeleton, and submit-handling pattern
@@ -99,6 +108,10 @@ function validateAddStudentFields(fields) {
  * from the same hardcoded constant/LearningPrograms.js that the Offline/B2B
  * account form uses, and grade options re-fetch when LP changes.
  */
+// One grid column's width (the grid below is 2 columns with gap-3.5 = 0.875rem), so the Student ID box and the
+// Learning Program field above it are exactly as wide as a normal field, centred; full width on mobile.
+const HALF_WIDTH = "mx-auto w-full sm:w-[calc((100%-0.875rem)/2)]";
+
 export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, initialFields, onNext }) {
   const [fields, setFields] = useState(() => ({ ...INITIAL_FIELDS, ...initialFields }));
   const [errors, setErrors] = useState({});
@@ -111,6 +124,7 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, ini
   const grades = useAddGradeOptions(context, fields.learningProgram);
   const signup = useAddStudentDetailsSignup({ context, userId, uniqueId, countries: countries.data });
   const dobBounds = getDobPickerBounds();
+  const isDualDiploma = fields.learningProgram === "DUAL_DIPLOMA";
 
   // This step's required master data — grades depend on a learning program
   // selection the user hasn't made yet at first render, so they're not part
@@ -167,11 +181,11 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, ini
     setFields((prev) => ({ ...prev, [name]: value }));
   }
 
-  // Changing the learning program clears the already-picked grade — grade
-  // options are LP-specific, so a stale standardId from a different LP's
-  // list must not survive the switch.
+  // Changing the learning program clears the already-picked grade and date of
+  // birth — grade options are LP-specific, so a stale standardId from a different
+  // LP's list must not survive the switch, and the DOB belongs to that grade.
   function setLearningProgram(learningProgram) {
-    setFields((prev) => ({ ...prev, learningProgram, standardId: "" }));
+    setFields((prev) => ({ ...prev, learningProgram, standardId: "", dob: null }));
   }
 
   // Changing the grade clears the already-picked DOB rather than leaving a
@@ -216,79 +230,118 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, ini
     <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       <h2 className="text-center text-xl font-extrabold text-black md:text-2xl">Student Details</h2>
 
-      <div className="mt-4.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-2">
+      <div className="mt-4.5 flex flex-col gap-3.5">
         {rollNo && (
-          <FloatingLabelInput
-            icon={BookOpen}
-            label={<Req label="Student Id" />}
-            value={rollNo}
-            readOnly
-            disabled
-            inputClassName="cursor-not-allowed bg-slate-100 text-black disabled:pointer-events-auto disabled:opacity-100"
-          />
+          <div className={`${HALF_WIDTH} rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-center`}>
+            <p className="text-sm text-black">
+              Student ID: <b>{rollNo}</b>
+            </p>
+            <p className="mt-0.5 text-[11px] leading-snug text-slate-600">
+              This is the student&apos;s unique ID. Share it with us when you need support from our team.
+            </p>
+          </div>
         )}
 
-        <FloatingLabelSelect
-          icon={BookOpen}
-          label={<Req label={fields.learningProgram ? "Selected Learning Program" : "Select Learning Program"} required />}
-          value={fields.learningProgram}
-          onValueChange={setLearningProgram}
-          options={LEARNING_PROGRAMS}
-          error={errors.learningProgram}
-        />
-        <FloatingLabelInput
-          icon={User}
-          label={<Req label="Student's First Name" required />}
-          filledLabel={<Req label="First Name" required />}
-          value={fields.firstName}
-          {...nameFieldProps((v) => setField("firstName", v))}
-          error={errors.firstName}
-        />
-        <FloatingLabelInput
-          icon={User}
-          label={<Req label="Student's Last Name" required />}
-          filledLabel={<Req label="Last Name" required />}
-          value={fields.lastName}
-          {...nameFieldProps((v) => setField("lastName", v))}
-          error={errors.lastName}
-        />
-        <FloatingLabelSelect
-          icon={GraduationCap}
-          label={<Req label={fields.standardId ? "Selected Grade" : "Select Grade"} required />}
-          value={fields.standardId}
-          onValueChange={setGrade}
-          options={grades.data || []}
-          disabled={!fields.learningProgram || grades.isPending}
-          error={errors.standardId}
-        />
-        <DatePicker
-          icon={Cake}
-          label={<Req label="Date of Birth" required />}
-          placeholder="MMM DD, YYYY"
-          value={fields.dob}
-          onChange={(value) => setField("dob", value)}
-          fromDate={dobBounds.fromDate}
-          toDate={dobBounds.toDate}
-          error={errors.dob}
-        />
-        <FloatingLabelSelect
-          icon={VenusAndMars}
-          label={<Req label={fields.gender ? "Selected Gender" : "Select Gender"} required />}
-          value={fields.gender}
-          onValueChange={(v) => setField("gender", v)}
-          options={GENDER_OPTIONS}
-          error={errors.gender}
-        />
-        <FloatingLabelSelect
-          icon={Globe}
-          label={<Req label="Nationality" required />}
-          value={fields.nationality}
-          onValueChange={(v) => setField("nationality", v)}
-          options={countries.data || []}
-          error={errors.nationality}
-          searchable
-        />
+        <div className={HALF_WIDTH}>
+          <FloatingLabelSelect
+            icon={BookOpen}
+            label={<Req label={fields.learningProgram ? "Selected Learning Program" : "Select Learning Program"} required />}
+            value={fields.learningProgram}
+            onValueChange={setLearningProgram}
+            options={LEARNING_PROGRAMS}
+            error={errors.learningProgram}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+          <FloatingLabelInput
+            icon={User}
+            label={<Req label="Student's First Name" required />}
+            filledLabel={<Req label="First Name" required />}
+            value={fields.firstName}
+            {...nameFieldProps((v) => setField("firstName", v))}
+            error={errors.firstName}
+          />
+          <FloatingLabelInput
+            icon={User}
+            label={<Req label="Student's Last Name" required />}
+            filledLabel={<Req label="Last Name" required />}
+            value={fields.lastName}
+            {...nameFieldProps((v) => setField("lastName", v))}
+            error={errors.lastName}
+          />
+          <FloatingLabelSelect
+            icon={GraduationCap}
+            label={<Req label={fields.standardId ? "Selected Grade" : "Select Grade"} required />}
+            value={fields.standardId}
+            onValueChange={setGrade}
+            options={grades.data || []}
+            disabled={!fields.learningProgram || grades.isPending}
+            error={errors.standardId}
+            searchable
+          />
+          <DatePicker
+            icon={Cake}
+            label={<Req label={<>Date of Birth{" "}<span className="text-black text-[12px]">(Month Day, Year)</span></>} required />}
+            value={fields.dob}
+            onChange={(value) => setField("dob", value)}
+            fromDate={dobBounds.fromDate}
+            toDate={dobBounds.toDate}
+            error={errors.dob}
+          />
+          <FloatingLabelSelect
+            icon={VenusAndMars}
+            label={<Req label={fields.gender ? "Selected Gender" : "Select Gender"} required />}
+            value={fields.gender}
+            onValueChange={(v) => setField("gender", v)}
+            options={GENDER_OPTIONS}
+            error={errors.gender}
+            searchable
+          />
+          <FloatingLabelSelect
+            icon={Globe}
+            label={<Req label={<>Nationality{" "}<span className="text-black text-[12px]">(Must have valid National ID)</span></>} required />}
+            value={fields.nationality}
+            onValueChange={(v) => setField("nationality", v)}
+            options={countries.data || []}
+            error={errors.nationality}
+            searchable
+          />
+        </div>
       </div>
+
+      {isDualDiploma && (
+        <>
+          <strong className="mt-6 block text-base font-bold text-black">Current School Details</strong>
+          <div className="mt-3 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+            <FloatingLabelInput
+              icon={School}
+              label={<Req label="Current School Name" required />}
+              className="sm:col-span-2 lg:col-span-1"
+              value={fields.studyingSchoolName}
+              onChange={(e) => setField("studyingSchoolName", e.target.value)}
+              error={errors.studyingSchoolName}
+            />
+            <FloatingLabelSelect
+              icon={BookOpen}
+              label={<Req label="Current Grade" required />}
+              value={fields.studyingGradeId}
+              onValueChange={(v) => setField("studyingGradeId", v)}
+              options={CURRENT_GRADE_OPTIONS}
+              error={errors.studyingGradeId}
+            />
+            <FloatingLabelSelect
+              icon={MapPin}
+              label={<Req label="Country of Current School" required />}
+              value={fields.countryIdOfSchool}
+              onValueChange={(v) => setField("countryIdOfSchool", v)}
+              options={countries.data || []}
+              error={errors.countryIdOfSchool}
+              searchable
+            />
+          </div>
+        </>
+      )}
 
       {errors.form && <p className="mt-4 text-center text-sm font-semibold text-red-600">{errors.form}</p>}
 

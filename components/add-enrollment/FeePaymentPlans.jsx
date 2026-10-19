@@ -261,7 +261,6 @@ function discountRow(youSave, label) {
 
 // getAnnualPaymentTable() — one-time "Pay in Full" plan.
 function AnnualSummary({ fee, standardId, isFlexOrDual }) {
-  debugger
   const rows = [baseRow({ fee, standardId, isFlexOrDual }), ...buildExtraRows(fee)];
   if (isFlexOrDual && fee.enrollmentFee?.enrollmentFee > 0) {
     rows.push({ label: "Enrollment fee", amount: fee.enrollmentFee.enrollmentFeeString });

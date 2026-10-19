@@ -5,7 +5,8 @@ import { FullScreenLoader } from "@/components/common/Loader";
 import { AddStage3ReviewPayment } from "@/components/add-enrollment/AddStage3ReviewPayment";
 import { useAddEnrollmentContext } from "@/hooks/add-enrollment/useAddEnrollmentContext";
 import { useAddWizardResume } from "@/hooks/add-enrollment/useAddWizardResume";
-import { addEnrollmentStepPath } from "@/utils/addEnrollmentSteps";
+import { addEnrollmentStepPath, addEnrollmentParentPath } from "@/utils/addEnrollmentSteps";
+import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { expireSession } from "@/utils/logout";
 
 /**
@@ -39,6 +40,10 @@ export function AddReviewAndPaymentStep() {
         // 2=parent-details [N/A here], 3=course-selection, 4=review). Map
         // it onto this wizard's 3-step scheme (1=student-details,
         // 2=course-selection, 3=review).
+        if (step === 2 && getLearningProgramBackendValue(context.learningProgram) === "ONE_TO_ONE_FLEX") {
+          router.push(addEnrollmentParentPath(school, parentId, sessionUserId));
+          return;
+        }
         const map = { 1: 1, 2: 1, 3: 2, 4: 3 };
         const target = map[step] ?? 2;
         router.push(addEnrollmentStepPath(school, parentId, sessionUserId, target));
