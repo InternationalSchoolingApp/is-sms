@@ -70,6 +70,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [failed, setFailed] = useState(false);
+  const { status: sessionStatus } = useSession();
 
   const search = searchParams.toString();
   const schoolUUID =
@@ -89,8 +90,11 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
           ? getPaymentResponseFailure(schoolUUID, customReference, uniqueUuid, search)
           : getPaymentResponseSuccess(schoolUUID, endpointPath, search);
 
+      // TEMP-DEBUG: every API call this page makes is printed as "[payment-response] api …"
+      console.log("[payment-response] api call", mode === "failure" ? "response-failure" : endpointPath, { schoolUUID, search });
       request
         .then((res) => {
+          console.log("[payment-response] api response", mode === "failure" ? "response-failure" : endpointPath, res);
           if (cancelled) return;
           if (!res) setFailed(true);
           else {
@@ -110,6 +114,32 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
     };
   }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, search, isReplay]);
 
+  // No login session: send the visitor to the login page. Waits for the gateway verification call above to finish
+  // first, so leaving the page never cuts off the backend confirming the payment.
+  // Stage7.jsp asks for a login only when there is no session AND the payment was not made through a payment
+  // link (initiatedVia 'Link') AND it is not an evaluation test form — those pages are shown without a login.
+  const shownWithoutLogin =
+    data &&
+    (String(data.responseStatus ?? "") === "4" ||
+      String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID" ||
+      data.initiatedVia === "Link" ||
+      data.contentFor === "EVALUATION-TEST-FORM");
+  const redirectToLogin = sessionStatus === "unauthenticated" && (isReplay || !loading) && !shownWithoutLogin;
+  useEffect(() => {
+    if (redirectToLogin) window.location.replace(loginPageUrl(schoolUUID));
+  }, [redirectToLogin, schoolUUID]);
+
+  // status "4" / ALREADY_PAID: this payment link was already used — shown with or without a login session.
+  const linkExpired =
+    !loading &&
+    data &&
+    (String(data.responseStatus ?? "") === "4" || String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID");
+  if (linkExpired) return <LinkExpiredCard data={data} schoolUUID={schoolUUID} />;
+
+  if (sessionStatus !== "authenticated" && !(shownWithoutLogin && sessionStatus === "unauthenticated")) {
+    return <ProcessingLoader />;
+  }
+
   if (isReplay) return <AddEnrollmentThankYouReplay
         schoolUUID={schoolUUID}
         parentId={addEnrollment.parentId}
@@ -127,10 +157,34 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   const responseStatus = String(data.responseStatus ?? "");
   if (responseStatus === "1") return <SuccessCard data={data} addEnrollment={addEnrollment} schoolUUID={schoolUUID} />;
   if (responseStatus === "2") return <UnderVerificationCard data={data} />;
-  if (responseStatus === "4" || String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID") {
-    return <LinkExpiredCard data={data} schoolUUID={schoolUUID} />;
-  }
   return <FailedCard data={data} />;
+}
+
+// contentFor / advanceFeePaid / enrollmentFeePaid for SignupStudentStage7.jsp's cases, from the paid payment's
+// title — the same mapping ClientCommonPaymentController#updatePaymentModal does for the JSP. The child is
+// already paid here (replay), i.e. its enrollment is done.
+const STAGE7_SAME_NAME_TYPES = new Set([
+  "TEACHER REQUEST FEE",
+  "BOOKSESSION_FEE",
+  "EXTENSION_FEE",
+  "ADDITIONAL_COURSE_PAYMENT",
+  "NOTARIZATION_FEE",
+  "OTHER_PAYMENT",
+]);
+const STAGE7_INSTALLMENT_TYPES = new Set(["INSTALLMENT-FEE", "SUBJECT_FEE", "CUSTOMIZED_SUBJECT_FEE", "SUBJECT_FEE_ADV"]);
+const STAGE7_BOOK_SEAT_TYPES = new Set(["registration", "REGISTRATION_FEE", "REGISTRATION_FEE_ADV"]);
+
+function stage7ContentFromPaymentTitle(paymentTitle) {
+  const title = String(paymentTitle || "");
+  if (STAGE7_SAME_NAME_TYPES.has(title)) return { contentFor: title, advanceFeePaid: "N" };
+  if (title === "RECURRING_SESSION_FEE") return { contentFor: "RECURRING_SESSION_FEE", advanceFeePaid: "N" };
+  if (STAGE7_INSTALLMENT_TYPES.has(title)) return { contentFor: "INSTALLMENT-FEE", advanceFeePaid: "N" };
+  if (STAGE7_BOOK_SEAT_TYPES.has(title)) {
+    const enrollmentFeePaid = title === "REGISTRATION_FEE_ADV" ? "A" : title === "REGISTRATION_FEE" ? "F" : "";
+    return { contentFor: "BOOK-SEAT", advanceFeePaid: "N", enrollmentFeePaid };
+  }
+  // registration fee, pay-in-full, payment plans and anything else: the first payment
+  return { contentFor: "FIRST-PAYMENT", advanceFeePaid: title === "REGISTRATION_SUBJECT_FEE_ADV" ? "Y" : "N" };
 }
 
 // Thank-you for an add-enrollment child that is already paid, built from the thank-you details API (child found
@@ -155,7 +209,7 @@ function AddEnrollmentThankYouReplay({ schoolUUID, parentId, rollNo, childUnique
     })
       .then((res) => {
         // TEMP-DEBUG: what the replay asked for and what the thank-you API answered
-        console.log("[add-enrollment] replay thank-you", { studentRollNumber, childUniqueId, res });
+        console.log("[payment-response] api response enroll/another/child/thank-you (replay)", { studentRollNumber, childUniqueId, res });
         const ok = res?.status === "1" && res.data;
         // Finished: the next wizard entry in this tab must not pick this child up again (this page's own refresh
         // keeps working from the rollNo / childUniqueId in its URL).
@@ -173,8 +227,8 @@ function AddEnrollmentThankYouReplay({ schoolUUID, parentId, rollNo, childUnique
   return (
     <SuccessCard
       data={{
-        contentFor: "FIRST-PAYMENT",
-        advanceFeePaid: "N",
+        // Same variables SignupStudentStage7.jsp renders from, worked out from the payment title here.
+        ...stage7ContentFromPaymentTitle(info.paymentTitle),
         userName: info.studentName,
         payAmount: info.payAmount,
         grade: info.grade,
@@ -249,7 +303,7 @@ function SuccessBody({ data }) {
       return (
         <>
           <p>Your online payment of {amount} has been received.</p>
-          <p>Your enrollment seat has been reserved. You can download the receipt below.</p>
+          <p>Your enrollment seat has been reserved. You can download the receipt by clicking on the button below.</p>
         </>
       );
     case "INSTALLMENT-FEE":
@@ -269,7 +323,8 @@ function SuccessBody({ data }) {
           <p>We confirm your online payment of {amount} is completed successfully.</p>
           <p>
             Kindly refer to the fee details in your profile for the receipt. You will be assigned a teacher for each
-            requested subject within 2 calendar days. We wish you a wonderful experience of schooling with us.
+            requested subject within 2 calendar days. We believe that we will be able to make a positive contribution
+            to your academic pursuits. We wish you a wonderful experience of schooling with us.
           </p>
         </>
       );
@@ -342,6 +397,7 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
         <StatusIcon variant="success" />
+        <p className="text-xl font-bold text-slate-800">Thank You!</p>
         <h2 className="text-2xl font-extrabold tracking-tight text-emerald-600 sm:text-3xl">
           {successTitle(data)}!
         </h2>
@@ -431,7 +487,7 @@ function AddEnrollmentAccountInfo({ schoolUUID, parentId, sessionUniqueId }) {
       studentRollNumber: rollNo,
     })
       .then((res) => {
-        console.log("[add-enrollment account section] thank-you API response", res);
+        console.log("[payment-response] api response enroll/another/child/thank-you (account section)", { rollNo, res });
         if (!cancelled && res?.status === "1" && res.data) setInfo(res.data);
       })
       .catch((err) => console.log("[add-enrollment account section] thank-you API failed", err));
@@ -557,9 +613,13 @@ const DASHBOARD_OR_REVIEW_TYPES = new Set([
 // OTHER_PAYMENT compared to the Success branch's own set — kept exactly as
 // the JSP has it (not harmonized), since those fall into the "review and
 // payment" `c:otherwise` here, same end destination either way.
-function dashboardOrReviewCta(data) {
+// The failed branch's list in Stage7.jsp is the same minus BOOK-SEAT: a failed seat booking always offers
+// "Click here to review and payment".
+const FAILED_DASHBOARD_OR_REVIEW_TYPES = new Set([...DASHBOARD_OR_REVIEW_TYPES].filter((type) => type !== "BOOK-SEAT"));
+
+function dashboardOrReviewCta(data, types = DASHBOARD_OR_REVIEW_TYPES) {
   if (!data.returnUrl) return null;
-  if (DASHBOARD_OR_REVIEW_TYPES.has(data.contentFor) && data.initiatedVia !== "Link") {
+  if (types.has(data.contentFor) && data.initiatedVia !== "Link") {
     return { href: data.returnUrl, label: "Click here for Dashboard" };
   }
   return { href: data.returnUrl, label: "Click here to review and payment" };
@@ -571,15 +631,16 @@ function UnderVerificationCard({ data }) {
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
         <StatusIcon variant="pending" />
-        <h2 className="mt-4 text-2xl font-extrabold text-black">Payment Under Verification</h2>
+        <p className="mt-3 text-xl font-bold text-slate-800">Thank You!</p>
+        <h2 className="mt-1 text-2xl font-extrabold text-black">Payment Under Verification</h2>
         {data.userName && <p className="mt-3 font-semibold text-primary">Dear {data.userName},</p>}
         {data.displaySchoolName && (
           <p className="mt-1 text-sm italic text-slate-600">Greetings from {data.displaySchoolName}!</p>
         )}
         <p className="mt-4 text-sm leading-relaxed text-slate-600">
-          We believe you were trying to complete a transaction with us. However, your payment is under verification and
-          you will be notified by email if the status changes. For more information, contact us at{" "}
-          <ContactEmail email={data.contactEmail} />.
+          We believe that you were trying to complete a transaction with us. However, your payment transaction is under
+          verification and you will be notified through email if there is any change in your payment status. Kindly let
+          us know by mailing on <ContactEmail email={data.contactEmail} /> if you need more information.
         </p>
         {data.feeFailedReason && (
           <p className="mt-3 text-sm text-slate-700">
@@ -619,17 +680,18 @@ function LinkExpiredCard({ data, schoolUUID }) {
 /* -------------------------------- Failed ------------------------------- */
 
 function FailedCard({ data }) {
-  const cta = dashboardOrReviewCta(data);
+  const cta = dashboardOrReviewCta(data, FAILED_DASHBOARD_OR_REVIEW_TYPES);
   return (
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
         <StatusIcon variant="failed" />
+        <p className="mt-3 text-xl font-bold text-slate-800">Oops!</p>
         <h2 className="text-2xl font-extrabold tracking-tight text-rose-600 sm:text-3xl">
           {data.failedTitle || "Payment Unsuccessful"}
         </h2>
-        {data.userName && <p className="mt-4 text-base font-bold text-black">Dear, {data.userName}</p>}
+        {data.userName && <p className="mt-4 text-base font-bold text-black">Dear {data.userName}</p>}
         {data.displaySchoolName && (
-          <p className="mt-3 text-sm font-semibold text-slate-700">Greetings from {data.displaySchoolName}</p>
+          <p className="mt-3 text-sm font-semibold italic text-slate-700">Greetings from {data.displaySchoolName}!</p>
         )}
         <div className="mt-5 space-y-2 rounded-2xl bg-rose-50/80 px-5 py-4 text-sm leading-relaxed text-slate-700 ring-1 ring-rose-100">
           {data.paymentName && (
@@ -638,9 +700,15 @@ function FailedCard({ data }) {
             </p>
           )}
           <p>
-            We couldn’t confirm your payment. Please try again, or contact <ContactEmail email={data.contactEmail} /> for help.
+            We believe that you were trying to complete a transaction with us. However, due to some issue, we have NOT
+            received your payment for this transaction. Kindly let us know by mailing on{" "}
+            <ContactEmail email={data.contactEmail} /> if we could help you on the same.
           </p>
-          {data.feeFailedReason && <p className="font-medium text-rose-700">{data.feeFailedReason}</p>}
+          {data.feeFailedReason && (
+            <p className="font-medium text-rose-700">
+              <b>Fee Failed Reason:</b> {data.feeFailedReason}
+            </p>
+          )}
         </div>
         <ReturnButton cta={cta} />
       </div>

@@ -43,3 +43,8 @@ export function normalizeAddSignupPage(signupPage) {
 export function addEnrollmentParentPath(school, parentId, sessionUserId) {
   return `${addEnrollmentBasePath(school, parentId, sessionUserId)}/parent-details`;
 }
+
+// The thank-you details API's isFirstPayment flag ("Y" = the registration fee of a fresh enrollment).
+export function isFirstPayment(info) {
+  return String(info?.isFirstPayment ?? "").toUpperCase() === "Y";
+}

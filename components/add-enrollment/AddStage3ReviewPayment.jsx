@@ -391,9 +391,13 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
     if (stageStatusData.status === STATUS_SESSION_OUT) {
       onSessionExpired?.();
     } else if (stageStatusData.status === STATUS_SUCCESS && stageStatusData.redirectUri) {
-      window.location.replace(stageStatusData.redirectUri);
+      // The child is already registered (e.g. paid through the payment link in another browser). redirectUri is the
+      // Java dashboard, which needs a Java session this browser does not have (it would end in a session-mismatch
+      // logout), so hand over to the wizard's completed flow (thank-you page) instead.
+      if (onEnrollmentCompleted) onEnrollmentCompleted();
+      else window.location.replace(stageStatusData.redirectUri);
     }
-  }, [stageStatusData, context.customPaymentEnabled, onSessionExpired]);
+  }, [stageStatusData, context.customPaymentEnabled, onSessionExpired, onEnrollmentCompleted]);
 
   // Coming back from the payment gateway (browser Back / bfcache) restores this page exactly as it
   // was left — with the payment modal open and busy. Reset it when the page is restored from the cache.
