@@ -1,7 +1,7 @@
 import { encodePayload, encodeRawString } from "@/utils/payloadEncoding";
 import { isBackendOverrideAllowed, resolveBackendNavigationOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { getHash, getSystemTimezone } from "@/utils/common";
-import { withServiceKey } from "@/lib/auth/session";
+import { withServiceKey } from "@/lib/auth/serviceKey";
 
 /**
  * Exchanges a one-time SSO token (issued by the legacy Java login page,
