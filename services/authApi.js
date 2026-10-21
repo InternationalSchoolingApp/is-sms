@@ -60,11 +60,7 @@ export async function exchangeSsoToken(schoolUUID, ssoToken, backendOverride) {
     return null;
   }
 
-  // Temporary diagnostic — this is the first live run of this path; remove
-  // once the handoff is confirmed working end to end.
   if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    console.error("exchangeSsoToken: non-OK response", url, response.status, text);
     return null;
   }
   return response.json();
