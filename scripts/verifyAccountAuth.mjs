@@ -20,9 +20,14 @@ const server = createServer((req, res) => {
       res.end(JSON.stringify({ keys: [{ ...publicKey.export({ format: "jwk" }), kid: "k1", alg: "RS256", use: "sig" }] }));
     } else if (req.url === "/school-a/auth/refresh") {
       refreshCalls++;
-      const ok = JSON.parse(body).refresh_token === "good-refresh";
+      const presented = JSON.parse(body).refresh_token;
+      const ok = presented === "good-refresh";
       setTimeout(() => {
-        if (!ok) {
+        if (presented === "racing-refresh") {
+          res.statusCode = 409;
+          res.setHeader("Retry-After", "1");
+          res.end(JSON.stringify({ error: "concurrent_refresh" }));
+        } else if (!ok) {
           res.statusCode = 401;
           res.end(JSON.stringify({ error: "invalid_grant" }));
         } else {
@@ -53,7 +58,7 @@ function token(overrides, { key = privateKey, kid = "k1", alg = "RS256" } = {}) 
   return `${head}.${payload}.${signature}`;
 }
 
-const { TokenError, logoutAtSms, refreshTokens, trustedBackend, verifyAccessToken } = await import("../lib/auth/smsTokens.js");
+const { RENEWED_ELSEWHERE, TokenError, logoutAtSms, refreshTokens, trustedBackend, verifyAccessToken } = await import("../lib/auth/smsTokens.js");
 const cookies = await import("../lib/auth/accountCookies.js");
 
 let failed = 0;
@@ -95,6 +100,12 @@ check("this deployment's backend is trusted", trustedBackend(backend) === backen
 const [a, b] = await Promise.all([refreshTokens(backend, "school-a", "good-refresh"), refreshTokens(backend, "school-a", "good-refresh")]);
 check("parallel renewals share one call to SMS", refreshCalls === 1 && a.refreshToken === "next-refresh" && a === b);
 check("a refused renewal gives null", (await refreshTokens(backend, "school-a", "used-refresh")) === null);
+const callsBeforeRace = refreshCalls;
+check("a renewal another server just made is not a sign-out",
+  (await refreshTokens(backend, "school-a", "racing-refresh")) === RENEWED_ELSEWHERE);
+await new Promise((resolve) => setTimeout(resolve, 20));
+await refreshTokens(backend, "school-a", "racing-refresh");
+check("that answer is not kept, so the retry asks SMS again", refreshCalls === callsBeforeRace + 2);
 await logoutAtSms(backend, "school-a", "next-refresh");
 check("logout reaches SMS", logoutCalls === 1);
 await logoutAtSms("http://127.0.0.1:1", "school-a", "x"); // unreachable SMS: must not throw

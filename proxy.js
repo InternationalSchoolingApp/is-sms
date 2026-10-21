@@ -10,7 +10,7 @@ import {
   pickedAccount,
   writeAccount,
 } from "@/lib/auth/accountCookies";
-import { TokenError, refreshTokens, trustedBackend, verifyAccessToken } from "@/lib/auth/smsTokens";
+import { RENEWED_ELSEWHERE, TokenError, refreshTokens, trustedBackend, verifyAccessToken } from "@/lib/auth/smsTokens";
 
 /**
  * Browser sign-in for the protected routes (SMS plan section 27, Phase 4). Several users can be signed in
@@ -73,6 +73,7 @@ export default async function proxy(request) {
       return signedOut(request, school, entry.account);
     }
     renewed = await refreshTokens(backend, school, entry.refreshToken).catch(() => null);
+    if (renewed === RENEWED_ELSEWHERE) return retryShortly(request);
     if (!renewed) return signedOut(request, school, entry.account);
     accessToken = renewed.accessToken;
   }
@@ -102,6 +103,16 @@ function toLogin(request, school) {
 }
 
 /** The account's login has ended (revoked, reused, or never valid): forget it and go to login. */
+/**
+ * Another request renewed this login a moment ago and its response carries the new cookies. Wait as SMS asks
+ * (Retry-After: 1), then send the browser to the same URL: 307 keeps the method and body, so a server action is
+ * repeated as sent, now with the new cookies.
+ */
+async function retryShortly(request) {
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  return NextResponse.redirect(request.nextUrl, 307);
+}
+
 function signedOut(request, school, account) {
   const response = toLogin(request, school);
   clearAccount(response.cookies, account);
