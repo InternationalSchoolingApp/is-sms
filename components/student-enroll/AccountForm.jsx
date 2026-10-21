@@ -232,9 +232,8 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
       // even when React's state missed the update.
       const formData = new FormData(formRef.current);
       const submittedEmail = formData.get("email") || fields.email;
-      // The location is captured asynchronously on load; if the user submits before it landed, resolve it now so the
-      // saved record never gets "{}" (see the location effect above).
-      if (!getLocationValue()) await callLocationForPaymentPromise();
+      // Refresh before signup: the visitor may have switched networks or VPN since page load.
+      await callLocationForPaymentPromise({ throwOnError: true });
       const domFields = {
         ...fields,
         location: getLocationValue() || fields.location,

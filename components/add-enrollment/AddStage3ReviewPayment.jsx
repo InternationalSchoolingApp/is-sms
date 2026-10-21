@@ -732,9 +732,9 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
         : failure?.message || "Could not load your review details.";
     return (
       <div>
-        <p className="text-sm font-semibold text-red-600">{message}</p>
+        <p className="text-center text-sm font-semibold text-red-600">{message}</p>
         {failure?.statusCode !== STATUS_REDIRECT_TO_DASHBOARD && failure?.statusCode !== STATUS_ELIGIBLE_CUSTOM_PLAN && (
-          <div className="mt-6 flex gap-3">
+          <div className="fixed inset-x-0 bottom-0 z-30 flex justify-center gap-3 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:bottom-12 md:bg-transparent">
             {onBack && (
               <Button type="button" variant="outline" onClick={onBack} className="cursor-pointer">
                 Back
