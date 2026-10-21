@@ -305,10 +305,12 @@ export function getCourseColor(courseRegistry, courseId) {
 }
 
 export function getEventColor(event, courseRegistry) {
+  // debugger
   if (event.eventKind === "holiday") return "#1b5e20";
   if (event.eventKind === "activity") return "#2267f0";
   return getCourseColor(courseRegistry, event.courseId);
 }
+
 
 // ── Filters ──────────────────────────────────────────────────────────────
 

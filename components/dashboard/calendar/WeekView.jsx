@@ -6,9 +6,9 @@ import { bucketEventsForWeek, getEventColor, getEventStatus, getWeekDays } from 
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const MAX_VISIBLE_PER_HOUR = 2;
-const ROW_HEIGHT = 48;
+const ROW_HEIGHT = 60;
 
-function EventChip({ event, courseRegistry, onSelect }) {
+function EventChip({ event, courseRegistry, onSelect, widthClassName = "w-full" }) {
   const color = getEventColor(event, courseRegistry);
   const status = getEventStatus(event);
   const isClass = event.eventKind === "class";
@@ -17,7 +17,7 @@ function EventChip({ event, courseRegistry, onSelect }) {
     <button
       type="button"
       onClick={() => onSelect?.(event)}
-      className={`block w-full truncate rounded px-1.5 py-1 text-left text-[11px] font-semibold border-2 ${
+      className={`block ${widthClassName} truncate rounded px-1.5 py-1 text-left text-[11px] font-semibold border-2 ${
         isLive ? "calendar-live-dashed" : ""
       }`}
       style={
@@ -119,15 +119,26 @@ export function WeekView({ events, selectedDate, courseRegistry, onSelectDay, on
                 // visually spill into the next hour's space. Matched here with
                 // position: relative + an absolutely positioned overflow chip
                 // anchored to this cell's bottom edge, so every row stays the
-                // same fixed, compact height instead of stretching.
+                // same fixed, compact height instead of stretching. Concurrent
+                // events in the same hour sit side by side (each an equal
+                // 1/visible.length share, like legacy's `pct = 100 / tc`)
+                // instead of stacking, so 2 visible events split 50/50.
                 <div
                   key={`${key}-${hour}`}
-                  className="relative min-w-0 space-y-0.5 border-b border-l border-dashed border-slate-100 p-0.5"
+                  className="relative min-w-0 border-b border-l border-dashed border-slate-100 p-0.5"
                   style={{ height: ROW_HEIGHT }}
                 >
-                  {visible.map((event) => (
-                    <EventChip key={event.id} event={event} courseRegistry={courseRegistry} onSelect={onSelectEvent} />
-                  ))}
+                  <div className="flex gap-0.5">
+                    {visible.map((event) => (
+                      <EventChip
+                        key={event.id}
+                        event={event}
+                        courseRegistry={courseRegistry}
+                        onSelect={onSelectEvent}
+                        widthClassName="min-w-0 flex-1"
+                      />
+                    ))}
+                  </div>
                   {overflow > 0 && (
                     <button
                       type="button"

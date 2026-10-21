@@ -129,7 +129,7 @@ function ThreadView({ threadId, sessionUserId, schoolName }) {
   return (
     <div className="flex h-full flex-col p-3">
       <div
-        className="relative flex-1 overflow-y-auto rounded-xl border-l-4 border-sky-500 py-4 pl-10 pr-3"
+        className="relative flex-1  rounded-xl border-l-4 border-sky-500 py-4 pl-10 pr-3"
         style={{
           backgroundImage:
             "linear-gradient(transparent 31px, rgba(0,132,255,0.08) 32px), linear-gradient(90deg, transparent 31px, rgba(0,132,255,0.08) 32px)",
@@ -138,11 +138,12 @@ function ThreadView({ threadId, sessionUserId, schoolName }) {
       >
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-0 left-1 top-0 w-3 bg-repeat-y"
+          className="pointer-events-none absolute bottom-0 left-1 top-0 w-3 bg-repeat-y overflow-y-auto"
           style={{
             backgroundImage:
               "radial-gradient(circle at center, white 3px, #64748b 3px, #64748b 4px, transparent 4px)",
             backgroundSize: "100% 28px",
+            backgroundRepeat:"repeat-y"
           }}
         />
         <Bookmark aria-hidden="true" className="absolute -top-1 right-4 h-7 w-5 fill-primary text-primary" />

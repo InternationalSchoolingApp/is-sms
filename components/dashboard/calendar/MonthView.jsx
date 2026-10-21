@@ -34,7 +34,7 @@ export function MonthView({ events, selectedDate, courseRegistry, onSelectDay, o
           const overflow = dayEvents.length - visible.length;
           const inMonth = isSameMonth(day, selectedDate);
           const isToday = isSameDay(day, today);
-
+          // debugger
           return (
             <button
               key={key}
@@ -61,8 +61,8 @@ export function MonthView({ events, selectedDate, courseRegistry, onSelectDay, o
                       e.stopPropagation();
                       onSelectEvent?.(event);
                     }}
-                    className="truncate rounded px-1 py-0.5 text-[10px] font-semibold text-white hover:opacity-90"
-                    style={{ background: getEventColor(event, courseRegistry) }}
+                    className={`truncate rounded px-1 py-0.5 text-[10px] font-semibold border-2 ${ event.eventKind == 'class' ? 'border-dashed':''}  hover:opacity-90`}
+                    style={{ borderColor: getEventColor(event, courseRegistry), color:getEventColor(event, courseRegistry)}}
                   >
                     {event.title || event.eventTitle || "Untitled"}
                   </div>
