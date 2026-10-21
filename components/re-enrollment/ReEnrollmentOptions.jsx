@@ -3,14 +3,16 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { User } from "lucide-react";
+import { ArrowRight, CalendarDays, Headphones, Info, Mail, MessageCircle, Phone } from "lucide-react";
 import { FullScreenLoader } from "@/components/common/Loader";
-import { ActionButton, PageTitle, SupportCard } from "@/components/re-enrollment/ReEnrollmentParts";
+import { ActionButton, CHAT_BASE_URL, SUPPORT_EMAIL, SUPPORT_PHONE } from "@/components/re-enrollment/ReEnrollmentParts";
 import { STATUS_SUCCESS, useReEnrollmentContext, useSelectReEnrollmentOption } from "@/hooks/useReEnrollment";
 import { expireSession } from "@/utils/logout";
 import { reEnrollmentStepPath } from "@/utils/reEnrollmentSteps";
 
-// Legacy "RE-ENROLL NOW & SAVE USD x" box with "Offer Ends on" and the DAYS : HRS : MIN : SEC countdown.
+const pad = (n) => String(n);
+
+// Early re-enrollment offer card: saving amount, "Offer Ends on" date and the DAYS : HRS : MIN : SEC countdown.
 function DiscountBanner({ discount }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -25,37 +27,108 @@ function DiscountBanner({ discount }) {
     { label: "MIN", value: Math.floor((remaining % 3600000) / 60000) },
     { label: "SEC", value: Math.floor((remaining % 60000) / 1000) },
   ];
-  const endsOn = new Date(discount.dueDateMillis).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const endsOn = new Date(discount.dueDateMillis).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
   return (
-    <div className="mt-6 text-center">
-      <div className="inline-block rounded-[10px] bg-gradient-to-r from-[#33AB57] via-[#46B64C] to-[#59C141] p-2 text-white shadow-lg">
-        <div className="rounded border border-dashed border-white/80 px-6 py-3">
-          <h6 className="mb-0 text-base font-semibold">RE-ENROLL NOW &amp; SAVE</h6>
-          <h4 className="mb-0 text-2xl font-bold">
-            {discount.currencyLabel ? `${discount.currencyLabel} ` : ""}
-            {discount.amount}
-          </h4>
-        </div>
+    <div className="overflow-hidden rounded-2xl border border-green-300 bg-white">
+      <div className="px-4 py-4 text-center">
+        <p className="text-base font-medium text-green-600">Early re-enrollment offer</p>
+        <p className="mt-1 text-3xl font-extrabold text-slate-900">
+          Save {discount.currencyLabel ? `${discount.currencyLabel} ` : ""}
+          {discount.amount}
+        </p>
+        <p className="mt-1 text-sm text-slate-500 sm:text-base">when you re-enroll before the offer ends</p>
       </div>
       {remaining > 0 && (
-        <>
-          <div className="mb-1 mt-4 text-base font-bold text-black">
-            ⏱️ Offer Ends on: <span className="text-red-600">{endsOn}</span>
+        <div className="flex flex-row items-center justify-between gap-2 border-t border-green-300 bg-green-50 px-3 py-3 sm:px-4">
+          <div className="flex items-center gap-2 text-slate-800">
+            <CalendarDays className="h-5 w-5 shrink-0 text-green-700" aria-hidden="true" />
+            <div className="leading-tight">
+              <p className="text-sm">Offer Ends on:</p>
+              <p className="text-base font-bold">{endsOn}</p>
+            </div>
           </div>
-          <div className="flex items-center justify-center gap-2" aria-label="Offer countdown">
+          <div className="flex items-center gap-1 sm:gap-1.5" aria-label="Offer countdown">
             {parts.map((part, index) => (
-              <div key={part.label} className="flex items-center gap-2">
-                <div className="min-w-[66px] rounded-md border border-slate-300 bg-white px-2 py-1">
-                  <div className="text-3xl font-bold text-red-600">{part.value}</div>
-                  <div className="text-xs font-semibold text-slate-700">{part.label}</div>
+              <div key={part.label} className="flex items-center gap-1 sm:gap-1.5">
+                <div className="min-w-[38px] rounded-lg border border-green-300 bg-white px-1 py-1 sm:min-w-[46px] sm:px-1.5 text-center leading-tight">
+                  <div className="text-lg font-bold text-slate-900">{pad(part.value)}</div>
+                  <div className="text-[10px] font-semibold text-slate-700">{part.label}</div>
                 </div>
-                {index < parts.length - 1 && <span className="text-xl font-bold text-primary">:</span>}
+                {index < parts.length - 1 && <span className="text-lg font-bold text-slate-800">:</span>}
               </div>
             ))}
           </div>
-        </>
+        </div>
       )}
     </div>
+  );
+}
+
+function StepList({ grade, hasDiscount, discountText }) {
+  const steps = [
+    { title: "Review fee & pick a plan", text: hasDiscount ? `Your ${discountText} saving is applied here` : "Choose the plan that suits you" },
+    { title: "Pay securely", text: "One payment for the whole year" },
+    { title: "Choose your courses", text: "Core courses are already added for you" },
+    { title: "Choose academic date", text: `Choose when ${grade || "the next grade"} begins, and you're done` },
+  ];
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h3 className="text-base font-bold text-slate-900">4 easy steps</h3>
+        <span className="flex items-center gap-1 text-sm font-medium text-primary">
+          <Info className="h-4 w-4" aria-hidden="true" />
+          About 5 Minutes
+        </span>
+      </div>
+      <ol className="grid gap-3 sm:grid-cols-2">
+        {steps.map((step, index) => (
+          <li key={step.title} className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+            <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">{index + 1}</span>
+            <div>
+              <p className="font-bold text-slate-900">{step.title}</p>
+              <p className="text-sm text-slate-600">{step.text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+function HelpCard({ uniqueId }) {
+  const chatUrl = `${CHAT_BASE_URL}/onboarding-support?uuid=${encodeURIComponent(uniqueId || "")}`;
+  return (
+    <aside className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <h4 className="mb-4 flex items-center gap-3 text-lg font-bold text-slate-900">
+        <Headphones className="h-6 w-6 text-primary" aria-hidden="true" />
+        Need Help?
+      </h4>
+      <a
+        href={chatUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mb-3 flex items-center gap-3 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white transition-transform hover:scale-[1.02]"
+      >
+        <MessageCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
+        Live Chat with School Administration
+      </a>
+      <div className="mb-3 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+        <Phone className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+        <div>
+          <p className="font-semibold text-slate-900">Phone Support</p>
+          <p className="text-slate-600">{SUPPORT_PHONE}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+        <Mail className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+        <div className="min-w-0">
+          <p className="font-semibold text-slate-900">Email Support</p>
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="break-words text-slate-600">
+            {SUPPORT_EMAIL}
+          </a>
+        </div>
+      </div>
+    </aside>
   );
 }
 
@@ -110,49 +183,53 @@ export function ReEnrollmentOptions() {
     }
   }
 
-  return (
-    <>
-      <PageTitle icon={User}>{eligibility.studentName || session.email}</PageTitle>
-      <div className="grid gap-4 lg:grid-cols-[3fr_1fr]">
-        <div className="rounded-[15px] bg-white px-4 py-8 shadow-lg sm:px-8">
-          {passed ? (
-            <div className="text-center">
-              <h2 className="mb-3 text-[26px] font-bold text-black">Congratulations, Dear {eligibility.studentName}!</h2>
-              <h6 className="mt-4 text-xl font-semibold text-slate-800">
-                You have been <b className="text-black">promoted</b>
-                {options[0]?.grade?.name && (
-                  <>
-                    {" "}to <span className="font-semibold">{options[0].grade.name}</span>
-                  </>
-                )}
-              </h6>
-            </div>
-          ) : (
-            <div className="mb-3 text-center">
-              <h2 className="mb-2 text-[28px] font-bold text-black">Don&apos;t give up</h2>
-              <h6 className="text-lg font-bold text-slate-500">Retake your courses and earn your way to the next grade</h6>
-            </div>
-          )}
+  const grade = options[0]?.grade?.name;
+  const discount = eligibility.progressionDiscount;
+  const hasDiscount = passed && discount?.amount > 0;
+  const discountText = hasDiscount ? `${discount.currencyLabel ? `${discount.currencyLabel} ` : ""}${discount.amount}` : "";
 
-          {passed && eligibility.progressionDiscount?.amount > 0 && <DiscountBanner discount={eligibility.progressionDiscount} />}
-
-          <div className="mt-8 flex flex-col items-center gap-4">
-            {options.map((option) => (
-              <div key={option.enrollmentType} className="text-center">
-                <ActionButton
-                  onClick={() => choose(option)}
-                  disabled={select.isPending}
-                  className="min-w-[240px] rounded-[15px] px-6 py-2.5 text-base font-semibold"
-                >
-                  {select.isPending && select.variables === option.enrollmentType ? "Please wait…" : OPTION_BUTTON[option.enrollmentType] || "Continue"}
-                </ActionButton>
-                {option.learningProgramLabel && <p className="mt-1 text-xs font-semibold text-slate-500">{option.learningProgramLabel}</p>}
-              </div>
-            ))}
-          </div>
+  const optionButtons = (
+    <div className="flex flex-col items-center gap-4">
+      {options.map((option) => (
+        <div key={option.enrollmentType} className="w-full text-center sm:w-auto">
+          <ActionButton
+            onClick={() => choose(option)}
+            disabled={select.isPending}
+            className="flex w-full items-center justify-center gap-2 rounded-xl px-8 py-3.5 text-lg font-semibold sm:min-w-[280px]"
+          >
+            {select.isPending && select.variables === option.enrollmentType ? "Please wait…" : OPTION_BUTTON[option.enrollmentType] || "Continue"}
+            {!(select.isPending && select.variables === option.enrollmentType) && <ArrowRight className="h-5 w-5" aria-hidden="true" />}
+          </ActionButton>
+          {option.learningProgramLabel && <p className="mt-1 text-xs font-semibold text-slate-500">{option.learningProgramLabel}</p>}
         </div>
-        <SupportCard uniqueId={session.uniqueId} />
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="mx-auto grid w-full max-w-6xl gap-4 lg:grid-cols-[2fr_1fr] lg:items-start">
+      <div className="flex flex-col gap-4">
+        {passed ? (
+          <div className="rounded-2xl bg-gradient-to-r from-[#0a7cf0] to-[#0057b8] px-4 py-6 text-center text-white shadow-lg">
+            <p className="inline-block rounded-full bg-white/20 px-6 py-2 text-md font-bold sm:text-md">Congratulations, Dear {eligibility.studentName}!</p>
+            <h2 className="mt-4 text-3xl font-extrabold leading-tight sm:text-3xl">
+              You&apos;ve been promoted{grade ? ` to ${grade}` : ""}
+            </h2>
+          </div>
+        ) : (
+          <div className="rounded-2xl bg-white px-4 py-6 text-center shadow-sm">
+            <h2 className="mb-2 text-[28px] font-bold text-black">Don&apos;t give up</h2>
+            <h6 className="text-lg font-bold text-slate-500">Retake your courses and earn your way to the next grade</h6>
+          </div>
+        )}
+
+        {hasDiscount && <DiscountBanner discount={discount} />}
+
+        {passed && <StepList grade={grade} hasDiscount={hasDiscount} discountText={discountText} />}
+
+        <div className="py-2">{optionButtons}</div>
       </div>
-    </>
+      <HelpCard uniqueId={session.uniqueId} />
+    </div>
   );
 }
