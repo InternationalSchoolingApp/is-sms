@@ -1,5 +1,5 @@
 import { getCommonScriptVariables } from "@/services/studentSignupBackendApi";
-import { getIpLocation } from "@/services/ipLocationApi";
+import { getIpLocation } from "@/services/ipLocationClientApi";
 
 /**
  * Port of the payer-location functions in the Java frontend —
@@ -41,7 +41,7 @@ export function getCountryISOCode() {
 }
 
 // GET PRO_IP_API_URL — the $.ajax({ global:false, type:"GET", url: PRO_IP_API_URL }) call,
-// now a Server Action (services/ipLocationApi.js) so it still works under a UAT backend override.
+// Browser request normally; a Server Action only for a cross-origin UAT backend override.
 async function fetchIpLocation() {
   const data = await getIpLocation();
   if (!data) throw new Error("ip-location returned no data");
@@ -56,7 +56,7 @@ export async function callLocationForPaymentFill(data) {
 }
 
 // callLocationForPaymentPromise()
-export async function callLocationForPaymentPromise() {
+export async function callLocationForPaymentPromise({ throwOnError = false } = {}) {
   if (LOCATION_SERVICE_BYPASS == "true") {
     await callLocationForPaymentFill(JSON.parse(DEFAULT_LOCATION));
   } else {
@@ -65,6 +65,7 @@ export async function callLocationForPaymentPromise() {
       await callLocationForPaymentFill(data);
     } catch (e) {
       console.error(e);
+      if (throwOnError) throw e;
     }
   }
 }
