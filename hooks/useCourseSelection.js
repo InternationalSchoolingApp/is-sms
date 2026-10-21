@@ -3,12 +3,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   chooseCoursesByGrade,
-  choosePaymentPlan,
   getPaymentDetails,
   getRecommendedCourses,
   getStudentCommissionPayBy,
 } from "@/services/studentSignupBackendApi";
-import { isKnownPaymentMode } from "@/utils/studentSignupValidation";
 
 // SeriConstant: "1" success, "0" failed, "2" exception, "3" session out.
 export const STATUS_SUCCESS = "1";
@@ -21,7 +19,7 @@ function isSuccessResponse(response) {
 // standardId is part of the key: without it, changing grade on Stage 1 and
 // returning to Stage 3 would keep serving the previous grade's cached
 // response (staleTime: Infinity below) instead of refetching for the new one.
-function courseDetailsKey(userId, standardId) {
+export function courseDetailsKey(userId, standardId) {
   return ["course-details", userId, standardId == null ? "" : String(standardId)];
 }
 
@@ -138,21 +136,18 @@ export function useRecommendedCourses({ context, userId }) {
 /**
  * Step 3 -> Step 4, mirroring handleCourseSelectionStepThreeProceed() in
  * signupStudentStage3.js: with showPaymentOption "Y", get-payment-details
- * first (this is also where the backend's mandatory-category check runs),
- * then choose-payment-plan with the plan it returns; with "N", straight to
- * choose-payment-plan with the course page's saved plan. choose-payment-plan
- * is what moves nextSessionStage to 4, so the review page (and a later
- * login) resumes at step 4. The review page lets the student change the
- * plan before paying.
+ * first (this is also where the backend's mandatory-category check runs).
+ * choose-payment-plan is intentionally NOT called here anymore — it's left
+ * for the review page (useChoosePaymentPlan in useStudentReview.js), which
+ * calls it when the student actually picks/switches a plan.
  *
  * Resolves to { ok, response } where response is whichever call failed, or
- * the choose-payment-plan response on success.
+ * null on success.
  */
 export function useProceedToReview({ context, userId }) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ courseData, showPaymentOption }) => {
-      let paymentMode = courseData.paymentMode;
       if (showPaymentOption === "Y") {
         // Matches getRequestForPaymentModeSelection() in signupStudentStage3.js
         // field-for-field. courseId/controlType are always sent as "" here:
@@ -175,14 +170,8 @@ export function useProceedToReview({ context, userId }) {
           requestFromMigration: "N",
         });
         if (details?.status !== STATUS_SUCCESS) return { ok: false, response: details };
-        paymentMode = details.paymentMode;
       }
-      // Same fallback the backend applies when no plan is saved yet
-      // (CTECourseUtil sets PAY_YEARLY); also covers a legacy-typo'd value
-      // like "nineMonthlly" already stored on the student.
-      if (!isKnownPaymentMode(paymentMode)) paymentMode = "annually";
-      const plan = await choosePaymentPlan(context.schoolUUID, { userId, paymentMode, requestFromMigration: "N" });
-      return { ok: plan?.status === STATUS_SUCCESS, response: plan };
+      return { ok: true, response: null };
     },
     // The review page caches get-student-review-details with staleTime: Infinity, so a visit to
     // Step 3 from the review screen (Edit) would otherwise come back to the pre-edit courses/fees.
