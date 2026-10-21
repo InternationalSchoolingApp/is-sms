@@ -1,6 +1,7 @@
 import { encodePayload, encodeRawString } from "@/utils/payloadEncoding";
 import { isBackendOverrideAllowed, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { getHash, getSystemTimezone } from "@/utils/common";
+import { withServiceKey } from "@/lib/auth/session";
 
 /**
  * Exchanges a one-time SSO token (issued by the legacy Java login page,
@@ -49,11 +50,11 @@ export async function exchangeSsoToken(schoolUUID, ssoToken, backendOverride) {
   const url = `${baseUrl}/${schoolUUID}/api/v1/common/sso/exchange`;
   let response;
   try {
-    response = await fetch(url, {
+    response = await fetch(url, withServiceKey({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ payload: encodePayload({ ssoToken }) }),
-    });
+    }));
   } catch (err) {
     console.error("exchangeSsoToken: fetch threw", url, err);
     return null;
