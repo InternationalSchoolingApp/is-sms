@@ -3,9 +3,12 @@
 import { useEffect } from "react";
 import { useParams, useRouter, useSelectedLayoutSegment } from "next/navigation";
 import { FullScreenLoader } from "@/components/common/Loader";
+import { DevApiSequenceLog } from "@/components/add-enrollment/DevApiSequenceLog";
 import { loadAddEnrollmentChildUniqueId, loadAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
 import { AddEnrollmentWizardShell, WIZARD_STEP_META } from "@/components/add-enrollment/AddEnrollmentWizardShell";
 import { AddEnrollmentProvider, useAddEnrollmentContext } from "@/hooks/add-enrollment/useAddEnrollmentContext";
+import { useBackendSessionGuard } from "@/hooks/useBackendSessionGuard";
+import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { expireSession, logoutEverywhere } from "@/utils/logout";
 
 /**
@@ -15,14 +18,15 @@ import { expireSession, logoutEverywhere } from "@/utils/logout";
  */
 const SEGMENT_TO_STEP_KEY = {
   "student-details": "student",
+  "parent-details": "parent",
   "course-selection": "course_selection",
   "review-and-payment": "review_and_payment",
 };
 
-const ADD_WIZARD_STEPS = ["student", "course_selection", "review_and_payment"].map((key) => ({
-  key,
-  ...WIZARD_STEP_META[key],
-}));
+const toSteps = (keys) => keys.map((key) => ({ key, ...WIZARD_STEP_META[key] }));
+const ADD_WIZARD_STEPS = toSteps(["student", "course_selection", "review_and_payment"]);
+// One-to-One Flex adds the "Academic & Communication Details" step.
+const ADD_WIZARD_STEPS_FLEX = toSteps(["student", "parent", "course_selection", "review_and_payment"]);
 
 function AddWizardFrame({ children }) {
   const router = useRouter();
@@ -34,6 +38,10 @@ function AddWizardFrame({ children }) {
   useEffect(() => {
     if (status === "unauthenticated") expireSession(school);
   }, [status, school]);
+
+  // Cross-app single-logout: periodically confirm this user is still logged
+  // in on the Java backend (is-rest-api) too, forcing a local logout if not.
+  useBackendSessionGuard(school, session, status);
 
   // The child is already enrolled (paid here, or via the payment link in another browser): send the user to the
   // payment-response thank-you page (ae=Y = add-enrollment, replay=Y = no gateway params to verify) so the URL
@@ -83,7 +91,7 @@ function AddWizardFrame({ children }) {
       logoUrl={logoUrl}
       context={context}
       currentStepKey={currentStepKey}
-      steps={ADD_WIZARD_STEPS}
+      steps={getLearningProgramBackendValue(context.learningProgram) === "ONE_TO_ONE_FLEX" ? ADD_WIZARD_STEPS_FLEX : ADD_WIZARD_STEPS}
       plain={plain}
       hideStepper={hideStepper}
       onLogout={() => logoutEverywhere(session)}
@@ -94,8 +102,11 @@ function AddWizardFrame({ children }) {
 }
 
 export function AddEnrollmentChrome({ children }) {
+  const segment = useSelectedLayoutSegment();
   return (
     <AddEnrollmentProvider>
+      {/* TEMP-DEBUG: prints the review-and-payment page's API calls, in order, to the console */}
+      {segment === "review-and-payment" && <DevApiSequenceLog label="review-and-payment api" />}
       <AddWizardFrame>{children}</AddWizardFrame>
     </AddEnrollmentProvider>
   );

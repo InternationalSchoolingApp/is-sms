@@ -9,7 +9,8 @@ import { useAddEnrollmentContext } from "@/hooks/add-enrollment/useAddEnrollment
 import { useAddWizardResume } from "@/hooks/add-enrollment/useAddWizardResume";
 import { useAddStudentDetailsPrefill } from "@/hooks/add-enrollment/useAddStage1";
 import { saveAddEnrollmentStudentFields, loadAddEnrollmentStudentFields } from "@/utils/addEnrollmentStorage";
-import { addEnrollmentStepPath } from "@/utils/addEnrollmentSteps";
+import { addEnrollmentStepPath, addEnrollmentParentPath } from "@/utils/addEnrollmentSteps";
+import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 
 /**
  * Step 1 ("Student profile") of the Add Another Student wizard. Mirrors
@@ -57,7 +58,13 @@ export function AddStudentDetailsStep() {
         }
         saveAddEnrollmentStudentFields(context.schoolUUID, nextChildUserId, fields);
         queryClient.setQueryData(["add-enrollment-student-details-prefill", nextChildUserId], (old) => ({ ...(old || {}), ...fields }));
-        router.push(addEnrollmentStepPath(school, parentId, sessionUserId, 2));
+        // Flex children fill "Academic & Communication Details" before course selection.
+        const isFlex = getLearningProgramBackendValue(fields.learningProgram) === "ONE_TO_ONE_FLEX";
+        router.push(
+          isFlex
+            ? addEnrollmentParentPath(school, parentId, sessionUserId)
+            : addEnrollmentStepPath(school, parentId, sessionUserId, 2)
+        );
       }}
     />
   );

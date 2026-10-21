@@ -15,11 +15,12 @@ import { FlaggedSeatsModal } from "@/components/add-enrollment/FlaggedSeatsModal
 import { CustomPlanTable, FeePaymentPlans } from "@/components/add-enrollment/FeePaymentPlans";
 import { InfoModal } from "@/components/add-enrollment/InfoModal";
 import { ParentInlineEdit, StudentInlineEdit } from "@/components/add-enrollment/ReviewInlineEdit";
+import { mapSignupParentToFields } from "@/hooks/useParentDetailsSignup";
 import { PaymentGatewayPickerModal } from "@/components/add-enrollment/PaymentGatewayPickerModal";
 import { getPaymentPaidStatus } from "@/services/studentSignupBackendApi";
 import { useShowPaymentOption } from "@/hooks/useCourseSelection";
 import { saveWizardParentFields } from "@/utils/wizardStorage";
-import { saveAddEnrollmentStudentFields } from "@/utils/addEnrollmentStorage";
+import { saveAddEnrollmentStudentFields, loadAddEnrollmentStudentFields } from "@/utils/addEnrollmentStorage";
 import { getOtherRelation, getPrimaryParentLabels, loadOtherParentCache } from "@/utils/parentRelation";
 import {
   STATUS_ELIGIBLE_CUSTOM_PLAN,
@@ -40,6 +41,8 @@ import {
 import { hidesCourseCredits, isKnownPaymentMode } from "@/utils/studentSignupValidation";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { getLearningProgramLabel } from "@/constant/LearningPrograms";
+import { useAddCountryOptions } from "@/hooks/add-enrollment/useAddStage1";
+import { CURRENT_GRADE_OPTIONS } from "@/components/student-enroll/Stage1StudentDetails";
 import {
   callLocationForPaymentPromise,
   getAirwallexCountryCode,
@@ -170,6 +173,18 @@ function ReviewRow({ label, children }) {
   );
 }
 
+// "WhatsApp, Call, Email" from the parent step's Preferred Contact Method checkboxes (same flags the form reads).
+function preferredContactLine(parent) {
+  if (!parent) return "--";
+  const fields = mapSignupParentToFields(parent);
+  const methods = [
+    fields.communicationWhatsApp && "WhatsApp",
+    fields.communicationCall && "Call",
+    fields.communicationEmail && "Email",
+  ].filter(Boolean);
+  return methods.length ? methods.join(", ") : "--";
+}
+
 function phoneLine(person) {
   if (!person?.contactNumber) return "--";
   const code = person.countryIsdCode || person.countryCode || "";
@@ -293,6 +308,7 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
   const airwallexMethods = useAirwallexPaymentMethods({ context });
   const offlinePayment = useOfflinePayment({ context, uniqueId });
 
+  const countryOptions = useAddCountryOptions(context);
   const [notice, setNotice] = useState(null);
   const [flaggedModal, setFlaggedModal] = useState(null);
   const [infoDismissed, setInfoDismissed] = useState(false);
@@ -375,9 +391,13 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
     if (stageStatusData.status === STATUS_SESSION_OUT) {
       onSessionExpired?.();
     } else if (stageStatusData.status === STATUS_SUCCESS && stageStatusData.redirectUri) {
-      window.location.replace(stageStatusData.redirectUri);
+      // The child is already registered (e.g. paid through the payment link in another browser). redirectUri is the
+      // Java dashboard, which needs a Java session this browser does not have (it would end in a session-mismatch
+      // logout), so hand over to the wizard's completed flow (thank-you page) instead.
+      if (onEnrollmentCompleted) onEnrollmentCompleted();
+      else window.location.replace(stageStatusData.redirectUri);
     }
-  }, [stageStatusData, context.customPaymentEnabled, onSessionExpired]);
+  }, [stageStatusData, context.customPaymentEnabled, onSessionExpired, onEnrollmentCompleted]);
 
   // Coming back from the payment gateway (browser Back / bfcache) restores this page exactly as it
   // was left — with the payment modal open and busy. Reset it when the page is restored from the cache.
@@ -712,9 +732,9 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
         : failure?.message || "Could not load your review details.";
     return (
       <div>
-        <p className="text-sm font-semibold text-red-600">{message}</p>
+        <p className="text-center text-sm font-semibold text-red-600">{message}</p>
         {failure?.statusCode !== STATUS_REDIRECT_TO_DASHBOARD && failure?.statusCode !== STATUS_ELIGIBLE_CUSTOM_PLAN && (
-          <div className="mt-6 flex gap-3">
+          <div className="fixed inset-x-0 bottom-0 z-30 flex justify-center gap-3 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:bottom-12 md:bg-transparent">
             {onBack && (
               <Button type="button" variant="outline" onClick={onBack} className="cursor-pointer">
                 Back
@@ -730,6 +750,17 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
   }
 
   const student = data.signupStudent;
+  const isFlexProgram =
+    getLearningProgramBackendValue(student?.learningProgram || context.learningProgram) === "ONE_TO_ONE_FLEX";
+  const isDualDiplomaProgram =
+    getLearningProgramBackendValue(student?.learningProgram || context.learningProgram) === "DUAL_DIPLOMA";
+  // Prefer what the backend returned; fall back to what this browser saved at Step 1.
+  const savedStudent = loadAddEnrollmentStudentFields(context.schoolUUID, userId);
+  const school = {
+    studyingSchoolName: student?.studyingSchoolName || savedStudent?.studyingSchoolName,
+    studyingGradeId: student?.studyingGradeId || savedStudent?.studyingGradeId,
+    countryIdOfSchool: student?.countryIdOfSchool || savedStudent?.countryIdOfSchool,
+  };
   const parent = data.signupParent;
   const course = data.signupCourse;
   const fee = data.feePaymentDetailsResponse;
@@ -776,7 +807,7 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
             userId={userId}
             uniqueId={uniqueId}
             rollNo={rollNo}
-            student={student}
+            student={{ ...student, ...(isDualDiplomaProgram ? school : {}) }}
             rollNo={rollNo}
             standardId={course?.standardId}
             onSaved={(fields) => finishEdit("student", fields)}
@@ -806,6 +837,17 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
             {/* <ReviewRow label="Student's Email">{student?.communicationEmail}</ReviewRow> */}
             {/* <ReviewRow label="Mobile Number">{phoneLine(student)}</ReviewRow> */}
             <ReviewRow label="Nationality">{student?.nationality}</ReviewRow>
+            {isDualDiplomaProgram && (
+              <>
+                <ReviewRow label="Current School Name">{school.studyingSchoolName || "--"}</ReviewRow>
+                <ReviewRow label="Current Grade">
+                  {CURRENT_GRADE_OPTIONS.find((g) => g.value === String(school.studyingGradeId))?.label || school.studyingGradeId || "--"}
+                </ReviewRow>
+                <ReviewRow label="Country of Current School">
+                  {countryOptions.data?.find((c) => c.value === String(school.countryIdOfSchool))?.label || school.countryIdOfSchool || "--"}
+                </ReviewRow>
+              </>
+            )}
             {/* <ReviewRow label="Country (Student's Current Location)">{student?.countryName}</ReviewRow>
             <ReviewRow label="Province / State">{student?.stateName}</ReviewRow>
             <ReviewRow label="City">{student?.cityName}</ReviewRow> */}
@@ -813,7 +855,7 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
           </Collapse>
         </section>
 
-        {/* {editing === "parent" && (
+        {isFlexProgram && editing === "parent" && (
           <ParentInlineEdit
             context={context}
             userId={userId}
@@ -823,8 +865,8 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
             onCancel={() => setEditing(null)}
             onSessionExpired={onSessionExpired}
           />
-        )} */}
-        {/* <section className={ROW_CLASS}>
+        )}
+        {isFlexProgram && <section className={ROW_CLASS}>
           <SectionHeader
             title={parentTitle}
             icon={IoMdPeople}
@@ -861,9 +903,11 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
                 {parent?.referralCode && <ReviewRow label="Referral Code">{parent.referralCode}</ReviewRow>}
               </>
             )}
+            {/* The parent step asks this after every variant, so it is listed after every variant here too. */}
+            <ReviewRow label="Preferred Contact Method">{preferredContactLine(parent)}</ReviewRow>
           </dl>
           </Collapse>
-        </section> */}
+        </section>}
 
         <section className={ROW_CLASS}>
           <SectionHeader
