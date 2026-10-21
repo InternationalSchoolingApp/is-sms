@@ -5,7 +5,9 @@ import Image from "next/image";
 import { BookOpen, CreditCard, LogOut, User, Users, TfiAngleDown} from "lucide-react";
 import { Footer } from "@/components/common/Footer";
 import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
+import { SchoolThemeStyle } from "@/components/common/SchoolThemeStyle";
 import { getLearningProgramTheme } from "@/utils/learningProgramTheme";
+import { DEFAULT_SCHOOL_UUID } from "@/constant/SchoolConstants";
 
 const STEPS = [
   { key: "student", label: "Student profile", icon: User },
@@ -27,6 +29,7 @@ export const WIZARD_STEP_META = {
 export function EnrollmentWizardShell({
   schoolName,
   logoUrl,
+  rootcss,
   context,
   currentStepKey,
   onLogout,
@@ -41,6 +44,7 @@ export function EnrollmentWizardShell({
   const programLabel = context ? getLearningProgramTheme(context.learningProgram).label : null;
   return (
     <div className="flex min-h-screen flex-col bg-white">
+      <SchoolThemeStyle rootcss={rootcss} />
       <header className="fixed top-[var(--maintenance-banner-h,0px)] z-11 hidden w-full border-b border-slate-200 bg-white px-4 py-3 sm:px-6 md:block">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <LogoMark schoolName={schoolName} logoUrl={logoUrl} />
@@ -73,7 +77,7 @@ export function EnrollmentWizardShell({
         <div className="flex-1">
         <div className="sticky top-0 z-20 -mx-4 bg-[#f2f5fa] px-4 pb-3 max-[579px]:pb-1 md:static md:mx-0 md:bg-transparent md:px-0 md:pb-0">
         <header className="grid grid-cols-[2rem_1fr_2rem] items-center gap-2 px-1 py-4 max-[579px]:py-2 md:hidden">
-          <Image src="/images/Fav_Icon.png" alt={schoolName || ""} width={28} height={28} className="h-7 w-auto" unoptimized />
+          <MobileMark schoolName={schoolName} school={context?.schoolUUID} logoUrl={logoUrl} />
           <div className="text-center">
             {programLabel && <h1 className="text-base font-extrabold leading-tight text-black">{programLabel}</h1>}
             <p className="mt-0.5 text-[12px] leading-tight text-primary font-semibold">Complete in just 5 minutes</p>
@@ -241,9 +245,16 @@ function StepCircle({ icon: Icon, state, justCompleted, animate }) {
 // app/[schoolId]/common/login/page.jsx) — via getSchoolSettingsLinks()'s
 // logoUrl, not a hardcoded "IS" mark. Falls back to that mark only while
 // logoUrl hasn't resolved yet (or a school has none configured).
+//
+// Height is fixed (h-9) regardless of the logo's own aspect ratio: the
+// header above is `fixed`, and the content below it reserves a constant
+// md:pt-[62px] to clear it — a taller, unconstrained logo (a school whose
+// logo isn't a wide wordmark) would grow the header past that reserved
+// space and the page title would render underneath it.
 function LogoMark({ schoolName, logoUrl }) {
   if (logoUrl) {
-    return <Image src={logoUrl} alt={schoolName || ""} width={160} height={36} className="w-full max-w-[160px] sm:max-w-[220px]" unoptimized />;
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={logoUrl} alt={schoolName || ""} className="h-9 w-auto max-w-[160px] sm:max-w-[220px]" />;
   }
 
   return (
@@ -255,4 +266,17 @@ function LogoMark({ schoolName, logoUrl }) {
       </div>
     </div>
   );
+}
+
+// Mobile header mark (28px square slot next to the step title). Fav_Icon.png
+// is International Schooling's own mark, so it's only used for that school —
+// every other school gets the same logo shown on desktop (no separate
+// per-school favicon lookup), rather than risk the wrong/missing icon.
+function MobileMark({ schoolName, school, logoUrl }) {
+  const src = school && school !== DEFAULT_SCHOOL_UUID ? logoUrl : null;
+  if (src) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt={schoolName || ""} className="h-7 w-7 object-contain" />;
+  }
+  return <Image src="/images/Fav_Icon.png" alt={schoolName || ""} width={28} height={28} className="h-7 w-auto" unoptimized />;
 }

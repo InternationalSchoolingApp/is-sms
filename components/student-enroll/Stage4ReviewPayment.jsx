@@ -17,7 +17,6 @@ import { InfoModal } from "@/components/student-enroll/InfoModal";
 import { ParentInlineEdit, StudentInlineEdit } from "@/components/student-enroll/ReviewInlineEdit";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
 import { getPaymentPaidStatus } from "@/services/studentSignupBackendApi";
-import { useShowPaymentOption } from "@/hooks/useCourseSelection";
 import { saveWizardParentFields, saveWizardStudentFields } from "@/utils/wizardStorage";
 import { getOtherRelation, getPrimaryParentLabels, loadOtherParentCache } from "@/utils/parentRelation";
 import {
@@ -272,7 +271,6 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
   // enrollment-stage-status (getSignupStatus()/getSignupStatusFinal() in legacy) is now polled
   // once for the whole wizard session by EnrollmentProvider (useEnrollmentContext.js), covering
   // every step instead of just this one — see that file for the cross-browser-redirect handling.
-  const paymentOption = useShowPaymentOption({ context, userId });
   const choosePlan = useChoosePaymentPlan({ context, userId });
   const submitApplication = useSubmitApplication({ context, userId });
   const proceedToDashboard = useProceedToDashboard({ context, userId });
@@ -309,7 +307,15 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
 
   const data = reviewQuery.data?.status === STATUS_SUCCESS ? reviewQuery.data : null;
   const failure = reviewQuery.data && reviewQuery.data.status !== STATUS_SUCCESS ? reviewQuery.data : null;
-  const showPaymentOption = paymentOption.data;
+  // Mirrors the backend's own gate exactly (SignupStudentUtil#getStudentReivewDetails:
+  // `if (SHOW_PAYMENT_AT_ENROLLMENT == Y || customPaymentEnabled)`), rather than the
+  // separate get-commission-pay-by/SHOW_PAYMENT_OPTION flag (a different, legacy
+  // per-school setting that doesn't track the real per-referral-code partner
+  // entity this endpoint gates on — a B2B/partner school with its own payment
+  // handling showed "Continue to Pay" with no plan to choose because of that
+  // mismatch). feePaymentDetailsResponse is only ever present when the backend
+  // decided payment-at-enrollment applies, so its presence IS the answer.
+  const showPaymentOption = data ? (data.feePaymentDetailsResponse || data.customPaymentEnabled ? "Y" : "N") : undefined;
   const busy =
     reviewQuery.isFetching ||
     choosePlan.isPending || submitApplication.isPending || proceedToDashboard.isPending || gatewayOptions.isPending || airwallexMethods.isPending || invokeGateway.isPending;
@@ -671,11 +677,11 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
     }
   }
 
-  if (reviewQuery.isLoading || paymentOption.isLoading) {
+  if (reviewQuery.isLoading) {
     return (
       <div className="mt-6 grid gap-x-8 gap-y-8 lg:grid-cols-[555fr_723fr]" aria-busy="true">
         <ReviewDetailsSkeleton />
-        {paymentOption.data !== "N" && <PaymentOptionsSkeleton />}
+        <PaymentOptionsSkeleton />
         <FullScreenLoader />
       </div>
     );
@@ -915,9 +921,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
               Back
             </Button>
           )}
-          {paymentOption.isLoading ? (
-            <p className="text-sm text-slate-500">Loading…</p>
-          ) : paymentPending && paymentUnderReview ? null : paymentPending ? (
+          {paymentPending && paymentUnderReview ? null : paymentPending ? (
             <Button type="button" onClick={confirmAndPay} disabled={busy || !!editing} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
               {busy ? "Please wait…" : "Continue to Pay"}
             </Button>

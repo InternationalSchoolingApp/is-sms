@@ -14,7 +14,8 @@ import {
 import { isFirstPayment, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
 import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
 import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
-import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
+import { getSchoolSettingsLinks, getSchoolSettingsTechnical } from "@/utils/schoolSettings";
+import { extractRootCss } from "@/utils/schoolColorTheme";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
@@ -63,6 +64,7 @@ function useResolveAddEnrollmentContext() {
   const { school, parentId, sessionUserId } = useParams();
   const { data: session, status } = useSession();
   const [logoUrl, setLogoUrl] = useState(null);
+  const [rootcss, setRootcss] = useState("");
   const [whatsAppNumber, setWhatsAppNumber] = useState(undefined);
   const authenticated =
     status === "authenticated" && Boolean(session?.userId && session?.schoolUUID && session?.uniqueId);
@@ -246,6 +248,20 @@ function useResolveAddEnrollmentContext() {
     };
   }, [session?.schoolNumericId]);
 
+  // Per-school color theme (rootcss custom-properties block) — see useEnrollmentContext.js.
+  useEffect(() => {
+    if (!session?.schoolNumericId) return;
+    let cancelled = false;
+    getSchoolSettingsTechnical(session.schoolNumericId)
+      .then((technical) => {
+        if (!cancelled) setRootcss(extractRootCss(technical?.parentColor));
+      })
+      .catch((err) => console.error("School color theme fetch failed:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.schoolNumericId]);
+
   // Support number for the mobile action bar's WhatsApp button.
   useEffect(() => {
     if (!session?.schoolUUID) return;
@@ -305,6 +321,7 @@ function useResolveAddEnrollmentContext() {
     session,
     context,
     logoUrl,
+    rootcss,
     ready,
     // Child identity — stage pages use these instead of session.userId/uniqueId.
     childUserId,

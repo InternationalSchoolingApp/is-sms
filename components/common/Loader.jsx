@@ -1,7 +1,32 @@
-import Image from "next/image";
+"use client";
 
-// loader-new.gif — the same loader legacy shows (paymentUnderProcessOverlay): 373x300 source, rendered ~150px wide.
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { LoaderCircle } from "lucide-react";
+import { DEFAULT_SCHOOL_UUID } from "@/constant/SchoolConstants";
+
+// loader-new.gif — the same loader legacy shows (paymentUnderProcessOverlay):
+// 373x300 source, rendered ~150px wide. It has International Schooling's own
+// pin+clock mark baked into the animation (same shape as Fav_Icon.png), so
+// it's only correct on International Schooling's own pages — every other
+// school (derived from the {school} URL segment) gets a brand-neutral
+// spinner instead, matching the LoaderCircle already used elsewhere
+// (PaymentResponseView.jsx, PaymentGatewayInitView.jsx).
 export function Loader({ size = 150, className = "" }) {
+  const pathname = usePathname();
+  const schoolSlug = pathname?.split("/")[1];
+  const isDefaultSchool = !schoolSlug || schoolSlug === DEFAULT_SCHOOL_UUID;
+
+  if (!isDefaultSchool) {
+    return (
+      <LoaderCircle
+        aria-label="Loading"
+        className={`animate-spin ${className}`}
+        style={{ width: Math.round(size * 0.4), height: Math.round(size * 0.4) }}
+      />
+    );
+  }
+
   return (
     <Image
       src="/loader-new.gif"

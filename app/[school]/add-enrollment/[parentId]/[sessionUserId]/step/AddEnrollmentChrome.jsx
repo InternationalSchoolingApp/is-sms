@@ -32,7 +32,7 @@ function AddWizardFrame({ children }) {
   const router = useRouter();
   const { school, parentId, sessionUserId } = useParams();
   const segment = useSelectedLayoutSegment();
-  const { status, session, context, logoUrl, ready, isError, completed, childUniqueId, childRollNo } =
+  const { status, session, context, logoUrl, rootcss, ready, isError, completed, childUniqueId, childRollNo } =
     useAddEnrollmentContext();
 
   useEffect(() => {
@@ -89,6 +89,7 @@ function AddWizardFrame({ children }) {
     <AddEnrollmentWizardShell
       schoolName={context.schoolName}
       logoUrl={logoUrl}
+      rootcss={rootcss}
       context={context}
       currentStepKey={currentStepKey}
       steps={getLearningProgramBackendValue(context.learningProgram) === "ONE_TO_ONE_FLEX" ? ADD_WIZARD_STEPS_FLEX : ADD_WIZARD_STEPS}

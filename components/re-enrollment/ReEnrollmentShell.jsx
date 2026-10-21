@@ -5,23 +5,30 @@ import Image from "next/image";
 import { LogOut } from "lucide-react";
 import { Footer } from "@/components/common/Footer";
 import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
+import { SchoolThemeStyle } from "@/components/common/SchoolThemeStyle";
 
 /**
  * Page frame of the re-enrollment screens: the light dashboard background, a plain header with the school
  * logo and the student's Log Off, and the copyright footer. No enrollment stepper or hero: the re-enrollment
  * keeps the look of the student dashboard it came from.
  */
-export function ReEnrollmentShell({ schoolName, logoUrl, studentName, onLogout, embed = false, children }) {
+export function ReEnrollmentShell({ schoolName, logoUrl, rootcss, studentName, onLogout, embed = false, children }) {
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
   // Inside the dashboard (iframe): no header, no footer, the dashboard around it provides them.
   if (embed) {
-    return <main className="mx-auto w-full max-w-[1310px] px-4 pb-24 pt-2 sm:px-6">{children}</main>;
+    return (
+      <>
+        <SchoolThemeStyle rootcss={rootcss} />
+        <main className="mx-auto w-full max-w-[1310px] px-4 pb-24 pt-2 sm:px-6">{children}</main>
+      </>
+    );
   }
 
   return (
     <div className="flex min-h-screen flex-col bg-[#f1f4f6]">
+      <SchoolThemeStyle rootcss={rootcss} />
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white px-4 py-2.5 shadow-sm sm:px-6">
         <div className="mx-auto flex max-w-[1310px] items-center justify-between gap-3">
           {logoUrl ? (

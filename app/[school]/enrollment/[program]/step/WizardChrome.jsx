@@ -33,7 +33,7 @@ const SEGMENT_TO_STEP_KEY = {
 function WizardFrame({ children }) {
   const { school } = useParams();
   const segment = useSelectedLayoutSegment();
-  const { status, session, context, logoUrl, ready } = useEnrollmentContext();
+  const { status, session, context, logoUrl, rootcss, ready } = useEnrollmentContext();
 
   // Session-expiry guard, hoisted here from the individual steps: since this
   // chrome gates whether steps mount at all, it must own the redirect (the
@@ -74,6 +74,7 @@ function WizardFrame({ children }) {
     <EnrollmentWizardShell
       schoolName={context.schoolName}
       logoUrl={logoUrl}
+      rootcss={rootcss}
       context={context}
       currentStepKey={currentStepKey}
       plain={plain}

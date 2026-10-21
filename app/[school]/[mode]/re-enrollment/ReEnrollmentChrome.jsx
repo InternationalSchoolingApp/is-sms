@@ -14,7 +14,7 @@ import { expireSession, logoutEverywhere } from "@/utils/logout";
  */
 function Frame({ children }) {
   const { school, mode } = useParams();
-  const { status, session, context, logoUrl, ready, eligibility, leavingForDashboard, loadFailed, retryLoading } = useReEnrollmentContext();
+  const { status, session, context, logoUrl, rootcss, ready, eligibility, leavingForDashboard, loadFailed, retryLoading } = useReEnrollmentContext();
 
   useEffect(() => {
     if (status === "unauthenticated") expireSession(school);
@@ -47,6 +47,7 @@ function Frame({ children }) {
       embed={mode === MODE_EMBED}
       schoolName={context.schoolName}
       logoUrl={logoUrl}
+      rootcss={rootcss}
       studentName={eligibility?.studentName}
       onLogout={() => logoutEverywhere(session)}
     >

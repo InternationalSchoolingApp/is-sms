@@ -3,7 +3,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
-import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
+import { getSchoolSettingsLinks, getSchoolSettingsTechnical } from "@/utils/schoolSettings";
+import { extractRootCss } from "@/utils/schoolColorTheme";
 import { getEnrollmentProcess, getPublicSchoolInfo, isEnrollmentViaNextjs } from "@/services/studentSignupApi";
 import { legacyEnrollmentProcessUrl } from "@/utils/backendOrigin";
 import { trackRequest } from "@/utils/loaderStore";
@@ -43,6 +44,7 @@ const EnrollmentContext = createContext(null);
 function useResolveEnrollmentContext() {
   const { data: session, status } = useSession();
   const [logoUrl, setLogoUrl] = useState(null);
+  const [rootcss, setRootcss] = useState("");
   const [whatsAppNumber, setWhatsAppNumber] = useState(undefined);
   const authenticated = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
   const prefill = useStudentDetailsPrefill({
@@ -107,6 +109,21 @@ function useResolveEnrollmentContext() {
         if (!cancelled && links?.logoUrl) setLogoUrl(links.logoUrl);
       })
       .catch((err) => console.error("School links fetch failed:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.schoolNumericId]);
+
+  // Per-school color theme (rootcss custom-properties block) — same schoolNumericId
+  // the logo fetch above uses, separate endpoint/entity (SchoolSettingsTechnical).
+  useEffect(() => {
+    if (!session?.schoolNumericId) return;
+    let cancelled = false;
+    trackRequest(() => getSchoolSettingsTechnical(session.schoolNumericId))
+      .then((technical) => {
+        if (!cancelled) setRootcss(extractRootCss(technical?.parentColor));
+      })
+      .catch((err) => console.error("School color theme fetch failed:", err));
     return () => {
       cancelled = true;
     };
@@ -186,7 +203,7 @@ function useResolveEnrollmentContext() {
     }
   }, [stageStatusData, session?.schoolUUID]);
 
-  return { status, session, context, logoUrl, ready };
+  return { status, session, context, logoUrl, rootcss, ready };
 }
 
 /**

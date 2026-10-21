@@ -62,3 +62,40 @@ export async function getSchoolSettingsLinks(schoolNumericId) {
     return null;
   }
 }
+
+/**
+ * Mirrors CommonController#getSchoolSettingTechnical (is-rest-api,
+ * src/main/java/com/c2e/is/v1/controller/CommonController.java:570-580) —
+ * same `POST {schoolId}/api/v1/technical` endpoint, same AES-encoded
+ * `{schoolId: <numeric>}` body as getSchoolSettingsLinks above. Returns the
+ * raw SchoolSettingsTechnical entity JSON — the field of interest for
+ * per-school theming is `parentColor`, a JSON *string* (not an object) whose
+ * `rootcss` key holds a literal block of CSS (custom properties/rules) the
+ * legacy JSP injects verbatim as a <style> tag (BaseController.java:1044,
+ * jquery.commonFunction.js:929). Use utils/schoolColorTheme.js's
+ * extractRootCss() to parse it rather than JSON-parsing `parentColor`
+ * inline at each call site.
+ */
+export async function getSchoolSettingsTechnical(schoolNumericId) {
+  const baseUrl = await resolveServerBackendOrigin();
+  if (!hasBackendOrigin()) {
+    throw new Error("A backend origin (NEXT_PUBLIC_BACKEND_BASE_URL) is required");
+  }
+  if (schoolNumericId == null) {
+    throw new Error("getSchoolSettingsTechnical: schoolNumericId is required (getPublicSchoolInfo must resolve first)");
+  }
+
+  const response = await fetch(`${baseUrl}/${schoolNumericId}/api/v1/technical`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ payload: encodePayload({ schoolId: schoolNumericId }) }),
+  });
+  if (!response.ok) return null;
+  const text = await response.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}

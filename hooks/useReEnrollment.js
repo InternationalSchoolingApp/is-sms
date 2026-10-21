@@ -3,7 +3,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
+import { getSchoolSettingsLinks, getSchoolSettingsTechnical } from "@/utils/schoolSettings";
+import { extractRootCss } from "@/utils/schoolColorTheme";
 import { getPublicSchoolInfo, isEnrollmentViaNextjs } from "@/services/studentSignupApi";
 import {
   chooseReEnrollmentPaymentPlan,
@@ -35,6 +36,7 @@ export const eligibilityKey = (userId) => ["re-enrollment-eligibility", userId];
 function useResolveReEnrollment() {
   const { data: session, status } = useSession();
   const [logoUrl, setLogoUrl] = useState(null);
+  const [rootcss, setRootcss] = useState("");
   const [whatsAppNumber, setWhatsAppNumber] = useState(undefined);
   const authenticated = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
 
@@ -81,6 +83,20 @@ function useResolveReEnrollment() {
         if (!cancelled && links?.logoUrl) setLogoUrl(links.logoUrl);
       })
       .catch((err) => console.error("School links fetch failed:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.schoolNumericId]);
+
+  // Per-school color theme (rootcss custom-properties block) — see useEnrollmentContext.js.
+  useEffect(() => {
+    if (!session?.schoolNumericId) return;
+    let cancelled = false;
+    getSchoolSettingsTechnical(session.schoolNumericId)
+      .then((technical) => {
+        if (!cancelled) setRootcss(extractRootCss(technical?.parentColor));
+      })
+      .catch((err) => console.error("School color theme fetch failed:", err));
     return () => {
       cancelled = true;
     };
@@ -135,6 +151,7 @@ function useResolveReEnrollment() {
     session,
     context,
     logoUrl,
+    rootcss,
     ready,
     loadFailed: eligibilityQuery.isError || (eligibilityQuery.data && !eligibility),
     eligibility,

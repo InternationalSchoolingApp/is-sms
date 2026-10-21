@@ -6,12 +6,17 @@ import { AccountForm } from "@/components/student-enroll/AccountForm";
 import { AccountFormOfflineB2B } from "@/components/student-enroll/AccountFormOfflineB2B";
 import { EmailVerificationPanel } from "@/components/student-enroll/EmailVerificationPanel";
 import { SchoolLogo } from "@/components/student-enroll/SchoolLogo";
+import { SchoolThemeStyle } from "@/components/common/SchoolThemeStyle";
+import { FullScreenLoader } from "@/components/common/Loader";
 import { Footer } from "@/components/common/Footer";
 import { SignupFooter } from "@/components/student-enroll/SignupFooter";
 import { getEnrollmentSignupInfo, getPublicSchoolInfo } from "@/services/studentSignupApi";
+import { getSchoolSettingsLinks, getSchoolSettingsTechnical } from "@/utils/schoolSettings";
+import { extractRootCss } from "@/utils/schoolColorTheme";
 import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 import { getLearningProgramTheme } from "@/utils/learningProgramTheme";
 import { loginPageUrl } from "@/utils/backendOrigin";
+import { getSchoolWebsiteUrl, DEFAULT_SCHOOL_UUID } from "@/constant/SchoolConstants";
 
 // Client half of the /{school}/enrollment/{program} route. The route params
 // (`school`, `program`) and the raw query string come from the Server
@@ -50,6 +55,7 @@ export function AccountCreationForm({ school, program, query, recaptchaSiteKey }
   const [signupInfoAttempt, setSignupInfoAttempt] = useState(0);
 
   const schoolUUID = school;
+  const isDefaultSchool = schoolUUID === DEFAULT_SCHOOL_UUID;
   const enrollmentFor = program;
   const learningProgram = getLearningProgramRouteCode(program) || "O";
   const theme = getLearningProgramTheme(learningProgram);
@@ -59,6 +65,26 @@ export function AccountCreationForm({ school, program, query, recaptchaSiteKey }
   const schoolSettingsLinks = signupInfo?.schoolSettingsLinks || {};
   const displayedSchoolName = signupInfo?.schoolName || schoolInfo.schoolName || "";
   const displayedProgramLabel = theme.label;
+  // Per-school branding — resolved from the {school} URL segment. The signup
+  // bootstrap (schoolSettingsLinks, below) carries this too, but it can take
+  // a while (AES payload decode, stage lookups); `directLinks` is the same
+  // getSchoolSettingsLinks call the post-login hooks use, fired as soon as
+  // schoolNumericId is known (the fast getPublicSchoolInfo lookup), so
+  // branding is ready well before the full bootstrap completes. schoolWebsite
+  // falls back to the static SCHOOL_URLS map (and that, in turn, to
+  // International Schooling's site) once both have resolved.
+  const [directLinks, setDirectLinks] = useState(null);
+  const schoolLogoUrl = schoolSettingsLinks.logoUrl || directLinks?.logoUrl;
+  const schoolWebsiteUrl = schoolSettingsLinks.schoolWebsite || directLinks?.schoolWebsite || getSchoolWebsiteUrl(schoolUUID);
+  // Whether the direct branding fetch below has settled (found a logo or
+  // not) — gates the whole page's first render for other schools so nobody
+  // sees International Schooling's branding flash before their own school's.
+  const [brandingChecked, setBrandingChecked] = useState(false);
+  const brandingPending = !isDefaultSchool && !brandingChecked && !signupInfoError;
+  const [rootcss, setRootcss] = useState("");
+  // Resolved from whichever numeric id becomes available first — the public
+  // support-info lookup below usually beats the full signup bootstrap.
+  const schoolNumericId = schoolSettingsLinks.schoolId ?? schoolInfo.schoolNumericId;
   const context = signupInfo
     ? {
         schoolUUID: signupInfo.schoolUuid || schoolUUID,
@@ -182,6 +208,52 @@ export function AccountCreationForm({ school, program, query, recaptchaSiteKey }
     };
   }, [schoolUUID]);
 
+  // Direct branding fetch — see the comment on schoolLogoUrl above. Only
+  // other schools need this (International Schooling's static fallback
+  // assets already match), and it's marked "checked" whether it finds a
+  // logo or not, so a school with none configured doesn't block forever.
+  useEffect(() => {
+    if (isDefaultSchool || !schoolInfo.schoolNumericId) return;
+    let cancelled = false;
+    getSchoolSettingsLinks(schoolInfo.schoolNumericId)
+      .then((links) => {
+        if (cancelled) return;
+        setDirectLinks(links);
+        setBrandingChecked(true);
+      })
+      .catch((error) => {
+        console.error("School branding fetch failed:", error);
+        if (!cancelled) setBrandingChecked(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isDefaultSchool, schoolInfo.schoolNumericId]);
+
+  // Safety net: if getPublicSchoolInfo itself never resolves (schoolNumericId
+  // never arrives), the fetch above never fires — don't hold the page hidden
+  // forever over a single failed lookup.
+  useEffect(() => {
+    if (isDefaultSchool) return;
+    const timer = window.setTimeout(() => setBrandingChecked(true), 6000);
+    return () => window.clearTimeout(timer);
+  }, [isDefaultSchool]);
+
+  // Per-school color theme (rootcss custom-properties block) — see
+  // useEnrollmentContext.js for the same fetch used post-login.
+  useEffect(() => {
+    if (!schoolNumericId) return;
+    let cancelled = false;
+    getSchoolSettingsTechnical(schoolNumericId)
+      .then((technical) => {
+        if (!cancelled) setRootcss(extractRootCss(technical?.parentColor));
+      })
+      .catch((error) => console.error("School color theme fetch failed:", error));
+    return () => {
+      cancelled = true;
+    };
+  }, [schoolNumericId]);
+
   // Below md (768px) the header/footer are `fixed`, so #enrollmentFormWrapper
   // needs real padding to avoid content sliding underneath them. Measuring
   // the header's actual rendered height (rather than a hardcoded px value)
@@ -228,13 +300,26 @@ export function AccountCreationForm({ school, program, query, recaptchaSiteKey }
       resizeObserver.disconnect();
       desktopQuery.removeEventListener("change", syncPadding);
     };
-  }, []);
+    // Re-attaches once brandingPending flips to false and the real header/footer
+    // mount for the first time (see the early loader return below) — with just
+    // [] this would only ever find them on a default-school page.
+  }, [brandingPending]);
+
+  // Other schools: hold the whole page behind a loader until their own
+  // branding has resolved (or definitively failed to), so nobody sees
+  // International Schooling's logo/colors flash before their own school's.
+  // International Schooling itself never waits — its static fallback assets
+  // already are the right branding.
+  if (brandingPending) {
+    return <FullScreenLoader />;
+  }
 
   return (
     <main
       className="relative flex flex-col overflow-hidden bg-white md:bg-[#F2F5FA]"
       style={{ height: "calc(100dvh - var(--maintenance-banner-h, 0px))" }}
     >
+      <SchoolThemeStyle rootcss={rootcss} />
       {/* Soft decorative blobs — the light-blue organic wave shapes behind
           everything on desktop. Purely decorative, so hidden from a11y and
           from pointer events; below md the layout is compact so they're
@@ -248,7 +333,15 @@ export function AccountCreationForm({ school, program, query, recaptchaSiteKey }
         id="signupMobileHeader"
         className="fixed left-0 top-[var(--maintenance-banner-h,0px)] z-20 grid w-full grid-cols-[2rem_1fr_2rem] items-center gap-2 bg-white px-4 py-4 md:hidden"
       >
-        <Image src="/images/Fav_Icon.png" alt={displayedSchoolName || ""} width={28} height={28} className="h-7 w-auto" unoptimized />
+        {schoolUUID !== DEFAULT_SCHOOL_UUID && schoolLogoUrl ? (
+          // Same per-school logo shown on desktop (SchoolLogo below) — no
+          // separate favicon lookup. Fav_Icon.png is International Schooling's
+          // own mark, so that school always keeps it instead.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={schoolLogoUrl} alt={displayedSchoolName || ""} className="h-7 w-auto" />
+        ) : (
+          <Image src="/images/Fav_Icon.png" alt={displayedSchoolName || ""} width={28} height={28} className="h-7 w-auto" unoptimized />
+        )}
         <div className="text-center">
           <h1 className="text-base font-extrabold leading-tight text-black">{displayedProgramLabel}</h1>
           <p className="mt-0.5 text-[12px] leading-tight text-primary font-semibold">Complete in just 5 minutes</p>
@@ -266,7 +359,7 @@ export function AccountCreationForm({ school, program, query, recaptchaSiteKey }
             pinned to the bottom-left. */}
         <section className="relative hidden h-full flex-col overflow-hidden px-10 pt-8 md:flex md:w-[42%] lg:w-[45%]">
           <div className="flex items-center gap-2">
-            <SchoolLogo schoolName={displayedSchoolName} width={260} />
+            <SchoolLogo schoolName={displayedSchoolName} logoUrl={schoolLogoUrl} href={schoolWebsiteUrl} width={260} />
           </div>
 
           <div className="mt-8">
