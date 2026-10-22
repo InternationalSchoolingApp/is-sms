@@ -43,7 +43,6 @@ export function PageTitle() {
         signupType: "Online",
       });
       // TEMP-DEBUG
-      console.log("[payment-response] api response get-student-details (PageTitle)", { studentUserId, response });
       if (response?.status !== "1") return null;
       return mapSignupStudentToFields(response.signupStudent);
     },

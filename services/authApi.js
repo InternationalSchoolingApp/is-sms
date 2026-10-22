@@ -1,5 +1,5 @@
 import { encodePayload, encodeRawString } from "@/utils/payloadEncoding";
-import { isBackendOverrideAllowed, resolveBackendNavigationOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { hasBackendOrigin, isBackendOverrideAllowed, resolveBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { getHash, getSystemTimezone } from "@/utils/common";
 import { withServiceKey } from "@/lib/auth/serviceKey";
 
@@ -160,8 +160,8 @@ export async function login(
  * @returns {Promise<boolean>}
  */
 export async function checkBackendSessionStatus(schoolUUID, uniqueId) {
-  const baseUrl = resolveBackendNavigationOrigin();
-  if (!baseUrl || !schoolUUID || !uniqueId) return true;
+  const baseUrl = resolveBackendOrigin();
+  if (!hasBackendOrigin() || !schoolUUID || !uniqueId) return true;
 
   try {
     const response = await fetch(`${baseUrl}/${schoolUUID}/api/v1/common/session-status/${encodeURIComponent(uniqueId)}`, {

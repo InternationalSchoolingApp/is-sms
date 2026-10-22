@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Clock, LoaderCircle, XCircle } from "lucide-react";
 import { getPaymentResponseSuccess, getPaymentResponseFailure, savePurchaseBrowserDetails } from "@/services/paymentResponseApi";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/components/providers/AuthSessionProvider";
 import { getAddEnrollmentThankYou } from "@/services/addEnrollmentBackendApi";
 import {
   clearAddEnrollmentChildState,
