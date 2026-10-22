@@ -70,6 +70,9 @@ export function PhoneNumberField({ label = "Contact Number", name = "contactNumb
           name={name}
           type="tel"
           defaultValue={value}
+          inputMode="numeric"
+          autoComplete="off"
+          placeholder=""
           onInput={(event) => {
             const input = event.currentTarget;
             input.value = input.value.replace(/\D/g, "");

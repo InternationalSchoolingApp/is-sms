@@ -79,7 +79,7 @@ function decorateFullscreenPopup(closePopup) {
   };
 }
 
-export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry = "us") {
+export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry) {
   useEffect(() => {
     let cancelled = false;
     const input = inputRef.current;
@@ -109,12 +109,30 @@ export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry = "us
     import("intl-tel-input/intlTelInputWithUtils").then(({ default: intlTelInput }) => {
       if (cancelled || !input) return;
       itiRef.current = intlTelInput(input, {
-        initialCountry: initialCountry || "us",
+        initialCountry: initialCountry || "",
+        initialCountryLookup: async () => {
+          try {
+            const response = await fetch("https://ipapi.co/json/");
+            if (!response.ok) {
+              throw new Error("Country lookup failed");
+            }
+            const data = await response.json();
+            if (!data.country_code) {
+              throw new Error("Country code not found");
+            }
+            return data.country_code.toLowerCase();
+          } catch (error) {
+            console.error("Country detection failed:", error);
+            return "us";
+          }
+        },
         separateDialCode: true,
         formatOnDisplay:false,
+        autoPlaceholder: "off",
         placeholderNumberPolicy:"off",
         dropdownParent: document.body,
       });
+      input.removeAttribute("placeholder");
       input.addEventListener("open:countryselector", handleOpenSelector);
       input.addEventListener("close:countryselector", handleCloseSelector);
       input.addEventListener("countrychange", handleChange);
