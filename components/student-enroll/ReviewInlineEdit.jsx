@@ -196,7 +196,7 @@ export function StudentInlineEdit({ context, userId, student, standardId, onSave
       return;
     }
     try {
-      console.log("Student Save Details", current)
+      // console.log("Student Save Details", current)
       const response = await signup.mutateAsync(current);
       if (outcome(response)) onSaved(current);
     } catch (err) {
@@ -411,7 +411,7 @@ export function ParentInlineEdit({ context, userId, parent, title = "Parent/Guar
       return;
     }
     try {
-      console.log("Parent Save Details", fields)
+      // console.log("Parent Save Details", fields)
       const response = await signup.mutateAsync(fields);
       if (outcome(response)) onSaved(fields);
     } catch (err) {

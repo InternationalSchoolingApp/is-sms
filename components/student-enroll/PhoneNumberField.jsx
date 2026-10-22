@@ -15,7 +15,6 @@ import { useIntlTelInput } from "@/hooks/useIntlTelInput";
  * width varies slightly per country), tuned to look right for common cases.
  */
 export function PhoneNumberField({ label = "Contact Number", name = "contactNumber", value, onChange, error, initialCountry, className }) {
-  debugger
   const inputRef = useRef(null);
   const itiRef = useRef(null);
   const id = useId();

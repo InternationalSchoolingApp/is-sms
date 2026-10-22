@@ -134,7 +134,6 @@ function Stage1Skeleton({ isDualDiploma }) {
  * sees before real data is shown.
  */
 export function Stage1StudentDetails({ context, userId, initialFields, onNext }) {
-  debugger
   const [fields, setFields] = useState(() => ({ ...INITIAL_FIELDS, ...initialFields }));
   const [errors, setErrors] = useState({});
   const [flaggedModal, setFlaggedModal] = useState(null);
@@ -225,7 +224,6 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
   }
 
   async function handleSubmit() {
-    debugger
     const { valid, errors: fieldErrors } = validateStudentDetails(fields, { isDualDiploma });
     const dobError = validateAge(fields.dob);
     const allErrors = dobError ? { ...fieldErrors, dob: fieldErrors.dob || dobError } : fieldErrors;
@@ -249,7 +247,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
         setErrors((prev) => ({ ...prev, form: "Something went wrong. Please check your connection and try again." }));
         return;
       }
-      console.log("Student Save Details", fields)
+      // console.log("Student Save Details", fields)
       onNext?.(fields);
     } catch (err) {
       console.error("Stage1StudentDetails submit failed:", err);

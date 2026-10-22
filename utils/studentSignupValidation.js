@@ -142,7 +142,6 @@ export function validateStudentDetails(fields, { isDualDiploma = false } = {}) {
     if (!fields.studyingGradeId) errors.studyingGradeId = "Current grade is required";
     if (!fields.countryIdOfSchool) errors.countryIdOfSchool = "Country of current school is required";
   } else {
-    debugger
     if (!fields.nationality) errors.nationality = "Nationality is required";
     if (!isValidEmail(fields.communicationEmail)) errors.communicationEmail = "Email is either empty or invalid";
     if (!fields.contactNumber || fields.phoneValid === false) {
