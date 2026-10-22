@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
-import { signOut } from "next-auth/react";
 import { ArrowRight, Check, Eye, EyeOff, Lock, LockOpen, LoaderCircle, Phone, X } from "lucide-react";
 import { createAddEnrollmentPassword } from "@/services/addEnrollmentPasswordApi";
 import { loadCreatePasswordTarget } from "@/utils/addEnrollmentCreatePassword";
@@ -46,13 +45,8 @@ export function AddCreatePassword({ schoolUUID }) {
   // ChangePassword.jsp's logout(): clear client storage, then hit the Java logout endpoint (UNIQUEUUID "111" when
   // there is none), which ends the Java session and lands on the login page. Falls back to the login page itself.
   const goToLogin = async () => {
-    try {
-      localStorage.clear();
-      sessionStorage.clear();
-      await signOut({ redirect: false });
-    } catch {
-      /* no Next.js session to drop */
-    }
+    localStorage.clear();
+    sessionStorage.clear();
     const backend = resolveBackendNavigationOrigin();
     window.location.assign(backend ? `${backend}/${schoolUUID}/common/logout/111` : loginPageUrl(schoolUUID));
   };
