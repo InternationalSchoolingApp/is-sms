@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { ArrowRight, LoaderCircle, RefreshCw, ShieldCheck } from "lucide-react";
-import { getAirwallexPaymentInit, getStripePaymentInit } from "@/services/paymentInitApi";
+import { getStripePaymentInit } from "@/services/paymentInitApi";
 
 const GATEWAY_CONFIG = {
   stripe: {
@@ -14,11 +14,30 @@ const GATEWAY_CONFIG = {
   },
   airwallex: {
     name: "Airwallex",
-    request: getAirwallexPaymentInit,
     redirectField: "airwallexCheckoutUrl",
     successStatus: "1",
   },
 };
+
+// Browser-side counterpart to startAirwallexCheckout()/getAirwallexCheckoutIntentUrl() below:
+// both Airwallex calls now go through the exact same relative-path + next.config.mjs rewrite,
+// instead of this one going through a Server Action's own server-to-server fetch.
+async function getAirwallexPaymentInitClient(uniqueUuid, paramsString, schoolUUID) {
+  const params = new URLSearchParams(paramsString || "");
+  params.delete("schoolUUID");
+  params.set("applyingFrom", "nextjs");
+  const query = params.toString();
+  const pathname = `/api/v1/${encodeURIComponent(schoolUUID)}/payment/airwallex-payment-init/${encodeURIComponent(uniqueUuid)}`;
+  const search = query ? `?${query}` : "";
+
+  const useLocalProxy = process.env.NEXT_PUBLIC_USE_LOCAL_PROXY === "true";
+  const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
+  const url = useLocalProxy || !backendBaseUrl ? `${pathname}${search}` : `${backendBaseUrl}${pathname}${search}`;
+
+  const response = await fetch(url, { method: "GET", credentials: "include" });
+  if (!response.ok) return null;
+  return response.json();
+}
 
 function getSafeRedirectUrl(value) {
   if (typeof value !== "string") return null;
@@ -130,7 +149,9 @@ export function PaymentGatewayInitView({ gateway, schoolUUID: schoolUUIDFromRout
 
   const startPayment = useCallback(async () => {
     try {
-      const response = await config.request(uniqueUuid, searchParams.toString(), schoolUUID);
+      const response = gateway === "airwallex"
+        ? await getAirwallexPaymentInitClient(uniqueUuid, searchParams.toString(), schoolUUID)
+        : await config.request(uniqueUuid, searchParams.toString(), schoolUUID);
       if (response?.status === config.successStatus) {
         if (gateway === "airwallex") {
           await startAirwallexCheckout(response.airwallexCheckoutUrl);
