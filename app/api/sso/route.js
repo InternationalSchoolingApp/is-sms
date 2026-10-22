@@ -137,13 +137,13 @@ async function handleSsoHandoff(request) {
     }
   }
 
-  // console.log("request", request)
-  // console.log("url======>", url)
-  // console.log("ssoToken======>", ssoToken)
-  // console.log("schoolUUID======>", schoolUUID)
-  // console.log("schoolName======>", schoolName)
-  // console.log("step======>", step)
-  // console.log("targetStep======>", targetStep)
+  console.log("request", request)
+  console.log("url======>", url)
+  console.log("ssoToken======>", ssoToken)
+  console.log("schoolUUID======>", schoolUUID)
+  console.log("schoolName======>", schoolName)
+  console.log("step======>", step)
+  console.log("targetStep======>", targetStep)
 
   if (!ssoToken || !schoolUUID) {
     return redirectTo("/", request);

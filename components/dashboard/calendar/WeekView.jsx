@@ -13,11 +13,12 @@ function EventChip({ event, courseRegistry, onSelect, widthClassName = "w-full" 
   const status = getEventStatus(event);
   const isClass = event.eventKind === "class";
   const isLive = status === "live";
+  console.log("event", event)
   return (
     <button
       type="button"
       onClick={() => onSelect?.(event)}
-      className={`block ${widthClassName} truncate rounded px-1.5 py-1 text-left text-[11px] font-semibold border-2 ${
+      className={`block ${widthClassName} truncate rounded cursor-pointer px-1.5 py-1 text-left text-[11px] font-semibold border-2 ${
         isLive ? "calendar-live-dashed" : ""
       }`}
       style={
@@ -142,8 +143,8 @@ export function WeekView({ events, selectedDate, courseRegistry, onSelectDay, on
                   {overflow > 0 && (
                     <button
                       type="button"
-                      onClick={() => onSelectDay(day)}
-                      className="absolute inset-x-0.5 top-full z-10 block rounded bg-primary/10 px-1 text-[10px] font-bold text-primary hover:underline"
+                      onClick={() => {onSelectDay(day)}}
+                      className="absolute inset-x-0.5 bottom-0 cursor-pointer z-10 block rounded bg-primary/10 px-1 text-[10px] font-bold text-primary hover:underline"
                     >
                       +{overflow} more
                     </button>

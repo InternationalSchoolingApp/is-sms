@@ -11,6 +11,7 @@ import { getTodayGroups } from "@/utils/calendarEvents";
  * same way the Today view does.
  */
 export function WeekDayDrilldown({ date, events, courseRegistry, onBack, backLabel = "Back", onSelectEvent }) {
+  debugger
   const dayKey = format(date, "yyyy-MM-dd");
   const dayEvents = events.filter((e) => e.localDateKey === dayKey);
   // getTodayGroups is keyed on "now" being the viewed day so live/upcoming/completed
