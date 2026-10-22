@@ -128,11 +128,9 @@ export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry) {
         },
         separateDialCode: true,
         formatOnDisplay:false,
-        autoPlaceholder: "off",
-        placeholderNumberPolicy:"off",
+        placeholderNumberPolicy:"OFF",
         dropdownParent: document.body,
       });
-      input.removeAttribute("placeholder");
       input.addEventListener("open:countryselector", handleOpenSelector);
       input.addEventListener("close:countryselector", handleCloseSelector);
       input.addEventListener("countrychange", handleChange);
