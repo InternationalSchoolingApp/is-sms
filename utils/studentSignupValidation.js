@@ -192,14 +192,15 @@ export function validateParentDetails(fields, { isOneToOneFlex = false } = {}) {
   } else if (fields.phoneValid === false) {
     errors.contactNumber = "Please enter a valid phone number";
   }else{
-    fields.contactNumber.replace(/-/g, "");
+    fields.contactNumber = fields.contactNumber.replace(/-/g, "");
   }
+  
   // Father / Mother also show an optional "other parent" mobile number: empty is fine, a
   // typed one must still be a valid number.
   if (fields.otherContactNumber && fields.otherPhoneValid === false) {
     errors.otherContactNumber = "Please enter a valid phone number";
   }else{
-    fields.otherContactNumber.replace(/-/g, "");
+    fields.otherContactNumber = fields.otherContactNumber.replace(/-/g, "");
   }
   if (!fields.countryId) errors.countryId = "Country is required";
   if (!fields.stateId) errors.stateId = "State is required";
