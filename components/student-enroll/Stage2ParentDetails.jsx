@@ -193,6 +193,7 @@ export function ParentRelationFields({ schoolUUID, userId, fields, setFields, er
             value={fields.otherFirstName}
             {...nameFieldProps((v) => set("otherFirstName", v))}
             onBlur={() => persistOther(fields)}
+            error={errors.otherFirstName}
           />
           <FloatingLabelInput
             icon={User}
@@ -200,6 +201,7 @@ export function ParentRelationFields({ schoolUUID, userId, fields, setFields, er
             value={fields.otherLastName}
             {...nameFieldProps((v) => set("otherLastName", v))}
             onBlur={() => persistOther(fields)}
+            error={errors.otherLastName}
           />
           <PhoneNumberField
             key={`other-${fields.relation}`}

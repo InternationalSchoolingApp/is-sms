@@ -5,7 +5,13 @@
  * DOM access) so it works the same in both client and server contexts.
  */
 
-const EMAIL_REGEX = /^([A-Za-z0-9_\-.])+@([A-Za-z0-9_\-.])+\.([A-Za-z]{2,4})$/;
+import { isNameTooLong, NAME_MAX_LENGTH } from "@/utils/nameInput";
+
+// Same wording as the API's SignupConstant length messages.
+const FIRST_NAME_TOO_LONG = `First Name cannot be more than ${NAME_MAX_LENGTH} characters.`;
+const LAST_NAME_TOO_LONG = `Last Name cannot be more than ${NAME_MAX_LENGTH} characters.`;
+
+const EMAIL_REGEX =/^([A-Za-z0-9_\-.])+@([A-Za-z0-9_\-.])+\.([A-Za-z]{2,4})$/;
 const SPECIAL_CHAR_REGEX = /[!@#$%&*]/;
 const LOWERCASE_REGEX = /[a-z]/;
 const UPPERCASE_REGEX = /[A-Z]/;
@@ -129,7 +135,9 @@ export function validateStudentDetails(fields, { isDualDiploma = false } = {}) {
   const errors = {};
 
   if (!fields.firstName?.trim()) errors.firstName = "First name is required";
+  else if (isNameTooLong(fields.firstName)) errors.firstName = FIRST_NAME_TOO_LONG;
   if (!fields.lastName?.trim()) errors.lastName = "Last name is required";
+  else if (isNameTooLong(fields.lastName)) errors.lastName = LAST_NAME_TOO_LONG;
   if (!fields.dob) errors.dob = "Date of birth is required";
   if (!fields.gender) errors.gender = "Gender is required";
   if (!fields.standardId) errors.standardId = "Grade is required";
@@ -182,7 +190,11 @@ export function validateParentDetails(fields, { isOneToOneFlex = false } = {}) {
   }
 
   if (!fields.firstName?.trim()) errors.firstName = "First name is required";
+  else if (isNameTooLong(fields.firstName)) errors.firstName = FIRST_NAME_TOO_LONG;
   if (!fields.lastName?.trim()) errors.lastName = "Last name is required";
+  else if (isNameTooLong(fields.lastName)) errors.lastName = LAST_NAME_TOO_LONG;
+  if (isNameTooLong(fields.otherFirstName)) errors.otherFirstName = FIRST_NAME_TOO_LONG;
+  if (isNameTooLong(fields.otherLastName)) errors.otherLastName = LAST_NAME_TOO_LONG;
   if (!fields.relation) errors.relation = " Relationship to Student is required";
   // The (selected relation's) mobile number is mandatory.
   if (!fields.contactNumber) {
