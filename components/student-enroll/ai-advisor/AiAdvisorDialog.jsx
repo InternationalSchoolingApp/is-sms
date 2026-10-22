@@ -46,6 +46,36 @@ const QUESTION_HINTS = {
   challenge: "This decides how many Honors or advanced courses we suggest.",
   freeTime: "This helps us find electives you'll actually enjoy.",
 };
+// Presentation-only touches that the backend options don't carry, keyed by option value.
+const OPTION_EMOJI = {
+  // Curious topics (high-school)
+  space: "🚀", human_body: "🧬", ai_robots: "🤖", money_startups: "💰", stories_media: "🎬",
+  climate_nature: "🌍", how_people_think: "🧠", justice_world: "🗳️", games_apps: "🎮", art_fashion_design: "✏️",
+  // Free-time activities (middle-school)
+  building: "🛠️", reading_writing: "📖", drawing_design: "🎨", sports: "⚽", music: "🎵",
+  coding_games: "🎮", helping_people: "🤝", nature: "🌱",
+  // Subjects
+  math: "➗", science: "🧪", english: "📖", social_studies: "🏛️", languages: "🗣️",
+  arts: "🎨", technology: "🖥️", business: "📊", pe_health: "🏅",
+  // Career
+  engineering: "🛠️", medicine: "🩺", computer_science: "💻", arts_design: "🎭",
+  law_social: "⚖️", sciences: "🔬", undecided: "🤔",
+  // College / country
+  us: "🇺🇸", uk: "🇬🇧", canada: "🇨🇦", germany: "🇩🇪", france: "🇫🇷", netherlands: "🇳🇱", ireland: "🇮🇪",
+  switzerland: "🇨🇭", dubai: "🇦🇪", australia: "🇦🇺", india: "🇮🇳", other: "🌐", not_sure: "🌐",
+  // Challenge
+  comfortable: "🌱", some_challenge: "⚡", high_challenge: "🚀",
+};
+// Short descriptions under the challenge options (the backend label stays the headline).
+const OPTION_SUBLABEL = {
+  comfortable: "Mostly regular courses, more time for other things",
+  some_challenge: "Some Honors courses in subjects you're good at",
+  high_challenge: "Honors and AP courses — a strong university profile",
+};
+// Questions that cap how many options you can pick, keyed by the question text.
+const MAX_PICKS = {
+  "What topics make you curious?": 3,
+};
 const ACTION_BADGE = {
   ADD: "Add",
   UPGRADE: "Upgrade",
@@ -158,7 +188,7 @@ function Chip({ selected, onClick, children, multi }) {
   );
 }
 
-function OptionCard({ selected, onClick, children, multi }) {
+function OptionCard({ selected, onClick, children, multi, emoji, sublabel }) {
   return (
     <button
       type="button"
@@ -169,7 +199,15 @@ function OptionCard({ selected, onClick, children, multi }) {
         selected ? "border-primary bg-[#e6f3ff] text-black" : "border-slate-300 bg-white text-black hover:border-primary"
       }`}
     >
-      {children}
+      {emoji && (
+        <span className="shrink-0 text-xl leading-none" aria-hidden="true">
+          {emoji}
+        </span>
+      )}
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span>{children}</span>
+        {sublabel && <span className="text-xs text-slate-500">{sublabel}</span>}
+      </span>
     </button>
   );
 }
@@ -179,6 +217,7 @@ function QuestionStep({ question, index, total, answers, onToggle, onSetAll }) {
   const picked = answers[question.id] || [];
   const allPicked = question.options.length > 0 && picked.length === question.options.length;
   const hint = question.hint || QUESTION_HINTS[question.id];
+  const maxPicks = MAX_PICKS[question.text];
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
@@ -201,9 +240,9 @@ function QuestionStep({ question, index, total, answers, onToggle, onSetAll }) {
         </legend>
         <div className="flex flex-wrap items-center justify-center gap-2">
           <span className="rounded-md bg-primary px-2 py-0.5 text-xs font-semibold text-white">
-            {question.multi ? "Choose all that apply" : "Choose one"}
+            {question.multi ? (maxPicks ? `Choose up to ${maxPicks}` : "Choose all that apply") : "Choose one"}
           </span>
-          {question.multi && (
+          {question.multi && !maxPicks && (
             <button
               type="button"
               onClick={() => onSetAll(allPicked ? [] : question.options.map((o) => o.value))}
@@ -220,13 +259,17 @@ function QuestionStep({ question, index, total, answers, onToggle, onSetAll }) {
               multi={question.multi}
               selected={picked.includes(option.value)}
               onClick={() => onToggle(question, option.value)}
+              emoji={OPTION_EMOJI[option.value]}
+              sublabel={OPTION_SUBLABEL[option.value]}
             >
               {option.label}
             </OptionCard>
           ))}
         </div>
         {question.multi && picked.length > 0 && (
-          <p className="text-xs text-slate-600">{picked.length} selected</p>
+          <p className="text-xs text-slate-600">
+            {maxPicks ? `${picked.length} of ${maxPicks} selected` : `${picked.length} selected`}
+          </p>
         )}
       </fieldset>
     </div>
@@ -576,13 +619,16 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
   }
 
   function toggleAnswer(question, value) {
+    const max = MAX_PICKS[question.text];
     setAnswers((prev) => {
       const current = prev[question.id] || [];
       if (!question.multi) return { ...prev, [question.id]: current.includes(value) ? [] : [value] };
-      return {
-        ...prev,
-        [question.id]: current.includes(value) ? current.filter((v) => v !== value) : [...current, value],
-      };
+      if (current.includes(value)) {
+        return { ...prev, [question.id]: current.filter((v) => v !== value) };
+      }
+      // At the cap, drop the oldest pick so the newest one still registers.
+      const next = max && current.length >= max ? [...current.slice(1), value] : [...current, value];
+      return { ...prev, [question.id]: next };
     });
   }
 
