@@ -39,7 +39,7 @@ export function getPrimaryParentLabels(relation) {
   };
 }
 
-const EMPTY_PHONE = { contactNumber: "", countryCode: "US", countryIsdCode: "+1", phoneValid: undefined };
+const EMPTY_PHONE = { contactNumber: "", countryCode: "", countryIsdCode: "", phoneValid: undefined };
 
 export function emptyParentBucket() {
   return { firstName: "", lastName: "", ...EMPTY_PHONE };
@@ -74,8 +74,8 @@ export function primaryFieldsFromBucket(bucket) {
     firstName: b.firstName || "",
     lastName: b.lastName || "",
     contactNumber: b.contactNumber || "",
-    countryCode: b.countryCode || "US",
-    countryIsdCode: b.countryIsdCode || "+1",
+    countryCode: b.countryCode || "",
+    countryIsdCode: b.countryIsdCode || "",
     phoneValid: b.phoneValid,
   };
 }
@@ -86,8 +86,8 @@ export function otherFieldsFromBucket(bucket) {
     otherFirstName: b.firstName || "",
     otherLastName: b.lastName || "",
     otherContactNumber: b.contactNumber || "",
-    otherCountryCode: b.countryCode || "US",
-    otherCountryIsdCode: b.countryIsdCode || "+1",
+    otherCountryCode: b.countryCode || "",
+    otherCountryIsdCode: b.countryIsdCode || "",
     otherPhoneValid: b.phoneValid,
   };
 }

@@ -1,5 +1,5 @@
 import { getCommonScriptVariables } from "@/services/studentSignupBackendApi";
-import { getIpLocation } from "@/services/ipLocationApi";
+import { getIpLocation } from "@/services/ipLocationClientApi";
 
 /**
  * Port of the payer-location functions in the Java frontend —
@@ -10,7 +10,7 @@ import { getIpLocation } from "@/services/ipLocationApi";
  * The Java pages get three globals from CommonCustomScript.jsp:
  *   LOCATION_SERVICE_BYPASS  'true' -> never call the IP service, use DEFAULT_LOCATION
  *   DEFAULT_LOCATION         JSON string of a location object ({"countryCode":"IN", ...})
- *   PRO_IP_API_URL           '/api/v1/ip-location'
+ *   PRO_IP_API_URL           the pro.ip-api.com URL called directly from the browser
  * loadLocationGlobals() fills them from POST {school}/api/v1/common-script-variables
  * (what getCommonCustomScript() calls). The `#location` hidden input the legacy code
  * keeps the resolved location in is the module-level `location` string here.
@@ -41,7 +41,7 @@ export function getCountryISOCode() {
 }
 
 // GET PRO_IP_API_URL — the $.ajax({ global:false, type:"GET", url: PRO_IP_API_URL }) call,
-// now a Server Action (services/ipLocationApi.js) so it still works under a UAT backend override.
+// made directly from the browser against pro.ip-api.com.
 async function fetchIpLocation() {
   const data = await getIpLocation();
   if (!data) throw new Error("ip-location returned no data");
@@ -56,7 +56,7 @@ export async function callLocationForPaymentFill(data) {
 }
 
 // callLocationForPaymentPromise()
-export async function callLocationForPaymentPromise() {
+export async function callLocationForPaymentPromise({ throwOnError = false } = {}) {
   if (LOCATION_SERVICE_BYPASS == "true") {
     await callLocationForPaymentFill(JSON.parse(DEFAULT_LOCATION));
   } else {
@@ -65,6 +65,7 @@ export async function callLocationForPaymentPromise() {
       await callLocationForPaymentFill(data);
     } catch (e) {
       console.error(e);
+      if (throwOnError) throw e;
     }
   }
 }

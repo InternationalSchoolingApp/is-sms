@@ -55,15 +55,15 @@ function defaultFields(studentAddress) {
     relation: "",
     contactNumber: "",
     // The phone widget defaults to US when nothing is saved.
-    countryCode: "US",
-    countryIsdCode: "+1",
+    countryCode: "",
+    countryIsdCode: "",
     phoneValid: undefined,
     // Optional "other parent" (Mother under Father, Father under Mother) — see utils/parentRelation.js.
     otherFirstName: "",
     otherLastName: "",
     otherContactNumber: "",
-    otherCountryCode: "US",
-    otherCountryIsdCode: "+1",
+    otherCountryCode: "",
+    otherCountryIsdCode: "",
     otherPhoneValid: undefined,
     sameAsStudent: Boolean(studentAddress?.countryId),
     countryId: studentAddress?.countryId || "",
@@ -142,7 +142,6 @@ export function ParentRelationFields({ schoolUUID, userId, fields, setFields, er
   }
 
   const set = (name, value) => setFields((prev) => ({ ...prev, [name]: value }));
-
   return (
     <>
       <div className="mt-4.5 sm:mx-auto sm:max-w-[420px]">
@@ -178,7 +177,7 @@ export function ParentRelationFields({ schoolUUID, userId, fields, setFields, er
           label={<Req label={labels.mobile} required />}
           value={fields.contactNumber}
           className="pb-1.5 w-full"
-          initialCountry={(fields.countryCode || "US").toLowerCase()}
+          initialCountry={(fields.countryCode || "").toLowerCase()}
           onChange={({ contactNumber, countryIsdCode, countryCode, isValid }) =>
             setFields((prev) => ({ ...prev, contactNumber, countryIsdCode, countryCode, phoneValid: isValid }))
           }
@@ -206,8 +205,8 @@ export function ParentRelationFields({ schoolUUID, userId, fields, setFields, er
             key={`other-${fields.relation}`}
             label={<>{otherRelation}&apos;s Mobile Number <span className="text-black">(Optional)</span></>}
             value={fields.otherContactNumber}
-            className="pb-1.5 w-full"
-            initialCountry={(fields.otherCountryCode || "US").toLowerCase()}
+            className={`pb-1.5 w-full ${fields.otherCountryCode}`}
+            initialCountry={(fields.otherCountryCode || "").toLowerCase()}
             onChange={({ contactNumber, countryIsdCode, countryCode, isValid }) =>
               setFields((prev) => ({
                 ...prev,
@@ -348,7 +347,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
         setErrors((prev) => ({ ...prev, form: "Something went wrong. Please check your connection and try again." }));
         return;
       }
-
+      // console.log("Parent Save Details", fields)
       onNext?.(fields);
     } catch (err) {
       console.error("Stage2ParentDetails submit failed:", err);

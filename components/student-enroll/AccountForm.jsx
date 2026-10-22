@@ -90,7 +90,7 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
   const signup = useAccountSignup({ mode: "online", context });
 
   // callLocationAndSelectCountryNew(): the signup page fills its hidden #location input with the payer's
-  // location (LOCATION_SERVICE_BYPASS ? DEFAULT_LOCATION : the /api/v1/ip-location lookup) and
+  // location (LOCATION_SERVICE_BYPASS ? DEFAULT_LOCATION : the direct browser-side pro-ip-api lookup) and
   // sends it with stage-1. Same here: capture it on load and keep it in the hidden `location` field below.
   useEffect(() => {
     let cancelled = false;
@@ -232,9 +232,8 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
       // even when React's state missed the update.
       const formData = new FormData(formRef.current);
       const submittedEmail = formData.get("email") || fields.email;
-      // The location is captured asynchronously on load; if the user submits before it landed, resolve it now so the
-      // saved record never gets "{}" (see the location effect above).
-      if (!getLocationValue()) await callLocationForPaymentPromise();
+      // Refresh before signup: the visitor may have switched networks or VPN since page load.
+      await callLocationForPaymentPromise({ throwOnError: true });
       const domFields = {
         ...fields,
         location: getLocationValue() || fields.location,
