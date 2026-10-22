@@ -6,6 +6,25 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
+    },
+    {
+      "name": "is-rest-api",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "SPRING_ACTIVE_PROFILE=dev",
+        "DATABASE_NAME=ildblive",
+        "NODE_COMMAND=node",
+        "PROJECT_PATH=/Users/ershoaibansari/is-rest-api/",
+        "TEMP_PATH=/Users/ershoaibansari/Documents/tomcat/seri/tmp",
+        "PDF_FOLDER_PATH=/Users/ershoaibansari/Documents",
+        "/Users/ershoaibansari/is-rest-api/mvnw",
+        "-f",
+        "/Users/ershoaibansari/is-rest-api/pom.xml",
+        "spring-boot:run",
+        "-Dspring-boot.run.jvmArguments=--add-opens java.base/java.lang=ALL-UNNAMED"
+      ],
+      "autoPort": false,
+      "port": 8080
     }
   ]
 }

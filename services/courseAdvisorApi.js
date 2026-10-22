@@ -64,8 +64,13 @@ export async function getAdvisorStart(schoolUUID, { studentUserId } = {}) {
 }
 
 /** answers: { questionId: [optionValue, ...] }; marksheetId: a confirmed marksheet, optional. */
-export async function getAdvisorSuggestions(schoolUUID, { answers, marksheetId, studentUserId }) {
-  return postAdvisor(schoolUUID, "recommend", forStudent({ answers: answers || {}, marksheetId: marksheetId ?? null }, studentUserId));
+/** otherAnswers: questionId -> text typed in a "Something else?" box. */
+export async function getAdvisorSuggestions(schoolUUID, { answers, otherAnswers, marksheetId, studentUserId }) {
+  return postAdvisor(
+    schoolUUID,
+    "recommend",
+    forStudent({ answers: answers || {}, otherAnswers: otherAnswers || {}, marksheetId: marksheetId ?? null }, studentUserId)
+  );
 }
 
 /** itemIds: all suggestions or only the ticked ones; confirmations: types the student agreed to. */

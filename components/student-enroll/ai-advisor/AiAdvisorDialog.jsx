@@ -35,17 +35,8 @@ const QUICK_QUESTIONS = [
   "Which elective fits my goals?",
   "Is my course load too heavy?",
 ];
-// Why each question is asked, keyed by the backend's question id (AdvisorQuestions.java).
-const QUESTION_HINTS = {
-  recoverSubjects: "We'll put these first so you can earn back the courses you need.",
-  career: "This helps us pick electives and course levels that lead toward that path.",
-  college: "Colleges in different countries look for different courses, so we'll match them.",
-  favoriteSubjects: "We'll lean toward higher levels or extra electives in these courses.",
-  hardSubjects: "We'll keep these at a comfortable level so your year isn't overloaded.",
-  homeSchoolSubjects: "We'll avoid suggesting courses you're already taking at your school.",
-  challenge: "This decides how many Honors or advanced courses we suggest.",
-  freeTime: "This helps us find electives you'll actually enjoy.",
-};
+// The after-school question (AdvisorQuestions.CAREER); its answer stays in the header on later questions.
+const CAREER_QUESTION = "career";
 const ACTION_BADGE = {
   ADD: "Add",
   UPGRADE: "Upgrade",
@@ -158,33 +149,63 @@ function Chip({ selected, onClick, children, multi }) {
   );
 }
 
-function OptionCard({ selected, onClick, children, multi }) {
+/** icon + label (+ description) on the left, a round tick on the right. */
+function OptionCard({ selected, onClick, option, multi, disabled }) {
   return (
     <button
       type="button"
       role={multi ? "checkbox" : "radio"}
       aria-checked={selected}
+      aria-disabled={disabled || undefined}
       onClick={onClick}
       className={`flex w-full items-center cursor-pointer gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
         selected ? "border-primary bg-[#e6f3ff] text-black" : "border-slate-300 bg-white text-black hover:border-primary"
-      }`}
+      } ${disabled ? "cursor-not-allowed opacity-50 hover:border-slate-300" : ""}`}
     >
-      {children}
+      {option.icon && (
+        <span className="w-6 shrink-0 text-center text-lg leading-none" aria-hidden="true">
+          {option.icon}
+        </span>
+      )}
+      <span className="min-w-0 flex-1">
+        <span className="block">{option.label}</span>
+        {option.description && <span className="block text-xs text-slate-600">{option.description}</span>}
+      </span>
+      <span
+        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+          selected ? "border-primary bg-primary text-white" : "border-slate-300 bg-white"
+        }`}
+        aria-hidden="true"
+      >
+        {selected && <Check className="h-3 w-3" strokeWidth={4} />}
+      </span>
     </button>
   );
 }
 
-/** One questionnaire question per screen, with progress, a hint and a select-all for multi-choice. */
-function QuestionStep({ question, index, total, answers, onToggle, onSetAll }) {
+/**
+ * One questionnaire question per screen, with progress, a hint, a select-all
+ * for open multi-choice, an "up to N" limit, and an optional typed answer.
+ * careerOption: the after-school answer, shown in the header on later questions.
+ */
+function QuestionStep({ question, index, total, answers, otherAnswers, onToggle, onSetAll, onOther, careerOption }) {
   const picked = answers[question.id] || [];
   const allPicked = question.options.length > 0 && picked.length === question.options.length;
-  const hint = question.hint || QUESTION_HINTS[question.id];
+  const atMax = Boolean(question.max) && picked.length >= question.max;
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
-        <p className="text-xs font-semibold text-slate-600">
-          Question {index + 1} of {total}
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs font-semibold text-slate-600">
+            Question {index + 1} of {total}
+          </p>
+          {careerOption && (
+            <p className="truncate text-xs font-semibold text-slate-600">
+              {careerOption.icon && <span aria-hidden="true">{careerOption.icon} </span>}
+              {careerOption.label}
+            </p>
+          )}
+        </div>
         <div className="flex gap-1" aria-hidden="true">
           {Array.from({ length: total }).map((_, i) => (
             <span key={i} className={`h-1.5 flex-1 rounded-full ${i <= index ? "bg-[#3fa43c]" : "bg-slate-200"}`} />
@@ -196,14 +217,14 @@ function QuestionStep({ question, index, total, answers, onToggle, onSetAll }) {
           <HiOutlineLightBulb className="w-12 h-12 hidden sm:inline-flex" /> 
           <div>
             <span className="block text-base font-extrabold">{question.text}</span>
-            {hint && <span className="mt-1 block text-sm">{hint}</span>}
+            {question.hint && <span className="mt-1 block text-sm">{question.hint}</span>}
           </div>
         </legend>
         <div className="flex flex-wrap items-center justify-center gap-2">
           <span className="rounded-md bg-primary px-2 py-0.5 text-xs font-semibold text-white">
-            {question.multi ? "Choose all that apply" : "Choose one"}
+            {!question.multi ? "Choose one" : question.max ? `Choose up to ${question.max}` : "Choose all that apply"}
           </span>
-          {question.multi && (
+          {question.multi && !question.max && (
             <button
               type="button"
               onClick={() => onSetAll(allPicked ? [] : question.options.map((o) => o.value))}
@@ -214,19 +235,39 @@ function QuestionStep({ question, index, total, answers, onToggle, onSetAll }) {
           )}
         </div>
         <div className="grid gap-2 sm:grid-cols-2" role={question.multi ? "group" : "radiogroup"}>
-          {question.options.map((option) => (
-            <OptionCard
-              key={option.value}
-              multi={question.multi}
-              selected={picked.includes(option.value)}
-              onClick={() => onToggle(question, option.value)}
-            >
-              {option.label}
-            </OptionCard>
-          ))}
+          {question.options.map((option) => {
+            const selected = picked.includes(option.value);
+            return (
+              <OptionCard
+                key={option.value}
+                multi={question.multi}
+                option={option}
+                selected={selected}
+                disabled={atMax && !selected}
+                onClick={() => (atMax && !selected ? null : onToggle(question, option.value))}
+              />
+            );
+          })}
         </div>
-        {question.multi && picked.length > 0 && (
+        {question.multi && question.max && (
+          <p className="text-center text-xs text-slate-500" aria-live="polite">
+            {picked.length} of {question.max} picked
+          </p>
+        )}
+        {question.multi && !question.max && picked.length > 0 && (
           <p className="text-xs text-slate-600">{picked.length} selected</p>
+        )}
+        {question.otherLabel && (
+          <label className="block space-y-1.5">
+            <span className="block text-sm text-slate-700">{question.otherLabel}</span>
+            <input
+              value={otherAnswers[question.id] || ""}
+              maxLength={60}
+              onChange={(e) => onOther(question, e.target.value)}
+              placeholder={question.otherPlaceholder}
+              className="h-11 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-primary"
+            />
+          </label>
         )}
       </fieldset>
     </div>
@@ -437,6 +478,8 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
   const [marksheet, setMarksheet] = useState(null);
   const [marksheetId, setMarksheetId] = useState(null);
   const [answers, setAnswers] = useState({});
+  // "Something else?" boxes: questionId -> typed text.
+  const [otherAnswers, setOtherAnswers] = useState({});
   const [questionIndex, setQuestionIndex] = useState(0);
   const [result, setResult] = useState(null);
   const [checked, setChecked] = useState(new Set());
@@ -480,7 +523,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
         if (response.status !== STATUS_SUCCESS) return showError(response.message, response.statusCode, loadStart);
         setSetup(response);
         setQuestionIndex(0);
-        setStep(response.marksheetEnabled ? "marksheet" : "questions");
+        setStep("intro");
       })
       .catch(() => showError(GENERIC_ERROR, null, loadStart));
   }
@@ -557,6 +600,12 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
   const questions = setup?.questions || [];
   const currentQuestion = questions[questionIndex];
   const onLastQuestion = questionIndex >= questions.length - 1;
+  const answered = (q) => (answers[q.id] || []).length > 0 || Boolean(otherAnswers[q.id]?.trim());
+  const careerIndex = questions.findIndex((q) => q.id === CAREER_QUESTION);
+  const careerOption =
+    careerIndex >= 0 && questionIndex > careerIndex
+      ? questions[careerIndex].options.find((o) => (answers[CAREER_QUESTION] || []).includes(o.value))
+      : null;
 
   function nextQuestion() {
     if (onLastQuestion) return handleSuggest();
@@ -566,11 +615,13 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
   /** Skip drops any answer to this question, so nothing half-picked is sent. */
   function skipQuestion() {
     if (currentQuestion) {
-      setAnswers((prev) => {
+      const drop = (prev) => {
         const next = { ...prev };
         delete next[currentQuestion.id];
         return next;
-      });
+      };
+      setAnswers(drop);
+      setOtherAnswers(drop);
     }
     nextQuestion();
   }
@@ -586,15 +637,15 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
     });
   }
 
-  /** chosen: the answers to send; "Skip all questions" sends none, even ones picked before going back. */
-  async function handleSuggest(chosen = answers) {
+  /** chosen / typed: the answers to send; "Skip all questions" sends none, even ones picked before going back. */
+  async function handleSuggest(chosen = answers, typed = otherAnswers) {
     setNotice("");
     setStep("thinking");
     try {
-      const response = await suggest.mutateAsync({ answers: chosen, marksheetId });
+      const response = await suggest.mutateAsync({ answers: chosen, otherAnswers: typed, marksheetId });
       if (response.status === STATUS_SESSION_OUT) return sessionOut();
       if (response.status !== STATUS_SUCCESS) {
-        showError(response.message, response.statusCode, () => handleSuggest(chosen));
+        showError(response.message, response.statusCode, () => handleSuggest(chosen, typed));
         return;
       }
       const suggestions = response.suggestions || [];
@@ -603,7 +654,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
       setChecked(new Set(suggestions.filter((s) => s.action !== "ADDITIONAL").map((s) => s.itemId)));
       setStep("suggestions");
     } catch {
-      showError(GENERIC_ERROR, null, () => handleSuggest(chosen));
+      showError(GENERIC_ERROR, null, () => handleSuggest(chosen, typed));
     }
   }
 
@@ -750,6 +801,41 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
             </div>
           )}
 
+          {step === "intro" && setup && (
+            <div className="space-y-4">
+              <div className="ai-rise flex items-start gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#3fa43c] text-white">
+                  <Sparkles className="h-4 w-4" />
+                </span>
+                <div className="space-y-3 rounded-2xl bg-slate-100 px-4 py-3 text-sm text-black">
+                  <p>
+                    Hi{setup.studentFirstName ? ` ${setup.studentFirstName}` : ""} 👋 We can help you plan your {gradeName || ""} courses
+                    based on <strong>your interests and goals</strong>.
+                  </p>
+                  <p>
+                    Before we recommend any courses, we&apos;d like to learn about your interests, the subjects you enjoy and your plans after
+                    school.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => (setup.marksheetEnabled ? setStep("marksheet") : goToQuestions())}
+                className="ai-rise ml-11 flex w-[calc(100%-2.75rem)] cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                <span className="text-2xl leading-none" aria-hidden="true">
+                  🧭
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-base font-bold text-black">Help me pick my courses</span>
+                  <span className="block text-sm text-slate-600">
+                    Answer {questions.length} quick questions and get a full course list
+                  </span>
+                </span>
+              </button>
+            </div>
+          )}
+
           {step === "marksheet" && (
             <div className="space-y-3">
               <div>
@@ -832,8 +918,11 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                 index={questionIndex}
                 total={questions.length}
                 answers={answers}
+                otherAnswers={otherAnswers}
+                careerOption={careerOption}
                 onToggle={toggleAnswer}
                 onSetAll={(values) => setAnswers((prev) => ({ ...prev, [currentQuestion.id]: values }))}
+                onOther={(question, text) => setOtherAnswers((prev) => ({ ...prev, [question.id]: text }))}
               />
             ) : (
               <p className="text-sm text-slate-700">We have everything we need. Get your suggestions when you&apos;re ready.</p>
@@ -1026,7 +1115,8 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                   variant="outline"
                   onClick={() => {
                     setAnswers({});
-                    handleSuggest({});
+                    setOtherAnswers({});
+                    handleSuggest({}, {});
                   }}
                   disabled={busy}
                   className="w-auto"
@@ -1034,11 +1124,14 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                   Skip all questions
                 </Button>
               </span>
-              {questionIndex > 0 && (
-                <Button type="button" variant="outline" onClick={() => setQuestionIndex((i) => i - 1)} disabled={busy}>
-                  Back
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => (questionIndex > 0 ? setQuestionIndex((i) => i - 1) : setStep("intro"))}
+                disabled={busy}
+              >
+                Back
+              </Button>
               <Button type="button" variant="outline" onClick={skipQuestion} disabled={busy}>
                 Skip
               </Button>
@@ -1046,13 +1139,13 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                 <Button
                   type="button"
                   onClick={() => handleSuggest()}
-                  disabled={busy || !(answers[currentQuestion.id] || []).length}
+                  disabled={busy || !answered(currentQuestion)}
                   className="bg-[#3fa43c] hover:bg-[#3fa43c]/90"
                 >
-                  <Sparkles className="h-4 w-4" /> Get suggestions
+                  <Sparkles className="h-4 w-4" /> Get my courses
                 </Button>
               ) : (
-                <Button type="button" onClick={nextQuestion} disabled={busy || !(answers[currentQuestion.id] || []).length}>
+                <Button type="button" onClick={nextQuestion} disabled={busy || !answered(currentQuestion)}>
                   Next
                 </Button>
               )}
@@ -1060,7 +1153,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
           )}
           {step === "questions" && !currentQuestion && (
             <Button type="button" onClick={() => handleSuggest()} disabled={busy} className="bg-[#3fa43c] hover:bg-[#3fa43c]/90">
-              <Sparkles className="h-4 w-4" /> Get suggestions
+              <Sparkles className="h-4 w-4" /> Get my courses
             </Button>
           )}
           {step === "suggestions" && setup?.chatEnabled && (

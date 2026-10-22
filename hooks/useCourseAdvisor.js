@@ -59,8 +59,11 @@ export function useConfirmMarksheet({ context, studentUserId }) {
 
 export function useAdvisorSuggestions({ context, studentUserId }) {
   return useMutation({
-    mutationFn: async ({ answers, marksheetId }) =>
-      required(await getAdvisorSuggestions(context.schoolUUID, { answers, marksheetId, studentUserId }), "ai-course-advisor/recommend"),
+    mutationFn: async ({ answers, otherAnswers, marksheetId }) =>
+      required(
+        await getAdvisorSuggestions(context.schoolUUID, { answers, otherAnswers, marksheetId, studentUserId }),
+        "ai-course-advisor/recommend"
+      ),
   });
 }
 
