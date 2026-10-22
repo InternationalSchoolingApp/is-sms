@@ -108,11 +108,18 @@ export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry) {
 
     import("intl-tel-input/intlTelInputWithUtils").then(({ default: intlTelInput }) => {
       if (cancelled || !input) return;
+      // The library caches the IP lookup result module-wide for the whole page lifetime, and wizard
+      // Back/Next is client-side navigation (no reload), so a VPN/location change would never be seen.
+      // Reset it when a step mounts its first phone field; fields mounted alongside share one lookup.
+      if (intlTelInput.instances.size === 0) {
+        intlTelInput.autoCountry = undefined;
+        intlTelInput.startedLoadingAutoCountry = false;
+      }
       itiRef.current = intlTelInput(input, {
         initialCountry: initialCountry || "",
         initialCountryLookup: async () => {
           try {
-            const response = await fetch("https://ipapi.co/json/");
+            const response = await fetch("https://ipapi.co/json/", { cache: "no-store" });
             if (!response.ok) {
               throw new Error("Country lookup failed");
             }
@@ -127,7 +134,12 @@ export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry) {
           }
         },
         separateDialCode: true,
-        formatOnDisplay:false,
+        formatAsYouType:false,
+        // formatAsYouType only governs live typing. Loading an already-saved number still runs it through
+        // #updateValueFromNumber once on init, which formats using numberDisplayFormat (default INTERNATIONAL,
+        // e.g. "80100 77187"). E164 is the only format that doesn't group digits with spaces, so this is what
+        // keeps a saved number displaying as the raw digits the user typed.
+        numberDisplayFormat: "E164",
         placeholderNumberPolicy:"OFF",
         dropdownParent: document.body,
       });

@@ -56,14 +56,27 @@ export function primaryBucketFromFields(fields) {
   };
 }
 
+// An invalid/incomplete number (phoneValid === false, e.g. a few digits typed then abandoned) leaves
+// no real number behind, same as an outright empty one -- its country is just whatever the widget
+// auto-detected on mount, never confirmed by an actual saved number.
+function isUsableNumber(contactNumber, phoneValid) {
+  return Boolean(contactNumber) && phoneValid !== false;
+}
+
 export function otherBucketFromFields(fields) {
+  const contactNumber = fields.otherContactNumber || "";
+  const usable = isUsableNumber(contactNumber, fields.otherPhoneValid);
   return {
     firstName: fields.otherFirstName || "",
     lastName: fields.otherLastName || "",
-    contactNumber: fields.otherContactNumber || "",
-    countryCode: fields.otherCountryCode || "",
-    countryIsdCode: fields.otherCountryIsdCode || "",
-    phoneValid: fields.otherPhoneValid,
+    contactNumber,
+    // The phone widget reports a (usually IP-detected) country as soon as it mounts, even with no
+    // number typed -- without a usable number that country is meaningless and must not be cached, or
+    // it comes back as `initialCountry` next time and permanently blocks the real IP lookup from ever
+    // running again (intl-tel-input skips initialCountryLookup whenever initialCountry is set).
+    countryCode: usable ? fields.otherCountryCode || "" : "",
+    countryIsdCode: usable ? fields.otherCountryIsdCode || "" : "",
+    phoneValid: contactNumber ? fields.otherPhoneValid : undefined,
   };
 }
 
@@ -82,13 +95,19 @@ export function primaryFieldsFromBucket(bucket) {
 
 export function otherFieldsFromBucket(bucket) {
   const b = { ...emptyParentBucket(), ...bucket };
+  // Strip the country here too, not just when writing it (otherBucketFromFields) -- a bucket saved
+  // before that guard existed can still have a stale country sitting in localStorage. Reading it back
+  // as "" (instead of trusting whatever is cached) is what lets PhoneNumberField's own IP lookup run
+  // fresh on every mount for as long as no real number is saved, so it always reflects the visitor's
+  // CURRENT location (e.g. after switching VPN country and clicking Back) instead of a stale one.
+  const usable = isUsableNumber(b.contactNumber, b.phoneValid);
   return {
     otherFirstName: b.firstName || "",
     otherLastName: b.lastName || "",
     otherContactNumber: b.contactNumber || "",
-    otherCountryCode: b.countryCode || "",
-    otherCountryIsdCode: b.countryIsdCode || "",
-    otherPhoneValid: b.phoneValid,
+    otherCountryCode: usable ? b.countryCode || "" : "",
+    otherCountryIsdCode: usable ? b.countryIsdCode || "" : "",
+    otherPhoneValid: usable ? b.phoneValid : undefined,
   };
 }
 
