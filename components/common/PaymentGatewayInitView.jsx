@@ -83,7 +83,11 @@ async function startAirwallexCheckout(checkoutUrl) {
   const url = getAirwallexCheckoutIntentUrl(checkoutUrl);
   if (!url) throw new Error("The Airwallex checkout URL is invalid.");
 
-  const response = await fetch(url, { method: "GET", credentials: "include" });
+  // Same-origin via the create-checkout-intent rewrite in next.config.mjs, so the
+  // default credentials mode already sends the cookie. An explicit "include" here
+  // forced a credentialed cross-origin request, which cannot be served by the
+  // Access-Control-Allow-Origin: "*" the backend replies with.
+  const response = await fetch(url, { method: "GET" });
   if (!response.ok) throw new Error("We could not reach the payment gateway. Please try again.");
 
   const intent = await response.json();
@@ -129,13 +133,17 @@ export function PaymentGatewayInitView({ gateway, schoolUUID: schoolUUIDFromRout
 
   const startPayment = useCallback(async () => {
     try {
+      // Mirrors the JSP (CommonPaymentResponseAirwallex.jsp): build the
+      // create-checkout-intent URL from the params already in this route and let
+      // that single call make the intent. Going through the payment-init API
+      // instead made a second, unused Airwallex intent on the same reference.
+      if (gateway === "airwallex") {
+        await startAirwallexCheckout(`/${schoolUUID}/create-checkout-intent/${uniqueUuid}?${searchParams.toString()}`);
+        return;
+      }
+
       const response = await config.request(uniqueUuid, searchParams.toString(), schoolUUID);
       if (response?.status === config.successStatus) {
-        if (gateway === "airwallex") {
-          await startAirwallexCheckout(response.airwallexCheckoutUrl);
-          return;
-        }
-
         const redirectUrl = getSafeRedirectUrl(response[config.redirectField]);
         if (redirectUrl) {
           window.location.assign(redirectUrl);
