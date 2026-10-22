@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import "intl-tel-input/styles";
+import { getIpLocation } from "@/services/ipLocationClientApi";
 
 // On phones intl-tel-input shows its country list as a full-screen popup. This decorates it to match the app's
 // own select popup (components/ui/floating-label-select.jsx): a red close button beside the search box, the popup
@@ -119,15 +120,11 @@ export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry) {
         initialCountry: initialCountry || "",
         initialCountryLookup: async () => {
           try {
-            const response = await fetch("https://ipapi.co/json/", { cache: "no-store" });
-            if (!response.ok) {
-              throw new Error("Country lookup failed");
-            }
-            const data = await response.json();
-            if (!data.country_code) {
+            const data = await getIpLocation();
+            if (!data.countryCode) {
               throw new Error("Country code not found");
             }
-            return data.country_code.toLowerCase();
+            return data.countryCode.toLowerCase();
           } catch (error) {
             console.error("Country detection failed:", error);
             return "us";
