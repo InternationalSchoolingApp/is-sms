@@ -90,7 +90,7 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
   const signup = useAccountSignup({ mode: "online", context });
 
   // callLocationAndSelectCountryNew(): the signup page fills its hidden #location input with the payer's
-  // location (LOCATION_SERVICE_BYPASS ? DEFAULT_LOCATION : the /api/v1/ip-location lookup) and
+  // location (LOCATION_SERVICE_BYPASS ? DEFAULT_LOCATION : the direct browser-side pro-ip-api lookup) and
   // sends it with stage-1. Same here: capture it on load and keep it in the hidden `location` field below.
   useEffect(() => {
     let cancelled = false;

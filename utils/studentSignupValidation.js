@@ -5,7 +5,13 @@
  * DOM access) so it works the same in both client and server contexts.
  */
 
-const EMAIL_REGEX = /^([A-Za-z0-9_\-.])+@([A-Za-z0-9_\-.])+\.([A-Za-z]{2,4})$/;
+import { isNameTooLong, NAME_MAX_LENGTH } from "@/utils/nameInput";
+
+// Same wording as the API's SignupConstant length messages.
+const FIRST_NAME_TOO_LONG = `First Name cannot be more than ${NAME_MAX_LENGTH} characters.`;
+const LAST_NAME_TOO_LONG = `Last Name cannot be more than ${NAME_MAX_LENGTH} characters.`;
+
+const EMAIL_REGEX =/^([A-Za-z0-9_\-.])+@([A-Za-z0-9_\-.])+\.([A-Za-z]{2,4})$/;
 const SPECIAL_CHAR_REGEX = /[!@#$%&*]/;
 const LOWERCASE_REGEX = /[a-z]/;
 const UPPERCASE_REGEX = /[A-Z]/;
@@ -129,14 +135,15 @@ export function validateStudentDetails(fields, { isDualDiploma = false } = {}) {
   const errors = {};
 
   if (!fields.firstName?.trim()) errors.firstName = "First name is required";
+  else if (isNameTooLong(fields.firstName)) errors.firstName = FIRST_NAME_TOO_LONG;
   if (!fields.lastName?.trim()) errors.lastName = "Last name is required";
+  else if (isNameTooLong(fields.lastName)) errors.lastName = LAST_NAME_TOO_LONG;
   if (!fields.dob) errors.dob = "Date of birth is required";
   if (!fields.gender) errors.gender = "Gender is required";
   if (!fields.standardId) errors.standardId = "Grade is required";
   if (!fields.countryId) errors.countryId = "Country is required";
   if (!fields.stateId) errors.stateId = "State is required";
   if (!fields.cityId) errors.cityId = "City is required";
-
   if (isDualDiploma) {
     if (!fields.studyingSchoolName?.trim()) errors.studyingSchoolName = "Current school name is required";
     if (!fields.studyingGradeId) errors.studyingGradeId = "Current grade is required";
@@ -146,6 +153,8 @@ export function validateStudentDetails(fields, { isDualDiploma = false } = {}) {
     if (!isValidEmail(fields.communicationEmail)) errors.communicationEmail = "Email is either empty or invalid";
     if (!fields.contactNumber || fields.phoneValid === false) {
       errors.contactNumber = "A valid mobile number is required";
+    }else{
+      fields.contactNumber = fields.contactNumber.replace(/[-\s]/g, "")
     }
   }
 
@@ -181,18 +190,27 @@ export function validateParentDetails(fields, { isOneToOneFlex = false } = {}) {
   }
 
   if (!fields.firstName?.trim()) errors.firstName = "First name is required";
+  else if (isNameTooLong(fields.firstName)) errors.firstName = FIRST_NAME_TOO_LONG;
   if (!fields.lastName?.trim()) errors.lastName = "Last name is required";
+  else if (isNameTooLong(fields.lastName)) errors.lastName = LAST_NAME_TOO_LONG;
+  if (isNameTooLong(fields.otherFirstName)) errors.otherFirstName = FIRST_NAME_TOO_LONG;
+  if (isNameTooLong(fields.otherLastName)) errors.otherLastName = LAST_NAME_TOO_LONG;
   if (!fields.relation) errors.relation = " Relationship to Student is required";
   // The (selected relation's) mobile number is mandatory.
   if (!fields.contactNumber) {
     errors.contactNumber = "Mobile Number is required";
   } else if (fields.phoneValid === false) {
     errors.contactNumber = "Please enter a valid phone number";
+  }else{
+     fields.contactNumber = fields.contactNumber.replace(/-/g, "");
   }
+  
   // Father / Mother also show an optional "other parent" mobile number: empty is fine, a
   // typed one must still be a valid number.
   if (fields.otherContactNumber && fields.otherPhoneValid === false) {
     errors.otherContactNumber = "Please enter a valid phone number";
+  }else{
+   fields.otherContactNumber = fields.otherContactNumber.replace(/-/g, "");
   }
   if (!fields.countryId) errors.countryId = "Country is required";
   if (!fields.stateId) errors.stateId = "State is required";

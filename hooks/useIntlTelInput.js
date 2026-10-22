@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import "intl-tel-input/styles";
+import { getIpLocation } from "@/services/ipLocationClientApi";
 
 // On phones intl-tel-input shows its country list as a full-screen popup. This decorates it to match the app's
 // own select popup (components/ui/floating-label-select.jsx): a red close button beside the search box, the popup
@@ -79,7 +80,7 @@ function decorateFullscreenPopup(closePopup) {
   };
 }
 
-export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry = "in") {
+export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry) {
   useEffect(() => {
     let cancelled = false;
     const input = inputRef.current;
@@ -108,9 +109,35 @@ export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry = "in
 
     import("intl-tel-input/intlTelInputWithUtils").then(({ default: intlTelInput }) => {
       if (cancelled || !input) return;
+      // The library caches the IP lookup result module-wide for the whole page lifetime, and wizard
+      // Back/Next is client-side navigation (no reload), so a VPN/location change would never be seen.
+      // Reset it when a step mounts its first phone field; fields mounted alongside share one lookup.
+      if (intlTelInput.instances.size === 0) {
+        intlTelInput.autoCountry = undefined;
+        intlTelInput.startedLoadingAutoCountry = false;
+      }
       itiRef.current = intlTelInput(input, {
-        initialCountry: initialCountry || "in",
+        initialCountry: initialCountry || "",
+        initialCountryLookup: async () => {
+          try {
+            const data = await getIpLocation();
+            if (!data.countryCode) {
+              throw new Error("Country code not found");
+            }
+            return data.countryCode.toLowerCase();
+          } catch (error) {
+            console.error("Country detection failed:", error);
+            return "us";
+          }
+        },
         separateDialCode: true,
+        formatAsYouType:false,
+        // formatAsYouType only governs live typing. Loading an already-saved number still runs it through
+        // #updateValueFromNumber once on init, which formats using numberDisplayFormat (default INTERNATIONAL,
+        // e.g. "80100 77187"). E164 is the only format that doesn't group digits with spaces, so this is what
+        // keeps a saved number displaying as the raw digits the user typed.
+        numberDisplayFormat: "E164",
+        placeholderNumberPolicy:"OFF",
         dropdownParent: document.body,
       });
       input.addEventListener("open:countryselector", handleOpenSelector);
