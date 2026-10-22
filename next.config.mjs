@@ -34,16 +34,7 @@ const nextConfig = {
   },
   async rewrites() {
     const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
-    if (!backendBaseUrl) return [];
-    // Always forwarded, independent of the full local-proxy mode below: the
-    // payment-init page fetches this from the browser, and routing it through
-    // our own origin keeps it a same-origin call like the JSP's AJAX. Turning
-    // on NEXT_PUBLIC_USE_LOCAL_PROXY for this would break every server-side
-    // call, since resolveServerBackendOrigin() returns "" in that mode.
-    const checkoutIntent = [
-      { source: "/:schoolId/create-checkout-intent/:path*", destination: `${backendBaseUrl}/:schoolId/create-checkout-intent/:path*` },
-    ];
-    if (process.env.NEXT_PUBLIC_USE_LOCAL_PROXY !== "true") return { afterFiles: checkoutIntent };
+    if (!backendBaseUrl || process.env.NEXT_PUBLIC_USE_LOCAL_PROXY !== "true") return [];
     return {
       afterFiles: [
         { source: "/api/v1/:path*", destination: `${backendBaseUrl}/api/v1/:path*` },
