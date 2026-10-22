@@ -170,7 +170,9 @@ function ReviewRow({ label, children }) {
 function phoneLine(person) {
   if (!person?.contactNumber) return "--";
   const code = person.countryIsdCode || person.countryCode || "";
-  return `+${code} ${person.contactNumber}`;
+  const contactNumber = String(person.contactNumber).replace(/-/g, "");
+  console.log("Review Mobile Number", { code, contactNumber });
+  return `+${code} ${contactNumber}`;
 }
 
 // Mirrors getPaymentSelectionBodyContent() in signupStudentContent.js: one
