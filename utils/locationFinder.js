@@ -10,7 +10,7 @@ import { getIpLocation } from "@/services/ipLocationClientApi";
  * The Java pages get three globals from CommonCustomScript.jsp:
  *   LOCATION_SERVICE_BYPASS  'true' -> never call the IP service, use DEFAULT_LOCATION
  *   DEFAULT_LOCATION         JSON string of a location object ({"countryCode":"IN", ...})
- *   PRO_IP_API_URL           '/api/v1/ip-location'
+ *   PRO_IP_API_URL           the pro.ip-api.com URL called directly from the browser
  * loadLocationGlobals() fills them from POST {school}/api/v1/common-script-variables
  * (what getCommonCustomScript() calls). The `#location` hidden input the legacy code
  * keeps the resolved location in is the module-level `location` string here.
@@ -41,7 +41,7 @@ export function getCountryISOCode() {
 }
 
 // GET PRO_IP_API_URL — the $.ajax({ global:false, type:"GET", url: PRO_IP_API_URL }) call,
-// Browser request normally; a Server Action only for a cross-origin UAT backend override.
+// made directly from the browser against pro.ip-api.com.
 async function fetchIpLocation() {
   const data = await getIpLocation();
   if (!data) throw new Error("ip-location returned no data");
