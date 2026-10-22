@@ -50,7 +50,6 @@ export function ParentDetailsStep() {
   if (!ready || redirecting || context.customPaymentEnabled || !hydrated) {
     return <FullScreenLoader />;
   }
-
   return (
     <Stage2ParentDetails
       context={context}

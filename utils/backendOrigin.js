@@ -66,9 +66,9 @@ export function resolveBackendNavigationOrigin() {
 /**
  * Resolves the prefix used by browser-facing backend requests.
  *
- * With the local proxy enabled, requests use the app origin directly (for
- * example /api/v1/ip-location). next.config.mjs forwards paths that do not
- * match a Next.js route to the backend while keeping session cookies same-origin.
+ * With the local proxy enabled, requests use the app origin directly.
+ * next.config.mjs forwards paths that do not match a Next.js route to the
+ * backend while keeping session cookies same-origin.
  */
 export function resolveBackendOrigin() {
   const override = getClientBackendOverride();
