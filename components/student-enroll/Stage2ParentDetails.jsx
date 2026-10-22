@@ -349,7 +349,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
         setErrors((prev) => ({ ...prev, form: "Something went wrong. Please check your connection and try again." }));
         return;
       }
-      console.log("Parent Save Details", fields)
+      // console.log("Parent Save Details", fields)
       onNext?.(fields);
     } catch (err) {
       console.error("Stage2ParentDetails submit failed:", err);
