@@ -224,6 +224,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
   }
 
   async function handleSubmit() {
+    debugger
     const { valid, errors: fieldErrors } = validateStudentDetails(fields, { isDualDiploma });
     const dobError = validateAge(fields.dob);
     const allErrors = dobError ? { ...fieldErrors, dob: fieldErrors.dob || dobError } : fieldErrors;
@@ -247,7 +248,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
         setErrors((prev) => ({ ...prev, form: "Something went wrong. Please check your connection and try again." }));
         return;
       }
-
+      console.log("Student Save Details", fields)
       onNext?.(fields);
     } catch (err) {
       console.error("Stage1StudentDetails submit failed:", err);

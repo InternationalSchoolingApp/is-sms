@@ -142,10 +142,13 @@ export function validateStudentDetails(fields, { isDualDiploma = false } = {}) {
     if (!fields.studyingGradeId) errors.studyingGradeId = "Current grade is required";
     if (!fields.countryIdOfSchool) errors.countryIdOfSchool = "Country of current school is required";
   } else {
+    debugger
     if (!fields.nationality) errors.nationality = "Nationality is required";
     if (!isValidEmail(fields.communicationEmail)) errors.communicationEmail = "Email is either empty or invalid";
     if (!fields.contactNumber || fields.phoneValid === false) {
       errors.contactNumber = "A valid mobile number is required";
+    }else{
+      fields.contactNumber = fields.contactNumber.replace(/-/g, "")
     }
   }
 
@@ -188,11 +191,15 @@ export function validateParentDetails(fields, { isOneToOneFlex = false } = {}) {
     errors.contactNumber = "Mobile Number is required";
   } else if (fields.phoneValid === false) {
     errors.contactNumber = "Please enter a valid phone number";
+  }else{
+    fields.contactNumber.replace(/-/g, "");
   }
   // Father / Mother also show an optional "other parent" mobile number: empty is fine, a
   // typed one must still be a valid number.
   if (fields.otherContactNumber && fields.otherPhoneValid === false) {
     errors.otherContactNumber = "Please enter a valid phone number";
+  }else{
+    fields.otherContactNumber.replace(/-/g, "");
   }
   if (!fields.countryId) errors.countryId = "Country is required";
   if (!fields.stateId) errors.stateId = "State is required";
