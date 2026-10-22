@@ -422,7 +422,7 @@ export function ParentInlineEdit({ context, userId, parent, title = "Parent/Guar
 
   return (
     <>
-      <EditCard title={title} saving={signup.isPending} onSave={save} onCancel={onCancel} formError={formError}>
+      <EditCard title={title} saving={signup.isPending} onSave={save} onCancel={onCancel} formError={formError} centerTitle>
         {isOneToOneFlex ? (
           <div className={GRID}>
             <FloatingLabelSelect
