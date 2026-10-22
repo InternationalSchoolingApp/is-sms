@@ -79,7 +79,7 @@ function decorateFullscreenPopup(closePopup) {
   };
 }
 
-export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry = "in") {
+export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry = "us") {
   useEffect(() => {
     let cancelled = false;
     const input = inputRef.current;
@@ -109,8 +109,10 @@ export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry = "in
     import("intl-tel-input/intlTelInputWithUtils").then(({ default: intlTelInput }) => {
       if (cancelled || !input) return;
       itiRef.current = intlTelInput(input, {
-        initialCountry: initialCountry || "in",
+        initialCountry: initialCountry || "us",
         separateDialCode: true,
+        formatOnDisplay:false,
+        placeholderNumberPolicy:"off",
         dropdownParent: document.body,
       });
       input.addEventListener("open:countryselector", handleOpenSelector);

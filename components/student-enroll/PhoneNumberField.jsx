@@ -15,6 +15,7 @@ import { useIntlTelInput } from "@/hooks/useIntlTelInput";
  * width varies slightly per country), tuned to look right for common cases.
  */
 export function PhoneNumberField({ label = "Contact Number", name = "contactNumber", value, onChange, error, initialCountry, className }) {
+  debugger
   const inputRef = useRef(null);
   const itiRef = useRef(null);
   const id = useId();
@@ -70,6 +71,10 @@ export function PhoneNumberField({ label = "Contact Number", name = "contactNumb
           name={name}
           type="tel"
           defaultValue={value}
+          onInput={(event) => {
+            const input = event.currentTarget;
+            input.value = input.value.replace(/\D/g, "");
+          }}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           className={`h-12 w-full rounded-md bg-white pl-10 pr-3.5 pt-1 text-[17px] outline-none ${className} ${

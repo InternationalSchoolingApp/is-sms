@@ -134,6 +134,7 @@ function Stage1Skeleton({ isDualDiploma }) {
  * sees before real data is shown.
  */
 export function Stage1StudentDetails({ context, userId, initialFields, onNext }) {
+  debugger
   const [fields, setFields] = useState(() => ({ ...INITIAL_FIELDS, ...initialFields }));
   const [errors, setErrors] = useState({});
   const [flaggedModal, setFlaggedModal] = useState(null);
