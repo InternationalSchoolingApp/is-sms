@@ -28,7 +28,7 @@ export function PageTitle() {
     gcTime: Infinity,
     refetchOnWindowFocus: false,
     retry: false,
-  });
+  }); 
   const childUserId = enrollChild.data?.data?.userId;
   const studentUserId = isAddEnrollment ? childUserId : session?.userId; 
 
