@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { getBackendOverrideCookieName, isBackendOverrideAllowed } from "@/utils/backendOrigin";
+import {
+  detectOriginatingBackend,
+  getBackendOverrideCookieName,
+  isBackendOverrideAllowed,
+  parseBackendOrigin,
+} from "@/utils/backendOrigin";
 import {
   ACCOUNT_HEADER,
   TAB_ACCOUNT_HEADER,
@@ -28,6 +33,39 @@ import { RENEWED_ELSEWHERE, TokenError, refreshTokens, trustedBackend, verifyAcc
  */
 export default async function proxy(request) {
   const path = request.nextUrl.pathname;
+  const segments = path.split("/").filter(Boolean);
+
+  // Pre-login landing page (/{school}/enrollment/{program} — exactly school/enrollment/program,
+  // nothing after; the protected wizard below additionally has /step/...). A UAT backend can send a
+  // brand-new/anonymous student straight here (ClientSignupStudentController#commonSignupContent,
+  // no `user` found yet) without going through /api/sso at all, so unlike the SSO handoff nothing has
+  // told this app which of the several UAT backend instances that was. That controller (like
+  // getFinalEnrollmentUrl for the SSO handoff) appends an explicit `backend` query param for exactly
+  // this — prefer it, falling back to the Referer-based detection (absent for a typed/bookmarked URL,
+  // which is exactly why the query param exists) for an older/un-upgraded backend build. Persist
+  // whichever one fires the same way the manual UAT picker does
+  // (components/common/BackendSwitcher.jsx) — otherwise this student's calls (and the picker's own
+  // display) silently fall back to the default backend instead of the one that sent them.
+  if (segments.length === 3 && segments[1] === "enrollment") {
+    const backendParam = isBackendOverrideAllowed() ? parseBackendOrigin(request.nextUrl.searchParams.get("backend")) : "";
+    const backendOverride = backendParam || detectOriginatingBackend(request);
+    if (!backendOverride) return NextResponse.next();
+    let response;
+    if (backendParam) {
+      const cleanUrl = new URL(request.url);
+      cleanUrl.searchParams.delete("backend");
+      response = NextResponse.redirect(cleanUrl);
+    } else {
+      response = NextResponse.next();
+    }
+    response.cookies.set(getBackendOverrideCookieName(), backendOverride, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
+      sameSite: "lax",
+    });
+    return response;
+  }
+
   const school = path.split("/")[1] || "";
   const accounts = heldAccounts(request.cookies).filter((a) => !a.profile?.schoolUUID || a.profile.schoolUUID === school);
   const forwarded = new Headers(request.headers);
@@ -121,6 +159,7 @@ function signedOut(request, school, account) {
 
 export const config = {
   matcher: [
+    "/:school/enrollment/:program",
     "/:school/enrollment/:program/step/:path*",
     "/:school/add-enrollment/:parentId/:sessionUserId/step/:path*",
   ],
