@@ -1,6 +1,7 @@
 "use server";
 
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { withSmsAuth } from "@/lib/auth/session";
 import { encodePayload } from "@/utils/payloadEncoding";
 
 /**
@@ -13,8 +14,9 @@ import { encodePayload } from "@/utils/payloadEncoding";
  *
  * Same "use server" + encodePayload pattern as the main service file; same
  * backend origin resolution and parseJsonResponse semantics (non-ok → null).
- * Identity/authorization travels in the request payload or URL path segments,
- * never a forwarded session cookie.
+ * The payload still carries parentId and the caller's uniqueId, but these
+ * routes are not public: calls go out through withSmsAuth so the signed-in
+ * parent's bearer token says who is asking, as everywhere else.
  */
 
 async function backendUrl(schoolUUID, path) {
@@ -39,11 +41,16 @@ async function parseJsonResponse(response) {
 }
 
 async function postPayload(schoolUUID, path, data) {
-  const response = await fetch(await backendUrl(schoolUUID, path), {
+  // withSmsAuth, as the main service file does: these routes are not public, so
+  // without the signed-in parent's bearer token SMS answers 401 and
+  // parseJsonResponse turns that into null — the wizard then had no child to
+  // show and no error to report. The payload still carries parentId and the
+  // caller's uniqueId; the token says who is asking.
+  const response = await fetch(await backendUrl(schoolUUID, path), await withSmsAuth({
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ payload: encodePayload(data) }),
-  });
+  }));
   return parseJsonResponse(response);
 }
 
@@ -111,7 +118,8 @@ export async function getAddEnrollmentThankYou(schoolUUID, { parentId, sessionUs
  */
 export async function getAddEnrollmentProcess(schoolUUID, uniqueId) {
   const response = await fetch(
-    `${await backendUrl(schoolUUID, `api/v1/student/enrollment/process/${encodeURIComponent(uniqueId)}`)}?from=add-enrollment`
+    `${await backendUrl(schoolUUID, `api/v1/student/enrollment/process/${encodeURIComponent(uniqueId)}`)}?from=add-enrollment`,
+    await withSmsAuth()
   );
   return parseJsonResponse(response);
 }
