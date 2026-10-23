@@ -482,7 +482,10 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
     try {
       // showPaymentModal(): LOCATION_SERVICE_BYPASS / DEFAULT_LOCATION globals, then
       // `await callLocationForPaymentPromise()` (fills #location) before the options flow.
-      await loadLocationGlobals({ schoolUUID: context.schoolUUID, userId });
+      // userId 0, not the child's: common-script-variables lets a signed-in user ask only for
+      // their own account and the parent is the one signed in here. Both globals come from
+      // school SETTINGS, so naming nobody returns the same answer.
+      await loadLocationGlobals({ schoolUUID: context.schoolUUID, userId: 0 });
       await callLocationForPaymentPromise();
       let userPaymentDetailsId = data.userPaymentDetailsId;
       if (!data.customPaymentEnabled) {

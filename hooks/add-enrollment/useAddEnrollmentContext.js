@@ -278,12 +278,16 @@ function useResolveAddEnrollmentContext() {
     processRedirect?.redirectTo !== "login";
 
   // Same payer-location capture as the main context, so the payment step finds it already there.
+  // userId 0, not the child's: common-script-variables lets a signed-in user ask only for their own
+  // account, and here the signed-in user is the parent, so asking for the child answered 403 and the
+  // payer location was never captured. The two globals this reads — LOCATION_SERVICE_BYPASS and
+  // DEFAULT_LOCATION — come from school SETTINGS and are the same whoever is named.
   useEffect(() => {
     if (!ready) return;
-    loadLocationGlobals({ schoolUUID: session.schoolUUID, userId: childUserId })
+    loadLocationGlobals({ schoolUUID: session.schoolUUID, userId: 0 })
       .then(() => callLocationForPaymentPromise())
       .catch((err) => console.error("Payer location capture failed:", err));
-  }, [ready, session?.schoolUUID, childUserId]);
+  }, [ready, session?.schoolUUID]);
 
   const context = ready
     ? {
