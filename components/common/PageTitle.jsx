@@ -51,7 +51,7 @@ export function PageTitle() {
     enabled: Boolean(authenticated && studentUserId && (program || isAddEnrollment)),
     staleTime: STUDENT_PREFILL_STALE_MS,
     refetchOnWindowFocus: false,
-    retry: false,
+    retry: false, 
   });
 
   const studentName = [prefill.data?.firstName, prefill.data?.lastName].filter(Boolean).join(" ");
