@@ -400,7 +400,7 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
         {firstName && <p className="text-lg font-bold text-slate-900">Dear {firstName},</p>}
-        <h2 className="mt-3 flex flex-col items-center justify-center gap-2 text-xl leading-tight font-extrabold tracking-tight text-emerald-700 min-[420px]:flex-row min-[420px]:gap-3 min-[420px]:text-2xl sm:text-[28px]">
+        <h2 className="mt-3 flex flex-col items-center justify-center gap-2 text-xl leading-tight font-extrabold tracking-tight text-emerald-700 min-[560px]:flex-row min-[560px]:gap-3 min-[560px]:text-2xl sm:text-[28px]">
           <span className="flex size-9 shrink-0 sm:size-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600" aria-hidden="true">
             <Check className="size-5" strokeWidth={3} />
           </span>
