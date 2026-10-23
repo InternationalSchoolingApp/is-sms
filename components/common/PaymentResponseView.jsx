@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Check, Clock, Copy, LoaderCircle, Phone, XCircle } from "lucide-react";
+import { Check, Clock, Copy, LoaderCircle, XCircle } from "lucide-react";
 import { getPaymentResponseSuccess, getPaymentResponseFailure, savePurchaseBrowserDetails } from "@/services/paymentResponseApi";
 import { useSession } from "next-auth/react";
 import { getAddEnrollmentThankYou } from "@/services/addEnrollmentBackendApi";
@@ -598,9 +598,7 @@ function LoginDetails({ data, fallbackName, loginHref, schoolUUID }) {
           rel="noopener noreferrer"
           className="inline-flex items-start gap-1.5 text-left font-bold text-primary hover:underline sm:items-center"
         >
-          <span className="mt-0.5 flex size-5 shrink-0 sm:mt-0 items-center justify-center rounded-full bg-[#25D366]" aria-hidden="true">
-            <Phone className="size-3 fill-white text-white" />
-          </span>
+          <Image src="/images/whatsapp-new.webp" alt="" width={20} height={20} unoptimized className="mt-0.5 size-5 shrink-0 sm:mt-0" />
           Chat with us on WhatsApp: +1 (727) 390-2419
         </a>
       </p>
