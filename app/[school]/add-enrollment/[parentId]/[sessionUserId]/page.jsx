@@ -37,7 +37,9 @@ function AddEnrollmentEntryRedirect() {
   }, [ready, context?.signupPage, router, school, parentId, sessionUserId]);
 
   if (isError) {
-    return <FullScreenLoader message="Something went wrong. Please refresh the page." />;
+    return (
+      <FullScreenLoader message="We couldn't start this enrollment. Please go back to your dashboard and start Add Another Child again — if it keeps happening, contact support and we'll finish it for you." />
+    );
   }
   return <FullScreenLoader />;
 }

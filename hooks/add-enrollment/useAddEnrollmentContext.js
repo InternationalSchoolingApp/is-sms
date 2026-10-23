@@ -260,6 +260,13 @@ function useResolveAddEnrollmentContext() {
     };
   }, [session?.schoolUUID]);
 
+  // A failed enroll/another/child resolves to null rather than throwing: parseJsonResponse
+  // turns any non-OK status, empty body or unparseable body into null, which React Query
+  // counts as a success. isError stayed false while `ready` stayed false for want of
+  // childData, so the wizard sat on its loader with nothing to say and no way forward.
+  // Checking data rather than childData keeps the S003 (already paid) answer out of this.
+  const enrollChildFailed = enrollChild.isFetched && !enrollChild.isError && !enrollChild.data;
+
   const processReady = !childUniqueId || enrollmentProcess.isFetched;
   const ready =
     authenticated &&
@@ -315,7 +322,11 @@ function useResolveAddEnrollmentContext() {
     customPaymentEnabled: enrollmentProcess.data?.customPaymentEnabled === true,
     markCompleted: () => setCompletedLocal(true),
     // E005: a reload with nothing to resume and no paid child (only a fresh "Add child" entry may create one)
-    isError: enrollChild.isError || enrollChild.data?.statusCode === "E005" || processRedirect?.redirectTo === "login",
+    isError:
+      enrollChild.isError ||
+      enrollChildFailed ||
+      enrollChild.data?.statusCode === "E005" ||
+      processRedirect?.redirectTo === "login",
   };
 }
 
