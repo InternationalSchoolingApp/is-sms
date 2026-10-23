@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useParams, useRouter, useSelectedLayoutSegment } from "next/navigation";
-import { FullScreenLoader } from "@/components/common/Loader";
+import { FullScreenError, FullScreenLoader } from "@/components/common/Loader";
 import { DevApiSequenceLog } from "@/components/add-enrollment/DevApiSequenceLog";
 import { loadAddEnrollmentChildUniqueId, loadAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
 import { AddEnrollmentWizardShell, WIZARD_STEP_META } from "@/components/add-enrollment/AddEnrollmentWizardShell";
@@ -68,7 +68,7 @@ function AddWizardFrame({ children }) {
 
   if (isError) {
     return (
-      <FullScreenLoader message="We couldn't start this enrollment. Please go back to your dashboard and start Add Another Child again — if it keeps happening, contact support and we'll finish it for you." />
+      <FullScreenError message="We couldn't start this enrollment. Please go back to your dashboard and start Add Another Child again — if it keeps happening, contact support and we'll finish it for you." />
     );
   }
 
