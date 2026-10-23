@@ -7,7 +7,6 @@ import { AccountInput } from "@/components/student-enroll/AccountInput";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { PasswordStrengthChecklist } from "@/components/student-enroll/PasswordStrengthChecklist";
-import { CaptchaField } from "@/components/student-enroll/CaptchaField";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { InfoModal, getWelcomeBackMessage } from "@/components/student-enroll/InfoModal";
 import { useAccountSignup } from "@/hooks/useAccountSignup";
@@ -59,13 +58,6 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
-  // Stays 0 (stable for SSR) until the user explicitly clicks "refresh" —
-  // no cache-busting is needed for the very first image load. Setting this
-  // from Date.now() inside a mount effect caused both a hydration mismatch
-  // (server/client render at different instants) AND an eslint
-  // react-hooks/set-state-in-effect error — a real user-event-driven
-  // refresh avoids both problems entirely.
-  const [captchaCacheBust, setCaptchaCacheBust] = useState(0);
   const [flaggedModal, setFlaggedModal] = useState(null);
   const [welcomeBackModal, setWelcomeBackModal] = useState(null);
   // const [emailValidatorModal, setEmailValidatorModal] = useState(null); // email-invalid confirm modal disabled
@@ -150,7 +142,6 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
   }
 
   function refreshCaptcha() {
-    setCaptchaCacheBust(Date.now());
     setField("captcha", randomCaptcha());
   }
 
@@ -483,17 +474,6 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
           }
         />
 
-        {/* 
-        <CaptchaField
-          schoolUUID={context.schoolUUID}
-          value={fields.captcha}
-          onChange={(v) => setField("captcha", v)}
-          onBlur={() => touchField("captcha")}
-          error={captchaError}
-          cacheBust={captchaCacheBust}
-          onRefresh={refreshCaptcha}
-        />
-        */}
 
         {errors.form && <p className="text-center text-sm font-semibold text-red-600">{errors.form}</p>}
 
