@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Clock, LoaderCircle, XCircle } from "lucide-react";
+import { Check, Clock, Copy, LoaderCircle, XCircle } from "lucide-react";
 import { getPaymentResponseSuccess, getPaymentResponseFailure, savePurchaseBrowserDetails } from "@/services/paymentResponseApi";
 import { useSession } from "@/components/providers/AuthSessionProvider";
 import { getAddEnrollmentThankYou } from "@/services/addEnrollmentBackendApi";
@@ -16,6 +16,7 @@ import {
 import { AccountSetupSection } from "@/components/add-enrollment/AccountSetupSection";
 import { loginPageUrl, resolveBackendOrigin } from "@/utils/backendOrigin";
 import { getBrowserDetailsForSignup } from "@/utils/utmCookies";
+import { logoutEverywhere } from "@/utils/logout";
 
 /**
  * Shared view for every /common/*payment-response-* route. Ports the render
@@ -126,7 +127,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       data.contentFor === "EVALUATION-TEST-FORM");
   const redirectToLogin = sessionStatus === "unauthenticated" && (isReplay || !loading) && !shownWithoutLogin;
   useEffect(() => {
-    if (redirectToLogin) window.location.replace(loginPageUrl(schoolUUID));
+    if (redirectToLogin && !window.__loggingOut) window.location.replace(loginPageUrl(schoolUUID));
   }, [redirectToLogin, schoolUUID]);
 
   // status "4" / ALREADY_PAID: this payment link was already used — shown with or without a login session.
@@ -296,7 +297,6 @@ function SuccessBody({ data }) {
           {data.advanceFeePaid === "Y" && (
             <p>Kindly refer to the fee details in your profile for the receipt.</p>
           )}
-          <p>Good luck &amp; we wish you a wonderful experience with us!</p>
         </>
       );
     case "BOOK-SEAT":
@@ -393,25 +393,32 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
   const [countdown, redirected] = useCountdownRedirect(showReload && !!returnUrl, returnUrl);
   const primaryCta = successPrimaryCta(data);
 
+  const isEnrolled = successTitle(data).includes("Enrolled");
+  const firstName = String(data.userName || "").trim().split(/\s+/)[0];
+
   return (
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
-        <StatusIcon variant="success" />
-        <p className="text-xl font-bold text-slate-800">Thank You!</p>
-        <h2 className="text-2xl font-extrabold tracking-tight text-emerald-600 sm:text-3xl">
-          {successTitle(data)}!
+        {firstName && <p className="text-lg font-bold text-slate-900">Dear {firstName},</p>}
+        <h2 className="mt-3 flex flex-col items-center justify-center gap-2 text-xl leading-tight font-extrabold tracking-tight text-emerald-700 min-[420px]:flex-row min-[420px]:gap-3 min-[420px]:text-2xl sm:text-[28px]">
+          <span className="flex size-9 shrink-0 sm:size-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600" aria-hidden="true">
+            <Check className="size-5" strokeWidth={3} />
+          </span>
+          {isEnrolled ? "You are successfully enrolled!" : "Payment successful!"}
         </h2>
-
-        {data.userName && <p className="mt-4 text-base font-bold text-black">Dear, {data.userName}</p>}
         {data.displaySchoolName && (
-          <p className="mt-3 text-sm font-semibold text-slate-700">Thank you for choosing {data.displaySchoolName}!</p>
+          <p className="mt-3 text-sm text-slate-800 sm:text-base">Thank you for choosing {data.displaySchoolName}.</p>
         )}
 
-        <div className="mt-5 space-y-2 rounded-2xl bg-emerald-50/80 px-5 py-4 text-sm leading-relaxed text-slate-700 ring-1 ring-emerald-100">
+        <div className="mt-5 space-y-2 rounded-xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-sm sm:px-5 sm:py-4 leading-relaxed text-slate-800">
           <SuccessBody data={data} />
         </div>
 
-        {data.accountSetup ? <AccountSetupSection data={data.accountSetup} /> : !addEnrollment && <AccountInfoCard data={data} />}
+        {data.accountSetup ? (
+          <LoginDetails data={data.accountSetup} fallbackName={data.userName} loginHref={loginPageUrl(schoolUUID)} schoolUUID={schoolUUID} />
+        ) : (
+          !addEnrollment && <AccountInfoCard data={data} />
+        )}
 
         <ReceiptButtons data={data} primaryCta={primaryCta} />
 
@@ -507,7 +514,119 @@ function AddEnrollmentAccountInfo({ schoolUUID, parentId, sessionUniqueId }) {
     hasOutlook: Boolean(info?.outlookEmail && info?.outlookPassword),
   });
   if (!isFirstPayment(info)) return null;
-  return <AccountSetupSection data={info} />;
+  return <LoginDetails data={info} loginHref={loginPageUrl(schoolUUID)} schoolUUID={schoolUUID} />;
+}
+
+// "Log in to your school dashboard" panel: login email + temporary password (show/hide, copy) and the dashboard
+// button. When the response has no Outlook credentials (password-creation step only), the original
+// AccountSetupSection is shown instead.
+function LoginDetails({ data, fallbackName, loginHref, schoolUUID }) {
+  const { data: session } = useSession();
+  const [show, setShow] = useState(true);
+  const [leaving, setLeaving] = useState(false);
+  // Same hand-off the add-enrollment create-password page uses: a short-lived HttpOnly cookie pair set by our
+  // API route, scoped to the school's login page, which the Java login controller reads (then clears) to prefill.
+  const storeLoginPrefill = () =>
+    fetch("/api/add-enrollment/login-credentials", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ school: schoolUUID, email, password }),
+    }).catch(() => {});
+  // Sign the current user out (Next.js session + Java session) and land on the login page so they can log in
+  // with the details above.
+  const goToDashboard = async (event) => {
+    event.preventDefault();
+    if (leaving) return;
+    setLeaving(true);
+    try {
+      await storeLoginPrefill();
+      if (session?.uniqueId) await logoutEverywhere(session);
+      else window.location.assign(loginHref);
+    } catch {
+      window.location.assign(loginHref);
+    }
+  };
+  const email = data.outlookEmail || data.loginEmail;
+  const password = data.outlookPassword;
+  if (!email || !password) return <AccountSetupSection data={data} />;
+  const name = data.studentName || fallbackName;
+
+  return (
+    <section className="mt-6 border-t border-slate-200 pt-6" aria-labelledby="login-details-h">
+      <h3 id="login-details-h" className="text-sm text-slate-800 sm:text-base">
+        Log in to your school dashboard with the details below
+      </h3>
+      <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 text-left">
+        <div className="flex items-center gap-1 px-3 py-3 sm:gap-2 sm:px-4">
+          <div className="min-w-0 flex-1">
+            {name && <p className="font-bold text-slate-900">{name}</p>}
+            <p className="mt-1 text-sm break-all text-slate-800">Login Email: {email}</p>
+          </div>
+          <CopyButton value={email} label="Copy login email" />
+        </div>
+        <div className="flex items-center gap-1 border-t border-slate-200 px-3 py-3 sm:gap-2 sm:px-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-slate-600">Login Password</p>
+            <p className="mt-0.5 font-mono text-sm break-all sm:text-base text-slate-900">
+              {show ? password : "•".repeat(Math.min(password.length, 14))}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShow((v) => !v)}
+            className="min-h-10 px-2 text-sm font-semibold text-primary"
+          >
+            {show ? "Hide" : "Show"}
+          </button>
+          <CopyButton value={password} label="Copy login password" />
+        </div>
+      </div>
+      <p className="mt-4 text-sm text-slate-700">You can change your password once inside the dashboard.</p>
+      <a
+        href={loginHref}
+        onClick={goToDashboard}
+        aria-disabled={leaving}
+        className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-primary px-8 text-base sm:w-auto font-semibold text-white shadow-sm transition hover:bg-primary/90"
+      >
+        {leaving ? "Redirecting…" : "Go to my dashboard"}
+      </a>
+      <p className="mt-5 flex flex-col items-center justify-center gap-1 text-sm text-slate-700 min-[480px]:flex-row min-[480px]:flex-wrap min-[480px]:gap-x-2">
+        Need help?
+        <a
+          href="https://wa.me/17273902419"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-start gap-1.5 text-left font-bold text-primary hover:underline sm:items-center"
+        >
+          <Image src="/images/whatsapp-new.webp" alt="" width={20} height={20} unoptimized className="mt-0.5 size-5 shrink-0 sm:mt-0" />
+          Chat with us on WhatsApp: +1 (727) 390-2419
+        </a>
+      </p>
+    </section>
+  );
+}
+
+function CopyButton({ value, label }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      aria-label={label}
+      className={`flex size-10 shrink-0 items-center justify-center ${copied ? "text-emerald-700" : "text-primary"}`}
+    >
+      {copied ? <Check className="size-[18px]" aria-hidden="true" /> : <Copy className="size-[18px]" aria-hidden="true" />}
+    </button>
+  );
 }
 
 export function isFirstPayment(info) {
