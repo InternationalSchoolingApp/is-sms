@@ -119,12 +119,20 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   // first, so leaving the page never cuts off the backend confirming the payment.
   // Stage7.jsp asks for a login only when there is no session AND the payment was not made through a payment
   // link (initiatedVia 'Link') AND it is not an evaluation test form — those pages are shown without a login.
+  // A returnUrl is the one-time view-as-user link the payment response just
+  // issued: following it signs this user in and lands them on their dashboard.
+  // Someone paying for a fresh enrollment has no session yet — that link is the
+  // credential — so the thank-you page is shown and its own countdown follows
+  // the link. Redirecting to login here instead both hid the thank-you page and
+  // threw away the credential, since this runs seconds before that countdown.
+  const signInLink = typeof data?.returnUrl === "string" ? data.returnUrl.trim() : "";
   const shownWithoutLogin =
     data &&
     (String(data.responseStatus ?? "") === "4" ||
       String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID" ||
       data.initiatedVia === "Link" ||
-      data.contentFor === "EVALUATION-TEST-FORM");
+      data.contentFor === "EVALUATION-TEST-FORM" ||
+      signInLink !== "");
   const redirectToLogin = sessionStatus === "unauthenticated" && (isReplay || !loading) && !shownWithoutLogin;
   useEffect(() => {
     if (redirectToLogin && !window.__loggingOut) window.location.replace(loginPageUrl(schoolUUID));
