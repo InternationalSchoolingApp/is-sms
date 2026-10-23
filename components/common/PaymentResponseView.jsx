@@ -14,7 +14,7 @@ import {
   loadLastAddEnrollmentRollNo,
 } from "@/utils/addEnrollmentStorage";
 import { AccountSetupSection } from "@/components/add-enrollment/AccountSetupSection";
-import { loginPageUrl, resolveBackendOrigin } from "@/utils/backendOrigin";
+import { loginPageUrl, resolveBackendOrigin, withLoginPayload } from "@/utils/backendOrigin";
 import { getBrowserDetailsForSignup } from "@/utils/utmCookies";
 import { logoutEverywhere } from "@/utils/logout";
 
@@ -540,10 +540,11 @@ function LoginDetails({ data, fallbackName, loginHref, schoolUUID }) {
     setLeaving(true);
     try {
       await storeLoginPrefill();
-      if (session?.uniqueId) await logoutEverywhere(session);
-      else window.location.assign(loginHref);
+      // The cookie above only reaches the Java login page on a shared parent domain; the payload covers the rest.
+      if (session?.uniqueId) await logoutEverywhere(session, { email, password });
+      else window.location.assign(withLoginPayload(loginHref, email, password));
     } catch {
-      window.location.assign(loginHref);
+      window.location.assign(withLoginPayload(loginHref, email, password));
     }
   };
   const email = data.outlookEmail || data.loginEmail;

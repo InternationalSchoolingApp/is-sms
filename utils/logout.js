@@ -1,5 +1,5 @@
 import { signOut } from "next-auth/react";
-import { loginPageUrl, resolveBackendNavigationOrigin } from "@/utils/backendOrigin";
+import { loginPageUrl, resolveBackendNavigationOrigin, withLoginPayload } from "@/utils/backendOrigin";
 
 // Session expired / missing: drop the Next.js session and land on the school's login page.
 // redirect:false + a manual navigation because the login page lives on another origin, which
@@ -22,15 +22,16 @@ export async function expireSession(schoolUUID) {
 // finds through the browser's session cookie, so it has to be a browser navigation (a Server
 // Action call can't carry that cookie). It then 302s to /{schoolId}/common/login, so one navigation
 // both kills the session and lands on the login page.
-export async function logoutEverywhere(session) {
+export async function logoutEverywhere(session, credentials) {
   // signOut flips useSession() to "unauthenticated", which WizardChrome answers with
   // expireSession() -> login page; the flag keeps that from racing the logout navigation below.
   window.__loggingOut = true;
   await signOut({ redirect: false });
   const backend = resolveBackendNavigationOrigin();
   if (session?.schoolUUID && session?.uniqueId && backend) {
-    window.location.assign(`${backend}/${session.schoolUUID}/common/logout/${encodeURIComponent(session.uniqueId)}`);
+    const logoutUrl = `${backend}/${session.schoolUUID}/common/logout/${encodeURIComponent(session.uniqueId)}`;
+    window.location.assign(withLoginPayload(logoutUrl, credentials?.email, credentials?.password));
     return;
   }
-  window.location.assign(loginPageUrl(session?.schoolUUID));
+  window.location.assign(withLoginPayload(loginPageUrl(session?.schoolUUID), credentials?.email, credentials?.password));
 }

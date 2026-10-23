@@ -5,7 +5,7 @@ import { signOut } from "next-auth/react";
 import { ArrowRight, Check, Eye, EyeOff, Lock, LockOpen, LoaderCircle, Phone, X } from "lucide-react";
 import { createAddEnrollmentPassword } from "@/services/addEnrollmentPasswordApi";
 import { loadCreatePasswordTarget } from "@/utils/addEnrollmentCreatePassword";
-import { loginPageUrl, resolveBackendNavigationOrigin } from "@/utils/backendOrigin";
+import { loginPageUrl, resolveBackendNavigationOrigin, withLoginPayload } from "@/utils/backendOrigin";
 import { getPasswordStrength } from "@/utils/studentSignupValidation";
 
 const RULES = [
@@ -45,7 +45,7 @@ export function AddCreatePassword({ schoolUUID }) {
 
   // ChangePassword.jsp's logout(): clear client storage, then hit the Java logout endpoint (UNIQUEUUID "111" when
   // there is none), which ends the Java session and lands on the login page. Falls back to the login page itself.
-  const goToLogin = async () => {
+  const goToLogin = async (credentials) => {
     try {
       localStorage.clear();
       sessionStorage.clear();
@@ -54,7 +54,8 @@ export function AddCreatePassword({ schoolUUID }) {
       /* no Next.js session to drop */
     }
     const backend = resolveBackendNavigationOrigin();
-    window.location.assign(backend ? `${backend}/${schoolUUID}/common/logout/111` : loginPageUrl(schoolUUID));
+    const url = backend ? `${backend}/${schoolUUID}/common/logout/111` : loginPageUrl(schoolUUID);
+    window.location.assign(withLoginPayload(url, credentials?.email, credentials?.password));
   };
 
   const submit = async (event) => {
@@ -89,7 +90,7 @@ export function AddCreatePassword({ schoolUUID }) {
       return setError("Password was created, but automatic login fill could not be prepared. Please try again.");
     }
     setDone(true);
-    setTimeout(goToLogin, 1500);
+    setTimeout(() => goToLogin({ email: target.email, password: password.trim() }), 1500);
   };
 
   return (
