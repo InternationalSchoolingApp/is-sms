@@ -1,4 +1,4 @@
-import { loginPageUrl, resolveBackendNavigationOrigin } from "@/utils/backendOrigin";
+import { loginPageUrl, resolveBackendNavigationOrigin, withLoginPayload } from "@/utils/backendOrigin";
 
 // Signs one user out of this browser (lib/auth: ends the SMS login, clears that user's cookies). Other
 // users signed in to other tabs are not affected.
@@ -19,7 +19,7 @@ export async function expireSession(schoolUUID) {
 // finds through the browser's session cookie, so it has to be a browser navigation (a Server
 // Action call can't carry that cookie). It then 302s to /{schoolId}/common/login, so one navigation
 // both kills the session and lands on the login page.
-export async function logoutEverywhere(session) {
+export async function logoutEverywhere(session, credentials) {
   // The flag keeps expireSession() from racing the logout navigation below.
   window.__loggingOut = true;
   try {
@@ -29,8 +29,9 @@ export async function logoutEverywhere(session) {
   }
   const backend = resolveBackendNavigationOrigin();
   if (session?.schoolUUID && session?.uniqueId && backend) {
-    window.location.assign(`${backend}/${session.schoolUUID}/common/logout/${encodeURIComponent(session.uniqueId)}`);
+    const logoutUrl = `${backend}/${session.schoolUUID}/common/logout/${encodeURIComponent(session.uniqueId)}`;
+    window.location.assign(withLoginPayload(logoutUrl, credentials?.email, credentials?.password));
     return;
   }
-  window.location.assign(loginPageUrl(session?.schoolUUID));
+  window.location.assign(withLoginPayload(loginPageUrl(session?.schoolUUID), credentials?.email, credentials?.password));
 }

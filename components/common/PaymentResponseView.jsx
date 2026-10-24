@@ -14,7 +14,7 @@ import {
   loadLastAddEnrollmentRollNo,
 } from "@/utils/addEnrollmentStorage";
 import { AccountSetupSection } from "@/components/add-enrollment/AccountSetupSection";
-import { loginPageUrl, resolveBackendOrigin } from "@/utils/backendOrigin";
+import { loginPageUrl, resolveBackendOrigin, withLoginPayload } from "@/utils/backendOrigin";
 import { getBrowserDetailsForSignup } from "@/utils/utmCookies";
 import { logoutEverywhere } from "@/utils/logout";
 
@@ -119,12 +119,6 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   // first, so leaving the page never cuts off the backend confirming the payment.
   // Stage7.jsp asks for a login only when there is no session AND the payment was not made through a payment
   // link (initiatedVia 'Link') AND it is not an evaluation test form — those pages are shown without a login.
-  // A returnUrl is the one-time view-as-user link the payment response just
-  // issued: following it signs this user in and lands them on their dashboard.
-  // Someone paying for a fresh enrollment has no session yet — that link is the
-  // credential — so the thank-you page is shown and its own countdown follows
-  // the link. Redirecting to login here instead both hid the thank-you page and
-  // threw away the credential, since this runs seconds before that countdown.
   const signInLink = typeof data?.returnUrl === "string" ? data.returnUrl.trim() : "";
   const shownWithoutLogin =
     data &&
@@ -408,7 +402,7 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
         {firstName && <p className="text-lg font-bold text-slate-900">Dear {firstName},</p>}
-        <h2 className="mt-3 flex flex-col items-center justify-center gap-2 text-xl leading-tight font-extrabold tracking-tight text-emerald-700 min-[420px]:flex-row min-[420px]:gap-3 min-[420px]:text-2xl sm:text-[28px]">
+        <h2 className="mt-3 flex flex-col items-center justify-center gap-2 text-xl leading-tight font-extrabold tracking-tight text-emerald-700 min-[560px]:flex-row min-[560px]:gap-3 min-[560px]:text-2xl sm:text-[28px]">
           <span className="flex size-9 shrink-0 sm:size-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600" aria-hidden="true">
             <Check className="size-5" strokeWidth={3} />
           </span>
@@ -424,20 +418,11 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
 
         {data.accountSetup ? (
           <LoginDetails data={data.accountSetup} fallbackName={data.userName} loginHref={loginPageUrl(schoolUUID)} schoolUUID={schoolUUID} />
-        ) : (
-          !addEnrollment && <AccountInfoCard data={data} />
-        )}
+        ) : data.showAccountInfo === "Y" ? (
+          <LoginDetails data={data} fallbackName={data.userName} loginHref={loginPageUrl(schoolUUID)} schoolUUID={schoolUUID} />
+        ) : null}
 
         <ReceiptButtons data={data} primaryCta={primaryCta} />
-
-        {/* Add Another Student: the account-setup section replaces the timer. */}
-        {addEnrollment && (
-          <AddEnrollmentAccountInfo
-            schoolUUID={schoolUUID}
-            parentId={addEnrollment.parentId}
-            sessionUniqueId={addEnrollment.sessionUniqueId}
-          />
-        )}
 
         {showReload && returnUrl && !redirected && (
           <div className="mt-5 flex items-center justify-center gap-4 rounded-2xl bg-blue-50 px-5 py-4 text-left ring-1 ring-blue-100">
@@ -548,10 +533,10 @@ function LoginDetails({ data, fallbackName, loginHref, schoolUUID }) {
     setLeaving(true);
     try {
       await storeLoginPrefill();
-      if (session?.uniqueId) await logoutEverywhere(session);
-      else window.location.assign(loginHref);
+      if (session?.uniqueId) await logoutEverywhere(session, { email, password });
+      else window.location.assign(withLoginPayload(loginHref, email, password));
     } catch {
-      window.location.assign(loginHref);
+      window.location.assign(withLoginPayload(loginHref, email, password));
     }
   };
   const email = data.outlookEmail || data.loginEmail;

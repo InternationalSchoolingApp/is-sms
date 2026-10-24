@@ -159,6 +159,17 @@ export function loginPageUrl(schoolUUID) {
   return schoolUUID && backend ? `${backend}/${schoolUUID}/common/login` : "/";
 }
 
+export function withLoginPayload(url, email, password) {
+  if (!url || !email || !password) return url;
+  const bytes = new TextEncoder().encode(JSON.stringify({ email, password }));
+  let binary = "";
+  bytes.forEach((b) => {
+    binary += String.fromCharCode(b);
+  });
+  const payload = btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return `${url}${url.includes("?") ? "&" : "?"}payload=${payload}`;
+}
+
 /**
  * The Java app's own legacy enrollment continuation page
  * (http://localhost:8080/{school}/student/enrollment/process/{uniqueId}) — where a
