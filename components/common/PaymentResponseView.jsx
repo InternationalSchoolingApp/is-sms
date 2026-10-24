@@ -533,6 +533,7 @@ function LoginDetails({ data, fallbackName, loginHref, schoolUUID }) {
     setLeaving(true);
     try {
       await storeLoginPrefill();
+      // The cookie above only reaches the Java login page on a shared parent domain; the payload covers the rest.
       if (session?.uniqueId) await logoutEverywhere(session, { email, password });
       else window.location.assign(withLoginPayload(loginHref, email, password));
     } catch {
@@ -574,7 +575,8 @@ function LoginDetails({ data, fallbackName, loginHref, schoolUUID }) {
           <CopyButton value={password} label="Copy login password" />
         </div>
       </div>
-      <p className="mt-4 text-sm text-slate-700">You can change your password once inside the dashboard.</p>
+      <p className="mt-4 text-sm text-slate-700">You can copy these details now. We have also sent them to your registered email address.</p>
+      <p className="mt-1 text-sm text-slate-700">You can change your password once inside the dashboard.</p>
       <a
         href={loginHref}
         onClick={goToDashboard}

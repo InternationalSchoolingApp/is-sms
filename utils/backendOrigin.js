@@ -171,6 +171,21 @@ export function withLoginPayload(url, email, password) {
 }
 
 /**
+ * Appends a Base64URL JSON `payload` ({email, password}) to a Java login/logout URL. The Java login page
+ * prefills from it when the cross-domain cookie (api/add-enrollment/login-credentials) can't reach it.
+ */
+export function withLoginPayload(url, email, password) {
+  if (!url || !email || !password) return url;
+  const bytes = new TextEncoder().encode(JSON.stringify({ email, password }));
+  let binary = "";
+  bytes.forEach((b) => {
+    binary += String.fromCharCode(b);
+  });
+  const payload = btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return `${url}${url.includes("?") ? "&" : "?"}payload=${payload}`;
+}
+
+/**
  * The Java app's own legacy enrollment continuation page
  * (http://localhost:8080/{school}/student/enrollment/process/{uniqueId}) — where a
  * student belongs when CONFIGURATION/ENROLLMENT_VIA_NEXTJS is off and this Next.js
