@@ -582,7 +582,8 @@ function LoginDetails({ data, fallbackName, loginHref, schoolUUID }) {
           <CopyButton value={password} label="Copy login password" />
         </div>
       </div>
-      <p className="mt-4 text-sm text-slate-700">You can change your password once inside the dashboard.</p>
+      <p className="mt-4 text-sm text-slate-700">You can copy these details now. We have also sent them to your registered email address.</p>
+      <p className="mt-1 text-sm text-slate-700">You can change your password once inside the dashboard.</p>
       <a
         href={loginHref}
         onClick={goToDashboard}

@@ -137,6 +137,7 @@ function OutlookCredentials({ email, password, url }) {
           }
         />
       </div>
+      <p className="text-[13px] text-slate-600">You can copy these details now. We have also sent them to your registered email address.</p>
       <p className="text-[13px] text-slate-600">Sign in once with these details, then choose your own password.</p>
       {url && (
         <div>
