@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useRef } from "react";
+import { useParams, usePathname } from "next/navigation";
 import { useSession } from "@/components/providers/AuthSessionProvider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getStudentDetails } from "@/services/studentSignupBackendApi";
@@ -10,10 +10,22 @@ import { getLearningProgramLabel, getLearningProgramRouteCode } from "@/constant
 
 export function PageTitle() {
   const { program, parentId } = useParams();
+  const pathname = usePathname();
   const { data: session, status } = useSession();
   const queryClient = useQueryClient();
   const authenticated = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
   const isAddEnrollment = Boolean(parentId);
+
+  // When the logged-in user changes (different student in the same browser tab),
+  // drop the stale prefill cache so the title picks up the new student's name
+  // instead of showing the previous student's.
+  const prevUserIdRef = useRef(session?.userId);
+  useEffect(() => {
+    if (prevUserIdRef.current && session?.userId && prevUserIdRef.current !== session?.userId) {
+      queryClient.removeQueries({ queryKey: ["student-details-prefill"] });
+    }
+    prevUserIdRef.current = session?.userId;
+  }, [session?.userId, queryClient]);
 
   // Read-only view of the add-enrollment wizard's child (useAddEnrollmentContext fills this cache entry). It must
   // NEVER fetch by itself: enrollAnotherChild reserves a child, and calling it here — on every page load, before
@@ -63,6 +75,26 @@ export function PageTitle() {
       : isAddEnrollment
         ? "Student Enrollment"
         : "Enrollment";
+
+  // Reset title when navigating to the enrollment creation page (pre-login: no session yet)
+  // so a previous student's name doesn't linger while the new student signs up.
+  useEffect(() => {
+    if (pathname && pathname.includes("/enrollment/") && !pathname.includes("/step/")) {
+      document.title = "Enrollment";
+    }
+  }, [pathname]);
+
+  // bfcache: the browser may restore this page with stale React state after a back/forward
+  // navigation. Invalidate the prefill query so the title refreshes from the API.
+  useEffect(() => {
+    const onPageShow = (e) => {
+      if (e.persisted) {
+        queryClient.invalidateQueries({ queryKey: ["student-details-prefill"] });
+      }
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, [queryClient]);
 
   useEffect(() => {
     document.title = title;
