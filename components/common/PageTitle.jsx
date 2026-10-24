@@ -58,9 +58,12 @@ export function PageTitle() {
       if (response?.status !== "1") return null;
       return mapSignupStudentToFields(response.signupStudent);
     },
-    // Only on the enrollment wizards (/enrollment/{program} or /add-enrollment/{parentId}): elsewhere, e.g. the
-    // /common payment-response pages, the logged-in user may be a parent and get-student-details answers E002.
-    enabled: Boolean(authenticated && studentUserId && (program || isAddEnrollment)),
+    // Only inside the enrollment wizard steps (/enrollment/{program}/step/...): the creation
+    // page (/{school}/enrollment/{program}, no /step/) is pre-login — a logged-in student's
+    // cookies from another tab must not leak their name into this tab's title. And on /common
+    // payment-response pages, the logged-in user may be a parent and get-student-details answers E002.
+    enabled: Boolean(authenticated && studentUserId && (program || isAddEnrollment)
+      && pathname && (pathname.includes("/step/") || isAddEnrollment)),
     staleTime: STUDENT_PREFILL_STALE_MS,
     refetchOnWindowFocus: false,
     retry: false, 
