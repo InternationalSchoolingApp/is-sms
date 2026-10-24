@@ -32,11 +32,11 @@ import {
  */
 
 // Backend static assets (legacy PATH_FOLDER_IMAGE2 / PATH_FOLDER_FONT2), served same-origin through the
-// /add-enrollment-assets rewrite in next.config.mjs (-> backend /static/theme2/...). The backend origin
+// /backend-static-assets rewrite in next.config.mjs (-> backend /static/theme2/...). The backend origin
 // itself is plain http (IP:port) on UAT, which an https page blocks as mixed content.
 const IMAGES = "images/";
 const FLAGS = "fonts/";
-const assetUrl = (folder, file) => `/add-enrollment-assets/${folder}${file}`;
+const assetUrl = (folder, file) => `/backend-static-assets/${folder}${file}`;
 
 // Gateways with no Pay Now button here: YOCO's is hidden (its own SDK flow), offline ones submit a form.
 const NO_PAY_BUTTON = ["YOCO", "CASH", "WIRETRANSFER"];
