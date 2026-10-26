@@ -1,4 +1,3 @@
-import { signOut } from "next-auth/react";
 import { loginPageUrl, resolveBackendNavigationOrigin, withLoginPayload } from "@/utils/backendOrigin";
 
 // Signs one user out of this browser (lib/auth: ends the SMS login, clears that user's cookies). Other
@@ -21,8 +20,7 @@ export async function expireSession(schoolUUID) {
 // Action call can't carry that cookie). It then 302s to /{schoolId}/common/login, so one navigation
 // both kills the session and lands on the login page.
 export async function logoutEverywhere(session, credentials) {
-  // signOut flips useSession() to "unauthenticated", which WizardChrome answers with
-  // expireSession() -> login page; the flag keeps that from racing the logout navigation below.
+  // The flag keeps expireSession() from racing the logout navigation below.
   window.__loggingOut = true;
   try {
     await signOutAccount(session?.uniqueId);
