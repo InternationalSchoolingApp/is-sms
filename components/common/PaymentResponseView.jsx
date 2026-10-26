@@ -576,7 +576,6 @@ function LoginDetails({ data, fallbackName, loginHref, schoolUUID }) {
         </div>
       </div>
       <p className="mt-4 text-sm text-slate-700">You can copy these details now. We have also sent them to your registered email address.</p>
-      <p className="mt-1 text-sm text-slate-700">You can change your password once inside the dashboard.</p>
       <a
         href={loginHref}
         onClick={goToDashboard}
@@ -585,6 +584,7 @@ function LoginDetails({ data, fallbackName, loginHref, schoolUUID }) {
       >
         {leaving ? "Redirecting…" : "Go to my dashboard"}
       </a>
+       <p className="mt-1 text-sm text-slate-700">You can change your password once inside the dashboard.</p>
       <p className="mt-5 flex flex-col items-center justify-center gap-1 text-sm text-slate-700 min-[480px]:flex-row min-[480px]:flex-wrap min-[480px]:gap-x-2">
         Need help?
         <a
@@ -594,7 +594,7 @@ function LoginDetails({ data, fallbackName, loginHref, schoolUUID }) {
           className="inline-flex items-start gap-1.5 text-left font-bold text-primary hover:underline sm:items-center"
         >
           <Image src="/images/whatsapp-new.webp" alt="" width={20} height={20} unoptimized className="mt-0.5 size-5 shrink-0 sm:mt-0" />
-          Chat with us on WhatsApp: +1 (727) 390-2419
+          Chat with us on WhatsApp: +1 (585) 499-0662
         </a>
       </p>
     </section>
