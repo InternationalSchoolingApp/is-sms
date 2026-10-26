@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
-import { ArrowRight, LoaderCircle, RefreshCw, ShieldCheck } from "lucide-react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, ArrowRight, LoaderCircle, RefreshCw, ShieldCheck } from "lucide-react";
 import { getStripePaymentInit } from "@/services/paymentInitApi";
 
 const GATEWAY_CONFIG = {
@@ -98,12 +98,30 @@ function loadAirwallexSdk() {
   return window.__airwallexSdkPromise;
 }
 
+// create-checkout-intent is a public SMS URL, but still behind the backend's visitor-token guard
+// (docs/63_7_0_SMS_TOKEN_BASED_PLAN.md section 29): a browser that never loaded a page straight from
+// the Java backend (every Next.js page is rendered by Next, not Spring) has no __Host-IS_VT cookie yet,
+// so the first call here always came back 401 with an X-Auth-Visitor header. accountAuth.js (theme2)
+// handles this for JSP pages by fetching that header's URL once and retrying; this is the same recipe
+// for the one Next.js call that hits a visitor-guarded route directly.
+async function fetchWithVisitorRetry(url) {
+  const response = await fetch(url, { method: "GET", credentials: "include" });
+  if (response.status !== 401) return response;
+
+  const visitorUrl = response.headers.get("X-Auth-Visitor");
+  if (!visitorUrl) return response;
+
+  const visitorResponse = await fetch(visitorUrl, { method: "GET", credentials: "include" });
+  if (!visitorResponse.ok) return response;
+
+  return fetch(url, { method: "GET", credentials: "include" });
+}
+
 async function startAirwallexCheckout(checkoutUrl) {
   const url = getAirwallexCheckoutIntentUrl(checkoutUrl);
   if (!url) throw new Error("The Airwallex checkout URL is invalid.");
 
-  // A public SMS URL ({school}/create-checkout-intent/...): no cookies needed.
-  const response = await fetch(url, { method: "GET" });
+  const response = await fetchWithVisitorRetry(url);
   if (!response.ok) throw new Error("We could not reach the payment gateway. Please try again.");
 
   const intent = await response.json();
@@ -140,6 +158,7 @@ function getFailureMessage(response) {
 
 export function PaymentGatewayInitView({ gateway, schoolUUID: schoolUUIDFromRoute }) {
   const params = useParams();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const config = GATEWAY_CONFIG[gateway];
   const uniqueUuid = params?.UNIQUEUUID;
@@ -203,9 +222,14 @@ export function PaymentGatewayInitView({ gateway, schoolUUID: schoolUUIDFromRout
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-rose-600">Payment setup interrupted</p>
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">We couldn’t connect to {config.name}</h1>
             <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-600">{errorMessage}</p>
-            <button type="button" onClick={retryPayment} className="mt-7 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
-              Try again <ArrowRight className="size-4" aria-hidden="true" />
-            </button>
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+              <button type="button" onClick={() => router.back()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
+                <ArrowLeft className="size-4" aria-hidden="true" /> Back
+              </button>
+              <button type="button" onClick={retryPayment} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
+                Try again <ArrowRight className="size-4" aria-hidden="true" />
+              </button>
+            </div>
             <p className="mt-5 text-xs leading-5 text-slate-500">If the issue continues, go back to the previous page or contact support.</p>
           </>
         )}
