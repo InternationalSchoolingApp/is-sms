@@ -55,7 +55,7 @@ export function useCourseDetails({ context, userId, standardId }) {
       return response;
     },
     enabled: Boolean(context?.schoolUUID && userId),
-    staleTime: Infinity,
+    staleTime: 0,
     refetchOnWindowFocus: false,
     retry: false,
   });
