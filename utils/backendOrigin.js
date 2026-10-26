@@ -67,9 +67,9 @@ export function resolveBackendNavigationOrigin() {
 /**
  * Resolves the prefix used by browser-facing backend requests.
  *
- * With the local proxy enabled, requests use the app origin directly (for
- * example /api/v1/ip-location). next.config.mjs forwards paths that do not
- * match a Next.js route to the backend while keeping session cookies same-origin.
+ * With the local proxy enabled, requests use the app origin directly.
+ * next.config.mjs forwards paths that do not match a Next.js route to the
+ * backend while keeping session cookies same-origin.
  */
 export function resolveBackendOrigin() {
   const override = getClientBackendOverride();
@@ -113,6 +113,21 @@ export async function resolveServerBackendOrigin() {
 export function loginPageUrl(schoolUUID) {
   const backend = resolveBackendNavigationOrigin();
   return schoolUUID && backend ? `${backend}/${schoolUUID}/common/login` : "/";
+}
+
+/**
+ * Appends a Base64URL JSON `payload` ({email, password}) to a Java login/logout URL. The Java login page
+ * prefills from it when the cross-domain cookie (api/add-enrollment/login-credentials) can't reach it.
+ */
+export function withLoginPayload(url, email, password) {
+  if (!url || !email || !password) return url;
+  const bytes = new TextEncoder().encode(JSON.stringify({ email, password }));
+  let binary = "";
+  bytes.forEach((b) => {
+    binary += String.fromCharCode(b);
+  });
+  const payload = btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return `${url}${url.includes("?") ? "&" : "?"}payload=${payload}`;
 }
 
 /**

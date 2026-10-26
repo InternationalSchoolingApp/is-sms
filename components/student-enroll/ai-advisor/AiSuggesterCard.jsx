@@ -32,16 +32,15 @@ export function AiSuggesterCard({ onOpen, disabled }) {
         type="button"
         onClick={onOpen}
         disabled={disabled}
-        className="ai-pulse mt-3 flex w-full items-center gap-3 rounded-xl border border-[#cdf1cb] bg-[#e2f5f0] px-4 py-3 text-left disabled:opacity-60 md:hidden"
+        className="ai-pulse mt-3 flex w-full items-center gap-3 rounded-xl border border-[#cdf1cb] bg-[#e2f5f0] px-4 py-2 text-left disabled:opacity-60 md:hidden"
       >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#3fa43c] text-white">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#3fa43c] text-white">
           <Sparkles className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1 text-black">
-          <p className="text-sm font-bold">Not sure? Start here</p>
-          <p className="text-xs font-medium">Help me choose courses</p>
+          <p className="text-sm font-bold">Help me choose courses</p>
         </div>
-        <ChevronRight className="h-5 w-5 shrink-0 text-black" aria-hidden="true" />
+        <ChevronRight className="h-4 w-4 shrink-0 text-black" aria-hidden="true" />
       </button>
     </>
   );

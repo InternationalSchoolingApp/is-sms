@@ -70,6 +70,13 @@ export function PhoneNumberField({ label = "Contact Number", name = "contactNumb
           name={name}
           type="tel"
           defaultValue={value}
+          inputMode="numeric"
+          autoComplete="off"
+          placeholder=""
+          onInput={(event) => {
+            const input = event.currentTarget;
+            input.value = input.value.replace(/\D/g, "");
+          }}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           className={`h-12 w-full rounded-md bg-white pl-10 pr-3.5 pt-1 text-[17px] outline-none ${className} ${
