@@ -48,8 +48,8 @@ import {
   useShowPaymentOption,
   useUpdateCourseSelection,
 } from "@/hooks/useCourseSelection";
-import { useGradeOptions, useCountryOptions } from "@/hooks/useStudentDetailsSignup";
-import { useAddStudentDetailsPrefill, useAddStudentDetailsSignup } from "@/hooks/add-enrollment/useAddStage1";
+import { useGradeOptions } from "@/hooks/useStudentDetailsSignup";
+import { useAddCountryOptions, useAddStudentDetailsPrefill, useAddStudentDetailsSignup } from "@/hooks/add-enrollment/useAddStage1";
 import {
   addableCountLabel,
   canRemoveSelected,
@@ -476,7 +476,7 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
   const isDualDiploma = getLearningProgramBackendValue(context.learningProgram) === "DUAL_DIPLOMA";
   const studentPrefill = useAddStudentDetailsPrefill({ context, userId });
   const grades = useGradeOptions(context);
-  const countries = useCountryOptions(context);
+  const countries = useAddCountryOptions(context);
   const changeGrade = useAddStudentDetailsSignup({ context, userId, uniqueId, countries: countries.data });
   const [changeGradeOpen, setChangeGradeOpen] = useState(false);
 
