@@ -1,6 +1,7 @@
 "use server";
 
 import { resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { withSmsAuth } from "@/lib/auth/session";
 
 /**
  * Cross-app single-logout support: asks the Java backend (is-rest-api) whether this
@@ -15,6 +16,9 @@ import { resolveServerBackendOrigin } from "@/utils/backendOrigin";
  * https:// page as mixed active content — the poll was blocked every minute. Asking
  * from the server has no such restriction, and resolveServerBackendOrigin() still
  * honours the UAT backend-override cookie, so the picker keeps working.
+ *
+ * The endpoint needs a signed-in user, so the call carries the tab's SMS token (withSmsAuth). Sent without one it
+ * was refused with 401, which the rule below read as "still logged in": the poll never logged anyone out.
  *
  * Returns true (assume valid) on any network/parse failure so a flaky request never
  * logs a user out by mistake — only an explicit `false` from the backend does that.
@@ -31,7 +35,7 @@ export async function checkBackendSessionStatus(schoolUUID, uniqueId) {
   try {
     const response = await fetch(
       `${baseUrl}/${schoolUUID}/api/v1/common/session-status/${encodeURIComponent(uniqueId)}`,
-      { method: "GET", cache: "no-store" }
+      await withSmsAuth({ method: "GET", cache: "no-store" })
     );
     if (!response.ok) return true;
     const stillValid = await response.json();

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { ArrowRight, LoaderCircle, RefreshCw, ShieldCheck } from "lucide-react";
 import { getStripePaymentInit } from "@/services/paymentInitApi";
+import { fetchWithVisitor } from "@/utils/visitorFetch";
 
 const GATEWAY_CONFIG = {
   stripe: {
@@ -102,8 +103,9 @@ async function startAirwallexCheckout(checkoutUrl) {
   const url = getAirwallexCheckoutIntentUrl(checkoutUrl);
   if (!url) throw new Error("The Airwallex checkout URL is invalid.");
 
-  // A public SMS URL ({school}/create-checkout-intent/...): no cookies needed.
-  const response = await fetch(url, { method: "GET" });
+  // A public SMS URL ({school}/create-checkout-intent/...): no user needed, but a visitor token, fetched once if
+  // SMS asks for one (this page is never an SMS page, so the browser has none yet).
+  const response = await fetchWithVisitor(url, { method: "GET" });
   if (!response.ok) throw new Error("We could not reach the payment gateway. Please try again.");
 
   const intent = await response.json();
