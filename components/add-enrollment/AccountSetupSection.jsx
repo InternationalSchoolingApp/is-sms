@@ -87,7 +87,7 @@ export function AccountSetupSection({ data }) {
           className="inline-flex items-center gap-1.5 font-bold text-primary hover:underline"
         >
           <Image src="/images/whatsapp-new.webp" alt="" width={18} height={18} unoptimized className="size-[18px]" />
-          Chat with us on WhatsApp: +1 (727) 390-2419
+          Chat with us on WhatsApp: +1 (585) 499-0662
         </a>
       </p>
     </section>

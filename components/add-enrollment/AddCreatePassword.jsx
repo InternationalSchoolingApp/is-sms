@@ -209,7 +209,7 @@ export function AddCreatePassword({ schoolUUID }) {
             <span className="flex size-[18px] items-center justify-center rounded-full bg-[#25D366]" aria-hidden="true">
               <Phone className="size-2.5 fill-white text-white" />
             </span>
-            Chat with us on WhatsApp: +1 (727) 390-2419
+            Chat with us on WhatsApp: +1 (585) 499-0662
           </a>
         </p>
       </div>
