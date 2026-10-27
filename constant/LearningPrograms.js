@@ -2,7 +2,7 @@ export const LEARNING_PROGRAMS = [
   {
     learningProgram: "BATCH",
     learningProgramLabel: "Group Learning",
-    orderId: 3,
+    orderId: 2,
     abbreviation: "G,B,BATCH",
     defaultCourseProviderId: 38,
     routeCode: "G",
@@ -10,7 +10,7 @@ export const LEARNING_PROGRAMS = [
   {
     learningProgram: "DUAL_DIPLOMA",
     learningProgramLabel: "Dual Diploma",
-    orderId: 5,
+    orderId: 6,
     abbreviation: "DD",
     defaultCourseProviderId: 37,
     routeCode: "DD",
@@ -18,7 +18,7 @@ export const LEARNING_PROGRAMS = [
   {
     learningProgram: "ONE_TO_ONE",
     learningProgramLabel: "One-to-One Learning",
-    orderId: 2,
+    orderId: 1,
     abbreviation: "O",
     defaultCourseProviderId: 37,
     routeCode: "O",
@@ -26,7 +26,7 @@ export const LEARNING_PROGRAMS = [
   {
     learningProgram: "ONE_TO_ONE_FLEX",
     learningProgramLabel: "Flexy Program",
-    orderId: 4,
+    orderId: 5,
     abbreviation: "F,Flexy",
     defaultCourseProviderId: 37,
     routeCode: "ONE_TO_ONE_FLEX",
@@ -34,7 +34,7 @@ export const LEARNING_PROGRAMS = [
   {
     learningProgram: "SCHOLARSHIP",
     learningProgramLabel: "Self Study",
-    orderId: 1,
+    orderId: 3,
     abbreviation: "A,S",
     defaultCourseProviderId: 37,
     routeCode: "SCHOLARSHIP",
@@ -42,7 +42,7 @@ export const LEARNING_PROGRAMS = [
   {
     learningProgram: "SSP",
     learningProgramLabel: "Self Study Plus",
-    orderId: 0,
+    orderId: 4,
     abbreviation: "SSP",
     defaultCourseProviderId: 37,
     routeCode: "SSP",

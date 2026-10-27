@@ -7,9 +7,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AddStage1StudentDetails } from "@/components/add-enrollment/AddStage1StudentDetails";
 import { useAddEnrollmentContext } from "@/hooks/add-enrollment/useAddEnrollmentContext";
 import { useAddWizardResume } from "@/hooks/add-enrollment/useAddWizardResume";
-import { useStudentDetailsPrefill } from "@/hooks/useStudentDetailsSignup";
+import { useAddStudentDetailsPrefill } from "@/hooks/add-enrollment/useAddStage1";
 import { saveAddEnrollmentStudentFields, loadAddEnrollmentStudentFields } from "@/utils/addEnrollmentStorage";
-import { addEnrollmentStepPath } from "@/utils/addEnrollmentSteps";
+import { addEnrollmentStepPath, addEnrollmentParentPath } from "@/utils/addEnrollmentSteps";
+import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 
 /**
  * Step 1 ("Student profile") of the Add Another Student wizard. Mirrors
@@ -17,14 +18,13 @@ import { addEnrollmentStepPath } from "@/utils/addEnrollmentSteps";
  * but prefill/save use the CHILD's identity (childUserId/childUniqueId from
  * enrollAnotherChild's response) instead of the logged-in session's own
  * userId/uniqueId — the caller (parent or sibling student) is never the
- * student being enrolled here.
  */
 export function AddStudentDetailsStep() {
   const router = useRouter();
   const { school, parentId, sessionUserId } = useParams();
-  const { context, ready, childUserId, childUniqueId } = useAddEnrollmentContext();
+  const { session, context, ready, childUserId, childUniqueId, childRollNo } = useAddEnrollmentContext();
   const { redirecting } = useAddWizardResume({ currentStep: 1, context, childUniqueId, ready });
-  const prefill = useStudentDetailsPrefill({ context, userId: childUserId });
+  const prefill = useAddStudentDetailsPrefill({ context, userId: childUserId });
   const queryClient = useQueryClient();
   const [initialFields, setInitialFields] = useState(null);
   const [hydrated, setHydrated] = useState(false);
@@ -44,11 +44,27 @@ export function AddStudentDetailsStep() {
     <AddStage1StudentDetails
       context={context}
       userId={childUserId}
+      uniqueId={childUniqueId}
+      rollNo={childRollNo}
       initialFields={initialFields}
-      onNext={(fields) => {
-        saveAddEnrollmentStudentFields(context.schoolUUID, childUserId, fields);
-        queryClient.setQueryData(["student-details-prefill", childUserId], (old) => ({ ...(old || {}), ...fields }));
-        router.push(addEnrollmentStepPath(school, parentId, sessionUserId, 2));
+      onNext={(fields, saveResponse) => {
+        const nextChildUserId = saveResponse?.data?.userId ?? saveResponse?.userId ?? childUserId;
+        const nextChildUniqueId = saveResponse?.data?.uniqueId ?? saveResponse?.uniqueId ?? childUniqueId;
+        if (nextChildUserId !== childUserId || nextChildUniqueId !== childUniqueId) {
+          queryClient.setQueryData(["add-enrollment-child", context.schoolUUID, parentId, session?.uniqueId], (old) => {
+            const prevData = old?.data || {};
+            return { ...(old || {}), data: { ...prevData, userId: nextChildUserId, uniqueId: nextChildUniqueId, signupPage: 2 } };
+          });
+        }
+        saveAddEnrollmentStudentFields(context.schoolUUID, nextChildUserId, fields);
+        queryClient.setQueryData(["add-enrollment-student-details-prefill", nextChildUserId], (old) => ({ ...(old || {}), ...fields }));
+        // Flex children fill "Academic & Communication Details" before course selection.
+        const isFlex = getLearningProgramBackendValue(fields.learningProgram) === "ONE_TO_ONE_FLEX";
+        router.push(
+          isFlex
+            ? addEnrollmentParentPath(school, parentId, sessionUserId)
+            : addEnrollmentStepPath(school, parentId, sessionUserId, 2)
+        );
       }}
     />
   );
