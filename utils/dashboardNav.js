@@ -30,6 +30,20 @@ export function studentNavHref(school, segment) {
  *                      chiledRoleModulesDTO: RoleModulesDTO[] }  (typo is in the DTO)
  * Returns null when the payload is missing/empty (callers treat that as "no menu").
  */
+// The backend's home/landing module is seeded under two different PAGE_LINK
+// values across schools/migrations - "dashboard" (MODULES.ID 86, "Dashboard")
+// and "student-home" (MODULES.ID 58, "Home", shown live as "My Dashboard") -
+// but the Next.js home page lives at the role root (no segment):
+// app/[school]/(dashboard)/student/page.jsx. Either pageLink would otherwise
+// route to .../student/dashboard or .../student/student-home, which don't
+// exist and fall through to the [...module] catch-all placeholder.
+const HOME_PAGE_LINKS = new Set(["dashboard", "student-home"]);
+
+function resolveSegment(pageLink, moduleName) {
+  const segment = pageLink || deriveSegment(moduleName);
+  return HOME_PAGE_LINKS.has(segment) ? "" : segment;
+}
+
 export function mapBackendMenu(dto) {
   const list = dto?.roleAndModuleDTO;
   if (!Array.isArray(list) || list.length === 0) return null;
@@ -39,7 +53,7 @@ export function mapBackendMenu(dto) {
     return {
       key: String(c.moduleId ?? pageLink),
       label: c.moduleName || pageLink,
-      segment: pageLink || deriveSegment(c.moduleName),
+      segment: resolveSegment(pageLink, c.moduleName),
       module: pageLink || c.moduleName,
       rights: mapRights(c),
     };
@@ -51,7 +65,7 @@ export function mapBackendMenu(dto) {
     return {
       key: String(m.moduleId ?? pageLink),
       label: m.moduleName || pageLink,
-      segment: pageLink || deriveSegment(m.moduleName),
+      segment: resolveSegment(pageLink, m.moduleName),
       icon: iconForLabel(m.moduleName, pageLink),
       module: pageLink || m.moduleName,
       children: kids.length ? kids : undefined,

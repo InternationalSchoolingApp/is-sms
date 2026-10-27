@@ -1,0 +1,42 @@
+{
+  "nodes": [
+    {
+      "id": "public_images_whatsapp_new_icon",
+      "label": "WhatsApp Icon (whatsapp-new.webp)",
+      "file_type": "image",
+      "source_file": "is-sms\\public\\images\\whatsapp-new.webp",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "concept_whatsapp_brand",
+      "label": "WhatsApp (messaging platform/brand)",
+      "file_type": "concept",
+      "source_file": "is-sms\\public\\images\\whatsapp-new.webp",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "public_images_whatsapp_new_icon",
+      "target": "concept_whatsapp_brand",
+      "relation": "DEPICTS",
+      "status": "INFERRED",
+      "confidence_score": 0.95,
+      "description": "The image shows the standard WhatsApp logo: a white speech-bubble-and-phone-handset glyph on a rounded-square green gradient background, used as a brand icon (e.g., for a WhatsApp contact/chat link)."
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "coverage": {
+    "is-sms\\public\\images\\whatsapp-new.webp": 1
+  }
+}

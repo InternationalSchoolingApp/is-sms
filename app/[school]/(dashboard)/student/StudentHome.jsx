@@ -24,7 +24,6 @@ export function StudentHome() {
   // Flatten groups (children) and drop the home tile (no segment) and plain group headers (no segment, no children).
   const quickLinks = menu.flatMap((n) => (n.children?.length ? n.children : [n])).filter((n) => n.segment);
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
-
   return (
     <div className="mx-auto w-full">
       <div>

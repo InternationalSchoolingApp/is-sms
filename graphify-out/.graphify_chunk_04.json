@@ -1,0 +1,61 @@
+{
+  "nodes": [
+    {
+      "id": "public_images_fav_icon_logo",
+      "label": "Fav_Icon.png (Location Pin + Clock Mark)",
+      "file_type": "image",
+      "source_file": "is-sms\\public\\images\\Fav_Icon.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_images_fav_icon_app_favicon_concept",
+      "label": "Application Favicon",
+      "file_type": "concept",
+      "source_file": "is-sms\\public\\images\\Fav_Icon.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_images_fav_icon_attendance_concept",
+      "label": "Attendance / Time-at-Location Theme",
+      "file_type": "concept",
+      "source_file": "is-sms\\public\\images\\Fav_Icon.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "public_images_fav_icon_logo",
+      "target": "public_images_fav_icon_app_favicon_concept",
+      "relation": "SERVES_AS",
+      "type": "EXTRACTED",
+      "confidence_score": 0.95,
+      "description": "Image depicts a blue map-pin/location marker containing a white circle with a green analog clock face (hands and four dot markers) inside - a combined location-pin-and-clock icon mark, filename indicates it is used as the site favicon."
+    },
+    {
+      "source": "public_images_fav_icon_logo",
+      "target": "public_images_fav_icon_attendance_concept",
+      "relation": "VISUALLY_REPRESENTS",
+      "type": "INFERRED",
+      "confidence_score": 0.65,
+      "description": "The combination of a location pin and a clock face suggests a theme of tracking time/attendance at a place, plausibly relevant to a school management system (is-sms) for attendance or time tracking at a school location."
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "coverage": {
+    "is-sms\\public\\images\\Fav_Icon.png": 1
+  }
+}

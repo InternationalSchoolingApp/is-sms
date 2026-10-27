@@ -317,3 +317,138 @@ export async function submitAnnouncementAcknowledge({ schoolUUID, announceId, us
     return null;
   }
 }
+
+/**
+ * Phase C — Exam Details ("Examination Schedule", sidebar segment
+ * batch-student-examination-sheet). POST /{schoolUUID}/dashboard/student-examination-details
+ * (ClientDashboardStudentController.studentExaminationDetails -> DashboardStudentUtil,
+ * session-cookie-gated like getSchoolCalendar). Response.details is a plain string: the
+ * uploaded exam-sheet's public file URL, or "" if the admin hasn't uploaded one yet.
+ */
+export async function getStudentExaminationDetails({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/student-examination-details", { userId, studentUserId: userId });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Phase C — Performance ("My Performance", sidebar segment lms-student-performance).
+ * POST /{schoolUUID}/dashboard/parent/student-academic-performance (despite the "parent"
+ * path segment, students reuse the same endpoint — ClientDashoboardParentController.java,
+ * session-cookie-gated). Only populated for Agilix Buzz LMS course providers (36/37/38);
+ * self-paced/other providers return an empty studentAcademicPerformances list.
+ * Response.details: StudentAcademicPerformanceDetailsDTO { studentAcademicPerformances }.
+ */
+export async function getStudentAcademicPerformance({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-academic-performance", { userId, studentUserId: userId });
+  } catch {
+    return null;
+  }
+}
+
+// Shared by the two Buzz progress-report calls below. ClientDashboardAzlixbuzzController
+// declares a @RequestHeader("UNIQUEUUID") param, but SessionUtil.getUser(String) actually
+// ignores that argument entirely (dead parameter - verified against the live source) and
+// falls through to getUserId(), the SAME cookie-backed session read every other call in
+// this file uses. So the session cookie must still be forwarded here, same as
+// postDashboardPayload; the UNIQUEUUID header is sent too since the controller requires
+// the header to be present, but it is not what grants access.
+async function postBuzzProgressPayload(schoolUUID, path, body, uniqueId) {
+  const baseUrl = await resolveServerBackendOrigin();
+  const response = await fetch(`${baseUrl}/${schoolUUID}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", UNIQUEUUID: uniqueId || "", Cookie: await getSessionCookieHeader() },
+    body: JSON.stringify({ payload: encodePayload(body) }),
+  });
+  return parseJsonResponse(response);
+}
+
+/**
+ * Performance row click — the per-course progress breakdown modal (assignment
+ * counts + items table). POST /{schoolUUID}/dashboard/get-student-progress-report-detail.
+ */
+export async function getStudentProgressReportDetail({ schoolUUID, uniqueId, studentUserId, lmsEnrollmentId, lmsCourseId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !uniqueId) return null;
+  try {
+    return await postBuzzProgressPayload(
+      schoolUUID,
+      "/dashboard/get-student-progress-report-detail",
+      { studentUserId, lmsUserId: lmsEnrollmentId, entityId: lmsCourseId },
+      uniqueId,
+    );
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Progress-detail item row click — the grade-history sub-modal.
+ * POST /{schoolUUID}/dashboard/get-progress-report-grade-history.
+ */
+export async function getProgressReportGradeHistory({ schoolUUID, uniqueId, itemId, enrollId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !uniqueId) return null;
+  try {
+    return await postBuzzProgressPayload(schoolUUID, "/dashboard/get-progress-report-grade-history", { itemId, enrollId }, uniqueId);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Phase C — Syllabus ("Syllabus & Assigned Teacher", sidebar segment
+ * syllabus-assigned-teacher — ONE_TO_ONE students only; BATCH students use a
+ * separate syllabus-assigned-batch-teacher variant, out of scope here, same
+ * as re-enrollment being its own branch). Despite the "parent" path segment,
+ * students call these directly (ClientDashoboardParentController.java,
+ * session-cookie-gated). The "assgined" typo in the path is real, not ours.
+ */
+export async function getStudentAssignedTeacher({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    const baseUrl = await resolveServerBackendOrigin();
+    const response = await fetch(`${baseUrl}/${schoolUUID}/dashboard/parent/student-assgined-teacher?check-session=Y`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: await getSessionCookieHeader() },
+      body: JSON.stringify({ payload: encodePayload({ userId, studentUserId: userId }) }),
+    });
+    return parseJsonResponse(response);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Per-course content drawer (opened by clicking a course in Syllabus) —
+ * live Buzz LMS module/item list, thin for non-LMS course providers.
+ */
+export async function getStudentCourseContent({ schoolUUID, userId, lmsUserId, lmsCourseId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId || !lmsUserId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-course-content", { userId, studentUserId: userId, lmsUserId, lmsCourseId });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Phase C — Transcript ("My Transcript", sidebar segment student-transcript).
+ * New thin JSON endpoint (ClientDashoboardMarksController.studentTranscriptStatus)
+ * added for this migration — mirrors the legacy studentTranscriptViewAfterPublish
+ * attachment lookup, but only the "Published" case (stored PDF). When no
+ * attachment exists but marksPublished is "Y", details.status is
+ * "rendered-only" (legacy would live-render via a spawned Puppeteer process —
+ * intentionally out of scope here, see the Java method's doc comment).
+ */
+export async function getStudentTranscriptStatus({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/student-transcript-status", { studentUserId: userId });
+  } catch {
+    return null;
+  }
+}

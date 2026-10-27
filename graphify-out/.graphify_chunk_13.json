@@ -1,0 +1,58 @@
+{
+  "nodes": [
+    {
+      "id": "public_images_self_study_enrollment_illustration",
+      "label": "Self-Study Enrollment Illustration",
+      "file_type": "image",
+      "source_file": "is-sms\\public\\images\\self-study-enrollment.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "concept_self_study_enrollment_program",
+      "label": "Self Study Enrollment Program",
+      "file_type": "concept",
+      "source_file": "is-sms\\public\\images\\self-study-enrollment.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "public_images_self_study_enrollment_illustration",
+      "target": "concept_self_study_enrollment_program",
+      "relation": "depicts",
+      "type": "EXTRACTED",
+      "confidence_score": 1.0,
+      "description": "Image shows a smiling teenage girl in a yellow top with blue headphones around her neck, seated at a desk with an open spiral notebook and a laptop, illustrating independent/self-paced study as an enrollment program option."
+    },
+    {
+      "source": "public_images_self_study_enrollment_illustration",
+      "target": "public_images_group_learning_enrollment_illustration",
+      "relation": "semantically_similar_to",
+      "type": "INFERRED",
+      "confidence_score": 0.85,
+      "description": "Both images are part of the same set of enrollment-program option illustrations (self study vs group learning) likely used together on an enrollment/course-selection page."
+    },
+    {
+      "source": "public_images_self_study_enrollment_illustration",
+      "target": "public_images_one_to_one_learning_enrollment_illustration",
+      "relation": "semantically_similar_to",
+      "type": "INFERRED",
+      "confidence_score": 0.85,
+      "description": "Both images are part of the same set of enrollment-program option illustrations (self study vs one-to-one learning) likely used together on an enrollment/course-selection page."
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "coverage": {
+    "is-sms\\public\\images\\self-study-enrollment.png": 1
+  }
+}
