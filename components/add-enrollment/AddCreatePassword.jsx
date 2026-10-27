@@ -201,7 +201,7 @@ export function AddCreatePassword({ schoolUUID }) {
         <p className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-[13px] text-slate-600">
           Need help?
           <a
-            href="https://wa.me/17273902419"
+            href="https://wa.me/15854990662"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 font-bold text-primary hover:underline"
