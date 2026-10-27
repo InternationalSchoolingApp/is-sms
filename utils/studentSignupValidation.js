@@ -279,6 +279,7 @@ const PAYMENT_MODES = [
   "nineMonthly",
   "tenMonthly",
   "twelveMonthly",
+  "n_installment",
   "registration",
 ];
 

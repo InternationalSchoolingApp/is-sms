@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef } from "react";
 import { CheckCircle2 } from "lucide-react";
+import { useRef } from "react";
 
 /**
  * "Select Payment Option" / "Choose how to pay" block of the review screen —
@@ -420,18 +420,42 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVari
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-xs font-semibold text-slate-700 md:text-sm">{option.label}</span>
                   {chips ? (
-                    checked ? (
                       <span className="mt-1 block text-base font-bold text-black md:text-2xl">
                         {(shownVariant ?? chips[0]).amount} total
                       </span>
-                    ) : (
-                      <span className="mt-1 block text-xs font-medium text-slate-500 md:text-sm">{describeMonths(chips)}</span>
-                    )
                   ) : (
                     <span className="mt-1 block text-base font-bold text-black md:text-2xl">{option.amount}</span>
                   )}
                   {option.savings && (
                     <span className="mt-1 block text-[11px] w-fit px-3 py-1 rounded-2xl font-bold bg-[#3fa43c] text-white md:text-xs">{option.savings}</span>
+                  )}
+                  {chips && (
+                    <span className="mt-2 flex flex-wrap gap-1" onClick={(e) => e.stopPropagation()}>
+                      {chips.map((variant) => {
+                        const on = variant.mode === activeVariant?.mode;
+                        return (
+                          <button
+                            key={variant.mode}
+                            type="button"
+                            disabled={disabled}
+                            onClick={(e) => { e.preventDefault(); onSelectVariant?.(variant.mode); }}
+                            className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap transition-colors md:gap-1.5 md:px-3 md:py-1.5 md:text-xs ${
+                              on ? "border-primary bg-primary/10 text-primary" : "border-slate-200 bg-white text-slate-600 hover:border-primary/40"
+                            } ${disabled ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
+                          >
+                            <span
+                              aria-hidden="true"
+                              className={`flex h-3 w-3 shrink-0 items-center justify-center rounded-full border-[1.5px] md:h-3.5 md:w-3.5 ${
+                                on ? "border-primary bg-white" : "border-slate-300 bg-white"
+                              }`}
+                            >
+                              {on && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                            </span>
+                            {variant.label}
+                          </button>
+                        );
+                      })}
+                    </span>
                   )}
                 </span>
               </span>
@@ -439,27 +463,6 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVari
           );
         })}
       </div>
-
-      {activeChips && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {activeChips.map((variant) => {
-            const on = variant.mode === activeVariant?.mode;
-            return (
-              <button
-                key={variant.mode}
-                type="button"
-                disabled={disabled}
-                onClick={() => onSelectVariant?.(variant.mode)}
-                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  on ? "border-primary bg-primary/10 text-primary" : "border-slate-300 bg-white text-slate-600 hover:border-primary/50"
-                } ${disabled ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
-              >
-                {variant.label}
-              </button>
-            );
-          })}
-        </div>
-      )}
 
       <div ref={summaryRef} className="scroll-mt-28 md:scroll-mt-20">
         {active?.kind === "registration" && <RegistrationSummary fee={fee} />}

@@ -1,51 +1,50 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { BiSolidBookAdd, BiSolidUserDetail} from "react-icons/bi";
-import { TfiAngleDown, TfiAngleUp } from "react-icons/tfi";
-import { Info } from "lucide-react";
-import { FaNotesMedical } from "react-icons/fa6";
-import { IoMdPeople } from "react-icons/io";
 import { FullScreenLoader } from "@/components/common/Loader";
-import { Button } from "@/components/ui/button";
-import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/student-enroll/ConfirmDialog";
-import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { CustomPlanTable, FeePaymentPlans } from "@/components/student-enroll/FeePaymentPlans";
+import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { InfoModal } from "@/components/student-enroll/InfoModal";
-import { ParentInlineEdit, StudentInlineEdit } from "@/components/student-enroll/ReviewInlineEdit";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
-import { getPaymentPaidStatus } from "@/services/studentSignupBackendApi";
+import { ParentInlineEdit, StudentInlineEdit } from "@/components/student-enroll/ReviewInlineEdit";
+import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useShowPaymentOption } from "@/hooks/useCourseSelection";
-import { saveWizardParentFields, saveWizardStudentFields } from "@/utils/wizardStorage";
-import { getOtherRelation, getPrimaryParentLabels, loadOtherParentCache } from "@/utils/parentRelation";
 import {
-  STATUS_ELIGIBLE_CUSTOM_PLAN,
-  STATUS_FLAGGED,
-  STATUS_REDIRECT_TO_DASHBOARD,
-  STATUS_SESSION_OUT,
-  STATUS_SUCCESS,
-  useAirwallexPaymentMethods,
-  useChoosePaymentPlan,
-  useInvokePaymentGateway,
-  useOfflinePayment,
-  usePaymentGatewayOptions,
-  useProceedToDashboard,
-  useStudentReviewDetails,
-  useSubmitApplication,
+    STATUS_ELIGIBLE_CUSTOM_PLAN,
+    STATUS_FLAGGED,
+    STATUS_REDIRECT_TO_DASHBOARD,
+    STATUS_SESSION_OUT,
+    STATUS_SUCCESS,
+    useAirwallexPaymentMethods,
+    useChoosePaymentPlan,
+    useInvokePaymentGateway,
+    useOfflinePayment,
+    usePaymentGatewayOptions,
+    useProceedToDashboard,
+    useStudentReviewDetails,
+    useSubmitApplication,
 } from "@/hooks/useStudentReview";
-import { hidesCourseCredits, isKnownPaymentMode } from "@/utils/studentSignupValidation";
+import { getPaymentPaidStatus } from "@/services/studentSignupBackendApi";
+import { legacyEnrollmentProcessUrl } from "@/utils/backendOrigin";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import {
-  callLocationForPaymentPromise,
-  getAirwallexCountryCode,
-  getLocationValue,
-  getPayerCountryCodePromise,
-  loadLocationGlobals,
+    callLocationForPaymentPromise,
+    getAirwallexCountryCode,
+    getLocationValue,
+    getPayerCountryCodePromise,
+    loadLocationGlobals,
 } from "@/utils/locationFinder";
-import { legacyEnrollmentProcessUrl } from "@/utils/backendOrigin";
+import { getOtherRelation, getPrimaryParentLabels, loadOtherParentCache } from "@/utils/parentRelation";
 import { isDummyStudentMode, showDummyStripeCheckoutPage } from "@/utils/paymentGatewayChecks";
+import { hidesCourseCredits, isKnownPaymentMode } from "@/utils/studentSignupValidation";
+import { saveWizardParentFields, saveWizardStudentFields } from "@/utils/wizardStorage";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { BiSolidUserDetail } from "react-icons/bi";
+import { FaNotesMedical } from "react-icons/fa6";
+import { IoMdPeople } from "react-icons/io";
+import { TfiAngleDown, TfiAngleUp } from "react-icons/tfi";
 
 const ROW_CLASS = "md:overflow-hidden md:rounded-xl md:border md:border-slate-200 md:bg-white";
 
@@ -186,25 +185,44 @@ const PAY_MODE_BY_KEY = {
   "dtl-three": "threeMonthly",
   "dtl-four": "fourMonthly",
   "dtl-five": "fiveMonthly",
-
 };
 const PAY_MODE_BY_MONTHS = { 2: "twoMonthly", 3: "threeMonthly", 4: "fourMonthly", 5: "fiveMonthly", 6: "sixMonthly" };
 const MONTHS_BY_PAY_MODE = { twoMonthly: 2, threeMonthly: 3, fourMonthly: 4, fiveMonthly: 5, sixMonthly: 6 };
 
-// The installment plan has one variant per monthly-fee object the backend sends
-// (monthlyFeeDetails, fourMonthlyFeeDetails, fiveMonthlyFeeDetails); more than one -> month chips.
+// One installment variant per plan the backend sends. The preferred source is the dynamic
+// `monthlyFeeDetailsList` (every configured plan, 2..N months); older responses that only carry
+// the single monthlyFeeDetails / fourMonthlyFeeDetails / fiveMonthlyFeeDetails fields still work.
+// More than one variant -> month chips are shown.
 function buildMonthlyVariants(fee) {
   const make = (details, fixedMode) => {
-    const mode = fixedMode || PAY_MODE_BY_KEY[details.paymentKey] || PAY_MODE_BY_MONTHS[details.monthlyFees?.length] || "threeMonthly";
-    const months = details.monthlyFees?.length || MONTHS_BY_PAY_MODE[mode];
+    const mode =
+      fixedMode ||
+      details.payModeValue ||
+      PAY_MODE_BY_KEY[details.paymentKey] ||
+      PAY_MODE_BY_MONTHS[details.noOfInstallment || details.monthlyFees?.length] ||
+      "threeMonthly";
+    const months = details.noOfInstallment || details.monthlyFees?.length || MONTHS_BY_PAY_MODE[mode];
     return { key: mode, mode, months, label: months ? `${months} Months` : "Installments", amount: details.payableFeeString, details };
   };
-  return [
-    fee.monthlyFeeDetails && make(fee.monthlyFeeDetails),
-    fee.fourMonthlyFeeDetails && make(fee.fourMonthlyFeeDetails, "fourMonthly"),
-    fee.fiveMonthlyFeeDetails && make(fee.fiveMonthlyFeeDetails, "fiveMonthly"),
-  ]
-    .filter(Boolean)
+
+  const list = Array.isArray(fee.monthlyFeeDetailsList) ? fee.monthlyFeeDetailsList : [];
+  const variants =
+    list.length > 0
+      ? list.map((details) => make(details))
+      : [
+          fee.monthlyFeeDetails && make(fee.monthlyFeeDetails),
+          fee.fourMonthlyFeeDetails && make(fee.fourMonthlyFeeDetails, "fourMonthly"),
+          fee.fiveMonthlyFeeDetails && make(fee.fiveMonthlyFeeDetails, "fiveMonthly"),
+        ].filter(Boolean);
+
+  // De-duplicate by mode (keep first) and order by month count.
+  const seen = new Set();
+  return variants
+    .filter((variant) => {
+      if (seen.has(variant.mode)) return false;
+      seen.add(variant.mode);
+      return true;
+    })
     .sort((x, y) => (x.months || 0) - (y.months || 0));
 }
 
