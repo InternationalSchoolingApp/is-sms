@@ -83,15 +83,12 @@ function useResolveAddEnrollmentContext() {
       const storedUniqueId = loadAddEnrollmentChildUniqueId(session.schoolUUID, parentId);
       const storedRollNo = loadAddEnrollmentRollNo(session.schoolUUID, parentId);
       if (!storedUniqueId && !storedRollNo) return { storedUniqueId: "", paid: false };
-      // statusCode REDIRECT_TO_DASHBOOARD from enrollment/process (asked with ?from=add-enrollment, i.e. ae=Y):
-      // the child's enrollment is complete -> thank-you page, no further check.
-      if (storedUniqueId) {
-        const process = await getAddEnrollmentProcess(session.schoolUUID, storedUniqueId);
-        if (process?.statusCode === STATUS_REDIRECT_TO_DASHBOARD && process?.redirectTo !== "login") {
-          return { storedUniqueId, paid: true };
-        }
-      }
-      // The thank-you details API looks at the payment itself. Only a FIRST payment (isFirstPayment = "Y": the
+      // NOTE: enrollment/process's statusCode REDIRECT_TO_DASHBOOARD ("registration complete") used to be
+      // trusted here directly, without the thank-you check below. Confirmed bug: a custom-plan child can be
+      // marked REDIRECT_TO_DASHBOOARD before actually paying, which sent an unpaid child straight to the
+      // thank-you replay, which then failed with "Payment not completed". So, like the enrollmentCompleted
+      // signal in useResolveAddEnrollmentContext below, this always falls through to the thank-you details
+      // API, which looks at the payment itself. Only a FIRST payment (isFirstPayment = "Y": the
       // registration fee of a fresh enrollment) takes the user to the thank-you page; for anything else the
       // wizard stays on the page the user landed on.
       const res = await getAddEnrollmentThankYou(session.schoolUUID, {
@@ -201,14 +198,18 @@ function useResolveAddEnrollmentContext() {
   const [completedLocal, setCompletedLocal] = useState(false);
   // S003 = enroll/another/child found the child this tab was enrolling already paid (e.g. via the payment link).
   const alreadyPaid = enrollChild.data?.statusCode === "S003";
-  // These signals only say "this child has paid / finished". The thank-you page is for a FIRST payment
-  // (isFirstPayment = "Y") only, so each one is confirmed with the thank-you details API before it counts.
-  // statusCode REDIRECT_TO_DASHBOOARD (enrollment/process, or a payment call answering it — markCompleted) in the
-  // add-enrollment flow (ae=Y) is final: straight to the thank-you page. Only S003 still needs the check.
-  const statusCodeCompleted = completedLocal || enrollmentCompleted;
-  const completionSignal = alreadyPaid && !statusCodeCompleted;
+  // Every one of these only CLAIMS the child has paid / finished: S003 from enroll/another/child,
+  // REDIRECT_TO_DASHBOOARD from enrollment/process, and markCompleted (the review step's stage-status poll
+  // answering "already registered with school", or a payment call answering REDIRECT_TO_DASHBOOARD).
+  // None of them means a payment landed: a custom-plan child is "registered" / "complete" as soon as the
+  // plan is confirmed, while the fee is still unpaid. Since the thank-you page can only render when the
+  // thank-you details API reports a FIRST payment, that API is the single gate for all of them — otherwise
+  // such a child is bounced to the thank-you replay, which then fails with "Payment not completed".
+  const completionSignal = alreadyPaid || enrollmentCompleted || completedLocal;
   const firstPaymentCheck = useQuery({
-    queryKey: ["add-enrollment-first-payment", session?.schoolUUID, parentId, childUniqueId],
+    // completedLocal is part of the key so a payment that completes in this tab re-asks the API instead of
+    // reusing the "not paid yet" answer an earlier signal already cached under Infinity staleTime.
+    queryKey: ["add-enrollment-first-payment", session?.schoolUUID, parentId, childUniqueId, completedLocal],
     queryFn: async () => {
       const res = await getAddEnrollmentThankYou(session.schoolUUID, {
         parentId,
@@ -226,8 +227,7 @@ function useResolveAddEnrollmentContext() {
     refetchOnWindowFocus: false,
     retry: false,
   });
-  const firstPaymentDone =
-    paidBeforeEnroll || statusCodeCompleted || (completionSignal && firstPaymentCheck.data === true);
+  const firstPaymentDone = paidBeforeEnroll || (completionSignal && firstPaymentCheck.data === true);
   // while the check runs the wizard is held back (loader); a "not a first payment" answer lets it render normally
   const completionPending = completionSignal && !firstPaymentCheck.isFetched && !firstPaymentCheck.isError;
   const completed = firstPaymentDone;
@@ -314,6 +314,10 @@ function useResolveAddEnrollmentContext() {
     // read straight off enrollment/process: `context` is null once the wizard has been replaced by the completed view
     customPaymentEnabled: enrollmentProcess.data?.customPaymentEnabled === true,
     markCompleted: () => setCompletedLocal(true),
+    // customPaymentEnabled is read once, at the start of the wizard — but a custom plan is attached later
+    // (at/after course selection, or by an admin), and this provider lives in the step layout, so it never
+    // remounts between steps. The review step re-asks before it decides which fee layout to render.
+    refetchEnrollmentProcess: enrollmentProcess.refetch,
     // E005: a reload with nothing to resume and no paid child (only a fresh "Add child" entry may create one)
     isError: enrollChild.isError || enrollChild.data?.statusCode === "E005" || processRedirect?.redirectTo === "login",
   };
