@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { FullScreenLoader } from "@/components/common/Loader";
