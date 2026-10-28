@@ -335,7 +335,7 @@ export async function getStudentExaminationDetails({ schoolUUID, userId }) {
 }
 
 /**
- * Phase C — Performance ("My Performance", sidebar segment lms-student-performance).
+ * Phase C — Performance ("My Performance", sidebar segment student-progress-report).
  * POST /{schoolUUID}/dashboard/parent/student-academic-performance (despite the "parent"
  * path segment, students reuse the same endpoint — ClientDashoboardParentController.java,
  * session-cookie-gated). Only populated for Agilix Buzz LMS course providers (36/37/38);

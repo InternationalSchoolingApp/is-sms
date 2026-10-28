@@ -26,11 +26,14 @@ export const DEFAULT_COURSE_PALETTE = [
   "#006d77",
 ];
 
+// Project rule: Asia/Singapore is the fallback whenever a timezone can't be resolved.
+export const FALLBACK_TIMEZONE = "Asia/Singapore";
+
 export function getBrowserTimezone() {
   try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || FALLBACK_TIMEZONE;
   } catch {
-    return "UTC";
+    return FALLBACK_TIMEZONE;
   }
 }
 
