@@ -57,13 +57,14 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   const [uuidSegment, ...gluedParts] = decodeURIComponent(params.UNIQUEUUID ?? "").split("&");
   const glued = new URLSearchParams(gluedParts.join("&"));
   const addEnrollmentParam = (key) => searchParams.get(key) || glued.get(key) || "";
+  const isAddEnrollmentUrl = addEnrollmentParam("ae").toUpperCase() === "Y";
+  const uniqueUuid = isAddEnrollmentUrl ? uuidSegment : params.UNIQUEUUID;
   // TEMP DEBUG: what the URL gave us
   console.log("[add-enrollment] url flags", { ae: addEnrollmentParam("ae"), parentId: addEnrollmentParam("parentId"), sessionUserId: addEnrollmentParam("sessionUserId") });
   const addEnrollment =
-    addEnrollmentParam("ae").toUpperCase() === "Y" && addEnrollmentParam("parentId") && addEnrollmentParam("sessionUserId")
-      ? { parentId: addEnrollmentParam("parentId"), sessionUniqueId: addEnrollmentParam("sessionUserId") }
+    isAddEnrollmentUrl && addEnrollmentParam("parentId") && addEnrollmentParam("sessionUserId")
+      ? { parentId: addEnrollmentParam("parentId"), sessionUniqueId: addEnrollmentParam("sessionUserId"), childUniqueId: uniqueUuid }
       : null;
-  const uniqueUuid = addEnrollment ? uuidSegment : params.UNIQUEUUID;
   // replay=Y: the wizard found this child already paid (refresh / paid via the payment link) and sent the user
   // here WITHOUT gateway params, so there is nothing to verify — show the thank-you from the thank-you API.
   const isReplay = Boolean(addEnrollment) && addEnrollmentParam("replay").toUpperCase() === "Y";
@@ -396,6 +397,12 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
   const isEnrolled = successTitle(data).includes("Enrolled");
   const firstName = String(data.userName || "").trim().split(/\s+/)[0];
 
+  // Add Another Student link return: the success response itself already carries the child's login credentials
+  // (outlookEmail/loginEmail + outlookPassword, showAccountInfo = "Y"), so show the login panel straight from it.
+  // This is the no-session path where the separate thank-you details call can't resolve the caller — skip it here.
+  const inlineCredentials = Boolean(addEnrollment) && hasLoginCredentials(data);
+  const showInlineLogin = Boolean(data.accountSetup) || isFirstPayment(data) || inlineCredentials;
+
   return (
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
@@ -414,19 +421,28 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
           <SuccessBody data={data} />
         </div>
 
-        {data.accountSetup ? (
-          <LoginDetails data={data.accountSetup} fallbackName={data.userName} loginHref={loginPageUrl(schoolUUID)} schoolUUID={schoolUUID} />
+        {showInlineLogin ? (
+          <LoginDetails
+            data={data.accountSetup || data}
+            sourceApi={data.accountSetup ? "api/v1/enroll/another/child/thank-you" : "api/v1/{schoolId}/payment/response-success"}
+            fallbackName={data.userName}
+            loginHref={loginPageUrl(schoolUUID)}
+            schoolUUID={schoolUUID}
+          />
         ) : (
           !addEnrollment && <AccountInfoCard data={data} />
         )}
 
         <ReceiptButtons data={data} primaryCta={primaryCta} />
 
-        {/* Add Another Student: the account-setup section replaces the timer. */}
-        {addEnrollment && (
+        {/* Add Another Student: the account-setup section replaces the timer. Skipped when the success
+            response already carried the credentials (shown inline above) — the thank-you call would only fail
+            on this no-session link return. */}
+        {addEnrollment && !inlineCredentials && !data.accountSetup && (
           <AddEnrollmentAccountInfo
             schoolUUID={schoolUUID}
             parentId={addEnrollment.parentId}
+            childUniqueId={addEnrollment.childUniqueId}
             sessionUniqueId={addEnrollment.sessionUniqueId}
           />
         )}
@@ -458,11 +474,18 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
 }
 
 // Add Another Student: loads the thank-you details (api/v1/enroll/another/child/thank-you) and shows the
-// account-setup section when the response says isFirstPayment = Y. The numeric user id comes from the login session, the roll number from the add-enrollment
-// wizard's sessionStorage; without either the section simply stays hidden.
-function AddEnrollmentAccountInfo({ schoolUUID, parentId, sessionUniqueId }) {
+// account-setup section when the response says isFirstPayment = Y. The caller identity comes from the login
+// session when available, or from the payment callback URL; the child id also comes from that URL.
+function AddEnrollmentAccountInfo({ schoolUUID, parentId, childUniqueId, sessionUniqueId }) {
   const { data: session, status: sessionStatus } = useSession();
-  const sessionUserId = session?.userId;
+  // Payment-link returns can arrive without a NextAuth session. The callback URL
+  // still carries the caller's unique id, so use it to ask the thank-you API for
+  // the completed child's account details instead of silently skipping the call.
+  // The thank-you API expects numeric sessionUserId (same as session.userId in
+  // the authenticated wizard), while the callback's sessionUserId query value
+  // is the caller's UUID. For payment-link callbacks, parentId is the available
+  // numeric account id; keep the UUID in sessionUniqueId below.
+  const sessionUserId = session?.userId || Number(parentId) || 0;
   const [info, setInfo] = useState(null);
 
   useEffect(() => {
@@ -483,6 +506,7 @@ function AddEnrollmentAccountInfo({ schoolUUID, parentId, sessionUniqueId }) {
       parentId,
       callerUniqueId,
       urlSessionUniqueId: sessionUniqueId,
+      childUniqueId,
       rollNo,
     });
     if (!sessionUserId) return undefined;
@@ -492,16 +516,17 @@ function AddEnrollmentAccountInfo({ schoolUUID, parentId, sessionUniqueId }) {
       sessionUserId,
       sessionUniqueId: callerUniqueId,
       studentRollNumber: rollNo,
+      childUniqueId,
     })
       .then((res) => {
         console.log("[payment-response] api response enroll/another/child/thank-you (account section)", { rollNo, res });
-        if (!cancelled && res?.status === "1" && res.data) setInfo(res.data);
+        if (!cancelled && String(res?.status ?? "") === "1" && res.data) setInfo(res.data);
       })
       .catch((err) => console.log("[add-enrollment account section] thank-you API failed", err));
     return () => {
       cancelled = true;
     };
-  }, [schoolUUID, parentId, sessionUserId, sessionUniqueId, session?.schoolUUID, session?.uniqueId]);
+  }, [schoolUUID, parentId, childUniqueId, sessionUserId, sessionUniqueId, session?.schoolUUID, session?.uniqueId]);
 
   // Only for the child's first payment, decided by the backend: payment title REGISTRATION_SUBJECT_FEE or
   // CUSTOMIZED_REGISTRATION_SUBJECT_FEE on a REGISTRATION_FRESH / REGISTRATION_FLEX_COURSE enrollment.
@@ -514,13 +539,13 @@ function AddEnrollmentAccountInfo({ schoolUUID, parentId, sessionUniqueId }) {
     hasOutlook: Boolean(info?.outlookEmail && info?.outlookPassword),
   });
   if (!isFirstPayment(info)) return null;
-  return <LoginDetails data={info} loginHref={loginPageUrl(schoolUUID)} schoolUUID={schoolUUID} />;
+  return <LoginDetails data={info} sourceApi="api/v1/enroll/another/child/thank-you" loginHref={loginPageUrl(schoolUUID)} schoolUUID={schoolUUID} />;
 }
 
 // "Log in to your school dashboard" panel: login email + temporary password (show/hide, copy) and the dashboard
 // button. When the response has no Outlook credentials (password-creation step only), the original
 // AccountSetupSection is shown instead.
-function LoginDetails({ data, fallbackName, loginHref, schoolUUID }) {
+function LoginDetails({ data, sourceApi, fallbackName, loginHref, schoolUUID }) {
   const { data: session } = useSession();
   const [show, setShow] = useState(true);
   const [leaving, setLeaving] = useState(false);
@@ -549,6 +574,15 @@ function LoginDetails({ data, fallbackName, loginHref, schoolUUID }) {
   };
   const email = data.outlookEmail || data.loginEmail;
   const password = data.outlookPassword;
+  console.log("[LoginDetails] credential source", {
+    api: sourceApi,
+    isFirstPayment: data.isFirstPayment,
+    outlookEmail: data.outlookEmail,
+    loginEmail: data.loginEmail,
+    outlookPassword: data.outlookPassword,
+    hasEmail: Boolean(email),
+    hasPassword: Boolean(password),
+  });
   if (!email || !password) return <AccountSetupSection data={data} />;
   const name = data.studentName || fallbackName;
 
@@ -633,6 +667,13 @@ function CopyButton({ value, label }) {
 
 export function isFirstPayment(info) {
   return String(info?.isFirstPayment ?? "").toUpperCase() === "Y";
+}
+
+// The success/thank-you response already carries the child's login credentials (Outlook or fallback login email
+// + password). Used to show the login panel straight from the success response on a no-session link return,
+// without the separate thank-you details call (which needs the caller's session to resolve).
+export function hasLoginCredentials(info) {
+  return Boolean((info?.outlookEmail || info?.loginEmail) && info?.outlookPassword);
 }
 
 // Added-student (sibling) enrollment: same info as the invite mail — SMS password + Outlook account.
