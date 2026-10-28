@@ -4,10 +4,19 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Clock, LoaderCircle, XCircle } from "lucide-react";
+import { Check, Clock, Copy, LoaderCircle, XCircle } from "lucide-react";
 import { getPaymentResponseSuccess, getPaymentResponseFailure, savePurchaseBrowserDetails } from "@/services/paymentResponseApi";
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
+import { useSession } from "next-auth/react";
+import { getAddEnrollmentThankYou } from "@/services/addEnrollmentBackendApi";
+import {
+  clearAddEnrollmentChildState,
+  loadAddEnrollmentRollNo,
+  loadLastAddEnrollmentRollNo,
+} from "@/utils/addEnrollmentStorage";
+import { AccountSetupSection } from "@/components/add-enrollment/AccountSetupSection";
+import { loginPageUrl, resolveBackendOrigin, withLoginPayload } from "@/utils/backendOrigin";
 import { getBrowserDetailsForSignup } from "@/utils/utmCookies";
+import { logoutEverywhere } from "@/utils/logout";
 
 /**
  * Shared view for every /common/*payment-response-* route. Ports the render
@@ -42,11 +51,27 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   const searchParams = useSearchParams();
 
   const customReference = params.customReference;
-  const uniqueUuid = params.UNIQUEUUID;
+
+  // Add Another Student: the return URL carries ae=Y (+ parentId, sessionUserId = the caller's UNIQUEUUID).
+  // On the path-based failure URL those arrive glued onto the UNIQUEUUID segment ("{uuid}&ae=Y&parentId=..").
+  const [uuidSegment, ...gluedParts] = decodeURIComponent(params.UNIQUEUUID ?? "").split("&");
+  const glued = new URLSearchParams(gluedParts.join("&"));
+  const addEnrollmentParam = (key) => searchParams.get(key) || glued.get(key) || "";
+  // TEMP DEBUG: what the URL gave us
+  console.log("[add-enrollment] url flags", { ae: addEnrollmentParam("ae"), parentId: addEnrollmentParam("parentId"), sessionUserId: addEnrollmentParam("sessionUserId") });
+  const addEnrollment =
+    addEnrollmentParam("ae").toUpperCase() === "Y" && addEnrollmentParam("parentId") && addEnrollmentParam("sessionUserId")
+      ? { parentId: addEnrollmentParam("parentId"), sessionUniqueId: addEnrollmentParam("sessionUserId") }
+      : null;
+  const uniqueUuid = addEnrollment ? uuidSegment : params.UNIQUEUUID;
+  // replay=Y: the wizard found this child already paid (refresh / paid via the payment link) and sent the user
+  // here WITHOUT gateway params, so there is nothing to verify — show the thank-you from the thank-you API.
+  const isReplay = Boolean(addEnrollment) && addEnrollmentParam("replay").toUpperCase() === "Y";
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [failed, setFailed] = useState(false);
+  const { status: sessionStatus } = useSession();
 
   const search = searchParams.toString();
   const schoolUUID =
@@ -57,6 +82,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
     process.env.NEXT_PUBLIC_SCHOOL_ID;
 
   useEffect(() => {
+    if (isReplay) return undefined;
     let cancelled = false;
     const requestTimer = window.setTimeout(() => {
       setLoading(true);
@@ -65,8 +91,11 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
           ? getPaymentResponseFailure(schoolUUID, customReference, uniqueUuid, search)
           : getPaymentResponseSuccess(schoolUUID, endpointPath, search);
 
+      // TEMP-DEBUG: every API call this page makes is printed as "[payment-response] api …"
+      console.log("[payment-response] api call", mode === "failure" ? "response-failure" : endpointPath, { schoolUUID, search });
       request
         .then((res) => {
+          console.log("[payment-response] api response", mode === "failure" ? "response-failure" : endpointPath, res);
           if (cancelled) return;
           if (!res) setFailed(true);
           else {
@@ -84,7 +113,40 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       cancelled = true;
       window.clearTimeout(requestTimer);
     };
-  }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, search]);
+  }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, search, isReplay]);
+
+  // No login session: send the visitor to the login page. Waits for the gateway verification call above to finish
+  // first, so leaving the page never cuts off the backend confirming the payment.
+  // Stage7.jsp asks for a login only when there is no session AND the payment was not made through a payment
+  // link (initiatedVia 'Link') AND it is not an evaluation test form — those pages are shown without a login.
+  const shownWithoutLogin =
+    data &&
+    (String(data.responseStatus ?? "") === "4" ||
+      String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID" ||
+      data.initiatedVia === "Link" ||
+      data.contentFor === "EVALUATION-TEST-FORM");
+  const redirectToLogin = sessionStatus === "unauthenticated" && (isReplay || !loading) && !shownWithoutLogin;
+  useEffect(() => {
+    if (redirectToLogin && !window.__loggingOut) window.location.replace(loginPageUrl(schoolUUID));
+  }, [redirectToLogin, schoolUUID]);
+
+  // status "4" / ALREADY_PAID: this payment link was already used — shown with or without a login session.
+  const linkExpired =
+    !loading &&
+    data &&
+    (String(data.responseStatus ?? "") === "4" || String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID");
+  if (linkExpired) return <LinkExpiredCard data={data} schoolUUID={schoolUUID} />;
+
+  if (sessionStatus !== "authenticated" && !(shownWithoutLogin && sessionStatus === "unauthenticated")) {
+    return <ProcessingLoader />;
+  }
+
+  if (isReplay) return <AddEnrollmentThankYouReplay
+        schoolUUID={schoolUUID}
+        parentId={addEnrollment.parentId}
+        rollNo={searchParams.get("rollNo") || ""}
+        childUniqueId={searchParams.get("childUniqueId") || ""}
+      />;
 
   if (loading) return <ProcessingLoader />;
 
@@ -94,9 +156,89 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   }
 
   const responseStatus = String(data.responseStatus ?? "");
-  if (responseStatus === "1") return <SuccessCard data={data} />;
+  if (responseStatus === "1") return <SuccessCard data={data} addEnrollment={addEnrollment} schoolUUID={schoolUUID} />;
   if (responseStatus === "2") return <UnderVerificationCard data={data} />;
   return <FailedCard data={data} />;
+}
+
+// contentFor / advanceFeePaid / enrollmentFeePaid for SignupStudentStage7.jsp's cases, from the paid payment's
+// title — the same mapping ClientCommonPaymentController#updatePaymentModal does for the JSP. The child is
+// already paid here (replay), i.e. its enrollment is done.
+const STAGE7_SAME_NAME_TYPES = new Set([
+  "TEACHER REQUEST FEE",
+  "BOOKSESSION_FEE",
+  "EXTENSION_FEE",
+  "ADDITIONAL_COURSE_PAYMENT",
+  "NOTARIZATION_FEE",
+  "OTHER_PAYMENT",
+]);
+const STAGE7_INSTALLMENT_TYPES = new Set(["INSTALLMENT-FEE", "SUBJECT_FEE", "CUSTOMIZED_SUBJECT_FEE", "SUBJECT_FEE_ADV"]);
+const STAGE7_BOOK_SEAT_TYPES = new Set(["registration", "REGISTRATION_FEE", "REGISTRATION_FEE_ADV"]);
+
+function stage7ContentFromPaymentTitle(paymentTitle) {
+  const title = String(paymentTitle || "");
+  if (STAGE7_SAME_NAME_TYPES.has(title)) return { contentFor: title, advanceFeePaid: "N" };
+  if (title === "RECURRING_SESSION_FEE") return { contentFor: "RECURRING_SESSION_FEE", advanceFeePaid: "N" };
+  if (STAGE7_INSTALLMENT_TYPES.has(title)) return { contentFor: "INSTALLMENT-FEE", advanceFeePaid: "N" };
+  if (STAGE7_BOOK_SEAT_TYPES.has(title)) {
+    const enrollmentFeePaid = title === "REGISTRATION_FEE_ADV" ? "A" : title === "REGISTRATION_FEE" ? "F" : "";
+    return { contentFor: "BOOK-SEAT", advanceFeePaid: "N", enrollmentFeePaid };
+  }
+  // registration fee, pay-in-full, payment plans and anything else: the first payment
+  return { contentFor: "FIRST-PAYMENT", advanceFeePaid: title === "REGISTRATION_SUBJECT_FEE_ADV" ? "Y" : "N" };
+}
+
+// Thank-you for an add-enrollment child that is already paid, built from the thank-you details API (child found
+// by the roll number the wizard left in storage). Same SuccessCard as a live payment return, incl. the
+// account-setup section on a first payment.
+function AddEnrollmentThankYouReplay({ schoolUUID, parentId, rollNo, childUniqueId }) {
+  const { data: session, status } = useSession();
+  const [info, setInfo] = useState(undefined);
+
+  useEffect(() => {
+    if (!session?.userId || !session?.uniqueId) return undefined;
+    let cancelled = false;
+    const sessionSchool = session.schoolUUID || schoolUUID;
+    const studentRollNumber =
+      rollNo || loadAddEnrollmentRollNo(sessionSchool, parentId) || loadLastAddEnrollmentRollNo(sessionSchool, parentId);
+    getAddEnrollmentThankYou(sessionSchool, {
+      parentId,
+      sessionUserId: session.userId,
+      sessionUniqueId: session.uniqueId,
+      studentRollNumber,
+      childUniqueId,
+    })
+      .then((res) => {
+        // TEMP-DEBUG: what the replay asked for and what the thank-you API answered
+        console.log("[payment-response] api response enroll/another/child/thank-you (replay)", { studentRollNumber, childUniqueId, res });
+        const ok = res?.status === "1" && res.data;
+        // Finished: the next wizard entry in this tab must not pick this child up again (this page's own refresh
+        // keeps working from the rollNo / childUniqueId in its URL).
+        if (ok) clearAddEnrollmentChildState(sessionSchool, parentId);
+        if (!cancelled) setInfo(ok ? res.data : null);
+      })
+      .catch(() => !cancelled && setInfo(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.userId, session?.uniqueId, session?.schoolUUID, schoolUUID, parentId, rollNo, childUniqueId]);
+
+  if (status === "unauthenticated" || info === null) return <ErrorCard data={null} />;
+  if (info === undefined) return <ProcessingLoader />;
+  return (
+    <SuccessCard
+      data={{
+        // Same variables SignupStudentStage7.jsp renders from, worked out from the payment title here.
+        ...stage7ContentFromPaymentTitle(info.paymentTitle),
+        userName: info.studentName,
+        payAmount: info.payAmount,
+        grade: info.grade,
+        learningProgram: info.learningProgram,
+        displaySchoolName: session?.schoolName,
+        accountSetup: isFirstPayment(info) ? info : null,
+      }}
+    />
+  );
 }
 
 /* ------------------------------- Loader -------------------------------- */
@@ -155,14 +297,13 @@ function SuccessBody({ data }) {
           {data.advanceFeePaid === "Y" && (
             <p>Kindly refer to the fee details in your profile for the receipt.</p>
           )}
-          <p>Good luck &amp; we wish you a wonderful experience with us!</p>
         </>
       );
     case "BOOK-SEAT":
       return (
         <>
           <p>Your online payment of {amount} has been received.</p>
-          <p>Your enrollment seat has been reserved. You can download the receipt below.</p>
+          <p>Your enrollment seat has been reserved. You can download the receipt by clicking on the button below.</p>
         </>
       );
     case "INSTALLMENT-FEE":
@@ -182,7 +323,8 @@ function SuccessBody({ data }) {
           <p>We confirm your online payment of {amount} is completed successfully.</p>
           <p>
             Kindly refer to the fee details in your profile for the receipt. You will be assigned a teacher for each
-            requested subject within 2 calendar days. We wish you a wonderful experience of schooling with us.
+            requested subject within 2 calendar days. We believe that we will be able to make a positive contribution
+            to your academic pursuits. We wish you a wonderful experience of schooling with us.
           </p>
         </>
       );
@@ -244,30 +386,50 @@ function successPrimaryCta(data) {
   return { href: data.returnUrl, label: "Click here to review and payment" };
 }
 
-function SuccessCard({ data }) {
-  const showReload = data.showReloadOption === "Y";
+export function SuccessCard({ data, addEnrollment, schoolUUID }) {
+  // Normal enrollment: countdown + auto-redirect. Add Another Student: the account-setup section replaces the timer.
+  const showReload = data.showReloadOption === "Y" && !addEnrollment;
   const returnUrl = data.returnUrl;
   const [countdown, redirected] = useCountdownRedirect(showReload && !!returnUrl, returnUrl);
   const primaryCta = successPrimaryCta(data);
 
+  const isEnrolled = successTitle(data).includes("Enrolled");
+  const firstName = String(data.userName || "").trim().split(/\s+/)[0];
+
   return (
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
-        <StatusIcon variant="success" />
-        <h2 className="text-2xl font-extrabold tracking-tight text-emerald-600 sm:text-3xl">
-          {successTitle(data)}!
+        {firstName && <p className="text-lg font-bold text-slate-900">Dear {firstName},</p>}
+        <h2 className="mt-3 flex flex-col items-center justify-center gap-2 text-xl leading-tight font-extrabold tracking-tight text-emerald-700 min-[560px]:flex-row min-[560px]:gap-3 min-[560px]:text-2xl sm:text-[28px]">
+          <span className="flex size-9 shrink-0 sm:size-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600" aria-hidden="true">
+            <Check className="size-5" strokeWidth={3} />
+          </span>
+          {isEnrolled ? "You are successfully enrolled!" : "Payment successful!"}
         </h2>
-
-        {data.userName && <p className="mt-4 text-base font-bold text-black">Dear, {data.userName}</p>}
         {data.displaySchoolName && (
-          <p className="mt-3 text-sm font-semibold text-slate-700">Thank you for choosing {data.displaySchoolName}!</p>
+          <p className="mt-3 text-sm text-slate-800 sm:text-base">Thank you for choosing {data.displaySchoolName}.</p>
         )}
 
-        <div className="mt-5 space-y-2 rounded-2xl bg-emerald-50/80 px-5 py-4 text-sm leading-relaxed text-slate-700 ring-1 ring-emerald-100">
+        <div className="mt-5 space-y-2 rounded-xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-sm sm:px-5 sm:py-4 leading-relaxed text-slate-800">
           <SuccessBody data={data} />
         </div>
 
+        {data.accountSetup ? (
+          <LoginDetails data={data.accountSetup} fallbackName={data.userName} loginHref={loginPageUrl(schoolUUID)} schoolUUID={schoolUUID} />
+        ) : (
+          !addEnrollment && <AccountInfoCard data={data} />
+        )}
+
         <ReceiptButtons data={data} primaryCta={primaryCta} />
+
+        {/* Add Another Student: the account-setup section replaces the timer. */}
+        {addEnrollment && (
+          <AddEnrollmentAccountInfo
+            schoolUUID={schoolUUID}
+            parentId={addEnrollment.parentId}
+            sessionUniqueId={addEnrollment.sessionUniqueId}
+          />
+        )}
 
         {showReload && returnUrl && !redirected && (
           <div className="mt-5 flex items-center justify-center gap-4 rounded-2xl bg-blue-50 px-5 py-4 text-left ring-1 ring-blue-100">
@@ -292,6 +454,230 @@ function SuccessCard({ data }) {
         )}
       </div>
     </PageShell>
+  );
+}
+
+// Add Another Student: loads the thank-you details (api/v1/enroll/another/child/thank-you) and shows the
+// account-setup section when the response says isFirstPayment = Y. The numeric user id comes from the login session, the roll number from the add-enrollment
+// wizard's sessionStorage; without either the section simply stays hidden.
+function AddEnrollmentAccountInfo({ schoolUUID, parentId, sessionUniqueId }) {
+  const { data: session, status: sessionStatus } = useSession();
+  const sessionUserId = session?.userId;
+  const [info, setInfo] = useState(null);
+
+  useEffect(() => {
+    // The wizard stores the roll number under the SESSION's school uuid; this common route has no {school}
+    // segment, so its own schoolUUID can be a different spelling — try both.
+    const rollNo =
+      loadAddEnrollmentRollNo(session?.schoolUUID, parentId) ||
+      loadAddEnrollmentRollNo(schoolUUID, parentId) ||
+      // opened in another tab: no sessionStorage there, so use the copy the wizard left in localStorage
+      loadLastAddEnrollmentRollNo(session?.schoolUUID || schoolUUID, parentId);
+    // The URL's sessionUserId is the enrolled CHILD's unique id; the thank-you API wants the caller's
+    // (sessionUserId and sessionUniqueId must be the same user), i.e. the logged-in session.
+    const callerUniqueId = session?.uniqueId || sessionUniqueId;
+    // TEMP DEBUG (remove once the section shows): which of the gates is closing?
+    console.log("[add-enrollment account section] gates", {
+      sessionStatus,
+      sessionUserId,
+      parentId,
+      callerUniqueId,
+      urlSessionUniqueId: sessionUniqueId,
+      rollNo,
+    });
+    if (!sessionUserId) return undefined;
+    let cancelled = false;
+    getAddEnrollmentThankYou(schoolUUID, {
+      parentId,
+      sessionUserId,
+      sessionUniqueId: callerUniqueId,
+      studentRollNumber: rollNo,
+    })
+      .then((res) => {
+        console.log("[payment-response] api response enroll/another/child/thank-you (account section)", { rollNo, res });
+        if (!cancelled && res?.status === "1" && res.data) setInfo(res.data);
+      })
+      .catch((err) => console.log("[add-enrollment account section] thank-you API failed", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [schoolUUID, parentId, sessionUserId, sessionUniqueId, session?.schoolUUID, session?.uniqueId]);
+
+  // Only for the child's first payment, decided by the backend: payment title REGISTRATION_SUBJECT_FEE or
+  // CUSTOMIZED_REGISTRATION_SUBJECT_FEE on a REGISTRATION_FRESH / REGISTRATION_FLEX_COURSE enrollment.
+  // TEMP DEBUG (remove once the section shows): the gate that decides visibility
+  console.log("[add-enrollment account section] visibility", {
+    hasInfo: Boolean(info),
+    isFirstPayment: info?.isFirstPayment,
+    paymentTitle: info?.paymentTitle,
+    hasCreatePasswordUrl: Boolean(info?.createPasswordUrl),
+    hasOutlook: Boolean(info?.outlookEmail && info?.outlookPassword),
+  });
+  if (!isFirstPayment(info)) return null;
+  return <LoginDetails data={info} loginHref={loginPageUrl(schoolUUID)} schoolUUID={schoolUUID} />;
+}
+
+// "Log in to your school dashboard" panel: login email + temporary password (show/hide, copy) and the dashboard
+// button. When the response has no Outlook credentials (password-creation step only), the original
+// AccountSetupSection is shown instead.
+function LoginDetails({ data, fallbackName, loginHref, schoolUUID }) {
+  const { data: session } = useSession();
+  const [show, setShow] = useState(true);
+  const [leaving, setLeaving] = useState(false);
+  // Same hand-off the add-enrollment create-password page uses: a short-lived HttpOnly cookie pair set by our
+  // API route, scoped to the school's login page, which the Java login controller reads (then clears) to prefill.
+  const storeLoginPrefill = () =>
+    fetch("/api/add-enrollment/login-credentials", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ school: schoolUUID, email, password }),
+    }).catch(() => {});
+  // Sign the current user out (Next.js session + Java session) and land on the login page so they can log in
+  // with the details above.
+  const goToDashboard = async (event) => {
+    event.preventDefault();
+    if (leaving) return;
+    setLeaving(true);
+    try {
+      await storeLoginPrefill();
+      // The cookie above only reaches the Java login page on a shared parent domain; the payload covers the rest.
+      if (session?.uniqueId) await logoutEverywhere(session, { email, password });
+      else window.location.assign(withLoginPayload(loginHref, email, password));
+    } catch {
+      window.location.assign(withLoginPayload(loginHref, email, password));
+    }
+  };
+  const email = data.outlookEmail || data.loginEmail;
+  const password = data.outlookPassword;
+  if (!email || !password) return <AccountSetupSection data={data} />;
+  const name = data.studentName || fallbackName;
+
+  return (
+    <section className="mt-6 border-t border-slate-200 pt-6" aria-labelledby="login-details-h">
+      <h3 id="login-details-h" className="text-sm text-slate-800 sm:text-base">
+        Log in to your school dashboard with the details below
+      </h3>
+      <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 text-left">
+        <div className="flex items-center gap-1 px-3 py-3 sm:gap-2 sm:px-4">
+          <div className="min-w-0 flex-1">
+            {name && <p className="font-bold text-slate-900">{name}</p>}
+            <p className="mt-1 text-sm break-all text-slate-800">Login Email: {email}</p>
+          </div>
+          <CopyButton value={email} label="Copy login email" />
+        </div>
+        <div className="flex items-center gap-1 border-t border-slate-200 px-3 py-3 sm:gap-2 sm:px-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-slate-600">Login Password</p>
+            <p className="mt-0.5 font-mono text-sm break-all sm:text-base text-slate-900">
+              {show ? password : "•".repeat(Math.min(password.length, 14))}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShow((v) => !v)}
+            className="min-h-10 px-2 text-sm font-semibold text-primary"
+          >
+            {show ? "Hide" : "Show"}
+          </button>
+          <CopyButton value={password} label="Copy login password" />
+        </div>
+      </div>
+      <p className="mt-4 text-sm text-slate-700">You can copy these details now. We have also sent them to your registered email address.</p>
+      <a
+        href={loginHref}
+        onClick={goToDashboard}
+        aria-disabled={leaving}
+        className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-primary px-8 text-base sm:w-auto font-semibold text-white shadow-sm transition hover:bg-primary/90"
+      >
+        {leaving ? "Redirecting…" : "Go to my dashboard"}
+      </a>
+       <p className="mt-1 text-sm text-slate-700">You can change your password once inside the dashboard.</p>
+      <p className="mt-5 flex flex-col items-center justify-center gap-1 text-sm text-slate-700 min-[480px]:flex-row min-[480px]:flex-wrap min-[480px]:gap-x-2">
+        Need help?
+        <a
+          href="https://wa.me/15854990662"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-start gap-1.5 text-left font-bold text-primary hover:underline sm:items-center"
+        >
+          <Image src="/images/whatsapp-new.webp" alt="" width={20} height={20} unoptimized className="mt-0.5 size-5 shrink-0 sm:mt-0" />
+          Chat with us on WhatsApp: +1 (585) 499-0662
+        </a>
+      </p>
+    </section>
+  );
+}
+
+function CopyButton({ value, label }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      aria-label={label}
+      className={`flex size-10 shrink-0 items-center justify-center ${copied ? "text-emerald-700" : "text-primary"}`}
+    >
+      {copied ? <Check className="size-[18px]" aria-hidden="true" /> : <Copy className="size-[18px]" aria-hidden="true" />}
+    </button>
+  );
+}
+
+export function isFirstPayment(info) {
+  return String(info?.isFirstPayment ?? "").toUpperCase() === "Y";
+}
+
+// Added-student (sibling) enrollment: same info as the invite mail — SMS password + Outlook account.
+function AccountInfoCard({ data }) {
+  if (data.showAccountInfo !== "Y") return null;
+  const hasOutlook = data.outlookEmail && data.outlookPassword;
+  return (
+    <div className="mt-5 space-y-4 rounded-2xl bg-blue-50/80 px-5 py-4 text-left text-sm leading-relaxed text-slate-700 ring-1 ring-blue-100">
+      <div>
+        <p className="font-bold text-slate-900">Step 1: Create your SMS password</p>
+        {data.createPasswordUrl && (
+          <a
+            href={data.createPasswordUrl}
+            className="mt-2 inline-block rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
+          >
+            Create Password
+          </a>
+        )}
+      </div>
+      <div>
+        <p className="font-bold text-slate-900">Step 2: Sign in to Outlook and set your new password</p>
+        {hasOutlook ? (
+          <dl className="mt-2 space-y-1">
+            <div>
+              <dt className="inline font-semibold">Outlook login URL: </dt>
+              <dd className="inline">
+                <a href={data.outlookLoginUrl} target="_blank" rel="noreferrer" className="text-primary underline">
+                  {data.outlookLoginUrl}
+                </a>
+              </dd>
+            </div>
+            <div>
+              <dt className="inline font-semibold">Email: </dt>
+              <dd className="inline break-all">{data.outlookEmail}</dd>
+            </div>
+            <div>
+              <dt className="inline font-semibold">Temporary password: </dt>
+              <dd className="inline font-mono">{data.outlookPassword}</dd>
+            </div>
+          </dl>
+        ) : (
+          <p className="mt-2">Your Outlook account is being prepared. The details will be shared with you by email.</p>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -348,9 +734,13 @@ const DASHBOARD_OR_REVIEW_TYPES = new Set([
 // OTHER_PAYMENT compared to the Success branch's own set — kept exactly as
 // the JSP has it (not harmonized), since those fall into the "review and
 // payment" `c:otherwise` here, same end destination either way.
-function dashboardOrReviewCta(data) {
+// The failed branch's list in Stage7.jsp is the same minus BOOK-SEAT: a failed seat booking always offers
+// "Click here to review and payment".
+const FAILED_DASHBOARD_OR_REVIEW_TYPES = new Set([...DASHBOARD_OR_REVIEW_TYPES].filter((type) => type !== "BOOK-SEAT"));
+
+function dashboardOrReviewCta(data, types = DASHBOARD_OR_REVIEW_TYPES) {
   if (!data.returnUrl) return null;
-  if (DASHBOARD_OR_REVIEW_TYPES.has(data.contentFor) && data.initiatedVia !== "Link") {
+  if (types.has(data.contentFor) && data.initiatedVia !== "Link") {
     return { href: data.returnUrl, label: "Click here for Dashboard" };
   }
   return { href: data.returnUrl, label: "Click here to review and payment" };
@@ -362,15 +752,16 @@ function UnderVerificationCard({ data }) {
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
         <StatusIcon variant="pending" />
-        <h2 className="mt-4 text-2xl font-extrabold text-black">Payment Under Verification</h2>
+        <p className="mt-3 text-xl font-bold text-slate-800">Thank You!</p>
+        <h2 className="mt-1 text-2xl font-extrabold text-black">Payment Under Verification</h2>
         {data.userName && <p className="mt-3 font-semibold text-primary">Dear {data.userName},</p>}
         {data.displaySchoolName && (
           <p className="mt-1 text-sm italic text-slate-600">Greetings from {data.displaySchoolName}!</p>
         )}
         <p className="mt-4 text-sm leading-relaxed text-slate-600">
-          We believe you were trying to complete a transaction with us. However, your payment is under verification and
-          you will be notified by email if the status changes. For more information, contact us at{" "}
-          <ContactEmail email={data.contactEmail} />.
+          We believe that you were trying to complete a transaction with us. However, your payment transaction is under
+          verification and you will be notified through email if there is any change in your payment status. Kindly let
+          us know by mailing on <ContactEmail email={data.contactEmail} /> if you need more information.
         </p>
         {data.feeFailedReason && (
           <p className="mt-3 text-sm text-slate-700">
@@ -383,20 +774,45 @@ function UnderVerificationCard({ data }) {
   );
 }
 
+/* ----------------------------- Link expired ---------------------------- */
+
+function LinkExpiredCard({ data, schoolUUID }) {
+  const loginHref = loginPageUrl(schoolUUID);
+  return (
+    <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
+      <div className="text-center">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-amber-500 text-white">
+          <Clock className="h-11 w-11" strokeWidth={2} aria-hidden="true" />
+        </div>
+        <h2 className="mt-5 text-2xl font-extrabold text-amber-700 sm:text-3xl">Link Expired</h2>
+        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+          Please{" "}
+          <a href={loginHref} className="font-semibold text-blue-600 underline underline-offset-2">
+            log in
+          </a>{" "}
+          to continue or contact <ContactEmail email={data.contactEmail || "support@internationalschooling.org"} /> for any
+          assistance.
+        </p>
+      </div>
+    </PageShell>
+  );
+}
+
 /* -------------------------------- Failed ------------------------------- */
 
 function FailedCard({ data }) {
-  const cta = dashboardOrReviewCta(data);
+  const cta = dashboardOrReviewCta(data, FAILED_DASHBOARD_OR_REVIEW_TYPES);
   return (
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
         <StatusIcon variant="failed" />
+        <p className="mt-3 text-xl font-bold text-slate-800">Oops!</p>
         <h2 className="text-2xl font-extrabold tracking-tight text-rose-600 sm:text-3xl">
           {data.failedTitle || "Payment Unsuccessful"}
         </h2>
-        {data.userName && <p className="mt-4 text-base font-bold text-black">Dear, {data.userName}</p>}
+        {data.userName && <p className="mt-4 text-base font-bold text-black">Dear {data.userName}</p>}
         {data.displaySchoolName && (
-          <p className="mt-3 text-sm font-semibold text-slate-700">Greetings from {data.displaySchoolName}</p>
+          <p className="mt-3 text-sm font-semibold italic text-slate-700">Greetings from {data.displaySchoolName}!</p>
         )}
         <div className="mt-5 space-y-2 rounded-2xl bg-rose-50/80 px-5 py-4 text-sm leading-relaxed text-slate-700 ring-1 ring-rose-100">
           {data.paymentName && (
@@ -405,9 +821,15 @@ function FailedCard({ data }) {
             </p>
           )}
           <p>
-            We couldn’t confirm your payment. Please try again, or contact <ContactEmail email={data.contactEmail} /> for help.
+            We believe that you were trying to complete a transaction with us. However, due to some issue, we have NOT
+            received your payment for this transaction. Kindly let us know by mailing on{" "}
+            <ContactEmail email={data.contactEmail} /> if we could help you on the same.
           </p>
-          {data.feeFailedReason && <p className="font-medium text-rose-700">{data.feeFailedReason}</p>}
+          {data.feeFailedReason && (
+            <p className="font-medium text-rose-700">
+              <b>Fee Failed Reason:</b> {data.feeFailedReason}
+            </p>
+          )}
         </div>
         <ReturnButton cta={cta} />
       </div>
