@@ -597,7 +597,7 @@ function LoginDetails({ data, fallbackName, loginHref, schoolUUID }) {
       <p className="mt-5 flex flex-col items-center justify-center gap-1 text-sm text-slate-700 min-[480px]:flex-row min-[480px]:flex-wrap min-[480px]:gap-x-2">
         Need help?
         <a
-          href="https://wa.me/17273902419"
+          href="https://wa.me/15854990662"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-start gap-1.5 text-left font-bold text-primary hover:underline sm:items-center"
