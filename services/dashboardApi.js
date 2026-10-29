@@ -437,12 +437,10 @@ export async function getStudentCourseContent({ schoolUUID, userId, lmsUserId, l
 
 /**
  * Phase C — Transcript ("My Transcript", sidebar segment student-transcript).
- * New thin JSON endpoint (ClientDashoboardMarksController.studentTranscriptStatus)
- * added for this migration — mirrors the legacy studentTranscriptViewAfterPublish
- * attachment lookup, but only the "Published" case (stored PDF). When no
- * attachment exists but marksPublished is "Y", details.status is
- * "rendered-only" (legacy would live-render via a spawned Puppeteer process —
- * intentionally out of scope here, see the Java method's doc comment).
+ * Uses the existing student-transcript-status endpoint
+ * (ClientDashoboardMarksController.studentTranscriptStatus) which returns:
+ *   - details.student  → { name, email, rollNumber, grade }
+ *   - details.transcripts → [{ gradeName, viewPath }] per historical grade
  */
 export async function getStudentTranscriptStatus({ schoolUUID, userId }) {
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
