@@ -193,6 +193,7 @@ export function ParentRelationFields({ schoolUUID, userId, fields, setFields, er
             value={fields.otherFirstName}
             {...nameFieldProps((v) => set("otherFirstName", v))}
             onBlur={() => persistOther(fields)}
+            error={errors.otherFirstName}
           />
           <FloatingLabelInput
             icon={User}
@@ -200,6 +201,7 @@ export function ParentRelationFields({ schoolUUID, userId, fields, setFields, er
             value={fields.otherLastName}
             {...nameFieldProps((v) => set("otherLastName", v))}
             onBlur={() => persistOther(fields)}
+            error={errors.otherLastName}
           />
           <PhoneNumberField
             key={`other-${fields.relation}`}
@@ -347,7 +349,7 @@ export function Stage2ParentDetails({ context, userId, studentAddress, coursePro
         setErrors((prev) => ({ ...prev, form: "Something went wrong. Please check your connection and try again." }));
         return;
       }
-      console.log("Parent Save Details", fields)
+      // console.log("Parent Save Details", fields)
       onNext?.(fields);
     } catch (err) {
       console.error("Stage2ParentDetails submit failed:", err);
