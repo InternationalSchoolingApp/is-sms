@@ -131,13 +131,6 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
     if (redirectToLogin && !window.__loggingOut) window.location.replace(loginPageUrl(schoolUUID));
   }, [redirectToLogin, schoolUUID]);
 
-  // status "4" / ALREADY_PAID: this payment link was already used — shown with or without a login session.
-  const linkExpired =
-    !loading &&
-    data &&
-    (String(data.responseStatus ?? "") === "4" || String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID");
-  if (linkExpired) return <LinkExpiredCard data={data} schoolUUID={schoolUUID} />;
-
   if (sessionStatus !== "authenticated" && !(shownWithoutLogin && sessionStatus === "unauthenticated")) {
     return <ProcessingLoader />;
   }
@@ -810,30 +803,6 @@ function UnderVerificationCard({ data }) {
           </p>
         )}
         <ReturnButton cta={cta} />
-      </div>
-    </PageShell>
-  );
-}
-
-/* ----------------------------- Link expired ---------------------------- */
-
-function LinkExpiredCard({ data, schoolUUID }) {
-  const loginHref = loginPageUrl(schoolUUID);
-  return (
-    <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
-      <div className="text-center">
-        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-amber-500 text-white">
-          <Clock className="h-11 w-11" strokeWidth={2} aria-hidden="true" />
-        </div>
-        <h2 className="mt-5 text-2xl font-extrabold text-amber-700 sm:text-3xl">Link Expired</h2>
-        <p className="mt-3 text-sm leading-relaxed text-slate-600">
-          Please{" "}
-          <a href={loginHref} className="font-semibold text-blue-600 underline underline-offset-2">
-            log in
-          </a>{" "}
-          to continue or contact <ContactEmail email={data.contactEmail || "support@internationalschooling.org"} /> for any
-          assistance.
-        </p>
       </div>
     </PageShell>
   );
