@@ -97,7 +97,7 @@ export function EnrollmentWizardShell({
             <h1 className="text-1.5xl font-extrabold text-black sm:text-2xl">{programLabel}</h1>
             <p className="mt-1 text-sm text-slate-500">Complete in just 5 minutes</p>
           </div>
-        )}
+        )} 
 
         {!hideStepper && <StepRow currentIndex={currentIndex} steps={steps} />}
         </div>

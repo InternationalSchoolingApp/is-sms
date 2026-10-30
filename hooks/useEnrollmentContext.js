@@ -13,6 +13,7 @@ import { STATUS_SESSION_OUT, STATUS_SUCCESS, useSignupStageStatusPoll } from "@/
 import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
 import { useStudentDetailsPrefill } from "@/hooks/useStudentDetailsSignup";
 import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
+import { recordApiAttempt } from "@/utils/lastApiAttempt";
 
 /**
  * Shared by the flat wizard step routes (app/step/1, app/step/2, app/step/3):
@@ -59,7 +60,13 @@ function useResolveEnrollmentContext() {
   // unless the setting explicitly comes back false.
   const enrollmentViaNextjs = useQuery({
     queryKey: ["enrollment-via-nextjs", session?.schoolUUID],
-    queryFn: () => isEnrollmentViaNextjs(session.schoolUUID),
+    queryFn: () => {
+      recordApiAttempt(
+        "isEnrollmentViaNextjs",
+        `${session.schoolUUID}/api/v1/get-setting?metaType=CONFIGURATION&metaKey=ENROLLMENT_VIA_NEXTJS`
+      );
+      return isEnrollmentViaNextjs(session.schoolUUID);
+    },
     enabled: authenticated,
     staleTime: Infinity,
     gcTime: Infinity,
@@ -70,7 +77,13 @@ function useResolveEnrollmentContext() {
 
   const enrollmentProcess = useQuery({
     queryKey: ["enrollment-process", session?.schoolUUID, session?.uniqueId],
-    queryFn: () => getEnrollmentProcess(session.schoolUUID, session.uniqueId),
+    queryFn: () => {
+      recordApiAttempt(
+        "getEnrollmentProcess",
+        `${session.schoolUUID}/api/v1/student/enrollment/process/${session.uniqueId}`
+      );
+      return getEnrollmentProcess(session.schoolUUID, session.uniqueId);
+    },
     enabled: Boolean(authenticated && session?.uniqueId && !viaLegacyFlow),
     staleTime: Infinity,
     gcTime: Infinity,
@@ -104,6 +117,7 @@ function useResolveEnrollmentContext() {
   useEffect(() => {
     if (!session?.schoolNumericId) return;
     let cancelled = false;
+    recordApiAttempt("getSchoolSettingsLinks", `${session.schoolNumericId}/api/v1/links`);
     trackRequest(() => getSchoolSettingsLinks(session.schoolNumericId))
       .then((links) => {
         if (!cancelled && links?.logoUrl) setLogoUrl(links.logoUrl);
@@ -133,6 +147,7 @@ function useResolveEnrollmentContext() {
   useEffect(() => {
     if (!session?.schoolUUID) return;
     let cancelled = false;
+    recordApiAttempt("getPublicSchoolInfo", `${session.schoolUUID}/api/v1/student/enrollment/public-info`);
     getPublicSchoolInfo(session.schoolUUID)
       .then((info) => {
         
@@ -157,6 +172,7 @@ function useResolveEnrollmentContext() {
   // falls back to its own IP call when it is empty. Same here: capture it once per page load.
   useEffect(() => {
     if (!ready) return;
+    recordApiAttempt("loadLocationGlobals", `${session.schoolUUID}/api/v1/common-script-variables`);
     loadLocationGlobals({ schoolUUID: session.schoolUUID, userId: session.userId })
       .then(() => callLocationForPaymentPromise())
       .catch((err) => console.error("Payer location capture failed:", err));

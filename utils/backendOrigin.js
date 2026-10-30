@@ -25,6 +25,53 @@ export function getBackendOverrideCookieName() {
   return BACKEND_OVERRIDE_COOKIE;
 }
 
+/**
+ * Validates/normalizes a candidate backend origin string (the `backend` query param the Java
+ * app now appends on its redirects into this app — see getFinalEnrollmentUrl and
+ * ClientSignupStudentController#commonSignupContent). Returns the origin (no path/query/
+ * trailing slash) or "" when missing/not an http(s) URL.
+ */
+export function parseBackendOrigin(value) {
+  if (!value || typeof value !== "string") return "";
+  try {
+    const url = new URL(value);
+    return /^https?:$/.test(url.protocol) ? url.origin : "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * UAT only: which backend instance actually sent this browser here. There is no picker
+ * involved when a student lands directly on one of several UAT backends' own pages (see
+ * constant/UatBackendUrls.js) and that backend then redirects the browser into this app on
+ * its own (Login.jsp's SSO handoff, or ClientSignupStudentController#commonSignupContent's
+ * brand-new-signup redirect to /{school}/enrollment/{program}) — the redirect URL itself
+ * carried no indication of which instance built it, since every instance points at the same
+ * single Next.js deployment. Both of those now append an explicit `backend` query param
+ * (read with parseBackendOrigin), which both callers below prefer; this Referer fallback stays
+ * for any other redirect into this app that hasn't been updated to carry that param, or an
+ * older/un-upgraded backend build. Under the default/modern "strict-origin-when-cross-origin"
+ * referrer policy a same-or-upgraded-scheme cross-origin navigation still sends the referrer's
+ * origin (not its full path) — but nothing is sent at all for a typed/bookmarked URL, which is
+ * exactly the case the query param exists to cover. Returns "" when absent, not an http(s) URL,
+ * or already same-origin as this app (nothing to override). Used by app/api/sso/route.js
+ * (logged-in/known-user handoff) and proxy.js (brand-new/anonymous signup landing on
+ * /{school}/enrollment/{program} with no SSO involved).
+ */
+export function detectOriginatingBackend(request) {
+  if (!isBackendOverrideAllowed()) return "";
+  const referer = request.headers.get("referer") || "";
+  try {
+    const refererUrl = new URL(referer);
+    if (!/^https?:$/.test(refererUrl.protocol)) return "";
+    if (refererUrl.origin === new URL(request.url).origin) return "";
+    return refererUrl.origin;
+  } catch {
+    return "";
+  }
+}
+
 /** Client-only read (document.cookie). Returns "" when absent/not allowed/on the server. */
 export function getClientBackendOverride() {
   if (!isBackendOverrideAllowed() || typeof document === "undefined") return "";
@@ -113,6 +160,21 @@ export async function resolveServerBackendOrigin() {
 export function loginPageUrl(schoolUUID) {
   const backend = resolveBackendNavigationOrigin();
   return schoolUUID && backend ? `${backend}/${schoolUUID}/common/login` : "/";
+}
+
+/**
+ * Appends a Base64URL JSON `payload` ({email, password}) to a Java login/logout URL. The Java login page
+ * prefills from it when the cross-domain cookie (api/add-enrollment/login-credentials) can't reach it.
+ */
+export function withLoginPayload(url, email, password) {
+  if (!url || !email || !password) return url;
+  const bytes = new TextEncoder().encode(JSON.stringify({ email, password }));
+  let binary = "";
+  bytes.forEach((b) => {
+    binary += String.fromCharCode(b);
+  });
+  const payload = btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return `${url}${url.includes("?") ? "&" : "?"}payload=${payload}`;
 }
 
 /**

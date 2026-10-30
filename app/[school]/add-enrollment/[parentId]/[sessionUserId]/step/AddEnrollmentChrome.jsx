@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useParams, useRouter, useSelectedLayoutSegment } from "next/navigation";
 import { FullScreenLoader } from "@/components/common/Loader";
-import { DevApiSequenceLog } from "@/components/add-enrollment/DevApiSequenceLog";
 import { loadAddEnrollmentChildUniqueId, loadAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
 import { AddEnrollmentWizardShell, WIZARD_STEP_META } from "@/components/add-enrollment/AddEnrollmentWizardShell";
 import { AddEnrollmentProvider, useAddEnrollmentContext } from "@/hooks/add-enrollment/useAddEnrollmentContext";
@@ -103,11 +102,8 @@ function AddWizardFrame({ children }) {
 }
 
 export function AddEnrollmentChrome({ children }) {
-  const segment = useSelectedLayoutSegment();
   return (
     <AddEnrollmentProvider>
-      {/* TEMP-DEBUG: prints the review-and-payment page's API calls, in order, to the console */}
-      {segment === "review-and-payment" && <DevApiSequenceLog label="review-and-payment api" />}
       <AddWizardFrame>{children}</AddWizardFrame>
     </AddEnrollmentProvider>
   );

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { createPasswordPath, saveCreatePasswordTarget } from "@/utils/addEnrollmentCreatePassword";
-import { ArrowRight, Check, Copy, ExternalLink, Eye, EyeOff, Phone, User } from "lucide-react";
+import { ArrowRight, Check, Copy, ExternalLink, Eye, EyeOff, User } from "lucide-react";
 
 /**
  * "Set up your student accounts": step 1 creates the SMS password, step 2 signs in to the school Outlook.
@@ -80,15 +81,13 @@ export function AccountSetupSection({ data }) {
       <p className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-[13px] text-slate-600">
         Stuck on a step?
         <a
-          href="https://wa.me/17273902419"
+          href="https://wa.me/15854990662"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 font-bold text-primary hover:underline"
         >
-          <span className="flex size-[18px] items-center justify-center rounded-full bg-[#25D366]" aria-hidden="true">
-            <Phone className="size-2.5 fill-white text-white" />
-          </span>
-          Chat with us on WhatsApp: +1 (727) 390-2419
+          <Image src="/images/whatsapp-new.webp" alt="" width={18} height={18} unoptimized className="size-[18px]" />
+          Chat with us on WhatsApp: +1 (585) 499-0662
         </a>
       </p>
     </section>
@@ -138,6 +137,7 @@ function OutlookCredentials({ email, password, url }) {
           }
         />
       </div>
+      <p className="text-[13px] text-slate-600">You can copy these details now. We have also sent them to your registered email address.</p>
       <p className="text-[13px] text-slate-600">Sign in once with these details, then choose your own password.</p>
       {url && (
         <div>
