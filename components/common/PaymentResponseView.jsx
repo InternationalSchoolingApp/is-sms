@@ -392,7 +392,12 @@ function successPrimaryCta(data) {
 
 export function SuccessCard({ data, addEnrollment, schoolUUID }) {
   // Normal enrollment: countdown + auto-redirect. Add Another Student: the account-setup section replaces the timer.
-  const showReload = data.showReloadOption === "Y" && !addEnrollment;
+  // ALREADY_PAID for a logged-in user (normal enrollment) also gets the timer + auto-redirect.
+  const { status: sessionStatus } = useSession();
+  const alreadyPaidInSession =
+    sessionStatus === "authenticated" &&
+    (String(data.responseStatus ?? "") === "4" || String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID");
+  const showReload = (data.showReloadOption === "Y" || alreadyPaidInSession) && !addEnrollment;
   const returnUrl = data.returnUrl;
   const [countdown, redirected] = useCountdownRedirect(showReload && !!returnUrl, returnUrl);
   const primaryCta = successPrimaryCta(data);
