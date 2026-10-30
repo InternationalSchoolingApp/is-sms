@@ -33,6 +33,8 @@
   ul,ol{margin:8px 0;padding-left:22px}li{margin:3px 0}
   .b{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;border:1px solid transparent;white-space:nowrap}
   .b.in{color:var(--in);border-color:var(--in);background:color-mix(in srgb,var(--in) 14%,transparent)}
+  .dead{color:#ff0000;font-weight:800;text-transform:uppercase;letter-spacing:.03em}
+  .dead-note{border:2px solid #ff0000;border-left-width:6px}
   .b.out{color:#fff;background:var(--out);border-color:var(--out)}
   .b.rec{color:var(--rec);border-color:var(--rec);background:color-mix(in srgb,var(--rec) 14%,transparent)}
   .b.warn{color:var(--warn);border-color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
@@ -177,7 +179,7 @@
 <tbody>
 <tr><td>Syllabus</td><td><code>student-syllabus</code></td><td><code>/{school}/student/syllabus</code></td></tr>
 <tr><td>Tasks (view/submit)</td><td><code>student-task</code>, <code>student-task-request</code></td><td><code>/student/tasks</code></td></tr>
-<tr><td>Course Timings</td><td><code>student-coursetimings</code></td><td><code>/student/course-timings</code></td></tr>
+<tr><td><span class="dead">Course Timings &mdash; DEAD CODE</span></td><td><code>student-coursetimings</code> <span class="dead">DEAD CODE</span></td><td><span class="dead">DO NOT MIGRATE (legacy view deleted)</span></td></tr>
 <tr><td>Events</td><td><code>student-events</code></td><td><code>/student/events</code></td></tr>
 <tr><td>Exam Details</td><td><code>student-examination-details</code></td><td><code>/student/exams</code></td></tr>
 <tr><td>Performance</td><td><code>student-performance-content</code></td><td><code>/student/performance</code></td></tr>
@@ -193,6 +195,17 @@
 <tr><td>Profile / Update Profile</td><td>student <code>ProfileView</code> / <code>UpdateProfile</code></td><td><code>/student/profile</code></td></tr>
 <tr class="excl"><td>Re-enrollment / Migration / Reserve seat</td><td><code>reEnrollment*</code>, <code>studentMigration*</code>, <code>reserveSeat*</code></td><td><span class="b out">EXCLUDE</span></td></tr>
 </tbody></table></div>
+<div class="note out dead-note"><b class="t dead">DEAD CODE &mdash; Course Timings (student-coursetimings) &mdash; verified in is-rest-api, branch feature/63_0_0_STUDENT_DASHBOARD_NEXTJS_PHASE4</b>
+<ul>
+<li><span class="dead">DEAD CODE</span> <code>ClientDashboardStudentController.java:695-715</code> &mdash; <code>GET /student-coursetimings</code> (<code>dashboardStudentCoursetimings</code>). Sets <code>dashboardPage="STUDENT-COURSE-TIMING"</code>, but nothing in <code>DashboardRightSideContent.jsp</code> handles that value, so the page renders nothing.</li>
+<li><span class="dead">DEAD CODE</span> <code>ClientDashboardStudentController.java:717-738</code> &mdash; <code>POST /student-coursetimings-content</code> (<code>dashboardStudentCoursetimingsContent</code>). Returns <code>DASHBOARD_UI_TYPE + "/student/StudentCourseTiming"</code>; that JSP was deleted.</li>
+<li><span class="dead">DEAD CODE</span> <code>ClientConstant.java:286</code> &mdash; <code>AJAX_PAGE_PAGE_STUDENT_STUDENT_COURSE_TIMING_CONTENT("/student/StudentCourseTiming")</code>, used only by the dead POST endpoint above.</li>
+<li><span class="dead">DEAD CODE</span> <code>WEB-INF/views/dashboard/student/StudentCourseTiming.jsp</code> &mdash; already removed in commit <code>b7c1cd8bbf</code> ("remove old theme", 3 Jul 2025). It only showed a "Tasks &amp; Syllabus" table with a hard-coded <code>0 Hrs</code> "Time Spent" column; no theme2 equivalent exists.</li>
+<li><span class="dead">DEAD CODE</span> <code>DashboardStudentUtil.java:495-523</code> &mdash; <code>getStudentCoursetimings()</code> is fully commented out.</li>
+<li><b>Not dead (shared, keep):</b> <code>DashboardStudentUtil.getStudentTask(user)</code> is also used by the Tasks / Syllabus endpoints (controller lines 522, 1021).</li>
+<li>No JS, SQL, properties or menu reference to <code>student-coursetimings</code> found in <code>src</code>. Sidebar menu rows are DB-driven (USER_RIGHTS), so confirm no row points to it before removing the endpoints.</li>
+</ul>
+<p><span class="dead">Decision:</span> do not build <code>/student/course-timings</code> in Next.js. Test case <code>STU-DASH-006</code> in the test-case file should be dropped or marked N/A.</p></div>
 <p class="lead">Exact per-module request/response confirmed at implementation. Highest-risk: <b>Book-a-Session</b>, <b>Cart/Payment</b>, <b>LMS-SSO</b>.</p>
 </section>
 
@@ -235,7 +248,7 @@ proxy.js  // add  /:school/student/:path*  to config.matcher
 <ol>
 <li><b>Phase A</b> — Foundation (shell, dynamic sidebar, context, SSO, toggle).</li>
 <li><b>Phase B</b> — Home + Calendar.</li>
-<li><b>Phase C, batch 1</b> (read-heavy): Syllabus, Course Timings, Events, Exam, Performance, PTM, Transcript.</li>
+<li><b>Phase C, batch 1</b> (read-heavy): Syllabus, <span class="dead">Course Timings (DEAD CODE &mdash; skip)</span>, Events, Exam, Performance, PTM, Transcript.</li>
 <li><b>Phase C, batch 2</b> (interactive): Tasks, Book-a-Session, Course Selection.</li>
 <li><b>Phase C, batch 3</b>: Cart/Buy, LMS, ID Card, Confirmation, Academic-Year-Extension, Profile.</li>
 </ol>

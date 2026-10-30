@@ -52,7 +52,10 @@ export async function getDashboardMenu({ schoolUUID, schoolId, roleId, userId })
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    return parseJsonResponse(response);
+    console.log("getDashboardMenu status:", response.status);
+    const menuData = await parseJsonResponse(response);
+    console.log("getDashboardMenu data:", JSON.stringify(menuData, null, 2));
+    return menuData;
   } catch {
     return null;
   }
