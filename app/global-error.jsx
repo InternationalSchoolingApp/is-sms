@@ -5,6 +5,7 @@ import "./globals.css";
 import { getLastApiAttempt } from "@/utils/lastApiAttempt";
 import { ErrorDetails, ErrorPageHeader, ErrorPageFooter } from "./error.jsx";
 import { goHomeFromErrorPage } from "@/utils/errorPageActions";
+import { reportErrorToBackend } from "@/utils/reportErrorToBackend";
 
 export default function GlobalError({ error }) {
   const [lastApiAttempt, setLastApiAttempt] = useState(null);
@@ -12,6 +13,7 @@ export default function GlobalError({ error }) {
   useEffect(() => {
     console.error("Fatal application error:", error);
     setLastApiAttempt(getLastApiAttempt());
+    reportErrorToBackend(error);
   }, [error]);
 
   return (

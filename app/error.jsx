@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getLastApiAttempt } from "@/utils/lastApiAttempt";
 import { SchoolLogo } from "@/components/student-enroll/SchoolLogo";
 import { goHomeFromErrorPage } from "@/utils/errorPageActions";
+import { reportErrorToBackend } from "@/utils/reportErrorToBackend";
 
 export default function Error({ error }) {
   const [lastApiAttempt, setLastApiAttempt] = useState(null);
@@ -11,6 +12,7 @@ export default function Error({ error }) {
   useEffect(() => {
     console.error("Unhandled application error:", error);
     setLastApiAttempt(getLastApiAttempt());
+    reportErrorToBackend(error);
   }, [error]);
 
   return (
