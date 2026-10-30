@@ -6,6 +6,7 @@ import { Menu, LogOut, ChevronDown, User, KeyRound, UserPlus } from "lucide-reac
 import toast from "react-hot-toast";
 import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
 import { logoutEverywhere } from "@/utils/logout";
+import { CartHeaderButton } from "@/components/student/cart/CartHeaderButton";
 
 /**
  * Fixed top header — mirrors the legacy Java Dashboard.jsp top bar:
@@ -65,8 +66,9 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
         </button>
       </div>
 
-      {/* Right: Add More Siblings + profile */}
+      {/* Right: cart + Add More Siblings + profile */}
       <div className="flex items-center gap-2 sm:gap-3">
+        <CartHeaderButton />
         <button
           type="button"
           onClick={() => toast("Add More Siblings — coming soon", { icon: "🚧" })}
