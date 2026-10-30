@@ -1,33 +1,43 @@
 "use client"; // Error boundaries must be Client Components
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "./globals.css";
+import { getLastApiAttempt } from "@/utils/lastApiAttempt";
+import { ErrorDetails, ErrorPageHeader, ErrorPageFooter } from "./error.jsx";
+import { goHomeFromErrorPage } from "@/utils/errorPageActions";
+import { reportErrorToBackend } from "@/utils/reportErrorToBackend";
 
-// Global error boundary for failures in the root layout itself. It replaces
-// the root layout when active, so it must render its own <html>/<body>.
-// Next.js 16 passes { error, retry }.
-export default function GlobalError({ error, retry }) {
+export default function GlobalError({ error }) {
+  const [lastApiAttempt, setLastApiAttempt] = useState(null);
+
   useEffect(() => {
     console.error("Fatal application error:", error);
+    setLastApiAttempt(getLastApiAttempt());
+    reportErrorToBackend(error);
   }, [error]);
 
   return (
     <html lang="en">
       <body className="min-h-screen bg-[#eef4fb] font-sans antialiased">
-        <main className="flex min-h-screen flex-col items-center justify-center p-6">
-          <div className="w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-xl shadow-slate-900/5 ring-1 ring-slate-900/5 sm:p-10">
-            <h1 className="text-xl font-bold text-black">Something went wrong</h1>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              A critical error occurred while loading the application. Please try again.
-            </p>
-            <button
-              type="button"
-              onClick={() => retry()}
-              className="mt-6 inline-block rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-            >
-              Try again
-            </button>
+        <main className="flex min-h-screen flex-col items-center p-6">
+          <ErrorPageHeader />
+          <div className="flex flex-1 flex-col items-center justify-center">
+            <div className="w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-xl shadow-slate-900/5 ring-1 ring-slate-900/5 sm:p-10">
+              <h1 className="text-xl font-bold text-black">Something went wrong</h1>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                A critical error occurred while loading the application. Please go back to the homepage and try again.
+              </p>
+              <button
+                type="button"
+                onClick={goHomeFromErrorPage}
+                className="mt-6 inline-block rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
+              >
+                Go to homepage
+              </button>
+              <ErrorDetails error={error} lastApiAttempt={lastApiAttempt} />
+            </div>
           </div>
+          <ErrorPageFooter />
         </main>
       </body>
     </html>

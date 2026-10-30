@@ -198,6 +198,7 @@ export function AddCreatePassword({ schoolUUID }) {
         )}
 
         <hr className="my-5 border-slate-200" />
+        
         <p className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-[13px] text-slate-600">
           Need help?
           <a
