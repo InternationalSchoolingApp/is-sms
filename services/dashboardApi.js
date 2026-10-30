@@ -453,3 +453,27 @@ export async function getStudentTranscriptStatus({ schoolUUID, userId }) {
     return null;
   }
 }
+
+/**
+ * Phase C — My Attendance (sidebar segment student-attendance-overview).
+ * POST /{schoolUUID}/dashboard/parent/student-attendance-full
+ * (ClientDashoboardParentController -> DashboardParentUtil.getStudentFullAttendance),
+ * the same call legacy studentAttendance.js makes for a student's own attendance:
+ * self-access is allowed when the session user IS studentUserId. Session-cookie gated.
+ *
+ * NOTE this endpoint's envelope is inverted vs the rest of the file: `status` is
+ * "SUCCESS" and `statusCode` carries the outcome ("1" ok, "3" session out,
+ * "V00x" validation). Response.details: { summary: { classesToday,
+ * attendancePercentThisMonth, attendanceDeltaFromLastMonth, latePercentThisMonth,
+ * lateDeltaFromLastMonth, totalClassesHeldThisMonth, classesAttended, late,
+ * earlyLeave, absent }, attendanceOverview: [{ monthKey "yyyy-MM", monthLabel
+ * "Jan", attendancePercent, ... }] x 12 for the current year }.
+ */
+export async function getStudentAttendanceFull({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-attendance-full", { userId, studentUserId: userId });
+  } catch {
+    return null;
+  }
+}
