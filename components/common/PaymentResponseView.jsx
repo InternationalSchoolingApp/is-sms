@@ -126,14 +126,12 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID" ||
       data.initiatedVia === "Link" ||
       data.contentFor === "EVALUATION-TEST-FORM");
-  // A success/failure URL copied into a browser with no session comes back ALREADY_PAID ("4"). Only that case is
-  // sent to login here; payment-link and evaluation-form pages still open without a login as above.
+  // Any success/failure URL copied into a browser with no session comes back ALREADY_PAID ("4") — the gateway
+  // return was already processed — so it goes to login, whatever the payment type.
   const copiedUrlWithoutSession =
     sessionStatus === "unauthenticated" &&
     data &&
-    (String(data.responseStatus ?? "") === "4" || String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID") &&
-    data.initiatedVia !== "Link" &&
-    data.contentFor !== "EVALUATION-TEST-FORM";
+    (String(data.responseStatus ?? "") === "4" || String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID");
   const redirectToLogin =
     sessionStatus === "unauthenticated" && (isReplay || !loading) && (!shownWithoutLogin || copiedUrlWithoutSession);
   useEffect(() => {
