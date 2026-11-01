@@ -10,6 +10,16 @@ import {
 import { UAT_BACKEND_URLS as PRESET_URLS } from "@/constant/UatBackendUrls";
 
 const CUSTOM_VALUE = "__custom__";
+// What "Reset to default" actually falls back to — NEXT_PUBLIC_BACKEND_BASE_URL always
+// (NEXT_PUBLIC_* vars are inlined into the client bundle, so reading it directly here is
+// safe). In local-proxy mode resolveBackendOrigin (utils/backendOrigin.js) itself resolves
+// to "" for actual requests — same-origin, forwarded to this same NEXT_PUBLIC_BACKEND_BASE_URL
+// by next.config.mjs's rewrites — but that's an implementation detail, not a different
+// backend; show the real target the tester cares about, just noting it's proxied.
+function defaultBackendDisplay() {
+  const backend = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || "(not configured)";
+  return process.env.NEXT_PUBLIC_USE_LOCAL_PROXY === "true" ? `${backend} (via local proxy)` : backend;
+}
 // Remembers where the tester dragged the toggle to, as FRACTIONS of the
 // viewport (0..1), not raw px — so the same spot still makes sense after
 // resizing the window or opening on a phone instead of a desktop, where raw
@@ -181,6 +191,7 @@ export function BackendSwitcher() {
   }
 
   const style = posPct ? { left: posPct.xPct * window.innerWidth, top: posPct.yPct * window.innerHeight } : undefined;
+  const effective = current || defaultBackendDisplay();
 
   return (
     <div
@@ -203,7 +214,7 @@ export function BackendSwitcher() {
           </div>
 
           <p className="mb-2 break-all text-xs text-gray-500">
-            Currently: {current || "default backend"}
+            Currently: {effective}
           </p>
 
           <select
@@ -255,11 +266,11 @@ export function BackendSwitcher() {
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
-          className="flex cursor-grab items-center gap-1 touch-none rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-amber-700 shadow-md hover:bg-amber-100 active:cursor-grabbing"
-          title="Pick a UAT backend (drag to move)"
+          className="flex max-w-[80vw] cursor-grab items-center gap-1 touch-none rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-amber-700 shadow-md hover:bg-amber-100 active:cursor-grabbing"
+          title={`Pick a UAT backend (drag to move) — currently: ${effective}`}
         >
-          <Server size={14} />
-          UAT
+          <Server size={14} className="shrink-0" />
+          <span className="truncate">UAT: {effective}</span>
         </button>
       )}
     </div>
