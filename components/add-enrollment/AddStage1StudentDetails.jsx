@@ -188,7 +188,7 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, ini
     setFields((prev) => ({ ...prev, learningProgram, standardId: "", dob: null }));
   }
 
-  // Changing the grade clears the already-picked DOB rather than leaving a
+  
   // value selected for the previous grade.
   function setGrade(standardId) {
     setFields((prev) => ({ ...prev, standardId, dob: null }));

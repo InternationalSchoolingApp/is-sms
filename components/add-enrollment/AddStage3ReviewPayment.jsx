@@ -292,12 +292,16 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
   // on Stage 3's "Continue" (useProceedToReview), then get-student-review-details
   // above, then enrollment-stage-status — held back until the review call has
   // succeeded so it always fires 4th, then repeats every 3 min (getSignupStatus()).
+  // context.customPaymentEnabled comes from enrollment/process's hasCustomPlan column, which can still read
+  // false for a child whose review response already reports a custom plan (that field is what renders
+  // CustomPlanTable below). Both sources count, or the guards below miss a custom-plan child.
+  const customPlan = context.customPaymentEnabled === true || reviewQuery.data?.customPaymentEnabled === true;
   const stageStatus = useSignupStageStatusPoll({
     context,
     uniqueId,
     // Custom plans always return the backend's SSO redirect from stage-status;
     // polling it here would send the user straight back into this page forever.
-    enabled: reviewQuery.isSuccess && !context.customPaymentEnabled,
+    enabled: reviewQuery.isSuccess && !customPlan,
   });
   const paymentOption = useShowPaymentOption({ context, userId });
   const choosePlan = useChoosePaymentPlan({ context, userId });
@@ -387,17 +391,18 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
 
   const stageStatusData = stageStatus.data;
   useEffect(() => {
-    if (!stageStatusData || context.customPaymentEnabled) return;
+    if (!stageStatusData || customPlan) return;
     if (stageStatusData.status === STATUS_SESSION_OUT) {
       onSessionExpired?.();
     } else if (stageStatusData.status === STATUS_SUCCESS && stageStatusData.redirectUri) {
       // The child is already registered (e.g. paid through the payment link in another browser). redirectUri is the
       // Java dashboard, which needs a Java session this browser does not have (it would end in a session-mismatch
-      // logout), so hand over to the wizard's completed flow (thank-you page) instead.
+      // logout), so hand over to the wizard's completed flow (thank-you page) instead. "Already registered" is not
+      // "paid", so the context confirms the payment with the thank-you API before it ends the wizard.
       if (onEnrollmentCompleted) onEnrollmentCompleted();
       else window.location.replace(stageStatusData.redirectUri);
     }
-  }, [stageStatusData, context.customPaymentEnabled, onSessionExpired, onEnrollmentCompleted]);
+  }, [stageStatusData, customPlan, onSessionExpired, onEnrollmentCompleted]);
 
   // Coming back from the payment gateway (browser Back / bfcache) restores this page exactly as it
   // was left — with the payment modal open and busy. Reset it when the page is restored from the cache.

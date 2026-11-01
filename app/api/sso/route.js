@@ -5,7 +5,12 @@ import { defaultBackend, logoutAtSms, trustedBackend } from "@/lib/auth/smsToken
 import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
 import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 import { addEnrollmentStepPath, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
-import { detectOriginatingBackend, getBackendOverrideCookieName, isBackendOverrideAllowed, parseBackendOrigin } from "@/utils/backendOrigin";
+import {
+  detectOriginatingBackend,
+  getBackendOverrideCookieName,
+  isBackendOverrideAllowed,
+  parseBackendOrigin,
+} from "@/utils/backendOrigin";
 
 const VALID_STEPS = new Set(["1", "2", "3", "4"]);
 

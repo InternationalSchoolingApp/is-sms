@@ -98,6 +98,7 @@ export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry) {
     }
 
     let undecorate = null;
+    let paddingObserver = null;
     function handleOpenSelector() {
       undecorate?.();
       undecorate = decorateFullscreenPopup(() => itiRef.current?.closeCountrySelector());
@@ -131,6 +132,10 @@ export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry) {
           }
         },
         separateDialCode: true,
+        // Renders the dial-code selector as its own bordered box next to the number input
+        // (two separate fields) instead of intl-tel-input's default flag+code overlay sitting
+        // inside the input — see the "Phone number field" rules in app/globals.css.
+        classNames: { container: "iti-split", countrySelectorContainer: "iti-split-popup" },
         formatAsYouType:false,
         // formatAsYouType only governs live typing. Loading an already-saved number still runs it through
         // #updateValueFromNumber once on init, which formats using numberDisplayFormat (default INTERNATIONAL,
@@ -140,6 +145,14 @@ export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry) {
         placeholderNumberPolicy:"OFF",
         dropdownParent: document.body,
       });
+      // The library keeps writing an inline padding-left sized for its overlay layout (on init, country
+      // change and resize). With the dial code in its own box that padding is wrong, so strip it every time.
+      const stripPadding = () => {
+        if (input.style.paddingLeft) input.style.paddingLeft = "";
+      };
+      stripPadding();
+      paddingObserver = new MutationObserver(stripPadding);
+      paddingObserver.observe(input, { attributes: true, attributeFilter: ["style"] });
       input.addEventListener("open:countryselector", handleOpenSelector);
       input.addEventListener("close:countryselector", handleCloseSelector);
       input.addEventListener("countrychange", handleChange);
@@ -150,6 +163,7 @@ export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry) {
     return () => {
       cancelled = true;
       undecorate?.();
+      paddingObserver?.disconnect();
       input?.removeEventListener("open:countryselector", handleOpenSelector);
       input?.removeEventListener("close:countryselector", handleCloseSelector);
       input?.removeEventListener("countrychange", handleChange);
