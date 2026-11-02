@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { CalendarModal, DetailRow } from "@/components/dashboard/calendar/CalendarModal";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { getProgressReportGradeHistory } from "@/services/dashboardApi";
 
 /**
@@ -12,10 +13,14 @@ import { getProgressReportGradeHistory } from "@/services/dashboardApi";
 export function PerformanceGradeHistoryModal({ itemId, enrollId, itemTitle, onClose }) {
   const { context } = useDashboardContext();
   const { schoolUUID, uniqueId } = context ?? {};
+  const dummy = useDummyStudent();
   const { data, isLoading } = useQuery({
-    queryKey: ["progress-report-grade-history", schoolUUID, itemId, enrollId],
-    queryFn: () => getProgressReportGradeHistory({ schoolUUID, uniqueId, itemId, enrollId }),
-    enabled: Boolean(schoolUUID && uniqueId && itemId && enrollId),
+    queryKey: ["progress-report-grade-history", schoolUUID, itemId, enrollId, dummy.key],
+    queryFn: () =>
+      dummy.enabled
+        ? dummy.student.academicGradeHistory(itemId)
+        : getProgressReportGradeHistory({ schoolUUID, uniqueId, itemId, enrollId }),
+    enabled: Boolean(schoolUUID && uniqueId && itemId && enrollId && dummy.settled),
   });
 
   const grades = data?.response?.grades?.grade;
@@ -32,7 +37,8 @@ export function PerformanceGradeHistoryModal({ itemId, enrollId, itemTitle, onCl
           <div key={index} className="rounded-lg border border-slate-100 p-2">
             <DetailRow label="Attempt" value={index + 1} />
             <DetailRow label="Score" value={grade.achieved != null && grade.possible != null ? `${grade.achieved} / ${grade.possible}` : null} />
-            <DetailRow label="Percent" value={grade.percent != null ? `${grade.percent}%` : null} />
+            {/* percent may already carry its "%" (dummy data: "88%"); add it only when missing */}
+            <DetailRow label="Percent" value={grade.percent != null ? `${String(grade.percent).replace(/%$/, "")}%` : null} />
             <DetailRow label="Submitted" value={grade.lastactivitydate} />
           </div>
         ))

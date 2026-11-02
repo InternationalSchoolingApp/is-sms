@@ -354,6 +354,23 @@ export async function getStudentAcademicPerformance({ schoolUUID, userId }) {
   }
 }
 
+/**
+ * Progress Reports ("My Progress Reports", sidebar segment progress-detail) — legacy
+ * studentProgressDetail.js. POST /{schoolUUID}/dashboard/parent/weekly-progress-reports-detail
+ * (same "parent" controller as above, students reuse it). Response.details:
+ * StudentWeeklyProgressReportDetailsDTO { studentWeeklyProgressReports: [{ daysType,
+ * reportStartDate, reportEndDate, createdDate, playloadUrl }] } — playloadUrl is the backend's
+ * own rendered gradebook report page (/dashboard/get-user-gradebook/{uniqueId}?payload=...).
+ */
+export async function getStudentWeeklyProgressReports({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/parent/weekly-progress-reports-detail", { userId, studentUserId: userId });
+  } catch {
+    return null;
+  }
+}
+
 // Shared by the two Buzz progress-report calls below. ClientDashboardAzlixbuzzController
 // declares a @RequestHeader("UNIQUEUUID") param, but SessionUtil.getUser(String) actually
 // ignores that argument entirely (dead parameter - verified against the live source) and
@@ -378,12 +395,14 @@ async function postBuzzProgressPayload(schoolUUID, path, body, uniqueId) {
 export async function getStudentProgressReportDetail({ schoolUUID, uniqueId, studentUserId, lmsEnrollmentId, lmsCourseId }) {
   if (!hasBackendOrigin() || !schoolUUID || !uniqueId) return null;
   try {
-    return await postBuzzProgressPayload(
+    const data = await postBuzzProgressPayload(
       schoolUUID,
       "/dashboard/get-student-progress-report-detail",
       { studentUserId, lmsUserId: lmsEnrollmentId, entityId: lmsCourseId },
       uniqueId,
     );
+    console.log("getStudentProgressReportDetail data:", JSON.stringify(data, null, 2));
+    return data;
   } catch {
     return null;
   }
@@ -397,6 +416,138 @@ export async function getProgressReportGradeHistory({ schoolUUID, uniqueId, item
   if (!hasBackendOrigin() || !schoolUUID || !uniqueId) return null;
   try {
     return await postBuzzProgressPayload(schoolUUID, "/dashboard/get-progress-report-grade-history", { itemId, enrollId }, uniqueId);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Progress Reports "View" — the gradebook report behind a row's playloadUrl, as JSON.
+ * GET /{schoolUUID}/dashboard/get-user-gradebook/{uniqueId}?payload=...&format=json
+ * (the same endpoint legacy loads as a JSP page; format=json returns its model data:
+ * student fields, gradebookEnroll[], reportStartDate/EndDate, downloadUrl, reportMessage).
+ * params is the row payload ({ data, startdate, enddate, subReportType }) with optional
+ * new dates from the report's own date search. requestFrom/forDownload are pinned so a
+ * view never creates a StudentWeeklyReportUpload row.
+ */
+export async function getStudentGradebookReport({ schoolUUID, uniqueId, params }) {
+  if (!hasBackendOrigin() || !schoolUUID || !/^[0-9a-f-]{36}$/i.test(uniqueId || "") || !params?.data) return null;
+  try {
+    const baseUrl = await resolveServerBackendOrigin();
+    const payload = encodePayload({
+      data: params.data,
+      startdate: params.startdate || "",
+      enddate: params.enddate || "",
+      subReportType: params.subReportType || "",
+      requestFrom: "true",
+      forDownload: "false",
+    });
+    const response = await fetch(
+      `${baseUrl}/${schoolUUID}/dashboard/get-user-gradebook/${uniqueId}?payload=${encodeURIComponent(payload)}&format=json`,
+      { headers: { Cookie: await getSessionCookieHeader() }, cache: "no-store" },
+    );
+    return parseJsonResponse(response);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * One module's rights for this user — legacy getUserRights() (masterContent.js), called by
+ * adminController.getContent() before every module page renders.
+ * POST /{schoolUUID}/api/v1/module (CommonController.getModule -> ModulesUtil.getModuleRights).
+ * Payload {schoolId, roleId, userId, moduleId}; returns RoleAndModuleDTO
+ * { moduleId, moduleName, pageLink, viewed, added, ... }. Not session-gated (same as module-details).
+ */
+export async function getModuleRights({ schoolUUID, schoolId, roleId, userId, moduleId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !schoolId || !roleId || !moduleId) return null;
+  try {
+    const baseUrl = await resolveServerBackendOrigin();
+    const response = await fetch(`${baseUrl}/${schoolUUID}/api/v1/module`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        payload: encodePayload({ schoolId: String(schoolId), roleId: String(roleId), userId: String(userId), moduleId: String(moduleId) }),
+      }),
+    });
+    return parseJsonResponse(response);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Clubs "Register Now" — legacy clubsCommon.js applyForClub(). POST /{schoolUUID}/save-club-request
+ * (ClubController -> ClubUtil.saveClubRequest) with {userId, clubName}; clubName is the legacy card
+ * title ("Spanish Club"), looked up by name server-side. status 1 = registered, 2 = already a member.
+ */
+export async function saveClubRequest({ schoolUUID, userId, clubName }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId || !clubName) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/save-club-request", { userId, clubName });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fee Details ("My Fee Details", sidebar segment fee-details) — legacy studentFeeDetails.js.
+ * POST /{schoolUUID}/dashboard/parent/student-fee-details (students reuse the "parent"
+ * controller, session-cookie-gated) with {userId, studentUserId}. Response.details:
+ * StudentDueFeesDTO { userPaymentDetailsList: [{ id, scheduledPayDate, standardName, paymentName,
+ * totalFeeWithMaterialFee, payDate, status, paymentTitle, paymentTransferType, pgName,
+ * recieptLink }], nextUserPaymentDetailsId }.
+ */
+export async function getStudentFeeDetails({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-fee-details", { userId, studentUserId: userId });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Login History ("My Log in History", sidebar segment student-login-details) — legacy
+ * studentLoginHistory.js. POST /{schoolUUID}/dashboard/parent/student-attendance (students reuse
+ * the "parent" controller, session-cookie-gated) with {userId, studentUserId}. Response.details:
+ * AttendanceDTO { firstLogin, lastLogin, duration, totalLoginDuretion, loginHistories: [{ loginTime,
+ * logOutTime, loginLocation, totalLoginDuretion }] } ("Duretion" is the backend's spelling).
+ */
+export async function getStudentLoginHistory({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-attendance", { userId, studentUserId: userId });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Student academic details — POST /{schoolUUID}/dashboard/parent/student-academic-details
+ * (students reuse the "parent" controller, session-cookie-gated) with {userId, studentUserId}.
+ * Response.details: StudentAcademicDocumentDetailsDTO { userId, userName (USER.USER_FULL_NAME,
+ * the legacy USER_FULL_NAME page global), ... }. Used for the student's display name.
+ */
+export async function getStudentAcademicDetails({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-academic-details", { userId, studentUserId: userId });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Demo student data row — legacy dummyStudentDashboardData.js hydrateDbRows().
+ * POST /{schoolUUID}/dashboard/student/demo-data (ParentDashboardDemoDataController, session-gated,
+ * demo student accounts only). No entityId is sent: the backend falls back to the demo row picked at
+ * "view as user" time (session DEMO_DASHBOARD_USER). Response: { status: "1", details: [row] }.
+ */
+export async function getStudentDemoData({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/student/demo-data", { userId });
   } catch {
     return null;
   }

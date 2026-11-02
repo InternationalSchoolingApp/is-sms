@@ -6,6 +6,7 @@ import { MessageCircle, Megaphone, Newspaper, NotebookText } from "lucide-react"
 import { getAnnouncementDetails, getChatUnseenCount } from "@/services/dashboardApi";
 import { getAllArticles } from "@/services/newsApi";
 import { getDiaryUnreadCount } from "@/services/diaryApi";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { buildChatSignInUrl } from "@/utils/chatLink";
 import { AnnouncementsPanel } from "@/components/dashboard/AnnouncementsPanel";
 import { NewsPanel } from "@/components/dashboard/NewsPanel";
@@ -31,10 +32,13 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
     return () => clearTimeout(id);
   }, []);
 
+  // Dummy (demo) student mode: announcements, news and the diary come from the dummy generator.
+  const dummy = useDummyStudent();
   const announcementsQuery = useQuery({
-    queryKey: ["student-announcements", schoolUUID, userId],
-    queryFn: () => getAnnouncementDetails({ schoolUUID, userId, startFrom: 0, pageSize: 20 }),
-    enabled: Boolean(schoolUUID && userId),
+    queryKey: ["student-announcements", schoolUUID, userId, dummy.key],
+    queryFn: () =>
+      dummy.enabled ? dummy.student.announcements() : getAnnouncementDetails({ schoolUUID, userId, startFrom: 0, pageSize: 20 }),
+    enabled: Boolean(schoolUUID && userId && dummy.settled),
     staleTime: 5 * 60_000,
     refetchOnWindowFocus: false,
   });
@@ -42,8 +46,9 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
   const newAnnouncementCount = announcementsQuery.data?.newAnnouncementCount || 0;
 
   const newsQuery = useQuery({
-    queryKey: ["news-articles"],
-    queryFn: () => getAllArticles({ page: 1, size: 10 }),
+    queryKey: ["news-articles", dummy.key],
+    queryFn: () => (dummy.enabled ? dummy.student.newsList() : getAllArticles({ page: 1, size: 10 })),
+    enabled: dummy.settled,
     staleTime: 5 * 60_000,
     refetchOnWindowFocus: false,
   });
@@ -60,9 +65,9 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
   const unseenChatMessages = chatCountQuery.data?.sumUnseen || 0;
 
   const diaryCountQuery = useQuery({
-    queryKey: ["diary-unread-count", userId],
-    queryFn: () => getDiaryUnreadCount({ sessionUserId: userId }),
-    enabled: Boolean(userId),
+    queryKey: ["diary-unread-count", userId, dummy.key],
+    queryFn: () => (dummy.enabled ? dummy.student.diaryUnreadCount() : getDiaryUnreadCount({ sessionUserId: userId })),
+    enabled: Boolean(userId && dummy.settled),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });

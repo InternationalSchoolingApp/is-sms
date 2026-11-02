@@ -10,8 +10,10 @@ import { FullScreenLoader } from "@/components/common/Loader";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
 import { CartTermsModal } from "@/components/student/cart/CartTermsModal";
+import { DummyCheckout } from "@/components/student/cart/DummyCheckout";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useCartCheckout } from "@/hooks/useCartCheckout";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 import {
   CART_KEYS,
   useApplyCartDiscount,
@@ -91,10 +93,11 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
  * shared payment-gateway flow.
  */
 export function Cart() {
-  const { context } = useDashboardContext();
+  const { context, session, logoUrl } = useDashboardContext();
   const { school } = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const dummy = useDummyStudent();
   const [code, setCode] = useState("");
   const [terms, setTerms] = useState(null);
 
@@ -115,6 +118,17 @@ export function Cart() {
     },
   });
   const symbol = currencyQuery.data?.symbol ?? "";
+
+  // Dummy checkout done (legacy dummyGoToDashboard): empty the dummy cart and go to the dashboard,
+  // keeping ?dummyStudent=Y so the demo carries on.
+  function finishDummyCheckout() {
+    dummy.student.clearCart();
+    checkout.closeDummyCheckout();
+    setTerms(null);
+    queryClient.invalidateQueries({ queryKey: CART_KEYS.count(context?.userId) });
+    queryClient.invalidateQueries({ queryKey: CART_KEYS.details(context?.userId) });
+    router.push(`${studentNavHref(school, "")}${window.location.search}`);
+  }
 
   if (!context || cartQuery.isLoading) {
     return (
@@ -155,7 +169,8 @@ export function Cart() {
 
   async function confirmAndPay() {
     const result = await createPayment.mutateAsync().catch(() => null);
-    if (result?.status !== "1" || !result.details?.userPaymentDetailsId) {
+    // Dummy mode's cart-payment answers userPaymentDetailsId 0, as in legacy.
+    if (result?.status !== "1" || result.details?.userPaymentDetailsId == null) {
       toast.error(result?.message || "Unable to pay cart items");
       return;
     }
@@ -245,7 +260,7 @@ export function Cart() {
 
       <CartTermsModal
         key={terms?.userPaymentDetailsId ?? "none"}
-        open={Boolean(terms) && !checkout.picker}
+        open={Boolean(terms) && !checkout.picker && !checkout.dummyGateway}
         planStatus={terms?.planStatus}
         schoolNumericId={context.schoolNumericId}
         schoolName={context.schoolName}
@@ -267,6 +282,16 @@ export function Cart() {
         onSubmitOffline={checkout.submitOffline}
       />
       {checkout.processing && <FullScreenLoader message="Payment is under process..." />}
+      {checkout.dummyGateway && dummy.student && (
+        <DummyCheckout
+          gateway={checkout.dummyGateway}
+          student={dummy.student}
+          email={session?.user?.email || "demo.student@test.local"}
+          logoUrl={logoUrl}
+          onBack={checkout.closeDummyCheckout}
+          onDone={finishDummyCheckout}
+        />
+      )}
       <Dialog open={checkout.incomplete} onOpenChange={(open) => !open && checkout.dismissIncomplete()}>
         <DialogContent className="text-center">
           <DialogHeader>

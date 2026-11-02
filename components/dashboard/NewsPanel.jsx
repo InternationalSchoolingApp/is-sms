@@ -7,6 +7,7 @@ import { Newspaper, X } from "lucide-react";
 import { NewsDetailModal } from "@/components/dashboard/NewsDetailModal";
 import { NewsAllModal } from "@/components/dashboard/NewsAllModal";
 import { getArticlesByIds } from "@/services/newsApi";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 
 function formatNewsDate(value) {
   if (!value) return "";
@@ -22,6 +23,7 @@ function formatNewsDate(value) {
 export function NewsPanel({ articles, totalNews, userId, onClose }) {
   const [selected, setSelected] = useState(null);
   const [allArticles, setAllArticles] = useState(null);
+  const dummy = useDummyStudent();
   const [markingAll, setMarkingAll] = useState(false);
   const queryClient = useQueryClient();
 
@@ -34,10 +36,11 @@ export function NewsPanel({ articles, totalNews, userId, onClose }) {
   // persistence the backend doesn't have.
   const handleViewAllNews = async () => {
     setMarkingAll(true);
-    const result = await getArticlesByIds({ ids: articles.map((a) => a.id), userId });
+    // Dummy mode: legacy shows the dummy list itself (no get-article-by-ids call).
+    const result = dummy.enabled ? dummy.student.newsList() : await getArticlesByIds({ ids: articles.map((a) => a.id), userId });
     setMarkingAll(false);
     setAllArticles(result?.list || []);
-    queryClient.setQueryData(["news-articles"], (data) => (data ? { ...data, totalNews: 0 } : data));
+    queryClient.setQueriesData({ queryKey: ["news-articles"] }, (data) => (data ? { ...data, totalNews: 0 } : data));
   };
 
   return (

@@ -7,6 +7,7 @@ import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { getDashboardChatLinks, getDashboardMenu, getDashboardUserDetails } from "@/services/dashboardApi";
 import { applyStudentNavRules, mapBackendMenu } from "@/utils/dashboardNav";
 import { expireSession } from "@/utils/logout";
+import { useStudentName } from "@/hooks/useStudentName";
 
 /**
  * Shared dashboard context, mounted ONCE by the (dashboard) route-group layout
@@ -70,6 +71,9 @@ function useResolveDashboardContext({ role = "student" } = {}) {
   // waiting on the (possibly missing) endpoint.
   const menu = menuQuery.data ?? [];
 
+  // Header "Welcome back, {name}" — the same full name Login History shows (legacy USER_FULL_NAME).
+  const studentName = useStudentName({ schoolUUID: session?.schoolUUID, userId: session?.userId, enabled: authenticated && role === "student" });
+
   // CHAT_URL / DIARY_URL — rarely-changing per-school config, fetched once.
   const chatLinksQuery = useQuery({
     queryKey: ["dashboard-chat-links", session?.schoolUUID, session?.userId],
@@ -107,6 +111,9 @@ function useResolveDashboardContext({ role = "student" } = {}) {
         uniqueId: session.uniqueId,
         userRole: session.userRole ?? null,
         roleId: session.roleId ?? null,
+        userName: studentName,
+        // Demo account (USER.DEMO_USER) — pass to isDummyStudentMode() like legacy isDemoUser.
+        demoUser: Boolean(session.demoUser),
         chatUrl: chatLinksQuery.data?.chatUrl || "",
         diaryUrl: chatLinksQuery.data?.diaryUrl || "",
       }

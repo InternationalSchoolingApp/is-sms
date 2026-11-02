@@ -247,6 +247,7 @@ export function StudentInlineEdit({ context, userId, uniqueId, student, rollNo, 
           />
           {/* Date of Birth is locked; Gender remains editable. */}
           <DatePicker
+            height="h-12"
             icon={Cake}
             label={<Req label={<>Date of Birth{" "}<span className="text-black text-[12px]">(Month Day, Year)</span></>} required />}
             value={fields.dob}

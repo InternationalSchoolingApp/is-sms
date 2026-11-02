@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { X } from "lucide-react";
 import { getAssignedTeacherForCourse, getTeacherWeeklySlots, submitBookClassSlot } from "@/services/bookClassApi";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { getDayHeading, getSlotEnd, getSlotState } from "@/utils/bookClass";
 
 const UNKNOWN_OUTCOME =
@@ -50,23 +51,32 @@ export function BookClassSlotModal({ course, onClose, onBooked }) {
   const [outcomeUnknown, setOutcomeUnknown] = useState(false);
   const inFlight = useRef(false);
 
+  // Dummy (demo) student mode: legacy getDummyAssignedTeacherDetailsResponse / getDummyTeacherWeeklyCalendarResponse /
+  // getDummyStudentBookClassSubmitResponse (nothing is really booked).
+  const dummy = useDummyStudent();
   const teacherQuery = useQuery({
-    queryKey: ["book-class-teacher", course.subjectId, course.studentStandardId],
-    queryFn: () => getAssignedTeacherForCourse({ subjectId: course.subjectId, studentStandardId: course.studentStandardId }),
+    queryKey: ["book-class-teacher", course.subjectId, course.studentStandardId, dummy.key],
+    queryFn: () =>
+      dummy.enabled
+        ? dummy.student.assignedTeacher(course.subjectId)
+        : getAssignedTeacherForCourse({ subjectId: course.subjectId, studentStandardId: course.studentStandardId }),
+    enabled: dummy.settled,
     staleTime: 0,
   });
   const teacher = teacherQuery.data;
   const teacherAssigned = teacher?.teacherAssigned === "YES";
 
   const slotsQuery = useQuery({
-    queryKey: ["book-class-slots", teacher?.assignedTeacherUserId, course.subjectId, startDate],
+    queryKey: ["book-class-slots", teacher?.assignedTeacherUserId, course.subjectId, startDate, dummy.key],
     queryFn: () =>
-      getTeacherWeeklySlots({
-        teacherUserId: teacher.assignedTeacherUserId,
-        studentStandardId: teacher.studentStandardId ?? course.studentStandardId,
-        subjectId: course.subjectId,
-        startDate,
-      }),
+      dummy.enabled
+        ? dummy.student.teacherWeeklyCalendar(teacher.assignedTeacherUserId, course.subjectId, new Date(startDate))
+        : getTeacherWeeklySlots({
+            teacherUserId: teacher.assignedTeacherUserId,
+            studentStandardId: teacher.studentStandardId ?? course.studentStandardId,
+            subjectId: course.subjectId,
+            startDate,
+          }),
     enabled: teacherAssigned,
     staleTime: 0,
   });
@@ -84,13 +94,15 @@ export function BookClassSlotModal({ course, onClose, onBooked }) {
     if (inFlight.current || outcomeUnknown) return;
     inFlight.current = true;
     setSubmitting(true);
-    const result = await submitBookClassSlot({
-      meetingDate: selected.slot.bookedStartDate,
-      meetingEndDate: end?.endDateTime,
-      subjectId: course.subjectId,
-      studentStandardId: teacher?.studentStandardId ?? course.studentStandardId,
-      teacherUserId: slots.teacherUserId,
-    });
+    const result = dummy.enabled
+      ? dummy.student.bookClassSubmit()
+      : await submitBookClassSlot({
+          meetingDate: selected.slot.bookedStartDate,
+          meetingEndDate: end?.endDateTime,
+          subjectId: course.subjectId,
+          studentStandardId: teacher?.studentStandardId ?? course.studentStandardId,
+          teacherUserId: slots.teacherUserId,
+        });
     inFlight.current = false;
     setSubmitting(false);
     if (!result) {

@@ -6,6 +6,7 @@ import { format, parseISO } from "date-fns";
 import { CalendarDays, Eye, Megaphone, X } from "lucide-react";
 import DOMPurify from "dompurify";
 import { submitAnnouncementAcknowledge } from "@/services/dashboardApi";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { getAttachmentUrl } from "@/utils/announcementAttachment";
 
 export function formatAnnouncementDate(value) {
@@ -29,13 +30,17 @@ export function formatAnnouncementDate(value) {
  */
 export function AnnouncementDetailModal({ announcement, schoolUUID, userId, onClose }) {
   const queryClient = useQueryClient();
+  const dummy = useDummyStudent();
   const [acknowledged, setAcknowledged] = useState(announcement.replyStatus === "Y");
   const [acknowledging, setAcknowledging] = useState(false);
   const attachmentUrl = getAttachmentUrl(announcement.attachment);
 
   const handleAcknowledge = async () => {
     setAcknowledging(true);
-    const result = await submitAnnouncementAcknowledge({ schoolUUID, announceId: announcement.announcementId, userId });
+    // Dummy-mode announcements don't exist server-side: legacy acknowledges them locally only.
+    const result = dummy.enabled
+      ? { status: "1" }
+      : await submitAnnouncementAcknowledge({ schoolUUID, announceId: announcement.announcementId, userId });
     setAcknowledging(false);
     if (result?.status !== "1" && result?.status !== 1) return;
 

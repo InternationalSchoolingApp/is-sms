@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { addDays, addMonths, addWeeks, format, startOfMonth, startOfWeek } from "date-fns";
 import { getSchoolCalendar } from "@/services/dashboardApi";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 import {
   DEFAULT_CALENDAR_FILTERS,
   applyCalendarFilters,
@@ -60,10 +61,15 @@ export function useStudentCalendar({ schoolUUID, userId }) {
   const startDate = format(start, "yyyy-MM-dd");
   const endDate = format(end, "yyyy-MM-dd");
 
+  // Dummy (demo) student mode: legacy patchDummySchoolCalendar's generated classes/assignments/holidays/activities.
+  const dummy = useDummyStudent();
   const query = useQuery({
-    queryKey: ["student-school-calendar", schoolUUID, userId, getBackendAgenda(viewName), startDate, endDate],
-    queryFn: () => getSchoolCalendar({ schoolUUID, userId, startDate, endDate }),
-    enabled: Boolean(schoolUUID && userId),
+    queryKey: ["student-school-calendar", schoolUUID, userId, getBackendAgenda(viewName), startDate, endDate, dummy.key],
+    queryFn: () =>
+      dummy.enabled
+        ? dummy.student.calendar({ startDate, endDate, timezone })
+        : getSchoolCalendar({ schoolUUID, userId, startDate, endDate }),
+    enabled: Boolean(schoolUUID && userId && dummy.settled),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
@@ -116,7 +122,7 @@ export function useStudentCalendar({ schoolUUID, userId }) {
     goPrev,
     goNext,
     timezone,
-    isLoading: query.isLoading,
+    isLoading: !dummy.settled || query.isLoading,
     isError: query.isError,
     holidays: query.data?.holidays || [],
     events: normalizedEvents,

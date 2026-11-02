@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Megaphone } from "lucide-react";
 import { getAnnouncementDetails } from "@/services/dashboardApi";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { AnnouncementDetailModal, formatAnnouncementDate } from "@/components/dashboard/AnnouncementDetailModal";
 
 /**
@@ -13,10 +14,12 @@ import { AnnouncementDetailModal, formatAnnouncementDate } from "@/components/da
  */
 export function AnnouncementsWidget({ schoolUUID, userId }) {
   const [selected, setSelected] = useState(null);
+  const dummy = useDummyStudent();
   const query = useQuery({
-    queryKey: ["student-announcements", schoolUUID, userId],
-    queryFn: () => getAnnouncementDetails({ schoolUUID, userId, startFrom: 0, pageSize: 5 }),
-    enabled: Boolean(schoolUUID && userId),
+    queryKey: ["student-announcements", schoolUUID, userId, dummy.key],
+    queryFn: () =>
+      dummy.enabled ? dummy.student.announcements() : getAnnouncementDetails({ schoolUUID, userId, startFrom: 0, pageSize: 5 }),
+    enabled: Boolean(schoolUUID && userId && dummy.settled),
     staleTime: 5 * 60_000,
     refetchOnWindowFocus: false,
   });

@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { format, isValid, parseISO } from "date-fns";
-import { ArrowLeft } from "lucide-react";
+import { format, isValid } from "date-fns";
+import { ArrowLeft, CalendarDays } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
 import { getStudentBookedClasses } from "@/services/bookClassApi";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { BOOKED_CLASS_STATUS_STYLES } from "@/utils/bookClass";
 
 const DATE_TYPES = [
@@ -31,12 +33,11 @@ const COUNTS = [
   ["completed", "Classes Completed"],
   ["missedByTeacher", "Classes Missed by Teacher"],
 ];
-const DEFAULT_FILTER = { dateType: "today", startDate: "", endDate: "", classStatus: "" };
+const DEFAULT_FILTER = { dateType: "today", startDate: null, endDate: null, classStatus: "" };
 
-// <input type="date"> gives yyyy-MM-dd; the backend expects "MMM dd, yyyy".
-function toBackendDate(value) {
-  const date = parseISO(value);
-  return value && isValid(date) ? format(date, "MMM dd, yyyy") : "";
+// The DatePicker gives a Date; the backend expects "MMM dd, yyyy".
+function toBackendDate(date) {
+  return date && isValid(date) ? format(date, "MMM dd, yyyy") : "";
 }
 
 /** Booked-classes history for one course — legacy bookedCalssCotentFun / bookClassFilterFormContent. */
@@ -44,17 +45,21 @@ export function BookedClasses({ course, onBack, onBook }) {
   const [draft, setDraft] = useState(DEFAULT_FILTER);
   const [filter, setFilter] = useState(DEFAULT_FILTER);
 
+  const dummy = useDummyStudent();
   const { data, isLoading } = useQuery({
-    queryKey: ["booked-classes", course.subjectId, course.studentStandardId, filter],
+    queryKey: ["booked-classes", course.subjectId, course.studentStandardId, filter, dummy.key],
+    // Dummy mode: legacy getDummyStudentBookedClassesDetailsResponse (the filters don't narrow it, as in legacy).
     queryFn: () =>
-      getStudentBookedClasses({
-        subjectId: course.subjectId,
-        studentStandardId: course.studentStandardId,
-        dateType: filter.dateType,
-        startDate: filter.dateType === "custom" ? toBackendDate(filter.startDate) : "",
-        endDate: filter.dateType === "custom" ? toBackendDate(filter.endDate) : "",
-        classStatus: filter.classStatus,
-      }),
+      dummy.enabled
+        ? dummy.student.bookedClasses(course.subjectId)
+        : getStudentBookedClasses({
+            subjectId: course.subjectId,
+            studentStandardId: course.studentStandardId,
+            dateType: filter.dateType,
+            startDate: filter.dateType === "custom" ? toBackendDate(filter.startDate) : "",
+            endDate: filter.dateType === "custom" ? toBackendDate(filter.endDate) : "",
+            classStatus: filter.classStatus,
+          }),
     staleTime: 0,
   });
   const counts = data?.subjectCountDatials;
@@ -80,23 +85,27 @@ export function BookedClasses({ course, onBack, onBook }) {
             <option key={d.value} value={d.value}>{d.label}</option>
           ))}
         </select>
-        <input
-          type="date"
-          value={draft.startDate}
-          disabled={!isCustom}
-          onChange={(e) => setDraft({ ...draft, startDate: e.target.value, endDate: "" })}
-          aria-label="Start date"
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-black disabled:bg-slate-100"
-        />
-        <input
-          type="date"
-          value={draft.endDate}
-          min={draft.startDate || undefined}
-          disabled={!isCustom}
-          onChange={(e) => setDraft({ ...draft, endDate: e.target.value })}
-          aria-label="End date"
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-black disabled:bg-slate-100"
-        />
+        <div className="w-full sm:w-44">
+          <DatePicker
+            icon={CalendarDays}
+            label="Start Date"
+            value={draft.startDate}
+            disabled={!isCustom}
+            onChange={(date) => setDraft({ ...draft, startDate: date ?? null, endDate: null })}
+            height="h-10"
+          />
+        </div>
+        <div className="w-full sm:w-44">
+          <DatePicker
+            icon={CalendarDays}
+            label="End Date"
+            value={draft.endDate}
+            fromDate={draft.startDate ?? undefined}
+            disabled={!isCustom}
+            onChange={(date) => setDraft({ ...draft, endDate: date ?? null })}
+            height="h-10"
+          />
+        </div>
         <select
           value={draft.classStatus}
           onChange={(e) => setDraft({ ...draft, classStatus: e.target.value })}

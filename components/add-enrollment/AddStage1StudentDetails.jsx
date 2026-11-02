@@ -281,6 +281,7 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, ini
             searchable
           />
           <DatePicker
+            height="h-12"
             icon={Cake}
             label={<Req label={<>Date of Birth{" "}<span className="text-black text-[12px]">(Month Day, Year)</span></>} required />}
             value={fields.dob}

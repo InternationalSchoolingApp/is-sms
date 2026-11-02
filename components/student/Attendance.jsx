@@ -14,7 +14,7 @@ const NO_CLASSES = "#e3e8e6";
 // Present / Late / Absent — validated together (dataviz validator, light surface). Late and Present sit in
 // the CVD floor band, so every slice is also labelled with its name and count.
 const SUMMARY = [
-  { key: "classesAttended", label: "Present", color: PRESENT },
+  { key: "classesAttended", label: "Present", color: PRESENT, textColor: "text-red-600" },
   { key: "late", label: "Late", color: "#d97706" },
   // Early Leave stays hidden, as in the legacy widget (product decision).
   { key: "absent", label: "Absent", color: "#e11d48" },
@@ -24,7 +24,7 @@ function StatCard({ label, icon: Icon, iconClass, children }) {
   return (
     <div className="flex items-start justify-between rounded-xl border border-slate-200 bg-white p-4">
       <div>
-        <p className="text-xs text-black/60">{label}</p>
+        <p className="text-xs text-red/60">{label}</p>
         <div className="mt-1 flex flex-wrap items-baseline gap-2">{children}</div>
       </div>
       <span className={`rounded-lg p-2 ${iconClass}`}>
@@ -88,10 +88,60 @@ function MonthlyChart({ months }) {
   return <Chart type="bar" height={320} options={options} series={[{ name: "Attendance", data: values }]} />;
 }
 
+// function SummaryChart({ summary }) {
+//   const held = Number(summary.totalClassesHeldThisMonth) || 0;
+//   const counts = SUMMARY.map((s) => Number(summary[s.key]) || 0);
+//   const percents = counts.map((count) => (held > 0 ? Number(((count / held) * 100).toFixed(1)) : 0));
+
+//   const options = {
+//     chart: { type: "radialBar", fontFamily: "inherit" },
+//     plotOptions: {
+//       radialBar: {
+//         startAngle: 0,
+//         endAngle: 270,
+//         hollow: { margin: 5, size: "30%", background: "transparent" },
+//         dataLabels: { name: { show: false }, value: { show: false } },
+//         barLabels: {
+//           enabled: true,
+//           useSeriesColors: false,
+//           offsetX: -8,
+//           fontSize: "14px",
+//           formatter: (name, opts) => `${name}: ${counts[opts.seriesIndex]}`,
+//         },
+//       },
+//     },
+//     colors: SUMMARY.map((s) => s.color),
+//     labels: SUMMARY.map((s) => s.label),
+//     tooltip: { enabled: false },
+//   };
+
+//   return (
+//     <>
+//       <Chart type="radialBar" height={320} options={options} series={percents} />
+//       <ul className="mt-2 space-y-1 text-sm text-black">
+//         {SUMMARY.map((s, i) => (
+//           <li key={s.key} className="flex items-center gap-2">
+//             <span className="h-3 w-3 rounded-sm" style={{ background: s.color }} aria-hidden="true" />
+//             <span className="flex-1">{s.label}</span>
+//             <span className="font-semibold">{counts[i]}</span>
+//             <span className="w-14 text-right text-black/60">{percents[i]}%</span>
+//           </li>
+//         ))}
+//         <li className="flex justify-between border-t border-slate-200 pt-1 text-black/60">
+//           <span>Classes held this month</span>
+//           <span className="font-semibold text-black">{held}</span>
+//         </li>
+//       </ul>
+//     </>
+//   );
+// }
+
 function SummaryChart({ summary }) {
   const held = Number(summary.totalClassesHeldThisMonth) || 0;
   const counts = SUMMARY.map((s) => Number(summary[s.key]) || 0);
-  const percents = counts.map((count) => (held > 0 ? Number(((count / held) * 100).toFixed(1)) : 0));
+  const percents = counts.map((count) =>
+    held > 0 ? Number(((count / held) * 100).toFixed(1)) : 0
+  );
 
   const options = {
     chart: { type: "radialBar", fontFamily: "inherit" },
@@ -106,7 +156,8 @@ function SummaryChart({ summary }) {
           useSeriesColors: false,
           offsetX: -8,
           fontSize: "14px",
-          formatter: (name, opts) => `${name}: ${counts[opts.seriesIndex]}`,
+          formatter: (name, opts) =>
+            `${name}: ${counts[opts.seriesIndex]}`,
         },
       },
     },
@@ -117,14 +168,28 @@ function SummaryChart({ summary }) {
 
   return (
     <>
-      <Chart type="radialBar" height={320} options={options} series={percents} />
+      <div className="attendance-summary-chart">
+        <Chart
+          type="radialBar"
+          height={320}
+          options={options}
+          series={percents}
+        />
+      </div>
+
       <ul className="mt-2 space-y-1 text-sm text-black">
         {SUMMARY.map((s, i) => (
           <li key={s.key} className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-sm" style={{ background: s.color }} aria-hidden="true" />
+            <span
+              className="h-3 w-3 rounded-sm"
+              style={{ background: s.color }}
+              aria-hidden="true"
+            />
             <span className="flex-1">{s.label}</span>
             <span className="font-semibold">{counts[i]}</span>
-            <span className="w-14 text-right text-black/60">{percents[i]}%</span>
+            <span className="w-14 text-right text-black/60">
+              {percents[i]}%
+            </span>
           </li>
         ))}
         <li className="flex justify-between border-t border-slate-200 pt-1 text-black/60">

@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { ArrowLeft, Bookmark, NotebookText, X } from "lucide-react";
 import { getDiaryThreadList, getDiaryThreadMessages, markDiaryThreadRead } from "@/services/diaryApi";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 
 // Roles that trigger the "Greetings from {school}!" letter template in
 // getParentSchoolDiaryTeacherCard/-ReplyCard (PARENT_MENTION_ROLE in
@@ -112,16 +113,18 @@ function DiaryEntryCard({ message, courseName, schoolName, viewerUserId }) {
  * appends getParentSchoolDiaryReplyEditor for USER_ROLE != "STUDENT").
  */
 function ThreadView({ threadId, sessionUserId, schoolName }) {
+  const dummy = useDummyStudent();
   const messagesQuery = useQuery({
-    queryKey: ["diary-thread-messages", sessionUserId, threadId],
-    queryFn: () => getDiaryThreadMessages({ sessionUserId, threadId }),
-    enabled: Boolean(sessionUserId && threadId),
+    queryKey: ["diary-thread-messages", sessionUserId, threadId, dummy.key],
+    queryFn: () => (dummy.enabled ? dummy.student.diaryMessages(threadId) : getDiaryThreadMessages({ sessionUserId, threadId })),
+    enabled: Boolean(sessionUserId && threadId && dummy.settled),
     refetchOnWindowFocus: false,
   });
 
+  // Dummy threads don't exist server-side: legacy skips the mark-read call in dummy mode.
   useEffect(() => {
-    if (sessionUserId && threadId) markDiaryThreadRead({ sessionUserId, threadId });
-  }, [sessionUserId, threadId]);
+    if (sessionUserId && threadId && dummy.settled && !dummy.enabled) markDiaryThreadRead({ sessionUserId, threadId });
+  }, [sessionUserId, threadId, dummy.settled, dummy.enabled]);
 
   const messages = messagesQuery.data?.details?.messages || [];
   const courseName = messagesQuery.data?.details?.courseName;
@@ -177,10 +180,11 @@ function ThreadView({ threadId, sessionUserId, schoolName }) {
  * to by teachers/parents only).
  */
 export function DiaryPanel({ sessionUserId, schoolName, onClose }) {
+  const dummy = useDummyStudent();
   const threadsQuery = useQuery({
-    queryKey: ["diary-threads", sessionUserId],
-    queryFn: () => getDiaryThreadList({ sessionUserId }),
-    enabled: Boolean(sessionUserId),
+    queryKey: ["diary-threads", sessionUserId, dummy.key],
+    queryFn: () => (dummy.enabled ? dummy.student.diaryThreads() : getDiaryThreadList({ sessionUserId })),
+    enabled: Boolean(sessionUserId && dummy.settled),
     refetchOnWindowFocus: false,
   });
   const threads = threadsQuery.data?.details?.threads || [];

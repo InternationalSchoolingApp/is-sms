@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { LucideCalendarDays, Newspaper, X } from "lucide-react";
 import DOMPurify from "dompurify";
 import { getArticleById } from "@/services/newsApi";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { formatNewsDate, formatRelativeAgo } from "@/utils/newsFormat";
 
 /**
@@ -14,16 +15,19 @@ import { formatNewsDate, formatRelativeAgo } from "@/utils/newsFormat";
  */
 export function NewsDetailModal({ article, userId, onClose }) {
   const [full, setFull] = useState(null);
+  const dummy = useDummyStudent();
 
   useEffect(() => {
     let cancelled = false;
-    getArticleById({ id: article.id, userId }).then((result) => {
+    // Dummy mode: legacy getDummyNewsById instead of get-article-by-id.
+    const load = dummy.enabled ? Promise.resolve(dummy.student.newsById(article.id)) : getArticleById({ id: article.id, userId });
+    load.then((result) => {
       if (!cancelled && result?.data) setFull(result.data);
     });
     return () => {
       cancelled = true;
     };
-  }, [article.id, userId]);
+  }, [article.id, userId, dummy.enabled, dummy.student]);
 
   const data = full || article;
   return (

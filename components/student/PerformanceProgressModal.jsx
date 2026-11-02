@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarModal } from "@/components/dashboard/calendar/CalendarModal";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { getStudentProgressReportDetail } from "@/services/dashboardApi";
 import { PerformanceGradeHistoryModal } from "@/components/student/PerformanceGradeHistoryModal";
 
@@ -30,18 +31,21 @@ export function PerformanceProgressModal({ course, onClose }) {
   const { context } = useDashboardContext();
   const { schoolUUID, uniqueId } = context ?? {};
   const [historyItem, setHistoryItem] = useState(null);
+  const dummy = useDummyStudent();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["student-progress-report-detail", schoolUUID, course.lmsEnrollmentId, course.lmsCourseId],
+    queryKey: ["student-progress-report-detail", schoolUUID, course.lmsEnrollmentId, course.lmsCourseId, dummy.key],
     queryFn: () =>
-      getStudentProgressReportDetail({
-        schoolUUID,
-        uniqueId,
-        studentUserId: course.studentUserId,
-        lmsEnrollmentId: course.lmsEnrollmentId,
-        lmsCourseId: course.lmsCourseId,
-      }),
-    enabled: Boolean(schoolUUID && uniqueId && course.lmsEnrollmentId),
+      dummy.enabled
+        ? dummy.student.academicProgressDetail(course.lmsEnrollmentId, course.lmsCourseId)
+        : getStudentProgressReportDetail({
+            schoolUUID,
+            uniqueId,
+            studentUserId: course.studentUserId,
+            lmsEnrollmentId: course.lmsEnrollmentId,
+            lmsCourseId: course.lmsCourseId,
+          }),
+    enabled: Boolean(schoolUUID && uniqueId && course.lmsEnrollmentId && dummy.settled),
   });
 
   const enrollments = asArray(data?.response?.enrollments?.enrollment);

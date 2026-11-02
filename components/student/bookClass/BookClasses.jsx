@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { CalendarPlus, Info } from "lucide-react";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { getBookAClassStatus, getStudentBookClassDetails } from "@/services/bookClassApi";
 import { getBrowserTimezone } from "@/utils/calendarEvents";
 import { studentNavHref } from "@/utils/dashboardNav";
@@ -54,18 +55,20 @@ export function BookClasses() {
   const [slotCourse, setSlotCourse] = useState(null);
   const [pickAllCourses, setPickAllCourses] = useState(false);
 
+  // Dummy (demo) student mode: legacy getDummyBookAClassResponse / getDummyStudentBookClassDetailsResponse.
+  const dummy = useDummyStudent();
   const statusQuery = useQuery({
-    queryKey: ["book-a-class", context?.userId],
-    queryFn: () => getBookAClassStatus({ userTimezone: getBrowserTimezone() }),
-    enabled: Boolean(context?.userId),
+    queryKey: ["book-a-class", context?.userId, dummy.key],
+    queryFn: () => (dummy.enabled ? dummy.student.bookAClass() : getBookAClassStatus({ userTimezone: getBrowserTimezone() })),
+    enabled: Boolean(context?.userId && dummy.settled),
     staleTime: 0,
   });
   const gate = statusQuery.data;
   const studentStandardId = gate?.details?.studentStandardId;
 
   const detailsQuery = useQuery({
-    queryKey: ["book-class-details", studentStandardId],
-    queryFn: () => getStudentBookClassDetails({ studentStandardId }),
+    queryKey: ["book-class-details", studentStandardId, dummy.key],
+    queryFn: () => (dummy.enabled ? dummy.student.bookClassDetails() : getStudentBookClassDetails({ studentStandardId })),
     enabled: Boolean(studentStandardId) && gate?.details?.showAcademicYearValidation !== "Y",
     staleTime: 0,
   });

@@ -299,6 +299,7 @@ export function Stage1StudentDetails({ context, userId, initialFields, onNext })
             searchable
           />
           <DatePicker
+            height="h-12"
             icon={Cake}
             label={<Req label={
                 <>

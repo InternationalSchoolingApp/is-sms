@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getStudentDashboardDetails, getStudentDashboardOrMigration } from "@/services/dashboardApi";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 
 /**
  * The two dashboard-orchestrator calls the legacy rendereDashboardContent()
@@ -12,16 +13,19 @@ import { getStudentDashboardDetails, getStudentDashboardOrMigration } from "@/se
  * backend response but intentionally not surfaced here — out of scope.
  */
 export function useStudentDashboardData({ schoolUUID, userId }) {
+  const dummy = useDummyStudent();
   const query = useQuery({
-    queryKey: ["student-dashboard-data", schoolUUID, userId],
+    queryKey: ["student-dashboard-data", schoolUUID, userId, dummy.key],
     queryFn: async () => {
+      // Dummy (demo) student mode: legacy getDummyGradeKDashboardOrMigrationSection / Details (no popups).
+      if (dummy.enabled) return { migration: dummy.student.dashboardOrMigration(), details: dummy.student.dashboardDetails() };
       const [migration, details] = await Promise.all([
         getStudentDashboardOrMigration({ schoolUUID, userId }),
         getStudentDashboardDetails({ schoolUUID, userId }),
       ]);
       return { migration, details };
     },
-    enabled: Boolean(schoolUUID && userId),
+    enabled: Boolean(schoolUUID && userId && dummy.settled),
     staleTime: 5 * 60_000,
     refetchOnWindowFocus: false,
   });

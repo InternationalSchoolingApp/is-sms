@@ -138,6 +138,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           schoolUUID: response.schoolUUID,
           schoolNumericId: response.schoolNumericId,
           schoolName: credentials.schoolName || response.schoolName || "",
+          // USER.DEMO_USER — the legacy isDemoUser flag that switches the dashboard to dummy data.
+          demoUser: String(response.demoUser || "").toUpperCase() === "Y",
         };
       },
     }),
@@ -158,6 +160,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.schoolUUID = user.schoolUUID;
         token.schoolNumericId = user.schoolNumericId;
         token.schoolName = user.schoolName;
+        token.demoUser = Boolean(user.demoUser);
       }
       return token;
     },
@@ -172,6 +175,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.schoolUUID = token.schoolUUID;
       session.schoolNumericId = token.schoolNumericId;
       session.schoolName = token.schoolName;
+      session.demoUser = Boolean(token.demoUser);
       return session;
     },
   },

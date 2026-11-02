@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarModal } from "@/components/dashboard/calendar/CalendarModal";
 import { getAssignedTeachersForAllCourses } from "@/services/bookClassApi";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 
 /**
  * "All Courses" card (subjectId 0: some elementary standards and SSP) — legacy
@@ -12,9 +13,10 @@ import { getAssignedTeachersForAllCourses } from "@/services/bookClassApi";
  */
 export function AllCoursesPickerModal({ studentStandardId, onPick, onClose }) {
   const [subjectId, setSubjectId] = useState("");
+  const dummy = useDummyStudent();
   const { data, isLoading } = useQuery({
-    queryKey: ["book-class-all-courses", studentStandardId],
-    queryFn: () => getAssignedTeachersForAllCourses({ studentStandardId }),
+    queryKey: ["book-class-all-courses", studentStandardId, dummy.key],
+    queryFn: () => (dummy.enabled ? dummy.student.assignedTeachersForAllCourses() : getAssignedTeachersForAllCourses({ studentStandardId })),
     staleTime: 0,
   });
   const list = data?.studentSubjectList ?? [];

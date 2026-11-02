@@ -69,7 +69,8 @@ export function AnnouncementsPanel({ announcements, newCount, schoolUUID, userId
                       <span className="flex-shrink-0 rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">New</span>
                     )}
                   </div>
-                  <p className="mt-1 text-xs text-black/50">{formatRelativeAgo(item.createdDate)}</p>
+                  {/* Dummy-mode club announcements carry their own label ("upcoming", "last week"), as legacy timeAgo shows */}
+                  <p className="mt-1 text-xs text-black/50">{item.timeLabel || formatRelativeAgo(item.createdDate)}</p>
                   <button
                     type="button"
                     onClick={() => setSelected(item)}

@@ -18,7 +18,7 @@ import {
   getPayerCountryCodePromise,
   loadLocationGlobals,
 } from "@/utils/locationFinder";
-import { isDummyStudentMode, showDummyStripeCheckoutPage } from "@/utils/paymentGatewayChecks";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { expireSession } from "@/utils/logout";
 
 const STATUS_SUCCESS = "1";
@@ -42,6 +42,10 @@ const GENERIC_ERROR = "Something went wrong. Please check your connection and tr
  *   submitOffline
  *
  * `onPaid` runs when the paid-status poll reports SUCCESS.
+ *
+ * Dummy (demo) student mode — legacy showDummyBookSessionPaymentOptions / showDummyStripeCheckoutPage:
+ * start() opens the picker with Stripe + Airwallex only, and a gateway opens the dummy checkout page
+ * (`dummyGateway`, rendered by the cart) instead of calling the backend.
  */
 export function useCartCheckout({ context, onPaid }) {
   const [picker, setPicker] = useState(null);
@@ -50,7 +54,9 @@ export function useCartCheckout({ context, onPaid }) {
   const [processing, setProcessing] = useState(false);
   const [incomplete, setIncomplete] = useState(false);
   const [underReview, setUnderReview] = useState(false);
+  const [dummyGateway, setDummyGateway] = useState(null);
   const pollRef = useRef({ timer: null, count: 0 });
+  const dummy = useDummyStudent();
 
   useEffect(() => () => clearInterval(pollRef.current.timer), []);
 
@@ -67,6 +73,22 @@ export function useCartCheckout({ context, onPaid }) {
 
   async function start(userPaymentDetailsId) {
     if (preparing || !context) return;
+    if (dummy.enabled) {
+      const schoolName = context.schoolName || "International Schooling";
+      setPicker({
+        details: {
+          paymentOptions: [
+            { name: "STRIPE", label: "Option 1: Pay via Stripe", icon: "STRIPE.png" },
+            { name: "Airwallex", label: "Option 2: Pay via Airwallex", icon: "Airwallex.png" },
+          ],
+          payAmount: dummy.student.checkoutAmount(),
+          paymentLabel: `${schoolName} is trusted by the safest and most reputed payment gateways, banks and wallets`,
+        },
+        methods: [],
+        countryCode: "",
+      });
+      return;
+    }
     setPreparing(true);
     try {
       const checked = await checkCartPayment({ userPaymentDetailsId });
@@ -158,8 +180,9 @@ export function useCartCheckout({ context, onPaid }) {
   }
 
   async function launchGateway(gateway) {
-    if (isDummyStudentMode()) {
-      showDummyStripeCheckoutPage();
+    if (dummy.enabled) {
+      setPicker(null);
+      setDummyGateway(gateway.name);
       return;
     }
     const details = picker.details;
@@ -262,5 +285,7 @@ export function useCartCheckout({ context, onPaid }) {
     dismissIncomplete: () => setIncomplete(false),
     underReview,
     dismissUnderReview: () => setUnderReview(false),
+    dummyGateway,
+    closeDummyCheckout: () => setDummyGateway(null),
   };
 }

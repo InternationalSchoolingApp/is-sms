@@ -11,9 +11,11 @@ import {
   getSchoolCurrency,
   removeCartItem,
 } from "@/services/cartApi";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 
 // Query keys shared by the plans page, the cart page and the header badge, so a
-// cart change refreshes all three.
+// cart change refreshes all three. Queries append the dummy-mode key, so these
+// stay prefixes for invalidation.
 export const CART_KEYS = {
   plans: (userId) => ["buy-extra-class", userId],
   count: (userId) => ["cart-count", userId],
@@ -21,32 +23,38 @@ export const CART_KEYS = {
   currency: (schoolId) => ["school-currency", schoolId],
 };
 
+// Dummy (demo) student mode: legacy getDummyBuyExtraClassResponse and the getDummy*Cart* handlers
+// (the cart is kept in localStorage, nothing reaches the backend).
+
 export function useBuyExtraClass(userId) {
+  const dummy = useDummyStudent();
   return useQuery({
-    queryKey: CART_KEYS.plans(userId),
-    queryFn: () => getBuyExtraClass(),
-    enabled: Boolean(userId),
+    queryKey: [...CART_KEYS.plans(userId), dummy.key],
+    queryFn: () => (dummy.enabled ? dummy.student.buyExtraClass() : getBuyExtraClass()),
+    enabled: Boolean(userId && dummy.settled),
     staleTime: 0,
   });
 }
 
 export function useCartDetails(userId) {
+  const dummy = useDummyStudent();
   return useQuery({
-    queryKey: CART_KEYS.details(userId),
-    queryFn: () => getCartDetails(),
-    enabled: Boolean(userId),
+    queryKey: [...CART_KEYS.details(userId), dummy.key],
+    queryFn: () => (dummy.enabled ? dummy.student.cartDetails() : getCartDetails()),
+    enabled: Boolean(userId && dummy.settled),
     staleTime: 0,
   });
 }
 
 export function useCartCount(userId) {
+  const dummy = useDummyStudent();
   return useQuery({
-    queryKey: CART_KEYS.count(userId),
+    queryKey: [...CART_KEYS.count(userId), dummy.key],
     queryFn: async () => {
-      const response = await getCartCount();
+      const response = dummy.enabled ? dummy.student.cartCount() : await getCartCount();
       return Number(response?.cartCount) || 0;
     },
-    enabled: Boolean(userId),
+    enabled: Boolean(userId && dummy.settled),
     refetchOnWindowFocus: false,
   });
 }
@@ -73,19 +81,32 @@ function useCartInvalidation(userId) {
 
 export function useAddPlanToCart(userId) {
   const invalidate = useCartInvalidation(userId);
-  return useMutation({ mutationFn: (plan) => addPlanToCart(plan), onSuccess: invalidate });
+  const dummy = useDummyStudent();
+  return useMutation({
+    mutationFn: async (plan) => (dummy.enabled ? dummy.student.addToCart(plan) : addPlanToCart(plan)),
+    onSuccess: invalidate,
+  });
 }
 
 export function useRemoveCartItem(userId) {
   const invalidate = useCartInvalidation(userId);
-  return useMutation({ mutationFn: (cartId) => removeCartItem({ cartId }), onSuccess: invalidate });
+  const dummy = useDummyStudent();
+  return useMutation({
+    mutationFn: async (cartId) => (dummy.enabled ? dummy.student.removeFromCart(cartId) : removeCartItem({ cartId })),
+    onSuccess: invalidate,
+  });
 }
 
 export function useApplyCartDiscount(userId) {
   const invalidate = useCartInvalidation(userId);
-  return useMutation({ mutationFn: (args) => applyCartDiscount(args), onSuccess: invalidate });
+  const dummy = useDummyStudent();
+  return useMutation({
+    mutationFn: async (args) => (dummy.enabled ? dummy.student.applyCartDiscount() : applyCartDiscount(args)),
+    onSuccess: invalidate,
+  });
 }
 
 export function useCreateCartPayment() {
-  return useMutation({ mutationFn: () => createCartPayment() });
+  const dummy = useDummyStudent();
+  return useMutation({ mutationFn: async () => (dummy.enabled ? dummy.student.cartPayment() : createCartPayment()) });
 }

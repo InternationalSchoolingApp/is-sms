@@ -73,6 +73,7 @@ export function ChangeGradeDialog({ open, onOpenChange, grades, courseProviderId
             searchable
           />
           <DatePicker
+            height="h-12"
             label={<Req label={
               <>Date of Birth{" "} <span className="text-black text-[12px]">(Month Day, Year)</span></>
             } required />}
