@@ -1,7 +1,12 @@
 import { signIn } from "@/auth";
 import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 import { addEnrollmentStepPath, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
-import { getBackendOverrideCookieName, isBackendOverrideAllowed } from "@/utils/backendOrigin";
+import {
+  detectOriginatingBackend,
+  getBackendOverrideCookieName,
+  isBackendOverrideAllowed,
+  parseBackendOrigin,
+} from "@/utils/backendOrigin";
 import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
 import { NextResponse } from "next/server";
 import { MODE_EMBED, MODE_SHARE, reEnrollmentBasePath } from "@/utils/reEnrollmentSteps";
@@ -76,32 +81,6 @@ function redirectTo(path, request) {
   return NextResponse.redirect(new URL(path, request.url), 303);
 }
 
-/**
- * UAT only: which backend instance actually issued this handoff. There is
- * no picker involved when a student lands on Login.jsp directly on one of
- * several UAT backends (see constant/UatBackendUrls.js) — the SSO redirect
- * URL itself carries no indication of which instance built it (every
- * instance points at the same single Next.js deployment). The Referer
- * header on this navigation is the only signal we get: the browser just
- * navigated here FROM that backend's own login page, and under the
- * default/modern "strict-origin-when-cross-origin" referrer policy a
- * same-or-upgraded-scheme cross-origin navigation still sends the
- * referrer's origin (not its full path). Returns "" when absent, not an
- * http(s) URL, or already same-origin as this app (nothing to override).
- */
-function detectOriginatingBackend(request) {
-  if (!isBackendOverrideAllowed()) return "";
-  const referer = request.headers.get("referer") || "";
-  try {
-    const refererUrl = new URL(referer);
-    if (!/^https?:$/.test(refererUrl.protocol)) return "";
-    if (refererUrl.origin === new URL(request.url).origin) return "";
-    return refererUrl.origin;
-  } catch {
-    return "";
-  }
-}
-
 async function handleSsoHandoff(request) {
   const url = new URL(request.url);
   const ssoToken = url.searchParams.get("token");
@@ -119,7 +98,11 @@ async function handleSsoHandoff(request) {
   const resume = url.searchParams.get("resume");
   const targetStep = VALID_STEPS.has(step) ? step : "1";
   const program = getLearningProgramRouteCode(url.searchParams.get("program")) || DEFAULT_PROGRAM;
-  const backendOverride = detectOriginatingBackend(request);
+  // getFinalEnrollmentUrl now appends this explicitly (same as ClientSignupStudentController's
+  // anonymous-signup redirect handled in proxy.js) — prefer it over the Referer-based guess, which
+  // is absent for a typed/bookmarked login page.
+  const backendParam = isBackendOverrideAllowed() ? parseBackendOrigin(url.searchParams.get("backend")) : "";
+  const backendOverride = backendParam || detectOriginatingBackend(request);
   // ae=Y means this student was enrolled by someone else (a parent adding a child),
   // so after the session is established the browser must land on the 3-step
   // /{school}/add-enrollment/{parentId}/{sessionUserId}/step/... wizard instead of the

@@ -40,7 +40,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
+/test-results/
+/playwright-report/
 # Graphify local/generated state
 graphify-out/cache/
 graphify-out/.graphify_ast.json
