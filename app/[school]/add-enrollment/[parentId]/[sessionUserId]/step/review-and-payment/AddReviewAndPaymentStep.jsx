@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { AddStage3ReviewPayment } from "@/components/add-enrollment/AddStage3ReviewPayment";
@@ -19,10 +20,35 @@ import { expireSession } from "@/utils/logout";
 export function AddReviewAndPaymentStep() {
   const router = useRouter();
   const { school, parentId, sessionUserId } = useParams();
-  const { context, ready, childUserId, childUniqueId, childRollNo, markCompleted } = useAddEnrollmentContext();
+  const { context, ready, childUserId, childUniqueId, childRollNo, markCompleted, refetchEnrollmentProcess } =
+    useAddEnrollmentContext();
   const { redirecting } = useAddWizardResume({ currentStep: 3, context, childUniqueId, ready });
 
-  if (!ready || redirecting) {
+  // enrollment/process is fetched once when the wizard starts, before a custom plan is attached, and its
+  // provider lives in the step layout — so arriving here from Step 2 without a browser reload would decide
+  // the fee layout from a stale customPaymentEnabled=false and render the ordinary payment plans for a
+  // custom-plan child. Re-ask once on entry, and hold the step until the answer is in.
+  // Held in a ref so `ready` is the only dependency: the effect must re-run on Strict Mode's second setup
+  // (which is why it carries no "already asked" guard — that would skip the re-run and never lift the
+  // loader), but must not re-run just because the refetch function is a new identity.
+  const [processFresh, setProcessFresh] = useState(false);
+  const refetchRef = useRef(refetchEnrollmentProcess);
+  useEffect(() => {
+    refetchRef.current = refetchEnrollmentProcess;
+  });
+  useEffect(() => {
+    if (!ready) return undefined;
+    let cancelled = false;
+    // A failed refetch still lifts the loader — the step then renders from the value already in hand.
+    Promise.resolve(refetchRef.current()).finally(() => {
+      if (!cancelled) setProcessFresh(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [ready]);
+
+  if (!ready || redirecting || !processFresh) {
     return <FullScreenLoader />;
   }
 

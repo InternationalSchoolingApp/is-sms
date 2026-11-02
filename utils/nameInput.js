@@ -30,12 +30,22 @@ export function sanitizeName(value) {
   return (value ?? "").replace(/[^\p{L}\p{M} ]/gu, "");
 }
 
+// Same limit the backend enforces on save-student-details / save-parent-details (SignupStudentUtil
+// SIGNUP_NAME_MAX_LENGTH) and the name columns are sized for (63_7_0_SIGNUP_NAME_LENGTH_100.sql).
+export const NAME_MAX_LENGTH = 100;
+
+export function isNameTooLong(value) {
+  return (value ?? "").trim().length > NAME_MAX_LENGTH;
+}
+
 // Spread onto a name input; `setValue` receives the sanitized string.
 export function nameFieldProps(setValue) {
   return {
+    maxLength: NAME_MAX_LENGTH,
     onKeyDown: (e) => {
       if (!isNameKeyAllowed(e)) e.preventDefault();
     },
-    onChange: (e) => setValue(sanitizeName(e.target.value)),
+    // maxLength doesn't reliably cap browser autofill, so trim here as well.
+    onChange: (e) => setValue(sanitizeName(e.target.value).slice(0, NAME_MAX_LENGTH)),
   };
 }
