@@ -14,7 +14,7 @@ import { getIpLocation } from "@/services/ipLocationClientApi";
  * loadLocationGlobals() fills them from POST {school}/api/v1/common-script-variables
  * (what getCommonCustomScript() calls). The `#location` hidden input the legacy code
  * keeps the resolved location in is the module-level `location` string here.
- */
+ */ 
 let LOCATION_SERVICE_BYPASS;
 let DEFAULT_LOCATION;
 let loaded = false;
