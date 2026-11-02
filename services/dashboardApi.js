@@ -628,3 +628,59 @@ export async function getStudentAttendanceFull({ schoolUUID, userId }) {
     return null;
   }
 }
+
+/**
+ * Course Extension ("Academic Year Extension", sidebar segment academic-year-extention) — legacy
+ * studentAcademicYearExtention.js. POST /{schoolUUID}/dashboard/academic-year-extention with
+ * {userId, studentUserId}. The backend leaves status "0" on success and on every blocked case
+ * (statusCode E003..E008 + message, no details); status "3" = session out. Response.details:
+ * StudentAcademicYearExtensionDetailsDTO { message, courses: [{ subjectId, imgURl, bgColor,
+ * subjectIcon, subjectName, standardName, courseType }] }.
+ */
+export async function getAcademicYearExtension({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/academic-year-extention", { userId: userId + "", studentUserId: userId + "" });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * One course of the extension list — POST /dashboard/academic-year-extention-proceed with
+ * {userId, studentUserId, subjectId}. Response.details: { extension1Status "Yes"|"No",
+ * extraSubjStatus, academicYearExtension: AcademicYearExtentionDTO { subjectId, subjectName, imgURl,
+ * bgColor, extentionAvailStatus, currentExtentionType, extension2CanTakeStatus, extensionCount,
+ * extentionCost, studentStandardId } }.
+ */
+export async function getAcademicYearExtensionProceed({ schoolUUID, userId, subjectId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId || !subjectId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/academic-year-extention-proceed", {
+      userId: userId + "",
+      studentUserId: userId + "",
+      subjectId: subjectId + "",
+    });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Avail an extension — POST /dashboard/academic-year-extention-avail with {studentStandardId,
+ * currentExtentionType "EXTENSION-1"|"EXTENSION-2", subjectId, userId}. statusCode "1" = ok;
+ * Response.details: { userPaymentDetailsId (EXTENSION-2: the EXTENSION_FEE payment to pay), message }.
+ */
+export async function availAcademicYearExtension({ schoolUUID, userId, studentStandardId, subjectId, currentExtentionType }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/academic-year-extention-avail", {
+      studentStandardId,
+      currentExtentionType,
+      subjectId,
+      userId,
+    });
+  } catch {
+    return null;
+  }
+}
