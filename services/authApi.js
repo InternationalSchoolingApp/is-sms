@@ -32,8 +32,13 @@ import { getHash, getSystemTimezone } from "@/utils/common";
  *   happens to be configured to. Falls back to resolveServerBackendOrigin()
  *   (the cookie/env chain) when absent, same as every other caller.
  * @returns {Promise<{status: string, uniqueId?: string, userId?: number,
- *   userLoginHash?: string, schoolUUID?: string, schoolNumericId?: number,
- *   schoolName?: string, message?: string}|null>}
+ *   studentUserId?: number, userLoginHash?: string, schoolUUID?: string,
+ *   schoolNumericId?: number, schoolName?: string, message?: string}|null>}
+ *   `studentUserId` is the Integer User.id of the token's owner — currently
+ *   always equal to `userId` (both are `user.getId()` server-side); kept as
+ *   a separate field since some callers need the numeric id specifically
+ *   (e.g. add-enrollment's enrollAnotherChild) rather than the uniqueId
+ *   UUID string.
  */
 export async function exchangeSsoToken(schoolUUID, ssoToken, backendOverride) {
   const baseUrl = (isBackendOverrideAllowed() && backendOverride) || (await resolveServerBackendOrigin());

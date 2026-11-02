@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useParams, useRouter, useSelectedLayoutSegment } from "next/navigation";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { loadAddEnrollmentChildUniqueId, loadAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
+import { NotMappedModal } from "@/components/add-enrollment/NotMappedModal";
 import { AddEnrollmentWizardShell, WIZARD_STEP_META } from "@/components/add-enrollment/AddEnrollmentWizardShell";
 import { AddEnrollmentProvider, useAddEnrollmentContext } from "@/hooks/add-enrollment/useAddEnrollmentContext";
 import { useBackendSessionGuard } from "@/hooks/useBackendSessionGuard";
@@ -31,7 +32,7 @@ function AddWizardFrame({ children }) {
   const router = useRouter();
   const { school, parentId, sessionUserId } = useParams();
   const segment = useSelectedLayoutSegment();
-  const { status, session, context, logoUrl, rootcss, ready, isError, completed, childUniqueId, childRollNo } =
+  const { status, session, context, logoUrl, rootcss, ready, isError, notMapped, completed, childUniqueId, childRollNo } =
     useAddEnrollmentContext();
 
   useEffect(() => {
@@ -65,6 +66,9 @@ function AddWizardFrame({ children }) {
     return () => window.removeEventListener("pageshow", onPageShow);
   }, []);
 
+  if (notMapped) {
+    return <NotMappedModal onLogout={() => logoutEverywhere(session)} />;
+  }
   if (isError) {
     return <FullScreenLoader message="Something went wrong. Please refresh the page." />;
   }

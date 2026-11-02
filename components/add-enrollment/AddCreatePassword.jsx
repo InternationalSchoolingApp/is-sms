@@ -43,8 +43,11 @@ export function AddCreatePassword({ schoolUUID }) {
   const strength = getPasswordStrength(password, confirm);
   const untouched = !password;
 
-  // ChangePassword.jsp's logout(): clear client storage, then hit the Java logout endpoint (UNIQUEUUID "111" when
-  // there is none), which ends the Java session and lands on the login page. Falls back to the login page itself.
+  // ChangePassword.jsp's logout(): clear client storage, then hit the Java logout endpoint (the new
+  // student's own studentUserId — the backend doesn't actually resolve identity from this path segment,
+  // see services/studentSignupBackendApi.js's postPayload comment, but target.userId is the real value
+  // on hand, not a placeholder), which ends the Java session and lands on the login page. Falls back to
+  // the login page itself.
   const goToLogin = async (credentials) => {
     try {
       localStorage.clear();
@@ -54,7 +57,7 @@ export function AddCreatePassword({ schoolUUID }) {
       /* no Next.js session to drop */
     }
     const backend = resolveBackendNavigationOrigin();
-    const url = backend ? `${backend}/${schoolUUID}/common/logout/111` : loginPageUrl(schoolUUID);
+    const url = backend ? `${backend}/${schoolUUID}/common/logout/${target?.userId ?? ""}` : loginPageUrl(schoolUUID);
     window.location.assign(withLoginPayload(url, credentials?.email, credentials?.password));
   };
 

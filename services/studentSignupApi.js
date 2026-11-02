@@ -29,9 +29,11 @@ async function parseJsonResponse(response) {
 // ClientSignupStudentController.getEnrollmentProcess(): resolves the saved
 // enrollment stage and custom-payment override — used by
 // hooks/useEnrollmentContext.js, the context hook every Stage1-4 step page
-// shares, not just StudentDetailsStep.jsx.
-export async function getEnrollmentProcess(schoolUUID, uniqueId) {
-  const response = await fetch(await backendUrl(schoolUUID, `api/v1/student/enrollment/process/${encodeURIComponent(uniqueId)}`));
+// shares, not just StudentDetailsStep.jsx. Path segment is the Integer
+// studentUserId (the logged-in student's own id, from session.studentUserId)
+// — previously the UUID uniqueId; the backend endpoint now resolves by id.
+export async function getEnrollmentProcess(schoolUUID, studentUserId) {
+  const response = await fetch(await backendUrl(schoolUUID, `api/v1/student/enrollment/process/${encodeURIComponent(studentUserId)}`));
   return parseJsonResponse(response);
 }
 

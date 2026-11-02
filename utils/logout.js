@@ -29,8 +29,8 @@ export async function logoutEverywhere(session, credentials) {
   window.__loggingOut = true;
   await signOut({ redirect: false });
   const backend = resolveBackendNavigationOrigin();
-  if (session?.schoolUUID && session?.uniqueId && backend) {
-    const logoutUrl = `${backend}/${session.schoolUUID}/common/logout/${encodeURIComponent(session.uniqueId)}`;
+  if (session?.schoolUUID && session?.studentUserId && backend) {
+    const logoutUrl = `${backend}/${session.schoolUUID}/common/logout/${encodeURIComponent(session.studentUserId)}`;
     window.location.assign(withLoginPayload(logoutUrl, credentials?.email, credentials?.password));
     return;
   }

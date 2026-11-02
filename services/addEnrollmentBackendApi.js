@@ -52,20 +52,21 @@ async function postPayload(schoolUUID, path, data) {
  * {schoolId}/api/v1/enroll/another/child):
  * resolves the parent's already-partially-enrolled child if one exists
  * (resume, no new row) or creates a new child user skeleton (new enrollment).
- * parentId (numeric parent id) and sessionUserId (the UNIQUEUUID of the
- * logged-in caller — the parent themselves, or a sibling student) travel in
- * the Base64 request payload, NOT as URL path segments. Response data:
+ * parentId (numeric parent id) and sessionUserId (the Integer studentUserId of
+ * the logged-in caller — the parent themselves, or a sibling student — from
+ * the sso-token exchange response, see auth.js/session.studentUserId) travel
+ * in the Base64 request payload, NOT as URL path segments. Response data:
  * {schoolId, schoolUUID, signupPage, userId, uniqueId} — signupPage is the
  * resume step (1/2/3), userId/uniqueId identify the child being enrolled,
  * NOT the caller. Safe to call on every add-enrollment wizard mount/refresh —
  * a parent with an in-progress child always resumes the same one.
  */
-export async function enrollAnotherChild(schoolUUID, parentId, sessionUserUniqueId, rollNo = "", allowCreate = true) {
+export async function enrollAnotherChild(schoolUUID, parentId, sessionUserStudentId, rollNo = "", allowCreate = true) {
   return postPayload(schoolUUID, "api/v1/enroll/another/child", {
     // false on a reload of the wizard: the backend then never reserves a new child (resumes / returns the paid one)
     allowCreate,
     parentId: Number(parentId),
-    sessionUserId: sessionUserUniqueId,
+    sessionUserId: sessionUserStudentId,
     // roll number the previous call returned for this parent's child ("" on the very first call)
     rollNo: rollNo || "",
     // the key the backend actually reads: a roll number that is already paid comes back as S003 instead of a new child
@@ -88,9 +89,12 @@ export async function saveAnotherChildStudentDetails(schoolUUID, request) {
 /**
  * Details for the Add Another Student thank-you page. The endpoint path is a
  * placeholder until the backend one is final — change it here only.
- * parentId + sessionUserId (the caller's UNIQUEUUID) travel in the Base64
- * payload like enrollAnotherChild; childUniqueId (optional) names the child that
- * just finished. Must NOT go through enrollAnotherChild: for a finished child that
+ * parentId + sessionUserId (the caller's Integer userId) + sessionUniqueId
+ * (the caller's Integer studentUserId, a same-session re-confirmation check
+ * against sessionUserId — see auth.js/session.studentUserId) travel in the
+ * Base64 payload; childUniqueId (optional, the child's UUID — the backend has
+ * no Integer id for the child via this path) names the child that just
+ * finished. Must NOT go through enrollAnotherChild: for a finished child that
  * call would create a brand-new skeleton child.
  */
 export async function getAddEnrollmentThankYou(schoolUUID, { parentId, sessionUserId, sessionUniqueId, studentRollNumber, childUniqueId }) {
@@ -108,10 +112,13 @@ export async function getAddEnrollmentThankYou(schoolUUID, { parentId, sessionUs
  * enrollment/process for the Add Another Student wizard. Same endpoint as the main flow's
  * getEnrollmentProcess, plus ?from=add-enrollment so the backend answers a completed/withdrawn child with
  * statusCode REDIRECT_TO_DASHBOOARD. The main flow never sends the param, so its answer is unchanged.
+ * Path segment is the Integer studentUserId — here, the CHILD's own numeric id (childUserId from
+ * enrollAnotherChild's response), NOT the caller's session id: this call asks about the child's enrollment,
+ * not the caller's.
  */
-export async function getAddEnrollmentProcess(schoolUUID, uniqueId) {
+export async function getAddEnrollmentProcess(schoolUUID, studentUserId) {
   const response = await fetch(
-    `${await backendUrl(schoolUUID, `api/v1/student/enrollment/process/${encodeURIComponent(uniqueId)}`)}?from=add-enrollment`
+    `${await backendUrl(schoolUUID, `api/v1/student/enrollment/process/${encodeURIComponent(studentUserId)}`)}?from=add-enrollment`
   );
   return parseJsonResponse(response);
 }

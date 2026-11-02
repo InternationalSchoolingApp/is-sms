@@ -29,9 +29,11 @@ import { createContext, useContext, useEffect, useState } from "react";
  * process -> customPaymentEnabled/signupType, payer-location capture, learning
  * program from the saved student) with ONE difference: the student being
  * enrolled is NOT the logged-in session user.
- *   - session.userId/uniqueId -> the CALLER (the parent themselves, or a
- *                         sibling student adding a brother/sister) — only used
- *                         to call enrollAnotherChild.
+ *   - session.userId/uniqueId/studentUserId -> the CALLER (the parent
+ *                         themselves, or a sibling student adding a
+ *                         brother/sister) — used to call enrollAnotherChild
+ *                         (studentUserId, the Integer User.id) and
+ *                         getAddEnrollmentThankYou (userId + studentUserId).
  *   - childUserId/childUniqueId -> the child actually being enrolled, read
  *                         from enrollAnotherChild()'s response (and replaced by
  *                         the save response after Stage 1), never from the
@@ -68,6 +70,16 @@ function useResolveAddEnrollmentContext() {
   const [whatsAppNumber, setWhatsAppNumber] = useState(undefined);
   const authenticated =
     status === "authenticated" && Boolean(session?.userId && session?.schoolUUID && session?.uniqueId);
+  // Caller's Integer User.id. session.userId is the same value (both are user.getId() server-side), so a session
+  // created before studentUserId was added to the token still works instead of sending an empty sessionUserId.
+  const callerUserId = session?.studentUserId ?? session?.userId;
+  // The {sessionUserId} URL segment must be the logged-in caller's own id (older links carried the caller's UUID
+  // there, which is accepted too). Anything else (an edited URL) is rejected before any API call; the backend
+  // separately checks that this caller belongs to {parentId}.
+  const urlUserMismatch =
+    status === "authenticated" &&
+    String(sessionUserId ?? "") !== String(callerUserId ?? "") &&
+    String(sessionUserId ?? "") !== String(session?.uniqueId ?? "");
 
   // Refresh guard: before enrollAnotherChild (which could reserve a brand-new child), ask the thank-you details API
   // about the child this tab was enrolling (uniqueId + roll number kept in sessionStorage). It answers status "1"
@@ -96,7 +108,7 @@ function useResolveAddEnrollmentContext() {
       const res = await getAddEnrollmentThankYou(session.schoolUUID, {
         parentId,
         sessionUserId: session.userId,
-        sessionUniqueId: session.uniqueId,
+        sessionUniqueId: callerUserId,
         studentRollNumber: storedRollNo,
         childUniqueId: storedUniqueId,
       });
@@ -104,7 +116,7 @@ function useResolveAddEnrollmentContext() {
       console.log("[add-enrollment] paidCheck", { storedUniqueId, storedRollNo, message: res?.message, status: res?.status, isFirstPayment: res?.data?.isFirstPayment });
       return { storedUniqueId, paid: res?.status === "1" && isFirstPayment(res.data) };
     },
-    enabled: Boolean(authenticated && parentId),
+    enabled: Boolean(authenticated && parentId && !urlUserMismatch),
     staleTime: Infinity,
     gcTime: Infinity,
     refetchOnWindowFocus: false,
@@ -113,12 +125,12 @@ function useResolveAddEnrollmentContext() {
   const paidBeforeEnroll = paidCheck.data?.paid === true;
 
   const enrollChild = useQuery({
-    queryKey: ["add-enrollment-child", session?.schoolUUID, parentId, session?.uniqueId],
+    queryKey: ["add-enrollment-child", session?.schoolUUID, parentId, callerUserId],
     queryFn: async () => {
       const response = await enrollAnotherChild(
         session.schoolUUID,
         parentId,
-        session.uniqueId,
+        callerUserId,
         // On a refresh childData is still empty, so fall back to the roll number kept in sessionStorage: the
         // backend answers S003 (already paid) for it instead of reserving a brand-new child.
         childData?.rollNo || loadAddEnrollmentRollNo(session.schoolUUID, parentId),
@@ -129,7 +141,7 @@ function useResolveAddEnrollmentContext() {
       // TEMP-DEBUG: what refresh sent and what the backend answered (S003 = already paid, S002 = resumed, S001/other = new)
       console.log("[add-enrollment] enroll/another/child", {
         sentRollNo: childData?.rollNo || loadAddEnrollmentRollNo(session.schoolUUID, parentId),
-        sessionUniqueId: session.uniqueId,
+        sessionStudentUserId: callerUserId,
         statusCode: response?.statusCode,
         message: response?.message,
         response,
@@ -137,7 +149,7 @@ function useResolveAddEnrollmentContext() {
       saveAddEnrollmentRollNo(session.schoolUUID, parentId, response?.data?.rollNo);
       return response;
     },
-    enabled: Boolean(authenticated && parentId && paidCheck.isFetched && !paidBeforeEnroll),
+    enabled: Boolean(authenticated && parentId && !urlUserMismatch && paidCheck.isFetched && !paidBeforeEnroll),
     staleTime: Infinity,
     gcTime: Infinity,
     refetchOnWindowFocus: false,
@@ -168,16 +180,17 @@ function useResolveAddEnrollmentContext() {
   });
 
   // customPaymentEnabled / signupType / REDIRECT for the child, like the main context does for
-  // the logged-in student (student/enrollment/process keyed by the student's own uniqueId).
+  // the logged-in student (student/enrollment/process keyed by the student's own numeric id — here,
+  // the CHILD's id, since the caller is managing someone else's enrollment).
   const enrollmentProcess = useQuery({
-    queryKey: ["add-enrollment-process", session?.schoolUUID, childUniqueId],
+    queryKey: ["add-enrollment-process", session?.schoolUUID, childUserId],
     queryFn: async () => {
-      const response = await getAddEnrollmentProcess(session.schoolUUID, childUniqueId);
+      const response = await getAddEnrollmentProcess(session.schoolUUID, childUserId);
       // TEMP-DEBUG: enrollment/process response (remove after checking statusCode / redirectTo)
-      console.log("[add-enrollment] enrollment/process response", { childUniqueId, response });
+      console.log("[add-enrollment] enrollment/process response", { childUserId, response });
       return response;
     },
-    enabled: Boolean(authenticated && childUniqueId),
+    enabled: Boolean(authenticated && childUserId),
     staleTime: Infinity,
     gcTime: Infinity,
     refetchOnWindowFocus: false,
@@ -216,7 +229,7 @@ function useResolveAddEnrollmentContext() {
       const res = await getAddEnrollmentThankYou(session.schoolUUID, {
         parentId,
         sessionUserId: session.userId,
-        sessionUniqueId: session.uniqueId,
+        sessionUniqueId: callerUserId,
         studentRollNumber: childRollNo || loadAddEnrollmentRollNo(session.schoolUUID, parentId),
         childUniqueId,
       });
@@ -336,7 +349,13 @@ function useResolveAddEnrollmentContext() {
     // remounts between steps. The review step re-asks before it decides which fee layout to render.
     refetchEnrollmentProcess: enrollmentProcess.refetch,
     // E005: a reload with nothing to resume and no paid child (only a fresh "Add child" entry may create one)
-    isError: enrollChild.isError || enrollChild.data?.statusCode === "E005" || processRedirect?.redirectTo === "login",
+    // The URL ids are not the caller's (edited URL), or the backend answered E006 (caller not mapped to this parent).
+    notMapped: urlUserMismatch || enrollChild.data?.statusCode === "E006",
+    isError:
+      urlUserMismatch ||
+      enrollChild.isError ||
+      (enrollChild.isFetched && !enrollChild.data?.data) ||
+      enrollChild.data?.statusCode === "E005" || processRedirect?.redirectTo === "login",
   };
 }
 

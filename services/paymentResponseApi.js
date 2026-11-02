@@ -3,8 +3,9 @@
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
 /**
- * JSON payment-response endpoints from PaymentResponseApiController.java.
- * Their shared base is /api/v1/{schoolId}/payment.
+ * JSON payment-response endpoints from PaymentResponseApiController.java:
+ * success at /api/v1/{schoolId}/common/{variant}, failure at
+ * /api/v1/{schoolId}/payment/response-failure/{customReference}.
  *
  * The response is the flattened set of model attributes the JSP reads —
  * `status` (SUCCESS/ERROR at the transport level), `responseStatus`
@@ -18,7 +19,7 @@ import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOri
  * as-is (the controller inspects them to decide which gateway's
  * paymentResponseX() to run: pgReferneceForStripe, id +
  * pgReferneceForAirwallex, resourcePath + pgReferneceForAFS, pgReferneceForYoco
- * + yocoToken, pgRefernece, UNIQUEUUID, paymentGateway, ...). Callers pass the
+ * + yocoToken, pgRefernece, paymentGateway, ...). Callers pass the
  * page's raw searchParams straight through, so nothing is dropped.
  */
 
@@ -27,8 +28,16 @@ async function backendUrl(schoolUUID, path) {
   if (!hasBackendOrigin() || !schoolUUID) {
     throw new Error("A backend origin and a schoolUUID (from the URL) are required");
   }
-  return `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/payment/${path}`;
+  return `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/${path}`;
 }
+
+// The success variants the backend maps (one per frontend success page).
+const SUCCESS_ENDPOINTS = new Set([
+  "payment-response-success",
+  "other-payment-response-success",
+  "registration-payment-response-success",
+  "evaluation-payment-response-success",
+]);
 
 async function getJson(url) {
   const response = await fetch(url, { method: "GET" });
@@ -62,19 +71,21 @@ function buildQuery(paramsString) {
 }
 
 /**
- * All four frontend success variants use the API's response-success route.
+ * Success: /common/{endpointPath}, where endpointPath is the success page's own name
+ * (payment-response-success, other-payment-response-success, ...).
  */
 export async function getPaymentResponseSuccess(schoolUUID, endpointPath, paramsString) {
-  return getJson(`${await backendUrl(schoolUUID, endpointPath)}${buildQuery(paramsString)}`);
+  if (!SUCCESS_ENDPOINTS.has(endpointPath)) throw new Error(`Unknown payment success endpoint: ${endpointPath}`);
+  return getJson(`${await backendUrl(schoolUUID, `common/${endpointPath}`)}${buildQuery(paramsString)}`);
 }
 
 /**
- * Failure: /payment/response-failure/{customReference}/{UNIQUEUUID}.
- * customReference and UNIQUEUUID are PATH segments; everything else
- * (paymentGateway, token, gateway signature fields, ...) rides in the query.
+ * Failure: /payment/response-failure/{customReference}. customReference is a PATH
+ * segment; everything else (paymentGateway, token, gateway signature fields, ...)
+ * rides in the query.
  */
-export async function getPaymentResponseFailure(schoolUUID, customReference, uniqueUuid, paramsString) {
-  const path = `response-failure/${encodeURIComponent(customReference)}/${encodeURIComponent(uniqueUuid)}`;
+export async function getPaymentResponseFailure(schoolUUID, customReference, paramsString) {
+  const path = `payment/response-failure/${encodeURIComponent(customReference)}`;
   return getJson(`${await backendUrl(schoolUUID, path)}${buildQuery(paramsString)}`);
 }
 

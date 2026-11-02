@@ -76,6 +76,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // save-*-details endpoints, which cannot resolve the user from
           // uniqueId alone (confirmed at SignupStudentUtil.java:1606).
           userId: response.userId,
+          // The main (self) enrollment flow's "studentUserId" is just this same
+          // logged-in user's own id — LoginResponse has no separate field for
+          // it (unlike the sso-token exchange response), so mirror userId here.
+          studentUserId: response.userId,
           schoolUUID: credentials.schoolUUID,
           schoolNumericId: Number(credentials.schoolNumericId),
           schoolName: credentials.schoolName || "",
@@ -127,6 +131,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           userLoginHash: response.userLoginHash,
           redirectUrl: response.redirectUrl || "",
           userId: response.userId,
+          // Integer User.id of the SSO token's owner (currently equal to
+          // `userId` above — see services/authApi.js's exchangeSsoToken doc
+          // comment). Used where an endpoint needs the caller's numeric id
+          // instead of the uniqueId UUID string (e.g. add-enrollment's
+          // enrollAnotherChild).
+          studentUserId: response.studentUserId,
           schoolUUID: response.schoolUUID,
           schoolNumericId: response.schoolNumericId,
           schoolName: credentials.schoolName || response.schoolName || "",
@@ -145,6 +155,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.userLoginHash = user.userLoginHash;
         token.redirectUrl = user.redirectUrl;
         token.userId = user.userId;
+        token.studentUserId = user.studentUserId;
         token.schoolUUID = user.schoolUUID;
         token.schoolNumericId = user.schoolNumericId;
         token.schoolName = user.schoolName;
@@ -157,6 +168,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.userLoginHash = token.userLoginHash;
       session.redirectUrl = token.redirectUrl;
       session.userId = token.userId;
+      session.studentUserId = token.studentUserId;
       session.schoolUUID = token.schoolUUID;
       session.schoolNumericId = token.schoolNumericId;
       session.schoolName = token.schoolName;

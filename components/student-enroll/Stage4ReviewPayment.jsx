@@ -279,7 +279,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
   const gatewayOptions = usePaymentGatewayOptions({ context });
   const invokeGateway = useInvokePaymentGateway({ context });
   const airwallexMethods = useAirwallexPaymentMethods({ context });
-  const offlinePayment = useOfflinePayment({ context, uniqueId });
+  const offlinePayment = useOfflinePayment({ context, studentUserId: userId });
 
   const [notice, setNotice] = useState(null);
   const [flaggedModal, setFlaggedModal] = useState(null);

@@ -308,7 +308,7 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
   const gatewayOptions = usePaymentGatewayOptions({ context });
   const invokeGateway = useInvokePaymentGateway({ context });
   const airwallexMethods = useAirwallexPaymentMethods({ context });
-  const offlinePayment = useOfflinePayment({ context, uniqueId });
+  const offlinePayment = useOfflinePayment({ context, studentUserId: userId });
 
   const countryOptions = useAddCountryOptions(context);
   const [notice, setNotice] = useState(null);

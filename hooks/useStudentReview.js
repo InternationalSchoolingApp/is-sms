@@ -171,9 +171,9 @@ export function useAirwallexPaymentMethods({ context }) {
 }
 
 /** Cash / Wire Transfer: proof upload, then common/offline-payment (see PaymentGatewayPickerModal's OfflineForm). */
-export function useOfflinePayment({ context, uniqueId }) {
+export function useOfflinePayment({ context, studentUserId }) {
   return {
-    upload: (args) => uploadPaymentProof(context.schoolUUID, uniqueId, args),
-    submit: (request) => submitOfflinePayment(context.schoolUUID, uniqueId, request),
+    upload: (args) => uploadPaymentProof(context.schoolUUID, studentUserId, args),
+    submit: (request) => submitOfflinePayment(context.schoolUUID, studentUserId, request),
   };
 }

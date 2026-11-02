@@ -51,20 +51,18 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   const params = useParams();
   const searchParams = useSearchParams();
 
-  const customReference = params.customReference;
-
-  // Add Another Student: the return URL carries ae=Y (+ parentId, sessionUserId = the caller's UNIQUEUUID).
-  // On the path-based failure URL those arrive glued onto the UNIQUEUUID segment ("{uuid}&ae=Y&parentId=..").
-  const [uuidSegment, ...gluedParts] = decodeURIComponent(params.UNIQUEUUID ?? "").split("&");
+  // The backend appends the add-enrollment flags (ae=Y|N, parentId, sessionUserId) with "&" to every return URL.
+  // The failure URL has no "?", so on it they arrive glued onto the customReference segment ("{ref}&ae=Y&parentId=..").
+  const [customReferenceSegment, ...gluedParts] = decodeURIComponent(params.customReference ?? "").split("&");
+  const customReference = customReferenceSegment || undefined;
   const glued = new URLSearchParams(gluedParts.join("&"));
   const addEnrollmentParam = (key) => searchParams.get(key) || glued.get(key) || "";
   const isAddEnrollmentUrl = addEnrollmentParam("ae").toUpperCase() === "Y";
-  const uniqueUuid = isAddEnrollmentUrl ? uuidSegment : params.UNIQUEUUID;
   // TEMP DEBUG: what the URL gave us
   console.log("[add-enrollment] url flags", { ae: addEnrollmentParam("ae"), parentId: addEnrollmentParam("parentId"), sessionUserId: addEnrollmentParam("sessionUserId") });
   const addEnrollment =
     isAddEnrollmentUrl && addEnrollmentParam("parentId") && addEnrollmentParam("sessionUserId")
-      ? { parentId: addEnrollmentParam("parentId"), sessionUniqueId: addEnrollmentParam("sessionUserId"), childUniqueId: uniqueUuid }
+      ? { parentId: addEnrollmentParam("parentId"), sessionUniqueId: addEnrollmentParam("sessionUserId"), childUniqueId: addEnrollmentParam("childUniqueId") }
       : null;
   // replay=Y: the wizard found this child already paid (refresh / paid via the payment link) and sent the user
   // here WITHOUT gateway params, so there is nothing to verify — show the thank-you from the thank-you API.
@@ -90,7 +88,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       setLoading(true);
       const request =
         mode === "failure"
-          ? getPaymentResponseFailure(schoolUUID, customReference, uniqueUuid, search)
+          ? getPaymentResponseFailure(schoolUUID, customReference, search)
           : getPaymentResponseSuccess(schoolUUID, endpointPath, search);
 
       // TEMP-DEBUG: every API call this page makes is printed as "[payment-response] api …"
@@ -115,7 +113,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       cancelled = true;
       window.clearTimeout(requestTimer);
     };
-  }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, search, isReplay]);
+  }, [endpointPath, mode, schoolUUID, customReference, search, isReplay]);
 
   // No login session: send the visitor to the login page. Waits for the gateway verification call above to finish
   // first, so leaving the page never cuts off the backend confirming the payment.
@@ -395,6 +393,7 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
   // Normal enrollment: countdown + auto-redirect. Add Another Student: the account-setup section replaces the timer.
   // ALREADY_PAID for a logged-in user (normal enrollment) also gets the timer + auto-redirect.
   const { status: sessionStatus } = useSession();
+  const framed = useFramed();
   const alreadyPaidInSession =
     sessionStatus === "authenticated" &&
     (String(data.responseStatus ?? "") === "4" || String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID");
@@ -433,7 +432,7 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
         {showInlineLogin ? (
           <LoginDetails
             data={data.accountSetup || data}
-            sourceApi={data.accountSetup ? "api/v1/enroll/another/child/thank-you" : "api/v1/{schoolId}/payment/response-success"}
+            sourceApi={data.accountSetup ? "api/v1/enroll/another/child/thank-you" : "api/v1/{schoolId}/common/*payment-response-success"}
             fallbackName={data.userName}
             loginHref={loginPageUrl(schoolUUID)}
             schoolUUID={schoolUUID}
@@ -576,7 +575,7 @@ function LoginDetails({ data, sourceApi, fallbackName, loginHref, schoolUUID }) 
     try {
       await storeLoginPrefill();
       // The cookie above only reaches the Java login page on a shared parent domain; the payload covers the rest.
-      if (session?.uniqueId) await logoutEverywhere(session, { email, password });
+      if (session?.studentUserId) await logoutEverywhere(session, { email, password });
       else window.location.assign(withLoginPayload(loginHref, email, password));
     } catch {
       window.location.assign(withLoginPayload(loginHref, email, password));

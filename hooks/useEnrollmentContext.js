@@ -76,15 +76,15 @@ function useResolveEnrollmentContext() {
   const viaLegacyFlow = enrollmentViaNextjs.data === false;
 
   const enrollmentProcess = useQuery({
-    queryKey: ["enrollment-process", session?.schoolUUID, session?.uniqueId],
+    queryKey: ["enrollment-process", session?.schoolUUID, session?.studentUserId],
     queryFn: () => {
       recordApiAttempt(
         "getEnrollmentProcess",
-        `${session.schoolUUID}/api/v1/student/enrollment/process/${session.uniqueId}`
+        `${session.schoolUUID}/api/v1/student/enrollment/process/${session.studentUserId}`
       );
-      return getEnrollmentProcess(session.schoolUUID, session.uniqueId);
+      return getEnrollmentProcess(session.schoolUUID, session.studentUserId);
     },
-    enabled: Boolean(authenticated && session?.uniqueId && !viaLegacyFlow),
+    enabled: Boolean(authenticated && session?.studentUserId && !viaLegacyFlow),
     staleTime: Infinity,
     gcTime: Infinity,
     refetchOnWindowFocus: false,
