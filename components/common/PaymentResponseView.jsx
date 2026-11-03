@@ -134,28 +134,9 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
     (String(data.responseStatus ?? "") === "4" || String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID");
   const redirectToLogin =
     sessionStatus === "unauthenticated" && (isReplay || !loading) && (!shownWithoutLogin || copiedUrlWithoutSession);
-  // TEMP DEBUG [pay-debug]: every state change that feeds the login redirect
   useEffect(() => {
-    console.log("[pay-debug] view state", {
-      sessionStatus,
-      loading,
-      hasData: Boolean(data),
-      responseStatus: data?.responseStatus,
-      statusCode: data?.statusCode,
-      initiatedVia: data?.initiatedVia,
-      isReplay,
-      shownWithoutLogin,
-      copiedUrlWithoutSession,
-      redirectToLogin,
-      at: new Date().toISOString(),
-    });
-  }, [sessionStatus, loading, data, isReplay, shownWithoutLogin, copiedUrlWithoutSession, redirectToLogin]);
-  useEffect(() => {
-    if (redirectToLogin && !window.__loggingOut) {
-      console.log("[pay-debug] REDIRECTING TO LOGIN", { sessionStatus, loading, responseStatus: data?.responseStatus, url: window.location.href });
-      window.location.replace(loginPageUrl(schoolUUID));
-    }
-  }, [redirectToLogin, schoolUUID, sessionStatus, loading, data?.responseStatus]);
+    if (redirectToLogin && !window.__loggingOut) window.location.replace(loginPageUrl(schoolUUID));
+  }, [redirectToLogin, schoolUUID]);
 
   if (
     sessionStatus !== "authenticated" &&
