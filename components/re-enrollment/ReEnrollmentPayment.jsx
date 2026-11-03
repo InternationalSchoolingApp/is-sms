@@ -53,7 +53,7 @@ function PaymentScreen() {
   const fetchReview = useFetchReEnrollmentReview({ context, userId });
   const gateway = useReEnrollmentGateway({
     context,
-    uniqueId: session.uniqueId,
+    studentUserId: session.studentUserId,
     // Paid while this page was waiting on the gateway: the entry screen resumes at the right step.
     onPaid: () => window.location.assign(`${reEnrollmentBasePath(school, mode)}?resume=1`),
     onSessionExpired: () => expireSession(school),

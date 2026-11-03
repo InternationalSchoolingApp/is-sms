@@ -168,7 +168,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.userLoginHash = token.userLoginHash;
       session.redirectUrl = token.redirectUrl;
       session.userId = token.userId;
-      session.studentUserId = token.studentUserId;
+      // JWTs issued before studentUserId existed don't carry it; it equals userId (both user.getId() server-side).
+      session.studentUserId = token.studentUserId ?? token.userId;
       session.schoolUUID = token.schoolUUID;
       session.schoolNumericId = token.schoolNumericId;
       session.schoolName = token.schoolName;

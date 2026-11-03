@@ -164,15 +164,15 @@ export async function login(
  * logs a user out by mistake — only an explicit `false` from the backend does that.
  *
  * @param {string} schoolUUID
- * @param {string} uniqueId
+ * @param {string|number} studentUserId
  * @returns {Promise<boolean>}
  */
-export async function checkBackendSessionStatus(schoolUUID, uniqueId) {
+export async function checkBackendSessionStatus(schoolUUID, studentUserId) {
   const baseUrl = resolveBackendNavigationOrigin();
-  if (!baseUrl || !schoolUUID || !uniqueId) return true;
+  if (!baseUrl || !schoolUUID || !studentUserId) return true;
 
   try {
-    const response = await fetch(`${baseUrl}/${schoolUUID}/api/v1/common/session-status/${encodeURIComponent(uniqueId)}`, {
+    const response = await fetch(`${baseUrl}/${schoolUUID}/api/v1/common/session-status/${encodeURIComponent(studentUserId)}`, {
       method: "GET",
     });
     if (!response.ok) return true;

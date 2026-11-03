@@ -101,7 +101,6 @@ export function AccountCreationForm({ school, program, query, recaptchaSiteKey }
         moduleId: signupInfo.moduleId,
         captchaRandomNumber: signupInfo.captchaRandomNumber,
         username: signupInfo.username || "",
-        uniqueId: signupInfo.UNIQUEUUID,
         ras: signupInfo.ras,
         referralCode: signupInfo.referralCode || searchParams.get("referralCode") || "",
         signupType: signupInfo.signupType,

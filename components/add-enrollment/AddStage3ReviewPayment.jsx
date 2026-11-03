@@ -279,7 +279,7 @@ function buildPlanOptions(fee, currencyCode) {
  * called when the primary action button is pressed.
  */
 
-export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEnrollmentCompleted, onBack, onSessionExpired, onOfflineSignup }) {
+export function AddStage3ReviewPayment({ context, userId, rollNo, onEnrollmentCompleted, onBack, onSessionExpired, onOfflineSignup }) {
   const reviewQuery = useStudentReviewDetails({
     context,
     userId,
@@ -297,7 +297,7 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
   const customPlan = context.customPaymentEnabled === true || reviewQuery.data?.customPaymentEnabled === true;
   const stageStatus = useSignupStageStatusPoll({
     context,
-    uniqueId,
+    studentUserId: userId,
     // Custom plans always return the backend's SSO redirect from stage-status;
     // polling it here would send the user straight back into this page forever.
     enabled: reviewQuery.isSuccess && !customPlan,
@@ -816,10 +816,8 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
           <StudentInlineEdit
             context={context}
             userId={userId}
-            uniqueId={uniqueId}
             rollNo={rollNo}
             student={{ ...student, ...(isDualDiplomaProgram ? school : {}) }}
-            rollNo={rollNo}
             standardId={course?.standardId}
             onSaved={(fields) => finishEdit("student", fields)}
             onCancel={() => setEditing(null)}

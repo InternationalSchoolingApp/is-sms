@@ -14,7 +14,7 @@ export default async function  page({params}) {
 
   let response = null;
   try {
-    response = await getSignupStageStatus(session.schoolUUID, session.uniqueId);
+    response = await getSignupStageStatus(session.schoolUUID, session.studentUserId);
   } catch (err) {
     console.error("Enrollment stage status check failed:", err);
   }

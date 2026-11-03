@@ -47,11 +47,11 @@ const PAID_STATUS_MAX_CHECKS = 10;
  *   gateway.start(review);   // review: re-enrollment review response (paymentRequired = true)
  *   return <>... {gateway.modals}</>;
  */
-export function useReEnrollmentGateway({ context, uniqueId, onPaid, onSessionExpired }) {
+export function useReEnrollmentGateway({ context, studentUserId, onPaid, onSessionExpired }) {
   const gatewayOptions = usePaymentGatewayOptions({ context });
   const invokeGateway = useInvokePaymentGateway({ context });
   const airwallexMethods = useAirwallexPaymentMethods({ context });
-  const offlinePayment = useOfflinePayment({ context, uniqueId });
+  const offlinePayment = useOfflinePayment({ context, studentUserId });
 
   const [gatewayPicker, setGatewayPicker] = useState(null);
   const [launching, setLaunching] = useState(false);

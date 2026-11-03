@@ -171,8 +171,8 @@ export async function proceedToDashboard(schoolUUID, request) {
 }
 
 // --- Stage resume / polling ---
-export async function getSignupStageStatus(schoolUUID, uniqueId) {
-  return getPayload(schoolUUID, "student/enrollment-stage-status", { uniqueId });
+export async function getSignupStageStatus(schoolUUID, studentUserId) {
+  return getPayload(schoolUUID, "student/enrollment-stage-status", { studentUserId });
 }
 
 // --- Document upload ---

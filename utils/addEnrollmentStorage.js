@@ -81,23 +81,23 @@ export function loadAddEnrollmentRollNo(schoolUUID, parentId) {
   }
 }
 
-// The child being enrolled (uniqueId), kept in sessionStorage so a refresh can ask "is this child already paid?"
+// The child being enrolled (studentUserId), kept in sessionStorage so a refresh can ask "is this child already paid?"
 // BEFORE enrollAnotherChild runs (which could otherwise reserve a brand-new child).
-const CHILD_UNIQUE_ID_PREFIX = "is-sms:add-enrollment-child-unique-id:";
+const CHILD_USER_ID_PREFIX = "is-sms:add-enrollment-child-user-id:";
 
-export function saveAddEnrollmentChildUniqueId(schoolUUID, parentId, childUniqueId) {
-  if (typeof window === "undefined" || !schoolUUID || !parentId || !childUniqueId) return;
+export function saveAddEnrollmentChildUserId(schoolUUID, parentId, childUserId) {
+  if (typeof window === "undefined" || !schoolUUID || !parentId || !childUserId) return;
   try {
-    window.sessionStorage.setItem(`${CHILD_UNIQUE_ID_PREFIX}${schoolUUID}:${parentId}`, String(childUniqueId));
+    window.sessionStorage.setItem(`${CHILD_USER_ID_PREFIX}${schoolUUID}:${parentId}`, String(childUserId));
   } catch {
     // no-op — storage can throw in private browsing / blocked storage
   }
 }
 
-export function loadAddEnrollmentChildUniqueId(schoolUUID, parentId) {
+export function loadAddEnrollmentChildUserId(schoolUUID, parentId) {
   if (typeof window === "undefined" || !schoolUUID || !parentId) return "";
   try {
-    return window.sessionStorage.getItem(`${CHILD_UNIQUE_ID_PREFIX}${schoolUUID}:${parentId}`) || "";
+    return window.sessionStorage.getItem(`${CHILD_USER_ID_PREFIX}${schoolUUID}:${parentId}`) || "";
   } catch {
     return "";
   }
@@ -109,7 +109,7 @@ export function loadAddEnrollmentChildUniqueId(schoolUUID, parentId) {
 export function clearAddEnrollmentChildState(schoolUUID, parentId) {
   if (typeof window === "undefined" || !schoolUUID || !parentId) return;
   try {
-    window.sessionStorage.removeItem(`${CHILD_UNIQUE_ID_PREFIX}${schoolUUID}:${parentId}`);
+    window.sessionStorage.removeItem(`${CHILD_USER_ID_PREFIX}${schoolUUID}:${parentId}`);
     window.sessionStorage.removeItem(`${ROLL_NO_PREFIX}${schoolUUID}:${parentId}`);
   } catch {
     // no-op

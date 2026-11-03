@@ -96,9 +96,9 @@ function useResolveEnrollmentContext() {
   // Back doesn't bounce them straight into this page again.
   useEffect(() => {
     if (!viaLegacyFlow) return;
-    const legacyUrl = legacyEnrollmentProcessUrl(session?.schoolUUID, session?.uniqueId);
+    const legacyUrl = legacyEnrollmentProcessUrl(session?.schoolUUID, session?.studentUserId);
     if (legacyUrl) window.location.replace(legacyUrl);
-  }, [viaLegacyFlow, session?.schoolUUID, session?.uniqueId]);
+  }, [viaLegacyFlow, session?.schoolUUID, session?.studentUserId]);
 
   // enrollment/process answers {status:"REDIRECT"} once the student is past the wizard — e.g.
   // paid from the invoice link in another tab and then refreshed this page. "dashboard" carries
@@ -159,7 +159,7 @@ function useResolveEnrollmentContext() {
     };
   }, [session?.schoolUUID]);
 
-  const processReady = !session?.uniqueId || enrollmentProcess.isFetched;
+  const processReady = !session?.studentUserId || enrollmentProcess.isFetched;
   // Never report ready while the legacy redirect above is in flight — the wizard
   // would otherwise flash a step before the browser leaves the page.
   // Same for the post-enrollment redirect, so the step never fires its own calls
@@ -199,14 +199,14 @@ function useResolveEnrollmentContext() {
   // not just the review/payment screen) and polls enrollment-stage-status every 3 minutes.
   // Mounted once here instead of per-step so a student finishing enrollment+payment in one
   // browser (another device/tab, same account) gets this tab redirected automatically — the
-  // status is DB-authoritative per uniqueId (see SignupStudentUtil#signupStageStatus), not
+  // status is DB-authoritative per studentUserId (see SignupStudentUtil#signupStageStatus), not
   // tied to this browser's own session/cookies. Skipped for confirmed custom plans: their
   // stage-status redirectUri points back into this same wizard, not the dashboard, so polling
   // it would just bounce the student in a loop (same exception Stage 4 carved out before this
   // was centralized here).
   const stageStatus = useSignupStageStatusPoll({
     context,
-    uniqueId: session?.uniqueId,
+    studentUserId: session?.studentUserId,
     enabled: ready && !context?.customPaymentEnabled,
   });
   const stageStatusData = stageStatus.data;

@@ -13,16 +13,16 @@ import { expireSession } from "@/utils/logout";
 /**
  * Step 3 ("Review & Payment") of the Add Another Student wizard. Mirrors
  * app/[school]/enrollment/[program]/step/review-and-payment/ReviewAndPaymentStep.jsx,
- * but uses the CHILD's identity (childUserId/childUniqueId from Stage 1's
+ * but uses the CHILD's identity (childUserId from Stage 1's
  * save response, injected into the add-enrollment-child cache) instead of
- * the logged-in session's own userId/uniqueId.
+ * the logged-in session's own userId.
  */
 export function AddReviewAndPaymentStep() {
   const router = useRouter();
   const { school, parentId, sessionUserId } = useParams();
-  const { context, ready, childUserId, childUniqueId, childRollNo, markCompleted, refetchEnrollmentProcess } =
+  const { context, ready, childUserId, childRollNo, markCompleted, refetchEnrollmentProcess } =
     useAddEnrollmentContext();
-  const { redirecting } = useAddWizardResume({ currentStep: 3, context, childUniqueId, ready });
+  const { redirecting } = useAddWizardResume({ currentStep: 3, context, childUserId, ready });
 
   // enrollment/process is fetched once when the wizard starts, before a custom plan is attached, and its
   // provider lives in the step layout — so arriving here from Step 2 without a browser reload would decide
@@ -56,7 +56,6 @@ export function AddReviewAndPaymentStep() {
     <AddStage3ReviewPayment
       context={context}
       userId={childUserId}
-      uniqueId={childUniqueId}
       rollNo={childRollNo}
       // Backend says the enrollment is already complete (REDIRECT_TO_DASHBOOARD) -> thank-you view in place.
       onEnrollmentCompleted={markCompleted}

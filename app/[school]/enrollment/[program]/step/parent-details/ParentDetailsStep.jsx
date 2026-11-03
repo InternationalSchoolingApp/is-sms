@@ -23,7 +23,7 @@ export function ParentDetailsStep() {
   const router = useRouter();
   const { school, program } = useParams();
   const { session, context, ready } = useEnrollmentContext();
-  const { redirecting } = useWizardResume({ currentStep: 2, context, uniqueId: session?.uniqueId, ready });
+  const { redirecting } = useWizardResume({ currentStep: 2, context, studentUserId: session?.studentUserId, ready });
   const parentPrefill = useParentDetailsPrefill({ context, userId: session?.userId });
   // Same query the enrollment context already runs, so this is normally already cached.
   const studentPrefill = useStudentDetailsPrefill({ context: { schoolUUID: session?.schoolUUID }, userId: session?.userId });

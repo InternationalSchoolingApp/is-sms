@@ -114,7 +114,7 @@ function useSaveOutcome({ context, onSessionExpired }) {
   return { formError, setFormError, outcome, modal };
 }
 
-export function StudentInlineEdit({ context, userId, uniqueId, student, rollNo, standardId, onSaved, onCancel, onSessionExpired }) {
+export function StudentInlineEdit({ context, userId, student, rollNo, standardId, onSaved, onCancel, onSessionExpired }) {
   // The review payload keeps the grade on the course block when the student block lacks it.
   const [initial] = useState(() => {
     const mapped = mapSignupStudentToFields(student);
@@ -130,7 +130,7 @@ export function StudentInlineEdit({ context, userId, uniqueId, student, rollNo, 
 
   const grades = useAddGradeOptions(context, learningProgram);
   const countries = useAddCountryOptions(context);
-  const signup = useAddStudentDetailsSignup({ context, userId, uniqueId, countries: countries.data });
+  const signup = useAddStudentDetailsSignup({ context, userId, countries: countries.data });
   const { formError, setFormError, outcome, modal } = useSaveOutcome({ context, onSessionExpired });
 
   // The backend hands nationality back as a country NAME; the select is keyed by id — resolved

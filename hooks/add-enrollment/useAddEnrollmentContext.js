@@ -6,9 +6,9 @@ import { enrollAnotherChild, getAddEnrollmentProcess, getAddEnrollmentThankYou }
 import { getPublicSchoolInfo } from "@/services/studentSignupApi";
 import {
   clearAddEnrollmentChildState,
-  loadAddEnrollmentChildUniqueId,
+  loadAddEnrollmentChildUserId,
   loadAddEnrollmentRollNo,
-  saveAddEnrollmentChildUniqueId,
+  saveAddEnrollmentChildUserId,
   saveAddEnrollmentRollNo,
 } from "@/utils/addEnrollmentStorage";
 import { isFirstPayment, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
@@ -29,12 +29,12 @@ import { createContext, useContext, useEffect, useState } from "react";
  * process -> customPaymentEnabled/signupType, payer-location capture, learning
  * program from the saved student) with ONE difference: the student being
  * enrolled is NOT the logged-in session user.
- *   - session.userId/uniqueId/studentUserId -> the CALLER (the parent
+ *   - session.userId/studentUserId -> the CALLER (the parent
  *                         themselves, or a sibling student adding a
  *                         brother/sister) — used to call enrollAnotherChild
  *                         (studentUserId, the Integer User.id) and
  *                         getAddEnrollmentThankYou (userId + studentUserId).
- *   - childUserId/childUniqueId -> the child actually being enrolled, read
+ *   - childUserId -> the child actually being enrolled, read
  *                         from enrollAnotherChild()'s response (and replaced by
  *                         the save response after Stage 1), never from the
  *                         session. Everything the main context keys off
@@ -69,17 +69,13 @@ function useResolveAddEnrollmentContext() {
   const [rootcss, setRootcss] = useState("");
   const [whatsAppNumber, setWhatsAppNumber] = useState(undefined);
   const authenticated =
-    status === "authenticated" && Boolean(session?.userId && session?.schoolUUID && session?.uniqueId);
+    status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
   // Caller's Integer User.id. session.userId is the same value (both are user.getId() server-side), so a session
   // created before studentUserId was added to the token still works instead of sending an empty sessionUserId.
   const callerUserId = session?.studentUserId ?? session?.userId;
-  // The {sessionUserId} URL segment must be the logged-in caller's own id (older links carried the caller's UUID
-  // there, which is accepted too). Anything else (an edited URL) is rejected before any API call; the backend
-  // separately checks that this caller belongs to {parentId}.
-  const urlUserMismatch =
-    status === "authenticated" &&
-    String(sessionUserId ?? "") !== String(callerUserId ?? "") &&
-    String(sessionUserId ?? "") !== String(session?.uniqueId ?? "");
+  // The {sessionUserId} URL segment must be the logged-in caller's own id. Anything else (an edited URL) is
+  // rejected before any API call; the backend separately checks that this caller belongs to {parentId}.
+  const urlUserMismatch = status === "authenticated" && String(sessionUserId ?? "") !== String(callerUserId ?? "");
 
   // Refresh guard: before enrollAnotherChild (which could reserve a brand-new child), ask the thank-you details API
   // about the child this tab was enrolling (uniqueId + roll number kept in sessionStorage). It answers status "1"
@@ -92,11 +88,11 @@ function useResolveAddEnrollmentContext() {
       // A fresh start must not pick up a child remembered from an earlier run in this tab.
       if (isFreshEntry()) {
         clearAddEnrollmentChildState(session.schoolUUID, parentId);
-        return { storedUniqueId: "", paid: false };
+        return { storedUserId: "", paid: false };
       }
-      const storedUniqueId = loadAddEnrollmentChildUniqueId(session.schoolUUID, parentId);
+      const storedUserId = loadAddEnrollmentChildUserId(session.schoolUUID, parentId);
       const storedRollNo = loadAddEnrollmentRollNo(session.schoolUUID, parentId);
-      if (!storedUniqueId && !storedRollNo) return { storedUniqueId: "", paid: false };
+      if (!storedUserId && !storedRollNo) return { storedUserId: "", paid: false };
       // NOTE: enrollment/process's statusCode REDIRECT_TO_DASHBOOARD ("registration complete") used to be
       // trusted here directly, without the thank-you check below. Confirmed bug: a custom-plan child can be
       // marked REDIRECT_TO_DASHBOOARD before actually paying, which sent an unpaid child straight to the
@@ -110,11 +106,11 @@ function useResolveAddEnrollmentContext() {
         sessionUserId: session.userId,
         sessionUniqueId: callerUserId,
         studentRollNumber: storedRollNo,
-        childUniqueId: storedUniqueId,
+        childUserId: storedUserId,
       });
       // TEMP-DEBUG: which stored child the refresh checked and what the thank-you API said
-      console.log("[add-enrollment] paidCheck", { storedUniqueId, storedRollNo, message: res?.message, status: res?.status, isFirstPayment: res?.data?.isFirstPayment });
-      return { storedUniqueId, paid: res?.status === "1" && isFirstPayment(res.data) };
+      console.log("[add-enrollment] paidCheck", { storedUserId, storedRollNo, message: res?.message, status: res?.status, isFirstPayment: res?.data?.isFirstPayment });
+      return { storedUserId, paid: res?.status === "1" && isFirstPayment(res.data) };
     },
     enabled: Boolean(authenticated && parentId && !urlUserMismatch),
     staleTime: Infinity,
@@ -158,12 +154,11 @@ function useResolveAddEnrollmentContext() {
 
   const childData = enrollChild.data?.data;
   const childUserId = childData?.userId;
-  const childUniqueId = childData?.uniqueId;
   const childRollNo = childData?.rollNo;
 
   useEffect(() => {
-    saveAddEnrollmentChildUniqueId(session?.schoolUUID, parentId, childUniqueId);
-  }, [session?.schoolUUID, parentId, childUniqueId]);
+    saveAddEnrollmentChildUserId(session?.schoolUUID, parentId, childUserId);
+  }, [session?.schoolUUID, parentId, childUserId]);
 
   // The roll number shown as "Student Id" can arrive after the first enrollAnotherChild call (the Stage 1 save
   // swaps the child into this cache), so persist it whenever it changes, not only in that query's queryFn.
@@ -224,19 +219,19 @@ function useResolveAddEnrollmentContext() {
   const firstPaymentCheck = useQuery({
     // completedLocal is part of the key so a payment that completes in this tab re-asks the API instead of
     // reusing the "not paid yet" answer an earlier signal already cached under Infinity staleTime.
-    queryKey: ["add-enrollment-first-payment", session?.schoolUUID, parentId, childUniqueId, completedLocal],
+    queryKey: ["add-enrollment-first-payment", session?.schoolUUID, parentId, childUserId, completedLocal],
     queryFn: async () => {
       const res = await getAddEnrollmentThankYou(session.schoolUUID, {
         parentId,
         sessionUserId: session.userId,
         sessionUniqueId: callerUserId,
         studentRollNumber: childRollNo || loadAddEnrollmentRollNo(session.schoolUUID, parentId),
-        childUniqueId,
+        childUserId,
       });
-      console.log("[add-enrollment] first-payment check", { childUniqueId, status: res?.status, isFirstPayment: res?.data?.isFirstPayment });
+      console.log("[add-enrollment] first-payment check", { childUserId, status: res?.status, isFirstPayment: res?.data?.isFirstPayment });
       return res?.status === "1" && isFirstPayment(res.data);
     },
-    enabled: Boolean(authenticated && completionSignal && childUniqueId),
+    enabled: Boolean(authenticated && completionSignal && childUserId),
     staleTime: Infinity,
     gcTime: Infinity,
     refetchOnWindowFocus: false,
@@ -289,7 +284,7 @@ function useResolveAddEnrollmentContext() {
     };
   }, [session?.schoolUUID]);
 
-  const processReady = !childUniqueId || enrollmentProcess.isFetched;
+  const processReady = !childUserId || enrollmentProcess.isFetched;
   const ready =
     authenticated &&
     enrollChild.isFetched &&
@@ -337,8 +332,7 @@ function useResolveAddEnrollmentContext() {
     rootcss,
     ready,
     // Child identity — stage pages use these instead of session.userId/uniqueId.
-    childUserId,
-    childUniqueId: childUniqueId || (paidBeforeEnroll ? paidCheck.data.storedUniqueId : undefined),
+    childUserId: childUserId || (paidBeforeEnroll ? paidCheck.data.storedUserId : undefined),
     childRollNo,
     completed,
     // read straight off enrollment/process: `context` is null once the wizard has been replaced by the completed view

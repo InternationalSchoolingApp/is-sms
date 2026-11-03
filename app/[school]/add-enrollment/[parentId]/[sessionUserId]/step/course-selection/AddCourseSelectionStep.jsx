@@ -21,8 +21,8 @@ import { expireSession } from "@/utils/logout";
 export function AddCourseSelectionStep() {
   const router = useRouter();
   const { school, parentId, sessionUserId } = useParams();
-  const { context, ready, childUserId, childUniqueId } = useAddEnrollmentContext();
-  const { redirecting } = useAddWizardResume({ currentStep: 2, context, childUniqueId, ready });
+  const { context, ready, childUserId } = useAddEnrollmentContext();
+  const { redirecting } = useAddWizardResume({ currentStep: 2, context, childUserId, ready });
   const [standardId, setStandardId] = useState(null);
   const [hydrated, setHydrated] = useState(false);
 
@@ -40,7 +40,6 @@ export function AddCourseSelectionStep() {
     <AddStage2CourseSelection
       context={context}
       userId={childUserId}
-      uniqueId={childUniqueId}
       standardId={standardId}
       onNext={() => router.push(addEnrollmentStepPath(school, parentId, sessionUserId, 3))}
       onBack={() =>

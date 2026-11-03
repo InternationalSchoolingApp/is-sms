@@ -14,7 +14,7 @@ export function CourseSelectionStep() {
   const router = useRouter();
   const { school, program } = useParams();
   const { session, context, ready } = useEnrollmentContext();
-  const { redirecting } = useWizardResume({ currentStep: 3, context, uniqueId: session?.uniqueId, ready });
+  const { redirecting } = useWizardResume({ currentStep: 3, context, studentUserId: session?.studentUserId, ready });
   const [standardId, setStandardId] = useState(null);
   const [hydrated, setHydrated] = useState(false);
 

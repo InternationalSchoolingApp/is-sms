@@ -98,7 +98,7 @@ const STAGE_STATUS_POLL_MS = 30000;
  * `redirectUri` (window.location.replace) — this hook only fetches.
  */
 
-export function useSignupStageStatusPoll({ context, uniqueId, enabled = true }) {
+export function useSignupStageStatusPoll({ context, studentUserId, enabled = true }) {
   // First call only after one full interval, so a page refresh doesn't hit
   // enrollment-stage-status (resume uses enrollment/process' signupPage instead).
   const [armed, setArmed] = useState(false);
@@ -108,9 +108,9 @@ export function useSignupStageStatusPoll({ context, uniqueId, enabled = true }) 
     return () => clearTimeout(t);
   }, [enabled]);
   return useQuery({
-    queryKey: ["signup-stage-status", uniqueId],
-    queryFn: () => getSignupStageStatus(context.schoolUUID, uniqueId),
-    enabled: Boolean(context?.schoolUUID && uniqueId && enabled && armed),
+    queryKey: ["signup-stage-status", studentUserId],
+    queryFn: () => getSignupStageStatus(context.schoolUUID, studentUserId),
+    enabled: Boolean(context?.schoolUUID && studentUserId && enabled && armed),
     refetchInterval: STAGE_STATUS_POLL_MS,
     refetchOnWindowFocus: false,
     retry: false,

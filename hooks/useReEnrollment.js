@@ -71,9 +71,9 @@ function useResolveReEnrollment() {
   const leaveForDashboard = viaLegacyFlow || eligibility?.nextAction === "DASHBOARD";
   useEffect(() => {
     if (!leaveForDashboard) return;
-    const url = legacyDashboardUrl(session?.schoolUUID, session?.uniqueId);
+    const url = legacyDashboardUrl(session?.schoolUUID, session?.studentUserId);
     if (url) navigateTop(url);
-  }, [leaveForDashboard, session?.schoolUUID, session?.uniqueId]);
+  }, [leaveForDashboard, session?.schoolUUID, session?.studentUserId]);
 
   useEffect(() => {
     if (!session?.schoolNumericId) return;

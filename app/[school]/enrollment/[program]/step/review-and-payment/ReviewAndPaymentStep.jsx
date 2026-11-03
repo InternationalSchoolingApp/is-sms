@@ -22,7 +22,7 @@ export function ReviewAndPaymentStep() {
   const router = useRouter();
   const { school, program } = useParams();
   const { session, context, ready } = useEnrollmentContext();
-  const { redirecting } = useWizardResume({ currentStep: 4, context, uniqueId: session?.uniqueId, ready });
+  const { redirecting } = useWizardResume({ currentStep: 4, context, studentUserId: session?.studentUserId, ready });
 
   if (!ready || redirecting) {
     return <FullScreenLoader />;
@@ -32,7 +32,6 @@ export function ReviewAndPaymentStep() {
     <Stage4ReviewPayment
       context={context}
       userId={session.userId}
-      uniqueId={session.uniqueId}
       onBack={(step) => router.push(stepPath(school, program, step || 3))}
       onSessionExpired={() => expireSession(school)}
     />

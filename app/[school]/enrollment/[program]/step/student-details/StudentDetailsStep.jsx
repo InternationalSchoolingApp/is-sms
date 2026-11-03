@@ -34,7 +34,7 @@ export function StudentDetailsStep() {
   const router = useRouter();
   const { school, program } = useParams();
   const { session, context, ready } = useEnrollmentContext();
-  const { redirecting } = useWizardResume({ currentStep: 1, context, uniqueId: session?.uniqueId, ready });
+  const { redirecting } = useWizardResume({ currentStep: 1, context, studentUserId: session?.studentUserId, ready });
   const prefill = useStudentDetailsPrefill({ context, userId: session?.userId });
   const queryClient = useQueryClient();
   const [initialFields, setInitialFields] = useState(null);

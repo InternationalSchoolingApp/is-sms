@@ -38,7 +38,7 @@ function ReviewScreen() {
   const complete = useCompleteReEnrollment({ context, userId });
   const gateway = useReEnrollmentGateway({
     context,
-    uniqueId: session.uniqueId,
+    studentUserId: session.studentUserId,
     onPaid: () => window.location.assign(`${reEnrollmentBasePath(school, mode)}?resume=1`),
     onSessionExpired: () => expireSession(school),
   });
@@ -58,7 +58,7 @@ function ReviewScreen() {
         toast.error(response?.message || "Could not complete your re-enrollment. Please try again.");
       } else {
         setFinishing(true);
-        const url = legacyDashboardUrl(context.schoolUUID, session.uniqueId) || response.redirectUrl;
+        const url = legacyDashboardUrl(context.schoolUUID, session.studentUserId) || response.redirectUrl;
         if (url) navigateTop(url);
       }
     } catch (err) {

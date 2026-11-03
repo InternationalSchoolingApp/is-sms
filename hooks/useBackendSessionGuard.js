@@ -21,17 +21,17 @@ const CHECK_INTERVAL_MS = 60_000;
  * (expireSession -> signOut + redirect to the school's login page).
  */
 export function useBackendSessionGuard(schoolUUID, session, status) {
-  const uniqueId = session?.uniqueId;
+  const studentUserId = session?.studentUserId;
   const loggingOutRef = useRef(false);
 
   useEffect(() => {
-    if (status !== "authenticated" || !schoolUUID || !uniqueId) return;
+    if (status !== "authenticated" || !schoolUUID || !studentUserId) return;
 
     const checkOnce = async () => {
       if (loggingOutRef.current) return;
-      const stillValid = await checkBackendSessionStatus(schoolUUID, uniqueId);
+      const stillValid = await checkBackendSessionStatus(schoolUUID, studentUserId);
       // TEMP-DEBUG
-      console.log("[session-guard] backend session-status", { uniqueId, stillValid });
+      console.log("[session-guard] backend session-status", { studentUserId, stillValid });
       if (!stillValid && !loggingOutRef.current) {
         loggingOutRef.current = true;
         expireSession(schoolUUID);
@@ -51,5 +51,5 @@ export function useBackendSessionGuard(schoolUUID, session, status) {
       clearInterval(intervalId);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [schoolUUID, uniqueId, status]);
+  }, [schoolUUID, studentUserId, status]);
 }

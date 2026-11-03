@@ -20,7 +20,7 @@ export function PageTitle() {
   // the wizard's own refresh checks and without the roll number / allowCreate guard — created a new child on
   // each refresh (and sent the thank-you page to that new child instead of the paid one).
   const enrollChild = useQuery({
-    queryKey: ["add-enrollment-child", session?.schoolUUID, parentId, session?.uniqueId],
+    queryKey: ["add-enrollment-child", session?.schoolUUID, parentId, session?.studentUserId ?? session?.userId],
     // never called (enabled: false); if anything ever refetches this key through us, keep what is cached
     queryFn: ({ queryKey }) => queryClient.getQueryData(queryKey) ?? null,
     enabled: false,

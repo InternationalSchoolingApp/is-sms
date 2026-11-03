@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useParams, useRouter, useSelectedLayoutSegment } from "next/navigation";
 import { FullScreenLoader } from "@/components/common/Loader";
-import { loadAddEnrollmentChildUniqueId, loadAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
+import { loadAddEnrollmentChildUserId, loadAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
 import { NotMappedModal } from "@/components/add-enrollment/NotMappedModal";
 import { AddEnrollmentWizardShell, WIZARD_STEP_META } from "@/components/add-enrollment/AddEnrollmentWizardShell";
 import { AddEnrollmentProvider, useAddEnrollmentContext } from "@/hooks/add-enrollment/useAddEnrollmentContext";
@@ -32,7 +32,7 @@ function AddWizardFrame({ children }) {
   const router = useRouter();
   const { school, parentId, sessionUserId } = useParams();
   const segment = useSelectedLayoutSegment();
-  const { status, session, context, logoUrl, rootcss, ready, isError, notMapped, completed, childUniqueId, childRollNo } =
+  const { status, session, context, logoUrl, rootcss, ready, isError, notMapped, completed, childUserId, childRollNo } =
     useAddEnrollmentContext();
 
   useEffect(() => {
@@ -48,15 +48,15 @@ function AddWizardFrame({ children }) {
   // is the thank-you one and a refresh stays there instead of re-entering the wizard.
   useEffect(() => {
     if (!completed) return;
-    // Name the finished child explicitly: the thank-you API finds it by roll number / unique id.
+    // Name the finished child explicitly: the thank-you API finds it by roll number / user id.
     // The child the backend resolved for this load (S003 = the paid one) first, the remembered one as fallback.
     const rollNo = childRollNo || loadAddEnrollmentRollNo(session?.schoolUUID, parentId);
-    const uniqueId = childUniqueId || loadAddEnrollmentChildUniqueId(session?.schoolUUID, parentId);
+    const childId = childUserId || loadAddEnrollmentChildUserId(session?.schoolUUID, parentId);
     const query = new URLSearchParams({ ae: "Y", replay: "Y", parentId, sessionUserId });
     if (rollNo) query.set("rollNo", rollNo);
-    if (uniqueId) query.set("childUniqueId", uniqueId);
+    if (childId) query.set("childUserId", childId);
     router.replace(`/${school}/common/payment-response-success?${query.toString()}`);
-  }, [completed, router, school, parentId, sessionUserId, childRollNo, childUniqueId, session?.schoolUUID]);
+  }, [completed, router, school, parentId, sessionUserId, childRollNo, childUserId, session?.schoolUUID]);
 
   useEffect(() => {
     const onPageShow = (e) => {

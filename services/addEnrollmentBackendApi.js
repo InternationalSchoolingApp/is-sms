@@ -92,19 +92,18 @@ export async function saveAnotherChildStudentDetails(schoolUUID, request) {
  * parentId + sessionUserId (the caller's Integer userId) + sessionUniqueId
  * (the caller's Integer studentUserId, a same-session re-confirmation check
  * against sessionUserId — see auth.js/session.studentUserId) travel in the
- * Base64 payload; childUniqueId (optional, the child's UUID — the backend has
- * no Integer id for the child via this path) names the child that just
+ * Base64 payload; childUserId (optional, the child's Integer id) names the child that just
  * finished. Must NOT go through enrollAnotherChild: for a finished child that
  * call would create a brand-new skeleton child.
  */
-export async function getAddEnrollmentThankYou(schoolUUID, { parentId, sessionUserId, sessionUniqueId, studentRollNumber, childUniqueId }) {
+export async function getAddEnrollmentThankYou(schoolUUID, { parentId, sessionUserId, sessionUniqueId, studentRollNumber, childUserId }) {
   return postPayload(schoolUUID, "api/v1/enroll/another/child/thank-you", {
     parentId: Number(parentId),
     sessionUserId: String(sessionUserId),
     sessionUniqueId,
-    // roll number when the caller has it; else the backend finds the child by this unique id
+    // roll number when the caller has it; else the backend finds the child by this user id
     studentRollNumber: studentRollNumber || "",
-    childUniqueId: childUniqueId || "",
+    childUserId: childUserId || "",
   });
 }
 
