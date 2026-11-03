@@ -431,10 +431,10 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
           <SuccessBody data={data} />
         </div>
 
-        {showInlineLogin ? (
+         {showInlineLogin ? (
           <LoginDetails
             data={data.accountSetup || data}
-            sourceApi={data.accountSetup ? "api/v1/enroll/another/child/thank-you" : "api/v1/{schoolId}/payment/response-success"}
+            sourceApi={data.accountSetup ? "api/v1/enroll/another/child/thank-you" : "api/v1/{schoolId}/common/*payment-response-success"}
             fallbackName={data.userName}
             loginHref={loginPageUrl(schoolUUID)}
             schoolUUID={schoolUUID}
