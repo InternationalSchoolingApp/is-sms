@@ -35,6 +35,13 @@ export default async function proxy(request) {
   const path = request.nextUrl.pathname;
   const segments = path.split("/").filter(Boolean);
 
+  // Payment gateway return pages (full page loads, so no X-Account header). With several accounts in the
+  // browser getAccountSession() cannot tell whose page this is and answers "signed out", which sent the
+  // payer to login instead of the thank-you page. The Add Another Student return URL names its account:
+  // sessionUserId (query, or glued onto the path's UNIQUEUUID segment on the failure URL).
+  if (PAYMENT_RESPONSE_PATH.test(path)) return await paymentReturn(request, path);
+  if (segments.includes("common")) return NextResponse.next(); // matched only for the payment returns above
+
   // Pre-login landing page (/{school}/enrollment/{program} — exactly school/enrollment/program,
   // nothing after; the protected wizard below additionally has /step/...). A UAT backend can send a
   // brand-new/anonymous student straight here (ClientSignupStudentController#commonSignupContent,
@@ -127,6 +134,45 @@ export default async function proxy(request) {
   return response;
 }
 
+const PAYMENT_RESPONSE_PATH = /^(?:\/[^/]+)?\/common\/(?:[a-z-]*payment-response-(?:success|failure))(?:\/|$)/;
+
+async function paymentReturn(request, path) {
+  const accounts = heldAccounts(request.cookies);
+  const glued = new URLSearchParams(decodeURIComponent(path).split("&").slice(1).join("&"));
+  const named = request.nextUrl.searchParams.get("sessionUserId") || glued.get("sessionUserId");
+  const entry = isAccountId(named) ? accounts.find((a) => a.account === named) : accounts.length === 1 ? accounts[0] : null;
+  // TEMP DEBUG [pay-debug]: what the payment-return proxy saw
+  console.warn("[pay-debug] proxy return", { path, held: accounts.length, named: named || null, picked: entry?.account || null, hasRefresh: Boolean(entry?.refreshToken) });
+  if (!entry) return NextResponse.next();
+
+  // Renew an expired access token HERE: the page cannot persist renewed cookies (Server Components have a
+  // read-only cookie store) and the refresh token is one-time, so renewing in the page's own render used up the
+  // refresh token without saving the new one, and the next call found the login "ended" -> login page.
+  const backend = trustedBackend(entry.profile?.backend);
+  let accessToken = entry.accessToken;
+  let renewed = null;
+  try {
+    await verifyAccessToken(accessToken, backend);
+  } catch (err) {
+    console.warn("[pay-debug] proxy verify failed", { reason: err?.reason, message: err?.message });
+    if (!(err instanceof TokenError) || err.reason !== "expired" || !entry.refreshToken) return NextResponse.next();
+    renewed = await refreshTokens(backend, entry.profile?.schoolUUID, entry.refreshToken).catch((e) => {
+      console.warn("[pay-debug] proxy refresh threw", e?.message);
+      return null;
+    });
+    console.warn("[pay-debug] proxy refresh result", renewed === RENEWED_ELSEWHERE ? "renewed-elsewhere" : renewed ? "renewed" : "refused");
+    if (!renewed || renewed === RENEWED_ELSEWHERE) return NextResponse.next();
+    accessToken = renewed.accessToken;
+  }
+  const forwarded = new Headers(request.headers);
+  forwarded.delete(ACCOUNT_HEADER);
+  forwarded.set(ACCOUNT_HEADER, entry.account);
+  if (renewed) forwarded.set("cookie", replaceCookie(request.headers.get("cookie") || "", `__Host-ISX_AT_${entry.account}`, accessToken));
+  const response = NextResponse.next({ request: { headers: forwarded } });
+  if (renewed) writeAccount(response.cookies, entry.account, renewed);
+  return response;
+}
+
 function replaceCookie(header, name, value) {
   const parts = header.split(/;\s*/).filter((p) => p && !p.startsWith(`${name}=`));
   parts.push(`${name}=${value}`);
@@ -162,5 +208,7 @@ export const config = {
     "/:school/enrollment/:program",
     "/:school/enrollment/:program/step/:path*",
     "/:school/add-enrollment/:parentId/:sessionUserId/step/:path*",
+    "/common/:path*",
+    "/:school/common/:path*",
   ],
 };
