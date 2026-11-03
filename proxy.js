@@ -35,6 +35,13 @@ export default async function proxy(request) {
   const path = request.nextUrl.pathname;
   const segments = path.split("/").filter(Boolean);
 
+  // Payment gateway return pages (full page loads, so no X-Account header). With several accounts in the
+  // browser getAccountSession() cannot tell whose page this is and answers "signed out", which sent the
+  // payer to login instead of the thank-you page. The Add Another Student return URL names its account:
+  // sessionUserId (query, or glued onto the path's UNIQUEUUID segment on the failure URL).
+  if (PAYMENT_RESPONSE_PATH.test(path)) return paymentReturn(request, path);
+  if (segments.includes("common")) return NextResponse.next(); // matched only for the payment returns above
+
   // Pre-login landing page (/{school}/enrollment/{program} — exactly school/enrollment/program,
   // nothing after; the protected wizard below additionally has /step/...). A UAT backend can send a
   // brand-new/anonymous student straight here (ClientSignupStudentController#commonSignupContent,
@@ -127,6 +134,17 @@ export default async function proxy(request) {
   return response;
 }
 
+const PAYMENT_RESPONSE_PATH = /^(?:\/[^/]+)?\/common\/(?:[a-z-]*payment-response-(?:success|failure))(?:\/|$)/;
+
+function paymentReturn(request, path) {
+  const glued = new URLSearchParams(decodeURIComponent(path).split("&").slice(1).join("&"));
+  const named = request.nextUrl.searchParams.get("sessionUserId") || glued.get("sessionUserId");
+  if (!isAccountId(named) || !heldAccounts(request.cookies).some((a) => a.account === named)) return NextResponse.next();
+  const forwarded = new Headers(request.headers);
+  forwarded.set(ACCOUNT_HEADER, named);
+  return NextResponse.next({ request: { headers: forwarded } });
+}
+
 function replaceCookie(header, name, value) {
   const parts = header.split(/;\s*/).filter((p) => p && !p.startsWith(`${name}=`));
   parts.push(`${name}=${value}`);
@@ -162,5 +180,7 @@ export const config = {
     "/:school/enrollment/:program",
     "/:school/enrollment/:program/step/:path*",
     "/:school/add-enrollment/:parentId/:sessionUserId/step/:path*",
+    "/common/:path*",
+    "/:school/common/:path*",
   ],
 };
