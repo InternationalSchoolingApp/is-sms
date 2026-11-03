@@ -34,6 +34,11 @@ import { RENEWED_ELSEWHERE, TokenError, refreshTokens, trustedBackend, verifyAcc
 export default async function proxy(request) {
   const path = request.nextUrl.pathname;
   const segments = path.split("/").filter(Boolean);
+  // TEMP DEBUG [api-log]: every request the proxy sees, and which account cookies the browser sent
+  console.log("[api-log] proxy", request.method, path + request.nextUrl.search, {
+    accounts: heldAccounts(request.cookies).map((a) => a.account),
+    tabAccount: request.headers.get(TAB_ACCOUNT_HEADER),
+  });
 
   // Pre-login landing page (/{school}/enrollment/{program} — exactly school/enrollment/program,
   // nothing after; the protected wizard below additionally has /step/...). A UAT backend can send a
