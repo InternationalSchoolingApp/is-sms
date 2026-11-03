@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CalendarModal } from "@/components/dashboard/calendar/CalendarModal";
 import { getAssignedTeachersForAllCourses } from "@/services/bookClassApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 
 /**
  * "All Courses" card (subjectId 0: some elementary standards and SSP) — legacy
@@ -13,6 +14,7 @@ import { useDummyStudent } from "@/hooks/useDummyStudent";
  */
 export function AllCoursesPickerModal({ studentStandardId, onPick, onClose }) {
   const [subjectId, setSubjectId] = useState("");
+  const { isK5 } = useDashboardContext();
   const dummy = useDummyStudent();
   const { data, isLoading } = useQuery({
     queryKey: ["book-class-all-courses", studentStandardId, dummy.key],
@@ -34,7 +36,7 @@ export function AllCoursesPickerModal({ studentStandardId, onPick, onClose }) {
           <select
             value={subjectId}
             onChange={(e) => setSubjectId(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-black"
+            className={isK5 ? "min-h-12 w-full rounded-full border-[3px] border-k5-line bg-k5-card px-4 text-base font-bold text-k5-ink" : "w-full rounded-lg border border-slate-300 px-3 py-2 text-black"}
           >
             <option value="">Select Course*</option>
             {list.map((s) => (
@@ -48,7 +50,7 @@ export function AllCoursesPickerModal({ studentStandardId, onPick, onClose }) {
               type="button"
               disabled={!picked}
               onClick={() => onPick({ subjectId: picked.subjectId, name: picked.subjectName, studentStandardId })}
-              className="rounded-lg bg-primary px-4 py-2 font-bold text-white disabled:opacity-40"
+              className={isK5 ? "min-h-12 cursor-pointer rounded-full border-none bg-k5-ac px-6 font-k5-display text-lg font-semibold text-white shadow-[0_4px_0_var(--k5-acd)] disabled:opacity-40" : "rounded-lg bg-primary px-4 py-2 font-bold text-white disabled:opacity-40"}
             >
               View Available Slots
             </button>

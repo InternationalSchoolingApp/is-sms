@@ -14,6 +14,7 @@ import { studentNavHref } from "@/utils/dashboardNav";
 import { BookClassSlotModal } from "@/components/student/bookClass/BookClassSlotModal";
 import { AllCoursesPickerModal } from "@/components/student/bookClass/AllCoursesPickerModal";
 import { BookedClasses } from "@/components/student/bookClass/BookedClasses";
+import { K5BookNotice, K5BookView } from "@/components/k5/pages/K5BookView";
 
 function PageTitle() {
   return (
@@ -25,6 +26,8 @@ function PageTitle() {
 }
 
 function Notice({ children }) {
+  const { isK5 } = useDashboardContext();
+  if (isK5) return <K5BookNotice>{children}</K5BookNotice>;
   return (
     <div className="mx-auto w-full">
       <PageTitle />
@@ -47,7 +50,7 @@ function Count({ label, value, className }) {
  * list, the selected course's counts, and the weekly booking / booked-classes flows.
  */
 export function BookClasses() {
-  const { context } = useDashboardContext();
+  const { context, isK5 } = useDashboardContext();
   const { school } = useParams();
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState(null);
@@ -136,6 +139,22 @@ export function BookClasses() {
     return (
       <>
         <BookedClasses course={course} onBack={() => setView("book")} onBook={() => startBooking(course)} />
+        {modals}
+      </>
+    );
+  }
+
+  if (isK5) {
+    return (
+      <>
+        <K5BookView
+          details={details}
+          subjects={subjects}
+          course={course}
+          onSelect={setSelectedId}
+          onShowBooked={() => setView("booked")}
+          onBook={() => startBooking(course)}
+        />
         {modals}
       </>
     );

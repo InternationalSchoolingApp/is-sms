@@ -12,22 +12,7 @@
  * — see docs/migration/dummy-student-mode-plan.md.
  */
 
-const GRADE_CONFIG = {
-  K: { standardId: 11, standardName: "KINDERGARTEN", label: "Grade K" },
-  1: { standardId: 12, standardName: "GRADE 1", label: "Grade 1" },
-  2: { standardId: 13, standardName: "GRADE 2", label: "Grade 2" },
-  3: { standardId: 14, standardName: "GRADE 3", label: "Grade 3" },
-  4: { standardId: 15, standardName: "GRADE 4", label: "Grade 4" },
-  5: { standardId: 16, standardName: "GRADE 5", label: "Grade 5" },
-  6: { standardId: 1, standardName: "GRADE 6", label: "Grade 6" },
-  7: { standardId: 2, standardName: "GRADE 7", label: "Grade 7" },
-  8: { standardId: 3, standardName: "GRADE 8", label: "Grade 8" },
-  9: { standardId: 4, standardName: "GRADE 9", label: "Grade 9" },
-  10: { standardId: 5, standardName: "GRADE 10", label: "Grade 10" },
-  11: { standardId: 6, standardName: "GRADE 11", label: "Grade 11" },
-  12: { standardId: 7, standardName: "GRADE 12", label: "Grade 12" },
-};
-const GRADE_KEYS = ["K", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
+import { ELEMENTARY_GRADE_KEYS, GRADE_CONFIG, GRADE_KEYS, gradeKeyByLabel, gradeKeyByStandardId } from "@/utils/gradeBand";
 
 const SUBJECT_ROWS = {
   K: [["LA", "Language Arts Grade K", "Language-Arts.jpg"], ["MATH", "Mathematics Grade K", "Mathematics.jpg"], ["SCI", "Science Grade K", "Science.jpg"], ["TECH", "Technology Grade K", "Technology-and-Research.jpg"], ["ART", "Art Grade K", "Fine-arts.jpg"], ["PE", "Physical Education Grade K", "Physical education.jpg"]],
@@ -155,18 +140,6 @@ function isOneToOneLearningProgram(value) {
   return program === "ONE_TO_ONE" || program.includes("ONE TO ONE") || program.includes("ONE-TO-ONE");
 }
 
-function gradeKeyByStandardId(id) {
-  const value = String(id || "").trim();
-  return Object.keys(GRADE_CONFIG).find((key) => String(GRADE_CONFIG[key].standardId) === value) || "";
-}
-function gradeKeyByLabel(label) {
-  const value = String(label || "").trim().toUpperCase();
-  if (!value) return "";
-  if (["K", "KG", "GRADE K", "KINDERGARTEN"].includes(value)) return "K";
-  const match = value.match(/(?:GRADE\s*)?(\d{1,2})/);
-  return match && GRADE_CONFIG[match[1]] ? match[1] : "";
-}
-
 /**
  * One dummy student. `row` = the demo-data row (or null), `params` = URLSearchParams of the page,
  * `fallbackName` = the logged-in user's name (legacy USER_FULL_NAME) when no demo name is known.
@@ -207,7 +180,7 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
     "K";
   const grade = GRADE_CONFIG[gradeKey] || GRADE_CONFIG.K;
   const offset = Math.max(0, GRADE_KEYS.indexOf(gradeKey));
-  const isElementary = ["K", "1", "2", "3", "4", "5"].includes(gradeKey);
+  const isElementary = ELEMENTARY_GRADE_KEYS.includes(gradeKey);
   const uid = 9000001 + offset;
 
   function subjects() {

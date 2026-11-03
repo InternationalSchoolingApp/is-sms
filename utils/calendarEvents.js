@@ -37,6 +37,18 @@ export function getBrowserTimezone() {
   }
 }
 
+/** `value` when it is a valid IANA timezone, else Asia/Singapore (project fallback rule). */
+export function resolveTimezone(value) {
+  const zone = String(value || "").trim();
+  if (!zone) return FALLBACK_TIMEZONE;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: zone });
+    return zone;
+  } catch {
+    return FALLBACK_TIMEZONE;
+  }
+}
+
 export function isTodayView(viewName) {
   return viewName === "today" || !viewName;
 }
@@ -308,7 +320,7 @@ export function getCourseColor(courseRegistry, courseId) {
 }
 
 export function getEventColor(event, courseRegistry) {
-  // debugger
+  // 
   if (event.eventKind === "holiday") return "#1b5e20";
   if (event.eventKind === "activity") return "#2267f0";
   return getCourseColor(courseRegistry, event.courseId);

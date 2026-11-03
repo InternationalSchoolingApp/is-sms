@@ -1,7 +1,8 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { getStudentDashboardDetails, getStudentDashboardOrMigration } from "@/services/dashboardApi";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getStudentDashboardOrMigration } from "@/services/dashboardApi";
+import { studentDashboardDetailsQuery } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 
 /**
@@ -14,6 +15,7 @@ import { useDummyStudent } from "@/hooks/useDummyStudent";
  */
 export function useStudentDashboardData({ schoolUUID, userId }) {
   const dummy = useDummyStudent();
+  const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ["student-dashboard-data", schoolUUID, userId, dummy.key],
     queryFn: async () => {
@@ -21,7 +23,8 @@ export function useStudentDashboardData({ schoolUUID, userId }) {
       if (dummy.enabled) return { migration: dummy.student.dashboardOrMigration(), details: dummy.student.dashboardDetails() };
       const [migration, details] = await Promise.all([
         getStudentDashboardOrMigration({ schoolUUID, userId }),
-        getStudentDashboardDetails({ schoolUUID, userId }),
+        // Same cached call the DashboardProvider's grade-band gate already made.
+        queryClient.ensureQueryData(studentDashboardDetailsQuery({ schoolUUID, userId })),
       ]);
       return { migration, details };
     },
@@ -40,5 +43,7 @@ export function useStudentDashboardData({ schoolUUID, userId }) {
     showGraduationCeremonyPopup: migration?.showGraduationCeremonyPopup === "Y",
     graduationCeremonyRegistrationDeadline: migration?.graduationCeremonyRegistrationDeadline || null,
     standardId: migration?.standardId ?? null,
+    // StudentDetailsDTO.userTimezone (the student's configured zone; may be missing or invalid).
+    userTimezone: details?.userTimezone || null,
   };
 }

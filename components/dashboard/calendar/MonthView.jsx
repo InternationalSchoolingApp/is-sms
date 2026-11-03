@@ -34,7 +34,7 @@ export function MonthView({ events, selectedDate, courseRegistry, onSelectDay, o
           const overflow = dayEvents.length - visible.length;
           const inMonth = isSameMonth(day, selectedDate);
           const isToday = isSameDay(day, today);
-          // debugger
+          // 
           return (
             <button
               key={key}

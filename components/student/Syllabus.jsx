@@ -5,6 +5,7 @@ import { BookOpen, User } from "lucide-react";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useStudentAssignedTeacher } from "@/hooks/useStudentAssignedTeacher";
 import { SyllabusCourseContentModal } from "@/components/student/SyllabusCourseContentModal";
+import { K5AssignedTeacher } from "@/components/k5/pages/K5AssignedTeacher";
 
 /**
  * Syllabus & Assigned Teacher — legacy studentSyllabusAssignedTeacherContent.js.
@@ -12,10 +13,11 @@ import { SyllabusCourseContentModal } from "@/components/student/SyllabusCourseC
  * covered here (out of scope, same as re-enrollment being its own branch).
  */
 export function Syllabus() {
-  const { context } = useDashboardContext();
+  const { context, isK5 } = useDashboardContext();
   const { schoolUUID, userId } = context ?? {};
   const { isLoading, courses } = useStudentAssignedTeacher({ schoolUUID, userId });
   const [selected, setSelected] = useState(null);
+  if (isK5) return <K5AssignedTeacher courses={courses} isLoading={isLoading} />;
   return (
     <div className="mx-auto w-full max-w-4xl">
       <div className="flex items-center gap-2 px-1 pb-4">

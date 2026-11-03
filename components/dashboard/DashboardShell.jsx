@@ -28,14 +28,15 @@ function useWideLayout() {
  * The student dashboard chrome — mirrors the legacy Dashboard.jsp shell
  * (top header + collapsible left sidebar + content + right action rail).
  * Mounted once by the (dashboard) layout so it persists across module
- * navigation. Nothing renders until the context is ready.
+ * navigation. Nothing renders until the context is ready and the grade band
+ * is resolved.
  *
  * Two sidebar states: `sidebarOpen` (mobile drawer) and `collapsed` (desktop
  * icon-rail). The header hamburger opens the drawer on small screens and
  * toggles the collapse on md+.
  */
 export function DashboardShell({ children }) {
-  const { ready, context, menu, logoUrl, session } = useDashboardContext();
+  const { ready, gradeResolved, context, menu, logoUrl, session } = useDashboardContext();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // Defaults to the collapsed icon-rail, matching the legacy dashboard.
   const [collapsed, setCollapsed] = useState(true);
@@ -75,7 +76,8 @@ export function DashboardShell({ children }) {
     }
   };
 
-  if (!ready) return <FullScreenLoader />;
+  // Also wait for the student's grade band, so a K–5 student never sees this shell flash first.
+  if (!ready || !gradeResolved) return <FullScreenLoader />;
 
   return (
     <div className="min-h-screen bg-[#f2f5fa]" style={{ "--dash-header-h": "56px", "--dash-footer-h": `${footerHeight}px` }}>

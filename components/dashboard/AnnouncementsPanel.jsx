@@ -5,7 +5,7 @@ import { parseISO } from "date-fns";
 import { Megaphone, X } from "lucide-react";
 import { AnnouncementDetailModal } from "@/components/dashboard/AnnouncementDetailModal";
 
-function formatRelativeAgo(value) {
+export function formatRelativeAgo(value) {
   if (!value) return "";
   const date = parseISO(String(value).replace(" ", "T"));
   if (Number.isNaN(date.getTime())) return "";

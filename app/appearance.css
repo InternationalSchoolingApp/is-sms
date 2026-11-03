@@ -1,0 +1,268 @@
+/*
+ * Appearance settings for the Grade K–5 shell (plan section 12.3). AppearanceProvider puts
+ * the allowlisted choices on the .theme-k5 root (and on dialogs portalled out of it) as
+ * data-* attributes; night = the existing Tailwind `.dark` class. Values from the
+ * Playful.dc.html mockup (themes, night, Okabe-Ito colour-blind palette).
+ */
+
+/* ── Favourite colour ─────────────────────────────────────────────── */
+.theme-k5[data-k5-theme="berry"] {
+  --k5-ac: #c42a6b;
+  --k5-acd: #8f1f4e;
+  --k5-act: #fce7f0;
+  --k5-acl: #f3c2d7;
+  --k5-acx: #8f1f4e;
+  --k5-page: #fdeef4;
+  --k5-line: #f5cfdf;
+}
+.theme-k5[data-k5-theme="jungle"] {
+  --k5-ac: #1f7a3a;
+  --k5-acd: #145a29;
+  --k5-act: #e3f5ea;
+  --k5-acl: #bfe3cb;
+  --k5-acx: #145a29;
+  --k5-page: #eaf6ee;
+  --k5-line: #cbe8d4;
+}
+.theme-k5[data-k5-theme="grape"] {
+  --k5-ac: #6a3fc4;
+  --k5-acd: #4c2a94;
+  --k5-act: #ede7fb;
+  --k5-acl: #d3c6f5;
+  --k5-acx: #4c2a94;
+  --k5-page: #f2eefc;
+  --k5-line: #dcd2f7;
+}
+.theme-k5[data-k5-theme="sunset"] {
+  --k5-ac: #c2410c;
+  --k5-acd: #8a2e08;
+  --k5-act: #ffedd5;
+  --k5-acl: #f8cdb4;
+  --k5-acx: #8a2e08;
+  --k5-page: #fff1e8;
+  --k5-line: #fad6c2;
+}
+
+/* ── Night (.dark) ─────────────────────────────────────────────────── */
+.theme-k5.dark {
+  --k5-brand: #8cb4ff;
+  --k5-page: #0e1530;
+  --k5-card: #1a2547;
+  --k5-ink: #f1f4ff;
+  --k5-mut: #b9c3dd;
+  --k5-soft: #222e55;
+  --k5-line: #33416b;
+  --k5-act: #1f3466;
+  --k5-acl: #3a5596;
+  --k5-acx: #9ec2ff;
+  --k5-yT: #3d3417;
+  --k5-yB: #6b5a1e;
+  --k5-yX: #ffd877;
+  --k5-yI: #ffc531;
+  --k5-gT: #173a26;
+  --k5-gX: #8be0a8;
+  --k5-gI: #6fd08e;
+  --k5-tT: #133a37;
+  --k5-tI: #5fd3c3;
+  --k5-oT: #43291a;
+  --k5-oI: #ff9a6b;
+  --k5-pT: #45213a;
+  --k5-pI: #ff8fbf;
+  --k5-vT: #2f2650;
+  --k5-vI: #b9a0ff;
+  --k5-mT: #3a3218;
+  --k5-mI: #e7c44a;
+  --k5-rT: #452226;
+  --k5-rI: #ff8a8e;
+  --k5-bT: #1e2f57;
+  --k5-bI: #8cb4ff;
+  --k5-c-done: #8f99b3;
+  --k5-c-live: #8cb4ff;
+  --k5-c-live-t: #1e2f57;
+  --k5-c-live-x: #3b6fd8;
+  --k5-c-up: #ffc531;
+  --k5-c-up-t: #3a3218;
+  --k5-c-act: #a78bfa;
+  --k5-c-act-x: #7c3aed;
+}
+.theme-k5.dark[data-k5-theme="berry"] {
+  --k5-act: #4a1f35;
+  --k5-acl: #7a2f52;
+  --k5-acx: #ff9cc6;
+}
+.theme-k5.dark[data-k5-theme="jungle"] {
+  --k5-act: #173a26;
+  --k5-acl: #2f6b45;
+  --k5-acx: #8be0a8;
+}
+.theme-k5.dark[data-k5-theme="grape"] {
+  --k5-act: #2f2650;
+  --k5-acl: #4e3e85;
+  --k5-acx: #c3adff;
+}
+.theme-k5.dark[data-k5-theme="sunset"] {
+  --k5-act: #43291a;
+  --k5-acl: #7a4326;
+  --k5-acx: #ffb08a;
+}
+
+/* ── Colour vision: Okabe-Ito colour-blind friendly palette ──────── */
+.theme-k5[data-k5-cvd="true"] {
+  --k5-bI: #0072b2;
+  --k5-bT: #e3f0f8;
+  --k5-pI: #b34700;
+  --k5-pT: #fbe7da;
+  --k5-vI: #a3507f;
+  --k5-vT: #f6e6ef;
+  --k5-mI: #8f6400;
+  --k5-mT: #fff3d6;
+  --k5-rI: #00795a;
+  --k5-rT: #ddf2ec;
+  --k5-gI: #00795a;
+  --k5-gX: #005a43;
+  --k5-gT: #ddf2ec;
+  --k5-oI: #b34700;
+  --k5-oT: #fbe7da;
+  --k5-tI: #0072b2;
+  --k5-tT: #e3f0f8;
+  --k5-grn: #00795a;
+  --k5-grnD: #005a43;
+  --k5-red: #b34700;
+  --k5-c-asg: #00795a;
+  --k5-c-live: #0072b2;
+  --k5-c-live-t: #e3f0f8;
+  --k5-c-live-x: #005a8a;
+  --k5-c-up: #e69f00;
+  --k5-c-up-t: #fdf1dc;
+  --k5-c-act: #cc79a7;
+  --k5-c-act-x: #a3507f;
+  --k5-c-act-d: #7e3a62;
+  --k5-c-hol: #b34700;
+}
+.theme-k5.dark[data-k5-cvd="true"] {
+  --k5-bI: #56b4e9;
+  --k5-bT: #173047;
+  --k5-pI: #ff9a5c;
+  --k5-pT: #40261a;
+  --k5-vI: #e39ac4;
+  --k5-vT: #3a2335;
+  --k5-mI: #f0c24a;
+  --k5-mT: #3a3016;
+  --k5-rI: #3fd0a4;
+  --k5-rT: #14382f;
+  --k5-gI: #3fd0a4;
+  --k5-gX: #7fe3c4;
+  --k5-gT: #14382f;
+  --k5-oI: #ff9a5c;
+  --k5-oT: #40261a;
+  --k5-tI: #56b4e9;
+  --k5-tT: #173047;
+  --k5-c-live: #56b4e9;
+  --k5-c-live-t: #173047;
+  --k5-c-up-t: #40301a;
+  --k5-c-act: #e39ac4;
+  --k5-c-act-x: #a3507f;
+}
+
+/* ── High contrast: darker secondary text and borders ─────────────── */
+.theme-k5[data-contrast="high"] {
+  --k5-mut: #263252;
+  --k5-line: #6d82ad;
+}
+.theme-k5.dark[data-contrast="high"] {
+  --k5-mut: #e3e8f7;
+  --k5-line: #8fa3d1;
+}
+
+/* ── Text size: the page content scales (mockup S 0.9 / L 1.15). Only <main> is zoomed —
+   the header, rails, Pico and dialogs keep their size and positions. ── */
+.theme-k5[data-text-size="small"] main {
+  zoom: 0.9;
+}
+.theme-k5[data-text-size="large"] main {
+  zoom: 1.15;
+}
+
+/* ── Reading help: extra letter / word spacing ────────────────────── */
+.theme-k5[data-reading="spaced"] main,
+.theme-k5[data-reading="spaced"][role="dialog"],
+.theme-k5[data-reading="spaced"] .k5-bubble {
+  letter-spacing: 0.1em;
+  word-spacing: 0.16em;
+}
+.theme-k5[data-reading="spaced"] main p {
+  line-height: 1.6;
+}
+
+/* ── Page colour (day look only, like the mockup's tn-*): tints the page, cards and soft panels ── */
+.theme-k5[data-tint="cream"]:not(.dark) {
+  --k5-card: #fff9ea;
+  --k5-page: #f8edd3;
+  --k5-soft: #f5ead2;
+}
+.theme-k5[data-tint="peach"]:not(.dark) {
+  --k5-card: #fff2ea;
+  --k5-page: #f9e2d3;
+  --k5-soft: #f7e3d7;
+}
+.theme-k5[data-tint="mint"]:not(.dark) {
+  --k5-card: #f0f9f2;
+  --k5-page: #dcefe2;
+  --k5-soft: #e1f1e6;
+}
+.theme-k5[data-tint="sky"]:not(.dark) {
+  --k5-card: #f0f6ff;
+  --k5-page: #dae8fa;
+  --k5-soft: #e1ecfa;
+}
+
+/* ── Plain text (dyslexia mode): no ALL-CAPS, no italics ──────────── */
+.theme-k5[data-plain="true"],
+.theme-k5[data-plain="true"] * {
+  text-transform: none !important;
+  font-style: normal !important;
+}
+
+/* ── Letters: swap both K–5 font roles ─────────────────────────────── */
+.theme-k5[data-font="simple"] {
+  --k5-fd: var(--font-lexend), sans-serif;
+  --k5-fb: var(--font-lexend), sans-serif;
+}
+.theme-k5[data-font="easy"] {
+  --k5-fd: var(--font-andika), sans-serif;
+  --k5-fb: var(--font-andika), sans-serif;
+}
+.theme-k5[data-font="clear"] {
+  --k5-fd: var(--font-atkinson), sans-serif;
+  --k5-fb: var(--font-atkinson), sans-serif;
+}
+
+/* ── Which hand: left hand moves the menu to the right and the action rail to the left ── */
+@media (min-width: 761px) {
+  .theme-k5[data-hand="left"] .k5-layout {
+    flex-direction: row-reverse;
+  }
+  .theme-k5[data-hand="left"] .k5-side {
+    left: auto;
+    right: calc(max(0px, (100vw - 100%) / 0) + 20px);
+  }
+  .theme-k5[data-hand="left"] .k5-rail {
+    right: auto;
+    left: calc(max(20px, (100vw - 100%) / 0) + 0px);
+  }
+}
+@media (max-width: 760px) {
+  .theme-k5[data-hand="left"] .k5-side[data-open="true"] {
+    left: auto;
+    right: 0;
+    border-radius: 26px 0 0 26px;
+  }
+}
+
+/* ── Motion: reduced (setting or OS) stops every animation ─────────── */
+.theme-k5[data-motion="reduced"] *,
+.theme-k5[data-motion="reduced"] *::before,
+.theme-k5[data-motion="reduced"] *::after {
+  animation: none !important;
+  transition: none !important;
+}

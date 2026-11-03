@@ -4,7 +4,9 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { DashboardProvider, useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDashboardSessionExpiry } from "@/hooks/useDashboardSessionExpiry";
+import { FullScreenLoader } from "@/components/common/Loader";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { K5Shell } from "@/components/k5/K5Shell";
 import { rememberDashboardPath } from "@/utils/lastDashboardPath";
 
 // Needs the dashboard context (schoolUUID), so it lives inside DashboardProvider.
@@ -12,6 +14,15 @@ function SessionExpiryWatcher() {
   const { context } = useDashboardContext();
   useDashboardSessionExpiry(context?.schoolUUID);
   return null;
+}
+
+// Same URLs for every grade: a Grade K–5 student (isK5) gets the K–5 chrome, everyone else
+// the existing shell. Holds the loader until the grade band is known, so neither shell flashes.
+function ShellForGrade({ children }) {
+  
+  const { ready, gradeResolved, isK5 } = useDashboardContext();
+  if (!ready || !gradeResolved) return <FullScreenLoader />;
+  return isK5 ? <K5Shell>{children}</K5Shell> : <DashboardShell>{children}</DashboardShell>;
 }
 
 // Keeps the current dashboard route so a bare /{school} visit comes back here (app/[school]/page.jsx).
@@ -37,7 +48,7 @@ export function DashboardChrome({ role = "student", children }) {
     <DashboardProvider role={role}>
       <SessionExpiryWatcher />
       <LastPathRecorder />
-      <DashboardShell>{children}</DashboardShell>
+      <ShellForGrade>{children}</ShellForGrade>
     </DashboardProvider>
   );
 }

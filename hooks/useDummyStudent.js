@@ -2,8 +2,7 @@
 
 import { useMemo, useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useDashboardContext } from "@/hooks/useDashboardContext";
-import { getStudentDemoData } from "@/services/dashboardApi";
+import { studentDemoRowQuery, useDashboardContext } from "@/hooks/useDashboardContext";
 import { isDummyStudentMode } from "@/utils/paymentGatewayChecks";
 import { createDummyStudent } from "@/utils/dummyStudent";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
@@ -30,18 +29,7 @@ export function useDummyStudent() {
   const demoUser = Boolean(context?.demoUser);
   const enabled = search !== null && isDummyStudentMode(demoUser);
 
-  const rowQuery = useQuery({
-    queryKey: ["student-demo-data", context?.schoolUUID, context?.userId],
-    queryFn: async () => {
-      const response = await getStudentDemoData({ schoolUUID: context.schoolUUID, userId: context.userId });
-      return String(response?.status) === "1" && Array.isArray(response.details) ? response.details[0] ?? null : null;
-    },
-    enabled: Boolean(enabled && demoUser && context?.schoolUUID && context?.userId),
-    staleTime: Infinity,
-    gcTime: Infinity,
-    refetchOnWindowFocus: false,
-    retry: false,
-  });
+  const rowQuery = useQuery(studentDemoRowQuery({ schoolUUID: context?.schoolUUID, userId: context?.userId, enabled: enabled && demoUser }));
 
   const row = rowQuery.data ?? null;
   // The dummy fee receipt page reads its data from this app's localStorage, so it must open on this

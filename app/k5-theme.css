@@ -1,0 +1,353 @@
+/*
+ * Grade K–5 dashboard theme (docs/migration/grade_k5_dashboard_plan.html, section 11).
+ * Tokens replicate the Playful.dc.html mockup and live ONLY under .theme-k5 (set on the
+ * K5Shell root), so the global school vars (--pc, shadcn :root) stay untouched for every
+ * other student. Tailwind v4 only: the @theme block exposes them as utilities
+ * (bg-k5-ac, text-k5-ink, border-k5-line, font-k5-display, ...).
+ * Theme variants (berry/jungle/grape/sunset), night and colour-blind sets come with the
+ * Appearance work in Phase 3.
+ */
+
+@theme inline {
+  --color-k5-brand: var(--k5-brand);
+  --color-k5-ac: var(--k5-ac);
+  --color-k5-acd: var(--k5-acd);
+  --color-k5-act: var(--k5-act);
+  --color-k5-acl: var(--k5-acl);
+  --color-k5-acx: var(--k5-acx);
+  --color-k5-ink: var(--k5-ink);
+  --color-k5-mut: var(--k5-mut);
+  --color-k5-page: var(--k5-page);
+  --color-k5-card: var(--k5-card);
+  --color-k5-soft: var(--k5-soft);
+  --color-k5-line: var(--k5-line);
+  --color-k5-grn: var(--k5-grn);
+  --color-k5-grnd: var(--k5-grnD);
+  --color-k5-red: var(--k5-red);
+  --color-k5-hi: var(--k5-hi);
+  /* Tint pairs: T = tile background, I = icon, X = text on the tile, B = border. */
+  --color-k5-yt: var(--k5-yT);
+  --color-k5-yb: var(--k5-yB);
+  --color-k5-yx: var(--k5-yX);
+  --color-k5-yi: var(--k5-yI);
+  --color-k5-gt: var(--k5-gT);
+  --color-k5-gx: var(--k5-gX);
+  --color-k5-gi: var(--k5-gI);
+  --color-k5-tt: var(--k5-tT);
+  --color-k5-ti: var(--k5-tI);
+  --color-k5-ot: var(--k5-oT);
+  --color-k5-oi: var(--k5-oI);
+  --color-k5-pt: var(--k5-pT);
+  --color-k5-pi: var(--k5-pI);
+  --color-k5-vt: var(--k5-vT);
+  --color-k5-vi: var(--k5-vI);
+  --color-k5-mt: var(--k5-mT);
+  --color-k5-mi: var(--k5-mI);
+  --color-k5-rt: var(--k5-rT);
+  --color-k5-ri: var(--k5-rI);
+  --color-k5-bt: var(--k5-bT);
+  --color-k5-bi: var(--k5-bI);
+  --font-k5-display: var(--k5-fd);
+  --font-k5-body: var(--k5-fb);
+}
+
+.theme-k5 {
+  --k5-brand: #1e66e0;
+  --k5-ac: #1e66e0;
+  --k5-acd: #1747a6;
+  --k5-act: #e6eefd;
+  --k5-acl: #cfe0fb;
+  --k5-acx: #1747a6;
+  --k5-ink: #1c2640;
+  --k5-mut: #4a5675;
+  --k5-page: #eaf4ff;
+  --k5-card: #ffffff;
+  --k5-soft: #f3f6fd;
+  --k5-line: #d3e3fb;
+  --k5-grn: #1f7a3a;
+  --k5-grnD: #145a29;
+  --k5-red: #d7263d;
+  --k5-hi: #ffc531;
+  --k5-yT: #fff1cc;
+  --k5-yB: #ffe08a;
+  --k5-yX: #7a4a05;
+  --k5-yI: #a16207;
+  --k5-gT: #e3f5ea;
+  --k5-gX: #1d6b3c;
+  --k5-gI: #237a45;
+  --k5-tT: #d5f5f0;
+  --k5-tI: #0f766e;
+  --k5-oT: #ffedd5;
+  --k5-oI: #c2410c;
+  --k5-pT: #fce7f0;
+  --k5-pI: #c92f6e;
+  --k5-vT: #ede7fb;
+  --k5-vI: #6a3fc4;
+  --k5-mT: #fff8dd;
+  --k5-mI: #8a6a00;
+  --k5-rT: #fdf0f0;
+  --k5-rI: #c92a2f;
+  --k5-bT: #eef4ff;
+  --k5-bI: #2563eb;
+  /* Colour clues (assignment / done / live / upcoming / activity / holiday). */
+  --k5-c-asg: #0b7f5c;
+  --k5-c-done: #8a93a6;
+  --k5-c-live: #2f7bf5;
+  --k5-c-live-t: #e8f1ff;
+  --k5-c-live-x: #1d5fcc;
+  --k5-c-up: #f2b807;
+  --k5-c-up-t: #fff8e1;
+  --k5-c-act: #8b5cf6;
+  --k5-c-act-x: #6d28d9;
+  --k5-c-act-d: #4c1d95;
+  --k5-c-hol: #d7263d;
+
+  /* shadcn components inside the K–5 shell pick up the K–5 accent. */
+  --primary: var(--k5-ac);
+  --ring: var(--k5-ac);
+
+  color: var(--k5-ink);
+  /* Font roles (display / body); Appearance "Letters" swaps them in app/appearance.css. */
+  --k5-fd: var(--font-fredoka), "Baloo Bhaijaan 2", sans-serif;
+  --k5-fb: var(--font-nunito), "Baloo Bhaijaan 2", sans-serif;
+  font-family: var(--k5-fb);
+}
+
+/* Chunky solid-offset shadows (no blur), mockup: 0 6px 0 var(--line). */
+@utility shadow-k5-chunky {
+  box-shadow: 0 6px 0 var(--k5-line);
+}
+@utility shadow-k5-btn {
+  box-shadow: 0 4px 0 var(--k5-line);
+}
+
+/*
+ * K5NavRail (mockup .side): a 96px icon rail that widens to 300px with labels on hover
+ * (pointer devices above 760px) or when opened ([data-open=true]); a drawer below 760px.
+ * Plain (unlayered) rules so they win over the item's Tailwind utilities.
+ */
+.k5-side {
+  width: 96px;
+  transition: width 0.22s ease, box-shadow 0.22s ease;
+}
+.k5-side .k5-nl,
+.k5-side .k5-sub {
+  display: none;
+}
+.k5-side[data-open="true"] {
+  width: 300px;
+  align-items: stretch;
+  z-index: 46;
+  box-shadow: 0 6px 0 var(--k5-line), 0 18px 48px rgba(10, 16, 34, 0.28);
+}
+.k5-side[data-open="true"] .k5-nclose {
+  display: flex;
+}
+.k5-side[data-open="true"] .k5-ni {
+  width: auto;
+  flex-direction: row;
+  gap: 12px;
+  padding: 4px 6px;
+  padding-inline-end: 40px;
+  font-size: 16px;
+  text-align: start;
+  white-space: nowrap;
+}
+.k5-side[data-open="true"] .k5-nl {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.k5-side[data-open="true"] .k5-sub {
+  display: flex;
+}
+.k5-side[data-open="true"] .k5-chev {
+  top: 50%;
+  margin-top: -9px;
+  inset-inline-end: 10px;
+  border-color: transparent;
+  background: transparent;
+}
+@media (hover: hover) and (min-width: 761px) {
+  .k5-side:hover {
+    width: 300px;
+    align-items: stretch;
+    z-index: 46;
+    box-shadow: 0 6px 0 var(--k5-line), 0 18px 48px rgba(10, 16, 34, 0.28);
+  }
+  .k5-side:hover .k5-ni {
+    width: auto;
+    flex-direction: row;
+    gap: 12px;
+    padding: 4px 6px;
+    padding-inline-end: 40px;
+    font-size: 16px;
+    text-align: start;
+    white-space: nowrap;
+  }
+  .k5-side:hover .k5-nl {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .k5-side:hover .k5-sub {
+    display: flex;
+  }
+  .k5-side:hover .k5-chev {
+    top: 50%;
+    margin-top: -9px;
+    inset-inline-end: 10px;
+    border-color: transparent;
+    background: transparent;
+  }
+}
+@media (max-width: 760px) {
+  .k5-side {
+    display: none;
+  }
+  .k5-side[data-open="true"] {
+    display: flex;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(300px, 86vw);
+    max-height: 100vh;
+    border-radius: 0 26px 26px 0;
+    z-index: 60;
+  }
+  /* The drawer scrolls by touch, so items there are not drag handles. */
+  .k5-side .k5-ni {
+    touch-action: pan-y;
+  }
+}
+
+/* Pico buddy animations + tour spotlight (mockup pinIdle / pinWave / blink / talk / pulseRing). */
+@keyframes k5PinIdle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+@keyframes k5PinWave {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-24deg);
+  }
+}
+@keyframes k5Blink {
+  0%,
+  93%,
+  100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.1);
+  }
+}
+@keyframes k5Talk {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.35);
+  }
+}
+@keyframes k5PulseRing {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 197, 49, 0.9);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(255, 197, 49, 0);
+  }
+}
+@keyframes k5PinBob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+@keyframes k5FootL {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+@keyframes k5FootR {
+  0%,
+  100% {
+    transform: translateY(-9px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+}
+.k5-pico-idle {
+  animation: k5PinIdle 2.6s ease-in-out infinite;
+}
+.k5-pico-walk {
+  animation: k5PinBob 0.42s ease-in-out infinite;
+}
+.k5-pico-walk .k5-pico-foot-l {
+  animation: k5FootL 0.42s ease-in-out infinite;
+}
+.k5-pico-walk .k5-pico-foot-r {
+  animation: k5FootR 0.42s ease-in-out infinite;
+}
+.k5-pico-arm {
+  transform-box: fill-box;
+  transform-origin: 100% 100%;
+  animation: k5PinWave 1.3s ease-in-out infinite;
+}
+.k5-pico-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: k5Blink 4.5s infinite;
+}
+.k5-pico-mouth {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.k5-pico-talk {
+  animation: k5Talk 0.22s ease-in-out infinite;
+}
+/* Live "Join class now" button ring (mockup liveRing). */
+@keyframes k5LiveRing {
+  0%,
+  100% {
+    box-shadow: 0 6px 0 var(--k5-grnD), 0 0 0 0 rgba(47, 123, 245, 0.5);
+  }
+  50% {
+    box-shadow: 0 6px 0 var(--k5-grnD), 0 0 0 10px rgba(47, 123, 245, 0);
+  }
+}
+.k5-live-ring {
+  animation: k5LiveRing 1.6s ease-in-out infinite;
+}
+.k5-spot {
+  outline: 4px solid #61ff31 !important;
+  outline-offset: 4px;
+  animation: k5PulseRing 1.3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-k5 *,
+  .theme-k5 *::before,
+  .theme-k5 *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

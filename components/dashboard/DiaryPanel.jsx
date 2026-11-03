@@ -11,16 +11,16 @@ import { useDummyStudent } from "@/hooks/useDummyStudent";
 // getParentSchoolDiaryTeacherCard/-ReplyCard (PARENT_MENTION_ROLE in
 // parentSchoolDiary.js) — the counterpart is always addressed as "Parent"
 // regardless of who's actually reading the thread.
-const STAFF_SENDER_ROLES = ["TEACHER", "DIRECTOR", "SCHOOL", "ADMIN"];
+export const STAFF_SENDER_ROLES = ["TEACHER", "DIRECTOR", "SCHOOL", "ADMIN"];
 
-function salutationFor(gender) {
+export function salutationFor(gender) {
   const normalized = (gender || "").toLowerCase();
   if (normalized === "male") return "Mr.";
   if (normalized === "female") return "Ms.";
   return "";
 }
 
-function formatWhen(value) {
+export function formatWhen(value) {
   if (!value) return "";
   const parsed = parseISO(String(value));
   // DISPLAY_DATETIME_FORMATTER ("ddd, DD MMM, YYYY hh:mm A") from timezoneConverter.js.

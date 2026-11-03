@@ -7,6 +7,7 @@ import { ArrowLeft, CalendarDays } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { getStudentBookedClasses } from "@/services/bookClassApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { BOOKED_CLASS_STATUS_STYLES } from "@/utils/bookClass";
 
 const DATE_TYPES = [
@@ -33,6 +34,40 @@ const COUNTS = [
   ["completed", "Classes Completed"],
   ["missedByTeacher", "Classes Missed by Teacher"],
 ];
+// Class names that change in the K-5 look; everything else is shared.
+const LOOK = {
+  legacy: {
+    title: "text-lg font-extrabold text-black sm:text-xl",
+    back: "flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-sm font-bold text-white",
+    filters: "flex flex-wrap items-end gap-2 rounded-2xl border border-slate-200 bg-white p-4",
+    select: "rounded-lg border border-slate-300 px-3 py-2 text-sm text-black",
+    reset: "rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white",
+    search: "rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white",
+    book: "ml-auto rounded-lg px-4 py-2 text-sm font-bold text-white",
+    bookOn: "bg-primary",
+    bookOff: "bg-black",
+    count: "flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2",
+    countNum: "text-lg font-extrabold text-primary",
+    tableWrap: "mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white",
+    thead: "bg-primary text-white",
+  },
+  k5: {
+    title: "m-0 font-k5-display text-3xl font-semibold leading-tight",
+    back: "flex min-h-12 cursor-pointer items-center gap-1 rounded-full border-[3px] border-k5-line bg-k5-card px-4 font-k5-display text-lg font-semibold text-k5-ink",
+    filters: "flex flex-wrap items-end gap-2.5 rounded-[26px] border-[3px] border-k5-line bg-k5-card p-4 shadow-k5-chunky",
+    select: "min-h-12 rounded-full border-[3px] border-k5-line bg-k5-card px-4 text-base font-bold text-k5-ink",
+    reset: "min-h-12 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-5 text-base font-black text-k5-ink",
+    search: "min-h-12 cursor-pointer rounded-full border-none bg-k5-ac px-5 text-base font-black text-white shadow-[0_4px_0_var(--k5-acd)]",
+    book: "ml-auto min-h-12 cursor-pointer rounded-full border-none px-5 text-base font-black text-white",
+    bookOn: "bg-k5-grn shadow-[0_4px_0_var(--k5-grnD)]",
+    bookOff: "bg-k5-mut",
+    count: "flex items-center gap-2 rounded-[18px] border-[3px] border-k5-line bg-k5-card px-3 py-2",
+    countNum: "font-k5-display text-2xl font-semibold text-k5-acx",
+    tableWrap: "mt-3 overflow-x-auto rounded-[26px] border-[3px] border-k5-line bg-k5-card shadow-k5-chunky",
+    thead: "bg-k5-ac text-white",
+  },
+};
+
 const DEFAULT_FILTER = { dateType: "today", startDate: null, endDate: null, classStatus: "" };
 
 // The DatePicker gives a Date; the backend expects "MMM dd, yyyy".
@@ -42,6 +77,8 @@ function toBackendDate(date) {
 
 /** Booked-classes history for one course — legacy bookedCalssCotentFun / bookClassFilterFormContent. */
 export function BookedClasses({ course, onBack, onBook }) {
+  const { isK5 } = useDashboardContext();
+  const look = isK5 ? LOOK.k5 : LOOK.legacy;
   const [draft, setDraft] = useState(DEFAULT_FILTER);
   const [filter, setFilter] = useState(DEFAULT_FILTER);
 
@@ -69,17 +106,17 @@ export function BookedClasses({ course, onBack, onBook }) {
   return (
     <div className="mx-auto w-full">
       <div className="flex items-center justify-between gap-2 px-1 pb-4">
-        <h1 className="text-lg font-extrabold text-black sm:text-xl">Booked Classes — {course.name}</h1>
-        <button type="button" onClick={onBack} className="flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-sm font-bold text-white">
+        <h1 className={look.title}>{isK5 ? "My booked classes" : "Booked Classes"} — {course.name}</h1>
+        <button type="button" onClick={onBack} className={look.back}>
           <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back
         </button>
       </div>
 
-      <div className="flex flex-wrap items-end gap-2 rounded-2xl border border-slate-200 bg-white p-4">
+      <div className={look.filters}>
         <select
           value={draft.dateType}
           onChange={(e) => setDraft({ ...draft, dateType: e.target.value })}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-black"
+          className={look.select}
         >
           {DATE_TYPES.map((d) => (
             <option key={d.value} value={d.value}>{d.label}</option>
@@ -109,7 +146,7 @@ export function BookedClasses({ course, onBack, onBook }) {
         <select
           value={draft.classStatus}
           onChange={(e) => setDraft({ ...draft, classStatus: e.target.value })}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-black"
+          className={look.select}
         >
           {STATUSES.map((s) => (
             <option key={s.value} value={s.value}>{s.label}</option>
@@ -121,18 +158,18 @@ export function BookedClasses({ course, onBack, onBook }) {
             setDraft(DEFAULT_FILTER);
             setFilter(DEFAULT_FILTER);
           }}
-          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white"
+          className={look.reset}
         >
           Reset
         </button>
-        <button type="button" onClick={() => setFilter(draft)} className="rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white">
+        <button type="button" onClick={() => setFilter(draft)} className={look.search}>
           Search
         </button>
         {course.subjectId !== 0 && (
           <button
             type="button"
             onClick={onBook}
-            className={`ml-auto rounded-lg px-4 py-2 text-sm font-bold text-white ${course.weekLeftClass > 0 ? "bg-primary" : "bg-black"}`}
+            className={`${look.book} ${course.weekLeftClass > 0 ? look.bookOn : look.bookOff}`}
           >
             Book a Class ({course.weekLeftClass})
           </button>
@@ -142,20 +179,20 @@ export function BookedClasses({ course, onBack, onBook }) {
       {counts && (
         <div className="mt-3 flex flex-wrap gap-2">
           {COUNTS.map(([key, label]) => (
-            <div key={key} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
+            <div key={key} className={look.count}>
               <div className="text-xs leading-tight">
                 <div className="font-bold text-black">Total number of</div>
                 <div className="text-black/70">{label}</div>
               </div>
-              <div className="text-lg font-extrabold text-primary">{counts[key] ?? 0}</div>
+              <div className={look.countNum}>{counts[key] ?? 0}</div>
             </div>
           ))}
         </div>
       )}
 
-      <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+      <div className={look.tableWrap}>
         <table className="min-w-[900px] w-full text-left text-sm">
-          <thead className="bg-primary text-white">
+          <thead className={look.thead}>
             <tr>
               {["S. No.", "Class Timing | Time zone", "Course Name", "Teacher Name", "Booked Date", "Class Type", "Class Status"].map((h) => (
                 <th key={h} className="px-3 py-2 font-normal">{h}</th>

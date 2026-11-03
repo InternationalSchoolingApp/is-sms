@@ -50,21 +50,28 @@ function getFetchRange(viewName, selectedDate) {
   return { start: addDays(selectedDate, -1), end: addDays(selectedDate, 1) };
 }
 
-export function useStudentCalendar({ schoolUUID, userId }) {
+/**
+ * Options used by the Grade K–5 home (defaults keep the existing calendar unchanged):
+ * `timezone` shows events in that zone instead of the browser's, `monthFetch` always loads
+ * the selected date's whole month (± a week) so the mini calendar and every view share one
+ * request, and `initialDate` is the first selected date.
+ */
+export function useStudentCalendar({ schoolUUID, userId, timezone: timezoneOption, monthFetch = false, initialDate }) {
   const [viewName, setViewName] = useState("today");
-  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState(() => initialDate || new Date());
   const [filters, setFilters] = useState(() => ({ ...DEFAULT_CALENDAR_FILTERS, ...(loadStoredPrefs().filters || {}) }));
   const [courseColors, setCourseColors] = useState(() => loadStoredPrefs().courseColors || {});
-  const timezone = getBrowserTimezone();
+  const timezone = timezoneOption || getBrowserTimezone();
+  const fetchView = monthFetch ? "month" : viewName;
 
-  const { start, end } = useMemo(() => getFetchRange(viewName, selectedDate), [viewName, selectedDate]);
+  const { start, end } = useMemo(() => getFetchRange(fetchView, selectedDate), [fetchView, selectedDate]);
   const startDate = format(start, "yyyy-MM-dd");
   const endDate = format(end, "yyyy-MM-dd");
 
   // Dummy (demo) student mode: legacy patchDummySchoolCalendar's generated classes/assignments/holidays/activities.
   const dummy = useDummyStudent();
   const query = useQuery({
-    queryKey: ["student-school-calendar", schoolUUID, userId, getBackendAgenda(viewName), startDate, endDate, dummy.key],
+    queryKey: ["student-school-calendar", schoolUUID, userId, getBackendAgenda(fetchView), startDate, endDate, timezone, dummy.key],
     queryFn: () =>
       dummy.enabled
         ? dummy.student.calendar({ startDate, endDate, timezone })
