@@ -44,7 +44,7 @@ export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMe
           <Image src={logoUrl} alt={schoolName || ""} width={220} height={44} className="h-11 w-auto max-w-[220px] object-contain max-[760px]:h-9 max-[760px]:max-w-[170px]" unoptimized />
         ) : (
           <span className="flex flex-col">
-            <span className="font-k5-display text-[22px] font-semibold leading-tight text-k5-brand">{schoolName || "International Schooling"}</span>
+            <span className="font-k5-display text-[22px] font-semibold leading-tight text-k5-brand">{schoolName}</span>
             <span className="text-xs font-extrabold text-k5-gx max-[760px]:hidden">Your Location. Your School. Your Time.</span>
           </span>
         )}
@@ -231,7 +231,7 @@ export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMe
         </div>
       </div>
 
-      <AppDownloadDialog open={appOpen} onClose={() => setAppOpen(false)} />
+      <AppDownloadDialog open={appOpen} schoolName={schoolName} onClose={() => setAppOpen(false)} />
 
       <LogoutConfirmDialog
         open={confirmLogout}

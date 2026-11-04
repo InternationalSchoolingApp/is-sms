@@ -1,6 +1,7 @@
 "use client";
 
 import { isFramed, navigateTop, useFramed } from "@/utils/embed";
+import { copyrightLine } from "@/utils/schoolBrand";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -1033,7 +1034,7 @@ function PageShell({ children, schoolSettingsLinks, schoolName }) {
               <img> avoids next/image remotePatterns config for arbitrary hosts. */}
           <img
             src={logoUrl || "/images/IS_Final_Logo.webp"}
-            alt={schoolName || "International Schooling"}
+            alt={schoolName || ""}
             className="h-11 w-auto"
           />
         </a>
@@ -1046,7 +1047,7 @@ function PageShell({ children, schoolSettingsLinks, schoolName }) {
       </div>
 
       <footer className="py-5 text-center text-xs text-slate-500">
-        Copyright © {new Date().getFullYear()} - {schoolName || "International Schooling"} - All Rights Reserved.
+        {copyrightLine(schoolName)}
       </footer>
     </main>
   );

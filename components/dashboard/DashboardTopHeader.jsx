@@ -43,7 +43,7 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
         ) : (
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-xs font-bold text-white">IS</div>
-            <span className="hidden text-sm font-bold text-black sm:inline">{schoolName || "International Schooling"}</span>
+            <span className="hidden text-sm font-bold text-black sm:inline">{schoolName}</span>
           </div>
         )}
       </div>

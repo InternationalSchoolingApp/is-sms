@@ -1,6 +1,8 @@
 "use client"; // Error boundaries must be Client Components
 
 import { useEffect, useState } from "react";
+import { useSchoolName } from "@/hooks/useSchoolName";
+import { copyrightLine } from "@/utils/schoolBrand";
 import { getLastApiAttempt } from "@/utils/lastApiAttempt";
 import { SchoolLogo } from "@/components/student-enroll/SchoolLogo";
 import { goHomeFromErrorPage } from "@/utils/errorPageActions";
@@ -39,21 +41,22 @@ export default function Error({ error }) {
   );
 }
 
-// No school context is available at this boundary (it sits above any
-// [school]-scoped route data), so these always show the generic
-// International Schooling brand/copyright rather than a specific school's.
+// No school route data is available at this boundary, so the school name comes from the sign-in
+// session when there is one (see useSchoolName) and is simply left out when there is not.
 export function ErrorPageHeader() {
+  const schoolName = useSchoolName();
   return (
     <div className="w-full py-2">
-      <SchoolLogo width={160} />
+      <SchoolLogo width={160} schoolName={schoolName} />
     </div>
   );
 }
 
 export function ErrorPageFooter() {
+  const schoolName = useSchoolName();
   return (
     <p className="py-4 text-center text-xs text-slate-500">
-      Copyright © {new Date().getFullYear()} - International Schooling - All Rights Reserved.
+      {copyrightLine(schoolName)}
     </p>
   );
 }

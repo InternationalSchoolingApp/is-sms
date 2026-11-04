@@ -74,7 +74,7 @@ export function useCartCheckout({ context, onPaid }) {
   async function start(userPaymentDetailsId) {
     if (preparing || !context) return;
     if (dummy.enabled) {
-      const schoolName = context.schoolName || "International Schooling";
+      const schoolName = context.schoolName || "";
       setPicker({
         details: {
           paymentOptions: [
@@ -82,7 +82,7 @@ export function useCartCheckout({ context, onPaid }) {
             { name: "Airwallex", label: "Option 2: Pay via Airwallex", icon: "Airwallex.png" },
           ],
           payAmount: dummy.student.checkoutAmount(),
-          paymentLabel: `${schoolName} is trusted by the safest and most reputed payment gateways, banks and wallets`,
+          paymentLabel: `${schoolName ? `${schoolName} is` : "We are"} trusted by the safest and most reputed payment gateways, banks and wallets`,
         },
         methods: [],
         countryCode: "",

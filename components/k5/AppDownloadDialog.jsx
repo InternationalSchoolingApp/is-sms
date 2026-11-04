@@ -124,9 +124,9 @@ function StepsDemo() {
   );
 }
 
-function SchoolPin() {
+function SchoolPin({ schoolName }) {
   return (
-    <svg width="64" height="78" viewBox="0 0 64 78" role="img" aria-label="International Schooling" className="k5-pico-idle flex-none max-[480px]:hidden">
+    <svg width="64" height="78" viewBox="0 0 64 78" role="img" aria-label={schoolName || "School"} className="k5-pico-idle flex-none max-[480px]:hidden">
       <ellipse cx="32" cy="75" rx="12" ry="2.5" fill="#1C2640" opacity="0.12" />
       <path d="M32 2C16 2 4 14 4 29.5 4 49 32 73 32 73s28-24 28-43.5C60 14 48 2 32 2z" fill="#2F7BF5" />
       <path d="M32 2C16 2 4 14 4 29.5c0 3 .6 6 1.6 9C8 22 18 11 32 11s24 11 26.4 27.5c1-3 1.6-6 1.6-9C60 14 48 2 32 2z" fill="#5C9BFF" opacity="0.6" />
@@ -155,7 +155,7 @@ function DancingPhone() {
  * store pages of the school app. Plain links that open the store in a new tab; nothing about
  * the student is sent anywhere.
  */
-export function AppDownloadDialog({ open, onClose }) {
+export function AppDownloadDialog({ open, schoolName, onClose }) {
   const themeProps = useK5ThemeProps(
     "max-h-[calc(100vh-32px)] gap-[18px] overflow-y-auto rounded-[32px] border-[3px] border-k5-ink bg-k5-card p-6 pb-[22px] text-k5-ink shadow-[0_8px_0_var(--k5-ink)] ring-0 sm:max-w-[720px] max-[480px]:p-4",
   );
@@ -172,9 +172,9 @@ export function AppDownloadDialog({ open, onClose }) {
         </button>
 
         <div className="flex items-center gap-3.5 pr-[52px]">
-          <SchoolPin />
+          <SchoolPin schoolName={schoolName} />
           <div className="flex min-w-0 flex-col gap-1">
-            <span className="text-xs font-black uppercase tracking-[0.08em] text-k5-vi">International Schooling app</span>
+            <span className="text-xs font-black uppercase tracking-[0.08em] text-k5-vi">{schoolName ? `${schoolName} app` : "School app"}</span>
             <DialogTitle className="m-0 font-k5-display text-[28px] font-semibold leading-[1.1]">Stay connected with our app!</DialogTitle>
             <DialogDescription className="m-0 flex flex-wrap items-center gap-2 text-base font-extrabold text-k5-mut">
               <span>Everything for school, right on your phone.</span>

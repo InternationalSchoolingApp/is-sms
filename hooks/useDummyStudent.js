@@ -36,6 +36,7 @@ export function useDummyStudent() {
   // origin: same-origin through the local proxy (next.config.mjs fallback), else the backend origin.
   const receiptBaseUrl = process.env.NEXT_PUBLIC_USE_LOCAL_PROXY === "true" ? "" : resolveBackendOrigin();
   const fallbackName = context?.userName || "";
+  const schoolName = context?.schoolName || "";
   const student = useMemo(
     () =>
       enabled
@@ -43,11 +44,12 @@ export function useDummyStudent() {
             row,
             params: new URLSearchParams(search || ""),
             fallbackName,
+            schoolName,
             receiptBaseUrl,
             imageBaseUrl: `${resolveBackendOrigin()}/static/theme2/images/`,
           })
         : null,
-    [enabled, row, search, fallbackName, receiptBaseUrl],
+    [enabled, row, search, fallbackName, schoolName, receiptBaseUrl],
   );
 
   const settled = Boolean(context) && search !== null && !(enabled && demoUser && rowQuery.isLoading);

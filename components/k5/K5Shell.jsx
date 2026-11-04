@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { copyrightLine } from "@/utils/schoolBrand";
 import { useParams, usePathname } from "next/navigation";
 import { RightActionRail } from "@/components/dashboard/RightActionRail";
 import { AppearanceProvider } from "@/components/appearance/AppearanceProvider";
@@ -91,7 +92,7 @@ function K5Frame({ children }) {
 
       {/* Below 760px the action rail is a fixed bottom tab bar — keep the footer clear of it. */}
       <footer className="px-4 pb-6 pt-2 text-center text-[13px] font-bold text-k5-mut max-[760px]:pb-[110px]">
-        Copyright © {new Date().getFullYear()} - {context.schoolName || "International Schooling"} - All Rights Reserved.
+        {copyrightLine(context.schoolName)}
       </footer>
 
       {isHome && <PicoGuide userId={context.userId} firstName={String(context.userName || "").split(" ")[0]} />}

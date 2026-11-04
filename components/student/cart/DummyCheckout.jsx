@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { copyrightLine } from "@/utils/schoolBrand";
 import { Check, ChevronLeft } from "lucide-react";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 
@@ -11,7 +12,7 @@ const COUNTRIES = ["India", "United States", "United Arab Emirates", "United Kin
 const money = (value) => (parseFloat(value) || 0).toFixed(2);
 const FIELD = "h-10 w-full bg-transparent px-3 text-[15px] text-slate-600 outline-none";
 
-function SuccessPage({ amount, studentName, logoUrl, onDone }) {
+function SuccessPage({ amount, studentName, logoUrl, schoolName, onDone }) {
   const [count, setCount] = useState(REDIRECT_SECONDS);
 
   useEffect(() => {
@@ -25,7 +26,7 @@ function SuccessPage({ amount, studentName, logoUrl, onDone }) {
 
   return (
     <main className="flex min-h-full flex-col items-center px-5 pb-14 pt-8 text-gray-800">
-      <OptimizedImage src={logoUrl} alt="International Schooling" width={330} height={100} sizes="(max-width: 640px) 90vw, 330px" className="mx-auto mb-9 h-auto w-[90%] max-w-[330px] sm:mb-14" />
+      <OptimizedImage src={logoUrl} alt={schoolName} width={330} height={100} sizes="(max-width: 640px) 90vw, 330px" className="mx-auto mb-9 h-auto w-[90%] max-w-[330px] sm:mb-14" />
       <section className="m-auto w-full max-w-[860px] text-center">
         <div className="mb-6 inline-flex h-28 w-28 items-center justify-center rounded-full bg-green-600 text-white shadow-[0_14px_32px_rgba(22,163,74,.22)]">
           <Check className="h-16 w-16" strokeWidth={3} />
@@ -33,7 +34,7 @@ function SuccessPage({ amount, studentName, logoUrl, onDone }) {
         <h1 className="mb-2 text-[34px] font-bold text-green-600 sm:text-[42px]">Thank You!</h1>
         <h2 className="mb-4 text-[25px] font-bold text-gray-900 sm:text-[30px]">Payment Successful</h2>
         <h3 className="mb-2.5 text-[22px] font-bold text-[#027fff]">Dear {studentName}</h3>
-        <p className="mb-7 text-xl font-bold italic">Greetings from International Schooling!</p>
+        <p className="mb-7 text-xl font-bold italic">{schoolName ? `Greetings from ${schoolName}!` : "Greetings!"}</p>
         <p className="mx-auto mb-3 max-w-[760px] text-base leading-relaxed text-gray-700 sm:text-lg">
           We confirm your online payment of <strong>${money(amount)}</strong> is completed successfully.
         </p>
@@ -51,7 +52,7 @@ function SuccessPage({ amount, studentName, logoUrl, onDone }) {
           Click here for Dashboard
         </button>
       </section>
-      <div className="mt-14 text-[15px] text-gray-600">Copyright &copy; {new Date().getFullYear()} - International Schooling - All Rights Reserved.</div>
+      <div className="mt-14 text-[15px] text-gray-600">{copyrightLine(schoolName)}</div>
     </main>
   );
 }
@@ -62,7 +63,7 @@ function SuccessPage({ amount, studentName, logoUrl, onDone }) {
  * "Payment Successful" page, which then empties the dummy cart and returns to the dashboard
  * (legacy dummyGoToDashboard). Nothing is charged and nothing reaches the backend.
  */
-export function DummyCheckout({ gateway, student, email, logoUrl, onBack, onDone }) {
+export function DummyCheckout({ gateway, student, email, logoUrl, schoolName, onBack, onDone }) {
   const [paid, setPaid] = useState(false);
   const [currency, setCurrency] = useState("INR");
   const [amount] = useState(() => student.checkoutAmount());
@@ -72,7 +73,7 @@ export function DummyCheckout({ gateway, student, email, logoUrl, onBack, onDone
   return (
     <div className="fixed inset-0 z-[100] overflow-y-auto bg-white font-sans text-[#30313d]">
       {paid ? (
-        <SuccessPage amount={amount} studentName={student.userName()} logoUrl={logoUrl || student.imageUrl("logo.png")} onDone={onDone} />
+        <SuccessPage amount={amount} studentName={student.userName()} logoUrl={logoUrl || student.imageUrl("logo.png")} schoolName={schoolName} onDone={onDone} />
       ) : (
         <div className="relative mx-auto grid min-h-full max-w-[380px] grid-cols-1 gap-10 px-5 py-8 lg:max-w-none lg:grid-cols-[380px_380px] lg:justify-center lg:gap-x-40 lg:px-0 lg:pt-14">
           <div aria-hidden="true" className="fixed inset-y-0 left-1/2 hidden w-px bg-[#f1f3f5] lg:block" />
@@ -82,7 +83,7 @@ export function DummyCheckout({ gateway, student, email, logoUrl, onBack, onDone
                 <ChevronLeft className="h-6 w-6" strokeWidth={3} />
               </button>
               <span className="mr-3 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#1685fe] text-[17px] text-white">i</span>
-              <span className="truncate">INTERNATIONAL SCHOOLING</span>
+              <span className="truncate">{(schoolName || "").toUpperCase()}</span>
               <span className="ml-2.5 rounded-[5px] bg-[#16335a] px-2.5 py-1 text-sm font-bold text-white">Sandbox</span>
             </div>
             <div className="mt-10 text-lg font-semibold lg:mt-20">Choose a currency:</div>
@@ -162,7 +163,7 @@ export function DummyCheckout({ gateway, student, email, logoUrl, onBack, onDone
               <span>
                 <strong className="font-semibold text-gray-600">Save my information for faster checkout</strong>
                 <br />
-                Pay securely at INTERNATIONAL SCHOOLING and everywhere Link is accepted.
+                {schoolName ? `Pay securely at ${schoolName.toUpperCase()} and everywhere Link is accepted.` : "Pay securely everywhere Link is accepted."}
               </span>
             </label>
             <button

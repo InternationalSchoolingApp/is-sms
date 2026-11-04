@@ -254,7 +254,7 @@ function LogoMark({ schoolName, logoUrl }) {
     <div className="flex items-center gap-3">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-bold text-white">IS</div>
       <div>
-        <p className="text-sm font-bold leading-tight text-black">{schoolName || "International Schooling"}</p>
+        <p className="text-sm font-bold leading-tight text-black">{schoolName}</p>
         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Admissions Portal</p>
       </div>
     </div>

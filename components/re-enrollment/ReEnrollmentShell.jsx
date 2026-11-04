@@ -27,7 +27,7 @@ export function ReEnrollmentShell({ schoolName, logoUrl, studentName, onLogout, 
           {logoUrl ? (
             <Image src={logoUrl} alt={schoolName || ""} width={160} height={36} className="h-9 w-auto max-w-[160px] sm:max-w-[220px]" unoptimized />
           ) : (
-            <p className="text-sm font-bold text-black">{schoolName || "International Schooling"}</p>
+            <p className="text-sm font-bold text-black">{schoolName}</p>
           )}
           <div className="flex items-center gap-3">
             {studentName && <span className="hidden text-sm font-semibold text-slate-700 sm:inline">{studentName}</span>}

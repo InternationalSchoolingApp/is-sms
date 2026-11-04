@@ -144,7 +144,7 @@ function isOneToOneLearningProgram(value) {
  * One dummy student. `row` = the demo-data row (or null), `params` = URLSearchParams of the page,
  * `fallbackName` = the logged-in user's name (legacy USER_FULL_NAME) when no demo name is known.
  */
-export function createDummyStudent({ row = null, params = new URLSearchParams(), fallbackName = "", receiptBaseUrl = "", imageBaseUrl = "" } = {}) {
+export function createDummyStudent({ row = null, params = new URLSearchParams(), fallbackName = "", schoolName = "", receiptBaseUrl = "", imageBaseUrl = "" } = {}) {
   const param = (name) => params.get(name) || "";
 
   // Legacy keeps only the demo row matching ?demoCourseId / ?demoCourseName (matchesSelectedDemoCourse).
@@ -658,7 +658,7 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
   function newsList() {
     const base = baseDate();
     const rows = [
-      [800001 + offset, `${grade.label} Learners Begin Their Demo Week`, `International Schooling welcomes ${grade.label} learners to a week of interactive online classes.`],
+      [800001 + offset, `${grade.label} Learners Begin Their Demo Week`, `${schoolName || "Our school"} welcomes ${grade.label} learners to a week of interactive online classes.`],
       [800101 + offset, "Simple Tips for Online Classroom Success", "Learners do best with a quiet study corner, a charged device, and a few minutes of preparation."],
     ];
     return {
@@ -668,7 +668,7 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
         id,
         title,
         content,
-        sourceName: "International Schooling",
+        sourceName: schoolName,
         image: `${imageBaseUrl}waiting-page-school-demo.png`,
         sourceLogo: `${imageBaseUrl}waiting-page-school-demo-logo.png`,
         sourceUrl: "",

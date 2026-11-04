@@ -288,6 +288,7 @@ export function Cart() {
           student={dummy.student}
           email={session?.user?.email || "demo.student@test.local"}
           logoUrl={logoUrl}
+          schoolName={context.schoolName}
           onBack={checkout.closeDummyCheckout}
           onDone={finishDummyCheckout}
         />

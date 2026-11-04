@@ -54,7 +54,7 @@ export async function getDashboardMenu({ schoolUUID, schoolId, roleId, userId })
     });
     console.log("getDashboardMenu status:", response.status);
     const menuData = await parseJsonResponse(response);
-    console.log("getDashboardMenu data:", JSON.stringify(menuData, null, 2));
+    // console.log("getDashboardMenu data:", JSON.stringify(menuData, null, 2));
     return menuData;
   } catch {
     return null;
