@@ -455,6 +455,7 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
             sourceApi={data.accountSetup ? "api/v1/enroll/another/child/thank-you" : "api/v1/{schoolId}/common/*payment-response-success"}
             fallbackName={data.userName}
             loginHref={loginPageUrl(schoolUUID)}
+            dashboardHref={data.returnUrl}
             schoolUUID={schoolUUID}
           />
         ) : (
@@ -567,13 +568,13 @@ function AddEnrollmentAccountInfo({ schoolUUID, parentId, childUniqueId, session
     hasOutlook: Boolean(info?.outlookEmail && info?.outlookPassword),
   });
   if (!isFirstPayment(info)) return null;
-  return <LoginDetails data={info} sourceApi="api/v1/enroll/another/child/thank-you" loginHref={loginPageUrl(schoolUUID)} schoolUUID={schoolUUID} />;
+  return <LoginDetails data={info} sourceApi="api/v1/enroll/another/child/thank-you" loginHref={loginPageUrl(schoolUUID)} dashboardHref={info.returnUrl} schoolUUID={schoolUUID} />;
 }
 
 // "Log in to your school dashboard" panel: login email + temporary password (show/hide, copy) and the dashboard
 // button. When the response has no Outlook credentials (password-creation step only), the original
 // AccountSetupSection is shown instead.
-function LoginDetails({ data, sourceApi, fallbackName, loginHref, schoolUUID }) {
+function LoginDetails({ data, sourceApi, fallbackName, loginHref, dashboardHref, schoolUUID }) {
   const { data: session } = useSession();
   const [show, setShow] = useState(true);
   const [leaving, setLeaving] = useState(false);
@@ -646,8 +647,8 @@ function LoginDetails({ data, sourceApi, fallbackName, loginHref, schoolUUID }) 
       </div>
       <p className="mt-4 text-sm text-slate-700">You can copy these details now. We have also sent them to your registered email address.</p>
       <a
-        href={loginHref}
-        onClick={goToDashboard}
+        href={dashboardHref || loginHref}
+        onClick={dashboardHref ? undefined : goToDashboard}
         aria-disabled={leaving}
         className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-primary px-8 text-base sm:w-auto font-semibold text-white shadow-sm transition hover:bg-primary/90"
       >
