@@ -167,5 +167,6 @@ export const config = {
     "/:school/enrollment/:program",
     "/:school/enrollment/:program/step/:path*",
     "/:school/add-enrollment/:parentId/:sessionUserId/step/:path*",
+    "/:school/common/:path*",
   ],
 };
