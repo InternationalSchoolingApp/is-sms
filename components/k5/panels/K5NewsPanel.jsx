@@ -6,6 +6,7 @@ import { format, parseISO } from "date-fns";
 import { Newspaper } from "lucide-react";
 import { NewsDetailModal } from "@/components/dashboard/NewsDetailModal";
 import { NewsAllModal } from "@/components/dashboard/NewsAllModal";
+import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { EmptyNote, K5Drawer } from "@/components/k5/panels/K5Drawer";
 import { getArticlesByIds } from "@/services/newsApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
@@ -17,6 +18,8 @@ function formatNewsDate(value) {
   const parsed = parseISO(String(value));
   return Number.isNaN(parsed.getTime()) ? "" : format(parsed, "MMM d, yyyy");
 }
+
+
 
 /**
  * K–5 look of the News drawer (mockup "News"): big story cards, three per page with Back / Next.
@@ -38,10 +41,15 @@ export function K5NewsPanel({ articles, totalNews, userId, onClose }) {
   const handleViewAll = async () => {
     setMarkingAll(true);
     const result = dummy.enabled ? dummy.student.newsList() : await getArticlesByIds({ ids: articles.map((a) => a.id), userId });
+    console.log("K5NewsPanel: view all news result", result);
     setMarkingAll(false);
     setAllArticles(result?.list || []);
+    setSelected(!result?.list || []);
+    console.log("K5NewsPanel: view all news articles", allArticles || []);
     queryClient.setQueriesData({ queryKey: ["news-articles"] }, (data) => (data ? { ...data, totalNews: 0 } : data));
   };
+
+  
 
   const goTo = (next, el) => {
     if (next < 0 || next >= pages) return;
@@ -53,17 +61,18 @@ export function K5NewsPanel({ articles, totalNews, userId, onClose }) {
 
   return (
     <>
-      <K5Drawer
-        title="News"
-        subtitle={totalNews > 0 ? `${totalNews} new` : "Fresh stories"}
-        icon={<Newspaper className="h-[30px] w-[30px] text-[#0B2447]" aria-hidden="true" />}
-        accent="#F2B705"
-        pastel="#FFE59E"
-        bg="var(--k5-card)"
-        width={600}
-        bodyClassName="px-4 pb-6 pt-[18px]"
-        onClose={onClose}
-      >
+      {!selected && (
+        <K5Drawer
+          title="News"
+          subtitle={totalNews > 0 ? `${totalNews} new` : "Fresh stories"}
+          icon={<Newspaper className="h-[30px] w-[30px] text-[#0B2447]" aria-hidden="true" />}
+          accent="#F2B705"
+          pastel="#FFE59E"
+          bg="var(--k5-card)"
+          width={600}
+          bodyClassName="px-4 pb-6 pt-[18px] overflow-y-auto"
+          onClose={onClose}
+        >
         {articles.length === 0 ? (
           <EmptyNote>No news yet.</EmptyNote>
         ) : (
@@ -73,7 +82,7 @@ export function K5NewsPanel({ articles, totalNews, userId, onClose }) {
                 <h3 className="m-0 font-k5-display text-[22px] font-semibold leading-tight text-k5-ink">{item.title}</h3>
                 <div className="relative flex h-[210px] items-center justify-center overflow-hidden rounded-[18px] bg-[linear-gradient(160deg,#FFF8D6_0%,#FFE27A_55%,#FFC94D_100%)]">
                   {item.image ? (
-                    <img src={item.image} alt="" className="h-full w-full object-cover" />
+                    <OptimizedImage src={item.image} alt="" fill sizes="(max-width: 760px) 100vw, 560px" className="object-cover" />
                   ) : (
                     <Newspaper className="h-20 w-20 text-[#8A6100]" aria-hidden="true" />
                   )}
@@ -112,9 +121,10 @@ export function K5NewsPanel({ articles, totalNews, userId, onClose }) {
             </button>
           </>
         )}
-      </K5Drawer>
-      {selected && <NewsDetailModal article={selected} userId={userId} onClose={() => setSelected(null)} />}
-      {allArticles && <NewsAllModal articles={allArticles} onClose={() => setAllArticles(null)} />}
+        </K5Drawer>
+      )}
+      {selected && !allArticles && <NewsDetailModal article={selected} userId={userId} onClose={() => setSelected(null)} />}
+      {allArticles && <NewsAllModal articles={allArticles} onClose={() => {setAllArticles(null); setSelected(null)}} />}
     </>
   );
 }

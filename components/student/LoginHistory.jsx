@@ -7,6 +7,7 @@ import { TableFooter } from "@/components/student/TableFooter";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useStudentLoginHistory } from "@/hooks/useStudentLoginHistory";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
+import { OptimizedImage } from "@/components/common/OptimizedImage";
 
 // Backend static assets (legacy PATH_FOLDER_IMAGE2).
 const assetUrl = (file) => `${resolveBackendOrigin()}/static/theme2/images/${file}`;
@@ -92,8 +93,7 @@ export function LoginHistory() {
   return (
     <div className="w-full">
       <div className="mb-3 flex items-center gap-3 px-1">
-        {/* eslint-disable-next-line @next/next/no-img-element -- legacy backend asset */}
-        <img src={assetUrl("Icon/sidebar/Login_History.png")} alt="" className="h-9 w-9 object-contain" />
+        <OptimizedImage src={assetUrl("Icon/sidebar/Login_History.png")} alt="" width={36} height={36} className="h-9 w-9 object-contain" />
         <h1 className="text-lg font-bold text-black sm:text-xl">Login History - {studentName || "N/A"}</h1>
       </div>
 

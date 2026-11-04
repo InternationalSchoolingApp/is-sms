@@ -6,6 +6,7 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useModuleRights } from "@/hooks/useModuleRights";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
+import { OptimizedImage } from "@/components/common/OptimizedImage";
 
 // Backend static assets (legacy PATH_FOLDER_IMAGE2).
 const assetUrl = (file) => `${resolveBackendOrigin()}/static/theme2/images/${file}`;
@@ -38,8 +39,7 @@ export function StudentHandbook() {
   return (
     <div className="w-full">
       <div className="mb-3 flex items-center gap-3 px-1">
-        {/* eslint-disable-next-line @next/next/no-img-element -- legacy backend asset */}
-        <img src={assetUrl("Icon/sidebar/Child_Handbook.png")} alt="" className="h-9 w-9 object-contain" />
+        <OptimizedImage src={assetUrl("Icon/sidebar/Child_Handbook.png")} alt="" width={36} height={36} className="h-9 w-9 object-contain" />
         <h1 className="text-lg font-bold text-black sm:text-xl">{title}</h1>
       </div>
 
@@ -50,8 +50,7 @@ export function StudentHandbook() {
           <p className="py-8 text-center text-black/60">You do not have access to this module.</p>
         ) : (
           <div className="flex flex-col items-center text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element -- legacy backend asset */}
-            <img src={coverImage} alt="Student Handbook" className="w-full max-w-[250px]" />
+            <OptimizedImage src={coverImage} alt="Student Handbook" width={250} height={325} sizes="250px" className="h-auto w-full max-w-[250px]" />
             {filePath ? (
               <a
                 href={filePath}

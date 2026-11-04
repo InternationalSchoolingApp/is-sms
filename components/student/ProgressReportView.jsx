@@ -9,6 +9,7 @@ import { useStudentGradebookReport } from "@/hooks/useStudentGradebookReport";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import { MobileTableCard } from "@/components/student/MobileTableCard";
+import { OptimizedImage } from "@/components/common/OptimizedImage";
 
 // Backend static assets (legacy PATH_FOLDER_IMAGE2).
 const assetUrl = (file) => `${resolveBackendOrigin()}/static/theme2/images/${file}`;
@@ -82,8 +83,7 @@ function EnrollmentReport({ enrollment, report, logoUrl }) {
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             {logoUrl && (
-              // eslint-disable-next-line @next/next/no-img-element -- school logo from settings
-              <img src={logoUrl} alt="School logo" className="mb-6 w-full max-w-[300px]" />
+              <OptimizedImage src={logoUrl} alt="School logo" width={300} height={80} sizes="(max-width: 768px) 100vw, 300px" className="mb-6 h-auto w-full max-w-[300px]" />
             )}
             <DetailRows
               rows={[
@@ -341,17 +341,16 @@ export function ProgressReportView({ url, onBack }) {
             ))}
 
             <div className="flex flex-wrap items-start justify-between gap-4">
-              {/* eslint-disable-next-line @next/next/no-img-element -- legacy backend asset */}
-              <img src={assetUrl("repost-bottom-graphic.png")} alt="" className="w-full max-w-[300px]" />
+              <OptimizedImage src={assetUrl("repost-bottom-graphic.png")} alt="" width={300} height={100} className="h-auto w-full max-w-[300px]" />
               <div className="w-full text-right sm:w-auto">
                 <div className="relative inline-block pr-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- legacy backend asset */}
-                  <img src={assetUrl("is-stamp.png")} alt="School stamp" className="w-full max-w-[100px]" />
-                  {/* eslint-disable-next-line @next/next/no-img-element -- legacy backend asset */}
-                  <img
+                  <OptimizedImage src={assetUrl("is-stamp.png")} alt="School stamp" width={100} height={100} className="h-auto w-full max-w-[100px]" />
+                  <OptimizedImage
                     src={assetUrl("signature-report.png")}
                     alt="Signature"
-                    className="absolute -bottom-[30px] -left-[30px] w-full max-w-[100px]"
+                    width={100}
+                    height={100}
+                    className="absolute -bottom-[30px] -left-[30px] h-auto w-full max-w-[100px]"
                   />
                 </div>
                 <p className="mt-2">School Official</p>

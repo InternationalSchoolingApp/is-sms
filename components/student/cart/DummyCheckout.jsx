@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check, ChevronLeft } from "lucide-react";
+import { OptimizedImage } from "@/components/common/OptimizedImage";
 
 const INR_RATE = 98.2304;
 const REDIRECT_SECONDS = 5;
@@ -24,8 +25,7 @@ function SuccessPage({ amount, studentName, logoUrl, onDone }) {
 
   return (
     <main className="flex min-h-full flex-col items-center px-5 pb-14 pt-8 text-gray-800">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={logoUrl} alt="International Schooling" className="mx-auto mb-9 w-[90%] max-w-[330px] sm:mb-14" />
+      <OptimizedImage src={logoUrl} alt="International Schooling" width={330} height={100} sizes="(max-width: 640px) 90vw, 330px" className="mx-auto mb-9 h-auto w-[90%] max-w-[330px] sm:mb-14" />
       <section className="m-auto w-full max-w-[860px] text-center">
         <div className="mb-6 inline-flex h-28 w-28 items-center justify-center rounded-full bg-green-600 text-white shadow-[0_14px_32px_rgba(22,163,74,.22)]">
           <Check className="h-16 w-16" strokeWidth={3} />
@@ -139,8 +139,7 @@ export function DummyCheckout({ gateway, student, email, logoUrl, onBack, onDone
                   <input type="text" inputMode="numeric" maxLength={19} placeholder="1234 1234 1234 1234" className={FIELD} />
                   <span className="flex shrink-0 items-center gap-1">
                     {["visa.png", "master-card.png", "american-express.png", "JCB-Pay.png"].map((file) => (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img key={file} src={student.imageUrl(file)} alt="" className="h-4 w-[25px] rounded-sm object-contain" />
+                      <OptimizedImage key={file} src={student.imageUrl(file)} alt="" width={25} height={16} className="h-4 w-[25px] rounded-sm object-contain" />
                     ))}
                   </span>
                 </div>

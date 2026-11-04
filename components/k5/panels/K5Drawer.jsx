@@ -13,9 +13,14 @@ export function K5Drawer({ title, subtitle, icon, accent, pastel, bg, width = 48
     const onKey = (e) => {
       if (e.key === "Escape") onClose();
     };
+    document.body.classList.add("fixed");
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      document.body.classList.remove("fixed");
+      window.removeEventListener("keydown", onKey);
+    };
   }, [onClose]);
+
 
   return (
     <div className="fixed inset-0 z-[85] box-border flex items-stretch justify-end p-4">

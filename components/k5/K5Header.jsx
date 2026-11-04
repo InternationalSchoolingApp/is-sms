@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { ChevronDown, KeyRound, LogOut, Menu, MoreVertical, Palette, User } from "lucide-react";
+import { ChevronDown, KeyRound, LogOut, Menu, MoreVertical, Palette, Smartphone, User } from "lucide-react";
 import toast from "react-hot-toast";
+import { AppDownloadDialog } from "@/components/k5/AppDownloadDialog";
 import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
 import { CartHeaderButton } from "@/components/student/cart/CartHeaderButton";
 import { logoutEverywhere } from "@/utils/logout";
@@ -12,12 +13,12 @@ import { logoutEverywhere } from "@/utils/logout";
  * Grade K–5 header (Playful.dc.html): menu button, school logo, LMS switch and the
  * "Welcome back" chip with the profile menu, plus the Appearance (palette) button that opens
  * "Make it yours!". Same actions as DashboardTopHeader — LMS, My Profile and Change Password
- * are still "coming soon"; Log out is live. "Get the App" is left out until the store links
- * config exists, per the "no non-functional controls" rule.
+ * are still "coming soon"; Log out is live. "Get the App" opens the store links (constant/appLinks.js).
  */
 export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMenu, onAppearance }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [appOpen, setAppOpen] = useState(false);
   const [lms, setLms] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -65,6 +66,16 @@ export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMe
             <circle cx="10.5" cy="7" r="1.6" fill="#1E66E0" />
             <circle cx="15" cy="7.5" r="1.6" fill="#1F7A3A" />
           </svg>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setAppOpen(true)}
+          aria-haspopup="dialog"
+          className="flex min-h-12 cursor-pointer items-center gap-2 rounded-full border-[3px] border-k5-ac bg-k5-card py-0 pl-3 pr-[18px] font-k5-display text-[17px] font-semibold text-k5-acx shadow-[0_4px_0_var(--k5-acl)] max-[760px]:hidden"
+        >
+          <Smartphone className="h-[22px] w-[22px]" strokeWidth={2.4} aria-hidden="true" />
+          Get the App
         </button>
 
         <button
@@ -186,6 +197,19 @@ export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMe
                 >
                   Theme &amp; look
                 </MoreItem>
+                <MoreItem
+                  icon={
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-k5-act">
+                      <Smartphone className="h-5 w-5 text-k5-acx" aria-hidden="true" />
+                    </span>
+                  }
+                  onClick={() => {
+                    setMoreOpen(false);
+                    setAppOpen(true);
+                  }}
+                >
+                  Get the App
+                </MoreItem>
                 <span aria-hidden="true" className="mx-1.5 my-1 block h-0.5 bg-k5-line" />
                 <MoreItem
                   danger
@@ -206,6 +230,8 @@ export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMe
           )}
         </div>
       </div>
+
+      <AppDownloadDialog open={appOpen} onClose={() => setAppOpen(false)} />
 
       <LogoutConfirmDialog
         open={confirmLogout}

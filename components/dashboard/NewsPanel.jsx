@@ -6,6 +6,7 @@ import { format, parseISO } from "date-fns";
 import { Newspaper, X } from "lucide-react";
 import { NewsDetailModal } from "@/components/dashboard/NewsDetailModal";
 import { NewsAllModal } from "@/components/dashboard/NewsAllModal";
+import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { getArticlesByIds } from "@/services/newsApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 
@@ -74,7 +75,7 @@ export function NewsPanel({ articles, totalNews, userId, onClose }) {
                     onClick={() => setSelected(item)}
                     className="flex w-full gap-3 rounded-lg border border-slate-100 p-2 text-left hover:border-primary hover:bg-primary/5"
                   >
-                    {item.image && <img src={item.image} alt="" className="h-16 w-16 flex-shrink-0 rounded object-cover" />}
+                    {item.image && <OptimizedImage src={item.image} alt="" width={64} height={64} className="h-16 w-16 flex-shrink-0 rounded object-cover" />}
                     <div className="min-w-0">
                       <span className="block text-sm font-bold text-black">{item.title}</span>
                       <span className="mt-1 block text-xs text-black/50">

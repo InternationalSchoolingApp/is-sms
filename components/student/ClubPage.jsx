@@ -9,6 +9,7 @@ import { useModuleRights } from "@/hooks/useModuleRights";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CLUBS } from "@/constant/Clubs";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
+import { OptimizedImage } from "@/components/common/OptimizedImage";
 
 // Backend static assets (legacy PATH_FOLDER_IMAGE2).
 const assetUrl = (file) => `${resolveBackendOrigin()}/static/theme2/images/${file}`;
@@ -49,11 +50,13 @@ export function ClubPage({ pageLink }) {
           <p className="py-8 text-center text-black/60">You do not have access to this club.</p>
         ) : (
           <div className="flex flex-col items-center text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element -- legacy backend asset */}
-            <img
+            <OptimizedImage
               src={assetUrl(`clubs/${club.image}`)}
               alt={club.title}
-              className="w-full rounded-[10px] sm:max-w-[65%]"
+              width={980}
+              height={560}
+              sizes="(max-width: 640px) 100vw, 65vw"
+              className="h-auto w-full rounded-[10px] sm:max-w-[65%]"
             />
             <h4 className="mt-4 text-lg font-bold text-black sm:text-2xl">
               Be part of our {club.title}!{club.subtitle ? ` – ${club.subtitle}` : ""}
@@ -76,8 +79,7 @@ export function ClubPage({ pageLink }) {
 
       <Dialog open={registered} onOpenChange={setRegistered}>
         <DialogContent className="text-center sm:max-w-[500px]">
-          {/* eslint-disable-next-line @next/next/no-img-element -- legacy backend asset */}
-          <img src={assetUrl("Awesome_Success_Check_Animation.gif")} alt="" className="mx-auto w-full max-w-[100px]" />
+          <OptimizedImage src={assetUrl("Awesome_Success_Check_Animation.gif")} alt="" width={100} height={100} className="mx-auto h-auto w-full max-w-[100px]" />
           <DialogTitle className="text-2xl font-semibold text-black">You&apos;re all Set!</DialogTitle>
           <p className="text-base text-black/80">
             Registration received.

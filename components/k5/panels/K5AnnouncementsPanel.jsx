@@ -11,16 +11,17 @@ export function K5AnnouncementsPanel({ announcements, newCount, schoolUUID, user
   const [selected, setSelected] = useState(null);
   return (
     <>
-      <K5Drawer
-        title="Announcements"
-        subtitle={newCount > 0 ? `${newCount} new` : "All read"}
-        icon={<Megaphone className="h-[30px] w-[30px] text-[#0B2447]" aria-hidden="true" />}
-        accent="#1477F8"
-        pastel="#D3E7FF"
-        bg="var(--k5-card)"
-        bodyClassName="px-4 pb-6 pt-[18px]"
-        onClose={onClose}
-      >
+      {!selected && (
+        <K5Drawer
+          title="Announcements"
+          subtitle={newCount > 0 ? `${newCount} new` : "All read"}
+          icon={<Megaphone className="h-[30px] w-[30px] text-[#0B2447]" aria-hidden="true" />}
+          accent="#1477F8"
+          pastel="#D3E7FF"
+          bg="var(--k5-card)"
+          bodyClassName="px-4 pb-6 pt-[18px] overflow-y-auto"
+          onClose={onClose}
+        >
         {announcements.length === 0 ? (
           <EmptyNote>No announcements yet.</EmptyNote>
         ) : (
@@ -54,7 +55,8 @@ export function K5AnnouncementsPanel({ announcements, newCount, schoolUUID, user
             );
           })
         )}
-      </K5Drawer>
+        </K5Drawer>
+      )}
       {selected && <AnnouncementDetailModal announcement={selected} schoolUUID={schoolUUID} userId={userId} onClose={() => setSelected(null)} />}
     </>
   );

@@ -12,6 +12,7 @@ import { useStudentAcademicYearExtension } from "@/hooks/useStudentAcademicYearE
 import { availAcademicYearExtension, getAcademicYearExtensionProceed } from "@/services/dashboardApi";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import { expireSession } from "@/utils/logout";
+import { OptimizedImage } from "@/components/common/OptimizedImage";
 
 const STATUS_SESSION_OUT = "3";
 const GENERIC_ERROR = "Something went wrong. Please try again.";
@@ -26,8 +27,7 @@ function courseImage(course, fallback) {
 function CourseCard({ course, image, onClick, as: Tag = "button" }) {
   return (
     <Tag type={Tag === "button" ? "button" : undefined} onClick={onClick} className="block w-full overflow-hidden rounded-lg bg-primary text-left shadow-sm transition hover:shadow-md">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={image} alt="" className="aspect-[4/3] w-full bg-white object-contain p-2" />
+      <OptimizedImage src={image} alt="" width={400} height={300} sizes="(max-width: 640px) 100vw, 50vw" className="aspect-[4/3] h-auto w-full bg-white object-contain p-2" />
       <div className="p-2 text-white">
         <h5 className="text-sm font-semibold sm:text-base">{course.subjectName || "N/A"}</h5>
       </div>

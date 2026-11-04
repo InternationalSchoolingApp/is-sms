@@ -15,6 +15,7 @@ import { BookClassSlotModal } from "@/components/student/bookClass/BookClassSlot
 import { AllCoursesPickerModal } from "@/components/student/bookClass/AllCoursesPickerModal";
 import { BookedClasses } from "@/components/student/bookClass/BookedClasses";
 import { K5BookNotice, K5BookView } from "@/components/k5/pages/K5BookView";
+import { OptimizedImage } from "@/components/common/OptimizedImage";
 
 function PageTitle() {
   return (
@@ -222,7 +223,7 @@ export function BookClasses() {
 
           <h2 className="px-1 font-semibold text-black">Book Classes for this week</h2>
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
-            {course.img && <img src={course.img} alt="" className="h-40 w-full rounded-xl object-cover" />}
+            {course.img && <OptimizedImage src={course.img} alt="" width={640} height={256} sizes="(max-width: 1024px) 100vw, 640px" className="h-40 w-full rounded-xl object-cover" />}
             <h3 className="my-3 font-semibold text-black">{course.name}</h3>
             <div className="flex flex-wrap gap-3">
               <Count label="Left" value={course.left} className="bg-amber-500" />

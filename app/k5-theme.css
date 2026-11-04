@@ -351,3 +351,247 @@
     transition: none !important;
   }
 }
+
+/* Free-day games: balloons float up the play area (Playful.dc.html balloonRise). */
+@keyframes k5BalloonRise {
+  0% {
+    transform: translateY(140px);
+  }
+  100% {
+    transform: translateY(-380px);
+  }
+}
+.k5-balloon {
+  animation: k5BalloonRise 7s linear infinite;
+}
+
+/* Toolbar weather tile: rain drops and snow flakes (Playful.dc.html dropFall / snowDrift). */
+@keyframes k5DropFall {
+  0% {
+    transform: translateY(-12px);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(70px);
+    opacity: 0;
+  }
+}
+@keyframes k5SnowDrift {
+  0% {
+    transform: translate(0, -8px);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(6px, 64px);
+    opacity: 0;
+  }
+}
+.k5-wx-drop {
+  position: absolute;
+  top: 0;
+  width: 3px;
+  height: 12px;
+  border-radius: 3px;
+  background: #4f8ff5;
+  opacity: 0.35;
+  animation: k5DropFall 1s linear infinite;
+}
+.k5-wx-flake {
+  position: absolute;
+  top: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px #b9c9e6;
+  opacity: 0.6;
+  animation: k5SnowDrift 2.2s linear infinite;
+}
+
+/* Get the App dialog: the little dancing phone and the scan -> download -> installed demo (Playful.dc.html). */
+@keyframes k5PhoneDance {
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  20% {
+    transform: rotate(-14deg) translateY(-3px);
+  }
+  40% {
+    transform: rotate(12deg) translateY(0);
+  }
+  60% {
+    transform: rotate(-10deg) translateY(-3px);
+  }
+  80% {
+    transform: rotate(8deg) translateY(0);
+  }
+}
+@keyframes k5DemoPhone {
+  0%,
+  100% {
+    transform: translateY(2px);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+@keyframes k5DemoS1 {
+  0%,
+  40% {
+    opacity: 1;
+  }
+  44%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes k5DemoScan {
+  0%,
+  12% {
+    transform: translateY(0);
+  }
+  24% {
+    transform: translateY(60px);
+  }
+  36%,
+  100% {
+    transform: translateY(0);
+  }
+}
+@keyframes k5DemoS2 {
+  0%,
+  40% {
+    opacity: 0;
+  }
+  44%,
+  54% {
+    opacity: 1;
+  }
+  58%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes k5DemoS3 {
+  0%,
+  56% {
+    opacity: 0;
+  }
+  60%,
+  82% {
+    opacity: 1;
+  }
+  86%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes k5DemoBar {
+  0%,
+  60% {
+    transform: scaleX(0.02);
+  }
+  80%,
+  100% {
+    transform: scaleX(1);
+  }
+}
+@keyframes k5DemoS4 {
+  0%,
+  84% {
+    opacity: 0;
+  }
+  88%,
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes k5DemoArrow {
+  0%,
+  100% {
+    transform: translateY(-2px);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+@keyframes k5DemoC1 {
+  0%,
+  42% {
+    opacity: 1;
+  }
+  46%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes k5DemoC2 {
+  0%,
+  44% {
+    opacity: 0;
+  }
+  48%,
+  84% {
+    opacity: 1;
+  }
+  88%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes k5DemoC3 {
+  0%,
+  86% {
+    opacity: 0;
+  }
+  90%,
+  100% {
+    opacity: 1;
+  }
+}
+.k5-phone-dance {
+  animation: k5PhoneDance 1.6s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+.k5-demo-phone {
+  animation: k5DemoPhone 2s ease-in-out infinite;
+}
+.k5-demo-s1 {
+  animation: k5DemoS1 6s linear infinite;
+}
+.k5-demo-scan {
+  animation: k5DemoScan 6s ease-in-out infinite;
+}
+.k5-demo-s2 {
+  animation: k5DemoS2 6s linear infinite;
+}
+.k5-demo-s3 {
+  animation: k5DemoS3 6s linear infinite;
+}
+.k5-demo-s4 {
+  animation: k5DemoS4 6s linear infinite;
+}
+.k5-demo-bar {
+  animation: k5DemoBar 6s linear infinite;
+  transform-box: fill-box;
+  transform-origin: left center;
+}
+.k5-demo-arrow {
+  animation: k5DemoArrow 0.6s ease-in-out infinite;
+}
+.k5-demo-c1 {
+  animation: k5DemoC1 6s linear infinite;
+}
+.k5-demo-c2 {
+  animation: k5DemoC2 6s linear infinite;
+}
+.k5-demo-c3 {
+  animation: k5DemoC3 6s linear infinite;
+}

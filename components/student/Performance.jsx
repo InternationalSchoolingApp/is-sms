@@ -6,6 +6,7 @@ import { useStudentAcademicPerformance } from "@/hooks/useStudentAcademicPerform
 import { PerformanceProgressModal } from "@/components/student/PerformanceProgressModal";
 import { TableFooter } from "@/components/student/TableFooter";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
+import { OptimizedImage } from "@/components/common/OptimizedImage";
 
 const PAGE_SIZE = 10;
 
@@ -42,8 +43,7 @@ function Pace({ value }) {
   const pace = PACE[value] ?? { label: value || "N/A", className: "text-black", image: "still.png", size: 24 };
   return (
     <div className={`flex items-center ${pace.className}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element -- legacy backend asset */}
-      <img src={assetUrl(pace.image)} alt={pace.label} width={pace.size} height={pace.size} className="object-contain" />
+      <OptimizedImage src={assetUrl(pace.image)} alt={pace.label} width={pace.size} height={pace.size} className="object-contain" />
       <span className="ml-2">{pace.label}</span>
     </div>
   );

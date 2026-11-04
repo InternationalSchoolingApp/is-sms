@@ -2,6 +2,7 @@
 
 import { useState, useSyncExternalStore } from "react";
 import { signOut } from "next-auth/react";
+import Image from "next/image";
 import { ArrowRight, Check, Eye, EyeOff, Lock, LockOpen, LoaderCircle, Phone, X } from "lucide-react";
 import { createAddEnrollmentPassword } from "@/services/addEnrollmentPasswordApi";
 import { loadCreatePasswordTarget } from "@/utils/addEnrollmentCreatePassword";
@@ -98,8 +99,7 @@ export function AddCreatePassword({ schoolUUID }) {
       className="flex min-h-screen flex-col items-center bg-[#eef4fb] bg-cover bg-center bg-no-repeat px-4 py-8 sm:py-10"
       style={{ backgroundImage: "url('/images/signup-thankyou-bg.png')" }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element -- static brand logo */}
-      <img src="/images/IS_Final_Logo.webp" alt="International Schooling" className="mb-5 h-11 w-auto" />
+      <Image src="/images/IS_Final_Logo.webp" alt="International Schooling" width={300} height={100} className="mb-5 h-11 w-auto" />
 
       <div className="relative w-full max-w-[480px] rounded-3xl bg-white px-5 py-8 shadow-xl shadow-slate-900/5 ring-1 ring-slate-900/5 sm:px-8">
         <span className="absolute top-4 right-4 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-primary">

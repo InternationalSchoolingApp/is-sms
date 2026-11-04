@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, ArrowRightLeft, ChevronRight, CircleCheckBig, In
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { OptimizedImage } from "@/components/common/OptimizedImage";
 import {
   CURRENCY_TO_FLAG_COUNTRY,
   FLAG_COUNTRY_TO_CURRENCY,
@@ -69,8 +70,7 @@ function tabIcon(option) {
 
 function Flag({ country, alt }) {
   if (!country) return null;
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={assetUrl(FLAGS, `${country}.svg`)} alt={alt} className="h-6 w-8 shrink-0 rounded-sm object-cover" />;
+  return <OptimizedImage src={assetUrl(FLAGS, `${country}.svg`)} alt={alt} width={32} height={24} className="h-6 w-8 shrink-0 rounded-sm object-cover" />;
 }
 
 function CurrencyCard({ details, payerCountryCode }) {
@@ -145,8 +145,7 @@ function MethodTile({ image, label, onClick, disabled }) {
       className="flex h-32 w-32 flex-col items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-800 transition hover:border-primary hover:shadow disabled:opacity-60 sm:w-36"
     >
       {image ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={image} alt="" className="max-h-12 max-w-full object-contain" />
+        <OptimizedImage src={image} alt="" width={192} height={48} className="max-h-12 max-w-full object-contain" />
       ) : null}
       <span className="text-center leading-tight">{label}</span>
     </button>
@@ -339,8 +338,7 @@ function GatewayPanel({ option, details, airwallexMethods, busy, onPay, onClose,
     <div className="min-w-0">
       {hasBanner && (
         <div className="flex justify-center rounded-xl bg-slate-100 px-5 py-4">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={assetUrl(IMAGES, option.icon)} alt={option.label} className="h-9 max-w-[220px] object-contain object-center" />
+          <OptimizedImage src={assetUrl(IMAGES, option.icon)} alt={option.label} width={220} height={36} className="h-9 max-w-[220px] object-contain object-center" />
         </div>
       )}
 
@@ -470,16 +468,14 @@ export function PaymentGatewayPickerModal({
                       }`}
                     >
                       <span className="flex h-12 w-12 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 p-1">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={assetUrl(IMAGES, tabIcon(option))} alt="" className=" md:max-h-7 md:max-w-7 max-h-7.2 max-w-7.2 object-contain" />
+                        <OptimizedImage src={assetUrl(IMAGES, tabIcon(option))} alt="" width={28} height={28} className="md:max-h-7 md:max-w-7 max-h-7.2 max-w-7.2 object-contain" />
                       </span>
                       <span className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
                         <span className="max-w-full break-words text-center text-2xl md:text-[17px]">{option.label}</span>
                         {String(option.name).toUpperCase() === "STRIPE" && (
                           <span className="flex items-center justify-center gap-1.5 md:hidden">
                             {[["visa.png", "Visa"], ["master-card.png", "Mastercard"], ["american-express.png", "Amex"]].map(([file, alt]) => (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img key={file} src={assetUrl(IMAGES, file)} alt={alt} className="h-7 w-auto rounded-sm bg-white object-contain p-1" />
+                              <OptimizedImage key={file} src={assetUrl(IMAGES, file)} alt={alt} width={28} height={28} className="h-7 w-auto rounded-sm bg-white object-contain p-1" />
                             ))}
                           </span>
                         )}

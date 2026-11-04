@@ -1,5 +1,6 @@
 "use client";
 
+import { K5Games } from "@/components/k5/games/K5Games";
 import { addDays, format } from "date-fns";
 import { CalendarDays, Check, ChevronRight, Clock, Flag, PartyPopper, Smile, Star, Video } from "lucide-react";
 import { CLUE_RING, K5_PRIMARY_BTN, PlanHeader, PlanTile, StatusPills, SubjectTile } from "@/components/k5/home/k5Bits";
@@ -273,7 +274,10 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
           ))}
         </div>
       ) : (
-        <NoClassDay reason={noClassReason(dateKey, day, { isSelfStudy, firstName })} isToday={isToday} />
+        <>
+          <NoClassDay reason={noClassReason(dateKey, day, { isSelfStudy, firstName })} isToday={isToday} />
+          <K5Games />
+        </>
       )}
 
       <Assignments items={day.assignments} clue={clue} onOpen={onOpen} />

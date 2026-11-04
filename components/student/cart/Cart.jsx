@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
 import { CartTermsModal } from "@/components/student/cart/CartTermsModal";
 import { DummyCheckout } from "@/components/student/cart/DummyCheckout";
+import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useCartCheckout } from "@/hooks/useCartCheckout";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
@@ -43,8 +44,7 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
   return (
     <li className="flex gap-3 rounded-xl border border-slate-200 p-3">
       {item.imgURl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={item.imgURl} alt="" className="h-20 w-20 shrink-0 rounded-lg border border-slate-200 object-contain" />
+        <OptimizedImage src={item.imgURl} alt="" width={80} height={80} className="h-20 w-20 shrink-0 rounded-lg border border-slate-200 object-contain" />
       )}
       <div className="min-w-0 flex-1 text-sm text-black">
         <h3 className="mb-1 text-base font-bold">{item.subjectName}</h3>

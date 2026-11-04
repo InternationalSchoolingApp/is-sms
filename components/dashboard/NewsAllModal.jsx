@@ -3,6 +3,7 @@
 import { CalendarDays, Clock, Newspaper, X } from "lucide-react";
 import DOMPurify from "dompurify";
 import { formatNewsDate, formatRelativeAgo } from "@/utils/newsFormat";
+import { OptimizedImage } from "@/components/common/OptimizedImage";
 
 function ArticleBlock({ article }) {
   return (
@@ -12,7 +13,7 @@ function ArticleBlock({ article }) {
         {article.country && <span className="flex-shrink-0 text-xs text-black/50">📍 {article.country}</span>}
       </div>
 
-      {article.image && <img src={article.image} alt="" className="mt-3 w-full rounded-lg object-cover" />}
+      {article.image && <OptimizedImage src={article.image} alt="" width={820} height={460} sizes="(max-width: 850px) 100vw, 820px" className="mt-3 h-auto w-full rounded-lg object-cover" />}
 
       <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-black/60">
         <span className="flex items-center gap-1">
@@ -34,7 +35,7 @@ function ArticleBlock({ article }) {
       <div className="mt-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {article.sourceLogo ? (
-            <img src={article.sourceLogo} alt="" className="h-8 w-8 rounded-full object-cover" />
+            <OptimizedImage src={article.sourceLogo} alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover" />
           ) : (
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/10 text-xs font-bold">
               {article.sourceName?.[0] || "?"}

@@ -3,6 +3,7 @@
 import { format } from "date-fns";
 import { ChevronLeft, ChevronRight, Moon, Sun } from "lucide-react";
 import { K5_CARD, K5_ROUND_BTN } from "@/components/k5/home/k5Bits";
+import { K5WeatherTile } from "@/components/k5/home/K5WeatherTile";
 import { weekKeys, keyToDate } from "@/utils/k5Calendar";
 
 const VIEWS = [
@@ -35,7 +36,7 @@ function titles(viewName, selectedDate) {
 /**
  * Planner toolbar (mockup top card): clock in the student's timezone with a greeting,
  * previous / next, the period title, and the Today / Week / Month switch. PreK has no
- * Month view (plan 12.8). The weather tile is Phase 4.
+ * Month view (plan 12.8). The weather tile shows real weather for the timezone city and is hidden until it arrives.
  */
 export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPrev, onNext, onToday, isCurrent, isPreK }) {
   const [big, small] = titles(viewName, selectedDate);
@@ -60,6 +61,8 @@ export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPre
           <span className="text-[13px] font-extrabold text-k5-yx">{zoneLabel(timezone)}</span>
         </div>
       </div>
+
+      <K5WeatherTile timezone={timezone} />
 
       <div className="flex items-center gap-1.5 max-[760px]:flex-[1_1_100%] max-[760px]:justify-center">
         <button type="button" aria-label={`Previous ${unit}`} onClick={onPrev} className={K5_ROUND_BTN}>
