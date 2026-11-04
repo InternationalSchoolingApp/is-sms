@@ -34,11 +34,6 @@ import { RENEWED_ELSEWHERE, TokenError, refreshTokens, trustedBackend, verifyAcc
 export default async function proxy(request) {
   const path = request.nextUrl.pathname;
   const segments = path.split("/").filter(Boolean);
-
-  // Payment gateway return pages: a full page load from the gateway, so no X-Account header and nothing but
-  // cookies to say whose page it is. Matched only to keep the login alive there (see paymentReturn).
-  if (PAYMENT_RESPONSE_PATH.test(path)) return paymentReturn(request, path);
-  if (segments.includes("common")) return NextResponse.next();
   // TEMP DEBUG [api-log]: every request the proxy sees, and which account cookies the browser sent
   console.log("[api-log] proxy", request.method, path + request.nextUrl.search, {
     accounts: heldAccounts(request.cookies).map((a) => a.account),
@@ -137,43 +132,6 @@ export default async function proxy(request) {
   return response;
 }
 
-const PAYMENT_RESPONSE_PATH = /^(?:\/[^/]+)?\/common\/(?:[a-z-]*payment-response-(?:success|failure))(?:\/|$)/;
-
-/**
- * The page cannot write cookies (Server Components have a read-only cookie store) and SMS refresh tokens are
- * one-time, so when the access token had expired (15 min, longer than most gateway visits) the page renewed it for
- * its own render only: the new refresh token was lost, the next call found the login ended, and the payer landed on
- * the login page right after the thank-you page showed. Renew here instead, where the cookies can be written.
- * Whose page it is: the Add Another Student return URL names its account (sessionUserId, in the query or glued onto
- * the failure URL's UNIQUEUUID segment), else the browser's only account. Never redirects: a payer with no usable
- * login still gets the page (it decides for itself, as before).
- */
-async function paymentReturn(request, path) {
-  const accounts = heldAccounts(request.cookies);
-  const glued = new URLSearchParams(decodeURIComponent(path).split("&").slice(1).join("&"));
-  const named = request.nextUrl.searchParams.get("sessionUserId") || glued.get("sessionUserId");
-  const entry = isAccountId(named) ? accounts.find((a) => a.account === named) : accounts.length === 1 ? accounts[0] : null;
-  if (!entry) return NextResponse.next();
-
-  const backend = trustedBackend(entry.profile?.backend);
-  let accessToken = entry.accessToken;
-  let renewed = null;
-  try {
-    await verifyAccessToken(accessToken, backend);
-  } catch (err) {
-    if (!(err instanceof TokenError) || err.reason !== "expired" || !entry.refreshToken) return NextResponse.next();
-    renewed = await refreshTokens(backend, entry.profile?.schoolUUID, entry.refreshToken).catch(() => null);
-    if (!renewed || renewed === RENEWED_ELSEWHERE) return NextResponse.next();
-    accessToken = renewed.accessToken;
-  }
-  const forwarded = new Headers(request.headers);
-  forwarded.set(ACCOUNT_HEADER, entry.account);
-  if (renewed) forwarded.set("cookie", replaceCookie(request.headers.get("cookie") || "", `__Host-ISX_AT_${entry.account}`, accessToken));
-  const response = NextResponse.next({ request: { headers: forwarded } });
-  if (renewed) writeAccount(response.cookies, entry.account, renewed);
-  return response;
-}
-
 function replaceCookie(header, name, value) {
   const parts = header.split(/;\s*/).filter((p) => p && !p.startsWith(`${name}=`));
   parts.push(`${name}=${value}`);
@@ -209,7 +167,5 @@ export const config = {
     "/:school/enrollment/:program",
     "/:school/enrollment/:program/step/:path*",
     "/:school/add-enrollment/:parentId/:sessionUserId/step/:path*",
-    "/common/:path*",
-    "/:school/common/:path*",
   ],
 };
