@@ -184,9 +184,14 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       data.contentFor === "EVALUATION-TEST-FORM"));
   // Any success/failure URL copied into a browser with no session comes back ALREADY_PAID ("4") — the gateway
   // return was already processed — so it goes to login, whatever the payment type.
+  // A payment-link return (initiatedVia 'Link') is the one case with no session by design: the payer
+  // never signed in here. The settlement/webhook or the enrolling tab's status poll may already have
+  // processed the payment by the time this tab comes back, so it also answers ALREADY_PAID — that is
+  // still the payer's own thank-you, not a copied URL, so it must not be sent to the login page.
   const copiedUrlWithoutSession =
     sessionStatus === "unauthenticated" &&
     data &&
+    data.initiatedVia !== "Link" &&
     (String(data.responseStatus ?? "") === "4" || String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID");
   const redirectToLogin =
     sessionStatus === "unauthenticated" && (isReplay || !loading) && (!shownWithoutLogin || copiedUrlWithoutSession);
