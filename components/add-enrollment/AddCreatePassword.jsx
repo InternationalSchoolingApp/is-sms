@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
-import { signOut } from "next-auth/react";
 import { ArrowRight, Check, Eye, EyeOff, Lock, LockOpen, LoaderCircle, Phone, X } from "lucide-react";
 import { createAddEnrollmentPassword } from "@/services/addEnrollmentPasswordApi";
 import { loadCreatePasswordTarget } from "@/utils/addEnrollmentCreatePassword";

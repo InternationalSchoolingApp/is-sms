@@ -1,5 +1,7 @@
 "use server";
 
+import { withSmsAuth } from "@/lib/auth/session";
+
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
 // School-prefixed gateway pages pass their URL school segment explicitly.
@@ -45,8 +47,9 @@ async function getPaymentInitResponse(gateway, uniqueUuid, paramsString, schoolU
   const url = `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/payment/${gateway}-payment-init/${encodeURIComponent(uniqueUuid)}${query ? `?${query}` : ""}`;
 
   try {
-    const response = await fetch(url, { method: "GET" });
-    return await parseInitResponse(response);
+    const response = await fetch(url, await withSmsAuth({ method: "GET" }));
+    if (!response.ok) return null;
+    return await response.json();
   } catch {
     return null;
   }
@@ -54,8 +57,4 @@ async function getPaymentInitResponse(gateway, uniqueUuid, paramsString, schoolU
 
 export async function getStripePaymentInit(uniqueUuid, paramsString, schoolUUID) {
   return getPaymentInitResponse("stripe", uniqueUuid, paramsString, schoolUUID);
-}
-
-export async function getAirwallexPaymentInit(uniqueUuid, paramsString, schoolUUID) {
-  return getPaymentInitResponse("airwallex", uniqueUuid, paramsString, schoolUUID);
 }

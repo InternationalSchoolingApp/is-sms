@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
-import { ArrowRight, LoaderCircle, RefreshCw, ShieldCheck } from "lucide-react";
-import { getAirwallexPaymentInit, getStripePaymentInit } from "@/services/paymentInitApi";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, ArrowRight, LoaderCircle, RefreshCw, ShieldCheck } from "lucide-react";
+import { getStripePaymentInit } from "@/services/paymentInitApi";
+import { fetchWithVisitor } from "@/utils/visitorFetch";
 
 const GATEWAY_CONFIG = {
   stripe: {
@@ -14,11 +15,30 @@ const GATEWAY_CONFIG = {
   },
   airwallex: {
     name: "Airwallex",
-    request: getAirwallexPaymentInit,
     redirectField: "airwallexCheckoutUrl",
     successStatus: "1",
   },
 };
+
+// Browser-side counterpart to startAirwallexCheckout()/getAirwallexCheckoutIntentUrl() below:
+// both Airwallex calls now go through the exact same relative-path + next.config.mjs rewrite,
+// instead of this one going through a Server Action's own server-to-server fetch.
+async function getAirwallexPaymentInitClient(uniqueUuid, paramsString, schoolUUID) {
+  const params = new URLSearchParams(paramsString || "");
+  params.delete("schoolUUID");
+  params.set("applyingFrom", "nextjs");
+  const query = params.toString();
+  const pathname = `/api/v1/${encodeURIComponent(schoolUUID)}/payment/airwallex-payment-init/${encodeURIComponent(uniqueUuid)}`;
+  const search = query ? `?${query}` : "";
+
+  const useLocalProxy = process.env.NEXT_PUBLIC_USE_LOCAL_PROXY === "true";
+  const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
+  const url = useLocalProxy || !backendBaseUrl ? `${pathname}${search}` : `${backendBaseUrl}${pathname}${search}`;
+
+  const response = await fetch(url, { method: "GET", credentials: "include" });
+  if (!response.ok) return null;
+  return response.json();
+}
 
 function getSafeRedirectUrl(value) {
   if (typeof value !== "string") return null;
@@ -83,7 +103,9 @@ async function startAirwallexCheckout(checkoutUrl) {
   const url = getAirwallexCheckoutIntentUrl(checkoutUrl);
   if (!url) throw new Error("The Airwallex checkout URL is invalid.");
 
-  const response = await fetch(url, { method: "GET", credentials: "include" });
+  // A public SMS URL ({school}/create-checkout-intent/...): no user needed, but a visitor token, fetched once if
+  // SMS asks for one (this page is never an SMS page, so the browser has none yet).
+  const response = await fetchWithVisitor(url, { method: "GET" });
   if (!response.ok) throw new Error("We could not reach the payment gateway. Please try again.");
 
   const intent = await response.json();
@@ -125,6 +147,7 @@ function getFailureMessage(response) {
 
 export function PaymentGatewayInitView({ gateway, schoolUUID: schoolUUIDFromRoute }) {
   const params = useParams();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const config = GATEWAY_CONFIG[gateway];
   const uniqueUuid = params?.UNIQUEUUID;
@@ -134,7 +157,9 @@ export function PaymentGatewayInitView({ gateway, schoolUUID: schoolUUIDFromRout
 
   const startPayment = useCallback(async () => {
     try {
-      const response = await config.request(uniqueUuid, searchParams.toString(), schoolUUID);
+      const response = gateway === "airwallex"
+        ? await getAirwallexPaymentInitClient(uniqueUuid, searchParams.toString(), schoolUUID)
+        : await config.request(uniqueUuid, searchParams.toString(), schoolUUID);
       if (response?.status === config.successStatus) {
         if (gateway === "airwallex") {
           await startAirwallexCheckout(response.airwallexCheckoutUrl);
@@ -186,9 +211,14 @@ export function PaymentGatewayInitView({ gateway, schoolUUID: schoolUUIDFromRout
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-rose-600">Payment setup interrupted</p>
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">We couldn’t connect to {config.name}</h1>
             <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-600">{errorMessage}</p>
-            <button type="button" onClick={retryPayment} className="mt-7 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
-              Try again <ArrowRight className="size-4" aria-hidden="true" />
-            </button>
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+              <button type="button" onClick={() => router.back()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
+                <ArrowLeft className="size-4" aria-hidden="true" /> Back
+              </button>
+              <button type="button" onClick={retryPayment} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
+                Try again <ArrowRight className="size-4" aria-hidden="true" />
+              </button>
+            </div>
             <p className="mt-5 text-xs leading-5 text-slate-500">If the issue continues, go back to the previous page or contact support.</p>
           </>
         )}

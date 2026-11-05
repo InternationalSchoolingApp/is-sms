@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/components/providers/AuthSessionProvider";
 import { useQuery } from "@tanstack/react-query";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { getEnrollmentProcess, getPublicSchoolInfo, isEnrollmentViaNextjs } from "@/services/studentSignupApi";

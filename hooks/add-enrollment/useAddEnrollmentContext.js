@@ -16,7 +16,7 @@ import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
 import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { useQuery } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/components/providers/AuthSessionProvider";
 import { useParams } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 
@@ -260,6 +260,13 @@ function useResolveAddEnrollmentContext() {
     };
   }, [session?.schoolUUID]);
 
+  // A failed enroll/another/child resolves to null rather than throwing: parseJsonResponse
+  // turns any non-OK status, empty body or unparseable body into null, which React Query
+  // counts as a success. isError stayed false while `ready` stayed false for want of
+  // childData, so the wizard sat on its loader with nothing to say and no way forward.
+  // Checking data rather than childData keeps the S003 (already paid) answer out of this.
+  const enrollChildFailed = enrollChild.isFetched && !enrollChild.isError && !enrollChild.data;
+
   const processReady = !childUniqueId || enrollmentProcess.isFetched;
   const ready =
     authenticated &&
@@ -271,12 +278,16 @@ function useResolveAddEnrollmentContext() {
     processRedirect?.redirectTo !== "login";
 
   // Same payer-location capture as the main context, so the payment step finds it already there.
+  // userId 0, not the child's: common-script-variables lets a signed-in user ask only for their own
+  // account, and here the signed-in user is the parent, so asking for the child answered 403 and the
+  // payer location was never captured. The two globals this reads — LOCATION_SERVICE_BYPASS and
+  // DEFAULT_LOCATION — come from school SETTINGS and are the same whoever is named.
   useEffect(() => {
     if (!ready) return;
-    loadLocationGlobals({ schoolUUID: session.schoolUUID, userId: childUserId })
+    loadLocationGlobals({ schoolUUID: session.schoolUUID, userId: 0 })
       .then(() => callLocationForPaymentPromise())
       .catch((err) => console.error("Payer location capture failed:", err));
-  }, [ready, session?.schoolUUID, childUserId]);
+  }, [ready, session?.schoolUUID]);
 
   const context = ready
     ? {
@@ -319,7 +330,11 @@ function useResolveAddEnrollmentContext() {
     // remounts between steps. The review step re-asks before it decides which fee layout to render.
     refetchEnrollmentProcess: enrollmentProcess.refetch,
     // E005: a reload with nothing to resume and no paid child (only a fresh "Add child" entry may create one)
-    isError: enrollChild.isError || enrollChild.data?.statusCode === "E005" || processRedirect?.redirectTo === "login",
+    isError:
+      enrollChild.isError ||
+      enrollChildFailed ||
+      enrollChild.data?.statusCode === "E005" ||
+      processRedirect?.redirectTo === "login",
   };
 }
 

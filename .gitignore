@@ -40,6 +40,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+/playwright-report/
+/test-results/
+/.claude/
+# token go-live regression suite: saved sign-ins (cookies)
+/e2e/
+/e2e/regression/.auth/
+/e2e/regression/.results/
+/playwright.regression.config.ts
 /test-results/
 /e2e/
 /playwright-report/

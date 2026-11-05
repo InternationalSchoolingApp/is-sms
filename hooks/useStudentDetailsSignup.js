@@ -251,8 +251,8 @@ function buildSaveStudentDetailsRequest({ fields, context, userId, isDualDiploma
 }
 
 /**
- * `userId` is the numeric User.id — from next-auth's session.userId post-login
- * (see app/api/auth/[...nextauth]/route.js) or, for a same-session
+ * `userId` is the numeric User.id — from the signed-in student's session
+ * (lib/auth/session.js, read from the SMS access token) or, for a same-session
  * continuation right after Offline/B2B account creation, that signup
  * response's own `studentUserId` field.
  */

@@ -34,11 +34,13 @@ const nextConfig = {
   },
   async rewrites() {
     const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
-    // Add Another Student only: its payment-method modal loads backend static assets (gateway logos, flags,
-    // card icons) through this same-origin prefix, so an https deployment never requests them from the
-    // backend's plain-http origin (blocked as mixed content). Nothing else uses this path.
+    // Payment-method modals (Add Another Student + fresh student-enroll) load backend static assets
+    // (gateway logos, flags, card icons) through this same-origin prefix, unconditionally (unlike the
+    // afterFiles/fallback rewrites below, which only exist under NEXT_PUBLIC_USE_LOCAL_PROXY) — so these
+    // images never depend on that flag, never hit mixed-content on an https deployment, and never need
+    // the browser to reach the backend origin directly (which can be an internal-only host/IP).
     const staticAssetRewrites = backendBaseUrl
-      ? [{ source: "/add-enrollment-assets/:path*", destination: `${backendBaseUrl}/static/theme2/:path*` }]
+      ? [{ source: "/backend-static-assets/:path*", destination: `${backendBaseUrl}/static/theme2/:path*` }]
       : [];
     if (!backendBaseUrl || process.env.NEXT_PUBLIC_USE_LOCAL_PROXY !== "true") return staticAssetRewrites;
     return {

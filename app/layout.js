@@ -4,6 +4,7 @@ import { DisableZoom } from "@/components/common/DisableZoom";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { AuthSessionProvider } from "@/components/providers/AuthSessionProvider";
+import { getAccountSession, publicSession } from "@/lib/auth/session";
 import { GlobalLoader } from "@/components/common/GlobalLoader";
 import { MaintenanceBanner } from "@/components/common/MaintenanceBanner";
 import { BackendSwitcher } from "@/components/common/BackendSwitcher";
@@ -11,6 +12,7 @@ import { PageTitle } from "@/components/common/PageTitle";
 import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import CampaignCookieInitializer from "@/components/CampaignCookieInitializer";
 import ConsentBanner from "@/components/ConsentBanner";
+import { TabAccount } from "@/components/auth/TabAccount";
 
 
 const openSans = Open_Sans({
@@ -28,15 +30,18 @@ export const viewport = {
   userScalable: false,
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const session = publicSession(await getAccountSession());
   return (
     <html lang="en" className={`${openSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
+        {/* Which signed-in user this tab works for (several can share the browser): X-Account on its calls. */}
+        <TabAccount account={session?.uniqueId} />
         {/* GTM + Clarity — only fire when NEXT_PUBLIC_DEPLOYMENT_MODE=PROD,
             mirroring the JSP's <c:if test="${DEPLOYMENT_MODE=='PROD'}">. */}
         <AnalyticsScripts />
         <DisableZoom />
-        <AuthSessionProvider>
+        <AuthSessionProvider session={session}>
           <QueryProvider>
             <PageTitle />
             <MaintenanceBanner />

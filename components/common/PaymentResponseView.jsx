@@ -11,7 +11,8 @@ import {
   getPaymentSettlementStatus,
   savePurchaseBrowserDetails,
 } from "@/services/paymentResponseApi";
-import { useSession } from "next-auth/react";
+import { getPaymentResponseSuccess, getPaymentResponseFailure, savePurchaseBrowserDetails } from "@/services/paymentResponseApi";
+import { useSession } from "@/components/providers/AuthSessionProvider";
 import { getAddEnrollmentThankYou } from "@/services/addEnrollmentBackendApi";
 import {
   clearAddEnrollmentChildState,
@@ -190,9 +191,29 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
     (String(data.responseStatus ?? "") === "4" || String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID");
   const redirectToLogin =
     sessionStatus === "unauthenticated" && (isReplay || !loading) && (!shownWithoutLogin || copiedUrlWithoutSession);
+  // TEMP DEBUG [pay-debug]: every state change that feeds the login redirect
   useEffect(() => {
-    if (redirectToLogin && !window.__loggingOut) window.location.replace(loginPageUrl(schoolUUID));
-  }, [redirectToLogin, schoolUUID]);
+    console.log("[pay-debug] view state", {
+      sessionStatus,
+      loading,
+      hasData: Boolean(data),
+      responseStatus: data?.responseStatus,
+      statusCode: data?.statusCode,
+      initiatedVia: data?.initiatedVia,
+      isReplay,
+      shownWithoutLogin,
+      copiedUrlWithoutSession,
+      redirectToLogin,
+      url: window.location.href,
+      at: new Date().toISOString(),
+    });
+  }, [sessionStatus, loading, data, isReplay, shownWithoutLogin, copiedUrlWithoutSession, redirectToLogin]);
+  useEffect(() => {
+    if (redirectToLogin && !window.__loggingOut) {
+      console.log("[pay-debug] REDIRECTING TO LOGIN", { sessionStatus, loading, responseStatus: data?.responseStatus, url: window.location.href });
+      window.location.replace(loginPageUrl(schoolUUID));
+    }
+  }, [redirectToLogin, schoolUUID, sessionStatus, loading, data?.responseStatus]);
 
   if (
     sessionStatus !== "authenticated" &&
@@ -506,6 +527,7 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
             sourceApi={data.accountSetup ? "api/v1/enroll/another/child/thank-you" : "api/v1/{schoolId}/common/*payment-response-success"}
             fallbackName={data.userName}
             loginHref={loginPageUrl(schoolUUID)}
+            dashboardHref={data.returnUrl}
             schoolUUID={schoolUUID}
           />
         ) : (
@@ -618,13 +640,13 @@ function AddEnrollmentAccountInfo({ schoolUUID, parentId, childUniqueId, session
     hasOutlook: Boolean(info?.outlookEmail && info?.outlookPassword),
   });
   if (!isFirstPayment(info)) return null;
-  return <LoginDetails data={info} sourceApi="api/v1/enroll/another/child/thank-you" loginHref={loginPageUrl(schoolUUID)} schoolUUID={schoolUUID} />;
+  return <LoginDetails data={info} sourceApi="api/v1/enroll/another/child/thank-you" loginHref={loginPageUrl(schoolUUID)} dashboardHref={info.returnUrl} schoolUUID={schoolUUID} />;
 }
 
 // "Log in to your school dashboard" panel: login email + temporary password (show/hide, copy) and the dashboard
 // button. When the response has no Outlook credentials (password-creation step only), the original
 // AccountSetupSection is shown instead.
-function LoginDetails({ data, sourceApi, fallbackName, loginHref, schoolUUID }) {
+function LoginDetails({ data, sourceApi, fallbackName, loginHref, dashboardHref, schoolUUID }) {
   const { data: session } = useSession();
   const [show, setShow] = useState(true);
   const [leaving, setLeaving] = useState(false);
@@ -697,8 +719,8 @@ function LoginDetails({ data, sourceApi, fallbackName, loginHref, schoolUUID }) 
       </div>
       <p className="mt-4 text-sm text-slate-700">You can copy these details now. We have also sent them to your registered email address.</p>
       <a
-        href={loginHref}
-        onClick={goToDashboard}
+        href={dashboardHref || loginHref}
+        onClick={dashboardHref ? undefined : goToDashboard}
         aria-disabled={leaving}
         className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-primary px-8 text-base sm:w-auto font-semibold text-white shadow-sm transition hover:bg-primary/90"
       >

@@ -1,5 +1,7 @@
 "use server";
 
+import { withServiceKey, withSmsAuth } from "@/lib/auth/session";
+
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
 async function backendUrl(schoolUUID, path) {
@@ -31,7 +33,7 @@ async function parseJsonResponse(response) {
 // hooks/useEnrollmentContext.js, the context hook every Stage1-4 step page
 // shares, not just StudentDetailsStep.jsx.
 export async function getEnrollmentProcess(schoolUUID, uniqueId) {
-  const response = await fetch(await backendUrl(schoolUUID, `api/v1/student/enrollment/process/${encodeURIComponent(uniqueId)}`));
+  const response = await fetch(await backendUrl(schoolUUID, `api/v1/student/enrollment/process/${encodeURIComponent(uniqueId)}`), await withSmsAuth());
   return parseJsonResponse(response);
 }
 
@@ -42,7 +44,7 @@ export async function getEnrollmentProcess(schoolUUID, uniqueId) {
 // Public/pre-auth like the rest of this file (login.js calls it logged out too).
 export async function getSettingValue(schoolUUID, metaType, metaKey) {
   const query = `metaType=${encodeURIComponent(metaType)}&metaKey=${encodeURIComponent(metaKey)}`;
-  const response = await fetch(await backendUrl(schoolUUID, `api/v1/get-setting?${query}`));
+  const response = await fetch(await backendUrl(schoolUUID, `api/v1/get-setting?${query}`), withServiceKey());
   const body = await parseJsonResponse(response);
   return body?.data?.metaValue ?? "";
 }
@@ -54,9 +56,15 @@ export async function getSettingValue(schoolUUID, metaType, metaKey) {
 // CommonUtil#getSettingValueByTypeAndKeyAsBoolean: only the literal "true"
 // (case-insensitive, trimmed) counts, everything else — including an
 // unreachable backend — is false.
+// true / false when SMS says so; null when the answer is empty or unknown (setting
+// missing, not readable without sign-in, backend down). Callers only switch to the
+// legacy flow on an explicit false: treating "unknown" as false sent this page and
+// the legacy SMS page redirecting to each other forever.
 export async function isEnrollmentViaNextjs(schoolUUID) {
-  const metaValue = await getSettingValue(schoolUUID, "CONFIGURATION", "ENROLLMENT_VIA_NEXTJS");
-  return String(metaValue).trim().toLowerCase() === "true";
+  const metaValue = String(await getSettingValue(schoolUUID, "CONFIGURATION", "ENROLLMENT_VIA_NEXTJS")).trim().toLowerCase();
+  if (metaValue === "true") return true;
+  if (metaValue === "false") return false;
+  return null;
 }
 
 // Public, pre-auth resolution of the {schoolId} URL slug/UUID into the
@@ -64,7 +72,7 @@ export async function isEnrollmentViaNextjs(schoolUUID) {
 // is-rest-api. Called directly from AccountCreationForm.jsx and
 // hooks/useEnrollmentContext.js.
 export async function getPublicSchoolInfo(schoolUUID) {
-  const response = await fetch(await backendUrl(schoolUUID, "api/v1/student/enrollment/public-info"));
+  const response = await fetch(await backendUrl(schoolUUID, "api/v1/student/enrollment/public-info"), withServiceKey());
   return parseJsonResponse(response);
 }
 
@@ -89,7 +97,8 @@ export async function getEnrollmentSignupInfo(schoolUUID, learningProgram, param
   if (!query.has("ras")) query.set("ras", "N");
 
   const response = await fetch(
-    `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/student/enrollment/${encodeURIComponent(learningProgram)}?${query.toString()}`
+    `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/student/enrollment/${encodeURIComponent(learningProgram)}?${query.toString()}`,
+    withServiceKey()
   );
   return parseJsonResponse(response);
 }

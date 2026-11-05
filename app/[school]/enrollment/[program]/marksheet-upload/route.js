@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { getAccountSession, withSmsAuth } from "@/lib/auth/session";
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
@@ -7,18 +7,18 @@ import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOri
  * than a Server Action because Server Actions cap request bodies at 1 MB.
  * Deliberately outside proxy.js's matcher (".../step/:path*"): the proxy only
  * buffers 10 MB of a body, which would silently cut a larger upload short.
- * The handler checks the next-auth session itself.
+ * Identity is established via the Bearer token in withSmsAuth; no
+ * userId/loginHash in the payload body is needed.
  *
  * Browser sends multipart "files" (already downscaled by utils/marksheetFiles);
- * this adds userId + loginHash from the session and forwards to
- * {schoolUUID}/student/enrollment/ai-course-advisor/marksheet/upload.
+ * this forwards to {schoolUUID}/student/enrollment/ai-course-advisor/marksheet/upload.
  */
 
 // Vercel functions accept ~4.5 MB request bodies; the browser keeps uploads under this.
 const MAX_TOTAL_BYTES = 4.4 * 1024 * 1024;
 
 export async function POST(request) {
-  const session = await auth();
+  const session = await getAccountSession();
   if (!session?.userId || !session.schoolUUID) {
     return Response.json({ status: "3" });
   }
@@ -44,15 +44,12 @@ export async function POST(request) {
   const outgoing = new FormData();
   // Add Another Student names the child; the backend checks it belongs to this parent.
   const studentUserId = Number(form.get("studentUserId")) || null;
-  outgoing.append(
-    "payload",
-    encodePayload({ userId: session.userId, loginHash: session.userLoginHash || "", ...(studentUserId ? { studentUserId } : {}) })
-  );
+  outgoing.append("payload", encodePayload(studentUserId ? { studentUserId } : {}));
   files.forEach((file) => outgoing.append("files", file, file.name || "marksheet"));
 
   const response = await fetch(
     `${await resolveServerBackendOrigin()}/${session.schoolUUID}/student/enrollment/ai-course-advisor/marksheet/upload`,
-    { method: "POST", body: outgoing }
+    await withSmsAuth({ method: "POST", body: outgoing })
   );
   if (!response.ok) {
     return Response.json({ status: "2", message: "We couldn't read your marksheet right now. You can continue without it." });

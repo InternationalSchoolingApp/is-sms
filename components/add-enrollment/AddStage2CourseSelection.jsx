@@ -854,7 +854,7 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
     </>
   );
 
-  if (courseQuery.isLoading) {
+  if (courseQuery.isLoading || courseQuery.isFetching) {
     return <Stage3Skeleton header={header} />;
   }
   console.log("data", data)

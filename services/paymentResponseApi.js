@@ -1,6 +1,7 @@
 "use server";
 
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { withSmsAuth } from "@/lib/auth/session";
 
 /**
  * JSON payment-response endpoints from PaymentResponseApiController.java.
@@ -39,7 +40,10 @@ const SUCCESS_ENDPOINTS = new Set([
 ]);
 
 async function getJson(url) {
-  const response = await fetch(url, { method: "GET" });
+  // /api/v1/{school}/common/*payment-response-success is not an open route on SMS: without the service key (and
+  // the signed-in user's token, when there is one) SMS refuses it with the visitor-token error, the gateway
+  // return is never verified, so the payment is never marked paid and the page ends up on the login page.
+  const response = await fetch(url, await withSmsAuth({ method: "GET" }));
   if (!response.ok) return null;
   const text = await response.text();
   if (!text) return null;
@@ -110,11 +114,11 @@ export async function savePurchaseBrowserDetails(schoolUUID, userPaymentDetailsI
   if (!hasBackendOrigin() || !schoolUUID) return null;
   const url = `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/payment/${userPaymentDetailsId}/purchase-browser-details`;
   try {
-    const response = await fetch(url, {
+    const response = await fetch(url, await withSmsAuth({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ browserDetails }),
-    });
+    }));
     return response.ok ? "OK" : null;
   } catch {
     return null;

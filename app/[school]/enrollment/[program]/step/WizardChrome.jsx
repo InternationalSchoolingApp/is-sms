@@ -6,6 +6,7 @@ import { FullScreenLoader } from "@/components/common/Loader";
 import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
 import { EnrollmentProvider, useEnrollmentContext } from "@/hooks/useEnrollmentContext";
 import { useBackendSessionGuard } from "@/hooks/useBackendSessionGuard";
+import { useStudentDetailsPrefill } from "@/hooks/useStudentDetailsSignup";
 import { expireSession, logoutEverywhere } from "@/utils/logout";
 
 /**
@@ -31,9 +32,19 @@ const SEGMENT_TO_STEP_KEY = {
 };
 
 function WizardFrame({ children }) {
-  const { school } = useParams();
+  const { school, program } = useParams();
   const segment = useSelectedLayoutSegment();
   const { status, session, context, logoUrl, ready } = useEnrollmentContext();
+
+  // Set tab title from the wizard's own session — the root layout's PageTitle
+  // depends on the server-rendered session prop which can be stale when the
+  // browser holds cookies from a previous student's enrollment.
+  const prefill = useStudentDetailsPrefill({ context, userId: session?.userId });
+  useEffect(() => {
+    if (!ready) return;
+    const name = [prefill.data?.firstName, prefill.data?.lastName].filter(Boolean).join(" ");
+    document.title = name ? `${name} | Enrollment` : "Enrollment";
+  }, [ready, prefill.data?.firstName, prefill.data?.lastName]);
 
   // Session-expiry guard, hoisted here from the individual steps: since this
   // chrome gates whether steps mount at all, it must own the redirect (the
