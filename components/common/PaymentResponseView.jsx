@@ -11,7 +11,6 @@ import {
   getPaymentSettlementStatus,
   savePurchaseBrowserDetails,
 } from "@/services/paymentResponseApi";
-import { getPaymentResponseSuccess, getPaymentResponseFailure, savePurchaseBrowserDetails } from "@/services/paymentResponseApi";
 import { useSession } from "@/components/providers/AuthSessionProvider";
 import { getAddEnrollmentThankYou } from "@/services/addEnrollmentBackendApi";
 import {
