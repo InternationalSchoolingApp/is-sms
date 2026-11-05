@@ -16,7 +16,9 @@ import { CustomPlanTable, FeePaymentPlans } from "@/components/student-enroll/Fe
 import { InfoModal } from "@/components/student-enroll/InfoModal";
 import { ParentInlineEdit, StudentInlineEdit } from "@/components/student-enroll/ReviewInlineEdit";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
-import { getPaymentPaidStatus } from "@/services/studentSignupBackendApi";
+import { PaymentInProgressModal } from "@/components/student-enroll/PaymentInProgressModal";
+import { getPaymentBrowserId, resumeUrlForThisBrowser } from "@/utils/paymentBrowserId";
+import { cancelPaymentAttempt, getPaymentPaidStatus } from "@/services/studentSignupBackendApi";
 import { useShowPaymentOption } from "@/hooks/useCourseSelection";
 import { saveWizardParentFields, saveWizardStudentFields } from "@/utils/wizardStorage";
 import { getOtherRelation, getPrimaryParentLabels, loadOtherParentCache } from "@/utils/parentRelation";
@@ -157,6 +159,11 @@ const PAID_STATUS_MAX_CHECKS = 10;
 
 const GENERIC_ERROR ="Something went wrong. Please check your connection and try again.";
 
+// invoke-payment-gateway's "can't start a new payment" outcomes: another device/tab has an open
+// Stripe/Airwallex payment for this fee, or the fee turned out to be paid already.
+const STATUS_PAYMENT_IN_PROGRESS = "PAYMENT_IN_PROGRESS";
+const STATUS_ALREADY_PAID = "ALREADY_PAID";
+
 // One "label  value" line of the review tables. Labels mirror the Step 1 / Step 2 form fields.
 function ReviewRow({ label, children }) {
   return (
@@ -296,6 +303,9 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
   // that opens away from this page (openSelf false), and when that poll ends unpaid.
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [paymentIncomplete, setPaymentIncomplete] = useState(false);
+  // PAYMENT_IN_PROGRESS / ALREADY_PAID from invoke-payment-gateway: { attempt | alreadyPaidMessage,
+  // openedAt, relaunch: { gateway, details } } for PaymentInProgressModal, else null.
+  const [paymentInProgress, setPaymentInProgress] = useState(null);
   const paidPollRef = useRef({ timer: null, count: 0 });
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
@@ -365,6 +375,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       if (!event.persisted) return;
       setLaunching(false);
       setGatewayPicker(null);
+      setPaymentInProgress(null);
       setNotice((current) => (current?.tone === "info" ? null : current));
     };
     window.addEventListener("pageshow", onPageShow);
@@ -549,13 +560,14 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
     );
   }
 
-  async function launchGateway(gateway) {
+  // `details` / `skipPopupProbe` are only passed when the launch is re-run after the earlier payment
+  // was cancelled: the picker is closed by then, and with no click to go on the probe would be blocked.
+  async function launchGateway(gateway, { details = gatewayPicker?.details, skipPopupProbe = false } = {}) {
     if (isDummyStudentMode()) {
       showDummyStripeCheckoutPage();
       return;
     }
     setNotice(null);
-    const details = gatewayPicker.details;
     const payload = {
       location: getLocationValue(),
       browserDetails: details.upid,
@@ -566,24 +578,53 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       paymentGateway: gateway.name,
       initiateVia: window.location.href.includes("fee-receipt") ? "Link" : "",
       backUrl: window.location.href,
+      // invoke-payment-gateway runs from the Next.js server, so the backend would only see Node's User-Agent;
+      // the "payment already in progress" message shows the payer's real device and browser.
+      userAgent: navigator.userAgent,
+      // This browser's own id: if its checkout tab was closed and it comes back, the in-progress pop-up is skipped.
+      browserId: getPaymentBrowserId(),
       applyingFrom: "nextjs",
     };
     // Pay Now: the payment modal stays open (legacy leaves #paymentOptionsModal up) while the
     // browser goes to the gateway; it is only closed if the launch fails.
     setLaunching(true);
     // isPopupBlocked(): legacy probes window.open('', '_blank') before the AJAX invoke.
-    const probe = window.open("", "_blank");
-    if (!probe || probe.closed || typeof probe.closed === "undefined") {
-      setLaunching(false);
-      setNotice({ tone: "error", text: "Popup blocked. Please allow popups and try again." });
-      return;
+    if (!skipPopupProbe) {
+      const probe = window.open("", "_blank");
+      if (!probe || probe.closed || typeof probe.closed === "undefined") {
+        setLaunching(false);
+        setNotice({ tone: "error", text: "Popup blocked. Please allow popups and try again." });
+        return;
+      }
+      probe.close();
     }
-    probe.close();
     try {
       const response = await invokeGateway.mutateAsync(payload);
+      const inProgress = response?.statusCode === STATUS_PAYMENT_IN_PROGRESS && response.details?.attemptRef;
+      // This browser started that payment (its checkout tab was closed): back to the same checkout when it can be.
+      const resumeUrl = inProgress ? resumeUrlForThisBrowser(response.details, gateway.name) : null;
+      if (resumeUrl) {
+        setNotice({ tone: "info", text: "Taking you back to the payment you started..." });
+        window.location.assign(resumeUrl);
+        return;
+      }
+      if (inProgress || response?.statusCode === STATUS_ALREADY_PAID) {
+        setLaunching(false);
+        setGatewayPicker(null);
+        setPaymentInProgress({
+          attempt: inProgress ? response.details : null,
+          // Same browser, nothing to reopen: cancel it at the gateway and start again without asking.
+          autoCancel: Boolean(inProgress && response.details.sameBrowser),
+          alreadyPaidMessage: inProgress ? "" : response.message || "This fee is already paid. You don't need to pay again.",
+          openedAt: Date.now(),
+          relaunch: { gateway, details },
+        });
+        return;
+      }
       if (response?.status !== STATUS_SUCCESS || !response.details?.redirectUrl) {
         setLaunching(false);
         setGatewayPicker(null);
+        setPaymentInProgress(null);
         handleFailure(response, "Could not start the payment. Please try again.");
         return;
       }
@@ -598,6 +639,7 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
       console.error("Stage4ReviewPayment launchGateway failed:", err);
       setLaunching(false);
       setGatewayPicker(null);
+      setPaymentInProgress(null);
       setNotice({ tone: "error", text: GENERIC_ERROR });
     }
   }
@@ -987,6 +1029,24 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         onUploadProof={uploadProof}
         onSubmitOffline={submitOffline}
       />
+      {paymentInProgress && (
+        <PaymentInProgressModal
+          key={paymentInProgress.openedAt}
+          request={paymentInProgress}
+          onClose={() => setPaymentInProgress(null)}
+          onCancelAttempt={(attemptRef) => cancelPaymentAttempt(context.schoolUUID, { attemptRef })}
+          onCancelled={() =>
+            launchGateway(paymentInProgress.relaunch.gateway, { details: paymentInProgress.relaunch.details, skipPopupProbe: true })
+          }
+          onPaid={() => {
+            // Same path as a paid get-payment-paid-status: reload the review, which moves a finished
+            // enrollment on to the dashboard.
+            setPaymentInProgress(null);
+            reviewQuery.refetch();
+          }}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
       {paymentProcessing && <FullScreenLoader message="Payment is under process..." />}
       <Dialog open={paymentIncomplete} onOpenChange={(open) => !open && setPaymentIncomplete(false)}>
         <DialogContent className="text-center">

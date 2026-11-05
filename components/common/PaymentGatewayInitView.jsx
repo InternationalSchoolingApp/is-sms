@@ -134,10 +134,15 @@ async function startAirwallexCheckout(checkoutUrl) {
   });
 }
 
+// The backend's own message wins (e.g. "This payment link has expired. Please start the payment again
+// from your fee page." for an invalid/expired attemptToken); a null response means it couldn't be reached.
 function getFailureMessage(response) {
-  const message = typeof response?.message === "string" ? response.message : "";
+  const message = [response?.message, response?.htmlMessage].find((value) => typeof value === "string" && value.trim()) || "";
   const cleanMessage = message.replace(/^FAILED\|/, "").trim();
-  return cleanMessage || "We couldn’t start your payment. Please try again in a moment.";
+  if (cleanMessage) return cleanMessage;
+  return response
+    ? "We couldn’t start your payment. Please try again in a moment."
+    : "We couldn’t reach the payment server to start your payment. Please check your connection and try again.";
 }
 
 export function PaymentGatewayInitView({ gateway, schoolUUID: schoolUUIDFromRoute }) {

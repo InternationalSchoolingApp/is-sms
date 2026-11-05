@@ -49,5 +49,6 @@ next-env.d.ts
 /e2e/regression/.results/
 /playwright.regression.config.ts
 /test-results/
-/playwright-report/
 /e2e/
+/playwright-report/
+/playwright.regression.config.ts

@@ -93,6 +93,17 @@ export async function getPaymentResponseFailure(schoolUUID, customReference, uni
 }
 
 /**
+ * Settlement status: /payment/settlement-status?ref=<settlementRef>, polled by the "confirming"
+ * card while the backend is still confirming a Stripe/Airwallex payment. The ref is the DTO's
+ * settlementRef, or the return URL's pgReferneceForStripe / pgReferneceForAirwallex.
+ * Resolves to { status, statusCode: SETTLED | CONFIRMING | NOT_PAID | DUPLICATE, message }, or null.
+ */
+export async function getPaymentSettlementStatus(schoolUUID, settlementRef) {
+  if (!settlementRef) return null;
+  return getJson(`${await backendUrl(schoolUUID, "payment/settlement-status")}?ref=${encodeURIComponent(settlementRef)}`);
+}
+
+/**
  * Sends browser details (fbc, fbp, IP, user agent, page URL) captured on the
  * payment success page so the Meta Conversions API cron can attach fresh match
  * data to the Purchase event.

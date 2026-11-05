@@ -209,6 +209,13 @@ export async function invokePaymentGateway(schoolUUID, request) {
   return postPayload(schoolUUID, "common/invoke-payment-gateway", request);
 }
 
+// Cancels the open payment attempt that invoke-payment-gateway reported as PAYMENT_IN_PROGRESS
+// (request: { attemptRef } from that response's details). Same transport as invoke-payment-gateway.
+// Resolves to statusCode CANCELLED, ALREADY_PAID or CANCEL_FAILED, each with a user-facing message.
+export async function cancelPaymentAttempt(schoolUUID, request) {
+  return postPayload(schoolUUID, "common/payment-attempt-cancel", request);
+}
+
 // logoutConfimation(true, ...common/logout/UNIQUEUUID) in signupStudentStage3.js: the backend drops
 // the user's login hash, records the logout and invalidates its HTTP session (found via the
 // forwarded session cookie). The 302 to the Java login page is deliberately not followed.
