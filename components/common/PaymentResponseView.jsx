@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import Link from "next/link"; 
 import Image from "next/image";
 import { Check, Clock, Copy, Info, LoaderCircle, XCircle } from "lucide-react";
 import {
