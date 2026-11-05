@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useParams } from "next/navigation";
+import { useSession } from "@/components/providers/AuthSessionProvider";
+import { getAddEnrollmentThankYou } from "@/services/addEnrollmentBackendApi";
+import { isFirstPayment } from "@/utils/addEnrollmentSteps";
 import { BiSolidBookAdd, BiSolidUserDetail} from "react-icons/bi";
 import { TfiAngleDown, TfiAngleUp } from "react-icons/tfi";
 import { Info } from "lucide-react";
@@ -310,6 +314,23 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
     // polling it here would send the user straight back into this page forever.
     enabled: reviewQuery.isSuccess && !customPlan,
   });
+  // Paid through the payment link in another browser: poll the thank-you API and switch to the thank-you view.
+  const { parentId } = useParams();
+  const { data: authSession } = useSession();
+  useEffect(() => {
+    if (!uniqueId || !parentId || !authSession?.uniqueId) return undefined;
+    const timer = setInterval(async () => {
+      const res = await getAddEnrollmentThankYou(authSession.schoolUUID, {
+        parentId,
+        sessionUserId: authSession.userId,
+        sessionUniqueId: authSession.uniqueId,
+        childUniqueId: uniqueId,
+      }).catch(() => null);
+      if (res?.status === "1" && isFirstPayment(res.data)) onEnrollmentCompleted?.(true);
+    }, 5000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uniqueId, parentId, authSession?.uniqueId]);
   const paymentOption = useShowPaymentOption({ context, userId });
   const choosePlan = useChoosePaymentPlan({ context, userId });
   const submitApplication = useSubmitApplication({ context, userId });

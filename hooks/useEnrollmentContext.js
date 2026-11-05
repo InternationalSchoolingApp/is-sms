@@ -87,6 +87,10 @@ function useResolveEnrollmentContext() {
     gcTime: Infinity,
     refetchOnWindowFocus: false,
     retry: false,
+    // Custom plan: stage-status is skipped (below), so watch for payment through the payment link in another
+    // browser here; once it answers REDIRECT the effect below sends the student to the dashboard.
+    refetchInterval: (query) =>
+      query.state.data?.customPaymentEnabled === true && query.state.data?.status !== "REDIRECT" ? 5000 : false,
   });
 
   // Setting is off: hand the student back to the legacy JSP continuation page
