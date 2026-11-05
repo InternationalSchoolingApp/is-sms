@@ -488,7 +488,17 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
   const alreadyPaidInSession =
     sessionStatus === "authenticated" &&
     (String(data.responseStatus ?? "") === "4" || String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID");
-  const showReload = (data.showReloadOption === "Y" || alreadyPaidInSession) && !addEnrollment;
+  // Add Another Student's first payment shows the account-setup / login panel instead of the timer. A later
+  // payment on the same URL shape (e.g. reserve a seat: ae=Y but no credentials, not a first payment) is a plain
+  // success and keeps the auto-redirect to the dashboard.
+  const addEnrollmentShowsAccountPanel =
+    Boolean(addEnrollment) && (Boolean(data.accountSetup) || isFirstPayment(data) || hasLoginCredentials(data));
+  // The first (status 1) response on an ae=Y return doesn't carry showReloadOption, while the refreshed
+  // ALREADY_PAID one does via alreadyPaidInSession — so a signed-in user on a plain add-enrollment success
+  // (reserve a seat) gets the same timer on the first load too.
+  const plainAddEnrollmentInSession = Boolean(addEnrollment) && sessionStatus === "authenticated";
+  const showReload =
+    (data.showReloadOption === "Y" || alreadyPaidInSession || plainAddEnrollmentInSession) && !addEnrollmentShowsAccountPanel;
   const returnUrl = data.returnUrl;
   const [countdown, redirected] = useCountdownRedirect(showReload && !!returnUrl, returnUrl);
   const primaryCta = successPrimaryCta(data);
