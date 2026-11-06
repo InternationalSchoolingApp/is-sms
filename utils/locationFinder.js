@@ -14,7 +14,7 @@ import { getIpLocation } from "@/services/ipLocationClientApi";
  * loadLocationGlobals() fills them from POST {school}/api/v1/common-script-variables
  * (what getCommonCustomScript() calls). The `#location` hidden input the legacy code
  * keeps the resolved location in is the module-level `location` string here.
- */
+ */ 
 let LOCATION_SERVICE_BYPASS;
 let DEFAULT_LOCATION;
 let loaded = false;
@@ -48,6 +48,13 @@ async function fetchIpLocation() {
   return data;
 }
 
+const IP_LOCATION_TIMEOUT_MS = 10_000;
+
+// Network tab "(failed)" -> TypeError, "(canceled)" -> AbortError.
+function isFailedOrCancelled(e) {
+  return e?.name === "TypeError" || e?.name === "AbortError";
+}
+
 // callLocationForPaymentFill(data): only a non-empty value is stored, as JSON.
 export async function callLocationForPaymentFill(data) {
   if (data != undefined && data != "") {
@@ -60,10 +67,27 @@ export async function callLocationForPaymentPromise({ throwOnError = false } = {
   if (LOCATION_SERVICE_BYPASS == "true") {
     await callLocationForPaymentFill(JSON.parse(DEFAULT_LOCATION));
   } else {
+    const request = fetchIpLocation();
     try {
-      const data = await fetchIpLocation();
-      await callLocationForPaymentFill(data);
+      // Wait at most IP_LOCATION_TIMEOUT_MS for ip-api when there is a DEFAULT_LOCATION to use meanwhile.
+      const data = DEFAULT_LOCATION
+        ? await Promise.race([
+            request,
+            new Promise((resolve) => setTimeout(() => resolve(null), IP_LOCATION_TIMEOUT_MS)),
+          ])
+        : await request;
+      if (data) {
+        await callLocationForPaymentFill(data);
+      } else {
+        // Too slow: use DEFAULT_LOCATION now, and swap in the actual location if the request still succeeds.
+        await callLocationForPaymentFill(JSON.parse(DEFAULT_LOCATION));
+        request.then(callLocationForPaymentFill).catch(() => {});
+      }
     } catch (e) {
+      if (isFailedOrCancelled(e) && DEFAULT_LOCATION) {
+        await callLocationForPaymentFill(JSON.parse(DEFAULT_LOCATION));
+        return;
+      }
       console.error(e);
       if (throwOnError) throw e;
     }
@@ -76,7 +100,7 @@ export async function getPayerCountryCodePromise() {
   try {
     if (LOCATION_SERVICE_BYPASS == "true") {
       return JSON.parse(DEFAULT_LOCATION).countryCode || "";
-    }
+    } 
     if (location) {
       try {
         return JSON.parse(location).countryCode || "";
@@ -85,6 +109,16 @@ export async function getPayerCountryCodePromise() {
     const data = await fetchIpLocation();
     return data && data.countryCode ? data.countryCode : "";
   } catch (e) {
+    if (isFailedOrCancelled(e) && DEFAULT_LOCATION) return JSON.parse(DEFAULT_LOCATION).countryCode || "";
+    return "";
+  }
+}
+
+// DEFAULT_LOCATION's country (lower-cased), or '' when it isn't loaded / not valid.
+export function getDefaultCountryCode() {
+  try {
+    return (JSON.parse(DEFAULT_LOCATION).countryCode || "").toLowerCase();
+  } catch {
     return "";
   }
 }

@@ -1,6 +1,7 @@
 import { encodePayload, encodeRawString } from "@/utils/payloadEncoding";
-import { isBackendOverrideAllowed, resolveBackendNavigationOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { isBackendOverrideAllowed, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { getHash, getSystemTimezone } from "@/utils/common";
+import { withServiceKey } from "@/lib/auth/serviceKey";
 
 /**
  * Exchanges a one-time SSO token (issued by the legacy Java login page,
@@ -49,21 +50,17 @@ export async function exchangeSsoToken(schoolUUID, ssoToken, backendOverride) {
   const url = `${baseUrl}/${schoolUUID}/api/v1/common/sso/exchange`;
   let response;
   try {
-    response = await fetch(url, {
+    response = await fetch(url, withServiceKey({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ payload: encodePayload({ ssoToken }) }),
-    });
+    }));
   } catch (err) {
     console.error("exchangeSsoToken: fetch threw", url, err);
     return null;
   }
 
-  // Temporary diagnostic — this is the first live run of this path; remove
-  // once the handoff is confirmed working end to end.
   if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    console.error("exchangeSsoToken: non-OK response", url, response.status, text);
     return null;
   }
   return response.json();
@@ -147,34 +144,6 @@ export async function login(
   return response.json();
 }
 
-/**
- * Cross-app single-logout support: asks the Java backend (is-rest-api) whether this
- * uniqueId is still logged in THERE — independently of this app's own next-auth
- * session. Backend: GET {schoolId}/api/v1/common/session-status/{uniqueId}
- * (CommonController#getSessionStatusByUniqueId), looked up purely from the user's
- * USER_LOGIN_HASH column (set on login, nulled on logout — see
- * CommonUtil#sessionOut) rather than an HttpSession, so it works cross-origin with
- * no shared cookie. Client-side only (used by useBackendSessionGuard's polling);
- * returns true (assume valid) on any network/parse failure so a flaky request never
- * logs a user out by mistake — only an explicit `false` from the backend does that.
- *
- * @param {string} schoolUUID
- * @param {string} uniqueId
- * @returns {Promise<boolean>}
- */
-export async function checkBackendSessionStatus(schoolUUID, uniqueId) {
-  const baseUrl = resolveBackendNavigationOrigin();
-  if (!baseUrl || !schoolUUID || !uniqueId) return true;
-
-  try {
-    const response = await fetch(`${baseUrl}/${schoolUUID}/api/v1/common/session-status/${encodeURIComponent(uniqueId)}`, {
-      method: "GET",
-    });
-    if (!response.ok) return true;
-    const stillValid = await response.json();
-    return stillValid !== false;
-  } catch (err) {
-    console.error("checkBackendSessionStatus: fetch threw", err);
-    return true;
-  }
-}
+// checkBackendSessionStatus moved to services/sessionStatusApi.js as a server
+// action: it is polled from the browser, and an http:// backend cannot be reached
+// from this app's https:// pages (mixed active content).

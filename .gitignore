@@ -50,3 +50,5 @@ graphify-out/.graphify_root
 graphify-out/.graphify_uncached.txt
 graphify-out/.graphify_filelist_*.txt
 /e2e/
+/playwright-report/
+/playwright.regression.config.ts

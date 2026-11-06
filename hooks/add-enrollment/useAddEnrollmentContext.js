@@ -16,7 +16,7 @@ import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
 import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { useQuery } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/components/providers/AuthSessionProvider";
 import { useParams } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 
@@ -196,6 +196,10 @@ function useResolveAddEnrollmentContext() {
   // the steps (see AddEnrollmentChrome) instead of navigating to the :8080 dashboard. markCompleted lets the
   // review step flip the same switch when the backend answers REDIRECT_TO_DASHBOOARD mid-payment.
   const [completedLocal, setCompletedLocal] = useState(false);
+  // Set by the review step's own paid poll, which already asked the thank-you API for a FIRST payment of this
+  // child and got it. That is the same gate firstPaymentCheck applies, so it is not asked a second time (the
+  // second ask can answer "not paid" for a different roll number and bounce the user back to the review step).
+  const [paidConfirmedLocal, setPaidConfirmedLocal] = useState(false);
   // S003 = enroll/another/child found the child this tab was enrolling already paid (e.g. via the payment link).
   const alreadyPaid = enrollChild.data?.statusCode === "S003";
   // Every one of these only CLAIMS the child has paid / finished: S003 from enroll/another/child,
@@ -227,9 +231,9 @@ function useResolveAddEnrollmentContext() {
     refetchOnWindowFocus: false,
     retry: false,
   });
-  const firstPaymentDone = paidBeforeEnroll || (completionSignal && firstPaymentCheck.data === true);
+  const firstPaymentDone = paidBeforeEnroll || paidConfirmedLocal || (completionSignal && firstPaymentCheck.data === true);
   // while the check runs the wizard is held back (loader); a "not a first payment" answer lets it render normally
-  const completionPending = completionSignal && !firstPaymentCheck.isFetched && !firstPaymentCheck.isError;
+  const completionPending = !paidConfirmedLocal && completionSignal && !firstPaymentCheck.isFetched && !firstPaymentCheck.isError;
   const completed = firstPaymentDone;
 
 
@@ -260,6 +264,13 @@ function useResolveAddEnrollmentContext() {
     };
   }, [session?.schoolUUID]);
 
+  // A failed enroll/another/child resolves to null rather than throwing: parseJsonResponse
+  // turns any non-OK status, empty body or unparseable body into null, which React Query
+  // counts as a success. isError stayed false while `ready` stayed false for want of
+  // childData, so the wizard sat on its loader with nothing to say and no way forward.
+  // Checking data rather than childData keeps the S003 (already paid) answer out of this.
+  const enrollChildFailed = enrollChild.isFetched && !enrollChild.isError && !enrollChild.data;
+
   const processReady = !childUniqueId || enrollmentProcess.isFetched;
   const ready =
     authenticated &&
@@ -271,12 +282,16 @@ function useResolveAddEnrollmentContext() {
     processRedirect?.redirectTo !== "login";
 
   // Same payer-location capture as the main context, so the payment step finds it already there.
+  // userId 0, not the child's: common-script-variables lets a signed-in user ask only for their own
+  // account, and here the signed-in user is the parent, so asking for the child answered 403 and the
+  // payer location was never captured. The two globals this reads — LOCATION_SERVICE_BYPASS and
+  // DEFAULT_LOCATION — come from school SETTINGS and are the same whoever is named.
   useEffect(() => {
     if (!ready) return;
-    loadLocationGlobals({ schoolUUID: session.schoolUUID, userId: childUserId })
+    loadLocationGlobals({ schoolUUID: session.schoolUUID, userId: 0 })
       .then(() => callLocationForPaymentPromise())
       .catch((err) => console.error("Payer location capture failed:", err));
-  }, [ready, session?.schoolUUID, childUserId]);
+  }, [ready, session?.schoolUUID]);
 
   const context = ready
     ? {
@@ -313,13 +328,20 @@ function useResolveAddEnrollmentContext() {
     completed,
     // read straight off enrollment/process: `context` is null once the wizard has been replaced by the completed view
     customPaymentEnabled: enrollmentProcess.data?.customPaymentEnabled === true,
-    markCompleted: () => setCompletedLocal(true),
+    markCompleted: (paidConfirmed) => {
+      setCompletedLocal(true);
+      if (paidConfirmed === true) setPaidConfirmedLocal(true);
+    },
     // customPaymentEnabled is read once, at the start of the wizard — but a custom plan is attached later
     // (at/after course selection, or by an admin), and this provider lives in the step layout, so it never
     // remounts between steps. The review step re-asks before it decides which fee layout to render.
     refetchEnrollmentProcess: enrollmentProcess.refetch,
     // E005: a reload with nothing to resume and no paid child (only a fresh "Add child" entry may create one)
-    isError: enrollChild.isError || enrollChild.data?.statusCode === "E005" || processRedirect?.redirectTo === "login",
+    isError:
+      enrollChild.isError ||
+      enrollChildFailed ||
+      enrollChild.data?.statusCode === "E005" ||
+      processRedirect?.redirectTo === "login",
   };
 }
 

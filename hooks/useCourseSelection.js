@@ -65,7 +65,7 @@ export function useCourseDetails({ context, userId, standardId, reEnrollment = f
       return response;
     },
     enabled: Boolean(context?.schoolUUID && userId),
-    staleTime: Infinity,
+    staleTime: 0,
     refetchOnWindowFocus: false,
     retry: false,
   });

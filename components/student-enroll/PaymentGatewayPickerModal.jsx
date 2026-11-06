@@ -33,10 +33,13 @@ import {
  *   onSubmitOffline(option, form, spec) -> { ok, message }   (CASH / WIRETRANSFER)
  */
 
-// Backend static assets (legacy PATH_FOLDER_IMAGE2 / PATH_FOLDER_FONT2).
-const IMAGES = "static/theme2/images/";
-const FLAGS = "static/theme2/fonts/";
-const assetUrl = (folder, file) => `${resolveBackendOrigin()}/${folder}${file}`;
+// Backend static assets (legacy PATH_FOLDER_IMAGE2 / PATH_FOLDER_FONT2), served same-origin through the
+// /backend-static-assets rewrite in next.config.mjs (-> backend /static/theme2/...). Using
+// resolveBackendOrigin() here used to send the browser straight at the backend's own origin — an
+// internal-only host/IP on some environments, unreachable from the browser, so the icons never loaded.
+const IMAGES = "images/";
+const FLAGS = "fonts/";
+const assetUrl = (folder, file) => `/backend-static-assets/${folder}${file}`;
 
 // Gateways with no Pay Now button here: YOCO's is hidden (its own SDK flow), offline ones submit a form.
 const NO_PAY_BUTTON = ["YOCO", "CASH", "WIRETRANSFER"];

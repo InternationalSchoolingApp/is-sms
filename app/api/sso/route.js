@@ -1,4 +1,8 @@
-import { signIn } from "@/auth";
+import { NextResponse } from "next/server";
+import { exchangeSsoToken } from "@/services/authApi";
+import { MAX_ACCOUNTS, clearAccount, heldAccounts, isAccountId, writeAccount, writePick } from "@/lib/auth/accountCookies";
+import { defaultBackend, logoutAtSms, trustedBackend } from "@/lib/auth/smsTokens";
+import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
 import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 import { addEnrollmentStepPath, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
 import {
@@ -18,8 +22,8 @@ const VALID_STEPS = new Set(["1", "2", "3", "4"]);
  * (Login.jsp) sends a STUDENT with an in-progress enrollment to, instead of
  * its own JSP continuation page. Login itself still happens entirely on the
  * Java side; this only exchanges the one-time `token` it hands us for a
- * real Auth.js session (via the "sso-token" CredentialsProvider in auth.js
- * -> services/authApi.js's exchangeSsoToken), then forwards the browser on
+ * signed-in account in this browser (services/authApi.js's exchangeSsoToken
+ * returns SMS's access and refresh tokens, written as this user's account cookies, see lib/auth/accountCookies.js), then forwards the browser on
  * to the actual wizard step the backend said to resume at.
  *
  * Expected URL: /api/sso?token=<oneTimeToken>&step=<1|2|3|4>&school=<schoolUUID>&program=<routeCode>
@@ -132,42 +136,55 @@ async function handleSsoHandoff(request) {
     return redirectTo("/", request);
   }
 
+  // The one-time token buys this user's SMS access and refresh tokens (SMS: auth.sso.issue-tokens=true).
+  let exchanged;
   try {
-    const result = await signIn("sso-token", { ssoToken, schoolName, schoolUUID, backendOverride, redirect: false });
-    if (!result || result.error) {
-      console.error("SSO token exchange failed:", result?.error);
-      return redirectTo("/", request);
-    }
+    exchanged = await exchangeSsoToken(schoolUUID, ssoToken, backendOverride);
   } catch (err) {
     console.error("SSO token exchange threw:", err);
     return redirectTo("/", request);
   }
+  if (!exchanged || exchanged.status === "0" || !isAccountId(exchanged.uniqueId)) {
+    console.error("SSO token exchange failed:", exchanged?.message);
+    return redirectTo("/", request);
+  }
+  if (!exchanged.accessToken || !exchanged.refreshToken) {
+    console.error("SSO token exchange returned no tokens: set auth.token.enabled and auth.sso.issue-tokens on SMS");
+    return redirectTo("/", request);
+  }
 
-  // A general, validated same-origin `next` (e.g. the Java dashboard redirect sends
-  // `next=/{school}/student` once STUDENT_DASHBOARD_VIA_NEXTJS is on) — lets any
-  // post-login destination ride the SAME one-time-token handoff that establishes the
-  // Auth.js session, so proxy.js doesn't bounce the student back to login. Only for
-  // the non-add-enrollment case (ae=Y keeps its dedicated builder + fresh=1 above).
-  const nextPath = isAddEnrollment ? null : safeNextPath(url.searchParams.get("next"), schoolUUID);
-
-  // Destination priority: add-another-child wizard (ae=Y) -> validated `next`
-  // (e.g. the student dashboard) -> the student's own enrollment step path.
+  // Add-another-child wizard wins when ae=Y and the path could be built; otherwise the student's own enrollment step.
   // fresh=1 marks a real "start" of the add-enrollment wizard (dashboard button / enrollment link). Only such an
   // entry may reserve a new child; a reload of the wizard never does (see useAddEnrollmentContext).
-  let destination;
-  if (addEnrollmentPath != null) {
-    destination = `${addEnrollmentPath}${addEnrollmentPath.includes("?") ? "&" : "?"}fresh=1`;
-  } else if (nextPath != null) {
-    // An explicit, validated destination from the backend (e.g. the student
-    // dashboard redirect, CommonUtil#getFinalStudentDashboardUrl's
-    // next=/{school}/student) always wins over the enrollment-wizard default.
-    destination = nextPath;
-  } else if (target === "re-enrollment") {
-    destination = `${reEnrollmentBasePath(schoolUUID, mode)}${resume === "1" ? "?resume=1" : ""}`;
-  } else {
-    destination = stepPath(schoolUUID, program, targetStep);
+  const target = addEnrollmentPath != null
+    ? `${addEnrollmentPath}${addEnrollmentPath.includes("?") ? "&" : "?"}fresh=1`
+    : stepPath(schoolUUID, program, targetStep);
+  const response = redirectTo(target, request);
+  const account = exchanged.uniqueId;
+  // The step page right after this redirect is for the user who just signed in, even when the browser holds
+  // other signed-in users: no "Choose account" page (proxy.js reads this one-time pick).
+  writePick(response.cookies, account, target);
+  const backend = backendOverride || defaultBackend();
+  // At most MAX_ACCOUNTS users per browser: signing in one more ends the oldest login here.
+  const others = heldAccounts(request.cookies).filter((a) => a.account !== account);
+  others.sort((a, b) => (a.profile?.signedInAt || 0) - (b.profile?.signedInAt || 0));
+  while (others.length >= MAX_ACCOUNTS) {
+    const oldest = others.shift();
+    await logoutAtSms(trustedBackend(oldest.profile?.backend), oldest.profile?.schoolUUID, oldest.refreshToken);
+    clearAccount(response.cookies, oldest.account);
   }
-  const response = redirectTo(destination, request);
+  writeAccount(response.cookies, account, {
+    accessToken: exchanged.accessToken,
+    refreshToken: exchanged.refreshToken,
+    profile: {
+      userId: exchanged.userId,
+      email: exchanged.email || "",
+      schoolUUID: exchanged.schoolUUID || schoolUUID,
+      schoolName: schoolName || exchanged.schoolName || "",
+      backend,
+      signedInAt: Date.now(),
+    },
+  });
   // The rest of this student's session (every Server Action after this
   // point) must keep hitting the SAME backend that issued the token, not
   // whatever NEXT_PUBLIC_BACKEND_BASE_URL defaults to — persist it the same

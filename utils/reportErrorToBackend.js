@@ -1,6 +1,5 @@
 "use client";
 
-import { getSession } from "next-auth/react";
 import { resolveBackendOrigin, hasBackendOrigin } from "@/utils/backendOrigin";
 import { getLastApiAttempt } from "@/utils/lastApiAttempt";
 
@@ -57,7 +56,12 @@ function postPayload(url, payload) {
   }
 }
 
-export async function reportErrorToBackend(error) {
+/**
+ * @param error   what the error boundary caught
+ * @param session the page's signed-in user (useSession() data), when the boundary has one; global-error.jsx
+ *                replaces the root layout, so it has none and reports without user details.
+ */
+export async function reportErrorToBackend(error, session = null) {
   if (typeof window === "undefined") return;
   if (!hasBackendOrigin()) return;
 
@@ -68,20 +72,11 @@ export async function reportErrorToBackend(error) {
 
   const lastApiAttempt = getLastApiAttempt();
 
-  // Session lookup is best-effort; a logged-out visitor or a broken session
-  // still logs the error, just without userId/schoolId filled in.
-  let session = null;
-  try {
-    session = await getSession();
-  } catch {
-    // ignore
-  }
-
   const payload = {
     errorUuid,
     userId: session?.userId ?? null,
     schoolId: session?.schoolNumericId ?? null,
-    userRole: session?.userRole ?? null,
+    userRole: session?.role ?? session?.userRole ?? null,
     moduleId: null,
     pageNo: window.location.pathname,
     currentUrl: window.location.href,

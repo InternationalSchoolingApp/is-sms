@@ -66,7 +66,9 @@ function AddWizardFrame({ children }) {
   }, []);
 
   if (isError) {
-    return <FullScreenLoader message="Something went wrong. Please refresh the page." />;
+    return (
+      <FullScreenError message="We couldn't start this enrollment. Please go back to your dashboard and start Add Another Child again — if it keeps happening, contact support and we'll finish it for you." />
+    );
   }
 
   if (completed) {

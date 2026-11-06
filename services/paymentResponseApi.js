@@ -1,6 +1,7 @@
 "use server";
 
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { withSmsAuth } from "@/lib/auth/session";
 
 /**
  * JSON payment-response endpoints from PaymentResponseApiController.java.
@@ -39,7 +40,10 @@ const SUCCESS_ENDPOINTS = new Set([
 ]);
 
 async function getJson(url) {
-  const response = await fetch(url, { method: "GET" });
+  // /api/v1/{school}/common/*payment-response-success is not an open route on SMS: without the service key (and
+  // the signed-in user's token, when there is one) SMS refuses it with the visitor-token error, the gateway
+  // return is never verified, so the payment is never marked paid and the page ends up on the login page.
+  const response = await fetch(url, await withSmsAuth({ method: "GET" }));
   if (!response.ok) return null;
   const text = await response.text();
   if (!text) return null;
@@ -89,6 +93,17 @@ export async function getPaymentResponseFailure(schoolUUID, customReference, uni
 }
 
 /**
+ * Settlement status: /payment/settlement-status?ref=<settlementRef>, polled by the "confirming"
+ * card while the backend is still confirming a Stripe/Airwallex payment. The ref is the DTO's
+ * settlementRef, or the return URL's pgReferneceForStripe / pgReferneceForAirwallex.
+ * Resolves to { status, statusCode: SETTLED | CONFIRMING | NOT_PAID | DUPLICATE, message }, or null.
+ */
+export async function getPaymentSettlementStatus(schoolUUID, settlementRef) {
+  if (!settlementRef) return null;
+  return getJson(`${await backendUrl(schoolUUID, "payment/settlement-status")}?ref=${encodeURIComponent(settlementRef)}`);
+}
+
+/**
  * Sends browser details (fbc, fbp, IP, user agent, page URL) captured on the
  * payment success page so the Meta Conversions API cron can attach fresh match
  * data to the Purchase event.
@@ -99,11 +114,11 @@ export async function savePurchaseBrowserDetails(schoolUUID, userPaymentDetailsI
   if (!hasBackendOrigin() || !schoolUUID) return null;
   const url = `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/payment/${userPaymentDetailsId}/purchase-browser-details`;
   try {
-    const response = await fetch(url, {
+    const response = await fetch(url, await withSmsAuth({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ browserDetails }),
-    });
+    }));
     return response.ok ? "OK" : null;
   } catch {
     return null;
