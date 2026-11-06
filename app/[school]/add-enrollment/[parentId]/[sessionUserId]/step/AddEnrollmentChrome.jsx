@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useParams, useRouter, useSelectedLayoutSegment } from "next/navigation";
-import { FullScreenLoader } from "@/components/common/Loader";
+import { FullScreenError, FullScreenLoader } from "@/components/common/Loader";
 import { loadAddEnrollmentChildUniqueId, loadAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
 import { AddEnrollmentWizardShell, WIZARD_STEP_META } from "@/components/add-enrollment/AddEnrollmentWizardShell";
 import { AddEnrollmentProvider, useAddEnrollmentContext } from "@/hooks/add-enrollment/useAddEnrollmentContext";
