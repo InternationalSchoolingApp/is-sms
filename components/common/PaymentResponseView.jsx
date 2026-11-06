@@ -415,6 +415,7 @@ function AddEnrollmentThankYouReplay({ schoolUUID, parentId, rollNo, childUnique
         payAmount: info.payAmount,
         grade: info.grade,
         learningProgram: info.learningProgram,
+        returnUrl: info.returnUrl,
         displaySchoolName: session?.schoolName,
         accountSetup: isFirstPayment(info) ? info : null,
       }}
