@@ -276,19 +276,19 @@ export function BookClassSlotModal({ course, onClose, onBooked }) {
                       <div className="text-center text-black/40">----</div>
                     ) : (
                       <div className="flex flex-col items-center gap-1">
-                        {list.map((slot) => {
+                        {list.map((slot, slotIdx) => {
                           const state = getSlotState(slot, day, slots);
                           const isSelected = selected?.slot === slot;
                           if (state !== "available") {
                             return (
-                              <div key={slot.bookedStartDate} className={`${CHIP} ${CHIP_STYLES[state]}`}>
+                              <div key={`${slot.bookedStartDate}-${slotIdx}`} className={`${CHIP} ${CHIP_STYLES[state]}`}>
                                 {slot.displayStartTime}
                               </div>
                             );
                           }
                           return (
                             <button
-                              key={slot.bookedStartDate}
+                              key={`${slot.bookedStartDate}-${slotIdx}`}
                               type="button"
                               onClick={() => setSelected({ slot, day })}
                               aria-pressed={isSelected}

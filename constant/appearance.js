@@ -20,7 +20,7 @@ export const APPEARANCE_OPTIONS = {
   hand: ["right", "left"],
   motion: ["system", "reduced"],
   buddy: ["pico", "penny", "booky", "bolt", "twinkle"],
-  voice: ["cheerful", "calm", "squeaky", "robot", "slow"],
+  voice: ["cheerful", "calm", "squeaky", "robot", "slow", "emma"],
   speech: ["on", "off"],
 };
 
@@ -85,6 +85,8 @@ export const VOICES = {
   squeaky: { name: "Squeaky", pitch: 1.75, rate: 1.05 },
   robot: { name: "Robot", pitch: 0.55, rate: 0.85 },
   slow: { name: "Slow & clear", pitch: 1.15, rate: 0.7 },
+  // Emma: a British voice; tapping her in the look dialog plays a recorded hello (mockup playClip).
+  emma: { name: "Emma", pitch: 1.0, rate: 0.95, gb: true },
 };
 
 /** Only allowlisted values survive; everything else takes the default. */

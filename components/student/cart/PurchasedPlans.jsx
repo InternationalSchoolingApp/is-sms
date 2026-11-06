@@ -1,6 +1,7 @@
 "use client";
 
 import { BookOpen } from "lucide-react";
+import { MobileTableCard } from "@/components/student/MobileTableCard";
 import { formatAmount, hasEnded, weeksBetween, weeksLabel } from "@/utils/cartPlan";
 
 /**
@@ -19,7 +20,26 @@ export function PurchasedPlans({ items, subjectId, symbol, isoCode }) {
         <BookOpen className="h-6 w-6 rounded bg-primary p-1 text-white" aria-hidden="true" />
         Purchased Plans{subjectName ? ` - ${subjectName}` : ""}
       </h2>
-      <div className="overflow-x-auto rounded-xl border border-slate-200">
+      {/* Mobile: one card per plan (column title beside each value). */}
+      <ul className="space-y-3 md:hidden">
+        {rows.map((item, index) => (
+          <li key={item.cartId ?? index}>
+            <MobileTableCard
+              rows={[
+                { label: "S.No", value: index + 1 },
+                { label: "No. of Classes", value: item.classCount },
+                { label: "Duration Plan", value: `${item.planStartDate} to ${item.planEndDate} (${weeksLabel(weeksBetween(item.planStartDate, item.planEndDate))})` },
+                { label: `Fee Paid${isoCode ? ` (${isoCode})` : ""}`, value: formatAmount(symbol, item.planAmount) },
+                {
+                  label: "Plan Status",
+                  value: hasEnded(item.planEndDate) ? <span className="text-red-600">Inactive</span> : <span className="text-primary">Active</span>,
+                },
+              ]}
+            />
+          </li>
+        ))}
+      </ul>
+      <div className="hidden overflow-x-auto rounded-xl border border-slate-200 md:block">
         <table className="w-full min-w-[560px] text-left text-sm">
           <thead className="bg-primary text-white">
             <tr>

@@ -9,6 +9,8 @@ import { getStudentBookedClasses } from "@/services/bookClassApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { BOOKED_CLASS_STATUS_STYLES } from "@/utils/bookClass";
+import { MobileTableCard } from "@/components/student/MobileTableCard";
+import { K5BookedView } from "@/components/k5/pages/K5BookedView";
 
 const DATE_TYPES = [
   { value: "today", label: "Today" },
@@ -76,9 +78,14 @@ function toBackendDate(date) {
 }
 
 /** Booked-classes history for one course — legacy bookedCalssCotentFun / bookClassFilterFormContent. */
-export function BookedClasses({ course, onBack, onBook }) {
+export function BookedClasses(props) {
   const { isK5 } = useDashboardContext();
-  const look = isK5 ? LOOK.k5 : LOOK.legacy;
+  return isK5 ? <K5BookedView {...props} /> : <LegacyBookedClasses {...props} />;
+}
+
+function LegacyBookedClasses({ course, onBack, onBook }) {
+  const isK5 = false;
+  const look = LOOK.legacy;
   const [draft, setDraft] = useState(DEFAULT_FILTER);
   const [filter, setFilter] = useState(DEFAULT_FILTER);
 
@@ -190,7 +197,39 @@ export function BookedClasses({ course, onBack, onBook }) {
         </div>
       )}
 
-      <div className={look.tableWrap}>
+      {/* Mobile: one card per booked class (column title beside each value) instead of a 900px table. */}
+      <div className="mt-3 md:hidden">
+        {isLoading || rows.length === 0 ? (
+          <p className="rounded-2xl border border-slate-200 bg-white py-6 text-center text-sm font-bold text-black/60">{isLoading ? "Loading…" : "No records found"}</p>
+        ) : (
+          <ul className="space-y-3">
+            {rows.map((row, index) => {
+              const status = BOOKED_CLASS_STATUS_STYLES[row.meetingResult];
+              return (
+                <li key={`${row.meetingJoinDate}-${row.startTime}-${index}`}>
+                  <MobileTableCard
+                    labelClassName={look.thead}
+                    rows={[
+                      { label: "S. No.", value: index + 1 },
+                      { label: "Class Timing | Time zone", value: `${row.meetingJoinDate} | ${row.startTime} - ${row.endTime} | ${row.timezone}` },
+                      { label: "Course Name", value: row.subjectName },
+                      { label: "Teacher Name", value: row.name },
+                      { label: "Booked Date", value: row.bookedDate },
+                      { label: "Class Type", value: row.classTypeExtraOrComp },
+                      {
+                        label: "Class Status",
+                        value: status ? <span className={`rounded px-2 py-0.5 font-bold ${status.className}`}>{status.label}</span> : <span className="font-bold">N/A</span>,
+                      },
+                    ]}
+                  />
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      <div className={`${look.tableWrap} hidden md:block`}>
         <table className="min-w-[900px] w-full text-left text-sm">
           <thead className={look.thead}>
             <tr>

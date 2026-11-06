@@ -1,10 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { VOICES } from "@/constant/appearance";
 
 const noSubscribe = () => () => {};
+// British female voices, in the mockup order of preference (Emma).
+const GB_NAMES = ["emma", "libby", "sonia", "serena", "kate", "stephanie", "martha", "fiona", "google uk english female"];
+function pickGbVoice() {
+  const voices = window.speechSynthesis.getVoices();
+  for (const name of GB_NAMES) {
+    const hit = voices.find((v) => v.lang?.toLowerCase().startsWith("en-gb") && v.name.toLowerCase().includes(name));
+    if (hit) return hit;
+  }
+  return voices.find((v) => v.lang?.toLowerCase().startsWith("en-gb")) || null;
+}
+
 const hasSpeech = () => "speechSynthesis" in window && typeof window.SpeechSynthesisUtterance !== "undefined";
 
 /**
@@ -30,7 +41,11 @@ export function useSpeech() {
       synth.cancel();
       const preset = VOICES[voice] || VOICES.cheerful;
       const utterance = new window.SpeechSynthesisUtterance(text);
-      utterance.lang = "en-US";
+      utterance.lang = preset.gb ? "en-GB" : "en-US";
+      if (preset.gb) {
+        const gb = pickGbVoice();
+        if (gb) utterance.voice = gb;
+      }
       utterance.pitch = preset.pitch;
       utterance.rate = preset.rate;
       utterance.onstart = () => setSpeaking(true);
@@ -41,7 +56,30 @@ export function useSpeech() {
     [supported, preferences.speech, preferences.voice],
   );
 
-  useEffect(() => stop, [stop]);
+  // Emma's recorded hello (tap in the look dialog). Always a tap, so browsers allow the audio.
+  const clipRef = useRef(null);
+  const playClip = useCallback(() => {
+    try {
+      if (supported) window.speechSynthesis.cancel();
+      clipRef.current?.pause();
+      const audio = new Audio("/k5/emma-hello.mp4");
+      clipRef.current = audio;
+      audio.onplay = () => setSpeaking(true);
+      audio.onended = () => setSpeaking(false);
+      audio.onerror = () => setSpeaking(false);
+      audio.play()?.catch(() => setSpeaking(false));
+    } catch {
+      setSpeaking(false);
+    }
+  }, [supported]);
 
-  return { supported, speaking, speak, stop };
+  useEffect(
+    () => () => {
+      stop();
+      clipRef.current?.pause();
+    },
+    [stop],
+  );
+
+  return { supported, speaking, speak, stop, playClip };
 }

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { DashboardProvider, useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDashboardSessionExpiry } from "@/hooks/useDashboardSessionExpiry";
 import { FullScreenLoader } from "@/components/common/Loader";
+import { SessionExpiredDialog } from "@/components/providers/SessionExpiredDialog";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { K5Shell } from "@/components/k5/K5Shell";
 import { rememberDashboardPath } from "@/utils/lastDashboardPath";
@@ -19,7 +20,6 @@ function SessionExpiryWatcher() {
 // Same URLs for every grade: a Grade K–5 student (isK5) gets the K–5 chrome, everyone else
 // the existing shell. Holds the loader until the grade band is known, so neither shell flashes.
 function ShellForGrade({ children }) {
-  
   const { ready, gradeResolved, isK5 } = useDashboardContext();
   if (!ready || !gradeResolved) return <FullScreenLoader />;
   return isK5 ? <K5Shell>{children}</K5Shell> : <DashboardShell>{children}</DashboardShell>;
@@ -47,6 +47,7 @@ export function DashboardChrome({ role = "student", children }) {
   return (
     <DashboardProvider role={role}>
       <SessionExpiryWatcher />
+      <SessionExpiredDialog />
       <LastPathRecorder />
       <ShellForGrade>{children}</ShellForGrade>
     </DashboardProvider>

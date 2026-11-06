@@ -6,7 +6,7 @@ import { usePathname, useParams } from "next/navigation";
 import {
   LayoutDashboard, CalendarDays, GraduationCap, CalendarCheck, ShoppingCart,
   ClipboardCheck, BarChart3, FileText, Globe, Handshake, Gamepad2, Wallet,
-  BookMarked, History, Circle, ChevronDown, X,
+  BookMarked, History, Circle, ChevronDown, X, Award,
 } from "lucide-react";
 import { studentNavHref } from "@/utils/dashboardNav";
 
@@ -15,7 +15,7 @@ const ICONS = {
   dashboard: LayoutDashboard, calendar: CalendarDays, teacher: GraduationCap,
   "book-class": CalendarCheck, cart: ShoppingCart, attendance: ClipboardCheck,
   chart: BarChart3, file: FileText, globe: Globe, social: Handshake, game: Gamepad2,
-  fee: Wallet, handbook: BookMarked, history: History, dot: Circle,
+  fee: Wallet, handbook: BookMarked, history: History, certificate: Award, dot: Circle,
 };
 
 function iconFor(key) {

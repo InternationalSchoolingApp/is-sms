@@ -184,13 +184,14 @@ function iconForLabel(name, pageLink) {
   if (s.includes("book") && s.includes("class")) return "book-class";
   if (s.includes("buy") || s.includes("extra")) return "cart";
   if (s.includes("attendance")) return "attendance";
-  if (s.includes("progress")) return "file";
+  if (s.includes("progress") || s.includes("transcript")) return "file";
   if (s.includes("academic") || s.includes("performance") || s.includes("report")) return "chart";
   if (s.includes("language")) return "globe";
   if (s.includes("social")) return "social";
   if (s.includes("sport") || s.includes("game")) return "game";
   if (s.includes("fee")) return "fee";
   if (s.includes("handbook")) return "handbook";
+  if (s.includes("certificate")) return "certificate";
   if (s.includes("history") || s.includes("log in") || s.includes("login")) return "history";
   return "dot";
 }

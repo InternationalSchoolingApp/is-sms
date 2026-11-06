@@ -7,6 +7,7 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { getStudentProgressReportDetail } from "@/services/dashboardApi";
 import { PerformanceGradeHistoryModal } from "@/components/student/PerformanceGradeHistoryModal";
+import { MobileTableCard } from "@/components/student/MobileTableCard";
 
 const TILES = [
   { key: "totalAssignment", label: "Total" },
@@ -81,7 +82,31 @@ export function PerformanceProgressModal({ course, onClose }) {
                 ))}
               </div>
 
-              <div className="mt-4 overflow-x-auto">
+              {/* Phone: one tappable card per assignment (column title beside each value). */}
+              <div className="mt-4 sm:hidden">
+                {items.length === 0 ? (
+                  <p className="py-4 text-center text-black/50">No assignments found.</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {items.map((item) => (
+                      <li key={item.itemid}>
+                        <button type="button" onClick={() => setHistoryItem(item)} className="block w-full cursor-pointer text-left">
+                          <MobileTableCard
+                            rows={[
+                              { label: "Assignment", value: item.title },
+                              { label: "Due", value: item.duedate || "—" },
+                              { label: "Status", value: [item.submissionStatus, item.status].find((s) => s && s !== "0") || "—" },
+                              { label: "Score", value: item.unitPercent || item.unitPercent === 0 ? `${item.unitPercent}%` : "—" },
+                            ]}
+                          />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="mt-4 hidden overflow-x-auto sm:block">
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 text-black/50">

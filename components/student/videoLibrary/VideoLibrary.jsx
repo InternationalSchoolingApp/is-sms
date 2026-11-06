@@ -23,6 +23,7 @@ import {
 import { FullScreenLoader } from "@/components/common/Loader";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
+import { K5VideoLibrary } from "@/components/k5/pages/K5VideoLibrary";
 import { SubscribeModal } from "@/components/student/videoLibrary/SubscribeModal";
 import { VideoPlayer } from "@/components/student/videoLibrary/VideoPlayer";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -347,6 +348,7 @@ function SearchResults({ hits, query, apiBase, onOpen }) {
  * position again, like legacy svlLoadPlaylists -> svlRestoreLastPosition).
  */
 function Library({ title, playlists, access, apiBase, applyProgress, busy, onTrial, onSubscribe }) {
+  const { isK5 } = useDashboardContext();
   const [pos, setPos] = useState(() => restorePosition(playlists, readStore()));
   const [search, setSearch] = useState("");
   const [autoplay, setAutoplay] = useState(() => readStore().autoplay !== false);
@@ -529,6 +531,52 @@ function Library({ title, playlists, access, apiBase, applyProgress, busy, onTri
           </div>
         </aside>
       </div>
+    );
+  }
+
+  if (isK5) {
+    return (
+      <K5VideoLibrary
+        playlists={playlists}
+        access={access}
+        apiBase={apiBase}
+        busy={busy}
+        onTrial={onTrial}
+        onSubscribe={onSubscribe}
+        search={search}
+        setSearch={setSearch}
+        query={query}
+        pos={pos}
+        current={current}
+        steps={steps}
+        stepIndex={stepIndex}
+        step={step}
+        video={video}
+        videoIndex={videoIndex}
+        p={p}
+        startAt={startAt}
+        locked={locked}
+        done={done}
+        pct={pct}
+        noun={noun}
+        autoplay={autoplay}
+        started={started}
+        playStep={playStep}
+        selectCourse={selectCourse}
+        openHit={openHit}
+        onEnded={onEnded}
+        onProgress={applyProgress}
+        onPlayPressed={() => setStarted(true)}
+        onStartOver={() => {
+          setStarted(true);
+          setPos((c) => ({ ...c, resumeAt: null }));
+          playerRef.current?.startOver();
+        }}
+        toggleAutoplay={toggleAutoplay}
+        playerRef={playerRef}
+        sideListRef={sideListRef}
+        stageRef={stageRef}
+      />
     );
   }
 

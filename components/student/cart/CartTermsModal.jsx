@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { K5TermsDialog } from "@/components/k5/pages/K5Cart";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 
 // Common Extra Class terms (renderCartPaymentTerms() in cartDetailContent.js, every school but 5).
 function extraClassTerms(schoolName) {
@@ -40,12 +42,41 @@ const DISCOVERY_TERM = "Under any circumstances/conditions, fees for Discovery E
  * today; "d" / "bd" (Discovery Education Add-on) are kept from the legacy
  * branches. Pay Now stays disabled until the box is ticked.
  */
-export function CartTermsModal({ open, planStatus, schoolNumericId, schoolName, busy, onClose, onPay }) {
+export function CartTermsModal({ open, planStatus, schoolNumericId, schoolName, busy, amountText, onClose, onPay }) {
+  const { isK5 } = useDashboardContext();
   const [agreed, setAgreed] = useState(false);
   const name = schoolName || "the school";
   const extraClasses = planStatus === "b" || planStatus === "bd";
   const terms =
     planStatus === "d" ? [DISCOVERY_TERM] : Number(schoolNumericId) === 5 && extraClasses ? schoolFiveTerms(name) : extraClassTerms(name);
+
+  const intro = extraClasses
+    ? "Please note the important fee refund policy and terms & conditions before enrolling for Extra Classes:"
+    : "Please note the below important terms and conditions before enrolling for Discovery Education Add-on:";
+
+  if (isK5) {
+    return (
+      <K5TermsDialog
+        open={open}
+        intro={intro}
+        terms={terms}
+        extra={
+          planStatus === "bd" ? (
+            <div className="mt-3 flex flex-col gap-2">
+              <p className="m-0 text-base font-black">Please note the below important terms and conditions before enrolling for Discovery Education Add-on:</p>
+              <p className="m-0 text-base font-bold">{DISCOVERY_TERM}</p>
+            </div>
+          ) : null
+        }
+        agreed={agreed}
+        onAgree={setAgreed}
+        busy={busy}
+        amountText={amountText}
+        onClose={onClose}
+        onPay={onPay}
+      />
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>

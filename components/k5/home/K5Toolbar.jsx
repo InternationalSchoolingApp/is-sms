@@ -1,9 +1,11 @@
 "use client";
 
 import { format } from "date-fns";
-import { ChevronLeft, ChevronRight, Moon, Sun } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { K5_CARD, K5_ROUND_BTN } from "@/components/k5/home/k5Bits";
-import { K5WeatherTile } from "@/components/k5/home/K5WeatherTile";
+import { K5ClockIcon } from "@/components/k5/home/K5ClockIcon";
+import { K5WeatherTile, kindOf } from "@/components/k5/home/K5WeatherTile";
+import { useK5Weather } from "@/hooks/useK5Weather";
 import { weekKeys, keyToDate } from "@/utils/k5Calendar";
 
 const VIEWS = [
@@ -42,38 +44,32 @@ export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPre
   const [big, small] = titles(viewName, selectedDate);
   const views = isPreK ? VIEWS.filter((v) => v.key !== "month") : VIEWS;
   const unit = viewName === "week" ? "week" : viewName === "month" ? "month" : "day";
-  // Mockup: a moon before 6 AM and from 6 PM in the student's timezone, else a sun.
-  const night = now.getHours() < 6 || now.getHours() >= 18;
+  const weather = useK5Weather(timezone);
+  // Real weather decides day / night and the picture; until it arrives, the clock does.
+  const night = weather ? !weather.isDay : now.getHours() < 6 || now.getHours() >= 18;
 
   return (
     <div className={`${K5_CARD} flex flex-wrap items-center gap-3 px-4 pb-3 pt-3.5`}>
-      <div className="flex items-center gap-2.5 rounded-[20px] bg-k5-yt py-2 pl-2 pr-4 max-[760px]:box-border max-[760px]:w-full">
-        <span className={`flex h-14 w-14 flex-none items-center justify-center rounded-full max-[760px]:h-[52px] max-[760px]:w-[52px] ${night ? "bg-[#6A3FC4]/15" : "bg-[#FFC531]/25"}`}>
-          {night ? (
-            <Moon className="h-10 w-10 fill-[#8B6BE0] text-[#6A3FC4]" strokeWidth={2} aria-hidden="true" />
-          ) : (
-            <Sun className="h-10 w-10 fill-[#FFC531] text-[#FFB020]" strokeWidth={2} aria-hidden="true" />
-          )}
-        </span>
-        <div className="flex flex-col whitespace-nowrap">
-          <span className="font-k5-display text-[28px] font-semibold leading-none text-k5-ink max-[760px]:text-[25px]">{format(now, "h:mm a")}</span>
-          <span className="text-[15px] font-black text-k5-yx">{greeting(now.getHours())}</span>
+      <div className="flex items-center gap-2.5 rounded-[22px] bg-k5-yt px-2.5 py-1.5 max-[760px]:box-border max-[760px]:w-full max-[760px]:flex-nowrap max-[760px]:gap-2 max-[760px]:px-2">
+        <K5ClockIcon kind={weather ? kindOf(weather.code) : "sun"} night={night} className="max-[760px]:!h-11 max-[760px]:!w-11" />
+        <div className="flex flex-none flex-col items-start whitespace-nowrap text-start">
+          <span className="font-k5-display text-[26px] font-bold leading-none text-k5-ink max-[760px]:text-[22px]">{format(now, "h:mm a")}</span>
+          <span className="font-k5-display text-base font-semibold leading-[1.2] text-k5-ink">{greeting(now.getHours())}</span>
           <span className="text-[13px] font-extrabold text-k5-yx">{zoneLabel(timezone)}</span>
         </div>
+        <K5WeatherTile weather={weather} />
       </div>
-
-      <K5WeatherTile timezone={timezone} />
 
       <div className="flex items-center gap-1.5 max-[760px]:flex-[1_1_100%] max-[760px]:justify-center">
         <button type="button" aria-label={`Previous ${unit}`} onClick={onPrev} className={K5_ROUND_BTN}>
-          <ChevronLeft className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
+          <ChevronLeft className="h-[22px] w-[22px]" strokeWidth={3} aria-hidden="true" />
         </button>
         <span className="flex min-w-[150px] flex-col items-center whitespace-nowrap text-center">
           <span className="font-k5-display text-[26px] font-semibold leading-[1.1] text-k5-ink">{big}</span>
           <span className="text-base font-extrabold text-k5-mut">{small}</span>
         </span>
         <button type="button" aria-label={`Next ${unit}`} onClick={onNext} className={K5_ROUND_BTN}>
-          <ChevronRight className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
+          <ChevronRight className="h-[22px] w-[22px]" strokeWidth={3} aria-hidden="true" />
         </button>
       </div>
 

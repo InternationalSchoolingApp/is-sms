@@ -1032,6 +1032,20 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
     };
   }
 
+  function classCalculationForGrownUps() {
+    const d = bookClassDetails();
+    const counts = (total, booked) => ({ total, booked, completed: 0, missedByStudent: 0, missedByTeacher: 0, rescheduled: 0, expired: 0, unused: total - booked });
+    // Same shape the service returns: the response's `details`.
+    return {
+      summary: {
+        maxClassPerWeek: d.compClassPerweek + 5,
+        complimentary: { total: d.compClassYear, perWeek: d.compClassPerweek, unused: d.compClassPerweek - 1 },
+        customPlan: { total: 10, perWeek: 5, unused: 5 },
+      },
+      subjects: [{ subjectId: 0, subjectName: "All Courses", complimentary: counts(d.compClassYear, 1), customPlan: counts(10, 0) }],
+    };
+  }
+
   function assignedTeacher(subjectId) {
     const subject = subjectById(subjectId);
     return {
@@ -1312,6 +1326,37 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
     };
   }
 
+  // Attendance Details page (the API's `details`): two classes per weekday of the range, UTC times.
+  function attendanceDetails({ fromDate, toDate, status, page }) {
+    const rows = [];
+    const names = ["Language Arts", "Mathematics"];
+    let seq = 0;
+    for (let t = Date.parse(`${toDate}T00:00:00Z`); t >= Date.parse(`${fromDate}T00:00:00Z`); t -= 86400000) {
+      const day = new Date(t);
+      if (day.getUTCDay() === 0 || day.getUTCDay() === 6) continue;
+      const ymd = day.toISOString().slice(0, 10);
+      names.forEach((className, k) => {
+        const n = seq++;
+        const absent = n % 9 === 4;
+        const late = !absent && n % 5 === 2;
+        rows.push({
+          className,
+          classDate: ymd,
+          startTime: `${ymd}T0${1 + k}:00:00Z`,
+          endTime: `${ymd}T0${1 + k}:50:00Z`,
+          joinedTime: absent ? null : `${ymd}T0${1 + k}:${late ? "12" : "00"}:00Z`,
+          status: absent ? "ABSENT" : "PRESENT",
+          absentLabel: absent ? "Missed by Student" : null,
+          late,
+          lateByMinutes: late ? 12 : 0,
+        });
+      });
+    }
+    const wanted = rows.filter((r) => (status === "PRESENT" ? r.status === "PRESENT" : status === "LATE" ? r.late : status === "ABSENT" ? r.status === "ABSENT" : true));
+    const current = Math.max(1, Number(page) || 1);
+    return { totalCount: wanted.length, page: current, pageSize: 10, rows: wanted.slice((current - 1) * 10, current * 10) };
+  }
+
   // --- My Assigned Teacher (legacy dummyStudentAssignedTeacherResponse) ---
   function assignedTeachers() {
     return {
@@ -1371,6 +1416,7 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
     userName,
     bookAClass,
     bookClassDetails,
+    classCalculationForGrownUps,
     assignedTeacher,
     assignedTeachersForAllCourses,
     teacherWeeklyCalendar,
@@ -1397,6 +1443,7 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
     diaryMessages,
     diaryUnreadCount,
     attendanceFull,
+    attendanceDetails,
     assignedTeachers,
     transcript,
     loginHistory,

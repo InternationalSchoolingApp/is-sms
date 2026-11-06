@@ -7,6 +7,7 @@ import { useModuleRights } from "@/hooks/useModuleRights";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
+import { K5Handbook } from "@/components/k5/pages/K5Handbook";
 
 // Backend static assets (legacy PATH_FOLDER_IMAGE2).
 const assetUrl = (file) => `${resolveBackendOrigin()}/static/theme2/images/${file}`;
@@ -19,7 +20,7 @@ const IS_POLICIES_URL = "https://internationalschooling.org/student-policies-and
  * (/api/v1/module) gate the page and give its title.
  */
 export function StudentHandbook() {
-  const { context } = useDashboardContext();
+  const { context, isK5 } = useDashboardContext();
   const schoolNumericId = context?.schoolNumericId;
   const { waiting, rights, canView } = useModuleRights("student-handbook");
   const linksQuery = useQuery({
@@ -35,6 +36,20 @@ export function StudentHandbook() {
   const isMainSchool = schoolNumericId == 1;
   const coverImage = assetUrl(isMainSchool ? "updated_handbook.jpeg" : "student-handbook.jpg");
   const policyLink = isMainSchool ? IS_POLICIES_URL : filePath;
+
+  if (isK5) {
+    return (
+      <K5Handbook
+        title={title}
+        schoolName={context?.schoolName}
+        loading={waiting || linksQuery.isLoading}
+        canView={canView}
+        filePath={filePath}
+        policyLink={policyLink}
+        coverImage={coverImage}
+      />
+    );
+  }
 
   return (
     <div className="w-full">

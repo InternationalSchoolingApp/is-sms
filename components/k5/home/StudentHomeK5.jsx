@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import toast from "react-hot-toast";
 import { addMonths, format, isSameMonth, isSameWeek, isSameDay } from "date-fns";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
@@ -18,9 +19,9 @@ import { MonthPlan, WeekPlan } from "@/components/k5/home/WeekMonthPlans";
 import { LiveClassAlert } from "@/components/k5/home/LiveClassAlert";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { getBrowserTimezone, resolveTimezone } from "@/utils/calendarEvents";
-import { dayAt, dayKey, keyToDate, weekKeys } from "@/utils/k5Calendar";
+import { classTitle, dayAt, dayKey, keyToDate, weekKeys } from "@/utils/k5Calendar";
 import { revealPlanTop } from "@/utils/k5Scroll";
-import { picoSay } from "@/components/k5/pico/picoEvents";
+import { picoSay, setPicoLive } from "@/components/k5/pico/picoEvents";
 
 const LIVE_ALERT_KEY = "is-k5-live-alert:";
 
@@ -152,11 +153,43 @@ function K5Planner({ timezone }) {
     }
   };
 
+  // Tell the buddy about the live class: the plan is ready, the popup waits for an answer, and the real class title.
+  const liveName = liveNow ? classTitle(liveNow) : "";
+  const alertPending = Boolean(alertEvent);
+  useEffect(() => {
+    setPicoLive({ ready: !model.isLoading, pending: alertPending, name: liveName });
+  }, [model.isLoading, alertPending, liveName]);
+  useEffect(() => () => setPicoLive({ ready: false, pending: false, name: "" }), []);
+
   const isCurrent =
     view === "week" ? isSameWeek(selectedDate, now, { weekStartsOn: 1 }) : view === "month" ? isSameMonth(selectedDate, now) : isSameDay(selectedDate, now);
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Mockup .sbcard: parents can add another child from the home page. Same "coming soon" as the legacy header until the sibling flow is wired. */}
+      <section aria-label="Have another child to enroll?" className={`${K5_CARD} flex flex-wrap items-center gap-3.5 px-5 py-3.5`}>
+        <span aria-hidden="true" className="flex h-14 w-14 flex-none items-center justify-center rounded-[18px] bg-k5-act text-k5-acx">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="9" cy="8" r="3.6" />
+            <path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" />
+            <path d="M19 7v6M16 10h6" />
+          </svg>
+        </span>
+        <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-0.5">
+          <h2 className="m-0 font-k5-display text-[22px] font-semibold leading-[1.2]">Have another child to enroll?</h2>
+          <p className="m-0 text-base font-extrabold leading-[1.4] text-k5-mut">Your details are already saved, so you only need to fill in your child’s details.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => toast("Add More Siblings — coming soon", { icon: "🚧" })}
+          className="flex min-h-12 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-[3px] border-k5-ac bg-k5-ac px-[18px] font-k5-display text-[17px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)] max-[760px]:flex-[1_1_100%] max-[760px]:justify-center"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Add More Siblings
+        </button>
+      </section>
       <K5Toolbar
         now={now}
         timezone={timezone}
@@ -204,6 +237,8 @@ function K5Planner({ timezone }) {
             <WeekPlan
               keys={weekKeys(selectedDate)}
               todayKey={todayKey}
+              selectedKey={selectedKey}
+              onSelect={model.setSelectedDate}
               days={days}
               courseRegistry={model.courseRegistry}
               clue={clue}
@@ -258,9 +293,15 @@ function K5Planner({ timezone }) {
         firstName={firstName}
         onJoin={(event) => {
           answerAlert();
+          // The buddy sends them off to the class they picked (the tour then skips its "class is live" tip).
+          picoSay(`Off you go to ${classTitle(event)} class! Have fun learning${firstName ? `, ${firstName}` : ""}!`, "plan", { intro: true, skipLive: true });
           setJoiningEvent(event);
         }}
-        onClose={answerAlert}
+        onClose={() => {
+          const name = alertEvent ? classTitle(alertEvent) : "";
+          answerAlert();
+          picoSay(`Okay! Your ${name ? `${name} ` : ""}class is still live. Tap the green Join class button when you are ready.`, "plan", { intro: true });
+        }}
       />
       {detailEvent && <EventDetailModal event={detailEvent} courseRegistry={model.courseRegistry} onClose={() => setDetailEvent(null)} />}
       {joiningEvent && (

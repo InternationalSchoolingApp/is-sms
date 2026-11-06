@@ -4,9 +4,11 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "reac
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import {
-  BarChart3, BookMarked, CalendarCheck, CalendarDays, ChevronDown, Circle, ClipboardCheck, FileText, Gamepad2,
+  Award, BarChart3, BookMarked, CalendarCheck, CalendarDays, ChevronDown, Circle, ClipboardCheck, FileText, Gamepad2,
   Globe, GraduationCap, Handshake, History, LayoutDashboard, MoreHorizontal, ShoppingCart, Wallet, X,
 } from "lucide-react";
+import { CLUB_ART } from "@/components/k5/clubMarks";
+import { NAV_ART } from "@/components/k5/navIcons";
 import { studentNavHref } from "@/utils/dashboardNav";
 
 // Icon key (utils/dashboardNav.js) -> lucide icon + the mockup's tile tint pair (T background / I icon).
@@ -25,6 +27,7 @@ const ICONS = {
   fee: [Wallet, "bg-k5-yt", "text-k5-yi"],
   handbook: [BookMarked, "bg-k5-rt", "text-k5-ri"],
   history: [History, "bg-k5-vt", "text-k5-vi"],
+  certificate: [Award, "bg-k5-pt", "text-k5-pi"],
   more: [MoreHorizontal, "bg-k5-soft", "text-k5-mut"],
 };
 const iconFor = (key) => ICONS[key] || [Circle, "bg-k5-soft", "text-k5-mut"];
@@ -143,13 +146,19 @@ function flattenItems(items) {
 }
 
 const ITEM_CLASS =
-  "k5-ni relative flex w-[52px] flex-none touch-none select-none flex-col items-center gap-1 rounded-2xl py-1 text-center text-xs font-black leading-[1.15] no-underline [overflow-wrap:anywhere]";
+  "k5-ni relative flex w-[76px] flex-none touch-none select-none flex-col items-center gap-1 rounded-2xl py-1 text-center text-xs font-black leading-[1.15] no-underline [overflow-wrap:anywhere]";
 
 function NavTile({ icon, active }) {
   const [Icon, tile, stroke] = iconFor(icon);
   return (
     <span className={`flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[15px] ${active ? "bg-white text-k5-ac" : `${tile} ${stroke}`}`}>
-      <Icon className="h-6 w-6" strokeWidth={2.3} aria-hidden="true" />
+      {NAV_ART[icon] ? (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          {NAV_ART[icon]}
+        </svg>
+      ) : (
+        <Icon className="h-6 w-6" strokeWidth={2.3} aria-hidden="true" />
+      )}
     </span>
   );
 }
@@ -176,6 +185,8 @@ function NavLink({ item, href, active, onNavigate, drag }) {
 function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
   const childActive = item.children.some((child) => isActive(child.segment));
   const [openGroup, setOpenGroup] = useState(childActive);
+  // A club group shows its clubs as little pictures (flags / emoji) right under it, even in the narrow rail.
+  const hasClubArt = item.children.some((child) => CLUB_ART[child.segment]);
 
   return (
     <>
@@ -187,7 +198,7 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
         onClick={(e) => {
           if (drag.consumeClick()) return e.preventDefault();
           // In the narrow rail the children have no room: widen the rail first, like the legacy icon-rail.
-          if (!e.currentTarget.closest(".k5-side")?.matches(".k5-side:hover, .k5-side[data-open='true']")) expandRail();
+          if (!hasClubArt && !e.currentTarget.closest(".k5-side")?.matches(".k5-side:hover, .k5-side[data-open='true']")) expandRail();
           setOpenGroup((v) => !v);
         }}
         {...drag.handlers(item.key)}
@@ -203,6 +214,41 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
           <ChevronDown className={`h-2.5 w-2.5 transition-transform ${openGroup ? "rotate-180" : ""}`} strokeWidth={4} />
         </span>
       </button>
+      {openGroup && hasClubArt && (
+        <ul className="k5-subicons m-0 flex w-full list-none flex-col items-center gap-0.5 p-0 pb-1.5">
+          {item.children.map((child) => {
+            const art = CLUB_ART[child.segment];
+            if (!art) return null;
+            const active = isActive(child.segment);
+            return (
+              <li key={child.key} className="flex w-full justify-center">
+                <Link
+                  href={studentNavHref(school, child.segment)}
+                  onClick={onNavigate}
+                  title={child.label}
+                  aria-label={child.label}
+                  aria-current={active ? "page" : undefined}
+                  className={`flex w-[52px] items-center justify-center rounded-xl py-1.5 no-underline ${active ? "bg-k5-act" : "hover:bg-k5-soft"}`}
+                >
+                  {art.flag ? (
+                    <span
+                      aria-hidden="true"
+                      className="flex h-6 w-[34px] flex-none items-center justify-center rounded-[7px] text-lg leading-none text-[#FFDE00] shadow-[0_0_0_2px_var(--k5-card),0_0_0_3px_var(--k5-line)]"
+                      style={{ background: art.flag }}
+                    >
+                      {art.mark}
+                    </span>
+                  ) : (
+                    <span aria-hidden="true" className="flex h-8 w-8 flex-none items-center justify-center rounded-[7px] bg-k5-soft text-lg leading-none shadow-[0_0_0_2px_var(--k5-card),0_0_0_3px_var(--k5-line)]">
+                      {art.emoji}
+                    </span>
+                  )}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
       {openGroup && (
         <ul className="k5-sub w-full flex-col gap-1 ps-[58px]">
           {item.children.map((child) => {

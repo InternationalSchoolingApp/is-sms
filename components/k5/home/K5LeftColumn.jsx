@@ -35,13 +35,13 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
       className={inPopup ? "flex flex-col gap-2.5" : `${K5_CARD} flex flex-col gap-2.5 p-4 max-[760px]:hidden`}
     >
       <div className="flex items-center justify-between gap-2">
-        <button type="button" aria-label="Previous month" onClick={() => onMonth(-1)} className={K5_ROUND_BTN}>
+        <button type="button" aria-label="Previous month" onClick={() => onMonth(-1)} className={`${K5_ROUND_BTN} !shadow-none`}>
           <ChevronLeft className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
         </button>
         <Title id={titleId} className="m-0 flex-1 text-center font-k5-display text-[22px] font-semibold leading-tight">
           {format(selectedDate, "MMMM yyyy")}
         </Title>
-        <button type="button" aria-label="Next month" onClick={() => onMonth(1)} className={K5_ROUND_BTN}>
+        <button type="button" aria-label="Next month" onClick={() => onMonth(1)} className={`${K5_ROUND_BTN} !shadow-none`}>
           <ChevronRight className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
         </button>
         {inPopup && (

@@ -16,15 +16,19 @@ import { BUDDIES } from "@/constant/appearance";
  */
 export function AppearanceDialog({ open, onClose }) {
   const { preferences, updatePreference, resetPreferences, canCustomize, savedAt, error, retry } = useAppearance();
-  const { speak } = useSpeech();
+  const { speak, playClip } = useSpeech();
   const themeProps = useK5ThemeProps(
-    "max-h-[calc(100vh-32px)] gap-5 overflow-y-auto rounded-[32px] border-[3px] border-k5-ink bg-k5-card p-[26px] text-k5-ink shadow-[0_8px_0_var(--k5-ink)] ring-0 sm:max-w-[640px] max-[480px]:p-4",
+    "max-h-[calc(100vh-32px)] gap-[22px] overflow-y-auto rounded-[32px] border-[3px] border-k5-ink bg-k5-card p-[26px] text-k5-ink shadow-[0_8px_0_var(--k5-ink)] ring-0 sm:max-w-[1060px] max-[480px]:p-4",
   );
   const [confirmReset, setConfirmReset] = useState(false);
   const buddyName = BUDDIES[preferences.buddy]?.name || "Pico";
 
   const hearVoice = (voice) => {
     updatePreference("voice", voice);
+    if (voice === "emma") {
+      playClip();
+      return;
+    }
     speak(`Hi! This is my voice!`, { force: true, voice });
   };
 
@@ -43,7 +47,7 @@ export function AppearanceDialog({ open, onClose }) {
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="absolute right-4 top-4 flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card text-k5-mut"
+          className="absolute right-4 top-4 flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-full border-[3px] border-[#D7263D] bg-[#D7263D] text-white shadow-[0_3px_0_#9E1B2C]"
         >
           <X className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
         </button>

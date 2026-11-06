@@ -6,7 +6,6 @@ import { ChevronDown, KeyRound, LogOut, Menu, MoreVertical, Palette, Smartphone,
 import toast from "react-hot-toast";
 import { AppDownloadDialog } from "@/components/k5/AppDownloadDialog";
 import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
-import { CartHeaderButton } from "@/components/student/cart/CartHeaderButton";
 import { logoutEverywhere } from "@/utils/logout";
 
 /**
@@ -94,7 +93,6 @@ export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMe
           LMS
         </button>
 
-        <CartHeaderButton />
 
         {/* Below 760px the palette, LMS and the welcome chip move into the More menu (mockup .hd-more). */}
         <div className="relative max-[760px]:hidden">

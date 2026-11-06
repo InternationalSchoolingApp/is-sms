@@ -2,13 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import { format, getDay, isSameMonth } from "date-fns";
-import { BookOpen, CalendarRange, Check, ChevronRight, Flag, PartyPopper, Smile, Sun } from "lucide-react";
+import { BookOpen, CalendarRange, Check, ChevronRight, Flag, PartyPopper, Smile } from "lucide-react";
 import { CLUE_RING, K5_PRIMARY_BTN, PlanHeader, PlanTile, StatusPills } from "@/components/k5/home/k5Bits";
 import { getCourseColor, getMonthGridDays } from "@/utils/calendarEvents";
 import {
   CLUE_COLORS as C,
-  WEEKDAY_HEAD,
-  WEEKDAY_SHADOW,
   WEEKDAY_TEXT,
   activityTitle,
   classTitle,
@@ -118,14 +116,40 @@ function DayExtras({ day, clue, onOpenEvent, onOpenDay }) {
   );
 }
 
-/** Week plan: five school-day columns plus a Sat · Sun column; tap a day to open it. */
-export function WeekPlan({ keys, todayKey, days, courseRegistry, clue, isSelfStudy, onOpenDay, onOpenEvent }) {
+/** Mockup balloon for a free day (.isFree card). */
+function FreeBalloon() {
+  return (
+    <svg width="34" height="50" viewBox="0 0 64 96" aria-hidden="true">
+      <path d="M32 68 Q27 80 34 94" fill="none" stroke="#8A94A8" strokeWidth="3" />
+      <ellipse cx="32" cy="32" rx="26" ry="31" fill="#FF5A7A" />
+      <path d="M27 62 L37 62 L32 69 Z" fill="#FF5A7A" />
+    </svg>
+  );
+}
+
+// Day heads by time (mockup week): a past day is slate, today wears the student's colour, a day to come is yellow.
+const PAST_HEAD = { background: "#6B7489", boxShadow: "0 4px 0 #4A5268", color: "#FFFFFF" };
+const NEXT_HEAD = { background: C.upcoming, boxShadow: "0 4px 0 #A16207", color: "#1C2640" };
+
+/** Week plan (mockup My Week): seven day columns, Monday to Sunday; tap a day to open it. */
+export function WeekPlan({ keys, todayKey, selectedKey, days, courseRegistry, clue, isSelfStudy, onSelect, onOpenDay, onOpenEvent }) {
+  // Like the month: tapping a day (its head, a class, a pill or the free card) picks it and brings the
+  // summary under the grid into view. The summary's items open the class / activity / assignment.
+  const panelRef = useRef(null);
+  const revealPanel = useRef(false);
+  useEffect(() => {
+    if (!revealPanel.current) return;
+    revealPanel.current = false;
+    revealElement(panelRef.current);
+  }, [selectedKey]);
+  const pick = (date) => {
+    if (dayKey(date) === selectedKey) revealElement(panelRef.current);
+    else revealPanel.current = true;
+    onSelect(date);
+  };
   const all = keys.flatMap((k) => dayAt(days, k).classes);
   const first = keyToDate(keys[0]);
   const last = keyToDate(keys[6]);
-  const weekend = [keys[5], keys[6]];
-  const weekendDays = weekend.map((k) => dayAt(days, k));
-  const weekendBusy = weekendDays.some((d) => d.classes.length || d.activities.length || d.assignments.length || d.holidays.length);
 
   return (
     <div className="flex flex-col gap-4">
@@ -141,79 +165,69 @@ export function WeekPlan({ keys, todayKey, days, courseRegistry, clue, isSelfStu
         <StatusPills counts={countStatuses(all)} />
       </PlanHeader>
 
-      <div className="grid grid-cols-[repeat(5,minmax(0,1fr))_minmax(0,0.8fr)] gap-2 @max-[700px]:grid-cols-3 @max-[420px]:grid-cols-2">
-        {keys.slice(0, 5).map((key) => {
+      <div className="grid grid-cols-7 gap-2 @max-[640px]:grid-cols-4 @max-[420px]:grid-cols-2">
+        {keys.map((key) => {
           const date = keyToDate(key);
           const day = dayAt(days, key);
           const isToday = key === todayKey;
+          const isPast = key < todayKey;
           const empty = !day.classes.length && !day.activities.length && !day.holidays.length;
+          const head = isToday ? { background: "var(--k5-ac)", boxShadow: "0 4px 0 var(--k5-acd)", color: "#FFFFFF" } : isPast ? PAST_HEAD : NEXT_HEAD;
+          const body = isToday
+            ? { background: "var(--k5-act)", borderColor: "var(--k5-ac)" }
+            : isPast
+              ? { background: "var(--k5-soft)", borderColor: C.done }
+              : { background: C.upcomingTint, borderColor: C.upcoming };
           return (
             <div key={key} className="flex min-w-0 flex-col gap-2">
               <button
                 type="button"
-                onClick={() => onOpenDay(date)}
-                className="relative cursor-pointer rounded-2xl border-none px-1 py-2 text-center text-white"
-                style={{
-                  background: isToday ? "var(--k5-ac)" : WEEKDAY_HEAD[getDay(date)],
-                  boxShadow: `0 4px 0 ${isToday ? "var(--k5-acd)" : WEEKDAY_SHADOW[getDay(date)]}`,
-                }}
+                aria-pressed={key === selectedKey}
+                onClick={() => pick(date)}
+                className={`relative cursor-pointer rounded-2xl border-none px-1 py-2 text-center ${key === selectedKey ? "outline outline-[3px] outline-offset-2 outline-[#FFC531]" : ""}`}
+                style={head}
               >
                 <span className="block text-[13px] font-black">{isToday ? "Today" : format(date, "EEE")}</span>
                 <span className="block font-k5-display text-[26px] font-semibold leading-[1.1]">{format(date, "d")}</span>
+                {isToday && (
+                  <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" className="absolute -right-1.5 -top-2.5">
+                    <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" fill="#FFC531" stroke="#A16207" strokeWidth="1.4" strokeLinejoin="round" />
+                  </svg>
+                )}
               </button>
-              <div
-                className={`flex flex-1 flex-col gap-1.5 rounded-[18px] border-[3px] p-2 ${isToday ? "border-k5-ac bg-k5-act" : "border-transparent bg-k5-soft"}`}
-              >
+              <div className="box-border flex flex-1 flex-col gap-1.5 rounded-[18px] border-[3px] p-2" style={body}>
                 {day.classes.map((c) => (
-                  <ClassChip key={c.id} event={c} courseRegistry={courseRegistry} clue={clue} onOpen={onOpenEvent} />
+                  <ClassChip key={c.id} event={c} courseRegistry={courseRegistry} clue={clue} onOpen={() => pick(date)} />
                 ))}
-                <DayExtras day={day} clue={clue} onOpenEvent={onOpenEvent} onOpenDay={() => onOpenDay(date)} />
+                <DayExtras day={day} clue={clue} onOpenEvent={() => pick(date)} onOpenDay={() => pick(date)} />
                 {empty && (
                   <button
                     type="button"
-                    onClick={() => onOpenDay(date)}
+                    onClick={() => pick(date)}
                     className="flex min-h-40 flex-1 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[14px] border-[3px] border-dashed border-k5-gi bg-k5-gt px-1.5 py-3 text-center text-[15px] font-black text-k5-gx"
                   >
-                    {isSelfStudy ? <BookOpen className="h-7 w-7" aria-hidden="true" /> : <Smile className="h-7 w-7" aria-hidden="true" />}
+                    {isSelfStudy ? <BookOpen className="h-[34px] w-[34px]" aria-hidden="true" /> : <FreeBalloon />}
                     No classes!
-                    <span className="text-xs font-extrabold">{isSelfStudy ? "Course work day" : "Free day"}</span>
+                    <span className="text-xs font-extrabold">{isSelfStudy ? "Course work day" : "Tap to play a game"}</span>
                   </button>
                 )}
               </div>
             </div>
           );
         })}
-
-        <div className="flex min-w-0 flex-col gap-2">
-          <div className="rounded-2xl bg-[#6A3FC4] px-1 py-2 text-center text-white shadow-[0_4px_0_#4C2A94]">
-            <span className="block text-[13px] font-black">Sat · Sun</span>
-            <span className="block font-k5-display text-[26px] font-semibold leading-[1.1]">
-              {format(keyToDate(weekend[0]), "d")}-{format(keyToDate(weekend[1]), "d")}
-            </span>
-          </div>
-          {weekendBusy ? (
-            <div className="flex flex-1 flex-col gap-1.5 rounded-[18px] bg-k5-yt p-2">
-              {weekend.map((key, i) => (
-                <div key={key} className="flex flex-col gap-1.5">
-                  <button type="button" onClick={() => onOpenDay(keyToDate(key))} className="cursor-pointer self-start border-none bg-transparent p-0 text-left text-xs font-black text-k5-yx underline">
-                    {format(keyToDate(key), "EEE d")}
-                  </button>
-                  {weekendDays[i].classes.map((c) => (
-                    <ClassChip key={c.id} event={c} courseRegistry={courseRegistry} clue={clue} onOpen={onOpenEvent} />
-                  ))}
-                  <DayExtras day={weekendDays[i]} clue={clue} onOpenEvent={onOpenEvent} onOpenDay={() => onOpenDay(keyToDate(key))} />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-[18px] bg-k5-yt p-2 text-center text-[15px] font-black text-k5-yx">
-              <Sun className="h-11 w-11 fill-[#FFC531] text-[#C9930A]" aria-hidden="true" />
-              Weekend!
-              <span className="text-[13px] font-extrabold">No school</span>
-            </div>
-          )}
-        </div>
       </div>
+
+      <DaySummary
+        panelRef={panelRef}
+        selectedKey={selectedKey}
+        days={days}
+        todayKey={todayKey}
+        isSelfStudy={isSelfStudy}
+        courseRegistry={courseRegistry}
+        clue={clue}
+        onOpenEvent={onOpenEvent}
+        onOpenDay={onOpenDay}
+      />
     </div>
   );
 }
@@ -236,6 +250,88 @@ function MonthLegend({ courseRegistry }) {
   );
 }
 
+/** The picked day under the Week / Month grid: its summary, a way to join a live class, "Open this day" and its events. */
+function DaySummary({ panelRef, selectedKey, days, todayKey, isSelfStudy, courseRegistry, clue, onOpenEvent, onOpenDay }) {
+  const selectedDay = dayAt(days, selectedKey);
+  const liveClass = selectedDay.classes.find((c) => c.k5Status === "live" && c.url);
+  const selectedEvents = [...selectedDay.classes, ...selectedDay.holidays, ...selectedDay.activities, ...selectedDay.assignments];
+
+  return (
+      <div ref={panelRef} aria-live="polite" className="move_to_today flex scroll-mb-6 flex-wrap items-center gap-3.5 rounded-[24px] border-[3px] border-k5-yb bg-k5-yt px-[18px] py-4">
+        <span className="flex h-14 w-14 flex-none items-center justify-center rounded-[18px] bg-k5-card font-k5-display text-[26px] font-semibold text-k5-ink">
+          {format(keyToDate(selectedKey), "d")}
+        </span>
+        <div className="flex flex-[1_1_220px] flex-col">
+          <span className="font-k5-display text-[22px] font-semibold">{format(keyToDate(selectedKey), "EEEE, MMMM d")}</span>
+          <span className="text-base font-extrabold text-k5-yx">{daySummary(selectedKey, selectedDay, todayKey, { isSelfStudy })}</span>
+        </div>
+        {/* A live class on the picked day can be joined right here, like in the Day plan. */}
+        {liveClass && (
+          <button
+            type="button"
+            onClick={() => onOpenEvent(liveClass)}
+            className="flex min-h-[50px] cursor-pointer items-center gap-2 rounded-full border-none bg-k5-grn px-5 font-k5-display text-[19px] font-semibold text-white shadow-[0_5px_0_var(--k5-grnD)]"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+            Join {classTitle(liveClass)}
+          </button>
+        )}
+        <button type="button" onClick={() => onOpenDay(keyToDate(selectedKey))} className={K5_PRIMARY_BTN}>
+          Open this day
+          <ChevronRight className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
+        </button>
+        {/* The picked day's events, each one tappable (month cells are buttons themselves, so
+            their pills only show — here they open the class / activity / assignment). */}
+        {selectedEvents.length > 0 && (
+          <ul aria-label="Events on this day" className="m-0 flex basis-full list-none flex-wrap gap-2 p-0">
+            {selectedDay.classes.map((c) => (
+              <li key={c.id} className="w-[230px] max-w-full">
+                <ClassChip event={c} courseRegistry={courseRegistry} clue={clue} onOpen={onOpenEvent} />
+              </li>
+            ))}
+            {selectedDay.holidays.map((h) => (
+              <li key={h.id} className="flex">
+                <SmallPill icon={Flag} style={{ background: C.holiday }} highlighted={clue === "holiday"} onClick={() => onOpenEvent(h)} className="py-1.5 text-[13px]">
+                  {h.title || h.eventTitle || "Holiday"}
+                </SmallPill>
+              </li>
+            ))}
+            {selectedDay.activities.map((a) => (
+              <li key={a.id} className="flex">
+                <SmallPill
+                  icon={PartyPopper}
+                  style={{ background: C.activityText, boxShadow: `0 3px 0 ${C.activityShadow}` }}
+                  highlighted={clue === "activity"}
+                  onClick={() => onOpenEvent(a)}
+                  label={`School activity: ${activityTitle(a)}`}
+                  className="py-1.5 text-[13px]"
+                >
+                  {activityTitle(a)}
+                </SmallPill>
+              </li>
+            ))}
+            {selectedDay.assignments.map((a) => (
+              <li key={a.id} className="flex">
+                <SmallPill
+                  icon={BookOpen}
+                  style={{ background: C.assignment }}
+                  highlighted={clue === "assignment"}
+                  onClick={() => onOpenEvent(a)}
+                  label={`Assignment: ${a.title || "Assignment"}`}
+                  className="py-1.5 text-[13px]"
+                >
+                  {a.title || "Assignment"}
+                </SmallPill>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+  );
+}
+
 /** Month plan: a 6-week grid with class dots and day pills, plus a summary of the picked day. */
 export function MonthPlan({ selectedDate, selectedKey, todayKey, days, courseRegistry, clue, isSelfStudy, onSelect, onOpenDay, onOpenEvent }) {
   const cells = getMonthGridDays(selectedDate);
@@ -247,9 +343,6 @@ export function MonthPlan({ selectedDate, selectedKey, todayKey, days, courseReg
     revealPanel.current = false;
     revealElement(panelRef.current);
   }, [selectedKey]);
-  const selectedDay = dayAt(days, selectedKey);
-  const liveClass = selectedDay.classes.find((c) => c.k5Status === "live" && c.url);
-  const selectedEvents = [...selectedDay.classes, ...selectedDay.holidays, ...selectedDay.activities, ...selectedDay.assignments];
 
   return (
     <div className="flex flex-col gap-3.5">
@@ -332,78 +425,17 @@ export function MonthPlan({ selectedDate, selectedKey, todayKey, days, courseReg
         })}
       </div>
 
-      <div ref={panelRef} aria-live="polite" className="move_to_today flex scroll-mb-6 flex-wrap items-center gap-3.5 rounded-[24px] border-[3px] border-k5-yb bg-k5-yt px-[18px] py-4">
-        <span className="flex h-14 w-14 flex-none items-center justify-center rounded-[18px] bg-k5-card font-k5-display text-[26px] font-semibold text-k5-ink">
-          {format(keyToDate(selectedKey), "d")}
-        </span>
-        <div className="flex flex-[1_1_220px] flex-col">
-          <span className="font-k5-display text-[22px] font-semibold">{format(keyToDate(selectedKey), "EEEE, MMMM d")}</span>
-          <span className="text-base font-extrabold text-k5-yx">{daySummary(selectedKey, selectedDay, todayKey, { isSelfStudy })}</span>
-        </div>
-        {/* A live class on the picked day can be joined right here, like in the Day plan. */}
-        {liveClass && (
-          <button
-            type="button"
-            onClick={() => onOpenEvent(liveClass)}
-            className="flex min-h-[50px] cursor-pointer items-center gap-2 rounded-full border-none bg-k5-grn px-5 font-k5-display text-[19px] font-semibold text-white shadow-[0_5px_0_var(--k5-grnD)]"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-            Join {classTitle(liveClass)}
-          </button>
-        )}
-        <button type="button" onClick={() => onOpenDay(keyToDate(selectedKey))} className={K5_PRIMARY_BTN}>
-          Open this day
-          <ChevronRight className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
-        </button>
-        {/* The picked day's events, each one tappable (month cells are buttons themselves, so
-            their pills only show — here they open the class / activity / assignment). */}
-        {selectedEvents.length > 0 && (
-          <ul aria-label="Events on this day" className="m-0 flex basis-full list-none flex-wrap gap-2 p-0">
-            {selectedDay.classes.map((c) => (
-              <li key={c.id} className="w-[230px] max-w-full">
-                <ClassChip event={c} courseRegistry={courseRegistry} clue={clue} onOpen={onOpenEvent} />
-              </li>
-            ))}
-            {selectedDay.holidays.map((h) => (
-              <li key={h.id} className="flex">
-                <SmallPill icon={Flag} style={{ background: C.holiday }} highlighted={clue === "holiday"} onClick={() => onOpenEvent(h)} className="py-1.5 text-[13px]">
-                  {h.title || h.eventTitle || "Holiday"}
-                </SmallPill>
-              </li>
-            ))}
-            {selectedDay.activities.map((a) => (
-              <li key={a.id} className="flex">
-                <SmallPill
-                  icon={PartyPopper}
-                  style={{ background: C.activityText, boxShadow: `0 3px 0 ${C.activityShadow}` }}
-                  highlighted={clue === "activity"}
-                  onClick={() => onOpenEvent(a)}
-                  label={`School activity: ${activityTitle(a)}`}
-                  className="py-1.5 text-[13px]"
-                >
-                  {activityTitle(a)}
-                </SmallPill>
-              </li>
-            ))}
-            {selectedDay.assignments.map((a) => (
-              <li key={a.id} className="flex">
-                <SmallPill
-                  icon={BookOpen}
-                  style={{ background: C.assignment }}
-                  highlighted={clue === "assignment"}
-                  onClick={() => onOpenEvent(a)}
-                  label={`Assignment: ${a.title || "Assignment"}`}
-                  className="py-1.5 text-[13px]"
-                >
-                  {a.title || "Assignment"}
-                </SmallPill>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <DaySummary
+        panelRef={panelRef}
+        selectedKey={selectedKey}
+        days={days}
+        todayKey={todayKey}
+        isSelfStudy={isSelfStudy}
+        courseRegistry={courseRegistry}
+        clue={clue}
+        onOpenEvent={onOpenEvent}
+        onOpenDay={onOpenDay}
+      />
     </div>
   );
 }

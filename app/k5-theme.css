@@ -161,6 +161,10 @@
 .k5-side[data-open="true"] .k5-sub {
   display: flex;
 }
+/* The little club pictures are the narrow rail's version of the club list. */
+.k5-side[data-open="true"] .k5-subicons {
+  display: none;
+}
 .k5-side[data-open="true"] .k5-chev {
   top: 50%;
   margin-top: -9px;
@@ -193,6 +197,9 @@
   .k5-side:hover .k5-sub {
     display: flex;
   }
+  .k5-side:hover .k5-subicons {
+    display: none;
+  }
   .k5-side:hover .k5-chev {
     top: 50%;
     margin-top: -9px;
@@ -219,6 +226,11 @@
   .k5-side .k5-ni {
     touch-action: pan-y;
   }
+}
+
+/* The corner buddy button bobs all the time (mockup .pinbtn k5bob). */
+.k5-pin-bob {
+  animation: k5PinIdle 2.4s ease-in-out infinite;
 }
 
 /* Pico buddy animations + tour spotlight (mockup pinIdle / pinWave / blink / talk / pulseRing). */
@@ -336,6 +348,19 @@
 }
 .k5-live-ring {
   animation: k5LiveRing 1.6s ease-in-out infinite;
+}
+/* Tour spotlight (mockup .spothole): fades in, then slides between tips. */
+@keyframes k5SpotIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.k5-spothole {
+  animation: k5SpotIn 0.3s ease-out;
+  transition: left 0.3s ease, top 0.3s ease, width 0.3s ease, height 0.3s ease;
 }
 .k5-spot {
   outline: 4px solid #61ff31 !important;
@@ -594,4 +619,144 @@
 }
 .k5-demo-c3 {
   animation: k5DemoC3 6s linear infinite;
+}
+/* Student Handbook (mockup .hbbook / .hbcover / .hbshine / .hbstar). Reduced motion is switched off by the rule below. */
+@keyframes k5HbFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(-1deg);
+  }
+}
+@keyframes k5HbShine {
+  0%,
+  60% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+@keyframes k5HbTw {
+  0%,
+  100% {
+    transform: scale(1) rotate(0);
+  }
+  50% {
+    transform: scale(1.25) rotate(15deg);
+  }
+}
+.k5-hbbook {
+  animation: k5HbFloat 4s ease-in-out infinite;
+}
+.k5-hbcover {
+  transition: transform 0.5s ease;
+}
+.k5-hbbook:hover .k5-hbcover {
+  transform: rotateY(-18deg);
+}
+.k5-hbshine {
+  animation: k5HbShine 5s ease-in-out infinite;
+}
+.k5-hbstar {
+  animation: k5HbTw 2.4s ease-in-out infinite;
+}
+/* Login History "Active now" dot (mockup .lhdot). Reduced motion is switched off by the rule above. */
+@keyframes k5LhPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(19, 128, 63, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(19, 128, 63, 0);
+  }
+}
+.k5-lhdot {
+  animation: k5LhPulse 1.4s ease-in-out infinite;
+}
+/* Academic Year Extension course tile (mockup .axcard). */
+.k5-axcard {
+  transition: transform 0.2s ease;
+}
+.k5-axcard:hover {
+  transform: translateY(-4px) rotate(-0.6deg);
+}
+/* Videos: the big play button pulses (mockup .lbplay). Reduced motion is switched off by the rule above. */
+@keyframes k5LbPulse {
+  0%,
+  100% {
+    box-shadow: 0 8px 0 var(--k5-acd), 0 10px 30px rgba(10, 16, 34, 0.25), 0 0 0 0 rgba(47, 123, 245, 0.45);
+  }
+  50% {
+    box-shadow: 0 8px 0 var(--k5-acd), 0 10px 30px rgba(10, 16, 34, 0.25), 0 0 0 14px rgba(47, 123, 245, 0);
+  }
+}
+.k5-lbplay {
+  animation: k5LbPulse 1.8s ease-in-out infinite;
+}
+/* My Certificates (mockup .cttrack / .ctreq / .ctcert). Reduced motion is switched off by the rule above. */
+@keyframes k5CtPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 6px var(--k5-act);
+  }
+  50% {
+    box-shadow: 0 0 0 10px var(--k5-act);
+  }
+}
+@keyframes k5CtRow {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes k5CtWig {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  30% {
+    transform: rotate(-10deg);
+  }
+  70% {
+    transform: rotate(8deg);
+  }
+}
+.k5-ctcur {
+  box-shadow: 0 0 0 6px var(--k5-act);
+  animation: k5CtPulse 1.6s ease-in-out infinite;
+}
+.k5-ctreq {
+  animation: k5CtRow 0.35s ease-out both;
+}
+.k5-ctcert {
+  transition: transform 0.2s ease;
+}
+.k5-ctcert:hover {
+  transform: translateY(-4px) rotate(-0.6deg);
+}
+.k5-ctcert:hover .k5-ctseal {
+  animation: k5CtWig 0.5s ease;
+}
+/* My Attendance medal pops in (mockup .atmedal). Reduced motion is switched off by the rule above. */
+@keyframes k5AtMedal {
+  0% {
+    transform: scale(0) rotate(-30deg);
+  }
+  70% {
+    transform: scale(1.1) rotate(6deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+.k5-atmedal {
+  animation: k5AtMedal 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+  transform-origin: 50% 40%;
 }

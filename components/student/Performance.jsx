@@ -5,6 +5,7 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useStudentAcademicPerformance } from "@/hooks/useStudentAcademicPerformance";
 import { PerformanceProgressModal } from "@/components/student/PerformanceProgressModal";
 import { TableFooter } from "@/components/student/TableFooter";
+import { MobileTableCard } from "@/components/student/MobileTableCard";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 
@@ -97,12 +98,55 @@ export function Performance() {
     detailed && "Progress (all activities)",
   ].filter(Boolean);
 
+  const status = isLoading ? "Loading…" : courses.length === 0 ? "No academic performance found" : null;
+  // One record per course: its cells in the order of `headers`, shared by the table and the phone cards.
+  const records = pageRows.map((course) => {
+    // Names that already carry a title (dummy-mode teachers: "Ms. Olivia Parker") keep it as is.
+    const hasTitle = /^(Mr|Mrs|Ms|Miss|Dr)\.?\s/i.test(course.teacherName || "");
+    const teacher = [hasTitle ? "" : salutation(course.teacherGender), course.teacherName || "N/A"].filter(Boolean).join(" ");
+    const name =
+      detailed && course.lmsEnrollmentId && course.lmsCourseId ? (
+        <button type="button" onClick={() => setSelected({ ...course, studentUserId: userId })} className="text-primary hover:underline">
+          {course.courseName || "N/A"}
+        </button>
+      ) : (
+        course.courseName || "N/A"
+      );
+    const cells = [
+      name,
+      formatPercent(course.score),
+      ...(detailed ? [<Pace key="pace" value={course.progressPace} />] : []),
+      teacher,
+      course.endDate || "N/A",
+      course.remainingDays || "N/A",
+      ...(detailed
+        ? [course.pendingAssignment ?? "N/A", <ProgressBar key="pg" value={course.progressGradable} />, <ProgressBar key="pa" value={course.progressAllActivity} />]
+        : []),
+    ];
+    return { key: course.lmsEnrollmentId || course.courseName, cells };
+  });
+
   return (
     <div className="w-full">
       <div className="rounded-[10px] border border-slate-200 bg-white py-4">
         <h4 className="mb-3 ml-5 text-xl font-bold text-black">Academic Performance</h4>
 
-        <div className="overflow-x-auto">
+        {/* Mobile: one card per course (column title beside each value) instead of a wide table. */}
+        <div className="md:hidden">
+          {status ? (
+            <p className="border-t border-slate-200 py-8 text-center text-sm text-black/50">{status}</p>
+          ) : (
+            <ul className="space-y-3 px-4">
+              {records.map((record) => (
+                <li key={record.key}>
+                  <MobileTableCard rows={headers.map((label, i) => ({ label, value: record.cells[i] }))} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full whitespace-nowrap text-left text-sm text-black">
             <thead className="bg-primary text-white">
               <tr>
@@ -114,61 +158,22 @@ export function Performance() {
               </tr>
             </thead>
             <tbody>
-              {isLoading ? (
+              {status ? (
                 <tr>
                   <td colSpan={headers.length} className="py-8 text-center text-black/50">
-                    Loading…
-                  </td>
-                </tr>
-              ) : courses.length === 0 ? (
-                <tr>
-                  <td colSpan={headers.length} className="py-8 text-center text-black/50">
-                    No academic performance found
+                    {status}
                   </td>
                 </tr>
               ) : (
-                pageRows.map((course) => {
-                  // Names that already carry a title (dummy-mode teachers: "Ms. Olivia Parker") keep it as is.
-                  const hasTitle = /^(Mr|Mrs|Ms|Miss|Dr)\.?\s/i.test(course.teacherName || "");
-                  const teacher = [hasTitle ? "" : salutation(course.teacherGender), course.teacherName || "N/A"].filter(Boolean).join(" ");
-                  return (
-                    <tr key={course.lmsEnrollmentId || course.courseName} className="border-b border-slate-200">
-                      <td className="py-3 pl-5 pr-3">
-                        {detailed && course.lmsEnrollmentId && course.lmsCourseId ? (
-                          <button
-                            type="button"
-                            onClick={() => setSelected({ ...course, studentUserId: userId })}
-                            className="text-primary hover:underline"
-                          >
-                            {course.courseName || "N/A"}
-                          </button>
-                        ) : (
-                          course.courseName || "N/A"
-                        )}
+                records.map((record) => (
+                  <tr key={record.key} className="border-b border-slate-200">
+                    {record.cells.map((cell, i) => (
+                      <td key={headers[i]} className={i === 0 ? "py-3 pl-5 pr-3" : "px-3 py-3"}>
+                        {cell}
                       </td>
-                      <td className="px-3 py-3">{formatPercent(course.score)}</td>
-                      {detailed && (
-                        <td className="px-3 py-3">
-                          <Pace value={course.progressPace} />
-                        </td>
-                      )}
-                      <td className="px-3 py-3">{teacher}</td>
-                      <td className="px-3 py-3">{course.endDate || "N/A"}</td>
-                      <td className="px-3 py-3">{course.remainingDays || "N/A"}</td>
-                      {detailed && <td className="px-3 py-3">{course.pendingAssignment ?? "N/A"}</td>}
-                      {detailed && (
-                        <td className="px-3 py-3">
-                          <ProgressBar value={course.progressGradable} />
-                        </td>
-                      )}
-                      {detailed && (
-                        <td className="px-3 py-3">
-                          <ProgressBar value={course.progressAllActivity} />
-                        </td>
-                      )}
-                    </tr>
-                  );
-                })
+                    ))}
+                  </tr>
+                ))
               )}
             </tbody>
           </table>

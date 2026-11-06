@@ -8,6 +8,7 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useAddPlanToCart, useBuyExtraClass, useSchoolCurrency } from "@/hooks/useStudentCart";
 import { studentNavHref } from "@/utils/dashboardNav";
 import { formatAmount, isoAfterDays, todayIso, weeksUntil } from "@/utils/cartPlan";
+import { K5BuyExtraClasses, K5BuyExtraNotice } from "@/components/k5/pages/K5BuyExtra";
 import { CustomisePlanModal } from "@/components/student/cart/CustomisePlanModal";
 import { PurchasedPlans } from "@/components/student/cart/PurchasedPlans";
 
@@ -22,7 +23,8 @@ function PageTitle() {
   );
 }
 
-function Notice({ children }) {
+function Notice({ children, isK5 }) {
+  if (isK5) return <K5BuyExtraNotice>{children}</K5BuyExtraNotice>;
   return (
     <div className="mx-auto w-full">
       <PageTitle />
@@ -87,7 +89,7 @@ function PlanCard({ plan, weeks, symbol, busy, onAdd }) {
  * `initialSubjectId` (the page's `?subject=<id>`) preselects a course (the cart's edit button).
  */
 export function BuyExtraClasses({ initialSubjectId = null }) {
-  const { context } = useDashboardContext();
+  const { context, isK5 } = useDashboardContext();
   const { school } = useParams();
   const router = useRouter();
   const [selectedId, setSelectedId] = useState(initialSubjectId);
@@ -98,12 +100,12 @@ export function BuyExtraClasses({ initialSubjectId = null }) {
   const addToCart = useAddPlanToCart(context?.userId);
   const symbol = currencyQuery.data?.symbol ?? "";
 
-  if (!context || plansQuery.isLoading) return <Notice>Loading…</Notice>;
+  if (!context || plansQuery.isLoading) return <Notice isK5={isK5}>Loading…</Notice>;
   const response = plansQuery.data;
   if (!response || response.status !== "1") {
-    return <Notice>{response?.message || "Unable to load plans right now. Please try again."}</Notice>;
+    return <Notice isK5={isK5}>{response?.message || "Unable to load plans right now. Please try again."}</Notice>;
   }
-  if (response.statusCode === "AY_NOT_STARTED") return <Notice>{response.message}</Notice>;
+  if (response.statusCode === "AY_NOT_STARTED") return <Notice isK5={isK5}>{response.message}</Notice>;
 
   const details = response.details ?? {};
   const subjects = details.subjects ?? [];
@@ -138,6 +140,49 @@ export function BuyExtraClasses({ initialSubjectId = null }) {
       toast.error("Unable to add into cart");
       return false;
     }
+  }
+
+  const customiseModal =
+    customising && customPlan && subject ? (
+      <CustomisePlanModal
+        subject={subject}
+        plan={customPlan}
+        symbol={symbol}
+        busy={addToCart.isPending}
+        onClose={() => setCustomising(false)}
+        onAdd={async (custom, buyNow) => {
+          if (await add(custom, custom.weeks, buyNow)) setCustomising(false);
+        }}
+      />
+    ) : null;
+
+  if (isK5) {
+    return (
+      <>
+        <K5BuyExtraClasses
+          subjects={subjects}
+          subject={subject}
+          singleCourse={singleCourse}
+          onSelect={setSelectedId}
+          fixedPlans={fixedPlans}
+          customPlan={customPlan}
+          weeks={weeks}
+          symbol={symbol}
+          busy={addToCart.isPending}
+          onAdd={add}
+          onCustomise={() => setCustomising(true)}
+          purchased={
+            <PurchasedPlans
+              items={details.purchasedItems ?? []}
+              subjectId={singleCourse ? null : subject?.subjectId}
+              symbol={symbol}
+              isoCode={currencyQuery.data?.isoCode ?? ""}
+            />
+          }
+        />
+        {customiseModal}
+      </>
+    );
   }
 
   return (

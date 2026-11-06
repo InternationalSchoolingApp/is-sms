@@ -12,6 +12,7 @@ import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGa
 import { CartTermsModal } from "@/components/student/cart/CartTermsModal";
 import { DummyCheckout } from "@/components/student/cart/DummyCheckout";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
+import { K5CartNotice, K5CartView } from "@/components/k5/pages/K5Cart";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useCartCheckout } from "@/hooks/useCartCheckout";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
@@ -93,7 +94,7 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
  * shared payment-gateway flow.
  */
 export function Cart() {
-  const { context, session, logoUrl } = useDashboardContext();
+  const { context, session, logoUrl, isK5 } = useDashboardContext();
   const { school } = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -131,6 +132,7 @@ export function Cart() {
   }
 
   if (!context || cartQuery.isLoading) {
+    if (isK5) return <K5CartNotice school={school}>Loading…</K5CartNotice>;
     return (
       <div className="mx-auto w-full">
         <PageTitle count={0} />
@@ -178,6 +180,7 @@ export function Cart() {
   }
 
   if (!details) {
+    if (isK5) return <K5CartNotice school={school}>{response?.message || "Unable to load your cart right now. Please try again."}</K5CartNotice>;
     return (
       <div className="mx-auto w-full">
         <PageTitle count={0} />
@@ -185,6 +188,94 @@ export function Cart() {
           {response?.message || "Unable to load your cart right now. Please try again."}
         </div>
       </div>
+    );
+  }
+
+  const modals = (
+    <>
+      <CartTermsModal
+        key={terms?.userPaymentDetailsId ?? "none"}
+        open={Boolean(terms) && !checkout.picker && !checkout.dummyGateway}
+        planStatus={terms?.planStatus}
+        schoolNumericId={context.schoolNumericId}
+        schoolName={context.schoolName}
+        busy={checkout.preparing}
+        amountText={formatAmount(symbol, cart.totalPayAmount)}
+        onClose={() => setTerms(null)}
+        onPay={() => checkout.start(terms.userPaymentDetailsId)}
+      />
+      <PaymentGatewayPickerModal
+        open={Boolean(checkout.picker)}
+        onOpenChange={(open) => !open && checkout.closePicker()}
+        details={checkout.picker?.details}
+        airwallexMethods={checkout.picker?.methods}
+        payerCountryCode={checkout.picker?.countryCode}
+        schoolNumericId={context.schoolNumericId}
+        schoolName={context.schoolName}
+        busy={checkout.launching}
+        onPay={checkout.launchGateway}
+        onUploadProof={checkout.uploadProof}
+        onSubmitOffline={checkout.submitOffline}
+      />
+      {checkout.processing && <FullScreenLoader message="Payment is under process..." />}
+      {checkout.dummyGateway && dummy.student && (
+        <DummyCheckout
+          gateway={checkout.dummyGateway}
+          student={dummy.student}
+          email={session?.user?.email || "demo.student@test.local"}
+          logoUrl={logoUrl}
+          schoolName={context.schoolName}
+          onBack={checkout.closeDummyCheckout}
+          onDone={finishDummyCheckout}
+        />
+      )}
+      <Dialog open={checkout.incomplete} onOpenChange={(open) => !open && checkout.dismissIncomplete()}>
+        <DialogContent className="text-center">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Oops!</DialogTitle>
+          </DialogHeader>
+          <h3 className="text-lg font-semibold text-red-600">Payment Incomplete</h3>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={checkout.underReview}
+        onOpenChange={(open) => {
+          if (open) return;
+          checkout.dismissUnderReview();
+          setTerms(null);
+          cartQuery.refetch();
+        }}
+      >
+        <DialogContent className="text-center">
+          <DialogHeader>
+            <DialogTitle>Your payment is under review.</DialogTitle>
+          </DialogHeader>
+          <p className="text-black/70">Your extra classes will be available once the payment is received.</p>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+
+  if (isK5) {
+    return (
+      <>
+        <K5CartView
+          school={school}
+          count={details.cartCount ?? items.length}
+          items={items}
+          symbol={symbol}
+          cart={cart}
+          appliedCode={appliedCode}
+          code={code}
+          onCode={setCode}
+          busy={busy}
+          canPay={items.length > 0 && !busy && cart.errorMsg !== DISCOUNT_TOO_LARGE}
+          onRemove={remove}
+          onToggleDiscount={toggleDiscount}
+          onPay={confirmAndPay}
+        />
+        {modals}
+      </>
     );
   }
 
@@ -258,65 +349,7 @@ export function Cart() {
         )}
       </div>
 
-      <CartTermsModal
-        key={terms?.userPaymentDetailsId ?? "none"}
-        open={Boolean(terms) && !checkout.picker && !checkout.dummyGateway}
-        planStatus={terms?.planStatus}
-        schoolNumericId={context.schoolNumericId}
-        schoolName={context.schoolName}
-        busy={checkout.preparing}
-        onClose={() => setTerms(null)}
-        onPay={() => checkout.start(terms.userPaymentDetailsId)}
-      />
-      <PaymentGatewayPickerModal
-        open={Boolean(checkout.picker)}
-        onOpenChange={(open) => !open && checkout.closePicker()}
-        details={checkout.picker?.details}
-        airwallexMethods={checkout.picker?.methods}
-        payerCountryCode={checkout.picker?.countryCode}
-        schoolNumericId={context.schoolNumericId}
-        schoolName={context.schoolName}
-        busy={checkout.launching}
-        onPay={checkout.launchGateway}
-        onUploadProof={checkout.uploadProof}
-        onSubmitOffline={checkout.submitOffline}
-      />
-      {checkout.processing && <FullScreenLoader message="Payment is under process..." />}
-      {checkout.dummyGateway && dummy.student && (
-        <DummyCheckout
-          gateway={checkout.dummyGateway}
-          student={dummy.student}
-          email={session?.user?.email || "demo.student@test.local"}
-          logoUrl={logoUrl}
-          schoolName={context.schoolName}
-          onBack={checkout.closeDummyCheckout}
-          onDone={finishDummyCheckout}
-        />
-      )}
-      <Dialog open={checkout.incomplete} onOpenChange={(open) => !open && checkout.dismissIncomplete()}>
-        <DialogContent className="text-center">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">Oops!</DialogTitle>
-          </DialogHeader>
-          <h3 className="text-lg font-semibold text-red-600">Payment Incomplete</h3>
-        </DialogContent>
-      </Dialog>
-      <Dialog
-        open={checkout.underReview}
-        onOpenChange={(open) => {
-          if (open) return;
-          checkout.dismissUnderReview();
-          setTerms(null);
-          cartQuery.refetch();
-        }}
-      >
-        <DialogContent className="text-center">
-          <DialogHeader>
-            <DialogTitle>Your payment is under review.</DialogTitle>
-          </DialogHeader>
-          <p className="text-black/70">Your extra classes will be available once the payment is received.</p>
-        </DialogContent>
-      </Dialog>
+      {modals}
     </div>
   );
 }

@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { usePathname } from "next/navigation";
 import { ChevronRight, Volume2, VolumeX, X } from "lucide-react";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 import { useSpeech } from "@/components/k5/pico/useSpeech";
 import { BUDDIES } from "@/constant/appearance";
-import { PICO_SAY_EVENT } from "@/components/k5/pico/picoEvents";
+import { PICO_SAY_EVENT, usePicoLive } from "@/components/k5/pico/picoEvents";
+import { CLUBS } from "@/constant/Clubs";
 
 const TOUR_KEY = "is-k5-tour:";
 const noSubscribe = () => () => {};
@@ -18,20 +20,37 @@ function readLocal(key) {
   }
 }
 
-// The 8 tips of the mockup tour; `pin` is the data-pin of the element Pico walks to.
+// The 8 tips of the mockup tour; `pin` is the data-pin of the element the buddy spotlights.
 // A tip whose element is not on the page (no live class right now) is skipped.
-function tourSteps(firstName, buddyName) {
+// `liveName` is the title of the class that is live right now (real data), when there is one.
+function tourSteps(firstName, buddyName, liveName) {
   return [
     { pin: null, text: `Hi${firstName ? ` ${firstName}` : ""}! I'm ${buddyName}, your calendar buddy. Tap Next and I'll show you around!` },
-    { pin: "live", text: "Your class is live right now! Tap the green Join class button to go in." },
+    { pin: "live", text: `${liveName ? `Your ${liveName} class` : "Your class"} is live right now! Tap the green Join class button to go in.` },
     { pin: "mini", text: "This little calendar shows the whole month. A dot under a day means something is planned." },
     { pin: "views", text: "Tap Today, Week or Month to see your plans in different ways." },
     { pin: "look", text: "Tap the palette button to pick your favorite color, night mode, letters and text size!" },
-    { pin: "clues", text: "Color clues tell you what each box means. Tap a clue and the matching boxes light up!" },
+    { pin: "clues", text: "Color clues tell you what each box means. Tap a clue and I'll explain it!" },
     { pin: "side", text: "Use the side menu to book classes, see your teacher, join clubs and more. Hold and drag a button to move your favorites to the top!" },
-    { pin: "msg", text: "Need help? Tap the green Messages button to talk to us." },
+    { pin: "msg", text: "Need help? Tap the green Talk to us button to chat with us!" },
   ];
 }
+// One tip per page (mockup tips("teacher") ...): the buddy opens with it when the student arrives there.
+// Key = the last part of the page address. Home keeps the 8-tip tour; Book a Class has its own guide.
+const PAGE_TIPS = {
+  "syllabus-assigned-teacher": "These are your courses! Tap See course calendar to see every lesson and when it is due.",
+  "student-transcript": "Tap the dots button to see your transcript.",
+  "student-handbook": "This book tells you all about your school!",
+  "student-login-details": "Here you can see every time you logged in!",
+  "academic-year-extention": "Tap a course to see how you can extend it.",
+  "student-video-library": "Watch your lessons in order, one by one!",
+  "my-certificates": "Need a certificate? Tap Request a certificate and the school will make it for you.",
+  "student-addon": "Want more classes? Pick a plan, then ask a grown-up to buy it!",
+  cart: "Want more classes? Pick a plan, then ask a grown-up to buy it!",
+  // Every club page (Language, Social and E-Sports clubs).
+  // No spotlight on the side menu here: the buddy only says it.
+  ...Object.fromEntries(Object.keys(CLUBS).map((pageLink) => [pageLink, "Pick a club from the menu and join the fun!"])),
+};
 const MOBILE_QUERY = "(max-width: 760px)";
 const subscribeMobile = (callback) => {
   const mql = window.matchMedia(MOBILE_QUERY);
@@ -42,329 +61,294 @@ const isMobileView = () => window.matchMedia(MOBILE_QUERY).matches;
 const pinEl = (pin) => (pin && typeof document !== "undefined" ? document.querySelector(`[data-pin="${pin}"]`) : null);
 const onPage = (pin) => !pin || Boolean(pinEl(pin));
 
-// Mockup geometry: the buddy box is 140×176; the header ends ~92px down.
-const W = 140;
-const H = 176;
-const M = 8;
-const TOP = 92;
-// Elements that never scroll (fixed chrome) — no page scroll before walking to them.
+// Elements that never scroll (fixed chrome) — no page scroll before spotlighting them.
 const FIXED_PINS = new Set(["side", "msg", "look"]);
 
-/** Where the buddy stands next to `el` (mockup placePin): beside it, else above / below. */
-function placeNext(el) {
-  const r = el.getBoundingClientRect();
-  if (!r.width && !r.height) return null;
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const midY = r.top + Math.min(r.height, 240) / 2 - H / 2;
-  const right = vw - r.right >= W + 12;
-  const left = r.left >= W + 12;
-  const onTop = r.top - H + 28 >= TOP;
-  const below = vh - r.bottom >= H + 4;
-  let cx;
-  let y;
-  if (r.width > 420 && onTop) [cx, y] = [r.right - W / 2 - 30, r.top - H + 28];
-  else if (right) [cx, y] = [r.right + W / 2 + 2, midY];
-  else if (left) [cx, y] = [r.left - W / 2 - 2, midY];
-  else if (onTop) [cx, y] = [r.right - W / 2 - 20, r.top - H + 28];
-  // Below a wide bar (the colour clues) the buddy stands at its right end, like the mockup.
-  else if (below) [cx, y] = [r.width > 420 ? r.right - W / 2 - 20 : r.left + W / 2 + 20, r.bottom - 6];
-  else [cx, y] = [r.right - W / 2 - 12, r.top + 10];
-  return {
-    x: Math.round(Math.min(vw - W / 2 - M, Math.max(W / 2 + M, cx))),
-    y: Math.round(Math.min(vh - H - 6, Math.max(TOP, y))),
-  };
-}
+// A dialog (look, Get the App, live popup, joining a class...) or the opened side menu is on top:
+// the spotlight steps aside until it is gone.
+const coveredByDialog = () =>
+  Boolean(document.querySelector('#k5-sidenav[data-open="true"]')) ||
+  // Only real modals count: the buddy bubble and the (non-modal) cookie banner do not hide the spotlight.
+  [...document.querySelectorAll('[role="alertdialog"],[role="dialog"][aria-modal="true"],[role="dialog"][data-open],[role="dialog"][data-state="open"]')].some((d) => !d.classList.contains("k5-bubble") && d.getBoundingClientRect().width > 0);
 
-/** The resting spot (bottom corner) when a tip has no element. */
-function restingSpot(leftHand) {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  return { x: leftHand ? W / 2 + 16 : vw - W / 2 - 16, y: vh - H - 10, resting: true };
-}
-
-/** Walk the buddy to the tip's element (or its resting corner); turns it to face the way it walks. */
-function moveBuddy({ pin, leftHand, posRef, setPos, setFaceLeft }, glide) {
-  const el = pinEl(pin);
-  const next = (el && placeNext(el)) || restingSpot(leftHand);
-  const prev = posRef.current;
-  if (prev && Math.abs(prev.x - next.x) < 2 && Math.abs(prev.y - next.y) < 2 && prev.resting === next.resting) return;
-  if (glide && prev && Math.abs(prev.x - next.x) > 6) setFaceLeft(next.x < prev.x);
-  posRef.current = next;
-  setPos(next);
-}
-
-/** Bubble position relative to the buddy box, with its tail pointing at the buddy. */
-function bubbleLayout(pos, leftHand) {
-  const vw = window.innerWidth;
-  const bw = Math.min(340, vw - 32);
-  if (pos.resting) {
-    // Mockup: bubble sits above the buddy, towards the middle of the screen.
-    return leftHand ? { below: false, left: 28, tail: 30, width: bw } : { below: false, left: W - bw - 12, tail: bw - 54, width: bw };
-  }
-  const abs = Math.min(vw - bw - 16, Math.max(16, pos.x - bw / 2));
-  return {
-    below: pos.y < 250,
-    left: Math.round(abs - (pos.x - W / 2)),
-    tail: Math.round(Math.min(bw - 44, Math.max(20, pos.x - abs - 12))),
-    width: bw,
-  };
+/**
+ * Mockup .spothole: the page dims and only the tip's element shines inside a yellow ring
+ * (8px around it, 26px corners), sliding smoothly from one tip to the next.
+ */
+function SpotHole({ pin, active }) {
+  const [box, setBox] = useState(null);
+  useEffect(() => {
+    let raf = 0;
+    const measure = () => {
+      const el = active ? pinEl(pin) : null;
+      const r = el && !coveredByDialog() ? el.getBoundingClientRect() : null;
+      const next = r && (r.width || r.height) ? { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) } : null;
+      setBox((prev) => (prev && next && prev.x === next.x && prev.y === next.y && prev.w === next.w && prev.h === next.h ? prev : next));
+    };
+    const schedule = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(measure);
+    };
+    measure();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    const timer = setInterval(measure, 300);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearInterval(timer);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  }, [active, pin]);
+  if (!active || !box) return null;
+  return (
+    <div
+      aria-hidden="true"
+      className="k5-spothole pointer-events-none fixed z-[38] rounded-[26px]"
+      style={{ left: box.x - 8, top: box.y - 8, width: box.w + 16, height: box.h + 16, boxShadow: "0 0 0 4px #FFC531, 0 0 0 200vmax rgba(10, 16, 34, 0.55)" }}
+    />
+  );
 }
 
 /**
- * Pico guide (plan Phase 3, mockup "Pico guide"): an 8-tip tour that runs once on the home
- * page (remembered per user: localStorage is-k5-tour:{userId}) and can be replayed with
- * "Ask Pico". For each tip the buddy walks next to its element, spotlights it, and its
- * speech bubble points at the buddy. Pico only talks after a tap (Next / Hear it), in the
- * student's voice, and never when the buddy voice is turned off.
+ * The buddy (plan Phase 3, mockup "pinwrap"): a small companion that always stands in the bottom
+ * corner (right, or left for left-handed students) and bobs. Tapping it opens a speech bubble
+ * beside it with an 8-tip tour that runs once on the home page (remembered per user:
+ * localStorage is-k5-tour:{userId}); each tip spotlights its element. "Hear it" / tapping the
+ * buddy speaks in the student's voice (and turns the voice back on), the red X hides the bubble
+ * only — the buddy stays and a tap brings it back. Below 760px the bubble opens above the buddy on tap.
  */
-export function PicoGuide({ userId, firstName }) {
+export function PicoGuide({ userId, firstName, home = true }) {
   const { preferences, updatePreference, themeProps } = useAppearance();
   const { speak, stop, speaking, supported } = useSpeech();
   const tourKey = `${TOUR_KEY}${userId}`;
   const seen = useSyncExternalStore(noSubscribe, () => readLocal(tourKey), () => "1");
-  const [state, setState] = useState({ open: null, index: 0, say: null });
-  const [pos, setPos] = useState(null);
-  const [walking, setWalking] = useState(false);
-  const [faceLeft, setFaceLeft] = useState(false);
-  const posRef = useRef(null);
+  const [state, setState] = useState({ open: null, index: 0, say: null, skipLive: false, pageTip: false });
+  const live = usePicoLive();
+  const pathname = usePathname();
+  // The Book a Class page has its own buddy guide: here the buddy stays, its bubble never opens.
+  const onBook = pathname.includes("book-a-session");
+  const [tipOn, setTipOn] = useState(false);
   const buddy = BUDDIES[preferences.buddy] || BUDDIES.pico;
-  const steps = tourSteps(firstName, buddy.name);
-  const open = state.open ?? !seen;
+  const steps = tourSteps(firstName, buddy.name, live.name);
+  const mobile = useSyncExternalStore(subscribeMobile, isMobileView, () => false);
+  // The first tour opens by itself once the plan is known; the buddy stays quiet while the "LIVE NOW" popup waits.
+  const autoOpen = home && !seen && live.ready;
+  // Desktop: open for the first tour and after a tap; mobile: while tapped open (and after the buddy speaks up).
+  const wanted = mobile ? tipOn : (state.open ?? autoOpen);
+  const open = wanted && !live.pending && !onBook;
   const step = steps[state.index];
   // A page can make the buddy explain something (e.g. a colour clue) between tour tips.
   const tip = state.say || step;
   const pin = tip?.pin ?? null;
-  const sayId = state.say?.id ?? null;
   const leftHand = themeProps["data-hand"] === "left";
   const reduced = themeProps["data-motion"] === "reduced";
-  const mobile = useSyncExternalStore(subscribeMobile, isMobileView, () => false);
 
-  // Each tip: spotlight + scroll the element into a comfortable spot, then walk there.
+  // Arriving on a page that has a tip: the buddy opens with it. Leaving it closes that tip again.
+  const pageSegment = pathname.split("/").filter(Boolean).pop();
+  const tipDef = PAGE_TIPS[pageSegment];
+  const pageTip = tipDef ? (typeof tipDef === "string" ? { text: tipDef, pin: null } : tipDef) : null;
+  // One key per page, so moving between two pages with the same tip (two clubs) opens it again.
+  // ...and only once the menu and the page's content are really there (no tip, no spotlight over a loading page).
+  const tipKey = pageTip && live.menuReady && live.contentReady ? pageSegment : null;
+  const [tipFor, setTipFor] = useState(null);
+  if (tipKey !== tipFor) {
+    // Adjusted while rendering (React's way to reset state when an input changes), not in an effect.
+    setTipFor(tipKey);
+    if (pageTip) {
+      setState((s) => ({ ...s, open: true, index: 0, say: { text: pageTip.text, pin: pageTip.pin, id: `page-${pageSegment}` }, skipLive: false, pageTip: true }));
+      setTipOn(true);
+    } else {
+      setState((s) => (s.pageTip ? { ...s, open: false, say: null, pageTip: false } : s));
+      setTipOn(false);
+    }
+  }
+  // The buddy also says it out loud (the student just tapped to get here, so speaking is allowed).
+  useEffect(() => {
+    if (pageTip) speak(pageTip.text);
+    // Once per arrival, not whenever the voice settings change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tipKey]);
+
+  // Each tip: spotlight its element and scroll it into a comfortable spot.
   useEffect(() => {
     if (!open) return;
     const el = pinEl(pin);
-    if (el) {
-      el.classList.add("k5-spot");
-      if (!FIXED_PINS.has(pin)) {
-        const r = el.getBoundingClientRect();
-        if (r.top < 150 || r.top > window.innerHeight * 0.55) {
-          window.scrollTo({ top: Math.max(0, window.scrollY + r.top - 260), behavior: reduced ? "auto" : "smooth" });
-        }
+    if (!el) return;
+    if (!FIXED_PINS.has(pin)) {
+      const r = el.getBoundingClientRect();
+      if (r.top < 150 || r.top > window.innerHeight * 0.55) {
+        // On a phone the bubble covers the lower half, so the element is lifted close to the header.
+        window.scrollTo({ top: Math.max(0, window.scrollY + r.top - (mobile ? 120 : 260)), behavior: reduced ? "auto" : "smooth" });
       }
     }
-    const move = { pin, leftHand, posRef, setPos, setFaceLeft };
-    const walkOn = setTimeout(() => setWalking(true), 0);
-    const first = setTimeout(() => moveBuddy(move, true), 40);
-    const settle = setTimeout(() => moveBuddy(move, false), 800);
-    const walkOff = setTimeout(() => setWalking(false), 1600);
-    return () => {
-      el?.classList.remove("k5-spot");
-      [walkOn, first, settle, walkOff].forEach(clearTimeout);
-    };
-  }, [open, pin, sayId, leftHand, reduced]);
+  }, [open, pin, state.say?.id, reduced, mobile]);
 
-  // picoSay(): walk to the element and say the text (it comes from a tap, so speaking is allowed).
+  // picoSay(): the buddy opens and says the text (it comes from a tap, so speaking is allowed).
   useEffect(() => {
     const onSay = (e) => {
-      const { text, pin: target } = e.detail || {};
+      const { text, pin: target, intro, skipLive } = e.detail || {};
       if (!text) return;
-      setState((s) => ({ ...s, open: true, say: { text, pin: target || null, id: Date.now() } }));
+      setState((s) => ({
+        ...s,
+        open: true,
+        index: intro ? 0 : s.index,
+        skipLive: intro ? Boolean(skipLive) : s.skipLive,
+        say: { text, pin: target || null, id: Date.now() },
+      }));
+      setTipOn(true);
       speak(text);
     };
     window.addEventListener(PICO_SAY_EVENT, onSay);
     return () => window.removeEventListener(PICO_SAY_EVENT, onSay);
   }, [speak]);
 
-  // Stay next to the element while the page scrolls or resizes.
-  useEffect(() => {
-    if (!open) return;
-    const follow = () => moveBuddy({ pin, leftHand, posRef, setPos, setFaceLeft }, false);
-    window.addEventListener("scroll", follow, { passive: true });
-    window.addEventListener("resize", follow);
-    return () => {
-      window.removeEventListener("scroll", follow);
-      window.removeEventListener("resize", follow);
-    };
-  }, [open, pin, leftHand]);
-
-  const finish = () => {
-    stop();
+  const markSeen = () => {
     try {
       window.localStorage.setItem(tourKey, "done");
     } catch {
-      // storage unavailable: the tour may start again next visit
+      // storage unavailable: the tour may open again next visit
     }
-    posRef.current = null;
-    setPos(null);
-    setState({ open: false, index: 0, say: null });
+  };
+  // Red X: closes the bubble only. The buddy stays; a tap brings the same tip back.
+  const hide = () => {
+    stop();
+    markSeen();
+    setTipOn(false);
+    setState((s) => ({ ...s, open: false }));
+  };
+  const finish = () => {
+    stop();
+    markSeen();
+    setTipOn(false);
+    setState({ open: false, index: 0, say: null, skipLive: false, pageTip: false });
   };
   const next = () => {
+    if (state.pageTip) return finish();
     let i = state.index + 1;
-    while (i < steps.length && !onPage(steps[i].pin)) i += 1;
+    // After joining the live class, the "class is live" tip is skipped.
+    while (i < steps.length && (!onPage(steps[i].pin) || (state.skipLive && steps[i].pin === "live"))) i += 1;
     if (i >= steps.length) return finish();
-    setState({ open: true, index: i, say: null });
+    setState((s) => ({ ...s, open: true, index: i, say: null }));
     speak(steps[i].text);
   };
-  const restart = () => {
-    setState({ open: true, index: 0, say: null });
-    speak(steps[0].text);
+  // Mockup hear / pinTap: asking the buddy to talk also turns its voice back on.
+  const hear = () => {
+    if (preferences.speech !== "on") updatePreference("speech", "on");
+    speak(tip.text, { force: true });
   };
-  const shown = steps.filter((s) => onPage(s.pin));
+  // Mockup pinTap: closed bubble opens again; an open one speaks. On a phone a tap toggles the bubble.
+  const tap = () => {
+    if (onBook) return;
+    if (mobile) {
+      if (tipOn) {
+        setTipOn(false);
+        stop();
+      } else {
+        setTipOn(true);
+        if (preferences.speech === "on") speak(tip.text);
+      }
+      return;
+    }
+    if (!open) {
+      setState((s) => ({ ...s, open: true }));
+      return;
+    }
+    hear();
+  };
+  const shown = state.pageTip ? [step] : steps.filter((s) => onPage(s.pin) && !(state.skipLive && s.pin === "live"));
   const position = Math.max(1, shown.indexOf(step) + 1);
 
-  if (!open && mobile) {
-    // Mobile (mockup .pinclosed): a 62px round buddy button above the bottom tab bar.
-    return (
-      <button
-        type="button"
-        onClick={restart}
-        aria-label={`Ask ${buddy.name}`}
-        className={`fixed bottom-[100px] z-40 flex h-[62px] w-[62px] cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-ink bg-k5-card p-1 shadow-[0_4px_0_var(--k5-ink)] ${leftHand ? "left-3" : "right-3"}`}
-      >
-        <PicoMascot buddy={preferences.buddy} width={48} full={false} />
-      </button>
-    );
-  }
-
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={restart}
-        className={`fixed bottom-4 z-40 flex min-h-[60px] cursor-pointer items-center gap-2.5 rounded-full border-[3px] border-k5-ink bg-k5-card py-1.5 pl-1.5 pr-5 font-k5-display text-xl font-semibold text-k5-ink shadow-[0_5px_0_var(--k5-ink)] ${
-          leftHand ? "left-4" : "right-4"
-        }`}
-      >
-        <PicoMascot buddy={preferences.buddy} width={46} full={false} />
-        Ask {buddy.name}
-      </button>
-    );
-  }
-
-  const bubbleBody = (
+  return (
     <>
-    <div className="relative flex items-center justify-between gap-2">
-      <span className="text-sm font-black uppercase tracking-[0.08em] text-k5-vi">{buddy.name} says</span>
-      <div className="flex gap-1.5">
-        {supported && (
-          <button
-            type="button"
-            aria-pressed={preferences.speech === "on"}
-            aria-label={preferences.speech === "on" ? `Turn ${buddy.name}'s voice off` : `Turn ${buddy.name}'s voice on`}
-            onClick={() => {
-              if (preferences.speech === "on") stop();
-              updatePreference("speech", preferences.speech === "on" ? "off" : "on");
-            }}
-            className={`flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-line ${preferences.speech === "on" ? "bg-k5-act text-k5-acx" : "bg-k5-card text-k5-mut"}`}
-          >
-            {preferences.speech === "on" ? <Volume2 className="h-5 w-5" aria-hidden="true" /> : <VolumeX className="h-5 w-5" aria-hidden="true" />}
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={finish}
-          aria-label={`Hide ${buddy.name}`}
-          className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card text-k5-mut"
-        >
-          <X className="h-4 w-4" strokeWidth={3} aria-hidden="true" />
-        </button>
-      </div>
-    </div>
-    <p aria-live="polite" className="relative m-0 font-k5-display text-[21px] font-medium leading-[1.3] text-k5-ink">
-      {tip.text}
-    </p>
-    <div className="relative flex items-center justify-between gap-2">
-      {supported ? (
-        <button
-          type="button"
-          onClick={() => speak(tip.text, { force: true })}
-          className="flex min-h-[46px] cursor-pointer items-center gap-1.5 rounded-full border-[3px] border-k5-line bg-k5-card px-3.5 text-[15px] font-black text-k5-acx"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M8 5v14l11-7z" />
-          </svg>
-          Hear it
-        </button>
-      ) : (
-        <span />
-      )}
-      <span className="text-sm font-extrabold text-k5-mut">
-        {position} / {shown.length}
-      </span>
-      <button
-        type="button"
-        onClick={next}
-        className="flex min-h-[46px] cursor-pointer items-center gap-1.5 rounded-full border-none bg-[#FFC531] pl-[18px] pr-3.5 font-k5-display text-lg font-semibold text-[#1C2640] shadow-[0_5px_0_#C9930A]"
-      >
-        {position >= shown.length ? "All done" : "Next"}
-        <ChevronRight className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
-      </button>
-    </div>
-    </>
-  );
-
-  if (mobile) {
-    // Mobile (mockup .pinwrap): no walking — the buddy waits above the tab bar as a round button
-    // and the bubble spans the screen above it; the tip's element is still spotlighted.
-    return (
-      <>
+    <SpotHole pin={pin} active={open} />
+    <div
+      className={`fixed bottom-[112px] z-40 h-[86px] w-[88px] max-[760px]:bottom-[150px] max-[760px]:h-[62px] max-[760px]:w-[58px] ${
+        leftHand ? "left-4 max-[760px]:left-3.5" : "right-4 max-[760px]:right-3.5"
+      }`}
+    >
+      {open && (
         <div
           role="dialog"
           aria-label={`${buddy.name} says`}
-          className="k5-bubble fixed inset-x-3 bottom-[174px] z-40 box-border flex flex-col gap-3 rounded-[26px] border-[3px] border-k5-ink bg-k5-card px-4 py-3.5 shadow-[0_6px_0_var(--k5-ink)]"
+          className={`k5-bubble absolute bottom-0 box-border flex w-[340px] max-w-[calc(100vw-32px)] flex-col gap-2.5 rounded-[26px] border-[3px] border-k5-ink bg-k5-card px-[18px] py-4 shadow-[0_6px_0_var(--k5-ink)] max-[760px]:fixed max-[760px]:inset-x-3 max-[760px]:bottom-[224px] max-[760px]:w-auto max-[760px]:max-w-none ${
+            leftHand ? "left-[calc(100%+14px)]" : "right-[calc(100%+14px)]"
+          } max-[760px]:left-3 max-[760px]:right-3`}
         >
-          {bubbleBody}
+          <span
+            aria-hidden="true"
+            className={`absolute bottom-[30px] block h-6 w-6 border-b-[3px] border-r-[3px] border-k5-ink bg-k5-card max-[760px]:hidden ${
+              leftHand ? "-left-[15px] rotate-[135deg]" : "-right-[15px] -rotate-45"
+            }`}
+          />
+          <div className="relative flex items-center justify-between gap-2">
+            <span className="text-sm font-black uppercase tracking-[0.08em] text-k5-vi">{buddy.name} says</span>
+            <div className="flex gap-1.5">
+              {supported && (
+                <button
+                  type="button"
+                  aria-pressed={preferences.speech === "on"}
+                  aria-label={preferences.speech === "on" ? `Turn ${buddy.name}'s voice off` : `Turn ${buddy.name}'s voice on`}
+                  onClick={() => {
+                    if (preferences.speech === "on") stop();
+                    updatePreference("speech", preferences.speech === "on" ? "off" : "on");
+                  }}
+                  className={`flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-line ${preferences.speech === "on" ? "bg-k5-act text-k5-acx" : "bg-k5-card text-k5-mut"}`}
+                >
+                  {preferences.speech === "on" ? <Volume2 className="h-5 w-5" aria-hidden="true" /> : <VolumeX className="h-5 w-5" aria-hidden="true" />}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={hide}
+                aria-label={`Hide ${buddy.name}`}
+                className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border-[3px] border-[#D7263D] bg-[#D7263D] text-white shadow-[0_3px_0_#9E1B2C]"
+              >
+                <X className="h-4 w-4" strokeWidth={3.5} aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+          <p aria-live="polite" className="relative m-0 font-k5-display text-[21px] font-medium leading-[1.3] text-k5-ink">
+            {tip.text}
+          </p>
+          <div className="relative flex items-center justify-between gap-2">
+            {supported ? (
+              <button
+                type="button"
+                onClick={hear}
+                className="flex min-h-[46px] cursor-pointer items-center gap-1.5 rounded-full border-[3px] border-k5-line bg-k5-card px-3.5 text-[15px] font-black text-k5-acx"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                Hear it
+              </button>
+            ) : (
+              <span />
+            )}
+            <span className="text-sm font-extrabold text-k5-mut">
+              {position} / {shown.length}
+            </span>
+            <button
+              type="button"
+              onClick={next}
+              className="flex min-h-[46px] cursor-pointer items-center gap-1.5 rounded-full border-none bg-[#FFC531] pl-[18px] pr-3.5 font-k5-display text-lg font-semibold text-[#1C2640] shadow-[0_5px_0_#C9930A]"
+            >
+              {position >= shown.length ? "All done" : "Next"}
+              <ChevronRight className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
+            </button>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={() => speak(tip.text, { force: true })}
-          aria-label={`${buddy.name}, your calendar buddy. Tap to hear ${buddy.name}.`}
-          className={`fixed bottom-[100px] z-40 flex h-[62px] w-[62px] cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-ink bg-k5-card p-1 shadow-[0_4px_0_var(--k5-ink)] ${leftHand ? "left-3" : "right-3"}`}
-        >
-          <PicoMascot buddy={preferences.buddy} width={48} full={false} talking={speaking} />
-        </button>
-      </>
-    );
-  }
-
-  if (!pos) return null;
-  const bubble = bubbleLayout(pos, leftHand);
-
-  return (
-    <div
-      className="fixed z-40"
-      style={{
-        left: pos.x,
-        top: pos.y,
-        width: W,
-        height: H,
-        marginLeft: -W / 2,
-        transition: walking && !reduced ? "left 1.4s ease-in-out, top 1.4s ease-in-out" : "none",
-      }}
-    >
-      <div
-        role="dialog"
-        aria-label={`${buddy.name} says`}
-        className="k5-bubble absolute box-border flex flex-col gap-3 rounded-[26px] border-[3px] border-k5-ink bg-k5-card px-[18px] py-4 shadow-[0_6px_0_var(--k5-ink)]"
-        style={{ left: bubble.left, width: bubble.width, ...(bubble.below ? { top: H + 10 } : { bottom: H + 10 }) }}
-      >
-        <span
-          aria-hidden="true"
-          className="absolute block h-6 w-6 border-b-[3px] border-r-[3px] border-k5-ink bg-k5-card"
-          style={{ left: bubble.tail, transform: `rotate(${bubble.below ? 225 : 45}deg)`, ...(bubble.below ? { top: -15 } : { bottom: -15 }) }}
-        />
-        {bubbleBody}
-      </div>
+      )}
       <button
         type="button"
-        onClick={() => speak(tip.text, { force: true })}
+        onClick={tap}
         aria-label={`${buddy.name}, your calendar buddy. Tap to hear ${buddy.name}.`}
-        className="block h-full w-full cursor-pointer border-none bg-transparent p-0"
-        style={{ transform: `scaleX(${faceLeft ? -1 : 1})`, transition: "transform .2s" }}
+        className="k5-pin-bob flex h-full w-full cursor-pointer items-end justify-center border-none bg-transparent p-0 max-[760px]:[&_svg]:!h-[60px] max-[760px]:[&_svg]:!w-12"
       >
-        <PicoMascot buddy={preferences.buddy} width={W} talking={speaking} walking={walking} />
+        <PicoMascot buddy={preferences.buddy} width={66} talking={speaking} />
       </button>
     </div>
+    </>
   );
 }

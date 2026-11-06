@@ -139,7 +139,7 @@ export function BookClasses() {
   if (view === "booked") {
     return (
       <>
-        <BookedClasses course={course} onBack={() => setView("book")} onBook={() => startBooking(course)} />
+        <BookedClasses course={course} onBack={() => setView("book")} onBook={() => (isK5 ? setView("book") : startBooking(course))} />
         {modals}
       </>
     );
@@ -152,9 +152,14 @@ export function BookClasses() {
           details={details}
           subjects={subjects}
           course={course}
-          onSelect={setSelectedId}
-          onShowBooked={() => setView("booked")}
-          onBook={() => startBooking(course)}
+          onShowBooked={(subjectId) => {
+            if (subjects.some((s) => s.subjectId === subjectId)) setSelectedId(subjectId);
+            setView("booked");
+          }}
+          onBooked={() => {
+            queryClient.invalidateQueries({ queryKey: ["book-class-details"] });
+            queryClient.invalidateQueries({ queryKey: ["booked-classes"] });
+          }}
         />
         {modals}
       </>

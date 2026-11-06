@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { CalendarCheck, Clock, PieChart, Presentation, TrendingDown, TrendingUp } from "lucide-react";
+import { K5Attendance } from "@/components/k5/pages/K5Attendance";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useStudentAttendance } from "@/hooks/useStudentAttendance";
 
@@ -208,9 +209,10 @@ function SummaryChart({ summary }) {
  * Present / Late / Absent breakdown.
  */
 export function Attendance() {
-  const { context } = useDashboardContext();
+  const { context, isK5 } = useDashboardContext();
   const { schoolUUID, userId } = context ?? {};
   const { isLoading, sessionOut, summary, months } = useStudentAttendance({ schoolUUID, userId });
+  if (isK5) return <K5Attendance isLoading={isLoading} sessionOut={sessionOut} summary={summary} months={months} />;
   const now = new Date();
   const monthName = now.toLocaleString("en-US", { month: "long" });
 

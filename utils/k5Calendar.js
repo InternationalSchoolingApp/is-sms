@@ -112,10 +112,11 @@ export function teacherName(event) {
 
 // Subject → icon key + tint pair (mockup: math blue, science green, language pink, computers violet, civics mustard).
 const SUBJECTS = [
+  // Computer first: "Foundations of Computer Science" is a computer course, not a science one.
+  [/computer|technology|coding|programming/i, "computer", "bg-k5-vt", "text-k5-vi", "var(--k5-vI)"],
   [/math|algebra|geometry|calculus|statistic/i, "math", "bg-k5-bt", "text-k5-bi", "var(--k5-bI)"],
   [/science|biology|physics|chemistry|environment/i, "science", "bg-k5-tt", "text-k5-ti", "var(--k5-tI)"],
   [/english|language|reading|writing|literature|spanish|french|german|chinese/i, "language", "bg-k5-pt", "text-k5-pi", "var(--k5-pI)"],
-  [/computer|technology|coding|programming/i, "computer", "bg-k5-vt", "text-k5-vi", "var(--k5-vI)"],
   [/social|history|geography|civics|government/i, "civics", "bg-k5-mt", "text-k5-mi", "var(--k5-mI)"],
   [/art|music|drama/i, "art", "bg-k5-ot", "text-k5-oi", "var(--k5-oI)"],
   [/physical|health|fitness|\bpe\b/i, "pe", "bg-k5-tt", "text-k5-ti", "var(--k5-tI)"],

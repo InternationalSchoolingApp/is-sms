@@ -4,6 +4,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { ArrowLeft, CalendarClock } from "lucide-react";
 import { FullScreenLoader } from "@/components/common/Loader";
+import { K5Extension } from "@/components/k5/pages/K5Extension";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -153,7 +154,7 @@ function ExtensionDetail({ data, image, busy, afterExtension1, onAvail, onBack }
  * (useCartCheckout), as the cart does.
  */
 export function AcademicYearExtension() {
-  const { context, logoUrl } = useDashboardContext();
+  const { context, logoUrl, isK5 } = useDashboardContext();
   const { schoolUUID, userId } = context ?? {};
   const { isLoading, message, courses, refetch } = useStudentAcademicYearExtension({ schoolUUID, userId });
   const [proceeding, setProceeding] = useState(false);
@@ -239,7 +240,20 @@ export function AcademicYearExtension() {
 
   return (
     <>
-      {selected ? (
+      {isK5 ? (
+        <K5Extension
+          loading={!context || isLoading}
+          message={message}
+          courses={courses}
+          imageOf={(course) => courseImage(course, logoUrl)}
+          onOpen={openCourse}
+          selected={selected}
+          afterExtension1={afterExtension1}
+          busy={busy}
+          onAvail={(type) => (type === "EXTENSION-1" ? setConfirmExtension1(true) : avail(type))}
+          onBack={() => setSelected(null)}
+        />
+      ) : selected ? (
         <ExtensionDetail
           data={selected.data}
           image={selected.image}

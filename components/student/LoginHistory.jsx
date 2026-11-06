@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { CalendarCheck, Clock, LogIn, LogOut, Search, ShieldCheck, TrendingUp } from "lucide-react";
+import { K5LoginHistory } from "@/components/k5/pages/K5LoginHistory";
 import { MobileTableCard } from "@/components/student/MobileTableCard";
 import { TableFooter } from "@/components/student/TableFooter";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -42,7 +43,7 @@ function SummaryCard({ label, value, sub, icon: Icon, tone }) {
  * table with a search box over every column (DataTables search), and the security notice.
  */
 export function LoginHistory() {
-  const { context } = useDashboardContext();
+  const { context, isK5 } = useDashboardContext();
   const { isLoading, attendance, studentName } = useStudentLoginHistory({
     schoolUUID: context?.schoolUUID,
     userId: context?.userId,
@@ -87,6 +88,8 @@ export function LoginHistory() {
       {row.duration}
     </span>,
   ];
+
+  if (isK5) return <K5LoginHistory isLoading={!context || isLoading} attendance={attendance} />;
 
   const status = !context || isLoading ? "Loading…" : filtered.length === 0 ? "No login history found" : null;
 

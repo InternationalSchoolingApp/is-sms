@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Award, FileX, MoreVertical } from "lucide-react";
+import { K5Transcript } from "@/components/k5/pages/K5Transcript";
+import { MobileTableCard } from "@/components/student/MobileTableCard";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useStudentTranscriptStatus } from "@/hooks/useStudentTranscriptStatus";
 
@@ -54,11 +56,13 @@ function ActionDropdown({ transcripts }) {
 }
 
 export function Transcript() {
-  const { context } = useDashboardContext();
+  const { context, isK5 } = useDashboardContext();
   const { isLoading, student, transcripts } = useStudentTranscriptStatus({
     schoolUUID: context?.schoolUUID,
     userId: context?.userId,
   });
+
+  if (isK5) return <K5Transcript isLoading={isLoading} student={student} transcripts={transcripts} />;
 
   return (
     <div className="mx-auto w-full max-w-5xl">
@@ -71,35 +75,48 @@ export function Transcript() {
         {isLoading ? (
           <div className="flex h-[200px] items-center justify-center text-sm text-black/60">Loading…</div>
         ) : student ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="bg-primary text-white">
-                  <th className="whitespace-nowrap px-4 py-2.5 font-semibold">S. No.</th>
-                  <th className="whitespace-nowrap px-4 py-2.5 font-semibold">Student Name</th>
-                  <th className="whitespace-nowrap px-4 py-2.5 font-semibold">Email</th>
-                  <th className="whitespace-nowrap px-4 py-2.5 font-semibold">Grade</th>
-                  <th className="whitespace-nowrap px-4 py-2.5 font-semibold">Student ID</th>
-                  <th className="whitespace-nowrap px-4 py-2.5 text-center font-semibold">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-t border-slate-100">
-                  <td className="px-4 py-2.5">1</td>
-                  <td className="px-4 py-2.5">{student.name}</td>
-                  <td className="px-4 py-2.5">{student.email}</td>
-                  <td className="px-4 py-2.5">{student.grade}</td>
-                  <td className="px-4 py-2.5">{student.rollNumber}</td>
-                  <td className="px-4 py-2.5 text-center">
-                    <ActionDropdown transcripts={transcripts} />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <div className="px-4 py-2 text-xs text-black/50">
-              Showing 1 to 1 of 1 entries
+          <>
+            {/* Mobile: the record as one card (column title beside each value). */}
+            <div className="px-4 pt-4 md:hidden">
+              <MobileTableCard
+                rows={[
+                  { label: "S. No.", value: 1 },
+                  { label: "Student Name", value: student.name },
+                  { label: "Email", value: student.email },
+                  { label: "Grade", value: student.grade },
+                  { label: "Student ID", value: student.rollNumber },
+                  { label: "Action", value: <ActionDropdown transcripts={transcripts} /> },
+                ]}
+              />
             </div>
-          </div>
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="bg-primary text-white">
+                    <th className="whitespace-nowrap px-4 py-2.5 font-semibold">S. No.</th>
+                    <th className="whitespace-nowrap px-4 py-2.5 font-semibold">Student Name</th>
+                    <th className="whitespace-nowrap px-4 py-2.5 font-semibold">Email</th>
+                    <th className="whitespace-nowrap px-4 py-2.5 font-semibold">Grade</th>
+                    <th className="whitespace-nowrap px-4 py-2.5 font-semibold">Student ID</th>
+                    <th className="whitespace-nowrap px-4 py-2.5 text-center font-semibold">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-t border-slate-100">
+                    <td className="px-4 py-2.5">1</td>
+                    <td className="px-4 py-2.5">{student.name}</td>
+                    <td className="px-4 py-2.5">{student.email}</td>
+                    <td className="px-4 py-2.5">{student.grade}</td>
+                    <td className="px-4 py-2.5">{student.rollNumber}</td>
+                    <td className="px-4 py-2.5 text-center">
+                      <ActionDropdown transcripts={transcripts} />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div className="px-4 py-2 text-xs text-black/50">Showing 1 to 1 of 1 entries</div>
+          </>
         ) : (
           <div className="flex h-[200px] flex-col items-center justify-center gap-2 text-center">
             <FileX className="h-8 w-8 text-black/30" aria-hidden="true" />

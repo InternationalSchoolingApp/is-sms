@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CLUBS } from "@/constant/Clubs";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
+import { K5Club, K5ClubDoneDialog } from "@/components/k5/pages/K5Club";
+import { picoSay } from "@/components/k5/pico/picoEvents";
 
 // Backend static assets (legacy PATH_FOLDER_IMAGE2).
 const assetUrl = (file) => `${resolveBackendOrigin()}/static/theme2/images/${file}`;
@@ -21,7 +23,7 @@ const assetUrl = (file) => `${resolveBackendOrigin()}/static/theme2/images/${fil
  * /api/v1/module, as legacy getContent() loads them before rendering any module.
  */
 export function ClubPage({ pageLink }) {
-  const { context } = useDashboardContext();
+  const { context, isK5 } = useDashboardContext();
   const { waiting, canView } = useModuleRights(pageLink);
   const { register } = useClubModule({ schoolUUID: context?.schoolUUID, userId: context?.userId });
   const [registered, setRegistered] = useState(false);
@@ -30,7 +32,11 @@ export function ClubPage({ pageLink }) {
   function applyForClub() {
     register.mutate(club.title, {
       onSuccess: (response) => {
-        if (String(response?.status) === "1") setRegistered(true);
+        if (String(response?.status) === "1") {
+          setRegistered(true);
+          // The K–5 buddy cheers the student on (mockup clYay).
+          if (isK5) picoSay("Yay! You joined the club!");
+        }
         else toast.error(response?.message || "Unable to register right now. Please try again.");
       },
       onError: () => toast.error("Unable to register right now. Please try again."),
@@ -40,6 +46,24 @@ export function ClubPage({ pageLink }) {
   if (!club) return null;
 
   const noAccess = !waiting && !canView;
+
+  if (isK5) {
+    return (
+      <>
+        <K5Club
+          pageLink={pageLink}
+          club={club}
+          imageSrc={assetUrl(`clubs/${club.image}`)}
+          waiting={waiting}
+          noAccess={noAccess}
+          registered={registered}
+          onRegister={applyForClub}
+          pending={register.isPending}
+        />
+        <K5ClubDoneDialog open={registered} onClose={() => setRegistered(false)} />
+      </>
+    );
+  }
 
   return (
     <div className="w-full">

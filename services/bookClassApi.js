@@ -100,6 +100,24 @@ export async function getStudentBookClassDetails({ studentStandardId }) {
 }
 
 /**
+ * "For grown-ups" numbers — POST /dashboard/class-calculation-for-grown-ups.
+ * Returns { status, statusCode, message, details: { summary: { maxClassPerWeek,
+ * complimentary: {total, perWeek, unused}, customPlan: {total, perWeek, unused} },
+ * subjects: [{ subjectId, subjectName, complimentary: {...counts}, customPlan: {...counts} }] } }.
+ */
+export async function getClassCalculationForGrownUps({ studentStandardId }) {
+  const me = await identity();
+  if (!hasBackendOrigin() || !me || !studentStandardId) return null;
+  try {
+    const data = await callBackend(me.schoolUUID, "/dashboard/class-calculation-for-grown-ups", { studentStandardId });
+    console.log("getClassCalculationForGrownUps", JSON.stringify({ studentStandardId, data }, null, 2));
+    return data?.details ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Teacher assigned to one course — /dashboard/student-subject-session-booking-new.
  * Returns { teacherAssigned: "YES"|"NO", assignedTeacherUserId, studentStandardId, teacherName, message }.
  */
@@ -203,12 +221,14 @@ export async function getStudentBookedClasses({ subjectId, studentStandardId, da
   const me = await identity();
   if (!hasBackendOrigin() || !me || !studentStandardId) return null;
   try {
-    return await callBackend(
+    const data = await callBackend(
       me.schoolUUID,
       "/dashboard/student-booked-classes-details",
       { userId: me.userId, subjectId, studentStandardId, callFrom: "STUDENT", startDate, endDate, classStatus, dateType },
       { method: "GET", asQuery: true },
     );
+    console.log("getStudentBookedClasses", { userId: me.userId, subjectId, studentStandardId, callFrom: "STUDENT", startDate, endDate, classStatus, dateType, data });
+    return data;
   } catch {
     return null;
   }

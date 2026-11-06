@@ -10,6 +10,7 @@ import { K5Header } from "@/components/k5/K5Header";
 import { K5NavRail } from "@/components/k5/K5NavRail";
 import { AppearanceDialog } from "@/components/k5/look/AppearanceDialog";
 import { PicoGuide } from "@/components/k5/pico/PicoGuide";
+import { setPicoLive } from "@/components/k5/pico/picoEvents";
 import { SelectToSpeak } from "@/components/k5/pico/SelectToSpeak";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -40,6 +41,12 @@ function K5Frame({ children }) {
   const [navOpen, setNavOpen] = useState(false);
   const [lookOpen, setLookOpen] = useState(false);
   const closeNav = useCallback(() => setNavOpen(false), []);
+  // The buddy's page tips wait for the left menu to have its items.
+  const menuCount = menu?.length ?? 0;
+  useEffect(() => {
+    setPicoLive({ menuReady: menuCount > 0 });
+    return () => setPicoLive({ menuReady: false });
+  }, [menuCount]);
   const isHome = pathname === studentNavHref(school, "");
 
   // Same bfcache guard as DashboardShell: a restored page reloads so the session is re-checked.
@@ -70,7 +77,7 @@ function K5Frame({ children }) {
         onAppearance={() => setLookOpen(true)}
       />
 
-      <div className="k5-layout relative box-border flex w-full max-w-[100%] flex-1 items-start gap-5 p-5 max-[760px]:flex-wrap">
+      <div className="k5-layout relative mx-auto box-border flex w-full max-w-[100%] flex-1 items-start gap-5 px-5 pb-[220px] pt-5 max-[760px]:flex-wrap">
         <div aria-hidden="true" className="w-24 flex-none max-[760px]:hidden" />
         <K5NavRail menu={menu} open={navOpen} onOpen={() => setNavOpen(true)} onClose={closeNav} isPreK={isPreK} userId={context.userId} />
 
@@ -95,7 +102,7 @@ function K5Frame({ children }) {
         {copyrightLine(context.schoolName)}
       </footer>
 
-      {isHome && <PicoGuide userId={context.userId} firstName={String(context.userName || "").split(" ")[0]} />}
+      <PicoGuide userId={context.userId} firstName={String(context.userName || "").split(" ")[0]} home={isHome} />
       <SelectToSpeak />
       <ReadingRuler />
       <AppearanceDialog open={lookOpen} onClose={() => setLookOpen(false)} />

@@ -4,6 +4,8 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { Minus, Plus } from "lucide-react";
 import { CalendarModal } from "@/components/dashboard/calendar/CalendarModal";
+import { K5CustomiseDialog } from "@/components/k5/pages/K5CustomisePlan";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { formatAmount, weeksUntil } from "@/utils/cartPlan";
 
 // buyExtraClass.js add(): at most 50 classes in a custom plan.
@@ -15,11 +17,13 @@ const MAX_CLASSES = 50;
  * number of weeks up to the course's enrollment end.
  */
 export function CustomisePlanModal({ subject, plan, symbol, busy, onClose, onAdd }) {
+  const { isK5 } = useDashboardContext();
   const [count, setCount] = useState(1);
   // The modal opens on the plan's own amount; every +/- recomputes count x fee.
   const [amount, setAmount] = useState(Number(plan.amount) || 0);
-  const [weeks, setWeeks] = useState("");
   const weeksLeft = weeksUntil(subject.enrollmentEndDate);
+  // The K–5 dialog opens on "1 week" like the mockup; the existing one asks the student to choose.
+  const [weeks, setWeeks] = useState(isK5 && weeksLeft >= 1 ? "1" : "");
   const fee = Number(plan.singleClassFee) || 0;
 
   function change(next) {
@@ -42,6 +46,25 @@ export function CustomisePlanModal({ subject, plan, symbol, busy, onClose, onAdd
         weeks: Number(weeks),
       },
       buyNow
+    );
+  }
+
+  if (isK5) {
+    return (
+      <K5CustomiseDialog
+        subjectName={subject.subjectName}
+        count={count}
+        minDisabled={count <= 1}
+        maxDisabled={count >= MAX_CLASSES}
+        onChange={change}
+        amountText={formatAmount(symbol, amount)}
+        weeks={weeks}
+        onWeeks={setWeeks}
+        weeksLeft={weeksLeft}
+        busy={busy}
+        onSubmit={submit}
+        onClose={onClose}
+      />
     );
   }
 
