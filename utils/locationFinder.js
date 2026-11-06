@@ -100,7 +100,7 @@ export async function getPayerCountryCodePromise() {
   try {
     if (LOCATION_SERVICE_BYPASS == "true") {
       return JSON.parse(DEFAULT_LOCATION).countryCode || "";
-    }
+    } 
     if (location) {
       try {
         return JSON.parse(location).countryCode || "";

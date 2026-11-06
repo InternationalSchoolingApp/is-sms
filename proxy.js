@@ -72,6 +72,10 @@ export default async function proxy(request) {
   }
 
   const school = path.split("/")[1] || "";
+  // The pages a gateway (or a shared payment link) returns the payer to. A payer who paid from a link has no
+  // session in this browser by design, so these never send anybody to login / the account chooser: with no
+  // account they render as a visitor (the page then calls SMS with the service key, see services/paymentResponseApi.js).
+  const publicPaymentReturn = isPaymentReturnPage(segments);
   const accounts = heldAccounts(request.cookies).filter((a) => !a.profile?.schoolUUID || a.profile.schoolUUID === school);
   const forwarded = new Headers(request.headers);
   forwarded.delete(ACCOUNT_HEADER); // only this proxy may set it
@@ -83,7 +87,7 @@ export default async function proxy(request) {
     // The tab says whose page this is. Never fall back to another account: the tab would then save its form
     // into someone else's enrollment.
     entry = accounts.find((a) => a.account === named) || null;
-    if (!entry) return toLogin(request, school);
+    if (!entry) return publicPaymentReturn ? asVisitor(forwarded) : toLogin(request, school);
   }
   const picked = entry ? null : pickedAccount(request.cookies, path);
   if (picked) {
@@ -98,6 +102,7 @@ export default async function proxy(request) {
     }
   }
   if (!entry && accounts.length === 1) entry = accounts[0];
+  if (!entry && publicPaymentReturn) return asVisitor(forwarded);
   if (!entry && accounts.length > 1) {
     const choose = new URL("/account/choose", request.url);
     choose.searchParams.set("return", path + request.nextUrl.search);
@@ -113,11 +118,11 @@ export default async function proxy(request) {
     await verifyAccessToken(accessToken, backend);
   } catch (err) {
     if (!(err instanceof TokenError) || err.reason !== "expired" || !entry.refreshToken) {
-      return signedOut(request, school, entry.account);
+      return publicPaymentReturn ? asVisitor(forwarded) : signedOut(request, school, entry.account);
     }
     renewed = await refreshTokens(backend, school, entry.refreshToken).catch(() => null);
     if (renewed === RENEWED_ELSEWHERE) return retryShortly(request);
-    if (!renewed) return signedOut(request, school, entry.account);
+    if (!renewed) return publicPaymentReturn ? asVisitor(forwarded) : signedOut(request, school, entry.account);
     accessToken = renewed.accessToken;
   }
 
@@ -130,6 +135,16 @@ export default async function proxy(request) {
   if (renewed) writeAccount(response.cookies, entry.account, renewed);
   if (clearPickCookie) clearPick(response.cookies);
   return response;
+}
+
+/** /{school}/common/{payment-response-success | other-/registration-/evaluation-payment-response-success | payment-response-failure/...} */
+function isPaymentReturnPage(segments) {
+  return segments[1] === "common" && /^([a-z]+-)?payment-response-(success|failure)$/.test(segments[2] || "");
+}
+
+/** Let the page render with nobody signed in (the account header stays unset). */
+function asVisitor(forwarded) {
+  return NextResponse.next({ request: { headers: forwarded } });
 }
 
 function replaceCookie(header, name, value) {
