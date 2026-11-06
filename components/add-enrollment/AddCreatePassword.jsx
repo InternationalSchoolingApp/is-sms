@@ -3,7 +3,7 @@
 import { useState, useSyncExternalStore } from "react";
 import { useSchoolName } from "@/hooks/useSchoolName";
 import { copyrightLine } from "@/utils/schoolBrand";
-import { signOut } from "next-auth/react";
+import { signOutTabAccount } from "@/utils/logout";
 import Image from "next/image";
 import { ArrowRight, Check, Eye, EyeOff, Lock, LockOpen, LoaderCircle, Phone, X } from "lucide-react";
 import { createAddEnrollmentPassword } from "@/services/addEnrollmentPasswordApi";
@@ -53,7 +53,7 @@ export function AddCreatePassword({ schoolUUID }) {
     try {
       localStorage.clear();
       sessionStorage.clear();
-      await signOut({ redirect: false });
+      await signOutTabAccount();
     } catch {
       /* no Next.js session to drop */
     }

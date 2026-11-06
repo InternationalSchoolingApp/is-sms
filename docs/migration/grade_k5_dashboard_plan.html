@@ -95,7 +95,7 @@ pre{overflow:auto;background:var(--panel2);border:1px solid var(--line);border-r
     <li><a href="#decisions">Final decisions</a></li>
     <li><a href="#verify">Verification</a></li>
     <li><a href="#gate">Green-signal gate</a></li>
-    <li><a href="#profile">My Profile (plan)</a></li>
+    <li><a href="#profile">My Profile (re-plan)</a></li>
   </ol>
 </aside>
 
@@ -601,7 +601,7 @@ const effective = sanitize({ ...policy.defaults, ...saved });       // allowlist
       <tr><td><b>2 · Home planner</b> <span class="b in">MVP</span></td><td><code>useK5CalendarModel</code>, Toolbar, Day/Week/Month, MiniCalendar, TodayCard, MyCourses, ColourClues, ClassCard states, LiveClassAlert, NoClassDay.</td><td>Legacy calendar ke saath parity: events, holidays, join aur status sab same hon.</td></tr>
       <tr><td><b>3 · Pico + Appearance</b> <span class="b rec">After MVP</span></td><td>Pico tour, spotlight, speech. <code>AppearanceProvider</code> + <code>constant/appearance.js</code> + AppearanceDialog (P0 → P1 → P2 settings). Optional cookie se first paint (decision 06). Module pages ke hardcoded colours tokens pe.</td><td>Tour ek baar auto chale aur replay ho sake. APP-001/002/003/004/006/014/016 pass hon. Light/Night me sab shared components readable hon (APP-018).</td></tr>
       <tr><td><b>4 · Delight + Gaps</b></td><td>Balloon Pop, brain break, homework markers (BE), weather, i18n. Appearance: admin CONFIGURATION keys + DTO <code>appearancePolicy</code>; approval mile to server-side user preference (Step B).</td><td>Product sign-off ke baad. APP-005, 007–013 pass hon.</td></tr>
-      <tr><td><b>5 · My Profile</b> <span class="b warn">Approval</span></td><td>Mockup v3 ka naya page. Legacy <code>profile-view-content-new</code> review, P1 read-only → P5 withdrawal; detail section 19 me.</td><td>Section 19.6 ke steps; backend gaps (19.4) par decision ke baad</td></tr>
+      <tr><td><b>5 · My Profile</b> <span class="b warn">Approval</span></td><td>Mockup v3 ka naya page; token merge ke baad dobara review (2026-11-06). P1 read-only → P5 withdrawal; detail section 19 me.</td><td>Section 19.6 ke steps; backend Batch A (19.4.3) ke baad</td></tr>
     </tbody>
   </table></div>
 </section>
@@ -672,130 +672,160 @@ const effective = sanitize({ ...policy.defaults, ...saved });       // allowlist
 </section>
 
 <section id="profile">
-  <h2><span class="n">19</span> My Profile (mockup v3 + legacy review) <span class="b warn">Plan · approval chahiye</span></h2>
-  <p class="lead">Updated 2026-11-06. Mockup v3 (<code>Playful.dc.html</code>, <code>pgProfile</code> ~line 1302, 166 <code>pf*</code> strings) me naya page aaya hai. Purane project me My Profile click par <code>profile-view-content-new</code> call hota hai; neeche us flow ka deep review aur Next.js port ka plan hai. Rule: <b>naye backend endpoints nahi</b>, existing ko hi use/enhance karna hai.</p>
+  <h2><span class="n">19</span> My Profile: re-plan after the token merge <span class="b warn">Plan · approval chahiye</span></h2>
+  <p class="lead">Updated 2026-11-06, dono repos ke merge ke baad dobara review. is-rest-api <code>97b59cd1db</code> (Merge pre-prod10 → <code>feature/63_0_0_STUDENT_DASHBOARD_NEXTJS_PHASE4</code>, token work <code>a54d6aadcd</code>), is-sms <code>04cebd2</code> (Merge pre-prod → <code>feature/version_1_3_0_phase4</code>). Mockup v3 <code>pgProfile</code> (~line 1302, 166 <code>pf*</code> strings). Rule: <b>naye backend endpoints nahi</b>, existing ko enhance.</p>
 
   <div class="grid">
     <div class="card"><div class="big">7</div><div class="lbl">sections (mockup = legacy order)</div></div>
     <div class="card"><div class="big">~15</div><div class="lbl">existing endpoints jo page use karta hai</div></div>
-    <div class="card"><div class="big">0</div><div class="lbl">is-sms me abhi (header me sirf "coming soon" toast)</div></div>
-    <div class="card"><div class="big">9</div><div class="lbl">backend security gaps (section 19.4)</div></div>
+    <div class="card"><div class="big">13</div><div class="lbl">backend security gaps (9 purane + 4 naye, section 19.4)</div></div>
+    <div class="card"><div class="big">2</div><div class="lbl">merge se partly fix (#5, #9)</div></div>
   </div>
 
-  <h3>19.1 Legacy entry point (kaise khulta hai)</h3>
+  <h3>19.0 Merge ke baad kya badla</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Repo</th><th>Pehle</th><th>Ab</th><th>Profile par asar</th></tr></thead>
+    <tbody>
+      <tr><td><b>is-rest-api</b></td><td>Java <code>HttpSession</code> (JSESSIONID), <code>sessionUtil</code> session se user</td><td>Stateless token auth (<code>v1/auth/SecurityConfig.java:70, 95-101</code>): <code>AuthTokenFilter</code> (Bearer), <code>BrowserTokenFilter</code> (cookie + <code>X-Account</code>), <code>BrowserCsrfFilter</code>, <code>ServiceKeyFilter</code>, <code>VisitorTokenFilter</code>. <code>auth.default-deny: enforce</code> (<code>application.yml:302</code>): <code>PublicRoutes</code> ke bahar har URL ko signed-in token user chahiye. <code>SessionUtil</code> ab <code>CurrentIdentity</code> ka facade hai (<code>SessionUtil.java:99-125</code>, <code>CurrentIdentity.java:46-48, 65-72</code>): <code>getUserId()</code> = token ka user.</td><td>Bina login wale (anonymous) calls ab 401. Lekin har profile endpoint ab bhi <b>payload ka <code>userId</code></b> use karta hai, token user ka nahi.</td></tr>
+      <tr><td><b>is-sms</b></td><td><code>auth.js</code> (next-auth) + browser cookies Java ko forward</td><td><code>proxy.js</code> token verify/renew karta hai (matcher me <code>/:school/student/:path*</code>), server par <code>getAccountSession()</code> (<code>lib/auth/session.js</code>), Java ko <code>Authorization: Bearer</code> + <code>X-Service-Key</code>. Client par <code>AuthSessionProvider</code> ka <code>useSession</code>. Dashboard services + <code>utils/backendRequest.js</code> token par shift ho chuke hain.</td><td>Naya route <code>student/my-profile</code> apne aap token-protected. BFF <code>backendRequest</code> se Bearer bhejega; 401 = global "Your session has been logged out" dialog.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>19.1 Legacy entry point</h3>
   <ul>
-    <li><b>Header link</b> (<code>DashboardTopHeader.jsp:365</code>): <code>getContent('', 'profile-view', '', payloadProfile)</code>. <code>payloadProfile</code> = <code>encode({userId, actionType:"1a", studentStandardId})</code> (<code>ClientDashboardStudentController.java:351-355</code>). <code>adminController.js:140</code> lazily <code>profileViewNewContent.js</code> load karke <code>renderStudentProfilePage()</code> chalata hai.</li>
-    <li><b>Load</b>: <code>POST /{school}/dashboard/profile-view-content-new?payload=…</code> (body khaali; query param jeet-ta hai) → <code>ClientDashboardCommonController.java:487</code> → <code>DashboardSchoolUtil.profileViewContentNew</code> (:14785).</li>
-    <li><b>School 4 &amp; 5</b> (<code>DashboardTopHeader.jsp:344, 387</code>) <code>getAsPostwithSession('/dashboard/profile-view-content-new…')</code> se naya tab kholte hain jo <b>raw JSON</b> dikhata hai: legacy bug / dead path. Port me sabke liye ek hi page.</li>
-    <li><b>Rendering</b>: poora client-side jQuery (<code>profileViewNewContent.js</code> template + <code>profileViewNew.js</code> ~8.9k lines + <code>cropperImage.js</code> + <code>withdrawalRequestUser.js</code>). Envelope <code>{payload: btoa(encodeURI(json))}</code> = is-sms ka <code>encodePayload</code> (AES nahi).</li>
-    <li><b>Session</b>: Java <code>HttpSession</code>. Session out par load <code>status "0"</code> deta hai (<code>"3"</code> nahi), isliye hamara global session dialog isse khud nahi pakdega: BFF ko ise alag se session-out maanna hoga (19.6).</li>
+    <li><b>Header link</b> (<code>DashboardTopHeader.jsp:365</code>): <code>getContent('', 'profile-view', '', payloadProfile)</code>, <code>payloadProfile = encode({userId, actionType:"1a", studentStandardId})</code> (<code>ClientDashboardStudentController.java:351-355</code>) → <code>profileViewNewContent.js</code> → <code>renderStudentProfilePage()</code>.</li>
+    <li><b>Load</b>: <code>POST /{school}/dashboard/profile-view-content-new?payload=…</code> → <code>ClientDashboardCommonController.java:486-491</code> → <code>DashboardSchoolUtil.profileViewContentNew</code> (:14785).</li>
+    <li><b>School 4 &amp; 5</b> (<code>DashboardTopHeader.jsp:344, 387</code>) raw JSON naye tab me kholte hain: legacy bug. Port me sabke liye ek page.</li>
+    <li><b>Rendering</b>: poora jQuery (<code>profileViewNew.js</code> ~8.9k lines). Envelope <code>{payload: btoa(encodeURI(json))}</code> = is-sms <code>encodePayload</code> (AES nahi).</li>
   </ul>
 
   <h3>19.2 Load response (data model)</h3>
-  <p><code>details</code>: <code>status, rightToEdit, rightToUpload, studentStandardId, userId, userRole, standardStatus, profileData{studentProfile[8], profileContactVerification{fieldId:{verifiedStatus Y/N, verifiedAt}}}, withdrawnRequest, paymentExpire, expiryDate, enrollmentDetails[]</code>. <code>studentProfile</code> ek <b>positional array</b> hai (<code>DashboardStudentUtil.java:829-1654</code>):</p>
+  <p><code>details</code>: <code>status, rightToEdit, rightToUpload, studentStandardId, userId, userRole, standardStatus, profileData{studentProfile[8], profileContactVerification{fieldId:{verifiedStatus Y/N, verifiedAt}}}, withdrawnRequest, paymentExpire, expiryDate, enrollmentDetails[]</code>. <code>studentProfile</code> <b>positional array</b> hai (<code>DashboardStudentUtil.java:829-1654</code>):</p>
   <div class="tw"><table>
     <thead><tr><th>#</th><th>Block</th><th>Main fields</th><th>Gotcha</th></tr></thead>
     <tbody>
-      <tr><td>0</td><td>Personal</td><td>first/middle/lastName, gender, dob, phoneNumber (+CountryCode iso2, WhatsAppStatus), altPhoneNumber, studentEmailId, altEmailId, country/state/city, timezone, nationality, address, profilePic, hobbies[], socialMedia[], customFields</td><td>nationality <b>text</b> bhejta hai, id nahi</td></tr>
-      <tr><td>1</td><td>Parents</td><td>mother*/father*/guardian* (name, email, phone + WhatsApp/Emergency, country/state/city, occupation, dob, facebook), relationType, weddingAnniversaryDate, pcWhatsappView/pcCallView/pcEmailView, callingTimePrefArray, isParentUserExist</td><td>mother first name = <code>motherName</code>; guardian facebook = <code>gurdianFacebook</code></td></tr>
-      <tr><td>2</td><td>Academic</td><td>studentID, learningProgram, grade, academicYearStartDate, enrollmentDate, courses, previousCurrent*, ctiTakenRecommendedGrade, age/address/parentPassport/lastAcademic proofs, studentIdCardDownloadUrl, standardStatus, reportType</td><td>ID card URL server pe bana-banaya aata hai</td></tr>
+      <tr><td>0</td><td>Personal</td><td>first/middle/lastName, gender, dob, phoneNumber (+CountryCode iso2, WhatsAppStatus), altPhoneNumber, studentEmailId, altEmailId, country/state/city, timezone, nationality, address, profilePic, hobbies[], socialMedia[], customFields</td><td>nationality <b>text</b> bhejta hai</td></tr>
+      <tr><td>1</td><td>Parents</td><td>mother*/father*/guardian* (naam, email, phone + WhatsApp/Emergency, country/state/city, occupation, dob, facebook), relationType, weddingAnniversaryDate, pcWhatsappView/pcCallView/pcEmailView, callingTimePrefArray</td><td><code>motherName</code>, <code>gurdianFacebook</code></td></tr>
+      <tr><td>2</td><td>Academic</td><td>studentID, learningProgram, grade, academicYearStartDate, enrollmentDate, courses, previousCurrent*, ctiTakenRecommendedGrade, 4 proofs, studentIdCardDownloadUrl, standardStatus, reportType</td><td></td></tr>
       <tr><td>3</td><td>Live-class timing</td><td>prefTimeList[{startTime, endTime, displayStartTime, displayEndTime, timePrefId}]</td><td>display 12h, store 24h</td></tr>
       <tr><td>4</td><td>Sports &amp; EC</td><td>sportsAndECList, joinedSportsAndECList</td><td></td></tr>
-      <tr><td>5</td><td>Reserve seat</td><td>admin only</td><td>student ko nahi dikhana</td></tr>
-      <tr><td>6</td><td>School email</td><td>email, <b>password</b>, azureUserStatus, passwordCreatedDate</td><td><b>password plaintext</b> aata hai</td></tr>
-      <tr><td>7</td><td>Enable registration</td><td>admin only</td><td>student ko nahi</td></tr>
+      <tr><td>5 / 7</td><td>Reserve seat / Enable registration</td><td>admin only</td><td>student ko nahi</td></tr>
+      <tr><td>6</td><td>School email</td><td>email, <b>password</b>, azureUserStatus, passwordCreatedDate</td><td>password plaintext (gap #4)</td></tr>
     </tbody>
   </table></div>
-  <p>Dates har jagah <code>MMM dd, yyyy</code> (<code>DateUtil.java:66</code>), timezone <code>COUNTRY_TIMEZONE</code> id ke roop me save hota hai.</p>
+  <p>Dates <code>MMM dd, yyyy</code> (<code>DateUtil.java:66</code>); timezone <code>COUNTRY_TIMEZONE</code> id.</p>
 
   <h3>19.3 Sections: mockup ↔ legacy ↔ API</h3>
   <div class="tw"><table>
     <thead><tr><th>Section</th><th>Student edit kar sakta hai</th><th>Locked / read-only</th><th>Existing API</th><th>Mockup diff</th></tr></thead>
     <tbody>
-      <tr><td>1 · Personal Information</td><td>Naam (sirf letters), gender, phone*, alt phone, alt email, country/state/city* (ek saath), timezone* (warning ke saath), nationality*, address, hobbies, social links (URL)</td><td>DOB, Email</td><td><code>update-user-profile-content</code> (single) / <code>update-user-profile-bulk</code>; states/cities: <code>/api/v1/common/masters</code></td><td>Same. Phone + WhatsApp checkbox + "Send OTP".</td></tr>
-      <tr><td>2 · Parent/Guardian</td><td>Mother/Father/Guardian: naam, phone (+WhatsApp, Emergency), facebook, country/state/city, occupation, dob; anniversary; communication (W/C/E, kam se kam ek); calling time slots</td><td>Parent emails, relationType (Primary Parent)</td><td>same save endpoints (<code>W001</code> consent, <code>WPR01</code> primary switch confirm)</td><td>Same.</td></tr>
-      <tr><td>3 · Academic Information</td><td>Previous/current school, grade, graduation year, country; documents upload; progress-report frequency</td><td>Student ID, AY start, enrollment, program, grade, LMS, courses, CTI</td><td>save endpoints; docs: <code>save-docs</code> (base64), <code>delete-uploaded-docs</code>; ID card: <code>student/id-card-pdf</code></td><td>Mockup me "Set Progress Report" (Weekly/Biweekly/Monthly) + ID card button. Student saved document hata nahi sakta.</td></tr>
-      <tr><td>4 · Live Classes - Preferred Timing</td><td>Start/end slots add/remove (overlap/duplicate reject)</td><td>-</td><td><code>report/save-time-preference</code>, <code>inactivate-time-preference</code></td><td>Same.</td></tr>
-      <tr><td>5 · Sport &amp; Extra Curriculars</td><td>Yes/No toggle, club checkboxes, events table</td><td>-</td><td>save endpoints (<code>sportsAndEcList</code>), <code>save-joined-sports-ec-club</code>, <code>inactivate-joined-extra-curricular</code></td><td>Mockup me events table nahi, sirf toggle + clubs.</td></tr>
-      <tr><td>6 · Student School Email</td><td>Activate, Open Outlook, Password reset</td><td>email/password (copy)</td><td><code>create-azure-user</code>, <code>reset-azure-password-notify-primary-mail</code></td><td>Mockup me email+password inputs dikhte hain; legacy me read-only + copy.</td></tr>
-      <tr><td>7 · Withdrawal Request</td><td>Reason, description, T&amp;C, email OTP verify, status list</td><td>sirf jab <code>selfEligible</code></td><td><code>student/withdrawal-eligibility</code>, <code>parent/withdrawal-init</code> → <code>-send-otp</code> → <code>-verify-otp</code> → <code>-list</code></td><td>Mockup ka flow legacy jaisa (verify dialog, "In Review", ek hi request ek waqt me).</td></tr>
-      <tr><td>Photo</td><td>Change photo (5 MB, JPG/PNG, crop)</td><td>-</td><td><code>save-docs</code> (docType "Profile Image", ID card dobara banta hai)</td><td>Mockup me avatar ke neeche camera button.</td></tr>
+      <tr><td>1 · Personal</td><td>Naam, gender, phone*, alt phone, alt email, country/state/city*, timezone* (warning), nationality*, address, hobbies, social links</td><td>DOB, Email</td><td><code>update-user-profile-content</code> / <code>-bulk</code>; <code>/api/v1/common/masters</code></td><td>Same; phone + WhatsApp + "Send OTP".</td></tr>
+      <tr><td>2 · Parent/Guardian</td><td>Mother/Father/Guardian naam, phone (+WhatsApp, Emergency), facebook, country/state/city, occupation, dob; anniversary; communication; calling slots</td><td>Parent emails, relationType</td><td>same save (<code>W001</code> consent, <code>WPR01</code> primary switch)</td><td>Same.</td></tr>
+      <tr><td>3 · Academic</td><td>Previous school/grade/year/country, documents, progress-report frequency</td><td>ID, AY start, enrollment, program, grade, LMS, courses, CTI</td><td>save; <code>save-docs</code>, <code>delete-uploaded-docs</code>; <code>student/id-card-pdf</code></td><td>"Set Progress Report" + ID card button.</td></tr>
+      <tr><td>4 · Live Classes timing</td><td>Slots add/remove</td><td>-</td><td><code>report/save-time-preference</code>, <code>inactivate-time-preference</code></td><td>Same.</td></tr>
+      <tr><td>5 · Sport &amp; EC</td><td>Toggle, clubs, events</td><td>-</td><td>save, <code>save-joined-sports-ec-club</code>, <code>inactivate-joined-extra-curricular</code></td><td>Mockup me events table nahi.</td></tr>
+      <tr><td>6 · School Email</td><td>Activate, Outlook, reset</td><td>email/password</td><td><code>create-azure-user</code>, <code>reset-azure-password-notify-primary-mail</code></td><td>Mockup inputs; legacy read-only + copy.</td></tr>
+      <tr><td>7 · Withdrawal</td><td>Reason, details, T&amp;C, email OTP, status list</td><td>sirf <code>selfEligible</code></td><td><code>student/withdrawal-eligibility</code>, <code>parent/withdrawal-init</code> → <code>-send-otp</code> → <code>-verify-otp</code> → <code>-list</code></td><td>Same flow.</td></tr>
+      <tr><td>Photo</td><td>5 MB JPG/PNG, crop</td><td>-</td><td><code>save-docs</code> ("Profile Image", ID card dobara banta hai)</td><td>Avatar par camera button.</td></tr>
     </tbody>
   </table></div>
-  <p><b>% complete</b> ka koi endpoint nahi; legacy DOM se ginta hai (<code>profileViewNew.js:2518-2768</code>): Personal = bhare fields (+hobby, +social), Guardian = max(mother/father/guardian) + relation + anniversary + communication + slots (/11), Academic = 4 me se kitne documents, Live = koi slot hai to 1/1, Sports = "participate" + event ho to 1/1; overall = jod / jod. Port me yeh ek pure util banega (unsaved field ginti me nahi).</p>
-  <p><b>OTP</b> (<code>/api/v1/common/otp-process</code>, otpType 1 send / 2 resend / 3 verify): sirf STUDENT role ke liye dikhta hai, 6 digit, 9 sends ke baad 1 ghanta lock (<code>OTP005</code>), verify par na expiry na attempt limit; WhatsApp verify phone ko bhi verified kar deta hai.</p>
+  <p><b>% complete</b>: endpoint nahi, legacy DOM se ginta hai (<code>profileViewNew.js:2518-2768</code>); port me pure util. <b>OTP</b>: <code>/api/v1/common/otp-process</code> (1 send / 2 resend / 3 verify), sirf STUDENT role, 9 sends ke baad 1 ghanta lock.</p>
 
   <div class="gaps-red">
-  <h3>19.4 Backend security gaps (legacy me abhi maujood) <span class="b warn">Approval</span></h3>
-  <p>Ye sab <b>aaj ke purane page me bhi</b> khule hain; Next.js port inhe naya nahi banata. Lekin koi bhi logged-in user (student ya parent) browser ke DevTools / Postman se in endpoints ko seedha call kar sakta hai, isliye inka asli fix backend me hi hai. Har gap code me verify kiya gaya hai (paths: <code>is-rest-api/src/main/java/com/c2e/is/</code>).</p>
+  <h3>19.4 Backend security gaps after the merge <span class="b warn">Approval</span></h3>
+  <p>Merge ne <b>"kaun call kar raha hai"</b> pakka kar diya (token), lekin <b>"kiska data"</b> ab bhi payload decide karta hai. Isliye 13 me se 11 gaps poore khule hain, 2 partly fix. Har gap code me dobara verify kiya (paths: <code>is-rest-api/src/main/java/com/c2e/is/</code>).</p>
   <div class="tw"><table>
-    <thead><tr><th>#</th><th>Gap</th><th>Kahan (code)</th><th>Kya ho sakta hai</th><th>Severity</th><th>Fix (existing endpoint enhance)</th></tr></thead>
+    <thead><tr><th>#</th><th>Gap</th><th>Merge ke baad</th><th>Code (abhi)</th><th>Kya ho sakta hai</th><th>Severity</th><th>Fix (existing endpoint enhance)</th></tr></thead>
     <tbody>
-      <tr><td>1</td><td><b>Kisi bhi student ka profile padhna</b> (IDOR, read)</td><td><code>profile-view-content-new</code> → <code>DashboardSchoolUtil.java:14811-14818</code>: <code>userId</code> payload se, <code>userService.getUser(userId)</code>; session user se match nahi</td><td>Logged-in user payload me doosra <code>userId</code> daal kar kisi bhi student ka poora profile dekh sakta hai: naam, DOB, phone, address, parents ke email/phone, documents, school email + password</td><td><span class="b out">Critical</span></td><td>Student session ho to target = session user (payload <code>userId</code> ignore). Parent session ho to sirf <code>PARENT_STUDENT_MAPPING</code> wale bachche. Staff ke liye module rights.</td></tr>
-      <tr><td>2</td><td><b>Kisi bhi student ka profile badalna</b> (IDOR, write)</td><td><code>update-user-profile-content</code> / <code>-bulk</code> → <code>ClientDashboardCommonController.java:1568</code>: <code>userService.getUser(authentication.getUserId())</code>; <code>save-docs</code> bhi ids payload se</td><td>Doosre student ka naam, phone, timezone, parents, documents badal dena; naam badalne par transcript/Lens sync, timezone badalne par uski future classes shift</td><td><span class="b out">Critical</span></td><td>Same ownership rule as #1, har save + <code>save-docs</code> par.</td></tr>
-      <tr><td>3</td><td><b>Locked fields sirf UI me locked</b></td><td><code>profileViewNew.js</code> DOB (:560), Email (:720), parent emails (:1268), relationType (:1850) disable karta hai; server <code>saveStudentProfileNewTheme</code> (<code>DashboardStudentUtil.java:2667+</code>) keyId ke hisaab se sab save karta hai</td><td>Student API se apna DOB, login email, parent email, primary parent, <code>admissonDate</code>, <code>reserveASeat</code>, <code>verifyUserEmail</code> (bina proof verified) badal sakta hai</td><td><span class="b out">High</span></td><td>Student role ke liye in <code>keyId</code>s ko server par reject (allowlist of student-editable keys).</td></tr>
-      <tr><td>4</td><td><b>School email password plaintext</b></td><td>Load: <code>DashboardStudentUtil.java:1622</code> (<code>schoolEmailAccount.password</code>); <code>create-azure-user</code> response bhi</td><td>Har profile load par Azure (Outlook/Teams) password network, logs aur browser memory me; #1 ke saath kisi aur ka password bhi</td><td><span class="b out">High</span></td><td>Load response se password hatao; sirf "show / copy" par session-owner ke liye alag existing call (ya reset flow) se.</td></tr>
-      <tr><td>5</td><td><b>Bina session ke endpoints</b></td><td><code>student/id-card-pdf</code> (<code>ClientDashboardStudentController.java:2555</code>, <code>userId</code> payload se), <code>create-azure-user</code> (:2815), <code>delete-uploaded-docs</code> (<code>ClientDashboardCommonController.java:2376</code>), <code>/api/v1/common/otp-process</code> (<code>CommonController.java:419</code>), <code>inactivate-time-preference</code> / <code>-user-soc-media</code> / <code>-joined-extra-curricular</code></td><td>Bina login: kisi bhi student ka ID card PDF; kisi ke liye Azure account banana (+ password); kisi ke documents delete; OTP endpoint se SMS/WhatsApp/email spam (paisa lagta hai); kisi ki time-slots/links hatana</td><td><span class="b out">High</span></td><td>Session check + #1 wala ownership rule; <code>otp-process</code> par session + per-user rate limit.</td></tr>
-      <tr><td>6</td><td><b>OTP verify galat value ko verified kar deta hai</b></td><td><code>CommonUtil.java:3891-3895</code>: profile OTP <code>entityId + entityType</code> se milta hai; <code>:4011-4016</code>: verified mark request ke <code>email/userphone</code> aur request ke <code>userId</code> ko</td><td>Apne number par OTP mangao, verify ke waqt kisi aur ka number / email bhejo → woh "Verified" ban jaata hai. Verify par expiry aur galat-attempt limit bhi nahi (6 digit brute force)</td><td><span class="b warn">Medium-High</span></td><td>OTP row me bheja gaya value save karo aur verify par match karo; expiry (jaise 10 min) + 5 galat attempts ke baad lock; <code>userId</code> session se.</td></tr>
-      <tr><td>7</td><td><b>Withdrawal eligibility sirf UI me</b></td><td>UI <code>student/withdrawal-eligibility</code> (<code>selfEligible = !hasParentAccount</code>) dekhta hai; <code>parent/withdrawal-*</code> me <code>canActOnStudent</code> (<code>WithdrawalRequestAdminServiceImpl.java:634</code>) apna record allow karta hai</td><td>Jis student ka parent account hai woh bhi API se withdrawal (enrollment cancel) shuru kar sakta hai, parent ke bina</td><td><span class="b warn">Medium</span></td><td><code>withdrawal-init</code> par bhi same eligibility rule (parent account ho to student self-request nahi).</td></tr>
-      <tr><td>8</td><td><b>"+" ka space ban jaana</b> (data corruption)</td><td><code>v1/security/AesUtil.java:182-191</code>: <code>decode()</code> Base64 ke baad <code>URLDecoder.decode</code>; <code>decodePreservePlus</code> (:229) maujood par profile me use nahi</td><td><code>a+b@gmail.com</code> → <code>a b@gmail.com</code>, social/Facebook URLs, address kharab save hote hain</td><td><span class="b warn">Medium</span></td><td>Profile save / OTP / docs endpoints me <code>decodePreservePlus</code>.</td></tr>
-      <tr><td>9</td><td><b>Session-out par galat code</b></td><td><code>DashboardSchoolUtil.java:14792-14799</code>: session na ho to <code>status "0"</code> (failed), <code>"3"</code> nahi</td><td>Client "session gaya" aur "galti hui" me farak nahi kar paata (hamara global session dialog isse khud nahi pakdega)</td><td><span class="b ph">Low</span></td><td><code>STATUS_CODE_SESSION_OUT</code> ("3") lautao. Tab tak BFF "0" + session message ko session-out maanega.</td></tr>
+      <tr><td>1</td><td><b>Kisi bhi student ka profile padhna</b></td><td>STILL OPEN</td><td><code>DashboardSchoolUtil.java:14811-14817</code>: <code>userId</code> payload se, <code>userService.getUser(userId)</code>; login zaroori (:14789) par ownership/school check nahi</td><td>Koi bhi logged-in user doosre ka poora profile (DOB, phone, address, parents, documents, school email password) dekh sakta hai</td><td><span class="b out">Critical</span></td><td>Student token → target = <code>sessionUtil.getUserId()</code> (token user), payload <code>userId</code> ignore. Parent → sirf <code>PARENT_STUDENT_MAPPING</code> ke bachche. Staff → module rights.</td></tr>
+      <tr><td>2</td><td><b>Kisi bhi student ka profile badalna</b></td><td>STILL OPEN</td><td><code>ClientDashboardCommonController.java:1557, 1578</code> (single), <code>:1630, 1652</code> (bulk): <code>getUser(authentication.getUserId())</code>; token user sirf "lastUpdatedBy". <code>save-docs</code> (:2413-2418) payload DTO seedha</td><td>Doosre ka naam, phone, timezone (future classes shift), documents badalna</td><td><span class="b out">Critical</span></td><td>#1 wala ownership rule har save + <code>save-docs</code> par.</td></tr>
+      <tr><td>3</td><td><b>Locked fields sirf UI me</b></td><td>STILL OPEN</td><td><code>DashboardStudentUtil.saveStudentProfileNewTheme</code> (:2667) role use hi nahi karta: <code>relationType</code> :3152, <code>verifyUserEmail</code> :3479/:4271, <code>admissonDate</code> :3607, <code>dob</code> :3614, <code>reserveASeat</code> :4034. <code>studentStandardId</code> payload se (:2681)</td><td>Student apna DOB, enrollment date, primary parent badal sakta hai, email bina proof "verified"</td><td><span class="b out">High</span></td><td>Student role ke liye editable <code>keyId</code> allowlist; <code>studentStandardId</code> user ka hi ho.</td></tr>
+      <tr><td>4</td><td><b>School email password plaintext</b></td><td>STILL OPEN</td><td><code>DashboardStudentUtil.java:1622</code>; <code>createAzureUser</code> :12074-12096 payload user ka password lautata hai</td><td>Har load par Azure password network/logs me; #1 ke saath doosre ka bhi</td><td><span class="b out">High</span></td><td>Load response se hatao; sirf owner ke "show / copy" par.</td></tr>
+      <tr><td>5</td><td><b>Ownership check nahi (pehle session hi nahi tha)</b></td><td>PARTLY: ab token chahiye</td><td><code>id-card-pdf</code> (<code>ClientDashboardStudentController.java:2568</code>), <code>create-azure-user</code> (:2836), <code>delete-uploaded-docs</code> (<code>ClientDashboardCommonController.java:2386</code>), <code>inactivate-time-preference</code> / <code>-user-soc-media</code> (<code>StudentAssginReportUtil.java:3130, 3152</code>), <code>inactivate-joined-extra-curricular</code> (<code>DashboardStudentUtil.java:11179</code>); <code>otp-process</code> ab bhi public (visitor token / service key se)</td><td>Logged-in user kisi ka ID card PDF, Azure account, documents delete, slots/links hata sakta hai; OTP endpoint se SMS/email spam</td><td><span class="b out">High</span></td><td>#1 wala ownership rule; <code>otp-process</code> par user token + rate limit.</td></tr>
+      <tr><td>6</td><td><b>OTP verify galat value ko verified kar deta hai</b></td><td>STILL OPEN</td><td><code>CommonUtil.java:3769</code> lookup <code>entityId + entityType</code>; :3877 sirf code compare; :3895-3908 request ke <code>userId</code> + email/phone verified. Expiry, attempt limit, used-check nahi; sirf resend cap (:3797)</td><td>Apne number par OTP, verify par doosra number bhejo → verified; 6 digit brute force</td><td><span class="b warn">Medium-High</span></td><td>Bheja gaya value OTP row me, verify par match; 10 min expiry; 5 galat → lock; userId token se.</td></tr>
+      <tr><td>7</td><td><b>Withdrawal eligibility sirf UI me</b></td><td>STILL OPEN</td><td><code>ClientWithdrawalRequestParentController.java:79-99</code> sirf report; <code>canActOnStudent</code> (<code>WithdrawalRequestAdminServiceImpl.java:634-639</code>) student = actor ko hamesha allow</td><td>Parent-account wala student API se enrollment cancel shuru kar sakta hai</td><td><span class="b warn">Medium</span></td><td><code>withdrawal-init</code> par bhi eligibility rule.</td></tr>
+      <tr><td>8</td><td><b>"+" ka space ban jaana</b></td><td>STILL OPEN</td><td><code>v1/security/AesUtil.java:182-195</code> (<code>URLDecoder</code> :189); <code>decodePreservePlus</code> (:248) profile me use nahi; <code>Payload.getDecodedPayload</code> :43 bhi same</td><td><code>a+b@gmail.com</code> → <code>a b@gmail.com</code>, URLs kharab</td><td><span class="b warn">Medium</span></td><td>Profile/OTP/docs me <code>decodePreservePlus</code>.</td></tr>
+      <tr><td>9</td><td><b>Session-out par galat code</b></td><td>PARTLY: ab token na ho to 401 pehle hi</td><td><code>DashboardSchoolUtil.java:14792/14798</code> ab bhi <code>"0"</code></td><td>Token ho par user na mile to client farak nahi kar paata</td><td><span class="b ph">Low</span></td><td><code>"3"</code> lautao; BFF 401 + "0"+session message ko session-out maanega.</td></tr>
+      <tr><td>10</td><td><b>NEW: parent/student login email badalna</b></td><td>OPEN</td><td><code>switchParentStudEmailId</code> (<code>DashboardStudentUtil.java:2709-2750</code>): <code>studUserId</code> aur <code>parentId</code> payload se, un users ke login email rewrite</td><td>Kisi aur ka login email badal kar account le lena (password reset us email par)</td><td><span class="b out">Critical</span></td><td>Sirf token user ke apne mapping ke liye; student ke liye band.</td></tr>
+      <tr><td>11</td><td><b>NEW: Bearer token ka school URL se match nahi</b></td><td>OPEN</td><td><code>AuthTokenFilter</code> school compare nahi karta (sirf <code>BrowserTokenFilter</code> :98 karta hai)</td><td>School A ka token <code>/{schoolB}/dashboard/...</code> par chalta hai (Next.js BFF Bearer hi bhejta hai)</td><td><span class="b out">High</span></td><td><code>AuthTokenFilter</code> me bhi <code>sameSchool</code> check.</td></tr>
+      <tr><td>12</td><td><b>NEW: OTP 123456 jab OTP_SERVICE band</b></td><td>OPEN (prod value pata nahi)</td><td><code>CommonUtil.java:2742-2747</code> <code>generateOTPCode</code> → <code>123456</code></td><td>Setting off ho to har OTP (profile, withdrawal) ka code sabko pata</td><td><span class="b warn">High if off</span></td><td>Prod me setting confirm; fixed code sirf non-prod profile me.</td></tr>
+      <tr><td>13</td><td><b>NEW: guards ka jhootha bharosa</b></td><td>OPEN</td><td><code>BodyIdentityAdvice</code> (:121-129) sirf typed body me <code>getAuthentication()</code> dekhta hai, profile ke <code>Payload</code> body nahi; exempt roles me PARENT nahi (:50-53). <code>AccessPolicyInterceptor</code> prod me <code>log</code> (<code>application-prod8100.yml:171-178</code>), sirf <code>{UNIQUEUUID}</code> path var (:133-146); <code>UNIQUEUUID</code> header kahin check nahi</td><td>Lagta hai identity check enforce hai, par profile endpoints par chalta hi nahi</td><td><span class="b warn">Medium</span></td><td>Profile endpoints ka ownership check util me (#1), guard config par bharosa nahi.</td></tr>
     </tbody>
   </table></div>
 
-  <h3>19.4.1 Next.js port khud kya karega (backend fix ke bina bhi)</h3>
+  <div class="note ok"><b class="t">Batch A code me ho gaya (2026-11-06, is-rest-api, uncommitted)</b>
+    Naya <code>v1/session/UserAccessGuard.java</code>: token user apna record hamesha; STUDENT sirf apna; PARENT apne mapped bachche (<code>PARENT_STUDENT_MAPPING</code>); SUPER_ADMIN sab; baaki roles sirf apne school ke users. Laga hai:
+    <ul>
+      <li>#1 <code>profile-view-content-new</code> (<code>DashboardSchoolUtil</code>) → mana ho to "You are not allowed to access this profile."</li>
+      <li>#2 <code>update-user-profile-content</code> + <code>-bulk</code> + <code>save-docs</code> (<code>ClientDashboardCommonController</code>).</li>
+      <li>#4 school e-mail password: <b>user ke kehne par pehle jaisa</b> (jo profile dekh sakta hai use dikhta hai, staff/teacher bhi). Ab sirf ownership guard (#1) ki wajah se doosre school / doosre student ka password nahi milta; plaintext rehna user ka decision.</li>
+      <li>#5 <code>id-card-pdf</code> (403), <code>create-azure-user</code>, <code>delete-uploaded-docs</code>.</li>
+      <li>#10 <code>switchParentStudEmailId</code>: student caller mana; ids sirf isi profile ke student aur uske apne parent ke (legacy UI me yeh switch pehle se band hai).</li>
+      <li>#11 <code>AuthTokenFilter</code> + <code>SecurityConfig</code>: Bearer token sirf apne school ke URL par user banata hai. Doosre school ke URL par request 401 "invalid token" nahi, <b>visitor</b> ki tarah chalti hai (<code>OTHER_SCHOOL_ATTRIBUTE</code> set; visitor token ke existing rules: public routes visitor cookie / <code>/{school}/auth/visitor</code> se, protected routes par login chahiye). Tests: AuthTokenFilterTest 11 (3 naye).</li>
+    </ul>
+    Pending: Batch B–D. <code>mvn compile</code> pass (merge ki <code>ClientDashboardAzlixbuzzController.getUserGradeBookSummary</code> error bhi theek: return <code>Object</code>, retry call me <code>format</code>). Auth tests pass: AuthTokenFilter 8, BrowserTokenFilter 41, DefaultDeny 17, BrowserSignInChain 5, BeanConstructors 1, DashboardParentUtilAttendanceDetails 37. Live test (19.4.3 checklist) baaki.
+  </div>
+
+  <h3>19.4.1 Merge ne kya theek kiya (bharosa kar sakte hain)</h3>
   <ul>
-    <li><code>userId</code>, <code>studentStandardId</code>, <code>authentication</code> hamesha server session se (<code>utils/backendRequest.js</code>); browser se kabhi nahi. Isse <b>hamara UI</b> kabhi doosre student ka data nahi maangega, lekin #1-#5 direct API call se phir bhi khule rahenge.</li>
-    <li>Locked fields (#3) ke liye save request hi nahi banegi; school email password (#4) page par default chhupa rahega.</li>
-    <li>Load ka <code>"0"</code> + session message (#9) global "Your session has been logged out" dialog kholega.</li>
-    <li>Phone hamesha ISD aur number alag fields me (#8 se bachne ke liye "+" kabhi ek string me nahi).</li>
+    <li>Bina login ke dashboard/profile URLs ab 401 (default-deny); <code>X-Account</code> sirf browser ke apne cookies me se chunta hai, kisi aur ban nahi sakte; <code>X-Service-Key</code> dashboard/profile nahi kholta.</li>
+    <li>Fix ab aasaan hai: <code>sessionUtil.getUserId()</code> (= <code>CurrentIdentity</code>, token user) har jagah pehle se available hai; bas profile utils me payload <code>userId</code> ki jagah use karna / compare karna hai.</li>
+    <li>Settings jo naam se dikhte hain par asar nahi: <code>auth.token.enabled</code> koi code nahi padhta (<code>application.yml:285-286</code> ka comment purana); <code>auth.sso.issue-tokens</code> ka switch nahi, SSO hamesha tokens deta hai (<code>SsoTokenHandoff.java:20-22</code>).</li>
   </ul>
 
-  <h3>19.4.2 Fix order (recommended)</h3>
+  <h3>19.4.2 Next.js port khud kya karega</h3>
+  <ul>
+    <li><code>userId</code>, <code>studentStandardId</code>, <code>authentication</code> hamesha <code>getAccountSession()</code> (token) se; browser se kabhi nahi. Hamara UI kabhi doosre ka data nahi maangega, lekin direct API calls (#1-#5, #10) backend fix tak khule.</li>
+    <li>Locked keys (#3, #10) ki request hi nahi banegi; school email password default chhupa (#4).</li>
+    <li>401 aur load ka <code>"0"</code>+session message (#9) global session dialog kholenge.</li>
+    <li>Phone ISD aur number alag fields (#8).</li>
+  </ul>
+
+  <h3>19.4.3 Fix order (recommended)</h3>
   <div class="tw"><table>
     <thead><tr><th>Batch</th><th>Gaps</th><th>Kab tak</th></tr></thead>
     <tbody>
-      <tr><td><b>A</b></td><td>#1 read IDOR, #2 write IDOR, #4 plaintext password, #5 ka <code>id-card-pdf</code> / <code>create-azure-user</code> / <code>delete-uploaded-docs</code></td><td>P1 (read-only page) live hone se pehle</td></tr>
-      <tr><td><b>B</b></td><td>#3 locked keys, #8 "+" bug</td><td>P2 (Personal + Parent save) se pehle</td></tr>
-      <tr><td><b>C</b></td><td>#6 OTP verify, #5 ka <code>otp-process</code> session + rate limit</td><td>P4 (OTP + photo) se pehle</td></tr>
-      <tr><td><b>D</b></td><td>#7 withdrawal eligibility, #5 ke <code>inactivate-*</code></td><td>P5 (school email + withdrawal) se pehle</td></tr>
-      <tr><td>-</td><td>#9 session-out code</td><td>Kabhi bhi (BFF workaround already plan me)</td></tr>
+      <tr><td><b>A</b> <span class="b in">Code done</span></td><td>#1, #2, #4, #10, #11; #5 ka <code>id-card-pdf</code> / <code>create-azure-user</code> / <code>delete-uploaded-docs</code></td><td>P1 (read-only) live hone se pehle · 2026-11-06 code me, test baaki</td></tr>
+      <tr><td><b>B</b></td><td>#3 locked keys, #8 "+" bug, #13 (ownership util me)</td><td>P2 (save) se pehle</td></tr>
+      <tr><td><b>C</b></td><td>#6 OTP verify, #12 OTP_SERVICE confirm, #5 ka <code>otp-process</code> (user token + rate limit)</td><td>P4 (OTP + photo) se pehle</td></tr>
+      <tr><td><b>D</b></td><td>#7 withdrawal, #5 ke <code>inactivate-*</code></td><td>P5 (school email + withdrawal) se pehle</td></tr>
+      <tr><td>-</td><td>#9</td><td>Kabhi bhi (BFF workaround plan me)</td></tr>
     </tbody>
   </table></div>
-  <div class="note"><b class="t">Har fix ka test</b>Do test students (A, B) + ek parent. A ke session se B ka <code>userId</code> bhej kar load / save / id-card / delete-docs / azure → sab reject hone chahiye; A ka apna sab kaam kare. Locked key (DOB, email) save → reject. OTP: number X par bhejo, verify par Y bhejo → reject; 6th galat code → lock. Email <code>a+b@…</code> save → waise hi wapas aaye.</div>
+  <div class="note"><b class="t">Har fix ka test</b>Do test students (A, B) + ek parent, alag token. A ke token se B ka <code>userId</code> → load / save / save-docs / id-card / delete-docs / azure / inactivate-* / switch email → sab reject; A ka apna kaam chale. School X ke token se school Y ka URL → 401. Locked key (DOB, email) save → reject. OTP: X par bhejo, Y verify → reject; 6th galat → lock; 10 min baad → expired. <code>a+b@…</code> save → waise hi wapas.</div>
   </div>
 
   <h3>19.5 Next.js design</h3>
   <ul>
-    <li><b>Route</b>: <code>app/[school]/(dashboard)/student/my-profile/page.jsx</code> → <code>components/student/MyProfile.jsx</code> (logic) → K–5 me <code>components/k5/pages/K5Profile.jsx</code>, baaki grades ke liye plain view (My Certificates jaisa pattern). Header (K5 + normal) ka "My Profile" item toast ki jagah is route par jaayega. DB menu row ki zaroorat nahi (link header se hai).</li>
-    <li><b>BFF</b>: <code>services/profileApi.js</code> ("use server") sab calls central <code>utils/backendRequest.js</code> se (session check, cookies, session-out → global dialog). <code>userId</code>, <code>studentStandardId</code>, <code>authentication</code> hamesha <b>server session</b> se bharenge, browser se kabhi nahi. Load ka <code>status "0"</code> + session message bhi session-out maana jaayega.</li>
-    <li><b>Mapping util</b>: <code>utils/profileModel.js</code>: positional array → named sections (<code>motherName</code>/<code>gurdianFacebook</code> jaise naam theek), field → <code>keyId</code> map (save request), <code>MMM dd, yyyy</code> ⇄ date picker (shadcn <code>DatePicker</code>, native date input nahi), % complete calculator, phone ISD alag field me (kabhi "+91…" ek string me nahi).</li>
-    <li><b>Save model</b>: mockup ka "Bulk Save" = <code>update-user-profile-bulk</code> (non-transactional: response ke hisaab se per-field error dikhana). <code>W001</code> / <code>WPR01</code> par confirm dialog, phir same request <code>"Y"</code> ke saath.</li>
-    <li><b>Hooks</b>: <code>useStudentProfile</code> (React Query load), mutations har action ke liye; save ke baad sirf profile query invalidate.</li>
-    <li><b>Pico tip</b>: <code>my-profile</code> → "This page is all about you! Keep your details up to date." (mockup <code>pfTip</code>).</li>
-    <li><b>Mobile</b>: left section nav → upar horizontal chips / select; 3-column field grid → 1 column ≤760px.</li>
+    <li><b>Route</b>: <code>app/[school]/(dashboard)/student/my-profile/page.jsx</code> (proxy matcher <code>/:school/student/:path*</code> se token-protected) → <code>components/student/MyProfile.jsx</code> (logic) → K–5: <code>components/k5/pages/K5Profile.jsx</code>, baaki: plain view. Dono headers ka "My Profile" toast ki jagah is route par.</li>
+    <li><b>BFF</b>: <code>services/profileApi.js</code> ("use server"), sab calls <code>utils/backendRequest.js</code> se: token check pehle, <code>Authorization: Bearer</code> + service key, 401 / session-out → <code>{sessionExpired}</code>. Ids token session se bhare jaayenge.</li>
+    <li><b>Model util</b> <code>utils/profileModel.js</code>: positional array → named sections, field → <code>keyId</code>, <code>MMM dd, yyyy</code> ⇄ shadcn <code>DatePicker</code>, % complete, phone ISD alag.</li>
+    <li><b>Save</b>: "Bulk Save" = <code>update-user-profile-bulk</code> (non-transactional, per-field errors); <code>W001</code> / <code>WPR01</code> par confirm dialog. Cookie writes nahi: Bearer requests CSRF filter se exempt hain.</li>
+    <li><b>Hooks</b>: <code>useStudentProfile</code> (React Query) + mutations; save ke baad sirf profile query invalidate.</li>
+    <li><b>Pico tip</b>: <code>my-profile</code> → "This page is all about you! Keep your details up to date."</li>
+    <li><b>Mobile</b>: section nav → horizontal chips / select; 3-column fields → 1 column ≤760px.</li>
   </ul>
 
   <h3>19.6 Port phases</h3>
   <div class="tw"><table>
     <thead><tr><th>Step</th><th>Kaam</th><th>Writes / side effects</th></tr></thead>
     <tbody>
-      <tr><td><b>P1 · Read-only</b></td><td>Route, BFF load, model util, 7 sections read-only, % ring, ID card download link, header link.</td><td>Koi nahi</td></tr>
-      <tr><td><b>P2 · Personal + Parent save</b></td><td>Single + bulk save, masters (state/city), timezone warning, W001/WPR01 confirms, validations (legacy rules).</td><td>DB writes; naam badalne par transcript/Lens sync, timezone par future classes shift</td></tr>
-      <tr><td><b>P3 · Academic + timing + clubs</b></td><td>Previous school, documents upload (base64), progress report frequency, time slots add/remove, sports/clubs.</td><td>Uploads, ID card regenerate (photo)</td></tr>
-      <tr><td><b>P4 · OTP + photo</b></td><td>Send/resend/verify (phone, WhatsApp, email), photo crop + upload.</td><td>SMS / WhatsApp / email bhejta hai</td></tr>
-      <tr><td><b>P5 · School email + Withdrawal</b></td><td>Activate / reset; withdrawal eligibility → init → OTP → list.</td><td>Azure account, emails, withdrawal request (enrollment cancel shuru)</td></tr>
+      <tr><td><b>P1 · Read-only</b></td><td>Route, BFF load, model util, 7 sections read-only, % ring, ID card link, header link.</td><td>Koi nahi</td></tr>
+      <tr><td><b>P2 · Personal + Parent save</b></td><td>Single + bulk save, masters, timezone warning, W001/WPR01, validations.</td><td>DB writes; naam → transcript/Lens sync, timezone → future classes shift</td></tr>
+      <tr><td><b>P3 · Academic + timing + clubs</b></td><td>Previous school, documents, progress report frequency, slots, clubs.</td><td>Uploads, ID card regenerate</td></tr>
+      <tr><td><b>P4 · OTP + photo</b></td><td>Send/resend/verify (phone, WhatsApp, email), photo crop + upload.</td><td>SMS / WhatsApp / email</td></tr>
+      <tr><td><b>P5 · School email + Withdrawal</b></td><td>Activate / reset; eligibility → init → OTP → list.</td><td>Azure account, emails, enrollment cancel shuru</td></tr>
     </tbody>
   </table></div>
-  <div class="note warn"><b class="t">Testing rule</b>P2 se aage har step asli writes karta hai (SMS/email, withdrawal). Test sirf test student par, aur withdrawal / azure activation user ki explicit approval ke baad hi chalayenge.</div>
+  <div class="note warn"><b class="t">Testing rule</b>P2 se aage asli writes (SMS/email, withdrawal). Sirf test student par; withdrawal / azure activation explicit approval ke baad.</div>
 
   <h3>19.7 Open questions (user se)</h3>
   <ol>
-    <li>19.4 ke backend fixes kab? (Recommended: 19.4.2 ka Batch A, yaani #1, #2, #4 aur id-card / azure / delete-docs, P1 se pehle.)</li>
-    <li>Mockup me Sports ka events table nahi hai: legacy ka events table rakhna hai ya hatana?</li>
-    <li>School email: mockup jaisa input dikhana ya legacy jaisa read-only + copy? (Recommended: read-only, password sirf maangne par.)</li>
-    <li>Parent-account wale student ke liye Withdrawal section chhupana (legacy) ya backend par bhi rokna?</li>
-    <li>Non-K5 students ke liye bhi naya page (plain look) ya abhi sirf K–5?</li>
+    <li>19.4.3 ka Batch A (backend) port P1 se pehle karna hai? (Recommended: haan, #1, #2, #10, #11 critical/high.)</li>
+    <li>Prod me <code>OTP_SERVICE</code> setting on hai? (#12)</li>
+    <li>Sports ka events table rakhna hai ya mockup jaisa hatana?</li>
+    <li>School email: read-only + copy (recommended) ya mockup jaisa input?</li>
+    <li>Non-K5 students ke liye bhi naya page (plain look) ya sirf K–5?</li>
   </ol>
 </section>
 

@@ -1,5 +1,4 @@
-import { cookies } from "next/headers";
-import { auth } from "@/auth";
+import { getAccountSession, serviceKeyHeaders, smsAuthHeaders } from "@/lib/auth/session";
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { isSessionOutResponse } from "@/utils/sessionState";
@@ -7,40 +6,40 @@ import { isSessionOutResponse } from "@/utils/sessionState";
 /**
  * The central server-side door to the Java backend for session-aware calls (not a "use server" file itself:
  * "use server" services import it). One place that
- *   1. validates the next-auth session BEFORE any request leaves the server,
- *   2. forwards the browser's cookies (the Java HttpSession),
+ *   1. validates the signed-in user's SMS token BEFORE any request leaves the server (getAccountSession: verifies the
+ *      access token, renews it with the refresh token when it has expired; no valid login -> session expired),
+ *   2. sends that token as "Authorization: Bearer" (+ this server's service key) instead of any session cookie,
  *   3. recognises the backend's session-out answers, and
  *   4. never throws across the Server Action boundary (Next masks thrown messages in production):
  *      it always RETURNS { ok: true, data } or { ok: false, code, message, sessionExpired? }.
  * The client side turns that into real errors with utils/serverCall.js (callServer).
  *
- * `buildBody(session)` receives { userId, schoolUUID, schoolNumericId, email } from the session, so ids never
- * come from the browser. `path` is relative to the school: "dashboard/parent/..." -> {schoolUUID}/dashboard/...
+ * `buildBody(session)` receives { userId, schoolUUID, schoolNumericId, email, uniqueId } from the session, so ids never
+ * come from the browser. `headers(session)` adds request headers a legacy endpoint still reads (e.g. UNIQUEUUID). `path` is relative to the school: "dashboard/parent/..." -> {schoolUUID}/dashboard/...
  */
 
 export const sessionExpiredResult = () => ({ ok: false, sessionExpired: true, code: "SESSION_EXPIRED", message: "Your session has been logged out" });
 const failure = (code, message) => ({ ok: false, code, message });
 
 export async function getSessionIdentity() {
-  const session = await auth();
+  const session = await getAccountSession();
   if (!session?.userId || !session?.schoolUUID) return null;
   return {
     userId: Number(session.userId),
     schoolUUID: session.schoolUUID,
     schoolNumericId: session.schoolNumericId != null ? Number(session.schoolNumericId) : null,
     email: session.email || "",
+    uniqueId: session.uniqueId || "",
   };
 }
 
-async function sessionCookieHeader() {
-  try {
-    return (await cookies()).toString();
-  } catch {
-    return "";
-  }
+// The signed-in user's SMS access token (Bearer) + this server's service key. The backend knows the user from
+// the token (lib/auth/session.js); the browser's cookies are no longer forwarded.
+async function authHeaders() {
+  return { ...serviceKeyHeaders(), ...(await smsAuthHeaders()) };
 }
 
-export async function backendRequest({ path, method = "POST", query, buildBody, checkSession = "Y" }) {
+export async function backendRequest({ path, method = "POST", query, buildBody, headers, checkSession = "Y" }) {
   const identity = await getSessionIdentity();
   if (!identity) return sessionExpiredResult();
   if (!hasBackendOrigin()) return failure("CONFIG", "The backend is not configured.");
@@ -54,7 +53,7 @@ export async function backendRequest({ path, method = "POST", query, buildBody, 
   try {
     const baseUrl = await resolveServerBackendOrigin();
     const url = `${baseUrl}/${identity.schoolUUID}/${path}${queryString ? `?${queryString}` : ""}`;
-    const init = { method, headers: { "Content-Type": "application/json", Cookie: await sessionCookieHeader() }, cache: "no-store" };
+    const init = { method, headers: { "Content-Type": "application/json", ...(headers ? headers(identity) : {}), ...(await authHeaders()) }, cache: "no-store" };
     if (method !== "GET" && buildBody) init.body = JSON.stringify({ payload: encodePayload(buildBody(identity)) });
     response = await fetch(url, init);
   } catch (error) {

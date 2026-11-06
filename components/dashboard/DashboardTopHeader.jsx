@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Menu, LogOut, ChevronDown, User, KeyRound, UserPlus } from "lucide-react";
 import toast from "react-hot-toast";
 import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
@@ -19,7 +20,14 @@ import { CartHeaderButton } from "@/components/student/cart/CartHeaderButton";
  * built (profile/change-password = Phase C; LMS = LMS SSO). Log out is live.
  */
 export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onHamburger }) {
+  const router = useRouter();
   const [confirmLogout, setConfirmLogout] = useState(false);
+  // My Profile is the signed-in student's own page (app/[school]/(dashboard)/student/my-profile).
+  const openProfile = () => {
+    const role = String(session?.role ?? session?.userRole ?? "").toLowerCase();
+    if (role === "student" && session?.schoolUUID) router.push(`/${session.schoolUUID}/student/my-profile`);
+    else toast("My Profile — coming soon", { icon: "🚧" });
+  };
   const [loggingOut, setLoggingOut] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [lms, setLms] = useState(false);
@@ -107,7 +115,7 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
                     <span className="text-sm font-bold">{displayName}</span>
                   </div>
                 </div>
-                <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); toast("My Profile — coming soon", { icon: "🚧" }); }}
+                <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); openProfile(); }}
                   className="flex w-full items-center gap-3 px-4 py-3 text-sm font-semibold text-black hover:bg-slate-100">
                   <User className="h-4 w-4" /> My Profile
                 </button>

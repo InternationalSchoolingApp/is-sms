@@ -45,6 +45,7 @@ const PAGE_TIPS = {
   "academic-year-extention": "Tap a course to see how you can extend it.",
   "student-video-library": "Watch your lessons in order, one by one!",
   "my-certificates": "Need a certificate? Tap Request a certificate and the school will make it for you.",
+  "my-profile": "This page is all about you! Keep your details up to date.",
   "student-addon": "Want more classes? Pick a plan, then ask a grown-up to buy it!",
   cart: "Want more classes? Pick a plan, then ask a grown-up to buy it!",
   // Every club page (Language, Social and E-Sports clubs).

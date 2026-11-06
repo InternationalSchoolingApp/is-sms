@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { ChevronDown, KeyRound, LogOut, Menu, MoreVertical, Palette, Smartphone, User } from "lucide-react";
 import toast from "react-hot-toast";
 import { AppDownloadDialog } from "@/components/k5/AppDownloadDialog";
@@ -19,7 +20,14 @@ export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMe
   const [moreOpen, setMoreOpen] = useState(false);
   const [appOpen, setAppOpen] = useState(false);
   const [lms, setLms] = useState(false);
+  const router = useRouter();
   const [confirmLogout, setConfirmLogout] = useState(false);
+  // My Profile is the signed-in student's own page (app/[school]/(dashboard)/student/my-profile).
+  const openProfile = () => {
+    const role = String(session?.role ?? session?.userRole ?? "").toLowerCase();
+    if (role === "student" && session?.schoolUUID) router.push(`/${session.schoolUUID}/student/my-profile`);
+    else toast("My Profile — coming soon", { icon: "🚧" });
+  };
   const [loggingOut, setLoggingOut] = useState(false);
 
   const displayName = userName || "Student";
@@ -126,7 +134,7 @@ export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMe
                   label="My Profile"
                   onClick={() => {
                     setMenuOpen(false);
-                    toast("My Profile — coming soon", { icon: "🚧" });
+                    openProfile();
                   }}
                 />
                 <MenuItem
@@ -174,7 +182,7 @@ export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMe
                   icon={<span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FFC531] font-k5-display text-xl font-bold text-[#1C2640]">{firstName.charAt(0).toUpperCase()}</span>}
                   onClick={() => {
                     setMoreOpen(false);
-                    toast("My Profile — coming soon", { icon: "🚧" });
+                    openProfile();
                   }}
                 >
                   <span className="flex flex-col leading-tight">

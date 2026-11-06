@@ -1,6 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { serviceKeyHeaders, smsAuthHeaders } from "@/lib/auth/session";
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { getSettingValue } from "@/services/studentSignupApi";
@@ -49,7 +49,7 @@ export async function getDashboardMenu({ schoolUUID, schoolId, roleId, userId })
     const body = { payload: encodePayload({ schoolId, roleId, userId, moduleType: "M", parentId: 0 }) };
     const response = await fetch(`${baseUrl}/${schoolUUID}/api/v1/module-details`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify(body),
     });
     console.log("getDashboardMenu status:", response.status);
@@ -82,7 +82,7 @@ export async function getDashboardUserDetails({ schoolUUID, userId }) {
     const body = { payload: encodePayload({ entityId: userId, type: "U" }) };
     const response = await fetch(`${baseUrl}/${schoolUUID}/api/v1/get-demo-dashboard-user-details`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify(body),
     });
     return parseJsonResponse(response);
@@ -131,7 +131,7 @@ export async function getChatUnseenCount({ schoolUUID, userId, userRole, email }
     const body = { payload: encodePayload({ role: userRole, email, userId }) };
     const response = await fetch(`${baseUrl}/${schoolUUID}/api/v1/chat`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify(body),
     });
     return parseJsonResponse(response);
@@ -163,22 +163,14 @@ export async function getStudentDashboardToggle(schoolUUID) {
  * session, not the path or body.
  *
  * UNLIKE every other call in this file, getSchoolCalendar's Java method also
- * gates on sessionUtil.getUserId() — i.e. a real HTTP session, not just the
- * decoded payload — so the browser's own session cookie must be forwarded on
- * this server-to-server call (see getSessionCookieHeader doc comment).
+ * gates on sessionUtil.getUserId() — i.e. a signed-in user, not just the
+ * decoded payload — so the user's SMS token goes on this server-to-server call
+ * (see authHeaders).
  */
-async function getSessionCookieHeader() {
-  // Deliberately forwards every cookie the browser sent on the incoming
-  // request (not just one known name): the Java backend's own session
-  // cookie's name isn't something this codebase owns/controls, and the
-  // local dev proxy (next.config.mjs's /:schoolId/dashboard/:path* rewrite)
-  // keeps it same-origin, so it rides along with everything else next-auth
-  // already sets on this origin.
-  try {
-    return (await cookies()).toString();
-  } catch {
-    return "";
-  }
+// The signed-in user's SMS access token (Bearer) + this server's service key. The backend knows the user from
+// the token (lib/auth/session.js); the browser's cookies are no longer forwarded.
+async function authHeaders() {
+  return { ...serviceKeyHeaders(), ...(await smsAuthHeaders()) };
 }
 
 // Shared by every call below: POST {schoolUUID}<path> with the standard
@@ -190,7 +182,7 @@ async function postDashboardPayload(schoolUUID, path, body) {
   const baseUrl = await resolveServerBackendOrigin();
   const response = await fetch(`${baseUrl}/${schoolUUID}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Cookie: await getSessionCookieHeader() },
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
     body: JSON.stringify({ payload: encodePayload(body) }),
   });
   return parseJsonResponse(response);
@@ -246,7 +238,7 @@ export async function getSchoolCalendar({ schoolUUID, userId, startDate, endDate
     const body = { payload: encodePayload({ userId, startDate, endDate }) };
     const response = await fetch(`${baseUrl}/${schoolUUID}/dashboard/school-calendar`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Cookie: await getSessionCookieHeader() },
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify(body),
     });
     return parseJsonResponse(response);
@@ -268,7 +260,7 @@ export async function getLiveClassAttendanceStatus({ schoolUUID, entityId, entit
     const body = { payload: encodePayload({ entityId, entityType, classDate, classStartTime }) };
     const response = await fetch(`${baseUrl}/${schoolUUID}/dashboard/live-class-attendance-status`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Cookie: await getSessionCookieHeader() },
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify(body),
     });
     return parseJsonResponse(response);
@@ -295,7 +287,7 @@ export async function getClassJoinDetails({ schoolUUID, url }) {
     const absoluteUrl = /^https?:\/\//i.test(url) ? url : `${baseUrl}/${schoolUUID}${url.startsWith("/") ? "" : "/"}${url}`;
     const response = await fetch(absoluteUrl, {
       method: "GET",
-      headers: { Cookie: await getSessionCookieHeader() },
+      headers: { ...(await authHeaders()) },
     });
     return parseJsonResponse(response);
   } catch {
@@ -382,7 +374,7 @@ async function postBuzzProgressPayload(schoolUUID, path, body, uniqueId) {
   const baseUrl = await resolveServerBackendOrigin();
   const response = await fetch(`${baseUrl}/${schoolUUID}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", UNIQUEUUID: uniqueId || "", Cookie: await getSessionCookieHeader() },
+    headers: { "Content-Type": "application/json", UNIQUEUUID: uniqueId || "", ...(await authHeaders()) },
     body: JSON.stringify({ payload: encodePayload(body) }),
   });
   return parseJsonResponse(response);
@@ -444,7 +436,7 @@ export async function getStudentGradebookReport({ schoolUUID, uniqueId, params }
     });
     const response = await fetch(
       `${baseUrl}/${schoolUUID}/dashboard/get-user-gradebook/${uniqueId}?payload=${encodeURIComponent(payload)}&format=json`,
-      { headers: { Cookie: await getSessionCookieHeader() }, cache: "no-store" },
+      { headers: { ...(await authHeaders()) }, cache: "no-store" },
     );
     return parseJsonResponse(response);
   } catch {
@@ -465,7 +457,7 @@ export async function getModuleRights({ schoolUUID, schoolId, roleId, userId, mo
     const baseUrl = await resolveServerBackendOrigin();
     const response = await fetch(`${baseUrl}/${schoolUUID}/api/v1/module`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify({
         payload: encodePayload({ schoolId: String(schoolId), roleId: String(roleId), userId: String(userId), moduleId: String(moduleId) }),
       }),
@@ -567,7 +559,7 @@ export async function getStudentAssignedTeacher({ schoolUUID, userId }) {
     const baseUrl = await resolveServerBackendOrigin();
     const response = await fetch(`${baseUrl}/${schoolUUID}/dashboard/parent/student-assgined-teacher?check-session=Y`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Cookie: await getSessionCookieHeader() },
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify({ payload: encodePayload({ userId, studentUserId: userId }) }),
     });
     return parseJsonResponse(response);

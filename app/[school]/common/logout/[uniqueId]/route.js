@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getAccountSession } from "@/lib/auth/session";
+import { clearAccount, heldAccounts } from "@/lib/auth/accountCookies";
+import { logoutAtSms, trustedBackend } from "@/lib/auth/smsTokens";
 import { getBackendOverrideCookieName, isBackendOverrideAllowed } from "@/utils/backendOrigin";
 
 /**
@@ -32,7 +34,7 @@ function backendOrigin(request) {
 
 export async function GET(request, { params }) {
   const { school, uniqueId } = await params;
-  const session = await auth();
+  const session = await getAccountSession();
   const backend = backendOrigin(request);
   const userKey = [session?.uniqueId, uniqueId].find((value) => value && SAFE_SEGMENT.test(String(value)));
 
@@ -49,6 +51,14 @@ export async function GET(request, { params }) {
   }
 
   const response = NextResponse.redirect(target, 303);
+  // Sign this user out of this browser: end the login at SMS and clear the user's token cookies
+  // (other users signed in to other tabs stay signed in).
+  const held = heldAccounts(request.cookies).find((a) => a.account === userKey);
+  if (held) {
+    await logoutAtSms(trustedBackend(held.profile?.backend), held.profile?.schoolUUID, held.refreshToken);
+    clearAccount(response.cookies, held.account);
+  }
+  // Old Auth.js cookies a browser may still carry from before the token sign-in.
   for (const { name } of request.cookies.getAll()) {
     if (AUTH_COOKIE.test(name)) {
       response.cookies.set(name, "", { path: "/", maxAge: 0, secure: name.startsWith("__") });

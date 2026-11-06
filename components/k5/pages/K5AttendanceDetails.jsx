@@ -39,7 +39,8 @@ const CELL =
   "px-3.5 py-2.5 max-[760px]:order-2 max-[760px]:px-3 max-[760px]:py-1.5 max-[760px]:before:mb-0.5 max-[760px]:before:block max-[760px]:before:text-xs max-[760px]:before:font-black max-[760px]:before:text-k5-mut max-[760px]:before:content-[attr(data-l)]";
 const SELECT =
   "w-full min-h-[50px] cursor-pointer rounded-[14px] border-[3px] border-k5-line bg-k5-card px-3 text-base font-extrabold text-k5-ink disabled:cursor-default disabled:bg-k5-soft";
-const FIELD_LABEL = "flex min-w-0 flex-1 flex-col gap-1 text-[13px] font-black text-k5-mut max-[760px]:basis-full";
+// Each filter keeps room for a whole date ("Nov 30, 2026"); when the row is narrow they wrap two (or one) per line.
+const FIELD_LABEL = "flex min-w-[190px] flex-[1_1_190px] flex-col gap-1 text-[13px] font-black text-k5-mut max-[460px]:min-w-full";
 const PAGE_BUTTON = "min-h-11 cursor-pointer rounded-[14px] border-[3px] border-k5-line bg-k5-card px-4 font-k5-display text-base font-semibold text-k5-ink disabled:cursor-default disabled:opacity-45";
 
 // The row's chip: a late arrival is "Late". An absent row is "Absent" for a student; other roles see the backend's
@@ -151,7 +152,7 @@ export function K5AttendanceDetails({ status, onStatusChange }) {
         </div>
       </div>
 
-      <div className="flex flex-nowrap items-end gap-3 rounded-[20px] bg-k5-soft px-3.5 py-3 max-[760px]:flex-wrap">
+      <div className="flex flex-wrap items-end gap-3 rounded-[20px] bg-k5-soft px-3.5 py-3">
         <label className={FIELD_LABEL}>
           Date
           <select value={dateFilter} onChange={(e) => changeDateFilter(e.target.value)} className={SELECT}>
@@ -163,7 +164,7 @@ export function K5AttendanceDetails({ status, onStatusChange }) {
             ))}
           </select>
         </label>
-        <div className={`${FIELD_LABEL} max-[760px]:basis-[45%]`}>
+        <div className={FIELD_LABEL}>
           From
           <DatePicker
             icon={CalendarDays}
@@ -178,7 +179,7 @@ export function K5AttendanceDetails({ status, onStatusChange }) {
             }}
           />
         </div>
-        <div className={`${FIELD_LABEL} max-[760px]:basis-[45%]`}>
+        <div className={FIELD_LABEL}>
           To
           {/* To is always today: when Custom is on the picker opens, but today is the only day that can be chosen. */}
           <DatePicker icon={CalendarDays} value={ymdToPickerDate(to)} disabled={!isCustom} height="h-[50px]" fromDate={ymdToPickerDate(today)} toDate={ymdToPickerDate(today)} onChange={() => {}} />

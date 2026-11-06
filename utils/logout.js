@@ -8,6 +8,20 @@ async function signOutAccount(uniqueId) {
   await fetch("/api/session/logout", { method: "POST", headers: { "X-Account": uniqueId } });
 }
 
+// The user this tab works for (components/auth/TabAccount.jsx keeps it in sessionStorage).
+function tabAccount() {
+  try {
+    return window.sessionStorage.getItem("isx-account");
+  } catch {
+    return null;
+  }
+}
+
+/** Signs this tab's user out of the browser (no-op when the tab has none). */
+export async function signOutTabAccount() {
+  await signOutAccount(tabAccount());
+}
+
 // Session expired / missing: land on the school's login page. The expired account's cookies were
 // already cleared by proxy.js when it found the login ended.
 export async function expireSession(schoolUUID) {
@@ -16,7 +30,7 @@ export async function expireSession(schoolUUID) {
   // to the parent dashboard). Keep "Preserve log" on in DevTools — the page navigates away right after this.
   console.warn("[expireSession] called -> going to the login page", new Error().stack);
   try {
-    await signOut({ redirect: false });
+    await signOutTabAccount();
   } catch (err) {
     console.error("Sign out failed:", err);
   }

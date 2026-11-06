@@ -1,7 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
-import { auth } from "@/auth";
+import { getAccountSession, serviceKeyHeaders, smsAuthHeaders } from "@/lib/auth/session";
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
@@ -22,17 +21,15 @@ import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOri
  */
 
 async function identity() {
-  const session = await auth();
+  const session = await getAccountSession();
   if (!session?.userId || !session?.schoolUUID) return null;
   return { userId: session.userId, schoolUUID: session.schoolUUID, schoolId: session.schoolNumericId };
 }
 
-async function sessionCookieHeader() {
-  try {
-    return (await cookies()).toString();
-  } catch {
-    return "";
-  }
+// The signed-in user's SMS access token (Bearer) + this server's service key. The backend knows the user from
+// the token (lib/auth/session.js); the browser's cookies are no longer forwarded.
+async function authHeaders() {
+  return { ...serviceKeyHeaders(), ...(await smsAuthHeaders()) };
 }
 
 async function parseJsonResponse(response) {
@@ -52,7 +49,7 @@ async function callBackend(schoolUUID, path, body, { method = "POST", asQuery = 
   const url = `${baseUrl}/${schoolUUID}${path}${asQuery ? `?payload=${encodeURIComponent(encoded)}` : ""}`;
   const response = await fetch(url, {
     method,
-    headers: { "Content-Type": "application/json", Cookie: await sessionCookieHeader() },
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
     body: asQuery ? undefined : JSON.stringify({ payload: encoded }),
   });
   return parseJsonResponse(response);

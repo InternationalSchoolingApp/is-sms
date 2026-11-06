@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/components/providers/AuthSessionProvider";
 import { useQuery } from "@tanstack/react-query";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { getDashboardChatLinks, getDashboardMenu, getDashboardUserDetails, getStudentDashboardDetails, getStudentDemoData } from "@/services/dashboardApi";
@@ -136,6 +136,9 @@ function useResolveGradeBand({ role, session, authenticated }) {
     // Sub-flag of the K–5 UI: PreK / Nursery (standardId 17) gets the simpler variant (plan 12.8).
     isPreK: isK5 && isPreKStandard(standardId),
     isSelfStudy: typeof details?.isSelfStudy === "boolean" ? details.isSelfStudy : isSelfStudyProgram(registrationType),
+    // The token sign-in carries no role id (only the role name); the dashboard details list the user's
+    // role modules, each with that role id (needed by the sidebar menu and module rights).
+    roleId: details?.roleAndModuleAssign?.roleAndModuleDTO?.[0]?.roleId ?? null,
   };
 
   // Remember the live (non-dummy) result for this tab, so the next load skips the loader.
@@ -168,6 +171,7 @@ function useResolveDashboardContext({ role = "student" } = {}) {
 
   // Before every other query: server actions run one at a time, and the shell waits for this one.
   const grade = useResolveGradeBand({ role, session, authenticated });
+  const roleId = session?.roleId ?? grade.roleId ?? null;
 
   // Dynamic menu (faithful Java sidebar) — the only source for the sidebar now.
   // For students, item-level visibility/labels are then adjusted to match
@@ -176,13 +180,13 @@ function useResolveDashboardContext({ role = "student" } = {}) {
   // getDashboardUserDetails (fee-details needs an Online signup, Academic
   // Year Extension is hidden for certain providers/standards, etc).
   const menuQuery = useQuery({
-    queryKey: ["dashboard-menu", role, session?.schoolNumericId, session?.roleId, session?.userId],
+    queryKey: ["dashboard-menu", role, session?.schoolNumericId, roleId, session?.userId],
     queryFn: async () => {
       const [dto, details] = await Promise.all([
         getDashboardMenu({
           schoolUUID: session.schoolUUID,
           schoolId: session.schoolNumericId,
-          roleId: session.roleId,
+          roleId,
           userId: session.userId,
         }),
         role === "student" ? getDashboardUserDetails({ schoolUUID: session.schoolUUID, userId: session.userId }) : null,
@@ -190,7 +194,8 @@ function useResolveDashboardContext({ role = "student" } = {}) {
       const mapped = mapBackendMenu(dto) ?? [];
       return role === "student" ? applyStudentNavRules(mapped, details ?? {}, { schoolNumericId: session.schoolNumericId }) : mapped;
     },
-    enabled: authenticated,
+    // Waits for the role id (dashboard details) so the menu is not cached empty.
+    enabled: authenticated && Boolean(roleId),
     staleTime: Infinity,
     gcTime: Infinity,
     refetchOnWindowFocus: false,
@@ -238,8 +243,8 @@ function useResolveDashboardContext({ role = "student" } = {}) {
         schoolName: session.schoolName,
         userId: session.userId,
         uniqueId: session.uniqueId,
-        userRole: session.userRole ?? null,
-        roleId: session.roleId ?? null,
+        userRole: session.userRole ?? session.role ?? null,
+        roleId,
         userName: studentName,
         // Demo account (USER.DEMO_USER) — pass to isDummyStudentMode() like legacy isDemoUser.
         demoUser: Boolean(session.demoUser),
