@@ -4,6 +4,7 @@
 @import "./k5-theme.css";
 @import "./appearance.css";
 @import "./k5-modules.css";
+@import "./profile-plain.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -294,6 +295,20 @@ input:-internal-autofill-selected {
 /* The library pins the dropdown's inline width to the number input alone; span the whole field. */
 .iti-split-popup:not(.iti--fullscreen-popup) .iti__country-selector {
   width: 100% !important;
+}
+/* Profile phone: K5 theme tokens, thicker borders, larger radii (matching other profile fields). */
+.iti.iti-split.iti-profile .iti__selected-country {
+  border: 3px solid var(--k5-line);
+  border-radius: 14px;
+  background: var(--k5-card);
+  min-height: 50px;
+}
+.iti.iti-split.iti-profile .iti__selected-country[aria-expanded="true"],
+.iti.iti-split.iti-profile[data-status="dirty"] .iti__selected-country {
+  border-color: var(--k5-ac);
+}
+.iti.iti-split.iti-profile[data-status="error"] .iti__selected-country {
+  border-color: var(--k5-ri);
 }
 
 /*

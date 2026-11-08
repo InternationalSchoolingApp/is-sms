@@ -32,16 +32,11 @@ export async function GET(request) {
   if (!response.ok) {
     return NextResponse.json({ message: "The ID card could not be downloaded." }, { status: response.status === 401 ? 401 : response.status || 502 });
   }
-  // The backend answers 200 with an empty body when it could not make the card (its catch-all), so read it
-  // (a card is a small PDF) and turn "nothing" into an error instead of an empty download.
-  const file = await response.arrayBuffer().catch(() => null);
-  if (!file || file.byteLength === 0) {
-    return NextResponse.json({ message: "Your ID card is not ready yet. Please try again later." }, { status: 502 });
-  }
-
   const headers = new Headers();
   headers.set("Content-Type", response.headers.get("content-type") || "application/pdf");
+  const contentLength = response.headers.get("content-length");
+  if (contentLength) headers.set("Content-Length", contentLength);
   headers.set("Content-Disposition", response.headers.get("content-disposition") || 'inline; filename="student-id-card.pdf"');
   headers.set("Cache-Control", "no-store");
-  return new NextResponse(file, { status: 200, headers });
+  return new NextResponse(response.body, { status: 200, headers });
 }

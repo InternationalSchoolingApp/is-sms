@@ -18,6 +18,7 @@ import { DayPlan } from "@/components/k5/home/DayPlan";
 import { MonthPlan, WeekPlan } from "@/components/k5/home/WeekMonthPlans";
 import { LiveClassAlert } from "@/components/k5/home/LiveClassAlert";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
+import { K5CompleteProfileModal } from "@/components/k5/home/K5CompleteProfileModal";
 import { getBrowserTimezone, resolveTimezone } from "@/utils/calendarEvents";
 import { classTitle, dayAt, dayKey, keyToDate, weekKeys } from "@/utils/k5Calendar";
 import { revealPlanTop } from "@/utils/k5Scroll";
@@ -106,6 +107,7 @@ export function StudentHomeK5() {
           studentEmail={dashboardData.studentEmail}
         />
       )}
+      <K5CompleteProfileModal />
     </>
   );
 }

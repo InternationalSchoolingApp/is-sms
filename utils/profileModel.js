@@ -193,6 +193,15 @@ export function buildProfileModel({ profile, places = {}, withdrawalEligible = f
     (parents.channels.some((c) => c.on) ? 1 : 0) +
     (parents.callingTimes.length ? 1 : 0);
 
+  // School-defined custom fields of each section (DashboardStudentUtil.getCustomFieldsForSection; the existing page
+  // renders them with renderDynamicFieldByUserID in Personal, Parent, Academic and Sports — Timing's are commented out).
+  const customFields = {
+    personal: customFieldsOf(p.customFields),
+    parents: customFieldsOf(g.customFields),
+    academic: customFieldsOf(a.customFields),
+    sports: customFieldsOf(s.customFields),
+  };
+
   // 3. Academic
   const standard = (Array.isArray(a.studentStandardDTO) ? a.studentStandardDTO : [])[0] || {};
   const subjects = standard.studentCourseSelectionDTO?.semesterSubjects1;
@@ -202,7 +211,14 @@ export function buildProfileModel({ profile, places = {}, withdrawalEligible = f
         const m = /^(.*?)\s*\(([^)]*)\)\s*$/.exec(text(label));
         return m ? { name: m[1], code: m[2] } : { name: text(label), code: "" };
       });
-  const documents = DOCS.map(([key, label]) => ({ key, label, url: text(a[key]), name: text(a[`${key}Name`]), type: text(a[`${key}AttachmentType`]) }));
+  // The parent passport's type comes as parentPassportAttachmentType (DashboardStudentUtil), the others as <key>AttachmentType.
+  const documents = DOCS.map(([key, label]) => ({
+    key,
+    label,
+    url: text(a[key]),
+    name: text(a[`${key}Name`]),
+    type: text(key === "parentPassportProof" ? a.parentPassportAttachmentType ?? a.parentPassportProofAttachmentType : a[`${key}AttachmentType`]),
+  }));
   const academic = {
     studentId: text(a.studentID),
     academicYearStart: text(a.academicYearStartDate),
@@ -218,6 +234,9 @@ export function buildProfileModel({ profile, places = {}, withdrawalEligible = f
     ctiRecommendedGrade: text(a.ctiTakenRecommendedGrade) || "No",
     documents,
     idCardUrl: text(a.studentIdCardDownloadUrl),
+    // The existing page shows Download Student ID Card only for an active enrolment (standardStatus 0).
+    idCardAllowed: String(a.standardStatus ?? "") === "0",
+    systemTrainingSkipped: text(a.systemTrainingStatus).toLowerCase() === "skipped" && !a.showSkipSystemTraining,
   };
   const academicCount = documents.filter((d) => d.url).length;
 
@@ -248,7 +267,7 @@ export function buildProfileModel({ profile, places = {}, withdrawalEligible = f
 
   // 6. School e-mail account (Microsoft 365). The password is shown as on the existing page, only once created.
   const active = yes(e.azureUserStatus);
-  const schoolEmail = { active, email: active ? text(e.email) : "", password: active ? text(e.password) : "" };
+  const schoolEmail = { active, email: active ? text(e.email) : "", password: active ? text(e.password) : "", passwordCreated: active && Boolean(text(e.passwordCreatedDate)) };
 
   // 7. Withdrawal (P5 builds the request flow; P1 only shows who the request is for).
   const withdrawal = { eligible: withdrawalEligible, inProgress: filled(profile?.withdrawnRequest) };
@@ -282,12 +301,52 @@ export function buildProfileModel({ profile, places = {}, withdrawalEligible = f
     pct: ratio(overallCount, overallTotal),
     sections,
     rightToEdit: profile?.rightToEdit === true,
+    // { phoneNumber: true, phoneNumberWhatsAppStatus: false, ... } from profileContactVerification (P4 OTP).
+    verified: Object.fromEntries(Object.keys(verification).map((field) => [field, verified(field)])),
     personal,
     parents,
     academic,
     timing,
+    customFields,
     sports,
     schoolEmail,
     withdrawal,
   };
+}
+
+// ---- Custom profile fields ----
+const CUSTOM_TYPES = ["text", "date", "file", "dropdown", "checkbox", "radio"];
+/** A dropdown option's stored value, as the existing page builds it: spaces -> "_", upper case. */
+export const customOptionKey = (label) => String(label || "").trim().replace(/\s+/g, "_").toUpperCase();
+/**
+ * [{ id, fieldId, label, type (text | date | file | dropdown | checkbox | radio), options [label], value, url,
+ *    attachmentType ("I" | "P"), purpose }] from one section's customFields (backend fieldType input/dropdown/checkbox/
+ * radio with inputType text/date/file). Unknown types are left out.
+ */
+export function customFieldsOf(list) {
+  const t = (v) => (v == null ? "" : String(v).trim());
+  return (Array.isArray(list) ? list : [])
+    .map((f) => {
+      const fieldType = t(f?.fieldType).toLowerCase();
+      const inputType = t(f?.inputType).toLowerCase();
+      const type = fieldType === "input" ? (["text", "date", "file"].includes(inputType) ? inputType : "text") : fieldType;
+      return {
+        id: t(f?.id),
+        fieldId: t(f?.fieldId),
+        label: t(f?.labelName),
+        type,
+        options: (Array.isArray(f?.options) ? f.options : []).map((o) => t(o?.optionValue)).filter(Boolean),
+        value: t(f?.fieldValue),
+        url: t(f?.customFieldURL),
+        attachmentType: t(f?.attachmentType) || "I",
+        purpose: t(f?.purpose),
+      };
+    })
+    .filter((f) => f.id && f.label && CUSTOM_TYPES.includes(f.type));
+}
+/** The value as a person reads it: a dropdown's option label, a checkbox list joined with commas. */
+export function customDisplayValue(field) {
+  if (field.type === "dropdown") return field.options.find((o) => customOptionKey(o) === field.value) || field.value;
+  if (field.type === "checkbox") return field.value.split(",").map((x) => x.trim()).filter(Boolean).join(", ");
+  return field.value;
 }

@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, FileText, IdCard, Info, Save } from "lucide-react";
+import { ArrowLeft, ArrowRight, Camera, Check, Eye, EyeOff, FileText, IdCard, Info, Save } from "lucide-react";
 import toast from "react-hot-toast";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { ConfirmDialog, EditableParents, EditablePersonal } from "@/components/k5/pages/K5ProfileEditors";
-import { EditableDocuments, EditablePreviousSchool, EditableSports, EditableTiming, ProgressReportPicker } from "@/components/k5/pages/K5ProfileEditorsP3";
+import { K5PhotoDialog } from "@/components/k5/pages/K5PhotoDialog";
+import { SchoolEmailEditor, WithdrawalEditor } from "@/components/k5/pages/K5ProfileP5";
+import { CustomFields } from "@/components/k5/pages/K5ProfileCustomFields";
+import { EditableDocuments } from "@/components/k5/pages/K5ProfileDocs";
+import { DocumentVerification } from "@/components/k5/pages/K5ProfileDocVerification";
+import { EditablePreviousSchool, EditableSports, EditableTiming, ProgressReportPicker } from "@/components/k5/pages/K5ProfileEditorsP3";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { subjectStyle } from "@/utils/k5Calendar";
 
@@ -25,14 +30,15 @@ const H3 = "m-0 font-k5-display text-xl font-semibold text-k5-ink";
 const HR = <hr className="my-1 h-[3px] rounded-[3px] border-none bg-k5-line" />;
 
 /** One read-only value (mockup .pfl + .pfin.pfro). */
-function Field({ label, value, mono, children, wide }) {
+function Field({ label, value, mono, children, wide, floating = false }) {
   const empty = !children && !value;
   return (
     <div className={`flex min-w-0 flex-col gap-1.5 text-sm font-black text-k5-mut ${wide ? "col-span-full" : ""}`}>
-      <span>{label}</span>
+      {!floating && <span>{label}</span>}
       <span
-        className={`flex min-h-[50px] items-center gap-2 rounded-[14px] border-[3px] border-k5-line bg-k5-soft px-3.5 py-2 text-base font-extrabold [overflow-wrap:anywhere] ${empty ? "text-k5-mut" : "text-k5-ink"} ${mono ? "font-mono" : "font-k5-body"}`}
+        className={`${floating ? "relative" : ""} flex min-h-[50px] items-center gap-2 rounded-[14px] border-[3px] border-k5-line bg-k5-soft px-3.5 py-2 text-base font-extrabold [overflow-wrap:anywhere] ${empty ? "text-k5-mut" : "text-k5-ink"} ${mono ? "font-mono" : "font-k5-body"}`}
       >
+        {floating && <span className="pointer-events-none absolute start-3 top-0 -translate-y-1/2 bg-k5-soft px-1 text-xs font-black text-k5-ac">{label}</span>}
         {children || value || "—"}
       </span>
     </div>
@@ -49,11 +55,11 @@ function Mark({ children }) {
   );
 }
 
-function ValueWithMarks({ label, value, marks }) {
+function ValueWithMarks({ label, value, marks, floating = false }) {
   const shown = marks.filter(([on]) => on);
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
-      <Field label={label} value={value} />
+      <Field label={label} value={value} floating={floating} />
       {value && shown.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {shown.map(([, text]) => (
@@ -123,17 +129,17 @@ function ParentBlock({ title, p }) {
     <>
       <h3 className={H3}>{title}</h3>
       <div className={GRID3}>
-        <Field label="First Name" value={p.firstName} />
-        <Field label="Middle Name" value={p.middleName} />
-        <Field label="Last Name" value={p.lastName} />
-        <ValueWithMarks label="Phone Number" value={p.phone} marks={[[p.whatsApp, "WhatsApp"], [p.emergency, "Emergency Contact"]]} />
-        <Field label="Email" value={p.email} />
-        <Field label="Facebook" value={p.facebook} />
-        <Field label="Country" value={p.country} />
-        <Field label="State" value={p.state} />
-        <Field label="City" value={p.city} />
-        <Field label="Occupation" value={p.occupation} />
-        <Field label="Date of Birth" value={p.dob} />
+        <Field label="First Name" value={p.firstName} floating />
+        <Field label="Middle Name" value={p.middleName} floating />
+        <Field label="Last Name" value={p.lastName} floating />
+        <ValueWithMarks label="Phone Number" value={p.phone} marks={[[p.whatsApp, "WhatsApp"], [p.emergency, "Emergency Contact"]]} floating />
+        <Field label="Email" value={p.email} floating />
+        <Field label="Facebook" value={p.facebook} floating />
+        <Field label="Country" value={p.country} floating />
+        <Field label="State" value={p.state} floating />
+        <Field label="City" value={p.city} floating />
+        <Field label="Occupation" value={p.occupation} floating />
+        <Field label="Date of Birth" value={p.dob} floating />
       </div>
     </>
   );
@@ -201,8 +207,8 @@ function ParentsSection({ m }) {
       <ParentBlock title="Guardian's Details" p={g.guardian} />
       {HR}
       <div className={GRID3}>
-        <Field label="Type of Relation (Primary Parent)" value={g.relation} />
-        <Field label="Wedding Anniversary Date" value={g.anniversary} />
+        <Field label="Type of Relation (Primary Parent)" value={g.relation} floating />
+        <Field label="Wedding Anniversary Date" value={g.anniversary} floating />
       </div>
       <h3 className={H3}>Communication</h3>
       <div className="flex flex-wrap gap-2.5">
@@ -296,6 +302,9 @@ function AcademicSection({ m, editor, actions }) {
         ))}
       </div>
       )}
+      {HR}
+      <h3 className={H3}>Document Verification</h3>
+      <DocumentVerification />
       {editor && (
         <>
           {HR}
@@ -403,20 +412,41 @@ function WithdrawalSection({ m }) {
 
 // Sections 1 and 2 are editable when the page has an editor (P2); the rest stay read-only for now.
 const SECTION_VIEWS = {
-  personal: ({ m, editor }) => (editor ? <EditablePersonal m={m} editor={editor} /> : <PersonalSection m={m} />),
+  personal: ({ m, editor, actions }) => (editor ? <EditablePersonal m={m} editor={editor} actions={actions} /> : <PersonalSection m={m} />),
   parents: ({ m, editor, actions }) => (editor ? <EditableParents m={m} editor={editor} actions={actions} /> : <ParentsSection m={m} />),
   academic: AcademicSection,
   timing: ({ m, actions }) => (actions ? <EditableTiming m={m} actions={actions} /> : <TimingSection m={m} />),
   sports: ({ m, editor, actions }) => (editor && actions ? <EditableSports m={m} editor={editor} actions={actions} /> : <SportsSection m={m} />),
-  schoolEmail: SchoolEmailSection,
-  withdrawal: WithdrawalSection,
+  // P5: activate / reset the school e-mail and the withdrawal request flow when the page can edit.
+  schoolEmail: ({ m, actions }) => (actions ? <SchoolEmailEditor m={m} refetch={actions.refetch} /> : <SchoolEmailSection m={m} />),
+  withdrawal: ({ m, actions }) => (actions ? <WithdrawalEditor m={m} /> : <WithdrawalSection m={m} />),
 };
 
-function Avatar({ header }) {
+function Avatar({ header, onPick }) {
   const [broken, setBroken] = useState(false);
   const ring = "shadow-[0_0_0_4px_var(--k5-card),0_0_0_7px_var(--k5-yB)]";
   return (
     <span className="relative flex-none">
+      {onPick && (
+        // Mockup: the round accent camera button on the avatar ("Change profile photo").
+        <label
+          title="Change profile photo"
+          className="absolute -bottom-1 -end-1.5 z-[1] flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-card bg-k5-ac text-white focus-within:ring-4 focus-within:ring-k5-acl"
+        >
+          <Camera className="h-5 w-5" strokeWidth={2.4} aria-hidden="true" />
+          <span className="sr-only">Change profile photo</span>
+          <input
+            type="file"
+            accept="image/jpeg,image/png"
+            className="sr-only"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) onPick(file);
+            }}
+          />
+        </label>
+      )}
       {header.photo && !broken ? (
         // A user-uploaded S3 photo of any size: a plain <img> keeps it simple (no remote image config needed).
         // eslint-disable-next-line @next/next/no-img-element
@@ -432,11 +462,21 @@ function Avatar({ header }) {
 
 /**
  * K–5 look of My Profile (mockup "pgProfile"): hero with photo, name, grade, student ID and the completion bar;
- * a section list with a ring per section; one section at a time with Previous / Next. Read-only in this phase (P1):
- * editing, OTP, uploads and the withdrawal flow come in the next phases (plan section 19).
+ * a section list with a ring per section; one section at a time with Previous / Next. Sections 1–5 are editable when
+ * the page gets an editor / actions (P2–P4: fields, lists, documents, OTP, photo); the withdrawal flow is P5.
  */
-export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownloadIdCard, downloading, editor, actions }) {
+export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownloadIdCard, downloading, downloadProgress, editor, actions }) {
   const [current, setCurrent] = useState(1);
+  const [photoFile, setPhotoFile] = useState(null);
+  const pickPhoto = (file) => {
+    // The existing page (cropperImage.js cropImage, docType "Profile Image"): JPG / PNG only, max 5 MB, one message for both.
+    if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type) || file.size > 5 * 1024 * 1024) return toast.error("Please upload files in JPG, PNG, and JPEG with max size of 5MB");
+    setPhotoFile(file);
+  };
+  const savePhoto = async (blob) => {
+    const ok = await actions?.uploadDocument("Profile Image", new File([blob], "profile.jpg", { type: "image/jpeg" }));
+    if (ok) setPhotoFile(null);
+  };
   usePicoContentReady(!isLoading);
 
   if (isLoading) {
@@ -473,9 +513,11 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
   const meta = [model.header.grade, model.header.studentId].filter(Boolean);
 
   return (
-    <div className="flex flex-col gap-[18px]">
+    // relative: the hidden (sr-only, absolute) file inputs stay inside the page. Without it their containing block is the
+    // document, so inside the regular dashboard's scrolling <main> they stretch the whole page and leave an empty area.
+    <div className="relative flex flex-col gap-[18px]">
       <div className={`${K5_CARD} flex flex-wrap items-center gap-[18px] px-[22px] py-[18px]`}>
-        <Avatar header={model.header} />
+        <Avatar header={model.header} onPick={actions ? pickPhoto : null} />
         <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1.5">
           <h1 className="m-0 font-k5-display text-[34px] font-semibold leading-[1.05] [overflow-wrap:anywhere] max-[600px]:text-[28px]">{model.header.name || "My Profile"}</h1>
           <p className="m-0 text-[17px] font-extrabold text-k5-mut">
@@ -553,13 +595,31 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
             <h2 id="k5-profile-h" className="m-0 min-w-0 flex-[1_1_220px] font-k5-display text-[26px] font-semibold leading-[1.15] max-[600px]:text-[22px]">
               {section.title}
             </h2>
-            {section.key === "academic" && model.academic.idCardUrl && (
-              <button type="button" onClick={onDownloadIdCard} disabled={downloading} className={GREEN_BTN}>
-                <IdCard className="h-5 w-5" aria-hidden="true" />
-                Download Student ID Card
-              </button>
+            {section.key === "academic" && model.academic.systemTrainingSkipped && <span className="text-sm font-black text-k5-mut">System Training Skipped</span>}
+            {section.key === "academic" && model.academic.idCardUrl && model.academic.idCardAllowed && (
+              <div className="flex min-w-[220px] flex-col gap-1.5">
+                <button type="button" onClick={onDownloadIdCard} disabled={downloading} className={GREEN_BTN}>
+                  <IdCard className="h-5 w-5" aria-hidden="true" />
+                  Download Student ID Card
+                </button>
+                {downloading && (
+                  <div className="flex flex-col gap-1" role="status" aria-live="polite">
+                    <div className="flex items-center justify-between gap-2 text-xs font-black text-k5-mut">
+                      <span>Downloading ID card...</span>
+                      <span>{downloadProgress}%</span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-k5-soft" aria-hidden="true">
+                      <div
+                        className="h-full rounded-full bg-[#13803F] transition-[width] duration-200"
+                        style={{ width: `${downloadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
             {section.key === "schoolEmail" &&
+              !actions &&
               (model.schoolEmail.active ? (
                 <a href="https://outlook.office.com" target="_blank" rel="noopener noreferrer" className={ACCENT_BTN}>
                   Open Outlook
@@ -576,6 +636,8 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
           </div>
 
           <View m={model} editor={editor} actions={actions} />
+          {/* The school's own fields for this section (Timing's are switched off on the existing page). */}
+          {["personal", "parents", "academic", "sports"].includes(section.key) && <CustomFields fields={model.customFields?.[section.key]} editor={editor} actions={actions} />}
 
           {!model.rightToEdit && (
             <p className="m-0 flex items-center gap-2 text-sm font-extrabold text-k5-mut">
@@ -597,6 +659,7 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
         </section>
       </div>
       <ConfirmDialog confirm={editor?.confirm} />
+      <K5PhotoDialog key={photoFile ? `${photoFile.name}-${photoFile.size}-${photoFile.lastModified}` : "none"} file={photoFile} saving={actions?.busy === "doc:Profile Image"} onCancel={() => setPhotoFile(null)} onSave={savePhoto} />
     </div>
   );
 }

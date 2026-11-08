@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { CalendarDays, Check, Lock, MessageCircle, Siren, Undo2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { CalendarDays, Check, Lock, MessageCircle, Plus, Siren, Trash2, Undo2, X } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
+import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { EditableCallingTimes } from "@/components/k5/pages/K5ProfileEditorsP3";
+import { OtpControl } from "@/components/k5/pages/K5ProfileOtp";
+import { useIntlTelInput } from "@/hooks/useIntlTelInput";
 import { useProfileMaster } from "@/hooks/useProfileEditor";
-import { GENDERS, PARENTS, formatProfileDate, parseProfileDate, phoneDigits } from "@/utils/profileEdit";
-import { dialCode } from "@/utils/profileModel";
+import { GENDERS, PARENTS, formatProfileDate, parseProfileDate } from "@/utils/profileEdit";
+import { NAME_MAX_LENGTH, isNameKeyAllowed, sanitizeName } from "@/utils/nameInput";
 
 /*
  * Editable pieces of the K–5 My Profile page (mockup .pfl / .pfin / .pffs): an input turns accent-bordered when
@@ -19,9 +23,9 @@ const GRID3 = "grid grid-cols-3 gap-x-4 gap-y-3.5 max-[1180px]:grid-cols-2 max-[
 const GRID2 = "grid grid-cols-2 gap-x-4 gap-y-3.5 max-[600px]:grid-cols-1";
 const H3 = "m-0 font-k5-display text-xl font-semibold text-k5-ink";
 const HR = <hr className="my-1 h-[3px] rounded-[3px] border-none bg-k5-line" />;
-const LABEL = "flex min-w-0 flex-col gap-1.5 text-sm font-black text-k5-mut";
+const LABEL = "relative flex min-w-0 flex-col gap-1.5 text-sm font-black text-k5-mut";
 const INPUT =
-  "min-h-[50px] w-full min-w-0 rounded-[14px] border-[3px] bg-k5-card px-3.5 font-k5-body text-base font-extrabold text-k5-ink outline-none focus:border-k5-ac disabled:cursor-not-allowed disabled:bg-k5-soft";
+  "h-[50px] w-full min-w-0 rounded-[14px] border-[3px] bg-k5-card px-3.5 pt-1 font-k5-body text-base font-extrabold text-k5-ink outline-none focus:border-k5-ac disabled:cursor-not-allowed disabled:bg-k5-soft";
 const ICON_BTN = "flex h-[30px] w-[30px] flex-none cursor-pointer items-center justify-center rounded-[9px] border-none p-0 text-white disabled:cursor-wait disabled:opacity-60";
 
 const req = <span className="text-k5-ri"> *</span>;
@@ -96,54 +100,40 @@ export function UnitBar({ editor, unit }) {
   );
 }
 
-export function EditText({ editor, k, label, required, type = "text", placeholder, wide, showError = true }) {
+/** name: a person's name (letters and spaces only, like the existing page's M.isChars). */
+export function EditText({ editor, k, label, required, type = "text", placeholder, wide, showError = true, name = false }) {
   const unit = editor.unitOf(k);
   const st = editor.status(unit);
+  const value = editor.draft[k] ?? "";
+  const [focused, setFocused] = useState(false);
+  const floated = focused || Boolean(value);
   return (
     <label className={`${LABEL} ${wide ? "col-span-full" : ""}`}>
-      <span>
-        {label}
-        {required && req}
-      </span>
       <span className="relative block min-w-0">
         <input
           type={type}
-          value={editor.draft[k] ?? ""}
+          value={value}
           placeholder={placeholder}
-          onChange={(e) => editor.set(k, e.target.value)}
+          maxLength={name ? NAME_MAX_LENGTH : undefined}
+          onChange={(e) => editor.set(k, name ? sanitizeName(e.target.value).slice(0, NAME_MAX_LENGTH) : e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") editor.save([unit]);
-            if (e.key === "Escape") editor.undo(unit);
+            else if (e.key === "Escape") editor.undo(unit);
+            else if (name && !isNameKeyAllowed(e)) e.preventDefault();
           }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           aria-invalid={Boolean(st.error)}
-          className={`${INPUT} ${border(st)} ${st.dirty ? "pe-[82px]" : st.saved ? "pe-[46px]" : ""}`}
+          className={`${INPUT} peer ${border(st)} ${st.dirty ? "pe-[82px]" : st.saved ? "pe-[46px]" : ""}`}
         />
+        <span className={`pointer-events-none absolute start-3 z-[1] bg-k5-card px-1 transition-all ${floated ? "top-0 -translate-y-1/2 text-xs text-k5-ac" : "top-1/2 -translate-y-1/2 text-base text-k5-mut"}`}>
+          {label}
+          {required && req}
+        </span>
         <InlineActions st={st} onSave={() => editor.save([unit])} onUndo={() => editor.undo(unit)} />
       </span>
       {showError && <ErrorText st={st} />}
     </label>
-  );
-}
-
-function SelectBox({ value, onChange, options, placeholder = "Select", st, disabled, ariaLabel, className = "" }) {
-  const list = options || [];
-  const known = !value || list.some((o) => o.value === value);
-  return (
-    <select
-      value={value ?? ""}
-      onChange={(e) => onChange(e.target.value)}
-      disabled={disabled}
-      aria-label={ariaLabel}
-      className={`${INPUT} cursor-pointer ${st ? border(st) : "border-k5-line"} ${className}`}
-    >
-      <option value="">{placeholder}</option>
-      {!known && <option value={value}>{value}</option>}
-      {list.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
   );
 }
 
@@ -152,12 +142,8 @@ export function EditSelect({ editor, k, label, required, options, loading }) {
   const st = editor.status(unit);
   return (
     <label className={LABEL}>
-      <span>
-        {label}
-        {required && req}
-      </span>
       <span className="relative block min-w-0">
-        <SelectBox value={editor.draft[k]} onChange={(v) => editor.set(k, v)} options={options} st={st} placeholder={loading ? "Loading…" : "Select"} className={st.dirty ? "pe-[110px]" : ""} />
+        <FloatingLabelSelect label={label} required={required} value={editor.draft[k] ?? ""} onValueChange={(value) => editor.set(k, value)} options={options || []} error={st.error} disabled={Boolean(loading)} searchable={(options || []).length > 5} className="w-full" />
         <InlineActions st={st} onSave={() => editor.save([unit])} onUndo={() => editor.undo(unit)} offset="end-8" />
       </span>
       <ErrorText st={st} />
@@ -169,9 +155,9 @@ function EditDate({ editor, k, label, maxToday = true }) {
   const unit = editor.unitOf(k);
   return (
     <div className={LABEL}>
-      <span>{label}</span>
       <DatePicker
         icon={CalendarDays}
+        label={label}
         height="h-[50px]"
         value={parseProfileDate(editor.draft[k])}
         fromDate={new Date(1930, 0, 1)}
@@ -183,11 +169,12 @@ function EditDate({ editor, k, label, maxToday = true }) {
   );
 }
 
-function Locked({ label, value }) {
+function Locked({ label, value, floating = false }) {
   return (
     <div className={LABEL}>
-      <span>{label}</span>
-      <span title="Only the school can change this" className="flex min-h-[50px] items-center gap-2 rounded-[14px] border-[3px] border-k5-line bg-k5-soft px-3.5 py-2 font-k5-body text-base font-extrabold text-k5-mut [overflow-wrap:anywhere]">
+      {!floating && <span>{label}</span>}
+      <span title="Only the school can change this" className={`${floating ? "relative" : ""} flex h-[50px] items-center gap-2 rounded-[14px] border-[3px] border-k5-line bg-k5-soft px-3.5 py-2 font-k5-body text-base font-extrabold text-k5-mut [overflow-wrap:anywhere]`}>
+        {floating && <span className="pointer-events-none absolute start-3 top-0 -translate-y-1/2 bg-k5-soft px-1 text-xs font-black text-k5-ac">{label}</span>}
         <Lock className="h-4 w-4 flex-none" aria-hidden="true" />
         <span className="min-w-0 text-k5-ink">{value || "—"}</span>
       </span>
@@ -195,15 +182,7 @@ function Locked({ label, value }) {
   );
 }
 
-// Country-code options from the countries list (extra = ISO2, extra1 = "+ISD"); a few countries share an ISO code
-// in that list, so each code appears once.
-function useIsoOptions(countries) {
-  const seen = new Set();
-  return (countries || [])
-    .filter((c) => c.extra && c.extra1)
-    .map((c) => ({ value: String(c.extra).toLowerCase(), label: `${String(c.extra).toUpperCase()} ${c.extra1}` }))
-    .filter((o) => (seen.has(o.value) ? false : seen.add(o.value)));
-}
+
 
 function Toggle({ on, onChange, children, icon: Icon }) {
   return (
@@ -215,31 +194,75 @@ function Toggle({ on, onChange, children, icon: Icon }) {
   );
 }
 
-function EditPhone({ editor, label, keys, required, emergencyKey, verified }) {
+function EditPhone({ editor, label, keys, required, emergencyKey, fieldId }) {
   const [numKey, isoKey, waKey] = keys;
   const unit = editor.unitOf(numKey);
   const st = editor.status(unit);
-  const isoOptions = useIsoOptions(editor.countries);
+  const [focused, setFocused] = useState(false);
+  const inputRef = useRef(null);
+  const itiRef = useRef(null);
   const iso = editor.draft[isoKey] || "";
-  const options = iso && !isoOptions.some((o) => o.value === iso) ? [{ value: iso, label: `${iso.toUpperCase()} ${dialCode(iso)}` }, ...isoOptions] : isoOptions;
+
+  // Stable callback — reads the latest editor & keys via ref so it never goes stale inside useIntlTelInput.
+  const stableRef = useRef({ editor, numKey, isoKey });
+  stableRef.current = { editor, numKey, isoKey };
+  const handleChange = useRef((payload) => {
+    const { editor: ed, numKey: nk, isoKey: ik } = stableRef.current;
+    const newIso = payload.countryCode ? payload.countryCode.toLowerCase() : "";
+    const newNum = (payload.contactNumber || "").replace(/\D/g, "");
+    if (newIso === (ed.draft[ik] || "") && newNum === (ed.draft[nk] ?? "")) return;
+    ed.setMany({ [ik]: newIso, [nk]: newNum });
+  }).current;
+
+  useIntlTelInput(inputRef, itiRef, handleChange, iso, { containerClass: "iti-profile" });
+
+  // Sync draft back to the widget when an external change (undo, bulk load) updates the values.
+  useEffect(() => {
+    const input = inputRef.current;
+    const iti = itiRef.current;
+    if (!input || !iti) return;
+    const draftNum = editor.draft[numKey] ?? "";
+    const draftIso = editor.draft[isoKey] || "";
+    if (input.value !== draftNum) input.value = draftNum;
+    const currentIso = iti.getSelectedCountry()?.iso2?.toLowerCase() || "";
+    if (draftIso && currentIso !== draftIso) iti.setSelectedCountry(draftIso);
+  }, [editor.draft[numKey], editor.draft[isoKey]]);
+
+  // Keep the flag selector's border in sync with the unit's dirty / error status.
+  useEffect(() => {
+    const container = inputRef.current?.closest(".iti");
+    if (!container) return;
+    container.dataset.status = st.error ? "error" : st.dirty || st.saved ? "dirty" : "";
+  }, [st.error, st.dirty, st.saved]);
+
   return (
     <div className={LABEL}>
-      <span>
-        {label}
-        {required && req}
-      </span>
-      <div className="flex min-w-0 gap-2">
-        <SelectBox value={iso} onChange={(v) => editor.set(isoKey, v)} options={options} placeholder="Code" st={st} ariaLabel={`${label} country code`} className="!w-[104px] flex-none !px-1.5 text-[15px]" />
+      <span className="relative block min-w-0">
+        <span className="pointer-events-none absolute left-3 top-0 z-[2] -translate-y-1/2 bg-k5-card px-1 text-xs font-black text-k5-ac">Country Code</span>
         <input
+          ref={inputRef}
           type="tel"
-          inputMode="tel"
-          value={editor.draft[numKey] ?? ""}
-          onChange={(e) => editor.set(numKey, phoneDigits(e.target.value))}
+          inputMode="numeric"
+          defaultValue={editor.draft[numKey] ?? ""}
+          autoComplete="off"
+          onInput={(e) => { e.currentTarget.value = e.currentTarget.value.replace(/\D/g, ""); }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           aria-label={label}
           aria-invalid={Boolean(st.error)}
-          className={`${INPUT} ${border(st)}`}
+          className={`${INPUT} ${border(st)} peer`}
         />
-      </div>
+        <span
+          className={`pointer-events-none absolute z-[1] bg-k5-card px-1 transition-all ${
+            focused || editor.draft[numKey]
+              ? "left-[6.75rem] top-0 -translate-y-1/2 text-xs text-k5-ac"
+              : "left-[7.375rem] top-1/2 -translate-y-1/2 text-base text-k5-mut"
+          }`}
+        >
+          {label}
+          {required && req}
+        </span>
+      </span>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
         <Toggle on={editor.draft[waKey]} onChange={(v) => editor.set(waKey, v)} icon={MessageCircle}>
           WhatsApp
@@ -249,14 +272,17 @@ function EditPhone({ editor, label, keys, required, emergencyKey, verified }) {
             Emergency Contact
           </Toggle>
         )}
-        {verified && (
-          <span className="ms-auto inline-flex min-h-7 items-center gap-1 rounded-full border-2 border-k5-ac bg-k5-act px-2.5 text-[13px] font-black text-k5-acx">
-            <Check className="h-3.5 w-3.5" strokeWidth={3.4} aria-hidden="true" />
-            Verified
-          </span>
-        )}
       </div>
       <UnitBar editor={editor} unit={unit} />
+      <OtpControl
+        otp={editor.otp}
+        fieldId={fieldId}
+        label={label}
+        saved={!st.dirty && Boolean(editor.draft[numKey])}
+        verified={editor.verified?.[fieldId]}
+        whatsApp={!st.dirty && Boolean(editor.draft[waKey])}
+        whatsAppVerified={editor.verified?.[`${fieldId}WhatsAppStatus`]}
+      />
     </div>
   );
 }
@@ -274,22 +300,13 @@ function EditPlace({ editor, keys, required }) {
   return (
     <>
       <label className={LABEL}>
-        <span>
-          Country{required && req}
-        </span>
-        <SelectBox value={country} onChange={(v) => editor.setMany({ [countryKey]: v, [stateKey]: "", [cityKey]: "" })} options={countries} st={st} placeholder={countries.length ? "Select" : "Loading…"} />
+        <FloatingLabelSelect label="Country" required={required} value={country ?? ""} onValueChange={(v) => editor.setMany({ [countryKey]: v, [stateKey]: "", [cityKey]: "" })} options={countries} error={st.error} disabled={!countries.length} searchable={countries.length > 5} />
       </label>
       <label className={LABEL}>
-        <span>
-          State{required && req}
-        </span>
-        <SelectBox value={state} onChange={(v) => editor.setMany({ [stateKey]: v, [cityKey]: "" })} options={toOptions(states.data)} st={st} disabled={!country} placeholder={states.isFetching ? "Loading…" : "Select"} />
+        <FloatingLabelSelect label="State" required={required} value={state ?? ""} onValueChange={(v) => editor.setMany({ [stateKey]: v, [cityKey]: "" })} options={toOptions(states.data)} error={st.error} disabled={!country || states.isFetching} searchable={toOptions(states.data).length > 5} />
       </label>
       <label className={LABEL}>
-        <span>
-          City{required && req}
-        </span>
-        <SelectBox value={editor.draft[cityKey]} onChange={(v) => editor.set(cityKey, v)} options={toOptions(cities.data)} st={st} disabled={!state} placeholder={cities.isFetching ? "Loading…" : "Select"} />
+        <FloatingLabelSelect label="City" required={required} value={editor.draft[cityKey] ?? ""} onValueChange={(v) => editor.set(cityKey, v)} options={toOptions(cities.data)} error={st.error} disabled={!state || cities.isFetching} searchable={toOptions(cities.data).length > 5} />
       </label>
       {(st.dirty || st.saved || st.error) && (
         <div className="col-span-full">
@@ -317,30 +334,175 @@ function ChipToggle({ on, onClick, children }) {
   );
 }
 
+const SMALL_BTN =
+  "inline-flex min-h-10 cursor-pointer items-center justify-center gap-1.5 rounded-[12px] border-none px-3.5 font-k5-display text-[15px] font-semibold disabled:cursor-not-allowed disabled:opacity-50";
+const LINK_BTN = "inline-flex cursor-pointer items-center gap-1.5 self-start border-none bg-transparent p-0 text-sm font-black text-k5-acx underline-offset-2 hover:underline";
+
+/**
+ * Hobbies (profileViewNewContent.js hobbiesContent + addOtherHobbiesContent): tick the school's hobbies, or type one
+ * ("Add other hobbies", at least 3 letters, not already there). A typed hobby joins the draft ticked; unticking it
+ * removes it, Undo removes all of them (cancelHobbies). Saved with the group's Save or Bulk Save.
+ */
+function EditableHobbies({ editor }) {
+  const [adding, setAdding] = useState(false);
+  const [value, setValue] = useState("");
+  const chosen = editor.draft.hobbies ? editor.draft.hobbies.split(",").filter(Boolean) : [];
+  const known = editor.hobbies.map((h) => h.label);
+  const typed = chosen.filter((label) => !known.includes(label));
+  const setChosen = (list) => editor.set("hobbies", [...new Set(list)].sort().join(","));
+  const toggle = (label) => setChosen(chosen.includes(label) ? chosen.filter((x) => x !== label) : [...chosen, label]);
+  const add = () => {
+    const label = value.replace(/,/g, " ").replace(/\s+/g, " ").trim();
+    if (label.length <= 2) return toast.error("Invalid hobby. Please type at least 3 letters.");
+    if ([...known, ...typed].some((x) => x.toLowerCase() === label.toLowerCase())) return toast.error("Already added");
+    setChosen([...chosen, label.slice(0, 100)]);
+    setValue("");
+    setAdding(false);
+  };
+  return (
+    <>
+      <h3 className={H3}>Hobbies</h3>
+      <div className="flex flex-wrap gap-2.5">
+        {[...known, ...typed].map((label) => (
+          <ChipToggle key={label} on={chosen.includes(label)} onClick={() => toggle(label)}>
+            {label}
+          </ChipToggle>
+        ))}
+      </div>
+      {adding ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") add();
+              if (e.key === "Escape") setAdding(false);
+            }}
+            aria-label="Other hobby"
+            placeholder="Type a hobby"
+            autoFocus
+            maxLength={100}
+            className={`${INPUT} border-k5-line !w-auto min-w-[220px] flex-1`}
+          />
+          <button type="button" onClick={add} className={`${SMALL_BTN} bg-k5-ac text-white`}>
+            Add
+          </button>
+          <button type="button" onClick={() => setAdding(false)} className={`${SMALL_BTN} bg-k5-soft text-k5-ink`}>
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <button type="button" onClick={() => setAdding(true)} className={LINK_BTN}>
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          Add other hobbies
+        </button>
+      )}
+      <UnitBar editor={editor} unit="hobbies" />
+    </>
+  );
+}
+
+/**
+ * Social Media Links (socialMedaiLinksContent / getSocialMediaFields): the standard links in the existing order
+ * (Instagram marked *), the student's own links with a remove button (inactivate-user-soc-media), and
+ * "Add other social media link" (title + URL, saved at once).
+ */
+function EditableSocial({ editor, actions }) {
+  const [adding, setAdding] = useState(false);
+  const [title, setTitle] = useState("");
+  const [url, setUrl] = useState("");
+  const add = async () => {
+    const ok = await actions.addSocialLink(title, url);
+    if (ok) {
+      setTitle("");
+      setUrl("");
+      setAdding(false);
+    }
+  };
+  const labelOf = (s) => `${s.label === "Twitter" ? "X (Twitter)" : s.label} ${s.custom ? "URL" : "Profile URL"}`;
+  return (
+    <>
+      <h3 className={H3}>Social Media Links</h3>
+      <div className={GRID2}>
+        {editor.social.map((s) => (
+          <div key={s.id} className="relative flex min-w-0 items-end gap-2">
+            <div className="min-w-0 flex-1">
+              <EditText editor={editor} k={`social.${s.id}`} label={labelOf(s)} required={s.label === "Instagram"} type="url" placeholder="https://" />
+            </div>
+            {s.custom && actions && (
+              <button
+                type="button"
+                onClick={() => actions.removeSocialLink(s.userSocialMediaId)}
+                disabled={Boolean(actions.busy)}
+                aria-label={`Remove ${s.label}`}
+                title="Remove"
+                className="mb-[7px] inline-flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-[10px] border-[3px] border-k5-ri bg-k5-rt p-0 text-k5-ri disabled:cursor-wait disabled:opacity-50"
+              >
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      {actions &&
+        (adding ? (
+          <div className={`${GRID3} items-end`}>
+            <label className={LABEL}>
+              <span>Link Title</span>
+              <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} autoFocus className={`${INPUT} border-k5-line`} />
+            </label>
+            <label className={LABEL}>
+              <span>URL</span>
+              <input value={url} onChange={(e) => setUrl(e.target.value)} type="url" placeholder="https://" className={`${INPUT} border-k5-line`} />
+            </label>
+            <div className="flex gap-2">
+              <button type="button" onClick={add} disabled={actions.busy === "social:add"} className={`${SMALL_BTN} min-h-[50px] bg-k5-ac text-white`}>
+                {actions.busy === "social:add" ? "Adding…" : "Add"}
+              </button>
+              <button type="button" onClick={() => setAdding(false)} className={`${SMALL_BTN} min-h-[50px] bg-k5-soft text-k5-ink`}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button type="button" onClick={() => setAdding(true)} className={LINK_BTN}>
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Add other social media link
+          </button>
+        ))}
+    </>
+  );
+}
+
 /** Section 1, editable. */
-export function EditablePersonal({ m, editor }) {
+export function EditablePersonal({ m, editor, actions }) {
   const p = m.personal;
   const timezones = useProfileMaster("timezones");
-  const chosen = new Set(editor.draft.hobbies ? editor.draft.hobbies.split(",") : []);
-  const toggleHobby = (hobbyId) => {
-    const next = new Set(chosen);
-    if (next.has(hobbyId)) next.delete(hobbyId);
-    else next.add(hobbyId);
-    editor.set("hobbies", [...next].sort().join(","));
-  };
   const countries = (editor.countries || []).map((c) => ({ value: c.key, label: c.value }));
   return (
     <>
       <div className={GRID3}>
-        <EditText editor={editor} k="firstName" label="First Name" required />
-        <EditText editor={editor} k="middleName" label="Middle Name" />
-        <EditText editor={editor} k="lastName" label="Last Name" required />
+        <EditText editor={editor} k="firstName" label="First Name" required name />
+        <EditText editor={editor} k="middleName" label="Middle Name" name />
+        <EditText editor={editor} k="lastName" label="Last Name" required name />
         <EditSelect editor={editor} k="gender" label="Gender" required options={GENDERS} />
         <Locked label="Date of Birth" value={p.dob} />
-        <EditPhone editor={editor} label="Phone" keys={["phone", "phoneIso", "phoneWa"]} required verified={p.phoneVerified} />
-        <EditPhone editor={editor} label="Alternate Phone" keys={["altPhone", "altPhoneIso", "altPhoneWa"]} />
-        <Locked label="Email" value={p.email} />
-        <EditText editor={editor} k="altEmail" label="Alternate Email" type="email" />
+        <EditPhone editor={editor} label="Phone" keys={["phone", "phoneIso", "phoneWa"]} required fieldId="phoneNumber" />
+        <EditPhone editor={editor} label="Alternate Phone" keys={["altPhone", "altPhoneIso", "altPhoneWa"]} fieldId="altPhoneNumber" />
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <Locked label="Email" value={p.email} />
+          <OtpControl otp={editor.otp} fieldId="studentEmailId" label="Email" saved={Boolean(p.email)} verified={editor.verified?.studentEmailId} />
+        </div>
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <EditText editor={editor} k="altEmail" label="Alternate Email" type="email" />
+          <OtpControl
+            otp={editor.otp}
+            fieldId="altEmailId"
+            label="Alternate Email"
+            saved={!editor.status(editor.unitOf("altEmail")).dirty && Boolean(editor.draft.altEmail)}
+            verified={editor.verified?.altEmailId}
+          />
+        </div>
         <EditPlace editor={editor} keys={["country", "state", "city"]} required />
         <EditSelect
           editor={editor}
@@ -352,39 +514,30 @@ export function EditablePersonal({ m, editor }) {
         />
         <EditSelect editor={editor} k="nationality" label="Nationality" required options={countries} loading={!countries.length} />
       </div>
-      <EditText editor={editor} k="address" label="Address" />
+      <EditText editor={editor} k="address" label="Address" required />
       {HR}
-      <h3 className={H3}>Hobbies</h3>
-      <div className="flex flex-wrap gap-2.5">
-        {editor.hobbies.map((h) => (
-          <ChipToggle key={h.id} on={chosen.has(h.id)} onClick={() => toggleHobby(h.id)}>
-            {h.label}
-          </ChipToggle>
-        ))}
-      </div>
-      <UnitBar editor={editor} unit="hobbies" />
+      <EditableHobbies editor={editor} />
       {HR}
-      <h3 className={H3}>Social Media Links</h3>
-      <div className={GRID2}>
-        {editor.social.map((s) => (
-          <EditText key={s.id} editor={editor} k={`social.${s.id}`} label={`${s.label === "Twitter" ? "X (Twitter)" : s.label} Profile URL`} type="url" placeholder="https://" />
-        ))}
-      </div>
+      <EditableSocial editor={editor} actions={actions} />
     </>
   );
 }
 
+// The parents' names are shown, not edited: the existing page disables them for a student.
 function EditableParent({ editor, kind, title, email }) {
   const k = (f) => `${kind}.${f}`;
   return (
     <>
       <h3 className={H3}>{title}</h3>
       <div className={GRID3}>
-        <EditText editor={editor} k={k("first")} label="First Name" />
-        <EditText editor={editor} k={k("middle")} label="Middle Name" showError={false} />
-        <EditText editor={editor} k={k("last")} label="Last Name" showError={false} />
-        <EditPhone editor={editor} label="Phone Number" keys={[k("phone"), k("phoneIso"), k("wa")]} emergencyKey={k("emergency")} />
-        <Locked label="Email" value={email} />
+        <Locked label="First Name" value={editor.draft[k("first")]} floating />
+        <Locked label="Middle Name" value={editor.draft[k("middle")]} floating />
+        <Locked label="Last Name" value={editor.draft[k("last")]} floating />
+        <EditPhone editor={editor} label="Phone Number" required keys={[k("phone"), k("phoneIso"), k("wa")]} emergencyKey={k("emergency")} fieldId={`${kind}PhoneNumber`} />
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <Locked label="Email" value={email} floating />
+          <OtpControl otp={editor.otp} fieldId={`${kind}Email`} label={`${title} email`} saved={Boolean(email)} verified={editor.verified?.[`${kind}Email`]} />
+        </div>
         <EditText editor={editor} k={k("facebook")} label="Facebook" />
         <EditPlace editor={editor} keys={[k("country"), k("state"), k("city")]} />
         <EditText editor={editor} k={k("occupation")} label="Occupation" />
@@ -412,7 +565,7 @@ export function EditableParents({ m, editor, actions }) {
       ))}
       {HR}
       <div className={GRID3}>
-        <Locked label="Type of Relation (Primary Parent)" value={g.relation} />
+        <Locked label="Type of Relation (Primary Parent)" value={g.relation} floating />
         <EditDate editor={editor} k="anniversary" label="Wedding Anniversary Date" />
       </div>
       <h3 className={H3}>Communication</h3>
@@ -480,7 +633,7 @@ export function ConfirmDialog({ confirm }) {
             onClick={confirm.accept}
             className="min-h-12 cursor-pointer rounded-full border-[3px] border-k5-ac bg-k5-ac px-5 font-k5-display text-[17px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)]"
           >
-            Yes, save
+            {confirm.okLabel || "Yes, save"}
           </button>
         </div>
       </div>

@@ -1,6 +1,9 @@
 "use server";
 
-import { backendRequest } from "@/utils/backendRequest";
+import { backendRequest, getSessionIdentity, sessionExpiredResult } from "@/utils/backendRequest";
+import { encodePayload } from "@/utils/payloadEncoding";
+import { smsAuthHeaders, serviceKeyHeaders } from "@/lib/auth/session";
+import { resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { PROFILE_DOC_TYPES, loadMyProfileFacts } from "@/services/profileFacts";
 
 /**
@@ -8,6 +11,7 @@ import { PROFILE_DOC_TYPES, loadMyProfileFacts } from "@/services/profileFacts";
  *   live-class preferred times  -> {school}/report/save-time-preference (saveType STUDENT_PROFILE) / dashboard/inactivate-time-preference
  *   joined sports & activities  -> dashboard/save-joined-sports-ec-club / dashboard/inactivate-joined-extra-curricular
  *   documents (remove)          -> dashboard/delete-uploaded-docs   (upload: app/api/profile/document/route.js)
+ *   own social link (remove)    -> dashboard/inactivate-user-soc-media (type SM; adding one is a profile save, socialMedia)
  *
  * These endpoints still take the student / enrolment / row id from the payload without an ownership check (plan
  * section 19.4, gap #5 and the new save-time-preference gap). So here the user is always the token user, the
@@ -100,6 +104,35 @@ export async function removeActivity({ id } = {}) {
   return { ok: true, data: { message: "Activity removed." } };
 }
 
+/** profileViewNew.js inactiveSocialMedia: only one of the user's own custom links (master id 0). */
+export async function removeSocialLink({ userSocialMediaId } = {}) {
+  const facts = await loadMyProfileFacts();
+  if (!facts.ok) return facts;
+  if (!facts.data.socialLinkIds.includes(String(userSocialMediaId))) return fail("NOT_YOURS", "This link is not on your profile.");
+  const result = await backendRequest({
+    path: "dashboard/inactivate-user-soc-media",
+    buildBody: (me) => ({ socMediaId: Number(userSocialMediaId), sessionUserId: me.userId, type: "SM" }),
+  });
+  if (!result.ok) return result;
+  if (failed(result.data)) return fail("SAVE_FAILED", messageOf(result.data, "The link could not be removed."));
+  return { ok: true, data: { message: messageOf(result.data, "Link removed.") } };
+}
+
+/** profileViewNew.js removeUploadImage for a custom file field: type CUSTOM_FILE + customProfileFieldId. */
+export async function removeCustomFile({ customProfileFieldId } = {}) {
+  const id = String(customProfileFieldId || "");
+  const facts = await loadMyProfileFacts();
+  if (!facts.ok) return facts;
+  if (!facts.data.customFields.some((f) => f.id === id && f.type === "file" && f.value)) return fail("NOT_YOURS", "This document is not on your profile.");
+  const result = await backendRequest({
+    path: "dashboard/delete-uploaded-docs",
+    buildBody: (me) => ({ userId: me.userId, studentStandardId: facts.data.studentStandardId, type: "CUSTOM_FILE", customProfileFieldId: Number(id) }),
+  });
+  if (!result.ok) return result;
+  if (failed(result.data)) return fail("SAVE_FAILED", messageOf(result.data, "The document could not be removed."));
+  return { ok: true, data: { message: "Document removed." } };
+}
+
 export async function removeDocument({ docType } = {}) {
   if (!PROFILE_DOC_TYPES.includes(docType)) return fail("BAD_TYPE", "Unknown document.");
   const facts = await loadMyProfileFacts();
@@ -111,4 +144,47 @@ export async function removeDocument({ docType } = {}) {
   if (!result.ok) return result;
   if (failed(result.data)) return fail("SAVE_FAILED", messageOf(result.data, "The document could not be removed."));
   return { ok: true, data: { message: "Document removed." } };
+}
+
+export async function loadDocumentVerification() {
+  const identity = await getSessionIdentity();
+  if (!identity) return sessionExpiredResult();
+  const encoded = encodePayload(identity.userId);
+  const baseUrl = await resolveServerBackendOrigin();
+  const headers = { ...serviceKeyHeaders(), ...(await smsAuthHeaders()) };
+
+  let documents = [];
+  let status = null;
+  try {
+    const docsRes = await fetch(baseUrl + "/student/enrollment/get-documents?payload=" + encodeURIComponent(encoded), { headers, cache: "no-store" });
+    if (docsRes.ok) {
+      const docsData = await docsRes.json().catch(() => null);
+      documents = docsData?.documents || [];
+    }
+  } catch {}
+
+  try {
+    const statusRes = await fetch(baseUrl + "/student/enrollment/get-documents-status?payload=" + encodeURIComponent(encoded), { headers, cache: "no-store" });
+    if (statusRes.ok) {
+      status = await statusRes.json().catch(() => null);
+    }
+  } catch {}
+
+  return { ok: true, data: { documents, status } };
+}
+
+export async function loadProfileCompletingProcess() {
+  // Check setting first
+  const { getSettingsByTypeAndKey } = await import("@/services/settingsApi");
+  const settingResult = await getSettingsByTypeAndKey("CONFIGURATION", "SHOW_STUDENT_PRFOILE_COMPLETING_MODEL");
+  const enabled = settingResult.ok && String(settingResult.data).toUpperCase() === "Y";
+  if (!enabled) return { ok: true, data: { enabled: false, profileData: [] } };
+
+  const result = await backendRequest({
+    path: "dashboard/get-profile-completing-process",
+    buildBody: (me) => ({ userId: me.userId }),
+  });
+  if (!result.ok) return result;
+  const profileData = result.data?.profileData || [];
+  return { ok: true, data: { enabled: true, profileData } };
 }

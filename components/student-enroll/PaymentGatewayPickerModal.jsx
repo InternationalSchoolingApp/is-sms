@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, ArrowRightLeft, ChevronRight, CircleCheckBig, In
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import {
@@ -281,7 +282,12 @@ function OfflineForm({ option, details, onUploadProof, onSubmitOffline, busy }) 
           </label>
           {fileName && (
             <span className="flex items-center gap-2 text-slate-700">
-              {fileName}
+              <Tooltip>
+                <TooltipTrigger delay={100} render={<span className="max-w-[220px] truncate" title={fileName} />}>
+                  {fileName}
+                </TooltipTrigger>
+                <TooltipContent>{fileName}</TooltipContent>
+              </Tooltip>
               <button type="button" aria-label="Remove file" onClick={() => setFileName("")} className="text-red-500">
                 <Trash2 className="h-4 w-4" />
               </button>

@@ -2,6 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { backendRequest } from "@/utils/backendRequest";
+import { loadMyProfileFacts } from "@/services/profileFacts";
 
 /**
  * My Profile P2: saving the student's own personal and parent/guardian details, plus the dropdown lists the
@@ -57,6 +58,8 @@ const STUDENT_KEYS = new Set([
   "progressReportType",
   "extracurricular",
   "communicationPreferredSlots",
+  // School-defined custom fields (fieldValue1 = the field's id); file fields go through the document upload only.
+  "customProfileFieldId",
 ]);
 
 // Only the fields the backend reads for these keys (RequestProfileData), so nothing else rides along.
@@ -80,6 +83,7 @@ const FIELDS = [
   "reportType",
   "sportsAndEcList",
   "callingPreferences",
+  "fieldValue1",
 ];
 
 function clean(item, studentStandardId) {
@@ -97,6 +101,14 @@ export async function saveMyProfile({ studentStandardId, items } = {}) {
   if (!list.length) return { ok: false, code: "EMPTY", message: "Nothing to save." };
   const refused = list.find((item) => !STUDENT_KEYS.has(item?.keyId));
   if (refused) return { ok: false, code: "LOCKED", message: "This detail can only be changed by the school." };
+  // A custom field must be one on this student's profile and not a file field (a file's value is its stored name).
+  const custom = list.filter((item) => item.keyId === "customProfileFieldId");
+  if (custom.length) {
+    const facts = await loadMyProfileFacts();
+    if (!facts.ok) return facts;
+    const editable = new Set(facts.data.customFields.filter((f) => f.type !== "file").map((f) => f.id));
+    if (custom.some((item) => !editable.has(String(item.fieldValue1 ?? "")))) return { ok: false, code: "LOCKED", message: "This detail can only be changed by the school." };
+  }
 
   const data = list.map((item) => clean(item, studentStandardId));
   const single = data.length === 1;

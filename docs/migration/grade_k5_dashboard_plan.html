@@ -786,9 +786,9 @@ const effective = sanitize({ ...policy.defaults, ...saved });       // allowlist
     <thead><tr><th>Batch</th><th>Gaps</th><th>Kab tak</th></tr></thead>
     <tbody>
       <tr><td><b>A</b> <span class="b in">Code done</span></td><td>#1, #2, #4, #10, #11; #5 ka <code>id-card-pdf</code> / <code>create-azure-user</code> / <code>delete-uploaded-docs</code></td><td>P1 (read-only) live hone se pehle · 2026-11-06 code me, test baaki</td></tr>
-      <tr><td><b>B</b></td><td>#3 locked keys, #8 "+" bug, #13 (ownership util me)</td><td>P2 (save) se pehle</td></tr>
-      <tr><td><b>C</b></td><td>#6 OTP verify, #12 OTP_SERVICE confirm, #5 ka <code>otp-process</code> (user token + rate limit)</td><td>P4 (OTP + photo) se pehle</td></tr>
-      <tr><td><b>D</b></td><td>#7 withdrawal, #5 ke <code>inactivate-*</code></td><td>P5 (school email + withdrawal) se pehle</td></tr>
+      <tr><td><b>B</b> <span class="b in">Code done</span></td><td>#3 locked keys, #8 "+" bug, #13 (ownership util me)</td><td>2026-11-06 code me (is-rest-api, uncommitted). <code>DashboardStudentUtil.validateStudentProfileNewTheme</code>: STUDENT caller ke liye keyId allowlist (<code>STUDENT_EDITABLE_PROFILE_KEYS</code>: DOB, own email, parent emails, relationType, admissonDate, reserveASeat, verify flags band) + <code>studentStandardId</code> us user ka hi. "+" bug: <code>update-user-profile-content</code> / <code>-bulk</code> / <code>otp-process</code> ab <code>decodePreservePlus</code>. #13: ownership <code>UserAccessGuard</code> me hai.</td></tr>
+      <tr><td><b>C</b> <span class="b in">Code done</span></td><td>#6 OTP verify, #12 OTP_SERVICE confirm, #5 ka <code>otp-process</code> (user token + rate limit)</td><td>2026-11-06 code me (<code>CommonUtil.otpProcess</code>, sirf <code>STUDENT_PROFILE_CONTACT*</code> OTP). Request ka <code>userId</code> = <code>entityId</code> = token se access wala user; verify par OTP row me bheja gaya number / email request ke value se match; 10 min expiry; already-used reject; 5 galat codes par lock (in-memory counter, naye code par reset). #12: prod profile (<code>prod*</code>) me fixed 123456 kabhi nahi, setting off ho tab bhi. Prod me <code>OTP_SERVICE</code> value phir bhi confirm karni hai.</td></tr>
+      <tr><td><b>D</b> <span class="b in">Code done</span></td><td>#7 withdrawal, #5 ke <code>inactivate-*</code></td><td>2026-11-06 code me. #7: <code>canActOnStudent</code> me student khud tabhi jab uska parent account na ho; withdrawal OTP verify par expiry (10 min), already-confirmed reject, 5 galat tries. #5: <code>inactivate-time-preference</code>, <code>inactivate-user-soc-media</code>, <code>inactivate-joined-extra-curricular</code> row ke owner par <code>UserAccessGuard</code>. Naye gaps bhi band: <code>save-time-preference</code>, <code>save-joined-sports-ec-club</code>, <code>reset-azure-password-notify-primary-mail</code>.</td></tr>
       <tr><td>-</td><td>#9</td><td>Kabhi bhi (BFF workaround plan me)</td></tr>
     </tbody>
   </table></div>
@@ -797,7 +797,7 @@ const effective = sanitize({ ...policy.defaults, ...saved });       // allowlist
 
   <h3>19.5 Next.js design</h3>
   <ul>
-    <li><b>Route</b>: <code>app/[school]/(dashboard)/student/my-profile/page.jsx</code> (proxy matcher <code>/:school/student/:path*</code> se token-protected) → <code>components/student/MyProfile.jsx</code> (logic) → K–5: <code>components/k5/pages/K5Profile.jsx</code>, baaki: plain view. Dono headers ka "My Profile" toast ki jagah is route par.</li>
+    <li><b>Route</b>: <code>app/[school]/(dashboard)/student/my-profile/page.jsx</code> (proxy matcher <code>/:school/student/:path*</code> se token-protected) → <code>components/student/MyProfile.jsx</code> (logic) → <code>components/k5/pages/K5Profile.jsx</code> + editors <b>sab grades ke liye</b> (Elementary / Middle / High, 2026-11-07): K–5 apne look me, baaki <code>.theme-profile-plain</code> wrapper me (<code>app/profile-plain.css</code> — K–5 tokens ko school accent / slate / Open Sans par map karta hai, chunky shadow, 3px border, bade font halke). Edit <code>rightToEdit</code> par, grade par nahi. Dono headers ka "My Profile" toast ki jagah is route par.</li>
     <li><b>BFF</b>: <code>services/profileApi.js</code> ("use server"), sab calls <code>utils/backendRequest.js</code> se: token check pehle, <code>Authorization: Bearer</code> + service key, 401 / session-out → <code>{sessionExpired}</code>. Ids token session se bhare jaayenge.</li>
     <li><b>Model util</b> <code>utils/profileModel.js</code>: positional array → named sections, field → <code>keyId</code>, <code>MMM dd, yyyy</code> ⇄ shadcn <code>DatePicker</code>, % complete, phone ISD alag.</li>
     <li><b>Save</b>: "Bulk Save" = <code>update-user-profile-bulk</code> (non-transactional, per-field errors); <code>W001</code> / <code>WPR01</code> par confirm dialog. Cookie writes nahi: Bearer requests CSRF filter se exempt hain.</li>
@@ -810,11 +810,11 @@ const effective = sanitize({ ...policy.defaults, ...saved });       // allowlist
   <div class="tw"><table>
     <thead><tr><th>Step</th><th>Kaam</th><th>Writes / side effects</th></tr></thead>
     <tbody>
-      <tr><td><b>P1 · Read-only</b></td><td>Route, BFF load, model util, 7 sections read-only, % ring, ID card link, header link.</td><td>Koi nahi</td></tr>
-      <tr><td><b>P2 · Personal + Parent save</b></td><td>Single + bulk save, masters, timezone warning, W001/WPR01, validations.</td><td>DB writes; naam → transcript/Lens sync, timezone → future classes shift</td></tr>
-      <tr><td><b>P3 · Academic + timing + clubs</b></td><td>Previous school, documents, progress report frequency, slots, clubs.</td><td>Uploads, ID card regenerate</td></tr>
-      <tr><td><b>P4 · OTP + photo</b></td><td>Send/resend/verify (phone, WhatsApp, email), photo crop + upload.</td><td>SMS / WhatsApp / email</td></tr>
-      <tr><td><b>P5 · School email + Withdrawal</b></td><td>Activate / reset; eligibility → init → OTP → list.</td><td>Azure account, emails, enrollment cancel shuru</td></tr>
+      <tr><td><b>P1 · Read-only</b></td><td>Route, BFF load, model util, 7 sections read-only, % ring, ID card link, header link.</td><td>Koi nahi · <span class="b in">Code done</span> live-checked</td></tr>
+      <tr><td><b>P2 · Personal + Parent save</b></td><td>Single + bulk save, masters, timezone warning, W001/WPR01, validations.</td><td>DB writes; naam → transcript/Lens sync, timezone → future classes shift · <span class="b in">Code done</span>; address / hobby save live-tested, parent fields nahi</td></tr>
+      <tr><td><b>P3 · Academic + timing + clubs</b></td><td>Previous school, documents, progress report frequency, slots, clubs.</td><td>Uploads, ID card regenerate · <span class="b in">Code done</span>; slots / activity / club live-tested, document upload nahi</td></tr>
+      <tr><td><b>P4 · OTP + photo</b></td><td>Send/resend/verify (phone, WhatsApp, email), photo crop + upload.</td><td>SMS / WhatsApp / email · <span class="b in">Code done</span>; email OTP + photo live-tested, SMS / WhatsApp nahi</td></tr>
+      <tr><td><b>P5 · School email + Withdrawal</b></td><td>Activate / reset; eligibility → init → OTP → list.</td><td>Azure account, emails, enrollment cancel shuru · <span class="b in">Code done</span>; Azure activation live-tested, reset / withdrawal submit nahi</td></tr>
     </tbody>
   </table></div>
   <div class="note warn"><b class="t">Testing rule</b>P2 se aage asli writes (SMS/email, withdrawal). Sirf test student par; withdrawal / azure activation explicit approval ke baad.</div>
@@ -825,7 +825,7 @@ const effective = sanitize({ ...policy.defaults, ...saved });       // allowlist
     <li>Prod me <code>OTP_SERVICE</code> setting on hai? (#12)</li>
     <li>Sports ka events table rakhna hai ya mockup jaisa hatana?</li>
     <li>School email: read-only + copy (recommended) ya mockup jaisa input?</li>
-    <li>Non-K5 students ke liye bhi naya page (plain look) ya sirf K–5?</li>
+    <li><s>Non-K5 students ke liye bhi naya page (plain look) ya sirf K–5?</s> — <b>Jawab (2026-11-07):</b> sab grades; wahi page + editors, plain theme scope (approach A). Middle/High student par live test baaki.</li>
   </ol>
 </section>
 

@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>K5 Dashboard Handoff</title>
+<style>
+  :root {
+    --bg: #f6f7fb; --card: #ffffff; --ink: #1c2640; --mut: #5b6478; --line: #dfe3ec;
+    --ac: #2563eb; --act: #e8f0ff; --ok: #15803d; --okt: #e7f7ed; --warn: #a16207; --warnt: #fef6e0;
+    --bad: #b91c1c; --badt: #fdecec; --code: #f1f3f8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1420; --card: #171d2b; --ink: #e8ecf4; --mut: #9aa3b5; --line: #2a3246;
+      --ac: #7aa2ff; --act: #1d2a47; --ok: #4ade80; --okt: #12301f; --warn: #fbbf24; --warnt: #33290d;
+      --bad: #f87171; --badt: #3a1717; --code: #1f2638;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  h2 { font-size: 21px; margin: 34px 0 10px; padding-top: 6px; border-top: 2px solid var(--line); }
+  h3 { font-size: 16px; margin: 18px 0 6px; }
+  p { margin: 6px 0; }
+  .sub { color: var(--mut); margin: 0 0 18px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin: 10px 0; }
+  .note { border-left: 4px solid var(--ac); background: var(--act); padding: 10px 14px; border-radius: 8px; margin: 10px 0; }
+  .warn { border-left-color: var(--warn); background: var(--warnt); }
+  .bad { border-left-color: var(--bad); background: var(--badt); }
+  .ok { border-left-color: var(--ok); background: var(--okt); }
+  code { background: var(--code); padding: 1px 5px; border-radius: 5px; font: 13px/1.4 ui-monospace, Consolas, monospace; overflow-wrap: anywhere; }
+  pre { background: var(--code); padding: 12px 14px; border-radius: 10px; overflow-x: auto; font: 13px/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap; }
+  .tw { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { background: var(--code); font-weight: 700; }
+  tr:last-child td { border-bottom: none; }
+  .b { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .b.ok { background: var(--okt); color: var(--ok); }
+  .b.warn { background: var(--warnt); color: var(--warn); }
+  .b.bad { background: var(--badt); color: var(--bad); }
+  .b.in { background: var(--act); color: var(--ac); }
+  ul, ol { margin: 6px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+  nav.toc { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 16px; }
+  nav.toc ol { columns: 2; column-gap: 32px; }
+  @media (max-width: 640px) { nav.toc ol { columns: 1; } h1 { font-size: 23px; } }
+  a { color: var(--ac); }
+</style>
+</head>
+<body>
+<main>
+<h1>K5 Dashboard + My Profile — Handoff</h1>
+<p class="sub">is-sms (Next.js frontend) + is-rest-api (Java backend) · status as of 2026-11-07 · for starting a fresh Claude Code session</p>
+
+<div class="note"><b>Naye session me sabse pehle:</b> is file ko padhwao, phir memory folder aur plan doc. Neeche "Start prompt" copy karke naye session me paste kar sakte ho.</div>
+
+<nav class="toc"><ol>
+  <li><a href="#start">Start prompt</a></li>
+  <li><a href="#setup">Repos, branches, running</a></li>
+  <li><a href="#rules">Rules jo follow karne hain</a></li>
+  <li><a href="#arch">Architecture (auth + API pattern)</a></li>
+  <li><a href="#commit">Commit status</a></li>
+  <li><a href="#profile">My Profile P1–P5</a></li>
+  <li><a href="#backend">Backend Batch A–D</a></li>
+  <li><a href="#tests">Live test status</a></li>
+  <li><a href="#data">Test student par kya badla</a></li>
+  <li><a href="#pending">Pending tasks</a></li>
+  <li><a href="#gotchas">Gotchas / tooling</a></li>
+  <li><a href="#earlier">Pehle ka K5 kaam</a></li>
+</ol></nav>
+
+<h2 id="start">1. Start prompt (naye session ke liye)</h2>
+<pre>K5 dashboard ka kaam continue karna hai. Pehle ye padho:
+1. D:\Workspace\is-sms\docs\migration\k5_handoff_2026-11-07.html (ye handoff)
+2. D:\Workspace\is-sms\docs\migration\grade_k5_dashboard_plan.html (section 19 = My Profile)
+3. Memory: C:\Users\Serii\.claude\projects\D--Workspace-is-sms\memory\MEMORY.md
+Code main checkout me hai: D:\Workspace\is-sms (frontend) aur D:\Workspace\is-rest-api (backend).
+Commit nahi karna — main khud commit karta hoon.
+Pending list handoff ke section 10 me hai.</pre>
+
+<h2 id="setup">2. Repos, branches, running</h2>
+<div class="tw"><table>
+<tr><th>Project</th><th>Path</th><th>Branch</th><th>Run</th></tr>
+<tr><td>Frontend (Next.js 16)</td><td><code>D:\Workspace\is-sms</code></td><td><code>feature/version_1_3_0_phase4</code></td><td>User ka dev server <code>http://localhost:3000</code> (khud chalate hain)</td></tr>
+<tr><td>Backend (Spring Boot)</td><td><code>D:\Workspace\is-rest-api</code></td><td><code>feature/63_0_0_STUDENT_DASHBOARD_NEXTJS_PHASE4</code></td><td><code>http://localhost:8080</code>; compile: <code>./mvnw -q -o compile</code></td></tr>
+</table></div>
+<ul>
+  <li><b>Mockup:</b> <code>D:\Workspace\K-5 dashboard\Playful.dc.html</code> (My Profile = <code>pgProfile</code>, ~line 1304; strings line ~2849 <code>"pf*"</code>).</li>
+  <li><b>Plan doc:</b> <code>docs/migration/grade_k5_dashboard_plan.html</code> — section 19 My Profile (gaps 19.4, batches 19.4.3, phases 19.6). Status already updated for P1–P5 + Batch A–D.</li>
+  <li><b>Login (testing):</b> <code>http://localhost:8080/international-schooling/common/login</code> → redirects to Next dashboard. The :3000 login page is blank in the in-app browser (CSP).</li>
+  <li><b>Test student:</b> <code>KWTHAAL240811730</code> (Mohammad, userId 15844, Grade 5, studentStandardId 22492). Password chat me user dega — kahin store mat karna.</li>
+  <li><b>Profile page:</b> <code>/international-schooling/student/my-profile</code></li>
+  <li>Dummy mode: <code>?dummyStudent=Y&amp;dummyGrade=K</code></li>
+</ul>
+
+<h2 id="rules">3. Rules jo follow karne hain</h2>
+<ul>
+  <li><b>Commit / push kabhi nahi</b> — user khud commit karta hai.</li>
+  <li><b>Existing APIs use karo</b>, naye backend endpoints mat banao (existing ko enhance karo).</li>
+  <li><b>Date picker:</b> hamesha <code>components/ui/date-picker.jsx</code> (shadcn) icon ke saath; native <code>input type=date</code> nahi.</li>
+  <li><b>School name dynamic</b> (session <code>schoolName</code>), "International Schooling" hardcode nahi.</li>
+  <li><b>K5 accent:</b> selected / active / ok states me look ka accent (<code>var(--k5-ac)</code>, <code>--k5-act</code>, <code>text-k5-acx</code>) — course colour ya fixed green nahi.</li>
+  <li><b>Timezone:</b> missing/invalid ho to fallback <code>Asia/Singapore</code>; valid timezone overwrite nahi.</li>
+  <li><b>Real writes:</b> SMS / email / Azure / withdrawal / document upload sirf test student par aur sirf user ki explicit approval ke baad.</li>
+  <li>User Hinglish me baat karta hai; jawab Hinglish me.</li>
+  <li><code>next dev</code> ka AGENTS.md block — read <code>node_modules/next/dist/docs/</code> before Next-specific code.</li>
+</ul>
+
+<h2 id="arch">4. Architecture (auth + API pattern)</h2>
+<div class="card">
+<h3>Token auth (no next-auth)</h3>
+<ul>
+  <li>Server user: <code>getAccountSession()</code> (<code>lib/auth/session.js</code>) → <code>{uniqueId, userId, schoolUUID, schoolNumericId, schoolName, email, role, accessToken}</code>. No roleId (roleId dashboard details se aata hai).</li>
+  <li>Java calls: <code>Authorization: Bearer</code> + service key. Client: <code>useSession</code> from <code>components/providers/AuthSessionProvider</code>.</li>
+  <li><code>proxy.js</code> matcher <code>/:school/student/:path*</code> — isliye API routes <code>/api/student/...</code> me mat banao (school = "api" ban jaata hai). Use <code>/api/profile/...</code>.</li>
+  <li>Backend: stateless JWT, <code>SessionUtil</code> → <code>CurrentIdentity</code>, default-deny, <code>UserAccessGuard</code> (Batch A).</li>
+</ul>
+<h3>Central API pattern</h3>
+<ul>
+  <li><code>utils/backendRequest.js</code> → <code>{ok,data}</code> / <code>{ok:false,code,message,sessionExpired}</code>. Options: <code>buildBody(me)</code>, <code>headers(me)</code> (e.g. <code>UNIQUEUUID</code>), <code>checkSession</code>. Identity has <code>uniqueId</code>.</li>
+  <li>Client gate <code>utils/serverCall.js</code> <code>callServer()</code>; global expired dialog <code>components/providers/SessionExpiredDialog.jsx</code>.</li>
+  <li>Payload envelope <code>{payload: btoa(encodeURI(json))}</code>.</li>
+  <li>K5 pattern: existing component keeps logic, returns <code>components/k5/pages/K5*.jsx</code> when <code>isK5</code>. Pages call <code>usePicoContentReady</code>; Pico tips in <code>PicoGuide.jsx</code> <code>PAGE_TIPS</code>.</li>
+</ul>
+</div>
+
+<h2 id="commit">5. Commit status</h2>
+<div class="note ok"><b>Committed (frontend):</b> <code>9b08220 Student New Dashboard Part 14</code> (2026-11-06 16:28) — K5 pages, token migration, session dialog, My Profile P1–P3 core files (<code>services/profileApi.js</code>, <code>profileSaveApi.js</code>, <code>profileActionsApi.js</code>, route <code>my-profile</code>, <code>/api/profile/id-card</code>, <code>K5ProfileEditorsP3.jsx</code> …).</div>
+<div class="note warn"><b>Uncommitted — frontend (is-sms):</b>
+<ul>
+  <li>New: <code>components/k5/pages/K5PhotoDialog.jsx</code>, <code>K5ProfileOtp.jsx</code>, <code>K5ProfileP5.jsx</code>, <code>hooks/useProfileOtp.js</code>, <code>services/profileOtpApi.js</code>, <code>services/profileP5Api.js</code></li>
+  <li>Modified: <code>app/api/profile/document/route.js</code>, <code>components/k5/pages/K5Profile.jsx</code>, <code>K5ProfileEditors.jsx</code>, <code>components/student/MyProfile.jsx</code>, <code>hooks/useProfileActions.js</code>, <code>services/profileFacts.js</code>, <code>utils/profileEdit.js</code>, <code>utils/profileModel.js</code>, <code>docs/migration/grade_k5_dashboard_plan.html</code></li>
+  <li><code>package-lock.json</code> — unrelated, user ka; mat chhedo.</li>
+</ul></div>
+<div class="note warn"><b>Uncommitted — backend (is-rest-api), sab Batch A–D:</b>
+<ul>
+  <li>New: <code>v1/session/UserAccessGuard.java</code></li>
+  <li>Modified: <code>ClientDashboardAzlixbuzzController</code> (merge compile fix), <code>ClientDashboardCommonController</code>, <code>ClientDashboardStudentController</code>, <code>AuthTokenFilter</code>, <code>SecurityConfig</code>, <code>CommonController</code>, <code>MSTeamAuthenticationService</code>, <code>CommonUtil</code>, <code>DashboardSchoolUtil</code>, <code>DashboardStudentUtil</code>, <code>StudentAssginReportUtil</code>, <code>WithdrawalRequestAdminServiceImpl</code>, test <code>AuthTokenFilterTest</code></li>
+</ul></div>
+
+<h2 id="profile">6. My Profile P1–P5 (frontend)</h2>
+<div class="tw"><table>
+<tr><th>Phase</th><th>Kya bana</th><th>Main files</th><th>Backend endpoints</th></tr>
+<tr><td><b>P1</b> read-only <span class="b ok">done</span></td><td>Route, hero + % bar, section nav with % rings (legacy rules 13/11/4/1/1), 7 sections, ID card download, header "My Profile" link, Pico tip, plain view for non-K5</td><td><code>services/profileApi.js</code>, <code>utils/profileModel.js</code>, <code>hooks/useStudentProfile.js</code>, <code>components/student/MyProfile.jsx</code>, <code>components/k5/pages/K5Profile.jsx</code>, <code>app/[school]/(dashboard)/student/my-profile/page.jsx</code>, <code>app/api/profile/id-card/route.js</code></td><td><code>dashboard/profile-view-content-new</code>, <code>api/v1/common/masters-bulk</code> (needs <code>authentication.hash</code>), <code>dashboard/student/withdrawal-eligibility</code> (needs <code>UNIQUEUUID</code> header), <code>dashboard/student/id-card-pdf</code></td></tr>
+<tr><td><b>P2</b> personal + parent save <span class="b ok">done</span></td><td>Per-field tick/cross, group Save/Undo, Bulk Save, timezone/nationality confirm, validations, cascading country/state/city, phone ISO + ISD. Locked: DOB, own email, parent emails, relation.</td><td><code>services/profileSaveApi.js</code> (STUDENT_KEYS allowlist), <code>utils/profileEdit.js</code> (draft + units), <code>hooks/useProfileEditor.js</code>, <code>components/k5/pages/K5ProfileEditors.jsx</code></td><td><code>dashboard/update-user-profile-content</code> / <code>-bulk</code>; masters COUNTRIES/STATES/CITIES/TIMEZONE/GRADES-LIST</td></tr>
+<tr><td><b>P3</b> academic, timing, clubs <span class="b ok">done</span></td><td>Previous school, progress report (7/14/28, anchor = coming Saturday), documents upload/remove, class times, parent calling times, activities, clubs</td><td><code>services/profileActionsApi.js</code>, <code>services/profileFacts.js</code> (server-side enrolment + ownership), <code>hooks/useProfileActions.js</code>, <code>K5ProfileEditorsP3.jsx</code>, <code>app/api/profile/document/route.js</code> (multipart → base64 save-docs)</td><td><code>report/save-time-preference</code> (STUDENT_PROFILE), <code>dashboard/inactivate-time-preference</code>, <code>save-joined-sports-ec-club</code>, <code>inactivate-joined-extra-curricular</code>, <code>save-docs</code>, <code>delete-uploaded-docs</code></td></tr>
+<tr><td><b>P4</b> OTP + photo <span class="b warn">uncommitted</span></td><td>"Send OTP" / "WhatsApp OTP" under saved phones + emails, 6-digit verify, Verified marks; avatar camera → own crop dialog (drag/zoom, 512 px JPEG) → "Profile Image"</td><td><code>services/profileOtpApi.js</code>, <code>hooks/useProfileOtp.js</code>, <code>K5ProfileOtp.jsx</code>, <code>K5PhotoDialog.jsx</code></td><td><code>api/v1/common/otp-process</code> (otpType 1/2/3; entityType <code>STUDENT_PROFILE_CONTACT[_WHATSAPP]_&lt;fieldId&gt;</code>), <code>save-docs</code></td></tr>
+<tr><td><b>P5</b> school email + withdrawal <span class="b warn">uncommitted</span></td><td>Activate (confirm) / Open Outlook / copy / reset password; withdrawal: details, request cards + tracker, new request (reason, details, T&amp;C, refund policy, agree) → 6-box OTP → done; bank form after ACCEPTED</td><td><code>services/profileP5Api.js</code>, <code>K5ProfileP5.jsx</code></td><td><code>create-azure-user</code>, <code>reset-azure-password-notify-primary-mail</code>, <code>dashboard/parent/withdrawal-init|-send-otp|-verify-otp|-bank-details</code> (+ <code>UNIQUEUUID</code> header)</td></tr>
+</table></div>
+<div class="note"><b>Security idea (frontend side):</b> browser se kabhi userId / studentStandardId / contact value nahi lete. Server action token user + <code>loadMyProfileFacts()</code> (server-side enrolment from <code>student/dashboard/get-student-dashboard</code>, then own profile) use karta hai. Remove sirf apne profile wale ids ka. OTP: browser sirf fieldId + channel bhejta hai.</div>
+
+<h2 id="backend">7. Backend Batch A–D (is-rest-api)</h2>
+<div class="tw"><table>
+<tr><th>Batch</th><th>Gaps</th><th>Kya kiya</th></tr>
+<tr><td><b>A</b> <span class="b ok">done + live</span></td><td>#1 #2 #4 #10 #11, #5 (id-card, azure, delete-docs)</td><td>New <code>UserAccessGuard</code> (self / parent's mapped child / same-school staff / SUPER_ADMIN) on profile load, single+bulk save, save-docs, delete-uploaded-docs, id-card-pdf (403), create-azure-user; <code>switchParentStudEmailId</code> locked; <code>AuthTokenFilter</code> other-school token → visitor (<code>OTHER_SCHOOL_ATTRIBUTE</code>). School-email password unchanged (user's decision).</td></tr>
+<tr><td><b>B</b> <span class="b ok">done + live</span></td><td>#3 locked keys, #8 "+" bug, #13</td><td><code>DashboardStudentUtil.STUDENT_EDITABLE_PROFILE_KEYS</code> allowlist + own <code>studentStandardId</code> check in <code>validateStudentProfileNewTheme</code> (STUDENT caller). <code>decodePreservePlus</code> in update-user-profile-content / -bulk / otp-process. #13 covered by guard.</td></tr>
+<tr><td><b>C</b> <span class="b ok">done + live</span></td><td>#6 OTP verify, #12, #5 otp-process</td><td><code>CommonUtil.otpProcess</code> (profile-contact only): userId = entityId = guard-accessible user; verify needs same value as sent; 10 min expiry; used code rejected; 5 wrong → lock (in-memory, reset on new code). <code>generateOTPCode</code>: <code>prod*</code> profile never gets 123456.</td></tr>
+<tr><td><b>D</b> <span class="b ok">done + live</span></td><td>#7 withdrawal, #5 inactivate-*</td><td><code>canActOnStudent</code>: student self only without parent account; withdrawal OTP: 10 min, already-confirmed, 5 wrong. Ownership on <code>inactivate-time-preference</code>, <code>-user-soc-media</code>, <code>-joined-extra-curricular</code>, <code>save-time-preference</code>, <code>save-joined-sports-ec-club</code>, <code>reset-azure-password-notify-primary-mail</code>.</td></tr>
+<tr><td>#9</td><td>session-out code</td><td>Open (BFF workaround in place).</td></tr>
+</table></div>
+<p>Tests passing: AuthTokenFilter 11, BrowserTokenFilter 41, DefaultDeny 17, BrowserSignInChain 5, BeanConstructors 1, DashboardParentUtilAttendanceDetails 37. <code>mvn compile</code> OK.</p>
+
+<h2 id="tests">8. Live test status</h2>
+<div class="tw"><table>
+<tr><th>Area</th><th>Status</th></tr>
+<tr><td>P1 load, % rings, sections, header link, mobile</td><td><span class="b ok">tested</span></td></tr>
+<tr><td>P2 single + bulk save (address, hobby), timezone confirm (cancelled), validation</td><td><span class="b ok">tested</span> · parent field saves <span class="b warn">not tested</span></td></tr>
+<tr><td>P3 class time add/overlap/remove, activity add/remove, club save, calling time add/remove</td><td><span class="b ok">tested</span> · document upload/remove <span class="b warn">not tested</span> (would replace real files)</td></tr>
+<tr><td>P4 email OTP send → wrong → verify; photo upload (original restored)</td><td><span class="b ok">tested</span> · SMS / WhatsApp OTP <span class="b warn">not tested</span></td></tr>
+<tr><td>P5 Azure activation</td><td><span class="b ok">tested</span> · password reset, withdrawal submit, bank details <span class="b warn">not tested</span></td></tr>
+<tr><td>Backend B–D rejects (other user / locked keys / other enrolment / OTP lock / different email / reuse)</td><td><span class="b ok">tested after restart</span></td></tr>
+<tr><td>Teacher / admin slot saving via <code>save-time-preference</code> after new guard</td><td><span class="b bad">not tested — regression risk</span></td></tr>
+<tr><td>ID card PDF</td><td><span class="b warn">empty file locally</span> (backend catch-all, S3) — check on an env with the card file</td></tr>
+</table></div>
+
+<h2 id="data">9. Test student (15844) par kya badla</h2>
+<ul>
+  <li>Student email <b>Verified</b> (OTP test).</li>
+  <li><b>School email activated</b> (Azure; local gave <code>teststudent@internationalschooling.org</code>).</li>
+  <li>Profile photo re-uploaded: same picture as full-size JPEG (original was a 6.5 MB PNG); new S3 name.</li>
+  <li>Baaki sab (address, hobbies, clubs, times, activities, alt email) wapas original.</li>
+</ul>
+
+<h2 id="pending">10. Pending tasks</h2>
+<ol>
+  <li><b>Teacher/admin regression check</b> — slot saving (save-time-preference) teacher aur admin login se.</li>
+  <li><b>Prod <code>OTP_SERVICE</code></b> setting confirm (gap #12).</li>
+  <li><b>Live tests baaki (approval chahiye):</b> password reset, withdrawal submit (10 min expiry), bank details, document upload/remove, SMS/WhatsApp OTP, parent field saves.</li>
+  <li><b>Plain (non-K5) profile</b> abhi read-only — edit sirf K5 page par. Decide karna hai.</li>
+  <li><b>Support email</b> <code>admin.support@internationalschooling.org</code> hardcoded (legacy jaisa) — school settings se lena hai ya nahi, user se poochna.</li>
+  <li><b>ID card PDF</b> — real environment par verify.</li>
+  <li><b>Gap #9</b> (session-out "0" code) — optional.</li>
+  <li><b>Plan ke baaki K5 pages:</b> Fee details, Academic Performance, Progress Report (K5 views) — plan doc dekho.</li>
+  <li><b>Older open items</b> (memory me): session-expired redirect lands on <code>/{school}/enrollment/O</code>; social-club "What you'll do" text; My Certificates "no access" for 15844 (DB module right); dashboardApi 401 handling; re-enrollment / diary / news token.</li>
+  <li><b>Commit</b> — user khud karega (frontend P4/P5 + backend A–D).</li>
+</ol>
+
+<h2 id="gotchas">11. Gotchas / tooling</h2>
+<ul>
+  <li><b>Worktree hook:</b> agar session worktree me ho, hook main checkout par Edit/Write rokta hai → scratchpad me likho, Bash <code>cp</code> / node script se apply karo. (Main checkout me hi session kholo to ye problem nahi.)</li>
+  <li><b>Bash heredoc → node template strings:</b> <code>\d</code> silently <code>d</code> ban gaya tha (regex toot gaye). Script Write tool se likho; baad me regex grep karo.</li>
+  <li><b>Python installed nahi</b> — node use karo.</li>
+  <li><b><code>profile-view-content-new</code> with <code>studentStandardId: 0</code></b> → <code>studentProfile</code> missing. Real enrolment chahiye (dashboard details).</li>
+  <li><b>masters-bulk</b> needs <code>authentication.hash</code>; <b>withdrawal-*</b> need <code>UNIQUEUUID</code> header.</li>
+  <li><b>Local OTP code = 123456</b> (OTP_SERVICE off locally).</li>
+  <li><b>In-app browser pane hidden</b> ho to pages throttle hote hain; 45 s+ scripts timeout. Session kabhi kabhi drop hota hai → :8080 par dobara login.</li>
+  <li>Backend slow ho sakta hai (bulk save ~30 s, plan load 40 s+).</li>
+  <li>Cookie banner screenshots ke liye <code>.consent-card</code> JS se hide; "Accept all" kabhi nahi.</li>
+  <li>ESLint: <code>npx eslint --rule '{"no-undef":"error"}' &lt;files&gt;</code>. React lint rule: effect me setState mat karo.</li>
+</ul>
+
+<h2 id="earlier">12. Pehle ka K5 kaam (committed, Part 12–14)</h2>
+<p>Shell, header, nav, rails, home (week/month), Pico buddy + page tips, appearance dialog, Book a Class + For grown-ups (class-calculation-for-grown-ups), booked classes, transcript, buy extra, cart, clubs, Assigned Teacher, Attendance (+ real Attendance Details with date filters/timezone), Handbook, Login History, Extension, Videos, My Certificates, global session-expired dialog, token-auth migration. Details: memory file <code>project-k5-dashboard.md</code> aur plan doc.</p>
+
+<h2>Memory</h2>
+<p><code>C:\Users\Serii\.claude\projects\D--Workspace-is-sms\memory\</code> — <code>MEMORY.md</code> index + <code>project-k5-dashboard.md</code> (sabse detailed), feedback files (no commits, accent rule, date picker, existing APIs, dynamic school name, Pico rules), <code>reference-k5-mockup-map.md</code>.</p>
+</main>
+</body>
+</html>

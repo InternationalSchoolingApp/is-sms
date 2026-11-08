@@ -1,37 +1,46 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
-import { CalendarDays, Clock, FileText, Plus, Trash2, Upload } from "lucide-react";
+import { useState } from "react";
+import { CalendarDays, Clock, Plus, Trash2 } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { EditSelect, EditText, UnitBar } from "@/components/k5/pages/K5ProfileEditors";
 import { useProfileMaster } from "@/hooks/useProfileEditor";
 import { REPORT_TYPES, formatProfileDate, parseProfileDate, reportDays, reportRange } from "@/utils/profileEdit";
 
 /*
- * My Profile P3 editors on the K–5 page: previous school, documents, progress report frequency (section 3), live-class
+ * My Profile P3 editors on the K–5 page: previous school, progress report frequency (section 3; documents are in
+ * K5ProfileDocs.jsx), live-class
  * times (4), sports, activities and clubs (5) and the parents' calling times (2). Field edits go through the editor
  * (hooks/useProfileEditor.js, tick / Bulk Save); list changes save at once (hooks/useProfileActions.js).
  */
 
 const GRID3 = "grid grid-cols-3 gap-x-4 gap-y-3.5 max-[1180px]:grid-cols-2 max-[600px]:grid-cols-1";
 const H3 = "m-0 font-k5-display text-xl font-semibold text-k5-ink";
-const LABEL = "flex min-w-0 flex-col gap-1.5 text-sm font-black text-k5-mut";
+const LABEL = "relative flex min-w-0 flex-col gap-1.5 pt-1.5 text-sm font-black text-k5-mut [&>span:first-child]:pointer-events-none [&>span:first-child]:absolute [&>span:first-child]:start-3 [&>span:first-child]:top-0 [&>span:first-child]:z-[1] [&>span:first-child]:-translate-y-1/2 [&>span:first-child]:bg-k5-card [&>span:first-child]:px-1 [&>span:first-child]:text-xs [&>span:first-child]:leading-none";
 const INPUT =
-  "min-h-[50px] w-full min-w-0 rounded-[14px] border-[3px] border-k5-line bg-k5-card px-3.5 font-k5-body text-base font-extrabold text-k5-ink outline-none focus:border-k5-ac";
+  "h-[50px] w-full min-w-0 rounded-[14px] border-[3px] border-k5-line bg-k5-card px-3.5 pt-1 font-k5-body text-base font-extrabold text-k5-ink outline-none focus:border-k5-ac";
 const ADD_BTN =
   "inline-flex min-h-[50px] cursor-pointer items-center justify-center gap-2 rounded-[14px] border-[3px] border-k5-ac bg-k5-ac px-4 font-k5-display text-base font-semibold text-white shadow-[0_4px_0_var(--k5-acd)] disabled:cursor-not-allowed disabled:opacity-50";
 const REMOVE_BTN =
   "inline-flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-[10px] border-[3px] border-k5-ri bg-k5-rt p-0 text-k5-ri disabled:cursor-wait disabled:opacity-50";
 
-// 10-minute steps for a whole day, as the existing page's generateTimeDropdown("12:00 AM", "11:59 PM", 10).
-const TIME_OPTIONS = Array.from({ length: 144 }, (_, i) => {
-  const h = Math.floor(i / 6);
-  const m = (i % 6) * 10;
-  const value = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-  const label = `${String(h % 12 || 12).padStart(2, "0")}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
-  return { value, label };
-});
+// 10-minute steps for a whole day, as the existing page's generateTimeDropdown("12:00 AM", "11:59 PM", 10), which
+// also ends on 11:59 PM.
+const TIME_OPTIONS = [
+  ...Array.from({ length: 144 }, (_, i) => {
+    const h = Math.floor(i / 6);
+    const m = (i % 6) * 10;
+    const value = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    const label = `${String(h % 12 || 12).padStart(2, "0")}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+    return { value, label };
+  }),
+  { value: "23:59", label: "11:59 PM" },
+];
 const timeLabel = (value) => TIME_OPTIONS.find((t) => t.value === value)?.label || value;
+const startOfToday = () => {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+};
 
 function TimeSelect({ label, value, onChange }) {
   return (
@@ -152,7 +161,8 @@ export function EditableCallingTimes({ m, actions }) {
 export function EditablePreviousSchool({ m, editor }) {
   const grades = useProfileMaster("grades");
   const year = new Date().getFullYear();
-  const years = Array.from({ length: 22 }, (_, i) => String(year + 1 - i)).map((y) => ({ value: y, label: y }));
+  // The existing page lists the current year back (profileViewNew.js, previousCurrentSchoolGraduationYear).
+  const years = Array.from({ length: 22 }, (_, i) => String(year - i)).map((y) => ({ value: y, label: y }));
   const countries = (editor.countries || []).map((c) => ({ value: c.key, label: c.value }));
   return (
     <div className={GRID3}>
@@ -165,70 +175,6 @@ export function EditablePreviousSchool({ m, editor }) {
         <span className="flex min-h-[50px] items-center rounded-[14px] border-[3px] border-k5-line bg-k5-soft px-3.5 font-k5-body text-base font-extrabold text-k5-ink">{m.academic.ctiRecommendedGrade}</span>
       </div>
     </div>
-  );
-}
-
-// Backend docType for each document of the profile (the parent passport is stored as "Signature").
-const DOC_TYPE = { ageProof: "Age Proof", addressProof: "Address Proof", parentPassportProof: "Signature", lastAcademicProof: "Last Academic Proof" };
-
-function DocTile({ doc, actions }) {
-  const inputId = useId();
-  const input = useRef(null);
-  const docType = DOC_TYPE[doc.key];
-  const working = actions.busy === `doc:${docType}`;
-  const choose = (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (file) actions.uploadDocument(docType, file);
-  };
-  return (
-    <div className="flex flex-col gap-1.5 text-sm font-black text-k5-mut">
-      <span>{doc.label}</span>
-      <input ref={input} id={inputId} type="file" accept="image/jpeg,image/png,application/pdf" onChange={choose} className="sr-only" disabled={Boolean(actions.busy)} />
-      {doc.url ? (
-        <div className="flex gap-2">
-          <a
-            href={doc.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex min-h-[50px] flex-1 items-center justify-center gap-2 rounded-[14px] border-[3px] border-k5-ac bg-k5-act px-3 text-base font-black text-k5-acx no-underline"
-          >
-            <FileText className="h-5 w-5 flex-none" aria-hidden="true" />
-            View<span className="sr-only"> {doc.label}</span>
-          </a>
-          <label htmlFor={inputId} title="Replace" className="flex h-[50px] w-[50px] flex-none cursor-pointer items-center justify-center rounded-[14px] border-[3px] border-k5-line bg-k5-soft text-k5-acx">
-            <Upload className="h-5 w-5" aria-hidden="true" />
-            <span className="sr-only">Replace {doc.label}</span>
-          </label>
-          <button type="button" onClick={() => actions.removeDocument(docType)} disabled={Boolean(actions.busy)} aria-label={`Remove ${doc.label}`} className={`${REMOVE_BTN} !h-[50px] !w-[50px] !rounded-[14px]`}>
-            <Trash2 className="h-5 w-5" aria-hidden="true" />
-          </button>
-        </div>
-      ) : (
-        <label
-          htmlFor={inputId}
-          className="flex min-h-[50px] cursor-pointer items-center justify-center gap-2 rounded-[14px] border-[3px] border-dashed border-k5-line bg-k5-soft px-3 text-base font-black text-k5-acx hover:border-k5-ac"
-        >
-          <Upload className="h-5 w-5" aria-hidden="true" />
-          {working ? "Uploading…" : "Upload"}
-        </label>
-      )}
-      {working && doc.url && <span className="text-[13px] font-black text-k5-acx">Working…</span>}
-    </div>
-  );
-}
-
-/** Section 3: the four documents (JPG / PNG / PDF, up to 5 MB). */
-export function EditableDocuments({ m, actions }) {
-  return (
-    <>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-3">
-        {m.academic.documents.map((doc) => (
-          <DocTile key={doc.key} doc={doc} actions={actions} />
-        ))}
-      </div>
-      <p className="m-0 text-[13px] font-extrabold text-k5-mut">JPG, PNG or PDF, up to 5 MB.</p>
-    </>
   );
 }
 
@@ -354,11 +300,23 @@ export function EditableSports({ m, editor, actions }) {
             </label>
             <div className={LABEL}>
               <span>Start date</span>
-              <DatePicker icon={CalendarDays} height="h-[50px]" value={parseProfileDate(start)} fromDate={new Date(2000, 0, 1)} toDate={new Date(new Date().getFullYear() + 1, 11, 31)} onChange={(d) => setStart(formatProfileDate(d))} />
+              {/* The existing page: the start is today or later, and a new start clears an earlier end. */}
+              <DatePicker
+                icon={CalendarDays}
+                height="h-[50px]"
+                value={parseProfileDate(start)}
+                fromDate={startOfToday()}
+                toDate={new Date(new Date().getFullYear() + 1, 11, 31)}
+                onChange={(d) => {
+                  setStart(formatProfileDate(d));
+                  const e = parseProfileDate(end);
+                  if (d && e && e < d) setEnd("");
+                }}
+              />
             </div>
             <div className={LABEL}>
               <span>End date</span>
-              <DatePicker icon={CalendarDays} height="h-[50px]" value={parseProfileDate(end)} fromDate={parseProfileDate(start) || new Date(2000, 0, 1)} toDate={new Date(new Date().getFullYear() + 1, 11, 31)} onChange={(d) => setEnd(formatProfileDate(d))} />
+              <DatePicker icon={CalendarDays} height="h-[50px]" value={parseProfileDate(end)} fromDate={parseProfileDate(start) || startOfToday()} toDate={new Date(new Date().getFullYear() + 1, 11, 31)} onChange={(d) => setEnd(formatProfileDate(d))} />
             </div>
             <label className={`${LABEL} col-span-2 max-[600px]:col-span-1`}>
               <span>Where</span>

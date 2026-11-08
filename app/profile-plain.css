@@ -1,0 +1,126 @@
+/*
+ * My Profile for every grade band (Middle / High school too): the same profile page and editors as
+ * Grade K–5 (components/k5/pages/K5Profile*.jsx) are drawn inside .theme-profile-plain, which gives
+ * the K–5 tokens the regular dashboard colours (school accent --primary, slate lines, Open Sans) and
+ * tones down the playful sizes (chunky shadows, 3px borders, big rounded corners, heavy weights).
+ * Deliberately NOT .theme-k5: that class also re-points the shadcn tokens (app/k5-modules.css).
+ * Plain (unlayered) rules, so they win over the Tailwind utilities.
+ */
+
+.theme-profile-plain {
+  /* Accent = the school colour, like the rest of the regular dashboard. */
+  --k5-brand: var(--primary);
+  --k5-ac: var(--primary);
+  --k5-acd: color-mix(in srgb, var(--k5-ac) 75%, black);
+  --k5-act: color-mix(in srgb, var(--k5-ac) 9%, white);
+  --k5-acl: color-mix(in srgb, var(--k5-ac) 25%, white);
+  --k5-acx: color-mix(in srgb, var(--k5-ac) 82%, black);
+  --k5-ink: #111827;
+  --k5-mut: #64748b;
+  --k5-page: #f8fafc;
+  --k5-card: #ffffff;
+  --k5-soft: #f8fafc;
+  --k5-line: #e2e8f0;
+  --k5-grn: #1f7a3a;
+  --k5-grnD: #145a29;
+  --k5-red: #d7263d;
+  --k5-hi: #ffc531;
+  --k5-yT: #fff8e1;
+  --k5-yB: #fde68a;
+  --k5-yX: #7a4a05;
+  --k5-yI: #a16207;
+  --k5-gT: #e3f5ea;
+  --k5-gX: #1d6b3c;
+  --k5-gI: #237a45;
+  --k5-tT: #d5f5f0;
+  --k5-tI: #0f766e;
+  --k5-oT: #ffedd5;
+  --k5-oI: #c2410c;
+  --k5-pT: #fce7f0;
+  --k5-pI: #c92f6e;
+  --k5-vT: #ede7fb;
+  --k5-vI: #6a3fc4;
+  --k5-mT: #fff8dd;
+  --k5-mI: #8a6a00;
+  --k5-rT: #fdf0f0;
+  --k5-rI: #c92a2f;
+  --k5-bT: #eef4ff;
+  --k5-bI: #2563eb;
+  --k5-fd: var(--font-sans);
+  --k5-fb: var(--font-sans);
+  color: var(--k5-ink);
+  font-family: var(--k5-fb);
+  font-size: 14px;
+}
+
+/* Flat cards and buttons instead of the solid-offset K–5 shadows. */
+.theme-profile-plain .shadow-k5-chunky,
+.theme-profile-plain .shadow-k5-btn {
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+}
+.theme-profile-plain [class*="shadow-[0_4px_0"],
+.theme-profile-plain [class*="shadow-[0_3px_0"] {
+  box-shadow: none;
+}
+
+/* Thin borders. */
+.theme-profile-plain [class*="border-[3px]"],
+.theme-profile-plain .border-2 {
+  border-width: 1px;
+}
+.theme-profile-plain [class*="border-t-[3px]"] {
+  border-top-width: 1px;
+}
+.theme-profile-plain [class*="border-b-[3px]"] {
+  border-bottom-width: 1px;
+}
+
+/* Smaller corners. */
+.theme-profile-plain [class*="rounded-[26px]"],
+.theme-profile-plain [class*="rounded-[20px]"] {
+  border-radius: 10px;
+}
+.theme-profile-plain [class*="rounded-[18px]"],
+.theme-profile-plain .rounded-2xl {
+  border-radius: 8px;
+}
+.theme-profile-plain [class*="rounded-[14px]"] {
+  border-radius: 6px;
+}
+
+/* Regular weights and sizes. */
+.theme-profile-plain .font-black {
+  font-weight: 600;
+}
+.theme-profile-plain .font-extrabold {
+  font-weight: 500;
+}
+.theme-profile-plain [class*="text-[34px]"] {
+  font-size: 22px;
+}
+.theme-profile-plain [class*="text-[26px]"] {
+  font-size: 18px;
+}
+.theme-profile-plain [class*="text-[22px]"],
+.theme-profile-plain .text-xl {
+  font-size: 16px;
+}
+.theme-profile-plain [class*="text-[17px]"],
+.theme-profile-plain .text-base {
+  font-size: 14px;
+}
+.theme-profile-plain [class*="text-[15px]"] {
+  font-size: 13px;
+}
+
+/* Lower controls. */
+.theme-profile-plain [class*="min-h-[50px]"],
+.theme-profile-plain .min-h-12 {
+  min-height: 40px;
+}
+.theme-profile-plain .min-h-14 {
+  min-height: 44px;
+}
+.theme-profile-plain .min-h-11 {
+  min-height: 36px;
+}

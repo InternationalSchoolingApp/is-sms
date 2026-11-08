@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { getProfileMaster, saveMyProfile } from "@/services/profileSaveApi";
+import { getSettingsByTypeAndKey } from "@/services/settingsApi";
 import { buildDraft, buildEditContext, buildUnits, sameValue } from "@/utils/profileEdit";
+import { loadPhoneUtils } from "@/utils/profilePhone";
 import { callServer } from "@/utils/serverCall";
 
 /** One dropdown list (countries / timezones / states of a country / cities of a state), cached per id. */
@@ -21,8 +23,10 @@ export function useProfileMaster(kind, id, enabled = true) {
 
 /**
  * My Profile P2 editor: a draft of the editable fields (utils/profileEdit.js), saved per field (the green tick) or
- * all at once (Bulk Save) through services/profileSaveApi.js. Timezone and nationality ask first, like the existing
- * page. After a save the profile is loaded again and the saved fields take the server's values.
+ * all at once (Bulk Save) through services/profileSaveApi.js. Timezone and nationality ask first, one at a time like
+ * the existing page's bulk warnings (No skips only that change). Phones are checked per country (utils/profilePhone.js)
+ * unless the school's PHONE_NUMBER_VALIDATION setting is "false". After a save the profile is loaded again and the
+ * saved fields take the server's values.
  *
  * Returns { draft, set, setMany, unitOf(key), status(unitId) -> { dirty, saving, saved, error }, save(unitIds),
  *           undo(unitId), saveAll(), dirtyCount, busy, confirm: { message, accept, cancel } | null, countries }.
@@ -39,6 +43,26 @@ export function useProfileEditor({ profile, studentStandardId, refetch, enabled 
 
   const countriesQuery = useProfileMaster("countries", null, enabled);
   const countries = useMemo(() => countriesQuery.data || [], [countriesQuery.data]);
+
+  // Per-country phone rules: libphonenumber (loaded once) and the school's switch (only "false" turns it off).
+  const [phoneUtils, setPhoneUtils] = useState(null);
+  useEffect(() => {
+    if (!enabled) return undefined;
+    let live = true;
+    loadPhoneUtils().then((utils) => live && setPhoneUtils(utils));
+    return () => {
+      live = false;
+    };
+  }, [enabled]);
+  const phoneSetting = useQuery({
+    queryKey: ["setting", "CONFIGURATION", "PHONE_NUMBER_VALIDATION"],
+    queryFn: () => callServer(() => getSettingsByTypeAndKey("CONFIGURATION", "PHONE_NUMBER_VALIDATION")),
+    enabled,
+    staleTime: 30 * 60_000,
+    refetchOnWindowFocus: false,
+  });
+  const phoneCheckOn = String(phoneSetting.data ?? "").trim().toLowerCase() !== "false";
+  const checkCtx = useMemo(() => ({ ...ctx, countries, phoneUtils, phoneCheckOn }), [ctx, countries, phoneUtils, phoneCheckOn]);
 
   const [edits, setEdits] = useState({});
   const [saving, setSaving] = useState(() => new Set());
@@ -124,7 +148,7 @@ export function useProfileEditor({ profile, studentStandardId, refetch, enabled 
       if (!list.length) return;
       const problems = {};
       list.forEach((u) => {
-        const problem = u.validate?.(draft);
+        const problem = u.validate?.(draft, checkCtx);
         if (problem) problems[u.id] = problem;
       });
       if (Object.keys(problems).length) {
@@ -132,21 +156,32 @@ export function useProfileEditor({ profile, studentStandardId, refetch, enabled 
         toast.error(Object.values(problems)[0]);
         return;
       }
-      const warnings = list.filter((u) => u.confirm).map((u) => u.confirm);
-      if (warnings.length) {
+      // One warning at a time (profileViewNew.js processApplyChnagesBulkWarnings): Yes keeps that change, No leaves
+      // it out; nothing left -> "No confirmed changes available to save."
+      const asking = list.filter((u) => u.confirm);
+      const plain = list.filter((u) => !u.confirm);
+      const approved = [];
+      const ask = (i) => {
+        if (i >= asking.length) {
+          setConfirm(null);
+          const toSave = [...plain, ...approved];
+          if (toSave.length) run(toSave);
+          else if (list.length > 1) toast("No confirmed changes available to save.");
+          return;
+        }
         setConfirm({
-          message: warnings.join(" "),
+          message: asking[i].confirm,
           accept: () => {
-            setConfirm(null);
-            run(list);
+            approved.push(asking[i]);
+            ask(i + 1);
           },
-          cancel: () => setConfirm(null),
+          cancel: () => ask(i + 1),
         });
-        return;
-      }
-      run(list);
+      };
+      if (asking.length) ask(0);
+      else run(list);
     },
-    [units, isDirty, draft, run],
+    [units, isDirty, draft, run, checkCtx],
   );
 
   const saveAll = useCallback(() => save(dirtyUnits.map((u) => u.id)), [save, dirtyUnits]);
