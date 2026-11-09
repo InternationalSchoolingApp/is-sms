@@ -81,6 +81,12 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   // carry the same identity plus ae=Y and the parent/session fields above.
   const callbackUniqueId = searchParams.get("UNIQUEUUID") || searchParams.get("uniqueUUID") || params.UNIQUEUUID || "";
   const isEnrollmentReturn = Boolean(addEnrollment || callbackUniqueId);
+  const [linkPaymentReturn] = useState(() =>
+    typeof window !== "undefined" && window.sessionStorage.getItem("isSmsLinkPaymentReturn") === "Y"
+  );
+  useEffect(() => {
+    if (linkPaymentReturn) window.sessionStorage.removeItem("isSmsLinkPaymentReturn");
+  }, [linkPaymentReturn]);
   // replay=Y: the wizard found this child already paid (refresh / paid via the payment link) and sent the user
   // here WITHOUT gateway params, so there is nothing to verify — show the thank-you from the thank-you API.
   const isReplay = Boolean(addEnrollment) && addEnrollmentParam("replay").toUpperCase() === "Y";
@@ -108,16 +114,17 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   // For an authenticated enrollment return, verify the Java backend session before
   // payment-response or thank-you APIs run. This covers both normal enrollment and
   // Add Another Child returns.
-  const requiresBackendSessionCheck = Boolean(isEnrollmentReturn && sessionStatus === "authenticated" && session?.uniqueId);
+  const requiresBackendSessionCheck = Boolean(
+    !linkPaymentReturn && isEnrollmentReturn && sessionStatus === "authenticated" && session?.uniqueId
+  );
   const [backendSessionCheckedFor, setBackendSessionCheckedFor] = useState(null);
   const backendSessionReady =
     !requiresBackendSessionCheck || backendSessionCheckedFor === session?.uniqueId;
 
   // The gateway can return before RootLayout has refreshed the tab's session.
-  // Refresh the server session first and hold enrollment callback APIs briefly
-  // until that session is visible to this client.
+  // Link payment returns do not require the payer's enrollment session.
   useEffect(() => {
-    if (!isEnrollmentReturn || sessionStatus === "authenticated") {
+    if (!isEnrollmentReturn || sessionStatus === "authenticated" || linkPaymentReturn) {
       setSessionWaitExpired(false);
       return undefined;
     }
@@ -131,7 +138,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [isEnrollmentReturn, sessionStatus, router]);
+  }, [isEnrollmentReturn, sessionStatus, linkPaymentReturn, router]);
 
   useEffect(() => {
     if (!requiresBackendSessionCheck) return undefined;
@@ -160,7 +167,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   useEffect(() => {
     if (
       isReplay ||
-      (isEnrollmentReturn && sessionStatus !== "authenticated" && !sessionWaitExpired) ||
+      (isEnrollmentReturn && sessionStatus !== "authenticated" && !sessionWaitExpired && !linkPaymentReturn) ||
       (isEnrollmentReturn && sessionStatus === "authenticated" && !backendSessionReady)
     ) return undefined;
     let cancelled = false;
@@ -206,7 +213,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       cancelled = true;
       window.clearTimeout(requestTimer);
     };
-  }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, search, isReplay, isEnrollmentReturn, sessionStatus, sessionWaitExpired, backendSessionReady, urlSettlementRef]);
+  }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, search, isReplay, isEnrollmentReturn, sessionStatus, sessionWaitExpired, backendSessionReady, urlSettlementRef, linkPaymentReturn]);
 
   // settlement-status said SETTLED: the success endpoint now returns the normal thank-you, so fetch it
   // again and render that. If it still can't be loaded, the confirming card shows the payment as confirmed.
@@ -264,7 +271,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
     data.initiatedVia !== "Link" &&
     (String(data.responseStatus ?? "") === "4" || String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID");
   const waitingForEnrollmentSession =
-    isEnrollmentReturn && sessionStatus === "unauthenticated" && !sessionWaitExpired;
+    isEnrollmentReturn && sessionStatus === "unauthenticated" && !sessionWaitExpired && !linkPaymentReturn;
   const redirectToLogin =
     sessionStatus === "unauthenticated" &&
     !waitingForEnrollmentSession &&

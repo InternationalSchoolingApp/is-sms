@@ -629,6 +629,9 @@ export function Stage4ReviewPayment({ context, userId, uniqueId, onBack, onSessi
         return;
       }
       setNotice({ tone: "info", text: "Please wait while redirecting to payment gateway..." });
+      if (payload.initiateVia === "Link") {
+        window.sessionStorage.setItem("isSmsLinkPaymentReturn", "Y");
+      }
       if (response.details.openSelf) {
         window.location.replace(response.details.redirectUrl);
       } else {
