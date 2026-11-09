@@ -81,7 +81,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   // carry the same identity plus ae=Y and the parent/session fields above.
   const callbackUniqueId = searchParams.get("UNIQUEUUID") || searchParams.get("uniqueUUID") || params.UNIQUEUUID || "";
   const isEnrollmentReturn = Boolean(addEnrollment || callbackUniqueId);
-  const requiresEnrollmentSession = isAddEnrollmentUrl;
+  const requiresEnrollmentSession = isEnrollmentReturn;
   // replay=Y: the wizard found this child already paid (refresh / paid via the payment link) and sent the user
   // here WITHOUT gateway params, so there is nothing to verify — show the thank-you from the thank-you API.
   const isReplay = Boolean(addEnrollment) && addEnrollmentParam("replay").toUpperCase() === "Y";
@@ -269,8 +269,8 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   const redirectToLogin =
     sessionStatus === "unauthenticated" &&
     !waitingForEnrollmentSession &&
-    (isReplay || !loading || sessionWaitExpired) &&
-    (!shownWithoutLogin || copiedUrlWithoutSession);
+    (!loading || (isReplay && sessionWaitExpired)) &&
+n    (!shownWithoutLogin || copiedUrlWithoutSession);
   // TEMP DEBUG [pay-debug]: every state change that feeds the login redirect
   useEffect(() => {
     console.log("[pay-debug] view state", {
