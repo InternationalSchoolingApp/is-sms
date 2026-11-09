@@ -208,6 +208,16 @@ export const config = {
     "/:school/enrollment/:program",
     "/:school/enrollment/:program/step/:path*",
     "/:school/add-enrollment/:parentId/:sessionUserId/step/:path*",
-    "/:school/common/:path*",
+    // Only this app's own /common pages. Not "/:school/common/:path*": where the server reaches SMS through this
+    // app's own origin (local-proxy rewrites, as on live), the server actions' SMS calls
+    // (common/payment-gateway/options, invoke-payment-gateway, offline-payment, ...) came through here with no
+    // account cookie and were redirected to the login page, so "Continue to Pay" failed.
+    "/:school/common/payment-response-success",
+    "/:school/common/other-payment-response-success",
+    "/:school/common/registration-payment-response-success",
+    "/:school/common/evaluation-payment-response-success",
+    "/:school/common/payment-response-failure/:path*",
+    "/:school/common/stripe-payment-init/:path*",
+    "/:school/common/airwallex-payment-init/:path*",
   ],
 };
