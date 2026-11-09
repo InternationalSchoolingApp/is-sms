@@ -69,12 +69,21 @@ async function backendUrl(schoolUUID, path, { includeSchoolId = true } = {}) {
 // infrastructure-level (wrong URL, backend down, endpoint missing) —
 // treat it the same as an empty body: null, not a fake success value.
 async function parseJsonResponse(response) {
-  if (!response.ok) return null;
-  const text = await response.text();
-  if (!text) return null;
+  // The caller only sees null, so name the real cause in the server log (401/403 from SMS auth, a 5xx or an HTML
+  // error page from the load balancer, ...): without it a live failure shows nothing but "Something went wrong".
+  const text = await response.text().catch(() => "");
+  if (!response.ok) {
+    console.error(`[sms-api] ${response.status} from ${response.url} :: ${text.slice(0, 300)}`);
+    return null;
+  }
+  if (!text) {
+    console.error(`[sms-api] empty body from ${response.url}`);
+    return null;
+  }
   try {
     return JSON.parse(text);
   } catch {
+    console.error(`[sms-api] non-JSON body from ${response.url} :: ${text.slice(0, 300)}`);
     return null;
   }
 }
