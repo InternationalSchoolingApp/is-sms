@@ -13,7 +13,7 @@ import {
 } from "@/services/paymentResponseApi";
 import { useSession } from "@/components/providers/AuthSessionProvider";
 import { getAddEnrollmentThankYou } from "@/services/addEnrollmentBackendApi";
-import { checkBackendSessionStatus } from "@/services/sessionStatusApi";
+import { checkBackendSessionStatus, hasHeldAccount } from "@/services/sessionStatusApi";
 import { 
   clearAddEnrollmentChildState,
   loadAddEnrollmentRollNo,
@@ -114,6 +114,24 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   const backendSessionReady =
     !requiresBackendSessionCheck || backendSessionCheckedFor === session?.uniqueId;
 
+  // Does this browser hold any account at all? undefined = still asking. A payment link paid in another browser
+  // (incognito) holds none: no session can ever appear, so the wait below is skipped and the payment-response API
+  // is called straight away as a visitor (its initiatedVia 'Link' answer is shown without a login).
+  const [heldAccount, setHeldAccount] = useState(undefined);
+  const awaitsSession = requiresEnrollmentSession && sessionStatus !== "authenticated";
+  useEffect(() => {
+    if (!awaitsSession) return undefined;
+    let cancelled = false;
+    hasHeldAccount(schoolUUID)
+      .then((held) => !cancelled && setHeldAccount(held !== false))
+      .catch(() => !cancelled && setHeldAccount(true));
+    return () => {
+      cancelled = true;
+    };
+  }, [awaitsSession, schoolUUID]);
+  // The session wait is over: it timed out, or there was never a session to wait for.
+  const sessionWaitDone = sessionWaitExpired || heldAccount === false;
+
   // The gateway can return before RootLayout has refreshed the tab's session.
   // Add-enrollment returns need their signed-in parent session. Normal payment
   // returns are verified by the payment-response API before the login decision.
@@ -122,6 +140,8 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       setSessionWaitExpired(false);
       return undefined;
     }
+    // Only wait when this browser holds an account that can still show up here.
+    if (heldAccount !== true) return undefined;
     let cancelled = false;
     setBackendSessionCheckedFor(null);
     router.refresh();
@@ -132,7 +152,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [requiresEnrollmentSession, sessionStatus, router]);
+  }, [requiresEnrollmentSession, sessionStatus, router, heldAccount]);
 
   useEffect(() => {
     if (!requiresBackendSessionCheck) return undefined;
@@ -161,7 +181,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   useEffect(() => {
     if (
       isReplay ||
-      (requiresEnrollmentSession && sessionStatus !== "authenticated" && !sessionWaitExpired) ||
+      (requiresEnrollmentSession && sessionStatus !== "authenticated" && !sessionWaitDone) ||
       (isEnrollmentReturn && sessionStatus === "authenticated" && !backendSessionReady)
     ) return undefined;
     let cancelled = false;
@@ -207,7 +227,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       cancelled = true;
       window.clearTimeout(requestTimer);
     };
-  }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, search, isReplay, isEnrollmentReturn, requiresEnrollmentSession, sessionStatus, sessionWaitExpired, backendSessionReady, urlSettlementRef]);
+  }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, search, isReplay, isEnrollmentReturn, requiresEnrollmentSession, sessionStatus, sessionWaitDone, backendSessionReady, urlSettlementRef]);
 
   // settlement-status said SETTLED: the success endpoint now returns the normal thank-you, so fetch it
   // again and render that. If it still can't be loaded, the confirming card shows the payment as confirmed.
@@ -265,11 +285,14 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
     data.initiatedVia !== "Link" &&
     (String(data.responseStatus ?? "") === "4" || String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID");
   const waitingForEnrollmentSession =
-    requiresEnrollmentSession && sessionStatus === "unauthenticated" && !sessionWaitExpired;
+    requiresEnrollmentSession && sessionStatus === "unauthenticated" && !sessionWaitDone;
+  // Never decide on login while the payment-response call is still in flight: its answer (initiatedVia 'Link',
+  // a confirming payment, ...) is what says whether the page may be shown without a login. Replay makes no such
+  // call without a session, so it only waits for the session wait to end.
   const redirectToLogin =
     sessionStatus === "unauthenticated" &&
     !waitingForEnrollmentSession &&
-    (isReplay || !loading || sessionWaitExpired) &&
+    (isReplay || !loading) &&
     (!shownWithoutLogin || copiedUrlWithoutSession);
   // TEMP DEBUG [pay-debug]: every state change that feeds the login redirect
   useEffect(() => {
@@ -277,6 +300,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       sessionStatus,
       waitingForEnrollmentSession,
       sessionWaitExpired,
+      heldAccount,
       loading,
       hasData: Boolean(data),
       responseStatus: data?.responseStatus,
@@ -289,7 +313,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       url: window.location.href,
       at: new Date().toISOString(),
     });
-  }, [sessionStatus, loading, data, isReplay, shownWithoutLogin, copiedUrlWithoutSession, redirectToLogin, waitingForEnrollmentSession, sessionWaitExpired]);
+  }, [sessionStatus, loading, data, isReplay, shownWithoutLogin, copiedUrlWithoutSession, redirectToLogin, waitingForEnrollmentSession, sessionWaitExpired, heldAccount]);
   useEffect(() => {
     if (redirectToLogin && !window.__loggingOut) {
       console.log("[pay-debug] REDIRECTING TO LOGIN", { sessionStatus, loading, responseStatus: data?.responseStatus, url: window.location.href });

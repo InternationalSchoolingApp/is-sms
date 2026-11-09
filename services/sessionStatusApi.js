@@ -1,7 +1,27 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { withSmsAuth } from "@/lib/auth/session";
+import { heldAccounts } from "@/lib/auth/accountCookies";
+
+/**
+ * Whether this browser holds ANY signed-in account for the school (the same cookies proxy.js picks from).
+ * false = nobody can ever be signed in on this page (e.g. a payment link paid in an incognito window), so a
+ * payment-return page must not wait for a session to appear. Errors answer true (keep waiting, as before).
+ *
+ * @param {string} schoolUUID
+ * @returns {Promise<boolean>}
+ */
+export async function hasHeldAccount(schoolUUID) {
+  try {
+    const accounts = heldAccounts(await cookies());
+    return accounts.some((a) => !schoolUUID || !a.profile?.schoolUUID || a.profile.schoolUUID === schoolUUID);
+  } catch (err) {
+    console.error("hasHeldAccount: cookie read failed", err);
+    return true;
+  }
+}
 
 /**
  * Cross-app single-logout support: asks the Java backend (is-rest-api) whether this
