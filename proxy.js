@@ -95,7 +95,10 @@ export default async function proxy(request) {
     clearPickCookie = true;
   }
   if (!entry) {
-    const segments = path.split("/").filter(Boolean);
+    // A payment return names its payer by UNIQUEUUID in the query (success pages) or in a path segment that can
+    // carry "&ae=Y&..." glued on (failure page), not as a plain segment: match those too, so a browser holding
+    // several accounts opens the page as the payer instead of as a visitor (who is sent to login).
+    const segments = publicPaymentReturn ? paymentReturnAccountIds(request.nextUrl, path) : path.split("/").filter(Boolean);
     entry = accounts.find((a) => segments.includes(a.account)) || null;
     if (!entry) {
       entry = accounts.find((a) => a.profile?.userId && segments.includes(String(a.profile.userId))) || null;
@@ -142,6 +145,29 @@ function isPaymentReturnPage(segments) {
   return segments[1] === "common" && /^([a-z]+-)?payment-response-(success|failure)$/.test(segments[2] || "");
 }
 
+/**
+ * The ids a payment-return URL can name its payer by: every path segment (also with any "&ae=Y&..." suffix cut
+ * off), plus the UNIQUEUUID / uniqueUUID query values the gateway return carries.
+ */
+function paymentReturnAccountIds(url, path) {
+  const ids = new Set();
+  for (const segment of path.split("/").filter(Boolean)) {
+    ids.add(segment);
+    let decoded = segment;
+    try {
+      decoded = decodeURIComponent(segment);
+    } catch {
+      // keep the raw segment
+    }
+    ids.add(decoded.split("&")[0]);
+  }
+  for (const key of ["UNIQUEUUID", "uniqueUUID"]) {
+    const value = url.searchParams.get(key);
+    if (value) ids.add(value);
+  }
+  return [...ids];
+}
+
 /** Let the page render with nobody signed in (the account header stays unset). */
 function asVisitor(forwarded) {
   return NextResponse.next({ request: { headers: forwarded } });
@@ -182,6 +208,16 @@ export const config = {
     "/:school/enrollment/:program",
     "/:school/enrollment/:program/step/:path*",
     "/:school/add-enrollment/:parentId/:sessionUserId/step/:path*",
-    "/:school/common/:path*",
+    // Only this app's own /common pages. Not "/:school/common/:path*": where the server reaches SMS through this
+    // app's own origin (local-proxy rewrites, as on live), the server actions' SMS calls
+    // (common/payment-gateway/options, invoke-payment-gateway, offline-payment, ...) came through here with no
+    // account cookie and were redirected to the login page, so "Continue to Pay" failed.
+    "/:school/common/payment-response-success",
+    "/:school/common/other-payment-response-success",
+    "/:school/common/registration-payment-response-success",
+    "/:school/common/evaluation-payment-response-success",
+    "/:school/common/payment-response-failure/:path*",
+    "/:school/common/stripe-payment-init/:path*",
+    "/:school/common/airwallex-payment-init/:path*",
   ],
 };
