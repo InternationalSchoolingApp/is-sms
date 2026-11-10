@@ -9,7 +9,8 @@
     "lint": "eslint",
     "verify:payload-encoding": "node scripts/verifyPayloadEncoding.mjs",
     "verify:cookie-domain": "node scripts/verifyCookieDomain.mjs",
-    "verify:account-auth": "node scripts/verifyAccountAuth.mjs"
+    "verify:account-auth": "node scripts/verifyAccountAuth.mjs",
+    "verify:payment-attempt-recovery": "node scripts/verifyPaymentAttemptRecovery.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

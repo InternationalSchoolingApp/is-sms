@@ -2,14 +2,16 @@
 
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { withSmsAuth } from "@/lib/auth/session";
 
 /**
  * Re-enrollment endpoints (ClientReEnrollmentController.java, is-rest-api):
  *   POST {school}/api/v1/student/re-enrollment/{eligibility,select-option,payment-details,
  *                                                 choose-payment-plan,review,complete}
- * Same envelope as studentSignupBackendApi.js: {payload: base64(JSON)}, identity travels in the payload
- * (`userId`), no cookie forwarding. Business failures are HTTP 200 with their own status/statusCode, so a
- * non-ok response or empty body means infrastructure trouble and resolves to null.
+ * Same envelope as studentSignupBackendApi.js: {payload: base64(JSON)}. The payload's `userId` selects the
+ * student; the signed-in bearer token authenticates the caller. No browser session cookie is forwarded.
+ * Business failures are HTTP 200 with their own status/statusCode, so a non-ok response or empty body means
+ * infrastructure trouble and resolves to null.
  *
  * Course selection is NOT here: the screen reuses the enrollment's course-details-by-standard-id
  * (studentSignupBackendApi.chooseCoursesByGrade) with callFrom "dashboard" / requestFromMigration "Y".
@@ -25,12 +27,16 @@ async function backendUrl(schoolUUID, name) {
 }
 
 async function postPayload(schoolUUID, name, data) {
-  const response = await fetch(await backendUrl(schoolUUID, name), {
+  const url = await backendUrl(schoolUUID, name);
+  const response = await fetch(url, await withSmsAuth({
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ payload: encodePayload(data) }),
-  });
-  if (!response.ok) return null;
+  }));
+  if (!response.ok) {
+    console.error(`[re-enrollment-api] ${response.status} for POST ${url}`);
+    return null;
+  }
   const text = await response.text();
   if (!text) return null;
   try {

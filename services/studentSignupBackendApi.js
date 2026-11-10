@@ -103,7 +103,8 @@ async function postPayload(schoolUUID, path, data, options) {
   // common/offline-payment), so callers that need it pass `studentUserId`.
   const headers = { "Content-Type": "application/json" };
   if (options?.studentUserId) headers.UNIQUEUUID = options.studentUserId;
-  const response = await fetch(await backendUrl(schoolUUID, path, options), {
+  const url = await backendUrl(schoolUUID, path, options);
+  const init = await withSmsAuth({
     method: "POST",
     headers,
     body: JSON.stringify({ payload: encodePayload(data) }),
@@ -244,7 +245,7 @@ export async function logoutSignup(schoolUUID, studentUserId) {
   await fetch(await backendUrl(schoolUUID, `common/logout/${encodeURIComponent(studentUserId)}`), {
     method: "GET",
     redirect: "manual",
-  }));
+  });
 }
 
 export async function getPaymentPaidStatus(schoolUUID, request) {
@@ -282,7 +283,7 @@ export async function uploadPaymentProof(schoolUUID, studentUserId, { file, uplo
   const response = await fetch(await backendUrl(schoolUUID, `api/upload/${studentUserId}`), {
     method: "POST",
     body: form,
-  }));
+  });
   return parseJsonResponse(response);
 }
 
@@ -373,4 +374,3 @@ export async function resendEmailVerification(schoolUUID, request) {
 export async function verifyReferralCode(schoolUUID, request) {
   return postPayload(schoolUUID, "api/v1/common/verify-referral", request);
 }
-

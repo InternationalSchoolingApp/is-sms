@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/components/providers/AuthSessionProvider";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSchoolSettingsLinks, getSchoolSettingsTechnical } from "@/utils/schoolSettings";
 import { extractRootCss } from "@/utils/schoolColorTheme";

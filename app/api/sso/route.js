@@ -6,8 +6,6 @@ import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
 import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 import { addEnrollmentStepPath, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
 import { detectOriginatingBackend, getBackendOverrideCookieName, isBackendOverrideAllowed, parseBackendOrigin } from "@/utils/backendOrigin";
-import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
-import { NextResponse } from "next/server";
 import { MODE_EMBED, MODE_SHARE, reEnrollmentBasePath } from "@/utils/reEnrollmentSteps";
 
 const VALID_STEPS = new Set(["1", "2", "3", "4"]);
@@ -88,7 +86,7 @@ async function handleSsoHandoff(request) {
   const step = url.searchParams.get("step");
   // target=re-enrollment: an existing student who has to re-enroll (the backend sets it, see
   // CommonUtil#getFinalEnrollmentUrl) goes to the re-enrollment pages instead of an enrollment wizard step.
-  const target = url.searchParams.get("target");
+  let target = url.searchParams.get("target");
   // mode=embed: the re-enrollment pages are shown inside the dashboard (iframe, no header / footer); anything else is "share".
   // (embed=1 is the older form of the same switch and is still understood.)
   const mode = url.searchParams.get("mode") === MODE_EMBED || url.searchParams.get("embed") === "1" ? MODE_EMBED : MODE_SHARE;
@@ -151,9 +149,13 @@ async function handleSsoHandoff(request) {
   // Add-another-child wizard wins when ae=Y and the path could be built; otherwise the student's own enrollment step.
   // fresh=1 marks a real "start" of the add-enrollment wizard (dashboard button / enrollment link). Only such an
   // entry may reserve a new child; a reload of the wizard never does (see useAddEnrollmentContext).
-  const target = addEnrollmentPath != null
-    ? `${addEnrollmentPath}${addEnrollmentPath.includes("?") ? "&" : "?"}fresh=1`
-    : stepPath(schoolUUID, program, targetStep);
+  if (addEnrollmentPath != null) {
+    target = `${addEnrollmentPath}${addEnrollmentPath.includes("?") ? "&" : "?"}fresh=1`;
+  } else if (target === "re-enrollment") {
+    target = `${reEnrollmentBasePath(schoolUUID, mode)}${resume === "1" ? "?resume=1" : ""}`;
+  } else {
+    target = stepPath(schoolUUID, program, targetStep);
+  }
   const response = redirectTo(target, request);
   const account = exchanged.uniqueId;
   // The step page right after this redirect is for the user who just signed in, even when the browser holds
@@ -180,21 +182,6 @@ async function handleSsoHandoff(request) {
       signedInAt: Date.now(),
     },
   });
-  // Add-another-child wizard wins when ae=Y and the path could be built; then an
-  // existing student's re-enrollment; otherwise the student's own enrollment step path.
-  // fresh=1 marks a real "start" of the add-enrollment wizard (dashboard button / enrollment link). Only such an
-  // entry may reserve a new child; a reload of the wizard never does (see useAddEnrollmentContext).
-  let destination;
-  if (addEnrollmentPath != null) {
-    destination = `${addEnrollmentPath}${addEnrollmentPath.includes("?") ? "&" : "?"}fresh=1`;
-  } else if (target === "re-enrollment") {
-    destination = `${reEnrollmentBasePath(schoolUUID, mode)}${resume === "1" ? "?resume=1" : ""}`;
-  } else {
-    destination = stepPath(schoolUUID, program, targetStep);
-  }
-  const response = redirectTo(destination, request);
-
-  
   // The rest of this student's session (every Server Action after this
   // point) must keep hitting the SAME backend that issued the token, not
   // whatever NEXT_PUBLIC_BACKEND_BASE_URL defaults to — persist it the same

@@ -6,8 +6,11 @@ import { FullScreenLoader } from "@/components/common/Loader";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
-import { getPaymentPaidStatus } from "@/services/studentSignupBackendApi";
+import { PaymentInProgressModal } from "@/components/student-enroll/PaymentInProgressModal";
+import { cancelPaymentAttempt, getPaymentPaidStatus } from "@/services/studentSignupBackendApi";
 import { isFramed, navigateTop } from "@/utils/embed";
+import { getPaymentBrowserId } from "@/utils/paymentBrowserId";
+import { getPaymentAttemptRecovery } from "@/utils/paymentAttemptRecovery.mjs";
 import {
   STATUS_SESSION_OUT,
   STATUS_SUCCESS,
@@ -58,6 +61,7 @@ export function useReEnrollmentGateway({ context, studentUserId, onPaid, onSessi
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [paymentIncomplete, setPaymentIncomplete] = useState(false);
   const [paymentUnderReview, setPaymentUnderReview] = useState(false);
+  const [paymentInProgress, setPaymentInProgress] = useState(null);
   const paidPollRef = useRef({ timer: null, count: 0 });
 
   // Coming back from the gateway with Back (bfcache) restores the page with the modal open and busy.
@@ -176,8 +180,8 @@ export function useReEnrollmentGateway({ context, studentUserId, onPaid, onSessi
     paidPollRef.current.timer = setInterval(() => checkPaidStatus(userPaymentDetailsId, schoolId), PAID_STATUS_POLL_MS);
   }
 
-  async function launchGateway(gateway) {
-    const details = gatewayPicker.details;
+  async function launchGateway(gateway, { details = gatewayPicker?.details } = {}) {
+    if (!details) return;
     const payload = {
       location: getLocationValue(),
       browserDetails: details.upid,
@@ -188,11 +192,28 @@ export function useReEnrollmentGateway({ context, studentUserId, onPaid, onSessi
       paymentGateway: gateway.name,
       initiateVia: "",
       backUrl: window.location.href,
+      userAgent: navigator.userAgent,
+      browserId: getPaymentBrowserId(),
       applyingFrom: "nextjs",
     };
     setLaunching(true);
     try {
       const response = await invokeGateway.mutateAsync(payload);
+      const recovery = getPaymentAttemptRecovery(response, gateway.name);
+      if (recovery?.resumeUrl) {
+        toast("Taking you back to the payment you started...");
+        window.location.assign(recovery.resumeUrl);
+        return;
+      }
+      if (recovery) {
+        setLaunching(false);
+        setGatewayPicker(null);
+        setPaymentInProgress({
+          ...recovery.request,
+          relaunch: { gateway, details },
+        });
+        return;
+      }
       if (response?.status !== STATUS_SUCCESS || !response.details?.redirectUrl) {
         setLaunching(false);
         setGatewayPicker(null);
@@ -283,6 +304,24 @@ export function useReEnrollmentGateway({ context, studentUserId, onPaid, onSessi
         onUploadProof={uploadProof}
         onSubmitOffline={submitOffline}
       />
+      {paymentInProgress && (
+        <PaymentInProgressModal
+          key={paymentInProgress.openedAt}
+          request={paymentInProgress}
+          onClose={() => setPaymentInProgress(null)}
+          onCancelAttempt={(attemptRef) => cancelPaymentAttempt(context.schoolUUID, { attemptRef })}
+          onCancelled={() => {
+            const { gateway, details } = paymentInProgress.relaunch;
+            setPaymentInProgress(null);
+            launchGateway(gateway, { details });
+          }}
+          onPaid={() => {
+            setPaymentInProgress(null);
+            onPaid?.();
+          }}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
       {paymentProcessing && <FullScreenLoader message="Payment is under process..." />}
       <Dialog open={paymentIncomplete} onOpenChange={(open) => !open && setPaymentIncomplete(false)}>
         <DialogContent className="text-center">

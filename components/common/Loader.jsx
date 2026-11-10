@@ -1,6 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, XCircle } from "lucide-react";
 import { DEFAULT_SCHOOL_UUID } from "@/constant/SchoolConstants";
 
 // loader-new.gif — the same loader legacy shows (paymentUnderProcessOverlay):

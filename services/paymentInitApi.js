@@ -74,7 +74,7 @@ export async function getStripeEmbeddedInit(uniqueUuid, paramsString, schoolUUID
   const query = buildQuery(paramsString);
   const url = `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/payment/stripe-embedded-init/${encodeURIComponent(uniqueUuid)}${query ? `?${query}` : ""}`;
   try {
-    const response = await fetch(url, { method: "GET" });
+    const response = await fetch(url, await withSmsAuth({ method: "GET" }));
     if (!response.ok) return null;
     return await response.json();
   } catch {

@@ -119,7 +119,8 @@ function Option({ id, highlighted, Icon, title, text, children }) {
  *
  * request: { attempt, autoCancel } with invoke-payment-gateway's `details` (attemptRef, paymentName, sameFee, replaced,
  *          sameBrowser, sameDevice, gateway, gatewayLabel, startedAt, expiresAt, device, browser, canContinue,
- *          continueUrl), or { alreadyPaidMessage } for ALREADY_PAID; plus `openedAt` (ms) for the expiry countdown.
+ *          continueUrl), or { unavailableMessage } when the in-progress response has no safe recovery reference,
+ *          or { alreadyPaidMessage } for ALREADY_PAID; plus `openedAt` (ms) for the expiry countdown.
  * onCancelAttempt(attemptRef) -> payment-attempt-cancel response (CANCELLED / ALREADY_PAID / CANCEL_FAILED).
  * onCancelled() re-runs the normal launch; onPaid() continues the app's paid-fee path.
  */
@@ -127,7 +128,9 @@ export function PaymentInProgressModal({ request, onClose, onCancelAttempt, onCa
   const attempt = request.attempt;
   // details -> confirm -> cancelling -> cancelled | paid | failed. autoCancel (the browser that started it is
   // back) goes straight to cancelling.
-  const [view, setView] = useState(request.alreadyPaidMessage ? "paid" : request.autoCancel ? "cancelling" : "details");
+  const [view, setView] = useState(
+    request.unavailableMessage ? "unavailable" : request.alreadyPaidMessage ? "paid" : request.autoCancel ? "cancelling" : "details"
+  );
   const autoCancelStarted = useRef(false);
   const [message, setMessage] = useState(request.alreadyPaidMessage || "");
   const [now, setNow] = useState(request.openedAt);
@@ -210,6 +213,12 @@ export function PaymentInProgressModal({ request, onClose, onCancelAttempt, onCa
       title: otherFee ? "That payment went through" : "This fee is already paid",
       description: message,
     },
+    unavailable: {
+      tone: "amber",
+      Icon: CreditCard,
+      title: "A payment is already in progress",
+      description: request.unavailableMessage,
+    },
     failed: { tone: "red", Icon: CircleAlert, title: "We couldn't close the old payment", description: message },
   }[view];
 
@@ -235,7 +244,13 @@ export function PaymentInProgressModal({ request, onClose, onCancelAttempt, onCa
       : "This payment can only be finished on the device where it was started.";
 
   let body = null;
-  if (view === "cancelled") {
+  if (view === "unavailable") {
+    body = (
+      <Button type="button" autoFocus onClick={onClose} className="h-11 w-full rounded-xl text-[15px] font-semibold hover:bg-primary/90">
+        Back
+      </Button>
+    );
+  } else if (view === "cancelled") {
     body = (
       <p className="flex items-center justify-center gap-2 text-sm font-medium text-slate-700">
         <LoaderCircle className="size-4 text-primary motion-safe:animate-spin" aria-hidden="true" />

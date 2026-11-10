@@ -136,7 +136,7 @@ async function startAirwallexCheckout(checkoutUrl) {
 
 // The backend's own message wins (e.g. "This payment link has expired. Please start the payment again
 // from your fee page." for an invalid/expired attemptToken); a null response means it couldn't be reached.
-function getFailureMessage(response) {
+export function getFailureMessage(response) {
   const message = [response?.message, response?.htmlMessage].find((value) => typeof value === "string" && value.trim()) || "";
   const cleanMessage = message.replace(/^FAILED\|/, "").trim();
   if (cleanMessage) return cleanMessage;
