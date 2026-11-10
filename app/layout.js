@@ -8,7 +8,7 @@ import { getAccountSession, publicSession } from "@/lib/auth/session";
 import { GlobalLoader } from "@/components/common/GlobalLoader";
 import { MaintenanceBanner } from "@/components/common/MaintenanceBanner";
 import { BackendSwitcher } from "@/components/common/BackendSwitcher";
-import { PageTitle } from "@/components/common/PageTitle";
+import { PageTitle } from "@/components/common/PageTitle"; 
 import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import CampaignCookieInitializer from "@/components/CampaignCookieInitializer";
 import ConsentBanner from "@/components/ConsentBanner";
