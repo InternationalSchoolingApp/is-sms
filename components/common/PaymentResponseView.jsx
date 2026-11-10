@@ -1,15 +1,20 @@
 "use client";
 
-import { isFramed, navigateTop, useFramed } from "@/utils/embed";
-import { Suspense, useEffect, useRef, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link"; 
 import Image from "next/image";
-import { Check, Clock, Copy, LoaderCircle, XCircle } from "lucide-react";
-import { getPaymentResponseSuccess, getPaymentResponseFailure, savePurchaseBrowserDetails } from "@/services/paymentResponseApi";
-import { useSession } from "next-auth/react";
-import { getAddEnrollmentThankYou } from "@/services/addEnrollmentBackendApi";
+import { Check, Clock, Copy, Info, LoaderCircle, XCircle } from "lucide-react";
 import {
+  getPaymentResponseSuccess,
+  getPaymentResponseFailure,
+  getPaymentSettlementStatus,
+  savePurchaseBrowserDetails,
+} from "@/services/paymentResponseApi";
+import { useSession } from "@/components/providers/AuthSessionProvider";
+import { getAddEnrollmentThankYou } from "@/services/addEnrollmentBackendApi";
+import { checkBackendSessionStatus, hasHeldAccount } from "@/services/sessionStatusApi";
+import { 
   clearAddEnrollmentChildState,
   loadAddEnrollmentRollNo,
   loadLastAddEnrollmentRollNo,
@@ -17,7 +22,7 @@ import {
 import { AccountSetupSection } from "@/components/add-enrollment/AccountSetupSection";
 import { loginPageUrl, resolveBackendOrigin, withLoginPayload } from "@/utils/backendOrigin";
 import { getBrowserDetailsForSignup } from "@/utils/utmCookies";
-import { logoutEverywhere } from "@/utils/logout";
+import { expireSession, logoutEverywhere } from "@/utils/logout";
 
 /**
  * Shared view for every /common/*payment-response-* route. Ports the render
@@ -35,6 +40,10 @@ import { logoutEverywhere } from "@/utils/logout";
  *      - anything else        -> Failed
  *  3. On Success with showReloadOption "Y", a 5s countdown auto-redirects to
  *     returnUrl (mirrors the JSP's page-redirect-counter), with a manual link.
+ *  4. confirmationPending "Y" (the backend couldn't confirm the payment with the gateway yet), or a
+ *     success call that fails on a Stripe/Airwallex return: the "confirming" card polls
+ *     payment/settlement-status until SETTLED (the success endpoint is fetched again), NOT_PAID,
+ *     DUPLICATE, or about 60 s pass.
  *
  * The school UUID comes from a schoolId path/query parameter when supplied,
  * then falls back to NEXT_PUBLIC_SCHOOL_ID for the common callback routes.
@@ -48,6 +57,10 @@ export function PaymentResponseView({ endpointPath, mode = "success", schoolUUID
 }
 
 function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFromRoute }) {
+  // The server has already checked the tab's account in RootLayout; read that result
+  // before interpreting callback flags or starting any add-enrollment request.
+  const { data: session, status: sessionStatus } = useSession();
+  const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
 
@@ -58,12 +71,16 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   const glued = new URLSearchParams(gluedParts.join("&"));
   const addEnrollmentParam = (key) => searchParams.get(key) || glued.get(key) || "";
   const isAddEnrollmentUrl = addEnrollmentParam("ae").toUpperCase() === "Y";
-  // TEMP DEBUG: what the URL gave us
-  console.log("[add-enrollment] url flags", { ae: addEnrollmentParam("ae"), parentId: addEnrollmentParam("parentId"), sessionUserId: addEnrollmentParam("sessionUserId") });
+  const uniqueUuid = isAddEnrollmentUrl ? uuidSegment : params.UNIQUEUUID;
   const addEnrollment =
     isAddEnrollmentUrl && addEnrollmentParam("parentId") && addEnrollmentParam("sessionUserId")
       ? { parentId: addEnrollmentParam("parentId"), sessionUniqueId: addEnrollmentParam("sessionUserId"), childUserId: addEnrollmentParam("childUserId") }
       : null;
+  // Normal enrollment gateway callbacks carry UNIQUEUUID directly; add-enrollment callbacks
+  // carry the same identity plus ae=Y and the parent/session fields above.
+  const callbackUniqueId = searchParams.get("UNIQUEUUID") || searchParams.get("uniqueUUID") || params.UNIQUEUUID || "";
+  const isEnrollmentReturn = Boolean(addEnrollment || callbackUniqueId);
+  const requiresEnrollmentSession = isAddEnrollmentUrl;
   // replay=Y: the wizard found this child already paid (refresh / paid via the payment link) and sent the user
   // here WITHOUT gateway params, so there is nothing to verify — show the thank-you from the thank-you API.
   const isReplay = Boolean(addEnrollment) && addEnrollmentParam("replay").toUpperCase() === "Y";
@@ -71,7 +88,9 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [failed, setFailed] = useState(false);
-  const { status: sessionStatus } = useSession();
+  // { ref, message, settledMessage } while the payment is still being confirmed, else null.
+  const [confirming, setConfirming] = useState(null);
+  const [sessionWaitExpired, setSessionWaitExpired] = useState(false);
 
   const search = searchParams.toString();
   const schoolUUID =
@@ -80,9 +99,90 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
     params.schoolId ||
     searchParams.get("schoolUUID") ||
     process.env.NEXT_PUBLIC_SCHOOL_ID;
+  // Stripe / Airwallex returns carry the settlement reference: polled when the success call fails.
+  const stripeRef = searchParams.get("pgReferneceForStripe") || "";
+  const airwallexRef = searchParams.get("pgReferneceForAirwallex") || "";
+  const urlSettlementRef = mode === "failure" ? "" : stripeRef || airwallexRef;
+  const gatewayName = (stripeRef && "Stripe") || (airwallexRef && "Airwallex") || data?.paymentGateway || "the payment gateway";
+
+  // For an authenticated enrollment return, verify the Java backend session before
+  // payment-response or thank-you APIs run. This covers both normal enrollment and
+  // Add Another Child returns.
+  const requiresBackendSessionCheck = Boolean(isEnrollmentReturn && sessionStatus === "authenticated" && session?.uniqueId);
+  const [backendSessionCheckedFor, setBackendSessionCheckedFor] = useState(null);
+  const backendSessionReady =
+    !requiresBackendSessionCheck || backendSessionCheckedFor === session?.uniqueId;
+
+  // Does this browser hold any account at all? undefined = still asking. A payment link paid in another browser
+  // (incognito) holds none: no session can ever appear, so the wait below is skipped and the payment-response API
+  // is called straight away as a visitor (its initiatedVia 'Link' answer is shown without a login).
+  const [heldAccount, setHeldAccount] = useState(undefined);
+  const awaitsSession = requiresEnrollmentSession && sessionStatus !== "authenticated";
+  useEffect(() => {
+    if (!awaitsSession) return undefined;
+    let cancelled = false;
+    hasHeldAccount(schoolUUID)
+      .then((held) => !cancelled && setHeldAccount(held !== false))
+      .catch(() => !cancelled && setHeldAccount(true));
+    return () => {
+      cancelled = true;
+    };
+  }, [awaitsSession, schoolUUID]);
+  // The session wait is over: it timed out, or there was never a session to wait for.
+  const sessionWaitDone = sessionWaitExpired || heldAccount === false;
+
+  // The gateway can return before RootLayout has refreshed the tab's session.
+  // Add-enrollment returns need their signed-in parent session. Normal payment
+  // returns are verified by the payment-response API before the login decision.
+  useEffect(() => {
+    if (!requiresEnrollmentSession || sessionStatus === "authenticated") {
+      setSessionWaitExpired(false);
+      return undefined;
+    }
+    // Only wait when this browser holds an account that can still show up here.
+    if (heldAccount !== true) return undefined;
+    let cancelled = false;
+    setBackendSessionCheckedFor(null);
+    router.refresh();
+    const timeoutId = window.setTimeout(() => {
+      if (!cancelled) setSessionWaitExpired(true);
+    }, 45_000);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [requiresEnrollmentSession, sessionStatus, router, heldAccount]);
 
   useEffect(() => {
-    if (isReplay) return undefined;
+    if (!requiresBackendSessionCheck) return undefined;
+    let cancelled = false;
+    setBackendSessionCheckedFor(null);
+    logPaymentBackendCall("GET", `/${schoolUUID}/api/v1/common/session-status/${session.uniqueId}`);
+    checkBackendSessionStatus(schoolUUID, session.uniqueId)
+      .then((valid) => {
+        if (cancelled) return;
+        if (!valid) {
+          expireSession(schoolUUID);
+          return;
+        }
+        setBackendSessionCheckedFor(session.uniqueId);
+      })
+      .catch(() => {
+        // The session-status service treats network failures as valid; keep
+        // the same fail-open behavior if the server action itself rejects.
+        if (!cancelled) setBackendSessionCheckedFor(session.uniqueId);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [requiresBackendSessionCheck, schoolUUID, session?.uniqueId]);
+
+  useEffect(() => {
+    if (
+      isReplay ||
+      (requiresEnrollmentSession && sessionStatus !== "authenticated" && !sessionWaitDone) ||
+      (isEnrollmentReturn && sessionStatus === "authenticated" && !backendSessionReady)
+    ) return undefined;
     let cancelled = false;
     const requestTimer = window.setTimeout(() => {
       setLoading(true);
@@ -91,21 +191,34 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
           ? getPaymentResponseFailure(schoolUUID, customReference, search)
           : getPaymentResponseSuccess(schoolUUID, endpointPath, search);
 
-      // TEMP-DEBUG: every API call this page makes is printed as "[payment-response] api …"
-      console.log("[payment-response] api call", mode === "failure" ? "response-failure" : endpointPath, { schoolUUID, search });
+      logPaymentBackendCall(
+        "GET",
+        mode === "failure"
+          ? `/api/v1/${schoolUUID}/payment/response-failure/${customReference}/${uniqueUuid}`
+          : `/api/v1/${schoolUUID}/common/${endpointPath}`
+      );
       request
         .then((res) => {
-          console.log("[payment-response] api response", mode === "failure" ? "response-failure" : endpointPath, res);
+          console.log("[payment-response] backend response", res);
           if (cancelled) return;
-          if (!res) setFailed(true);
-          else {
+          if (!res) {
+            if (urlSettlementRef) setConfirming({ ref: urlSettlementRef });
+            else setFailed(true);
+          } else {
             setData(res);
-            if (String(res.responseStatus) === "1" && res.userPaymentDetailsId) {
+            if (mode !== "failure" && isConfirmationPending(res)) {
+              setConfirming({ ref: res.settlementRef || urlSettlementRef, message: parseHtmlMessage(res.htmlMessage) });
+            } else if (String(res.responseStatus) === "1" && res.userPaymentDetailsId) {
+              logPaymentBackendCall("POST", `/api/v1/${schoolUUID}/payment/${res.userPaymentDetailsId}/purchase-browser-details`);
               savePurchaseBrowserDetails(schoolUUID, res.userPaymentDetailsId, getBrowserDetailsForSignup()).catch(() => {});
             }
           }
         })
-        .catch(() => !cancelled && setFailed(true))
+        .catch(() => {
+          if (cancelled) return;
+          if (urlSettlementRef) setConfirming({ ref: urlSettlementRef });
+          else setFailed(true);
+        })
         .finally(() => !cancelled && setLoading(false));
     }, 0);
 
@@ -113,29 +226,101 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       cancelled = true;
       window.clearTimeout(requestTimer);
     };
-  }, [endpointPath, mode, schoolUUID, customReference, search, isReplay]);
+  }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, search, isReplay, isEnrollmentReturn, requiresEnrollmentSession, sessionStatus, sessionWaitDone, backendSessionReady, urlSettlementRef]);
+
+  // settlement-status said SETTLED: the success endpoint now returns the normal thank-you, so fetch it
+  // again and render that. If it still can't be loaded, the confirming card shows the payment as confirmed.
+  const handleSettled = useCallback(
+    (settledMessage) => {
+      setLoading(true);
+      logPaymentBackendCall("GET", `/api/v1/${schoolUUID}/common/${endpointPath}`, "(settled: retry)");
+      getPaymentResponseSuccess(schoolUUID, endpointPath, search)
+        .catch(() => null)
+        .then((res) => {
+          if (res && !isConfirmationPending(res) && String(res.status).toUpperCase() !== "ERROR") {
+            setData(res);
+            setConfirming(null);
+            if (String(res.responseStatus) === "1" && res.userPaymentDetailsId) {
+              logPaymentBackendCall("POST", `/api/v1/${schoolUUID}/payment/${res.userPaymentDetailsId}/purchase-browser-details`);
+              savePurchaseBrowserDetails(schoolUUID, res.userPaymentDetailsId, getBrowserDetailsForSignup()).catch(() => {});
+            }
+          } else {
+            setConfirming((current) => ({ ...current, settledMessage: settledMessage || "Your payment is confirmed." }));
+          }
+        })
+        .finally(() => setLoading(false));
+    },
+    [schoolUUID, endpointPath, search]
+  );
+
+  // settlement-status said NOT_PAID: show the normal failure card (and its login rules) with that reason.
+  const handleNotPaid = useCallback((reason) => {
+    setData((current) => ({ ...(current || {}), responseStatus: "0", feeFailedReason: current?.feeFailedReason || reason }));
+    setConfirming(null);
+  }, []);
 
   // No login session: send the visitor to the login page. Waits for the gateway verification call above to finish
   // first, so leaving the page never cuts off the backend confirming the payment.
   // Stage7.jsp asks for a login only when there is no session AND the payment was not made through a payment
   // link (initiatedVia 'Link') AND it is not an evaluation test form — those pages are shown without a login.
+  // The confirming card (no payment details on it) is shown without a login too, so a payment-link return
+  // isn't sent to the login page while the payment is still being confirmed.
   const shownWithoutLogin =
-    data &&
+    Boolean(confirming) ||
+    (data &&
     (String(data.responseStatus ?? "") === "4" ||
       String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID" ||
       data.initiatedVia === "Link" ||
-      data.contentFor === "EVALUATION-TEST-FORM");
+      data.contentFor === "EVALUATION-TEST-FORM"));
   // Any success/failure URL copied into a browser with no session comes back ALREADY_PAID ("4") — the gateway
   // return was already processed — so it goes to login, whatever the payment type.
+  // A payment-link return (initiatedVia 'Link') is the one case with no session by design: the payer
+  // never signed in here. The settlement/webhook or the enrolling tab's status poll may already have
+  // processed the payment by the time this tab comes back, so it also answers ALREADY_PAID — that is
+  // still the payer's own thank-you, not a copied URL, so it must not be sent to the login page.
   const copiedUrlWithoutSession =
     sessionStatus === "unauthenticated" &&
     data &&
+    data.initiatedVia !== "Link" &&
     (String(data.responseStatus ?? "") === "4" || String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID");
+  const waitingForEnrollmentSession =
+    requiresEnrollmentSession && sessionStatus === "unauthenticated" && !sessionWaitDone;
+  // Never decide on login while the payment-response call is still in flight: its answer (initiatedVia 'Link',
+  // a confirming payment, ...) is what says whether the page may be shown without a login. Replay makes no such
+  // call without a session, so it only waits for the session wait to end.
   const redirectToLogin =
-    sessionStatus === "unauthenticated" && (isReplay || !loading) && (!shownWithoutLogin || copiedUrlWithoutSession);
+    sessionStatus === "unauthenticated" &&
+    !waitingForEnrollmentSession &&
+    (isReplay || !loading) &&
+    (!shownWithoutLogin || copiedUrlWithoutSession);
+  // TEMP DEBUG [pay-debug]: every state change that feeds the login redirect
   useEffect(() => {
-    if (redirectToLogin && !window.__loggingOut) window.location.replace(loginPageUrl(schoolUUID));
-  }, [redirectToLogin, schoolUUID]);
+    console.log("[pay-debug] view state", {
+      sessionStatus,
+      waitingForEnrollmentSession,
+      sessionWaitExpired,
+      heldAccount,
+      loading,
+      hasData: Boolean(data),
+      responseStatus: data?.responseStatus,
+      statusCode: data?.statusCode,
+      initiatedVia: data?.initiatedVia,
+      isReplay,
+      shownWithoutLogin,
+      copiedUrlWithoutSession,
+      redirectToLogin,
+      url: window.location.href,
+      at: new Date().toISOString(),
+    });
+  }, [sessionStatus, loading, data, isReplay, shownWithoutLogin, copiedUrlWithoutSession, redirectToLogin, waitingForEnrollmentSession, sessionWaitExpired, heldAccount]);
+  useEffect(() => {
+    if (redirectToLogin && !window.__loggingOut) {
+      console.log("[pay-debug] REDIRECTING TO LOGIN", { sessionStatus, loading, responseStatus: data?.responseStatus, url: window.location.href });
+      window.location.replace(loginPageUrl(schoolUUID));
+    }
+  }, [redirectToLogin, schoolUUID, sessionStatus, loading, data?.responseStatus]);
+
+  if (waitingForEnrollmentSession) return <ProcessingLoader />;
 
   if (
     sessionStatus !== "authenticated" &&
@@ -149,9 +334,25 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
         parentId={addEnrollment.parentId}
         rollNo={searchParams.get("rollNo") || ""}
         childUserId={searchParams.get("childUserId") || ""}
+        sessionCheckReady={backendSessionReady}
       />;
 
   if (loading) return <ProcessingLoader />;
+
+  if (confirming) {
+    return (
+      <ConfirmingCard
+        data={data}
+        schoolUUID={schoolUUID}
+        settlementRef={confirming.ref}
+        message={confirming.message}
+        settledMessage={confirming.settledMessage}
+        gatewayName={gatewayName}
+        onSettled={handleSettled}
+        onNotPaid={handleNotPaid}
+      />
+    );
+  }
 
   // Network/parse failure, or the backend's own transport-level ERROR.
   if (failed || !data || String(data.status).toUpperCase() === "ERROR") {
@@ -194,16 +395,19 @@ function stage7ContentFromPaymentTitle(paymentTitle) {
 // Thank-you for an add-enrollment child that is already paid, built from the thank-you details API (child found
 // by the roll number the wizard left in storage). Same SuccessCard as a live payment return, incl. the
 // account-setup section on a first payment.
-function AddEnrollmentThankYouReplay({ schoolUUID, parentId, rollNo, childUserId }) {
+function AddEnrollmentThankYouReplay({ schoolUUID, parentId, rollNo, childUserId, sessionCheckReady }) {
   const { data: session, status } = useSession();
   const [info, setInfo] = useState(undefined);
 
   useEffect(() => {
-    if (!session?.userId) return undefined;
+    // RootLayout resolves the session before rendering this page. Never issue the
+    // thank-you request until that check has produced an authenticated identity.
+    if (!sessionCheckReady || status !== "authenticated" || !session?.userId || !session?.uniqueId) return undefined;
     let cancelled = false;
     const sessionSchool = session.schoolUUID || schoolUUID;
     const studentRollNumber =
       rollNo || loadAddEnrollmentRollNo(sessionSchool, parentId) || loadLastAddEnrollmentRollNo(sessionSchool, parentId);
+    logPaymentBackendCall("POST", "/api/v1/enroll/another/child/thank-you", "(replay)");
     getAddEnrollmentThankYou(sessionSchool, {
       parentId,
       sessionUserId: session.userId,
@@ -224,10 +428,10 @@ function AddEnrollmentThankYouReplay({ schoolUUID, parentId, rollNo, childUserId
     return () => {
       cancelled = true;
     };
-  }, [session?.userId, session?.studentUserId, session?.schoolUUID, schoolUUID, parentId, rollNo, childUserId]);
+  }, [sessionCheckReady, status, session?.userId, session?.studentUserId, session?.schoolUUID, schoolUUID, parentId, rollNo, childUniqueId]);
 
   if (status === "unauthenticated" || info === null) return <ErrorCard data={null} />;
-  if (info === undefined) return <ProcessingLoader />;
+  if (!sessionCheckReady || info === undefined) return <ProcessingLoader />;
   return (
     <SuccessCard
       data={{
@@ -237,6 +441,7 @@ function AddEnrollmentThankYouReplay({ schoolUUID, parentId, rollNo, childUserId
         payAmount: info.payAmount,
         grade: info.grade,
         learningProgram: info.learningProgram,
+        returnUrl: info.returnUrl,
         displaySchoolName: session?.schoolName,
         accountSetup: isFirstPayment(info) ? info : null,
       }}
@@ -397,7 +602,17 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
   const alreadyPaidInSession =
     sessionStatus === "authenticated" &&
     (String(data.responseStatus ?? "") === "4" || String(data.statusCode ?? "").toUpperCase() === "ALREADY_PAID");
-  const showReload = (data.showReloadOption === "Y" || alreadyPaidInSession) && !addEnrollment;
+  // Add Another Student's first payment shows the account-setup / login panel instead of the timer. A later
+  // payment on the same URL shape (e.g. reserve a seat: ae=Y but no credentials, not a first payment) is a plain
+  // success and keeps the auto-redirect to the dashboard.
+  const addEnrollmentShowsAccountPanel =
+    Boolean(addEnrollment) && (Boolean(data.accountSetup) || isFirstPayment(data) || hasLoginCredentials(data));
+  // The first (status 1) response on an ae=Y return doesn't carry showReloadOption, while the refreshed
+  // ALREADY_PAID one does via alreadyPaidInSession — so a signed-in user on a plain add-enrollment success
+  // (reserve a seat) gets the same timer on the first load too.
+  const plainAddEnrollmentInSession = Boolean(addEnrollment) && sessionStatus === "authenticated";
+  const showReload =
+    (data.showReloadOption === "Y" || alreadyPaidInSession || plainAddEnrollmentInSession) && !addEnrollmentShowsAccountPanel;
   const returnUrl = data.returnUrl;
   const [countdown, redirected] = useCountdownRedirect(showReload && !!returnUrl, returnUrl);
   const primaryCta = successPrimaryCta(data);
@@ -429,12 +644,13 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
           <SuccessBody data={data} />
         </div>
 
-        {showInlineLogin ? (
+         {showInlineLogin ? (
           <LoginDetails
             data={data.accountSetup || data}
             sourceApi={data.accountSetup ? "api/v1/enroll/another/child/thank-you" : "api/v1/{schoolId}/common/*payment-response-success"}
             fallbackName={data.userName}
             loginHref={loginPageUrl(schoolUUID)}
+            dashboardHref={data.returnUrl}
             schoolUUID={schoolUUID}
           />
         ) : (
@@ -520,6 +736,7 @@ function AddEnrollmentAccountInfo({ schoolUUID, parentId, childUserId, sessionUn
     });
     if (!sessionUserId) return undefined;
     let cancelled = false;
+    logPaymentBackendCall("POST", "/api/v1/enroll/another/child/thank-you", "(account info)");
     getAddEnrollmentThankYou(schoolUUID, {
       parentId,
       sessionUserId,
@@ -528,10 +745,9 @@ function AddEnrollmentAccountInfo({ schoolUUID, parentId, childUserId, sessionUn
       childUserId,
     })
       .then((res) => {
-        console.log("[payment-response] api response enroll/another/child/thank-you (account section)", { rollNo, res });
         if (!cancelled && String(res?.status ?? "") === "1" && res.data) setInfo(res.data);
       })
-      .catch((err) => console.log("[add-enrollment account section] thank-you API failed", err));
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -539,22 +755,14 @@ function AddEnrollmentAccountInfo({ schoolUUID, parentId, childUserId, sessionUn
 
   // Only for the child's first payment, decided by the backend: payment title REGISTRATION_SUBJECT_FEE or
   // CUSTOMIZED_REGISTRATION_SUBJECT_FEE on a REGISTRATION_FRESH / REGISTRATION_FLEX_COURSE enrollment.
-  // TEMP DEBUG (remove once the section shows): the gate that decides visibility
-  console.log("[add-enrollment account section] visibility", {
-    hasInfo: Boolean(info),
-    isFirstPayment: info?.isFirstPayment,
-    paymentTitle: info?.paymentTitle,
-    hasCreatePasswordUrl: Boolean(info?.createPasswordUrl),
-    hasOutlook: Boolean(info?.outlookEmail && info?.outlookPassword),
-  });
   if (!isFirstPayment(info)) return null;
-  return <LoginDetails data={info} sourceApi="api/v1/enroll/another/child/thank-you" loginHref={loginPageUrl(schoolUUID)} schoolUUID={schoolUUID} />;
+  return <LoginDetails data={info} sourceApi="api/v1/enroll/another/child/thank-you" loginHref={loginPageUrl(schoolUUID)} dashboardHref={info.returnUrl} schoolUUID={schoolUUID} />;
 }
 
 // "Log in to your school dashboard" panel: login email + temporary password (show/hide, copy) and the dashboard
 // button. When the response has no Outlook credentials (password-creation step only), the original
 // AccountSetupSection is shown instead.
-function LoginDetails({ data, sourceApi, fallbackName, loginHref, schoolUUID }) {
+function LoginDetails({ data, sourceApi, fallbackName, loginHref, dashboardHref, schoolUUID }) {
   const { data: session } = useSession();
   const [show, setShow] = useState(true);
   const [leaving, setLeaving] = useState(false);
@@ -583,15 +791,6 @@ function LoginDetails({ data, sourceApi, fallbackName, loginHref, schoolUUID }) 
   };
   const email = data.outlookEmail || data.loginEmail;
   const password = data.outlookPassword;
-  console.log("[LoginDetails] credential source", {
-    api: sourceApi,
-    isFirstPayment: data.isFirstPayment,
-    outlookEmail: data.outlookEmail,
-    loginEmail: data.loginEmail,
-    outlookPassword: data.outlookPassword,
-    hasEmail: Boolean(email),
-    hasPassword: Boolean(password),
-  });
   if (!email || !password) return <AccountSetupSection data={data} />;
   const name = data.studentName || fallbackName;
 
@@ -627,8 +826,8 @@ function LoginDetails({ data, sourceApi, fallbackName, loginHref, schoolUUID }) 
       </div>
       <p className="mt-4 text-sm text-slate-700">You can copy these details now. We have also sent them to your registered email address.</p>
       <a
-        href={loginHref}
-        onClick={goToDashboard}
+        href={dashboardHref || loginHref}
+        onClick={dashboardHref ? undefined : goToDashboard}
         aria-disabled={leaving}
         className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-primary px-8 text-base sm:w-auto font-semibold text-white shadow-sm transition hover:bg-primary/90"
       >
@@ -863,6 +1062,98 @@ function FailedCard({ data }) {
   );
 }
 
+/* ------------------------------ Confirming ----------------------------- */
+
+const SETTLEMENT_POLL_MS = 4000;
+const SETTLEMENT_MAX_POLLS = 15; // about 60 s
+
+function logPaymentBackendCall(method, path, note = "") {
+  console.log(`[payment-response] backend request ${method} ${path}${note ? ` ${note}` : ""}`);
+}
+
+function isConfirmationPending(res) {
+  return String(res?.confirmationPending ?? "").toUpperCase() === "Y";
+}
+
+// The backend couldn't confirm the payment with the gateway yet: poll payment/settlement-status every
+// 4 s. SETTLED -> onSettled (the page fetches the thank-you again); NOT_PAID -> onNotPaid (the failure
+// card); DUPLICATE -> its message; UNDER_REVIEW -> paid but held for the school (no "try again"); no
+// answer after about 60 s -> the receipt will follow by email.
+function ConfirmingCard({ data, schoolUUID, settlementRef, message, settledMessage, gatewayName, onSettled, onNotPaid }) {
+  const [result, setResult] = useState(() => (settlementRef ? { phase: "CONFIRMING", message: "" } : { phase: "TIMEOUT" }));
+
+  useEffect(() => {
+    if (!settlementRef || settledMessage) return undefined;
+    let cancelled = false;
+    let polls = 0;
+    let timer;
+    const poll = async () => {
+      polls += 1;
+      logPaymentBackendCall("GET", `/api/v1/${schoolUUID}/payment/settlement-status?ref=${settlementRef}`);
+      const res = await getPaymentSettlementStatus(schoolUUID, settlementRef).catch(() => null);
+      if (cancelled) return;
+      const statusCode = String(res?.statusCode ?? "").toUpperCase();
+      if (statusCode === "SETTLED") {
+        onSettled(res.message);
+        return;
+      }
+      if (statusCode === "NOT_PAID") {
+        onNotPaid(res.message || `${gatewayName} hasn't received this payment.`);
+        return;
+      }
+      if (statusCode === "DUPLICATE" || statusCode === "UNDER_REVIEW") {
+        setResult({ phase: statusCode, message: res.message || "" });
+        return;
+      }
+      if (statusCode === "CONFIRMING" && res.message) setResult({ phase: "CONFIRMING", message: res.message });
+      if (polls >= SETTLEMENT_MAX_POLLS) setResult({ phase: "TIMEOUT" });
+      else timer = window.setTimeout(poll, SETTLEMENT_POLL_MS);
+    };
+    timer = window.setTimeout(poll, SETTLEMENT_POLL_MS);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [schoolUUID, settlementRef, settledMessage, gatewayName, onSettled, onNotPaid]);
+
+  let icon = "pending";
+  let title = "Confirming your payment";
+  let text = result.message || message || `We're confirming your payment with ${gatewayName}. Please don't pay again.`;
+  if (settledMessage) {
+    icon = "confirmed";
+    title = "Payment confirmed";
+    text = `${settledMessage} We'll email your receipt. You don't need to pay again.`;
+  } else if (result.phase === "DUPLICATE") {
+    icon = "info";
+    title = "This fee was already paid";
+    text = result.message || "This fee was already paid, so this second payment will be refunded. You don't need to do anything.";
+  } else if (result.phase === "UNDER_REVIEW") {
+    icon = "info";
+    title = "Your payment is being checked";
+    text =
+      result.message || "We received your payment, but the school needs to check it before it's applied. Please don't pay again.";
+  } else if (result.phase === "TIMEOUT") {
+    title = "Your payment is still being confirmed";
+    text = `We'll email your receipt as soon as ${gatewayName} confirms. You don't need to pay again.`;
+  }
+
+  return (
+    <PageShell schoolSettingsLinks={data?.schoolSettingsLinks} schoolName={data?.displaySchoolName}>
+      <div className="text-center" role="status" aria-live="polite">
+        <StatusIcon variant={icon} />
+        <h2 className="mt-4 text-2xl font-extrabold text-black">{title}</h2>
+        <p className="mt-3 text-sm leading-relaxed text-slate-600">{text}</p>
+        {!settledMessage && result.phase === "CONFIRMING" && (
+          <p className="mt-6 flex items-center justify-center gap-2 text-xs font-medium text-slate-500">
+            <LoaderCircle className="size-4 animate-spin text-primary" aria-hidden="true" />
+            This page updates by itself. Please keep it open.
+          </p>
+        )}
+      </div>
+    </PageShell>
+  );
+}
+
 /* ------------------------------- Error --------------------------------- */
 
 // Transport-level ERROR (invalid school, unreachable backend, etc.). The
@@ -964,6 +1255,8 @@ function StatusIcon({ variant }) {
   const map = {
     pending: { Icon: Clock, ring: "bg-amber-50 text-amber-500" },
     failed: { Icon: XCircle, ring: "bg-red-50 text-red-500" },
+    info: { Icon: Info, ring: "bg-sky-50 text-sky-600" },
+    confirmed: { Icon: Check, ring: "bg-emerald-50 text-emerald-600" },
   };
   const { Icon, ring } = map[variant] || map.failed;
   return (

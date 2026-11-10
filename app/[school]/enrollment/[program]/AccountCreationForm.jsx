@@ -128,6 +128,16 @@ export function AccountCreationForm({ school, program, query, recaptchaSiteKey }
         ...FALLBACK_POLICY_LINKS,
       };
 
+  // A new student signs up in this tab: it no longer works for the tab's earlier user (components/auth/TabAccount.jsx),
+  // so the signup is not sent as them.
+  useEffect(() => {
+    try {
+      window.sessionStorage.removeItem("isx-account");
+    } catch {
+      // storage unavailable: nothing was remembered either
+    }
+  }, []);
+
   // Public enrollment bootstrap. The exact URL query (including referralCode,
   // ras, payload, and v when present) is sent to the backend; its response
   // supplies the form defaults and school policy links.
@@ -169,6 +179,13 @@ export function AccountCreationForm({ school, program, query, recaptchaSiteKey }
           }
           if (response?.status === "REDIRECT" && response.redirectTo) {
             if (bootstrap) window.sessionStorage.removeItem(bootstrapStorageKey);
+            // Never "redirect" to the page we are on: that reloads it forever (SMS answers
+            // REDIRECT to /{school}/enrollment/O when the program has no grade mapping).
+            const target = new URL(response.redirectTo, window.location.href);
+            if (target.origin === window.location.origin && target.pathname === window.location.pathname) {
+              setSignupInfoError("Enrollment for this program isn’t available right now. Please contact support.");
+              return;
+            }
             window.location.assign(response.redirectTo);
             return;
           }

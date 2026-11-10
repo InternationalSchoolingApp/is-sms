@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { checkBackendSessionStatus } from "@/services/authApi";
+import { checkBackendSessionStatus } from "@/services/sessionStatusApi";
 import { expireSession } from "@/utils/logout";
 
 // How often to ask the Java backend (is-rest-api) whether this user is still

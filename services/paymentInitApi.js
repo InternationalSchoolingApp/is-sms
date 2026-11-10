@@ -1,5 +1,7 @@
 "use server";
 
+import { withSmsAuth } from "@/lib/auth/session";
+
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
 // School-prefixed gateway pages pass their URL school segment explicitly.
@@ -7,6 +9,8 @@ import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOri
 // `paramsString` is a plain string, not a URLSearchParams instance — Server
 // Actions can only accept serializable arguments (see
 // services/studentSignupApi.js's getEnrollmentSignupInfo for the same pattern).
+// Every gateway param (attemptToken, applyingFrom, ...) is forwarded unchanged; applyingFrom is
+// only added when the link has none.
 function buildQuery(paramsString) {
   const params = new URLSearchParams(paramsString || "");
   const query = new URLSearchParams();
@@ -14,8 +18,23 @@ function buildQuery(paramsString) {
     if (key === "schoolUUID") continue;
     query.append(key, value);
   }
-  query.set("applyingFrom", "nextjs");
+  if (!query.has("applyingFrom")) query.set("applyingFrom", "nextjs");
   return query.toString();
+}
+
+// A non-2xx reply still counts when it is the backend's own { status, message } body (for example
+// "This payment link has expired..."), so the page can show that message. Anything else is null.
+async function parseInitResponse(response) {
+  const text = await response.text();
+  if (!text) return null;
+  let body;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  if (response.ok) return body;
+  return typeof body?.message === "string" && typeof body?.status !== "number" ? body : null;
 }
 
 async function getPaymentInitResponse(gateway, uniqueUuid, paramsString, schoolUUIDFromRoute) {
@@ -28,7 +47,7 @@ async function getPaymentInitResponse(gateway, uniqueUuid, paramsString, schoolU
   const url = `${baseUrl}/api/v1/${encodeURIComponent(schoolUUID)}/payment/${gateway}-payment-init/${encodeURIComponent(uniqueUuid)}${query ? `?${query}` : ""}`;
 
   try {
-    const response = await fetch(url, { method: "GET" });
+    const response = await fetch(url, await withSmsAuth({ method: "GET" }));
     if (!response.ok) return null;
     return await response.json();
   } catch {

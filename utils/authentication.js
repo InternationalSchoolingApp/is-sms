@@ -22,8 +22,8 @@ export function buildAuthentication(context) {
  * save-parent-details, etc.), which resolve "who is this" via
  * Authentication.userId, not the session cookie alone (confirmed at
  * SignupStudentUtil.java:1606, saveStudentDetails). `userId` must come from
- * next-auth's session (session.userId, populated post-login — see
- * app/api/auth/[...nextauth]/route.js) or, for a same-session continuation
+ * the signed-in student's session (session.userId, lib/auth/session.js, read
+ * from the SMS access token) or, for a same-session continuation
  * right after account creation (e.g. Offline/B2B, which skips email
  * verification), from that signup response's own `studentUserId` field.
  */

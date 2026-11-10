@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { Circle } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/components/providers/AuthSessionProvider";
 import { useQuery } from "@tanstack/react-query";
 import { getMaintenanceDowntimeStatus } from "@/services/maintenanceApi";
 

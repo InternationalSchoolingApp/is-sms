@@ -1,5 +1,7 @@
 "use server";
 
+import { withSmsAuth } from "@/lib/auth/session";
+
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 
@@ -28,9 +30,7 @@ import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOri
  * getPublicSchoolInfo, getEnrollmentProcess) live in the sibling
  * services/studentSignupApi.js instead — same "use server" pattern, just a
  * separate file for no reason other than how they were introduced; nothing
- * requires them to be split from this one anymore. The captcha <img> URL,
- * which must execute in the browser itself, lives in
- * services/studentSignupClientApi.js, which is genuinely client-only.
+ * requires them to be split from this one anymore.
  *
  * `schoolUUID` is the {schoolId} URL-PATH segment (school UUID/slug) and is
  * taken as an explicit argument on every call, NOT read from an env var —
@@ -68,13 +68,30 @@ async function backendUrl(schoolUUID, path, { includeSchoolId = true } = {}) {
 // the doc comment above), so a non-ok HTTP status here is always
 // infrastructure-level (wrong URL, backend down, endpoint missing) —
 // treat it the same as an empty body: null, not a fake success value.
-async function parseJsonResponse(response) {
-  if (!response.ok) return null;
-  const text = await response.text();
-  if (!text) return null;
+async function parseJsonResponse(response, request) {
+  // The caller only sees null, so name the real cause in the server log (401/403 from SMS auth, a 5xx or an HTML
+  // error page from the load balancer, ...): without it a live failure shows nothing but "Something went wrong".
+  // fetch follows redirects, so response.url is where it ended (e.g. the login page): log what was asked too,
+  // and whether the call carried the user's token.
+  const where = () =>
+    request
+      ? `${request.method} ${request.url}` +
+        (response.redirected ? ` -> redirected to ${response.url}` : "") +
+        ` (signed in: ${Boolean(request.headers?.Authorization)})`
+      : response.url;
+  const text = await response.text().catch(() => "");
+  if (!response.ok) {
+    console.error(`[sms-api] ${response.status} for ${where()} :: ${text.slice(0, 300)}`);
+    return null;
+  }
+  if (!text) {
+    console.error(`[sms-api] empty body for ${where()}`);
+    return null;
+  }
   try {
     return JSON.parse(text);
   } catch {
+    console.error(`[sms-api] non-JSON body for ${where()} :: ${text.slice(0, 200)}`);
     return null;
   }
 }
@@ -91,13 +108,16 @@ async function postPayload(schoolUUID, path, data, options) {
     headers,
     body: JSON.stringify({ payload: encodePayload(data) }),
   });
-  return parseJsonResponse(response);
+  const response = await fetch(url, init);
+  return parseJsonResponse(response, { method: "POST", url, headers: init.headers });
 }
 
 async function getPayload(schoolUUID, path, params, options) {
   const query = params ? `?${new URLSearchParams(params).toString()}` : "";
-  const response = await fetch(await backendUrl(schoolUUID, `${path}${query}`, options));
-  return parseJsonResponse(response);
+  const url = await backendUrl(schoolUUID, `${path}${query}`, options);
+  const init = await withSmsAuth();
+  const response = await fetch(url, init);
+  return parseJsonResponse(response, { method: "GET", url, headers: init.headers });
 }
 
 // --- Stage 1: Student Details ---
@@ -210,6 +230,13 @@ export async function invokePaymentGateway(schoolUUID, request) {
   return postPayload(schoolUUID, "common/invoke-payment-gateway", request);
 }
 
+// Cancels the open payment attempt that invoke-payment-gateway reported as PAYMENT_IN_PROGRESS
+// (request: { attemptRef } from that response's details). Same transport as invoke-payment-gateway.
+// Resolves to statusCode CANCELLED, ALREADY_PAID or CANCEL_FAILED, each with a user-facing message.
+export async function cancelPaymentAttempt(schoolUUID, request) {
+  return postPayload(schoolUUID, "common/payment-attempt-cancel", request);
+}
+
 // logoutConfimation(true, ...common/logout/UNIQUEUUID) in signupStudentStage3.js: the backend drops
 // the user's login hash, records the logout and invalidates its HTTP session (found via the
 // forwarded session cookie). The 302 to the Java login page is deliberately not followed.
@@ -217,7 +244,7 @@ export async function logoutSignup(schoolUUID, studentUserId) {
   await fetch(await backendUrl(schoolUUID, `common/logout/${encodeURIComponent(studentUserId)}`), {
     method: "GET",
     redirect: "manual",
-  });
+  }));
 }
 
 export async function getPaymentPaidStatus(schoolUUID, request) {
@@ -255,7 +282,7 @@ export async function uploadPaymentProof(schoolUUID, studentUserId, { file, uplo
   const response = await fetch(await backendUrl(schoolUUID, `api/upload/${studentUserId}`), {
     method: "POST",
     body: form,
-  });
+  }));
   return parseJsonResponse(response);
 }
 

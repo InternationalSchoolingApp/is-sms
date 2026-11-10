@@ -1,10 +1,10 @@
-import { auth } from "@/auth";
+import { getAccountSession } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import { DEFAULT_PROGRAM } from "@/utils/wizardSteps";
 import { resolveBackendNavigationOrigin } from "@/utils/backendOrigin";
 
 export default async function Home() {
-  const session = await auth()
+  const session = await getAccountSession();
   if (!session){
     const schoolUUID = process.env.NEXT_PUBLIC_SCHOOL_ID;
     redirect(schoolUUID ? `/${schoolUUID}/enrollment/${DEFAULT_PROGRAM}` : resolveBackendNavigationOrigin());

@@ -5,15 +5,17 @@ import { getLastApiAttempt } from "@/utils/lastApiAttempt";
 import { SchoolLogo } from "@/components/student-enroll/SchoolLogo";
 import { goHomeFromErrorPage } from "@/utils/errorPageActions";
 import { reportErrorToBackend } from "@/utils/reportErrorToBackend";
+import { useSession } from "@/components/providers/AuthSessionProvider";
 
 export default function Error({ error }) {
   const [lastApiAttempt, setLastApiAttempt] = useState(null);
+  const { data: session } = useSession();
 
   useEffect(() => {
     console.error("Unhandled application error:", error);
     setLastApiAttempt(getLastApiAttempt());
-    reportErrorToBackend(error);
-  }, [error]);
+    reportErrorToBackend(error, session);
+  }, [error, session]);
 
   return (
     <main className="flex min-h-screen flex-col items-center bg-[#eef4fb] bg-gradient-to-b from-[#eaf2fc] via-[#eef5fc] to-[#e7f0fb] p-6">
@@ -26,7 +28,7 @@ export default function Error({ error }) {
           </p>
           <button
             type="button"
-            onClick={goHomeFromErrorPage}
+            onClick={() => goHomeFromErrorPage(session?.uniqueId)}
             className="mt-6 inline-block rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
           >
             Go to homepage

@@ -1,0 +1,3 @@
+# graphify: skip third-party bundles and local tool config (on top of .gitignore)
+public/vendor/
+.claude/

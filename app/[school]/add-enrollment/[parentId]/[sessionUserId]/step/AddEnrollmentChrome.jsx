@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useParams, useRouter, useSelectedLayoutSegment } from "next/navigation";
-import { FullScreenLoader } from "@/components/common/Loader";
+import { FullScreenError, FullScreenLoader } from "@/components/common/Loader";
 import { loadAddEnrollmentChildUserId, loadAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
 import { NotMappedModal } from "@/components/add-enrollment/NotMappedModal";
 import { AddEnrollmentWizardShell, WIZARD_STEP_META } from "@/components/add-enrollment/AddEnrollmentWizardShell";
@@ -70,7 +70,9 @@ function AddWizardFrame({ children }) {
     return <NotMappedModal onLogout={() => logoutEverywhere(session)} />;
   }
   if (isError) {
-    return <FullScreenLoader message="Something went wrong. Please refresh the page." />;
+    return (
+      <FullScreenError message="We couldn't start this enrollment. Please go back to your dashboard and start Add Another Child again — if it keeps happening, contact support and we'll finish it for you." />
+    );
   }
 
   if (completed) {
