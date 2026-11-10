@@ -65,7 +65,6 @@ function K5Frame({ children }) {
     setLastPath(pathname);
     setNavOpen(false);
   }
-  debugger;
   return (
     <div {...themeProps} data-k5-prek={isPreK ? "true" : undefined}>
       <K5Header
