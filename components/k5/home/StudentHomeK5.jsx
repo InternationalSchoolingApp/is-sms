@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { addMonths, format, isSameMonth, isSameWeek, isSameDay } from "date-fns";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { useAddSiblings } from "@/hooks/useAddSiblings";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
 import { useK5CalendarModel } from "@/hooks/useK5CalendarModel";
 import { OnboardingVideoModal } from "@/components/dashboard/OnboardingVideoModal";
@@ -168,30 +169,7 @@ function K5Planner({ timezone }) {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Mockup .sbcard: parents can add another child from the home page. Same "coming soon" as the legacy header until the sibling flow is wired. */}
-      <section aria-label="Have another child to enroll?" className={`${K5_CARD} flex flex-wrap items-center gap-3.5 px-5 py-3.5`}>
-        <span aria-hidden="true" className="flex h-14 w-14 flex-none items-center justify-center rounded-[18px] bg-k5-act text-k5-acx">
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="9" cy="8" r="3.6" />
-            <path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" />
-            <path d="M19 7v6M16 10h6" />
-          </svg>
-        </span>
-        <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-0.5">
-          <h2 className="m-0 font-k5-display text-[22px] font-semibold leading-[1.2]">Have another child to enroll?</h2>
-          <p className="m-0 text-base font-extrabold leading-[1.4] text-k5-mut">Your details are already saved, so you only need to fill in your child’s details.</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => toast("Add More Siblings — coming soon", { icon: "🚧" })}
-          className="flex min-h-12 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-[3px] border-k5-ac bg-k5-ac px-[18px] font-k5-display text-[17px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)] max-[760px]:flex-[1_1_100%] max-[760px]:justify-center"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Add More Siblings
-        </button>
-      </section>
+      <AddSiblingsCard />
       <K5Toolbar
         now={now}
         timezone={timezone}
@@ -310,5 +288,43 @@ function K5Planner({ timezone }) {
         <JoinClassModal event={joiningEvent} schoolUUID={context?.schoolUUID} courseRegistry={model.courseRegistry} onClose={() => setJoiningEvent(null)} />
       )}
     </div>
+  );
+}
+
+function AddSiblingsCard() {
+  const siblings = useAddSiblings();
+  if (!siblings.visible) return null;
+  return (
+    <section aria-label="Have another child to enroll?" className={`${K5_CARD} flex flex-wrap items-center gap-3.5 px-5 py-3.5`}>
+      <span aria-hidden="true" className="flex h-14 w-14 flex-none items-center justify-center rounded-[18px] bg-k5-act text-k5-acx">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="9" cy="8" r="3.6" />
+          <path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" />
+          <path d="M19 7v6M16 10h6" />
+        </svg>
+      </span>
+      <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-0.5">
+        <h2 className="m-0 font-k5-display text-[22px] font-semibold leading-[1.2]">Have another child to enroll?</h2>
+        <p className="m-0 text-base font-extrabold leading-[1.4] text-k5-mut">Your details are already saved, so you only need to fill in your child's details.</p>
+      </div>
+      <button
+        type="button"
+        onClick={siblings.handleClick}
+        disabled={siblings.busy}
+        className="flex min-h-12 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-[3px] border-k5-ac bg-k5-ac px-[18px] font-k5-display text-[17px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)] disabled:opacity-60 max-[760px]:flex-[1_1_100%] max-[760px]:justify-center"
+      >
+        {siblings.busy ? (
+          <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
+            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+          </svg>
+        ) : (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        )}
+        {siblings.label}
+      </button>
+    </section>
   );
 }

@@ -713,3 +713,30 @@ export async function changePassword({ schoolUUID, uniqueId, oldpassword, newpas
     return null;
   }
 }
+
+/**
+ * The student's short profile — POST /{schoolUUID}/api/v1/get-user-short-profile
+ * (CommonController.getUserShortProfile → DashboardCommonUtil.getUserShortProfile).
+ * Returns { parentId, hasPartialChild, partialChildName, partialChildUserId,
+ * lastPassUpdatedDate, addSiblingFirstLogin, profileName }. For a STUDENT,
+ * parentId is resolved via ParentStudentMapping; for a PARENT, directly from
+ * the Parents table.
+ */
+export async function getUserShortProfile({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/api/v1/get-user-short-profile", { userId });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * ADD_SIBILING_BTN (CONFIGURATION) — the per-school toggle that gates the
+ * "Add More Siblings" button on the student dashboard. Same getSettingValue
+ * pattern as isDashboardViaNextjs above. Only the literal "true" counts.
+ */
+export async function isAddSiblingEnabled(schoolUUID) {
+  const value = String(await getSettingValue(schoolUUID, "CONFIGURATION", "ADD_SIBILING_BTN")).trim().toLowerCase();
+  return value === "true";
+}

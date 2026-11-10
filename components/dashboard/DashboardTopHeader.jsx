@@ -3,11 +3,12 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Menu, LogOut, ChevronDown, User, KeyRound, UserPlus } from "lucide-react";
+import { Menu, LogOut, ChevronDown, User, KeyRound, UserPlus, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
 import { logoutEverywhere } from "@/utils/logout";
 import { ChangePasswordModal } from "@/components/dashboard/ChangePasswordModal";
+import { useAddSiblings } from "@/hooks/useAddSiblings";
 import { CartHeaderButton } from "@/components/student/cart/CartHeaderButton";
 
 /**
@@ -22,6 +23,7 @@ import { CartHeaderButton } from "@/components/student/cart/CartHeaderButton";
  */
 export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onHamburger, lmsProviderURL, isPayLmsPaymentPending }) {
   const router = useRouter();
+  const siblings = useAddSiblings();
   const [confirmLogout, setConfirmLogout] = useState(false);
   // My Profile is the signed-in student's own page (app/[school]/(dashboard)/student/my-profile).
   const openProfile = () => {
@@ -84,13 +86,16 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
       {/* Right: cart + Add More Siblings + profile */}
       <div className="flex items-center gap-2 sm:gap-3">
         <CartHeaderButton />
-        <button
-          type="button"
-          onClick={() => toast("Add More Siblings — coming soon", { icon: "🚧" })}
-          className="hidden items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90 sm:inline-flex"
-        >
-          <UserPlus className="h-4 w-4" /> Add More Siblings
-        </button>
+        {siblings.visible && (
+          <button
+            type="button"
+            onClick={siblings.handleClick}
+            disabled={siblings.busy}
+            className="hidden items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60 sm:inline-flex"
+          >
+            {siblings.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />} {siblings.label}
+          </button>
+        )}
 
         <div className="relative">
           <button
