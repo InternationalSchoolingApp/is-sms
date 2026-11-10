@@ -3,12 +3,11 @@
 import { useState, useSyncExternalStore } from "react";
 import { useSchoolName } from "@/hooks/useSchoolName";
 import { copyrightLine } from "@/utils/schoolBrand";
-import { signOutTabAccount } from "@/utils/logout";
 import Image from "next/image";
 import { ArrowRight, Check, Eye, EyeOff, Lock, LockOpen, LoaderCircle, Phone, X } from "lucide-react";
 import { createAddEnrollmentPassword } from "@/services/addEnrollmentPasswordApi";
 import { loadCreatePasswordTarget } from "@/utils/addEnrollmentCreatePassword";
-import { loginPageUrl, resolveBackendNavigationOrigin, withLoginPayload } from "@/utils/backendOrigin";
+import { loginPageUrl, withLoginPayload } from "@/utils/backendOrigin";
 import { getPasswordStrength } from "@/utils/studentSignupValidation";
 
 const RULES = [
@@ -47,19 +46,10 @@ export function AddCreatePassword({ schoolUUID }) {
   const strength = getPasswordStrength(password, confirm);
   const untouched = !password;
 
-  // ChangePassword.jsp's logout(): clear client storage, then hit the Java logout endpoint (UNIQUEUUID "111" when
-  // there is none), which ends the Java session and lands on the login page. Falls back to the login page itself.
+  // This page creates the CHILD's password while the browser may still be signed in as the parent in another tab.
+  // Do not clear shared browser storage or log out the current session here; that would invalidate the dashboard.
   const goToLogin = async (credentials) => {
-    try {
-      localStorage.clear();
-      sessionStorage.clear();
-      await signOutTabAccount();
-    } catch {
-      /* no Next.js session to drop */
-    }
-    const backend = resolveBackendNavigationOrigin();
-    const url = backend ? `${backend}/${schoolUUID}/common/logout/111` : loginPageUrl(schoolUUID);
-    window.location.assign(withLoginPayload(url, credentials?.email, credentials?.password));
+    window.location.assign(withLoginPayload(loginPageUrl(schoolUUID), credentials?.email, credentials?.password));
   };
 
   const submit = async (event) => {
@@ -78,7 +68,7 @@ export function AddCreatePassword({ schoolUUID }) {
     setSubmitting(false);
     const status = String(res?.status ?? "");
     if (!res || ["0", "2", "3"].includes(status)) {
-      if (status === "3") return goToLogin();
+      if (status === "3") return goToLogin({ email: target.email, password: password.trim() });
       return setError(res?.message || "Something went wrong. Please try again.");
     }
     try {
