@@ -89,6 +89,19 @@
   --k5-rI: #c92a2f;
   --k5-bT: #eef4ff;
   --k5-bI: #2563eb;
+  --k5-vX: #5b34b0;
+  --k5-tX: #0b5e58;
+  /* Subject colours (mockup --sLaI / --sLaT …): I = stroke / text, T = tint. */
+  --k5-sLaI: #1d6fe8;
+  --k5-sLaT: #e4eefe;
+  --k5-sMaI: #b98200;
+  --k5-sMaT: #fff2cc;
+  --k5-sScI: #13802b;
+  --k5-sScT: #e2f3e6;
+  --k5-sArI: #0e93cc;
+  --k5-sArT: #dff3fc;
+  --k5-sCsI: #d21f4c;
+  --k5-sCsT: #fce4ea;
   /* Colour clues (assignment / done / live / upcoming / activity / holiday). */
   --k5-c-asg: #0b7f5c;
   --k5-c-done: #8a93a6;
@@ -759,4 +772,365 @@
 .k5-atmedal {
   animation: k5AtMedal 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
   transform-origin: 50% 40%;
+}
+
+/*
+ * My Performance (Playful.dc.html pgPerf / pmCv): hero scene, medals, streak, course rows, course view
+ * tables. Reduced motion is switched off by the .theme-k5 rule above.
+ */
+@keyframes k5PmRise {
+  0% {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes k5PmPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+@keyframes k5PkSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes k5PkDrift {
+  from {
+    transform: translateX(-10px);
+  }
+  to {
+    transform: translateX(14px);
+  }
+}
+@keyframes k5PkFlap {
+  from {
+    transform: skewY(0);
+  }
+  to {
+    transform: skewY(-6deg);
+  }
+}
+@keyframes k5PkTw {
+  from {
+    opacity: 0.3;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+@keyframes k5PkFlick {
+  0% {
+    transform: scale(1, 1) rotate(-3deg);
+  }
+  100% {
+    transform: scale(1.06, 0.94) rotate(3deg);
+  }
+}
+@keyframes k5PkPop {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+@keyframes k5PkCute {
+  0%,
+  100% {
+    transform: rotate(10deg) scale(1);
+  }
+  50% {
+    transform: rotate(-6deg) scale(1.08);
+  }
+}
+@keyframes k5PkBub {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+@keyframes k5PmFlick {
+  0%,
+  100% {
+    transform: rotate(-3deg) scale(1);
+  }
+  50% {
+    transform: rotate(3deg) scale(1.06);
+  }
+}
+@keyframes k5PmBob {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-1.6px);
+  }
+}
+@keyframes k5PmBobS {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-0.6px);
+  }
+}
+@keyframes k5PmLegR {
+  0%,
+  100% {
+    transform: rotate(40deg);
+  }
+  50% {
+    transform: rotate(-40deg);
+  }
+}
+@keyframes k5PmArmR {
+  0%,
+  100% {
+    transform: rotate(-60deg);
+  }
+  50% {
+    transform: rotate(60deg);
+  }
+}
+@keyframes k5PmLegW {
+  0%,
+  100% {
+    transform: rotate(15deg);
+  }
+  50% {
+    transform: rotate(-15deg);
+  }
+}
+@keyframes k5PmArmW {
+  0%,
+  100% {
+    transform: rotate(-16deg);
+  }
+  50% {
+    transform: rotate(16deg);
+  }
+}
+.k5-pmpanel {
+  animation: k5PmRise 0.25s ease-out;
+}
+.k5-pmearned {
+  animation: k5PmRise 0.4s ease-out both;
+}
+.k5-pmearned:hover .k5-pmbi {
+  animation: k5PmPulse 0.5s ease-out;
+}
+.k5-pksun {
+  animation: k5PkSpin 18s linear infinite;
+}
+.k5-pkcloud1 {
+  animation: k5PkDrift 9s ease-in-out infinite alternate;
+}
+.k5-pkcloud2 {
+  animation: k5PkDrift 7s ease-in-out infinite alternate-reverse;
+}
+.k5-pkflag {
+  animation: k5PkFlap 1.2s ease-in-out infinite alternate;
+  transform-box: fill-box;
+  transform-origin: 0 50%;
+}
+.k5-pksp {
+  animation: k5PkTw 1.6s ease-in-out infinite alternate;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.k5-pkflame {
+  animation: k5PkFlick 1.2s ease-in-out infinite alternate;
+  transform-origin: 50% 90%;
+}
+.k5-pkbig svg {
+  animation: k5PkPop 0.5s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+.k5-pkbig svg:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.k5-pkbig svg:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.k5-pkbig svg:nth-child(4) {
+  animation-delay: 0.24s;
+}
+.k5-pkbig svg:nth-child(5) {
+  animation-delay: 0.32s;
+}
+.k5-pkcute {
+  animation: k5PkCute 2.4s ease-in-out infinite;
+  transform-origin: 50% 60%;
+}
+.k5-pkbub {
+  display: none;
+  transform: translateX(-50%);
+}
+.k5-pkscore:hover .k5-pkbub,
+.k5-pmrow:focus-visible .k5-pkbub {
+  display: block;
+  animation: k5PkBub 0.2s ease-out;
+}
+.k5-pmflame {
+  animation: k5PmFlick 1.6s ease-in-out infinite;
+}
+/* My Goals: the student's marker hops along the road, sparks twinkle, the star jar's honey waves. */
+@keyframes k5PkHopMe {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+@keyframes k5PkWave {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(40px);
+  }
+}
+.k5-pkme {
+  animation: k5PkHopMe 1.4s ease-in-out infinite;
+}
+.k5-pkspark {
+  animation: k5PkTw 1.8s ease-in-out infinite alternate;
+}
+.k5-pkwave {
+  animation: k5PkWave 2.4s linear infinite;
+}
+.k5-pmlg,
+.k5-pmar {
+  transform-box: view-box;
+}
+.k5-pmpA {
+  animation: k5PmBob 0.22s ease-in-out infinite alternate;
+  flex: none;
+  overflow: visible;
+}
+.k5-pmpB {
+  animation: k5PmBobS 1.5s ease-in-out infinite alternate;
+  flex: none;
+  overflow: visible;
+}
+.k5-pmpA .k5-pmL1 {
+  animation: k5PmLegR 0.44s ease-in-out infinite;
+}
+.k5-pmpA .k5-pmL2 {
+  animation: k5PmLegR 0.44s ease-in-out -0.22s infinite;
+}
+.k5-pmpA .k5-pmA1 {
+  animation: k5PmArmR 0.44s ease-in-out infinite;
+}
+.k5-pmpA .k5-pmA2 {
+  animation: k5PmArmR 0.44s ease-in-out -0.22s infinite;
+}
+.k5-pmpB .k5-pmL1 {
+  animation: k5PmLegW 3s ease-in-out infinite;
+}
+.k5-pmpB .k5-pmL2 {
+  animation: k5PmLegW 3s ease-in-out -1.5s infinite;
+}
+.k5-pmpB .k5-pmA1 {
+  animation: k5PmArmW 3s ease-in-out infinite;
+}
+.k5-pmpB .k5-pmA2 {
+  animation: k5PmArmW 3s ease-in-out -1.5s infinite;
+}
+.k5-pmrow {
+  display: grid;
+  grid-template-columns: 56px minmax(180px, 1.6fr) minmax(100px, 0.7fr) minmax(150px, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.k5-pmrow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 var(--k5-line);
+}
+@media (max-width: 760px) {
+  .k5-pmrow {
+    grid-template-columns: 56px 1fr;
+  }
+  .k5-pmrow > :nth-child(n + 3) {
+    grid-column: 2;
+  }
+  .k5-pkscene {
+    opacity: 0.45;
+    max-width: 100% !important;
+  }
+  .k5-pkbub {
+    left: 0 !important;
+    transform: none !important;
+  }
+  .k5-pkcute {
+    inset-inline-end: -6px !important;
+  }
+  .k5-pmtab {
+    flex: 1 1 auto;
+    justify-content: center;
+    font-size: 16px !important;
+    padding: 0 12px !important;
+  }
+  .k5-pmpill {
+    min-width: 0 !important;
+    flex: 1 1 0;
+  }
+  .k5-pmaside {
+    margin-inline-start: 0 !important;
+  }
+  .k5-bdwrap {
+    border: none !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+  }
+  .k5-bdtbl {
+    min-width: 0 !important;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .k5-bdhead {
+    display: none !important;
+  }
+  .k5-bdrow {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    border: 3px solid var(--k5-line) !important;
+    border-radius: 18px;
+    padding: 6px 0;
+    overflow: hidden;
+  }
+  .k5-bdrow > [role="cell"] {
+    padding: 6px 12px !important;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .k5-bdrow > .k5-bdwide {
+    grid-column: 1 / -1;
+  }
+  .k5-bdrow > [data-l]::before {
+    content: attr(data-l);
+    display: block;
+    font-size: 12px;
+    font-weight: 900;
+    color: var(--k5-mut);
+    margin-bottom: 2px;
+  }
 }

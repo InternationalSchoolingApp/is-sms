@@ -11,6 +11,7 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useCartCheckout } from "@/hooks/useCartCheckout";
 import { useModuleRights } from "@/hooks/useModuleRights";
 import { useSchoolCurrency } from "@/hooks/useStudentCart";
+import { K5FeeDetails } from "@/components/k5/pages/K5FeeDetails";
 import { useStudentFeeDetails } from "@/hooks/useStudentFeeDetails";
 
 const PAGE_SIZE = 10;
@@ -69,7 +70,7 @@ function feeAction(row, nextId, schoolNumericId, canView) {
  * module's viewed right like legacy roleAndModule.viewed.
  */
 export function FeeDetails() {
-  const { context } = useDashboardContext();
+  const { context, isK5 } = useDashboardContext();
   const { schoolUUID, userId, schoolNumericId } = context ?? {};
   const { isLoading, payments, nextUserPaymentDetailsId, refetch } = useStudentFeeDetails({ schoolUUID, userId });
   const { canView } = useModuleRights("fee-details");
@@ -140,6 +141,62 @@ export function FeeDetails() {
       actionCell(row),
     ];
   };
+
+  if (isK5) {
+    return (
+      <>
+        <K5FeeDetails
+          isLoading={!context || isLoading}
+          payments={payments}
+          nextUserPaymentDetailsId={nextUserPaymentDetailsId}
+          symbol={symbol}
+          canView={canView}
+          onPay={checkout.start}
+        />
+        {context && (
+          <PaymentGatewayPickerModal
+            open={Boolean(checkout.picker)}
+            onOpenChange={(open) => !open && checkout.closePicker()}
+            details={checkout.picker?.details}
+            airwallexMethods={checkout.picker?.methods}
+            payerCountryCode={checkout.picker?.countryCode}
+            schoolNumericId={context.schoolNumericId}
+            schoolName={context.schoolName}
+            busy={checkout.launching}
+            onPay={checkout.launchGateway}
+            onUploadProof={checkout.uploadProof}
+            onSubmitOffline={checkout.submitOffline}
+          />
+        )}
+        {(checkout.preparing || checkout.processing) && (
+          <FullScreenLoader message={checkout.processing ? "Payment is under process..." : undefined} />
+        )}
+        <Dialog open={checkout.incomplete} onOpenChange={(open) => !open && checkout.dismissIncomplete()}>
+          <DialogContent className="text-center">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Oops!</DialogTitle>
+            </DialogHeader>
+            <h3 className="text-lg font-semibold text-red-600">Payment Incomplete</h3>
+          </DialogContent>
+        </Dialog>
+        <Dialog
+          open={checkout.underReview}
+          onOpenChange={(open) => {
+            if (open) return;
+            checkout.dismissUnderReview();
+            refetch();
+          }}
+        >
+          <DialogContent className="text-center">
+            <DialogHeader>
+              <DialogTitle>Your payment is under review.</DialogTitle>
+            </DialogHeader>
+            <p className="text-black/70">Your fee status will be updated once the payment is received.</p>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
 
   const status = !context || isLoading ? "Loading…" : payments.length === 0 ? "No fee details found" : null;
 

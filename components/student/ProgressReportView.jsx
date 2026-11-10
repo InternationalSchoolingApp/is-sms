@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { ArrowLeft, CalendarDays, Landmark } from "lucide-react";
 import { differenceInCalendarDays, format, isValid, parse } from "date-fns";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -12,7 +13,7 @@ import { MobileTableCard } from "@/components/student/MobileTableCard";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 
 // Backend static assets (legacy PATH_FOLDER_IMAGE2).
-const assetUrl = (file) => `${resolveBackendOrigin()}/static/theme2/images/${file}`;
+export const assetUrl = (file) => `${resolveBackendOrigin()}/static/theme2/images/${file}`;
 
 // Legacy item.colorScoreText is a Bootstrap class pair.
 const SCORE_CLASS = {
@@ -20,7 +21,7 @@ const SCORE_CLASS = {
   "bg-warning text-white": "bg-[#ffc107] text-white",
 };
 
-const GRADING_SYSTEM = [
+export const GRADING_SYSTEM = [
   ["A+", "96-100"],
   ["A", "93-95"],
   ["A-", "89-92"],
@@ -36,14 +37,25 @@ const GRADING_SYSTEM = [
   ["F", "Below 60", "bg-[#dc3545] text-white"],
 ];
 
-/** Splits a row's playloadUrl (.../get-user-gradebook/{uniqueId}?payload=base64) into its parts. */
+/**
+ * Splits a row's playloadUrl (.../get-user-gradebook/{uniqueId}?payload=...) into its parts. The list API sends the
+ * payload encrypted, so it is kept as it is (rawPayload) and passed back to the backend, which decrypts it; an older
+ * plain base64 JSON payload is read into params.
+ */
 function parseReportUrl(url) {
   try {
-    const parsed = new URL(url);
-    const payload = parsed.searchParams.get("payload");
-    return { uniqueId: parsed.pathname.split("/").pop(), params: JSON.parse(decodeURI(atob(payload))) };
+    const parsed = new URL(url, "http://localhost");
+    const rawPayload = parsed.searchParams.get("payload") || "";
+    const uniqueId = parsed.pathname.split("/").pop();
+    let params = null;
+    try {
+      params = JSON.parse(decodeURI(atob(rawPayload)));
+    } catch {
+      params = null;
+    }
+    return { uniqueId, params: params?.data ? params : null, rawPayload: params?.data ? "" : rawPayload };
   } catch {
-    return { uniqueId: null, params: null };
+    return { uniqueId: null, params: null, rawPayload: "" };
   }
 }
 
@@ -53,7 +65,7 @@ const toDate = (value) => {
   const parsed = value ? parse(value, BACKEND_DATE, new Date()) : null;
   return parsed && isValid(parsed) ? parsed : undefined;
 };
-const orNA = (value) => (value === undefined || value === null || value === "" ? "N/A" : value);
+export const orNA = (value) => (value === undefined || value === null || value === "" ? "N/A" : value);
 
 function DetailRows({ rows }) {
   return (
@@ -241,27 +253,29 @@ function EnrollmentReport({ enrollment, report, logoUrl }) {
 }
 
 /**
- * Progress Reports "View" — legacy get-user-gradebook page (GradebookSummaryHTML.jsp)
- * rendered from its JSON (format=json). Date search re-fetches the same endpoint with
- * new dates, like legacy callDateWiseGradebokSummary.
+ * State of one opened report (shared by the regular and the K–5 view): the row's payload, the date pickers and the
+ * date search that re-fetches the same endpoint with new dates, like legacy callDateWiseGradebokSummary.
  */
-export function ProgressReportView({ url, onBack }) {
-  const { context, logoUrl } = useDashboardContext();
+export function useProgressReport(url) {
+  const { context } = useDashboardContext();
   const schoolUUID = context?.schoolUUID;
   const dummy = useDummyStudent();
   // Dummy-mode rows link to "dummy-student-progress-report://n" (no backend payload): start from that
   // report's own week, like the real payload's startdate/enddate.
   const dummyUrl = dummy.enabled && dummy.student?.isProgressReportUrl(url) ? url : null;
-  const { uniqueId, params: initialParams } = useMemo(() => {
+  const { uniqueId, params: initialParams, rawPayload } = useMemo(() => {
     if (!dummyUrl) return parseReportUrl(url);
     const report = dummy.student.progressReport(dummyUrl);
-    return { uniqueId: "dummy", params: { data: "dummy", startdate: report.startdate, enddate: report.enddate, subReportType: report.subReportType } };
+    return { uniqueId: "dummy", rawPayload: "", params: { data: "dummy", startdate: report.startdate, enddate: report.enddate, subReportType: report.subReportType } };
   }, [url, dummyUrl, dummy.student]);
   const [params, setParams] = useState(initialParams);
-  const [startdate, setStartdate] = useState(() => toDate(initialParams?.startdate));
-  const [enddate, setEnddate] = useState(() => toDate(initialParams?.enddate));
+  // Until the student picks dates, the pickers show the report's own range (from the payload or the first answer).
+  const [pickedStart, setStartdate] = useState(() => toDate(initialParams?.startdate));
+  const [pickedEnd, setEnddate] = useState(() => toDate(initialParams?.enddate));
   const [error, setError] = useState("");
-  const { isLoading, report } = useStudentGradebookReport({ schoolUUID, uniqueId, params, dummyUrl });
+  const { isLoading, report } = useStudentGradebookReport({ schoolUUID, uniqueId, params, rawPayload, dummyUrl });
+  const startdate = pickedStart ?? toDate(report?.startdate);
+  const enddate = pickedEnd ?? toDate(report?.enddate);
 
   const enrollments = Array.isArray(report?.gradebookEnroll)
     ? report.gradebookEnroll.filter((enrollment) => enrollment.grades?.items?.item?.length)
@@ -271,16 +285,88 @@ export function ProgressReportView({ url, onBack }) {
   function search() {
     if (!startdate && !enddate) return setError("Please select report start date and end date");
     if (!startdate || !enddate || startdate > enddate) return setError("Please select start date must be less then end date");
+    const data = params?.data || report?.data;
+    if (!data) return setError("Please open the report again from the list.");
     setError("");
+    // Keep the searched range in the pickers even if the next answer fails.
+    setStartdate(startdate);
+    setEnddate(enddate);
     // Legacy get-user-gradebook-content: a 7-day range is a weekly report (shows Current Week Percentage).
     const days = differenceInCalendarDays(enddate, startdate) + 1;
     setParams({
       ...params,
+      data,
       startdate: format(startdate, BACKEND_DATE),
       enddate: format(enddate, BACKEND_DATE),
       subReportType: days === 7 ? "weekly" : "",
     });
   }
+
+  return { isLoading, report, startdate, enddate, setStartdate, setEnddate, search, error, enrollments, unsupported };
+}
+
+/** "…/send-mail-student-get-user-gradebook/<id>?payload=…" -> "?payload=…" (only the payload goes to our route). */
+function downloadQuery(link) {
+  try {
+    return new URL(link, "http://localhost").search;
+  } catch {
+    return link.includes("?") ? link.slice(link.indexOf("?")) : "";
+  }
+}
+
+/** 'attachment; filename="X.pdf"' -> "X.pdf". */
+function fileNameOf(disposition) {
+  const m = /filename="?([^";]+)"?/i.exec(disposition || "");
+  return m ? m[1] : "progress-report.pdf";
+}
+
+/**
+ * Download of the opened report. The backend builds the PDF on request, which takes up to a minute, so the page
+ * fetches it through /api/performance/progress-report-pdf (opened with the user's token) and shows "Preparing…"
+ * until it arrives, instead of a bare link that gives no sign anything is happening.
+ * design "k5" asks the backend for the K–5 look of the PDF (GradebookSummaryK5HTML.jsp).
+ */
+export function useReportDownload(link, design) {
+  const [preparing, setPreparing] = useState(false);
+
+  const download = async () => {
+    const query = link ? downloadQuery(link) : "";
+    if (!query || preparing) return;
+    setPreparing(true);
+    try {
+      const designQuery = design === "k5" ? "&design=k5" : "";
+      const response = await fetch(`/api/performance/progress-report-pdf${query}${designQuery}`, { cache: "no-store" });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.message || "The report could not be downloaded. Please try again.");
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileNameOf(response.headers.get("content-disposition"));
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    } catch (e) {
+      toast.error(e?.message || "The report could not be downloaded. Please try again.");
+    } finally {
+      setPreparing(false);
+    }
+  };
+
+  return { preparing, download };
+}
+
+/**
+ * Progress Reports "View" — legacy get-user-gradebook page (GradebookSummaryHTML.jsp)
+ * rendered from its JSON (format=json).
+ */
+export function ProgressReportView({ url, onBack }) {
+  const { logoUrl } = useDashboardContext();
+  const { isLoading, report, startdate, enddate, setStartdate, setEnddate, search, error, enrollments, unsupported } = useProgressReport(url);
+  const { preparing, download } = useReportDownload(report?.downloadUrl);
 
   return (
     <div className="w-full">
@@ -312,14 +398,15 @@ export function ProgressReportView({ url, onBack }) {
             Search
           </button>
           {report?.downloadUrl && (
-            <a
-              href={report.downloadUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="ml-auto flex h-10 items-center rounded-md bg-[#17a2b8] px-5 cursor-pointer text-sm text-white"
+            <button
+              type="button"
+              onClick={download}
+              disabled={preparing}
+              aria-busy={preparing}
+              className="ml-auto flex h-10 items-center rounded-md bg-[#17a2b8] px-5 cursor-pointer text-sm text-white disabled:cursor-wait disabled:opacity-70"
             >
-              Download
-            </a>
+              {preparing ? "Preparing…" : "Download"}
+            </button>
           )}
         </div>
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}

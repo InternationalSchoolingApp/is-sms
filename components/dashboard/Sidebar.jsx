@@ -41,7 +41,7 @@ export function Sidebar({ menu, open = false, onClose, collapsed = false, onExpa
     const href = studentNavHref(school, segment);
     return segment ? pathname === href || pathname.startsWith(`${href}/`) : pathname === href;
   };
-
+  console.log("Sidebar render", menu);
   return (
     <>
       {open && <div className="fixed inset-0 z-30 bg-black/40 md:hidden" aria-hidden="true" onClick={onClose} />}

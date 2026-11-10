@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K5 Performance — Backend Plan</title>
+<style>
+  :root { --bg:#f7f6f2; --card:#fff; --ink:#1c2640; --mut:#5b6478; --line:#e3e0d8; --ac:#1e66e0; --act:#e6eefd; --ok:#1d6b3c; --okt:#e3f5ea; --warn:#8a5a00; --warnt:#fff1cc; --red:#c92a2f; --redt:#fdecee; }
+  * { box-sizing:border-box; margin:0; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--ink); padding:16px; line-height:1.6; max-width:1100px; margin:0 auto; }
+  h1 { font-size:26px; } .sub { color:var(--mut); margin:4px 0 20px; font-size:14px; }
+  h2 { font-size:20px; margin:28px 0 10px; padding-bottom:6px; border-bottom:3px solid var(--line); }
+  h3 { font-size:16px; margin:16px 0 6px; color:var(--ac); }
+  .card { background:var(--card); border:2px solid var(--line); border-radius:16px; padding:16px; margin:10px 0; }
+  table { width:100%; border-collapse:collapse; font-size:14px; margin:8px 0; }
+  th { background:var(--ac); color:#fff; text-align:left; padding:8px 10px; } td { padding:7px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  code, pre { font-family:'Cascadia Code',Consolas,monospace; font-size:12.5px; } code { background:#f0f0ec; padding:1px 5px; border-radius:5px; }
+  pre { background:#f3f2ee; border:1px solid var(--line); border-radius:12px; padding:12px; overflow-x:auto; white-space:pre; }
+  .tag { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:800; }
+  .t-ok { background:var(--okt); color:var(--ok); } .t-warn { background:var(--warnt); color:var(--warn); } .t-red { background:var(--redt); color:var(--red); } .t-blue { background:var(--act); color:var(--ac); }
+  .note { background:var(--warnt); border-left:4px solid #e0a100; padding:10px 14px; border-radius:0 10px 10px 0; font-size:14px; margin:10px 0; }
+  .risk { background:var(--redt); border-left:4px solid var(--red); padding:10px 14px; border-radius:0 10px 10px 0; font-size:14px; margin:10px 0; }
+  .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin:12px 0; }
+  .tile { background:var(--card); border:2px solid var(--line); border-radius:14px; padding:12px; text-align:center; }
+  .tile b { display:block; font-size:26px; color:var(--ac); } .tile span { font-size:12px; color:var(--mut); }
+  ol li, ul li { margin:4px 0; } ul, ol { padding-left:20px; }
+</style>
+</head>
+<body>
+
+<h1>K5 My Performance — Backend Plan (Goals + Class Comparison)</h1>
+<p class="sub">Date: 2026-11-08 · Repos: <code>is-rest-api</code> (backend) + <code>is-sms</code> (frontend) · Rule: naya endpoint nahi, existing endpoints enhance karenge</p>
+
+<div class="tiles">
+  <div class="tile"><b>0</b><span>Naye endpoints</span></div>
+  <div class="tile"><b>2</b><span>Existing endpoints enhance</span></div>
+  <div class="tile"><b>0</b><span>Schema change (DB ALTER)</span></div>
+  <div class="tile"><b>0</b><span>Extra LMS calls</span></div>
+</div>
+
+<h2>1. Kya banana hai (short)</h2>
+<div class="card">
+  <ul>
+    <li><b>My Goals (Tab 2):</b> student apna target average score, finish-by date, reminder on/off aur comparison on/off save kare. Baaki sab (gap, per-week, today's target, this week's goals, goals by course) frontend pe existing course + assignment data se calculate hoga.</li>
+    <li><b>Class Comparison (Tab 3):</b> har course ke liye anonymized class numbers — class size, class avg score, class avg progress, student ka percentile (score / progress / on-time), on-time %, progress distribution (8 bands). <b>Kisi aur student ka naam ya score kabhi nahi bhejenge</b>, sirf aggregates.</li>
+  </ul>
+</div>
+
+<h2>2. Research se kya mila</h2>
+<div class="card">
+  <table>
+    <tr><th>Sawal</th><th>Jawab</th></tr>
+    <tr><td>Goals kahan save karein?</td><td><code>NOTIFICATION_SETTINGS</code> table (USER_ID, SETTING_KEY, SETTING_VALUE) — free-form per-user key/value. Service <code>NotificationSettingsService.updateSingleSetting(userId, key, value)</code> already upsert karta hai. <b>Schema change nahi chahiye.</b></td></tr>
+    <tr><td>Goals write kis endpoint se?</td><td>Existing student profile save <code>{school}/dashboard/update-user-profile-content</code> (DashboardStudentUtil.updateStudentProfileNewTheme). Ye <code>keyId + fieldValue</code> leta hai aur student-editable keys ki whitelist hai — usme naya key <code>k5Goals</code> add karenge.</td></tr>
+    <tr><td>Class data kahan se?</td><td>Live LMS se nahi (har classmate ke liye LMS call = bahut slow). Backend ka scheduler (<code>getStudentGradingSave</code>) saare Buzz students ka data DB mein upsert karta hai: <code>BUZZ_ENROLLMENT</code> (score), <code>BUZZ_GRADES</code> (progress), <code>BUZZ_ACTIVITY</code> (due vs submitted). In pe SQL aggregate.</td></tr>
+    <tr><td>Class data kis endpoint se?</td><td>Existing <code>{school}/dashboard/parent/student-academic-performance</code> (DashboardParentUtil.getStudentAcademicPerformance) — jo K5 page already call karta hai. Optional flag <code>includeClassComparison</code> pe har course ke saath <code>classComparison</code> block.</td></tr>
+    <tr><td>Reminders ke liye cron?</td><td><b>Nahi chahiye.</b> Mockup khud kehta hai: "Shown on this page — no extra emails." Reminder = page pe banner jab student today's target se peeche ho.</td></tr>
+    <tr><td>DB migration tool?</td><td>Nahi hai (<code>ddl-auto: none</code>, manual SQL). Isliye schema change avoid kiya.</td></tr>
+  </table>
+</div>
+
+<h2>3. Backend Change #1 — Goals save (write)</h2>
+<div class="card">
+  <p><span class="tag t-blue">ENHANCE</span> <code>POST {school}/dashboard/update-user-profile-content</code></p>
+  <h3>Request (existing format, naya keyId)</h3>
+<pre>{ "keyId": "k5Goals",
+  "fieldValue": "{\"score\":85,\"finishBy\":\"2027-06-20\",\"remind\":\"Y\",\"compare\":\"Y\"}" }</pre>
+  <h3>Backend logic (DashboardStudentUtil)</h3>
+  <ol>
+    <li><code>STUDENT_EDITABLE_PROFILE_KEYS</code> mein <code>"k5Goals"</code> add.</li>
+    <li><code>validateStudentProfileNewTheme</code>: keyId = k5Goals ho toh JSON parse + validate:
+      <ul>
+        <li><code>score</code>: integer, 50–100 (mockup choices 80/85/90/95)</li>
+        <li><code>finishBy</code>: <code>yyyy-MM-dd</code>, valid date, aaj ya future</li>
+        <li><code>remind</code>, <code>compare</code>: sirf <code>Y</code>/<code>N</code></li>
+      </ul>
+    </li>
+    <li><code>saveStudentProfileNewTheme</code>: keyId = k5Goals ho toh <b>sirf</b> 4 keys upsert karo aur return — baaki profile save logic run nahi hoga:
+      <br><code>K5_GOAL_SCORE</code>, <code>K5_GOAL_FINISH_BY</code>, <code>K5_GOAL_REMIND</code>, <code>K5_GOAL_COMPARE</code> (USER_ID = profile ka student userId, token se aaya — payload se kabhi nahi).</li>
+  </ol>
+  <div class="note">Frontend pehle se is endpoint ko <code>services/profileSaveApi.js</code> se call karta hai (token user). Wahi server action reuse karenge.</div>
+</div>
+
+<h2>4. Backend Change #2 — Goals + Class Comparison read</h2>
+<div class="card">
+  <p><span class="tag t-blue">ENHANCE</span> <code>POST {school}/dashboard/parent/student-academic-performance</code></p>
+  <h3>Request — naya optional flag</h3>
+<pre>{ "userId": 123, "studentUserId": 123, "includeClassComparison": "Y" }</pre>
+  <p>Flag na ho toh response bilkul pehle jaisa — purana Performance page aur parent dashboard pe koi asar nahi, koi extra query nahi.</p>
+
+  <h3>Response — naye fields</h3>
+<pre>details: {
+  courseProviderId, lmsUserId, userName,
+  studentAcademicPerformances: [ { ...existing fields...,
+      "classComparison": {                // null jab class chhoti ho / comparison off / data na ho
+        "size": 24,                       // classmates + student
+        "avgScore": 81.5,  "avgProgress": 12.3,
+        "scorePct": 62,    "progressPct": 48,   // student ka percentile (0-100)
+        "youOnTime": 100,  "classOnTime": 72,   // % on-time submissions
+        "onTimePct": 70,
+        "dist": [3,5,6,4,3,2,1,0]          // students per progress band 0-5,5-10,...,30-35,35+
+      } } ],
+  "k5Goals": { "score": 85, "finishBy": "2027-06-20", "remind": "Y", "compare": "Y", "saved": true }
+}</pre>
+
+  <h3>Classmates kaun? (SQL)</h3>
+  <ul>
+    <li>Same LMS course: <code>BUZZ_ENROLLMENT.ENTITY_ID = course.lmsCourseId</code></li>
+    <li>Active: <code>LMS_USER.ACTIVE='Y' AND DELETED='N'</code> (join on LMS_USER_ID)</li>
+    <li>Progress: <code>BUZZ_GRADES</code> join <code>ENROLLMENT_ID = BUZZ_ENROLLMENT.ID</code> → COMPLETED / COMPLETABLE</li>
+    <li>Score: <code>BUZZ_ENROLLMENT.ACHIEVED / POSSIBLE</code></li>
+    <li>On-time: <code>BUZZ_ACTIVITY</code> per LMS_USER_ID — submitted items mein <code>SUBMITTED_DATE &lt;= DUE_DATE</code>, excused chhod ke</li>
+  </ul>
+<pre>-- BuzzEnrollmentDao (native, ek query per course)
+SELECT e.LMS_USER_ID, e.ACHIEVED, e.POSSIBLE, g.COMPLETED, g.COMPLETABLE
+FROM BUZZ_ENROLLMENT e
+JOIN BUZZ_GRADES g ON g.ENROLLMENT_ID = e.ID
+JOIN LMS_USER lu ON lu.LMS_USER_ID = e.LMS_USER_ID AND lu.ACTIVE = 'Y' AND lu.DELETED = 'N'
+WHERE e.ENTITY_ID = ?1
+
+-- BuzzActivityDao (on-time per student in that course)
+SELECT a.LMS_USER_ID,
+       SUM(CASE WHEN a.SUBMITTED_DATE &lt;= a.DUE_DATE THEN 1 ELSE 0 END) AS ON_TIME,
+       COUNT(*) AS SUBMITTED
+FROM BUZZ_ACTIVITY a
+WHERE a.ENTITY_ID = ?1 AND a.SUBMITTED_DATE IS NOT NULL AND (a.EXCUSED IS NULL OR a.EXCUSED = 0)
+GROUP BY a.LMS_USER_ID</pre>
+  <p>Java mein: averages, percentile (<i>kitne classmates ka value student se kam hai</i>, ties half), 8 bands. Student ka apna score/progress <b>live LMS wala</b> use hoga (jo page pe dikhta hai), classmates ka DB snapshot.</p>
+
+  <h3>Kab null bhejenge</h3>
+  <ul>
+    <li>Flag nahi bheja</li>
+    <li>Student ne comparison off kiya (<code>K5_GOAL_COMPARE = N</code>) — server pe bhi check, sirf UI pe nahi</li>
+    <li>Class size &lt; <b>5</b> (privacy, neeche dekho)</li>
+    <li>Non-Buzz provider (36/37/38 ke alawa)</li>
+  </ul>
+</div>
+
+<h2>5. Frontend (is-sms)</h2>
+<div class="card">
+  <table>
+    <tr><th>Kaam</th><th>Detail</th></tr>
+    <tr><td><code>services/dashboardApi.js</code></td><td><code>getStudentAcademicPerformance</code> mein optional <code>includeClassComparison</code> param — sirf K5 page bhejega.</td></tr>
+    <tr><td>Goals save</td><td>Server action: existing <code>profileSaveApi</code> se <code>keyId: "k5Goals"</code>. Save ke baad performance query invalidate.</td></tr>
+    <tr><td>Tab 2 My Goals</td><td>Mockup jaisa: hero ("Aim for X% and finish by Y"), Score goal card, Completion road (Today marker), This week's goals (detail items jo is hafte due hain), Goals by course cards, <b>Set my goals</b> dialog (80/85/90/95 choices, finish date: recommended / course end / <b>shadcn date-picker</b>, 2 toggles). Goals save na hon toh defaults dikhenge (85, end date se 2 hafte pehle, Y, Y).</td></tr>
+    <tr><td>Tab 3 Class Comparison</td><td>Mockup jaisa: headline, course pills, overall standing, 3 bars (score / progress / on-time), histogram, CTA, "All courses at a glance" table, privacy line. Off state + "Turn on comparison" (compare = Y save). Class chhoti ho toh friendly message.</td></tr>
+    <tr><td>On Target medal</td><td>Fixed 85% ki jagah student ka goal score.</td></tr>
+    <tr><td>Reminder</td><td>Remind = Y aur kisi course mein progress &lt; today's target → Tab 1 pe chhota banner.</td></tr>
+  </table>
+</div>
+
+<h2>6. Risks / decisions (maine ye defaults liye hain)</h2>
+<div class="risk"><b>Privacy — minimum class size 5:</b> mockup <code>MIN_CLASS = 2</code> leta hai, lekin 2 students mein class average se doosre student ka exact score nikal aata hai. Isliye 5 rakha hai. Chahiye toh constant badal sakte hain.</div>
+<div class="note"><b>Data freshness:</b> classmates ka data scheduler ke last run jitna purana hoga (frequency abhi confirm nahi). Student ka apna data live rahega.</div>
+<div class="note"><b>Classmates scope:</b> "same LMS course (ENTITY_ID)" — matlab us course ke saare active Buzz students, chahe section/teacher alag ho. Same teacher/section tak limit karna ho toh STUDENT_SESSION_SUBJECTS join add karna padega (abhi verify nahi kiya).</div>
+<div class="note"><b>Existing security gap (purana, chhua nahi):</b> <code>student-academic-performance</code> student session mein <code>studentUserId</code> payload se leta hai aur check nahi karta ki wahi login student hai. Naye fields bhi isi response mein jayenge — alag se fix karna chahiye.</div>
+
+<h2>7. Order of work</h2>
+<div class="card">
+  <ol>
+    <li><b>Backend #1</b> — goals save (k5Goals keyId) + read (<code>k5Goals</code> in performance response).</li>
+    <li><b>Backend #2</b> — <code>includeClassComparison</code> + 2 DAO queries + aggregation.</li>
+    <li><b>Backend restart</b> (aapko karna hoga) → API test.</li>
+    <li><b>Frontend</b> — Tab 2 My Goals + Set goals dialog.</li>
+    <li><b>Frontend</b> — Tab 3 Class Comparison.</li>
+    <li>K5 student se browser test, kuch commit nahi.</li>
+  </ol>
+</div>
+
+<p style="text-align:center;color:var(--mut);font-size:13px;margin-top:24px">K5 Dashboard Migration · Academic Performance · Backend plan</p>
+</body>
+</html>

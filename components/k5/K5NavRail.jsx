@@ -100,7 +100,7 @@ export function K5NavRail({ menu, open, onOpen, onClose, isPreK = false, userId 
     const href = studentNavHref(school, segment);
     return segment ? pathname === href || pathname.startsWith(`${href}/`) : pathname === href;
   };
-
+  console.log("K5NavRail render", menu);
   return (
     <>
       {open && <button type="button" aria-label="Close menu" onClick={onClose} className="fixed inset-0 z-[45] cursor-pointer bg-[rgba(10,16,34,0.35)]" />}

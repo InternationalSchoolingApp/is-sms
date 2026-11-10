@@ -343,10 +343,21 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
   }
 
   // --- My Performance (legacy dummyAcademicPerformanceRows / ProgressDetail / GradeHistory) ---
+  // K5 Class Comparison numbers per course (Playful.dc.html CD), so the tab can be seen without real class data.
+  const DUMMY_CLASS = [
+    { size: 126, avgScore: 78.4, avgProgress: 18, scorePct: 58, progressPct: 78, youOnTime: 100, classOnTime: 72, onTimePct: 70, dist: [8, 14, 22, 26, 24, 16, 10, 6] },
+    { size: 98, avgScore: 86.1, avgProgress: 16, scorePct: 88, progressPct: 81, youOnTime: 100, classOnTime: 75, onTimePct: 66, dist: [10, 12, 18, 20, 17, 11, 6, 4] },
+    { size: 112, avgScore: 81.5, avgProgress: 12, scorePct: 90, progressPct: 34, youOnTime: 100, classOnTime: 69, onTimePct: 72, dist: [12, 20, 26, 24, 16, 8, 4, 2] },
+    { size: 14, avgScore: 72.5, avgProgress: 9, scorePct: 36, progressPct: 29, youOnTime: 75, classOnTime: 68, onTimePct: 52, dist: [2, 3, 4, 2, 1, 1, 1, 0] },
+    { size: 88, avgScore: 76.0, avgProgress: 11, scorePct: 38, progressPct: 41, youOnTime: 80, classOnTime: 70, onTimePct: 55, dist: [9, 17, 22, 18, 12, 6, 3, 1] },
+  ];
+
   function academicPerformanceRows() {
     const base = baseDate();
     const endDate = plusMonths(base, 9);
     return subjects().map((subject, i) => ({
+      startDate: displayDateOnly(plusDays(base, -60)),
+      classComparison: { ...DUMMY_CLASS[i % DUMMY_CLASS.length], ...(i % 3 === 0 ? { scorePct: null } : {}) },
       lmsEnrollmentId: `DUMMY-STUDENT-ENROLL-${uid}-${i + 1}`,
       lmsCourseId: String(subject.subjectId || `DUMMY-STUDENT-COURSE-${i + 1}`),
       courseName: cleanCourseName(subject.subjectName || `Course ${i + 1}`),
@@ -362,7 +373,156 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
     }));
   }
 
-  const academicPerformance = () => ({ status: 1, details: { courseProviderId: 37, studentAcademicPerformances: academicPerformanceRows() } });
+  // New My Performance page: the same shape the backend builds from the daily cron's tables
+  // (StudentPerformanceUtil), worked out here with the same rules so the page can be seen without real data.
+  function academicPerformanceView() {
+    const DAY = 86400000;
+    const iso = (t) => new Date(t).toISOString().slice(0, 10);
+    const todayT = Date.parse(`${iso(Date.now())}T00:00:00Z`);
+    const today = iso(todayT);
+    const startT = todayT - 60 * DAY;
+    const endT = todayT + 270 * DAY;
+    const target = Math.round(Math.min(100, Math.max(0, ((todayT - startT) / (endT - startT)) * 100)) * 100) / 100;
+    const monday = todayT - ((new Date(todayT).getUTCDay() + 6) % 7) * DAY;
+    const rows = academicPerformanceRows();
+    const courses = rows.map((row, i) => {
+      const scores = [100, 100, 100, 92 - i * 3, 74, null, null, null];
+      const acts = scores.map((pct, k) => {
+        const due = todayT + (k - 3) * 4 * DAY;
+        const excused = k === 5 && i % 2 === 1;
+        const submittedT = pct == null ? null : due - (k === 2 ? 0 : DAY);
+        const submitted = submittedT == null ? null : iso(submittedT);
+        const status = excused ? "excused" : submitted ? (submittedT < due ? "before_time" : "on_time") : due < todayT ? "missed" : "upcoming";
+        const score = pct == null || excused ? null : i === 1 ? 100 : pct;
+        return {
+          itemId: `DUMMY-STUDENT-ITEM-${i + 1}-${k + 1}`,
+          unit: `0${Math.floor(k / 3) + 1}.0${k % 3}`,
+          title: `Lesson ${k + 1}`,
+          fullTitle: `0${Math.floor(k / 3) + 1}.0${k % 3} ${row.courseName} Lesson ${k + 1}`,
+          type: k % 2 ? "ASSIGNMENT" : "QUIZ",
+          due: iso(due),
+          submitted: excused ? null : submitted,
+          timeSpent: submitted ? `0:${pad(18 + k)}:00` : null,
+          status,
+          score,
+          grade: score == null ? null : score >= 93 ? "A" : score >= 83 ? "B" : "C",
+          passed: score == null ? null : score >= 60,
+          done: !excused && Boolean(submitted),
+        };
+      });
+      const counted = acts.filter((a) => a.status !== "excused");
+      const submittedCount = counted.filter((a) => a.done).length;
+      const progress = Math.round((submittedCount / Math.max(1, counted.length)) * 10000) / 100;
+      const scored = counted.filter((a) => a.score != null);
+      const hasScore = i % 3 !== 0 && scored.length > 0;
+      const score = hasScore ? Math.round((scored.reduce((s, a) => s + a.score, 0) / scored.length) * 100) / 100 : null;
+      const paceGap = Math.round((progress - target) * 100) / 100;
+      const due = counted.filter((a) => a.status !== "upcoming").sort((a, b) => (a.due < b.due ? 1 : -1));
+      let streak = 0;
+      for (const a of due) {
+        if (a.status === "late" || a.status === "missed") break;
+        streak += 1;
+      }
+      const count = (s) => counted.filter((a) => a.status === s).length;
+      return {
+        lmsEnrollmentId: row.lmsEnrollmentId,
+        lmsCourseId: row.lmsCourseId,
+        courseName: row.courseName,
+        teacherName: row.teacherName,
+        teacherGender: row.teacherGender,
+        startDate: iso(startT),
+        endDate: iso(endT),
+        progress,
+        submitted: submittedCount,
+        countable: counted.length,
+        left: counted.length - submittedCount,
+        hasScore,
+        score,
+        grade: hasScore ? (score >= 93 ? "A" : "B") : null,
+        passMark: 60,
+        target,
+        paceGap,
+        pace: paceGap > 5 ? "ahead" : paceGap < -5 ? "behind" : "on_track",
+        daysLeft: 270,
+        streak,
+        summary: {
+          total: acts.length,
+          excused: acts.length - counted.length,
+          submitted: submittedCount,
+          upcoming: count("upcoming"),
+          missed: count("missed"),
+          passed: scored.filter((a) => a.passed).length,
+          failed: scored.filter((a) => !a.passed).length,
+          before: count("before_time"),
+          onTime: count("on_time"),
+          late: count("late"),
+        },
+        nextUp: counted.filter((a) => a.status === "upcoming").slice(0, 2).map((a) => ({ title: a.fullTitle, due: a.due })),
+        activities: acts,
+        classComparison: row.classComparison,
+      };
+    });
+    const scoredCourses = courses.filter((c) => c.hasScore);
+    const avg = scoredCourses.length ? Math.round((scoredCourses.reduce((s, c) => s + c.score, 0) / scoredCourses.length) * 10) / 10 : null;
+    const lines = [];
+    courses.forEach((c) =>
+      c.activities.forEach((a) => {
+        const t = Date.parse(`${a.due}T00:00:00Z`);
+        if (a.status !== "excused" && t >= monday && t < monday + 7 * DAY) {
+          lines.push({
+            enrollmentId: c.lmsEnrollmentId,
+            itemId: a.itemId,
+            title: a.fullTitle,
+            course: c.courseName,
+            due: a.due,
+            catchUp: false,
+            state: a.done ? "done" : t < todayT ? "overdue" : "not_started",
+          });
+        }
+      })
+    );
+    return {
+      today,
+      timezone: "Asia/Singapore",
+      compareAvailable: true,
+      goals: { score: 85, finishBy: iso(endT - 14 * DAY), remind: "Y", compare: "Y", saved: false, schoolDefault: 85, endDate: iso(endT), recommended: iso(endT - 14 * DAY) },
+      tiles: {
+        avgScore: avg,
+        scoredCourses: scoredCourses.length,
+        submitted: courses.reduce((s, c) => s + c.submitted, 0),
+        toGo: courses.reduce((s, c) => s + c.left, 0),
+        ahead: courses.filter((c) => c.pace === "ahead").length,
+        onTrack: courses.filter((c) => c.pace === "on_track").length,
+        behind: courses.filter((c) => c.pace === "behind").length,
+        totalCourses: courses.length,
+        daysLeft: 270,
+        endDate: iso(endT),
+      },
+      courses,
+      lastUpdated: today,
+      badges: [
+        { id: "EARLY_SUBMITTER", name: "Early Submitter", earned: true, earnedOn: iso(todayT - 9 * DAY) },
+        { id: "CLEAN_SWEEP", name: "Clean Sweep", earned: true, earnedOn: iso(todayT - 5 * DAY) },
+        { id: "PERFECT_SCORE", name: "Perfect Score", earned: false, earnedOn: null },
+        { id: "HALFWAY", name: "Halfway", earned: false, earnedOn: null },
+        { id: "ON_TARGET", name: "On Target", earned: avg != null && avg >= 85, earnedOn: avg != null && avg >= 85 ? today : null },
+      ],
+      insights: [
+        courses.some((c) => c.pace === "ahead")
+          ? `You’re ahead in ${courses.filter((c) => c.pace === "ahead").map((c) => c.courseName).join(" & ")}. Keep that rhythm going.`
+          : `${courses[0]?.courseName} is closest to today’s target. A steady week will put you ahead.`,
+        `${courses[1]?.streak || 3} ${courses[1]?.courseName} assignments in a row submitted on time.`,
+        courses.some((c) => c.hasScore && c.score >= 100) ? `Perfect score in ${courses.find((c) => c.hasScore && c.score >= 100).courseName}.` : null,
+      ],
+      week: { start: iso(monday), end: iso(monday + 6 * DAY), lines },
+      goalScore: 85,
+    };
+  }
+
+  const academicPerformance = () => ({
+    status: 1,
+    details: { courseProviderId: 37, studentAcademicPerformances: academicPerformanceRows(), performance: academicPerformanceView() },
+  });
 
   function academicProgressDetail(lmsEnrollmentId, lmsCourseId) {
     const rows = academicPerformanceRows();

@@ -486,7 +486,7 @@ export function EditablePersonal({ m, editor, actions }) {
         <EditText editor={editor} k="middleName" label="Middle Name" name />
         <EditText editor={editor} k="lastName" label="Last Name" required name />
         <EditSelect editor={editor} k="gender" label="Gender" required options={GENDERS} />
-        <Locked label="Date of Birth" value={p.dob} />
+        <Locked label="Date of Birth" value={p.dob} floating />
         <EditPhone editor={editor} label="Phone" keys={["phone", "phoneIso", "phoneWa"]} required fieldId="phoneNumber" />
         <EditPhone editor={editor} label="Alternate Phone" keys={["altPhone", "altPhoneIso", "altPhoneWa"]} fieldId="altPhoneNumber" />
         <div className="flex min-w-0 flex-col gap-1.5">

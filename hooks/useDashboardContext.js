@@ -3,9 +3,9 @@
 import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "@/components/providers/AuthSessionProvider";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
-import { getDashboardChatLinks, getDashboardMenu, getDashboardUserDetails, getStudentDashboardDetails, getStudentDemoData } from "@/services/dashboardApi";
+import { getDashboardChatLinks, getDashboardMenu, getStudentDashboardDetails, getStudentDemoData } from "@/services/dashboardApi";
 import { applyStudentNavRules, mapBackendMenu } from "@/utils/dashboardNav";
 import { bandFromStandardId, isK5LearningProgram, isPreKStandard, isSelfStudyProgram, normalizeGradeBand } from "@/utils/gradeBand";
 import { isDummyStudentMode } from "@/utils/paymentGatewayChecks";
@@ -139,6 +139,8 @@ function useResolveGradeBand({ role, session, authenticated }) {
     // The token sign-in carries no role id (only the role name); the dashboard details list the user's
     // role modules, each with that role id (needed by the sidebar menu and module rights).
     roleId: details?.roleAndModuleAssign?.roleAndModuleDTO?.[0]?.roleId ?? null,
+    lmsProviderURL: details?.lmsProviderURL ?? "",
+    isPayLmsPaymentPending: details?.isPayLmsPaymentPending ?? "",
   };
 
   // Remember the live (non-dummy) result for this tab, so the next load skips the loader.
@@ -161,6 +163,7 @@ function useResolveDashboardContext({ role = "student" } = {}) {
   const { data: session, status } = useSession();
   const [logoUrl, setLogoUrl] = useState(null);
   const authenticated = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
+  const queryClient = useQueryClient();
 
   // Session-expiry guard: a session dropping while the dashboard is open hands
   // the user back to the school's Java login page (proxy.js already blocks
@@ -177,8 +180,7 @@ function useResolveDashboardContext({ role = "student" } = {}) {
   // For students, item-level visibility/labels are then adjusted to match
   // DashboardLeftSideContentSchool.jsp's per-pageLink rules (see
   // applyStudentNavRules), using the student-profile flags from
-  // getDashboardUserDetails (fee-details needs an Online signup, Academic
-  // Year Extension is hidden for certain providers/standards, etc).
+  // the student's own get-student-dashboard (fee-details needs an Online signup, batch-schedule a BATCH signup).
   const menuQuery = useQuery({
     queryKey: ["dashboard-menu", role, session?.schoolNumericId, roleId, session?.userId],
     queryFn: async () => {
@@ -189,10 +191,11 @@ function useResolveDashboardContext({ role = "student" } = {}) {
           roleId,
           userId: session.userId,
         }),
-        role === "student" ? getDashboardUserDetails({ schoolUUID: session.schoolUUID, userId: session.userId }) : null,
+        role === "student" ? queryClient.fetchQuery(studentDashboardDetailsQuery({ schoolUUID: session.schoolUUID, userId: session.userId })) : null,
       ]);
       const mapped = mapBackendMenu(dto) ?? [];
-      return role === "student" ? applyStudentNavRules(mapped, details ?? {}, { schoolNumericId: session.schoolNumericId }) : mapped;
+      const navDetails = { signupType: details?.signupType, signupMode: details?.registrationType };
+      return role === "student" ? applyStudentNavRules(mapped, navDetails, { schoolNumericId: session.schoolNumericId }) : mapped;
     },
     // Waits for the role id (dashboard details) so the menu is not cached empty.
     enabled: authenticated && Boolean(roleId),

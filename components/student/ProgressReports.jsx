@@ -7,6 +7,7 @@ import { useStudentProgressReports } from "@/hooks/useStudentProgressReports";
 import { TableFooter } from "@/components/student/TableFooter";
 import { ProgressReportView } from "@/components/student/ProgressReportView";
 import { MobileTableCard } from "@/components/student/MobileTableCard";
+import { K5ProgressReports } from "@/components/k5/pages/K5ProgressReports";
 
 const PAGE_SIZE = 10;
 
@@ -35,13 +36,28 @@ function normalizeUrl(url) {
  * legacy swaps the dashboard content.
  */
 export function ProgressReports() {
-  const { context } = useDashboardContext();
+  const { context, isK5 } = useDashboardContext();
   const { schoolUUID, userId } = context ?? {};
   const { isLoading, reports } = useStudentProgressReports({ schoolUUID, userId });
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState(null);
 
   const pageRows = useMemo(() => reports.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE), [reports, page]);
+
+  if (isK5) {
+    const k5Rows = reports.map((report, index) => {
+      const range = dateRange(report.reportStartDate, report.reportEndDate);
+      return {
+        key: report.weeklyReportId || `${range}-${index}`,
+        serial: index + 1,
+        type: reportType(report.daysType),
+        range,
+        published: report.createdDate || "N/A",
+        url: normalizeUrl(report.playloadUrl),
+      };
+    });
+    return <K5ProgressReports isLoading={!context || isLoading} rows={k5Rows} />;
+  }
 
   if (selected) {
     return <ProgressReportView url={selected} onBack={() => setSelected(null)} />;

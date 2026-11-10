@@ -45,6 +45,7 @@ function contactsOf(sp) {
 
 export async function loadMyProfileFacts() {
   const dashboard = await backendRequest({ path: "student/dashboard/get-student-dashboard", checkSession: null, buildBody: (me) => ({ userId: me.userId }) });
+  console.log("loadMyProfileFacts dashboard", dashboard);
   if (!dashboard.ok) return dashboard;
   const enrolment = Number(dashboard.data?.studentStandardId) || 0;
   if (!enrolment) return { ok: false, code: "NO_ENROLMENT", message: "No current enrolment was found on your profile." };

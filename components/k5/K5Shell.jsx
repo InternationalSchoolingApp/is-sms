@@ -34,7 +34,8 @@ export function K5Shell({ children }) {
 }
 
 function K5Frame({ children }) {
-  const { context, menu, logoUrl, session, isPreK } = useDashboardContext();
+  const { context, menu, logoUrl, session, isPreK, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
+  
   const pathname = usePathname();
   const { school } = useParams();
   const themeProps = useK5ThemeProps("relative flex min-h-screen flex-col overflow-x-clip bg-k5-page");
@@ -64,7 +65,7 @@ function K5Frame({ children }) {
     setLastPath(pathname);
     setNavOpen(false);
   }
-
+  debugger;
   return (
     <div {...themeProps} data-k5-prek={isPreK ? "true" : undefined}>
       <K5Header
@@ -75,6 +76,8 @@ function K5Frame({ children }) {
         navOpen={navOpen}
         onMenu={() => setNavOpen((v) => !v)}
         onAppearance={() => setLookOpen(true)}
+        lmsProviderURL={lmsProviderURL}
+        isPayLmsPaymentPending={isPayLmsPaymentPending}
       />
 
       <div className="k5-layout relative mx-auto box-border flex w-full max-w-[100%] flex-1 items-start gap-5 px-5 pb-[220px] pt-5 max-[760px]:flex-wrap">

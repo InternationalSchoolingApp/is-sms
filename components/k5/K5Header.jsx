@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { AppDownloadDialog } from "@/components/k5/AppDownloadDialog";
 import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
 import { logoutEverywhere } from "@/utils/logout";
+import { K5ChangePasswordModal } from "@/components/k5/panels/K5ChangePasswordModal";
 
 /**
  * Grade K–5 header (Playful.dc.html): menu button, school logo, LMS switch and the
@@ -15,8 +16,9 @@ import { logoutEverywhere } from "@/utils/logout";
  * "Make it yours!". Same actions as DashboardTopHeader — LMS, My Profile and Change Password
  * are still "coming soon"; Log out is live. "Get the App" opens the store links (constant/appLinks.js).
  */
-export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMenu, onAppearance }) {
+export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMenu, onAppearance, lmsProviderURL, isPayLmsPaymentPending }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [changePwOpen, setChangePwOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [appOpen, setAppOpen] = useState(false);
   const [lms, setLms] = useState(false);
@@ -90,8 +92,13 @@ export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMe
           role="switch"
           aria-checked={lms}
           onClick={() => {
-            setLms((v) => !v);
-            toast("LMS — coming soon", { icon: "🚧" });
+            if (isPayLmsPaymentPending) {
+              toast(isPayLmsPaymentPending, { icon: "⚠️" });
+            } else if (lmsProviderURL) {
+              window.open(lmsProviderURL, "_blank");
+            } else {
+              toast("LMS — coming soon", { icon: "🚧" });
+            }
           }}
           className="flex min-h-12 items-center gap-2.5 rounded-full border-[3px] border-k5-line bg-k5-card py-0 pl-2 pr-4 text-[15px] font-black text-k5-mut max-[760px]:hidden"
         >
@@ -142,7 +149,7 @@ export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMe
                   label="Change Password"
                   onClick={() => {
                     setMenuOpen(false);
-                    toast("Change Password — coming soon", { icon: "🚧" });
+                    setChangePwOpen(true);
                   }}
                 />
                 <MenuItem
@@ -238,6 +245,8 @@ export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMe
       </div>
 
       <AppDownloadDialog open={appOpen} schoolName={schoolName} onClose={() => setAppOpen(false)} />
+
+      {changePwOpen && <K5ChangePasswordModal onClose={() => setChangePwOpen(false)} />}
 
       <LogoutConfirmDialog
         open={confirmLogout}

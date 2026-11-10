@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useStudentAcademicPerformance } from "@/hooks/useStudentAcademicPerformance";
+import { K5Performance } from "@/components/k5/pages/K5Performance";
 import { PerformanceProgressModal } from "@/components/student/PerformanceProgressModal";
 import { TableFooter } from "@/components/student/TableFooter";
 import { MobileTableCard } from "@/components/student/MobileTableCard";
@@ -77,14 +78,23 @@ function ProgressBar({ value }) {
  * providers show the empty state (not an error).
  */
 export function Performance() {
-  const { context } = useDashboardContext();
+  const { context, isK5 } = useDashboardContext();
   const { schoolUUID, userId } = context ?? {};
-  const { isLoading, courses, courseProviderId } = useStudentAcademicPerformance({ schoolUUID, userId });
+  // Every student asks for the new My Performance page; the backend builds it for the Agilix Buzz providers.
+  const { isLoading, courses, courseProviderId, performance } = useStudentAcademicPerformance({ schoolUUID, userId, k5Performance: true });
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState(null);
 
   const detailed = DETAILED_PROVIDERS.includes(parseInt(courseProviderId, 10));
   const pageRows = useMemo(() => courses.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE), [courses, page]);
+
+  // K–5: the playful look. Middle / High school: the same page in the regular dashboard look (like My Profile).
+  // Other providers have no daily synced course data, so they keep the table below.
+  const loading = !context || isLoading;
+  if (isK5 || performance || loading) {
+    const page = <K5Performance isLoading={loading} performance={performance} courseProviderId={courseProviderId} plain={!isK5} />;
+    return isK5 ? page : <div className="theme-profile-plain k5-perf-plain">{page}</div>;
+  }
 
   const headers = [
     "Course Name",

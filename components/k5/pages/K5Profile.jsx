@@ -154,7 +154,7 @@ function PersonalSection({ m }) {
         <Field label="Middle Name" value={p.middleName} />
         <Field label="Last Name" value={p.lastName} />
         <Field label="Gender" value={p.gender} />
-        <Field label="Date of Birth" value={p.dob} />
+        <Field label="Date of Birth" value={p.dob} floating />
         <ValueWithMarks label="Phone" value={p.phone} marks={[[p.phoneWhatsApp, "WhatsApp"], [p.phoneVerified, "Verified"]]} />
         <ValueWithMarks label="Alternate Phone" value={p.altPhone} marks={[[p.altPhoneWhatsApp, "WhatsApp"]]} />
         <ValueWithMarks label="Email" value={p.email} marks={[[p.emailVerified, "Verified"]]} />

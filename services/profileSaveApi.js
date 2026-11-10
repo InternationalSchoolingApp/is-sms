@@ -126,6 +126,38 @@ export async function saveMyProfile({ studentStandardId, items } = {}) {
   return { ok: true, data: { message: answer.message || "Saved." } };
 }
 
+const YES_NO = new Set(["Y", "N"]);
+
+/**
+ * K5 My Performance "My Goals": target average score, finish-by date, reminder and class-comparison opt-in. Same
+ * profile save endpoint with keyId "k5Goals" (DashboardStudentUtil -> K5GoalsUtil, kept in NOTIFICATION_SETTINGS);
+ * the backend checks the values again. Not part of STUDENT_KEYS, so the profile editor cannot send it.
+ */
+export async function saveMyGoals({ score, finishBy, remind, compare } = {}) {
+  const s = Number(score);
+  if (!Number.isInteger(s) || s < 50 || s > 100) return { ok: false, code: "BAD_SCORE", message: "Please choose a target score." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(finishBy || ""))) return { ok: false, code: "BAD_DATE", message: "Please choose a finish date." };
+  if (!YES_NO.has(remind) || !YES_NO.has(compare)) return { ok: false, code: "BAD_FLAG", message: "Please choose your goals again." };
+  const facts = await loadMyProfileFacts();
+  if (!facts.ok) return facts;
+  const requestProfileData = clean(
+    { keyId: "k5Goals", fieldValue: JSON.stringify({ score: s, finishBy, remind, compare }) },
+    facts.data.studentStandardId,
+  );
+  const result = await backendRequest({
+    path: "dashboard/update-user-profile-content",
+    headers: (me) => ({ UNIQUEUUID: me.uniqueId }),
+    buildBody: (me) => ({ authentication: authentication(me), requestProfileData }),
+  });
+  if (!result.ok) return result;
+  const answer = result.data || {};
+  const status = String(answer.status ?? "");
+  if (status === "0" || status === "2" || status === "") {
+    return { ok: false, code: String(answer.statusCode || "SAVE_FAILED"), message: answer.message || "Your goals could not be saved." };
+  }
+  return { ok: true, data: { message: answer.message || "Your goals are saved." } };
+}
+
 const MASTER_REQUESTS = {
   countries: () => ({ requestKey: "COUNTRIES-LIST" }),
   states: (id) => ({ requestKey: "STATES-LIST", requestValue: String(id) }),

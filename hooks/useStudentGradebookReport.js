@@ -16,17 +16,17 @@ function toDate(value) {
  * report's own date search. dummyUrl = a dummy-mode row's report link: the same JSON
  * comes from the dummy generator instead (legacy getDummyStudentProgressReportHtml).
  */
-export function useStudentGradebookReport({ schoolUUID, uniqueId, params, dummyUrl }) {
+export function useStudentGradebookReport({ schoolUUID, uniqueId, params, rawPayload, dummyUrl }) {
   const dummy = useDummyStudent();
   const useDummy = Boolean(dummyUrl && dummy.enabled);
   const query = useQuery({
-    queryKey: ["student-gradebook-report", schoolUUID, uniqueId, params, useDummy && dummyUrl, dummy.key],
+    queryKey: ["student-gradebook-report", schoolUUID, uniqueId, params, params?.data ? "" : rawPayload, useDummy && dummyUrl, dummy.key],
     queryFn: () => {
-      if (!useDummy) return getStudentGradebookReport({ schoolUUID, uniqueId, params });
+      if (!useDummy) return getStudentGradebookReport({ schoolUUID, uniqueId, params, rawPayload });
       const report = dummy.student.progressReport(dummyUrl, { start: toDate(params?.startdate), end: toDate(params?.enddate) });
       return { ...report, subReportType: params?.subReportType ?? report.subReportType };
     },
-    enabled: Boolean(schoolUUID && uniqueId && params?.data && dummy.settled),
+    enabled: Boolean(schoolUUID && uniqueId && (params?.data || rawPayload) && dummy.settled),
     staleTime: 5 * 60_000,
     refetchOnWindowFocus: false,
   });

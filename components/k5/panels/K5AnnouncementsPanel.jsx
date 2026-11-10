@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Megaphone } from "lucide-react";
-import { AnnouncementDetailModal } from "@/components/dashboard/AnnouncementDetailModal";
+import { K5AnnouncementDetailModal } from "@/components/k5/panels/K5AnnouncementDetailModal";
 import { formatRelativeAgo } from "@/components/dashboard/AnnouncementsPanel";
 import { EmptyNote, K5Drawer } from "@/components/k5/panels/K5Drawer";
 
@@ -57,7 +57,7 @@ export function K5AnnouncementsPanel({ announcements, newCount, schoolUUID, user
         )}
         </K5Drawer>
       )}
-      {selected && <AnnouncementDetailModal announcement={selected} schoolUUID={schoolUUID} userId={userId} onClose={() => setSelected(null)} />}
+      {selected && <K5AnnouncementDetailModal announcement={selected} schoolUUID={schoolUUID} userId={userId} onClose={() => setSelected(null)} />}
     </>
   );
 }

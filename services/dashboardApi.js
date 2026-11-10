@@ -54,7 +54,7 @@ export async function getDashboardMenu({ schoolUUID, schoolId, roleId, userId })
     });
     console.log("getDashboardMenu status:", response.status);
     const menuData = await parseJsonResponse(response);
-    // console.log("getDashboardMenu data:", JSON.stringify(menuData, null, 2));
+    console.log("getDashboardMenu data:", JSON.stringify(menuData, null, 2));
     return menuData;
   } catch {
     return null;
@@ -336,11 +336,14 @@ export async function getStudentExaminationDetails({ schoolUUID, userId }) {
  * session-cookie-gated). Only populated for Agilix Buzz LMS course providers (36/37/38);
  * self-paced/other providers return an empty studentAcademicPerformances list.
  * Response.details: StudentAcademicPerformanceDetailsDTO { studentAcademicPerformances }.
+ * includeClassComparison (K5 My Performance only) also brings details.k5Goals and a classComparison block per course.
  */
-export async function getStudentAcademicPerformance({ schoolUUID, userId }) {
+export async function getStudentAcademicPerformance({ schoolUUID, userId, k5Performance = false }) {
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
-    return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-academic-performance", { userId, studentUserId: userId });
+    // k5Performance: the new My Performance page; the backend answers from the daily cron's tables, not the LMS.
+    const body = { userId, studentUserId: userId, ...(k5Performance ? { k5Performance: "Y", includeClassComparison: "Y" } : {}) };
+    return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-academic-performance", body);
   } catch {
     return null;
   }
@@ -420,20 +423,28 @@ export async function getProgressReportGradeHistory({ schoolUUID, uniqueId, item
  * student fields, gradebookEnroll[], reportStartDate/EndDate, downloadUrl, reportMessage).
  * params is the row payload ({ data, startdate, enddate, subReportType }) with optional
  * new dates from the report's own date search. requestFrom/forDownload are pinned so a
- * view never creates a StudentWeeklyReportUpload row.
+ * view never creates a StudentWeeklyReportUpload row. rawPayload: the list's own encrypted
+ * payload, sent back unchanged for the first view (the backend decrypts it).
  */
-export async function getStudentGradebookReport({ schoolUUID, uniqueId, params }) {
-  if (!hasBackendOrigin() || !schoolUUID || !/^[0-9a-f-]{36}$/i.test(uniqueId || "") || !params?.data) return null;
+export async function getStudentGradebookReport({ schoolUUID, uniqueId, params, rawPayload }) {
+  if (!hasBackendOrigin() || !schoolUUID || !/^[0-9a-f-]{36}$/i.test(uniqueId || "") || !(params?.data || rawPayload)) return null;
   try {
     const baseUrl = await resolveServerBackendOrigin();
-    const payload = encodePayload({
-      data: params.data,
-      startdate: params.startdate || "",
-      enddate: params.enddate || "",
-      subReportType: params.subReportType || "",
-      requestFrom: "true",
-      forDownload: "false",
-    });
+    // Plain base64 of the JSON, like legacy: this endpoint reads the payload with AesUtil.decodeOrDecrypt, which only
+    // takes base64 whose text starts with "{" and tries AES on anything else, so encodePayload's encodeURI ("%7B…") fails.
+    const payload = params?.data
+      ? Buffer.from(
+          JSON.stringify({
+            data: params.data,
+            startdate: params.startdate || "",
+            enddate: params.enddate || "",
+            subReportType: params.subReportType || "",
+            requestFrom: "true",
+            forDownload: "false",
+          }),
+          "utf8",
+        ).toString("base64")
+      : String(rawPayload);
     const response = await fetch(
       `${baseUrl}/${schoolUUID}/dashboard/get-user-gradebook/${uniqueId}?payload=${encodeURIComponent(payload)}&format=json`,
       { headers: { ...(await authHeaders()) }, cache: "no-store" },
@@ -672,6 +683,32 @@ export async function availAcademicYearExtension({ schoolUUID, userId, studentSt
       subjectId,
       userId,
     });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Change the student's password — POST /{schoolUUID}/dashboard/changed-password-content
+ * (ClientDashboardCommonController.changedPasswordContent → CommonUtil.resetPasswordDashbourd).
+ * Each password field is individually encoded (btoa(encodeURI(val))) before the outer
+ * payload wrapper, matching the legacy dashboardCommon.js changePassword() + the global
+ * $.ajaxSetup beforeSend encoding chain. The controller requires a UNIQUEUUID header
+ * (same as the Buzz progress-report calls). Response: {status, statusCode, message}.
+ * Status "1" = success, "0"/"2" = error with message, "3" = session expired.
+ */
+export async function changePassword({ schoolUUID, uniqueId, oldpassword, newpassword, confirmpassword }) {
+  if (!hasBackendOrigin() || !schoolUUID || !oldpassword || !newpassword || !confirmpassword) return null;
+  try {
+    const enc = (v) => btoa(encodeURI(v));
+    const body = { oldpassword: enc(oldpassword), newpassword: enc(newpassword), confirmpassword: enc(confirmpassword) };
+    const baseUrl = await resolveServerBackendOrigin();
+    const response = await fetch(`${baseUrl}/${schoolUUID}/dashboard/changed-password-content`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", UNIQUEUUID: uniqueId || "", ...(await authHeaders()) },
+      body: JSON.stringify({ payload: encodePayload(body) }),
+    });
+    return parseJsonResponse(response);
   } catch {
     return null;
   }

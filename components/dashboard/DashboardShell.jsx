@@ -36,7 +36,7 @@ function useWideLayout() {
  * toggles the collapse on md+.
  */
 export function DashboardShell({ children }) {
-  const { ready, gradeResolved, context, menu, logoUrl, session } = useDashboardContext();
+  const { ready, gradeResolved, context, menu, logoUrl, session, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // Defaults to the collapsed icon-rail, matching the legacy dashboard.
   const [collapsed, setCollapsed] = useState(true);
@@ -87,6 +87,8 @@ export function DashboardShell({ children }) {
         session={session}
         userName={context.userName}
         onHamburger={onHamburger}
+        lmsProviderURL={lmsProviderURL}
+        isPayLmsPaymentPending={isPayLmsPaymentPending}
       />
 
       <Sidebar

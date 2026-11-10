@@ -1,6 +1,6 @@
 /*
- * My Profile for every grade band (Middle / High school too): the same profile page and editors as
- * Grade K–5 (components/k5/pages/K5Profile*.jsx) are drawn inside .theme-profile-plain, which gives
+ * My Profile and My Performance for every grade band (Middle / High school too): the same pages as
+ * Grade K–5 (components/k5/pages/K5Profile*.jsx, K5Performance*.jsx) are drawn inside .theme-profile-plain, which gives
  * the K–5 tokens the regular dashboard colours (school accent --primary, slate lines, Open Sans) and
  * tones down the playful sizes (chunky shadows, 3px borders, big rounded corners, heavy weights).
  * Deliberately NOT .theme-k5: that class also re-points the shadcn tokens (app/k5-modules.css).
@@ -46,6 +46,19 @@
   --k5-rI: #c92a2f;
   --k5-bT: #eef4ff;
   --k5-bI: #2563eb;
+  --k5-vX: #5b34b0;
+  --k5-tX: #0b5e58;
+  /* Course colours (My Performance course rows, cards and charts). */
+  --k5-sLaI: #1d6fe8;
+  --k5-sLaT: #e4eefe;
+  --k5-sMaI: #b98200;
+  --k5-sMaT: #fff2cc;
+  --k5-sScI: #13802b;
+  --k5-sScT: #e2f3e6;
+  --k5-sArI: #0e93cc;
+  --k5-sArT: #dff3fc;
+  --k5-sCsI: #d21f4c;
+  --k5-sCsT: #fce4ea;
   --k5-fd: var(--font-sans);
   --k5-fb: var(--font-sans);
   color: var(--k5-ink);
@@ -123,4 +136,24 @@
 }
 .theme-profile-plain .min-h-11 {
   min-height: 36px;
+}
+
+/* My Performance in the regular look (Middle / High school): dashboard-size headings, no sparkles. */
+.k5-perf-plain .text-4xl {
+  font-size: 24px;
+}
+.k5-perf-plain [class*="text-[32px]"] {
+  font-size: 22px;
+}
+.k5-perf-plain [class*="text-[30px]"] {
+  font-size: 20px;
+}
+.k5-perf-plain .text-2xl {
+  font-size: 18px;
+}
+.k5-perf-plain [class*="text-[19px]"] {
+  font-size: 15px;
+}
+.k5-perf-plain .k5-pkspark {
+  display: none;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 
@@ -13,8 +13,9 @@ import { Calendar } from "@/components/ui/calendar";
  *
  * `height` is the trigger's Tailwind height class (e.g. "h-10"); defaults to "h-12".
  */
-export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDate, error, disabled = false, height = "h-12" }) {
+export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDate, error, disabled = false, height = "h-12", autoOpen = false }) {
   const [open, setOpen] = useState(false);
+  useEffect(() => { if (autoOpen) setOpen(true); }, [autoOpen]);
   const floated = open || Boolean(value);
 
   return (

@@ -7,6 +7,7 @@ import { Menu, LogOut, ChevronDown, User, KeyRound, UserPlus } from "lucide-reac
 import toast from "react-hot-toast";
 import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
 import { logoutEverywhere } from "@/utils/logout";
+import { ChangePasswordModal } from "@/components/dashboard/ChangePasswordModal";
 import { CartHeaderButton } from "@/components/student/cart/CartHeaderButton";
 
 /**
@@ -19,7 +20,7 @@ import { CartHeaderButton } from "@/components/student/cart/CartHeaderButton";
  * reference and wired as "coming soon" toasts until their target pages/SSO are
  * built (profile/change-password = Phase C; LMS = LMS SSO). Log out is live.
  */
-export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onHamburger }) {
+export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onHamburger, lmsProviderURL, isPayLmsPaymentPending }) {
   const router = useRouter();
   const [confirmLogout, setConfirmLogout] = useState(false);
   // My Profile is the signed-in student's own page (app/[school]/(dashboard)/student/my-profile).
@@ -30,6 +31,7 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
   };
   const [loggingOut, setLoggingOut] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [changePwOpen, setChangePwOpen] = useState(false);
   const [lms, setLms] = useState(false);
 
   const displayName = userName || "Student";
@@ -65,8 +67,13 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
           aria-checked={lms}
           aria-label="Switch to LMS"
           onClick={() => {
-            setLms((v) => !v);
-            toast("LMS — coming soon", { icon: "🚧" });
+            if (isPayLmsPaymentPending) {
+              toast(isPayLmsPaymentPending, { icon: "⚠️" });
+            } else if (lmsProviderURL) {
+              window.open(lmsProviderURL, "_blank");
+            } else {
+              toast("LMS — coming soon", { icon: "🚧" });
+            }
           }}
           className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${lms ? "bg-primary" : "bg-slate-300"}`}
         >
@@ -119,7 +126,7 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
                   className="flex w-full items-center gap-3 px-4 py-3 text-sm font-semibold text-black hover:bg-slate-100">
                   <User className="h-4 w-4" /> My Profile
                 </button>
-                <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); toast("Change Password — coming soon", { icon: "🚧" }); }}
+                <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); setChangePwOpen(true); }}
                   className="flex w-full items-center gap-3 px-4 py-3 text-sm font-semibold text-black hover:bg-slate-100">
                   <KeyRound className="h-4 w-4" /> Change Password
                 </button>
@@ -133,6 +140,7 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
         </div>
       </div>
 
+      {changePwOpen && <ChangePasswordModal onClose={() => setChangePwOpen(false)} />}
       <LogoutConfirmDialog
         open={confirmLogout}
         busy={loggingOut}
