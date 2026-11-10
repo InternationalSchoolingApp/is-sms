@@ -42,7 +42,6 @@ function contactsOf(sp) {
     guardianEmail: { value: t(g.guardianEmail) },
   };
 }
-
 export async function loadMyProfileFacts() {
   const dashboard = await backendRequest({ path: "student/dashboard/get-student-dashboard", checkSession: null, buildBody: (me) => ({ userId: me.userId }) });
   console.log("loadMyProfileFacts dashboard", dashboard);
