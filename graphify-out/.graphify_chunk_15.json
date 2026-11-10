@@ -1,0 +1,77 @@
+{
+  "nodes": [
+    {
+      "id": "public_images_signup_thankyou_bg_background",
+      "label": "Signup Thank You Background",
+      "file_type": "image",
+      "source_file": "is-sms\\public\\images\\signup-thankyou-bg.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_images_signup_thankyou_bg_signup_flow",
+      "label": "Sign-up Flow",
+      "file_type": "concept",
+      "source_file": "is-sms\\public\\images\\signup-thankyou-bg.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_images_signup_thankyou_bg_thank_you_screen",
+      "label": "Thank You / Confirmation Screen",
+      "file_type": "concept",
+      "source_file": "is-sms\\public\\images\\signup-thankyou-bg.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "public_images_signup_thankyou_bg_background",
+      "target": "public_images_signup_thankyou_bg_thank_you_screen",
+      "relation": "used_as_background_for",
+      "type": "INFERRED",
+      "confidence_score": 0.85,
+      "explanation": "Soft pastel wavy illustration with ample blank/light space in the center suggests it is a decorative background layer intended to sit behind a thank-you/confirmation message after a user completes sign-up."
+    },
+    {
+      "source": "public_images_signup_thankyou_bg_thank_you_screen",
+      "target": "public_images_signup_thankyou_bg_signup_flow",
+      "relation": "part_of",
+      "type": "INFERRED",
+      "confidence_score": 0.85,
+      "explanation": "A thank-you/confirmation screen is typically the final step shown after a user completes the sign-up process."
+    },
+    {
+      "source": "public_images_signup_thankyou_bg_background",
+      "target": "public_images_signup_new_illustration",
+      "relation": "semantically_similar_to",
+      "type": "INFERRED",
+      "confidence_score": 0.55,
+      "explanation": "Both images are visual assets associated with the sign-up flow/page in the same application, likely sharing a consistent illustrative design language."
+    },
+    {
+      "source": "public_images_signup_thankyou_bg_background",
+      "target": "public_images_valid_email_screenshot",
+      "relation": "conceptually_related_to",
+      "type": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "explanation": "Possible relation as both may belong to the account verification/sign-up confirmation journey, but no direct evidence links a valid-email screenshot to this specific thank-you background asset."
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "coverage": {
+    "is-sms\\public\\images\\signup-thankyou-bg.png": 1
+  }
+}

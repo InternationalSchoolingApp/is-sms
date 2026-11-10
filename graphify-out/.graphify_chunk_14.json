@@ -1,0 +1,84 @@
+{
+  "nodes": [
+    {
+      "id": "public_images_signup_new_illustration",
+      "label": "Signup New Illustration (Student Video Call with Teacher)",
+      "file_type": "image",
+      "source_file": "is-sms\\public\\images\\signup-new.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_images_signup_new_student",
+      "label": "Student Girl (illustrated subject)",
+      "file_type": "image",
+      "source_file": "is-sms\\public\\images\\signup-new.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_images_signup_new_teacher",
+      "label": "Teacher/Tutor Woman (video call subject)",
+      "file_type": "image",
+      "source_file": "is-sms\\public\\images\\signup-new.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_images_signup_new_signup_page",
+      "label": "Signup Page (UI context)",
+      "file_type": "concept",
+      "source_file": "is-sms\\public\\images\\signup-new.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "public_images_signup_new_illustration",
+      "target": "public_images_signup_new_student",
+      "relation": "DEPICTS",
+      "type": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "public_images_signup_new_illustration",
+      "target": "public_images_signup_new_teacher",
+      "relation": "DEPICTS",
+      "type": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "public_images_signup_new_student",
+      "target": "public_images_signup_new_teacher",
+      "relation": "VIDEO_CALLS_WITH",
+      "type": "INFERRED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "public_images_signup_new_illustration",
+      "target": "public_images_signup_new_signup_page",
+      "relation": "USED_ON",
+      "type": "INFERRED",
+      "confidence_score": 0.85
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "coverage": {
+    "is-sms\\public\\images\\signup-new.png": 1
+  }
+}

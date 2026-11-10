@@ -117,13 +117,13 @@ async function handleSsoHandoff(request) {
     }
   }
 
-  // console.log("request", request)
-  // console.log("url======>", url)
-  // console.log("ssoToken======>", ssoToken)
-  // console.log("schoolUUID======>", schoolUUID)
-  // console.log("schoolName======>", schoolName)
-  // console.log("step======>", step)
-  // console.log("targetStep======>", targetStep)
+  console.log("request", request)
+  console.log("url======>", url)
+  console.log("ssoToken======>", ssoToken)
+  console.log("schoolUUID======>", schoolUUID)
+  console.log("schoolName======>", schoolName)
+  console.log("step======>", step)
+  console.log("targetStep======>", targetStep)
 
   if (!ssoToken || !schoolUUID) {
     return redirectTo("/", request);
@@ -146,21 +146,32 @@ async function handleSsoHandoff(request) {
     return redirectTo("/", request);
   }
 
-  // Add-another-child wizard wins when ae=Y and the path could be built; otherwise the student's own enrollment step.
+  // A general, validated same-origin `next` (e.g. the Java dashboard redirect sends
+  // `next=/{school}/student` once STUDENT_DASHBOARD_VIA_NEXTJS is on) — lets any
+  // post-login destination ride the SAME one-time-token handoff that signs the user in,
+  // so proxy.js doesn't bounce the student back to login. Only for the non-add-enrollment
+  // case (ae=Y keeps its dedicated builder + fresh=1 above).
+  const nextPath = isAddEnrollment ? null : safeNextPath(url.searchParams.get("next"), schoolUUID);
+
+  // Destination priority: add-another-child wizard (ae=Y) -> validated `next` (e.g. the student dashboard)
+  // -> re-enrollment pages (target=re-enrollment) -> the student's own enrollment step path.
   // fresh=1 marks a real "start" of the add-enrollment wizard (dashboard button / enrollment link). Only such an
   // entry may reserve a new child; a reload of the wizard never does (see useAddEnrollmentContext).
+  let destination;
   if (addEnrollmentPath != null) {
-    target = `${addEnrollmentPath}${addEnrollmentPath.includes("?") ? "&" : "?"}fresh=1`;
+    destination = `${addEnrollmentPath}${addEnrollmentPath.includes("?") ? "&" : "?"}fresh=1`;
+  } else if (nextPath != null) {
+    destination = nextPath;
   } else if (target === "re-enrollment") {
-    target = `${reEnrollmentBasePath(schoolUUID, mode)}${resume === "1" ? "?resume=1" : ""}`;
+    destination = `${reEnrollmentBasePath(schoolUUID, mode)}${resume === "1" ? "?resume=1" : ""}`;
   } else {
-    target = stepPath(schoolUUID, program, targetStep);
+    destination = stepPath(schoolUUID, program, targetStep);
   }
-  const response = redirectTo(target, request);
+  const response = redirectTo(destination, request);
   const account = exchanged.uniqueId;
   // The step page right after this redirect is for the user who just signed in, even when the browser holds
   // other signed-in users: no "Choose account" page (proxy.js reads this one-time pick).
-  writePick(response.cookies, account, target);
+  writePick(response.cookies, account, destination);
   const backend = backendOverride || defaultBackend();
   // At most MAX_ACCOUNTS users per browser: signing in one more ends the oldest login here.
   const others = heldAccounts(request.cookies).filter((a) => a.account !== account);

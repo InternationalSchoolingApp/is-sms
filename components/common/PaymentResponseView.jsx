@@ -652,6 +652,7 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
             loginHref={loginPageUrl(schoolUUID)}
             dashboardHref={data.returnUrl}
             schoolUUID={schoolUUID}
+            preserveCurrentSession={Boolean(addEnrollment)}
           />
         ) : (
           !addEnrollment && <AccountInfoCard data={data} />
@@ -756,13 +757,13 @@ function AddEnrollmentAccountInfo({ schoolUUID, parentId, childUserId, sessionUn
   // Only for the child's first payment, decided by the backend: payment title REGISTRATION_SUBJECT_FEE or
   // CUSTOMIZED_REGISTRATION_SUBJECT_FEE on a REGISTRATION_FRESH / REGISTRATION_FLEX_COURSE enrollment.
   if (!isFirstPayment(info)) return null;
-  return <LoginDetails data={info} sourceApi="api/v1/enroll/another/child/thank-you" loginHref={loginPageUrl(schoolUUID)} dashboardHref={info.returnUrl} schoolUUID={schoolUUID} />;
+  return <LoginDetails data={info} sourceApi="api/v1/enroll/another/child/thank-you" loginHref={loginPageUrl(schoolUUID)} dashboardHref={info.returnUrl} schoolUUID={schoolUUID} preserveCurrentSession />;
 }
 
 // "Log in to your school dashboard" panel: login email + temporary password (show/hide, copy) and the dashboard
 // button. When the response has no Outlook credentials (password-creation step only), the original
 // AccountSetupSection is shown instead.
-function LoginDetails({ data, sourceApi, fallbackName, loginHref, dashboardHref, schoolUUID }) {
+function LoginDetails({ data, sourceApi, fallbackName, loginHref, dashboardHref, schoolUUID, preserveCurrentSession = false }) {
   const { data: session } = useSession();
   const [show, setShow] = useState(true);
   const [leaving, setLeaving] = useState(false);
@@ -774,17 +775,23 @@ function LoginDetails({ data, sourceApi, fallbackName, loginHref, dashboardHref,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ school: schoolUUID, email, password }),
     }).catch(() => {});
-  // Sign the current user out (Next.js session + Java session) and land on the login page so they can log in
-  // with the details above.
+  // Land on the login page so the CHILD can log in with the details above. The signed-in session here (if any) is
+  // the caller's — the parent/sibling who added the child, often still open on the dashboard in another tab — so it
+  // must NOT be logged out: logoutEverywhere ends that user's login at the Java side too (shared browser cookies),
+  // which made the dashboard's next "Add more sibling" answer 401 and sign the caller out.
   const goToDashboard = async (event) => {
     event.preventDefault();
     if (leaving) return;
     setLeaving(true);
     try {
       await storeLoginPrefill();
-      // The cookie above only reaches the Java login page on a shared parent domain; the payload covers the rest.
-      if (session?.studentUserId) await logoutEverywhere(session, { email, password });
-      else window.location.assign(withLoginPayload(loginHref, email, password));
+      // For Add Another Student, keep the caller's dashboard session alive in its other tab. The normal
+      // fresh-enrollment flow retains its existing logout so the newly created account can sign in cleanly.
+      if (preserveCurrentSession || !session?.uniqueId) {
+        window.location.assign(withLoginPayload(loginHref, email, password));
+      } else {
+        await logoutEverywhere(session, { email, password });
+      }
     } catch {
       window.location.assign(withLoginPayload(loginHref, email, password));
     }
@@ -1324,7 +1331,7 @@ function PageShell({ children, schoolSettingsLinks, schoolName }) {
               <img> avoids next/image remotePatterns config for arbitrary hosts. */}
           <img
             src={logoUrl || "/images/IS_Final_Logo.webp"}
-            alt={schoolName || "International Schooling"}
+            alt={schoolName || ""}
             className="h-11 w-auto"
           />
         </a>
@@ -1337,7 +1344,7 @@ function PageShell({ children, schoolSettingsLinks, schoolName }) {
       </div>
 
       <footer className="py-5 text-center text-xs text-slate-500">
-        Copyright © {new Date().getFullYear()} - {schoolName || "International Schooling"} - All Rights Reserved.
+        {copyrightLine(schoolName)}
       </footer>
     </main>
   );

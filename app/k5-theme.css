@@ -1,0 +1,1136 @@
+/*
+ * Grade K–5 dashboard theme (docs/migration/grade_k5_dashboard_plan.html, section 11).
+ * Tokens replicate the Playful.dc.html mockup and live ONLY under .theme-k5 (set on the
+ * K5Shell root), so the global school vars (--pc, shadcn :root) stay untouched for every
+ * other student. Tailwind v4 only: the @theme block exposes them as utilities
+ * (bg-k5-ac, text-k5-ink, border-k5-line, font-k5-display, ...).
+ * Theme variants (berry/jungle/grape/sunset), night and colour-blind sets come with the
+ * Appearance work in Phase 3.
+ */
+
+@theme inline {
+  --color-k5-brand: var(--k5-brand);
+  --color-k5-ac: var(--k5-ac);
+  --color-k5-acd: var(--k5-acd);
+  --color-k5-act: var(--k5-act);
+  --color-k5-acl: var(--k5-acl);
+  --color-k5-acx: var(--k5-acx);
+  --color-k5-ink: var(--k5-ink);
+  --color-k5-mut: var(--k5-mut);
+  --color-k5-page: var(--k5-page);
+  --color-k5-card: var(--k5-card);
+  --color-k5-soft: var(--k5-soft);
+  --color-k5-line: var(--k5-line);
+  --color-k5-grn: var(--k5-grn);
+  --color-k5-grnd: var(--k5-grnD);
+  --color-k5-red: var(--k5-red);
+  --color-k5-hi: var(--k5-hi);
+  /* Tint pairs: T = tile background, I = icon, X = text on the tile, B = border. */
+  --color-k5-yt: var(--k5-yT);
+  --color-k5-yb: var(--k5-yB);
+  --color-k5-yx: var(--k5-yX);
+  --color-k5-yi: var(--k5-yI);
+  --color-k5-gt: var(--k5-gT);
+  --color-k5-gx: var(--k5-gX);
+  --color-k5-gi: var(--k5-gI);
+  --color-k5-tt: var(--k5-tT);
+  --color-k5-ti: var(--k5-tI);
+  --color-k5-ot: var(--k5-oT);
+  --color-k5-oi: var(--k5-oI);
+  --color-k5-pt: var(--k5-pT);
+  --color-k5-pi: var(--k5-pI);
+  --color-k5-vt: var(--k5-vT);
+  --color-k5-vi: var(--k5-vI);
+  --color-k5-mt: var(--k5-mT);
+  --color-k5-mi: var(--k5-mI);
+  --color-k5-rt: var(--k5-rT);
+  --color-k5-ri: var(--k5-rI);
+  --color-k5-bt: var(--k5-bT);
+  --color-k5-bi: var(--k5-bI);
+  --font-k5-display: var(--k5-fd);
+  --font-k5-body: var(--k5-fb);
+}
+
+.theme-k5 {
+  --k5-brand: #1e66e0;
+  --k5-ac: #1e66e0;
+  --k5-acd: #1747a6;
+  --k5-act: #e6eefd;
+  --k5-acl: #cfe0fb;
+  --k5-acx: #1747a6;
+  --k5-ink: #1c2640;
+  --k5-mut: #4a5675;
+  --k5-page: #eaf4ff;
+  --k5-card: #ffffff;
+  --k5-soft: #f3f6fd;
+  --k5-line: #d3e3fb;
+  --k5-grn: #1f7a3a;
+  --k5-grnD: #145a29;
+  --k5-red: #d7263d;
+  --k5-hi: #ffc531;
+  --k5-yT: #fff1cc;
+  --k5-yB: #ffe08a;
+  --k5-yX: #7a4a05;
+  --k5-yI: #a16207;
+  --k5-gT: #e3f5ea;
+  --k5-gX: #1d6b3c;
+  --k5-gI: #237a45;
+  --k5-tT: #d5f5f0;
+  --k5-tI: #0f766e;
+  --k5-oT: #ffedd5;
+  --k5-oI: #c2410c;
+  --k5-pT: #fce7f0;
+  --k5-pI: #c92f6e;
+  --k5-vT: #ede7fb;
+  --k5-vI: #6a3fc4;
+  --k5-mT: #fff8dd;
+  --k5-mI: #8a6a00;
+  --k5-rT: #fdf0f0;
+  --k5-rI: #c92a2f;
+  --k5-bT: #eef4ff;
+  --k5-bI: #2563eb;
+  --k5-vX: #5b34b0;
+  --k5-tX: #0b5e58;
+  /* Subject colours (mockup --sLaI / --sLaT …): I = stroke / text, T = tint. */
+  --k5-sLaI: #1d6fe8;
+  --k5-sLaT: #e4eefe;
+  --k5-sMaI: #b98200;
+  --k5-sMaT: #fff2cc;
+  --k5-sScI: #13802b;
+  --k5-sScT: #e2f3e6;
+  --k5-sArI: #0e93cc;
+  --k5-sArT: #dff3fc;
+  --k5-sCsI: #d21f4c;
+  --k5-sCsT: #fce4ea;
+  /* Colour clues (assignment / done / live / upcoming / activity / holiday). */
+  --k5-c-asg: #0b7f5c;
+  --k5-c-done: #8a93a6;
+  --k5-c-live: #2f7bf5;
+  --k5-c-live-t: #e8f1ff;
+  --k5-c-live-x: #1d5fcc;
+  --k5-c-up: #f2b807;
+  --k5-c-up-t: #fff8e1;
+  --k5-c-act: #8b5cf6;
+  --k5-c-act-x: #6d28d9;
+  --k5-c-act-d: #4c1d95;
+  --k5-c-hol: #d7263d;
+
+  /* shadcn components inside the K–5 shell pick up the K–5 accent. */
+  --primary: var(--k5-ac);
+  --ring: var(--k5-ac);
+
+  color: var(--k5-ink);
+  /* Font roles (display / body); Appearance "Letters" swaps them in app/appearance.css. */
+  --k5-fd: var(--font-fredoka), "Baloo Bhaijaan 2", sans-serif;
+  --k5-fb: var(--font-nunito), "Baloo Bhaijaan 2", sans-serif;
+  font-family: var(--k5-fb);
+}
+
+/* Chunky solid-offset shadows (no blur), mockup: 0 6px 0 var(--line). */
+@utility shadow-k5-chunky {
+  box-shadow: 0 6px 0 var(--k5-line);
+}
+@utility shadow-k5-btn {
+  box-shadow: 0 4px 0 var(--k5-line);
+}
+
+/*
+ * K5NavRail (mockup .side): a 96px icon rail that widens to 300px with labels on hover
+ * (pointer devices above 760px) or when opened ([data-open=true]); a drawer below 760px.
+ * Plain (unlayered) rules so they win over the item's Tailwind utilities.
+ */
+.k5-side {
+  width: 96px;
+  transition: width 0.22s ease, box-shadow 0.22s ease;
+}
+.k5-side .k5-nl,
+.k5-side .k5-sub {
+  display: none;
+}
+.k5-side[data-open="true"] {
+  width: 300px;
+  align-items: stretch;
+  z-index: 46;
+  box-shadow: 0 6px 0 var(--k5-line), 0 18px 48px rgba(10, 16, 34, 0.28);
+}
+.k5-side[data-open="true"] .k5-nclose {
+  display: flex;
+}
+.k5-side[data-open="true"] .k5-ni {
+  width: auto;
+  flex-direction: row;
+  gap: 12px;
+  padding: 4px 6px;
+  padding-inline-end: 40px;
+  font-size: 16px;
+  text-align: start;
+  white-space: nowrap;
+}
+.k5-side[data-open="true"] .k5-nl {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.k5-side[data-open="true"] .k5-sub {
+  display: flex;
+}
+/* The little club pictures are the narrow rail's version of the club list. */
+.k5-side[data-open="true"] .k5-subicons {
+  display: none;
+}
+.k5-side[data-open="true"] .k5-chev {
+  top: 50%;
+  margin-top: -9px;
+  inset-inline-end: 10px;
+  border-color: transparent;
+  background: transparent;
+}
+@media (hover: hover) and (min-width: 761px) {
+  .k5-side:hover {
+    width: 300px;
+    align-items: stretch;
+    z-index: 46;
+    box-shadow: 0 6px 0 var(--k5-line), 0 18px 48px rgba(10, 16, 34, 0.28);
+  }
+  .k5-side:hover .k5-ni {
+    width: auto;
+    flex-direction: row;
+    gap: 12px;
+    padding: 4px 6px;
+    padding-inline-end: 40px;
+    font-size: 16px;
+    text-align: start;
+    white-space: nowrap;
+  }
+  .k5-side:hover .k5-nl {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .k5-side:hover .k5-sub {
+    display: flex;
+  }
+  .k5-side:hover .k5-subicons {
+    display: none;
+  }
+  .k5-side:hover .k5-chev {
+    top: 50%;
+    margin-top: -9px;
+    inset-inline-end: 10px;
+    border-color: transparent;
+    background: transparent;
+  }
+}
+@media (max-width: 760px) {
+  .k5-side {
+    display: none;
+  }
+  .k5-side[data-open="true"] {
+    display: flex;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(300px, 86vw);
+    max-height: 100vh;
+    border-radius: 0 26px 26px 0;
+    z-index: 60;
+  }
+  /* The drawer scrolls by touch, so items there are not drag handles. */
+  .k5-side .k5-ni {
+    touch-action: pan-y;
+  }
+}
+
+/* The corner buddy button bobs all the time (mockup .pinbtn k5bob). */
+.k5-pin-bob {
+  animation: k5PinIdle 2.4s ease-in-out infinite;
+}
+
+/* Pico buddy animations + tour spotlight (mockup pinIdle / pinWave / blink / talk / pulseRing). */
+@keyframes k5PinIdle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+@keyframes k5PinWave {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-24deg);
+  }
+}
+@keyframes k5Blink {
+  0%,
+  93%,
+  100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.1);
+  }
+}
+@keyframes k5Talk {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.35);
+  }
+}
+@keyframes k5PulseRing {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 197, 49, 0.9);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(255, 197, 49, 0);
+  }
+}
+@keyframes k5PinBob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+@keyframes k5FootL {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+@keyframes k5FootR {
+  0%,
+  100% {
+    transform: translateY(-9px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+}
+.k5-pico-idle {
+  animation: k5PinIdle 2.6s ease-in-out infinite;
+}
+.k5-pico-walk {
+  animation: k5PinBob 0.42s ease-in-out infinite;
+}
+.k5-pico-walk .k5-pico-foot-l {
+  animation: k5FootL 0.42s ease-in-out infinite;
+}
+.k5-pico-walk .k5-pico-foot-r {
+  animation: k5FootR 0.42s ease-in-out infinite;
+}
+.k5-pico-arm {
+  transform-box: fill-box;
+  transform-origin: 100% 100%;
+  animation: k5PinWave 1.3s ease-in-out infinite;
+}
+.k5-pico-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: k5Blink 4.5s infinite;
+}
+.k5-pico-mouth {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.k5-pico-talk {
+  animation: k5Talk 0.22s ease-in-out infinite;
+}
+/* Live "Join class now" button ring (mockup liveRing). */
+@keyframes k5LiveRing {
+  0%,
+  100% {
+    box-shadow: 0 6px 0 var(--k5-grnD), 0 0 0 0 rgba(47, 123, 245, 0.5);
+  }
+  50% {
+    box-shadow: 0 6px 0 var(--k5-grnD), 0 0 0 10px rgba(47, 123, 245, 0);
+  }
+}
+.k5-live-ring {
+  animation: k5LiveRing 1.6s ease-in-out infinite;
+}
+/* Tour spotlight (mockup .spothole): fades in, then slides between tips. */
+@keyframes k5SpotIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.k5-spothole {
+  animation: k5SpotIn 0.3s ease-out;
+  transition: left 0.3s ease, top 0.3s ease, width 0.3s ease, height 0.3s ease;
+}
+.k5-spot {
+  outline: 4px solid #61ff31 !important;
+  outline-offset: 4px;
+  animation: k5PulseRing 1.3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-k5 *,
+  .theme-k5 *::before,
+  .theme-k5 *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Free-day games: balloons float up the play area (Playful.dc.html balloonRise). */
+@keyframes k5BalloonRise {
+  0% {
+    transform: translateY(140px);
+  }
+  100% {
+    transform: translateY(-380px);
+  }
+}
+.k5-balloon {
+  animation: k5BalloonRise 7s linear infinite;
+}
+
+/* Toolbar weather tile: rain drops and snow flakes (Playful.dc.html dropFall / snowDrift). */
+@keyframes k5DropFall {
+  0% {
+    transform: translateY(-12px);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(70px);
+    opacity: 0;
+  }
+}
+@keyframes k5SnowDrift {
+  0% {
+    transform: translate(0, -8px);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(6px, 64px);
+    opacity: 0;
+  }
+}
+.k5-wx-drop {
+  position: absolute;
+  top: 0;
+  width: 3px;
+  height: 12px;
+  border-radius: 3px;
+  background: #4f8ff5;
+  opacity: 0.35;
+  animation: k5DropFall 1s linear infinite;
+}
+.k5-wx-flake {
+  position: absolute;
+  top: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px #b9c9e6;
+  opacity: 0.6;
+  animation: k5SnowDrift 2.2s linear infinite;
+}
+
+/* Get the App dialog: the little dancing phone and the scan -> download -> installed demo (Playful.dc.html). */
+@keyframes k5PhoneDance {
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  20% {
+    transform: rotate(-14deg) translateY(-3px);
+  }
+  40% {
+    transform: rotate(12deg) translateY(0);
+  }
+  60% {
+    transform: rotate(-10deg) translateY(-3px);
+  }
+  80% {
+    transform: rotate(8deg) translateY(0);
+  }
+}
+@keyframes k5DemoPhone {
+  0%,
+  100% {
+    transform: translateY(2px);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+@keyframes k5DemoS1 {
+  0%,
+  40% {
+    opacity: 1;
+  }
+  44%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes k5DemoScan {
+  0%,
+  12% {
+    transform: translateY(0);
+  }
+  24% {
+    transform: translateY(60px);
+  }
+  36%,
+  100% {
+    transform: translateY(0);
+  }
+}
+@keyframes k5DemoS2 {
+  0%,
+  40% {
+    opacity: 0;
+  }
+  44%,
+  54% {
+    opacity: 1;
+  }
+  58%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes k5DemoS3 {
+  0%,
+  56% {
+    opacity: 0;
+  }
+  60%,
+  82% {
+    opacity: 1;
+  }
+  86%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes k5DemoBar {
+  0%,
+  60% {
+    transform: scaleX(0.02);
+  }
+  80%,
+  100% {
+    transform: scaleX(1);
+  }
+}
+@keyframes k5DemoS4 {
+  0%,
+  84% {
+    opacity: 0;
+  }
+  88%,
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes k5DemoArrow {
+  0%,
+  100% {
+    transform: translateY(-2px);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+@keyframes k5DemoC1 {
+  0%,
+  42% {
+    opacity: 1;
+  }
+  46%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes k5DemoC2 {
+  0%,
+  44% {
+    opacity: 0;
+  }
+  48%,
+  84% {
+    opacity: 1;
+  }
+  88%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes k5DemoC3 {
+  0%,
+  86% {
+    opacity: 0;
+  }
+  90%,
+  100% {
+    opacity: 1;
+  }
+}
+.k5-phone-dance {
+  animation: k5PhoneDance 1.6s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+.k5-demo-phone {
+  animation: k5DemoPhone 2s ease-in-out infinite;
+}
+.k5-demo-s1 {
+  animation: k5DemoS1 6s linear infinite;
+}
+.k5-demo-scan {
+  animation: k5DemoScan 6s ease-in-out infinite;
+}
+.k5-demo-s2 {
+  animation: k5DemoS2 6s linear infinite;
+}
+.k5-demo-s3 {
+  animation: k5DemoS3 6s linear infinite;
+}
+.k5-demo-s4 {
+  animation: k5DemoS4 6s linear infinite;
+}
+.k5-demo-bar {
+  animation: k5DemoBar 6s linear infinite;
+  transform-box: fill-box;
+  transform-origin: left center;
+}
+.k5-demo-arrow {
+  animation: k5DemoArrow 0.6s ease-in-out infinite;
+}
+.k5-demo-c1 {
+  animation: k5DemoC1 6s linear infinite;
+}
+.k5-demo-c2 {
+  animation: k5DemoC2 6s linear infinite;
+}
+.k5-demo-c3 {
+  animation: k5DemoC3 6s linear infinite;
+}
+/* Student Handbook (mockup .hbbook / .hbcover / .hbshine / .hbstar). Reduced motion is switched off by the rule below. */
+@keyframes k5HbFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(-1deg);
+  }
+}
+@keyframes k5HbShine {
+  0%,
+  60% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+@keyframes k5HbTw {
+  0%,
+  100% {
+    transform: scale(1) rotate(0);
+  }
+  50% {
+    transform: scale(1.25) rotate(15deg);
+  }
+}
+.k5-hbbook {
+  animation: k5HbFloat 4s ease-in-out infinite;
+}
+.k5-hbcover {
+  transition: transform 0.5s ease;
+}
+.k5-hbbook:hover .k5-hbcover {
+  transform: rotateY(-18deg);
+}
+.k5-hbshine {
+  animation: k5HbShine 5s ease-in-out infinite;
+}
+.k5-hbstar {
+  animation: k5HbTw 2.4s ease-in-out infinite;
+}
+/* Login History "Active now" dot (mockup .lhdot). Reduced motion is switched off by the rule above. */
+@keyframes k5LhPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(19, 128, 63, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(19, 128, 63, 0);
+  }
+}
+.k5-lhdot {
+  animation: k5LhPulse 1.4s ease-in-out infinite;
+}
+/* Academic Year Extension course tile (mockup .axcard). */
+.k5-axcard {
+  transition: transform 0.2s ease;
+}
+.k5-axcard:hover {
+  transform: translateY(-4px) rotate(-0.6deg);
+}
+/* Videos: the big play button pulses (mockup .lbplay). Reduced motion is switched off by the rule above. */
+@keyframes k5LbPulse {
+  0%,
+  100% {
+    box-shadow: 0 8px 0 var(--k5-acd), 0 10px 30px rgba(10, 16, 34, 0.25), 0 0 0 0 rgba(47, 123, 245, 0.45);
+  }
+  50% {
+    box-shadow: 0 8px 0 var(--k5-acd), 0 10px 30px rgba(10, 16, 34, 0.25), 0 0 0 14px rgba(47, 123, 245, 0);
+  }
+}
+.k5-lbplay {
+  animation: k5LbPulse 1.8s ease-in-out infinite;
+}
+/* My Certificates (mockup .cttrack / .ctreq / .ctcert). Reduced motion is switched off by the rule above. */
+@keyframes k5CtPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 6px var(--k5-act);
+  }
+  50% {
+    box-shadow: 0 0 0 10px var(--k5-act);
+  }
+}
+@keyframes k5CtRow {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes k5CtWig {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  30% {
+    transform: rotate(-10deg);
+  }
+  70% {
+    transform: rotate(8deg);
+  }
+}
+.k5-ctcur {
+  box-shadow: 0 0 0 6px var(--k5-act);
+  animation: k5CtPulse 1.6s ease-in-out infinite;
+}
+.k5-ctreq {
+  animation: k5CtRow 0.35s ease-out both;
+}
+.k5-ctcert {
+  transition: transform 0.2s ease;
+}
+.k5-ctcert:hover {
+  transform: translateY(-4px) rotate(-0.6deg);
+}
+.k5-ctcert:hover .k5-ctseal {
+  animation: k5CtWig 0.5s ease;
+}
+/* My Attendance medal pops in (mockup .atmedal). Reduced motion is switched off by the rule above. */
+@keyframes k5AtMedal {
+  0% {
+    transform: scale(0) rotate(-30deg);
+  }
+  70% {
+    transform: scale(1.1) rotate(6deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+.k5-atmedal {
+  animation: k5AtMedal 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+  transform-origin: 50% 40%;
+}
+
+/*
+ * My Performance (Playful.dc.html pgPerf / pmCv): hero scene, medals, streak, course rows, course view
+ * tables. Reduced motion is switched off by the .theme-k5 rule above.
+ */
+@keyframes k5PmRise {
+  0% {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes k5PmPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+@keyframes k5PkSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes k5PkDrift {
+  from {
+    transform: translateX(-10px);
+  }
+  to {
+    transform: translateX(14px);
+  }
+}
+@keyframes k5PkFlap {
+  from {
+    transform: skewY(0);
+  }
+  to {
+    transform: skewY(-6deg);
+  }
+}
+@keyframes k5PkTw {
+  from {
+    opacity: 0.3;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+@keyframes k5PkFlick {
+  0% {
+    transform: scale(1, 1) rotate(-3deg);
+  }
+  100% {
+    transform: scale(1.06, 0.94) rotate(3deg);
+  }
+}
+@keyframes k5PkPop {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+@keyframes k5PkCute {
+  0%,
+  100% {
+    transform: rotate(10deg) scale(1);
+  }
+  50% {
+    transform: rotate(-6deg) scale(1.08);
+  }
+}
+@keyframes k5PkBub {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+@keyframes k5PmFlick {
+  0%,
+  100% {
+    transform: rotate(-3deg) scale(1);
+  }
+  50% {
+    transform: rotate(3deg) scale(1.06);
+  }
+}
+@keyframes k5PmBob {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-1.6px);
+  }
+}
+@keyframes k5PmBobS {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-0.6px);
+  }
+}
+@keyframes k5PmLegR {
+  0%,
+  100% {
+    transform: rotate(40deg);
+  }
+  50% {
+    transform: rotate(-40deg);
+  }
+}
+@keyframes k5PmArmR {
+  0%,
+  100% {
+    transform: rotate(-60deg);
+  }
+  50% {
+    transform: rotate(60deg);
+  }
+}
+@keyframes k5PmLegW {
+  0%,
+  100% {
+    transform: rotate(15deg);
+  }
+  50% {
+    transform: rotate(-15deg);
+  }
+}
+@keyframes k5PmArmW {
+  0%,
+  100% {
+    transform: rotate(-16deg);
+  }
+  50% {
+    transform: rotate(16deg);
+  }
+}
+.k5-pmpanel {
+  animation: k5PmRise 0.25s ease-out;
+}
+.k5-pmearned {
+  animation: k5PmRise 0.4s ease-out both;
+}
+.k5-pmearned:hover .k5-pmbi {
+  animation: k5PmPulse 0.5s ease-out;
+}
+.k5-pksun {
+  animation: k5PkSpin 18s linear infinite;
+}
+.k5-pkcloud1 {
+  animation: k5PkDrift 9s ease-in-out infinite alternate;
+}
+.k5-pkcloud2 {
+  animation: k5PkDrift 7s ease-in-out infinite alternate-reverse;
+}
+.k5-pkflag {
+  animation: k5PkFlap 1.2s ease-in-out infinite alternate;
+  transform-box: fill-box;
+  transform-origin: 0 50%;
+}
+.k5-pksp {
+  animation: k5PkTw 1.6s ease-in-out infinite alternate;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.k5-pkflame {
+  animation: k5PkFlick 1.2s ease-in-out infinite alternate;
+  transform-origin: 50% 90%;
+}
+.k5-pkbig svg {
+  animation: k5PkPop 0.5s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+.k5-pkbig svg:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.k5-pkbig svg:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.k5-pkbig svg:nth-child(4) {
+  animation-delay: 0.24s;
+}
+.k5-pkbig svg:nth-child(5) {
+  animation-delay: 0.32s;
+}
+.k5-pkcute {
+  animation: k5PkCute 2.4s ease-in-out infinite;
+  transform-origin: 50% 60%;
+}
+.k5-pkbub {
+  display: none;
+  transform: translateX(-50%);
+}
+.k5-pkscore:hover .k5-pkbub,
+.k5-pmrow:focus-visible .k5-pkbub {
+  display: block;
+  animation: k5PkBub 0.2s ease-out;
+}
+.k5-pmflame {
+  animation: k5PmFlick 1.6s ease-in-out infinite;
+}
+/* My Goals: the student's marker hops along the road, sparks twinkle, the star jar's honey waves. */
+@keyframes k5PkHopMe {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+@keyframes k5PkWave {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(40px);
+  }
+}
+.k5-pkme {
+  animation: k5PkHopMe 1.4s ease-in-out infinite;
+}
+.k5-pkspark {
+  animation: k5PkTw 1.8s ease-in-out infinite alternate;
+}
+.k5-pkwave {
+  animation: k5PkWave 2.4s linear infinite;
+}
+.k5-pmlg,
+.k5-pmar {
+  transform-box: view-box;
+}
+.k5-pmpA {
+  animation: k5PmBob 0.22s ease-in-out infinite alternate;
+  flex: none;
+  overflow: visible;
+}
+.k5-pmpB {
+  animation: k5PmBobS 1.5s ease-in-out infinite alternate;
+  flex: none;
+  overflow: visible;
+}
+.k5-pmpA .k5-pmL1 {
+  animation: k5PmLegR 0.44s ease-in-out infinite;
+}
+.k5-pmpA .k5-pmL2 {
+  animation: k5PmLegR 0.44s ease-in-out -0.22s infinite;
+}
+.k5-pmpA .k5-pmA1 {
+  animation: k5PmArmR 0.44s ease-in-out infinite;
+}
+.k5-pmpA .k5-pmA2 {
+  animation: k5PmArmR 0.44s ease-in-out -0.22s infinite;
+}
+.k5-pmpB .k5-pmL1 {
+  animation: k5PmLegW 3s ease-in-out infinite;
+}
+.k5-pmpB .k5-pmL2 {
+  animation: k5PmLegW 3s ease-in-out -1.5s infinite;
+}
+.k5-pmpB .k5-pmA1 {
+  animation: k5PmArmW 3s ease-in-out infinite;
+}
+.k5-pmpB .k5-pmA2 {
+  animation: k5PmArmW 3s ease-in-out -1.5s infinite;
+}
+.k5-pmrow {
+  display: grid;
+  grid-template-columns: 56px minmax(180px, 1.6fr) minmax(100px, 0.7fr) minmax(150px, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.k5-pmrow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 var(--k5-line);
+}
+@media (max-width: 760px) {
+  .k5-pmrow {
+    grid-template-columns: 56px 1fr;
+  }
+  .k5-pmrow > :nth-child(n + 3) {
+    grid-column: 2;
+  }
+  .k5-pkscene {
+    opacity: 0.45;
+    max-width: 100% !important;
+  }
+  .k5-pkbub {
+    left: 0 !important;
+    transform: none !important;
+  }
+  .k5-pkcute {
+    inset-inline-end: -6px !important;
+  }
+  .k5-pmtab {
+    flex: 1 1 auto;
+    justify-content: center;
+    font-size: 16px !important;
+    padding: 0 12px !important;
+  }
+  .k5-pmpill {
+    min-width: 0 !important;
+    flex: 1 1 0;
+  }
+  .k5-pmaside {
+    margin-inline-start: 0 !important;
+  }
+  .k5-bdwrap {
+    border: none !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+  }
+  .k5-bdtbl {
+    min-width: 0 !important;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .k5-bdhead {
+    display: none !important;
+  }
+  .k5-bdrow {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    border: 3px solid var(--k5-line) !important;
+    border-radius: 18px;
+    padding: 6px 0;
+    overflow: hidden;
+  }
+  .k5-bdrow > [role="cell"] {
+    padding: 6px 12px !important;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .k5-bdrow > .k5-bdwide {
+    grid-column: 1 / -1;
+  }
+  .k5-bdrow > [data-l]::before {
+    content: attr(data-l);
+    display: block;
+    font-size: 12px;
+    font-weight: 900;
+    color: var(--k5-mut);
+    margin-bottom: 2px;
+  }
+}

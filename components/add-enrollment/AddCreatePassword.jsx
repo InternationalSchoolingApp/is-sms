@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
+import { useSchoolName } from "@/hooks/useSchoolName";
+import { copyrightLine } from "@/utils/schoolBrand";
+import Image from "next/image";
 import { ArrowRight, Check, Eye, EyeOff, Lock, LockOpen, LoaderCircle, Phone, X } from "lucide-react";
 import { createAddEnrollmentPassword } from "@/services/addEnrollmentPasswordApi";
 import { loadCreatePasswordTarget } from "@/utils/addEnrollmentCreatePassword";
-import { loginPageUrl, resolveBackendNavigationOrigin, withLoginPayload } from "@/utils/backendOrigin";
+import { loginPageUrl, withLoginPayload } from "@/utils/backendOrigin";
 import { getPasswordStrength } from "@/utils/studentSignupValidation";
 
 const RULES = [
@@ -29,6 +32,7 @@ const initials = (name = "") =>
  * reset-password API as ChangePassword.jsx). Reads who it is for from the hand-off the thank-you button stored.
  */
 export function AddCreatePassword({ schoolUUID }) {
+  const schoolName = useSchoolName();
   // sessionStorage is client-only: undefined on the server / first paint, null when the hand-off is missing.
   const target = useSyncExternalStore(subscribeNone, loadCreatePasswordTarget, () => undefined);
   const [password, setPassword] = useState("");
@@ -42,22 +46,10 @@ export function AddCreatePassword({ schoolUUID }) {
   const strength = getPasswordStrength(password, confirm);
   const untouched = !password;
 
-  // ChangePassword.jsp's logout(): clear client storage, then hit the Java logout endpoint (the new
-  // student's own studentUserId — the backend doesn't actually resolve identity from this path segment,
-  // see services/studentSignupBackendApi.js's postPayload comment, but target.userId is the real value
-  // on hand, not a placeholder), which ends the Java session and lands on the login page. Falls back to
-  // the login page itself.
+  // This page creates the CHILD's password while the browser may still be signed in as the parent in another tab.
+  // Do not clear shared browser storage or log out the current session here; that would invalidate the dashboard.
   const goToLogin = async (credentials) => {
-    try {
-      localStorage.clear();
-      sessionStorage.clear();
-      await signOut({ redirect: false });
-    } catch {
-      /* no Next.js session to drop */
-    }
-    const backend = resolveBackendNavigationOrigin();
-    const url = backend ? `${backend}/${schoolUUID}/common/logout/${target?.userId ?? ""}` : loginPageUrl(schoolUUID);
-    window.location.assign(withLoginPayload(url, credentials?.email, credentials?.password));
+    window.location.assign(withLoginPayload(loginPageUrl(schoolUUID), credentials?.email, credentials?.password));
   };
 
   const submit = async (event) => {
@@ -76,7 +68,7 @@ export function AddCreatePassword({ schoolUUID }) {
     setSubmitting(false);
     const status = String(res?.status ?? "");
     if (!res || ["0", "2", "3"].includes(status)) {
-      if (status === "3") return goToLogin();
+      if (status === "3") return goToLogin({ email: target.email, password: password.trim() });
       return setError(res?.message || "Something went wrong. Please try again.");
     }
     try {
@@ -100,8 +92,7 @@ export function AddCreatePassword({ schoolUUID }) {
       className="flex min-h-screen flex-col items-center bg-[#eef4fb] bg-cover bg-center bg-no-repeat px-4 py-8 sm:py-10"
       style={{ backgroundImage: "url('/images/signup-thankyou-bg.png')" }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element -- static brand logo */}
-      <img src="/images/IS_Final_Logo.webp" alt="International Schooling" className="mb-5 h-11 w-auto" />
+      <Image src="/images/IS_Final_Logo.webp" alt={schoolName} width={300} height={100} className="mb-5 h-11 w-auto" />
 
       <div className="relative w-full max-w-[480px] rounded-3xl bg-white px-5 py-8 shadow-xl shadow-slate-900/5 ring-1 ring-slate-900/5 sm:px-8">
         <span className="absolute top-4 right-4 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-primary">
@@ -218,7 +209,7 @@ export function AddCreatePassword({ schoolUUID }) {
       </div>
 
       <footer className="py-5 text-center text-xs text-slate-500">
-        Copyright © {new Date().getFullYear()} - International Schooling - All Rights Reserved.
+        {copyrightLine(schoolName)}
       </footer>
     </main>
   );

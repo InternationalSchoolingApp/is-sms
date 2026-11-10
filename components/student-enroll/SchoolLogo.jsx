@@ -13,15 +13,14 @@ import Image from "next/image";
  * Keeping this in one component means the logo asset/link/alt is defined
  * once, not copy-pasted per breakpoint.
  */
-export function SchoolLogo({ schoolName, logoUrl, href, width = 220, className = "" }) {
-  const label = schoolName || "International Schooling";
-  const resolvedHref = href || "https://internationalschooling.org/";
+export function SchoolLogo({ schoolName, width = 220, className = "" }) {
+  const label = schoolName || "";
   return (
     <a
       href={resolvedHref}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={`${label} — home`}
+      aria-label={label ? `${label} — home` : "School home"}
       className={`inline-block transition-opacity hover:opacity-90 ${className}`}
     >
       {logoUrl ? (

@@ -1,0 +1,237 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { format, parseISO } from "date-fns";
+import { ArrowLeft, Bookmark, NotebookText, X } from "lucide-react";
+import { getDiaryThreadList, getDiaryThreadMessages, markDiaryThreadRead } from "@/services/diaryApi";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
+
+// Roles that trigger the "Greetings from {school}!" letter template in
+// getParentSchoolDiaryTeacherCard/-ReplyCard (PARENT_MENTION_ROLE in
+// parentSchoolDiary.js) — the counterpart is always addressed as "Parent"
+// regardless of who's actually reading the thread.
+export const STAFF_SENDER_ROLES = ["TEACHER", "DIRECTOR", "SCHOOL", "ADMIN"];
+
+export function salutationFor(gender) {
+  const normalized = (gender || "").toLowerCase();
+  if (normalized === "male") return "Mr.";
+  if (normalized === "female") return "Ms.";
+  return "";
+}
+
+export function formatWhen(value) {
+  if (!value) return "";
+  const parsed = parseISO(String(value));
+  // DISPLAY_DATETIME_FORMATTER ("ddd, DD MMM, YYYY hh:mm A") from timezoneConverter.js.
+  return Number.isNaN(parsed.getTime()) ? "" : format(parsed, "EEE, d MMM, yyyy hh:mm a");
+}
+
+function ThreadList({ threads, onSelect }) {
+  if (threads.length === 0) return <p className="text-sm text-black/80 p-3 text-center">No diary conversations yet.</p>;
+  return (
+    <ul className="divide-y divide-slate-100">
+      {threads.map((thread) => (
+        <li key={thread.threadId} className="p-3 hover:bg-black/5">
+          <button
+            type="button"
+            onClick={() => onSelect(thread.threadId)}
+            className="flex w-full items-start gap-2 text-left cursor-pointer"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="truncate text-sm font-bold text-black">{thread.teacherName}</span>
+                {thread.unreadCount > 0 && (
+                  <span className="flex-shrink-0 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    {thread.unreadCount}
+                  </span>
+                )}
+              </div>
+              <p className="mt-0.5 truncate text-xs text-black/60">{thread.latestMessage}</p>
+            </div>
+            <span className="flex-shrink-0 text-[10px] text-black/40">{formatWhen(thread.lastMessageAt)}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * One diary entry — port of getParentSchoolDiaryTeacherCard /
+ * getParentSchoolDiaryReplyCard. The viewer's own messages (parent-card)
+ * float right on a blue-tinted card with no sender header; everyone else's
+ * (teacher-card) float left on a white card with a sender-name header. The
+ * "Greetings from {school}! / Hope you are doing well. ... Gratitude and
+ * prayers," letter wrapper only appears around messages from staff roles —
+ * a real reply from the thread's parent, or the viewer's own message, is
+ * just plain text.
+ */
+function DiaryEntryCard({ message, courseName, schoolName, viewerUserId }) {
+  const isOwn = String(message.senderUserId) === String(viewerUserId);
+  const isStaffSender = STAFF_SENDER_ROLES.includes((message.senderRole || "").toUpperCase());
+  const recipientName = message.mentions?.find((mention) => mention.roleType === "PARENT")?.userName || "Parent";
+
+  return (
+    <div className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
+      <div
+        className={`w-full mt-2 rounded-2xl border border-slate-300/70 p-4 shadow-sm ${
+          isOwn ? "bg-gradient-to-br from-sky-50 to-sky-100" : "bg-white"
+        }`}
+      >
+        {!isOwn && (
+          <p className="mb-1 font-bold text-primary">
+            {salutationFor(message.senderGender)} {message.senderName}
+            {courseName ? ` | ${courseName}` : ""}
+          </p>
+        )}
+        {isStaffSender && (
+          <div className="mb-1">
+            <p className="font-caveat text-xl font-bold text-black">{recipientName}</p>
+            <p className="font-caveat text-lg font-semibold text-primary">Greetings from {schoolName}!</p>
+            <p className="font-caveat text-lg font-semibold text-black">Hope you are doing well.</p>
+          </div>
+        )}
+        <p className="font-caveat my-3 whitespace-pre-wrap text-xl text-black">{message.message}</p>
+        {isStaffSender && (
+          <div className="mb-1">
+            <p className="font-caveat text-lg text-black">Gratitude and prayers,</p>
+            <p className="font-caveat text-lg text-black">{schoolName} Family</p>
+          </div>
+        )}
+        <small className="text-[11px] text-black/80">{formatWhen(message.createdAt)}</small>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The "school-diary-notebook" wrapper — a spiral-bound blue left edge over
+ * faint graph-paper ruling (parentSchoolDiaryGetStyles' .school-diary-notebook
+ * / .card-body background), with a bookmark ribbon in the corner. Read-only:
+ * students never get the reply editor in legacy either (chatDetailsConent only
+ * appends getParentSchoolDiaryReplyEditor for USER_ROLE != "STUDENT").
+ */
+function ThreadView({ threadId, sessionUserId, schoolName }) {
+  const dummy = useDummyStudent();
+  const messagesQuery = useQuery({
+    queryKey: ["diary-thread-messages", sessionUserId, threadId, dummy.key],
+    queryFn: () => (dummy.enabled ? dummy.student.diaryMessages(threadId) : getDiaryThreadMessages({ sessionUserId, threadId })),
+    enabled: Boolean(sessionUserId && threadId && dummy.settled),
+    refetchOnWindowFocus: false,
+  });
+
+  // Dummy threads don't exist server-side: legacy skips the mark-read call in dummy mode.
+  useEffect(() => {
+    if (sessionUserId && threadId && dummy.settled && !dummy.enabled) markDiaryThreadRead({ sessionUserId, threadId });
+  }, [sessionUserId, threadId, dummy.settled, dummy.enabled]);
+
+  const messages = messagesQuery.data?.details?.messages || [];
+  const courseName = messagesQuery.data?.details?.courseName;
+
+  return (
+    <div className="flex h-full flex-col p-3">
+      <div
+        className="relative flex-1  rounded-xl border-l-4 border-sky-500 py-4 pl-10 pr-3"
+        style={{
+          backgroundImage:
+            "linear-gradient(transparent 31px, rgba(0,132,255,0.08) 32px), linear-gradient(90deg, transparent 31px, rgba(0,132,255,0.08) 32px)",
+          backgroundSize: "32px 32px",
+        }}
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-0 left-1 top-0 w-3 bg-repeat-y overflow-y-auto"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at center, white 3px, #64748b 3px, #64748b 4px, transparent 4px)",
+            backgroundSize: "100% 28px",
+            backgroundRepeat:"repeat-y"
+          }}
+        />
+        <Bookmark aria-hidden="true" className="absolute -top-1 right-4 h-7 w-5 fill-primary text-primary" />
+
+        <div className="space-y-4">
+          {messagesQuery.isLoading ? (
+            <p className="text-sm text-black/80 p-5">Loading…</p>
+          ) : messages.length === 0 ? (
+            <p className="text-sm text-black/80 p-5">No messages yet.</p>
+          ) : (
+            messages.map((message) => (
+              <DiaryEntryCard
+                key={message.id}
+                message={message}
+                courseName={courseName}
+                schoolName={schoolName}
+                viewerUserId={sessionUserId}
+              />
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Slide-in "Student Diary" panel — the legacy School Diary teacher<->student
+ * messaging thread system. Read-only here: in legacy, the reply editor is
+ * never rendered for USER_ROLE == "STUDENT" (threads are created and replied
+ * to by teachers/parents only).
+ */
+export function DiaryPanel({ sessionUserId, schoolName, onClose }) {
+  const dummy = useDummyStudent();
+  const threadsQuery = useQuery({
+    queryKey: ["diary-threads", sessionUserId, dummy.key],
+    queryFn: () => (dummy.enabled ? dummy.student.diaryThreads() : getDiaryThreadList({ sessionUserId })),
+    enabled: Boolean(sessionUserId && dummy.settled),
+    refetchOnWindowFocus: false,
+  });
+  const threads = threadsQuery.data?.details?.threads || [];
+  const [selectedThreadId, setSelectedThreadId] = useState(null);
+  const selectedThreadName = threads.find((thread) => thread.threadId === selectedThreadId)?.teacherName;
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative flex h-full w-full max-w-[600px] flex-col bg-white shadow-xl">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute -left-4 cursor-pointer top-3 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        <div className="flex items-center gap-2 border-b border-slate-200 px-5 py-4">
+          {selectedThreadId && (
+            <button
+              type="button"
+              onClick={() => setSelectedThreadId(null)}
+              aria-label="Back to diary list"
+              className="-ml-1 flex h-6 w-6 flex-shrink-0 items-center justify-center text-black hover:text-primary"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+          )}
+          <NotebookText className="h-5 w-5 flex-shrink-0 text-primary" aria-hidden="true" />
+          <h2 className="truncate text-base font-extrabold text-black">
+            Student Diary
+            {selectedThreadId && selectedThreadName ? ` - ${selectedThreadName}` : ""}
+          </h2>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {selectedThreadId ? (
+            <ThreadView threadId={selectedThreadId} sessionUserId={sessionUserId} schoolName={schoolName} />
+          ) : threadsQuery.isLoading ? (
+            <p className="text-sm text-black/80 p-4 text-center">Loading…</p>
+          ) : (
+            <ThreadList threads={threads} onSelect={setSelectedThreadId} />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

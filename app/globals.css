@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "./k5-theme.css";
+@import "./appearance.css";
+@import "./k5-modules.css";
+@import "./profile-plain.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -9,6 +13,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-open-sans);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-caveat: var(--font-caveat);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -291,6 +296,20 @@ input:-internal-autofill-selected {
 .iti-split-popup:not(.iti--fullscreen-popup) .iti__country-selector {
   width: 100% !important;
 }
+/* Profile phone: K5 theme tokens, thicker borders, larger radii (matching other profile fields). */
+.iti.iti-split.iti-profile .iti__selected-country {
+  border: 3px solid var(--k5-line);
+  border-radius: 14px;
+  background: var(--k5-card);
+  min-height: 50px;
+}
+.iti.iti-split.iti-profile .iti__selected-country[aria-expanded="true"],
+.iti.iti-split.iti-profile[data-status="dirty"] .iti__selected-country {
+  border-color: var(--k5-ac);
+}
+.iti.iti-split.iti-profile[data-status="error"] .iti__selected-country {
+  border-color: var(--k5-ri);
+}
 
 /*
  * Maintenance-notice marquee (components/common/MaintenanceBanner.jsx).
@@ -383,6 +402,45 @@ input:-internal-autofill-selected {
 }
 @media (prefers-reduced-motion: reduce) {
   .consent-card {
+    animation: none;
+  }
+}
+
+/* Student dashboard calendar: a LIVE class/activity gets the legacy
+   "marching ants" rotating dashed border (dashboardMarchingAnts in the old
+   JSP calendar) instead of a static dashed border. Color comes from the
+   --live-color custom property set inline per event. */
+@keyframes calendar-marching-ants {
+  to {
+    background-position: 8px 0, -8px 100%, 0 -8px, 100% 8px;
+  }
+}
+.calendar-live-dashed {
+  border: 0 !important;
+  background-image:
+    repeating-linear-gradient(90deg, var(--live-color, #e53935) 0, var(--live-color, #e53935) 4px, transparent 4px, transparent 8px),
+    repeating-linear-gradient(90deg, var(--live-color, #e53935) 0, var(--live-color, #e53935) 4px, transparent 4px, transparent 8px),
+    repeating-linear-gradient(0deg, var(--live-color, #e53935) 0, var(--live-color, #e53935) 4px, transparent 4px, transparent 8px),
+    repeating-linear-gradient(0deg, var(--live-color, #e53935) 0, var(--live-color, #e53935) 4px, transparent 4px, transparent 8px);
+  background-size: 100% 2px, 100% 2px, 2px 100%, 2px 100%;
+  background-position: 0 0, 0 100%, 0 0, 100% 0;
+  background-repeat: no-repeat;
+  animation: calendar-marching-ants 0.5s linear infinite;
+}
+.calendar-live-legend {
+  border: 0 !important;
+  background-image:
+    repeating-linear-gradient(90deg, #888 0, #888 4px, transparent 4px, transparent 8px),
+    repeating-linear-gradient(90deg, #888 0, #888 4px, transparent 4px, transparent 8px),
+    repeating-linear-gradient(0deg, #888 0, #888 4px, transparent 4px, transparent 8px),
+    repeating-linear-gradient(0deg, #888 0, #888 4px, transparent 4px, transparent 8px);
+  background-size: 100% 2px, 100% 2px, 2px 100%, 2px 100%;
+  background-position: 0 0, 0 100%, 0 0, 100% 0;
+  background-repeat: no-repeat;
+  animation: calendar-marching-ants 0.5s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .calendar-live-dashed {
     animation: none;
   }
 }

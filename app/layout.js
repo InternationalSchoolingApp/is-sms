@@ -1,4 +1,4 @@
-import { Open_Sans } from "next/font/google";
+import { Open_Sans, Caveat } from "next/font/google";
 import { AppToaster } from "@/components/common/AppToaster";
 import { DisableZoom } from "@/components/common/DisableZoom";
 import "./globals.css";
@@ -21,6 +21,13 @@ const openSans = Open_Sans({
   weight: ["400", "500", "600", "700", "800"],
 });
 
+// School Diary "handwritten note" styling (parentSchoolDiaryGetStyles' .caveat-font).
+const caveat = Caveat({
+  variable: "--font-caveat",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
 export const metadata = {};
 
 export const viewport = {
@@ -33,7 +40,7 @@ export const viewport = {
 export default async function RootLayout({ children }) {
   const session = publicSession(await getAccountSession());
   return (
-    <html lang="en" className={`${openSans.variable} h-full antialiased`}>
+    <html lang="en" className={`${openSans.variable} ${caveat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
         {/* Which signed-in user this tab works for (several can share the browser): X-Account on its calls. */}
         <TabAccount account={session?.uniqueId} />

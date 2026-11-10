@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 
@@ -10,9 +10,12 @@ import { Calendar } from "@/components/ui/calendar";
  * empty, dark border-2 when open). No such composition existed yet in
  * components/ui — built from the existing calendar.jsx/popover.jsx
  * primitives, no new shadcn install needed.
+ *
+ * `height` is the trigger's Tailwind height class (e.g. "h-10"); defaults to "h-12".
  */
-export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDate, error, disabled = false }) {
+export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDate, error, disabled = false, height = "h-12", autoOpen = false }) {
   const [open, setOpen] = useState(false);
+  useEffect(() => { if (autoOpen) setOpen(true); }, [autoOpen]);
   const floated = open || Boolean(value);
 
   return (
@@ -21,7 +24,7 @@ export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDat
         <PopoverTrigger
           type="button"
           disabled={disabled}
-          className={`relative flex h-12 w-full items-center rounded-md border ${disabled ? "cursor-not-allowed bg-slate-100 text-black" : "bg-white"} ${Icon ? "pl-10" : "pl-3.5"} pr-3.5 pt-1 text-left text-[17px] ${
+          className={`relative flex ${height} w-full items-center rounded-md border ${disabled ? "cursor-not-allowed bg-slate-100 text-black" : "bg-white"} ${height ? "pb-1.5" : ""} ${Icon ? "pl-10" : "pl-3.5"} pr-3.5 pt-1  text-left text-[17px] ${
             error ? "border-2 border-red-500" : open ? "border-2 border-primary" : value && !disabled ? "border-2 border-emerald-500" : "border-slate-300"
           }`}
         >

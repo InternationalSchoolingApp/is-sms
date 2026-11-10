@@ -15,7 +15,7 @@ import { Req } from "@/components/common/Req";
 import { RequiredAsterisk } from "@/components/common/RequiredAsterisk";
 import { FlaggedSeatsModal } from "@/components/student-enroll/FlaggedSeatsModal";
 import { useCountryOptions, useStateOptions, useCityOptions } from "@/hooks/useStudentDetailsSignup";
-import { useParentDetailsSignup } from "@/hooks/useParentDetailsSignup";
+import { o } from "@/hooks/useParentDetailsSignup";
 import { validateParentDetails } from "@/utils/studentSignupValidation";
 import { nameFieldProps } from "@/utils/nameInput";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
