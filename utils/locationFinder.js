@@ -23,7 +23,6 @@ let location = ""; // the `#location` input's value
 export async function loadLocationGlobals({ schoolUUID, userId }) {
   if (loaded) return;
   const response = await getCommonScriptVariables(schoolUUID, { userId });
-  debugger
   if (!response) throw new Error("common-script-variables returned no response");
   LOCATION_SERVICE_BYPASS = String(response.LOCATION_SERVICE_BYPASS);
   DEFAULT_LOCATION = response.DEFAULT_LOCATION;

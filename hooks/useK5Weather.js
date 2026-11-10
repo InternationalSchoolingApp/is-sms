@@ -68,7 +68,6 @@ export function useK5Weather(timezone) {
 
     (async () => {
       try {
-        debugger
         const cached = readCache("is-k5-wx:" + timezone);
         if (cached && Date.now() - cached.at < FRESH_MS) {
           finish(cached.weather);
@@ -88,7 +87,6 @@ export function useK5Weather(timezone) {
           WEATHER_URL + "?current=temperature_2m,weather_code,is_day&timezone=auto&latitude=" + place.latitude + "&longitude=" + place.longitude,
           controller.signal,
         );
-        debugger
         console.log("useK5Weather", { timezone, city, place, data });
         const current = data && data.current;
         if (!current || typeof current.temperature_2m !== "number") return;
