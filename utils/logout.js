@@ -59,3 +59,20 @@ export async function logoutEverywhere(session, credentials) {
   }
   window.location.assign(withLoginPayload(loginPageUrl(session?.schoolUUID), credentials?.email, credentials?.password));
 }
+
+// Add Another Student wizard logout. That tab is signed in as the CALLER (the parent/sibling who pressed
+// "Add more sibling" on the dashboard, which opened this tab with window.open), and the dashboard tab is still
+// open as the same user. Java's common/logout/{uid} would end that user's dashboard login too (shared browser
+// cookies), so the next "Add more sibling" answered 401 and the dashboard signed out. Here only this tab's own
+// SMS login (the SSO handoff one) is ended, then the tab closes and the dashboard keeps working.
+export async function leaveAddEnrollmentWizard(session) {
+  window.__loggingOut = true;
+  try {
+    await signOutAccount(session?.uniqueId);
+  } catch (err) {
+    console.error("Sign out failed:", err);
+  }
+  window.close();
+  // Not closable (tab opened by hand / reloaded): fall back to the school's login page.
+  setTimeout(() => window.location.assign(loginPageUrl(session?.schoolUUID)), 300);
+}

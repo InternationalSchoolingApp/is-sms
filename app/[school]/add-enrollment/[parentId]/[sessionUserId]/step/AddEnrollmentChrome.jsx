@@ -8,7 +8,7 @@ import { AddEnrollmentWizardShell, WIZARD_STEP_META } from "@/components/add-enr
 import { AddEnrollmentProvider, useAddEnrollmentContext } from "@/hooks/add-enrollment/useAddEnrollmentContext";
 import { useBackendSessionGuard } from "@/hooks/useBackendSessionGuard";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
-import { expireSession, logoutEverywhere } from "@/utils/logout";
+import { expireSession, leaveAddEnrollmentWizard } from "@/utils/logout";
 
 /**
  * Chrome for the "Add Another Student" wizard — 3-entry counterpart of
@@ -95,7 +95,7 @@ function AddWizardFrame({ children }) {
       steps={getLearningProgramBackendValue(context.learningProgram) === "ONE_TO_ONE_FLEX" ? ADD_WIZARD_STEPS_FLEX : ADD_WIZARD_STEPS}
       plain={plain}
       hideStepper={hideStepper}
-      onLogout={() => logoutEverywhere(session)}
+      onLogout={() => leaveAddEnrollmentWizard(session)}
     >
       {children}
     </AddEnrollmentWizardShell>
