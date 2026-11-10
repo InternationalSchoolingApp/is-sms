@@ -12,6 +12,7 @@ import { AppearanceDialog } from "@/components/k5/look/AppearanceDialog";
 import { PicoGuide } from "@/components/k5/pico/PicoGuide";
 import { setPicoLive } from "@/components/k5/pico/picoEvents";
 import { SelectToSpeak } from "@/components/k5/pico/SelectToSpeak";
+import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { studentNavHref } from "@/utils/dashboardNav";
@@ -27,7 +28,7 @@ import { studentNavHref } from "@/utils/dashboardNav";
 export function K5Shell({ children }) {
   const { context } = useDashboardContext();
   return (
-    <AppearanceProvider scope="k5" userId={context.userId}>
+    <AppearanceProvider scope="k5" userId={context.userId} schoolUUID={context.schoolUUID}>
       <K5Frame>{children}</K5Frame>
     </AppearanceProvider>
   );
@@ -38,7 +39,8 @@ function K5Frame({ children }) {
   
   const pathname = usePathname();
   const { school } = useParams();
-  const themeProps = useK5ThemeProps("relative flex min-h-screen flex-col overflow-x-clip bg-k5-page");
+  const { isLoading: appearanceLoading } = useAppearance();
+    const themeProps = useK5ThemeProps("relative flex min-h-screen flex-col overflow-x-clip bg-k5-page");
   const [navOpen, setNavOpen] = useState(false);
   const [lookOpen, setLookOpen] = useState(false);
   const closeNav = useCallback(() => setNavOpen(false), []);
@@ -66,7 +68,7 @@ function K5Frame({ children }) {
     setNavOpen(false);
   }
   return (
-    <div {...themeProps} data-k5-prek={isPreK ? "true" : undefined}>
+    <div {...themeProps} data-k5-prek={isPreK ? "true" : undefined} style={appearanceLoading ? { opacity: 0, transition: "opacity 0.3s ease" } : { opacity: 1, transition: "opacity 0.3s ease" }}>
       <K5Header
         schoolName={context.schoolName}
         logoUrl={logoUrl}

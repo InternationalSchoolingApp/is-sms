@@ -52,9 +52,7 @@ export async function getDashboardMenu({ schoolUUID, schoolId, roleId, userId })
       headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify(body),
     });
-    console.log("getDashboardMenu status:", response.status);
     const menuData = await parseJsonResponse(response);
-    console.log("getDashboardMenu data:", JSON.stringify(menuData, null, 2));
     return menuData;
   } catch {
     return null;
@@ -107,6 +105,21 @@ export async function getDashboardChatLinks({ schoolUUID, userId }) {
   try {
     const response = await getCommonScriptVariables(schoolUUID, { userId });
     return response ? { chatUrl: response.CHAT_URL || "", diaryUrl: response.DIARY_URL || "" } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Student menu-visibility flags — POST /{schoolUUID}/dashboard/parent/student-menu-flags
+ * Controls per-student sidebar visibility (Assigned Teacher, Book a Class,
+ * Attendance) and the "Buy & Book a Class" label override. On error the caller
+ * treats it as null → no menus hidden (safe fallback).
+ */
+export async function getStudentMenuFlags({ schoolUUID, studentUserId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !studentUserId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-menu-flags", { studentUserId });
   } catch {
     return null;
   }
@@ -739,4 +752,22 @@ export async function getUserShortProfile({ schoolUUID, userId }) {
 export async function isAddSiblingEnabled(schoolUUID) {
   const value = String(await getSettingValue(schoolUUID, "CONFIGURATION", "ADD_SIBILING_BTN")).trim().toLowerCase();
   return value === "true";
+}
+
+/**
+ * Save the user's appearance preferences to the USER_THEME table via
+ * POST /{schoolUUID}/api/v1/update-theme (CommonController.updateUserTheme
+ * -> DashboardCommonUtil.updateUserTheme). The backend stores the whole
+ * colorObj JSON in USER_THEME.COLOR_CODE and tracks edit counts.
+ */
+export async function saveUserTheme({ schoolUUID, userId, appearance }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/api/v1/update-theme", {
+      userId,
+      colorObj: { appearance },
+    });
+  } catch {
+    return null;
+  }
 }

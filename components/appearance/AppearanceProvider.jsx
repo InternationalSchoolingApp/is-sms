@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState, useSyncExternalStore } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { DEFAULT_POLICY, sanitizeAppearance } from "@/constant/appearance";
+import { getUserShortProfile, saveUserTheme } from "@/services/dashboardApi";
 
 /**
  * Generic appearance provider (plan section 12, Step A): school policy + the user's saved
@@ -51,7 +52,7 @@ const REDUCED_QUERY = "(prefers-reduced-motion: reduce)";
 const subscribeDark = subscribeMedia(DARK_QUERY);
 const subscribeReduced = subscribeMedia(REDUCED_QUERY);
 
-export function AppearanceProvider({ scope = "k5", userId, policy = DEFAULT_POLICY, children }) {
+export function AppearanceProvider({ scope = "k5", userId, schoolUUID, policy = DEFAULT_POLICY, children }) {
   const key = userId ? `is-${scope}-look:${userId}` : null;
   const raw = useSyncExternalStore(subscribeStorage, () => readStorage(key), () => null);
   const systemDark = useSyncExternalStore(subscribeDark, () => window.matchMedia(DARK_QUERY).matches, () => false);
@@ -59,6 +60,28 @@ export function AppearanceProvider({ scope = "k5", userId, policy = DEFAULT_POLI
   // A look that could not be saved still previews (and can be retried) — never a fake "Saved".
   const [unsaved, setUnsaved] = useState(null);
   const [status, setStatus] = useState({ isSaving: false, error: null, savedAt: null });
+
+  // Server sync: load appearance from USER_THEME on mount, save back on change.
+  // serverReady = true immediately when localStorage has data (no flash); false = must wait for server.
+  const [serverReady, setServerReady] = useState(() => Boolean(readStorage(key)));
+  const serverLoaded = useRef(false);
+  useEffect(() => {
+    if (!userId || !schoolUUID || serverLoaded.current) return;
+    serverLoaded.current = true;
+    getUserShortProfile({ schoolUUID, userId }).then((profile) => {
+      if (!profile?.userThemeColorCode) { setServerReady(true); return; }
+      try {
+        const colorObj = typeof profile.userThemeColorCode === "string"
+          ? JSON.parse(profile.userThemeColorCode) : profile.userThemeColorCode;
+        const appearance = colorObj?.appearance;
+        if (appearance && typeof appearance === "object" && key) {
+          window.localStorage.setItem(key, JSON.stringify(appearance));
+          window.dispatchEvent(new Event(CHANGE_EVENT));
+        }
+      } catch { /* ignore malformed */ }
+      setServerReady(true);
+    }).catch(() => setServerReady(true));
+  }, [userId, schoolUUID, key]);
 
   const allow = policy.allowUserCustomization !== false;
   const defaults = useMemo(() => sanitizeAppearance(policy.defaults), [policy.defaults]);
@@ -80,8 +103,12 @@ export function AppearanceProvider({ scope = "k5", userId, policy = DEFAULT_POLI
         setUnsaved(next);
         setStatus({ isSaving: false, error: "Couldn't save your look on this device.", savedAt: null });
       }
+      // Background server save — fire-and-forget, localStorage is the instant preview.
+      if (schoolUUID && userId) {
+        saveUserTheme({ schoolUUID, userId, appearance: next }).catch(() => {});
+      }
     },
-    [key],
+    [key, schoolUUID, userId],
   );
 
   const value = useMemo(() => {
@@ -90,7 +117,7 @@ export function AppearanceProvider({ scope = "k5", userId, policy = DEFAULT_POLI
     return {
       preferences,
       canCustomize: allow && Boolean(key),
-      isLoading: false,
+      isLoading: !serverReady,
       isSaving: status.isSaving,
       error: status.error,
       savedAt: status.savedAt,
@@ -121,7 +148,7 @@ export function AppearanceProvider({ scope = "k5", userId, policy = DEFAULT_POLI
         "data-motion": reduced ? "reduced" : "full",
       },
     };
-  }, [preferences, allow, key, status, systemDark, systemReduced, save, defaults, unsaved]);
+  }, [preferences, allow, key, status, systemDark, systemReduced, save, defaults, unsaved, serverReady]);
 
   return <AppearanceContext.Provider value={value}>{children}</AppearanceContext.Provider>;
 }

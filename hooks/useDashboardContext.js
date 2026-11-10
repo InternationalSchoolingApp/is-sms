@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSession } from "@/components/providers/AuthSessionProvider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
-import { getDashboardChatLinks, getDashboardMenu, getStudentDashboardDetails, getStudentDemoData } from "@/services/dashboardApi";
+import { getDashboardChatLinks, getDashboardMenu, getStudentDashboardDetails, getStudentDemoData, getStudentMenuFlags } from "@/services/dashboardApi";
 import { applyStudentNavRules, mapBackendMenu } from "@/utils/dashboardNav";
 import { bandFromStandardId, isK5LearningProgram, isPreKStandard, isSelfStudyProgram, normalizeGradeBand } from "@/utils/gradeBand";
 import { isDummyStudentMode } from "@/utils/paymentGatewayChecks";
@@ -184,7 +184,7 @@ function useResolveDashboardContext({ role = "student" } = {}) {
   const menuQuery = useQuery({
     queryKey: ["dashboard-menu", role, session?.schoolNumericId, roleId, session?.userId],
     queryFn: async () => {
-      const [dto, details] = await Promise.all([
+      const [dto, details, menuFlagsResp] = await Promise.all([
         getDashboardMenu({
           schoolUUID: session.schoolUUID,
           schoolId: session.schoolNumericId,
@@ -192,10 +192,12 @@ function useResolveDashboardContext({ role = "student" } = {}) {
           userId: session.userId,
         }),
         role === "student" ? queryClient.fetchQuery(studentDashboardDetailsQuery({ schoolUUID: session.schoolUUID, userId: session.userId })) : null,
+        role === "student" ? getStudentMenuFlags({ schoolUUID: session.schoolUUID, studentUserId: session.userId }) : null,
       ]);
       const mapped = mapBackendMenu(dto) ?? [];
+      const menuFlags = menuFlagsResp?.details ?? null;
       const navDetails = { signupType: details?.signupType, signupMode: details?.registrationType };
-      return role === "student" ? applyStudentNavRules(mapped, navDetails, { schoolNumericId: session.schoolNumericId }) : mapped;
+      return role === "student" ? applyStudentNavRules(mapped, navDetails, { schoolNumericId: session.schoolNumericId, menuFlags }) : mapped;
     },
     // Waits for the role id (dashboard details) so the menu is not cached empty.
     enabled: authenticated && Boolean(roleId),

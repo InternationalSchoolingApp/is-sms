@@ -23,6 +23,7 @@ import { AccountSetupSection } from "@/components/add-enrollment/AccountSetupSec
 import { loginPageUrl, resolveBackendOrigin, withLoginPayload } from "@/utils/backendOrigin";
 import { getBrowserDetailsForSignup } from "@/utils/utmCookies";
 import { expireSession, logoutEverywhere } from "@/utils/logout";
+import { copyrightLine } from "@/utils/schoolBrand";
 
 /**
  * Shared view for every /common/*payment-response-* route. Ports the render
