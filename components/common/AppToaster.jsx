@@ -56,5 +56,11 @@ export function AppToaster() {
     };
   }, []);
 
-  return <Toaster position="top-center" containerStyle={{ top: "var(--app-toast-top, 30vh)" }} />;
+  return (
+    <Toaster
+      position="top-center"
+      containerStyle={{ top: "var(--app-toast-top, 30vh)" }}
+      toastOptions={{ style: { fontSize: "var(--app-toast-font-size, 14px)", fontFamily: "var(--app-toast-font-family, inherit)", letterSpacing: "var(--app-toast-letter-spacing, normal)" } }}
+    />
+  );
 }

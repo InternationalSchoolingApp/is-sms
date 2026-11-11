@@ -146,6 +146,7 @@ export function AppearanceProvider({ scope = "k5", userId, schoolUUID, policy = 
         "data-font": preferences.font,
         "data-hand": preferences.hand,
         "data-motion": reduced ? "reduced" : "full",
+        "data-buddy-enabled": preferences.buddyEnabled,
       },
     };
   }, [preferences, allow, key, status, systemDark, systemReduced, save, defaults, unsaved, serverReady]);
@@ -154,6 +155,8 @@ export function AppearanceProvider({ scope = "k5", userId, schoolUUID, policy = 
 }
 
 /** preferences, isLoading, isSaving, error, updatePreference, resetPreferences (+ themeProps). */
+export { AppearanceContext };
+
 export function useAppearance() {
   const value = useContext(AppearanceContext);
   if (!value) throw new Error("useAppearance must be used within an AppearanceProvider");

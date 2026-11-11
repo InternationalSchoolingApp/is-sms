@@ -116,7 +116,7 @@ export function applyStudentNavRules(menu, details = {}, { schoolNumericId, menu
   const userStandard = details.userStandard;
   const isBatchProgram = String(details.signupMode || "").toUpperCase() === "BATCH";
   const examSheetUploaded = details.examSheetUploaded === "Y";
-  const transcriptVisible = !details.showTranscriptToStudent || details.showTranscriptToStudent === "Y";
+  const showTranscript = menuFlags?.showTranscriptMenu !== false;
   const isOnlineSignup = String(details.signupType || "").toLowerCase() === "online";
   const reportsAllowed = providerId !== 39 && userStandard !== 8;
 
@@ -139,7 +139,7 @@ export function applyStudentNavRules(menu, details = {}, { schoolNumericId, menu
         return isBatchProgram && examSheetUploaded;
       case "student-transcript":
       case "parent-student-transcript":
-        return transcriptVisible;
+        return showTranscript;
       case "academic-year-extention":
         return reportsAllowed;
       case "syllabus-assigned-teacher":

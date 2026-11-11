@@ -190,14 +190,14 @@ export function PicoGuide({ userId, firstName, home = true }) {
   // picoSay(): the buddy opens and says the text (it comes from a tap, so speaking is allowed).
   useEffect(() => {
     const onSay = (e) => {
-      const { text, pin: target, intro, skipLive } = e.detail || {};
+      const { text, pin: target, intro, skipLive, above } = e.detail || {};
       if (!text) return;
       setState((s) => ({
         ...s,
         open: true,
         index: intro ? 0 : s.index,
         skipLive: intro ? Boolean(skipLive) : s.skipLive,
-        say: { text, pin: target || null, id: Date.now() },
+        say: { text, pin: target || null, id: Date.now(), above: Boolean(above) },
       }));
       setTipOn(true);
       speak(text);
@@ -205,6 +205,8 @@ export function PicoGuide({ userId, firstName, home = true }) {
     window.addEventListener(PICO_SAY_EVENT, onSay);
     return () => window.removeEventListener(PICO_SAY_EVENT, onSay);
   }, [speak]);
+
+  if (preferences.buddyEnabled === "off") return null;
 
   const markSeen = () => {
     try {
@@ -266,7 +268,7 @@ export function PicoGuide({ userId, firstName, home = true }) {
     <>
     <SpotHole pin={pin} active={open} />
     <div
-      className={`fixed bottom-[112px] z-40 h-[86px] w-[88px] max-[760px]:bottom-[150px] max-[760px]:h-[62px] max-[760px]:w-[58px] ${
+      className={`fixed bottom-[112px] ${state.say?.above ? "z-[60]" : "z-40"} h-[86px] w-[88px] max-[760px]:bottom-[150px] max-[760px]:h-[62px] max-[760px]:w-[58px] ${
         leftHand ? "left-4 max-[760px]:left-3.5" : "right-4 max-[760px]:right-3.5"
       }`}
     >

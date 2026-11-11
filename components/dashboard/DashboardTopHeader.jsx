@@ -73,8 +73,6 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
               toast(isPayLmsPaymentPending, { icon: "⚠️" });
             } else if (lmsProviderURL) {
               window.open(lmsProviderURL, "_blank");
-            } else {
-              toast("LMS — coming soon", { icon: "🚧" });
             }
           }}
           className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${lms ? "bg-primary" : "bg-slate-300"}`}

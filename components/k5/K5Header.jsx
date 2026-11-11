@@ -6,9 +6,25 @@ import { useRouter } from "next/navigation";
 import { ChevronDown, KeyRound, LogOut, Menu, MoreVertical, Palette, Smartphone, User } from "lucide-react";
 import toast from "react-hot-toast";
 import { AppDownloadDialog } from "@/components/k5/AppDownloadDialog";
+import { useStudentProfile } from "@/hooks/useStudentProfile";
+import { picoSay } from "@/components/k5/pico/picoEvents";
 import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
 import { logoutEverywhere } from "@/utils/logout";
 import { K5ChangePasswordModal } from "@/components/k5/panels/K5ChangePasswordModal";
+
+/**
+ * Round avatar of the welcome chip / More menu: the student's profile photo, or the first letter when there is none
+ * (or the picture cannot load). Keyed by the photo address so a new photo is tried again.
+ */
+function HeaderAvatar({ photo, initial, className, textClass }) {
+  const [broken, setBroken] = useState(false);
+  if (photo && !broken) {
+    // A user-uploaded S3 photo of any size: a plain <img> (same as the My Profile hero), no remote image config needed.
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={photo} alt="" onError={() => setBroken(true)} className={`${className} bg-[#FFC531] object-cover`} />;
+  }
+  return <span className={`flex items-center justify-center rounded-full ${className} ${textClass}`}>{initial}</span>;
+}
 
 /**
  * Grade K–5 header (Playful.dc.html): menu button, school logo, LMS switch and the
@@ -16,12 +32,20 @@ import { K5ChangePasswordModal } from "@/components/k5/panels/K5ChangePasswordMo
  * "Make it yours!". Same actions as DashboardTopHeader — LMS, My Profile and Change Password
  * are still "coming soon"; Log out is live. "Get the App" opens the store links (constant/appLinks.js).
  */
-export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMenu, onAppearance, lmsProviderURL, isPayLmsPaymentPending }) {
+export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, userName, navOpen, onMenu, onAppearance, lmsProviderURL, isPayLmsPaymentPending }) {
+  // Same profile query as My Profile (shared cache): saving a new photo there refreshes this avatar too.
+  const { model: profileModel } = useStudentProfile({ schoolUUID, userId });
+  const photo = profileModel?.header?.photo || "";
   const [menuOpen, setMenuOpen] = useState(false);
   const [changePwOpen, setChangePwOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [appOpen, setAppOpen] = useState(false);
   const [lms, setLms] = useState(false);
+  // Mockup openApp(): the dialog opens and the buddy says it too.
+  const openApp = () => {
+    setAppOpen(true);
+    picoSay("Get the app and take me with you on your phone!", null, { above: true });
+  };
   const router = useRouter();
   const [confirmLogout, setConfirmLogout] = useState(false);
   // My Profile is the signed-in student's own page (app/[school]/(dashboard)/student/my-profile).
@@ -37,7 +61,7 @@ export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMe
 
   return (
     <header className="sticky top-[var(--maintenance-banner-h,0px)] z-30 border-b-4 border-k5-line bg-k5-card">
-      <div className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-3 px-5 py-2.5 max-[760px]:flex-nowrap max-[760px]:px-3">
+      <div className="mx-auto flex max-w-[100%] flex-wrap items-center gap-3 px-5 py-2.5 max-[760px]:flex-nowrap max-[760px]:px-3">
         <button
           type="button"
           aria-label="Menu"
@@ -79,7 +103,7 @@ export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMe
 
         <button
           type="button"
-          onClick={() => setAppOpen(true)}
+          onClick={openApp}
           aria-haspopup="dialog"
           className="flex min-h-12 cursor-pointer items-center gap-2 rounded-full border-[3px] border-k5-ac bg-k5-card py-0 pl-3 pr-[18px] font-k5-display text-[17px] font-semibold text-k5-acx shadow-[0_4px_0_var(--k5-acl)] max-[760px]:hidden"
         >
@@ -96,8 +120,6 @@ export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMe
               toast(isPayLmsPaymentPending, { icon: "⚠️" });
             } else if (lmsProviderURL) {
               window.open(lmsProviderURL, "_blank");
-            } else {
-              toast("LMS — coming soon", { icon: "🚧" });
             }
           }}
           className="flex min-h-12 items-center gap-2.5 rounded-full border-[3px] border-k5-line bg-k5-card py-0 pl-2 pr-4 text-[15px] font-black text-k5-mut max-[760px]:hidden"
@@ -118,9 +140,7 @@ export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMe
             aria-expanded={menuOpen}
             className="flex min-h-14 items-center gap-2.5 rounded-full border-[3px] border-k5-yb bg-k5-yt py-1 pl-1 pr-4 text-left"
           >
-            <span className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-k5-hi font-k5-display text-[22px] font-bold text-[#1C2640]">
-              {firstName.charAt(0).toUpperCase()}
-            </span>
+            <HeaderAvatar key={photo} photo={photo} initial={firstName.charAt(0).toUpperCase()} className="block h-[46px] w-[46px] flex-none rounded-full" textClass="bg-k5-hi font-k5-display text-[22px] font-bold text-[#1C2640]" />
             <span className="hidden flex-col sm:flex">
               <span className="text-[13px] font-extrabold text-k5-yx">Welcome back,</span>
               <span className="font-k5-display text-xl font-semibold leading-none text-k5-ink">{firstName}!</span>
@@ -186,7 +206,7 @@ export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMe
                 className="absolute end-0 top-[60px] z-[55] flex w-[250px] flex-col gap-0.5 rounded-[22px] border-[3px] border-k5-ink bg-k5-card p-2 shadow-[0_6px_0_var(--k5-ink)]"
               >
                 <MoreItem
-                  icon={<span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FFC531] font-k5-display text-xl font-bold text-[#1C2640]">{firstName.charAt(0).toUpperCase()}</span>}
+                  icon={<HeaderAvatar key={photo} photo={photo} initial={firstName.charAt(0).toUpperCase()} className="block h-10 w-10 flex-none rounded-full" textClass="bg-[#FFC531] font-k5-display text-xl font-bold text-[#1C2640]" />}
                   onClick={() => {
                     setMoreOpen(false);
                     openProfile();
@@ -218,7 +238,7 @@ export function K5Header({ schoolName, logoUrl, session, userName, navOpen, onMe
                   }
                   onClick={() => {
                     setMoreOpen(false);
-                    setAppOpen(true);
+                    openApp();
                   }}
                 >
                   Get the App

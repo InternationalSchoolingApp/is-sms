@@ -24,6 +24,7 @@ import { loginPageUrl, resolveBackendOrigin, withLoginPayload } from "@/utils/ba
 import { getBrowserDetailsForSignup } from "@/utils/utmCookies";
 import { expireSession, logoutEverywhere } from "@/utils/logout";
 import { copyrightLine } from "@/utils/schoolBrand";
+import { isFramed, navigateTop, useFramed } from "@/utils/embed";
 
 /**
  * Shared view for every /common/*payment-response-* route. Ports the render

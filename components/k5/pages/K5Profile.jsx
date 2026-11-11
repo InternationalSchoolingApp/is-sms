@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Camera, Check, Eye, EyeOff, FileText, IdCard, Info, Save } from "lucide-react";
+import { ArrowLeft, ArrowRight, Camera, Check, Eye, EyeOff, FileText, IdCard, Info } from "lucide-react";
 import toast from "react-hot-toast";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { ConfirmDialog, EditableParents, EditablePersonal } from "@/components/k5/pages/K5ProfileEditors";
@@ -555,7 +555,6 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
               disabled={!editor.dirtyCount || editor.busy}
               className={`${BTN_BASE} border-[#13803F] bg-[#13803F] text-white shadow-[0_4px_0_#0B5A2B]`}
             >
-              <Save className="h-5 w-5" aria-hidden="true" />
               {editor.busy ? "Saving…" : editor.dirtyCount ? `Bulk Save (${editor.dirtyCount})` : "Bulk Save"}
             </button>
           )}

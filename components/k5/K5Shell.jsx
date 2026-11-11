@@ -39,7 +39,7 @@ function K5Frame({ children }) {
   
   const pathname = usePathname();
   const { school } = useParams();
-  const { isLoading: appearanceLoading } = useAppearance();
+  const { isLoading: appearanceLoading, preferences } = useAppearance();
     const themeProps = useK5ThemeProps("relative flex min-h-screen flex-col overflow-x-clip bg-k5-page");
   const [navOpen, setNavOpen] = useState(false);
   const [lookOpen, setLookOpen] = useState(false);
@@ -61,6 +61,25 @@ function K5Frame({ children }) {
     return () => window.removeEventListener("pageshow", onPageShow);
   }, []);
 
+  useEffect(() => {
+    const sizeMap = { small: "14px", medium: "16px", large: "18px" };
+    const fontMap = {
+      cute: "'Fredoka', 'Baloo Bhaijaan 2', sans-serif",
+      simple: "'Lexend', sans-serif",
+      easy: "'Andika', sans-serif",
+      clear: "'Atkinson Hyperlegible', sans-serif",
+    };
+    const el = document.documentElement;
+    el.style.setProperty("--app-toast-font-size", sizeMap[preferences.textSize] || "16px");
+    el.style.setProperty("--app-toast-font-family", fontMap[preferences.font] || fontMap.cute);
+    el.style.setProperty("--app-toast-letter-spacing", preferences.reading === "spaced" ? "0.1em" : "normal");
+    return () => {
+      el.style.removeProperty("--app-toast-font-size");
+      el.style.removeProperty("--app-toast-font-family");
+      el.style.removeProperty("--app-toast-letter-spacing");
+    };
+  }, [preferences.textSize, preferences.font, preferences.reading]);
+
   // A route change closes the opened nav / drawer.
   const [lastPath, setLastPath] = useState(pathname);
   if (pathname !== lastPath) {
@@ -70,6 +89,8 @@ function K5Frame({ children }) {
   return (
     <div {...themeProps} data-k5-prek={isPreK ? "true" : undefined} style={appearanceLoading ? { opacity: 0, transition: "opacity 0.3s ease" } : { opacity: 1, transition: "opacity 0.3s ease" }}>
       <K5Header
+        userId={context.userId}
+        schoolUUID={context.schoolUUID}
         schoolName={context.schoolName}
         logoUrl={logoUrl}
         session={session}

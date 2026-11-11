@@ -48,7 +48,7 @@ function Choice({ name, value, label, children, className = "", style }) {
  * Buddy + voice only show where a buddy exists (`withBuddy`, K–5).
  */
 export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
-  const { preferences } = useAppearance();
+  const { preferences, updatePreference: _panelUpdate } = useAppearance();
   return (
     <div className="grid items-start gap-[22px] min-[921px]:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
       <div className="flex min-w-0 flex-col gap-5">
@@ -116,7 +116,19 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
         {withBuddy && (
           <>
             <Section id="lk-buddy" title="Your buddy">
-              <div className="grid grid-cols-5 gap-2.5">
+              <div className="mb-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={preferences.buddyEnabled !== "off"}
+                  onClick={() => _panelUpdate("buddyEnabled", preferences.buddyEnabled === "off" ? "on" : "off")}
+                  className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${preferences.buddyEnabled === "off" ? "bg-k5-line" : "bg-k5-ac"}`}
+                >
+                  <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ${preferences.buddyEnabled === "off" ? "translate-x-0" : "translate-x-5"}`} />
+                </button>
+                <span className="text-[15px] font-bold text-k5-ink">{preferences.buddyEnabled === "off" ? "Buddy is hidden" : "Buddy is showing"}</span>
+              </div>
+              <div className={`grid grid-cols-5 gap-2.5 ${preferences.buddyEnabled === "off" ? "pointer-events-none opacity-40" : ""}`}>
                 {Object.entries(BUDDIES).map(([key, b]) => (
                   <Choice key={key} name="buddy" value={key} label={b.name} className="!min-h-0 gap-1.5 !px-1 !pb-2 !pt-2.5 font-k5-display !text-[17px] font-semibold">
                     <PicoMascot buddy={key} width={44} full={false} />
