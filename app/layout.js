@@ -46,6 +46,7 @@ export default async function RootLayout({ children }) {
         <TabAccount account={session?.uniqueId} />
         {/* GTM + Clarity — only fire when NEXT_PUBLIC_DEPLOYMENT_MODE=PROD,
             mirroring the JSP's <c:if test="${DEPLOYMENT_MODE=='PROD'}">. */}
+            
         <AnalyticsScripts />
         <DisableZoom />
         <AuthSessionProvider session={session}>
