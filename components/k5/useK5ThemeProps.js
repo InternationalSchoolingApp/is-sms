@@ -1,5 +1,6 @@
 "use client";
 
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { k5FontVariables } from "@/components/k5/k5Fonts";
 
@@ -9,6 +10,8 @@ import { k5FontVariables } from "@/components/k5/k5Fonts";
  */
 export function useK5ThemeProps(extraClassName = "") {
   const { themeProps } = useAppearance();
+  // Grade 6–8 students get the same K–5 components in the "Balanced" skin (app/k5-middle.css).
+  const { isMiddle } = useDashboardContext();
   const { className, ...data } = themeProps;
-  return { ...data, className: `theme-k5 ${k5FontVariables} ${className} ${extraClassName}`.trim() };
+  return { ...data, "data-k5-band": isMiddle ? "middle" : undefined, className: `theme-k5 ${k5FontVariables} ${className} ${extraClassName}`.trim() };
 }

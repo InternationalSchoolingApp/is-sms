@@ -6,6 +6,7 @@ import { CalendarDays, Check, Lock, Plus, Siren, Trash2, Undo2, X } from "lucide
 import { IoLogoWhatsapp } from "react-icons/io";
 import { DatePicker } from "@/components/ui/date-picker";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EditableCallingTimes } from "@/components/k5/pages/K5ProfileEditorsP3";
 import { OtpControl } from "@/components/k5/pages/K5ProfileOtp";
 import { useIntlTelInput } from "@/hooks/useIntlTelInput";
@@ -171,13 +172,37 @@ function EditDate({ editor, k, label, maxToday = true }) {
 }
 
 function Locked({ label, value, floating = false }) {
+  const valueRef = useRef(null);
+  const [valueOverflows, setValueOverflows] = useState(false);
+
+  useEffect(() => {
+    const element = valueRef.current;
+    if (!element) return undefined;
+
+    const measure = () => setValueOverflows(element.scrollWidth > element.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    if (element.parentElement) observer.observe(element.parentElement);
+    return () => observer.disconnect();
+  }, [value]);
+
   return (
     <div className={LABEL}>
       {!floating && <span>{label}</span>}
       <span title="Only the school can change this" className={`${floating ? "relative" : ""} flex h-[50px] items-center gap-2 rounded-[14px] border-[3px] border-k5-line bg-k5-soft px-3.5 py-2 font-k5-body text-base font-extrabold text-k5-mut`}>
         {floating && <span className="pointer-events-none absolute start-3 top-0 -translate-y-1/2 bg-k5-soft px-1 text-xs font-black text-k5-ac">{label}</span>}
         <Lock className="h-4 w-4 flex-none" aria-hidden="true" />
-        <span title={value || undefined} className="min-w-0 truncate text-k5-ink">{value || "—"}</span>
+        {valueOverflows && value ? (
+          <Tooltip>
+            <TooltipTrigger delay={100} render={<span ref={valueRef} className="min-w-0 truncate text-k5-ink" />}>
+              {value}
+            </TooltipTrigger>
+            <TooltipContent>{value}</TooltipContent>
+          </Tooltip>
+        ) : (
+          <span ref={valueRef} className="min-w-0 truncate text-k5-ink">{value || "—"}</span>
+        )}
       </span>
     </div>
   );

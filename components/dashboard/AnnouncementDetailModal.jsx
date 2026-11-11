@@ -7,7 +7,8 @@ import { CalendarDays, Eye, Megaphone, X } from "lucide-react";
 import DOMPurify from "dompurify";
 import { submitAnnouncementAcknowledge } from "@/services/dashboardApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
-import { getAttachmentUrl } from "@/utils/announcementAttachment";
+import { getAttachmentUrl, isImageAttachment } from "@/utils/announcementAttachment";
+import { AttachmentPreviewDialog } from "@/components/dashboard/AttachmentPreviewDialog";
 
 export function formatAnnouncementDate(value) {
   if (!value) return "";
@@ -34,6 +35,9 @@ export function AnnouncementDetailModal({ announcement, schoolUUID, userId, onCl
   const [acknowledged, setAcknowledged] = useState(announcement.replyStatus === "Y");
   const [acknowledging, setAcknowledging] = useState(false);
   const attachmentUrl = getAttachmentUrl(announcement.attachment);
+  // Like the legacy page: a picture opens in a preview dialog on this tab, any other file (PDF...) in a new tab.
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const isImage = isImageAttachment(announcement.attachment);
 
   const handleAcknowledge = async () => {
     setAcknowledging(true);
@@ -89,9 +93,15 @@ export function AnnouncementDetailModal({ announcement, schoolUUID, userId, onCl
             {attachmentUrl && (
               <a
                 href={attachmentUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:opacity-90"
+                {...(isImage
+                  ? {
+                      onClick: (e) => {
+                        e.preventDefault();
+                        setPreviewOpen(true);
+                      },
+                    }
+                  : { target: "_blank", rel: "noopener noreferrer" })}
+                className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:opacity-90"
               >
                 <Eye className="h-4 w-4" /> View Attachment
               </a>
@@ -109,6 +119,7 @@ export function AnnouncementDetailModal({ announcement, schoolUUID, userId, onCl
           </div>
         )}
       </div>
+      {previewOpen && <AttachmentPreviewDialog url={attachmentUrl} onClose={() => setPreviewOpen(false)} />}
     </div>
   );
 }

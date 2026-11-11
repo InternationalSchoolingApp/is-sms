@@ -6,7 +6,8 @@ import { CalendarDays, Eye, Megaphone, X } from "lucide-react";
 import DOMPurify from "dompurify";
 import { submitAnnouncementAcknowledge } from "@/services/dashboardApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
-import { getAttachmentUrl } from "@/utils/announcementAttachment";
+import { getAttachmentUrl, isImageAttachment } from "@/utils/announcementAttachment";
+import { AttachmentPreviewDialog } from "@/components/dashboard/AttachmentPreviewDialog";
 import { formatAnnouncementDate } from "@/components/dashboard/AnnouncementDetailModal";
 
 export function K5AnnouncementDetailModal({ announcement, schoolUUID, userId, onClose }) {
@@ -15,6 +16,9 @@ export function K5AnnouncementDetailModal({ announcement, schoolUUID, userId, on
   const [acknowledged, setAcknowledged] = useState(announcement.replyStatus === "Y");
   const [acknowledging, setAcknowledging] = useState(false);
   const attachmentUrl = getAttachmentUrl(announcement.attachment);
+  // A picture opens in a preview dialog on this tab, any other file (PDF...) in a new tab (as in the legacy page).
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const isImage = isImageAttachment(announcement.attachment);
 
   const handleAcknowledge = async () => {
     setAcknowledging(true);
@@ -78,9 +82,15 @@ export function K5AnnouncementDetailModal({ announcement, schoolUUID, userId, on
             {attachmentUrl && (
               <a
                 href={attachmentUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-1 items-center justify-center gap-2 rounded-full border-none bg-k5-ac px-4 py-3 font-k5-display text-[15px] font-semibold text-white no-underline shadow-[0_4px_0_var(--k5-acd)]"
+                {...(isImage
+                  ? {
+                      onClick: (e) => {
+                        e.preventDefault();
+                        setPreviewOpen(true);
+                      },
+                    }
+                  : { target: "_blank", rel: "noopener noreferrer" })}
+                className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-full border-none bg-k5-ac px-4 py-3 font-k5-display text-[15px] font-semibold text-white no-underline shadow-[0_4px_0_var(--k5-acd)]"
               >
                 <Eye className="h-5 w-5" /> View Attachment
               </a>
@@ -98,6 +108,7 @@ export function K5AnnouncementDetailModal({ announcement, schoolUUID, userId, on
           </div>
         )}
       </div>
+      {previewOpen && <AttachmentPreviewDialog url={attachmentUrl} onClose={() => setPreviewOpen(false)} k5 />}
     </div>
   );
 }
