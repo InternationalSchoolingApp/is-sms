@@ -186,11 +186,12 @@ export function useReEnrollmentContext() {
   return value;
 }
 
-/** select-option: the student picked Next Grade / Repeat / Take Individual Course. */
+/** select-option: the student picked Next Grade / Repeat / Take Individual Course, in one of the option's learning programs. */
 export function useSelectReEnrollmentOption({ context, userId }) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (enrollmentType) => selectReEnrollmentOption(context.schoolUUID, { userId, enrollmentType }),
+    mutationFn: ({ enrollmentType, learningProgram }) =>
+      selectReEnrollmentOption(context.schoolUUID, { userId, enrollmentType, learningProgram }),
     onSuccess: (response) => {
       // Steps / resume info change once the next record exists. Returned, so mutateAsync resolves only after the
       // eligibility is read again: the step screen's guard (useRequireSelectedOption) must already see the selected

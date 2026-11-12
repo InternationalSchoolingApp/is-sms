@@ -142,6 +142,39 @@ const OPTION_BUTTON = {
 };
 
 /**
+ * Learning programs the student may move into for one option (Re-enrollment Specs for Flow: "Any", Take an Individual Course
+ * without Group, ...), the default one pre-selected. A single program is just named under the button.
+ */
+function ProgramChips({ option, selected, disabled, onSelect }) {
+  const programs = option.programs || [];
+  if (programs.length <= 1) {
+    return option.learningProgramLabel ? <p className="mt-1 text-xs font-semibold text-slate-500">{option.learningProgramLabel}</p> : null;
+  }
+  return (
+    <div className="mt-2 flex max-w-[420px] flex-wrap justify-center gap-1.5" role="radiogroup" aria-label="Learning program">
+      {programs.map((program) => {
+        const active = program.learningProgram === selected;
+        return (
+          <button
+            key={program.learningProgram}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            disabled={disabled}
+            onClick={() => onSelect(program.learningProgram)}
+            className={`cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold duration-150 disabled:cursor-not-allowed disabled:opacity-60 ${
+              active ? "border-primary bg-primary text-white" : "border-slate-300 bg-white text-slate-600 hover:border-primary hover:text-primary"
+            }`}
+          >
+            {program.learningProgramLabel || program.learningProgram}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
  * Entry screen of the re-enrollment, laid out like the legacy student re-enrollment page: the student's name in a
  * page title bar, a big result card (promoted / "Don't give up") with the option buttons, and the
  * "Need Support?" card on the right. A student who already selected an option goes straight to the screen to
@@ -154,6 +187,7 @@ export function ReEnrollmentOptions() {
   const select = useSelectReEnrollmentOption({ context, userId: session.userId });
   // resume=1 (login / coming back from the payment): continue at the step the student is on instead of showing the options.
   const [resume] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("resume") === "1");
+  const [pickedPrograms, setPickedPrograms] = useState({});
 
   useEffect(() => {
     if (resume && inProgress && eligibility.currentStep) router.replace(reEnrollmentStepPath(school, eligibility.currentStep));
@@ -163,11 +197,13 @@ export function ReEnrollmentOptions() {
 
   const passed = eligibility.result === "PASS";
   const options = eligibility.options || [];
+  // The learning program picked under each option; the option's default (first in `programs`) until the student picks another.
+  const programOf = (option) => pickedPrograms[option.enrollmentType] ?? option.learningProgram;
 
   async function choose(option) {
     if (select.isPending) return;
     try {
-      const response = await select.mutateAsync(option.enrollmentType);
+      const response = await select.mutateAsync({ enrollmentType: option.enrollmentType, learningProgram: programOf(option) });
       if (!response) {
         toast.error(GENERIC_ERROR);
       } else if (response.status === "3") {
@@ -183,7 +219,8 @@ export function ReEnrollmentOptions() {
     }
   }
 
-  const grade = options[0]?.grade?.name;
+  // "Promoted to" names the Next Grade's grade (a grade 12 pass has no Next Grade, only Take an Individual Course).
+  const grade = options.find((option) => option.enrollmentType === "REGISTRATION_NEXT_GRADE")?.grade?.name;
   const discount = eligibility.progressionDiscount;
   const hasDiscount = passed && discount?.amount > 0;
   const discountText = hasDiscount ? `${discount.currencyLabel ? `${discount.currencyLabel} ` : ""}${discount.amount}` : "";
@@ -197,10 +234,15 @@ export function ReEnrollmentOptions() {
             disabled={select.isPending}
             className="flex w-full items-center justify-center gap-2 rounded-xl px-8 py-3.5 text-lg font-semibold sm:min-w-[280px]"
           >
-            {select.isPending && select.variables === option.enrollmentType ? "Please wait…" : OPTION_BUTTON[option.enrollmentType] || "Continue"}
-            {!(select.isPending && select.variables === option.enrollmentType) && <ArrowRight className="h-5 w-5" aria-hidden="true" />}
+            {select.isPending && select.variables?.enrollmentType === option.enrollmentType ? "Please wait…" : OPTION_BUTTON[option.enrollmentType] || "Continue"}
+            {!(select.isPending && select.variables?.enrollmentType === option.enrollmentType) && <ArrowRight className="h-5 w-5" aria-hidden="true" />}
           </ActionButton>
-          {option.learningProgramLabel && <p className="mt-1 text-xs font-semibold text-slate-500">{option.learningProgramLabel}</p>}
+          <ProgramChips
+            option={option}
+            selected={programOf(option)}
+            disabled={select.isPending}
+            onSelect={(program) => setPickedPrograms((current) => ({ ...current, [option.enrollmentType]: program }))}
+          />
         </div>
       ))}
     </div>

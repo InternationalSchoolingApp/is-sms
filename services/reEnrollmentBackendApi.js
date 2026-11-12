@@ -51,7 +51,7 @@ export async function getReEnrollmentEligibility(schoolUUID, request) {
   return postPayload(schoolUUID, "eligibility", request);
 }
 
-/** {userId, enrollmentType} -> the student's next record is ready; steps + nextStep. */
+/** {userId, enrollmentType, learningProgram} -> the student's next record is ready; steps + nextStep. */
 export async function selectReEnrollmentOption(schoolUUID, request) {
   return postPayload(schoolUUID, "select-option", request);
 }
