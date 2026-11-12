@@ -947,6 +947,24 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     }
   }
 
+  // Flexy re-enrollment: the grade chip's name is a dropdown of the Flexy grades (instead of the Change Grade dialog).
+  const gradeSelect =
+    reEnrollment && reEnrollmentGrades?.length > 0 ? (
+      <select
+        aria-label="Course Selection For"
+        value={String(data?.standardId ?? "")}
+        onChange={(event) => handleReEnrollmentGradeChange(event.target.value)}
+        disabled={busy || reEnrollmentGradeLocked}
+        className="cursor-pointer bg-transparent text-xs font-semibold text-black focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 md:text-sm"
+      >
+        {reEnrollmentGrades.map((grade) => (
+          <option key={grade.id} value={String(grade.id)}>
+            {grade.label}
+          </option>
+        ))}
+      </select>
+    ) : null;
+
   // Re-enrollment shows its own title bar above this screen.
   const header = inReview || reEnrollment ? null : (
     <>
@@ -1100,7 +1118,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         <div className={`mt-2 flex items-center gap-3 rounded-sm pl-3 justify-center md:hidden`}>
           <span className="inline-flex items-center gap-2 text-sm font-semibold text-black">
             <GraduationCap className="h-5 w-5 text-primary" />
-            {data.standardName}
+            {gradeSelect ?? data.standardName}
           </span>
           {!reEnrollment && (
           <button
@@ -1116,25 +1134,11 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       )}
     <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white px-4 pt-2 pb-3 shadow-sm sm:p-4 lg:py-6 lg:px-8">
       {header}
-      {reEnrollment && reEnrollmentGrades?.length > 0 && (
-        <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
-          <label htmlFor="re-enrollment-grade" className="text-base font-semibold text-primary">
-            Course Selection For
-          </label>
-          <select
-            id="re-enrollment-grade"
-            value={String(data.standardId)}
-            onChange={(event) => handleReEnrollmentGradeChange(event.target.value)}
-            disabled={busy || reEnrollmentGradeLocked}
-            className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-black disabled:opacity-60"
-          >
-            {reEnrollmentGrades.map((grade) => (
-              <option key={grade.id} value={String(grade.id)}>
-                {grade.label}
-              </option>
-            ))}
-          </select>
-        </div>
+      {reEnrollment && (showExtraCoursesToggle || reEnrollmentGrades?.length > 0) && (
+        <h2 className={`mb-1 flex items-center justify-center gap-2 text-center text-xl font-bold md:text-2xl ${showExtraCoursesToggle ? "text-[#3fa43c]" : "text-black"}`}>
+          {showExtraCoursesToggle && <CheckCircle2 className="h-5 w-5 shrink-0 md:h-6 md:w-6 stroke-3" aria-hidden="true" />}
+          <span className="inline">{showExtraCoursesToggle ? "Course Selection Completed" : "Course Selection"}</span>
+        </h2>
       )}
 
       
@@ -1146,7 +1150,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           <div className={`flex items-center gap-2 rounded-lg py-1.5 px-2.5 bg-[#e6f3ff] ${gradeBand === "elementary" || centerGradeHeader ? "mx-auto" : ""}`}>
             <span className="inline-flex items-center gap-2 text-xs font-semibold text-black">
               <GraduationCap className="h-4 w-4 text-primary" />
-              {data.standardName}
+              {gradeSelect ?? data.standardName}
             </span>
             {!reEnrollment && (
             <button

@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { CreditCard } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { FullScreenLoader } from "@/components/common/Loader";
-import { ActionButton, PageTitle } from "@/components/re-enrollment/ReEnrollmentParts";
+import { ActionButton } from "@/components/re-enrollment/ReEnrollmentParts";
 import { CustomPlanTable, FeePaymentPlans } from "@/components/student-enroll/FeePaymentPlans";
 import { buildPlanOptions } from "@/components/student-enroll/Stage4ReviewPayment";
 import {
@@ -90,7 +90,8 @@ function PaymentScreen() {
   const currentPayMode = currentOption?.variants ? currentVariant : currentOption?.mode;
 
   const next = nextStepAfter(steps, STEP_PAYMENT);
-  const previous = customPlan ? null : previousStepBefore(steps, STEP_PAYMENT);
+  // First step: Back returns to the option screen (the custom plan has no Back).
+  const previous = customPlan ? null : previousStepBefore(steps, STEP_PAYMENT) ?? "OPTION";
   const payNow = customPlan || next === STEP_COURSE_SELECTION;
   const busy = choosePlan.isPending || fetchReview.isPending || gateway.busy;
 
@@ -131,11 +132,12 @@ function PaymentScreen() {
 
   return (
     <>
-      <PageTitle icon={CreditCard}>
-        <span className="text-primary">Payment for </span>
-        <b>{option.grade?.name}</b>
-        {option.learningProgramLabel && <span className="ml-2 rounded bg-primary px-2 text-sm text-white">{option.learningProgramLabel}</span>}
-      </PageTitle>
+      <div className="mb-4 mt-2 text-center">
+        <h1 className="text-1.5xl font-extrabold text-black sm:text-2xl">
+          Payment for <span className="text-primary">{option.grade?.name}</span>
+        </h1>
+        {option.learningProgramLabel && <p className="mt-1 text-sm font-semibold text-primary">{option.learningProgramLabel}</p>}
+      </div>
 
       {!data ? (
         <div className="rounded-[15px] bg-white p-6 shadow-lg">
@@ -180,9 +182,9 @@ function PaymentScreen() {
           {payNow && next === STEP_COURSE_SELECTION && <p className="mt-3 text-center text-sm text-slate-600">You will choose your courses after the payment.</p>}
           <div className="mt-4 flex items-center justify-between gap-3">
             {previous ? (
-              <ActionButton className="px-6" disabled={busy} onClick={() => router.push(reEnrollmentStepPath(school, previous))}>
+              <Button type="button" variant="outline" className="cursor-pointer" disabled={busy} onClick={() => router.push(reEnrollmentStepPath(school, previous))}>
                 Back
-              </ActionButton>
+              </Button>
             ) : (
               <span />
             )}
