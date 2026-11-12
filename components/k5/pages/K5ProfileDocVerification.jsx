@@ -24,7 +24,7 @@ function StatusBar({ status }) {
   const allVerified = unverifiedRequiredCount === 0;
   return (
     <div
-      className={`flex flex-wrap items-center gap-3 rounded-2xl border-[3px] px-4 py-3 text-sm font-black ${allVerified ? "border-k5-ac bg-k5-act text-k5-acx" : "border-amber-400 bg-amber-50 text-amber-700"}`}
+      className={`flex flex-wrap items-center gap-3 k5m-r12 rounded-2xl border-[3px] px-4 py-3 text-sm font-black ${allVerified ? "border-k5-ac bg-k5-act text-k5-acx" : "border-amber-400 bg-amber-50 text-amber-700"}`}
     >
       {allVerified ? (
         <ShieldCheck className="h-5 w-5 flex-none" />
@@ -80,7 +80,7 @@ export function DocumentVerification() {
     <div className="flex flex-col gap-3.5">
       <StatusBar status={status} />
       {/* Desktop table */}
-      <div className="hidden overflow-x-auto rounded-2xl border-[3px] border-k5-line md:block">
+      <div className="hidden overflow-x-auto k5m-r12 rounded-2xl border-[3px] border-k5-line md:block">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b-[3px] border-k5-line bg-k5-soft text-left font-black text-k5-mut">
@@ -138,7 +138,7 @@ export function DocumentVerification() {
           const verified = String(doc.isDocumentVerified).toUpperCase() === "Y";
           const skipped = String(doc.isVerificationRequired).toUpperCase() === "N";
           return (
-            <div key={doc.id} className="flex flex-col gap-2 rounded-2xl border-[3px] border-k5-line bg-k5-card p-4">
+            <div key={doc.id} className="flex flex-col gap-2 k5m-r12 rounded-2xl border-[3px] border-k5-line bg-k5-card p-4">
               <div className="flex items-start justify-between gap-2">
                 <span className="text-base font-extrabold text-k5-ink">{doc.fileOriginalName || doc.documentName || "—"}</span>
                 {skipped ? (

@@ -1,6 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 
 /*
  * Mockup .pfund / .pfotp / .pfotpr / .pfverd: under a saved phone number or e-mail, "Send OTP" (and for a phone with
@@ -59,14 +60,15 @@ function CodeRow({ otp, fieldId, channel, label }) {
  * fieldId: the existing page's id (phoneNumber, altEmailId, fatherPhoneNumber, ...); saved: the value on screen is the
  * saved one and not empty; verified / whatsAppVerified from the profile; whatsApp: WhatsApp is ticked and saved.
  */
-export function OtpControl({ otp, fieldId, label, saved, verified, whatsApp, whatsAppVerified }) {
+export function OtpControl({ otp, fieldId, label, saved, verified, whatsApp, whatsAppVerified, inline = false }) {
+  const { isMiddle } = useDashboardContext();
   if (!otp) return null;
   // profileViewNew.js updateProfileContactVerificationUI / updateProfileWhatsappVerificationUI: a WhatsApp check counts
   // only while WhatsApp is ticked, and then also verifies the number.
   const waVerified = Boolean(whatsApp && whatsAppVerified);
   if (verified || waVerified) {
     return (
-      <div className="flex flex-wrap gap-1.5">
+      <div className={`flex flex-wrap gap-1.5 ${inline || isMiddle ? "ms-auto" : ""}`}>
         <VerifiedMark />
         {waVerified && <VerifiedMark>WhatsApp verified</VerifiedMark>}
       </div>
@@ -77,9 +79,10 @@ export function OtpControl({ otp, fieldId, label, saved, verified, whatsApp, wha
   // With WhatsApp ticked the existing page offers only the WhatsApp code (the SMS button is hidden).
   const channels = email ? ["EMAIL"] : whatsApp ? ["WHATSAPP"] : ["PHONE"];
   const sent = channels.filter((ch) => otp.state(fieldId, ch).sent);
+  // inline (Grade 6–8, mockup .pfund): the button sits at the right end of the WhatsApp row; the code row wraps below it.
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className={inline ? "contents" : "flex flex-col gap-2"}>
+      <div className={`flex flex-wrap items-center gap-2 ${inline || isMiddle ? "ms-auto justify-end" : ""}`}>
         {channels.map((ch) => (
           <button key={ch} type="button" onClick={() => otp.send(fieldId, ch)} disabled={Boolean(otp.busy)} className={OTP_BTN}>
             {otp.busy === `${fieldId}:${ch}:send` ? "Sending…" : ch === "WHATSAPP" ? "WhatsApp OTP" : "Send OTP"}
@@ -88,7 +91,9 @@ export function OtpControl({ otp, fieldId, label, saved, verified, whatsApp, wha
         {sent.length > 0 && <span className="text-[13px] font-black text-k5-mut">Code sent</span>}
       </div>
       {sent.map((ch) => (
-        <CodeRow key={ch} otp={otp} fieldId={fieldId} channel={ch} label={label} />
+        <div key={ch} className={inline ? "basis-full" : "contents"}>
+          <CodeRow otp={otp} fieldId={fieldId} channel={ch} label={label} />
+        </div>
       ))}
     </div>
   );

@@ -158,26 +158,43 @@ export function K5PlanSkeleton({ items = 3 }) {
 /** My Profile: the hero card, the section list and a grid of fields. */
 export function K5ProfileSkeleton() {
   return (
-    <K5Loading label="Loading your profile" className="flex flex-col gap-4">
-      <div className={`${K5_CARD} flex flex-wrap items-center gap-5 p-5`}>
-        <K5Sk className="h-24 w-24 flex-none rounded-full" />
-        <div className="flex flex-[1_1_260px] flex-col gap-2.5">
-          <K5Sk className="h-9 w-2/3" />
-          <K5Sk className="h-5 w-1/2" />
-          <K5Sk className="h-4 w-full max-w-[460px] rounded-full" />
+    <K5Loading label="Loading your profile" className="flex flex-col gap-[18px]">
+      <div className={`${K5_CARD} flex flex-wrap items-center gap-[18px] px-[22px] py-[18px]`}>
+        <K5Sk className="h-[88px] w-[88px] flex-none rounded-full" />
+        <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-2.5">
+          <K5Sk className="h-9 w-2/3 max-w-[360px]" />
+          <K5Sk className="h-5 w-64 max-w-full" />
+          <K5Sk className="h-4 w-full max-w-[440px] rounded-full" />
         </div>
-        <K5Sk className="h-[52px] w-36 rounded-full" />
+        <div className="flex gap-2.5">
+          <K5Sk className="h-12 w-28 rounded-full" />
+          <K5Sk className="h-12 w-36 rounded-full" />
+        </div>
       </div>
-      <div className="flex items-start gap-4 max-[900px]:flex-col">
-        <div className={`${K5_CARD} flex w-[300px] flex-none flex-col gap-2 p-2.5 max-[900px]:w-full`}>
-          {Array.from({ length: 6 }, (_, i) => (
-            <K5Sk key={i} className="h-14 w-full rounded-2xl" />
+      <div className="grid grid-cols-[270px_minmax(0,1fr)] items-start gap-[18px] max-[900px]:grid-cols-1">
+        <div className={`${K5_CARD} flex flex-col gap-1 p-2.5 max-[900px]:flex-row max-[900px]:overflow-hidden`}>
+          {Array.from({ length: 8 }, (_, i) => (
+            <div key={i} className="flex min-h-14 items-center gap-2.5 rounded-2xl px-2.5 py-1.5 max-[900px]:w-[200px] max-[900px]:flex-none">
+              <K5Sk className="h-[30px] w-[30px] flex-none rounded-full" />
+              <K5Sk className="h-4 flex-1" />
+              <K5Sk className="h-[30px] w-[30px] flex-none rounded-full" />
+            </div>
           ))}
         </div>
-        <div className={`${K5_CARD} grid min-w-0 flex-1 grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 p-5 max-[900px]:w-full`}>
-          {Array.from({ length: 9 }, (_, i) => (
-            <K5Sk key={i} className="h-[50px] w-full rounded-[14px]" />
-          ))}
+        <div className={`${K5_CARD} flex min-w-0 flex-col gap-4 px-[22px] py-5 max-[600px]:px-4`}>
+          <div className="flex items-center gap-3">
+            <K5Sk className="h-11 w-11 flex-none rounded-[14px]" />
+            <K5Sk className="h-8 w-64 max-w-full" />
+          </div>
+          <div className="grid grid-cols-3 gap-x-4 gap-y-[18px] max-[900px]:grid-cols-2 max-[600px]:grid-cols-1">
+            {Array.from({ length: 9 }, (_, i) => (
+              <K5Sk key={i} className="h-[50px] w-full rounded-[14px]" />
+            ))}
+          </div>
+          <div className="flex justify-between gap-2.5 border-t-2 border-k5-line pt-4">
+            <K5Sk className="h-12 w-28 rounded-full" />
+            <K5Sk className="h-12 w-28 rounded-full" />
+          </div>
         </div>
       </div>
     </K5Loading>

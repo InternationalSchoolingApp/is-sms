@@ -247,3 +247,11 @@
     border-radius: 14px;
   }
 }
+
+/* My Profile (mockup .pfnb / .pfob / .pfck / .pfwdcard): the 16px panels are 12px and the 20px withdraw card is 14px. */
+[data-k5-band="middle"] .k5m-r12 {
+  border-radius: 12px;
+}
+[data-k5-band="middle"] .k5m-r14 {
+  border-radius: 14px;
+}
