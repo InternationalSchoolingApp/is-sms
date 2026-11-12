@@ -44,7 +44,7 @@ function ClassChip({ event, courseRegistry, clue, onOpen }) {
         <span className="text-xs font-extrabold text-k5-mut">{timeLabel(event)}</span>
       </span>
       {event.k5Status === "done" && <Check className="h-4 w-4 flex-none text-k5-acx" strokeWidth={3} aria-label="Done" />}
-      {live && <span className="flex-none rounded-full px-1.5 py-0.5 text-[11px] font-black text-white" style={{ background: C.liveText }}>LIVE</span>}
+      {live && <span className="flex-none animate-pulse rounded-full px-1.5 py-0.5 text-[11px] font-black text-white" style={{ background: C.liveText }}>LIVE</span>}
     </button>
   );
 }

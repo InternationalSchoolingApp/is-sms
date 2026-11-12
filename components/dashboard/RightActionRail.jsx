@@ -21,8 +21,9 @@ import { K5DiaryPanel } from "@/components/k5/panels/K5DiaryPanel";
  * real backend data and open their own slide-in panel. Talk to Us opens a
  * signed sign-in link into the chat app directly instead of a panel.
  * variant="k5": the Grade K–5 look (Messages / News / Notices / Teacher), same data and panels.
+ * middle (with variant="k5"): the Grade 6–8 "Balanced" rail — one blue tint / rim for all four buttons.
  */
-export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueId, userRole, email, schoolName, variant = "default" }) {
+export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueId, userRole, email, schoolName, variant = "default", middle = false }) {
   const queryClient = useQueryClient();
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const [newsOpen, setNewsOpen] = useState(false);
@@ -163,6 +164,7 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diaryUrl, userId]);
 
+  const cut = (k5Colour) => (middle ? "#DCEEFF" : k5Colour);
   // Same data and props either way; the k5 variant swaps in the K–5 drawer look.
   const AnnouncementsView = variant === "k5" ? K5AnnouncementsPanel : AnnouncementsPanel;
   const NewsView = variant === "k5" ? K5NewsPanel : NewsPanel;
@@ -190,16 +192,16 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
       {variant === "k5" ? (
         // Mockup rail: a column of pastel buttons on the right; below 760px a bottom tab bar.
         <div className="k5-rail fixed right-[calc(max(20px,(100vw-100%)/0)+0px)] top-[calc(var(--maintenance-banner-h,0px)+100px)] z-20 flex w-20 flex-col items-center gap-4 max-[760px]:inset-x-0 max-[760px]:bottom-0 max-[760px]:top-auto max-[760px]:z-40 max-[760px]:w-full max-[760px]:flex-row max-[760px]:items-start max-[760px]:justify-around max-[760px]:gap-0 max-[760px]:border-t-[3px] max-[760px]:border-k5-line max-[760px]:bg-k5-card max-[760px]:px-1 max-[760px]:pb-[max(8px,env(safe-area-inset-bottom))] max-[760px]:pt-2.5">
-          <K5RailButton label="Talk to us" pin="msg" onClick={openTalkToUs} badge={unseenChatMessages} tint="#C3F0DC" rim="#0E8F67" ink="#0B6B4D">
-            <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path fill="#0B2447" d="M9.5 3C5.36 3 2 5.69 2 9c0 1.6.8 3.06 2.1 4.13L3 16.5l3.6-1.7c.9.27 1.88.42 2.9.42 4.14 0 7.5-2.76 7.5-6.1S13.64 3 9.5 3z" /><path fill="#0B2447" stroke="#C3F0DC" strokeWidth="1.6" d="M15.5 9.3c3.59 0 6.5 2.3 6.5 5.1 0 1.36-.68 2.58-1.8 3.5L21.2 21l-3.4-1.42c-.72.2-1.5.32-2.3.32-3.59 0-6.5-2.3-6.5-5.2s2.91-5.4 6.5-5.4z" /></svg>
+          <K5RailButton middle={middle} label="Talk to us" pin="msg" onClick={openTalkToUs} badge={unseenChatMessages} tint="#C3F0DC" rim="#0E8F67" ink="#0B6B4D">
+            <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path fill="#0B2447" d="M9.5 3C5.36 3 2 5.69 2 9c0 1.6.8 3.06 2.1 4.13L3 16.5l3.6-1.7c.9.27 1.88.42 2.9.42 4.14 0 7.5-2.76 7.5-6.1S13.64 3 9.5 3z" /><path fill="#0B2447" stroke={cut("#C3F0DC")} strokeWidth="1.6" d="M15.5 9.3c3.59 0 6.5 2.3 6.5 5.1 0 1.36-.68 2.58-1.8 3.5L21.2 21l-3.4-1.42c-.72.2-1.5.32-2.3.32-3.59 0-6.5-2.3-6.5-5.2s2.91-5.4 6.5-5.4z" /></svg>
           </K5RailButton>
-          <K5RailButton label="Announcement" onClick={() => setAnnouncementsOpen(true)} badge={newAnnouncementCount} tint="#D3E7FF" rim="#1477F8" ink="#0E5BC2">
+          <K5RailButton middle={middle} label="Announcement" onClick={() => setAnnouncementsOpen(true)} badge={newAnnouncementCount} tint="#D3E7FF" rim="#1477F8" ink="#0E5BC2">
             <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path fill="#0B2447" d="M2.5 9.6A1.6 1.6 0 0 1 4.1 8H8l7.3-4.6c.66-.42 1.5.06 1.5.84v13.52c0 .78-.84 1.26-1.5.84L8 14H7.6l.86 4.3a1 1 0 0 1-.98 1.2H5.9a1 1 0 0 1-.97-.77L3.9 14h.2A1.6 1.6 0 0 1 2.5 12.4z" /><rect x="18.4" y="9.2" width="3.2" height="3.6" rx="1.6" fill="#0B2447" /></svg>
           </K5RailButton>
-          <K5RailButton label="News" onClick={() => setNewsOpen(true)} badge={totalNews} tint="#FFE59E" rim="#F2B705" ink="#8A5A00">
-            <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path fill="#0B2447" d="M6.5 4H20a1 1 0 0 1 1 1v13a2 2 0 0 1-2 2H5a3 3 0 0 1-3-3V8.5a1 1 0 0 1 1-1h2.5V5a1 1 0 0 1 1-1z" /><path d="M5.5 8.6V17a1 1 0 0 1-2 0V8.6" fill="none" stroke="#FFE59E" strokeWidth="1.3" /><rect x="8" y="7.2" width="5" height="4.2" rx=".6" fill="#FFE59E" /><rect x="9.2" y="8.4" width="2.6" height="1.8" fill="#0B2447" /><rect x="14.4" y="7.4" width="4.2" height="1.4" rx=".7" fill="#FFE59E" /><rect x="14.4" y="9.9" width="4.2" height="1.4" rx=".7" fill="#FFE59E" /><rect x="8" y="13" width="10.6" height="1.4" rx=".7" fill="#FFE59E" /><rect x="8" y="15.6" width="10.6" height="1.4" rx=".7" fill="#FFE59E" /></svg>
+          <K5RailButton middle={middle} label="News" onClick={() => setNewsOpen(true)} badge={totalNews} tint="#FFE59E" rim="#F2B705" ink="#8A5A00">
+            <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path fill="#0B2447" d="M6.5 4H20a1 1 0 0 1 1 1v13a2 2 0 0 1-2 2H5a3 3 0 0 1-3-3V8.5a1 1 0 0 1 1-1h2.5V5a1 1 0 0 1 1-1z" /><path d="M5.5 8.6V17a1 1 0 0 1-2 0V8.6" fill="none" stroke={cut("#FFE59E")} strokeWidth="1.3" /><rect x="8" y="7.2" width="5" height="4.2" rx=".6" fill={cut("#FFE59E")} /><rect x="9.2" y="8.4" width="2.6" height="1.8" fill="#0B2447" /><rect x="14.4" y="7.4" width="4.2" height="1.4" rx=".7" fill={cut("#FFE59E")} /><rect x="14.4" y="9.9" width="4.2" height="1.4" rx=".7" fill={cut("#FFE59E")} /><rect x="8" y="13" width="10.6" height="1.4" rx=".7" fill={cut("#FFE59E")} /><rect x="8" y="15.6" width="10.6" height="1.4" rx=".7" fill={cut("#FFE59E")} /></svg>
           </K5RailButton>
-          <K5RailButton
+          <K5RailButton middle={middle}
             label="Student's Diary"
             onClick={() => {
               setDiaryOpen(true);
@@ -210,7 +212,7 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
             rim="#9C6BF0"
             ink="#6A3FC4"
           >
-            <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="2.5" width="13.5" height="19" rx="2.2" fill="#0B2447" /><rect x="17.2" y="5.4" width="2.8" height="2.6" rx="1" fill="#0B2447" /><rect x="17.2" y="10.7" width="2.8" height="2.6" rx="1" fill="#0B2447" /><rect x="17.2" y="16" width="2.8" height="2.6" rx="1" fill="#0B2447" /><circle cx="11.25" cy="9.6" r="2.6" fill="#E8DAFF" /><path d="M7 17.4c0-2.4 1.9-3.9 4.25-3.9s4.25 1.5 4.25 3.9z" fill="#E8DAFF" /></svg>
+            <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="2.5" width="13.5" height="19" rx="2.2" fill="#0B2447" /><rect x="17.2" y="5.4" width="2.8" height="2.6" rx="1" fill="#0B2447" /><rect x="17.2" y="10.7" width="2.8" height="2.6" rx="1" fill="#0B2447" /><rect x="17.2" y="16" width="2.8" height="2.6" rx="1" fill="#0B2447" /><circle cx="11.25" cy="9.6" r="2.6" fill={cut("#E8DAFF")} /><path d="M7 17.4c0-2.4 1.9-3.9 4.25-3.9s4.25 1.5 4.25 3.9z" fill={cut("#E8DAFF")} /></svg>
           </K5RailButton>
         </div>
       ) : (
@@ -273,7 +275,13 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
 
 // Grade K–5 rail button (Playful.dc.html .rail): 62px pastel circle on a coloured rim, label
 // under it, red count badge. In the mobile tab bar: a quarter of the width, 46px circle.
-function K5RailButton({ label, onClick, badge, tint, rim, ink, pin, children }) {
+function K5RailButton({ label, onClick, badge, tint, rim, ink, pin, middle, children }) {
+  // Grade 6–8 (Middle.dc.html .rail): every button is the same soft blue circle on a #027FFE rim.
+  if (middle) {
+    tint = "#EEF6FF";
+    rim = "#027FFE";
+    ink = "#0B2447";
+  }
   return (
     <button
       type="button"
@@ -292,7 +300,7 @@ function K5RailButton({ label, onClick, badge, tint, rim, ink, pin, children }) 
       {badge ? (
         <span
           aria-hidden="true"
-          className="absolute -right-0.5 -top-1 flex h-[30px] min-w-[30px] items-center justify-center rounded-full border-[3px] border-k5-card bg-k5-red px-1.5 text-[13px] font-black text-white max-[760px]:-top-1.5 max-[760px]:right-[calc(50%-36px)] max-[760px]:h-6 max-[760px]:min-w-6 max-[760px]:border-2 max-[760px]:px-[5px] max-[760px]:text-xs"
+          className="k5-rail-badge absolute -right-0.5 -top-1 flex h-[30px] min-w-[30px] items-center justify-center rounded-full border-[3px] border-k5-card bg-k5-red px-1.5 text-[13px] font-black text-white max-[760px]:-top-1.5 max-[760px]:right-[calc(50%-36px)] max-[760px]:h-6 max-[760px]:min-w-6 max-[760px]:border-2 max-[760px]:px-[5px] max-[760px]:text-xs"
         >
           {badge}
         </span>

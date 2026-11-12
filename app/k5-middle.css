@@ -1,0 +1,238 @@
+/*
+ * Grade 6–8 ("Middle", "Balanced" look) skin of the K–5 dashboard.
+ * Source: D:\Workspace\Grade 6–8 dashboard\Middle.dc.html — the same pages, dialogs and logic as
+ * Playful.dc.html, restyled: 1.5px borders (not 3px), soft two-layer shadows (not hard 0 6px 0
+ * offsets), smaller radii, Outfit + DM Sans, and the #027FFE blue palette.
+ *
+ * The K–5 components are reused as they are. useK5ThemeProps() adds data-k5-band="middle" next to
+ * .theme-k5 (also on dialogs portalled out of the shell), and everything below only applies under
+ * that attribute, so the K–5 look is untouched. Imported between k5-theme.css and appearance.css
+ * (globals.css): the favourite-colour / colour-blind variants in appearance.css come later and keep
+ * winning over the base tokens here; the night block below beats the K–5 night values but not the
+ * night + favourite-colour combinations.
+ */
+
+/* ── Tokens (mockup .app) ─────────────────────────────────────────── */
+.theme-k5[data-k5-band="middle"] {
+  --k5-brand: #027ffe;
+  --k5-ac: #027ffe;
+  --k5-acd: #0057b8;
+  --k5-act: #f2f8ff;
+  --k5-acl: #c7e1ff;
+  --k5-acx: #0057b8;
+  --k5-ink: #171b2e;
+  --k5-page: #f8fbfe;
+  --k5-soft: #f3f6fd;
+  --k5-line: #d9e6f5;
+  /* Balanced look: the tile tints are all the same soft blue. */
+  --k5-tT: #e6f2ff;
+  --k5-tI: #0068d6;
+  --k5-tX: #0057b8;
+  --k5-oT: #e6f2ff;
+  --k5-oI: #0068d6;
+  --k5-pT: #e6f2ff;
+  --k5-pI: #0068d6;
+  --k5-vT: #e6f2ff;
+  --k5-vI: #0068d6;
+  --k5-vX: #0057b8;
+  --k5-mT: #e6f2ff;
+  --k5-mI: #0068d6;
+  --k5-bT: #eef4ff;
+  --k5-bI: #2563eb;
+  --k5-sLaI: #027ffe;
+  --k5-sLaT: #f2f8ff;
+  --k5-sMaI: #027ffe;
+  --k5-sMaT: #f2f8ff;
+  --k5-sScI: #027ffe;
+  --k5-sScT: #f2f8ff;
+  --k5-sArI: #027ffe;
+  --k5-sArT: #f2f8ff;
+  --k5-sCsI: #027ffe;
+  --k5-sCsT: #f2f8ff;
+  --k5-c-live: #3b9bff;
+  --k5-c-live-t: #e6f2ff;
+  --k5-c-live-x: #0068d6;
+  /* Fonts (loaded in k5Fonts.js). */
+  --k5-fd: var(--font-outfit), "Baloo Bhaijaan 2", sans-serif;
+  --k5-fb: var(--font-dm-sans), "Baloo Bhaijaan 2", sans-serif;
+  /* The soft shadows the structural rules below use. */
+  --k5m-card: 0 1px 2px rgba(23, 27, 46, 0.05), 0 6px 18px rgba(23, 27, 46, 0.06);
+  --k5m-pop: 0 18px 44px rgba(23, 27, 46, 0.18);
+}
+
+.theme-k5.dark[data-k5-band="middle"] {
+  --k5-brand: #7dbdff;
+  --k5-page: #0c1424;
+  --k5-card: #172338;
+  --k5-ink: #f1f4ff;
+  --k5-mut: #b9c3dd;
+  --k5-soft: #212e48;
+  --k5-line: #33425e;
+  --k5-act: #12345e;
+  --k5-acl: #1f5a99;
+  --k5-acx: #b3d8ff;
+  --k5-tT: #12345e;
+  --k5-tI: #7dbdff;
+  --k5-tX: #b3d8ff;
+  --k5-oT: #12345e;
+  --k5-oI: #7dbdff;
+  --k5-pT: #12345e;
+  --k5-pI: #7dbdff;
+  --k5-vT: #12345e;
+  --k5-vI: #7dbdff;
+  --k5-vX: #b3d8ff;
+  --k5-mT: #12345e;
+  --k5-mI: #7dbdff;
+  --k5-bT: #1e2f57;
+  --k5-bI: #7dbdff;
+  --k5-sLaI: #7dbdff;
+  --k5-sLaT: #12345e;
+  --k5-sMaI: #7dbdff;
+  --k5-sMaT: #12345e;
+  --k5-sScI: #7dbdff;
+  --k5-sScT: #12345e;
+  --k5-sArI: #7dbdff;
+  --k5-sArT: #12345e;
+  --k5-sCsI: #7dbdff;
+  --k5-sCsT: #12345e;
+  --k5-c-live: #7dbdff;
+  --k5-c-live-t: #1e2f57;
+  --k5-c-live-x: #1a7fe6;
+  --k5m-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.25);
+  --k5m-pop: 0 18px 44px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Structure: thin borders, soft shadows, smaller radii ─────────────
+ * The K–5 components carry these as Tailwind arbitrary values (border-[3px], rounded-[26px],
+ * shadow-[0_6px_0_…]); plain (unlayered) rules win over those utilities. Only exact class names
+ * are matched, so responsive variants (max-[760px]:…) are left alone. */
+:is([data-k5-band="middle"], [data-k5-band="middle"] *) {
+  /* 3px → 1.5px (mockup: every card, tile, input and button). */
+  &.border-\[3px\] {
+    border-width: 1.5px;
+  }
+  &.border-t-\[3px\] {
+    border-top-width: 1.5px;
+  }
+  &.border-b-\[3px\] {
+    border-bottom-width: 1.5px;
+  }
+  &.border-r-\[3px\] {
+    border-right-width: 1.5px;
+  }
+  &.border-y-\[3px\] {
+    border-top-width: 1.5px;
+    border-bottom-width: 1.5px;
+  }
+
+  /* The class / activity / assignment cards and a few tiles set their border inline (style="border: 3px solid …"),
+     which no utility class can reach: !important beats inline styles. */
+  &[style*="border: 3px"],
+  &[style*="border: 2px"] {
+    border-width: 1.5px !important;
+  }
+  &[style*="box-shadow: 0 6px 0"],
+  &[style*="box-shadow: 0 5px 0"] {
+    box-shadow: var(--k5m-card) !important;
+  }
+
+  /* Radii: cards 26 → 18, tiles 18 → 12, controls 14 → 10 (mockup values). */
+  &.rounded-\[34px\],
+  &.rounded-\[32px\] {
+    border-radius: 20px;
+  }
+  &.rounded-\[28px\],
+  &.rounded-\[26px\],
+  &.rounded-\[24px\],
+  &.rounded-3xl {
+    border-radius: 18px;
+  }
+  &.rounded-\[22px\],
+  &.rounded-\[20px\] {
+    border-radius: 16px;
+  }
+  &.rounded-\[18px\] {
+    border-radius: 12px;
+  }
+  &.rounded-\[14px\] {
+    border-radius: 10px;
+  }
+  &.rounded-\[10px\] {
+    border-radius: 8px;
+  }
+  &.rounded-t-\[28px\] {
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+  }
+  &.rounded-b-\[28px\] {
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+  }
+  &.rounded-t-\[14px\] {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+  &.rounded-r-\[14px\] {
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+  }
+
+  /* Hard offset shadows → mockup's soft ones. Order matters (later rules are more specific cases):
+     any hard offset shadow with a literal colour first, then accent / green buttons, then cards, then pop-ups. */
+  &[class*="shadow-[0_3px_0_"],
+  &[class*="shadow-[0_4px_0_"],
+  &[class*="shadow-[0_5px_0_"],
+  &[class*="shadow-[0_6px_0_"] {
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.22);
+  }
+  &[class*="shadow-[0_3px_0_var(--k5-acd)]"],
+  &[class*="shadow-[0_4px_0_var(--k5-acd)]"],
+  &[class*="shadow-[0_5px_0_var(--k5-acd)]"],
+  &[class*="shadow-[0_6px_0_var(--k5-acd)]"] {
+    box-shadow: 0 2px 0 var(--k5-acd);
+  }
+  &[class*="shadow-[0_4px_0_var(--k5-grnD)]"],
+  &[class*="shadow-[0_5px_0_var(--k5-grnD)]"],
+  &[class*="shadow-[0_6px_0_var(--k5-grnD)]"] {
+    box-shadow: 0 2px 0 var(--k5-grnD);
+  }
+  &[class*="shadow-[0_4px_0_var(--rim)]"],
+  &[class*="shadow-[0_6px_0_var(--rim)]"] {
+    box-shadow: 0 2px 0 var(--rim);
+  }
+  &[class*="shadow-[0_4px_0_var(--k5-line)]"],
+  &[class*="shadow-[0_5px_0_var(--k5-line)]"],
+  &[class*="shadow-[0_6px_0_var(--k5-line)]"],
+  &[class*="shadow-[0_4px_0_var(--k5-acl)]"],
+  &[class*="shadow-[0_6px_0_var(--k5-acl)]"],
+  &.shadow-k5-chunky,
+  &.shadow-k5-btn {
+    box-shadow: var(--k5m-card);
+  }
+  &[class*="shadow-[0_6px_0_var(--k5-ink)]"],
+  &[class*="shadow-[0_8px_0_var(--k5-ink)]"],
+  &[class*="shadow-[0_8px_0_var(--k5-acd)"] {
+    box-shadow: var(--k5m-pop);
+  }
+}
+
+/* Side rail (k5-theme.css): the open / hovered rail's hard line shadow becomes soft too. */
+[data-k5-band="middle"] .k5-side[data-open="true"] {
+  box-shadow: var(--k5m-card), 0 18px 48px rgba(10, 16, 34, 0.28);
+}
+@media (hover: hover) and (min-width: 761px) {
+  [data-k5-band="middle"] .k5-side:hover {
+    box-shadow: var(--k5m-card), 0 18px 48px rgba(10, 16, 34, 0.28);
+  }
+}
+
+/* Right action rail (mockup .rail): the count badge is Outfit 15px / 700 with a soft shadow (desktop; the
+   phone tab bar keeps its own smaller badge). */
+@media (min-width: 761px) {
+  [data-k5-band="middle"] .k5-rail-badge {
+    font-family: var(--k5-fd);
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(11, 36, 71, 0.18);
+  }
+}

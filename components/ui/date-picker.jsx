@@ -12,8 +12,10 @@ import { Calendar } from "@/components/ui/calendar";
  * primitives, no new shadcn install needed.
  *
  * `height` is the trigger's Tailwind height class (e.g. "h-10"); defaults to "h-12".
+ * Optional: `disabledDates` (extra react-day-picker matchers, e.g. blackout Date[]) on top of the from/to range,
+ * and `defaultMonth` (month shown when nothing is picked; defaults to `toDate`, as before).
  */
-export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDate, error, disabled = false, height = "h-12", autoOpen = false }) {
+export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDate, error, disabled = false, height = "h-12", autoOpen = false, disabledDates, defaultMonth }) {
   const [open, setOpen] = useState(false);
   useEffect(() => { if (autoOpen) setOpen(true); }, [autoOpen]);
   const floated = open || Boolean(value);
@@ -56,8 +58,8 @@ export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDat
             captionLayout="dropdown"
             startMonth={fromDate}
             endMonth={toDate}
-            disabled={{ before: fromDate, after: toDate }}
-            defaultMonth={value || toDate}
+            disabled={disabledDates ? [{ before: fromDate, after: toDate }, ...[].concat(disabledDates)] : { before: fromDate, after: toDate }}
+            defaultMonth={value || defaultMonth || toDate}
           />
         </PopoverContent>
       </Popover>

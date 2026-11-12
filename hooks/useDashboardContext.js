@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import { useSession } from "@/components/providers/AuthSessionProvider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
-import { getDashboardChatLinks, getDashboardMenu, getStudentDashboardDetails, getStudentDemoData } from "@/services/dashboardApi";
+import { getDashboardChatLinks, getDashboardMenu, getStudentDashboardDetails, getStudentDemoData, getStudentMenuFlags } from "@/services/dashboardApi";
 import { applyStudentNavRules, mapBackendMenu } from "@/utils/dashboardNav";
-import { bandFromStandardId, isK5LearningProgram, isPreKStandard, isSelfStudyProgram, normalizeGradeBand } from "@/utils/gradeBand";
+import { bandFromStandardId, isK5LearningProgram, isMiddleDashboardOn, isPreKStandard, isSelfStudyProgram, normalizeGradeBand } from "@/utils/gradeBand";
 import { isDummyStudentMode } from "@/utils/paymentGatewayChecks";
 import { createDummyStudent } from "@/utils/dummyStudent";
 import { expireSession } from "@/utils/logout";
@@ -55,8 +55,9 @@ function parseGradeCache(raw) {
     const value = JSON.parse(raw);
     const gradeBand = normalizeGradeBand(value?.gradeBand);
     if (!gradeBand) return null;
-    const isK5 = value.isK5 === true && gradeBand === "ELEMENTARY";
-    return { gradeBand, isK5, isPreK: isK5 && value.isPreK === true, isSelfStudy: value.isSelfStudy === true };
+    const isMiddle = value.isMiddle === true && gradeBand === "MIDDLE" && isMiddleDashboardOn(false);
+    const isK5 = value.isK5 === true && (gradeBand === "ELEMENTARY" || isMiddle);
+    return { gradeBand, isK5, isMiddle, isPreK: isK5 && !isMiddle && value.isPreK === true, isSelfStudy: value.isSelfStudy === true };
   } catch {
     return null;
   }
@@ -127,14 +128,18 @@ function useResolveGradeBand({ role, session, authenticated }) {
   const registrationType = details?.registrationType ?? null;
   const gradeBand = (dummyEnabled ? null : normalizeGradeBand(details?.gradeBand)) ?? bandFromStandardId(standardId) ?? "MIDDLE";
   const k5DashboardEnabled = dummyEnabled || details?.k5DashboardEnabled === true;
-  const isK5 = gradeBand === "ELEMENTARY" && k5DashboardEnabled && isK5LearningProgram(registrationType);
+  // Grade 6–8 reuses the K–5 dashboard with its own skin (see utils/gradeBand.js isMiddleDashboardOn).
+  const isMiddle = gradeBand === "MIDDLE" && isMiddleDashboardOn(dummyEnabled);
+  const isK5 = (gradeBand === "ELEMENTARY" || isMiddle) && k5DashboardEnabled && isK5LearningProgram(registrationType);
   const fetched = authenticated && search !== null && (dummyEnabled ? !demoRowQuery.isLoading : !detailsQuery.isPending);
 
   const resolved = {
     gradeBand,
     isK5,
+    // Sub-flag of isK5: Grade 6–8 — same components, "Balanced" skin.
+    isMiddle: isK5 && isMiddle,
     // Sub-flag of the K–5 UI: PreK / Nursery (standardId 17) gets the simpler variant (plan 12.8).
-    isPreK: isK5 && isPreKStandard(standardId),
+    isPreK: isK5 && !isMiddle && isPreKStandard(standardId),
     isSelfStudy: typeof details?.isSelfStudy === "boolean" ? details.isSelfStudy : isSelfStudyProgram(registrationType),
     // The token sign-in carries no role id (only the role name); the dashboard details list the user's
     // role modules, each with that role id (needed by the sidebar menu and module rights).
@@ -184,7 +189,7 @@ function useResolveDashboardContext({ role = "student" } = {}) {
   const menuQuery = useQuery({
     queryKey: ["dashboard-menu", role, session?.schoolNumericId, roleId, session?.userId],
     queryFn: async () => {
-      const [dto, details] = await Promise.all([
+      const [dto, details, menuFlagsResp] = await Promise.all([
         getDashboardMenu({
           schoolUUID: session.schoolUUID,
           schoolId: session.schoolNumericId,
@@ -192,10 +197,12 @@ function useResolveDashboardContext({ role = "student" } = {}) {
           userId: session.userId,
         }),
         role === "student" ? queryClient.fetchQuery(studentDashboardDetailsQuery({ schoolUUID: session.schoolUUID, userId: session.userId })) : null,
+        role === "student" ? getStudentMenuFlags({ schoolUUID: session.schoolUUID, studentUserId: session.userId }) : null,
       ]);
       const mapped = mapBackendMenu(dto) ?? [];
+      const menuFlags = menuFlagsResp?.details ?? null;
       const navDetails = { signupType: details?.signupType, signupMode: details?.registrationType };
-      return role === "student" ? applyStudentNavRules(mapped, navDetails, { schoolNumericId: session.schoolNumericId }) : mapped;
+      return role === "student" ? applyStudentNavRules(mapped, navDetails, { schoolNumericId: session.schoolNumericId, menuFlags }) : mapped;
     },
     // Waits for the role id (dashboard details) so the menu is not cached empty.
     enabled: authenticated && Boolean(roleId),

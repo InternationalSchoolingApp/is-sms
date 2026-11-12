@@ -109,16 +109,22 @@ const STUDENT_HIDDEN_SEGMENTS = new Set([
  *     SIGNUP_TYPE. NOT `signupMode` — easy to confuse since both are
  *     enrollment-shaped strings, but they're unrelated fields.
  */
-export function applyStudentNavRules(menu, details = {}, { schoolNumericId } = {}) {
+export function applyStudentNavRules(menu, details = {}, { schoolNumericId, menuFlags } = {}) {
   if (!Array.isArray(menu)) return menu;
 
   const providerId = details.providerId;
   const userStandard = details.userStandard;
   const isBatchProgram = String(details.signupMode || "").toUpperCase() === "BATCH";
   const examSheetUploaded = details.examSheetUploaded === "Y";
-  const transcriptVisible = !details.showTranscriptToStudent || details.showTranscriptToStudent === "Y";
+  const showTranscript = menuFlags?.showTranscriptMenu !== false;
   const isOnlineSignup = String(details.signupType || "").toLowerCase() === "online";
   const reportsAllowed = providerId !== 39 && userStandard !== 8;
+
+  // Menu-visibility flags from student-menu-flags endpoint (null/missing = show all).
+  const showAssignedTeacher = menuFlags?.showAssignedTeacherMenu !== false;
+  const showBookClass = menuFlags?.showBookClassMenu !== false;
+  const showAttendance = menuFlags?.showAttendanceMenu !== false;
+  const buyAndBookLabel = menuFlags?.useBuyAndBookLabel === true;
 
   const isItemVisible = (item) => {
     switch (item.segment) {
@@ -133,9 +139,16 @@ export function applyStudentNavRules(menu, details = {}, { schoolNumericId } = {
         return isBatchProgram && examSheetUploaded;
       case "student-transcript":
       case "parent-student-transcript":
-        return transcriptVisible;
+        return showTranscript;
       case "academic-year-extention":
         return reportsAllowed;
+      case "syllabus-assigned-teacher":
+      case "syllabus-assigned-batch-teacher":
+        return showAssignedTeacher;
+      case "book-a-session":
+        return showBookClass;
+      case "student-attendance-overview":
+        return showAttendance;
       default:
         return true;
     }
@@ -144,6 +157,9 @@ export function applyStudentNavRules(menu, details = {}, { schoolNumericId } = {
   const withLabelOverride = (item) => {
     if ((item.segment === "evaluation-test-form-details" || item.segment === "student-id-card") && schoolNumericId !== 1) {
       return { ...item, label: "Evaluation Test" };
+    }
+    if (item.segment === "student-addon" && buyAndBookLabel) {
+      return { ...item, label: "Buy & Book a Class" };
     }
     return item;
   };
@@ -160,7 +176,7 @@ export function applyStudentNavRules(menu, details = {}, { schoolNumericId } = {
     .map((item) => {
       if (!item.children?.length) return item;
       const children = item.children
-        .filter((c) => !STUDENT_HIDDEN_SEGMENTS.has(c.segment) && (c.segment !== "batch-schedule" || isBatchProgram))
+        .filter((c) => !STUDENT_HIDDEN_SEGMENTS.has(c.segment) && (c.segment !== "batch-schedule" || isBatchProgram) && isItemVisible(c))
         .map(withLabelOverride);
       return { ...item, children };
     });

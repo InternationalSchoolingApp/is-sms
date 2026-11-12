@@ -34,17 +34,20 @@ export function NewsDetailModal({ article, userId, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-black/50 p-4" onClick={onClose}>
       <div className="w-full max-w-[850px] h-8/8 rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <div className=" px-6 bg-white mb-4">
-          <button
+        <div className=" px-6 bg-white mb-4 rounded-2xl pt-3">
+            {/* <button
               type="button"
               onClick={onClose}
               aria-label="Close"
               className="ml-auto my-3 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-red-600 text-white hover:bg-red-700"
             >
               <X className="h-4 w-4" />
+            </button> */}
+            <button type="button" onClick={onClose} aria-label="Close" className="mb-2 flex h-9 w-9 flex-none cursor-pointer items-center justify-center ml-auto rounded-full border-[3px] border-white bg-k5-red">
+              <X className="h-4 w-4 text-white" strokeWidth={3} />
             </button>
 
-          {data.image && <OptimizedImage src={data.image} alt="" width={850} height={480} sizes="(max-width: 850px) 100vw, 850px" className="h-auto w-full object-cover" />}
+          {data.image && <OptimizedImage src={data.image} alt="" width={850} height={480} sizes="(max-width: 850px) 100vw, 850px" className="h-auto w-full object-cover rounded-2xl" />}
 
           <div className="px-5 py-4">
             <div className="flex flex-wrap items-center gap-2 text-xs text-black/50">
@@ -66,7 +69,7 @@ export function NewsDetailModal({ article, userId, onClose }) {
                 href={data.sourceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-block text-xs font-bold text-primary hover:underline"
+                className="mt-3 inline-block text-lg font-bold text-primary hover:underline"
               >
                 View original source →
               </a>

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Check, ChevronDown, Search, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { RequiredAsterisk } from "@/components/common/RequiredAsterisk";
 
 /**
@@ -22,6 +23,19 @@ import { RequiredAsterisk } from "@/components/common/RequiredAsterisk";
  * short fixed lists (gender, grade) should keep the default, non-searchable
  * form.
  */
+/**
+ * K5 look (`k5` prop, used by the K–5 My Profile page): same box as the profile inputs — 50px tall,
+ * 14px radius, 3px border (`k5Border` = the field status colour class, accent while open), K5 card colours.
+ */
+const K5_TRIGGER = "!h-[50px] rounded-[14px] border-[3px] pt-1 font-k5-body text-base font-extrabold text-k5-ink";
+function k5Trigger({ disabled, open, error, k5Border }) {
+  if (disabled) return `${K5_TRIGGER} border-k5-line bg-k5-soft cursor-not-allowed`;
+  return `${K5_TRIGGER} bg-k5-card ${error ? "border-k5-ri" : open ? "border-k5-ac" : k5Border || "border-k5-line"} focus:!border-k5-ac focus-visible:!border-k5-ac`;
+}
+function k5Label(floated, error) {
+  return `bg-k5-card font-k5-body font-black ${floated ? (error ? "!text-k5-ri" : "!text-k5-ac") : "!text-base !text-k5-mut"}`;
+}
+
 export function FloatingLabelSelect({ searchable = false, ...props }) {
   // Dispatches to one of two sibling components rather than branching
   // inline, so neither implementation calls its hooks conditionally
@@ -174,7 +188,7 @@ function MobileSelectSheet({ options, value, onSelect, onClose, searchable }) {
   );
 }
 
-function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, onValueChange, options, error, disabled = false, className = "" }) {
+function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, onValueChange, options, error, disabled = false, className = "", k5 = false, k5Border }) {
   const [open, setOpen] = useState(false);
   const isTouch = useIsTouch();
   const floated = open || Boolean(value);
@@ -188,11 +202,11 @@ function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, 
         )}
         {label && (
           <label
-            className={`pointer-events-none absolute z-10 max-w-[calc(100%-1.5rem)] overflow-hidden text-ellipsis bg-white px-1 transition-all ${
+            className={cn(`pointer-events-none absolute z-10 max-w-[calc(100%-1.5rem)] overflow-hidden text-ellipsis bg-white px-1 transition-all ${
               floated
                 ? `left-3 top-0 -translate-y-1/2 whitespace-nowrap text-xs max-[319px]:text-[10px] ${error ? "text-red-500" : "text-primary"}`
                 : `top-1/2 -translate-y-1/2 text-sm max-[319px]:text-[xs] text-slate-500 ${Icon ? "left-10" : "left-3.5"}`
-            }`}
+            }`, k5 && k5Label(floated, error))}
             // Unfloated, the label sits between the leading icon and the trailing chevron: cap its
             // width so a long label wraps instead of running under the chevron / required asterisk.
             style={floated ? undefined : { maxWidth: Icon ? "calc(100% - 5rem)" : "calc(100% - 3.5rem)" }}
@@ -207,11 +221,11 @@ function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, 
               type="button"
               disabled={disabled}
               onClick={() => !disabled && setOpen(true)}
-              className={`flex !h-12 w-full items-center rounded-md border pr-8 pt-1 text-left text-[17px] ${Icon ? "pl-10" : "pl-3.5"} ${
+              className={cn(`flex !h-12 w-full items-center rounded-md border pr-8 pt-1 text-left text-[17px] ${Icon ? "pl-10" : "pl-3.5"} ${
                 disabled
                   ? "cursor-not-allowed bg-slate-100 text-black disabled:opacity-100"
                   : `bg-white ${error ? "border-2 border-red-500" : open ? "border-2 border-primary" : value ? "border-2 border-emerald-500" : "border-slate-300"}`
-              }`}
+              }`, k5 && k5Trigger({ disabled, open, error, k5Border }))}
             >
               <span className="truncate relative bottom-0.75">{selected?.label ?? ""}</span>
             </button>
@@ -231,11 +245,11 @@ function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, 
         ) : (
           <Select className="" value={value} onValueChange={onValueChange} onOpenChange={setOpen} disabled={disabled}>
             <SelectTrigger
-              className={`!h-12 rounded-md w-full pt-1 text-[17px] ${Icon ? "pl-10" : "pl-3.5"} pr-3.5 ${
+              className={cn(`!h-12 rounded-md w-full pt-1 text-[17px] ${Icon ? "pl-10" : "pl-3.5"} pr-3.5 ${
                 disabled
                   ? "cursor-not-allowed bg-slate-100 text-black disabled:opacity-100"
                   : `bg-white ${error ? "border-2 border-red-500 focus:!border-red-500 focus-visible:!border-red-500" : open ? "border-2 border-primary" : value ? "border-2 border-emerald-500" : "border-slate-300"}`
-              }`}
+              }`, k5 && k5Trigger({ disabled, open, error, k5Border }))}
             >
               <SelectValue>{selected?.label ?? ""}</SelectValue>
             </SelectTrigger>
@@ -263,7 +277,7 @@ function canAutoFocusSearch() {
   return !window.matchMedia("(pointer: coarse)").matches;
 }
 
-function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, value, onValueChange, options, error, disabled = false, className }) {
+function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, value, onValueChange, options, error, disabled = false, className, k5 = false, k5Border }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const isTouch = useIsTouch();
@@ -295,7 +309,7 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
         )}
         {label && (
           <label
-            className={`pointer-events-none absolute z-1 max-w-[calc(100%-1.5rem)] overflow-hidden text-ellipsis bg-white px-1 transition-all ${
+            className={cn(`pointer-events-none absolute z-1 max-w-[calc(100%-1.5rem)] overflow-hidden text-ellipsis bg-white px-1 transition-all ${
               floated
                 ? `left-3 top-0 -translate-y-1/2 whitespace-nowrap text-xs max-[319px]:text-[10px] ${error ? "text-red-500" : "text-primary"}`
                 // Unfocused + empty, an invalid field's label would otherwise sit
@@ -303,7 +317,7 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
                 // there, it fades in already floated the instant the field is
                 // focused (opened) or gets a value.
                 : `top-1/2 -translate-y-1/2 text-sm max-[319px]:text-xs ${error ? "text-red-500 opacity-0" : "text-slate-500"} ${Icon ? "left-10" : "left-3.5"}`
-            }`}
+            }`, k5 && k5Label(floated, error))}
             // Unfloated, the label sits between the leading icon and the trailing chevron: cap its
             // width so a long label wraps instead of running under the chevron / required asterisk.
             style={floated ? undefined : { maxWidth: Icon ? "calc(100% - 5rem)" : "calc(100% - 3.5rem)" }}
@@ -318,11 +332,11 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
               type="button"
               disabled={disabled}
               onClick={() => handleOpenChange(true)}
-              className={`flex !h-12 w-full items-center rounded-md border pr-8 pt-1 text-left text-[17px] ${Icon ? "pl-10" : "pl-3.5"} ${
+              className={cn(`flex !h-12 w-full items-center rounded-md border pr-8 pt-1 text-left text-[17px] ${Icon ? "pl-10" : "pl-3.5"} ${
                 disabled
                   ? "cursor-not-allowed bg-slate-100 text-black disabled:opacity-100"
                   : `bg-white ${error ? "border-2 border-red-500" : open ? "border-2 border-primary" : value ? "border-2 border-emerald-500" : "border-slate-300"}`
-              }`}
+              }`, k5 && k5Trigger({ disabled, open, error, k5Border }))}
             >
               <span className="truncate relative bottom-0.75">{selected?.label ?? ""}</span>
             </button>
@@ -334,11 +348,11 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
             <PopoverTrigger
               type="button"
               disabled={disabled}
-              className={`flex !h-12 w-full items-center rounded-md border pr-8 pt-1 text-left text-[17px] ${Icon ? "pl-10" : "pl-3.5"} ${
+              className={cn(`flex !h-12 w-full items-center rounded-md border pr-8 pt-1 text-left text-[17px] ${Icon ? "pl-10" : "pl-3.5"} ${
                 disabled
                   ? "cursor-not-allowed bg-slate-100 text-black disabled:opacity-100"
                   : `bg-white ${error ? "border-2 border-red-500 focus:!border-red-500 focus-visible:!border-red-500" : open ? "border-2 border-primary" : value ? "border-2 border-emerald-500" : "border-slate-300"}`
-              }`}
+              }`, k5 && k5Trigger({ disabled, open, error, k5Border }))}
             >
               <span className="truncate relative bottom-0.75">{selected?.label ?? ""}</span>
             </PopoverTrigger>

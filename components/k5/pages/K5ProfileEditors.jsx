@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { CalendarDays, Check, Lock, MessageCircle, Plus, Siren, Trash2, Undo2, X } from "lucide-react";
+import { CalendarDays, Check, Lock, Plus, Siren, Trash2, Undo2, X } from "lucide-react";
+import { IoLogoWhatsapp } from "react-icons/io";
 import { DatePicker } from "@/components/ui/date-picker";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EditableCallingTimes } from "@/components/k5/pages/K5ProfileEditorsP3";
 import { OtpControl } from "@/components/k5/pages/K5ProfileOtp";
 import { useIntlTelInput } from "@/hooks/useIntlTelInput";
@@ -143,7 +145,7 @@ export function EditSelect({ editor, k, label, required, options, loading }) {
   return (
     <label className={LABEL}>
       <span className="relative block min-w-0">
-        <FloatingLabelSelect label={label} required={required} value={editor.draft[k] ?? ""} onValueChange={(value) => editor.set(k, value)} options={options || []} error={st.error} disabled={Boolean(loading)} searchable={(options || []).length > 5} className="w-full" />
+        <FloatingLabelSelect k5 k5Border={border(st)} label={label} required={required} value={editor.draft[k] ?? ""} onValueChange={(value) => editor.set(k, value)} options={options || []} error={st.error} disabled={Boolean(loading)} searchable={(options || []).length > 5} className="w-full" />
         <InlineActions st={st} onSave={() => editor.save([unit])} onUndo={() => editor.undo(unit)} offset="end-8" />
       </span>
       <ErrorText st={st} />
@@ -170,19 +172,48 @@ function EditDate({ editor, k, label, maxToday = true }) {
 }
 
 function Locked({ label, value, floating = false }) {
+  const valueRef = useRef(null);
+  const [valueOverflows, setValueOverflows] = useState(false);
+
+  useEffect(() => {
+    const element = valueRef.current;
+    if (!element) return undefined;
+
+    const measure = () => setValueOverflows(element.scrollWidth > element.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    if (element.parentElement) observer.observe(element.parentElement);
+    return () => observer.disconnect();
+  }, [value]);
+
   return (
     <div className={LABEL}>
       {!floating && <span>{label}</span>}
-      <span title="Only the school can change this" className={`${floating ? "relative" : ""} flex h-[50px] items-center gap-2 rounded-[14px] border-[3px] border-k5-line bg-k5-soft px-3.5 py-2 font-k5-body text-base font-extrabold text-k5-mut [overflow-wrap:anywhere]`}>
+      <span title="Only the school can change this" className={`${floating ? "relative" : ""} flex h-[50px] items-center gap-2 rounded-[14px] border-[3px] border-k5-line bg-k5-soft px-3.5 py-2 font-k5-body text-base font-extrabold text-k5-mut`}>
         {floating && <span className="pointer-events-none absolute start-3 top-0 -translate-y-1/2 bg-k5-soft px-1 text-xs font-black text-k5-ac">{label}</span>}
         <Lock className="h-4 w-4 flex-none" aria-hidden="true" />
-        <span className="min-w-0 text-k5-ink">{value || "—"}</span>
+        {valueOverflows && value ? (
+          <Tooltip>
+            <TooltipTrigger delay={100} render={<span ref={valueRef} className="min-w-0 truncate text-k5-ink" />}>
+              {value}
+            </TooltipTrigger>
+            <TooltipContent>{value}</TooltipContent>
+          </Tooltip>
+        ) : (
+          <span ref={valueRef} className="min-w-0 truncate text-k5-ink">{value || "—"}</span>
+        )}
       </span>
     </div>
   );
 }
 
 
+
+// WhatsApp mark in its brand green.
+function WhatsAppIcon(props) {
+  return <IoLogoWhatsapp {...props} fill="#25d366" color="#25d366" />;
+}
 
 function Toggle({ on, onChange, children, icon: Icon }) {
   return (
@@ -253,7 +284,7 @@ function EditPhone({ editor, label, keys, required, emergencyKey, fieldId }) {
           className={`${INPUT} ${border(st)} peer`}
         />
         <span
-          className={`pointer-events-none absolute z-[1] bg-k5-card px-1 transition-all ${
+          className={`pointer-events-none absolute z-[1] max-w-[calc(100%-7.5rem)] truncate whitespace-nowrap bg-k5-card px-1 transition-all ${
             focused || editor.draft[numKey]
               ? "left-[6.75rem] top-0 -translate-y-1/2 text-xs text-k5-ac"
               : "left-[7.375rem] top-1/2 -translate-y-1/2 text-base text-k5-mut"
@@ -264,8 +295,8 @@ function EditPhone({ editor, label, keys, required, emergencyKey, fieldId }) {
         </span>
       </span>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-        <Toggle on={editor.draft[waKey]} onChange={(v) => editor.set(waKey, v)} icon={MessageCircle}>
-          WhatsApp
+        <Toggle on={editor.draft[waKey]} onChange={(v) => editor.set(waKey, v)} icon={WhatsAppIcon}>
+          Available on WhatsApp
         </Toggle>
         {emergencyKey && (
           <Toggle on={editor.draft[emergencyKey]} onChange={(v) => editor.set(emergencyKey, v)} icon={Siren}>
@@ -300,13 +331,13 @@ function EditPlace({ editor, keys, required }) {
   return (
     <>
       <label className={LABEL}>
-        <FloatingLabelSelect label="Country" required={required} value={country ?? ""} onValueChange={(v) => editor.setMany({ [countryKey]: v, [stateKey]: "", [cityKey]: "" })} options={countries} error={st.error} disabled={!countries.length} searchable={countries.length > 5} />
+        <FloatingLabelSelect k5 k5Border={border(st)} label="Country" required={required} value={country ?? ""} onValueChange={(v) => editor.setMany({ [countryKey]: v, [stateKey]: "", [cityKey]: "" })} options={countries} error={st.error} disabled={!countries.length} searchable={countries.length > 5} />
       </label>
       <label className={LABEL}>
-        <FloatingLabelSelect label="State" required={required} value={state ?? ""} onValueChange={(v) => editor.setMany({ [stateKey]: v, [cityKey]: "" })} options={toOptions(states.data)} error={st.error} disabled={!country || states.isFetching} searchable={toOptions(states.data).length > 5} />
+        <FloatingLabelSelect k5 k5Border={border(st)} label="State" required={required} value={state ?? ""} onValueChange={(v) => editor.setMany({ [stateKey]: v, [cityKey]: "" })} options={toOptions(states.data)} error={st.error} disabled={!country || states.isFetching} searchable={toOptions(states.data).length > 5} />
       </label>
       <label className={LABEL}>
-        <FloatingLabelSelect label="City" required={required} value={editor.draft[cityKey] ?? ""} onValueChange={(v) => editor.set(cityKey, v)} options={toOptions(cities.data)} error={st.error} disabled={!state || cities.isFetching} searchable={toOptions(cities.data).length > 5} />
+        <FloatingLabelSelect k5 k5Border={border(st)} label="City" required={required} value={editor.draft[cityKey] ?? ""} onValueChange={(v) => editor.set(cityKey, v)} options={toOptions(cities.data)} error={st.error} disabled={!state || cities.isFetching} searchable={toOptions(cities.data).length > 5} />
       </label>
       {(st.dirty || st.saved || st.error) && (
         <div className="col-span-full">
@@ -490,7 +521,7 @@ export function EditablePersonal({ m, editor, actions }) {
         <EditPhone editor={editor} label="Phone" keys={["phone", "phoneIso", "phoneWa"]} required fieldId="phoneNumber" />
         <EditPhone editor={editor} label="Alternate Phone" keys={["altPhone", "altPhoneIso", "altPhoneWa"]} fieldId="altPhoneNumber" />
         <div className="flex min-w-0 flex-col gap-1.5">
-          <Locked label="Email" value={p.email} />
+          <Locked label="Email" value={p.email} floating />
           <OtpControl otp={editor.otp} fieldId="studentEmailId" label="Email" saved={Boolean(p.email)} verified={editor.verified?.studentEmailId} />
         </div>
         <div className="flex min-w-0 flex-col gap-1.5">

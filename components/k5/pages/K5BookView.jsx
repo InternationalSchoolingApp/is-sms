@@ -76,7 +76,7 @@ function BookHeader({ teacherName }) {
       </span>
       <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
         <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">Book a Class</h1>
-        <p className="m-0 text-lg font-extrabold text-k5-mut">Pick a subject, a day and a time. That&apos;s it!</p>
+        <p className="m-0 text-lg font-extrabold text-k5-mut">Pick a course, a day and a time. That&apos;s it!</p>
         {teacherName !== undefined && <TeacherChip name={teacherName} />}
       </div>
     </div>
@@ -209,7 +209,7 @@ function useBookSlots(picked) {
   };
 }
 
-const STEP_LABELS = ["Pick a subject", "Pick a day", "Pick a time"];
+const STEP_LABELS = ["Pick a course", "Pick a day", "Pick a time"];
 
 function StepPills({ step }) {
   return (
@@ -527,7 +527,7 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
           <div className="overflow-x-auto rounded-[22px] border-[3px] border-k5-line">
             <div role="table" aria-label="Class numbers" className="text-[15px] font-extrabold">
               <div role="row" className="grid min-w-[900px] grid-cols-[minmax(200px,1.8fr)_repeat(7,minmax(92px,1fr))] items-center bg-k5-act text-[17px] font-black">
-                <span role="columnheader" className="px-4 py-3.5 text-start">Subject</span>
+                <span role="columnheader" className="px-4 py-3.5 text-start">Course</span>
                 {TABLE_COLS.map(([label, , dot]) => (
                   <span key={label} role="columnheader" className="px-3 py-3.5 text-center leading-[1.25]">
                     <span aria-hidden="true" className="me-1.5 inline-block h-3 w-3 rounded-full align-[-1px]" style={{ background: dot }} />
@@ -728,7 +728,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked }
           <div className="flex flex-col">
             {step < 4 && <span className="text-sm font-black text-k5-mut">Step {step} of 3</span>}
             <h2 id="k5-step" className="m-0 font-k5-display text-[30px] font-semibold leading-[1.1]">{title}</h2>
-            {step === 1 && <span className="mt-0.5 text-[15px] font-black text-k5-gx">Every subject is open. Pick any one you like!</span>}
+            {step === 1 && <span className="mt-0.5 text-[15px] font-black text-k5-gx">Every course is open. Pick any one you like!</span>}
             {step === 3 && (
               <span className="mt-0.5 flex items-center gap-1.5 text-[15px] font-black text-[var(--k5-vX)]">
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-k5-vi text-[10px] text-white">{initialsOf(teacherName)}</span>

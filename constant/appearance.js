@@ -22,6 +22,7 @@ export const APPEARANCE_OPTIONS = {
   buddy: ["pico", "penny", "booky", "bolt", "twinkle"],
   voice: ["cheerful", "calm", "squeaky", "robot", "slow", "emma"],
   speech: ["on", "off"],
+  buddyEnabled: ["on", "off"],
 };
 
 // Decision 08: Light by default (System stays available in the dialog).
@@ -42,6 +43,7 @@ export const DEFAULT_APPEARANCE = {
   buddy: "pico",
   voice: "cheerful",
   speech: "on",
+  buddyEnabled: "on",
 };
 
 // School policy (admin CONFIGURATION keys arrive in Phase 4). Customization off = defaults

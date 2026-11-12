@@ -52,9 +52,7 @@ export async function getDashboardMenu({ schoolUUID, schoolId, roleId, userId })
       headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify(body),
     });
-    console.log("getDashboardMenu status:", response.status);
     const menuData = await parseJsonResponse(response);
-    console.log("getDashboardMenu data:", JSON.stringify(menuData, null, 2));
     return menuData;
   } catch {
     return null;
@@ -107,6 +105,21 @@ export async function getDashboardChatLinks({ schoolUUID, userId }) {
   try {
     const response = await getCommonScriptVariables(schoolUUID, { userId });
     return response ? { chatUrl: response.CHAT_URL || "", diaryUrl: response.DIARY_URL || "" } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Student menu-visibility flags — POST /{schoolUUID}/dashboard/parent/student-menu-flags
+ * Controls per-student sidebar visibility (Assigned Teacher, Book a Class,
+ * Attendance) and the "Buy & Book a Class" label override. On error the caller
+ * treats it as null → no menus hidden (safe fallback).
+ */
+export async function getStudentMenuFlags({ schoolUUID, studentUserId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !studentUserId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-menu-flags", { studentUserId });
   } catch {
     return null;
   }
@@ -582,11 +595,16 @@ export async function getStudentAssignedTeacher({ schoolUUID, userId }) {
 /**
  * Per-course content drawer (opened by clicking a course in Syllabus) —
  * live Buzz LMS module/item list, thin for non-LMS course providers.
+ * The answer is { status: "1", details: { lmsUserId, lmsCourseId, modules: [{ moduleName, items: [{ contentName, dueDate,
+ * lmsProviderUrl, isPayLmsPaymentPending }] }] } } (studentSyllabusAssignedTeacher.js reads details.modules). Callers get
+ * `details`, or null when the call failed (status other than "1").
  */
 export async function getStudentCourseContent({ schoolUUID, userId, lmsUserId, lmsCourseId }) {
   if (!hasBackendOrigin() || !schoolUUID || !userId || !lmsUserId) return null;
   try {
-    return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-course-content", { userId, studentUserId: userId, lmsUserId, lmsCourseId });
+    const response = await postDashboardPayload(schoolUUID, "/dashboard/parent/student-course-content", { userId, studentUserId: userId, lmsUserId, lmsCourseId });
+    console.log("getStudentCourseContent response:", JSON.stringify(response, null, 2));
+    return response && String(response.status) === "1" ? (response.details ?? { modules: [] }) : null;
   } catch {
     return null;
   }
@@ -739,4 +757,22 @@ export async function getUserShortProfile({ schoolUUID, userId }) {
 export async function isAddSiblingEnabled(schoolUUID) {
   const value = String(await getSettingValue(schoolUUID, "CONFIGURATION", "ADD_SIBILING_BTN")).trim().toLowerCase();
   return value === "true";
+}
+
+/**
+ * Save the user's appearance preferences to the USER_THEME table via
+ * POST /{schoolUUID}/api/v1/update-theme (CommonController.updateUserTheme
+ * -> DashboardCommonUtil.updateUserTheme). The backend stores the whole
+ * colorObj JSON in USER_THEME.COLOR_CODE and tracks edit counts.
+ */
+export async function saveUserTheme({ schoolUUID, userId, appearance }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/api/v1/update-theme", {
+      userId,
+      colorObj: { appearance },
+    });
+  } catch {
+    return null;
+  }
 }

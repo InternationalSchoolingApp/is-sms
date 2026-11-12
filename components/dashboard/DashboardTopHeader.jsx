@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { openLmsLink } from "@/utils/lmsCourseLink";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Menu, LogOut, ChevronDown, User, KeyRound, UserPlus, Loader2 } from "lucide-react";
@@ -72,9 +73,7 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
             if (isPayLmsPaymentPending) {
               toast(isPayLmsPaymentPending, { icon: "⚠️" });
             } else if (lmsProviderURL) {
-              window.open(lmsProviderURL, "_blank");
-            } else {
-              toast("LMS — coming soon", { icon: "🚧" });
+              openLmsLink(lmsProviderURL);
             }
           }}
           className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${lms ? "bg-primary" : "bg-slate-300"}`}

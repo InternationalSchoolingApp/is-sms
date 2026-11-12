@@ -51,6 +51,14 @@ export const K5_LEARNING_PROGRAMS = ["BATCH", "CWS", "DUAL_DIPLOMA", "ONE_TO_ONE
 // GradeBandUtil.isSelfStudy: Self-Study (SCHOLARSHIP) and Self-Study Plus (SSP).
 const SELF_STUDY_PROGRAMS = ["SCHOLARSHIP", "SSP"];
 
+/**
+ * Grade 6–8 (MIDDLE) students get the K–5 dashboard in the "Balanced" skin (app/k5-middle.css). Off unless
+ * NEXT_PUBLIC_MIDDLE_DASHBOARD=true (the backend k5DashboardEnabled flag still applies); always on in dummy mode.
+ */
+export function isMiddleDashboardOn(dummy = false) {
+  return Boolean(dummy) || process.env.NEXT_PUBLIC_MIDDLE_DASHBOARD === "true";
+}
+
 /** The band for a STANDARD_ID, or null when unknown. */
 export function bandFromStandardId(standardId) {
   return STANDARD_BANDS[Number(standardId)] ?? null;

@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { DashboardProvider, useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDashboardSessionExpiry } from "@/hooks/useDashboardSessionExpiry";
+import { useOnboardingGate } from "@/hooks/useOnboardingGate";
+import { OnboardingFrame } from "@/components/onboarding/OnboardingFrame";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { SessionExpiredDialog } from "@/components/providers/SessionExpiredDialog";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
@@ -23,6 +25,29 @@ function ShellForGrade({ children }) {
   const { ready, gradeResolved, isK5 } = useDashboardContext();
   if (!ready || !gradeResolved) return <FullScreenLoader />;
   return isK5 ? <K5Shell>{children}</K5Shell> : <DashboardShell>{children}</DashboardShell>;
+}
+
+// Steps a student must finish before the dashboard (time zone, overdue fee, Dashboard Setup): holds the
+// loader while checking and sends the student there instead of rendering the dashboard (hooks/useOnboardingGate.js).
+function OnboardingGate({ role, children }) {
+  const { context } = useDashboardContext();
+  const { checking, redirecting } = useOnboardingGate({ context, enabled: role === "student" });
+  if (checking || redirecting) return <FullScreenLoader />;
+  return children;
+}
+
+// The onboarding pages (/{school}/student/welcome and /setup) are where the gate sends students, so they get
+// neither the gate nor the dashboard shell: just the plain logo / Log Off frame (components/onboarding/OnboardingFrame.jsx).
+const isOnboardingPath = (pathname) => /^\/[^/]+\/student\/(welcome|setup)\/?$/.test(pathname || "");
+
+function DashboardBody({ role, children }) {
+  const pathname = usePathname();
+  if (role === "student" && isOnboardingPath(pathname)) return <OnboardingFrame>{children}</OnboardingFrame>;
+  return (
+    <OnboardingGate role={role}>
+      <ShellForGrade>{children}</ShellForGrade>
+    </OnboardingGate>
+  );
 }
 
 // Keeps the current dashboard route so a bare /{school} visit comes back here (app/[school]/page.jsx).
@@ -49,7 +74,7 @@ export function DashboardChrome({ role = "student", children }) {
       <SessionExpiryWatcher />
       <SessionExpiredDialog />
       <LastPathRecorder />
-      <ShellForGrade>{children}</ShellForGrade>
+      <DashboardBody role={role}>{children}</DashboardBody>
     </DashboardProvider>
   );
 }
