@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
+import { K5Loading, K5TilesSkeleton, K5TableSkeleton } from "@/components/k5/K5Skeletons";
 
 const PAGE_SIZE = 10;
 const GRID = "56px minmax(190px,1.2fr) minmax(190px,1.2fr) minmax(220px,1.5fr) minmax(170px,1fr)";
@@ -83,7 +84,10 @@ export function K5LoginHistory({ isLoading, attendance }) {
       </div>
 
       {isLoading ? (
-        <p className="m-0 py-8 text-center font-k5-display text-2xl font-semibold text-k5-mut">Loading…</p>
+        <K5Loading label="Loading your log in history">
+          <K5TilesSkeleton count={3} min={250} />
+          <K5TableSkeleton rows={5} cols={5} />
+        </K5Loading>
       ) : (
         <>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-3.5">

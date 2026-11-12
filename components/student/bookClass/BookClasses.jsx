@@ -26,9 +26,9 @@ function PageTitle() {
   );
 }
 
-function Notice({ children }) {
+function Notice({ children, loading = false }) {
   const { isK5 } = useDashboardContext();
-  if (isK5) return <K5BookNotice>{children}</K5BookNotice>;
+  if (isK5) return <K5BookNotice loading={loading}>{children}</K5BookNotice>;
   return (
     <div className="mx-auto w-full">
       <PageTitle />
@@ -51,13 +51,15 @@ function Count({ label, value, className }) {
  * list, the selected course's counts, and the weekly booking / booked-classes flows.
  */
 export function BookClasses() {
-  const { context, isK5 } = useDashboardContext();
+  const { context, isK5, isMiddle } = useDashboardContext();
   const { school } = useParams();
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState(null);
   const [view, setView] = useState("book");
   const [slotCourse, setSlotCourse] = useState(null);
   const [pickAllCourses, setPickAllCourses] = useState(false);
+  // Grade 6–8: "Book a Class (n)" on Booked Class Details opens the booking steps in a dialog.
+  const [bookPopup, setBookPopup] = useState(false);
 
   // Dummy (demo) student mode: legacy getDummyBookAClassResponse / getDummyStudentBookClassDetailsResponse.
   const dummy = useDummyStudent();
@@ -100,7 +102,7 @@ export function BookClasses() {
   }
 
   if (!context || statusQuery.isLoading || (studentStandardId && detailsQuery.isLoading)) {
-    return <Notice>Loading…</Notice>;
+    return <Notice loading>Loading…</Notice>;
   }
   if (!gate) return <Notice>Unable to load your classes right now. Please try again.</Notice>;
   if (gate.statusCode === "AY_NOT_STARTED") return <Notice>{gate.message}</Notice>;
@@ -139,7 +141,26 @@ export function BookClasses() {
   if (view === "booked") {
     return (
       <>
-        <BookedClasses course={course} onBack={() => setView("book")} onBook={() => (isK5 ? setView("book") : startBooking(course))} />
+        <BookedClasses
+          course={course}
+          subjects={subjects}
+          onBack={() => setView("book")}
+          onBook={() => (isMiddle ? setBookPopup(true) : isK5 ? setView("book") : startBooking(course))}
+        />
+        {isMiddle && bookPopup && (
+          <K5BookView
+            popup
+            details={details}
+            subjects={subjects}
+            course={course}
+            onClose={() => setBookPopup(false)}
+            onShowBooked={() => setBookPopup(false)}
+            onBooked={() => {
+              queryClient.invalidateQueries({ queryKey: ["book-class-details"] });
+              queryClient.invalidateQueries({ queryKey: ["booked-classes"] });
+            }}
+          />
+        )}
         {modals}
       </>
     );

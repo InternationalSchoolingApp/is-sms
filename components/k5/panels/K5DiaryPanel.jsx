@@ -7,6 +7,7 @@ import { STAFF_SENDER_ROLES, formatWhen, salutationFor } from "@/components/dash
 import { EmptyNote, K5Drawer } from "@/components/k5/panels/K5Drawer";
 import { getDiaryThreadList, getDiaryThreadMessages, markDiaryThreadRead } from "@/services/diaryApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { K5Loading, K5ListSkeleton } from "@/components/k5/K5Skeletons";
 
 // Notebook paper (mockup PAPER): red margin line + blue ruling on cream.
 const PAPER =
@@ -87,7 +88,13 @@ function ThreadView({ threadId, sessionUserId, schoolName }) {
   const messages = messagesQuery.data?.details?.messages || [];
   const courseName = messagesQuery.data?.details?.courseName;
 
-  if (messagesQuery.isLoading) return <EmptyNote>Loading…</EmptyNote>;
+  if (messagesQuery.isLoading) {
+    return (
+      <K5Loading label="Loading the notes" className="">
+        <K5ListSkeleton rows={3} />
+      </K5Loading>
+    );
+  }
   if (messages.length === 0) return <EmptyNote>No notes yet.</EmptyNote>;
   return messages.map((message) => (
     <Note key={message.id} message={message} courseName={courseName} schoolName={schoolName} viewerUserId={sessionUserId} />
@@ -147,7 +154,11 @@ export function K5DiaryPanel({ sessionUserId, schoolName, onClose }) {
         </div>
       ) : (
         <div className="p-3.5">
-          {threadsQuery.isLoading ? <EmptyNote>Loading…</EmptyNote> : <ThreadList threads={threads} onSelect={setSelectedThreadId} />}
+          {threadsQuery.isLoading ? (
+            <K5Loading label="Loading your diary" className="">
+              <K5ListSkeleton rows={4} />
+            </K5Loading>
+          ) : <ThreadList threads={threads} onSelect={setSelectedThreadId} />}
         </div>
       )}
     </K5Drawer>

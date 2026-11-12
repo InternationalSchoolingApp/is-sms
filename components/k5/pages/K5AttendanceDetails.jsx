@@ -24,6 +24,7 @@ import {
   ymdToPickerDate,
 } from "@/utils/attendanceDates";
 import { isSessionExpiredError } from "@/utils/sessionState";
+import { K5Loading, K5RowsSkeleton, K5Sk } from "@/components/k5/K5Skeletons";
 
 export const AC = { present: "#13803F", late: "#E8A200", absent: "#E5243B", missS: "#B81A2E", missT: "#E0457B" };
 export const ATB = { present: "#E4F4EA", late: "#FFF3D1", absent: "#FDE6E8", missS: "#FBE1E4", missT: "#FDEBF2" };
@@ -147,7 +148,7 @@ export function K5AttendanceDetails({ status, onStatusChange }) {
             </span>
           )}
           <span aria-live="polite" className="text-[15px] font-extrabold text-k5-mut">
-            {totalCount ? `Showing ${first + 1} to ${Math.min(totalCount, first + rows.length)} of ${totalCount} entries` : query.isLoading ? "Loading…" : "Showing 0 entries"}
+            {totalCount ? `Showing ${first + 1} to ${Math.min(totalCount, first + rows.length)} of ${totalCount} entries` : query.isLoading ? <K5Sk className="inline-block h-4 w-40 align-middle" /> : "Showing 0 entries"}
           </span>
         </div>
       </div>
@@ -240,11 +241,14 @@ export function K5AttendanceDetails({ status, onStatusChange }) {
                 </div>
               );
             })}
-            {!rows.length && (
-              <div className="px-4 py-7 text-center font-k5-display text-[19px] font-semibold text-k5-mut">
-                {query.isLoading || (query.isFetching && !details) ? "Loading…" : customError || "No classes here."}
-              </div>
-            )}
+            {!rows.length &&
+              (query.isLoading || (query.isFetching && !details) ? (
+                <K5Loading label="Loading your classes" className="">
+                  <K5RowsSkeleton rows={5} cols={6} />
+                </K5Loading>
+              ) : (
+                <div className="px-4 py-7 text-center font-k5-display text-[19px] font-semibold text-k5-mut">{customError || "No classes here."}</div>
+              ))}
           </div>
         </div>
       )}

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { CLUB_ART } from "@/components/k5/clubMarks";
 import { NAV_ART } from "@/components/k5/navIcons";
+import { K5Sk } from "@/components/k5/K5Skeletons";
 import { studentNavHref } from "@/utils/dashboardNav";
 
 // Icon key (utils/dashboardNav.js) -> lucide icon + the mockup's tile tint pair (T background / I icon).
@@ -60,7 +61,7 @@ function parseOrder(raw) {
  * header menu button; below 760px it is a drawer. Items can be dragged into a personal
  * order (localStorage is-k5-nav:{userId}); authorization stays with the backend menu.
  */
-export function K5NavRail({ menu, open, onOpen, onClose, isPreK = false, userId }) {
+export function K5NavRail({ menu, loading = false, open, onOpen, onClose, isPreK = false, userId }) {
   const pathname = usePathname();
   const { school } = useParams();
   const navRef = useRef(null);
@@ -121,6 +122,21 @@ export function K5NavRail({ menu, open, onOpen, onClose, isPreK = false, userId 
         >
           <X className="h-4 w-4" strokeWidth={3} aria-hidden="true" />
         </button>
+
+        {/* While the menu loads: the same tiles as the real items (76px wide, 46px icon box, a short label), pulsing. */}
+        {loading && items.length === 0 && (
+          <>
+            <span role="status" aria-busy="true" aria-live="polite" className="sr-only">
+              Loading the menu…
+            </span>
+            {Array.from({ length: 12 }, (_, i) => (
+              <span key={i} aria-hidden="true" className="k5-ni relative flex w-[76px] flex-none flex-col items-center gap-1 py-1">
+                <K5Sk className="h-[46px] w-[46px] rounded-[15px]" />
+                <K5Sk className="k5-nl h-2.5 w-12" />
+              </span>
+            ))}
+          </>
+        )}
 
         {items.map((item) =>
           item.children?.length ? (

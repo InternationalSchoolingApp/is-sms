@@ -12,6 +12,7 @@ import { getBrowserTimezone } from "@/utils/calendarEvents";
 import { asArray, courseTone, fmtShort, num, paceInfo } from "@/components/k5/pages/k5PerformanceData";
 import { teacherName } from "@/components/k5/pages/K5PerformanceCourseList";
 import { BackIcon, CloseIcon, EyeIcon, HistoryIcon, PaceIcon, SmallFlame, TickIcon } from "@/components/k5/pages/K5PerformanceIcons";
+import { K5Loading, K5RowsSkeleton } from "@/components/k5/K5Skeletons";
 
 const HEAD = "px-3.5 py-3 font-k5-display text-[15px] font-semibold";
 const STAT_COLS = [
@@ -117,7 +118,9 @@ function GradeHistory({ act, enrollId, onClose }) {
               ))}
             </div>
             {isLoading ? (
-              <p className="m-0 p-5 text-center text-k5-mut">Loading…</p>
+              <K5Loading label="Loading the attempts" className="">
+                <K5RowsSkeleton rows={3} cols={5} />
+              </K5Loading>
             ) : !rows.length ? (
               <p className="m-0 p-5 text-center text-k5-mut">No attempts yet.</p>
             ) : (

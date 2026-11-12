@@ -5,6 +5,7 @@ import { Download, Link2, Plus, Search, ShieldCheck, X } from "lucide-react";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { certDate, certificateTitle, enrolmentLabel, requestMeta, requestSteps, statusOf } from "@/utils/certificates";
+import { K5Loading, K5ListSkeleton, K5CardsSkeleton } from "@/components/k5/K5Skeletons";
 
 const PRIMARY = "inline-flex min-h-[46px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-none bg-k5-ac px-[18px] font-k5-display text-base font-semibold text-white no-underline shadow-[0_4px_0_var(--k5-acd)] disabled:cursor-default disabled:opacity-50";
 const SECONDARY = "inline-flex min-h-[46px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-[3px] border-k5-line bg-k5-card px-4 font-k5-display text-base font-semibold text-k5-ink no-underline shadow-[0_4px_0_var(--k5-line)]";
@@ -171,7 +172,9 @@ export function K5Certificates({ schoolName, requests, certificates, form, sent,
       <section aria-labelledby="k5-ct-req" className="flex flex-col gap-3">
         <h2 id="k5-ct-req" className="m-0 ps-1 font-k5-display text-2xl font-semibold">My requests</h2>
         {requests.loading ? (
-          <div className={`${K5_CARD} p-6 text-center font-k5-display text-lg font-semibold text-k5-mut`}>Loading…</div>
+          <K5Loading label="Loading your requests" className="">
+            <K5ListSkeleton rows={2} card />
+          </K5Loading>
         ) : !requests.items.length ? (
           <div className={`${K5_CARD} p-6 text-center font-k5-display text-lg font-semibold text-k5-mut`}>{requests.error || "You have no requests yet."}</div>
         ) : (
@@ -229,7 +232,9 @@ export function K5Certificates({ schoolName, requests, certificates, form, sent,
           )}
         </div>
         {certificates.loading ? (
-          <div className={`${K5_CARD} p-6 text-center font-k5-display text-lg font-semibold text-k5-mut`}>Loading…</div>
+          <K5Loading label="Loading your certificates" className="">
+            <K5CardsSkeleton count={3} />
+          </K5Loading>
         ) : certificates.error ? (
           <div className={`${K5_CARD} p-6 text-center font-k5-display text-lg font-semibold text-[#C81E35]`}>{certificates.error}</div>
         ) : !certs.length ? (

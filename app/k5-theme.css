@@ -1134,3 +1134,34 @@
     margin-bottom: 2px;
   }
 }
+
+/* Club page "What you'll do" cards (mockup .clact): lift a little on hover and the round icon wiggles once. */
+.k5-clact {
+  transition: transform 0.2s ease;
+}
+.k5-clact:hover {
+  transform: translateY(-4px) rotate(-0.5deg);
+}
+.k5-clact:hover .k5-clactic {
+  animation: k5-axwig 0.5s ease;
+}
+@keyframes k5-axwig {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  30% {
+    transform: rotate(-8deg);
+  }
+  60% {
+    transform: rotate(6deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .k5-clact:hover {
+    transform: none;
+  }
+  .k5-clact:hover .k5-clactic {
+    animation: none;
+  }
+}

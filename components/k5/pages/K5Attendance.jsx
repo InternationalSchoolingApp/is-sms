@@ -4,6 +4,8 @@ import { useState } from "react";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { K5AttendanceDetails, AC, ATB, LABEL } from "@/components/k5/pages/K5AttendanceDetails";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
+import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 
 /**
  * K–5 look of My Attendance (mockup My Attendance): header, three number tiles, the Academic Year bar
@@ -85,6 +87,119 @@ function StatTile({ label, value, valueClass, tileClass, icon, children }) {
   );
 }
 
+/** "My Attendance" title row. Grade 6–8 (Middle.dc.html): no card around it, a 62px accent tile, a 30px heading. */
+function AttendanceHeader() {
+  const { isMiddle } = useDashboardContext();
+  return (
+    <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
+      <span
+        className={isMiddle ? "flex h-[62px] w-[62px] flex-none items-center justify-center bg-k5-act" : "flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-tt"}
+        style={isMiddle ? { borderRadius: 14 } : undefined}
+      >
+        <svg width={isMiddle ? 34 : 48} height={isMiddle ? 34 : 48} viewBox="0 0 24 24" fill="none" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: isMiddle ? "var(--k5-ac)" : "var(--k5-tI)" }}>
+          <rect x="5" y="4" width="14" height="17" rx="2" />
+          <path d="M9 2.5h6v3H9z" />
+          <path d="M8.5 11l1.5 1.5 3-3" />
+          <path d="M8.5 16.5h7" />
+        </svg>
+      </span>
+      <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
+        <h1 className={`m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-4xl"}`}>My Attendance</h1>
+        <p className={`m-0 font-extrabold text-k5-mut ${isMiddle ? "text-base" : "text-lg"}`}>See how many classes you came to.</p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * My Attendance while it loads, laid out like the page: the title, the three number tiles, Performance Overview next to
+ * Monthly Summary (the ring and its three rows), and Attendance Details (filters and rows).
+ */
+function AttendanceSkeleton() {
+  return (
+    <K5Loading label="Loading your attendance" className="flex flex-col gap-4">
+      <AttendanceHeader />
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-3.5">
+        {Array.from({ length: 3 }, (_, i) => (
+          <div key={i} className={`${K5_CARD} flex items-center gap-3.5 px-4 py-3.5`}>
+            <span className="flex flex-1 flex-col gap-2">
+              <K5Sk className="h-4 w-32" />
+              <K5Sk className="h-9 w-20" />
+              <K5Sk className="h-5 w-36 rounded-full" />
+            </span>
+            <K5Sk className="h-[54px] w-[54px] flex-none rounded-[18px]" />
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] items-stretch gap-4 max-[900px]:grid-cols-1">
+        <div className={`${K5_CARD} flex flex-col gap-3.5 px-5 py-[18px]`}>
+          <div className="flex flex-wrap items-start justify-between gap-2.5">
+            <span className="flex flex-col gap-2">
+              <K5Sk className="h-7 w-56" />
+              <K5Sk className="h-4 w-48" />
+            </span>
+            <K5Sk className="h-[46px] w-40 rounded-[14px]" />
+          </div>
+          <div className="grid h-[240px] grid-cols-[40px_minmax(0,1fr)] gap-1.5">
+            <span className="flex flex-col justify-between py-1">
+              {Array.from({ length: 5 }, (_, i) => (
+                <K5Sk key={i} className="h-3 w-8" />
+              ))}
+            </span>
+            <div className="flex items-end gap-3 border-b-2 border-k5-line px-2">
+              {[70, 92, 55, 80, 40, 66, 85, 50, 74, 60].map((h, i) => (
+                <K5Sk key={i} className="flex-1 rounded-b-none rounded-t-lg" style={{ height: `${h}%` }} />
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className={`${K5_CARD} flex flex-col gap-3.5 px-5 py-[18px]`}>
+          <span className="flex flex-col gap-2">
+            <K5Sk className="h-7 w-48" />
+            <K5Sk className="h-4 w-28" />
+          </span>
+          <div className="flex flex-wrap items-center gap-[18px]">
+            <K5Sk className="h-[160px] w-[160px] flex-none rounded-full" />
+            <div className="flex flex-[1_1_150px] flex-col gap-2.5">
+              {Array.from({ length: 3 }, (_, i) => (
+                <K5Sk key={i} className="h-10 w-full rounded-full" />
+              ))}
+            </div>
+          </div>
+          <K5Sk className="h-[92px] w-full rounded-[20px]" />
+        </div>
+      </div>
+      <div className={`${K5_CARD} flex flex-col gap-3.5 px-5 py-[18px]`}>
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          <span className="flex flex-col gap-2">
+            <K5Sk className="h-7 w-52" />
+            <K5Sk className="h-4 w-72 max-w-full" />
+          </span>
+          <K5Sk className="h-4 w-44" />
+        </div>
+        <div className="flex flex-wrap items-end gap-3 rounded-[20px] bg-k5-soft px-3.5 py-3">
+          {Array.from({ length: 4 }, (_, i) => (
+            <span key={i} className="flex min-w-[150px] flex-1 flex-col gap-1.5">
+              <K5Sk className="h-3 w-12" />
+              <K5Sk className="h-[50px] w-full rounded-[14px]" />
+            </span>
+          ))}
+        </div>
+        <div className="overflow-hidden rounded-[18px] border-[3px] border-k5-line">
+          <div className="h-14 bg-k5-ac/25" />
+          {Array.from({ length: 4 }, (_, r) => (
+            <div key={r} className={`grid grid-cols-6 items-center gap-4 border-t-2 border-k5-line px-3.5 py-3.5 ${r % 2 ? "bg-k5-soft" : "bg-k5-card"}`}>
+              {Array.from({ length: 6 }, (_, c) => (
+                <K5Sk key={c} className={`h-4 ${c === 0 ? "w-6" : "w-4/5"}`} />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </K5Loading>
+  );
+}
+
 const svgProps = { width: 28, height: 28, viewBox: "0 0 24 24", fill: "none", strokeLinecap: "round", strokeLinejoin: "round" };
 
 /** K–5 look of My Attendance. `months` / `summary` are the existing attendance response. */
@@ -130,24 +245,11 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
         })
     : [];
 
-  if (isLoading) return <p className="m-0 py-8 text-center font-k5-display text-2xl font-semibold text-k5-mut">Loading…</p>;
+  if (isLoading) return <AttendanceSkeleton />;
 
   return (
     <div className="flex flex-col gap-4">
-      <div className={`${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
-        <span className="flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-tt">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: "var(--k5-tI)" }}>
-            <rect x="5" y="4" width="14" height="17" rx="2" />
-            <path d="M9 2.5h6v3H9z" />
-            <path d="M8.5 11l1.5 1.5 3-3" />
-            <path d="M8.5 16.5h7" />
-          </svg>
-        </span>
-        <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-          <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">My Attendance</h1>
-          <p className="m-0 text-lg font-extrabold text-k5-mut">See how many classes you came to.</p>
-        </div>
-      </div>
+      <AttendanceHeader />
 
       {!summary ? (
         <div className={`${K5_CARD} p-8 text-center font-k5-display text-2xl font-semibold text-k5-mut`}>
@@ -183,7 +285,7 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                 <span className={`self-start rounded-full px-2.5 py-0.5 text-[13px] font-black ${diff >= 0 ? "bg-k5-gt text-k5-gx" : "bg-k5-rt text-k5-ri"}`}>
                   {diff === 0
                     ? `Same as ${MON_LONG[slots[prevIdx].month - 1]}`
-                    : `${diff > 0 ? "▲" : "▼"} ${Math.abs(diff)}% from ${MON_LONG[slots[prevIdx].month - 1]}`}
+                    : `${diff > 0 ? "▲" : "▼"} ${Math.round(Math.abs(diff) * 10) / 10}% from ${MON_LONG[slots[prevIdx].month - 1]}`}
                 </span>
               )}
             </StatTile>

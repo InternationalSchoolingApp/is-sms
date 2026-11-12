@@ -214,6 +214,8 @@ function useResolveDashboardContext({ role = "student" } = {}) {
   // Empty until the query settles, so the sidebar renders (empty) without
   // waiting on the (possibly missing) endpoint.
   const menu = menuQuery.data ?? [];
+  // True while the menu request is running: the K–5 / Grade 6–8 left rail shows skeleton tiles instead of an empty box.
+  const menuLoading = menuQuery.isLoading;
 
   // Header "Welcome back, {name}" — the same full name Login History shows (legacy USER_FULL_NAME).
   const studentName = useStudentName({ schoolUUID: session?.schoolUUID, userId: session?.userId, enabled: authenticated && role === "student" });
@@ -263,7 +265,7 @@ function useResolveDashboardContext({ role = "student" } = {}) {
       }
     : null;
 
-  return { status, session, context, menu, logoUrl, ready, ...grade };
+  return { status, session, context, menu, menuLoading, logoUrl, ready, ...grade };
 }
 
 export function DashboardProvider({ role = "student", children }) {

@@ -6,6 +6,7 @@ import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { useK5CourseColors } from "@/hooks/useK5CourseColors";
 import { subjectStyle } from "@/utils/k5Calendar";
+import { K5Loading, K5CardsSkeleton } from "@/components/k5/K5Skeletons";
 
 const BUTTON =
   "flex min-h-14 items-center gap-2.5 self-start rounded-full border-none bg-[#13803F] px-6 font-k5-display text-[19px] font-semibold text-white shadow-[0_5px_0_#0B5A2B] disabled:opacity-50 max-[760px]:w-full max-[760px]:justify-center";
@@ -72,7 +73,9 @@ function ListView({ loading, message, courses, imageOf, onOpen }) {
       </div>
 
       {loading ? (
-        <p className="m-0 py-8 text-center font-k5-display text-2xl font-semibold text-k5-mut">Loading…</p>
+        <K5Loading label="Loading your courses">
+          <K5CardsSkeleton count={3} />
+        </K5Loading>
       ) : (
         <>
           <section aria-labelledby="k5-ax" className={`${K5_CARD} flex flex-col gap-[18px] p-[22px] max-[760px]:p-4`}>

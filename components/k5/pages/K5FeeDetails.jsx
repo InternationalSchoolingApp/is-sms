@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
+import { K5Loading, K5TableSkeleton } from "@/components/k5/K5Skeletons";
 
 const PAGE_SIZE = 10;
 const GRID = "56px minmax(130px,.9fr) minmax(100px,.7fr) minmax(220px,1.6fr) minmax(110px,.8fr) minmax(130px,.9fr) minmax(120px,.8fr) minmax(130px,.9fr)";
@@ -91,7 +92,9 @@ export function K5FeeDetails({ isLoading, payments, nextUserPaymentDetailsId, sy
       </div>
 
       {isLoading ? (
-        <p className="m-0 py-8 text-center font-k5-display text-2xl font-semibold text-k5-mut">Loading…</p>
+        <K5Loading label="Loading your fee details">
+          <K5TableSkeleton rows={4} cols={7} />
+        </K5Loading>
       ) : (
         <section aria-labelledby="k5-fh" className={`${K5_CARD} flex flex-col gap-3.5 px-5 py-4`}>
           <div className="flex flex-wrap items-center justify-between gap-3">

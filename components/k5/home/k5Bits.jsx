@@ -2,6 +2,7 @@
 
 import { BookOpen, Calculator, Dumbbell, FlaskConical, Landmark, Monitor, Palette } from "lucide-react";
 import { subjectStyle } from "@/utils/k5Calendar";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 
 // Shared building blocks of the Grade K–5 home (Playful.dc.html card / pill / button values).
 
@@ -24,16 +25,29 @@ const SUBJECT_ICONS = {
   book: BookOpen,
 };
 
+// Grade 6–8 (Middle.dc.html): the "art" course is drawn as a globe, never a palette.
+function GlobeIcon({ className, strokeWidth = 2.2 }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
+    </svg>
+  );
+}
+
 /** Just the subject's icon (caller picks size and colour). */
 export function SubjectIcon({ name, className }) {
-  const Icon = SUBJECT_ICONS[subjectStyle(name).icon] || BookOpen;
+  const { isMiddle } = useDashboardContext();
+  const icon = subjectStyle(name).icon;
+  const Icon = isMiddle && icon === "art" ? GlobeIcon : SUBJECT_ICONS[icon] || BookOpen;
   return <Icon className={className} strokeWidth={2.2} aria-hidden="true" />;
 }
 
 /** Rounded tile with the subject's icon in its tint pair. */
 export function SubjectTile({ name, size = "lg" }) {
+  const { isMiddle } = useDashboardContext();
   const { icon, tile, ink } = subjectStyle(name);
-  const Icon = SUBJECT_ICONS[icon] || BookOpen;
+  const Icon = isMiddle && icon === "art" ? GlobeIcon : SUBJECT_ICONS[icon] || BookOpen;
   const box = size === "lg" ? "h-[66px] w-[66px] rounded-[20px]" : "h-[38px] w-[38px] rounded-xl";
   return (
     <span className={`flex flex-none items-center justify-center ${box} ${tile}`}>
