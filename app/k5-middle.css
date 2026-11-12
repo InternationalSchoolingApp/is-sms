@@ -196,6 +196,10 @@
   &[class*="shadow-[0_6px_0_var(--k5-grnD)]"] {
     box-shadow: 0 2px 0 var(--k5-grnD);
   }
+  &[class*="shadow-[0_4px_0_var(--rim)]"],
+  &[class*="shadow-[0_6px_0_var(--rim)]"] {
+    box-shadow: 0 2px 0 var(--rim);
+  }
   &[class*="shadow-[0_4px_0_var(--k5-line)]"],
   &[class*="shadow-[0_5px_0_var(--k5-line)]"],
   &[class*="shadow-[0_6px_0_var(--k5-line)]"],
@@ -219,5 +223,16 @@
 @media (hover: hover) and (min-width: 761px) {
   [data-k5-band="middle"] .k5-side:hover {
     box-shadow: var(--k5m-card), 0 18px 48px rgba(10, 16, 34, 0.28);
+  }
+}
+
+/* Right action rail (mockup .rail): the count badge is Outfit 15px / 700 with a soft shadow (desktop; the
+   phone tab bar keeps its own smaller badge). */
+@media (min-width: 761px) {
+  [data-k5-band="middle"] .k5-rail-badge {
+    font-family: var(--k5-fd);
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(11, 36, 71, 0.18);
   }
 }

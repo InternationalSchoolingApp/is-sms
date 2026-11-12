@@ -35,7 +35,7 @@ export function K5Shell({ children }) {
 }
 
 function K5Frame({ children }) {
-  const { context, menu, logoUrl, session, isPreK, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
+  const { context, menu, logoUrl, session, isPreK, isMiddle, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
   
   const pathname = usePathname();
   const { school } = useParams();
@@ -111,6 +111,7 @@ function K5Frame({ children }) {
         <div aria-hidden="true" className="w-20 flex-none max-[760px]:hidden" />
         <RightActionRail
           variant="k5"
+          middle={isMiddle}
           chatUrl={context.chatUrl}
           diaryUrl={context.diaryUrl}
           schoolUUID={context.schoolUUID}

@@ -24,8 +24,8 @@ import { getBrowserTimezone, resolveTimezone } from "@/utils/calendarEvents";
 import { classTitle, dayAt, dayKey, keyToDate, weekKeys } from "@/utils/k5Calendar";
 import { revealPlanTop } from "@/utils/k5Scroll";
 import { picoSay, setPicoLive } from "@/components/k5/pico/picoEvents";
+import { LIVE_ALERT_KEY } from "@/utils/liveAlertMemory";
 
-const LIVE_ALERT_KEY = "is-k5-live-alert:";
 
 
 // "October 9, 16 and 28" for days of one month (a long list stops at 4 + "N more days").
@@ -141,7 +141,7 @@ function K5Planner({ timezone }) {
 
   const open = (event) => (isJoinable(event) ? setJoiningEvent(event) : setDetailEvent(event));
 
-  // Live-class alert: until the student answers it, once per live class per session.
+  // Live-class alert: until the student answers it, once per live class per login (utils/liveAlertMemory.js).
   const liveNow = dayAt(days, todayKey).classes.find((c) => c.k5Status === "live" && c.url);
   const alertKey = liveNow ? `${LIVE_ALERT_KEY}${context?.userId}:${liveNow.id}` : null;
   const alertSeen = useSyncExternalStore(noSubscribe, () => readSession(alertKey), () => "1");
@@ -305,7 +305,7 @@ function AddSiblingsCard() {
       </span>
       <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-0.5">
         <h2 className="m-0 font-k5-display text-[22px] font-semibold leading-[1.2]">Have another child to enroll?</h2>
-        <p className="m-0 text-base font-extrabold leading-[1.4] text-k5-mut">Your details are already saved, so you only need to fill in your child's details.</p>
+        <p className="m-0 text-base font-extrabold leading-[1.4] text-k5-mut">Your details are already saved, so you only need to fill in your child&apos;s details.</p>
       </div>
       <button
         type="button"

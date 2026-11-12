@@ -1,10 +1,13 @@
 import { loginPageUrl, resolveBackendNavigationOrigin, withLoginPayload } from "@/utils/backendOrigin";
 import { navigateTop } from "@/utils/embed";
+import { clearLiveAlertMarks } from "@/utils/liveAlertMemory";
 
 // Signs one user out of this browser (lib/auth: ends the SMS login, clears that user's cookies). Other
 // users signed in to other tabs are not affected.
 async function signOutAccount(uniqueId) {
   if (!uniqueId) return;
+  // The next login must see the live-class dialog again.
+  clearLiveAlertMarks();
   await fetch("/api/session/logout", { method: "POST", headers: { "X-Account": uniqueId } });
 }
 

@@ -211,6 +211,10 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
     (a, b) => (a.e.startZoned?.getTime() || 0) - (b.e.startZoned?.getTime() || 0),
   );
   const nClasses = day.classes.length;
+  // Games are locked only while one of today's classes is live (the student must go to it): a free day picked
+  // from the calendar then shows them locked. With no live class right now — nothing today, classes still to come,
+  // or all done — they stay open. (The Middle mockup locks every day but today; the product rule is "live class".)
+  const gamesLocked = dayAt(days, todayKey).classes.some((c) => c.k5Status === "live");
   const subtitle = nClasses ? `${nClasses} class${nClasses === 1 ? "" : "es"}${isToday ? " today" : ""}` : "No classes";
   // The dotted "now" line goes right before the first item that has not finished yet.
   const nowIndex = isToday ? items.findIndex((it) => it.e.k5Status !== "done") : -1;
@@ -276,7 +280,7 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
       ) : (
         <>
           <NoClassDay reason={noClassReason(dateKey, day, { isSelfStudy, firstName })} isToday={isToday} />
-          <K5Games />
+          <K5Games locked={gamesLocked} />
         </>
       )}
 

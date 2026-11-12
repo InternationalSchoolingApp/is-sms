@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CalendarModal } from "@/components/dashboard/calendar/CalendarModal";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { getStudentCourseContent } from "@/services/dashboardApi";
+import { hasDueDate } from "@/utils/lmsCourseLink";
 
 function asArray(value) {
   if (!value) return [];
@@ -40,7 +41,7 @@ export function SyllabusCourseContentModal({ course, onClose }) {
                 {asArray(module.items).map((item, itemIndex) => (
                   <li key={itemIndex} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 px-2 py-1.5">
                     <span className="text-black">{item.contentName}</span>
-                    {item.dueDate && <span className="flex-shrink-0 text-xs text-black/50">Due {item.dueDate}</span>}
+                    {hasDueDate(item.dueDate) && <span className="flex-shrink-0 text-xs text-black/50">Due {item.dueDate}</span>}
                   </li>
                 ))}
               </ul>
