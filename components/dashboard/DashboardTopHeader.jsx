@@ -25,10 +25,12 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
   const router = useRouter();
   const siblings = useAddSiblings();
   const [confirmLogout, setConfirmLogout] = useState(false);
-  // My Profile is the signed-in student's own page (app/[school]/(dashboard)/student/my-profile).
+  const role = String(session?.role ?? session?.userRole ?? "").toLowerCase();
+  const isParent = role === "parent";
+  // My Profile is the signed-in user's own page: student/my-profile, or parent/my-profile (built with the
+  // parent profile module; until then the parent catch-all placeholder shows).
   const openProfile = () => {
-    const role = String(session?.role ?? session?.userRole ?? "").toLowerCase();
-    if (role === "student" && session?.schoolUUID) router.push(`/${session.schoolUUID}/student/my-profile`);
+    if ((role === "student" || isParent) && session?.schoolUUID) router.push(`/${session.schoolUUID}/${role}/my-profile`);
     else toast("My Profile — coming soon", { icon: "🚧" });
   };
   const [loggingOut, setLoggingOut] = useState(false);
@@ -36,7 +38,7 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
   const [changePwOpen, setChangePwOpen] = useState(false);
   const [lms, setLms] = useState(false);
 
-  const displayName = userName || "Student";
+  const displayName = userName || (isParent ? "Parent" : "Student");
 
   return (
     <header className="fixed inset-x-0 top-[var(--maintenance-banner-h,0px)] z-50 flex h-[56px] items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 sm:px-5">
@@ -60,7 +62,10 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
         )}
       </div>
 
-      {/* Center: LMS switch */}
+      {/* Center: the LMS switch; on the parent dashboard the page title, with the LMS switch only when the parent has an LMS user */}
+      <div className="flex min-w-0 items-center gap-3">
+      {isParent && <h1 className="truncate text-base font-extrabold text-primary sm:text-2xl">Parent Dashboard</h1>}
+      {(!isParent || lmsProviderURL) && (
       <div className="flex items-center gap-2">
         <span className="text-xs font-bold text-black">LMS</span>
         <button
@@ -80,11 +85,14 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
           <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${lms ? "translate-x-5" : "translate-x-0.5"}`} />
         </button>
       </div>
+      )}
+      </div>
 
       {/* Right: cart + Add More Siblings + profile */}
       <div className="flex items-center gap-2 sm:gap-3">
         <CartHeaderButton />
-        {siblings.visible && (
+        {/* Student's "Add More Siblings". A parent gets its own Add Another Child button (parent dashboard Phase D). */}
+        {siblings.visible && !isParent && (
           <button
             type="button"
             onClick={siblings.handleClick}

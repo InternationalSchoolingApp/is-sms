@@ -117,8 +117,9 @@ export default async function proxy(request) {
   const backend = trustedBackend(entry.profile?.backend);
   let accessToken = entry.accessToken;
   let renewed = null;
+  let claims = null;
   try {
-    await verifyAccessToken(accessToken, backend);
+    claims = await verifyAccessToken(accessToken, backend);
   } catch (err) {
     if (!(err instanceof TokenError) || err.reason !== "expired" || !entry.refreshToken) {
       return publicPaymentReturn ? asVisitor(forwarded) : signedOut(request, school, entry.account);
@@ -127,6 +128,16 @@ export default async function proxy(request) {
     if (renewed === RENEWED_ELSEWHERE) return retryShortly(request);
     if (!renewed) return publicPaymentReturn ? asVisitor(forwarded) : signedOut(request, school, entry.account);
     accessToken = renewed.accessToken;
+    claims = await verifyAccessToken(accessToken, backend).catch(() => null);
+  }
+
+  // /{school}/student and /{school}/parent are each for one role. As the Java dashboards do, send anyone on
+  // the other role's URL to their own start page; never sign them out (the caller may just be one of several
+  // accounts in this browser, working in another tab).
+  const mismatch = dashboardRoleRedirect(request, segments, claims?.role, school);
+  if (mismatch) {
+    if (renewed) writeAccount(mismatch.cookies, entry.account, renewed);
+    return mismatch;
   }
 
   forwarded.set(ACCOUNT_HEADER, entry.account);
@@ -138,6 +149,21 @@ export default async function proxy(request) {
   if (renewed) writeAccount(response.cookies, entry.account, renewed);
   if (clearPickCookie) clearPick(response.cookies);
   return response;
+}
+
+/**
+ * The redirect for a user on the other role's dashboard URL, or null. A STUDENT on /parent goes to /student,
+ * a PARENT on /student goes to /parent, and any other role (teacher, admin, ...) goes to the school's login
+ * page on the Java app, whose "already logged in" shortcut sends it to its own dashboard. Role names come from
+ * the token's role claim ("STUDENT" / "PARENT", compared in any case). No role claim: no redirect.
+ */
+function dashboardRoleRedirect(request, segments, claimRole, school) {
+  const dashboard = segments[1];
+  if (dashboard !== "student" && dashboard !== "parent") return null;
+  const role = String(claimRole || "").toLowerCase();
+  if (!role || role === dashboard) return null;
+  if (role === "student" || role === "parent") return NextResponse.redirect(new URL(`/${school}/${role}`, request.url));
+  return toLogin(request, school);
 }
 
 /** /{school}/common/{payment-response-success | other-/registration-/evaluation-payment-response-success | payment-response-failure/...} */
@@ -210,6 +236,8 @@ export const config = {
     "/:school/add-enrollment/:parentId/:sessionUserId/step/:path*",
     // Student dashboard (Phase A). `:path*` also covers the bare /{school}/student home.
     "/:school/student/:path*",
+    // Parent dashboard (same chrome and layout as the student one; see dashboardRoleRedirect).
+    "/:school/parent/:path*",
     // Re-enrollment (existing students): the option screen and its step screens.
     "/:school/:mode(embed|share)/re-enrollment",
     "/:school/:mode(embed|share)/re-enrollment/:path*",

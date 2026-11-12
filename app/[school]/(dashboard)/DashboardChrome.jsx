@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { ParentChildProvider } from "@/hooks/parent/useSelectedChild";
 import { DashboardProvider, useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDashboardSessionExpiry } from "@/hooks/useDashboardSessionExpiry";
 import { useOnboardingGate } from "@/hooks/useOnboardingGate";
@@ -50,6 +51,13 @@ function DashboardBody({ role, children }) {
   );
 }
 
+// A parent's pages are each about one child: the selected child is held once, around the shell, so the child
+// tabs and every parent page share it (it is not in the URL). Students have no such scope.
+function ParentChildScope({ role, children }) {
+  if (role !== "parent") return children;
+  return <ParentChildProvider>{children}</ParentChildProvider>;
+}
+
 // Keeps the current dashboard route so a bare /{school} visit comes back here (app/[school]/page.jsx).
 function LastPathRecorder() {
   const pathname = usePathname();
@@ -65,8 +73,7 @@ function LastPathRecorder() {
  * WizardChrome. Placed in the (dashboard) route-group layout so navigating
  * between modules does not remount the shell/context.
  *
- * `role` is fixed to "student" for Phase A (the only migrated role). When more
- * roles are added, resolve it from the route segment / session here.
+ * `role` ("student" | "parent") is resolved from the session by the layout.
  */
 export function DashboardChrome({ role = "student", children }) {
   return (
@@ -74,7 +81,9 @@ export function DashboardChrome({ role = "student", children }) {
       <SessionExpiryWatcher />
       <SessionExpiredDialog />
       <LastPathRecorder />
-      <DashboardBody role={role}>{children}</DashboardBody>
+      <ParentChildScope role={role}>
+        <DashboardBody role={role}>{children}</DashboardBody>
+      </ParentChildScope>
     </DashboardProvider>
   );
 }

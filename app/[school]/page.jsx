@@ -14,7 +14,7 @@ export default async function SchoolBasePage({params}) {
     const session = await getAccountSession();
     if (session?.userId && session.schoolUUID === school) {
         const lastPath = (await cookies()).get(LAST_DASHBOARD_PATH_COOKIE)?.value;
-        redirect(safeDashboardPath(lastPath, school));
+        redirect(safeDashboardPath(lastPath, school, session.role));
     }
     redirect(match.url);
 

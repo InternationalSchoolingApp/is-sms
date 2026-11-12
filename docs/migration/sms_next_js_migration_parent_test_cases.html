@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Parent Dashboard (Next.js) — Test Cases</title>
+<style>
+  :root{
+    --bg:#0f1420;--panel:#151c2c;--panel2:#1b2436;--ink:#e8edf6;--mut:#9fb0c9;--line:#2a364d;
+    --acc:#5b9dff;--v:#2fbf71;--u:#e0a52b;--oq:#b07cff;
+    --p0:#ff4d5e;--p1:#ff8a3d;--p2:#e0c23a;--p3:#58c0a8;
+  }
+  @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+    --bg:#f5f7fb;--panel:#fff;--panel2:#eef2f8;--ink:#17202e;--mut:#536079;--line:#d7deea;
+    --acc:#1f5fd6;--v:#1f9d57;--u:#b5821a;--oq:#7a4fd0;
+    --p0:#d61f36;--p1:#c75a12;--p2:#9a861a;--p3:#1f8f78;}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.85em;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:.03em .38em}
+  .wrap{display:flex;max-width:1600px;margin:0 auto}
+  aside{position:sticky;top:0;align-self:flex-start;height:100vh;overflow:auto;width:260px;flex:0 0 260px;background:var(--panel);border-right:1px solid var(--line);padding:16px 12px}
+  aside .brand{font-weight:800;font-size:15px;padding:4px 6px 10px;line-height:1.3}
+  aside h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:12px 6px 4px}
+  aside ol{list-style:none;margin:0;padding:0}
+  aside ol li a{display:flex;justify-content:space-between;gap:8px;padding:5px 8px;border-radius:7px;color:var(--mut);font-size:13px}
+  aside ol li a:hover,aside ol li a.active{background:var(--panel2);color:var(--ink);text-decoration:none}
+  aside ol li a .c{color:var(--acc);font-variant-numeric:tabular-nums;font-size:12px}
+  main{flex:1 1 auto;min-width:0;padding:22px 28px 120px}
+  header.top{border:1px solid var(--line);background:linear-gradient(135deg,var(--panel),var(--panel2));border-radius:16px;padding:22px 24px;margin-bottom:18px}
+  header.top h1{margin:0 0 6px;font-size:23px}
+  header.top .sub{color:var(--mut);font-size:13.5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-size:12px;color:var(--mut)}
+  .meta b{color:var(--ink)}
+  .grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:14px 0}
+  .card{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:12px 14px}
+  .card .big{font-size:24px;font-weight:800}.card .lbl{color:var(--mut);font-size:12px;margin-top:2px}
+  section{border-top:1px solid var(--line);padding-top:18px;margin-top:22px;scroll-margin-top:10px}
+  section>h2{font-size:18px;margin:0 0 6px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  section>h2 .id{color:var(--acc);font-size:13px;font-weight:700}
+  p{margin:7px 0}.lead{color:var(--mut)}
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:10px 0}
+  table{border-collapse:collapse;width:100%;font-size:12.6px;min-width:900px}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--panel2);position:sticky;top:0;font-size:11px;text-transform:uppercase;letter-spacing:.04em;z-index:1}
+  tbody tr:hover{background:color-mix(in srgb,var(--acc) 7%,transparent)}
+  td.id{white-space:nowrap;font-family:ui-monospace,monospace;font-size:11.5px;color:var(--mut)}
+  td.ttl{min-width:190px;font-weight:600}
+  td.steps{min-width:260px}td.exp{min-width:220px}
+  td code{white-space:nowrap}
+  .b{display:inline-block;font-size:10.5px;font-weight:700;border-radius:999px;padding:2px 8px;border:1px solid transparent;white-space:nowrap}
+  .b.P0{color:#fff;background:var(--p0);border-color:var(--p0)}
+  .b.P1{color:#191a10;background:var(--p1);border-color:var(--p1)}
+  .b.P2{color:#191a10;background:var(--p2);border-color:var(--p2)}
+  .b.P3{color:#07140f;background:var(--p3);border-color:var(--p3)}
+  .b.t{color:var(--mut);border-color:var(--line);background:var(--panel2)}
+  .b.v{color:var(--v);border-color:var(--v);background:color-mix(in srgb,var(--v) 14%,transparent)}
+  .b.u{color:var(--u);border-color:var(--u);background:color-mix(in srgb,var(--u) 14%,transparent)}
+  .b.oq{color:var(--oq);border-color:var(--oq);background:color-mix(in srgb,var(--oq) 14%,transparent)}
+  .st{font-size:11px;color:var(--mut);white-space:nowrap}
+  .controls{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0;border-bottom:1px solid var(--line);margin-bottom:8px}
+  .controls .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .controls input{flex:1 1 260px;min-width:200px;padding:8px 12px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:14px}
+  .btn{border:1px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:8px;padding:6px 11px;font-size:12.5px;cursor:pointer}
+  .btn.on{outline:2px solid var(--acc)}
+  .note{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--panel);border-radius:10px;padding:11px 14px;margin:12px 0}
+  .note.warn{border-left-color:var(--p1)}.note.bad{border-left-color:var(--p0)}.note.ok{border-left-color:var(--v)}
+  .note b.t2{display:block;margin-bottom:3px}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0;font-size:12px;color:var(--mut);align-items:center}
+  .small{font-size:12px;color:var(--mut)}
+  .mobtoggle{display:none}
+  @media (max-width:980px){
+    aside{position:fixed;z-index:30;transform:translateX(-102%);transition:transform .2s;box-shadow:0 0 40px rgba(0,0,0,.5)}
+    aside.open{transform:none}
+    .mobtoggle{display:inline-block;position:fixed;top:12px;left:12px;z-index:31}
+    main{padding:56px 14px 90px}
+  }
+  @media print{
+    aside,.mobtoggle,.controls{display:none!important}
+    main{padding:0}section{break-inside:auto}
+    body{background:#fff;color:#000}a{color:#000}
+    tr{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<button class="btn mobtoggle" id="navToggle">☰ Suites</button>
+<div class="wrap">
+<aside id="sidebar">
+  <div class="brand">Parent Dashboard<br/>Test Cases (Next.js)</div>
+  <h2>Suites</h2>
+  <ol id="toc">
+    <li><a href="#sum"><span>Summary</span></a></li>
+    <li><a href="#env"><span>Entry &amp; Redirect (no toggle)</span><span class="c" data-count="env"></span></a></li>
+    <li><a href="#role"><span>Role Routing &amp; Guard</span><span class="c" data-count="role"></span></a></li>
+    <li><a href="#child"><span>Child Gate, Tabs &amp; Selection</span><span class="c" data-count="child"></span></a></li>
+    <li><a href="#home"><span>Parent Home</span><span class="c" data-count="home"></span></a></li>
+    <li><a href="#mod"><span>Left-side Modules</span><span class="c" data-count="mod"></span></a></li>
+    <li><a href="#prof"><span>Profile, Withdrawal &amp; Account</span><span class="c" data-count="prof"></span></a></li>
+    <li><a href="#pay"><span>Fee Payment Return</span><span class="c" data-count="pay"></span></a></li>
+    <li><a href="#sec"><span>Security / Isolation</span><span class="c" data-count="sec"></span></a></li>
+    <li><a href="#theme"><span>Theme follows the selected child</span><span class="c" data-count="theme"></span></a></li>
+    <li><a href="#reg"><span>Student Dashboard Regression</span><span class="c" data-count="reg"></span></a></li>
+    <li><a href="#ui"><span>UI / Responsive</span><span class="c" data-count="ui"></span></a></li>
+  </ol>
+</aside>
+<main>
+<header class="top">
+  <h1>Parent Dashboard (Next.js) — Test Cases</h1>
+  <div class="sub">Parity and safety checks for the Parent dashboard migration (plan: <code>parent_dashboard_module_plan.html</code>). Covers what is new or changed by the migration: redirects (no toggle), role routing, child gate and selection, home, modules, profile and withdrawal, payment return, isolation, and student regression. Older legacy-level parent API cases stay in <code>sms_next_js_migration_student_test_cases.html</code> (PAR-AUTH, PAR-CHILD, PAR-DASH-001..013, PAR-FEE, PAR-SEC, PAR-API); this file does not repeat them.</div>
+  <div class="meta">
+    <span><b>Generated:</b> 2026-11-11</span>
+    <span><b>Legacy:</b> <code>is-rest-api</code> @ <code>18d8889979</code></span>
+    <span><b>New:</b> <code>is-sms</code> @ <code>0d35d29</code></span>
+    <span><b>ID prefix:</b> PDN (PAR-DASH is already used in the older file)</span>
+  </div>
+  <div class="legend" style="margin-top:12px">
+    <span>Priority:</span><span class="b P0">P0</span><span class="b P1">P1</span><span class="b P2">P2</span><span class="b P3">P3</span>
+    <span style="margin-left:10px">Status:</span><span class="st">Not Run (default)</span>
+  </div>
+</header>
+<section id="sum" style="border-top:none;margin-top:0;padding-top:0">
+  <h2><span class="id">SUMMARY</span> Coverage Dashboard</h2>
+  <div class="grid">
+    <div class="card"><div class="big" id="sumTotal">0</div><div class="lbl">Total test cases</div></div>
+    <div class="card"><div class="big" id="sumP0" style="color:var(--p0)">0</div><div class="lbl">P0</div></div>
+    <div class="card"><div class="big" id="sumP1" style="color:var(--p1)">0</div><div class="lbl">P1</div></div>
+    <div class="card"><div class="big" id="sumP2" style="color:var(--p2)">0</div><div class="lbl">P2</div></div>
+    <div class="card"><div class="big" id="sumP3" style="color:var(--p3)">0</div><div class="lbl">P3</div></div>
+    <div class="card"><div class="big" id="sumShown">0</div><div class="lbl">Shown (after filter)</div></div>
+  </div>
+  <div class="controls"><div class="row">
+    <input id="q" type="text" placeholder="Search all test cases… (e.g. 'child', 'redirect', 'withdrawal')" oninput="applyFilter()">
+    <button class="btn" onclick="setPri(this,'ALL')">All</button>
+    <button class="btn" onclick="setPri(this,'P0')">P0</button>
+    <button class="btn" onclick="setPri(this,'P1')">P1</button>
+    <button class="btn" onclick="setPri(this,'P2')">P2</button>
+    <button class="btn" onclick="setPri(this,'P3')">P3</button>
+  </div></div>
+</section>
+<section id="env">
+<h2><span class="id">TS-PDN-ENV</span> Entry &amp; Redirect (no toggle)</h2>
+<p class="small">There is no parent toggle: every PARENT entry point goes to Next.js. The only fallback is a blank <code>NEXTJS_APP_URL</code>.</p>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P0" data-type="E2E"><td class="id">PDN-ENV-001</td><td class="ttl">Parent login lands on Next.js</td><td class="steps">Log in as a parent on the school login page.</td><td class="exp">Browser goes through <code>/api/sso</code> and lands on <code>/{school}/parent</code>. No JSP dashboard page is shown in between.</td><td><span class="b t">E2E</span></td><td><span class="b P0">P0</span></td><td><code>getFinalParentDashboardUrl</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="E2E"><td class="id">PDN-ENV-002</td><td class="ttl">SSO / already-logged-in entry</td><td class="steps">Open the school URL while logged in as a parent, and use an SSO link.</td><td class="exp">Lands on <code>/{school}/parent</code> both ways.</td><td><span class="b t">E2E</span></td><td><span class="b P1">P1</span></td><td><code>SingleSignOnUtil#getDashboardRedirectUrl</code>, <code>#getRedirectUrl</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="E2E"><td class="id">PDN-ENV-003</td><td class="ttl">Old parent-dashboard URL redirects</td><td class="steps">As a logged-in parent open <code>/{school}/dashboard/parent-dashboard/{uuid}</code> (bookmark or email link).</td><td class="exp">Redirected to Next.js <code>/parent</code>. Legacy <code>/parent/*</code> AJAX endpoints still answer.</td><td><span class="b t">E2E</span></td><td><span class="b P1">P1</span></td><td><code>ClientDashoboardParentController#parentDashboard</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-ENV-004</td><td class="ttl">Blank NEXTJS_APP_URL falls back to JSP</td><td class="steps">In a test env blank <code>NEXTJS_APP_URL</code>; log in as a parent.</td><td class="exp">Parent lands on the legacy JSP parent dashboard. No error, no redirect loop.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>getFinalParentDashboardUrl</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-ENV-005</td><td class="ttl">Parent opening the student URL</td><td class="steps">As a parent open <code>/{school}/dashboard/student/{uuid}</code>.</td><td class="exp">Redirected to Next.js <code>/parent</code>.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>ClientDashboardStudentController</code> L218</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">PDN-ENV-006</td><td class="ttl">Other roles unaffected</td><td class="steps">Log in as student, teacher, counselor and admin.</td><td class="exp">Each lands exactly where it did before the change.</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td><code>CommonUtil</code> L1927</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Regression"><td class="id">PDN-ENV-007</td><td class="ttl">Admin view-as-parent untouched</td><td class="steps">Admin uses view-as-user on a parent.</td><td class="exp">Behaviour is unchanged (legacy flow, out of v1 scope).</td><td><span class="b t">Regression</span></td><td><span class="b P2">P2</span></td><td><code>view-as-user</code></td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="role">
+<h2><span class="id">TS-PDN-ROLE</span> Role Routing &amp; Guard</h2>
+<p class="small">One <code>layout.jsx</code> with a dynamic role; <code>proxy.js</code> redirects mismatches the way Java does, and never signs out.</p>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">PDN-ROLE-001</td><td class="ttl">Parent on /student</td><td class="steps">As a parent open <code>/{school}/student/...</code>.</td><td class="exp">Redirected to <code>/{school}/parent</code>. Session stays signed in.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td><code>proxy.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">PDN-ROLE-002</td><td class="ttl">Student on /parent</td><td class="steps">As a student open <code>/{school}/parent/...</code>.</td><td class="exp">Redirected to <code>/{school}/student</code>.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td><code>proxy.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-ROLE-003</td><td class="ttl">Other role on either dashboard</td><td class="steps">As teacher/admin open <code>/{school}/parent</code> and <code>/{school}/student</code>.</td><td class="exp">Sent to that role's own start page (legacy JSP).</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>CommonUtil#getRedirectUrl</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Security"><td class="id">PDN-ROLE-004</td><td class="ttl">Mismatch never signs out</td><td class="steps">Two accounts in one browser; trigger a mismatch redirect in one tab.</td><td class="exp">Other tab/account stays signed in. No logout call is made.</td><td><span class="b t">Security</span></td><td><span class="b P1">P1</span></td><td><code>proxy.js</code>, <code>TabAccount</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-ROLE-005</td><td class="ttl">Role value case</td><td class="steps">Token <code>role</code> is <code>PARENT</code> / <code>STUDENT</code> (any case).</td><td class="exp">Layout and proxy resolve the role case-insensitively.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>claims.role</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">PDN-ROLE-006</td><td class="ttl">No student shell for a parent</td><td class="steps">Load <code>/parent</code> with a throttled network.</td><td class="exp">Loader until ready, then the parent shell. The student/K5 shell never flashes.</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td><code>DashboardChrome</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-ROLE-007</td><td class="ttl">Bare /{school} returns to own dashboard</td><td class="steps">Visit <code>/{school}</code> as parent, then as student.</td><td class="exp">Each returns to its last or default dashboard path.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>lastDashboardPath.js</code></td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="child">
+<h2><span class="id">TS-PDN-CHILD</span> Child Gate, Tabs &amp; Selection</h2>
+<p class="small"><code>get-students-by-parent</code> is the parent gate: children, <code>roleId</code> menu and LMS URL in one call, identity from the session.</p>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P0" data-type="API"><td class="id">PDN-CHILD-001</td><td class="ttl">Gate response</td><td class="steps">Call <code>get-students-by-parent</code> as a parent.</td><td class="exp">Returns <code>studentBasicDetails[]</code>, <code>roleAndModuleAssign</code> (with <code>roleId</code>) and <code>lmsProviderURL</code> when set.</td><td><span class="b t">API</span></td><td><span class="b P0">P0</span></td><td><code>DashboardStudentUtil#getStudentsByParent</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">PDN-CHILD-002</td><td class="ttl">Body userId mismatch rejected</td><td class="steps">As parent A POST <code>userId</code> of parent B.</td><td class="exp">Failed status. No children, no menu returned.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td><code>getStudentsByParent</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">PDN-CHILD-003</td><td class="ttl">No session</td><td class="steps">Call the endpoint without a session.</td><td class="exp">Session-out status (<code>status</code> 3).</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td><code>commonUtil.getSessionOutStatus</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">PDN-CHILD-004</td><td class="ttl">Legacy JSP callers still work</td><td class="steps">On the legacy parent dashboard open the child list and the Withdrawal Request children.</td><td class="exp">Both lists load as before (they send the parent's own <code>userId</code>).</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td><code>parentDashboardContent.js</code> L32, <code>withdrawalRequestUser.js</code> L214</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-CHILD-005</td><td class="ttl">Child tabs</td><td class="steps">Parent with 2+ children opens <code>/parent</code>, then a module page.</td><td class="exp">All children show side by side at the top as "Child N: First name · Grade X" tabs, Child 1 selected and highlighted, on the home and on every module page.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>ChildTabs</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-CHILD-006</td><td class="ttl">Single child</td><td class="steps">Parent with one child opens <code>/parent</code>.</td><td class="exp">One tab, selected; the home opens straight on that child.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>useSelectedChild</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-CHILD-007</td><td class="ttl">Selection survives reload</td><td class="steps">Select a child, move between modules, press reload.</td><td class="exp">The same child is still selected (legacy lost it on reload). The address bar never shows a child id.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>?child=</code> + <code>sessionStorage</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">PDN-CHILD-008</td><td class="ttl">Edited stored child</td><td class="steps">In devtools set this tab's <code>is-parent-child:*</code> sessionStorage value to another parent's child id, or to junk; reload.</td><td class="exp">Picker opens (or the only child is selected). No data from the other child is requested or shown.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td><code>ParentChildProvider</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Security"><td class="id">PDN-CHILD-013</td><td class="ttl">No child id in the URL</td><td class="steps">Open home, every module, and switch child.</td><td class="exp">The address bar never contains a child id. An old link with <code>?child=</code> loads and the param is removed.</td><td><span class="b t">Security</span></td><td><span class="b P1">P1</span></td><td><code>useSelectedChild</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Functional"><td class="id">PDN-CHILD-009</td><td class="ttl">Switch child</td><td class="steps">Click each child tab on home and on a module; with a tab focused use ArrowLeft, ArrowRight, Home and End.</td><td class="exp">Every widget refetches for the new child. No stale rows from the previous child. The keys move the selection.</td><td><span class="b t">Functional</span></td><td><span class="b P0">P0</span></td><td><code>ChildTabs</code>, query keys</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-CHILD-010</td><td class="ttl">Selection is per account</td><td class="steps">Two parent accounts in two tabs, each with a different child.</td><td class="exp">Neither tab picks up the other's selection.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>sessionStorage</code> per account</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Functional"><td class="id">PDN-CHILD-011</td><td class="ttl">Menu from the gate roleId</td><td class="steps">Open <code>/parent</code> and compare the sidebar with <code>getRoleAssignModuleList</code>.</td><td class="exp">Items and order match the DB-driven menu (skipped items absent).</td><td><span class="b t">Functional</span></td><td><span class="b P0">P0</span></td><td><code>ModulesUtil</code>, <code>applyParentNavRules</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Negative"><td class="id">PDN-CHILD-012</td><td class="ttl">No active child</td><td class="steps">Parent whose children are all inactive.</td><td class="exp">Friendly empty state. No crash, no endless loader.</td><td><span class="b t">Negative</span></td><td><span class="b P2">P2</span></td><td><code>ParentChildProvider</code></td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="home">
+<h2><span class="id">TS-PDN-HOME</span> Parent Home</h2>
+<p class="small">Compare each widget with the legacy JSP for the same child. Legacy API cases: PAR-DASH-001 to PAR-DASH-013 in the student/parent file.</p>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-HOME-001</td><td class="ttl">Child overview and summary</td><td class="steps">Open home for a child.</td><td class="exp">Name, grade and last/this-month average match legacy.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>parent/student-dashboard-overview</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-HOME-002</td><td class="ttl">Attendance and grade charts</td><td class="steps">Open home; hover or read the chart values.</td><td class="exp">SVG charts show the same numbers as legacy; readable on mobile; no chart library added.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>attendanceOverview[]</code>, <code>gradeOverview[]</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-HOME-003</td><td class="ttl">Performance card links</td><td class="steps">Click each performance link.</td><td class="exp">Opens the matching module by <code>pageLink</code>, not a hard-coded module id.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>parentDashboardContent.js</code> L367</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-HOME-004</td><td class="ttl">Upcoming classes and activities</td><td class="steps">Open home for a child with and without classes.</td><td class="exp">List matches legacy; title switches on <code>activitiesWithClass</code>; times in the right timezone.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>parent/student-schedule</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-HOME-005</td><td class="ttl">Payments due card</td><td class="steps">Child with and without dues.</td><td class="exp">Dues match Fee Details; Pay opens the fee flow.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>parent/student-fee-details</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-HOME-006</td><td class="ttl">Announcements</td><td class="steps">Open announcements; acknowledge one.</td><td class="exp">List, detail and acknowledge work; count updates.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>get-announcement-details</code>, <code>save-acknowledge-request</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-HOME-007</td><td class="ttl">School diary</td><td class="steps">Open diary; send and read a message as PARENT.</td><td class="exp">Threads, unread count and mention list work.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>/api/diary/*</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P3" data-type="Functional"><td class="id">PDN-HOME-008</td><td class="ttl">Chat</td><td class="steps">Receive an unread chat message.</td><td class="exp">Unread count shows and clears.</td><td><span class="b t">Functional</span></td><td><span class="b P3">P3</span></td><td><code>api/v1/chat</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P3" data-type="UI"><td class="id">PDN-HOME-009</td><td class="ttl">News hidden</td><td class="steps">Open the right action rail as parent.</td><td class="exp">No News entry (legacy hides it).</td><td><span class="b t">UI</span></td><td><span class="b P3">P3</span></td><td><code>parentDashboard.js</code> L112</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-HOME-010</td><td class="ttl">Switch to LMS</td><td class="steps">Parent with and without an LMS user.</td><td class="exp">Link shows only when <code>lmsProviderURL</code> exists and opens the LMS.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>lmsProviderURL</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="E2E"><td class="id">PDN-HOME-011</td><td class="ttl">Add Another Child button</td><td class="steps">Setting <code>ADD_ANOTHER_CHILD_BTN</code> on, then off.</td><td class="exp">Button shows only when on; opens the existing add-enrollment flow in a new tab through SSO.</td><td><span class="b t">E2E</span></td><td><span class="b P1">P1</span></td><td><code>api/v1/enroll/another/child</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">PDN-HOME-012</td><td class="ttl">Mobile bottom bar</td><td class="steps">Open home at 375px width.</td><td class="exp">Bottom bar shows the same entries as legacy and navigates correctly.</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td><code>parentDashboardContent.js</code> L699</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">PDN-HOME-013</td><td class="ttl">Header title and LMS</td><td class="steps">Open the parent dashboard as a parent with and without an LMS user.</td><td class="exp">The header shows "Parent Dashboard" in the centre and the parent's name on the right; the LMS switch appears only when the parent has an LMS user.</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td><code>DashboardTopHeader</code></td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="mod">
+<h2><span class="id">TS-PDN-MOD</span> Left-side Modules</h2>
+<p class="small">Same <code>pageLink</code> as the legacy route: <code>/{school}/parent/{pageLink}</code>. Skipped in v1: Teacher Feedback, PTM, Transcript, Notifications.</p>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-MOD-001</td><td class="ttl">Attendance</td><td class="steps">Open <code>parent-attendance</code>.</td><td class="exp">Summary and month-wise data match legacy for the selected child.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>student-attendance-full</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-MOD-002</td><td class="ttl">Attendance details</td><td class="steps">Open a day/class detail.</td><td class="exp">Details match legacy.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>student-attendance-details</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-MOD-003</td><td class="ttl">Login History</td><td class="steps">Open <code>parent-student-login-details</code>.</td><td class="exp">Rows match legacy; no <code>?type=full-page</code> dependency.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>student-attendance</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-MOD-004</td><td class="ttl">Assigned Teachers</td><td class="steps">Open <code>parent-syllabus-assigned-teacher</code>; open course content.</td><td class="exp">Teachers and course-content modal match legacy.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>student-assgined-teacher</code>, <code>student-course-content</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Functional"><td class="id">PDN-MOD-005</td><td class="ttl">Fee Details</td><td class="steps">Open <code>parent-fee-details</code>.</td><td class="exp">Paid/due amounts and dates match legacy.</td><td><span class="b t">Functional</span></td><td><span class="b P0">P0</span></td><td><code>student-fee-details</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-MOD-006</td><td class="ttl">Receipt</td><td class="steps">Download a receipt.</td><td class="exp">Receipt opens with the parent's session; wrong child is refused.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>receipt link</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-MOD-007</td><td class="ttl">Wire transfer school</td><td class="steps">School id 5 with a wire-transfer due.</td><td class="exp">The special wire-transfer path from legacy is kept.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>parentFeeDetailsContent.js</code> L162</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-MOD-008</td><td class="ttl">Academic Performance</td><td class="steps">Open <code>parent-academic-performance</code> for a normal child and for a K5 child.</td><td class="exp">Numbers match legacy for both. <code>k5Performance</code> is not sent for the K5 child.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>student-academic-performance</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-MOD-009</td><td class="ttl">Excuse activity</td><td class="steps">Excuse an activity.</td><td class="exp">Saved; list refreshes.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>dashboard/excuse-activity</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-MOD-010</td><td class="ttl">Progress reports</td><td class="steps">Open <code>parent-progress</code>; change date range.</td><td class="exp">Weekly reports for the range match legacy.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>weekly-progress-reports-detail</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-MOD-011</td><td class="ttl">Progress report view</td><td class="steps">Open one report.</td><td class="exp">Gradebook view matches legacy.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>Buzz gradebook</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-MOD-012</td><td class="ttl">Class Schedule</td><td class="steps">Open <code>parent-class-schedule</code>.</td><td class="exp">Schedule for the chosen range matches legacy.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>student-schedule</code>, <code>student-class-summary</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-MOD-013</td><td class="ttl">Class Summary</td><td class="steps">Open <code>parent-class-summary</code>.</td><td class="exp">Own route; summary matches legacy.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>student-class-schedule-summary</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-MOD-014</td><td class="ttl">Academic Docs list</td><td class="steps">Open <code>parent-download-academic-docs</code>.</td><td class="exp">Documents, transcript and verification letter entries match legacy.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>student-academic-details</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">PDN-MOD-015</td><td class="ttl">Academic Docs download</td><td class="steps">Download each document type.</td><td class="exp">File streams through the Next.js BFF route. No token or encrypted URL is exposed to the browser; another child's file is refused.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td><code>app/api/parent/academic-docs</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P3" data-type="UI"><td class="id">PDN-MOD-016</td><td class="ttl">Unmigrated menu item</td><td class="steps">Open a menu item with no Next.js folder.</td><td class="exp">"Being migrated" placeholder, not a 404.</td><td><span class="b t">UI</span></td><td><span class="b P3">P3</span></td><td><code>parent/[...module]</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-MOD-017</td><td class="ttl">Skipped items absent</td><td class="steps">Check the sidebar for a normal and a demo parent.</td><td class="exp">No Teacher Feedback, PTM, Transcript or Notifications.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>applyParentNavRules</code></td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="prof">
+<h2><span class="id">TS-PDN-PROF</span> Profile, Withdrawal &amp; Account</h2>
+
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-PROF-001</td><td class="ttl">My Profile opens</td><td class="steps">Header menu, My Profile.</td><td class="exp">Opens <code>/parent/my-profile</code> (not a "coming soon" toast) with parent details.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>get-common-profile-details</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-PROF-002</td><td class="ttl">Save profile</td><td class="steps">Edit and save fields.</td><td class="exp">Saved; reload shows new values.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>save-common-profile-details</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-PROF-003</td><td class="ttl">Document upload</td><td class="steps">Upload a document.</td><td class="exp">Saved and listed.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>save-docs</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-PROF-004</td><td class="ttl">Withdrawal request</td><td class="steps">Open the Withdrawal Request card; start one for a child.</td><td class="exp">Child list, init and history work.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>parent/withdrawal-init</code>, <code>-list</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-PROF-005</td><td class="ttl">Withdrawal OTP</td><td class="steps">Send and verify the OTP (right and wrong code).</td><td class="exp">Right code accepted; wrong code and expiry rejected with a message.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>withdrawal-send-otp</code>, <code>-verify-otp</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-PROF-006</td><td class="ttl">Bank details</td><td class="steps">Save bank details.</td><td class="exp">Saved; masked on display.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>withdrawal-bank-details</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P3" data-type="UI"><td class="id">PDN-PROF-007</td><td class="ttl">App-install prompt</td><td class="steps">Open the profile on mobile and desktop.</td><td class="exp">Prompt behaves as in legacy.</td><td><span class="b t">UI</span></td><td><span class="b P3">P3</span></td><td><code>adminProfileContent.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-PROF-008</td><td class="ttl">Change password</td><td class="steps">Header menu, Change Password.</td><td class="exp">Modal works; old password rejected when wrong.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>changed-password-content</code></td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="pay">
+<h2><span class="id">TS-PDN-PAY</span> Fee Payment Return</h2>
+
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P0" data-type="E2E"><td class="id">PDN-PAY-001</td><td class="ttl">Pay and return</td><td class="steps">Pay a due fee end to end (Stripe/Airwallex test mode).</td><td class="exp">Returns to the Next.js <code>payment-response-success</code> page, signed in.</td><td><span class="b t">E2E</span></td><td><span class="b P0">P0</span></td><td><code>PaymentResponseApiController</code> L612</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="E2E"><td class="id">PDN-PAY-002</td><td class="ttl">Failed payment</td><td class="steps">Fail or cancel a payment.</td><td class="exp">Failure page shows; Go to dashboard goes to <code>/parent</code>.</td><td><span class="b t">E2E</span></td><td><span class="b P1">P1</span></td><td><code>payment-response-failure</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">PDN-PAY-003</td><td class="ttl">Go to dashboard by role</td><td class="steps">Finish a payment as a parent, then as a student.</td><td class="exp">Parent goes to <code>/parent/parent-fee-details</code>; student goes where it did before.</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td><code>PaymentResponseView.jsx</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-PAY-004</td><td class="ttl">Session kept</td><td class="steps">Complete a payment.</td><td class="exp">No re-login after the gateway returns.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>SSO / account cookies</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-PAY-005</td><td class="ttl">Fallback environment</td><td class="steps">Blank <code>NEXTJS_APP_URL</code>, pay as a parent.</td><td class="exp">Return goes to the legacy JSP and works.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>ClientCommonPaymentController</code> L579</td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="sec">
+<h2><span class="id">TS-PDN-SEC</span> Security / Isolation</h2>
+
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">PDN-SEC-001</td><td class="ttl">Child IDOR on every module</td><td class="steps">Call each parent endpoint with another parent's <code>studentUserId</code>.</td><td class="exp">Denied by the parent-student mapping check. No data returned.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td><code>isStudentMappedToParent</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">PDN-SEC-002</td><td class="ttl">Student calling parent data</td><td class="steps">As a student call <code>/parent/*</code> with another student's id.</td><td class="exp">Denied.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td><code>AccessPolicyInterceptor</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">PDN-SEC-003</td><td class="ttl">No secrets to the browser</td><td class="steps">Inspect network and HTML on parent pages.</td><td class="exp">No access token, <code>DATABASE_NAME</code> or <code>SESSION_ID</code> is sent to the client.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td><code>BFF</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-SEC-004</td><td class="ttl">Session expiry</td><td class="steps">Let the session expire on a parent page.</td><td class="exp">Session-expired dialog shows; no endless retries.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>useDashboardSessionExpiry</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Security"><td class="id">PDN-SEC-005</td><td class="ttl">Two accounts, two tabs</td><td class="steps">Parent in one tab, student in another.</td><td class="exp">No cross-contamination of data, menu or selected child.</td><td><span class="b t">Security</span></td><td><span class="b P1">P1</span></td><td><code>x-account</code> header</td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="theme">
+<h2><span class="id">TS-PDN-THEME</span> Theme follows the selected child</h2>
+<p class="small">A parent with an elementary, a middle and a high-school child. Same K-5 / middle / default themes the student dashboard already has.</p>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P0" data-type="UI"><td class="id">PDN-THEME-001</td><td class="ttl">Elementary child</td><td class="steps">Parent with three children (elementary, middle, high) selects the elementary child.</td><td class="exp">Whole dashboard is in the K-5 theme: shell, header, menu rail, home and modules. K5 is enabled for the school.</td><td><span class="b t">UI</span></td><td><span class="b P0">P0</span></td><td><code>K5Shell</code>, <code>useChildTheme</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="UI"><td class="id">PDN-THEME-002</td><td class="ttl">Middle child</td><td class="steps">Select the middle child with <code>NEXT_PUBLIC_MIDDLE_DASHBOARD=true</code>.</td><td class="exp">K-5 chrome in the Balanced skin, as for a middle-school student.</td><td><span class="b t">UI</span></td><td><span class="b P1">P1</span></td><td><code>app/k5-middle.css</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="UI"><td class="id">PDN-THEME-003</td><td class="ttl">Middle child, flag off</td><td class="steps">Select the middle child with the middle flag off.</td><td class="exp">Default theme, the same as a student of that grade sees.</td><td><span class="b t">UI</span></td><td><span class="b P1">P1</span></td><td><code>isMiddleDashboardOn</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="UI"><td class="id">PDN-THEME-004</td><td class="ttl">High-school child</td><td class="steps">Select the high-school child.</td><td class="exp">Default high-school theme (<code>DashboardShell</code>).</td><td><span class="b t">UI</span></td><td><span class="b P0">P0</span></td><td><code>DashboardShell</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Functional"><td class="id">PDN-THEME-005</td><td class="ttl">Switching child switches theme</td><td class="steps">Switch elementary, middle, high and back with the child tabs.</td><td class="exp">Theme changes at once each time; the data refetches for the new child; no reload and no flash of the wrong theme.</td><td><span class="b t">Functional</span></td><td><span class="b P0">P0</span></td><td><code>ChildSwitcher</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-THEME-006</td><td class="ttl">Reload keeps theme</td><td class="steps">Select the elementary child and reload.</td><td class="exp">Same child, same theme, no flash of the default theme before it.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>sessionStorage + gate</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="UI"><td class="id">PDN-THEME-007</td><td class="ttl">First child is the default</td><td class="steps">Open <code>/parent</code> with several children and no stored choice.</td><td class="exp">Child 1 is selected and its theme shows from the first paint; there is no neutral picker screen.</td><td><span class="b t">UI</span></td><td><span class="b P1">P1</span></td><td><code>useSelectedChild</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-THEME-008</td><td class="ttl">K5 disabled for the school</td><td class="steps">Turn <code>K5_DASHBOARD_ENABLED</code> off, select the elementary child.</td><td class="exp">Default theme for every child.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>k5DashboardEnabled</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PDN-THEME-009</td><td class="ttl">Not a K-5 learning program</td><td class="steps">Child whose program is not in the K-5 list.</td><td class="exp">Default theme, as for a student.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>isK5LearningProgram</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P3" data-type="UI"><td class="id">PDN-THEME-010</td><td class="ttl">PreK child</td><td class="steps">Select a PreK / Nursery child (standard 17).</td><td class="exp">Simpler PreK variant, as for a student.</td><td><span class="b t">UI</span></td><td><span class="b P3">P3</span></td><td><code>isPreK</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="API"><td class="id">PDN-THEME-011</td><td class="ttl">Gate carries the theme data</td><td class="steps">Call <code>get-students-by-parent</code> for the three-child parent.</td><td class="exp">Each child has <code>gradeBand</code>, <code>standardId</code>, <code>registrationType</code>, <code>isSelfStudy</code>; the response has <code>k5DashboardEnabled</code>. No extra per-child call is made to theme the page.</td><td><span class="b t">API</span></td><td><span class="b P0">P0</span></td><td><code>getStudentsByParent</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="UI"><td class="id">PDN-THEME-012</td><td class="ttl">Parent pages look right in each theme</td><td class="steps">Open home, the child tabs and every built module in all three themes.</td><td class="exp">No unreadable text, broken layout or clashing colours (K-5 pages use the compatibility scope or a dedicated variant).</td><td><span class="b t">UI</span></td><td><span class="b P1">P1</span></td><td><code>k5-legacy</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PDN-THEME-013</td><td class="ttl">K-5 chrome is parent-aware</td><td class="steps">In the K-5 theme use the nav rail, header items and right rail as a parent.</td><td class="exp">Links stay under <code>/parent</code>; no cart or student siblings; the rail is child-scoped with no News and hidden on phones; no Pico guide.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>K5NavRail</code>, <code>K5Header</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Security"><td class="id">PDN-THEME-014</td><td class="ttl">Appearance choices</td><td class="steps">Change the K-5 look as a parent, then switch child.</td><td class="exp">The choice is saved on the parent's account and applies to every child; it is never sent with another user's id.</td><td><span class="b t">Security</span></td><td><span class="b P2">P2</span></td><td><code>update-theme</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">PDN-THEME-015</td><td class="ttl">Student themes unchanged</td><td class="steps">Log in as an elementary, a middle and a high-school student.</td><td class="exp">Each student theme is exactly as before.</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td><code>useResolveGradeBand</code></td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="reg">
+<h2><span class="id">TS-PDN-REG</span> Student Dashboard Regression</h2>
+<p class="small">Re-run after every shared-file change (layout, <code>dashboardApi</code> params, hooks, Sidebar, TopHeader, <code>proxy.js</code>).</p>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">PDN-REG-001</td><td class="ttl">Student home</td><td class="steps">Run STU-DASH-001 and STU-DASH-002.</td><td class="exp">Entry and menu are unchanged.</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td><code>StudentHome</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">PDN-REG-002</td><td class="ttl">Child-aware params default</td><td class="steps">Open student Attendance, Fees, Performance, Progress, Syllabus, Login History.</td><td class="exp">All load as before (<code>studentUserId</code> defaults to <code>userId</code>).</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td><code>dashboardApi.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">PDN-REG-003</td><td class="ttl">Student role from session</td><td class="steps">Log in as a student.</td><td class="exp">Layout resolves <code>student</code>; menu comes from <code>get-student-dashboard</code>.</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td><code>useDashboardContext</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Regression"><td class="id">PDN-REG-004</td><td class="ttl">K5 student shell</td><td class="steps">Log in as a K5 student.</td><td class="exp">K5 shell and pages render as before.</td><td><span class="b t">Regression</span></td><td><span class="b P1">P1</span></td><td><code>K5Shell</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Regression"><td class="id">PDN-REG-005</td><td class="ttl">Profile, cart, book-a-session</td><td class="steps">Open student profile, cart and book-a-session.</td><td class="exp">Unchanged; <code>userType</code> stays student.</td><td><span class="b t">Regression</span></td><td><span class="b P1">P1</span></td><td><code>profileApi</code>, <code>cartApi</code>, <code>bookClassApi</code></td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="ui">
+<h2><span class="id">TS-PDN-UI</span> UI / Responsive</h2>
+
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">PDN-UI-001</td><td class="ttl">Phone width</td><td class="steps">Use 375px width on home and each module.</td><td class="exp">No horizontal scroll; sidebar drawer and bottom bar work.</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td><code>DashboardShell</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">PDN-UI-002</td><td class="ttl">Child tabs accessibility</td><td class="steps">Use the child tabs with the keyboard and a screen reader.</td><td class="exp">A labelled tablist; arrow-key navigation; the selected tab is announced.</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td><code>ChildTabs</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">PDN-UI-003</td><td class="ttl">Error and empty states</td><td class="steps">Force an API failure on each module.</td><td class="exp">Clear error with retry; empty data shows an empty state.</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td><code>each module</code></td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+</main>
+</div>
+<script>
+(function(){
+  var tog=document.getElementById('navToggle'),sb=document.getElementById('sidebar');
+  if(tog)tog.addEventListener('click',function(){sb.classList.toggle('open');});
+  document.querySelectorAll('[data-count]').forEach(function(el){
+    var sec=document.getElementById(el.getAttribute('data-count'));
+    if(sec)el.textContent=sec.querySelectorAll('tr.tc').length;
+  });
+  recount();
+})();
+var curPri='ALL';
+function setPri(btn,p){curPri=p;document.querySelectorAll('.controls .btn').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');applyFilter();}
+function applyFilter(){
+  var q=(document.getElementById('q').value||'').toLowerCase();
+  document.querySelectorAll('tr.tc').forEach(function(tr){
+    var okText=tr.textContent.toLowerCase().indexOf(q)>-1;
+    var okPri=(curPri==='ALL')||(tr.getAttribute('data-pri')===curPri);
+    tr.style.display=(okText&&okPri)?'':'none';
+  });
+  recount();
+}
+function recount(){
+  var all=[].slice.call(document.querySelectorAll('tr.tc'));
+  var shown=all.filter(function(t){return t.style.display!=='none';});
+  function c(p){return all.filter(function(t){return t.getAttribute('data-pri')===p;}).length;}
+  set('sumTotal',all.length);set('sumP0',c('P0'));set('sumP1',c('P1'));set('sumP2',c('P2'));set('sumP3',c('P3'));set('sumShown',shown.length);
+}
+function set(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+window.addEventListener('beforeprint',function(){document.querySelectorAll('tr.tc').forEach(function(t){t.style.display='';});});
+</script>
+</body>
+</html>

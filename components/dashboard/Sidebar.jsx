@@ -8,7 +8,8 @@ import {
   ClipboardCheck, BarChart3, FileText, Globe, Handshake, Gamepad2, Wallet,
   BookMarked, History, Circle, ChevronDown, X, Award,
 } from "lucide-react";
-import { studentNavHref } from "@/utils/dashboardNav";
+import { dashboardNavHref } from "@/utils/dashboardNav";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 
 // String-key -> lucide component (keys come from utils/dashboardNav.js; all verified present).
 const ICONS = {
@@ -36,9 +37,13 @@ function iconFor(key) {
 export function Sidebar({ menu, open = false, onClose, collapsed = false, onExpand }) {
   const pathname = usePathname();
   const { school } = useParams();
+  // The same shell serves the student and parent dashboards; links stay under the signed-in role's base path.
+  const { context } = useDashboardContext();
+  const role = context?.role ?? "student";
+  const hrefFor = (segment) => dashboardNavHref(school, role, segment);
 
   const isActive = (segment) => {
-    const href = studentNavHref(school, segment);
+    const href = hrefFor(segment);
     return segment ? pathname === href || pathname.startsWith(`${href}/`) : pathname === href;
   };
   console.log("Sidebar render", menu);
@@ -47,7 +52,7 @@ export function Sidebar({ menu, open = false, onClose, collapsed = false, onExpa
       {open && <div className="fixed inset-0 z-30 bg-black/40 md:hidden" aria-hidden="true" onClick={onClose} />}
 
       <nav
-        aria-label="Student dashboard"
+        aria-label={role === "parent" ? "Parent dashboard" : "Student dashboard"}
         className={`fixed left-0 top-[var(--dash-header-h,56px)] z-40 h-[calc(100vh-var(--dash-header-h,56px))] overflow-y-auto overflow-x-hidden border-r border-slate-200 bg-white py-3 transition-all duration-200 md:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         } ${collapsed ? "w-16 px-2" : "w-64 px-3"}`}
@@ -65,7 +70,7 @@ export function Sidebar({ menu, open = false, onClose, collapsed = false, onExpa
               <GroupItem
                 key={item.key}
                 item={item}
-                school={school}
+                hrefFor={hrefFor}
                 collapsed={collapsed}
                 onExpand={onExpand}
                 onNavigate={onClose}
@@ -74,7 +79,7 @@ export function Sidebar({ menu, open = false, onClose, collapsed = false, onExpa
             ) : (
               <LinkItem
                 key={item.key}
-                href={studentNavHref(school, item.segment)}
+                href={hrefFor(item.segment)}
                 label={item.label}
                 Icon={iconFor(item.icon)}
                 active={isActive(item.segment)}
@@ -108,7 +113,7 @@ function LinkItem({ href, label, Icon, active, collapsed, onNavigate }) {
   );
 }
 
-function GroupItem({ item, school, collapsed, onExpand, onNavigate, isActive }) {
+function GroupItem({ item, hrefFor, collapsed, onExpand, onNavigate, isActive }) {
   const Icon = iconFor(item.icon);
   const childActive = item.children.some((c) => isActive(c.segment));
   const [openGroup, setOpenGroup] = useState(childActive);
@@ -152,7 +157,7 @@ function GroupItem({ item, school, collapsed, onExpand, onNavigate, isActive }) 
             return (
               <li key={child.key}>
                 <Link
-                  href={studentNavHref(school, child.segment)}
+                  href={hrefFor(child.segment)}
                   onClick={onNavigate}
                   aria-current={active ? "page" : undefined}
                   className={`block rounded-lg px-3 py-2 text-sm transition-colors ${

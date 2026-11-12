@@ -42,10 +42,11 @@ async function postDiary(path, body) {
  * The rail's real badge-count source (unlike News, this IS server-backed) —
  * legacy's #schoolDiaryBadge reads `details.unreadMessageCount`.
  */
-export async function getDiaryUnreadCount({ sessionUserId }) {
+export async function getDiaryUnreadCount({ sessionUserId, studentUserId }) {
   if (!hasBackendOrigin() || !sessionUserId) return null;
   try {
-    return await postDiary("/thread/unread-count", { sessionUserId });
+    // A parent also names the child (the selected one): the backend then counts only that child's unread diary.
+    return await postDiary("/thread/unread-count", studentUserId ? { sessionUserId, studentUserId } : { sessionUserId });
   } catch {
     return null;
   }

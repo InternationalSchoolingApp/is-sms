@@ -14,10 +14,15 @@ export function dashboardBasePath(school, role = "student") {
   return `/${school}/${role}`;
 }
 
+// Full href for a nav item of the given dashboard role ("" = the home/landing page).
+export function dashboardNavHref(school, role, segment) {
+  const base = dashboardBasePath(school, role);
+  return segment ? `${base}/${segment}` : base;
+}
+
 // Full href for a student nav item ("" = the home/landing page).
 export function studentNavHref(school, segment) {
-  const base = dashboardBasePath(school, "student");
-  return segment ? `${base}/${segment}` : base;
+  return dashboardNavHref(school, "student", segment);
 }
 
 /**
@@ -37,7 +42,9 @@ export function studentNavHref(school, segment) {
 // app/[school]/(dashboard)/student/page.jsx. Either pageLink would otherwise
 // route to .../student/dashboard or .../student/student-home, which don't
 // exist and fall through to the [...module] catch-all placeholder.
-const HOME_PAGE_LINKS = new Set(["dashboard", "student-home"]);
+// The parent home is seeded as "Parent-dashboard" (MODULES, 60_0_0_PARENT_DASHBOARD.sql) and routes to
+// app/[school]/(dashboard)/parent/page.jsx the same way.
+const HOME_PAGE_LINKS = new Set(["dashboard", "student-home", "Parent-dashboard", "parent-dashboard"]);
 
 function resolveSegment(pageLink, moduleName) {
   const segment = pageLink || deriveSegment(moduleName);
@@ -180,6 +187,24 @@ export function applyStudentNavRules(menu, details = {}, { schoolNumericId, menu
         .map(withLabelOverride);
       return { ...item, children };
     });
+}
+
+// Parent menu items that are not part of the Next.js parent dashboard in v1: Teacher Feedback and PTM
+// (demo-only in the legacy JSP, no backend calls), Transcript (no legacy page behind it) and Notifications
+// (no server handler). See docs/migration/parent_dashboard_module_plan.html.
+const PARENT_HIDDEN_SEGMENTS = new Set(["teacher-feedback", "ptm", "parent-student-transcript", "parent-notifications"]);
+
+/**
+ * Parent counterpart of applyStudentNavRules: drops the items above (top level and children). The rest of the
+ * parent menu is exactly what the backend assigns to the parent role (ModulesUtil.getRoleAssignModuleList).
+ */
+export function applyParentNavRules(menu) {
+  if (!Array.isArray(menu)) return menu;
+  return menu
+    .filter((item) => !PARENT_HIDDEN_SEGMENTS.has(item.segment))
+    .map((item) =>
+      item.children?.length ? { ...item, children: item.children.filter((c) => !PARENT_HIDDEN_SEGMENTS.has(c.segment)) } : item,
+    );
 }
 
 function isActiveModule(m) {

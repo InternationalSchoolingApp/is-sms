@@ -7,6 +7,7 @@ import { DashboardTopHeader } from "@/components/dashboard/DashboardTopHeader";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { RightActionRail } from "@/components/dashboard/RightActionRail";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { useOptionalSelectedChild } from "@/hooks/parent/useSelectedChild";
 
 // Above this width, the header and footer stay pinned to the viewport and
 // the content between them becomes its own scroll region (matching the
@@ -37,6 +38,9 @@ function useWideLayout() {
  */
 export function DashboardShell({ children }) {
   const { ready, gradeResolved, context, menu, logoUrl, session, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
+  // A parent's rail is about the selected child (announcements, diary badge) and has no News, as in the legacy JSP.
+  const isParent = context?.role === "parent";
+  const selectedChild = useOptionalSelectedChild()?.selectedChild;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // Defaults to the collapsed icon-rail, matching the legacy dashboard.
   const [collapsed, setCollapsed] = useState(true);
@@ -119,6 +123,9 @@ export function DashboardShell({ children }) {
       </div>
 
       <RightActionRail
+        studentUserId={isParent ? selectedChild?.userId : undefined}
+        hideNews={isParent}
+        hideOnPhone={isParent}
         chatUrl={context.chatUrl}
         diaryUrl={context.diaryUrl}
         schoolUUID={context.schoolUUID}

@@ -6,7 +6,8 @@ import { useSession } from "@/components/providers/AuthSessionProvider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { getDashboardChatLinks, getDashboardMenu, getStudentDashboardDetails, getStudentDemoData, getStudentMenuFlags } from "@/services/dashboardApi";
-import { applyStudentNavRules, mapBackendMenu } from "@/utils/dashboardNav";
+import { applyParentNavRules, applyStudentNavRules, mapBackendMenu } from "@/utils/dashboardNav";
+import { useParentGate } from "@/hooks/parent/useParentGate";
 import { bandFromStandardId, isK5LearningProgram, isMiddleDashboardOn, isPreKStandard, isSelfStudyProgram, normalizeGradeBand } from "@/utils/gradeBand";
 import { isDummyStudentMode } from "@/utils/paymentGatewayChecks";
 import { createDummyStudent } from "@/utils/dummyStudent";
@@ -179,7 +180,9 @@ function useResolveDashboardContext({ role = "student" } = {}) {
 
   // Before every other query: server actions run one at a time, and the shell waits for this one.
   const grade = useResolveGradeBand({ role, session, authenticated });
-  const roleId = session?.roleId ?? grade.roleId ?? null;
+  // A parent has no grade band; its gate (get-students-by-parent) supplies the role id, children and LMS link.
+  const parent = useParentGate({ role, session, authenticated });
+  const roleId = session?.roleId ?? grade.roleId ?? parent.roleId ?? null;
 
   // Dynamic menu (faithful Java sidebar) — the only source for the sidebar now.
   // For students, item-level visibility/labels are then adjusted to match
@@ -202,6 +205,7 @@ function useResolveDashboardContext({ role = "student" } = {}) {
       const mapped = mapBackendMenu(dto) ?? [];
       const menuFlags = menuFlagsResp?.details ?? null;
       const navDetails = { signupType: details?.signupType, signupMode: details?.registrationType };
+      if (role === "parent") return applyParentNavRules(mapped);
       return role === "student" ? applyStudentNavRules(mapped, navDetails, { schoolNumericId: session.schoolNumericId, menuFlags }) : mapped;
     },
     // Waits for the role id (dashboard details) so the menu is not cached empty.
@@ -255,7 +259,7 @@ function useResolveDashboardContext({ role = "student" } = {}) {
         uniqueId: session.uniqueId,
         userRole: session.userRole ?? session.role ?? null,
         roleId,
-        userName: studentName,
+        userName: studentName || parent.name || null,
         // Demo account (USER.DEMO_USER) — pass to isDummyStudentMode() like legacy isDemoUser.
         demoUser: Boolean(session.demoUser),
         chatUrl: chatLinksQuery.data?.chatUrl || "",
@@ -263,7 +267,14 @@ function useResolveDashboardContext({ role = "student" } = {}) {
       }
     : null;
 
-  return { status, session, context, menu, logoUrl, ready, ...grade };
+  // For a parent the gate stands in for the grade band: it holds the shell's loader until it has settled, and
+  // supplies the role id, LMS link and children (parentChildren is [] for every other role).
+  const parentOverrides =
+    role === "parent"
+      ? { roleId, lmsProviderURL: parent.lmsProviderURL, gradeResolved: parent.resolved }
+      : {};
+
+  return { status, session, context, menu, logoUrl, ready, ...grade, ...parentOverrides, parentChildren: parent.children };
 }
 
 export function DashboardProvider({ role = "student", children }) {

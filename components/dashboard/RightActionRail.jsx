@@ -22,8 +22,14 @@ import { K5DiaryPanel } from "@/components/k5/panels/K5DiaryPanel";
  * signed sign-in link into the chat app directly instead of a panel.
  * variant="k5": the Grade K–5 look (Messages / News / Notices / Teacher), same data and panels.
  */
-export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueId, userRole, email, schoolName, variant = "default" }) {
+/** Fired on window with detail "announcements" | "diary" to open that rail panel from elsewhere on the page. */
+export const RAIL_OPEN_EVENT = "is-rail-open";
+
+export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueId, userRole, email, schoolName, variant = "default", studentUserId, hideNews = false, hideOnPhone = false }) {
   const queryClient = useQueryClient();
+  // Parent dashboard: announcements and the diary badge are about the selected child (legacy fetched them with the
+  // child's id), chat stays the parent's own. Students leave studentUserId unset, so nothing changes for them.
+  const announcementUserId = studentUserId ?? userId;
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const [newsOpen, setNewsOpen] = useState(false);
   const [diaryOpen, setDiaryOpen] = useState(false);
@@ -39,10 +45,10 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
   // Dummy (demo) student mode: announcements, news and the diary come from the dummy generator.
   const dummy = useDummyStudent();
   const announcementsQuery = useQuery({
-    queryKey: ["student-announcements", schoolUUID, userId, dummy.key],
+    queryKey: ["student-announcements", schoolUUID, announcementUserId, dummy.key],
     queryFn: () =>
-      dummy.enabled ? dummy.student.announcements() : getAnnouncementDetails({ schoolUUID, userId, startFrom: 0, pageSize: 20 }),
-    enabled: Boolean(schoolUUID && userId && dummy.settled),
+      dummy.enabled ? dummy.student.announcements() : getAnnouncementDetails({ schoolUUID, userId: announcementUserId, startFrom: 0, pageSize: 20 }),
+    enabled: Boolean(schoolUUID && announcementUserId && dummy.settled),
     staleTime: 5 * 60_000,
     refetchOnWindowFocus: false,
   });
@@ -69,8 +75,8 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
   const unseenChatMessages = chatCountQuery.data?.sumUnseen || 0;
 
   const diaryCountQuery = useQuery({
-    queryKey: ["diary-unread-count", userId, dummy.key],
-    queryFn: () => (dummy.enabled ? dummy.student.diaryUnreadCount() : getDiaryUnreadCount({ sessionUserId: userId })),
+    queryKey: ["diary-unread-count", userId, dummy.key, studentUserId ?? null],
+    queryFn: () => (dummy.enabled ? dummy.student.diaryUnreadCount() : getDiaryUnreadCount({ sessionUserId: userId, studentUserId })),
     enabled: Boolean(userId && dummy.settled),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
@@ -163,6 +169,20 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diaryUrl, userId]);
 
+  // Other parts of the page (the parent mobile bottom bar) open a panel through this event: the rail owns the
+  // panels, so they ask it instead of holding a copy of its state.
+  useEffect(() => {
+    const onOpen = (event) => {
+      if (event.detail === "announcements") setAnnouncementsOpen(true);
+      else if (event.detail === "diary") {
+        setDiaryOpen(true);
+        queryClient.invalidateQueries({ queryKey: ["diary-unread-count", userId] });
+      }
+    };
+    window.addEventListener(RAIL_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(RAIL_OPEN_EVENT, onOpen);
+  }, [queryClient, userId]);
+
   // Same data and props either way; the k5 variant swaps in the K–5 drawer look.
   const AnnouncementsView = variant === "k5" ? K5AnnouncementsPanel : AnnouncementsPanel;
   const NewsView = variant === "k5" ? K5NewsPanel : NewsPanel;
@@ -214,7 +234,7 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
           </K5RailButton>
         </div>
       ) : (
-      <div className="fixed right-0 top-1/4 z-40 flex -translate-y-1/2 flex-col items-center gap-3 pr-2">
+      <div className={`fixed right-0 top-1/4 z-40 flex -translate-y-1/2 flex-col items-center gap-3 pr-2 ${hideOnPhone ? "max-sm:hidden" : ""}`}>
         <RailButton
           label="Talk to Us"
           onClick={openTalkToUs}
@@ -226,9 +246,11 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
         <RailButton label="Announcement" onClick={() => setAnnouncementsOpen(true)} badge={newAnnouncementCount}>
           <Megaphone className="h-5 w-5" />
         </RailButton>
-        <RailButton label="News" onClick={() => setNewsOpen(true)} badge={totalNews}>
-          <Newspaper className="h-5 w-5" />
-        </RailButton>
+        {!hideNews && (
+          <RailButton label="News" onClick={() => setNewsOpen(true)} badge={totalNews}>
+            <Newspaper className="h-5 w-5" />
+          </RailButton>
+        )}
         <RailButton
           label="Student Diary"
           onClick={() => {
@@ -254,7 +276,7 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
         />
       )}
 
-      {newsOpen && <NewsView articles={articles} totalNews={totalNews} userId={userId} onClose={() => setNewsOpen(false)} />}
+      {newsOpen && !hideNews && <NewsView articles={articles} totalNews={totalNews} userId={userId} onClose={() => setNewsOpen(false)} />}
 
       {diaryOpen && (
         <DiaryView

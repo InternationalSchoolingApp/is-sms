@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Parent Dashboard Migration Plan</title>
+<style>
+  :root{--bg:#0f1420;--panel:#151c2c;--panel2:#1b2436;--ink:#e8edf6;--mut:#9fb0c9;--line:#2a364d;--acc:#5b9dff;
+    --in:#2fbf71;--out:#ff4d5e;--rec:#5b9dff;--warn:#e0a52b;}
+  @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f5f7fb;--panel:#fff;--panel2:#eef2f8;--ink:#17202e;--mut:#536079;--line:#d7deea;--acc:#1f5fd6;--in:#1f9d57;--out:#d61f36;--rec:#1f5fd6;--warn:#b5821a;}}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.85em;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:.03em .4em}
+  .wrap{display:flex;max-width:1200px;margin:0 auto}
+  aside{position:sticky;top:0;align-self:flex-start;height:100vh;overflow:auto;width:250px;flex:0 0 250px;background:var(--panel);border-right:1px solid var(--line);padding:16px 12px}
+  aside .brand{font-weight:800;font-size:15px;padding:4px 6px 10px;line-height:1.3}
+  aside ol{list-style:none;margin:0;padding:0;counter-reset:s}
+  aside ol li a{display:block;padding:5px 8px;border-radius:7px;color:var(--mut);font-size:13.5px}
+  aside ol li a::before{counter-increment:s;content:counter(s) ". ";color:var(--acc)}
+  aside ol li a:hover,aside ol li a.active{background:var(--panel2);color:var(--ink);text-decoration:none}
+  main{flex:1 1 auto;min-width:0;padding:24px 32px 120px}
+  header.top{border:1px solid var(--line);background:linear-gradient(135deg,var(--panel),var(--panel2));border-radius:16px;padding:22px 24px;margin-bottom:20px}
+  header.top h1{margin:0 0 6px;font-size:24px}
+  header.top .sub{color:var(--mut);font-size:14px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-size:12.5px;color:var(--mut)}
+  .meta b{color:var(--ink)}
+  section{border-top:1px solid var(--line);padding-top:22px;margin-top:26px;scroll-margin-top:12px}
+  section>h2{font-size:20px;margin:0 0 6px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  section>h2 .n{color:var(--acc);font-size:14px}
+  h3{font-size:16px;margin:18px 0 8px}
+  p{margin:8px 0}.lead{color:var(--mut)}
+  ul,ol{margin:8px 0;padding-left:22px}li{margin:3px 0}
+  .b{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;border:1px solid transparent;white-space:nowrap}
+  .b.in{color:var(--in);border-color:var(--in);background:color-mix(in srgb,var(--in) 14%,transparent)}
+  .dead{color:#ff0000;font-weight:800;text-transform:uppercase;letter-spacing:.03em}
+  .dead-note{border:2px solid #ff0000;border-left-width:6px}
+  .b.out{color:#fff;background:var(--out);border-color:var(--out)}
+  .b.rec{color:var(--rec);border-color:var(--rec);background:color-mix(in srgb,var(--rec) 14%,transparent)}
+  .b.warn{color:var(--warn);border-color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+  .b.ph{background:var(--panel2);color:var(--ink);border-color:var(--line)}
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:12px 0}
+  table{border-collapse:collapse;width:100%;font-size:13px;min-width:620px}
+  th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--panel2);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  tbody tr:hover{background:color-mix(in srgb,var(--acc) 7%,transparent)}
+  tr.excl{opacity:.72}
+  tr.excl td{text-decoration:line-through;text-decoration-color:var(--out)}
+  tr.excl td:last-child,tr.excl td:first-child{text-decoration:none}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:14px 0}
+  .card{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:14px 16px}
+  .card .big{font-size:26px;font-weight:800}.card .lbl{color:var(--mut);font-size:12.5px;margin-top:2px}
+  .note{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--panel);border-radius:10px;padding:12px 15px;margin:14px 0}
+  .note.out{border-left-color:var(--out)}.note.ok{border-left-color:var(--in)}.note.warn{border-left-color:var(--warn)}
+  .note b.t{display:block;margin-bottom:3px}
+  figure{margin:16px 0;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:14px}
+  figure svg{display:block;width:100%;height:auto}
+  figcaption{color:var(--mut);font-size:12.5px;margin-top:8px}
+  pre{overflow:auto;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:12.5px;line-height:1.5}
+  .svgbox{fill:var(--panel2);stroke:var(--line);stroke-width:1.4}
+  .svgbox.acc{stroke:var(--acc)}.svgbox.in{stroke:var(--in)}.svgbox.out{stroke:var(--out)}
+  .svgtxt{fill:var(--ink);font:12px -apple-system,Segoe UI,Roboto,sans-serif}.svgtxt.s{font-size:10.5px;fill:var(--mut)}.svgtxt.b{font-weight:700}
+  .svgedge{stroke:var(--mut);stroke-width:1.4;fill:none}.svgedge.dash{stroke-dasharray:5 4}
+  .mobtoggle{display:none}
+  @media (max-width:980px){aside{position:fixed;z-index:30;transform:translateX(-102%);transition:transform .2s;box-shadow:0 0 40px rgba(0,0,0,.5)}aside.open{transform:none}.mobtoggle{display:inline-block;position:fixed;top:12px;left:12px;z-index:31}main{padding:56px 16px 90px}}
+  @media print{aside,.mobtoggle{display:none}main{padding:0}body{background:#fff;color:#000}a{color:#000}section{break-inside:avoid}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>
+</defs></svg>
+<button class="mobtoggle b ph" id="navToggle">☰ Contents</button>
+<div class="wrap">
+<aside id="sidebar">
+  <div class="brand">Parent Dashboard<br/>Migration Plan</div>
+  <ol id="toc">
+    <li><a href="#s1">Context &amp; Scope</a></li>
+    <li><a href="#s2">Approach (no toggle)</a></li>
+    <li><a href="#s3">Student vs Parent: Key Differences</a></li>
+    <li><a href="#s4">Phase 0 — Backend Prep &amp; Docs</a></li>
+    <li><a href="#s5">Phase A — Parent Foundation</a></li>
+    <li><a href="#s6">Phase B — Child Selection Layer</a></li>
+    <li><a href="#s7">Phase C — Parent Home</a></li>
+    <li><a href="#s7b">Phase C2 — Theme per Child (not doing)</a></li>
+    <li><a href="#s8">Phase D — Parent Modules</a></li>
+    <li><a href="#s9">Phase E — Cutover &amp; Release</a></li>
+    <li><a href="#s10">Backend Changes</a></li>
+    <li><a href="#s11">Proposed Next.js Routes / Files</a></li>
+    <li><a href="#s12">Legacy Issues Found</a></li>
+    <li><a href="#s13">Decision Log (all settled)</a></li>
+    <li><a href="#s14">Verification</a></li>
+    <li><a href="#s15">Green-Signal Gate</a></li>
+  </ol>
+</aside>
+<main>
+<header class="top">
+  <h1>Parent Dashboard → Next.js — Migration Plan</h1>
+  <div class="sub">Move the post-login <b>Parent</b> dashboard (child tabs, home and left-side modules) from the Java/JSP app into <code>is-sms</code>, using the finished Student dashboard as the template. All open decisions are now settled (section 13). Plan only: no code has been written.</div>
+  <div class="meta">
+    <span>Generated: <b>2026-11-11</b> (updated after decision round)</span>
+    <span>Legacy: <b>is-rest-api @ 18d8889979</b> (feature/63_0_0_STUDENT_DASHBOARD_NEXTJS_PHASE4)</span>
+    <span>New: <b>is-sms @ 0d35d29</b> (feature/version_1_3_0_phase4)</span>
+  </div>
+  <div class="meta"><span class="b in">IN scope</span><span class="b out">OUT / skipped</span><span class="b rec">Decided</span><span class="b warn">Needs check</span><span class="b ph">Phase</span></div>
+</header>
+
+<section id="s1" style="border-top:none;margin-top:0;padding-top:0">
+<h2><span class="n">01</span> Context &amp; Scope</h2>
+<p>The Java app serves the Parent dashboard at <code>/{school}/dashboard/parent-dashboard/{UNIQUEUUID}</code> (<code>ClientDashoboardParentController#parentDashboard</code>, L43-110). It uses the shared <code>theme2/dashboard/Dashboard.jsp</code> shell with a DB-driven menu (<code>USER_RIGHTS</code>, <code>MODULES</code>). It is a jQuery SPA (<code>pageConfig.js → callDashboardPageSchool</code>), and the selected child is a JS global, <code>ACTIVE_STUDENT_ID</code>, which is lost on reload.</p>
+<div class="grid">
+  <div class="card"><div class="big">1</div><div class="lbl">Child tabs plus home (overview, charts, schedule, fees, announcements, diary)</div></div>
+  <div class="card"><div class="big">9</div><div class="lbl">Left-side Parent modules in v1</div></div>
+  <div class="card"><div class="big">5</div><div class="lbl">Skipped in v1 (see below)</div></div>
+  <div class="card"><div class="big">~70%</div><div class="lbl">Endpoints already shared with the migrated Student dashboard (<code>/dashboard/parent/*</code>)</div></div>
+  <div class="card"><div class="big">6</div><div class="lbl">Phases: 0, then A to E</div></div>
+</div>
+<h3>Scope items</h3>
+<ul>
+  <li><span class="b in">IN</span> Child tabs plus <b>home</b> (<code>parentDashboardContent.js</code>, <code>parentDashboard.js</code>): child overview, attendance and grade charts, upcoming classes and activities, payments, announcements, diary count, chat, Switch to LMS, Add Another Child, mobile bottom bar.</li>
+  <li><span class="b in">IN</span> Modules: Attendance, Login History, Assigned Teachers, Fee Details, Academic Performance, Progress, Class Schedule, Class Summary, Download Academic Docs. Header items: My Profile (with Withdrawal Request and the app-install prompt) and Change Password.</li>
+  <li><span class="b out">SKIP v1</span> Teacher Feedback and PTM (demo-only, no backend calls), parent demo mode (<code>dummyParentDashboardData.js</code>, <code>?parentDemoPreview=Y</code>), Transcript (no <code>pageConfig</code> entry; confirm <code>USER_RIGHTS</code> first), and <b>Notifications</b> (no controller or JSP handles <code>notifications</code>, and the parent MODULES seed has no such item).</li>
+  <li><span class="b in">IN</span> <b>Theme per child</b> (added after Phase C): the dashboard theme is the selected child's, reusing the theme already built for the student dashboard (section 7b).</li>
+  <li><span class="b out">OUT</span> Re-enrollment (student-only). Add Another Child is <b>already</b> built in Next.js (<code>/add-enrollment/...</code>), so only the button wiring is in scope. Admin "view as parent" flows (<code>view-as-user</code>, <code>/redirect-parent-from-student</code>) are not touched in v1.</li>
+</ul>
+</section>
+
+<section id="s2">
+<h2><span class="n">02</span> Approach — no toggle</h2>
+<p>Unlike the Student dashboard there is <b>no <code>PARENT_DASHBOARD_VIA_NEXTJS</code> toggle</b>. Every PARENT entry point redirects straight to the Next.js dashboard, so cutover happens when the backend and frontend are deployed. Rollback is a code revert, not a settings row. The release therefore needs a full pass in UAT before prod (Phase E).</p>
+<div class="note warn"><b class="t">Only safety net: blank <code>NEXTJS_APP_URL</code></b>
+If <code>NEXTJS_APP_URL</code> is blank in an environment, the parent redirect falls back to the legacy JSP. This is a config guard, not a toggle.</div>
+<div class="note"><b class="t">Branches (decided)</b>
+Next.js work goes on a <b>new branch</b> that you create and move to. Backend work stays on <code>feature/63_0_0_STUDENT_DASHBOARD_NEXTJS_PHASE4</code>. No commits or pushes are made by Claude; changes stay in the working tree.</div>
+<div class="note ok"><b class="t">Reuse as-is (do NOT rebuild)</b>
+Auth and SSO (<code>app/api/sso</code>, <code>lib/auth/*</code>), <code>proxy.js</code> account picking and refresh, <code>DashboardShell</code>, <code>Sidebar</code>, <code>DashboardTopHeader</code>, <code>RightActionRail</code> (announcements, diary, chat), <code>PermissionGate</code>/<code>useModuleRights</code>, <code>mapBackendMenu</code>, <code>services/dashboardApi.js</code>, <code>utils/backendRequest.js</code>, session-expiry hooks and dialog, <code>ChangePasswordModal</code>, <code>components/ui/**</code>, <code>components/common/**</code>, and the student feature components (Attendance, LoginHistory, FeeDetails, Performance, ProgressReports, Syllabus) once made child-aware.</div>
+</section>
+
+<section id="s3">
+<h2><span class="n">03</span> Student vs Parent — what actually changes</h2>
+<div class="tw"><table>
+<thead><tr><th>Area</th><th>Student (done)</th><th>Parent (to do)</th></tr></thead>
+<tbody>
+<tr><td>Whose data</td><td>Session user = the student. Services hardwire <code>studentUserId: userId</code>.</td><td>Session user = the parent. Each call needs <code>studentUserId = selectedChildId</code>. The backend already checks <code>isStudentMappedToParent</code> (<code>DashboardParentUtil</code> L573).</td></tr>
+<tr><td>Child selection</td><td>Not needed</td><td><b>New layer.</b> Legacy keeps <code>ACTIVE_STUDENT_ID</code> in a JS global. Next.js holds it in the provider and per-account <code>sessionStorage</code>; <b>never in the URL</b>.</td></tr>
+<tr><td>Layout</td><td><code>(dashboard)/layout.jsx</code> hardcodes <code>role="student"</code></td><td><b>Same <code>layout.jsx</code>, role resolved dynamically</b> from the session (<code>claims.role</code>, compared case-insensitively)</td></tr>
+<tr><td>Menu <code>roleId</code></td><td>From <code>get-student-dashboard</code> (the grade gate)</td><td>The grade gate is skipped for parents, so <code>roleId</code> is null and the menu never loads. <b>Fix:</b> <code>get-students-by-parent</code> also returns <code>roleAndModuleAssign</code>, same as the student gate.</td></tr>
+<tr><td>Nav rules</td><td><code>applyStudentNavRules</code></td><td>New <code>applyParentNavRules</code> (hide skipped items, "My" → "View" names are done server-side)</td></tr>
+<tr><td>K5 / grade band theme</td><td><code>K5Shell</code> (Elementary, and Middle with the Balanced skin) vs <code>DashboardShell</code> (High), chosen from the student's own grade band</td><td><b>Follows the selected child</b> (Phase C2): an elementary child gives the K-5 theme, a middle child the Balanced skin, a high-school child the default one, and switching child switches the theme. Performance data stays legacy-style: no <code>k5Performance</code>.</td></tr>
+<tr><td>Header</td><td>Cart, Add Siblings, student profile</td><td>No cart. Add Another Child (<code>ADD_ANOTHER_CHILD_BTN</code>), Switch to LMS, parent profile, the child tabs above the page content (<code>ChildTabs</code>).</td></tr>
+<tr><td>Hardcoded <code>"STUDENT"</code></td><td><code>utils/authentication.js</code>, <code>profileApi</code> L63, <code>profileOtpApi</code> L51, <code>profileSaveApi</code> L97, <code>bookClassApi</code> L193</td><td>Use the session role on the parent path</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="s4">
+<h2><span class="n">04</span> Phase 0 — Backend Prep &amp; Docs <span class="b ph">prerequisite</span></h2>
+<p>Phase 0 is mostly backend, on the PHASE4 branch, uncommitted.</p>
+<ol>
+  <li><b><code>get-students-by-parent</code> security fix</b> (<code>DashboardStudentUtil#getStudentsByParent</code> L10245): take the parent id from the session identity (<code>CurrentIdentity</code>) and reject a body <code>userId</code> that does not match. Before changing it, check the legacy callers (e.g. <code>withdrawalRequestUser.js</code>) so the JSP keeps working.</li>
+  <li><b>Same endpoint returns <code>roleAndModuleAssign</code></b> (built with <code>modulesUtil.getRoleAssignModuleList(school, user.getRoleId(), "M", 0, userId)</code>, as the Java controller does at L83), next to the existing <code>studentBasicDetails[]</code> and <code>lmsProviderURL</code>. This is the parent's equivalent of the student grade gate.</li>
+  <li>Record that the token <code>role</code> claim comes from <code>User.getParentUserRole()</code> (<code>"PARENT"</code>/<code>"STUDENT"</code>, case not confirmed against the ROLE seed). Next.js compares it lowercased. No JWT change is planned.</li>
+  <li>Create <code>docs/migration/sms_next_js_migration_parent_test_cases.html</code> (PAR-DASH-*), modelled on the student file, as the parity baseline for Phases C and D.</li>
+  <li>Check <code>USER_RIGHTS</code> for any parent Transcript row before dropping that menu item.</li>
+</ol>
+</section>
+
+<section id="s5">
+<h2><span class="n">05</span> Phase A — Parent Foundation <span class="b ph">backend + Next.js</span></h2>
+<h3>A1. Backend: send parents to Next.js (no flag)</h3>
+<ul>
+  <li>Add <code>CommonUtil#getFinalParentDashboardUrl</code>, modelled on <code>getFinalStudentDashboardUrl</code> (L2287): <code>NEXTJS_APP_URL + "api/sso?token=…&amp;school=…&amp;next=/{schoolUUID}/parent"</code>. If <code>NEXTJS_APP_URL</code> is blank, return the legacy JSP URL.</li>
+  <li>Use it at every PARENT redirect: <code>SingleSignOnUtil#getDashboardRedirectUrl</code> L280-288 (this also removes the stale <code>view-as-user</code> target), <code>SingleSignOnUtil#getRedirectUrl</code> L403-406, <code>CommonUtil</code> L1927-1929 and <code>#getRedirectUrl</code> L2365-2371, and <code>ClientDashboardStudentController</code> L218-220.</li>
+  <li><code>ClientDashoboardParentController#parentDashboard</code>: after the role check, a GET redirects to Next.js (as the student controller does at L339-346), so old bookmarks and email links work. The controller's AJAX <code>/parent/*</code> endpoints stay, because Next.js calls them. The JSP rendering code is not deleted yet.</li>
+</ul>
+<h3>A2. Next.js routing, layout and guard</h3>
+<ul>
+  <li><b>Same <code>layout.jsx</code>, dynamic role.</b> It becomes an async server component: <code>getAccountSession()</code> gives <code>claims.role</code>, lowercased to <code>student</code> or <code>parent</code>, and is passed to <code>&lt;DashboardChrome role=…&gt;</code> (the prop already exists). <code>student/</code> and <code>parent/</code> stay as route folders under one layout, so the shell does not remount.</li>
+  <li><b><code>proxy.js</code>:</b> add <code>"/:school/parent/:path*"</code> to the matcher, and a role check that mirrors Java: a PARENT on <code>/student</code> goes to <code>/parent</code>, a STUDENT on <code>/parent</code> goes to <code>/student</code>, any other role goes to its own start page (the legacy JSP). It <b>never signs the user out</b> on a mismatch, because several accounts can share one browser. Where Java has no landing URL it shows "This page is only for parent accounts." on the login page.</li>
+  <li><code>utils/lastDashboardPath.js</code>: add <code>"parent"</code> to <code>DASHBOARD_ROLES</code>, with a role-based fallback.</li>
+  <li><code>app/[school]/(dashboard)/parent/[...module]/page.jsx</code>: "being migrated" placeholder for modules not yet built.</li>
+</ul>
+<h3>A3. Context, menu, shell</h3>
+<ul>
+  <li><code>useDashboardContext</code>: for a parent, call <code>get-students-by-parent</code> as the gate. It supplies <code>roleId</code> (so <code>getDashboardMenu</code> runs), the children list and <code>lmsProviderURL</code>. Skip the student-only details and menu-flag fetches. Cache like the student grade gate.</li>
+  <li><code>utils/dashboardNav.js</code>: replace <code>studentNavHref</code> by a role-aware <code>dashboardNavHref</code>, add <code>Parent-dashboard</code> to <code>HOME_PAGE_LINKS</code>, add <code>applyParentNavRules</code>.</li>
+  <li><code>Sidebar.jsx</code> (L41, 77, 155): role-aware href and aria-label.</li>
+  <li><code>DashboardTopHeader.jsx</code>: by role, hide the cart and student siblings, route "My Profile" to <code>/parent/my-profile</code> (L30-32 now toasts "coming soon"), show Switch to LMS and Add Another Child, and show the page title (and the LMS switch only when the parent has an LMS user).</li>
+  <li><code>RightActionRail</code>: unchanged (announcements, chat, diary). Hide News for parents, as legacy does.</li>
+</ul>
+<div class="note"><b class="t">Exit criteria A</b>A parent logs in, is sent through SSO to <code>/{school}/parent</code>, and sees the DB-driven parent menu. Each item opens the placeholder. A student cannot stay on <code>/parent</code>, and a parent cannot stay on <code>/student</code>.</div>
+</section>
+
+<section id="s6">
+<h2><span class="n">06</span> Phase B — Child Selection Layer <span class="b ph">core of the parent work</span></h2>
+<ul>
+  <li><b>Service:</b> <code>getStudentsByParent()</code> in <code>services/dashboardApi.js</code> returns <code>studentBasicDetails[]</code> (studentId, studentName, userId, standardName, studentStandardId, courseProvicerId, learningProgramName, studentTimezone, profilePic).</li>
+  <li><b>Provider:</b> <code>ParentChildProvider</code> and <code>useSelectedChild</code> expose <code>{children, selectedChild, selectChild, isLoading}</code>. The selected id is <b>always validated against the children list</b>. An unknown id opens the picker.</li>
+  <li><b>Where it lives (changed, Phase C review):</b> <b>not in the URL</b>, so no child id sits in the address bar to read or edit. It is held in <code>ParentChildProvider</code> (the page's memory) and mirrored to <code>sessionStorage</code> per account (this tab only), which is how it survives a reload. The stored id is trusted only after it is found in the gate's children list; anything else opens the picker. The first child is selected until another is chosen (the legacy tabs open on Child 1). Deep links to a specific child are given up on purpose. An old <code>?child=</code> in a bookmark is stripped from the address bar. This is a convenience, not the access check: every parent endpoint verifies server-side that the child belongs to the signed-in parent, so an edited request is refused whatever the browser sends.</li>
+  <li><b>UI (changed after the legacy screenshot of 2026-11-12):</b> all the children sit side by side as <b>tabs across the top of every parent page</b> (<code>ChildTabs</code>, rendered by <code>parent/layout.jsx</code>), labelled "Child 1: Mohammed · Grade 8"; the selected tab is highlighted with a blue underline and the dashboard opens on Child 1. A click switches the whole dashboard to that child (data and theme). The header shows the title "Parent Dashboard" in the centre and "Welcome, {parent name}" on the right; the LMS switch only appears when the parent has an LMS user. This replaces the earlier picker screen and header dropdown (the picker component now only shows the "no children" message). Modules follow the tabs, and none has a picker of its own.</li>
+  <li><b>Status (built in Phase B):</b> <code>hooks/parent/useSelectedChild.js</code> (<code>ParentChildProvider</code> mounted around the shell for parents only, plus <code>useSelectedChild</code>; no <code>withChild</code>, nothing to carry in links), <code>ChildTabs</code> (above every parent page, in <code>parent/layout.jsx</code>), <code>ChildPicker</code> (only the no-children message), <code>ChildAvatar</code>, <code>ParentChildRequired</code> (every parent page wraps in it). Because parent pages have their own hooks (Q20), the <i>student</i> hooks and services do <b>not</b> get a child parameter, so the next two bullets are superseded: parent hooks take the selected child's id and put it in their query key.</li>
+  <li><b>Superseded by Q20 — make the data layer child-aware, non-breaking:</b> every <code>dashboardApi</code> function that hardwires <code>studentUserId: userId</code> (L339, 358, 376, 520, 536, 551, 587, 602, 618, 642, 659/676) gets an optional <code>studentUserId</code> that <b>defaults to <code>userId</code></b>. <code>services/attendanceApi.js</code> L21-27 is the template. Hooks accept <code>studentUserId</code> and <b>add it to the query key</b>, so switching child refetches.</li>
+  <li><b>One adapter:</b> <code>hooks/useDashboardSubject.js</code> returns <code>context.userId</code> for a student and <code>selectedChild.userId</code> for a parent. Shared components call it instead of reading <code>context.userId</code>.</li>
+  <li>Session-derived services (profile, withdrawal, anything using <code>buildBody(me)</code>) need an explicit <code>studentUserId</code> only where the endpoint is child-scoped.</li>
+</ul>
+<div class="note warn"><b class="t">Watch</b><code>useDummyStudent</code> is wired into almost every hook and is keyed on <code>context.userId</code>. Parent demo mode is skipped in v1, so on the parent path the hooks must treat dummy mode as off.</div>
+</section>
+
+<section id="s7">
+<h2><span class="n">07</span> Phase C — Parent Home</h2>
+<p>Legacy: <code>renderParentDashboardContent()</code> (<code>parentDashboardContent.js</code> L17) → <code>getStudentDetailsByStudentID</code> (<code>parentDashboard.js</code> L134).</p>
+<div class="tw"><table>
+<thead><tr><th>Home widget</th><th>Legacy source</th><th>Endpoint</th><th>Migrate?</th></tr></thead>
+<tbody>
+<tr><td>Child tabs (all children side by side)</td><td><code>parentDashboardContent.js</code> L68-137</td><td><code>parent/get-students-by-parent</code></td><td><span class="b in">YES (Phase B)</span></td></tr>
+<tr><td>Child overview and summary</td><td><code>parentDashboard.js</code> L134+</td><td><code>parent/student-dashboard-overview</code></td><td><span class="b in">YES</span></td></tr>
+<tr><td>Attendance chart and grade chart</td><td><code>attendanceOverview[]</code>, <code>gradeOverview[]</code></td><td>same</td><td><span class="b in">YES</span> as small SVG components, no new library</td></tr>
+<tr><td>Performance card (links to modules)</td><td>L367</td><td>same</td><td><span class="b in">YES</span> (link by pageLink, not hard-coded moduleId)</td></tr>
+<tr><td>Upcoming classes and activities</td><td>L540, title switches on <code>activitiesWithClass</code></td><td><code>parent/student-schedule</code></td><td><span class="b in">YES</span></td></tr>
+<tr><td>Payments / due fees</td><td>L596</td><td><code>parent/student-fee-details</code> + <code>common/check-payment</code></td><td><span class="b in">YES</span> (reuse <code>useStudentFeeDetails</code>)</td></tr>
+<tr><td>Announcements and acknowledge</td><td><code>announcement.js</code></td><td><code>get-announcement-details</code>, <code>school-announce-data</code>, <code>save-acknowledge-request</code></td><td><span class="b in">YES</span> (reuse <code>AnnouncementsWidget</code>)</td></tr>
+<tr><td>School diary</td><td><code>parentSchoolDiary*.js</code></td><td><code>/api/diary/*</code></td><td><span class="b in">YES</span> (reuse <code>DiaryPanel</code>, which already handles PARENT)</td></tr>
+<tr><td>Mobile bottom bar</td><td>L699</td><td>none</td><td><span class="b in">YES</span> (built for v1)</td></tr>
+<tr><td>Demo data</td><td><code>dummyParentDashboardData.js</code></td><td><code>parent/demo-data</code></td><td><span class="b out">SKIP v1</span></td></tr>
+</tbody></table></div>
+<div class="note ok"><b class="t">Status: built in Phase C</b>
+All widgets above except demo data. Announcements, diary and chat are <b>not</b> page cards (the legacy home has none): they stay the shell's right rail, now driven by the selected child (<code>studentUserId</code> prop on <code>RightActionRail</code>: announcements list and diary badge for the child, chat for the parent, News hidden). Phone (&lt;640px): the rail and the two right cards are hidden and <code>ParentMobileBar</code> takes over; its Upcoming and Payments buttons open the same cards as bottom sheets, Announcement and Diary open the rail panels. Parent name comes from <code>get-user-short-profile</code> (<code>profileName</code>).
+<br/><b>Legacy quirks:</b> kept for parity: the attendance delta under 1 shows as a red decline; the Upcoming card shows only today. Changed on purpose: today's date is the child's timezone date (legacy used the UTC date); the chart tooltip no longer hard-codes "Batch 2025-2026"; the mobile Upcoming badge is omitted (legacy never updated it). Module links go by <code>pageLink</code>, not module ids 247/251/253/254/104.</div>
+<p>Split: <code>parent/page.jsx</code> → <code>ParentHome.jsx</code> (the selected child's home), <code>components/parent/home/{ChildOverviewCard, AttendanceChart, GradeChart, UpcomingSchedule, PaymentsDueCard, ParentMobileBar}.jsx</code>, <code>hooks/parent/useParentChildOverview.js</code>, <code>useParentChildSchedule.js</code>.</p>
+</section>
+
+<section id="s7b">
+<h2><span class="n">07b</span> Phase C2 — Theme follows the selected child <span class="b ph">added after Phase C</span> <span class="b out">NOT being done (user decision 2026-11-12)</span></h2>
+<div class="note warn"><b class="t">Decision (2026-11-12): this theme phase is not being done</b>
+Phases D1, D2, D3 and E are built first, with the default theme, and this phase (C2) follows once they are done. The label "C2" is kept because the section was added after Phase C; in time it comes after E. Until then every child gets the default theme, and nothing in the work above waits on this. The theme sub-decisions below (Q21a, Q22 to Q24) stay open until then.</div>
+<div class="note"><b class="t">Requirement (settled)</b>
+A parent with three children, one in elementary, one in middle school and one in high school: when the parent selects the elementary child the whole dashboard (shell, header, menu rail, pages) is in the elementary (K-5) theme; the middle child gives the middle theme; the high-school child gives the high-school theme. The theme itself is already built for the student dashboard and is reused, not redrawn.</div>
+
+<h3>How the student theme works today (what we reuse)</h3>
+<ul>
+  <li><b>Band:</b> the backend decides <code>gradeBand</code> (ELEMENTARY / MIDDLE / HIGH) in <code>GradeBandUtil.resolve(standardId)</code>: name overrides first ("elementary", "middle", "high school", "advanced placement", ...), then <code>STANDARD.ORDER_ID</code> against two CONFIGURATION settings, default MIDDLE. <code>utils/gradeBand.js</code> only holds a fallback table.</li>
+  <li><b>Theme choice (<code>useResolveGradeBand</code>):</b> <code>isK5 = (ELEMENTARY, or MIDDLE when NEXT_PUBLIC_MIDDLE_DASHBOARD=true) &amp;&amp; K5_DASHBOARD_ENABLED &amp;&amp; a K5 learning program</code>. <code>isMiddle</code> picks the Balanced skin (<code>app/k5-middle.css</code>), <code>isPreK</code> (standard 17) the simpler variant.</li>
+  <li><b>Shell:</b> <code>isK5</code> gives <code>K5Shell</code> (<code>AppearanceProvider scope="k5"</code>, <code>.theme-k5</code> tokens, <code>K5Header</code>, <code>K5NavRail</code>, Pico guide, rail <code>variant="k5"</code>); otherwise <code>DashboardShell</code>. Feature pages render their <code>components/k5/pages/K5*</code> variant when <code>isK5</code>.</li>
+  <li>The parent today always gets <code>DashboardShell</code>: the grade gate is student-only, so the parent has no band.</li>
+</ul>
+
+<h3>What the parent needs</h3>
+<ol>
+  <li><b>Per-child theme data from the backend (Phase C2, small).</b> <code>get-students-by-parent</code> already returns each child's <code>studentStandardId</code> but not the band. Add per child, in the existing loop, using the same helpers the student gate uses: <code>gradeBand</code> (<code>gradeBandUtil.resolve(standardId)</code>), <code>standardId</code>, <code>registrationType</code> and <code>isSelfStudy</code>; and once at the top level <code>k5DashboardEnabled</code> (school-wide <code>K5_DASHBOARD_ENABLED</code>). Few extra queries per child. The parent gate alone then themes every child, with no extra call.
+    <br/><i>Not used on purpose:</i> calling the student's <code>get-student-dashboard</code> with the child's id works today, but that endpoint takes the user id from the body with no ownership check (a gap to fix, not to build on).</li>
+  <li><b><code>useChildTheme()</code> (new, <code>hooks/parent/</code>).</b> From the selected child plus the gate's <code>k5DashboardEnabled</code> it returns the same <code>{gradeBand, isK5, isMiddle, isPreK, isSelfStudy}</code> the student gate does, with the same rules and the same fallback (unknown band is MIDDLE, as the backend does).</li>
+  <li><b>Shell choice for a parent.</b> <code>ShellForGrade</code> reads the child's theme instead of the student grade fields when the role is parent. A parent with children always has a selected child (Child 1 by default), so the theme is known from the first paint; a parent with no children, and any state where the theme is unknown, use the neutral <code>DashboardShell</code>. The selected child lives in <code>ParentChildProvider</code>, which wraps the shell, so switching child swaps the shell without losing state or reloading.</li>
+  <li><b>Make the K-5 chrome role-aware</b> (as Phase A did for <code>Sidebar</code> and the header): <code>K5NavRail</code>, <code>K5Shell</code> and <code>K5CompleteProfileModal</code> use <code>studentNavHref</code>; <code>K5Shell</code> renders its own <code>RightActionRail</code>, which needs the same parent props as <code>DashboardShell</code> gives it (<code>studentUserId</code> = selected child, no News, hidden on phones); the K-5 header needs the parent variant of the cart / profile / Add Another Child items.</li>
+  <li><b>Parent pages inside the K-5 theme.</b> Parent pages are their own components (Q20) written for the default tokens, so under <code>.theme-k5</code> they must still look right. Recommended first step: wrap parent content in the <code>k5-legacy</code> compatibility scope the shared rail panels already use (<code>app/k5-modules.css</code>), so default-themed components take the K-5 / Balanced tokens. Dedicated K-5 variants of individual parent pages (<code>components/parent/k5/*</code>, as the student has <code>components/k5/pages/*</code>) are a later, per-module choice. Phase B and C components (child tabs, home) are reviewed in all three themes in this phase.</li>
+</ol>
+
+<h3>Rules and edge cases</h3>
+<ul>
+  <li>The three bands for one parent: Elementary gives K-5; Middle gives the Balanced skin only when <code>NEXT_PUBLIC_MIDDLE_DASHBOARD=true</code> (otherwise default, as for students); High gives the default theme.</li>
+  <li><code>K5_DASHBOARD_ENABLED</code> off, or a learning program that is not a K-5 program: default theme for that child, as for a student.</li>
+  <li>Switching child changes the theme at once; reload keeps the child (not in the URL), so it keeps the theme.</li>
+  <li>The appearance choices inside the K-5 theme (<code>USER_THEME</code>, saved with <code>update-theme</code> by user id) belong to the <b>parent's own account</b>, one setting across all the children; the backend update-theme call takes the user id from the body with no session check, so the parent app must only ever send the session user's id.</li>
+  <li>The Pico guide and its page tips are written for a student: hidden on the parent dashboard.</li>
+  <li>The theme never changes what data or menu the parent gets: menu and rights are the parent's role, data is the selected child's.</li>
+</ul>
+
+<h3>Open sub-decisions (recommended answers in section 13)</h3>
+<p>Q21 where the per-child theme data comes from, Q22 how parent pages look in the K-5 theme, Q23 who owns the appearance choices, Q24 Pico guide for parents, Q25 which theme shows before a child is picked (no such state now: Child 1 is selected from the start).</p>
+<div class="note warn"><b class="t">Effort</b>Backend: a few lines in <code>getStudentsByParent</code> (check that <code>GradeBandUtil</code> and the standard service are injected there). Frontend: one hook, a few role-aware changes in K-5 chrome files, and a visual pass of the parent pages in each theme. The theme code itself is not rewritten.</div>
+</section>
+
+<section id="s8">
+<h2><span class="n">08</span> Phase D — Parent Left-side Modules</h2>
+<p>The route segment is the legacy <code>pageLink</code>, as for students, so the DB menu maps 1:1: <code>/{school}/parent/{pageLink}</code>.</p>
+<div class="note warn"><b class="t">Changed (Phase A decision): parent gets its own pages and components</b>
+Wherever this table says "Reuse" a student component, read it as <b>"build the parent's own, modelled on the student one"</b>: its own page under <code>app/[school]/(dashboard)/parent/…</code> and its own component under <code>components/parent/…</code>, as the student has under <code>components/student/…</code>. Only the shell (layout, <code>DashboardShell</code>, <code>Sidebar</code>, header, right rail) and non-UI code (<code>dashboardApi</code> services, utilities) are shared. This also means the student hooks do not need a child parameter: parent hooks live in <code>hooks/parent/…</code>.</div>
+<div class="tw"><table>
+<thead><tr><th>Batch</th><th>Module (pageLink)</th><th>Endpoint (<code>/dashboard/parent/…</code>)</th><th>Next.js approach</th></tr></thead>
+<tbody>
+<tr><td rowspan="6"><b>D1</b><br/>reuse student components</td><td>Attendance (<code>parent-attendance</code>)</td><td><code>student-attendance-full</code>, <code>student-attendance-details</code></td><td>Reuse <code>Attendance</code> with the child id</td></tr>
+<tr><td>Login History (<code>parent-student-login-details</code>)</td><td><code>student-attendance</code></td><td>Reuse <code>LoginHistory</code>. Drop the <code>?type=full-page</code> special case.</td></tr>
+<tr><td>Assigned Teachers (<code>parent-syllabus-assigned-teacher</code>)</td><td><code>student-assgined-teacher</code>, <code>student-course-content</code></td><td>Reuse <code>Syllabus</code> and its course-content modal</td></tr>
+<tr><td>Fee Details (<code>parent-fee-details</code>)</td><td><code>student-fee-details</code>, <code>common/check-payment</code>, receipt</td><td>Reuse <code>FeeDetails</code>. Keep the <code>SCHOOL_ID==5</code> wire-transfer case (<code>parentFeeDetailsContent.js</code> L162).</td></tr>
+<tr><td>Academic Performance (<code>parent-academic-performance</code>)</td><td><code>student-academic-performance</code>, <code>dashboard/excuse-activity</code></td><td>Reuse <code>Performance</code> and modals. Legacy behaviour: <b>no <code>k5Performance</code></b>, even for a K5 child.</td></tr>
+<tr><td>Progress (<code>parent-progress</code>)</td><td><code>weekly-progress-reports-detail</code></td><td>Reuse <code>ProgressReports</code> / <code>ProgressReportView</code></td></tr>
+<tr><td rowspan="3"><b>D2</b><br/>parent-only (new)</td><td>Class Schedule (<code>parent-class-schedule</code>)</td><td><code>student-schedule</code>, <code>student-class-summary</code></td><td>New <code>ClassSchedule.jsx</code>, its own route</td></tr>
+<tr><td>Class Summary (<code>parent-class-summary</code>)</td><td><code>student-class-schedule-summary</code>, <code>student-class-summary</code></td><td>New <code>ClassSummary.jsx</code>, its own route. It shares a hook with Class Schedule.</td></tr>
+<tr><td>Download Academic Docs (<code>parent-download-academic-docs</code>)</td><td><code>student-academic-details</code> (documents plus encrypted transcript and verification URLs)</td><td>New <code>AcademicDocs.jsx</code>. Downloads stream through a Next.js BFF route (like <code>app/api/profile/document</code>), so no token reaches the browser.</td></tr>
+<tr><td rowspan="3"><b>D3</b><br/>header / account</td><td>My Profile (Withdrawal Request and app-install prompt both in)</td><td><code>dashboard/get-common-profile-details</code>, <code>save-common-profile-details</code>, <code>save-docs</code>, <code>parent/withdrawal-{init,list,send-otp,verify-otp,bank-details}</code></td><td>New <code>/parent/my-profile</code>. <code>profileP5Api</code> already wraps withdrawal-*.</td></tr>
+<tr><td>Change Password</td><td><code>/dashboard/changed-password-content</code></td><td>Reuse <code>ChangePasswordModal</code></td></tr>
+<tr><td>Add Another Child</td><td><code>api/v1/enroll/another/child</code> returns an ssoToken; poll <code>get-partial-child-name</code></td><td>Button only. Open the <b>existing</b> Next.js add-enrollment flow (Mode B, new tab) per the Add Student roadmap.</td></tr>
+</tbody></table></div>
+<div class="note ok"><b class="t">Status: D1 built (Attendance, Login History, Assigned Teachers, Fee Details, Academic Performance, Progress)</b>
+Each module has its own page, components (<code>components/parent/&lt;module&gt;/</code>), hooks (<code>hooks/parent/</code>) and BFF service (<code>services/parent*Api.js</code>, all on <code>services/parentApiBase.js</code>); the parent is always the session user and the child is the selected tab. Differences from the legacy page, decided while building: <b>Assigned Teachers</b> has no course-content modal (the legacy parent page has none, so <code>student-course-content</code> is unused); <b>Login History</b> does not have the legacy "Parent Log in History" tab (the child tabs only list children); <b>Attendance</b> uses the current year instead of the hardcoded 2026, keeps Early Leave hidden, and also has an attendance-details service and hook that no page uses yet (the legacy parent page never calls it); <b>Academic Performance</b> does not send <code>fullcourseid</code> / <code>includeClassComparison</code> (the first is unused by the Java, the second only feeds K5 data the page does not show) and has no Excuse buttons (legacy hides them for parents); <b>Fee Details</b> reuses the shared non-UI payment services and the enrollment payment-method modal, with the payment return still to be changed in Phase E; <b>Progress</b> downloads through <code>/api/parent/progress-report-pdf</code>, which checks server-side that the report's child belongs to the signed-in parent.
+<br/><b>Backend gaps found (for Phase E or a backend task):</b> the Buzz endpoints <code>get-student-progress-report-detail</code> and <code>get-progress-report-grade-history</code> only check the session user, not the parent-child mapping; <code>get-user-gradebook</code> and the progress-report PDF endpoint trust their payload (the PDF route above compensates); <code>excuse-activity</code> has no parent or role check.</div>
+<div class="note ok"><b class="t">Status: D2 built (Class Schedule, Class Summary, Download Academic Docs)</b>
+Class Schedule and Class Summary are two routes on one service (<code>services/parentClassScheduleApi.js</code>) and shared calendar pieces. Differences from the plan text, found in the legacy pages: <b>Class Schedule does not call <code>student-class-summary</code></b> (only Class Summary has the "View Summary" sheet; the Schedule page has no such column); Schedule hides classes that have ended, as legacy does; a custom range is capped at 92 days. Class Summary keeps only ended classes that were Attended or Attending, with the summary shown as plain text. <b>Academic Docs</b>: the service never returns the encrypted transcript, diploma and verification URLs to the browser. A click POSTs <code>/api/parent/academic-docs</code> with <code>{studentUserId, kind, index, rowKey}</code> in the body (the child id is never in a URL); the route takes the parent from the session, re-reads the parent's children and returns 403 for a child that is not theirs, re-fetches the documents and resolves the file itself, only fetches a backend path of the expected shape on the backend host, and streams it. Legacy filtering is kept (Weekly by default, by graduation date) with an added "All" button.
+<br/><b>Unverified, to check in a browser:</b> the three document links on the backend are rendered HTML pages (transcript view, diploma view, verification page), not files. Streamed from this app's origin they may lose relative assets or scripts, and backend error pages come back as HTTP 200 HTML. If they do not render, the options are a backend endpoint that returns the PDF or a base-href rewrite.
+<br/><b>More backend gaps:</b> <code>student-class-summary</code> looks the summary up by <code>meetingId</code> alone and does not check that the child belongs to the parent.</div>
+<div class="note ok"><b class="t">Status: D3 built (My Profile with Withdrawal, Change Password, Add Another Child)</b>
+<b>My Profile</b> (<code>/parent/my-profile</code>, about the parent so the child tabs are hidden there): view and edit of the legacy fields, photo upload with crop (JPG/PNG up to 5 MB), the Withdrawal Request section (child choice from the parent's children, reason, terms, OTP, status tracker, and the bank form after approval) and the app-install prompt (auto-opens on the parent home only when all four legacy gates hold: school 1, not an installed app, not closed in the last 7 days, app not in use; plus a "Get App" button). The parent id always comes from the session; withdrawal init/list/send-otp check the chosen child against the parent's own children first; account and routing numbers are masked to the last four on the server (stricter than legacy); the OTP never leaves the dialog's local state. Left out because legacy has them elsewhere or for other roles: a document viewer (legacy only has the photo), the app-install admin toggle, the B2B bank panel. <b>Change Password</b> needed no new code: the shared header modal already sends the session user's unique id and works for a parent. <b>Add Another Child</b> is a parent-owned button at the right end of the child tabs: shown when <code>CONFIGURATION/ADD_ANOTHER_CHILD_BTN</code> is "true", label becomes "Resume {name}'s Enrollment" when a child is half enrolled (short profile, polled every 60 s), and a click resumes or reserves the child, then opens the existing Add Another Student wizard in a new tab (the tab is opened inside the click so it is not popup-blocked; if blocked, it continues in the same tab).
+<br/><b>More backend gaps:</b> <code>get-common-profile-details</code> and <code>save-common-profile-details</code> trust the body userId (save also overwrites the e-mail it is given: the BFF re-reads and sends the real one); <code>app-last-activity</code> (POST) trusts the body userId; <code>masters-bulk</code> is public. <b>To smoke-test:</b> <code>app-last-activity</code> (called with the session unique id in the school-UUID slot of the BFF helper), <code>save-docs</code> and <code>masters-bulk</code> were not run end to end; the stored phone dial code format (leading "+") is unknown.</div>
+<p class="lead">Skipped in v1: Teacher Feedback, PTM, Transcript, Notifications, demo mode. Exact request and response shapes are confirmed per module during implementation. Highest risk: Fee Details payment round trip, Academic Docs downloads, Profile with withdrawal OTP.</p>
+</section>
+
+<section id="s9">
+<h2><span class="n">09</span> Phase E — Cutover &amp; Release</h2>
+<ul>
+  <li><b>Payment return:</b> <code>PaymentResponseApiController</code> L612 and <code>ClientCommonPaymentController</code> L579-582 send parents back to the JSP. Change them so a parent lands on the Next.js <code>/{school}/common/payment-response-success</code> page, and its "Go to dashboard" action goes by role to <code>/parent/parent-fee-details</code>. <code>components/common/PaymentResponseView.jsx</code> has uncommitted changes on this branch and must not be overwritten.</li>
+  <li>Parent pages needing a session must always arrive through <code>/api/sso</code>, which is what the A1 redirects do.</li>
+  <li><b>No toggle, so release order matters:</b> deploy backend and Next.js to UAT together, run the full PAR-DASH suite and the STU-DASH regression, then prod. Rollback is a code revert on both sides.</li>
+  <li><b>Status: payment return built (backend, nothing removed).</b> For a PARENT paying an installment fee, <code>PaymentResponseApiController</code> (the Next.js payment-response page) and <code>ClientCommonPaymentController</code> (the legacy JSP result page) now return <code>CommonUtil#getParentPaymentReturnUrl</code>: the Next.js <code>/parent/parent-fee-details</code> through the SSO handoff, so it works with or without an existing Next.js session; with a blank <code>NEXTJS_APP_URL</code> it is the legacy JSP URL as before. The old lines are kept as comments, the legacy <code>parent-dashboard</code> endpoint and JSP are untouched, and nothing was deleted (decision: old code stays until after cutover). The Next.js payment result page needed no change: it already sends the payer to the backend's <code>returnUrl</code> (button and countdown redirect). Not changed on purpose: the overdue-fee branch (<code>getAdditionalLayerRedirectUrl</code>) and the other fee types (extension, book-session, notarization, other: <code>view-as-user</code> links), which already end up on the Next.js parent dashboard through the redirects of Phase A. Known limit: the SSO token in the return URL is single-use and valid for 5 minutes, so a payer who waits longer on the result page and then clicks the button is asked to log in again.</li>
+<li>After cutover, clean up later (separate task): the JSP rendering path, <code>select-student-by-parent</code>, <code>/redirect-parent-from-student</code>.</li>
+</ul>
+</section>
+
+<section id="s10">
+<h2><span class="n">10</span> Backend Changes (is-rest-api, branch PHASE4, uncommitted)</h2>
+<div class="tw"><table>
+<thead><tr><th>#</th><th>Change</th><th>Where</th><th>Phase</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Parent id from the session in <code>get-students-by-parent</code>; reject a mismatched body <code>userId</code></td><td><code>DashboardStudentUtil</code> L10245</td><td>0</td></tr>
+<tr><td>2</td><td>Same endpoint also returns <code>roleAndModuleAssign</code></td><td><code>DashboardStudentUtil#getStudentsByParent</code></td><td>0</td></tr>
+<tr><td>3</td><td><code>getFinalParentDashboardUrl</code> with blank-<code>NEXTJS_APP_URL</code> fallback; use it at all PARENT redirects</td><td><code>CommonUtil</code>, <code>SingleSignOnUtil</code>, <code>ClientDashboardStudentController</code></td><td>A</td></tr>
+<tr><td>4</td><td>Legacy parent GET redirects to Next.js</td><td><code>ClientDashoboardParentController#parentDashboard</code></td><td>A</td></tr>
+<tr><td>5</td><td>Payment return URLs for parents go to Next.js</td><td><code>PaymentResponseApiController</code> L612, <code>ClientCommonPaymentController</code> L579</td><td>E</td></tr>
+<tr><td>6</td><td>Thin JSON endpoint only where a module returns HTML fragments (none known yet)</td><td>per module</td><td>D</td></tr>
+<tr><td>7</td><td>Per-child theme fields in the parent gate: <code>gradeBand</code>, <code>standardId</code>, <code>registrationType</code>, <code>isSelfStudy</code> per child, <code>k5DashboardEnabled</code> once</td><td><code>DashboardStudentUtil#getStudentsByParent</code></td><td>C2</td></tr>
+</tbody></table></div>
+<p>Not planned: any JWT change, any new setting or SQL seed. Everything else reuses the existing <code>/dashboard/parent/*</code> JSON endpoints through the BFF.</p>
+</section>
+
+<section id="s11">
+<h2><span class="n">11</span> Proposed Next.js Route / File Structure <span class="b rec">Decided</span></h2>
+<pre>app/[school]/(dashboard)/
+  layout.jsx                       // async server layout: role from getAccountSession() → &lt;DashboardChrome role&gt;
+  student/ ...                     // unchanged
+  parent/
+    page.jsx                       // HOME → ParentHome.jsx (selected child's home)
+    [...module]/page.jsx           // "being migrated" placeholder
+    parent-attendance/  parent-student-login-details/  parent-syllabus-assigned-teacher/
+    parent-fee-details/ parent-academic-performance/   parent-progress/
+    parent-class-schedule/ parent-class-summary/ parent-download-academic-docs/
+    my-profile/
+      page.jsx (server, ~7 lines) → client component
+app/api/parent/academic-docs/      // BFF download stream
+components/parent/
+  ParentChildProvider.jsx  ChildTabs.jsx  ChildPicker.jsx (no-children message)  ParentMobileBar.jsx
+  home/ChildOverviewCard.jsx  AttendanceChart.jsx  GradeChart.jsx  UpcomingSchedule.jsx  PaymentsDueCard.jsx
+  ClassSchedule.jsx  ClassSummary.jsx  AcademicDocs.jsx  ParentProfile.jsx  WithdrawalRequest.jsx
+hooks/
+  useDashboardSubject.js
+  parent/useSelectedChild.js  useParentChildren.js  useParentChildOverview.js  useParentChildSchedule.js
+  parent/useParentClassSchedule.js  useParentAcademicDocs.js  useParentProfile.js
+services/
+  dashboardApi.js                  // + optional studentUserId param (default = userId)
+  parentDashboardApi.js            // get-students-by-parent, student-dashboard-overview, student-schedule,
+                                   //   class-summary, class-schedule-summary, academic-details, common-profile
+utils/
+  dashboardNav.js                  // dashboardNavHref(role), applyParentNavRules, HOME_PAGE_LINKS += Parent-dashboard
+  lastDashboardPath.js             // DASHBOARD_ROLES += "parent"
+proxy.js                           // matcher += "/:school/parent/:path*" + role redirect (never sign out)</pre>
+</section>
+
+<section id="s12">
+<h2><span class="n">12</span> Legacy Issues Found (do not copy blindly)</h2>
+<div class="tw"><table>
+<thead><tr><th>Issue</th><th>Evidence</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td><span class="b out">Security</span> <code>get-students-by-parent</code> trusts the body <code>userId</code></td><td><code>ClientDashoboardParentController</code> L137, <code>DashboardStudentUtil</code> L10245-10254</td><td>Fix in Phase 0</td></tr>
+<tr><td><span class="b warn">Broken</span> <code>parentSchoolDiary.js</code> L467 calls <code>dashboard/parent/student-diary</code>, which no controller maps</td><td>no mapping found</td><td>Do not port. Use <code>/api/diary/*</code>.</td></tr>
+<tr><td><span class="b warn">Dead</span> <code>parent-notifications</code>: no controller or JSP handles <code>notifications</code>; not in the parent MODULES seed</td><td><code>pageConfig.js</code> L135, <code>60_0_0_PARENT_DASHBOARD.sql</code></td><td>Skipped in v1</td></tr>
+<tr><td><span class="b warn">Inconsistent</span> <code>SingleSignOnUtil#getDashboardRedirectUrl</code> sends PARENT to old <code>view-as-user</code></td><td>L280-288 vs L403-406</td><td>Fixed by the A1 redirect change</td></tr>
+<tr><td><span class="b warn">Dead?</span> Transcript menu item has no <code>pageConfig</code> entry</td><td>sidebar JSP ~L170</td><td>Skipped; check <code>USER_RIGHTS</code> first</td></tr>
+<tr><td><span class="b warn">Unused</span> <code>select-student-by-parent</code>, <code>/redirect-parent-from-student</code> (@TODO Remove)</td><td>controller L112-142</td><td>Not ported; clean up after cutover</td></tr>
+<tr><td><span class="b ph">Info</span> <code>DashboardContentParent.jsp</code> is not included anywhere</td><td>theme2/dashboard</td><td>Ignore</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="s13">
+<h2><span class="n">13</span> Decision Log <span class="b rec">all settled</span></h2>
+<div class="tw"><table>
+<thead><tr><th>#</th><th>Decision</th><th>Outcome</th></tr></thead>
+<tbody>
+<tr><td>Q1</td><td>Where the selected child lives</td><td><b>Changed:</b> not in the URL (no child id in the address bar). Held in the provider plus per-account <code>sessionStorage</code>, validated against the children list</td></tr>
+<tr><td>Q2</td><td>Layout</td><td><b>Changed:</b> same <code>layout.jsx</code>, role resolved dynamically from the session (not per-role layouts)</td></tr>
+<tr><td>Q2b</td><td>Role mismatch</td><td>Handle as Java does today: redirect to the user's own start page, never sign out. Enforced in <code>proxy.js</code>.</td></tr>
+<tr><td>Q3 / Q3b</td><td>Parent <code>roleId</code></td><td>Same as student: a gate call returns it. <code>get-students-by-parent</code> also returns <code>roleAndModuleAssign</code>. No JWT change.</td></tr>
+<tr><td>Q4</td><td><code>get-students-by-parent</code> fix</td><td>Parent id from the session; reject mismatch</td></tr>
+<tr><td>Q5</td><td>Branches and commits</td><td><b>Changed:</b> Next.js on a new branch you create; backend on PHASE4; no commits by Claude</td></tr>
+<tr><td>Q6</td><td>Toggle</td><td><b>Changed:</b> no toggle for the parent dashboard</td></tr>
+<tr><td>Q7</td><td>Skipped in v1</td><td>Teacher Feedback, PTM, demo mode, Transcript, Notifications</td></tr>
+<tr><td>Q8</td><td>Charts</td><td>Small SVG components, no new library</td></tr>
+<tr><td>Q9</td><td>Parent test cases</td><td>Create the PAR-DASH-* file in Phase 0</td></tr>
+<tr><td>Q10</td><td>Old parent URLs</td><td>Legacy parent GET redirects to Next.js</td></tr>
+<tr><td>Q11</td><td>Blank <code>NEXTJS_APP_URL</code></td><td>Fall back to the JSP</td></tr>
+<tr><td>Q12</td><td>Admin view-as-parent</td><td>Not touched in v1</td></tr>
+<tr><td>Q13</td><td>Fee payment return</td><td>Next.js payment-response page, then <code>/parent/parent-fee-details</code></td></tr>
+<tr><td>Q14</td><td>Profile scope</td><td>Withdrawal Request and app-install prompt both included</td></tr>
+<tr><td>Q15</td><td>Child switcher</td><td><b>Changed:</b> child tabs across the top of every parent page (matches the legacy screenshot); no header dropdown</td></tr>
+<tr><td>Q16</td><td>Class Schedule / Summary</td><td>Two routes, shared hook</td></tr>
+<tr><td>Q17</td><td>Academic Docs downloads</td><td>Through a Next.js BFF route</td></tr>
+<tr><td>Q18</td><td>K5 child performance</td><td>Legacy behaviour: no <code>k5Performance</code></td></tr>
+<tr><td>Q19</td><td>Mobile bottom bar</td><td>Build it in v1</td></tr>
+<tr><td>Q20</td><td>Parent pages and components (set at Phase A)</td><td><b>Changed from "reuse":</b> parent gets its own pages and components, like the student; only the shell and non-UI services/utils are shared</td></tr>
+<tr><td>Q21</td><td>Dashboard theme follows the selected child</td><td><b>Settled (added after Phase C):</b> elementary child gives the K-5 theme, middle the middle theme, high the high-school theme; reuses the student theme</td></tr>
+<tr><td>Q21a</td><td>Where the per-child theme data comes from</td><td><i>Recommended:</i> <code>get-students-by-parent</code> returns <code>gradeBand</code>, <code>standardId</code>, <code>registrationType</code>, <code>isSelfStudy</code> per child and <code>k5DashboardEnabled</code> once. Alternative: <code>get-student-dashboard</code> per child (no ownership check, not recommended).</td></tr>
+<tr><td>Q22</td><td>Parent pages inside the K-5 theme</td><td><i>Recommended:</i> <code>k5-legacy</code> compatibility wrapper first; dedicated K-5 parent pages later, per module, if wanted</td></tr>
+<tr><td>Q23</td><td>Who owns the appearance choices</td><td><i>Recommended:</i> the parent account (one setting for all children)</td></tr>
+<tr><td>Q24</td><td>Pico guide for a parent</td><td><i>Recommended:</i> hidden</td></tr>
+<tr><td>Q25</td><td>Theme before a child is picked</td><td><b>No such state:</b> the first child is selected from the start, so the theme is that child's from the first paint (only a parent with no children sees the neutral default)</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="s14">
+<h2><span class="n">14</span> Verification</h2>
+<ul>
+  <li>Run is-sms locally against is-rest-api. Log in as a parent with <b>one child</b> and as a parent with <b>2+ children</b>, including a K5 child, and with a blank <code>NEXTJS_APP_URL</code> to check the JSP fallback.</li>
+  <li>Compare each phase with the legacy JSP: menu items and order, child tabs, switching child (all widgets refetch), reload keeps the child, the address bar never shows a child id, and edited <code>sessionStorage</code> opens the picker.</li>
+  <li><b>Regression on the student dashboard</b> after every shared-file change (layout, <code>dashboardApi</code> params, hooks, Sidebar, TopHeader, <code>proxy.js</code>). Re-run the STU-DASH cases.</li>
+  <li>Theme per child (Phase C2): a parent with an elementary, a middle and a high-school child: each selection shows its own theme, switching changes it at once, reload keeps child and theme, K5 off or middle flag off falls back to default, the picker is neutral, and the student themes are unchanged.</li>
+  <li>Role redirects: a parent on <code>/student</code>, a student on <code>/parent</code>, and another role on either, with no sign-out in each case.</li>
+  <li>Legacy callers of <code>get-students-by-parent</code> (e.g. <code>withdrawalRequestUser.js</code>) still work after the Phase 0 fix.</li>
+  <li>Fee payment end to end: pay, then land on the Next.js payment-response page, then Fee Details.</li>
+  <li><code>npm run lint</code> and <code>npm run build</code> after each phase. PAR-DASH-* is the parity checklist.</li>
+</ul>
+</section>
+
+<section id="s15">
+<h2><span class="n">15</span> Status</h2>
+<div class="note ok"><b class="t">Built: Phase 0, A, B, C, D1, D2, D3 and E</b>Backend changes are on the PHASE4 branch and the Next.js work on the parent-dashboard branch, all uncommitted. <b>Phase C2 (theme per child) is not being done</b> (user decision, 2026-11-12): every child gets the default theme, and C2 stays in this document only as a record, not to be started unless asked. Not done on purpose: removal of any legacy parent code (the JSP dashboard, <code>/redirect-parent-from-student</code>, <code>select-student-by-parent</code> stay until after cutover). Open items: the backend gaps listed above, and browser or live-backend checks of every module.</div>
+</section>
+<p class="small" style="color:var(--mut);font-size:12px;margin-top:40px">Generated 2026-11-11 · Scope: Parent dashboard (child tabs, home, left-side modules) · Legacy 18d8889979 · New 0d35d29 · Self-contained, offline. No secret values included.</p>
+</main>
+</div>
+<script>
+(function(){
+ var tog=document.getElementById('navToggle'),sb=document.getElementById('sidebar');
+ if(tog)tog.addEventListener('click',function(){sb.classList.toggle('open');});
+ document.querySelectorAll('#toc a').forEach(function(a){a.addEventListener('click',function(){if(window.innerWidth<=980)sb.classList.remove('open');});});
+ var links=[].slice.call(document.querySelectorAll('#toc a')),map={};
+ links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+ var obs=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.remove('active');});if(map[e.target.id])map[e.target.id].classList.add('active');}});},{rootMargin:'-15% 0px -75% 0px'});
+ document.querySelectorAll('section[id]').forEach(function(s){obs.observe(s);});
+})();
+</script>
+</body>
+</html>
