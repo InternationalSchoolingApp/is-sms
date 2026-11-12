@@ -3,9 +3,10 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
-// Enrollment flow only: /<school>/enroll, /<school>/enrollment/... and /<school>/add-enrollment/... Payment-response,
-// payment-init and every other route load no Pixel and send no PageView.
-const ENROLLMENT_PATH = /^\/[^/]+\/(enroll|enrollment|add-enrollment)(\/|$)/;
+// Enrollment flow only: /<school>/enroll, /<school>/enrollment/..., /<school>/add-enrollment/... and the teacher
+// registration (/<school>/teacher-registration/...). Payment-response, payment-init and every other route load no
+// Pixel and send no PageView.
+const ENROLLMENT_PATH = /^\/[^/]+\/(enroll|enrollment|add-enrollment|teacher-registration)(\/|$)/;
 
 export function isEnrollmentPath(pathname) {
   return ENROLLMENT_PATH.test(pathname || "");

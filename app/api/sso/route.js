@@ -5,6 +5,7 @@ import { defaultBackend, logoutAtSms, trustedBackend } from "@/lib/auth/smsToken
 import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
 import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 import { addEnrollmentStepPath, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
+import { isTeacherStep, teacherStepPath } from "@/utils/teacherRegistrationSteps";
 import {
   detectOriginatingBackend,
   getBackendOverrideCookieName,
@@ -100,6 +101,10 @@ async function handleSsoHandoff(request) {
   // re-enrollment starts from its options screen.
   const resume = url.searchParams.get("resume");
   const targetStep = VALID_STEPS.has(step) ? step : "1";
+  // flow=teacher: a TEACHER with an unfinished registration (CommonUtil#getFinalTeacherRegistrationUrl). Teachers
+  // have their own six steps (utils/teacherRegistrationSteps.js), so `step` is validated against those, and the
+  // student-only params (program, ae, next, target) are ignored for this flow.
+  const isTeacherFlow = url.searchParams.get("flow") === "teacher";
   const program = getLearningProgramRouteCode(url.searchParams.get("program")) || DEFAULT_PROGRAM;
   // getFinalEnrollmentUrl now appends this explicitly (same as ClientSignupStudentController's
   // anonymous-signup redirect handled in proxy.js) — prefer it over the Referer-based guess, which
@@ -164,7 +169,9 @@ async function handleSsoHandoff(request) {
   // fresh=1 marks a real "start" of the add-enrollment wizard (dashboard button / enrollment link). Only such an
   // entry may reserve a new child; a reload of the wizard never does (see useAddEnrollmentContext).
   let destination;
-  if (addEnrollmentPath != null) {
+  if (isTeacherFlow) {
+    destination = teacherStepPath(schoolUUID, isTeacherStep(step) ? step : 1);
+  } else if (addEnrollmentPath != null) {
     destination = `${addEnrollmentPath}${addEnrollmentPath.includes("?") ? "&" : "?"}fresh=1`;
   } else if (nextPath != null) {
     destination = nextPath;

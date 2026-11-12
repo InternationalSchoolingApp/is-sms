@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teacher Registration Migration Plan</title>
+<style>
+  /* Layout: sticky contents rail + single reading column; phases as numbered rail; monospace for paths/endpoints */
+  :root{
+    --bg:#f6f5f1; --surface:#ffffff; --surface-2:#eeede6; --border:#dcdad0;
+    --fg:#20231f; --fg-muted:#55574e; --fg-faint:#85867a;
+    --accent:#2c5f4f; --accent-fg:#f6f5f1; --accent-soft:#e3ece7;
+    --ok-bg:#e4efe6; --ok-fg:#1f5c3c; --ok-border:#b9d9c3;
+    --new-bg:#fcecd8; --new-fg:#8a4a0c; --new-border:#edc99a;
+    --risk-bg:#f6e2df; --risk-fg:#8c3326; --risk-border:#e6bcb4;
+    --info-bg:#e3eaf4; --info-fg:#27466f; --info-border:#bccbe0;
+    --font-display:Georgia,"Iowan Old Style","Palatino Linotype",serif;
+    --font-body:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",Arial,sans-serif;
+    --font-mono:Consolas,"SFMono-Regular","Cascadia Mono",Menlo,monospace;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#171916; --surface:#1f221e; --surface-2:#272a24; --border:#393c34;
+      --fg:#eceae1; --fg-muted:#aeae9f; --fg-faint:#7b7b6e;
+      --accent:#7fc9ac; --accent-fg:#102017; --accent-soft:#1f3229;
+      --ok-bg:#1c2e23; --ok-fg:#8fd6ab; --ok-border:#2e4a38;
+      --new-bg:#332616; --new-fg:#f0b877; --new-border:#4d3a20;
+      --risk-bg:#34201c; --risk-fg:#f0a593; --risk-border:#50302a;
+      --info-bg:#1b2636; --info-fg:#9cbce6; --info-border:#2c3d55;
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#171916; --surface:#1f221e; --surface-2:#272a24; --border:#393c34;
+    --fg:#eceae1; --fg-muted:#aeae9f; --fg-faint:#7b7b6e;
+    --accent:#7fc9ac; --accent-fg:#102017; --accent-soft:#1f3229;
+    --ok-bg:#1c2e23; --ok-fg:#8fd6ab; --ok-border:#2e4a38;
+    --new-bg:#332616; --new-fg:#f0b877; --new-border:#4d3a20;
+    --risk-bg:#34201c; --risk-fg:#f0a593; --risk-border:#50302a;
+    --info-bg:#1b2636; --info-fg:#9cbce6; --info-border:#2c3d55;
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} }
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:var(--font-body); font-size:15px; line-height:1.6;
+  }
+  a{color:var(--accent);}
+  a:focus-visible, button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+
+  .layout{
+    display:grid; grid-template-columns:240px minmax(0,1fr); gap:48px;
+    max-width:1180px; margin:0 auto;
+    padding:40px max(16px, env(safe-area-inset-right,0px)) 96px max(16px, env(safe-area-inset-left,0px));
+  }
+  @media (max-width:900px){ .layout{grid-template-columns:minmax(0,1fr); gap:0;} .rail{display:none;} }
+
+  .rail{position:sticky; top:24px; align-self:start; max-height:calc(100vh - 48px); overflow:auto; padding-right:4px;}
+  .rail .brand{font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--fg-faint); margin-bottom:14px;}
+  .rail ol{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px;}
+  .rail a{display:flex; gap:10px; text-decoration:none; color:var(--fg-muted); font-size:13.5px; padding:5px 8px; border-radius:6px;}
+  .rail a span{font-family:var(--font-mono); font-size:11.5px; color:var(--fg-faint); min-width:20px; padding-top:1px;}
+  .rail a:hover{background:var(--surface-2); color:var(--fg);}
+  .rail .sub a{padding-left:38px; font-size:12.5px;}
+  .theme-btn{
+    margin-top:18px; font:inherit; font-size:12.5px; color:var(--fg-muted); background:var(--surface);
+    border:1px solid var(--border); border-radius:6px; padding:6px 10px; cursor:pointer;
+  }
+
+  main{min-width:0;}
+  header.hero{padding-bottom:28px; border-bottom:1px solid var(--border);}
+  .kicker{font-family:var(--font-mono); font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--fg-faint); display:flex; flex-wrap:wrap; gap:8px 14px; margin-bottom:14px;}
+  h1{font-family:var(--font-display); font-weight:600; font-size:clamp(28px,4.4vw,40px); line-height:1.12; margin:0 0 14px; text-wrap:balance; letter-spacing:-.01em;}
+  .lede{font-size:16.5px; color:var(--fg-muted); max-width:68ch; margin:0;}
+
+  .stats{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:26px;}
+  @media (max-width:640px){ .stats{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  .stat{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px;}
+  .stat b{display:block; font-family:var(--font-display); font-size:26px; font-weight:600; line-height:1.1; font-variant-numeric:tabular-nums;}
+  .stat span{font-size:12.5px; color:var(--fg-muted);}
+
+  section{padding-top:52px; scroll-margin-top:12px;}
+  .sh{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;}
+  .sh .num{font-family:var(--font-mono); font-size:13px; color:var(--fg-faint);}
+  h2{font-family:var(--font-display); font-size:25px; font-weight:600; margin:0; letter-spacing:-.01em; text-wrap:balance;}
+  h3{font-size:16px; margin:26px 0 8px; font-weight:650;}
+  h4{font-size:13px; margin:18px 0 6px; font-family:var(--font-mono); text-transform:uppercase; letter-spacing:.06em; color:var(--fg-faint); font-weight:500;}
+  .sub-lede{color:var(--fg-muted); margin:8px 0 22px; max-width:70ch;}
+  p{max-width:72ch;}
+  ul.plain{margin:6px 0 0; padding-left:20px;}
+  ul.plain li{margin-bottom:5px;}
+
+  code{font-family:var(--font-mono); font-size:12.5px; background:var(--surface-2); padding:1px 5px; border-radius:4px; word-break:break-word;}
+
+  .badge{display:inline-block; font-family:var(--font-mono); font-size:10.5px; letter-spacing:.03em; padding:2px 8px; border-radius:20px; border:1px solid; white-space:nowrap; vertical-align:1px;}
+  .b-reuse{background:var(--ok-bg); color:var(--ok-fg); border-color:var(--ok-border);}
+  .b-new{background:var(--new-bg); color:var(--new-fg); border-color:var(--new-border);}
+  .b-risk{background:var(--risk-bg); color:var(--risk-fg); border-color:var(--risk-border);}
+  .b-info{background:var(--info-bg); color:var(--info-fg); border-color:var(--info-border);}
+  .b-be{background:var(--surface-2); color:var(--fg-muted); border-color:var(--border);}
+
+  .table-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:10px; background:var(--surface); margin:10px 0 6px;}
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  th,td{text-align:left; padding:9px 13px; border-bottom:1px solid var(--border); vertical-align:top;}
+  thead th{font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--fg-faint); background:var(--surface-2); white-space:nowrap; font-weight:500;}
+  tbody tr:last-child td{border-bottom:none;}
+  td.num, th.num{font-variant-numeric:tabular-nums; white-space:nowrap;}
+
+  .callout{border:1px solid var(--border); border-left:3px solid var(--accent); background:var(--surface); border-radius:8px; padding:14px 18px; margin:16px 0;}
+  .callout.warn{border-left-color:var(--risk-fg);}
+  .callout .tag{display:block; font-family:var(--font-mono); font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--accent); margin-bottom:6px;}
+  .callout.warn .tag{color:var(--risk-fg);}
+  .callout p{margin:0 0 6px;} .callout p:last-child{margin:0;}
+
+  .flow{border:1px solid var(--border); border-radius:10px; background:var(--surface); overflow:hidden;}
+  .flow .row{display:grid; grid-template-columns:30px minmax(0,1fr); gap:14px; padding:13px 18px; border-bottom:1px solid var(--border);}
+  .flow .row:last-child{border-bottom:none;}
+  .flow .n{width:24px; height:24px; border-radius:50%; background:var(--accent); color:var(--accent-fg); font-family:var(--font-mono); font-size:12px; display:flex; align-items:center; justify-content:center; margin-top:1px;}
+  .flow b{display:block; font-size:14.5px;}
+  .flow span{color:var(--fg-muted); font-size:13.5px;}
+
+  .stepper{display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; margin:14px 0 4px;}
+  @media (max-width:760px){ .stepper{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  .stepper div{background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px 12px;}
+  .stepper div small{display:block; font-family:var(--font-mono); font-size:10.5px; color:var(--fg-faint); letter-spacing:.05em;}
+  .stepper div b{font-size:13.5px; display:block; line-height:1.3;}
+  .stepper div em{font-style:normal; font-size:11.5px; color:var(--fg-muted);}
+
+  /* Phase rail */
+  .phase{display:grid; grid-template-columns:46px minmax(0,1fr); gap:18px; margin-top:34px; scroll-margin-top:12px;}
+  .phase .mk{display:flex; flex-direction:column; align-items:center;}
+  .phase .circle{width:40px; height:40px; border-radius:50%; border:2px solid var(--accent); color:var(--accent); background:var(--surface); font-family:var(--font-mono); font-size:14px; display:flex; align-items:center; justify-content:center; flex:none;}
+  .phase .line{width:2px; flex:1; background:var(--border); margin-top:6px;}
+  .phase .body{min-width:0; padding-bottom:6px;}
+  .phase h3{margin:6px 0 4px; font-size:19px; font-family:var(--font-display); font-weight:600;}
+  .phase .meta{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 12px;}
+  .phase .goal{color:var(--fg-muted); margin:0 0 12px;}
+  .cols{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px;}
+  @media (max-width:760px){ .cols{grid-template-columns:minmax(0,1fr);} }
+  .box{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; min-width:0;}
+  .box h4{margin-top:0;}
+  .box ul{margin:0; padding-left:18px; font-size:13.5px;}
+  .box li{margin-bottom:6px;}
+  .exit{margin-top:12px; background:var(--accent-soft); border-radius:8px; padding:11px 14px; font-size:13.5px;}
+  .exit b{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:3px;}
+
+  .q{display:grid; grid-template-columns:34px minmax(0,1fr); gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:10px;}
+  .q .qn{font-family:var(--font-mono); font-size:12px; color:var(--fg-faint); padding-top:2px;}
+  .q p{margin:0;} .q p.hint{color:var(--fg-muted); font-size:13.5px; margin-top:5px;}
+  .q .rec{margin-top:7px; font-size:13.5px;} .q .rec b{color:var(--accent);}
+
+  footer{margin-top:72px; padding-top:20px; border-top:1px solid var(--border); color:var(--fg-faint); font-size:12.5px;}
+
+  @media print{
+    .rail, .theme-btn{display:none !important;}
+    .layout{grid-template-columns:1fr; padding:0;}
+    body{background:#fff; color:#000; font-size:12px;}
+    section, .phase{break-inside:avoid-page;}
+    .table-wrap{overflow:visible;}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <nav class="rail" aria-label="Contents">
+    <div class="brand">Teacher registration &middot; plan</div>
+    <ol>
+      <li><a href="#summary"><span>01</span>Summary</a></li>
+      <li><a href="#today"><span>02</span>How it works today</a></li>
+      <li><a href="#target"><span>03</span>Target flow &amp; SSO</a></li>
+      <li><a href="#overview"><span>04</span>Phase overview</a></li>
+      <li><a href="#phases"><span>05</span>Phases in detail</a></li>
+      <li class="sub"><a href="#p0">P0 Decisions</a></li>
+      <li class="sub"><a href="#p1">P1 Backend bridge</a></li>
+      <li class="sub"><a href="#p2">P2 Next.js shell</a></li>
+      <li class="sub"><a href="#p3">P3 Sign-up &amp; Step 1</a></li>
+      <li class="sub"><a href="#p4">P4 Step 2 &amp; demo</a></li>
+      <li class="sub"><a href="#p5">P5 Review &amp; contract</a></li>
+      <li class="sub"><a href="#p6">P6 Verification &amp; bank</a></li>
+      <li class="sub"><a href="#p7">P7 Emails, QA, rollout</a></li>
+      <li class="sub"><a href="#p8">P8 Later scope</a></li>
+      <li><a href="#apis"><span>06</span>API inventory</a></li>
+      <li><a href="#modals"><span>07</span>Modals &amp; lock screens</a></li>
+      <li><a href="#files"><span>08</span>File map</a></li>
+      <li><a href="#lessons"><span>09</span>Lessons from students</a></li>
+      <li><a href="#risks"><span>10</span>Risks</a></li>
+      <li><a href="#questions"><span>11</span>Decision log</a></li>
+    </ol>
+    <button class="theme-btn" id="themeBtn" type="button">Switch theme</button>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <div class="kicker"><span>is-sms + is-rest-api</span><span>Release 1.4.0</span><span>Prepared 4 Nov 2026</span></div>
+      <h1>Teacher Registration on Next.js</h1>
+      <p class="lede">The plan for moving the legacy teacher sign-up wizard (<code>SignupCommonTeacher.jsp</code> + <code>theme2/teacher/SignupTeacher.jsp</code>) out of the Java app and into is-sms. It uses the same approach as the student enrollment migration: the existing backend APIs stay in place, emails and logins hand off to Next.js through single sign-on, and a per-school setting can switch the new flow on or off.</p>
+      <div class="stats">
+        <div class="stat"><b>8 + 1</b><span>phases (P0 to P7, then later scope)</span></div>
+        <div class="stat"><b>6</b><span>wizard stages, plus account creation</span></div>
+        <div class="stat"><b>~20</b><span>teacher stage endpoints already return JSON</span></div>
+        <div class="stat"><b>~15</b><span>modals and lock screens to rebuild</span></div>
+      </div>
+    </header>
+
+    <!-- 01 -->
+    <section id="summary">
+      <div class="sh"><span class="num">01</span><h2>Summary</h2></div>
+      <p class="sub-lede">Most of the teacher flow already exists on the backend. What's missing is the bridge into Next.js and a new UI.</p>
+      <ul class="plain">
+        <li><b>The backend business logic is done.</b> <code>ClientSignupTeacherController</code> and <code>SignupTeacherUtil</code> already save every stage, run the demo recording on Lens, generate the contract PDF, handle verification and bank details, and send all the emails. About 20 of the stage endpoints already accept and return JSON (an encoded <code>payload</code>), the same way the student endpoints do.</li>
+        <li><b>The bridge is missing.</b> Students who log in or click through from an email are sent to Next.js with a one-time SSO token (<code>/api/sso?token=…</code>). Teachers are still sent to the JSP page <code>/teacher/signup/process/{uuid}</code>, and nothing in the teacher code creates an SSO token.</li>
+        <li><b>The UI must be rebuilt.</b> That means 6 wizard stages, an account-creation page, and about 15 modals and lock screens, including the live demo recorder (start a Lens meeting, poll for recordings, re-attempt, pick a recording, play it back).</li>
+        <li><b>A few new backend APIs are needed:</b>
+          <ul class="plain">
+            <li>a teacher "registration process" endpoint (the student one returns 403 for teachers);</li>
+            <li>a stage-status endpoint, so the page can notice when an admin approves the teacher;</li>
+            <li>a GET for saved bank details (none exists, so the form is always blank);</li>
+            <li>a file-upload path that handles documents up to 10 MB;</li>
+            <li>a role field on the SSO exchange response;</li>
+            <li>a "continue registration" email link that creates a fresh SSO token when clicked.</li>
+          </ul>
+        </li>
+      </ul>
+      <div class="callout">
+        <span class="tag">About "signupTeacher.jsp"</span>
+        <p>No file with that exact name exists. The legacy page is <code>is-rest-api/src/main/webapp/WEB-INF/views/theme2/teacher/SignupTeacher.jsp</code>, with account creation in <code>theme2/SignupCommonTeacher.jsp</code>. This plan assumes those are the pages being replaced. The data they collect already reaches the backend through the JSON endpoints listed in <a href="#apis">section 06</a>.</p>
+        <p>No teacher webhook will be built. The external careers site (new-website) already sends teacher applications to <code>save-teacher-screening-data</code>, which belongs to the screening pipeline. The Next.js sign-up page calls the existing stage-1 API directly.</p>
+      </div>
+    </section>
+
+    <!-- 02 -->
+    <section id="today">
+      <div class="sh"><span class="num">02</span><h2>How the teacher flow works today</h2></div>
+      <p class="sub-lede">The teacher's progress is stored in <code>USER.FIRST_RESET</code>. The JSP maps that value to a wizard page. Several values mean an admin decision is pending, and the teacher is shown a locked screen.</p>
+
+      <div class="stepper">
+        <div><small>STEP 1</small><b>Personal Details</b><em>firstReset 11</em></div>
+        <div><small>STEP 2</small><b>Professional Details + Demo</b><em>firstReset 12</em></div>
+        <div><small>STEP 3</small><b>Demo Under Review</b><em>13 / 24 lock</em></div>
+        <div><small>STEP 4</small><b>Contract Details</b><em>14 / 19 &rarr; 22</em></div>
+        <div><small>STEP 5</small><b>Verification</b><em>22 &rarr; 21 lock</em></div>
+        <div><small>STEP 6</small><b>Bank Details</b><em>23 &rarr; 0 done</em></div>
+      </div>
+
+      <h3>Stage map (<code>SignupTeacherUtil.signupTeacherProccess:1861</code>)</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th class="num">firstReset</th><th>Meaning</th><th>Who sets it</th><th>Teacher sees</th></tr></thead>
+        <tbody>
+          <tr><td class="num">9 / 10</td><td>Account created (offline / online)</td><td>stage-1 sign-up</td><td>Step 1 (9 renders an empty page, a legacy bug)</td></tr>
+          <tr><td class="num">11</td><td>Basic details saved</td><td>save-basic-details; screening "Approved for Selection" invite</td><td>Step 2</td></tr>
+          <tr><td class="num">12</td><td>Professional details + demo saved</td><td>save-academic-professional-details</td><td>Step 3 Review</td></tr>
+          <tr><td class="num">13</td><td>Submitted for review</td><td>profile-confirmation</td><td>Locked: <i>Demo Under Review</i></td></tr>
+          <tr><td class="num">24</td><td>On hold</td><td>admin</td><td>Locked: <i>Demo Under Review</i></td></tr>
+          <tr><td class="num">14 / 19</td><td>Approved / agreement published</td><td>admin</td><td>Step 4 Contract</td></tr>
+          <tr><td class="num">22</td><td>Contract accepted</td><td>save-Teacher-Declaration</td><td>Step 5 Verification</td></tr>
+          <tr><td class="num">21</td><td>Verification submitted</td><td>save-teacher-verification</td><td>Locked: <i>Documents Under Verification</i></td></tr>
+          <tr><td class="num">23</td><td>Sent to bank details</td><td>admin</td><td>Step 6 Bank</td></tr>
+          <tr><td class="num">0</td><td>Registration complete</td><td>save-teacher-bank-details</td><td>Teacher dashboard (still JSP)</td></tr>
+          <tr><td class="num">15 / 25</td><td>Declined (profile / screening)</td><td>admin</td><td>Login blocked: "profile declined"</td></tr>
+          <tr><td class="num">20, 26, 16&ndash;18</td><td>Verification requested / re-activated / training (no longer used)</td><td>admin</td><td>Falls through to Step 2 (a likely bug for 20)</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout warn">
+        <span class="tag">Watch out</span>
+        <p>The numbers 11&ndash;15 mean different things for students and schools. Every new check must test the role <em>and</em> <code>firstReset</code>, never <code>firstReset</code> alone.</p>
+      </div>
+
+      <h3>Two teacher pipelines feed this wizard</h3>
+      <ul class="plain">
+        <li><b>A. Self sign-up.</b> The account form, then stage-1, then the wizard from Step 1. <b>This is the main scope of this plan.</b></li>
+        <li><b>B. Job application / screening.</b> <code>USER_SCREENING</code>: an applicant uses public AES-link pages with no login (tracker, questions, book-a-meeting, accept terms). When an admin sets "Approved for Selection Process", a User and Teacher are created at firstReset 11, and an invite-password email drops the teacher into the <em>same</em> wizard at Step 2. Pipeline B's public pages are out of scope until P8, but its invite email must land in Next.js.</li>
+      </ul>
+    </section>
+
+    <!-- 03 -->
+    <section id="target">
+      <div class="sh"><span class="num">03</span><h2>Target flow and single sign-on</h2></div>
+      <p class="sub-lede">This follows the student pattern exactly, with one change: emails never contain the 5-minute token itself.</p>
+      <div class="flow">
+        <div class="row"><div class="n">1</div><div><b>Account creation in Next.js</b><span><code>/{school}/teacher-registration</code> posts to the existing <code>api/v1/teacher/enrollment/stage-1</code>. When the setting is off, the page redirects to the JSP <code>/{school}/teacher/signup</code>, the same way <code>isEnrollmentViaNextjs</code> works for students.</span></div></div>
+        <div class="row"><div class="n">2</div><div><b>Backend returns an SSO URL instead of a JSP URL</b><span>When the setting is on, the stage-1 <code>redirectUrl</code> (<code>SignupTeacherUtil:335</code>), the login redirect (<code>CommonUtil.getLogin:2039</code>) and the dashboard redirect (<code>SingleSignOnUtil.getDashboardRedirectUrl:251</code>) all call a new <code>getFinalTeacherRegistrationUrl()</code>. It creates a token with the existing <code>createSsoToken()</code> and builds <code>&lt;NEXTJS&gt;/api/sso?token=…&amp;flow=teacher&amp;step=N&amp;school=…&amp;backend=…</code>.</span></div></div>
+        <div class="row"><div class="n">3</div><div><b>Email links go through a "continue" endpoint</b><span>Teacher emails (verify, approved, verification requested, contract accepted, invite-password) link to a new <code>{school}/teacher/registration/continue?payload=…</code>. The payload is an encrypted user id plus an expiry time. A link stays valid for 72 hours and works more than once in that window. Each click is checked by the backend, which creates a fresh 5-minute SSO token and redirects to <code>/api/sso</code>. An expired link falls back to the login page, which still lands in Next.js through step 2.</span></div></div>
+        <div class="row"><div class="n">4</div><div><b>/api/sso handles teachers</b><span><code>app/api/sso/route.js</code> reads <code>flow=teacher</code> (an explicit flag, like <code>ae=Y</code>), checks the step against a teacher list of valid steps, signs in with the existing <code>"sso-token"</code> provider, then sends a 303 redirect to <code>teacherStepPath(school, step)</code>.</span></div></div>
+        <div class="row"><div class="n">5</div><div><b>The wizard resumes from the backend</b><span>A new <code>GET api/v1/teacher/registration/process/{uuid}</code> returns <code>firstReset</code>, the mapped page and lock state. A cloned resume hook sends the teacher to the right step or lock screen. Locked screens poll a teacher stage-status endpoint, so an admin approval moves the teacher on without them logging out and back in.</span></div></div>
+        <div class="row"><div class="n">6</div><div><b>Completion</b><span>After bank details (firstReset 0), the teacher is sent to the legacy <code>/{school}/dashboard/teacher/{uuid}</code> using the existing hash-POST helper (<code>withLoginPayload</code>). The teacher dashboard is not migrated yet.</span></div></div>
+      </div>
+      <div class="callout">
+        <span class="tag">Correction from the first draft</span>
+        <p>The first draft said <code>SsoExchangeResponse</code> had no role. On the current backend branch it already returns <code>userRole</code> (the parent role, e.g. <code>TEACHER</code>) and <code>roleId</code>, added for the student dashboard. The exchange works for teachers as it is. P1 only adds <code>firstReset</code>, so the Next.js session knows the registration stage. The stage numbers overlap with student and school stages, so it is always read together with <code>userRole</code>.</p>
+      </div>
+    </section>
+
+    <!-- 04 -->
+    <section id="overview">
+      <div class="sh"><span class="num">04</span><h2>Phase overview</h2></div>
+      <p class="sub-lede">The work has 8 delivery phases (P0&ndash;P7) plus one optional later phase (P8). P1 (backend) and P2 (frontend shell) can run in parallel once P0 is settled. From P3 onward, each phase delivers working stages end to end.</p>
+      <div class="callout">
+        <span class="tag">Review gate after every phase</span>
+        <p>Each phase ends with a stop. The diff from both repos is presented together with what was tested in the browser. Nothing is committed until it has been reviewed and approved, and nothing is pushed without separate approval. The next phase starts only after that.</p>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Phase</th><th>Name</th><th>Repos</th><th>Done when</th></tr></thead>
+        <tbody>
+          <tr><td>P0</td><td>Groundwork</td><td>both</td><td>Both apps run locally, branches ready, test accounts created</td></tr>
+          <tr><td>P1</td><td>Backend bridge</td><td>is-rest-api</td><td>A teacher login returns a working <code>/api/sso</code> URL; the new APIs respond</td></tr>
+          <tr><td>P2</td><td>Next.js shell &amp; SSO</td><td>is-sms</td><td>A teacher lands, signed in, on the correct (placeholder) step</td></tr>
+          <tr><td>P3</td><td>Account creation + Step 1</td><td>is-sms</td><td>A new teacher signs up and saves personal details</td></tr>
+          <tr><td>P4</td><td>Step 2 + demo recorder</td><td>both</td><td>Documents uploaded, demo recorded and selected, firstReset reaches 12</td></tr>
+          <tr><td>P5</td><td>Review, lock screen, contract</td><td>is-sms</td><td>Submit for review, admin approves, contract signed (firstReset 22)</td></tr>
+          <tr><td>P6</td><td>Verification + bank + finish</td><td>both</td><td>firstReset reaches 0 and the teacher lands on the dashboard</td></tr>
+          <tr><td>P7</td><td>Email deep links, hardening, QA, rollout</td><td>both</td><td>Live in production behind the global setting</td></tr>
+          <tr><td>P8</td><td>Later: screening pages, teacher dashboard</td><td>both</td><td>Planned separately (master plan phase P6)</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 05 -->
+    <section id="phases">
+      <div class="sh"><span class="num">05</span><h2>Phases in detail</h2></div>
+
+      <!-- P0 -->
+      <div class="phase" id="p0">
+        <div class="mk"><div class="circle">P0</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Groundwork</h3>
+          <div class="meta"><span class="badge b-be">both repos</span></div>
+          <p class="goal">All design decisions are settled (see <a href="#questions">section 11</a>). P0 sets up the branches and a local environment where every later phase can be tested end to end.</p>
+          <div class="cols">
+            <div class="box"><h4>Branches &amp; setting</h4><ul>
+              <li>Backend: <code>feature/63_0_0_TEACHER_REGISTRATION_NEXTJS_PHASE1</code>. It has no teacher commits yet, and its tip already contains the student SSO code.</li>
+              <li>Frontend: <code>feature/version_1_4_0_teacher_registration</code> (identical to main today).</li>
+              <li>New global setting key: <code>CONFIGURATION / TEACHER_REGISTRATION_VIA_NEXTJS</code>, separate from <code>ENROLLMENT_VIA_NEXTJS</code>. The <code>SETTINGS</code> table has no school column, so the setting can only be on or off for every school.</li>
+            </ul></div>
+            <div class="box"><h4>Local test environment</h4><ul>
+              <li>is-rest-api: dev profile via <code>mvnw</code> (Java 25, port 8080, context <code>/</code>), using the database from the VS Code launch config. No Redis.</li>
+              <li>Uploads go to the <b>testseri</b> bucket automatically: under the dev profile, <code>SCHOOL_SETTINGS_AWS</code> resolves to its TESTING row.</li>
+              <li>is-sms: the existing <code>.env.local</code> already proxies to <code>localhost:8080</code>.</li>
+              <li>Test teachers use dummy addresses (e.g. <code>teacher.test1@example.com</code>). Email links are read from the backend logs.</li>
+              <li>Admin approval clicks in the legacy admin dashboard and one real demo recording are done by hand during testing, following a checklist.</li>
+            </ul></div>
+          </div>
+          <div class="exit"><b>Exit</b>Both apps run locally; a test teacher can sign up on the legacy JSP flow locally; branches are checked out.</div>
+        </div>
+      </div>
+
+      <!-- P1 -->
+      <div class="phase" id="p1">
+        <div class="mk"><div class="circle">P1</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Backend bridge</h3>
+          <div class="meta"><span class="badge b-be">is-rest-api</span><span class="badge b-new">mostly new code</span></div>
+          <p class="goal">Teach the backend to send teachers to Next.js and add the few APIs the new UI needs. No stage business logic changes.</p>
+          <div class="cols">
+            <div class="box"><h4>SSO &amp; redirects</h4><ul>
+              <li>SQL <code>external-resource/64_x_x_TEACHER_REGISTRATION_NEXTJS.sql</code> (ddl-auto is none): insert the <code>TEACHER_REGISTRATION_VIA_NEXTJS</code> setting, defaulting to false. The <code>SSO_TOKENS</code> table is reused unchanged.</li>
+              <li><code>CommonUtil.isTeacherRegistrationInProgress(user)</code>: role is TEACHER, and firstReset is neither 0, 1, 15 nor 25.</li>
+              <li><code>CommonUtil.getFinalTeacherRegistrationUrl(user, office)</code>: copy <code>getFinalEnrollmentUrl</code>, adding <code>flow=teacher</code> and <code>step</code> taken from the firstReset map. Optionally shorten it with TinyURL like the student URL.</li>
+              <li>Add the teacher branch, gated by the setting, at:
+                <ul>
+                  <li><code>CommonUtil.getLogin:2039</code></li>
+                  <li><code>CommonUtil.getRedirectUrl:2341</code></li>
+                  <li><code>SingleSignOnUtil.getDashboardRedirectUrl:251</code></li>
+                  <li>the stage-1 <code>redirectUrl</code> at <code>SignupTeacherUtil:335</code></li>
+                </ul>
+              </li>
+              <li>When the setting is on, the JSP entry pages <code>{school}/teacher/signup</code> (controller :63) and <code>/teacher/signup/process/{uuid}</code> (:141) redirect to Next.js, the same way <code>commonSignupContent:290</code> does for students.</li>
+              <li>Add <code>firstReset</code> to <code>SsoExchangeResponse</code> and fill it in <code>exchangeSsoToken</code>. The role is already there as <code>userRole</code>. This is additive, so the student flow is unaffected.</li>
+              <li>reCAPTCHA: <code>SignupUtil.validateSignup:897</code> skips the check for teacher stage-1 whenever <code>ENROLLMENT_VIA_NEXTJS</code> is on. Make the teacher skip depend on <code>TEACHER_REGISTRATION_VIA_NEXTJS</code> instead. The JSP flow keeps its check, and Next.js verifies reCAPTCHA on its own server.</li>
+            </ul></div>
+            <div class="box"><h4>New JSON APIs</h4><ul>
+              <li><code>GET {school}/api/v1/teacher/registration/process/{uuid}?hash=</code>: returns firstReset, signupPage, the wizard step (1&ndash;6), and a <code>state</code>: <code>FORM</code>, <code>LOCKED</code> (lock reason UNDER_REVIEW or VERIFICATION) or <code>REDIRECT</code> for declined, withdrawn or completed teachers. The "contract expired" case is not a state here: it comes from the existing agreement-details response and is handled inside the Contract step (P5). It reuses the logic of <code>signupTeacherProccess</code>, with one fix: firstReset 20 (a legacy state no admin option can set any more) opens the Contract step, the same as 14, instead of falling through to Step 2.</li>
+              <li>Teacher stage-status endpoint for lock-screen polling, shaped like the student <code>SignupStageStatusResponse</code> (status, signupPage, redirectUri).</li>
+              <li><code>teacher/signup/get-teacher-bank-details</code>, so Step 6 can be prefilled. Mask the account number in the response.</li>
+              <li><code>teacher/signup/upload-document</code>, a multipart endpoint that takes one file plus its <code>fileType</code>. Storage is the same as legacy teacher uploads: <code>AttachmentUtils</code> logic, the bucket from <code>SCHOOL_SETTINGS_AWS</code> (testseri locally), public-read, and the <code>ATTACHMENTS</code> row upserted per (<code>LOGIN_ID</code>, <code>ATTACHMENT_TYPE</code>). Two things differ:
+                <ul>
+                  <li>The S3 upload is <b>synchronous</b>, so the response reports a real success or failure.</li>
+                  <li>Files are checked on the server: 10 MB at most, JPG/PNG/PDF only.</li>
+                </ul>
+                The Step 2 and Step 5 save methods do <b>not</b> change: they already keep any attachment that is not re-sent.</li>
+              <li>Every new endpoint (process, stage-status, bank GET, upload, continue) checks <code>userLoginHash</code> against the user. The existing shared endpoints stay as they are, the same as for students. Adding the check there would break the legacy JSP flow, which sends a random hash.</li>
+              <li>Any timezone code that is new or touched must fall back to <code>Asia/Singapore</code> when the timezone is missing or invalid, and must never overwrite a valid configured one (project rule).</li>
+            </ul></div>
+          </div>
+          <div class="exit"><b>Exit</b>With the setting on in UAT, a teacher at firstReset 11 logs into the JSP login and is redirected to <code>&lt;nextjs&gt;/api/sso?…&amp;flow=teacher&amp;step=1</code> (step 1 is Personal Details; firstReset 12 gives step 2, and so on); exchanging that token returns <code>userRole=TEACHER</code> and the firstReset. With the setting off, nothing changes for anyone.</div>
+        </div>
+      </div>
+
+      <!-- P2 -->
+      <div class="phase" id="p2">
+        <div class="mk"><div class="circle">P2</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Next.js shell &amp; SSO handoff</h3>
+          <div class="meta"><span class="badge b-be">is-sms</span><span class="badge b-reuse">clone student infra</span></div>
+          <p class="goal">Get a teacher from the backend redirect into a signed-in wizard shell with all six steps as placeholders. This copies the final student structure, not the student first draft.</p>
+          <div class="cols">
+            <div class="box"><h4>Auth &amp; routing</h4><ul>
+              <li><code>auth.js</code>: carry <code>userRole</code> and <code>firstReset</code> from the exchange through <code>authorize</code>, then <code>jwt</code>, then <code>session</code>. Declare any new <code>signIn()</code> credential in the provider's <code>credentials</code> list, or next-auth silently drops it.</li>
+              <li><code>app/api/sso/route.js</code>: add a <code>flow=teacher</code> branch with its own list of valid steps (1&ndash;6), using <code>teacherStepPath()</code>. Keep the 303 redirect, the backend override cookie and the safe-path checks.</li>
+              <li><code>proxy.js</code>: add <code>/:school/teacher-registration/step/:path*</code> to the protected routes and <code>/:school/teacher-registration</code> to the public-landing backend-cookie branch.</li>
+              <li><code>next.config.mjs</code>: add the <code>no-store</code> header and the dev rewrites for the teacher paths.</li>
+              <li><code>utils/authentication.js</code>: make <code>userType</code> a parameter (it is hard-coded to <code>"STUDENT"</code> today).</li>
+            </ul></div>
+            <div class="box"><h4>Shell &amp; state</h4><ul>
+              <li><code>utils/teacherRegistrationSteps.js</code>: the single source for the six step slugs and <code>teacherStepPath()</code>.</li>
+              <li><code>step/layout.jsx</code> and <code>TeacherWizardChrome.jsx</code> mount the provider and the shell <b>once</b>, not once per step.</li>
+              <li><code>hooks/useTeacherRegistrationContext.js</code>: reads the session, the process endpoint and the setting gate, which redirects to the JSP via a new <code>legacyTeacherRegistrationUrl()</code>. It calls <code>recordApiAttempt()</code> so error reports carry useful diagnostics.</li>
+              <li><code>hooks/useTeacherWizardResume.js</code>: copies the <code>window.__wizardResumeChecked</code> latch and the synchronous <code>redirecting</code> flag.</li>
+              <li><code>services/teacherSignupApi.js</code> (public) and <code>services/teacherSignupBackendApi.js</code> (<code>"use server"</code>, payload envelope, no cookie forwarding).</li>
+              <li>Import <code>LogoutConfirmDialog</code>, <code>ConfirmDialog</code>, <code>InfoModal</code> and <code>MobileActionBar</code> from <code>components/student-enroll/</code> as they are. Don't make a third copy, and don't move them, so no student file changes.</li>
+              <li>Teacher screens keep the student wizard's look (shell, stepper, colours, mobile action bar) and use the legacy teacher text word-for-word, fixing only obvious typos.</li>
+              <li><code>PageTitle.jsx</code>: give teacher routes their own tab title, and never call student endpoints there.</li>
+              <li><code>EnrollmentPixel.jsx</code>: add <code>teacher-registration</code> to the route regex, so the Meta pixel also runs on teacher pages.</li>
+            </ul></div>
+          </div>
+          <div class="exit"><b>Exit</b>Using the P1 UAT URL, a teacher lands on <code>/{school}/teacher-registration/step/professional-details</code> while signed in. Refresh and back/forward keep them on the right step, logout works, and a student SSO login still behaves exactly as before.</div>
+        </div>
+      </div>
+
+      <!-- P3 -->
+      <div class="phase" id="p3">
+        <div class="mk"><div class="circle">P3</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Account creation + Step 1 Personal Details</h3>
+          <div class="meta"><span class="badge b-be">is-sms</span><span class="badge b-reuse">existing APIs</span></div>
+          <p class="goal">A brand-new teacher can create an account and save personal details. firstReset reaches 11.</p>
+          <div class="cols">
+            <div class="box"><h4>Account page <code>/{school}/teacher-registration</code></h4><ul>
+              <li>Fields: Email (max 50), Confirm Email, Password and Confirm, and a Terms checkbox linked to the school's Terms and Privacy URLs. The button reads "Sign Up".</li>
+              <li>Password rules (shown as a tooltip and checked live): 8&ndash;20 characters, at least one each of uppercase, lowercase, digit and a special character from <code>!@#$%&amp;*</code>; no sequences, keyboard patterns or repeated characters.</li>
+              <li>On email blur, call <code>is-user-available</code>:
+                <ul>
+                  <li>invalid email → <b>EmailValidatorModal</b>;</li>
+                  <li>status 0043/0044 → <b>Already registered</b>;</li>
+                  <li>status 02 → <b>Not approved</b>.</li>
+                </ul>
+              </li>
+              <li>Submit to <code>api/v1/teacher/enrollment/stage-1</code> with <code>userType:'TEACHER'</code>, the password encoded with <code>encodeRawString</code>, UTM cookies and location. Use invisible reCAPTCHA v3 with action <code>teacher_signup</code>, verified server-side by cloning the student helper.</li>
+              <li>On success, follow <code>redirectUrl</code> straight into the wizard, the same as students. The backend still sends the verification email in the background, and there is no blocking "check your email" screen. A blocking screen would be cosmetic anyway, because unverified users can already log in.</li>
+            </ul></div>
+            <div class="box"><h4>Step 1 Personal Details</h4><ul>
+              <li>Load from <code>teacher/signup/get-teacher-basic-details</code>.</li>
+              <li>Fields:
+                <ul>
+                  <li>First, Middle (optional) and Last name: letters only, max 40, title-cased.</li>
+                  <li>Country, State and City as cascading selects. Country is locked when SCHOOL_ID is 5.</li>
+                  <li>Date of birth: age 18&ndash;99, sent as <code>mm-dd-yyyy</code>.</li>
+                  <li>Gender: MALE, FEMALE or DONOTWANTTOSPECIFY.</li>
+                  <li>Email: read-only.</li>
+                  <li>Phone: reuse <code>useIntlTelInput</code> and <code>PhoneNumberField</code>, and send the dial code and number as separate fields.</li>
+                </ul>
+              </li>
+              <li>Save to <code>teacher/signup/save-basic-details</code> and await the response before moving on. If the save fails, show the error and stay on the step.</li>
+              <li>Fix the legacy firstReset 9 empty page: show Step 1 empty and ready to fill.</li>
+            </ul></div>
+          </div>
+          <div class="exit"><b>Exit</b>Sign up, land in Step 1 through SSO, save Step 1, refresh: the data persists and the teacher is on Step 2. Duplicate and declined emails show the right modal.</div>
+        </div>
+      </div>
+
+      <!-- P4 -->
+      <div class="phase" id="p4">
+        <div class="mk"><div class="circle">P4</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Step 2 Professional Details + live demo recorder</h3>
+          <div class="meta"><span class="badge b-be">both repos</span><span class="badge b-risk">largest phase</span></div>
+          <p class="goal">This is the hardest step. It has five document uploads, grade and course pickers, a declaration, and the Lens demo recording loop.</p>
+          <div class="cols">
+            <div class="box"><h4>Form, pickers, documents</h4><ul>
+              <li>Load from <code>get-teacher-academic-professional-details</code> and <code>get-teacher-signup-subject-details</code>.</li>
+              <li>Fields:
+                <ul>
+                  <li>Highest degree, from a fixed list of 6.</li>
+                  <li>Specialization (max 100).</li>
+                  <li>Experience: 1&ndash;20 years.</li>
+                  <li>Last organization (max 100).</li>
+                  <li>"Why should we hire you?" (max 200).</li>
+                </ul>
+              </li>
+              <li><b>Grades Taught</b> dialog: multi-select. Schools 1 and 6 offer KG&ndash;12; others offer 1&ndash;12.</li>
+              <li><b>Courses Taught</b> dialog: Elementary, Middle and High tabs, multi-select, with selected chips. At least one course is required.</li>
+              <li>Uploads (JPG, PNG or PDF, max about 10 MB):
+                <ul>
+                  <li>Highest Degree (fileType 2)</li>
+                  <li>CV (4)</li>
+                  <li>Work-Experience (3, optional)</li>
+                  <li>Passport/National ID (19)</li>
+                  <li>Internet Speed Test screenshot (75)</li>
+                </ul>
+              </li>
+              <li><b>Uploads:</b> each file is uploaded <b>as soon as it is picked</b>, straight from the browser to the P1 <code>upload-document</code> endpoint. It never goes through Next.js, because Vercel limits request bodies to about 4.5 MB. Every file gets its own progress bar and error message. Picking a file again replaces the stored one. The stage save sends no attachments; the backend keeps what was uploaded.</li>
+              <li>Declaration checkbox <code>declConfirmation</code>, with the school name inserted into the text.</li>
+              <li>Save to <code>save-academic-professional-details</code> and await the response. Legacy moves on before the save completes, which is a bug.</li>
+            </ul></div>
+            <div class="box"><h4>Demo recorder drawer</h4><ul>
+              <li>Read the maximum number of attempts from the <code>TEACHER_DEMO_RECORDING_ATTEMPTS</code> setting (default 2).</li>
+              <li>"Live record your demo" validates and saves the form first, then calls <code>create-teacher-registration-demo-meeting</code> with title, start time, 30-minute duration, timezone, meetingType 1 and gmType 16.</li>
+              <li>Timezone comes from the user's timezone. If it is missing or can't be resolved, fall back to <code>Asia/Singapore</code>.</li>
+              <li><code>start-teacher-registration-demo-meeting?payload=</code> returns a host URL. Open it in a new tab and show the Start Demo / Copy Link dialog.</li>
+              <li>Poll <code>get-teacher-demo-recordings</code> every 10 s with React Query's <code>refetchInterval</code>, for up to 40 minutes. Stop once every session has a recording.</li>
+              <li>Each attempt row shows one state:
+                <ul>
+                  <li>in progress;</li>
+                  <li>invalid (start equals end);</li>
+                  <li>under 1 minute;</li>
+                  <li>recording processing;</li>
+                  <li>ready, with Recordings and a select option.</li>
+                </ul>
+              </li>
+              <li>Re-attempt calls <code>teacher-demo-recording-reattempt-by-teacher</code>, then starts a new meeting.</li>
+              <li>Playback uses <code>videos/signed-url</code> and plays in a <code>&lt;video&gt;</code> modal. Archived recordings (Glacier or Deep Archive) can't be played. The transcript comes from <code>transcript/show-content</code>.</li>
+              <li>The chosen recording is saved as <code>demoMeetingId</code> with the stage. Teachers with a saved <code>demoVedioLink</code> keep the old "paste a demo link" mode.</li>
+              <li>Watch out: <code>get-teacher-demo-recordings</code> and <code>create-…-demo-meeting</code> expect a <b>raw JSON body</b>, not the <code>payload</code> envelope.</li>
+            </ul></div>
+          </div>
+          <div class="exit"><b>Exit</b>The teacher records a demo, sees it become playable, picks it, saves, and firstReset becomes 12. Refreshing mid-recording resumes polling. Re-attempts stop at the configured limit. Meeting creation and the polling and table logic are tested automatically in the browser; one real recording run is done by hand, following a checklist.</div>
+        </div>
+      </div>
+
+      <!-- P5 -->
+      <div class="phase" id="p5">
+        <div class="mk"><div class="circle">P5</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Step 3 Review, review lock, Step 4 Contract</h3>
+          <div class="meta"><span class="badge b-be">is-sms</span></div>
+          <p class="goal">The teacher submits for review, waits for an admin decision, then signs the contract.</p>
+          <div class="cols">
+            <div class="box"><h4>Review &amp; lock</h4><ul>
+              <li>Step 3 is read-only, with Personal and Professional sections. Edit returns to Step 1 or 2 <b>and reloads their data</b> (legacy only switches tabs). The demo "View" opens the recording.</li>
+              <li>Next opens the <b>Note</b> confirmation ("no changes once submitted"). Submit calls <code>profile-confirmation</code> (<code>SEND_MAIL_FOR_PENDING_APPROVAL</code>) and firstReset becomes 13.</li>
+              <li><b>Demo Under Review</b> lock screen, for firstReset 13 and 24: its only actions are Log out and Check status. It polls the stage-status endpoint every 30 seconds, so approval (14) moves the teacher to Step 4 automatically.</li>
+            </ul></div>
+            <div class="box"><h4>Contract</h4><ul>
+              <li>Load from <code>get-teacher-signup-agreement-details</code>. If <code>validityEnd</code> is missing or in the past, show the <b>Contract Expired</b> lock (Log out only) and stop.</li>
+              <li>Render the agreement HTML <b>sanitized</b> with DOMPurify, since the HTML comes from the backend. Show the logo, or the letterhead for WLP schools, plus the recipient block and date.</li>
+              <li>Signature upload: JPG or PNG, 300 KB or less. It is placed in the signature box and today's date is filled in. Add the "Acceptance of Offer" checkbox.</li>
+              <li>"Accept Contract" opens the <b>Are you sure?</b> dialog. Yes calls <code>save-Teacher-Declaration</code> with the contract HTML (including the signature), plus ip-api location JSON and browser details. firstReset becomes 22. The backend uses <code>decodePreservePlus</code>.</li>
+              <li>Back is hidden on Steps 4&ndash;6, as in legacy.</li>
+            </ul></div>
+          </div>
+          <div class="exit"><b>Exit</b>Submit, then an admin approves in the legacy admin dashboard; the teacher's lock screen moves on to the contract by itself. Signing produces the PDF email and firstReset 22.</div>
+        </div>
+      </div>
+
+      <!-- P6 -->
+      <div class="phase" id="p6">
+        <div class="mk"><div class="circle">P6</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Step 5 Verification, Step 6 Bank, completion</h3>
+          <div class="meta"><span class="badge b-be">both repos</span></div>
+          <p class="goal">Background check documents, the second review lock, and bank details. This is where registration completes.</p>
+          <div class="cols">
+            <div class="box"><h4>Verification</h4><ul>
+              <li>Load from <code>get-teacher-verification-details</code>.</li>
+              <li>Social media: LinkedIn, Facebook, Instagram and X. At least one is required, <i>or</i> the teacher ticks "I do not have any active social media accounts", which clears and disables the four fields.</li>
+              <li>Recommendation letters 1 and 2 (fileTypes 73 and 74).</li>
+              <li>References 1 and 2: name, email, phone (intl-tel) and designation are all required.</li>
+              <li>Police verification declaration (shows the teacher's name), Police Verification document (72) and Last Salary Slip (41).</li>
+              <li>Show validation messages in the legacy order. The <b>Note</b> confirmation then calls <code>save-teacher-verification</code> (it has <b>no</b> <code>authentication</code> block) and firstReset becomes 21.</li>
+              <li><b>Documents Under Verification</b> lock screen, which polls like the P5 lock. When an admin redirects the teacher to bank details (23), they go to Step 6.</li>
+            </ul></div>
+            <div class="box"><h4>Bank &amp; finish</h4><ul>
+              <li>Prefill from the new <code>get-teacher-bank-details</code> (legacy is always blank).</li>
+              <li>Fields:
+                <ul>
+                  <li>Currency, account number, IBAN, and account type (Savings, Checking or Current). Fix the legacy placeholder value <code>" "</code>, which lets an unselected type through.</li>
+                  <li>Holder first, middle and last name; address; country, state and city; postal code; phone; email.</li>
+                  <li>Bank name, branch name and branch address; country, state and city; postal code.</li>
+                  <li>Optional: SWIFT, IFSC, routing number and other details.</li>
+                </ul>
+              </li>
+              <li>Submit to <code>save-teacher-bank-details</code> (<code>accountType:'BANK_ACCOUNT'</code>), and firstReset becomes 0.</li>
+              <li>Show "Redirecting to dashboard", then hash-POST to the legacy <code>/{school}/dashboard/teacher/{uuid}</code> using <code>withLoginPayload</code>.</li>
+              <li>The process endpoint returns REDIRECT for firstReset 0, so a stale tab can't reopen the wizard.</li>
+            </ul></div>
+          </div>
+          <div class="exit"><b>Exit</b>A teacher goes from sign-up to the teacher dashboard without opening a single JSP wizard page.</div>
+        </div>
+      </div>
+
+      <!-- P7 -->
+      <div class="phase" id="p7">
+        <div class="mk"><div class="circle">P7</div><div class="line"></div></div>
+        <div class="body">
+          <h3>Email deep links, hardening, QA, rollout</h3>
+          <div class="meta"><span class="badge b-be">both repos</span></div>
+          <p class="goal">Every teacher email leads into Next.js, the flow survives real-world use, and the release goes out safely.</p>
+          <div class="cols">
+            <div class="box"><h4>Emails (single sign-on)</h4><ul>
+              <li>Add the "continue" endpoint <code>{school}/teacher/registration/continue?payload=</code>. The payload is an encrypted <code>userId|expiry</code>. A link is valid for 72 hours and works more than once in that window, so a second click or an email scanner opening it first doesn't break it. Each click creates a fresh SSO token, then redirects to Next.js. Expired links go to the login page.</li>
+              <li>Point the <code>#URL#</code> in these templates at it when the setting is on:
+                <ul>
+                  <li><code>TEACHER_PROFILE_APPROVED_REDIRECT_TO_BANK</code></li>
+                  <li><code>TEACHER_PROFILE_APPROVED_REDIRECT_TO_VERIFICATION</code></li>
+                  <li><code>TEACHER_CONTRACT_ACCEPT_MAIL</code></li>
+                </ul>
+              </li>
+              <li>After email verification (<code>/common/verify-email</code>) and the invite-password flow (<code>/common/invite-password</code>), redirect teachers through SSO instead of to the JSP login.</li>
+              <li>Under-review, decline and on-hold emails have no link. They need no change.</li>
+            </ul></div>
+            <div class="box"><h4>Hardening, QA, rollout</h4><ul>
+              <li>Reuse <code>useBackendSessionGuard</code>, the <code>window.__loggingOut</code> guard, the <code>pageshow</code> reload for pages restored from the back/forward cache, and error forwarding to <code>sms-error-log</code>.</li>
+              <li>QA matrix:
+                <ul>
+                  <li>every firstReset value × {fresh login, email link, refresh, second tab};</li>
+                  <li>mobile layouts, including the demo drawer and contract on phones;</li>
+                  <li>UAT backend switcher;</li>
+                  <li>setting on and setting off.</li>
+                </ul>
+              </li>
+              <li>Regression check on the student SSO, login and enrollment flows. Shared files change in P2.</li>
+              <li>Rollout (the setting is global, so there's no per-school stage):
+                <ol>
+                  <li>full test pass on UAT with the setting on;</li>
+                  <li>deploy to production with the setting <b>off</b>;</li>
+                  <li>switch the setting on;</li>
+                  <li>monitor the error logs for a week.</li>
+                </ol>
+                Rollback is turning the setting off; the JSP flow is untouched.</li>
+            </ul></div>
+          </div>
+          <div class="exit"><b>Exit</b>The setting is on in production; a week of error logs shows no teacher-flow regressions; the legacy JSP stays available as a fallback.</div>
+        </div>
+      </div>
+
+      <!-- P8 -->
+      <div class="phase" id="p8">
+        <div class="mk"><div class="circle">P8</div></div>
+        <div class="body">
+          <h3>Later scope (separate plan)</h3>
+          <div class="meta"><span class="badge b-be">both repos</span></div>
+          <ul class="plain">
+            <li>Pipeline-B public applicant pages:
+              <ul>
+                <li><code>job-application-tracking</code></li>
+                <li><code>job-application-question-answers</code></li>
+                <li><code>book-a-meeting/{Interview|Initial-Interview}</code></li>
+                <li><code>accept-terms-and-conditions</code></li>
+              </ul>
+              These use AES-link access with no login.</li>
+            <li>The teacher dashboard (<code>ClientDashboardTeacherController</code>, 37 JSPs). The master migration plan schedules it as phase P6, after the shared dashboard foundation.</li>
+            <li>Retire <code>SignupCommonTeacher.jsp</code>, <code>SignupTeacher.jsp</code> and the <code>signupTeacherStage1–6.js</code> files once the setting has been on everywhere for one release.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 -->
+    <section id="apis">
+      <div class="sh"><span class="num">06</span><h2>API inventory for the wizard</h2></div>
+      <p class="sub-lede">Paths are relative to <code>{schoolUUID}/</code>. Unless noted, each takes POST with the <code>{payload}</code> envelope that <code>utils/payloadEncoding.js</code> already produces.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Stage</th><th>Endpoint</th><th>Effect</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Account</td><td><code>api/v1/common/is-user-available</code></td><td>email check</td><td><span class="badge b-reuse">reuse</span></td></tr>
+          <tr><td>Account</td><td><code>api/v1/teacher/enrollment/stage-1</code></td><td>creates User + Teacher, sends verification email</td><td><span class="badge b-reuse">reuse</span> redirectUrl changes in P1</td></tr>
+          <tr><td>Account</td><td><code>api/v1/common/resend-email-verification</code></td><td>resend</td><td><span class="badge b-reuse">reuse</span></td></tr>
+          <tr><td>Resume</td><td><code>GET api/v1/teacher/registration/process/{uuid}</code></td><td>firstReset → page / lock</td><td><span class="badge b-new">new</span></td></tr>
+          <tr><td>Resume</td><td>teacher stage-status</td><td>lock-screen polling</td><td><span class="badge b-new">new</span></td></tr>
+          <tr><td>SSO</td><td><code>api/v1/common/sso/exchange</code></td><td>token → session</td><td><span class="badge b-reuse">reuse</span> + firstReset field</td></tr>
+          <tr><td>1</td><td><code>teacher/signup/get-teacher-basic-details</code> &middot; <code>save-basic-details</code></td><td>→ 11</td><td><span class="badge b-reuse">reuse</span></td></tr>
+          <tr><td>2</td><td><code>get-teacher-academic-professional-details</code> &middot; <code>get-teacher-signup-subject-details</code></td><td>load</td><td><span class="badge b-reuse">reuse</span></td></tr>
+          <tr><td>2</td><td><code>save-academic-professional-details</code></td><td>→ 12</td><td><span class="badge b-reuse">reuse</span> unchanged, sent with no attachments</td></tr>
+          <tr><td>2, 5</td><td><code>teacher/signup/upload-document</code> (multipart, browser → backend)</td><td>one file, synchronous S3 upload, <code>ATTACHMENTS</code> upsert</td><td><span class="badge b-new">new</span></td></tr>
+          <tr><td>2 demo</td><td><code>create-teacher-registration-demo-meeting</code> (raw JSON) &middot; <code>GET start-teacher-registration-demo-meeting</code></td><td>Lens meeting</td><td><span class="badge b-reuse">reuse</span></td></tr>
+          <tr><td>2 demo</td><td><code>get-teacher-demo-recordings</code> (raw JSON) &middot; <code>teacher-demo-recording-reattempt-by-teacher</code></td><td>poll / re-attempt</td><td><span class="badge b-reuse">reuse</span></td></tr>
+          <tr><td>2 demo</td><td><code>videos/signed-url</code> &middot; <code>transcript/show-content</code> &middot; <code>api/v1/get-setting</code></td><td>playback, attempt limit</td><td><span class="badge b-reuse">reuse</span></td></tr>
+          <tr><td>3</td><td><code>profile-confirmation</code></td><td>→ 13, under-review emails</td><td><span class="badge b-reuse">reuse</span></td></tr>
+          <tr><td>4</td><td><code>get-teacher-signup-agreement-details</code> &middot; <code>save-Teacher-Declaration</code></td><td>→ 22, contract PDF</td><td><span class="badge b-reuse">reuse</span></td></tr>
+          <tr><td>5</td><td><code>get-teacher-verification-details</code> &middot; <code>save-teacher-verification</code></td><td>→ 21</td><td><span class="badge b-reuse">reuse</span></td></tr>
+          <tr><td>6</td><td><code>get-teacher-bank-details</code></td><td>prefill</td><td><span class="badge b-new">new</span></td></tr>
+          <tr><td>6</td><td><code>save-teacher-bank-details</code></td><td>→ 0 complete</td><td><span class="badge b-reuse">reuse</span></td></tr>
+          <tr><td>Email</td><td><code>teacher/registration/continue?payload=</code></td><td>email link → fresh SSO</td><td><span class="badge b-new">new</span></td></tr>
+          <tr><td>External</td><td><code>save-teacher-screening-data</code> (careers site, new-website)</td><td>job applications, screening pipeline</td><td><span class="badge b-reuse">unchanged</span>, no teacher webhook</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout warn">
+        <span class="tag">Security: what is checked and what isn't</span>
+        <p>No existing stage endpoint, student or teacher, validates <code>userLoginHash</code> today. They trust the <code>userId</code> inside the payload, and their session checks are commented out (e.g. <code>SignupTeacherUtil:374</code>, <code>:1925</code>, <code>:2510</code>). The legacy JSP sends a random number as the hash, so enforcing a check on these shared endpoints would break the legacy flow, which is also the rollback path.</p>
+        <p>Decision: every <b>new</b> endpoint checks <code>userLoginHash</code>. These are process, stage-status, bank-details GET (which returns bank data), upload-document and continue. The gap in the existing endpoints is recorded as a separate task covering both students and teachers.</p>
+      </div>
+    </section>
+
+    <!-- 07 -->
+    <section id="modals">
+      <div class="sh"><span class="num">07</span><h2>Conditional modals and lock screens</h2></div>
+      <p class="sub-lede">Every modal and lock screen the teacher can see in the legacy flow, and how each will be built in Next.js.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Modal / screen</th><th>Shown when</th><th>Next.js</th><th>Phase</th></tr></thead>
+        <tbody>
+          <tr><td>Email looks invalid</td><td>is-user-available: user exists but email not verified</td><td>reuse <code>EmailValidatorModal</code></td><td>P3</td></tr>
+          <tr><td>Already registered</td><td>statusCode 0043/0044, or stage-1 status 0001</td><td>shared <code>InfoModal</code></td><td>P3</td></tr>
+          <tr><td>Not approved</td><td>statusCode 02</td><td>shared <code>InfoModal</code></td><td>P3</td></tr>
+          <tr><td>Verification email sent (+ resend)</td><td>never shown in legacy (truthiness bug)</td><td>not built: the teacher goes straight into the wizard, as students do</td><td>&mdash;</td></tr>
+          <tr><td>Grades Taught</td><td>"Grades you have taught" button</td><td>new multi-select dialog</td><td>P4</td></tr>
+          <tr><td>Courses Taught</td><td>"Courses you have taught" button</td><td>new tabbed multi-select dialog</td><td>P4</td></tr>
+          <tr><td>Demo instructions + recorder drawer</td><td>"Live record your demo"</td><td>new <code>Sheet</code> (side drawer)</td><td>P4</td></tr>
+          <tr><td>Start demo (host link)</td><td>meeting created</td><td>new dialog, link copy</td><td>P4</td></tr>
+          <tr><td>Available recordings / video player</td><td>"Recordings", "Play"</td><td>new dialogs</td><td>P4</td></tr>
+          <tr><td>Demo video instructions (link mode)</td><td>info icon, saved demoVedioLink</td><td>new dialog</td><td>P4</td></tr>
+          <tr><td>Note: review before submit</td><td>Step 3 Next</td><td>shared <code>ConfirmDialog</code></td><td>P5</td></tr>
+          <tr><td>Demo Under Review (locked)</td><td>after submit, firstReset 13 or 24</td><td>full-page lock + polling</td><td>P5</td></tr>
+          <tr><td>Contract Expired (locked)</td><td><code>validityEnd</code> missing or past</td><td>full-page lock</td><td>P5</td></tr>
+          <tr><td>Are you sure? (contract)</td><td>Accept Contract after validation</td><td>shared <code>ConfirmDialog</code></td><td>P5</td></tr>
+          <tr><td>Note: review documents</td><td>Step 5 Next</td><td>shared <code>ConfirmDialog</code></td><td>P6</td></tr>
+          <tr><td>Documents Under Verification (locked)</td><td>after submit, firstReset 21</td><td>full-page lock + polling</td><td>P6</td></tr>
+          <tr><td>Logout confirm</td><td>header logout</td><td>shared <code>LogoutConfirmDialog</code></td><td>P2</td></tr>
+          <tr><td>Profile declined</td><td>firstReset 15 / 25</td><td>process API → REDIRECT to login with message</td><td>P1/P2</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 08 -->
+    <section id="files">
+      <div class="sh"><span class="num">08</span><h2>File map</h2></div>
+      <h3>is-sms</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Path</th><th>Change</th></tr></thead>
+        <tbody>
+          <tr><td><code>app/[school]/teacher-registration/page.jsx</code> + <code>TeacherAccountForm.jsx</code></td><td><span class="badge b-new">new</span> public account page with the setting gate</td></tr>
+          <tr><td><code>app/[school]/teacher-registration/step/layout.jsx</code> + <code>TeacherWizardChrome.jsx</code></td><td><span class="badge b-new">new</span> mount the shell once</td></tr>
+          <tr><td><code>app/[school]/teacher-registration/step/{personal-details, professional-details, review, contract, verification, bank-details}/</code></td><td><span class="badge b-new">new</span> server <code>page.jsx</code> + client <code>*Step.jsx</code></td></tr>
+          <tr><td><code>components/teacher-registration/*</code></td><td><span class="badge b-new">new</span> stage components, demo recorder, pickers, lock screens</td></tr>
+          <tr><td><code>hooks/useTeacherRegistrationContext.js</code>, <code>useTeacherWizardResume.js</code>, <code>useTeacherStageStatusPoll.js</code>, <code>useDemoRecordings.js</code></td><td><span class="badge b-new">new</span> cloned from the student hooks</td></tr>
+          <tr><td><code>services/teacherSignupApi.js</code>, <code>teacherSignupBackendApi.js</code></td><td><span class="badge b-new">new</span></td></tr>
+          <tr><td><code>utils/teacherRegistrationSteps.js</code></td><td><span class="badge b-new">new</span></td></tr>
+          <tr><td><code>auth.js</code>, <code>app/api/sso/route.js</code>, <code>proxy.js</code>, <code>next.config.mjs</code></td><td><span class="badge b-risk">shared, edit carefully</span> teacher branch</td></tr>
+          <tr><td><code>utils/authentication.js</code>, <code>utils/backendOrigin.js</code>, <code>components/common/PageTitle.jsx</code>, <code>components/EnrollmentPixel.jsx</code></td><td><span class="badge b-risk">shared</span> userType parameter, legacy teacher URLs, title, Meta pixel route regex</td></tr>
+          <tr><td><code>components/student-enroll/{InfoModal, ConfirmDialog, LogoutConfirmDialog, MobileActionBar}.jsx</code></td><td><span class="badge b-reuse">import as-is</span> no move, no change to student files</td></tr>
+          <tr><td><code>package.json</code></td><td><span class="badge b-new">add</span> <code>dompurify</code> for the contract HTML</td></tr>
+        </tbody>
+      </table></div>
+      <h3>is-rest-api</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Path</th><th>Change</th></tr></thead>
+        <tbody>
+          <tr><td><code>external-resource/64_x_x_TEACHER_REGISTRATION_NEXTJS.sql</code></td><td><span class="badge b-new">new</span> setting row</td></tr>
+          <tr><td><code>v1/util/CommonUtil.java</code></td><td><span class="badge b-new">add</span> <code>isTeacherRegistrationInProgress</code>, <code>getFinalTeacherRegistrationUrl</code>; login + redirect branches</td></tr>
+          <tr><td><code>v1/util/SingleSignOnUtil.java</code></td><td><span class="badge b-new">add</span> teacher branch in <code>getDashboardRedirectUrl</code></td></tr>
+          <tr><td><code>v1/dto/requesthandler/SsoExchangeResponse.java</code></td><td><span class="badge b-new">add</span> <code>firstReset</code> (<code>userRole</code> already exists)</td></tr>
+          <tr><td><code>client/controller/ClientSignupTeacherController.java</code></td><td><span class="badge b-new">add</span> process, stage-status, bank GET, upload, continue endpoints; Next.js redirects</td></tr>
+          <tr><td><code>v1/util/SignupTeacherUtil.java</code></td><td><span class="badge b-new">add</span> process mapping as JSON, bank GET, stage-1 SSO redirect</td></tr>
+          <tr><td><code>v1/util/EmailUtils.java</code> + email templates</td><td><span class="badge b-new">edit</span> <code>#URL#</code> to the continue link when the setting is on</td></tr>
+          <tr><td><code>v1/util/AttachmentUtils.java</code></td><td><span class="badge b-new">add</span> a synchronous store-and-record method for the upload endpoint (same bucket logic and <code>ATTACHMENTS</code> upsert as <code>uploadFile</code>)</td></tr>
+          <tr><td><code>v1/util/SignupUtil.java</code></td><td><span class="badge b-new">edit</span> teacher reCAPTCHA skip keyed on the new setting (<code>validateSignup:897</code>)</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 09 -->
+    <section id="lessons">
+      <div class="sh"><span class="num">09</span><h2>Lessons from the student migration</h2></div>
+      <p class="sub-lede">Each of these cost the student flow a fix commit. The teacher flow should get them right from day one.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Do this</th><th>Because</th></tr></thead>
+        <tbody>
+          <tr><td>Use named step routes <code>/{school}/teacher-registration/step/{slug}</code> from the start</td><td>The flat <code>/step/N</code> routes had to be rebuilt on day 4 (6 commits).</td></tr>
+          <tr><td>Mount the provider and shell once, in <code>step/layout.jsx</code></td><td>Mounting per step repeated the logo, school info and location side effects.</td></tr>
+          <tr><td>Save on every step and await the result; no batched client saves</td><td>Batched saving was reverted after refreshes lost data (<code>8dda26e</code>).</td></tr>
+          <tr><td>Check <code>status === "1"</code>, never <code>statusCode</code></td><td>Failed saves were being reported as success (<code>756e268</code>).</td></tr>
+          <tr><td>Send the phone dial code and number separately</td><td>The backend decode turns <code>+</code> into a space.</td></tr>
+          <tr><td>Route SSO by an explicit flag (<code>flow=teacher</code>)</td><td>Inferring the flow from <code>next</code> broke routing (<code>e6863e6</code>).</td></tr>
+          <tr><td>Declare every <code>signIn()</code> credential in the provider schema</td><td>next-auth silently drops undeclared fields (<code>7c136f4</code>).</td></tr>
+          <tr><td>Pass only serializable values to Server Actions</td><td>Passing URLSearchParams broke (<code>42806e4</code>).</td></tr>
+          <tr><td>Never call record-creating endpoints from passive components</td><td><code>PageTitle</code> created a new child record on every refresh.</td></tr>
+          <tr><td>Treat stale tabs and copied URLs as normal</td><td>Already-paid results and URLs opened without a session needed fixes (<code>ad7d485</code>, <code>90c2f30</code>).</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 10 -->
+    <section id="risks">
+      <div class="sh"><span class="num">10</span><h2>Risks</h2></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Risk</th><th>Impact</th><th>Mitigation</th></tr></thead>
+        <tbody>
+          <tr><td>Document uploads exceed Vercel and Server Action body limits</td><td><span class="badge b-risk">high</span></td><td>Each file goes from the browser straight to the backend upload endpoint, never through Next.js. The 10 MB-per-file limit is checked in the browser and on the backend (Spring allows 50 MB).</td></tr>
+          <tr><td>Shared files (auth.js, /api/sso, proxy.js) break student SSO</td><td><span class="badge b-risk">high</span></td><td>Additive branches only, behind <code>flow=teacher</code>; a student regression pass in P2 and P7.</td></tr>
+          <tr><td>Existing stage endpoints (student and teacher) trust <code>userId</code> without a hash check</td><td><span class="badge b-risk">high</span></td><td>The new endpoints validate <code>userLoginHash</code>. The existing ones stay as they are because enforcing it would break the legacy JSP; this is tracked as a <b>separate task</b>.</td></tr>
+          <tr><td>Teacher documents (passport, police verification, salary slip) are public-read in S3</td><td><span class="badge b-risk">high</span></td><td>Kept for parity, because the admin dashboard opens the links directly. Moving to private objects with signed URLs is a <b>separate task</b>.</td></tr>
+          <tr><td>AWS access keys are hard-coded in is-rest-api yml and SQL files</td><td><span class="badge b-risk">high</span></td><td>Outside this plan. Rotating the keys and moving them to env vars or the DB is a <b>separate task</b>.</td></tr>
+          <tr><td>The contract HTML from the backend is rendered as HTML</td><td><span class="badge b-new">medium</span></td><td>Sanitize it with DOMPurify, and only allow the signature image and the logo source.</td></tr>
+          <tr><td>The demo poll runs while the tab is in the background or the teacher leaves</td><td><span class="badge b-new">medium</span></td><td>Bounded <code>refetchInterval</code>, paused when the tab is hidden, and resumed on return.</td></tr>
+          <tr><td>The 5-minute SSO token expires before the teacher opens the email</td><td><span class="badge b-new">medium</span></td><td>The continue endpoint creates a fresh token on every click within 72 hours.</td></tr>
+          <tr><td>firstReset values overlap with other roles</td><td><span class="badge b-new">medium</span></td><td>Always check the role together with firstReset.</td></tr>
+          <tr><td>New timezone code skips the project fallback</td><td><span class="badge b-info">low</span></td><td><code>Asia/Singapore</code> fallback; never overwrite a valid configured timezone.</td></tr>
+          <tr><td>No automated test framework in is-sms</td><td><span class="badge b-info">low</span></td><td>Every phase is tested end to end in the browser against the local backend before review, then a full manual QA matrix runs in P7. No new test framework for now.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 11 -->
+    <section id="questions">
+      <div class="sh"><span class="num">11</span><h2>Decision log</h2></div>
+      <p class="sub-lede">All design questions were settled on 4 Nov 2026. This table is the reference for every phase; anything not listed here follows the student enrollment implementation.</p>
+
+      <h3>Scope</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>#</th><th>Question</th><th>Decision</th></tr></thead>
+        <tbody>
+          <tr><td>Q1</td><td>Teacher webhook for an external site?</td><td>Not built. The careers site already uses <code>save-teacher-screening-data</code>.</td></tr>
+          <tr><td>Q2</td><td>Screening applicant pages?</td><td>Later (P8). Only the "Approved for Selection" invite email is changed to land in Next.js.</td></tr>
+          <tr><td>Q3</td><td>Account-creation page in Next.js too?</td><td>Yes, <code>/{school}/teacher-registration</code>, so the JSP can be retired later.</td></tr>
+          <tr><td>Q6</td><td>Route name</td><td><code>/{school}/teacher-registration/step/{slug}</code>, with no <code>[program]</code> segment.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Single sign-on, emails and stages</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>#</th><th>Question</th><th>Decision</th></tr></thead>
+        <tbody>
+          <tr><td>Q4</td><td>Email link behaviour</td><td>The "continue" link stays valid for 72 hours and works more than once; each click creates a fresh 5-minute SSO token; after expiry it falls back to the login page.</td></tr>
+          <tr><td>Q15</td><td>firstReset 20</td><td>Opens the Contract step, the same as 14. No admin option can set it today.</td></tr>
+          <tr><td>Q17</td><td>Unverified email after sign-up</td><td>The teacher goes straight into the wizard, the same as students. The verification email is still sent, and nothing blocks the teacher.</td></tr>
+          <tr><td>Q7</td><td>Under-review screens</td><td>Poll every 30 seconds and offer a "Check status" button; approval moves the teacher on automatically.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Rollout and security</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>#</th><th>Question</th><th>Decision</th></tr></thead>
+        <tbody>
+          <tr><td>Q14</td><td>Rollout granularity</td><td>One global setting, <code>TEACHER_REGISTRATION_VIA_NEXTJS</code>. Test fully on UAT, then switch it on in production for everyone; switching it off is the rollback. (SETTINGS has no school column.)</td></tr>
+          <tr><td>Q16</td><td>Hash validation</td><td>Only the new endpoints check <code>userLoginHash</code>. The gap in the existing shared endpoints is a separate task.</td></tr>
+          <tr><td>Q19</td><td>reCAPTCHA gap</td><td>The teacher stage-1 skip depends on the new teacher setting, not <code>ENROLLMENT_VIA_NEXTJS</code>.</td></tr>
+          <tr><td>Q24</td><td>Public-read S3 objects</td><td>Kept for parity; making them private is a separate task.</td></tr>
+          <tr><td>Q13</td><td>Sanitize the contract HTML</td><td>Add <code>dompurify</code>.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Uploads</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>#</th><th>Question</th><th>Decision</th></tr></thead>
+        <tbody>
+          <tr><td>Q5 / Q29</td><td>Upload design</td><td>A new backend endpoint, <code>teacher/signup/upload-document</code>. The browser sends files directly to it, and it uses the same storage as legacy teacher uploads (<code>AttachmentUtils</code>, bucket from the DB, <code>ATTACHMENTS</code> table, same fileType codes). The limit is 10 MB per file, JPG/PNG/PDF. The new-website approach (a Next.js route holding its own AWS keys) is not used. The Step 2 and Step 5 save methods don't change.</td></tr>
+          <tr><td>Q22</td><td>When files are stored</td><td>As soon as they are picked; picking again replaces the file.</td></tr>
+          <tr><td>Q23</td><td>Confirm the upload succeeded</td><td>The endpoint waits for the S3 upload, so the teacher sees a real success or failure.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>UI</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>#</th><th>Question</th><th>Decision</th></tr></thead>
+        <tbody>
+          <tr><td>Q8</td><td>Legacy bugs</td><td>Fix: the Step 2 save timing, Account Type validation, the empty page at firstReset 9, bank-details prefill, and the Review page's Edit button not reloading data.</td></tr>
+          <tr><td>Q9</td><td>Shared modals</td><td>Imported from <code>components/student-enroll/</code> as they are; no student file changes.</td></tr>
+          <tr><td>Q10</td><td>Old "paste a demo link" mode</td><td>Kept for teachers who already have <code>demoVedioLink</code>.</td></tr>
+          <tr><td>Q20</td><td>Look and wording</td><td>The student wizard's look, with the legacy teacher text word-for-word (only obvious typos fixed).</td></tr>
+          <tr><td>Q21</td><td>Meta pixel</td><td>Included on teacher pages.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Workflow and testing</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>#</th><th>Question</th><th>Decision</th></tr></thead>
+        <tbody>
+          <tr><td>Q11</td><td>Git workflow</td><td>Frontend on <code>feature/version_1_4_0_teacher_registration</code>, backend on <code>feature/63_0_0_TEACHER_REGISTRATION_NEXTJS_PHASE1</code>. Nothing is committed until the code has been reviewed, and nothing is pushed without separate approval.</td></tr>
+          <tr><td>Q18</td><td>Review cadence</td><td>Stop after each phase: present the diff and what was tested, commit after approval, then start the next phase.</td></tr>
+          <tr><td>Q12 / Q25</td><td>Test environment</td><td>A local is-rest-api (dev profile, the database from the VS Code launch config, uploads to the <b>testseri</b> bucket), with is-sms proxying to it. No new test framework.</td></tr>
+          <tr><td>Q26</td><td>Test emails</td><td>Dummy addresses; links read from the backend logs.</td></tr>
+          <tr><td>Q27</td><td>Live demo recording</td><td>Meeting creation and the polling and table logic are tested automatically; one real recording run is done by hand, following a checklist.</td></tr>
+          <tr><td>Q28</td><td>Admin approvals</td><td>Done by hand in the legacy admin dashboard when a test needs them.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <footer>
+      This plan is based on reading the code in <code>is-sms</code> (<code>feature/version_1_4_0_teacher_registration</code>, which matches main) and <code>is-rest-api</code> (pre-prod line, with <code>feature/63_0_0_TEACHER_REGISTRATION_NEXTJS_PHASE1</code> checked) on 4 Nov 2026. Line numbers are approximate and shift as those branches change. No code was changed while preparing it.
+    </footer>
+  </main>
+</div>
+<script>
+  (function(){
+    var root = document.documentElement, btn = document.getElementById('themeBtn');
+    try { var saved = localStorage.getItem('tr-plan-theme'); if (saved) root.setAttribute('data-theme', saved); } catch(e) {}
+    btn.addEventListener('click', function(){
+      var cur = root.getAttribute('data-theme');
+      if (!cur) cur = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      var next = cur === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('tr-plan-theme', next); } catch(e) {}
+    });
+  })();
+</script>
+</body>
+</html>

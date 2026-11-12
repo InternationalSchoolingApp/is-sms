@@ -51,7 +51,12 @@ export default async function proxy(request) {
   // whichever one fires the same way the manual UAT picker does
   // (components/common/BackendSwitcher.jsx) — otherwise this student's calls (and the picker's own
   // display) silently fall back to the default backend instead of the one that sent them.
-  if (segments.length === 3 && segments[1] === "enrollment") {
+  // The teacher registration landing page (/{school}/teacher-registration, nothing after) is the same case:
+  // ClientSignupTeacherController#signup sends an anonymous teacher here with an explicit `backend` param.
+  // (Its protected steps live under /step/..., matched below like the student wizard.)
+  const isPublicLanding =
+    (segments.length === 3 && segments[1] === "enrollment") || (segments.length === 2 && segments[1] === "teacher-registration");
+  if (isPublicLanding) {
     const backendParam = isBackendOverrideAllowed() ? parseBackendOrigin(request.nextUrl.searchParams.get("backend")) : "";
     const backendOverride = backendParam || detectOriginatingBackend(request);
     if (!backendOverride) return NextResponse.next();
@@ -207,6 +212,9 @@ export const config = {
   matcher: [
     "/:school/enrollment/:program",
     "/:school/enrollment/:program/step/:path*",
+    // Teacher registration: the public landing page (backend-cookie branch above) and its signed-in steps.
+    "/:school/teacher-registration",
+    "/:school/teacher-registration/step/:path*",
     "/:school/add-enrollment/:parentId/:sessionUserId/step/:path*",
     // Student dashboard (Phase A). `:path*` also covers the bare /{school}/student home.
     "/:school/student/:path*",

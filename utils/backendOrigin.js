@@ -189,6 +189,17 @@ export function legacyEnrollmentProcessUrl(schoolUUID, uniqueId) {
 }
 
 /**
+ * The legacy JSP teacher registration wizard for a teacher already signed up
+ * (ClientSignupTeacherController: {schoolId}/teacher/signup/process/{uniqueId}). Used when
+ * CONFIGURATION/TEACHER_REGISTRATION_VIA_NEXTJS is explicitly false, so the teacher goes back to the old flow.
+ */
+export function legacyTeacherRegistrationUrl(schoolUUID, uniqueId) {
+  const backend = resolveBackendNavigationOrigin();
+  if (!backend || !schoolUUID || !uniqueId) return "";
+  return `${backend}/${schoolUUID}/teacher/signup/process/${encodeURIComponent(uniqueId)}`;
+}
+
+/**
  * Public legacy enrollment start page for a school/program. The original
  * signup query is forwarded intact because the JSP reads values such as
  * payload, referralCode, ras, and v directly from the URL.

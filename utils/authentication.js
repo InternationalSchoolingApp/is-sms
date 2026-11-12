@@ -7,12 +7,12 @@ import { getHash } from "@/utils/common";
  * needed this shape too) so the userId-carrying variant below has one
  * source of truth.
  */
-export function buildAuthentication(context) {
+export function buildAuthentication(context, userType = "STUDENT") {
   return {
     hash: getHash(),
     schoolId: context.schoolNumericId,
     schoolUUID: context.schoolUUID,
-    userType: "STUDENT",
+    userType,
   };
 }
 
@@ -27,9 +27,9 @@ export function buildAuthentication(context) {
  * right after account creation (e.g. Offline/B2B, which skips email
  * verification), from that signup response's own `studentUserId` field.
  */
-export function buildAuthenticatedRequest(context, userId) {
+export function buildAuthenticatedRequest(context, userId, userType = "STUDENT") {
   return {
-    ...buildAuthentication(context),
+    ...buildAuthentication(context, userType),
     userId,
   };
 }

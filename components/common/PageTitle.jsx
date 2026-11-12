@@ -99,9 +99,12 @@ export function PageTitle() {
     return () => window.removeEventListener("pageshow", onPageShow);
   }, [queryClient]);
 
+  // Teacher registration has its own tab title (and never uses the student endpoints above: no `program` param,
+  // so the prefill query stays disabled there).
+  const isTeacherRegistration = /^\/[^/]+\/teacher-registration(\/|$)/.test(pathname || "");
   useEffect(() => {
-    document.title = title;
-  }, [title]);
+    document.title = isTeacherRegistration ? "Teacher Registration" : title;
+  }, [title, isTeacherRegistration]);
 
   return null;
 }

@@ -38,6 +38,11 @@ const nextConfig = {
         source: "/:school/enrollment/:path*",
         headers: [{ key: "Cache-Control", value: "no-store, must-revalidate" }],
       },
+      // Same for the teacher registration steps: after logout, Back must re-hit proxy.js instead of replaying a step.
+      {
+        source: "/:school/teacher-registration/:path*",
+        headers: [{ key: "Cache-Control", value: "no-store, must-revalidate" }],
+      },
       // The embed re-enrollment pages are shown inside the Java dashboard's iframe: only that origin (and this app itself) may frame them.
       {
         source: "/:school/embed/re-enrollment/:path*",
