@@ -5,7 +5,7 @@ import { ReEnrollmentShell } from "@/components/re-enrollment/ReEnrollmentShell"
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { logoutEverywhere } from "@/utils/logout";
 
-/**
+/** 
  * Frame of the onboarding pages (Welcome; later Dashboard Setup): the school logo, the student's name and
  * Log Off on top, the copyright footer below - no dashboard sidebar or header, like the legacy
  * AdditionalLayerAtLogin.jsp. Same shell the re-enrollment pages use.
