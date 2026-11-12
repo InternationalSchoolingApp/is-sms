@@ -595,11 +595,16 @@ export async function getStudentAssignedTeacher({ schoolUUID, userId }) {
 /**
  * Per-course content drawer (opened by clicking a course in Syllabus) —
  * live Buzz LMS module/item list, thin for non-LMS course providers.
+ * The answer is { status: "1", details: { lmsUserId, lmsCourseId, modules: [{ moduleName, items: [{ contentName, dueDate,
+ * lmsProviderUrl, isPayLmsPaymentPending }] }] } } (studentSyllabusAssignedTeacher.js reads details.modules). Callers get
+ * `details`, or null when the call failed (status other than "1").
  */
 export async function getStudentCourseContent({ schoolUUID, userId, lmsUserId, lmsCourseId }) {
   if (!hasBackendOrigin() || !schoolUUID || !userId || !lmsUserId) return null;
   try {
-    return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-course-content", { userId, studentUserId: userId, lmsUserId, lmsCourseId });
+    const response = await postDashboardPayload(schoolUUID, "/dashboard/parent/student-course-content", { userId, studentUserId: userId, lmsUserId, lmsCourseId });
+    console.log("getStudentCourseContent response:", JSON.stringify(response, null, 2));
+    return response && String(response.status) === "1" ? (response.details ?? { modules: [] }) : null;
   } catch {
     return null;
   }

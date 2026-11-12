@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { openLmsLink } from "@/utils/lmsCourseLink";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChevronDown, KeyRound, LogOut, Menu, MoreVertical, Palette, Smartphone, User } from "lucide-react";
@@ -119,7 +120,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, use
             if (isPayLmsPaymentPending) {
               toast(isPayLmsPaymentPending, { icon: "⚠️" });
             } else if (lmsProviderURL) {
-              window.open(lmsProviderURL, "_blank");
+              openLmsLink(lmsProviderURL);
             }
           }}
           className="flex min-h-12 items-center gap-2.5 rounded-full border-[3px] border-k5-line bg-k5-card py-0 pl-2 pr-4 text-[15px] font-black text-k5-mut max-[760px]:hidden"
