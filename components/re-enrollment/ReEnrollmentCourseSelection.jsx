@@ -18,7 +18,7 @@ import { nextStepAfter, previousStepBefore, reEnrollmentStepPath, STEP_COURSE_SE
  */
 export function ReEnrollmentCourseSelection() {
   const router = useRouter();
-  const { school, mode } = useParams();
+  const { school } = useParams();
   const queryClient = useQueryClient();
   const { session, context, option, steps } = useReEnrollmentContext();
   const allowed = useRequireSelectedOption(STEP_COURSE_SELECTION);
@@ -51,8 +51,8 @@ export function ReEnrollmentCourseSelection() {
         reEnrollmentGradeLocked={gradeLocked}
         // The backend record has the new grade now: the later screens (payment, review) read it from the eligibility answer.
         onReEnrollmentGradeChange={() => queryClient.invalidateQueries({ queryKey: eligibilityKey(session.userId) })}
-        onNext={() => router.push(reEnrollmentStepPath(school, next, mode))}
-        onBack={previous ? () => router.push(reEnrollmentStepPath(school, previous, mode)) : undefined}
+        onNext={() => router.push(reEnrollmentStepPath(school, next))}
+        onBack={previous ? () => router.push(reEnrollmentStepPath(school, previous)) : undefined}
         onSessionExpired={() => expireSession(school)}
       />
     </>

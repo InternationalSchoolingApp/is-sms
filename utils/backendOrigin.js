@@ -199,15 +199,3 @@ export function legacyEnrollmentSignupUrl(schoolUUID, program, query = "") {
   const base = `${backend.replace(/\/+$/, "")}/${encodeURIComponent(schoolUUID)}/student/enrollment/${encodeURIComponent(program)}`;
   return query ? `${base}?${query}` : base;
 }
-
-/**
- * The Java app's student dashboard (http://localhost:8080/{school}/dashboard/student/{studentUserId}) — where a
- * student belongs when re-enrollment does not apply, or when ENROLLMENT_VIA_NEXTJS is off. A JSP page the
- * Java app serves itself, so it uses the real backend origin and not the dev proxy. "" when anything needed
- * to build it is missing.
- */
-export function legacyDashboardUrl(schoolUUID, studentUserId) {
-  const backend = resolveBackendNavigationOrigin();
-  if (!backend || !schoolUUID || !studentUserId) return "";
-  return `${backend}/${schoolUUID}/dashboard/student/${encodeURIComponent(studentUserId)}`;
-}

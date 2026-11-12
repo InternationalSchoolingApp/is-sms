@@ -204,9 +204,9 @@ async function postDashboardPayload(schoolUUID, path, body) {
 /**
  * The dashboard orchestrator's first call — StudentDashboardOrMigrationDTO.
  * Carries the graduation-ceremony-popup / batch-announcement / re-enrollment
- * trigger flags read on every dashboard load. Re-enrollment fields
- * (showBatchReEnrollmentPopUp/Date) are read but never acted on here — that
- * flow is owned by a separate branch.
+ * trigger flags read on every dashboard load. `studentGraduate` sends the
+ * student to the re-enrollment pages (hooks/useReEnrollmentEntry.js); the batch
+ * re-enrollment popup fields (showBatchReEnrollmentPopUp/Date) are not acted on.
  */
 export async function getStudentDashboardOrMigration({ schoolUUID, userId }) {
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;

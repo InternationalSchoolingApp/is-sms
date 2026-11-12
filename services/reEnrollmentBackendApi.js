@@ -75,3 +75,8 @@ export async function getReEnrollmentReview(schoolUUID, request) {
 export async function completeReEnrollment(schoolUUID, request) {
   return postPayload(schoolUUID, "complete", request);
 }
+
+/** {userId} -> the latest successful grade-fee payment of the next record (payment success page of a payment made elsewhere). */
+export async function getReEnrollmentThankYou(schoolUUID, request) {
+  return postPayload(schoolUUID, "thank-you", request);
+}

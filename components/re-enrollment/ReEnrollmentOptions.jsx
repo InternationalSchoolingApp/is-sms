@@ -149,15 +149,15 @@ const OPTION_BUTTON = {
  */
 export function ReEnrollmentOptions() {
   const router = useRouter();
-  const { school, mode } = useParams();
+  const { school } = useParams();
   const { session, context, eligibility, inProgress } = useReEnrollmentContext();
   const select = useSelectReEnrollmentOption({ context, userId: session.userId });
   // resume=1 (login / coming back from the payment): continue at the step the student is on instead of showing the options.
   const [resume] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("resume") === "1");
 
   useEffect(() => {
-    if (resume && inProgress && eligibility.currentStep) router.replace(reEnrollmentStepPath(school, eligibility.currentStep, mode));
-  }, [resume, inProgress, eligibility.currentStep, router, school, mode]);
+    if (resume && inProgress && eligibility.currentStep) router.replace(reEnrollmentStepPath(school, eligibility.currentStep));
+  }, [resume, inProgress, eligibility.currentStep, router, school]);
 
   if (resume && inProgress) return <FullScreenLoader />;
 
@@ -175,7 +175,7 @@ export function ReEnrollmentOptions() {
       } else if (response.status !== STATUS_SUCCESS) {
         toast.error(response.message || "Could not select this option. Please try again.");
       } else {
-        router.push(reEnrollmentStepPath(school, response.nextStep, mode));
+        router.push(reEnrollmentStepPath(school, response.nextStep));
       }
     } catch (err) {
       console.error("ReEnrollmentOptions select-option failed:", err);

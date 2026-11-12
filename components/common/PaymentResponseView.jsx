@@ -13,6 +13,7 @@ import {
 } from "@/services/paymentResponseApi";
 import { useSession } from "@/components/providers/AuthSessionProvider";
 import { getAddEnrollmentThankYou } from "@/services/addEnrollmentBackendApi";
+import { getReEnrollmentThankYou } from "@/services/reEnrollmentBackendApi";
 import { checkBackendSessionStatus, hasHeldAccount } from "@/services/sessionStatusApi";
 import { 
   clearAddEnrollmentChildState,
@@ -73,7 +74,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   const glued = new URLSearchParams(gluedParts.join("&"));
   const addEnrollmentParam = (key) => searchParams.get(key) || glued.get(key) || "";
   const isAddEnrollmentUrl = addEnrollmentParam("ae").toUpperCase() === "Y";
-  const uniqueUuid = isAddEnrollmentUrl ? uuidSegment : params.UNIQUEUUID;
+  const uniqueUuid = params.UNIQUEUUID;
   const addEnrollment =
     isAddEnrollmentUrl && addEnrollmentParam("parentId") && addEnrollmentParam("sessionUserId")
       ? { parentId: addEnrollmentParam("parentId"), sessionUniqueId: addEnrollmentParam("sessionUserId"), childUserId: addEnrollmentParam("childUserId") }
@@ -86,6 +87,10 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   // replay=Y: the wizard found this child already paid (refresh / paid via the payment link) and sent the user
   // here WITHOUT gateway params, so there is nothing to verify — show the thank-you from the thank-you API.
   const isReplay = Boolean(addEnrollment) && addEnrollmentParam("replay").toUpperCase() === "Y";
+  // re=Y&replay=Y: the re-enrollment page saw its grade fee paid elsewhere (e.g. the custom plan's payment link) and sent
+  // the student here WITHOUT gateway params — show the thank-you from the re-enrollment thank-you API.
+  const isReEnrollmentReplay =
+    !isAddEnrollmentUrl && searchParams.get("re")?.toUpperCase() === "Y" && searchParams.get("replay")?.toUpperCase() === "Y";
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -182,6 +187,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   useEffect(() => {
     if (
       isReplay ||
+      isReEnrollmentReplay ||
       (requiresEnrollmentSession && sessionStatus !== "authenticated" && !sessionWaitDone) ||
       (isEnrollmentReturn && sessionStatus === "authenticated" && !backendSessionReady)
     ) return undefined;
@@ -228,7 +234,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       cancelled = true;
       window.clearTimeout(requestTimer);
     };
-  }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, search, isReplay, isEnrollmentReturn, requiresEnrollmentSession, sessionStatus, sessionWaitDone, backendSessionReady, urlSettlementRef]);
+  }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, search, isReplay, isReEnrollmentReplay, isEnrollmentReturn, requiresEnrollmentSession, sessionStatus, sessionWaitDone, backendSessionReady, urlSettlementRef]);
 
   // settlement-status said SETTLED: the success endpoint now returns the normal thank-you, so fetch it
   // again and render that. If it still can't be loaded, the confirming card shows the payment as confirmed.
@@ -293,7 +299,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   const redirectToLogin =
     sessionStatus === "unauthenticated" &&
     !waitingForEnrollmentSession &&
-    (isReplay || !loading) &&
+    (isReplay || isReEnrollmentReplay || !loading) &&
     (!shownWithoutLogin || copiedUrlWithoutSession);
   // TEMP DEBUG [pay-debug]: every state change that feeds the login redirect
   useEffect(() => {
@@ -338,6 +344,8 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
         childUserId={searchParams.get("childUserId") || ""}
         sessionCheckReady={backendSessionReady}
       />;
+
+  if (isReEnrollmentReplay) return <ReEnrollmentThankYouReplay schoolUUID={schoolUUID} />;
 
   if (loading) return <ProcessingLoader />;
 
@@ -430,7 +438,7 @@ function AddEnrollmentThankYouReplay({ schoolUUID, parentId, rollNo, childUserId
     return () => {
       cancelled = true;
     };
-  }, [sessionCheckReady, status, session?.userId, session?.studentUserId, session?.schoolUUID, schoolUUID, parentId, rollNo, childUniqueId]);
+  }, [sessionCheckReady, status, session?.userId, session?.studentUserId, session?.schoolUUID, schoolUUID, parentId, rollNo, childUserId]);
 
   if (status === "unauthenticated" || info === null) return <ErrorCard data={null} />;
   if (!sessionCheckReady || info === undefined) return <ProcessingLoader />;
@@ -446,6 +454,46 @@ function AddEnrollmentThankYouReplay({ schoolUUID, parentId, rollNo, childUserId
         returnUrl: info.returnUrl,
         displaySchoolName: session?.schoolName,
         accountSetup: isFirstPayment(info) ? info : null,
+      }}
+    />
+  );
+}
+
+// Thank-you for a re-enrollment grade fee paid elsewhere (the custom plan's payment link, another tab), built from the
+// re-enrollment thank-you API. Same SuccessCard and countdown as a live payment return; the countdown goes to the
+// student dashboard, which sends the student on to the next re-enrollment step (e.g. course selection).
+function ReEnrollmentThankYouReplay({ schoolUUID }) {
+  const { data: session, status } = useSession();
+  const [info, setInfo] = useState(undefined);
+
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.userId) return undefined;
+    let cancelled = false;
+    logPaymentBackendCall("POST", "/api/v1/student/re-enrollment/thank-you", "(replay)");
+    getReEnrollmentThankYou(session.schoolUUID || schoolUUID, { userId: session.userId })
+      .then((res) => !cancelled && setInfo(res?.status === "1" ? res : null))
+      .catch(() => !cancelled && setInfo(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [status, session?.userId, session?.schoolUUID, schoolUUID]);
+
+  if (status === "unauthenticated" || info === null) return <ErrorCard data={null} />;
+  if (info === undefined) return <ProcessingLoader />;
+  return (
+    <SuccessCard
+      data={{
+        ...stage7ContentFromPaymentTitle(info.paymentTitle),
+        enrollmentType: info.enrollmentType,
+        paymentName: info.paymentName,
+        userName: info.studentName,
+        payAmount: info.payAmount,
+        grade: info.grade,
+        learningProgram: info.learningProgram,
+        initiatedVia: "Link",
+        showReloadOption: "Y",
+        returnUrl: `/${schoolUUID}/student`,
+        displaySchoolName: session?.schoolName,
       }}
     />
   );

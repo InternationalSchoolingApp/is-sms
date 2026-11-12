@@ -318,19 +318,19 @@ export function AddStage3ReviewPayment({ context, userId, rollNo, onEnrollmentCo
   const { parentId } = useParams();
   const { data: authSession } = useSession();
   useEffect(() => {
-    if (!uniqueId || !parentId || !authSession?.uniqueId) return undefined;
+    if (!userId || !parentId || !authSession?.uniqueId) return undefined;
     const timer = setInterval(async () => {
       const res = await getAddEnrollmentThankYou(authSession.schoolUUID, {
         parentId,
         sessionUserId: authSession.userId,
         sessionUniqueId: authSession.uniqueId,
-        childUniqueId: uniqueId,
+        childUserId: userId,
       }).catch(() => null);
       if (res?.status === "1" && isFirstPayment(res.data)) onEnrollmentCompleted?.(true);
     }, 5000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uniqueId, parentId, authSession?.uniqueId]);
+  }, [userId, parentId, authSession?.uniqueId]);
   const paymentOption = useShowPaymentOption({ context, userId });
   const choosePlan = useChoosePaymentPlan({ context, userId });
   const submitApplication = useSubmitApplication({ context, userId });

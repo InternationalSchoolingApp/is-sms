@@ -1,5 +1,4 @@
 import { loginPageUrl, resolveBackendNavigationOrigin, withLoginPayload } from "@/utils/backendOrigin";
-import { navigateTop } from "@/utils/embed";
 import { clearLiveAlertMarks } from "@/utils/liveAlertMemory";
 
 // Signs one user out of this browser (lib/auth: ends the SMS login, clears that user's cookies). Other
@@ -37,8 +36,7 @@ export async function expireSession(schoolUUID) {
   } catch (err) {
     console.error("Sign out failed:", err);
   }
-  // Inside an iframe (re-enrollment embedded in the dashboard) the login page must replace the whole page.
-  navigateTop(loginPageUrl(schoolUUID), { replace: false });
+  window.location.assign(loginPageUrl(schoolUUID));
 }
 
 // Legacy signupLogout() / logoutConfimation(true, ...common/logout/UNIQUEUUID): the logout endpoint

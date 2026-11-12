@@ -9,7 +9,7 @@ import { AddEnrollmentWizardShell, WIZARD_STEP_META } from "@/components/add-enr
 import { AddEnrollmentProvider, useAddEnrollmentContext } from "@/hooks/add-enrollment/useAddEnrollmentContext";
 import { useBackendSessionGuard } from "@/hooks/useBackendSessionGuard";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
-import { expireSession, leaveAddEnrollmentWizard } from "@/utils/logout";
+import { expireSession, leaveAddEnrollmentWizard, logoutEverywhere } from "@/utils/logout";
 
 /**
  * Chrome for the "Add Another Student" wizard — 3-entry counterpart of

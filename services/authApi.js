@@ -1,5 +1,5 @@
 import { encodePayload, encodeRawString } from "@/utils/payloadEncoding";
-import { isBackendOverrideAllowed, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { isBackendOverrideAllowed, resolveBackendNavigationOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { getHash, getSystemTimezone } from "@/utils/common";
 import { withServiceKey } from "@/lib/auth/serviceKey";
 

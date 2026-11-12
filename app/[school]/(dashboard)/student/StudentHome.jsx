@@ -14,9 +14,10 @@ import { studentNavHref } from "@/utils/dashboardNav";
  *
  * Phase B: the student CALENDAR (classes / activities / assignments /
  * school-events), announcements, the onboarding video popup and the
- * graduation-ceremony popup are all wired to the real backend. RE-ENROLLMENT
- * (batch re-enroll popup + discount countdown) is intentionally NOT shown
- * here — it is migrated on a separate branch.
+ * graduation-ceremony popup are all wired to the real backend. A graduated
+ * student who has to re-enroll never sees this home: StudentHomeForGrade sends
+ * them to the re-enrollment pages. The batch re-enroll popup + discount
+ * countdown are not migrated.
  */
 export function StudentHome() {
   const { context, menu } = useDashboardContext();

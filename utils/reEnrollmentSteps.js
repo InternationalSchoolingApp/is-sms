@@ -3,8 +3,8 @@
  * The backend decides the order: eligibility / select-option return `steps`, e.g.
  *   payment first : ["PAYMENT", "COURSE_SELECTION", "REVIEW"]  (["COURSE_SELECTION", "REVIEW"] once the grade fee is paid)
  *   courses first : ["COURSE_SELECTION", "PAYMENT", "REVIEW"]  (Flexy / Dual Diploma / Take Individual Course)
- * Routes: /{school}/{mode}/re-enrollment (choose option) and /{school}/{mode}/re-enrollment/{payment,course-selection,review},
- * where {mode} is "embed" (no header / footer, shown inside the dashboard) or "share" (normal page with header / footer).
+ * Routes: /{school}/student/re-enrollment (choose option) and /{school}/student/re-enrollment/{payment,course-selection,review},
+ * inside the student dashboard layout.
  */
 export const STEP_PAYMENT = "PAYMENT";
 export const STEP_COURSE_SELECTION = "COURSE_SELECTION";
@@ -29,18 +29,14 @@ export const STEP_LABELS = {
   [STEP_REVIEW]: "Review",
 };
 
-export const MODE_EMBED = "embed";
-export const MODE_SHARE = "share";
-export const RE_ENROLLMENT_MODES = [MODE_EMBED, MODE_SHARE];
-
-export function reEnrollmentBasePath(school, mode = MODE_SHARE) {
-  return `/${school}/${mode}/re-enrollment`;
+export function reEnrollmentBasePath(school) {
+  return `/${school}/student/re-enrollment`;
 }
 
 /** Route of a step; the option screen (base path) for an unknown / empty step. */
-export function reEnrollmentStepPath(school, step, mode = MODE_SHARE) {
+export function reEnrollmentStepPath(school, step) {
   const slug = STEP_SLUGS[step];
-  return slug ? `${reEnrollmentBasePath(school, mode)}/${slug}` : reEnrollmentBasePath(school, mode);
+  return slug ? `${reEnrollmentBasePath(school)}/${slug}` : reEnrollmentBasePath(school);
 }
 
 /**

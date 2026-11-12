@@ -13,8 +13,9 @@ import Image from "next/image";
  * Keeping this in one component means the logo asset/link/alt is defined
  * once, not copy-pasted per breakpoint.
  */
-export function SchoolLogo({ schoolName, width = 220, className = "" }) {
+export function SchoolLogo({ schoolName, logoUrl, href, width = 220, className = "" }) {
   const label = schoolName || "";
+  const resolvedHref = href || "https://internationalschooling.org/";
   return (
     <a
       href={resolvedHref}

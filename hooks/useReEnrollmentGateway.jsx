@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
 import { PaymentInProgressModal } from "@/components/student-enroll/PaymentInProgressModal";
 import { cancelPaymentAttempt, getPaymentPaidStatus } from "@/services/studentSignupBackendApi";
-import { isFramed, navigateTop } from "@/utils/embed";
 import { getPaymentBrowserId } from "@/utils/paymentBrowserId";
 import { getPaymentAttemptRecovery } from "@/utils/paymentAttemptRecovery.mjs";
 import {
@@ -26,14 +25,6 @@ import {
   getPayerCountryCodePromise,
   loadLocationGlobals,
 } from "@/utils/locationFinder";
-
-// The init page the backend returns for Stripe / Airwallex has an embedded twin next to it with the same query.
-function embeddedPaymentUrl(gatewayName, redirectUrl) {
-  const name = String(gatewayName || "").toLowerCase();
-  if (name !== "stripe" && name !== "airwallex") return null;
-  const from = `/common/${name}-payment-init/`;
-  return redirectUrl.includes(from) ? redirectUrl.replace(from, `/common/${name}-embedded/`) : null;
-}
 
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
 // getPaymentPaidStatus() polling in commonPaymentGateway.js: every 10s, gives up after 10 checks.
@@ -202,6 +193,8 @@ export function useReEnrollmentGateway({ context, studentUserId, onPaid, onSessi
       const recovery = getPaymentAttemptRecovery(response, gateway.name);
       if (recovery?.resumeUrl) {
         toast("Taking you back to the payment you started...");
+        // This tab is paying itself: the re-enrollment chrome must not take the fee turning paid for a payment made elsewhere.
+        window.__reEnrollmentGatewayStarted = true;
         window.location.assign(recovery.resumeUrl);
         return;
       }
@@ -221,17 +214,8 @@ export function useReEnrollmentGateway({ context, studentUserId, onPaid, onSessi
         return;
       }
       toast("Please wait while redirecting to payment gateway...");
-      // Inside the dashboard's iframe the hosted gateway pages (Stripe Checkout, Airwallex hosted page) refuse to run, so Stripe and
-      // Airwallex open their embedded form on a page of this app, in the same frame (see PaymentEmbeddedView); they bring the payer
-      // back to the usual response page, in the frame as well. Any other gateway opens in the whole window, as before.
-      const redirectUrl = response.details.redirectUrl;
-      if (isFramed()) {
-        const embeddedUrl = embeddedPaymentUrl(gateway.name, redirectUrl);
-        if (embeddedUrl) window.location.assign(embeddedUrl);
-        else navigateTop(redirectUrl, { replace: false });
-      } else {
-        window.location.assign(redirectUrl);
-      }
+      window.__reEnrollmentGatewayStarted = true;
+      window.location.assign(response.details.redirectUrl);
       // Still here after a while (the navigation was blocked): free the button instead of spinning forever.
       setTimeout(() => setLaunching(false), 10000);
     } catch (err) {

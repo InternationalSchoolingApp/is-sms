@@ -208,11 +208,9 @@ export const config = {
     "/:school/enrollment/:program",
     "/:school/enrollment/:program/step/:path*",
     "/:school/add-enrollment/:parentId/:sessionUserId/step/:path*",
-    // Student dashboard (Phase A). `:path*` also covers the bare /{school}/student home.
+    // Student dashboard (Phase A). `:path*` also covers the bare /{school}/student home and the re-enrollment
+    // pages (/{school}/student/re-enrollment/...).
     "/:school/student/:path*",
-    // Re-enrollment (existing students): the option screen and its step screens.
-    "/:school/:mode(embed|share)/re-enrollment",
-    "/:school/:mode(embed|share)/re-enrollment/:path*",
     // Only this app's own /common pages. Not "/:school/common/:path*": where the server reaches SMS through this
     // app's own origin (local-proxy rewrites, as on live), the server actions' SMS calls
     // (common/payment-gateway/options, invoke-payment-gateway, offline-payment, ...) came through here with no

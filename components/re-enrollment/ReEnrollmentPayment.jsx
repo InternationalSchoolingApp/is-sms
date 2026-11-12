@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { CreditCard } from "lucide-react";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { ActionButton, PageTitle } from "@/components/re-enrollment/ReEnrollmentParts";
-import { FeePaymentPlans } from "@/components/student-enroll/FeePaymentPlans";
+import { CustomPlanTable, FeePaymentPlans } from "@/components/student-enroll/FeePaymentPlans";
 import { buildPlanOptions } from "@/components/student-enroll/Stage4ReviewPayment";
 import {
   STATUS_SUCCESS,
@@ -37,6 +37,8 @@ const FLEX_OR_DUAL = ["ONE_TO_ONE_FLEX", "DUAL_DIPLOMA"];
  *  - payment first (the next step is the course selection): the payment gateway starts right away, the student comes back
  *    after paying and continues with the courses;
  *  - courses first (Flexy / Dual Diploma / individual course): the review screen follows, where the payment is made.
+ * Custom payment plan (confirmed by the admin): only that plan is shown (no One-Time / Installments), without Back, and
+ * "Continue to Pay" pays its first unpaid installment right away, no choose-payment-plan (as the enrollment wizard does).
  */
 export function ReEnrollmentPayment() {
   const allowed = useRequireSelectedOption(STEP_PAYMENT);
@@ -45,8 +47,8 @@ export function ReEnrollmentPayment() {
 
 function PaymentScreen() {
   const router = useRouter();
-  const { school, mode } = useParams();
-  const { session, context, option, steps } = useReEnrollmentContext();
+  const { school } = useParams();
+  const { session, context, option, steps, customPlan: customPlanConfirmed } = useReEnrollmentContext();
   const userId = session.userId;
   const detailsQuery = useReEnrollmentPaymentDetails({ context, userId });
   const choosePlan = useChooseReEnrollmentPlan({ context, userId });
@@ -55,13 +57,27 @@ function PaymentScreen() {
     context,
     studentUserId: session.studentUserId,
     // Paid while this page was waiting on the gateway: the entry screen resumes at the right step.
-    onPaid: () => window.location.assign(`${reEnrollmentBasePath(school, mode)}?resume=1`),
+    onPaid: () => window.location.assign(`${reEnrollmentBasePath(school)}?resume=1`),
     onSessionExpired: () => expireSession(school),
   });
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
 
   const data = detailsQuery.data?.status === STATUS_SUCCESS ? detailsQuery.data : null;
+  // The eligibility poll decides (it sees the admin confirming or deleting the plan while this page is open).
+  const customPlan = customPlanConfirmed;
+  const customSchedule = data?.paymentCalculationResponse?.paymentDetails?.schedulePayments || [];
+  // Fee read before the plan was confirmed / deleted: read it again (custom schedule, or the One-Time / Installment plans).
+  const detailsStale = Boolean(data) && (data.customPaymentEnabled === true) !== customPlan;
+  const refetchDetails = detailsQuery.refetch;
+  // The plan state the fee was last re-read for: one re-read per change, so a fee that still disagrees shows what it has
+  // (e.g. the "could not be loaded" message) instead of a loader forever.
+  const [detailsReadFor, setDetailsReadFor] = useState(null);
+  const awaitingDetails = detailsStale && detailsReadFor !== customPlan;
+  useEffect(() => {
+    if (!awaitingDetails) return;
+    refetchDetails().finally(() => setDetailsReadFor(customPlan));
+  }, [awaitingDetails, customPlan, refetchDetails]);
   const planOptions = useMemo(() => buildPlanOptions(data, data?.currencyIsoCode), [data]);
 
   // The student's own pick wins, else the plan saved on the backend, else the first one.
@@ -75,8 +91,8 @@ function PaymentScreen() {
   const currentPayMode = currentOption?.variants ? currentVariant : currentOption?.mode;
 
   const next = nextStepAfter(steps, STEP_PAYMENT);
-  const previous = previousStepBefore(steps, STEP_PAYMENT);
-  const payNow = next === STEP_COURSE_SELECTION;
+  const previous = customPlan ? null : previousStepBefore(steps, STEP_PAYMENT);
+  const payNow = customPlan || next === STEP_COURSE_SELECTION;
   const busy = choosePlan.isPending || fetchReview.isPending || gateway.busy;
 
   function handleFailure(response, fallback) {
@@ -86,15 +102,16 @@ function PaymentScreen() {
   }
 
   async function onContinue() {
-    if (busy || !currentOption) return;
+    if (busy || (!customPlan && !currentOption)) return;
     try {
-      const plan = await choosePlan.mutateAsync(isKnownPaymentMode(currentPayMode) ? currentPayMode : "annually");
-      if (plan?.status !== STATUS_SUCCESS) {
+      // The custom plan's installments already exist: the review returns the first unpaid one.
+      const plan = customPlan ? null : await choosePlan.mutateAsync(isKnownPaymentMode(currentPayMode) ? currentPayMode : "annually");
+      if (!customPlan && plan?.status !== STATUS_SUCCESS) {
         handleFailure(plan, "Could not save your payment plan. Please try again.");
         return;
       }
       if (!payNow) {
-        router.push(reEnrollmentStepPath(school, next, mode));
+        router.push(reEnrollmentStepPath(school, next));
         return;
       }
       // The payment record just created is what the gateway has to be started for; the review API returns it.
@@ -110,7 +127,8 @@ function PaymentScreen() {
     }
   }
 
-  if (detailsQuery.isLoading) return <FullScreenLoader />;
+  // Plan confirmed / deleted just now: wait for the re-read fee instead of showing the old one for a moment.
+  if (detailsQuery.isLoading || awaitingDetails) return <FullScreenLoader />;
 
   return (
     <>
@@ -125,7 +143,7 @@ function PaymentScreen() {
           <p className="text-sm font-semibold text-red-600">{detailsQuery.data?.message || "Could not load your payment options."}</p>
           <div className="mt-4 flex gap-3">
             {previous && (
-              <ActionButton className="bg-slate-500 hover:bg-slate-600" onClick={() => router.push(reEnrollmentStepPath(school, previous, mode))}>
+              <ActionButton className="bg-slate-500 hover:bg-slate-600" onClick={() => router.push(reEnrollmentStepPath(school, previous))}>
                 Back
               </ActionButton>
             )}
@@ -136,28 +154,40 @@ function PaymentScreen() {
         </div>
       ) : (
         <div className={`mx-auto max-w-4xl ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
-          <h2 className="mb-3 text-center text-base font-semibold text-black md:text-lg">Select Payment Option</h2>
-          <FeePaymentPlans
-            fee={data}
-            options={planOptions}
-            selected={currentPlan}
-            onSelect={setSelectedPlan}
-            selectedVariant={currentVariant}
-            onSelectVariant={setSelectedVariant}
-            disabled={busy}
-            standardId={option.grade?.id}
-            isFlexOrDual={FLEX_OR_DUAL.includes(option.learningProgram)}
-          />
-          {payNow && <p className="mt-3 text-center text-sm text-slate-600">You will choose your courses after the payment.</p>}
+          <h2 className="mb-3 text-center text-base font-semibold text-black md:text-lg">
+            {customPlan ? data.feeSetionTitile || "Fee Payment" : "Select Payment Option"}
+          </h2>
+          {customPlan ? (
+            customSchedule.length > 0 ? (
+              <CustomPlanTable fee={data} />
+            ) : (
+              <p className="rounded-[15px] bg-white p-6 text-center text-sm font-semibold text-red-600 shadow-lg">
+                Your custom payment plan could not be loaded. Please contact the school administration.
+              </p>
+            )
+          ) : (
+            <FeePaymentPlans
+              fee={data}
+              options={planOptions}
+              selected={currentPlan}
+              onSelect={setSelectedPlan}
+              selectedVariant={currentVariant}
+              onSelectVariant={setSelectedVariant}
+              disabled={busy}
+              standardId={option.grade?.id}
+              isFlexOrDual={FLEX_OR_DUAL.includes(option.learningProgram)}
+            />
+          )}
+          {payNow && next === STEP_COURSE_SELECTION && <p className="mt-3 text-center text-sm text-slate-600">You will choose your courses after the payment.</p>}
           <div className="mt-4 flex items-center justify-between gap-3">
             {previous ? (
-              <ActionButton className="px-6" disabled={busy} onClick={() => router.push(reEnrollmentStepPath(school, previous, mode))}>
+              <ActionButton className="px-6" disabled={busy} onClick={() => router.push(reEnrollmentStepPath(school, previous))}>
                 Back
               </ActionButton>
             ) : (
               <span />
             )}
-            <ActionButton className="bg-green-600 px-6 hover:bg-green-700" disabled={busy || !currentOption} onClick={onContinue}>
+            <ActionButton className="bg-green-600 px-6 hover:bg-green-700" disabled={busy || (customPlan ? customSchedule.length === 0 : !currentOption)} onClick={onContinue}>
               {busy ? "Please wait…" : payNow ? "Continue to Pay" : "Continue"}
             </ActionButton>
           </div>

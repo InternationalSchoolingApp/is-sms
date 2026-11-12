@@ -11,8 +11,7 @@ import { buildPlanOptions } from "@/components/student-enroll/Stage4ReviewPaymen
 import { STATUS_SUCCESS, useCompleteReEnrollment, useReEnrollmentContext, useReEnrollmentReview } from "@/hooks/useReEnrollment";
 import { useReEnrollmentGateway } from "@/hooks/useReEnrollmentGateway";
 import { useRequireSelectedOption } from "@/hooks/useRequireSelectedOption";
-import { legacyDashboardUrl } from "@/utils/backendOrigin";
-import { navigateTop } from "@/utils/embed";
+import { dashboardBasePath } from "@/utils/dashboardNav";
 import { expireSession } from "@/utils/logout";
 import { hidesCourseCredits } from "@/utils/studentSignupValidation";
 import { previousStepBefore, reEnrollmentBasePath, reEnrollmentStepPath, STEP_REVIEW } from "@/utils/reEnrollmentSteps";
@@ -31,7 +30,7 @@ export function ReEnrollmentReview() {
 
 function ReviewScreen() {
   const router = useRouter();
-  const { school, mode } = useParams();
+  const { school } = useParams();
   const { session, context, option, steps } = useReEnrollmentContext();
   const userId = session.userId;
   const reviewQuery = useReEnrollmentReview({ context, userId });
@@ -39,7 +38,7 @@ function ReviewScreen() {
   const gateway = useReEnrollmentGateway({
     context,
     studentUserId: session.studentUserId,
-    onPaid: () => window.location.assign(`${reEnrollmentBasePath(school, mode)}?resume=1`),
+    onPaid: () => window.location.assign(`${reEnrollmentBasePath(school)}?resume=1`),
     onSessionExpired: () => expireSession(school),
   });
   const [finishing, setFinishing] = useState(false);
@@ -58,8 +57,8 @@ function ReviewScreen() {
         toast.error(response?.message || "Could not complete your re-enrollment. Please try again.");
       } else {
         setFinishing(true);
-        const url = legacyDashboardUrl(context.schoolUUID, session.studentUserId) || response.redirectUrl;
-        if (url) navigateTop(url);
+        // Full load: the dashboard (menu, grade) has to be read again for the new academic year.
+        window.location.assign(dashboardBasePath(school));
       }
     } catch (err) {
       console.error("ReEnrollmentReview complete failed:", err);
@@ -77,7 +76,7 @@ function ReviewScreen() {
           <p className="text-sm font-semibold text-red-600">{reviewQuery.data?.message || "Could not load your review details."}</p>
           <div className="mt-4 flex gap-3">
             {previous && (
-              <ActionButton className="bg-slate-500 hover:bg-slate-600" onClick={() => router.push(reEnrollmentStepPath(school, previous, mode))}>
+              <ActionButton className="bg-slate-500 hover:bg-slate-600" onClick={() => router.push(reEnrollmentStepPath(school, previous))}>
                 Back
               </ActionButton>
             )}
@@ -167,7 +166,7 @@ function ReviewScreen() {
 
       <div className="mt-3 flex items-center justify-between gap-3">
         {previous ? (
-          <ActionButton className="px-6" disabled={busy} onClick={() => router.push(reEnrollmentStepPath(school, previous, mode))}>
+          <ActionButton className="px-6" disabled={busy} onClick={() => router.push(reEnrollmentStepPath(school, previous))}>
             Back
           </ActionButton>
         ) : (
