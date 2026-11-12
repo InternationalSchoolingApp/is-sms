@@ -132,7 +132,7 @@ export function Cart() {
   }
 
   if (!context || cartQuery.isLoading) {
-    if (isK5) return <K5CartNotice school={school}>Loading…</K5CartNotice>;
+    if (isK5) return <K5CartNotice school={school} loading />;
     return (
       <div className="mx-auto w-full">
         <PageTitle count={0} />

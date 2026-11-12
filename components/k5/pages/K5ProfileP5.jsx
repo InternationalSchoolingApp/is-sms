@@ -6,6 +6,7 @@ import { Check, ChevronDown, Copy, Eye, EyeOff, KeyRound, Mail } from "lucide-re
 import toast from "react-hot-toast";
 import { activateSchoolEmail, confirmWithdrawal, getWithdrawal, resetSchoolEmailPassword, startWithdrawal, submitWithdrawalBank } from "@/services/profileP5Api";
 import { callServer } from "@/utils/serverCall";
+import { K5Loading, K5ListSkeleton } from "@/components/k5/K5Skeletons";
 
 /*
  * My Profile P5 on the K–5 page (mockup sections 6 and 7):
@@ -672,9 +673,9 @@ export function WithdrawalEditor({ m }) {
       </div>
       {HR}
       {query.isPending ? (
-        <p className="m-0 font-k5-display text-lg font-semibold text-k5-mut" role="status">
-          Loading your withdrawal requests…
-        </p>
+        <K5Loading label="Loading your withdrawal requests" className="">
+          <K5ListSkeleton rows={2} />
+        </K5Loading>
       ) : query.error ? (
         <Note tone="red" title="We couldn't load this">
           {clean(query.error)}{" "}

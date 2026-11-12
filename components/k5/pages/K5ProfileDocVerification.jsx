@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, X, Eye, Loader2, AlertCircle, ShieldCheck } from "lucide-react";
+import { Check, X, Eye, AlertCircle, ShieldCheck } from "lucide-react";
 import { loadDocumentVerification } from "@/services/profileActionsApi";
 import { callServer } from "@/utils/serverCall";
+import { K5Loading, K5ListSkeleton } from "@/components/k5/K5Skeletons";
 
 function Badge({ ok, children }) {
   return (
@@ -59,10 +60,9 @@ export function DocumentVerification() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-4 text-base font-extrabold text-k5-mut">
-        <Loader2 className="h-5 w-5 animate-spin" />
-        Loading verification status...
-      </div>
+      <K5Loading label="Loading verification status" className="py-2">
+        <K5ListSkeleton rows={3} />
+      </K5Loading>
     );
   }
 

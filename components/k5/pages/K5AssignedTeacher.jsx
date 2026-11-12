@@ -12,25 +12,7 @@ import { useK5CourseColors } from "@/hooks/useK5CourseColors";
 import { getStudentCourseContent } from "@/services/dashboardApi";
 import { courseTint, subjectStyle } from "@/utils/k5Calendar";
 import { hasDueDate, openLmsLesson } from "@/utils/lmsCourseLink";
-
-/**
- * A spinner with a friendly line while something loads. The course calendar can take a good while (the LMS answers
- * slowly), so the student sees that it is working, not an empty box. The spin stops under reduced motion (appearance.css).
- */
-function Loading({ title, hint }) {
-  return (
-    <div role="status" aria-live="polite" className="flex flex-col items-center gap-3 py-10 text-center">
-      <span className="flex h-16 w-16 items-center justify-center rounded-full bg-k5-act">
-        <svg className="h-9 w-9 animate-spin text-k5-ac" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
-          <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-        </svg>
-      </span>
-      <span className="font-k5-display text-xl font-semibold text-k5-ink">{title}</span>
-      {hint && <span className="max-w-[320px] text-[15px] font-extrabold text-k5-mut">{hint}</span>}
-    </div>
-  );
-}
+import { K5Loading, K5CardsSkeleton, K5ListSkeleton } from "@/components/k5/K5Skeletons";
 
 function asArray(value) {
   if (!value) return [];
@@ -82,7 +64,10 @@ function CourseContentDialog({ course, color, onClose }) {
         </div>
         <div className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-scroll overscroll-contain p-4">
           {isLoading ? (
-            <Loading title="Getting your lessons…" hint="This can take a little while. Hang tight!" />
+            <K5Loading label="Getting your lessons" className="flex flex-col gap-3.5">
+              <p className="m-0 text-center text-[15px] font-extrabold text-k5-mut">Getting your lessons… this can take a little while.</p>
+              <K5ListSkeleton rows={5} />
+            </K5Loading>
           ) : modules.length === 0 ? (
             <p className="m-0 rounded-[20px] bg-k5-soft px-4 py-7 text-center font-k5-display text-xl font-semibold text-k5-mut" style={isMiddle ? { borderRadius: 14 } : undefined}>{data === null ? "Unable to load the course calendar." : "No course content found."}</p>
           ) : (
@@ -184,7 +169,9 @@ export function K5AssignedTeacher({ courses, isLoading }) {
       )}
 
       {isLoading ? (
-        <Loading title="Getting your courses…" />
+        <K5Loading label="Getting your courses">
+          <K5CardsSkeleton count={4} />
+        </K5Loading>
       ) : courses.length === 0 ? (
         <p className={`${K5_CARD} m-0 p-8 text-center font-k5-display text-2xl font-semibold text-k5-mut`}>No courses yet.</p>
       ) : (

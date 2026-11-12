@@ -22,6 +22,7 @@ import { K5PerformanceStreak } from "@/components/k5/pages/K5PerformanceStreak";
 import { K5PerformanceAchievements } from "@/components/k5/pages/K5PerformanceAchievements";
 import { ChartIcon, HeroScene, PeopleIcon, TargetIcon } from "@/components/k5/pages/K5PerformanceIcons";
 import { asArray, badgeView, courseKey, fmtShort, sessionInfo } from "@/components/k5/pages/k5PerformanceData";
+import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
 
 const TABS = [
   { id: "perf", label: "Performance", Icon: ChartIcon },
@@ -49,16 +50,21 @@ function useAutoRotate(count, onPill, active) {
 }
 
 function Hero({ name, tips, pill, onPill, plain, hoverProps }) {
+  const { isMiddle } = useDashboardContext();
   return (
     <section
       className="relative flex flex-col gap-3 overflow-hidden rounded-[26px] border-[3px] border-k5-ac px-[26px] py-6 shadow-[0_6px_0_var(--k5-acl)]"
-      style={{
-        background:
-          "radial-gradient(circle at 8% 0%, rgba(255,255,255,.55), rgba(255,255,255,0) 45%), radial-gradient(circle at 70% 120%, rgba(255,197,49,.18), rgba(255,197,49,0) 50%), var(--k5-act)",
-      }}
+      style={
+        isMiddle
+          ? { background: "var(--k5-act)", boxShadow: "0 2px 0 var(--k5-acl)", borderRadius: 18 }
+          : {
+              background:
+                "radial-gradient(circle at 8% 0%, rgba(255,255,255,.55), rgba(255,255,255,0) 45%), radial-gradient(circle at 70% 120%, rgba(255,197,49,.18), rgba(255,197,49,0) 50%), var(--k5-act)",
+            }
+      }
       {...hoverProps}
     >
-      {!plain && <HeroScene />}
+      {!plain && !isMiddle && <HeroScene />}
       <h2 className="relative m-0 font-k5-display text-[30px] font-semibold text-k5-ink">{plain ? `Hi ${name}, here’s how you’re doing.` : `Hey ${name}, nice momentum.`}</h2>
       <p key={pill} aria-live="polite" className="k5-pmpanel relative m-0 min-h-[52px] text-lg font-extrabold leading-normal text-k5-ink">
         {tips[pill] || QUIET[pill]}
@@ -99,10 +105,15 @@ function Hero({ name, tips, pill, onPill, plain, hoverProps }) {
 
 function Header({ session }) {
   const { school } = useParams();
+  const { isMiddle } = useDashboardContext();
   return (
-    <div className={`${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
-      <span aria-hidden="true" className="flex h-[76px] w-[76px] flex-none items-center justify-center rounded-[24px]" style={{ background: "var(--k5-gT)", color: "var(--k5-gI)" }}>
-        <ChartIcon size={42} width={2.3} />
+    <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
+      <span
+        aria-hidden="true"
+        className={`flex flex-none items-center justify-center ${isMiddle ? "h-[62px] w-[62px]" : "h-[76px] w-[76px] rounded-[24px]"}`}
+        style={isMiddle ? { background: "var(--k5-act)", color: "var(--k5-ac)", borderRadius: 14 } : { background: "var(--k5-gT)", color: "var(--k5-gI)" }}
+      >
+        <ChartIcon size={isMiddle ? 34 : 42} width={2.3} />
       </span>
       <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
         <span className="text-[15px] font-extrabold text-k5-mut">
@@ -111,7 +122,7 @@ function Header({ session }) {
           </Link>{" "}
           / My Performance
         </span>
-        <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">My Performance</h1>
+        <h1 className={`m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-4xl"}`}>My Performance</h1>
       </div>
       {session && <span className="rounded-full border-2 border-k5-line bg-k5-soft px-3.5 py-1.5 text-[15px] font-black text-k5-mut">{session.label}</span>}
     </div>
@@ -126,6 +137,69 @@ function BehindBanner({ names }) {
       </span>
       <span>You’re behind today’s target in {names.join(" & ")}. A little work today gets you back on track!</span>
     </div>
+  );
+}
+
+/**
+ * My Performance while it loads, laid out like the page: the title, the three tabs, the hero (greeting, tip, three
+ * pills), the badge cards, the four number tiles and the course rows.
+ */
+function PerformanceSkeleton() {
+  return (
+    <K5Loading label="Loading your performance" className="flex flex-col gap-[18px]">
+      <Header session={null} />
+      <div className="flex flex-wrap gap-2.5">
+        {Array.from({ length: 3 }, (_, i) => (
+          <K5Sk key={i} className="h-[50px] w-40 rounded-full" />
+        ))}
+      </div>
+      <div className={`${K5_CARD} flex flex-col gap-3 px-[26px] py-6`}>
+        <K5Sk className="h-8 w-72 max-w-full" />
+        <K5Sk className="h-5 w-full max-w-[640px]" />
+        <K5Sk className="h-5 w-2/3 max-w-[420px]" />
+        <div className="flex flex-wrap gap-2.5 pt-1">
+          {Array.from({ length: 3 }, (_, i) => (
+            <K5Sk key={i} className="h-11 w-[130px] rounded-full" />
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3.5">
+        {Array.from({ length: 3 }, (_, i) => (
+          <div key={i} className="flex items-center gap-3 rounded-[18px] border-[3px] border-k5-line bg-k5-card px-3.5 py-3">
+            <K5Sk className="h-14 w-14 flex-none rounded-full" />
+            <span className="flex flex-1 flex-col gap-2">
+              <K5Sk className="h-4 w-3/4" />
+              <K5Sk className="h-3 w-1/2" />
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(210px,1fr))] gap-3.5">
+        {Array.from({ length: 4 }, (_, i) => (
+          <div key={i} className={`${K5_CARD} flex items-center gap-3.5 px-[18px] py-4`}>
+            <K5Sk className="h-[50px] w-[50px] flex-none rounded-2xl" />
+            <span className="flex flex-1 flex-col gap-2">
+              <K5Sk className="h-3.5 w-24" />
+              <K5Sk className="h-6 w-16" />
+              <K5Sk className="h-3 w-28" />
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-col gap-3">
+        {Array.from({ length: 3 }, (_, i) => (
+          <div key={i} className="flex items-center gap-4 rounded-[20px] border-[3px] border-k5-line bg-k5-card px-[18px] py-3.5">
+            <K5Sk className="h-16 w-16 flex-none rounded-full" />
+            <span className="flex flex-1 flex-col gap-2">
+              <K5Sk className="h-5 w-1/2" />
+              <K5Sk className="h-3.5 w-1/3" />
+              <K5Sk className="h-3 w-full max-w-[420px] rounded-full" />
+            </span>
+            <K5Sk className="h-9 w-24 flex-none rounded-full max-[560px]:hidden" />
+          </div>
+        ))}
+      </div>
+    </K5Loading>
   );
 }
 
@@ -190,14 +264,7 @@ export function K5Performance({ isLoading, performance, courseProviderId, plain 
     } catch {}
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col gap-[18px]">
-        <Header session={null} />
-        <div className={`${K5_CARD} p-8 text-center font-k5-display text-2xl font-semibold text-k5-mut`}>Loading…</div>
-      </div>
-    );
-  }
+  if (isLoading) return <PerformanceSkeleton />;
 
   if (openIndex >= 0) {
     return <K5PerformanceCourseView course={courses[openIndex]} index={openIndex} onBack={() => setOpenKey(null)} />;
@@ -207,7 +274,7 @@ export function K5Performance({ isLoading, performance, courseProviderId, plain 
   const detailed = [36, 37, 38].includes(parseInt(courseProviderId, 10));
 
   return (
-    <div className="flex flex-col gap-[18px]">
+    <div className="k5-perf-page flex flex-col gap-[18px]">
       <Header session={session} />
 
       <div role="tablist" aria-label="My Performance" className="flex flex-wrap gap-2.5">

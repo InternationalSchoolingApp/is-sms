@@ -8,21 +8,42 @@ import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
 import { formatAmount, weeksBetween, weeksLabel } from "@/utils/cartPlan";
 import { studentNavHref } from "@/utils/dashboardNav";
+import { subjectStyle } from "@/utils/k5Calendar";
+import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 
 const CART_BLUE = "#1D6BF0";
 const CART_BLUE_DEEP = "#1C47B8";
+// Grade 6–8 (Middle.dc.html): the cart blue is #027FFE with a #0057B8 edge, the class box ends in #0068D6.
+function useCartLook() {
+  const { isMiddle } = useDashboardContext();
+  return isMiddle
+    ? { middle: true, blue: "#027FFE", deep: "#0057B8", grad: "linear-gradient(150deg, #5A9BFF 0%, #0068D6 100%)", edge: "0 2px 0" }
+    : { middle: false, blue: CART_BLUE, deep: CART_BLUE_DEEP, grad: "linear-gradient(150deg, #5A9BFF 0%, #1D5BF0 100%)", edge: "0 4px 0" };
+}
 
-function CartHeader({ count, school, backHref }) {
+function CartHeader({ count, school, backHref, countLoading = false }) {
+  const { middle } = useCartLook();
   return (
-    <div className={`${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
-      <span className="flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-bt">
-        <PlusCircle className="h-12 w-12 text-k5-bi" strokeWidth={2} aria-hidden="true" />
-      </span>
+    <div className={middle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
+      {middle ? (
+        // Grade 6–8: no card around the title — a 62px accent tile, a 30px heading.
+        <span className="flex h-[62px] w-[62px] flex-none items-center justify-center bg-k5-act" style={{ borderRadius: 14 }}>
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true" className="stroke-k5-ac">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 8v8M8 12h8" />
+          </svg>
+        </span>
+      ) : (
+        <span className="flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-bt">
+          <PlusCircle className="h-12 w-12 text-k5-bi" strokeWidth={2} aria-hidden="true" />
+        </span>
+      )}
       <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-        <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">
-          Your Cart ({count} {count === 1 ? "item" : "items"})
+        <h1 className={`m-0 font-k5-display font-semibold leading-[1.05] ${middle ? "text-[30px]" : "text-4xl"}`}>
+          {countLoading ? "Your Cart" : `Your Cart (${count} ${count === 1 ? "item" : "items"})`}
         </h1>
-        <p className="m-0 text-lg font-extrabold text-k5-mut">Check your classes, then pay.</p>
+        <p className={`m-0 font-extrabold text-k5-mut ${middle ? "text-base" : "text-lg"}`}>Check your classes, then pay.</p>
       </div>
       <Link
         href={backHref ?? studentNavHref(school, "student-addon")}
@@ -36,7 +57,8 @@ function CartHeader({ count, school, backHref }) {
 }
 
 /** Loading / error card in the K–5 look. */
-export function K5CartNotice({ school, children }) {
+export function K5CartNotice({ school, loading = false, children }) {
+  if (loading) return <CartSkeleton school={school} />;
   return (
     <div className="flex flex-col gap-4">
       <CartHeader count={0} school={school} />
@@ -45,7 +67,53 @@ export function K5CartNotice({ school, children }) {
   );
 }
 
+/** The cart while it loads, laid out like the cart: items on the left (class box, details, edit / remove), Fee Details on the right. */
+function CartSkeleton({ school }) {
+  return (
+    <K5Loading label="Loading your cart" className="flex flex-col gap-4">
+      <CartHeader count={0} school={school} countLoading />
+      <div className="flex flex-wrap items-start gap-[18px]">
+        <div className="flex min-w-0 flex-[999_1_480px] flex-col gap-3.5">
+          {Array.from({ length: 2 }, (_, i) => (
+            <div key={i} className={`${K5_CARD} flex flex-wrap items-center gap-4 p-4`}>
+              <K5Sk className="h-28 w-28 flex-none rounded-[22px]" />
+              <div className="grid min-w-0 flex-[1_1_240px] grid-cols-[110px_1fr] items-center gap-x-3.5 gap-y-2.5">
+                {Array.from({ length: 4 }, (_, r) => (
+                  <span key={r} className="contents">
+                    <K5Sk className="h-3.5 w-24" />
+                    <K5Sk className={`h-5 ${r === 2 ? "w-4/5" : "w-1/2"}`} />
+                  </span>
+                ))}
+              </div>
+              <div className="ms-auto flex gap-2">
+                <K5Sk className="h-12 w-12 rounded-[14px]" />
+                <K5Sk className="h-12 w-12 rounded-[14px]" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className={`${K5_CARD} flex min-w-0 flex-[1_1_320px] flex-col gap-3.5 p-5`}>
+          <K5Sk className="h-8 w-40" />
+          <div className="flex justify-between">
+            <K5Sk className="h-5 w-24" />
+            <K5Sk className="h-5 w-16" />
+          </div>
+          <K5Sk className="h-4 w-28" />
+          <K5Sk className="h-[54px] w-full rounded-2xl" />
+          <div className="flex justify-between border-t-[3px] border-dashed border-k5-line pt-3.5">
+            <K5Sk className="h-7 w-20" />
+            <K5Sk className="h-8 w-24" />
+          </div>
+          <K5Sk className="h-[60px] w-full rounded-[18px]" />
+          <K5Sk className="mx-auto h-3.5 w-44" />
+        </div>
+      </div>
+    </K5Loading>
+  );
+}
+
 function CartItem({ item, symbol, school, busy, onRemove }) {
+  const look = useCartLook();
   const weeks = weeksBetween(item.planStartDate, item.planEndDate);
   const label = "text-[15px] font-extrabold text-k5-mut";
   return (
@@ -53,7 +121,7 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
       <div
         aria-hidden="true"
         className="flex h-28 w-28 flex-none flex-col items-center justify-center rounded-[22px] text-white shadow-[0_5px_0_#1C47B8]"
-        style={{ background: "linear-gradient(150deg, #5A9BFF 0%, #1D5BF0 100%)" }}
+        style={look.middle ? { background: look.grad, boxShadow: "0 2px 0 #0057B8" } : { background: look.grad }}
       >
         <span className="font-k5-display text-[44px] font-bold leading-none">{item.classCount}</span>
         <span className="mt-1 text-sm font-black uppercase tracking-[0.06em]">classes</span>
@@ -62,7 +130,10 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
         {item.subjectName && (
           <>
             <dt className={label}>Course</dt>
-            <dd className="m-0 font-k5-display text-[19px] font-semibold">{item.subjectName}</dd>
+            <dd className="m-0 flex items-center gap-2 font-k5-display text-[19px] font-semibold">
+              {look.middle && <span aria-hidden="true" className="h-3 w-3 flex-none rounded-full" style={{ background: subjectStyle(item.subjectName).color }} />}
+              {item.subjectName}
+            </dd>
           </>
         )}
         <dt className={label}>No. of classes</dt>
@@ -74,7 +145,7 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
           {item.planStartDate} – {item.planEndDate} ({weeksLabel(weeks)})
         </dd>
         <dt className={label}>Plan fee</dt>
-        <dd className="m-0 font-k5-display text-[22px] font-bold" style={{ color: CART_BLUE }}>
+        <dd className="m-0 font-k5-display text-[22px] font-bold" style={{ color: look.blue }}>
           {formatAmount(symbol, item.planAmount)}
         </dd>
       </dl>
@@ -84,7 +155,7 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
           aria-label="Change plan"
           title="Change plan"
           className="flex h-12 w-12 items-center justify-center rounded-[14px] text-white shadow-[0_4px_0_#1C47B8]"
-          style={{ background: CART_BLUE }}
+          style={look.middle ? { background: look.blue, boxShadow: `0 2px 0 ${look.deep}` } : { background: look.blue }}
         >
           <Pencil className="h-5 w-5" strokeWidth={2.6} aria-hidden="true" />
         </Link>
@@ -95,6 +166,7 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
           disabled={busy}
           onClick={() => onRemove(item.cartId)}
           className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-[14px] border-none bg-[#E5243B] text-white shadow-[0_4px_0_#A3172A] disabled:cursor-default disabled:opacity-50"
+          style={look.middle ? { boxShadow: "0 2px 0 #A3172A" } : undefined}
         >
           <Trash2 className="h-5 w-5" strokeWidth={2.6} aria-hidden="true" />
         </button>
@@ -109,6 +181,7 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
  */
 export function K5CartView({ school, count, items, symbol, cart, appliedCode, code, onCode, busy, canPay, onRemove, onToggleDiscount, onPay }) {
   const empty = items.length === 0;
+  const look = useCartLook();
   usePicoContentReady(true);
   return (
     <div className="flex flex-col gap-4">
@@ -122,7 +195,7 @@ export function K5CartView({ school, count, items, symbol, cart, appliedCode, co
               <Link
                 href={studentNavHref(school, "student-addon")}
                 className="flex min-h-[50px] items-center rounded-2xl px-[22px] font-k5-display text-lg font-semibold text-white no-underline shadow-[0_4px_0_#1C47B8]"
-                style={{ background: CART_BLUE }}
+                style={look.middle ? { background: look.blue, borderRadius: 12, boxShadow: `0 2px 0 ${look.deep}` } : { background: look.blue }}
               >
                 See plans
               </Link>
@@ -139,7 +212,7 @@ export function K5CartView({ school, count, items, symbol, cart, appliedCode, co
             <span>{formatAmount(symbol, cart.cartTotal)}</span>
           </div>
           <label htmlFor="k5-code" className="text-base font-black">Discount Code</label>
-          <div className="flex overflow-hidden rounded-2xl border-[3px] bg-white" style={{ borderColor: cart.errorMsg ? "#E5243B" : appliedCode ? "#0E7A43" : CART_BLUE }}>
+          <div className="flex overflow-hidden rounded-2xl border-[3px] bg-white" style={{ borderColor: cart.errorMsg ? "#E5243B" : appliedCode ? "#0E7A43" : look.blue, ...(look.middle ? { borderRadius: 12 } : {}) }}>
             <input
               id="k5-code"
               type="text"
@@ -156,7 +229,7 @@ export function K5CartView({ school, count, items, symbol, cart, appliedCode, co
               onClick={onToggleDiscount}
               title={appliedCode ? "Remove Discount Code" : "Apply Discount Code"}
               className="min-w-[92px] flex-none cursor-pointer border-none px-3 font-k5-display text-[17px] font-semibold text-white disabled:cursor-default disabled:opacity-50"
-              style={{ background: CART_BLUE }}
+              style={{ background: look.blue }}
             >
               {appliedCode ? "Remove" : "Apply"}
             </button>
@@ -170,14 +243,14 @@ export function K5CartView({ school, count, items, symbol, cart, appliedCode, co
           )}
           <div className="flex items-baseline justify-between gap-2.5 border-t-[3px] border-dashed border-k5-line pt-3.5">
             <span className="font-k5-display text-[22px] font-semibold">Total</span>
-            <span className="font-k5-display text-[30px] font-bold" style={{ color: CART_BLUE }}>{formatAmount(symbol, cart.totalPayAmount)}</span>
+            <span className="font-k5-display text-[30px] font-bold" style={{ color: look.blue }}>{formatAmount(symbol, cart.totalPayAmount)}</span>
           </div>
           <button
             type="button"
             disabled={!canPay}
             onClick={onPay}
             className="min-h-[60px] cursor-pointer rounded-[18px] border-none font-k5-display text-[22px] font-semibold tracking-[0.03em] text-white shadow-[0_5px_0_#1C47B8] disabled:cursor-default disabled:opacity-45"
-            style={{ background: CART_BLUE }}
+            style={look.middle ? { background: look.blue, boxShadow: `0 2px 0 ${look.deep}` } : { background: look.blue }}
           >
             Confirm and Pay
           </button>

@@ -25,6 +25,7 @@ import { classTitle, dayAt, dayKey, keyToDate, weekKeys } from "@/utils/k5Calend
 import { revealPlanTop } from "@/utils/k5Scroll";
 import { picoSay, setPicoLive } from "@/components/k5/pico/picoEvents";
 import { LIVE_ALERT_KEY } from "@/utils/liveAlertMemory";
+import { K5PlanSkeleton } from "@/components/k5/K5Skeletons";
 
 
 
@@ -210,7 +211,7 @@ function K5Planner({ timezone }) {
         {/* Mobile (mockup .duo>[data-pin=plan]{order:-1}): the plan comes before the left column. */}
         <section ref={planRef} aria-label="My plans" data-pin="plan" className={`${K5_CARD} scroll-mt-[120px] @container box-border flex min-w-0 flex-[999_1_460px] flex-col gap-[18px] p-[22px] max-[760px]:order-first max-[560px]:p-3.5`}>
           {model.isLoading ? (
-            <p className="m-0 p-10 text-center text-lg font-extrabold text-k5-mut">Loading your plan…</p>
+            <K5PlanSkeleton />
           ) : model.isError ? (
             <p className="m-0 p-10 text-center text-lg font-extrabold text-k5-mut">Couldn&apos;t load your plan. Please try again shortly.</p>
           ) : view === "week" ? (

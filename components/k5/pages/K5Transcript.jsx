@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { Award, FileX, MoreVertical, Search } from "lucide-react";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { K5Loading, K5TableSkeleton } from "@/components/k5/K5Skeletons";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || "";
 const GRID = "70px minmax(220px,1.4fr) minmax(220px,1.6fr) 110px minmax(170px,1fr) 90px";
@@ -21,7 +23,7 @@ const initialsOf = (name) =>
     .join("");
 
 /** The ⋮ button of a row: opens a small menu with one item per published transcript. */
-function ActionMenu({ transcripts, open, onToggle, onClose }) {
+function ActionMenu({ transcripts, open, onToggle, onClose, middle }) {
   if (!transcripts.length) return <span className="text-sm font-extrabold text-k5-mut">--</span>;
   return (
     <>
@@ -36,7 +38,7 @@ function ActionMenu({ transcripts, open, onToggle, onClose }) {
         <MoreVertical className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
       </button>
       {open && (
-        <span role="menu" className="absolute end-2.5 top-[calc(100%-4px)] z-20 flex min-w-[230px] flex-col rounded-[18px] border-[3px] border-k5-ink bg-k5-card p-2 shadow-[0_6px_0_var(--k5-ink)]">
+        <span role="menu" className="absolute end-2.5 top-[calc(100%-4px)] z-20 flex min-w-[230px] flex-col rounded-[18px] border-[3px] border-k5-ink bg-k5-card p-2 shadow-[0_6px_0_var(--k5-ink)]" style={middle ? { boxShadow: "0 2px 0 var(--k5-ink)" } : undefined}>
           {transcripts.map((t, i) => (
             <a
               key={i}
@@ -46,9 +48,10 @@ function ActionMenu({ transcripts, open, onToggle, onClose }) {
               rel="noopener noreferrer"
               onClick={onClose}
               className="flex min-h-12 items-center gap-2.5 rounded-xl px-3 font-k5-display text-base font-semibold text-k5-ink no-underline hover:bg-k5-soft"
+              style={middle ? { borderRadius: 8 } : undefined}
             >
               <span aria-hidden="true" className="flex h-8 w-8 flex-none items-center justify-center rounded-[10px] bg-k5-yt">
-                <Award className="h-[18px] w-[18px] text-k5-yi" strokeWidth={2.4} />
+                <Award className={`h-[18px] w-[18px] ${middle ? "text-k5-yx" : "text-k5-yi"}`} strokeWidth={2.4} />
               </span>
               Transcript - {t.gradeName}
             </a>
@@ -65,6 +68,7 @@ export function K5Transcript({ isLoading, student, transcripts }) {
   const [perPage, setPerPage] = useState(10);
   const [page, setPage] = useState(1);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { isMiddle } = useDashboardContext();
   usePicoContentReady(!isLoading);
 
   const rows = useMemo(() => {
@@ -80,18 +84,37 @@ export function K5Transcript({ isLoading, student, transcripts }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className={`${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
-        <span className="flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-yt">
-          <Award className="h-12 w-12 text-k5-yi" strokeWidth={2} aria-hidden="true" />
-        </span>
-        <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-          <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">Student Transcript</h1>
-          <p className="m-0 text-lg font-extrabold text-k5-mut">Your school record for each grade.</p>
+      {isMiddle ? (
+        // Grade 6–8 (Middle.dc.html): no card around the title — a 62px accent tile with a clipboard, a 30px heading.
+        <div className="flex flex-wrap items-center gap-4">
+          <span className="flex h-[62px] w-[62px] flex-none items-center justify-center bg-k5-act" style={{ borderRadius: 14 }}>
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="stroke-k5-ac">
+              <rect x="5" y="3" width="14" height="18" rx="2.5" />
+              <path d="M9 3.5v2h6v-2" />
+              <path d="M8.5 10h7M8.5 13.5h7M8.5 17h4" />
+            </svg>
+          </span>
+          <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
+            <h1 className="m-0 font-k5-display text-[30px] font-semibold leading-[1.05]">Student Transcript</h1>
+            <p className="m-0 text-base font-extrabold text-k5-mut">Your school record for each grade.</p>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className={`${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
+          <span className="flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-yt">
+            <Award className="h-12 w-12 text-k5-yi" strokeWidth={2} aria-hidden="true" />
+          </span>
+          <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
+            <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">Student Transcript</h1>
+            <p className="m-0 text-lg font-extrabold text-k5-mut">Your school record for each grade.</p>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
-        <p className="m-0 py-8 text-center font-k5-display text-2xl font-semibold text-k5-mut">Loading…</p>
+        <K5Loading label="Loading your transcript">
+          <K5TableSkeleton rows={1} cols={6} />
+        </K5Loading>
       ) : !student ? (
         <div className={`${K5_CARD} flex flex-col items-center gap-2 p-8 text-center`}>
           <FileX className="h-10 w-10 text-k5-mut" aria-hidden="true" />
@@ -110,6 +133,7 @@ export function K5Transcript({ isLoading, student, transcripts }) {
                   setPage(1);
                 }}
                 className="min-h-[42px] rounded-xl border-[3px] border-k5-line bg-k5-card px-2.5 text-base font-black text-k5-ink"
+                style={isMiddle ? { borderRadius: 8 } : undefined}
               >
                 {[10, 25, 50].map((n) => (
                   <option key={n} value={n}>{n}</option>
@@ -144,8 +168,8 @@ export function K5Transcript({ isLoading, student, transcripts }) {
                 <div
                   key={row.id ?? i}
                   role="row"
-                  style={{ "--cols": GRID }}
                   className="relative grid grid-cols-[var(--cols)] items-center border-t-2 border-k5-line bg-k5-card max-[760px]:grid-cols-2 max-[760px]:rounded-[18px] max-[760px]:border-[3px] max-[760px]:py-1.5"
+                  style={isMiddle ? { "--cols": GRID, borderTopWidth: 1.5 } : { "--cols": GRID }}
                 >
                   <span role="cell" className="px-3.5 py-3 max-[760px]:order-1 max-[760px]:px-3 max-[760px]:py-1.5 max-[760px]:font-k5-display max-[760px]:text-lg max-[760px]:font-semibold">{start + i + 1}</span>
                   <span role="cell" data-l="Student Name" className={`${CELL} max-[760px]:col-span-full`}>
@@ -156,13 +180,13 @@ export function K5Transcript({ isLoading, student, transcripts }) {
                   </span>
                   <span role="cell" data-l="Email" className={`${CELL} [overflow-wrap:anywhere] max-[760px]:col-span-full`}>{row.email}</span>
                   <span role="cell" data-l="Grade" className={`${CELL} max-[760px]:col-span-full`}>
-                    <span className="rounded-full bg-k5-act px-3 py-[3px] font-black text-k5-acx">{row.grade}</span>
+                    <span className="rounded-full bg-k5-act px-3 py-[3px] font-black text-k5-acx whitespace-nowrap">{row.grade}</span>
                   </span>
                   <span role="cell" data-l="Student ID" className={`${CELL} max-[760px]:col-span-full`}>
                     <span className="rounded-lg bg-k5-soft px-2.5 py-0.5 font-mono text-sm font-extrabold">{row.id}</span>
                   </span>
                   <span role="cell" className="relative px-3.5 py-2 max-[760px]:order-1 max-[760px]:px-3 max-[760px]:py-1.5 max-[760px]:text-end">
-                    <ActionMenu transcripts={transcripts} open={menuOpen} onToggle={() => setMenuOpen((v) => !v)} onClose={() => setMenuOpen(false)} />
+                    <ActionMenu middle={isMiddle} transcripts={transcripts} open={menuOpen} onToggle={() => setMenuOpen((v) => !v)} onClose={() => setMenuOpen(false)} />
                   </span>
                 </div>
               ))}
@@ -172,7 +196,7 @@ export function K5Transcript({ isLoading, student, transcripts }) {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
+          <div className={`flex flex-wrap items-center gap-2.5 ${isMiddle ? "justify-between" : "justify-center"}`}>
             <span className="text-[15px] font-extrabold text-k5-mut">
               {rows.length ? `Showing ${start + 1} to ${Math.min(start + perPage, rows.length)} of ${rows.length} entries` : "Showing 0 to 0 of 0 entries"}
             </span>

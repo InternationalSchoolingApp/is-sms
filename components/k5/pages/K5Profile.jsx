@@ -13,6 +13,7 @@ import { DocumentVerification } from "@/components/k5/pages/K5ProfileDocVerifica
 import { EditablePreviousSchool, EditableSports, EditableTiming, ProgressReportPicker } from "@/components/k5/pages/K5ProfileEditorsP3";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { subjectStyle } from "@/utils/k5Calendar";
+import { K5ProfileSkeleton } from "@/components/k5/K5Skeletons";
 
 // Base + one colour set each (two bg-/border- utilities on one element would fight).
 const BTN_BASE =
@@ -481,9 +482,7 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
 
   if (isLoading) {
     return (
-      <div className={`${K5_CARD} flex min-h-[260px] items-center justify-center px-6 py-10 font-k5-display text-xl font-semibold text-k5-mut`} role="status">
-        Loading your profile…
-      </div>
+      <K5ProfileSkeleton />
     );
   }
   if (error || !model) {
