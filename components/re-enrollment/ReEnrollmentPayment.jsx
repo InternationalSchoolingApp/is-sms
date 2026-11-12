@@ -33,7 +33,6 @@ const FLEX_OR_DUAL = ["ONE_TO_ONE_FLEX", "DUAL_DIPLOMA"];
 
 /**
  * PAYMENT step, laid out like the enrollment's review and payment screen: "Select Payment Option" with the fee plans on
- * the page itself (no modal), and "Continue to Pay". The chosen plan is saved with choose-payment-plan and then:
  *  - payment first (the next step is the course selection): the payment gateway starts right away, the student comes back
  *    after paying and continues with the courses;
  *  - courses first (Flexy / Dual Diploma / individual course): the review screen follows, where the payment is made.
