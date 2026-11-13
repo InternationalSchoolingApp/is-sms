@@ -799,7 +799,7 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
   // updated (a booking takes a while, then the numbers are asked again); "–" if they could not be read.
   const spinner = (size) => <K5Sk className={size.includes("h-9") ? "h-10 w-20" : "inline-block h-5 w-8 align-middle"} />;
   const card = (value) => (busy ? spinner("h-9 w-9") : calc ? value : "–");
-  const perWeekAll = n(sum?.maxClassPerWeek) || n(free?.perWeek) + n(extra?.perWeek ?? extra?.perweek);
+  const perWeekAll = n(free?.perWeek) + n(extra?.perWeek ?? extra?.perweek);
   const rows = calc?.subjects?.length ? calc.subjects : [{ subjectId: "all", subjectName: "All Courses", placeholder: true }];
   // Grade 9–12: no "Left" column (High.dc.html), and the four tiles add up the table.
   const cols = high ? TABLE_COLS.filter(([, key]) => key !== "unused") : TABLE_COLS;
