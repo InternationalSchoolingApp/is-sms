@@ -102,7 +102,7 @@ function K5Frame({ children }) {
         isPayLmsPaymentPending={isPayLmsPaymentPending}
       />
 
-      <div className="k5-layout relative mx-auto box-border flex w-full max-w-[100%] flex-1 items-start gap-5 px-5 pb-[220px] pt-5 max-[760px]:flex-wrap">
+      <div className="k5-layout relative mx-auto box-border flex w-full max-w-[100%] flex-1 items-start gap-5 px-5 pb-[20px] pt-5 max-[760px]:flex-wrap">
         <div aria-hidden="true" className="w-24 flex-none max-[760px]:hidden" />
         <K5NavRail menu={menu} loading={menuLoading} open={navOpen} onOpen={() => setNavOpen(true)} onClose={closeNav} isPreK={isPreK} userId={context.userId} />
 
@@ -131,7 +131,7 @@ function K5Frame({ children }) {
       <PicoGuide userId={context.userId} firstName={String(context.userName || "").split(" ")[0]} home={isHome} />
       <SelectToSpeak />
       <ReadingRuler />
-      <AppearanceDialog open={lookOpen} onClose={() => setLookOpen(false)} />
+      <AppearanceDialog open={lookOpen} onClose={() => setLookOpen(false)} firstName={String(context.userName || "").split(" ")[0]} />
     </div>
   );
 }

@@ -126,31 +126,73 @@ export function K5BlockSkeleton({ height = 320, card = true }) {
   );
 }
 
-/** The day plan of the home page: the date tile, then time on the left and a class card on the right. */
+/**
+ * The day plan of the home page while it loads: the date tile with its title and status pills, a class card row (time on
+ * the left) three times. The k5h-* classes are the same ones the real plan has, so Grade 9–12 sizes them like it.
+ */
 export function K5PlanSkeleton({ items = 3 }) {
   return (
     <K5Loading label="Loading your plan" className="flex flex-col gap-4">
-      <div className="flex items-center gap-4">
-        <K5Sk className="h-[76px] w-[76px] flex-none rounded-[22px]" />
-        <div className="flex flex-1 flex-col gap-2">
-          <K5Sk className="h-8 w-56 max-w-full" />
+      <div className="flex flex-wrap items-center gap-4">
+        <K5Sk className="k5h-ptile h-[78px] w-[78px] flex-none rounded-[24px]" />
+        <div className="flex flex-[1_1_200px] flex-col gap-2">
+          <K5Sk className="k5h-ptitle h-8 w-56 max-w-full" />
           <K5Sk className="h-4 w-32" />
         </div>
-      </div>
-      {Array.from({ length: items }, (_, i) => (
-        <div key={i} className="grid grid-cols-[84px_minmax(0,1fr)] items-start gap-3.5 max-[560px]:grid-cols-1">
-          <K5Sk className="mt-5 h-4 w-16 justify-self-end max-[560px]:justify-self-start" />
-          <div className="flex items-center gap-4 rounded-[24px] border-[3px] border-k5-line px-[18px] py-4">
-            <K5Sk className="h-[66px] w-[66px] flex-none rounded-[20px]" />
-            <div className="flex flex-1 flex-col gap-2">
-              <K5Sk className="h-3.5 w-24" />
-              <K5Sk className="h-6 w-3/5" />
-              <K5Sk className="h-4 w-2/5" />
-            </div>
-            <K5Sk className="h-12 w-32 flex-none rounded-full max-[560px]:hidden" />
-          </div>
+        <div className="flex gap-2 max-[560px]:hidden">
+          <K5Sk className="h-9 w-20 rounded-full" />
+          <K5Sk className="h-9 w-20 rounded-full" />
+          <K5Sk className="h-9 w-24 rounded-full" />
         </div>
-      ))}
+      </div>
+      <div className="flex flex-col gap-3.5">
+        {Array.from({ length: items }, (_, i) => (
+          <div key={i} className="grid grid-cols-[84px_minmax(0,1fr)] items-center gap-3.5 max-[560px]:grid-cols-1">
+            <K5Sk className="h-4 w-16 justify-self-end max-[560px]:justify-self-start" />
+            <div className="flex flex-wrap items-center gap-4 rounded-[24px] border-[3px] border-k5-line px-[18px] py-3.5">
+              <K5Sk className="k5h-stile h-[66px] w-[66px] flex-none rounded-[20px]" />
+              <div className="flex flex-[1_1_220px] flex-col gap-2">
+                <K5Sk className="h-5 w-24 rounded-full" />
+                <K5Sk className="k5h-ctitle h-7 w-3/5" />
+                <K5Sk className="h-4 w-2/5" />
+                <span className="flex items-center gap-2">
+                  <K5Sk className="h-[30px] w-[30px] rounded-full" />
+                  <K5Sk className="h-4 w-28" />
+                </span>
+              </div>
+              <K5Sk className="k5h-join h-[54px] w-32 flex-none rounded-full max-[560px]:hidden" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </K5Loading>
+  );
+}
+
+/** The two left-column cards of the home page (Today, My Courses) while the plan loads. */
+export function K5HomeLeftSkeleton() {
+  return (
+    <K5Loading label="Loading your day" className="flex flex-col gap-4">
+      <div className={`${K5_CARD} flex flex-col gap-3 p-4`}>
+        <K5Sk className="h-6 w-20" />
+        <div className="flex items-center gap-3">
+          <K5Sk className="h-11 w-11 flex-none rounded-[10px]" />
+          <span className="flex flex-1 flex-col gap-2">
+            <K5Sk className="h-4 w-28" />
+            <K5Sk className="h-3.5 w-40 max-w-full" />
+          </span>
+        </div>
+      </div>
+      <div className={`${K5_CARD} flex flex-col gap-2 p-4`}>
+        <K5Sk className="mb-1 h-6 w-32" />
+        {Array.from({ length: 5 }, (_, i) => (
+          <div key={i} className="flex min-h-[52px] items-center gap-2.5 rounded-[14px] px-2 py-1">
+            <K5Sk className="k5h-ctile h-[38px] w-[38px] flex-none rounded-xl" />
+            <K5Sk className="h-4 flex-1" />
+            <K5Sk className="k5h-cchk h-[26px] w-[26px] flex-none rounded-lg" />
+          </div>
+        ))}
+      </div>
     </K5Loading>
   );
 }

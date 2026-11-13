@@ -6,9 +6,10 @@ import { ChevronRight, Volume2, VolumeX, X } from "lucide-react";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 import { useSpeech } from "@/components/k5/pico/useSpeech";
-import { BUDDIES } from "@/constant/appearance";
+import { BUDDIES, voiceOf } from "@/constant/appearance";
 import { PICO_SAY_EVENT, usePicoLive } from "@/components/k5/pico/picoEvents";
 import { CLUBS } from "@/constant/Clubs";
+import { preparePicoClips } from "@/utils/picoVoice";
 
 const TOUR_KEY = "is-k5-tour:";
 const noSubscribe = () => () => {};
@@ -123,7 +124,7 @@ function SpotHole({ pin, active }) {
  */
 export function PicoGuide({ userId, firstName, home = true }) {
   const { preferences, updatePreference, themeProps } = useAppearance();
-  const { speak, stop, speaking, supported } = useSpeech();
+  const { speak, stop, speaking, supported, word } = useSpeech();
   const tourKey = `${TOUR_KEY}${userId}`;
   const seen = useSyncExternalStore(noSubscribe, () => readLocal(tourKey), () => "1");
   const [state, setState] = useState({ open: null, index: 0, say: null, skipLive: false, pageTip: false });
@@ -166,6 +167,13 @@ export function PicoGuide({ userId, firstName, home = true }) {
       setTipOn(false);
     }
   }
+  // The buddy's voice for this page is got ready once the page is idle: the page's tip, and on the home page the tour
+  // tips, so the student's tap (Next, Hear it) plays at once.
+  const voiceTexts = [pageTip?.text, ...(home ? steps.map((s) => s.text) : [])].filter(Boolean).join("|");
+  // preparePicoClips waits for the page to finish loading and the browser to be idle, so the page always comes first.
+  // In the voice and speed the student picked (a new pick gets its own clips).
+  const { voice: voicePick, voiceSpeed } = preferences;
+  useEffect(() => preparePicoClips(voiceTexts.split("|"), voiceOf(voicePick, voiceSpeed)), [voiceTexts, voicePick, voiceSpeed]);
   // The buddy also says it out loud (the student just tapped to get here, so speaking is allowed).
   useEffect(() => {
     if (pageTip) speak(pageTip.text);
@@ -314,7 +322,18 @@ export function PicoGuide({ userId, firstName, home = true }) {
             </div>
           </div>
           <p aria-live="polite" className="relative m-0 font-k5-display text-[21px] font-medium leading-[1.3] text-k5-ink">
-            {tip.text}
+            {word && word.text === tip.text.replace(/\s+/g, " ").trim()
+              ? // Recorded voice: the word being said lights up (LoginHighlight.jsp spokenHtml / follow).
+                tip.text
+                  .trim()
+                  .split(/\s+/)
+                  .map((w, i, all) => (
+                    <span key={i} className={i === word.n ? "rounded bg-[#FFC531] text-[#3A2A00]" : undefined}>
+                      {w}
+                      {i < all.length - 1 ? " " : ""}
+                    </span>
+                  ))
+              : tip.text}
           </p>
           <div className="relative flex items-center justify-between gap-2">
             {supported ? (

@@ -1,0 +1,296 @@
+/*
+ * Grade 9–12 ("High", "Mature" look) on top of the Grade 6–8 skin.
+ * Source: D:\Workspace\Grade 9-12 Dashboard\High.dc.html. Same pages, dialogs and logic as Middle.dc.html with the
+ * Mature look: Roboto, a smaller type scale (13px body where Middle has 16px), weights 500 / 700, controls 40–45px high,
+ * flat buttons (no hard offset shadow), a one-layer card shadow and 12px card corners.
+ *
+ * useK5ThemeProps() gives a High student data-k5-band="middle" (everything in app/k5-middle.css applies) plus
+ * data-k5-high, which this file restyles; it is imported after k5-middle.css. The values were measured by comparing the
+ * two mockups element by element. The type scale, weights and heights are generated from those measurements.
+ */
+
+/* ── Tokens (mockup .app, Mature) ───────────────────────────────────── */
+.theme-k5[data-k5-high] {
+  --k5-ink: #1b2130;
+  --k5-mut: #5b6577;
+  --k5-soft: #f4f6f9;
+  --k5-page: #f5f7fa;
+  --k5-line: #e3e7ed;
+  --k5-act: #e6f2ff;
+  --k5-sLaT: #e6f2ff;
+  --k5-sMaT: #e6f2ff;
+  --k5-sScT: #e6f2ff;
+  --k5-sArT: #e6f2ff;
+  --k5-sCsT: #e6f2ff;
+  /* Fonts: Roboto for display and body (loaded in k5Fonts.js). */
+  --k5-fd: var(--font-roboto), "Baloo Bhaijaan 2", sans-serif;
+  --k5-fb: var(--font-roboto), "Baloo Bhaijaan 2", sans-serif;
+  /* The one-layer card shadow. */
+  --k5m-card: 0 1px 2px rgba(16, 24, 40, 0.05);
+}
+
+/* Text with no size or weight of its own is 13px / 500 (the mockup body) where K–5 inherits 16px / 400. */
+.theme-k5[data-k5-high] {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+:is([data-k5-high], [data-k5-high] *) {
+  /* Type scale */
+  &.text-\[11px\] {
+    font-size: 11px;
+  }
+  &.text-\[12px\] {
+    font-size: 12px;
+  }
+  &.text-\[13px\] {
+    font-size: 12px;
+  }
+  &.text-\[14px\] {
+    font-size: 12px;
+  }
+  &.text-\[15px\] {
+    font-size: 13px;
+  }
+  &.text-\[16px\] {
+    font-size: 13px;
+  }
+  &.text-\[17px\] {
+    font-size: 14px;
+  }
+  &.text-\[18px\] {
+    font-size: 15px;
+  }
+  &.text-\[19px\] {
+    font-size: 16px;
+  }
+  &.text-\[20px\] {
+    font-size: 17px;
+  }
+  &.text-\[21px\] {
+    font-size: 18px;
+  }
+  &.text-\[22px\] {
+    font-size: 18px;
+  }
+  &.text-\[23px\] {
+    font-size: 19px;
+  }
+  &.text-\[24px\] {
+    font-size: 20px;
+  }
+  &.text-\[25px\] {
+    font-size: 21px;
+  }
+  &.text-\[26px\] {
+    font-size: 22px;
+  }
+  &.text-\[27px\] {
+    font-size: 23px;
+  }
+  &.text-\[28px\] {
+    font-size: 24px;
+  }
+  &.text-\[30px\] {
+    font-size: 25px;
+  }
+  &.text-\[32px\] {
+    font-size: 27px;
+  }
+  &.text-\[34px\] {
+    font-size: 28px;
+  }
+  &.text-\[36px\] {
+    font-size: 30px;
+  }
+  &.text-\[38px\] {
+    font-size: 32px;
+  }
+  &.text-\[40px\] {
+    font-size: 34px;
+  }
+  &.text-xs {
+    font-size: 12px;
+  }
+  &.text-sm {
+    font-size: 12px;
+  }
+  &.text-base {
+    font-size: 13px;
+  }
+  &.text-lg {
+    font-size: 15px;
+  }
+  &.text-xl {
+    font-size: 17px;
+  }
+  &.text-2xl {
+    font-size: 20px;
+  }
+  &.text-3xl {
+    font-size: 25px;
+  }
+  &.text-4xl {
+    font-size: 30px;
+  }
+  &.text-5xl {
+    font-size: 40px;
+  }
+
+  /* Weights: 500 for text, 700 for labels and numbers (K–5 uses 600 / 800 / 900). */
+  &.font-semibold,
+  &.font-bold,
+  &.font-extrabold {
+    font-weight: 500;
+  }
+  &.font-black {
+    font-weight: 700;
+  }
+
+  /* Control heights */
+  &.min-h-\[40px\] {
+    min-height: 40px;
+  }
+  &.min-h-\[42px\] {
+    min-height: 40px;
+  }
+  &.min-h-\[46px\] {
+    min-height: 40px;
+  }
+  &.min-h-\[48px\] {
+    min-height: 41px;
+  }
+  &.min-h-\[50px\] {
+    min-height: 43px;
+  }
+  &.min-h-\[52px\] {
+    min-height: 45px;
+  }
+  &.min-h-\[54px\] {
+    min-height: 47px;
+  }
+  &.min-h-\[56px\] {
+    min-height: 48px;
+  }
+  &.min-h-\[58px\] {
+    min-height: 50px;
+  }
+  &.min-h-\[60px\] {
+    min-height: 52px;
+  }
+  &.min-h-\[62px\] {
+    min-height: 54px;
+  }
+  &.min-h-\[64px\] {
+    min-height: 55px;
+  }
+  &.min-h-\[72px\] {
+    min-height: 62px;
+  }
+  &.min-h-\[78px\] {
+    min-height: 67px;
+  }
+
+  /* Corners: cards, panels and tiles are 12px (Middle 16–20px); 10px controls stay. */
+  &.rounded-\[34px\],
+  &.rounded-\[32px\],
+  &.rounded-\[28px\],
+  &.rounded-\[26px\],
+  &.rounded-\[24px\],
+  &.rounded-3xl,
+  &.rounded-\[22px\],
+  &.rounded-\[20px\] {
+    border-radius: 12px;
+  }
+
+  /* The theme's named corner sizes (rounded-2xl / xl / lg / md): 12, 10 and 8px in the mockup. */
+  &.rounded-2xl {
+    border-radius: 12px;
+  }
+  &.rounded-xl {
+    border-radius: 10px;
+  }
+  &.rounded-lg,
+  &.rounded-md {
+    border-radius: 8px;
+  }
+
+  /* Flat buttons: the hard offset shadows of K–5 / Middle are gone, cards keep one soft layer. */
+  &[class*="shadow-[0_3px_0_"],
+  &[class*="shadow-[0_4px_0_"],
+  &[class*="shadow-[0_5px_0_"],
+  &[class*="shadow-[0_6px_0_"],
+  &[class*="shadow-[0_3px_0_var(--k5-acd)]"],
+  &[class*="shadow-[0_4px_0_var(--k5-acd)]"],
+  &[class*="shadow-[0_5px_0_var(--k5-acd)]"],
+  &[class*="shadow-[0_6px_0_var(--k5-acd)]"],
+  &[class*="shadow-[0_4px_0_var(--k5-grnD)]"],
+  &[class*="shadow-[0_5px_0_var(--k5-grnD)]"],
+  &[class*="shadow-[0_6px_0_var(--k5-grnD)]"],
+  &[class*="shadow-[0_4px_0_var(--rim)]"],
+  &[class*="shadow-[0_6px_0_var(--rim)]"] {
+    box-shadow: none;
+  }
+  &[class*="shadow-[0_4px_0_var(--k5-line)]"],
+  &[class*="shadow-[0_5px_0_var(--k5-line)]"],
+  &[class*="shadow-[0_6px_0_var(--k5-line)]"],
+  &[class*="shadow-[0_4px_0_var(--k5-acl)]"],
+  &[class*="shadow-[0_6px_0_var(--k5-acl)]"],
+  &.shadow-k5-chunky,
+  &.shadow-k5-btn {
+    box-shadow: var(--k5m-card);
+  }
+}
+
+
+/* ── Home page (mockup values that are not a plain scale of the K–5 / Middle ones) ───────────────────────── */
+/* Clock box: the light blue of the page (Middle: a yellow tint), 6px 10px, and its time zone line in ink. */
+[data-k5-high] .k5h-tbox {
+  background: var(--k5-act);
+  padding: 6px 10px;
+  gap: 10px;
+}
+[data-k5-high] .k5h-zone {
+  color: var(--k5-ink);
+}
+/* "Today's Plan" header: a 58px date tile (11px day, 21px date), a 24px title. */
+[data-k5-high] .k5h-ptile {
+  width: 58px;
+  height: 58px;
+  border-radius: 10px;
+}
+[data-k5-high] .k5h-ptile-top {
+  font-size: 11px;
+  font-weight: 700;
+}
+[data-k5-high] .k5h-ptile-big {
+  font-size: 21px;
+  font-weight: 500;
+}
+[data-k5-high] .k5h-ptitle {
+  font-size: 24px;
+}
+/* Class card: a 50px subject tile, an 18px title, a 46px Join button; the status pills take ink text. */
+[data-k5-high] .k5h-stile {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+}
+[data-k5-high] .k5h-sicon {
+  width: 28px;
+  height: 28px;
+}
+[data-k5-high] .k5h-ctitle {
+  font-size: 18px;
+}
+[data-k5-high] .k5h-join {
+  min-height: 46px;
+}
+[data-k5-high] .k5h-pill {
+  color: var(--k5-ink);
+}
+/* My Courses rows: 8px corners on the 38px icon tile and the 26px tick. */
+[data-k5-high] .k5h-ctile,
+[data-k5-high] .k5h-cchk {
+  border-radius: 8px;
+}

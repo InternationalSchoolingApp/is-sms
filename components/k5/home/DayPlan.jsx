@@ -57,7 +57,7 @@ export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
           <Video className="h-3.5 w-3.5" aria-hidden="true" />
           {status === "live" ? "Live Class" : "Class"}
         </span>
-        <h3 className="m-0 font-k5-display text-[26px] font-semibold leading-[1.1]">{classTitle(event)}</h3>
+        <h3 className="k5h-ctitle m-0 font-k5-display text-[26px] font-semibold leading-[1.1]">{classTitle(event)}</h3>
         <p className="m-0 text-[17px] font-extrabold text-k5-mut">{timeRange(event)}</p>
         <Teacher event={event} />
       </button>
@@ -78,7 +78,7 @@ export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
             <button
               type="button"
               onClick={() => onJoin(event)}
-              className={`flex cursor-pointer items-center gap-2 rounded-full border-none bg-k5-grn px-[22px] font-k5-display font-semibold text-white shadow-[0_5px_0_var(--k5-grnD)] ${
+              className={`k5h-join flex cursor-pointer items-center gap-2 rounded-full border-none bg-k5-grn px-[22px] font-k5-display font-semibold text-white shadow-[0_5px_0_var(--k5-grnD)] ${
                 isPreK ? "min-h-[76px] text-[26px]" : "min-h-[54px] text-[21px]"
               }`}
             >

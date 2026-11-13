@@ -14,10 +14,10 @@ import { BUDDIES } from "@/constant/appearance";
  * "Make it yours!" (mockup look dialog) — the K–5 wrapper around AppearanceSettingsPanel.
  * Changes are collected in a local draft; nothing applies until the user clicks Save.
  */
-export function AppearanceDialog({ open, onClose }) {
+export function AppearanceDialog({ open, onClose, firstName = "" }) {
   const appearance = useAppearance();
   const { preferences, updatePreferences, canCustomize } = appearance;
-  const { speak, playClip } = useSpeech();
+  const { speak } = useSpeech();
   const themeProps = useK5ThemeProps(
     "flex flex-col max-h-[calc(100vh-32px)] gap-0 overflow-hidden rounded-[32px] border-[3px] border-k5-ink bg-k5-card p-0 text-k5-ink shadow-[0_8px_0_var(--k5-ink)] ring-0 sm:max-w-[1060px] max-[480px]:p-0",
   );
@@ -54,11 +54,15 @@ export function AppearanceDialog({ open, onClose }) {
     onClose();
   }, [draft, updatePreferences, onClose]);
 
-  const hearVoice = useCallback((voice) => {
-    setDraft((prev) => sanitizeAppearance({ ...prev, voice }));
-    if (voice === "emma") { playClip(); return; }
-    speak("Hi! This is my voice!", { force: true, voice });
-  }, [speak, playClip]);
+  // A voice or a speed was tapped ({voice} or {voiceSpeed}): pick it in the draft and say hello in it, with the
+  // student's own name ("Hi Eshal! This is my voice!"). A voice not heard before can take 10–20 seconds the first time, so the
+  // preview waits for it rather than falling back to a browser voice that does not sound like the one picked.
+  const hearVoice = useCallback((patch) => {
+    debugger
+    const next = sanitizeAppearance({ ...draft, ...patch });
+    setDraft(next);
+    speak(`Hi${firstName ? ` ${firstName}` : ""}! This is my voice!`, { force: true, voice: next.voice, voiceSpeed: next.voiceSpeed, wait: 25000 });
+  }, [speak, firstName, draft]);
 
   const buddyName = BUDDIES[draft.buddy]?.name || "Pico";
 
