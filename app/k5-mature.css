@@ -294,3 +294,24 @@
 [data-k5-high] .k5h-cchk {
   border-radius: 8px;
 }
+
+/* ── Inbox (mockup .cm*, page "comm") ───────────────────────────────────────────────────────────────────── */
+/* Title 25px / 500 and a 13px / 500 line under it; 8px buttons and inputs, inputs 42px high; a 10px title tile. */
+[data-k5-high] .k5-cm-h1 {
+  font-size: 25px;
+  font-weight: 500;
+}
+[data-k5-high] .k5-cm-sub {
+  font-size: 13px;
+  font-weight: 500;
+}
+[data-k5-high] .k5-cm-btn,
+[data-k5-high] .k5-cm-in {
+  border-radius: 8px;
+}
+[data-k5-high] .k5-cm-in {
+  min-height: 42px;
+}
+[data-k5-high] .k5-cm-tile {
+  border-radius: 10px !important;
+}

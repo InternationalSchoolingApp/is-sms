@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { INBOX_TIP } from "@/utils/inbox";
 import { usePathname } from "next/navigation";
 import { ChevronRight, Volume2, VolumeX, X } from "lucide-react";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
@@ -49,6 +50,8 @@ const PAGE_TIPS = {
   "student-progress-report": "Here’s how you’re doing in every course!",
   "progress-detail": "Tap View to open a full report for that week!",
   "my-profile": "This page is all about you! Keep your details up to date.",
+  inbox: INBOX_TIP,
+  "inbox-compose": INBOX_TIP,
   "student-addon": "Want more classes? Pick a plan, then ask a grown-up to buy it!",
   cart: "Want more classes? Pick a plan, then ask a grown-up to buy it!",
   // Every club page (Language, Social and E-Sports clubs).
