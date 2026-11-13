@@ -43,3 +43,23 @@ export function teacherStepPath(school, step) {
   const slug = TEACHER_STEP_SLUGS[isTeacherStep(step) ? Number(step) : 1];
   return `${teacherStepBasePath(school)}/${slug}`;
 }
+
+// The last step a teacher may go back from to edit an earlier form: personal details (1) and professional details
+// (2) stay open while the marker is on the review step (3) at most. Once the profile is with the school (locked),
+// or approved and on to the contract, verification or bank steps, the forms are closed.
+const LAST_EDITABLE_MARKER = 3;
+
+/**
+ * Where the teacher is sent when they open `currentStep`: null = stay, otherwise the step to go to. `wizardStep` is
+ * the backend's marker, the next step still pending (teacher/registration/process). A step past the marker is
+ * always sent back to it; a step behind the marker stays open while the wizard is editable (`editable`, state FORM)
+ * and the marker is at most the review step, so a teacher can go back and correct a form (as in the student wizard)
+ * but not after the profile is with the school.
+ */
+export function resolveTeacherStepRedirect({ currentStep, wizardStep, editable }) {
+  if (!isTeacherStep(wizardStep)) return null;
+  const marker = Number(wizardStep);
+  if (currentStep === marker) return null;
+  const mayStayBehind = Boolean(editable) && marker <= LAST_EDITABLE_MARKER && currentStep < marker;
+  return mayStayBehind ? null : marker;
+}

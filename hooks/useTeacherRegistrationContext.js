@@ -80,8 +80,7 @@ function useResolveTeacherRegistrationContext() {
     if (legacyUrl) window.location.replace(legacyUrl);
   }, [viaLegacyFlow, session?.schoolUUID, session?.uniqueId]);
 
-  const processData = process.data;
-  const sessionOut = processData?.status === TEACHER_STATUS_SESSION_OUT;
+  const processData = process.data;  const sessionOut = processData?.status === TEACHER_STATUS_SESSION_OUT;
   // REDIRECT: declined, withdrawn or already registered, so there is nothing to do in the wizard. The backend names
   // the destination (the school's login page).
   const processRedirect = processData?.state === TEACHER_STATE_REDIRECT ? processData : null;

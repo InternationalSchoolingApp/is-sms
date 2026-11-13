@@ -200,6 +200,17 @@ export function legacyTeacherRegistrationUrl(schoolUUID, uniqueId) {
 }
 
 /**
+ * The legacy JSP teacher account-creation page ({schoolId}/teacher/signup). With
+ * CONFIGURATION/TEACHER_REGISTRATION_VIA_NEXTJS on, the backend sends that URL to the Next.js landing page; with it
+ * explicitly off the Next.js landing page sends the visitor here. "" when anything needed to build it is missing.
+ */
+export function legacyTeacherSignupUrl(schoolUUID) {
+  const backend = resolveBackendNavigationOrigin();
+  if (!backend || !schoolUUID) return "";
+  return `${backend}/${encodeURIComponent(schoolUUID)}/teacher/signup`;
+}
+
+/**
  * Public legacy enrollment start page for a school/program. The original
  * signup query is forwarded intact because the JSP reads values such as
  * payload, referralCode, ras, and v directly from the URL.
