@@ -5,7 +5,8 @@ import { Download, Link2, Plus, Search, ShieldCheck, X } from "lucide-react";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { certDate, certificateTitle, enrolmentLabel, requestMeta, requestSteps, statusOf } from "@/utils/certificates";
-import { K5Loading, K5ListSkeleton, K5CardsSkeleton } from "@/components/k5/K5Skeletons";
+import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 
 const PRIMARY = "inline-flex min-h-[46px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-none bg-k5-ac px-[18px] font-k5-display text-base font-semibold text-white no-underline shadow-[0_4px_0_var(--k5-acd)] disabled:cursor-default disabled:opacity-50";
 const SECONDARY = "inline-flex min-h-[46px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-[3px] border-k5-line bg-k5-card px-4 font-k5-display text-base font-semibold text-k5-ink no-underline shadow-[0_4px_0_var(--k5-line)]";
@@ -141,6 +142,88 @@ function RequestDialog({ form }) {
   );
 }
 
+/** Title row. Grade 6–8 (Middle.dc.html): no card, a 62px accent tile, a 30px heading, 16px subtitle. */
+function CertHeader({ onRequest }) {
+  const { isMiddle } = useDashboardContext();
+  return (
+    <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
+      <span
+        className={isMiddle ? "flex h-[62px] w-[62px] flex-none items-center justify-center bg-k5-act" : "flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-pt"}
+        style={isMiddle ? { borderRadius: 14 } : undefined}
+      >
+        <CapIcon size={isMiddle ? 34 : 48} stroke={isMiddle ? "var(--k5-ac)" : undefined} />
+      </span>
+      <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-1">
+        <h1 className={`m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-4xl"}`}>My Certificates</h1>
+        <p className={`m-0 font-extrabold text-k5-mut ${isMiddle ? "text-base" : "text-[17px]"}`}>Certificates your school has issued to you. Anyone can check one is genuine with its Certificate ID.</p>
+      </div>
+      {onRequest ? (
+        <button type="button" onClick={onRequest} className={`${PRIMARY} min-h-[54px] text-lg max-[760px]:w-full max-[760px]:justify-center`}>
+          <Plus className="h-5 w-5" strokeWidth={3} aria-hidden="true" /> Request a certificate
+        </button>
+      ) : (
+        <K5Sk className="h-[54px] w-[230px] rounded-full" />
+      )}
+    </div>
+  );
+}
+
+/** One request card while it loads: name and status chip, the meta line, then the four-step track. */
+function RequestSkeleton() {
+  return (
+    <div className={`${K5_CARD} flex flex-col gap-3.5 px-5 pb-5 pt-4`}>
+      <div className="flex flex-wrap items-start gap-3">
+        <span className="flex flex-[1_1_280px] flex-col gap-2">
+          <span className="flex items-center gap-2.5">
+            <K5Sk className="h-6 w-56" />
+            <K5Sk className="h-6 w-24 rounded-full" />
+          </span>
+          <K5Sk className="h-4 w-64 max-w-full" />
+        </span>
+        <K5Sk className="h-[46px] w-28 rounded-full" />
+      </div>
+      <div className="grid grid-cols-4 pt-1.5">
+        {Array.from({ length: 4 }, (_, i) => (
+          <span key={i} className="flex flex-col items-center gap-2">
+            <K5Sk className="h-[30px] w-[30px] rounded-full" />
+            <K5Sk className="h-3.5 w-20 max-w-full" />
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** One golden certificate card while it loads: seal and title, three detail rows, the buttons. */
+function CertCardSkeleton() {
+  return (
+    <div className="rounded-[26px] bg-k5-soft p-2.5">
+      <div className="flex flex-col gap-2.5 rounded-[18px] border-2 border-dashed border-k5-line bg-k5-card px-[18px] pb-4 pt-[18px]">
+        <div className="flex items-center gap-3">
+          <K5Sk className="h-[66px] w-[58px] flex-none rounded-full" />
+          <span className="flex flex-1 flex-col gap-2">
+            <K5Sk className="h-3 w-32" />
+            <K5Sk className="h-6 w-3/4" />
+          </span>
+        </div>
+        <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2">
+          {Array.from({ length: 3 }, (_, i) => (
+            <span key={i} className="contents">
+              <K5Sk className="h-4 w-20" />
+              <K5Sk className="h-4 w-32" />
+            </span>
+          ))}
+        </div>
+        <div className="mt-1 flex flex-wrap gap-2">
+          <K5Sk className="h-[46px] w-36 rounded-full" />
+          <K5Sk className="h-[46px] w-24 rounded-full" />
+          <K5Sk className="h-[46px] w-28 rounded-full" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /**
  * K–5 look of My Certificates (mockup My Certificates): the requests with their progress track, the issued
  * certificates as golden cards, the request form and the "sent" message. Download / Verify / Copy link use
@@ -148,6 +231,7 @@ function RequestDialog({ form }) {
  */
 export function K5Certificates({ schoolName, requests, certificates, form, sent, onSentClose, onCancel, onCopy }) {
   const [query, setQuery] = useState("");
+  const { isMiddle } = useDashboardContext();
   usePicoContentReady(!requests.loading && !certificates.loading);
   const q = query.trim().toLowerCase();
   const certs = q
@@ -156,24 +240,14 @@ export function K5Certificates({ schoolName, requests, certificates, form, sent,
 
   return (
     <div className="flex flex-col gap-[18px]">
-      <div className={`${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
-        <span className="flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-pt">
-          <CapIcon size={48} />
-        </span>
-        <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-1">
-          <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">My Certificates</h1>
-          <p className="m-0 text-[17px] font-extrabold text-k5-mut">Certificates your school has issued to you. Anyone can check one is genuine with its Certificate ID.</p>
-        </div>
-        <button type="button" onClick={form.start} className={`${PRIMARY} min-h-[54px] text-lg max-[760px]:w-full max-[760px]:justify-center`}>
-          <Plus className="h-5 w-5" strokeWidth={3} aria-hidden="true" /> Request a certificate
-        </button>
-      </div>
+      <CertHeader onRequest={form.start} />
 
       <section aria-labelledby="k5-ct-req" className="flex flex-col gap-3">
         <h2 id="k5-ct-req" className="m-0 ps-1 font-k5-display text-2xl font-semibold">My requests</h2>
         {requests.loading ? (
-          <K5Loading label="Loading your requests" className="">
-            <K5ListSkeleton rows={2} card />
+          <K5Loading label="Loading your requests" className="flex flex-col gap-3.5">
+            <RequestSkeleton />
+            <RequestSkeleton />
           </K5Loading>
         ) : !requests.items.length ? (
           <div className={`${K5_CARD} p-6 text-center font-k5-display text-lg font-semibold text-k5-mut`}>{requests.error || "You have no requests yet."}</div>
@@ -232,8 +306,10 @@ export function K5Certificates({ schoolName, requests, certificates, form, sent,
           )}
         </div>
         {certificates.loading ? (
-          <K5Loading label="Loading your certificates" className="">
-            <K5CardsSkeleton count={3} />
+          <K5Loading label="Loading your certificates" className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4 max-[760px]:grid-cols-1">
+            {Array.from({ length: 3 }, (_, i) => (
+              <CertCardSkeleton key={i} />
+            ))}
           </K5Loading>
         ) : certificates.error ? (
           <div className={`${K5_CARD} p-6 text-center font-k5-display text-lg font-semibold text-[#C81E35]`}>{certificates.error}</div>
@@ -246,8 +322,8 @@ export function K5Certificates({ schoolName, requests, certificates, form, sent,
             {certs.map((c) => {
               const ready = c.pdfStatus === "READY" && c.pdfUrl;
               return (
-                <li key={c.certCode} className="k5-ctcert relative rounded-[26px] p-2.5 shadow-[0_6px_0_#C9930A]" style={{ background: "linear-gradient(135deg, #FFE7A3, #F2C14E 45%, #FFE7A3)" }}>
-                  <div className="box-border flex h-full flex-col gap-2.5 rounded-[18px] border-2 border-dashed border-[#D9A73A] bg-[#FFFBEE] px-[18px] pb-4 pt-[18px] text-[#3A2A00]">
+                <li key={c.certCode} className="k5-ctcert relative rounded-[26px] p-2.5 shadow-[0_6px_0_#C9930A]" style={{ background: "linear-gradient(135deg, #FFE7A3, #F2C14E 45%, #FFE7A3)", ...(isMiddle ? { boxShadow: "0 2px 0 #C9930A" } : null) }}>
+                  <div style={isMiddle ? { borderWidth: 1.5 } : undefined} className="box-border flex h-full flex-col gap-2.5 rounded-[18px] border-2 border-dashed border-[#D9A73A] bg-[#FFFBEE] px-[18px] pb-4 pt-[18px] text-[#3A2A00]">
                     <div className="flex items-center gap-3">
                       <Seal />
                       <div className="flex min-w-0 flex-col gap-0.5">

@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
-import { K5Loading, K5TilesSkeleton, K5TableSkeleton } from "@/components/k5/K5Skeletons";
+import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 
 const PAGE_SIZE = 10;
 const GRID = "56px minmax(190px,1.2fr) minmax(190px,1.2fr) minmax(220px,1.5fr) minmax(170px,1fr)";
@@ -41,6 +42,77 @@ function PageButton({ children, ...props }) {
   );
 }
 
+/** "Login History" title row. Grade 6–8 (Middle.dc.html): no card, a 62px accent tile, a 30px heading. */
+function LoginHeader() {
+  const { isMiddle } = useDashboardContext();
+  return (
+    <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
+      <span
+        className={isMiddle ? "flex h-[62px] w-[62px] flex-none items-center justify-center bg-k5-act" : "flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-tt"}
+        style={isMiddle ? { borderRadius: 14 } : undefined}
+      >
+        <svg width={isMiddle ? 34 : 48} height={isMiddle ? 34 : 48} viewBox="0 0 24 24" fill="none" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: isMiddle ? "var(--k5-ac)" : "var(--k5-tI)" }}>
+          <path d="M3.5 12a8.5 8.5 0 1 0 2.5-6" />
+          <path d="M3 4v4h4" />
+          <path d="M12 8v4l3 2" />
+        </svg>
+      </span>
+      <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
+        <h1 className={`m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-4xl"}`}>Login History</h1>
+        <p className={`m-0 font-extrabold text-k5-mut ${isMiddle ? "text-base" : "text-lg"}`}>See when and where you logged in.</p>
+      </div>
+    </div>
+  );
+}
+
+/** Login History while it loads: the title, the three summary tiles, then the sessions card (heading and search, table, pager) and the notice. */
+function LoginSkeleton() {
+  return (
+    <K5Loading label="Loading your log in history" className="flex flex-col gap-4">
+      <LoginHeader />
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-3.5">
+        {Array.from({ length: 3 }, (_, i) => (
+          <div key={i} className={`${K5_CARD} flex items-start gap-3.5 px-[18px] py-4`}>
+            <span className="flex flex-1 flex-col gap-2">
+              <K5Sk className="h-4 w-32" />
+              <K5Sk className="h-7 w-36" />
+              <K5Sk className="h-6 w-24 rounded-full" />
+            </span>
+            <K5Sk className="h-[54px] w-[54px] flex-none rounded-[18px]" />
+          </div>
+        ))}
+      </div>
+      <div className={`${K5_CARD} flex flex-col gap-3.5 px-5 py-4`}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <K5Sk className="h-8 w-48" />
+          <K5Sk className="h-[50px] w-[340px] max-w-full rounded-full" />
+        </div>
+        <div className="overflow-hidden rounded-[18px] border-[3px] border-k5-line">
+          <div className="h-12 bg-k5-ac/25" />
+          {Array.from({ length: 5 }, (_, r) => (
+            <div key={r} className={`grid items-center gap-4 border-t-2 border-k5-line px-3.5 py-3 ${r % 2 ? "bg-k5-soft" : "bg-k5-card"}`} style={{ gridTemplateColumns: "40px 1.2fr 1.2fr 1.5fr 1fr" }}>
+              <K5Sk className="h-4 w-5" />
+              <K5Sk className="h-4 w-4/5" />
+              <K5Sk className="h-4 w-4/5" />
+              <K5Sk className="h-4 w-3/5" />
+              <K5Sk className="h-4 w-20" />
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          <K5Sk className="h-4 w-44" />
+          <span className="flex items-center gap-2">
+            <K5Sk className="h-11 w-24 rounded-[14px]" />
+            <K5Sk className="h-11 w-11 rounded-[14px]" />
+            <K5Sk className="h-11 w-16 rounded-[14px]" />
+          </span>
+        </div>
+      </div>
+      <K5Sk className="h-[78px] w-full rounded-[22px]" />
+    </K5Loading>
+  );
+}
+
 /**
  * K–5 look of My Log in History (mockup Login History): First / Last / Total login tiles, the
  * "Log in Sessions" table with search and pages, and the security notice. Same data as the existing page.
@@ -67,28 +139,13 @@ export function K5LoginHistory({ isLoading, attendance }) {
   const start = current * PAGE_SIZE;
   const visible = rows.slice(start, start + PAGE_SIZE);
 
+  if (isLoading) return <LoginSkeleton />;
+
   return (
     <div className="flex flex-col gap-4">
-      <div className={`${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
-        <span className="flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-tt">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: "var(--k5-tI)" }}>
-            <path d="M3.5 12a8.5 8.5 0 1 0 2.5-6" />
-            <path d="M3 4v4h4" />
-            <path d="M12 8v4l3 2" />
-          </svg>
-        </span>
-        <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-          <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">Login History</h1>
-          <p className="m-0 text-lg font-extrabold text-k5-mut">See when and where you logged in.</p>
-        </div>
-      </div>
+      <LoginHeader />
 
-      {isLoading ? (
-        <K5Loading label="Loading your log in history">
-          <K5TilesSkeleton count={3} min={250} />
-          <K5TableSkeleton rows={5} cols={5} />
-        </K5Loading>
-      ) : (
+      {(
         <>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-3.5">
             <SummaryTile label="First Login" value={firstDate || "N/A"} pill={firstTime || "N/A"} pillClass="bg-k5-gt text-k5-gx" tileClass="bg-k5-gt">

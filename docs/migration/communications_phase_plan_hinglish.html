@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Communications (Inbox) — Phase-wise Plan (Hinglish)</title>
+<style>
+  :root{--bg:#0f1420;--panel:#151c2c;--panel2:#1b2436;--ink:#e8edf6;--mut:#9fb0c9;--line:#2a364d;--acc:#5b9dff;
+    --in:#2fbf71;--out:#ff4d5e;--rec:#5b9dff;--warn:#e0a52b;}
+  @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f5f7fb;--panel:#fff;--panel2:#eef2f8;--ink:#17202e;--mut:#536079;--line:#d7deea;--acc:#1f5fd6;--in:#1f9d57;--out:#d61f36;--rec:#1f5fd6;--warn:#b5821a;}}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.85em;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:.03em .4em}
+  .wrap{display:flex;max-width:1200px;margin:0 auto}
+  aside{position:sticky;top:0;align-self:flex-start;height:100vh;overflow:auto;width:250px;flex:0 0 250px;background:var(--panel);border-right:1px solid var(--line);padding:16px 12px}
+  aside .brand{font-weight:800;font-size:15px;padding:4px 6px 10px;line-height:1.3}
+  aside ol{list-style:none;margin:0;padding:0;counter-reset:s}
+  aside ol li a{display:block;padding:5px 8px;border-radius:7px;color:var(--mut);font-size:13.5px}
+  aside ol li a::before{counter-increment:s;content:counter(s) ". ";color:var(--acc)}
+  aside ol li a:hover{background:var(--panel2);color:var(--ink);text-decoration:none}
+  main{flex:1 1 auto;min-width:0;padding:24px 32px 120px}
+  header.top{border:1px solid var(--line);background:linear-gradient(135deg,var(--panel),var(--panel2));border-radius:16px;padding:22px 24px;margin-bottom:20px}
+  header.top h1{margin:0 0 6px;font-size:24px}
+  header.top .sub{color:var(--mut);font-size:14px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-size:12.5px;color:var(--mut)}
+  .meta b{color:var(--ink)}
+  .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+  .btn{display:inline-flex;align-items:center;gap:8px;font:600 14px/1 inherit;font-family:inherit;padding:10px 16px;border-radius:10px;border:1px solid var(--acc);background:var(--acc);color:#fff;cursor:pointer}
+  .btn.ghost{background:transparent;color:var(--acc)}
+  .btn:focus-visible{outline:3px solid color-mix(in srgb,var(--acc) 45%,transparent);outline-offset:2px}
+  section{border-top:1px solid var(--line);padding-top:22px;margin-top:26px;scroll-margin-top:12px}
+  section>h2{font-size:20px;margin:0 0 6px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  section>h2 .n{color:var(--acc);font-size:14px}
+  h3{font-size:16px;margin:18px 0 8px}
+  p{margin:8px 0}.lead{color:var(--mut)}
+  ul,ol{margin:8px 0;padding-left:22px}li{margin:3px 0}
+  .b{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;border:1px solid transparent;white-space:nowrap}
+  .b.in{color:var(--in);border-color:var(--in);background:color-mix(in srgb,var(--in) 14%,transparent)}
+  .b.out{color:#fff;background:var(--out);border-color:var(--out)}
+  .b.rec{color:var(--rec);border-color:var(--rec);background:color-mix(in srgb,var(--rec) 14%,transparent)}
+  .b.warn{color:var(--warn);border-color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+  .b.ph{background:var(--panel2);color:var(--ink);border-color:var(--line)}
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:12px 0}
+  table{border-collapse:collapse;width:100%;font-size:13px;min-width:620px}
+  th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--panel2);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  tbody tr:hover{background:color-mix(in srgb,var(--acc) 7%,transparent)}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:14px 0}
+  .card{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:14px 16px}
+  .card .big{font-size:26px;font-weight:800}.card .lbl{color:var(--mut);font-size:12.5px;margin-top:2px}
+  .note{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--panel);border-radius:10px;padding:12px 15px;margin:14px 0}
+  .note.out{border-left-color:var(--out)}.note.ok{border-left-color:var(--in)}.note.warn{border-left-color:var(--warn)}
+  .note b.t{display:block;margin-bottom:3px}
+  figure{margin:16px 0;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:14px}
+  figure svg{display:block;width:100%;height:auto}
+  figcaption{color:var(--mut);font-size:12.5px;margin-top:8px}
+  pre{overflow:auto;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:12.5px;line-height:1.5}
+  .svgbox{fill:var(--panel2);stroke:var(--line);stroke-width:1.4}
+  .svgacc{fill:color-mix(in srgb,var(--acc) 16%,var(--panel));stroke:var(--acc);stroke-width:1.4}
+  .svgin{fill:color-mix(in srgb,var(--in) 14%,var(--panel));stroke:var(--in);stroke-width:1.4}
+  .svgt{fill:var(--ink);font:600 13px -apple-system,Segoe UI,sans-serif}
+  .svgs{fill:var(--mut);font:12px -apple-system,Segoe UI,sans-serif}
+  .svgl{stroke:var(--mut);stroke-width:1.5;fill:none}
+  details{border:1px solid var(--line);border-radius:10px;background:var(--panel);margin:10px 0;padding:0 14px}
+  details>summary{cursor:pointer;padding:10px 0;font-weight:600}
+  .two{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  #demoOut{font-size:13px;color:var(--mut)}
+  @media (max-width:860px){.wrap{display:block}aside{position:static;height:auto;width:auto;border-right:0;border-bottom:1px solid var(--line)}main{padding:18px 16px 80px}}
+  @media print{aside,.actions,.no-print{display:none}main{padding:0}}
+  .ph{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:16px 18px;margin:14px 0}
+  .ph h4{margin:14px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+  .ph h4:first-of-type{margin-top:6px}
+  .kv{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--mut);margin:4px 0 2px}
+  .kv b{color:var(--ink)}
+  .chk{list-style:none;padding-left:0}
+  .chk li{padding-left:26px;position:relative}
+  .chk li::before{content:"☐";position:absolute;left:4px;color:var(--acc)}
+  .tl{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+  .tl a{display:inline-block;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--panel);font-size:12.5px;color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<aside>
+  <div class="brand">Communications (Inbox)<br><span style="color:var(--mut);font-weight:500;font-size:12.5px">Phase-wise plan (Hinglish)</span></div>
+  <ol>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#p0">P0 · Backend check</a></li>
+    <li><a href="#p1">P1 · Foundation</a></li>
+    <li><a href="#p2">P2 · Inbox list</a></li>
+    <li><a href="#p3">P3 · Reader + download</a></li>
+    <li><a href="#p4">P4 · Compose + Reply</a></li>
+    <li><a href="#p5">P5 · Sent tab</a></li>
+    <li><a href="#p6">P6 · K5 skin</a></li>
+    <li><a href="#p7">P7 · Middle skin</a></li>
+    <li><a href="#p8">P8 · Extras</a></li>
+    <li><a href="#p9">P9 · QA + handover</a></li>
+    <li><a href="#questions">Open questions</a></li>
+  </ol>
+</aside>
+<main>
+<header class="top">
+  <h1>Communications (Inbox): phase-wise migration plan</h1>
+  <div class="sub">Legacy Inbox (<code>is-rest-api</code>, jQuery) ko <code>is-sms</code> (Next 16, React Query, Tailwind v4, shadcn ui) me 10 phases me le jaane ka plan. Har phase me: goal, kis phase par depend hai, files, endpoints, step-by-step kaam, security checks, UI notes, test cases aur "done kab maana jaaye". Endpoints aur request/response ki poori detail <a href="communications_migration_plan_hinglish.html">Hinglish plan</a> me hai.</div>
+  <div class="meta">
+    <span>Branch <b>feature/version_1_3_0_phase4</b></span>
+    <span>pageLink <b>inbox</b>, <b>inbox-compose</b></span>
+    <span>Naye backend endpoints <b>0</b></span>
+    <span>Date <b>2026-11-12</b></span>
+  </div>
+  <div class="actions no-print">
+    <button type="button" class="btn" id="downloadPage">⬇ Ye phase plan download karo (.html)</button>
+    <button type="button" class="btn ghost" onclick="window.print()">Print</button>
+  </div>
+</header>
+
+<!-- ================================================================== overview -->
+<section id="overview">
+  <h2><span class="n">0</span> Overview</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Phase</th><th>Kya milega</th><th>Depends on</th><th>Andaaz (rough)</th></tr></thead>
+    <tbody>
+      <tr><td><a href="#p0"><b>P0</b></a> Backend check</td><td>Confirm ki saare inbox endpoints Next server se Bearer token par chalte hain</td><td>—</td><td>0.5 din</td></tr>
+      <tr><td><a href="#p1"><b>P1</b></a> Foundation</td><td>Service, utils, hooks, route aur khaali page skeleton ke saath</td><td>P0</td><td>1 din</td></tr>
+      <tr><td><a href="#p2"><b>P2</b></a> Inbox list</td><td>Tabs, filters, list, pager, star, mark all read, unread badge</td><td>P1</td><td>2 din</td></tr>
+      <tr><td><a href="#p3"><b>P3</b></a> Reader + download</td><td>Email / notification / announcement / WhatsApp kholna, email body route, attachment download route, acknowledge</td><td>P2</td><td>2 din</td></tr>
+      <tr><td><a href="#p4"><b>P4</b></a> Compose + Reply</td><td>Contacts, send route, compose dialog, recipient picker, reply</td><td>P3</td><td>2.5 din</td></tr>
+      <tr><td><a href="#p5"><b>P5</b></a> Sent tab</td><td>Sent folder, <code>inbox-compose</code> route, <code>?compose=1</code></td><td>P4</td><td>1 din</td></tr>
+      <tr><td><a href="#p6"><b>P6</b></a> K5 skin</td><td><code>K5Inbox</code>, simple tabs, "Write to my teacher", Pico tip</td><td>P3 (compose wala hissa P4 ke baad)</td><td>2 din</td></tr>
+      <tr><td><a href="#p7"><b>P7</b></a> Middle skin</td><td>Grade 6–8 ke liye <code>K5Inbox</code> + <code>k5-middle.css</code></td><td>P6</td><td>1 din</td></tr>
+      <tr><td><a href="#p8"><b>P8</b></a> Extras</td><td>Email settings, compose templates / AI help, WhatsApp tab (jo approve ho)</td><td>P4, questions Q2/Q3/Q7</td><td>1–2 din</td></tr>
+      <tr><td><a href="#p9"><b>P9</b></a> QA + handover</td><td>Saare test cases, lint, build, test-case doc update</td><td>Sab</td><td>1 din</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><b class="t">Har phase ke rules (sab par lagu)</b>
+    <ul>
+      <li>Code likhne se pehle <code>node_modules/next/dist/docs/</code> me related guide padhna (Route Handlers, Server Actions).</li>
+      <li>Browser se kabhi <code>userId</code> nahi; identity hamesha session/token se (<code>backendRequest</code>, <code>getAccountSession</code>).</li>
+      <li>Loading me shadcn Skeleton, "Loading…" text nahi. Dates ke liye <code>components/ui/date-picker.jsx</code> (icon ke saath), native date input nahi.</li>
+      <li>School ka naam hardcode nahi (<code>useSchoolName</code> / backend ka naam). Timezone fallback <b>Asia/Singapore</b>.</li>
+      <li>Naye backend endpoints nahi. Commit user khud karega. Har phase ke baad <code>npm run lint</code>.</li>
+    </ul>
+  </div>
+  <div class="tl no-print">
+    <a href="#p0">P0</a><a href="#p1">P1</a><a href="#p2">P2</a><a href="#p3">P3</a><a href="#p4">P4</a><a href="#p5">P5</a><a href="#p6">P6</a><a href="#p7">P7</a><a href="#p8">P8</a><a href="#p9">P9</a>
+  </div>
+</section>
+
+<!-- ================================================================== P0 -->
+<section id="p0">
+  <h2><span class="n">P0</span> Backend check <span class="b ph">koi app code nahi</span></h2>
+  <div class="ph">
+    <div class="kv"><span>Goal: <b>pakka karna ki legacy endpoints Next server se chalenge</b></span><span>Depends on: <b>—</b></span></div>
+    <h4>Kaam</h4>
+    <ol class="chk">
+      <li>Test student se login (:8080 SSO, test student IDs) karke Next server se ek temporary script chalao jo <code>backendRequest</code> jaisa Bearer header bheje.</li>
+      <li>Har JSON endpoint call karo: <code>list</code>, <code>children</code>, <code>unread</code>, <code>email</code>, <code>notification</code>, <code>announcement</code>, <code>star</code>, <code>mark-all-read</code>, <code>compose/contacts</code>, <code>compose/reply</code>, <code>sent</code>, <code>email-settings</code>. Sab <code>status "1"</code> dein.</li>
+      <li>Dono GET check karo: <code>email-content?payload=</code> HTML aur CSP header deta hai; <code>attachment?payload=</code> <b>302</b> deta hai (fetch me <code>redirect: "manual"</code>).</li>
+      <li>Multipart <code>compose/send</code> ek test teacher ko 1 chhoti file ke saath bhejo (sirf dev / UAT par).</li>
+      <li>Confirm karo: student role ke paas <code>inbox</code> right hai, sidebar menu me pageLink <code>inbox</code> (aur <code>inbox-compose</code>) aata hai.</li>
+      <li>Har environment ka S3 host note karo (attachment redirect kahan jaata hai) → <code>INBOX_ATTACHMENT_HOSTS</code> env value.</li>
+      <li>Temporary script delete karo.</li>
+    </ol>
+    <h4>Done kab</h4>
+    <p>Saare endpoints test student ke liye kaam karte hain aur S3 host list tay hai. Koi endpoint fail ho to yahin ruk ke backend issue note karo.</p>
+  </div>
+</section>
+
+<!-- ================================================================== P1 -->
+<section id="p1">
+  <h2><span class="n">P1</span> Foundation</h2>
+  <div class="ph">
+    <div class="kv"><span>Goal: <b>service, utils, hooks aur route taiyaar; page skeleton dikhaye</b></span><span>Depends on: <b>P0</b></span></div>
+    <h4>Nayi files</h4>
+    <div class="tw"><table>
+      <thead><tr><th>File</th><th>Is phase me kya</th></tr></thead>
+      <tbody>
+        <tr><td><code>services/inboxApi.js</code></td><td><code>"use server"</code>. Helper <code>inboxCall(path, body)</code> → <code>backendRequest({ path: "dashboard/inbox/" + path, buildBody: () =&gt; body })</code>; status <code>"0"</code>/<code>"2"</code> ko <code>{ok:false, code:"REFUSED", message}</code> banana. Read functions: <code>listInbox</code>, <code>getInboxChildren</code>, <code>getInboxUnread</code>.</td></tr>
+        <tr><td><code>utils/inbox.js</code></td><td><code>CHANNELS</code> (icon, label), <code>CATEGORIES</code>, <code>datePreset(preset, tz)</code> (Today / Yesterday / Last 7 / Last 30, user timezone, fallback Asia/Singapore), <code>formatInboxTime(epoch, tz)</code>, <code>sanitizeFilter(input)</code> (whitelist).</td></tr>
+        <tr><td><code>hooks/useInbox.js</code></td><td><code>useInboxList(filters)</code> key <code>["inbox", userId, "list", filters]</code>, <code>placeholderData: keepPreviousData</code>; <code>useInboxChildren()</code>; <code>useInboxUnread()</code> key <code>["inbox", userId, "unread"]</code>. Sab <code>callServer</code> ke through.</td></tr>
+        <tr><td><code>app/[school]/(dashboard)/student/inbox/page.jsx</code></td><td><code>&lt;Inbox /&gt;</code> render (catch-all <code>[...module]</code> ko override).</td></tr>
+        <tr><td><code>components/student/inbox/Inbox.jsx</code></td><td>Page frame: title, header actions (abhi disabled), skeleton rows. <code>isK5</code> branch ki jagah abhi placeholder.</td></tr>
+      </tbody>
+    </table></div>
+    <h4>Endpoints</h4>
+    <p><code>list</code>, <code>children</code>, <code>unread</code></p>
+    <h4>Kaam</h4>
+    <ol class="chk">
+      <li>Next docs padho: Server Actions aur Route Handlers (<code>01-getting-started/15-route-handlers.md</code>).</li>
+      <li><code>sanitizeFilter</code>: channel ∈ ALL/EMAIL/NOTIFICATION/ANNOUNCEMENT/WHATSAPP, read ∈ ALL/UNREAD/READ, dates <code>yyyy-MM-dd</code>, pageSize ∈ 20/50/100, search max 200 chars, categories sirf known list se, <code>childUserId</code> number ya null.</li>
+      <li><code>listInbox(filter)</code> server par dobara <code>sanitizeFilter</code> chalaye (client par bharosa nahi).</li>
+      <li>Route banao, sidebar se kholo, skeleton dikhe.</li>
+    </ol>
+    <h4>Security</h4>
+    <ul><li>S5: filter whitelist server par. Koi <code>userId</code> param nahi.</li></ul>
+    <h4>Done kab</h4>
+    <p>Sidebar ka "Inbox" naye route par khulta hai, skeleton dikhta hai, aur React Query devtools me <code>list</code> + <code>unread</code> ka data aata hai. Lint clean.</p>
+  </div>
+</section>
+
+<!-- ================================================================== P2 -->
+<section id="p2">
+  <h2><span class="n">P2</span> Inbox list</h2>
+  <div class="ph">
+    <div class="kv"><span>Goal: <b>legacy jaisi list: tabs, filters, pager, star, mark all read, badge</b></span><span>Depends on: <b>P1</b></span></div>
+    <h4>Nayi / badli files</h4>
+    <div class="tw"><table>
+      <thead><tr><th>File</th><th>Is phase me kya</th></tr></thead>
+      <tbody>
+        <tr><td><code>components/student/inbox/InboxFilters.jsx</code></td><td>Search, date preset select, Custom par do date pickers, read select, category select, With attachments / Starred checkboxes, Child select (sirf jab <code>children</code> khaali na ho), Apply. Phone par "Filters" Sheet.</td></tr>
+        <tr><td><code>components/student/inbox/InboxList.jsx</code>, <code>InboxRow.jsx</code></td><td>Rows: channel icon, title, sender, chips (child, category), preview, time, paperclip, star button, "Not delivered to your email" warning, unread bold. Summary line aur pager (Newer / Older, "Page x of y").</td></tr>
+        <tr><td><code>services/inboxApi.js</code></td><td>+ <code>toggleInboxStar(channel, id)</code>, <code>markAllInboxRead()</code>.</td></tr>
+        <tr><td><code>hooks/useInbox.js</code></td><td>+ <code>useToggleStar</code> (optimistic update, error par rollback + toast), <code>useMarkAllRead</code> (success par <code>list</code> + <code>unread</code> invalidate).</td></tr>
+        <tr><td><code>components/dashboard/Sidebar.jsx</code>, <code>components/k5/K5NavRail.jsx</code></td><td><code>inbox</code> item par unread count badge (<code>useInboxUnread().TOTAL</code>, 0 ho to badge nahi).</td></tr>
+      </tbody>
+    </table></div>
+    <h4>Endpoints</h4>
+    <p><code>list</code>, <code>star</code>, <code>mark-all-read</code>, <code>children</code>, <code>unread</code></p>
+    <h4>Kaam</h4>
+    <ol class="chk">
+      <li>Tabs All / Emails / Notifications / Announcements (WhatsApp P8 tak hidden, Sent P5 me). Tab badalne par page 1.</li>
+      <li>Default filter: Last 30 days, read ALL, pageSize 20.</li>
+      <li>Filter state URL search params me nahi, component state me (legacy jaisa); Apply / tab change par query key badle.</li>
+      <li>Purane answers apne aap ignore (React Query key se) — legacy ka <code>request</code> counter ki zaroorat nahi.</li>
+      <li>Summary: "Nothing here for these filters." / "37 items" / 500 se zyada par "newest … listed" message.</li>
+      <li>Refusal (<code>status "0"</code>) ka message toast me; list waisi hi rahe.</li>
+      <li>Mark all as read ke baad list + badge refresh.</li>
+    </ol>
+    <h4>UI notes</h4>
+    <ul><li>Regular skin. Skeleton rows load aur page badalte waqt. Star button <code>aria-pressed</code>, row button keyboard se khule.</li></ul>
+    <h4>Tests</h4>
+    <p>IN-01 se IN-08, IN-14, IN-15, IN-16, TZ-01 (presets), UI-03 (filters Sheet).</p>
+    <h4>Done kab</h4>
+    <p>Test student legacy jaisa hi list dekh, filter, page, star aur mark-all kar sakta hai; badge sahi number dikhata hai.</p>
+  </div>
+</section>
+
+<!-- ================================================================== P3 -->
+<section id="p3">
+  <h2><span class="n">P3</span> Reader + attachment download</h2>
+  <div class="ph">
+    <div class="kv"><span>Goal: <b>har item kholna, email body safe dikhana, attachment download</b></span><span>Depends on: <b>P2</b></span></div>
+    <h4>Nayi / badli files</h4>
+    <div class="tw"><table>
+      <thead><tr><th>File</th><th>Is phase me kya</th></tr></thead>
+      <tbody>
+        <tr><td><code>components/student/inbox/InboxReader.jsx</code></td><td>shadcn Dialog (mobile par Sheet). Views: Email (sender, time, child chip, undelivered notice, attachments, iframe body, Print), Notification (text), Announcement (text, attachment, "I have read this"), WhatsApp (sirf naam + note, list ke data se).</td></tr>
+        <tr><td><code>app/api/inbox/email-content/route.js</code></td><td>GET <code>?payload=</code>: session se Bearer, backend <code>email-content</code> call, HTML wapas; backend ka CSP header copy, <code>X-Content-Type-Options: nosniff</code>, <code>Cache-Control: no-store</code>.</td></tr>
+        <tr><td><code>app/api/inbox/attachment/route.js</code></td><td>GET <code>?payload=</code>: <code>redirect: "manual"</code>, 302 ka <code>Location</code> sirf <code>https:</code> + <code>INBOX_ATTACHMENT_HOSTS</code> par maano, file stream karo <code>Content-Disposition: attachment</code> aur readable naam ke saath (9-digit prefix hata ke). 403/400/503 ka backend text wapas.</td></tr>
+        <tr><td><code>services/inboxApi.js</code></td><td>+ <code>openInboxEmail(id)</code>, <code>openInboxNotification(id)</code>, <code>openInboxAnnouncement(id, childUserId)</code>, <code>acknowledgeInboxAnnouncement(id, childUserId)</code>.</td></tr>
+        <tr><td><code>hooks/useInbox.js</code></td><td>+ <code>useInboxItem(channel, id)</code> (success par <code>list</code> + <code>unread</code> invalidate), <code>useAcknowledge</code>.</td></tr>
+        <tr><td><code>utils/inbox.js</code></td><td>+ <code>downloadInboxAttachment(a)</code> (fetch → blob → <code>&lt;a download&gt;</code>, 401 par session-expired), <code>shownAttachmentName(name)</code>.</td></tr>
+      </tbody>
+    </table></div>
+    <h4>Endpoints</h4>
+    <p><code>email</code>, <code>notification</code>, <code>announcement</code>, <code>acknowledge</code>, <code>GET email-content</code>, <code>GET attachment</code></p>
+    <h4>Kaam</h4>
+    <ol class="chk">
+      <li>Row click → reader khule, andar skeleton, phir detail.</li>
+      <li>Email body: <code>&lt;iframe sandbox="allow-same-origin allow-popups" src="/api/inbox/email-content?payload=…"&gt;</code>; load par height adjust (200–3000 px), legacy jaisa.</li>
+      <li>Attachment button: "Preparing…" state, error toast, readable naam se save.</li>
+      <li>Announcement attachment: abhi <code>getAttachmentUrl</code> (<code>utils/announcementAttachment.js</code>) se naye tab me (Q4 ka jawab aane tak).</li>
+      <li>"I have read this" → acknowledge → confirmation text.</li>
+      <li>Print: sirf reader ka content (print CSS).</li>
+      <li>Reply button abhi sirf dikhe jab <code>canReply</code> true ho; click P4 me jodenge.</li>
+    </ol>
+    <h4>Security</h4>
+    <ul>
+      <li>S1: dono GET Next se proxy, browser ko backend token / URL nahi.</li>
+      <li>S2: <code>dangerouslySetInnerHTML</code> kabhi nahi; iframe me <code>allow-scripts</code> nahi.</li>
+      <li>S6: non-S3 redirect par 502.</li>
+    </ul>
+    <h4>Tests</h4>
+    <p>IN-09 se IN-13, SE-02, SE-03.</p>
+    <h4>Done kab</h4>
+    <p>Har channel ka item khulta hai, read status aur badge update hote hain, attachment sahi naam se download hota hai, aur tamper kiya payload 403 deta hai.</p>
+  </div>
+</section>
+
+<!-- ================================================================== P4 -->
+<section id="p4">
+  <h2><span class="n">P4</span> Compose + Reply</h2>
+  <div class="ph">
+    <div class="kv"><span>Goal: <b>student school office / teacher ko likh sake aur reply kar sake</b></span><span>Depends on: <b>P3</b></span></div>
+    <h4>Nayi / badli files</h4>
+    <div class="tw"><table>
+      <thead><tr><th>File</th><th>Is phase me kya</th></tr></thead>
+      <tbody>
+        <tr><td><code>app/api/inbox/send/route.js</code></td><td>POST multipart (<code>to[]</code>, <code>subject</code>, <code>message</code>, <code>inReplyToId</code>, <code>files</code>). Checks: to khaali nahi, subject 1–200, message 1–10,000, max 3 files, har ek ≤5 MB, extension list (pdf, jpg, jpeg, png, gif, doc, docx, xls, xlsx, ppt, pptx, txt, csv). Phir <code>encodePayload</code> ke saath multipart Bearer se backend <code>compose/send</code> ko. Answer: backend <code>data</code> ya <code>{message}</code> (400 / 401 / 502).</td></tr>
+        <tr><td><code>services/inboxApi.js</code></td><td>+ <code>getComposeContacts()</code> (<code>{search:"", role:"", page:0}</code>), <code>getReplyDraft(id)</code>.</td></tr>
+        <tr><td><code>hooks/useInboxCompose.js</code></td><td><code>useComposeContacts()</code> (staleTime 5 min), <code>useReplyDraft(id)</code>, <code>useSendInboxMessage()</code> (mutation → <code>/api/inbox/send</code>; success par <code>sent</code> invalidate).</td></tr>
+        <tr><td><code>components/student/inbox/ComposeDialog.jsx</code></td><td>To, subject (counter), message (counter), file input (client checks, legacy wording), "Check before sending" review step, Send. Error inline; draft kabhi clear nahi hota jab tak send success na ho.</td></tr>
+        <tr><td><code>components/student/inbox/RecipientPicker.jsx</code></td><td>Chips + Popover list, client-side search (name / context), <code>maxRecipients</code> limit, school office pehle.</td></tr>
+        <tr><td><code>utils/inbox.js</code></td><td>+ <code>FILE_RULES</code>, <code>fileProblem(files)</code> (backend jaise messages).</td></tr>
+        <tr><td><code>components/student/inbox/Inbox.jsx</code>, <code>InboxReader.jsx</code></td><td>"Write a message" button (sirf <code>canCompose</code> true par), Reader ka Reply → <code>getReplyDraft</code> → Compose (To + "Re: …" bhara hua).</td></tr>
+      </tbody>
+    </table></div>
+    <h4>Endpoints</h4>
+    <p><code>compose/contacts</code>, <code>compose/reply</code>, <code>compose/send</code> (multipart)</p>
+    <h4>Kaam</h4>
+    <ol class="chk">
+      <li><code>enabled</code> false ya <code>canCompose</code> false → button hidden; <code>reason</code> text compose route par dikhe.</li>
+      <li>Send success → toast me backend <code>message</code>, dialog band, draft reset.</li>
+      <li>Background send (<code>background: true</code>) ka message bhi waisa hi dikhe.</li>
+      <li><code>skipped</code> list ho to toast / dialog me naam aur reason.</li>
+      <li>Network error ya refusal → inline error, form bhara rahe.</li>
+      <li>Reply: To lock (ek hi teacher), subject "Re: …", <code>inReplyToId</code> bheja jaaye.</li>
+    </ol>
+    <h4>Security</h4>
+    <ul>
+      <li>S4: files route handler se, Server Action limit nahi badhani.</li>
+      <li>Recipients sirf ids; backend har id dobara check karta hai. Client se koi sender id nahi.</li>
+      <li>S8: session expire par draft bana rahe.</li>
+    </ul>
+    <h4>Tests</h4>
+    <p>CO-01 se CO-09, SE-01.</p>
+    <h4>Done kab</h4>
+    <p>Student teacher ko 2 attachments ke saath message bhej sakta hai, teacher ke message ka reply kar sakta hai, galat input par legacy jaise messages aate hain.</p>
+  </div>
+</section>
+
+<!-- ================================================================== P5 -->
+<section id="p5">
+  <h2><span class="n">P5</span> Sent tab + compose route</h2>
+  <div class="ph">
+    <div class="kv"><span>Goal: <b>apne bheje messages dekhna; seedha Compose khol ke aana</b></span><span>Depends on: <b>P4</b></span></div>
+    <h4>Nayi / badli files</h4>
+    <div class="tw"><table>
+      <thead><tr><th>File</th><th>Is phase me kya</th></tr></thead>
+      <tbody>
+        <tr><td><code>services/inboxApi.js</code></td><td>+ <code>listInboxSent({from, to, search, page, pageSize})</code>.</td></tr>
+        <tr><td><code>hooks/useInboxCompose.js</code></td><td>+ <code>useInboxSent(filters)</code>; "sending" state ho to thodi der (jaise 10 s) me refetch jab tak finished na ho.</td></tr>
+        <tr><td><code>components/student/inbox/SentList.jsx</code></td><td>Subject, time, recipients (pehle kuch naam + "aur N"), state chip (sent / not sent / sending / partly), progress, paperclip, "in reply to".</td></tr>
+        <tr><td><code>app/[school]/(dashboard)/student/inbox-compose/page.jsx</code></td><td><code>&lt;Inbox openCompose /&gt;</code>.</td></tr>
+        <tr><td><code>components/student/inbox/Inbox.jsx</code></td><td>Sent tab (sirf jab compose allowed ho), Sent par read / category / child / attachments / starred filters hidden; <code>?compose=1</code> support.</td></tr>
+      </tbody>
+    </table></div>
+    <h4>Endpoints</h4>
+    <p><code>sent</code></p>
+    <h4>Tests</h4>
+    <p>CO-05 (Sent me dikhe), UI-04.</p>
+    <h4>Done kab</h4>
+    <p>Bheja message Sent me sahi state ke saath dikhta hai; <code>/student/inbox-compose</code> aur <code>?compose=1</code> Compose khol dete hain.</p>
+  </div>
+</section>
+
+<!-- ================================================================== P6 -->
+<section id="p6">
+  <h2><span class="n">P6</span> K5 skin (Grade K–5)</h2>
+  <div class="ph">
+    <div class="kv"><span>Goal: <b>chhote bachchon ke liye simple, friendly Inbox</b></span><span>Depends on: <b>P3</b> (reader), "Write to my teacher" ke liye <b>P4</b></span></div>
+    <h4>Nayi / badli files</h4>
+    <div class="tw"><table>
+      <thead><tr><th>File</th><th>Is phase me kya</th></tr></thead>
+      <tbody>
+        <tr><td><code>components/k5/pages/K5Inbox.jsx</code></td><td>Bade cards, tabs <i>All</i> / <i>From my teachers</i> / <i>School news</i>, sirf search box (advanced filters nahi), Last 30 days fixed, unread dot, star.</td></tr>
+        <tr><td><code>components/k5/pages/K5InboxReader.jsx</code></td><td>Badi text, simple header, attachment buttons, iframe body, "I have read this" bada button.</td></tr>
+        <tr><td><code>components/k5/pages/K5WriteToTeacher.jsx</code></td><td>Teacher cards se chuno (school office bhi), subject + message, attachment, review, Send. AI help / templates nahi.</td></tr>
+        <tr><td><code>components/student/inbox/Inbox.jsx</code></td><td><code>if (isK5) return &lt;K5Inbox … /&gt;</code> (<code>Attendance.jsx</code> jaisa).</td></tr>
+        <tr><td><code>components/k5/K5Skeletons.jsx</code></td><td>Inbox list ka skeleton (agar existing koi fit na ho).</td></tr>
+        <tr><td>Pico (<code>components/k5/pico/*</code>)</td><td>Inbox page tip: data load hone ke baad, pehli visit par.</td></tr>
+      </tbody>
+    </table></div>
+    <h4>Kaam</h4>
+    <ol class="chk">
+      <li>"From my teachers" = EMAIL channel jahan sender teacher ho (message: true); "School news" = ANNOUNCEMENT + NOTIFICATION. (Mapping Q8 ke jawab par final.)</li>
+      <li>Selected / active / ok states chuni hui look ke accent se (fixed green ya course colour nahi).</li>
+      <li>Font, size, spacing appearance settings se.</li>
+      <li>Wahi hooks; koi naya service nahi.</li>
+    </ol>
+    <h4>Tests</h4>
+    <p>UI-01, IN-09, IN-11, IN-13, CO-05 (K5 me).</p>
+    <h4>Done kab</h4>
+    <p>K5 test student ko K5 skin dikhti hai, message padh / download / acknowledge kar sakta hai aur teacher ko likh sakta hai.</p>
+  </div>
+</section>
+
+<!-- ================================================================== P7 -->
+<section id="p7">
+  <h2><span class="n">P7</span> Middle skin (Grade 6–8)</h2>
+  <div class="ph">
+    <div class="kv"><span>Goal: <b>Grade 6–8 ko K5 component Middle look ke saath</b></span><span>Depends on: <b>P6</b></span></div>
+    <h4>Nayi / badli files</h4>
+    <div class="tw"><table>
+      <thead><tr><th>File</th><th>Is phase me kya</th></tr></thead>
+      <tbody>
+        <tr><td><code>components/k5/pages/K5Inbox.jsx</code></td><td><code>middle</code> prop: poore tabs (All / Emails / Notifications / Announcements / Sent), search, Read filter; categories hidden. Compose me full <code>RecipientPicker</code>.</td></tr>
+        <tr><td><code>k5-middle.css</code></td><td>Inbox classes ke Middle styles.</td></tr>
+      </tbody>
+    </table></div>
+    <h4>Tests</h4>
+    <p>UI-02, UI-03.</p>
+    <h4>Done kab</h4>
+    <p>Middle flag on hone par Grade 6–8 student ko Middle skin dikhti hai, saare actions chalte hain; flag off par regular skin.</p>
+  </div>
+</section>
+
+<!-- ================================================================== P8 -->
+<section id="p8">
+  <h2><span class="n">P8</span> Extras <span class="b warn">questions par depend</span></h2>
+  <div class="ph">
+    <div class="kv"><span>Goal: <b>jo extra features approve hon, unki parity</b></span><span>Depends on: <b>P4</b>, <b>Q2 / Q3 / Q7</b></span></div>
+    <div class="tw"><table>
+      <thead><tr><th>Feature</th><th>Files</th><th>Endpoints</th><th>Shart</th></tr></thead>
+      <tbody>
+        <tr><td>Email settings dialog</td><td><code>EmailSettingsDialog.jsx</code>, <code>useEmailSettings</code>, <code>getEmailSettings</code>, <code>saveEmailSetting</code></td><td><code>email-settings</code>, <code>email-settings/save</code></td><td>Q7 = haan. Switch turant save, error par wapas.</td></tr>
+        <tr><td>Compose templates</td><td><code>getComposeAssist</code>, <code>getComposeTemplates</code>, template picker Compose me</td><td><code>compose/assist</code>, <code>compose/templates</code></td><td>Q3 = haan. K5 me nahi.</td></tr>
+        <tr><td>AI writing help</td><td><code>composeAiHelp</code>, Compose me action buttons, <code>aiRemaining</code> dikhana</td><td><code>compose/ai-help</code></td><td>Q3 = haan aur <code>aiEnabled</code> true. Suggestion sirf replace par lage.</td></tr>
+        <tr><td>WhatsApp tab</td><td>Tab + reader view (P3 me bana)</td><td><code>list</code> (channel WHATSAPP)</td><td>Q2 = haan.</td></tr>
+        <tr><td>Announcement attachment fix</td><td>Backend follow-up (alag kaam)</td><td>existing checked endpoint</td><td>Q4 ka jawab.</td></tr>
+      </tbody>
+    </table></div>
+    <h4>Done kab</h4>
+    <p>Jo approve hua wo legacy jaisa chalta hai; jo nahi hua wo hidden hai aur plan me note hai.</p>
+  </div>
+</section>
+
+<!-- ================================================================== P9 -->
+<section id="p9">
+  <h2><span class="n">P9</span> QA + handover</h2>
+  <div class="ph">
+    <div class="kv"><span>Goal: <b>sab kuch verify, docs update</b></span><span>Depends on: <b>sab phases</b></span></div>
+    <h4>Kaam</h4>
+    <ol class="chk">
+      <li>Browser me saare test cases (neeche ki table): regular, K5, Middle; desktop aur 375 px phone width; light aur dark.</li>
+      <li>Console errors aur network tab check (koi request me <code>userId</code> browser se nahi jaata).</li>
+      <li><code>npm run lint</code> aur <code>npm run build</code> clean.</li>
+      <li>Test cases <code>docs/migration/sms_next_js_migration_student_test_cases.html</code> me add.</li>
+      <li>Is plan me har phase ka status update; uncommitted files ki list user ko do (commit user karega).</li>
+    </ol>
+    <h4>Saare test cases (phase ke saath)</h4>
+    <div class="tw"><table>
+      <thead><tr><th>ID</th><th>Phase</th><th>Case</th><th>Expected</th></tr></thead>
+      <tbody>
+        <tr><td>IN-01</td><td>P1/P2</td><td>Sidebar se Inbox kholo</td><td><code>/{school}/student/inbox</code>; skeleton, phir pichhle 30 din, newest upar.</td></tr>
+        <tr><td>IN-02</td><td>P2</td><td>Tabs badlo</td><td>Sirf wahi channel; page 1.</td></tr>
+        <tr><td>IN-03</td><td>P2</td><td>Custom dates, From &gt; To</td><td>"The start date must be on or before the end date."</td></tr>
+        <tr><td>IN-04</td><td>P2</td><td>Ek saal se lamba range</td><td>"Please choose a date range of one year or less."</td></tr>
+        <tr><td>IN-05</td><td>P2</td><td>Unread + attachments + starred</td><td>Filters saath kaam karein.</td></tr>
+        <tr><td>IN-06</td><td>P2</td><td>Search</td><td>Matching items ya "Nothing here for these filters."</td></tr>
+        <tr><td>IN-07</td><td>P2</td><td>500+ items</td><td>"newest … listed" message.</td></tr>
+        <tr><td>IN-08</td><td>P2</td><td>Pager</td><td>Pehle / aakhri page par disabled; "Page x of y".</td></tr>
+        <tr><td>IN-09</td><td>P3</td><td>Unread email kholo</td><td>Body iframe me; row read; badge −1.</td></tr>
+        <tr><td>IN-10</td><td>P3</td><td>Email HTML me script</td><td>Script nahi chalti.</td></tr>
+        <tr><td>IN-11</td><td>P3</td><td>Attachment download</td><td>Readable naam; "Preparing…".</td></tr>
+        <tr><td>IN-12</td><td>P3</td><td>Tampered attachment payload</td><td>403 message toast; download nahi.</td></tr>
+        <tr><td>IN-13</td><td>P3</td><td>"I have read this"</td><td>Confirmation; dobara kholne par bhi.</td></tr>
+        <tr><td>IN-14</td><td>P2</td><td>Star / unstar</td><td>Turant badle; refuse par wapas.</td></tr>
+        <tr><td>IN-15</td><td>P2</td><td>Mark all as read</td><td>Rows read, badge 0 (announcements chhod ke).</td></tr>
+        <tr><td>IN-16</td><td>P2</td><td>Student Child filter</td><td>Hidden.</td></tr>
+        <tr><td>CO-01</td><td>P4</td><td>Recipient list</td><td>School office, phir apne teachers.</td></tr>
+        <tr><td>CO-02</td><td>P4</td><td>Writing band</td><td>Button hidden; reason text.</td></tr>
+        <tr><td>CO-03</td><td>P4</td><td>Galat subject / message length</td><td>Legacy wording.</td></tr>
+        <tr><td>CO-04</td><td>P4</td><td>4 files / 6 MB / .exe</td><td>Upload se pehle block.</td></tr>
+        <tr><td>CO-05</td><td>P4/P5</td><td>Teacher ko 2 attachments</td><td>Success toast; Sent me "sent".</td></tr>
+        <tr><td>CO-06</td><td>P4</td><td>Send par server down</td><td>Inline error; form bhara.</td></tr>
+        <tr><td>CO-07</td><td>P4</td><td>Reply</td><td>To = teacher, "Re: …".</td></tr>
+        <tr><td>CO-08</td><td>P3/P4</td><td>School email par Reply</td><td>Button nahi.</td></tr>
+        <tr><td>CO-09</td><td>P4</td><td>Daily cap</td><td>Backend refusal text.</td></tr>
+        <tr><td>SE-01</td><td>P4</td><td>Body me <code>userId</code> tamper</td><td>Ignore.</td></tr>
+        <tr><td>SE-02</td><td>P3</td><td>Session expire</td><td>Global dialog; aage request nahi.</td></tr>
+        <tr><td>SE-03</td><td>P3</td><td>Non-S3 redirect</td><td>502; redirect nahi.</td></tr>
+        <tr><td>TZ-01</td><td>P2</td><td>Timezone khaali / galat</td><td>Asia/Singapore.</td></tr>
+        <tr><td>UI-01</td><td>P6</td><td>K5 student</td><td>K5 skin, simple tabs, Pico tip.</td></tr>
+        <tr><td>UI-02</td><td>P7</td><td>Grade 6–8 (flag on)</td><td>Middle skin.</td></tr>
+        <tr><td>UI-03</td><td>P2/P7</td><td>375 px width</td><td>Filters Sheet, horizontal scroll nahi.</td></tr>
+        <tr><td>UI-04</td><td>P5</td><td><code>inbox-compose</code> / <code>?compose=1</code></td><td>Compose khula.</td></tr>
+      </tbody>
+    </table></div>
+    <h4>Done kab</h4>
+    <p>Saare applicable cases pass, lint + build clean, docs updated, user ko handover note mila.</p>
+  </div>
+</section>
+
+<!-- ================================================================== questions -->
+<section id="questions">
+  <h2><span class="n">?</span> Open questions (kis phase ko rokte hain)</h2>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Sawaal</th><th>Kis phase par asar</th></tr></thead>
+    <tbody>
+      <tr><td>Q1</td><td>Sirf student dashboard, ya parent dashboard bhi?</td><td>P2 (Child filter), P3 (announcement <code>childUserId</code>)</td></tr>
+      <tr><td>Q2</td><td>WhatsApp tab rakhna hai?</td><td>P8</td></tr>
+      <tr><td>Q3</td><td>Templates aur AI writing help students ko dena hai?</td><td>P8</td></tr>
+      <tr><td>Q4</td><td>Announcement attachments public S3 links: waisa hi rakhein ya pehle backend fix?</td><td>P3, P8</td></tr>
+      <tr><td>Q5</td><td>Attachment force download (readable naam) ya naye tab me S3 link?</td><td>P3</td></tr>
+      <tr><td>Q6</td><td>Backend Asia/Kolkata ki jagah user timezone + Asia/Singapore fallback use kare?</td><td>P2 (alag backend kaam)</td></tr>
+      <tr><td>Q7</td><td>Email settings dialog students ko chahiye?</td><td>P8</td></tr>
+      <tr><td>Q8</td><td>K5 tabs "All / From my teachers / School news" theek hain?</td><td>P6</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note warn"><b class="t">Q5 aur Q8 ka jawab P3 / P6 shuru hone se pehle chahiye.</b> Baaki questions P8 tak ruk sakte hain; P0–P2 abhi shuru ho sakte hain.</div>
+</section>
+</main>
+</div>
+
+<script>
+(function () {
+  document.getElementById("downloadPage").addEventListener("click", function () {
+    var html = "<!doctype html>\n" + document.documentElement.outerHTML;
+    var url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "communications_phase_plan_hinglish.html";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  });
+})();
+</script>
+</body>
+</html>

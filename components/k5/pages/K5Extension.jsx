@@ -1,12 +1,14 @@
 "use client";
 
-import { ChevronLeft, CirclePlus } from "lucide-react";
+import { ChevronLeft, CirclePlus, MessageSquareText } from "lucide-react";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { useK5CourseColors } from "@/hooks/useK5CourseColors";
 import { subjectStyle } from "@/utils/k5Calendar";
-import { K5Loading, K5CardsSkeleton } from "@/components/k5/K5Skeletons";
+import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { useTalkToUs } from "@/hooks/useTalkToUs";
 
 const BUTTON =
   "flex min-h-14 items-center gap-2.5 self-start rounded-full border-none bg-[#13803F] px-6 font-k5-display text-[19px] font-semibold text-white shadow-[0_5px_0_#0B5A2B] disabled:opacity-50 max-[760px]:w-full max-[760px]:justify-center";
@@ -38,13 +40,14 @@ function describe(data, afterExtension1) {
 
 /** The course tile of the list and of the course screen (mockup .axcard). */
 function CourseTile({ course, image, color, tall, onClick }) {
+  const { isMiddle } = useDashboardContext();
   const Tag = onClick ? "button" : "div";
   return (
     <Tag
       type={onClick ? "button" : undefined}
       onClick={onClick}
       className={`flex w-full flex-col overflow-hidden rounded-3xl border-[3px] bg-k5-card p-0 text-start text-inherit ${onClick ? "k5-axcard cursor-pointer" : ""}`}
-      style={{ borderColor: color, boxShadow: `0 6px 0 ${color}`, font: "inherit" }}
+      style={{ borderColor: color, boxShadow: `0 ${isMiddle && !tall ? 2 : 6}px 0 ${color}`, font: "inherit", ...(isMiddle ? { borderRadius: 16 } : null) }}
     >
       <div className={`relative w-full overflow-hidden bg-k5-soft ${tall ? "h-[260px]" : "h-[170px]"}`}>
         <OptimizedImage src={image} alt={tall ? course.subjectName || "" : ""} width={440} height={320} sizes="(max-width: 760px) 100vw, 25vw" className="block h-full w-full object-cover" />
@@ -57,26 +60,58 @@ function CourseTile({ course, image, color, tall, onClick }) {
   );
 }
 
+/** "Academic Year Extension" title row. Grade 6–8 (Middle.dc.html): no card, a 62px accent tile, a 30px heading. */
+function ExtensionHeader() {
+  const { isMiddle } = useDashboardContext();
+  return (
+    <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
+      <span
+        className={isMiddle ? "flex h-[62px] w-[62px] flex-none items-center justify-center bg-k5-act" : "flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-gt"}
+        style={isMiddle ? { borderRadius: 14 } : undefined}
+      >
+        <CirclePlus className={isMiddle ? "h-[34px] w-[34px] text-k5-ac" : "h-12 w-12 text-k5-gi"} strokeWidth={2.4} aria-hidden="true" />
+      </span>
+      <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
+        <h1 className={`m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-4xl"}`}>Academic Year Extension</h1>
+        <p className={`m-0 font-extrabold text-k5-mut ${isMiddle ? "text-base" : "text-lg"}`}>Your courses this year.</p>
+      </div>
+    </div>
+  );
+}
+
+/** The course list while it loads: the title, the card with its heading and four course tiles (picture and coloured name), the notice. */
+function ExtensionSkeleton() {
+  return (
+    <K5Loading label="Loading your courses" className="flex flex-col gap-4">
+      <ExtensionHeader />
+      <div className={`${K5_CARD} flex flex-col items-center gap-[18px] p-[22px] max-[760px]:p-4`}>
+        <K5Sk className="h-8 w-[min(560px,90%)]" />
+        <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-[18px]">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="flex flex-col overflow-hidden rounded-3xl border-[3px] border-k5-line bg-k5-card">
+              <K5Sk className="h-[170px] w-full rounded-none" />
+              <span className="flex flex-col gap-2 px-4 pb-3.5 pt-3">
+                <K5Sk className="h-3.5 w-24" />
+                <K5Sk className="h-5 w-3/4" />
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <K5Sk className="h-[56px] w-full rounded-[18px]" />
+    </K5Loading>
+  );
+}
+
 function ListView({ loading, message, courses, imageOf, onOpen }) {
   const colorOf = useCourseColor();
   usePicoContentReady(!loading);
+  if (loading) return <ExtensionSkeleton />;
   return (
     <div className="flex flex-col gap-4">
-      <div className={`${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
-        <span className="flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-gt">
-          <CirclePlus className="h-12 w-12 text-k5-gi" strokeWidth={2.4} aria-hidden="true" />
-        </span>
-        <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-          <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">Academic Year Extension</h1>
-          <p className="m-0 text-lg font-extrabold text-k5-mut">Your courses this year.</p>
-        </div>
-      </div>
+      <ExtensionHeader />
 
-      {loading ? (
-        <K5Loading label="Loading your courses">
-          <K5CardsSkeleton count={3} />
-        </K5Loading>
-      ) : (
+      {(
         <>
           <section aria-labelledby="k5-ax" className={`${K5_CARD} flex flex-col gap-[18px] p-[22px] max-[760px]:p-4`}>
             <h2 id="k5-ax" className="m-0 text-center font-k5-display text-[28px] font-semibold leading-tight text-k5-acx max-[760px]:text-[22px]">
@@ -103,6 +138,8 @@ function ListView({ loading, message, courses, imageOf, onOpen }) {
 
 function DetailView({ selected, afterExtension1, busy, onAvail, onBack }) {
   const colorOf = useCourseColor();
+  const { isMiddle } = useDashboardContext();
+  const talkToUs = useTalkToUs();
   const { data, image } = selected;
   const color = colorOf(data);
   const { lines, action } = describe(data, afterExtension1);
@@ -130,8 +167,14 @@ function DetailView({ selected, afterExtension1, busy, onAvail, onBack }) {
               <span key={i} className="block">{line}</span>
             ))}
           </p>
+          {data.showNotEligible && (
+            <button type="button" onClick={talkToUs} className={BUTTON} style={isMiddle ? { boxShadow: "0 2px 0 #0B5A2B" } : undefined}>
+              <MessageSquareText className="h-6 w-6" strokeWidth={2.4} aria-hidden="true" />
+              Contact School Administrator
+            </button>
+          )}
           {action && (
-            <button type="button" disabled={busy} onClick={() => onAvail(action.type)} className={BUTTON}>
+            <button type="button" disabled={busy} onClick={() => onAvail(action.type)} className={BUTTON} style={isMiddle ? { boxShadow: "0 2px 0 #0B5A2B" } : undefined}>
               {action.label}
             </button>
           )}
