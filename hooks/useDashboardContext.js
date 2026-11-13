@@ -280,7 +280,6 @@ export function DashboardProvider({ role = "student", children }) {
 }
 
 export function useDashboardContext() {
-  
   const value = useContext(DashboardContext);
   if (value === null) {
     throw new Error("useDashboardContext must be used within a DashboardProvider");

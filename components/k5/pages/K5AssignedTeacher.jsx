@@ -12,7 +12,7 @@ import { useK5CourseColors } from "@/hooks/useK5CourseColors";
 import { getStudentCourseContent } from "@/services/dashboardApi";
 import { courseTint, subjectStyle } from "@/utils/k5Calendar";
 import { hasDueDate, openLmsLesson } from "@/utils/lmsCourseLink";
-import { K5Loading, K5CardsSkeleton, K5ListSkeleton } from "@/components/k5/K5Skeletons";
+import { K5Loading, K5Sk, K5TeacherSkeleton } from "@/components/k5/K5Skeletons";
 
 function asArray(value) {
   if (!value) return [];
@@ -23,7 +23,8 @@ function initials(name) {
   return String(name || "?")
     .replace(/^(mr|ms|mrs|dr)\.?\s+/i, "")
     .split(/\s+/)
-    .filter(Boolean)
+    // a stray "." or "-" in the name is not a word ("Abhilasha ." is "A", not "A.")
+    .filter((part) => /[\p{L}\p{N}]/u.test(part[0] || ""))
     .slice(0, 2)
     .map((part) => part[0].toUpperCase())
     .join("");
@@ -37,7 +38,7 @@ function splitLesson(name) {
 
 /** The course's lessons, grouped by module and collapsible (mockup "Course calendar" dialog), in the course's colour. */
 function CourseContentDialog({ course, color, onClose }) {
-  const { context, isMiddle } = useDashboardContext();
+  const { context, isMiddle, isHigh } = useDashboardContext();
   const { schoolUUID, userId } = context ?? {};
   const themeProps = useK5ThemeProps(
     "flex h-[560px] max-h-[min(560px,calc(100vh-32px))] flex-col gap-0 overflow-hidden rounded-[28px] border-[3px] border-k5-ink bg-k5-card p-0 text-k5-ink shadow-[0_8px_0_var(--k5-ink)] ring-0 sm:max-w-[760px]",
@@ -53,8 +54,8 @@ function CourseContentDialog({ course, color, onClose }) {
 
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
-      {/* Grade 6–8: the dialog is 20px round (the shared skin would make it 18px). */}
-      <DialogContent showCloseButton={false} {...themeProps} style={isMiddle ? { borderRadius: 20 } : undefined}>
+      {/* Grade 6–8: the dialog is 20px round (the shared skin would make it 18px); Grade 9–12: 12px. */}
+      <DialogContent showCloseButton={false} {...themeProps} style={isHigh ? { borderRadius: 12 } : isMiddle ? { borderRadius: 20 } : undefined}>
         <div className="flex items-center gap-3 py-3.5 pl-5 pr-4 text-white" style={{ background: color }}>
           <DialogTitle className="m-0 min-w-0 flex-1 font-k5-display text-[22px] font-semibold leading-[1.2]">Course calendar: {course.courseName}</DialogTitle>
           <DialogDescription className="sr-only">Lessons and due dates for {course.courseName}</DialogDescription>
@@ -66,10 +67,29 @@ function CourseContentDialog({ course, color, onClose }) {
           {isLoading ? (
             <K5Loading label="Getting your lessons" className="flex flex-col gap-3.5">
               <p className="m-0 text-center text-[15px] font-extrabold text-k5-mut">Getting your lessons… this can take a little while.</p>
-              <K5ListSkeleton rows={5} />
+              {[3, 2].map((rows, m) => (
+                <div key={m} className="overflow-hidden rounded-[22px] border-[3px] border-k5-line">
+                  <div className="flex items-center gap-3 bg-k5-soft px-3.5 py-2.5">
+                    <K5Sk className="h-5 w-5 flex-none rounded-full" />
+                    <K5Sk className="h-11 w-11 flex-none rounded-[14px]" />
+                    <K5Sk className="h-5 flex-1" />
+                    <K5Sk className="h-4 w-16" />
+                  </div>
+                  {Array.from({ length: rows }, (_, i) => (
+                    <div key={i} className="flex items-center gap-3 border-t-2 border-k5-line px-3.5 py-2.5">
+                      <K5Sk className="h-10 w-10 flex-none rounded-xl" />
+                      <span className="flex flex-1 flex-col gap-1.5">
+                        <K5Sk className="h-3 w-12" />
+                        <K5Sk className="h-4 w-3/5" />
+                      </span>
+                      <K5Sk className="h-7 w-24 flex-none rounded-full" />
+                    </div>
+                  ))}
+                </div>
+              ))}
             </K5Loading>
           ) : modules.length === 0 ? (
-            <p className="m-0 rounded-[20px] bg-k5-soft px-4 py-7 text-center font-k5-display text-xl font-semibold text-k5-mut" style={isMiddle ? { borderRadius: 14 } : undefined}>{data === null ? "Unable to load the course calendar." : "No course content found."}</p>
+            <p className="m-0 rounded-[20px] bg-k5-soft px-4 py-7 text-center font-k5-display text-xl font-semibold text-k5-mut" style={isHigh ? { borderRadius: 10 } : isMiddle ? { borderRadius: 14 } : undefined}>{data === null ? "Unable to load the course calendar." : "No course content found."}</p>
           ) : (
             modules.map((module, index) => {
               const items = asArray(module.items);
@@ -137,7 +157,7 @@ function CourseContentDialog({ course, color, onClose }) {
 /** K–5 look of "Syllabus & Assigned Teacher" (mockup My Assigned Teacher): one card per course, in the course's colour. */
 export function K5AssignedTeacher({ courses, isLoading }) {
   const [selected, setSelected] = useState(null);
-  const { isMiddle } = useDashboardContext();
+  const { isMiddle, isHigh } = useDashboardContext();
   usePicoContentReady(!isLoading);
   const colorFor = useK5CourseColors();
   // The colour the student already sees on the home plan; a course without one falls back to its subject colour.
@@ -148,7 +168,7 @@ export function K5AssignedTeacher({ courses, isLoading }) {
       {isMiddle ? (
         // Grade 6–8 (Middle.dc.html): no card around the title — a 62px accent tile, a 30px heading.
         <div className="flex flex-wrap items-center gap-4">
-          <span className="flex h-[62px] w-[62px] flex-none items-center justify-center rounded-[14px] bg-k5-act" style={{ borderRadius: 14 }}>
+          <span className="flex h-[62px] w-[62px] flex-none items-center justify-center rounded-[14px] bg-k5-act" style={{ borderRadius: isHigh ? 10 : 14 }}>
             <UserRoundCheck className="h-[34px] w-[34px] text-k5-ac" strokeWidth={2} aria-hidden="true" />
           </span>
           <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
@@ -169,9 +189,7 @@ export function K5AssignedTeacher({ courses, isLoading }) {
       )}
 
       {isLoading ? (
-        <K5Loading label="Getting your courses">
-          <K5CardsSkeleton count={4} />
-        </K5Loading>
+        <K5TeacherSkeleton />
       ) : courses.length === 0 ? (
         <p className={`${K5_CARD} m-0 p-8 text-center font-k5-display text-2xl font-semibold text-k5-mut`}>No courses yet.</p>
       ) : (

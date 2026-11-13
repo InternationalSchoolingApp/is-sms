@@ -356,11 +356,63 @@ export async function getStudentAcademicPerformance({ schoolUUID, userId, k5Perf
   try {
     // k5Performance: the new My Performance page; the backend answers from the daily cron's tables, not the LMS.
     const body = { userId, studentUserId: userId, ...(k5Performance ? { k5Performance: "Y", includeClassComparison: "Y" } : {}) };
-    return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-academic-performance", body);
+    const data =  await postDashboardPayload(schoolUUID, "/dashboard/parent/student-academic-performance", body);
+    console.log("getStudentAcademicPerformance data:", data, null, 2);
+    return data;
   } catch {
     return null;
   }
 }
+
+// export async function getStudentAcademicPerformance({schoolUUID,userId,k5Performance = false}) {
+//   if (!hasBackendOrigin() || !schoolUUID || !userId) {return null;}
+
+//     try {
+//         const body = {
+//             userId,
+//             studentUserId: userId,
+//             ...(k5Performance
+//                 ? {
+//                     k5Performance: "Y",
+//                     includeClassComparison: "Y"
+//                 }
+//                 : {})
+//         };
+
+//         console.log("Academic Performance Request:", {
+//             schoolUUID,
+//             body
+//         });
+
+//         const data = await postDashboardPayload(
+//             schoolUUID,
+//             "/dashboard/parent/student-academic-performance",
+//             body
+//         );
+
+//         console.log(
+//             "Academic Performance Full Response:",
+//             JSON.stringify(data, null, 2)
+//         );
+
+//         console.log(
+//             "Student Academic Performances:",
+//             JSON.stringify(data)
+            
+//         );
+
+//         console.log(
+//             "K5 Performance:",
+//             k5Performance
+//         );
+
+//         return data;
+
+//     } catch (error) {
+//         console.error("Academic Performance API Error:", error);
+//         return null;
+//     }
+// }
 
 /**
  * Progress Reports ("My Progress Reports", sidebar segment progress-detail) — legacy
