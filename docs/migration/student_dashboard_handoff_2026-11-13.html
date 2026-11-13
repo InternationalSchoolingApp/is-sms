@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Student Dashboard Handover</title>
+<style>
+  :root {
+    --bg: #f6f7fb; --card: #ffffff; --ink: #1c2640; --mut: #5b6478; --line: #dfe3ec;
+    --ac: #2563eb; --act: #e8f0ff; --ok: #15803d; --okt: #e7f7ed; --warn: #a16207; --warnt: #fef6e0;
+    --bad: #b91c1c; --badt: #fdecec; --code: #f1f3f8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1420; --card: #171d2b; --ink: #e8ecf4; --mut: #9aa3b5; --line: #2a3246;
+      --ac: #7aa2ff; --act: #1d2a47; --ok: #4ade80; --okt: #12301f; --warn: #fbbf24; --warnt: #33290d;
+      --bad: #f87171; --badt: #3a1717; --code: #1f2638;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  h2 { font-size: 21px; margin: 34px 0 10px; padding-top: 6px; border-top: 2px solid var(--line); }
+  h3 { font-size: 16px; margin: 18px 0 6px; }
+  p { margin: 6px 0; }
+  .sub { color: var(--mut); margin: 0 0 18px; }
+  .note { border-left: 4px solid var(--ac); background: var(--act); padding: 10px 14px; border-radius: 8px; margin: 10px 0; }
+  .warn { border-left-color: var(--warn); background: var(--warnt); }
+  .bad { border-left-color: var(--bad); background: var(--badt); }
+  code { background: var(--code); padding: 1px 5px; border-radius: 5px; font: 13px/1.4 ui-monospace, Consolas, monospace; overflow-wrap: anywhere; }
+  pre { background: var(--code); padding: 12px 14px; border-radius: 10px; overflow-x: auto; font: 13px/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap; }
+  .tw { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { background: var(--code); font-weight: 700; }
+  tr:last-child td { border-bottom: none; }
+  .b { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .b.ok { background: var(--okt); color: var(--ok); }
+  .b.warn { background: var(--warnt); color: var(--warn); }
+  .b.bad { background: var(--badt); color: var(--bad); }
+  .b.in { background: var(--act); color: var(--ac); }
+  ul, ol { margin: 6px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+  nav.toc { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 16px; }
+  nav.toc ol { columns: 2; column-gap: 32px; }
+  @media (max-width: 640px) { nav.toc ol { columns: 1; } h1 { font-size: 23px; } }
+  a { color: var(--ac); }
+</style>
+</head>
+<body>
+<main>
+<h1>Student Dashboard — Handover</h1>
+<p class="sub">is-sms (Next.js frontend) + is-rest-api (Java backend) · status as of 2026-11-13 · for the developer taking over the student dashboard</p>
+
+<div class="note"><b>In one paragraph:</b> the student dashboard has been moved from the Java/JSP app into is-sms page by page. Eighteen pages plus 24 club pages have real pages; the newest is the Inbox (Communication), committed on 2026-11-13. What is left is a list of smaller gaps: a few menu pages with no page yet, and elements missing on the home page, in the header and inside migrated pages. That list is <a href="#queue">section 8</a>. Nothing in it has been started, and the order has not been decided.</div>
+
+<nav class="toc"><ol>
+  <li><a href="#setup">Repos, branches, running</a></li>
+  <li><a href="#rules">Rules to follow</a></li>
+  <li><a href="#arch">How the dashboard is built</a></li>
+  <li><a href="#legacy">Where the legacy truth is</a></li>
+  <li><a href="#inbox">Inbox module (new)</a></li>
+  <li><a href="#done">What is migrated</a></li>
+  <li><a href="#reenrol">Re-enrollment branches</a></li>
+  <li><a href="#queue">Work queue (gap list)</a></li>
+  <li><a href="#open">Open decisions</a></li>
+  <li><a href="#unverified">Not verified</a></li>
+  <li><a href="#gotchas">Gotchas</a></li>
+  <li><a href="#docs">Related documents</a></li>
+</ol></nav>
+
+<h2 id="setup">1. Repos, branches, running</h2>
+<div class="tw"><table>
+<tr><th>Project</th><th>Branch</th><th>Tip on 2026-11-13</th><th>Holds</th></tr>
+<tr><td>is-sms (Next.js 16, React 19)</td><td><code>feature/version_1_3_0_phase4</code></td><td><code>da9f8b2</code></td><td>Student dashboard with the three grade looks, including the Inbox</td></tr>
+<tr><td>is-sms</td><td><code>feature/version_1_2_0_phase3</code></td><td><code>7f91790</code></td><td>Everything in phase4 plus 24 commits of re-enrollment work</td></tr>
+<tr><td>is-rest-api (Spring Boot)</td><td><code>feature/63_0_0_STUDENT_DASHBOARD_NEXTJS_PHASE4</code></td><td><code>a5bd2bd110</code></td><td>Backend for the dashboard, including the Inbox endpoints</td></tr>
+<tr><td>is-rest-api</td><td><code>feature/63_0_0_STUDENT_ENROLLEMNT_NEXTJS_PHASE3</code></td><td><code>4a71e778ec</code></td><td>Re-enrollment backend. It has 20 commits the dashboard branch lacks, and lacks 2 from it ("Student New Dashboard Part 25" and a merge, both 2026-11-13)</td></tr>
+</table></div>
+<ul>
+  <li><b>Run the frontend:</b> <code>npm run dev</code> (port 3000). The backend runs on port 8080.</li>
+  <li><b>Sign in for testing:</b> through the backend login page (<code>http://localhost:8080/&lt;school&gt;/common/login</code>), which sends a student on to the Next.js dashboard. This comes from the 2026-11-07 handoff.</li>
+  <li><b>Grade looks:</b> grades 6–8 and 9–12 only get their look when <code>NEXT_PUBLIC_MIDDLE_DASHBOARD=true</code> and <code>NEXT_PUBLIC_HIGH_DASHBOARD=true</code> are set in <code>.env.local</code>. Without them those students get the old shell. Neither flag is listed in <code>.env.example</code>.</li>
+  <li><b>Dummy student:</b> add <code>?dummyStudent=Y&amp;dummyGrade=3</code> (or <code>10</code>, <code>K</code>) to any dashboard address to see a look with sample data.</li>
+  <li><b>Backend switches:</b> <code>STUDENT_DASHBOARD_VIA_NEXTJS</code> sends students to the Next.js dashboard. <code>MAILBOX_ENABLED</code> (settings) turns on writing messages in the Inbox; it is treated as off when it cannot be read.</li>
+  <li><b>Checks before handing work back:</b> <code>npm run lint</code>, <code>npm run build</code>, and the logic checks that match the page, for example <code>npm run verify:inbox</code> (17 checks) or <code>npm run verify:contact-check</code>.</li>
+</ul>
+
+<h2 id="rules">2. Rules to follow</h2>
+<ul>
+  <li><b>Do not commit or push without the project owner's approval.</b> Build, check, show, then wait.</li>
+  <li><b>Use the existing backend endpoints.</b> The Inbox was built with no is-rest-api change. Where a gap needs a backend field (see the Transcript row), raise it first.</li>
+  <li><b>Next.js 16 is not the version most references describe.</b> Read the guide in <code>node_modules/next/dist/docs/</code> before writing Next-specific code (<code>AGENTS.md</code>).</li>
+  <li><b>Time zones:</b> use the user's own zone; when it is missing or invalid fall back to <code>Asia/Singapore</code>; never overwrite a valid configured zone (<code>AGENTS.md</code>).</li>
+  <li><b>Images:</b> prefer <code>next/image</code>; never switch off the image lint rule globally (<code>CLAUDE.md</code>).</li>
+  <li><b>After changing code</b> run <code>graphify update .</code> so the knowledge graph in <code>graphify-out/</code> stays current (<code>CLAUDE.md</code>).</li>
+  <li><b>Wording:</b> clear messages a student can act on, not "invalid request" or "refresh your browser". The school name always comes from the session, never hard-coded.</li>
+  <li><b>Real data:</b> anything that sends a message, email or payment, or changes an account, is done only on a test student and only after the owner agrees.</li>
+  <li>From the 2026-11-07 handoff, still in force: use <code>components/ui/date-picker.jsx</code> instead of a native date input, and use the look's accent colour (<code>var(--k5-ac)</code>) for selected and active states.</li>
+</ul>
+
+<h2 id="arch">3. How the dashboard is built</h2>
+<h3>One page, two shells</h3>
+<ul>
+  <li>Every page is a route <code>app/[school]/(dashboard)/student/&lt;page link&gt;/page.jsx</code> that renders <code>components/student/X.jsx</code>. That component holds the old-shell version and switches to <code>components/k5/pages/K5X.jsx</code> when <code>useDashboardContext().isK5</code> is true.</li>
+  <li>The page link is the same string the backend menu uses (<code>fee-details</code>, <code>student-attendance-overview</code>, …). A menu item with no route falls to <code>student/[...module]/page.jsx</code>, which shows "This module is being migrated and will be available soon (Phase C)."</li>
+</ul>
+<h3>Three grade looks from one component tree</h3>
+<ul>
+  <li>Playful (K–5), Balanced (6–8) and Mature (9–12) are the same <code>components/k5/*</code> components. The look is only attributes on the <code>.theme-k5</code> root from <code>useK5ThemeProps()</code>: nothing for Playful, <code>data-k5-band="middle"</code> for Balanced (<code>app/k5-middle.css</code>), plus <code>data-k5-high</code> for Mature (<code>app/k5-mature.css</code>).</li>
+  <li>The Balanced and Mature skins restyle by matching the <b>exact</b> Tailwind arbitrary class spellings used in the K5 components (<code>border-[3px]</code>, <code>rounded-[26px]</code>, <code>text-[16px]</code>, <code>min-h-[48px]</code> …). A new component is skinned for free only if it uses those same spellings; anything else needs its own rule in the two skin files.</li>
+  <li>A dialog rendered outside the shell must spread the same theme props, or it loses the look.</li>
+  <li><code>useDashboardContext()</code> gives <code>isK5</code>, <code>isMiddle</code>, <code>isHigh</code>, <code>isPreK</code>, the menu and the session facts.</li>
+</ul>
+<h3>Talking to the backend</h3>
+<ul>
+  <li>Calls go through a <code>"use server"</code> file in <code>services/</code> built on <code>utils/backendRequest.js</code>. File uploads and downloads go through a route handler under <code>app/api/</code>.</li>
+  <li>The backend answers HTTP 200 with <code>{ status, message, data }</code>: <code>"1"</code> ok, <code>"0"</code> refused (show the message), <code>"2"</code> error.</li>
+  <li>Request payloads are <code>btoa(encodeURI(JSON.stringify(data)))</code>. That is an encoding, not encryption.</li>
+  <li>For a student, <code>childUserId</code> must be <code>null</code>, never <code>0</code>.</li>
+</ul>
+<h3>Menu</h3>
+<ul>
+  <li>The menu is rows in the database (<code>MODULES</code> + <code>USER_RIGHTS</code>), read through <code>POST /api/v1/module-details</code>. <code>utils/dashboardNav.js</code> maps it and <code>applyStudentNavRules()</code> hides or renames items the way the legacy sidebar did.</li>
+  <li>Icons are chosen from the label in <code>iconForLabel()</code>; the unread badge on Communication comes from <code>components/student/inbox/InboxBadge.jsx</code>, used by both <code>K5NavRail.jsx</code> and <code>Sidebar.jsx</code>.</li>
+</ul>
+<h3>Dummy student</h3>
+<p>Each page's hook has two sources with the same methods: the live one (services) and a sample one from <code>utils/dummy*.js</code>. Actions in dummy mode work in memory and reset on reload. A new page should follow the same split. My Profile does not (see D6 in the queue).</p>
+
+<h2 id="legacy">4. Where the legacy truth is</h2>
+<div class="note warn"><b>Do not judge "what a student can do" from the Java controllers.</b> <code>ClientDashboardStudentController</code> still has endpoints for Tasks, Events, PTM report, Course Timings, the LMS page, Confirmation of Studies and old Syllabus that no menu item or script calls any more. An earlier comparison made from the controllers listed those as missing; they are not reachable by a student in legacy.</div>
+<p>All paths below are in is-rest-api under <code>src/main/resources/static/theme2/js/custom/</code> unless stated.</p>
+<div class="tw"><table>
+<tr><th>Question</th><th>Where to look</th></tr>
+<tr><td>Which page links exist and which scripts draw them</td><td><code>pageConfig.js</code>, the <code>pageRequest</code> table in <code>callDashboardPageSchool</code>; student entries are lines 134–184 and 252–275</td></tr>
+<tr><td>Which function draws a script-rendered page</td><td><code>adminController.js</code>, <code>contentHandlers</code> (line 163)</td></tr>
+<tr><td>Home page</td><td><code>studentDashboardContent.js</code> (popups, gates, widgets) and <code>dashboardCalendarNew.js</code> (calendar, class and activity popups)</td></tr>
+<tr><td>Header, sidebar, footer</td><td><code>src/main/webapp/WEB-INF/views/theme2/dashboard/</code>: <code>Dashboard.jsp</code>, <code>DashboardTopHeader.jsp</code>, <code>DashboardLeftSideContentSchool.jsp</code></td></tr>
+<tr><td>What the page is given on entry</td><td><code>ClientDashboardStudentController</code>, the <code>/student/{UNIQUEUUID}</code> method</td></tr>
+<tr><td>Payment dialogs shared by cart and fees</td><td><code>commonPaymentGateway.js</code></td></tr>
+</table></div>
+<p>A legacy page is normally a pair: <code>xContent.js</code> builds the markup and <code>x.js</code> holds the behaviour.</p>
+
+<h2 id="inbox">5. Inbox module (new, committed 2026-11-13)</h2>
+<p>Commit <code>da9f8b2</code>: 24 files. Routes <code>/student/inbox</code> and <code>/student/inbox-compose</code> (opens with the compose panel). Built to the three design mockups (Playful, Balanced, Mature).</p>
+<div class="tw"><table>
+<tr><th>Part</th><th>File</th><th>Holds</th></tr>
+<tr><td>Rules and wording</td><td><code>utils/inbox.js</code></td><td>Folders, filters, date ranges, time formatting, compose checks, template filling, every user-facing string</td></tr>
+<tr><td>Logic</td><td><code>hooks/useInbox.js</code>, <code>hooks/useInboxCompose.js</code></td><td>List, reader, unread counts, star, acknowledge, settings; draft rules for new message and reply</td></tr>
+<tr><td>Backend calls</td><td><code>services/inboxApi.js</code></td><td>All inbox endpoints; each returns <code>{ ok, data }</code> or <code>{ ok: false, refused, message, sessionExpired }</code></td></tr>
+<tr><td>Route handlers</td><td><code>app/api/inbox/{email-content,attachment,send}/route.js</code></td><td>Email body as text, attachment download with a readable name, multipart send</td></tr>
+<tr><td>Grade looks</td><td><code>components/k5/pages/K5Inbox.jsx</code>, <code>K5InboxReader.jsx</code>, <code>K5InboxCompose.jsx</code></td><td>List and filters, reader, compose panel and Email settings panel</td></tr>
+<tr><td>Old shell</td><td><code>components/student/inbox/Inbox.jsx</code>, <code>InboxCompose.jsx</code>, <code>InboxBadge.jsx</code></td><td>Same logic in the standard colours; unread badge</td></tr>
+<tr><td>Sample data</td><td><code>utils/dummyInbox.js</code></td><td>12 sample messages per look; send, reply and Sent work in memory</td></tr>
+<tr><td>Checks</td><td><code>scripts/verifyInbox.mjs</code></td><td>17 logic checks (<code>npm run verify:inbox</code>)</td></tr>
+</table></div>
+<h3>Decisions already made — do not reopen without asking</h3>
+<ul>
+  <li>Student only, English only for now. No theme picker, Print, header bell or AI help.</li>
+  <li>No "Check before sending" dialog; its two warnings show above Send.</li>
+  <li>Date presets are 7, 30 (default), 90 days and This year. No "All time" (the backend caps a range at 366 days).</li>
+  <li>Mark as unread and attachment sizes are left out because the backend has neither.</li>
+  <li>The email body is fetched as text by the page and shown in a sandboxed frame through <code>srcdoc</code>. Do not change it to a frame <code>src</code>: only page requests carry the tab's <code>X-Account</code> header, so a frame address would load the wrong account or none.</li>
+  <li>The attachment route follows the backend's redirect itself and only to trusted storage hosts (<code>amazonaws.com</code> by default; override with <code>INBOX_ATTACHMENT_HOSTS</code>). The storage address is never given to the browser.</li>
+  <li>The star call's channel value is case-sensitive on the backend.</li>
+</ul>
+<h3>Backend follow-ups logged, not built</h3>
+<ul>
+  <li>A mark-as-unread endpoint; attachment size in the list; an access check on announcement attachments.</li>
+  <li>Inbox date filters are read as India days on the backend, while the page uses the user's zone. Accepted for now.</li>
+</ul>
+
+<h2 id="done">6. What is migrated</h2>
+<div class="tw"><table>
+<tr><th>Page</th><th>Page link</th><th>Grade looks</th><th>State against legacy</th></tr>
+<tr><td>Home</td><td>(root)</td><td>Yes</td><td>Gaps: see B1–B6</td></tr>
+<tr><td>My Profile</td><td><code>my-profile</code></td><td>Yes</td><td>Near complete; see D6</td></tr>
+<tr><td>Book a Session</td><td><code>book-a-session</code></td><td>Yes</td><td>Matches; old-shell table gaps in D9</td></tr>
+<tr><td>Buy Extra Classes</td><td><code>student-addon</code></td><td>Yes</td><td>Matches</td></tr>
+<tr><td>Cart and checkout</td><td><code>cart</code></td><td>Yes</td><td>See D1 and C3</td></tr>
+<tr><td>Fee Details</td><td><code>fee-details</code></td><td>Yes</td><td>See D1 and D7</td></tr>
+<tr><td>Attendance</td><td><code>student-attendance-overview</code></td><td>Yes</td><td>Matches (the grade looks add a detail view legacy lacks)</td></tr>
+<tr><td>Academic Performance</td><td><code>student-progress-report</code></td><td>Yes</td><td>See D5</td></tr>
+<tr><td>Progress Reports</td><td><code>progress-detail</code></td><td>Yes</td><td>See D2</td></tr>
+<tr><td>Transcript</td><td><code>student-transcript</code></td><td>Yes</td><td>See D3</td></tr>
+<tr><td>Examination Sheet</td><td><code>batch-student-examination-sheet</code></td><td><b>No</b></td><td>See D4</td></tr>
+<tr><td>Syllabus &amp; Assigned Teacher</td><td><code>syllabus-assigned-teacher</code></td><td>Yes</td><td>See D8</td></tr>
+<tr><td>Academic Year Extension</td><td><code>academic-year-extention</code></td><td>Yes</td><td>Matches (one mailbox link dropped)</td></tr>
+<tr><td>Video Library</td><td><code>student-video-library</code></td><td>Yes</td><td>Matches</td></tr>
+<tr><td>Student Handbook</td><td><code>student-handbook</code></td><td>Yes</td><td>Matches</td></tr>
+<tr><td>My Certificates</td><td><code>my-certificates</code></td><td>Yes</td><td>Matches in the grade looks; old-shell gaps in D9</td></tr>
+<tr><td>Login History</td><td><code>student-login-details</code></td><td>Yes</td><td>Matches</td></tr>
+<tr><td>Inbox, Compose</td><td><code>inbox</code>, <code>inbox-compose</code></td><td>Yes</td><td>Built to the designs; see section 5</td></tr>
+<tr><td>24 club pages</td><td><code>*-club</code>, <code>competitive-gaming</code></td><td>Yes</td><td>Match; six older clubs and the landing page are missing (A3, A4)</td></tr>
+<tr><td>Welcome and Setup gates</td><td><code>welcome</code>, <code>setup</code></td><td>—</td><td>Overdue fee, time-zone confirm, academic-year start and training are covered</td></tr>
+</table></div>
+
+<h2 id="reenrol">7. Re-enrollment branches</h2>
+<p>Re-enrollment is being built by its own work stream on is-sms <code>feature/version_1_2_0_phase3</code> and is-rest-api <code>feature/63_0_0_STUDENT_ENROLLEMNT_NEXTJS_PHASE3</code>. Do not rebuild it on phase4.</p>
+<ul>
+  <li><b>On phase3 already:</b> routes under <code>student/re-enrollment</code> (options, course selection, payment, review), discount offer with countdown, custom payment plan, thank-you page, and the home entry (<code>hooks/useReEnrollmentEntry.js</code>) for a graduated student.</li>
+  <li><b>Not on phase3:</b> items E1–E3 in the queue.</li>
+  <li>Dashboard work on phase4 reaches phase3 by merging phase4 into phase3; the project owner does that merge.</li>
+</ul>
+
+<h2 id="queue">8. Work queue (gap list)</h2>
+<p>From a file-by-file comparison of the legacy scripts against is-sms on 2026-11-13. It was done by reading source; nothing was run in a browser. <span class="b ok">Confirmed</span> means the gap was searched for directly in is-sms afterwards. <span class="b in">Reported</span> means it comes from the comparison pass only and should be re-read before work starts.</p>
+
+<h3>A. Menu pages with no page (they open the placeholder)</h3>
+<p>All six have no route folder (confirmed). Whether each is switched on for students in any school is <b>not known</b>: the live menu table was not read.</p>
+<div class="tw"><table>
+<tr><th>#</th><th>Page link</th><th>What legacy does</th><th>Legacy source</th><th>Size</th></tr>
+<tr><td>A1</td><td><code>student-feedback</code></td><td>Menu item with one child per feedback form. For a teacher-rating form: pick a teacher, then the form in a frame</td><td><code>feedbackNew.js</code> (574 lines), <code>feedbackContents.js</code> (149); children built in <code>DashboardLeftSideContentSchool.jsp:24-36</code></td><td>Medium</td></tr>
+<tr><td>A2</td><td><code>batch-schedule</code></td><td>Group-class calendar (daily, weekly, monthly) for batch students</td><td>Server page <code>teacher-batch-time-schedule</code>; <code>dashboardSchoolBatches.js</code> (shared with teacher and admin)</td><td>Medium to large</td></tr>
+<tr><td>A3</td><td><code>team-building-club</code>, <code>cultural-exchange-club</code>, <code>leadership-skills-club</code>, <code>debate-club</code>, <code>drama-expression-club</code>, <code>public-speaking-club</code></td><td>Same club page as the other 24</td><td><code>pageConfig.js:158-163</code>. Titles and images are already in <code>constant/Clubs.js:15-20</code></td><td>Tiny: one page folder each</td></tr>
+<tr><td>A4</td><td><code>clubs</code></td><td>Landing page: 12 club cards with Apply</td><td><code>clubs.js</code> (177), <code>clubsContent.js</code> (34)</td><td>Small</td></tr>
+<tr><td>A5</td><td><code>evaluation-test-form-details</code></td><td>Evaluation test form, server-rendered</td><td><code>pageConfig.js:78</code></td><td>Small to medium</td></tr>
+<tr><td>A6</td><td><code>my-school-calendar</code></td><td>Only a "There is no data" card</td><td><code>mySchoolCalendarContent.js</code> (36); <code>mySchoolCalendar.js</code> is empty</td><td>Trivial</td></tr>
+</table></div>
+
+<h3>B. Home page</h3>
+<div class="tw"><table>
+<tr><th>#</th><th>Missing or partial</th><th>Legacy source</th><th>is-sms today</th><th>Checked</th></tr>
+<tr><td>B1</td><td>Class feedback: "Rate this class/activity", popup when a class ends, weekly pending-feedback popup, review prompt (school 1)</td><td><code>dashboardCalendarNew.js:2584-2618, 2731-2842</code>; <code>feedbackStudentTeacher.js</code>; <code>studentDashboardContent.js:239-247, 273-274</code></td><td>None. <code>EventDetailModal.jsx:77</code> says feedback is deferred</td><td><span class="b ok">Confirmed</span></td></tr>
+<tr><td>B2</td><td>Forced "Change your password" on load (password expired, or a sibling's first login)</td><td><code>studentDashboardContent.js:179-185</code></td><td>The flags are documented in <code>services/dashboardApi.js:739</code> but nothing reads them</td><td><span class="b ok">Confirmed</span></td></tr>
+<tr><td>B3</td><td>Activity details popup (description, attachment, timed Join Event). Activities with a link cannot be joined</td><td><code>dashboardCalendarNew.js:2865-2876</code>, endpoint <code>view-extra-activity</code></td><td>Endpoint never called; activities open the basic event dialog</td><td><span class="b ok">Confirmed</span></td></tr>
+<tr><td>B4</td><td>Missed / Late status refresh when a class ends</td><td><code>dashboardCalendarNew.js:2775-2791</code></td><td><code>getLiveClassAttendanceStatus</code> exists in <code>dashboardApi.js:269</code> with no caller</td><td><span class="b ok">Confirmed</span></td></tr>
+<tr><td>B5</td><td>School email (Outlook) activation reminder with snooze</td><td><code>studentDashboardContent.js:890-995</code></td><td>Activation only inside My Profile</td><td><span class="b in">Reported</span></td></tr>
+<tr><td>B6</td><td>Partial pieces: assignment "Attempt" button to the LMS; completed-class popup (duration, teacher, rate); join popup (backend refusal message); onboarding video gating (Watch again, book training); class-time preference on first visit; calendar filters in the grade looks; complete-profile popup in the old shell</td><td><code>dashboardCalendarNew.js:2219-2456, 2622-2721, 2883-2944</code>; <code>studentDashboardContent.js:513-636, 997-1017</code>; <code>studentTimePreference.js</code></td><td>Each exists in a reduced form</td><td><span class="b in">Reported</span></td></tr>
+</table></div>
+
+<h3>C. Header and shell</h3>
+<div class="tw"><table>
+<tr><th>#</th><th>Missing or partial</th><th>Legacy source</th><th>is-sms today</th><th>Checked</th></tr>
+<tr><td>C1</td><td>WhatsApp "Need help?" link in the header</td><td><code>DashboardTopHeader.jsp:283-298</code></td><td>Only on enrollment and payment pages</td><td><span class="b ok">Confirmed</span></td></tr>
+<tr><td>C2</td><td>Quote of the moment (behind the QUOTE_SERVICE setting)</td><td><code>DashboardRightSideContent.jsp</code>, <code>mqDashboardWidget()</code></td><td>None</td><td><span class="b ok">Confirmed</span></td></tr>
+<tr><td>C3</td><td>Cart icon with count in the grade-look header</td><td><code>cartDetailContent.js:132-149</code></td><td><code>CartHeaderButton</code> is mounted only in the old shell's <code>DashboardTopHeader.jsx:87</code></td><td><span class="b ok">Confirmed</span></td></tr>
+<tr><td>C4</td><td>Automatic app-install prompt</td><td><code>Dashboard.jsp:625-634</code>, <code>appInstallNotification.js:397</code></td><td><code>AppDownloadDialog</code> opens only by hand from <code>K5Header.jsx</code></td><td><span class="b in">Reported</span></td></tr>
+<tr><td>C5</td><td>"Switch to parent" when a parent views as the student</td><td><code>DashboardTopHeader.jsp:406-412</code></td><td>None. Not known whether parents are ever sent into this dashboard</td><td><span class="b in">Reported</span></td></tr>
+</table></div>
+
+<h3>D. Inside migrated pages</h3>
+<div class="tw"><table>
+<tr><th>#</th><th>Page</th><th>Gap</th><th>Legacy source</th><th>is-sms today</th><th>Checked</th></tr>
+<tr><td>D1</td><td>Cart and Fee Details payment</td><td>No "payment already in progress" dialog (continue / start new / not now) and no already-paid handling. No "School Payment Update" dialog for an old fee</td><td><code>commonPaymentGateway.js:157-188, 262-310, 2009-2075</code></td><td><code>hooks/useCartCheckout.js</code> shows a toast only. The dialog already exists for enrollment: <code>PaymentInProgressModal.jsx</code>, <code>AddStage3ReviewPayment.jsx:674-682</code></td><td><span class="b ok">Confirmed</span></td></tr>
+<tr><td>D2</td><td>Progress Reports</td><td>Canvas (provider 40) and Courseware (41) report bodies</td><td><code>MainFileForReport.jsp:4-9</code></td><td>"This report type is not available here yet." in <code>ProgressReportView.jsx:423</code> and <code>K5ProgressReportView.jsx:317</code></td><td><span class="b ok">Confirmed</span></td></tr>
+<tr><td>D3</td><td>Transcript</td><td>Diploma link for the final grade; "(New)" label; module view-right check</td><td><code>StudentAttendance.jsp:133-146</code></td><td>Not present. <code>student-transcript-status</code> returns only grade name and view path, so the diploma link needs a backend field</td><td><span class="b in">Reported</span></td></tr>
+<tr><td>D4</td><td>Examination Sheet</td><td>No grade-look version. PDF in a plain frame, where legacy uses the PDF viewer through a proxy</td><td><code>studentExaminationSheetContent.js:16</code></td><td><code>ExamDetails.jsx</code> never checks <code>isK5</code></td><td><span class="b ok">Confirmed</span></td></tr>
+<tr><td>D5</td><td>Academic Performance (grade looks)</td><td>Remaining days, "progress (all activities)" bar, late time on a submitted activity</td><td><code>studentAcademicPerformanceContent.js:20, 23, 224-228</code></td><td>Only in the old-shell fallback table</td><td><span class="b in">Reported</span></td></tr>
+<tr><td>D6</td><td>My Profile</td><td>(a) "My contact details" card (<code>contact-check/summary</code>). (b) Dummy mode is not handled: the page loads the signed-in account's real profile, so an edit made while demonstrating would save for real</td><td><code>profileViewNewContent.js:175</code>, <code>contactCheck.js:760</code></td><td>No <code>summary</code> call anywhere; <code>hooks/useStudentProfile.js</code> has no dummy branch</td><td><span class="b ok">Confirmed</span></td></tr>
+<tr><td>D7</td><td>Fee Details (grade looks)</td><td>"Payment Under Process" for a wire transfer awaiting review (school 5)</td><td><code>studentFeeDetailsContent.js:100-102</code></td><td>In <code>FeeDetails.jsx:52</code>, not in <code>K5FeeDetails.jsx</code></td><td><span class="b in">Reported</span></td></tr>
+<tr><td>D8</td><td>Syllabus</td><td>Search and paging on the course list; in the old shell a lesson does not open the LMS</td><td><code>studentSyllabusAssignedTeacher.js:74-90, 407</code></td><td>Neither look has search or paging</td><td><span class="b in">Reported</span></td></tr>
+<tr><td>D9</td><td>Old shell only</td><td>Certificates: search, request progress, status chips. Booked classes: search, sort, paging, and Book a Class on the "All Courses" card</td><td><code>myCertificates.js:161</code>, <code>studentBookClassContent.js:987, 1127-1135</code></td><td>The grade looks have them</td><td><span class="b in">Reported</span></td></tr>
+</table></div>
+
+<h3>E. Re-enrollment family, not on the phase3 branches</h3>
+<div class="tw"><table>
+<tr><th>#</th><th>Gap</th><th>Legacy source</th><th>Checked</th></tr>
+<tr><td>E1</td><td>Reserve a Seat for next grade (eligibility popup, accept, modal) and its "Need any help" panel</td><td><code>reserveSeat.js:42-140</code>; endpoints <code>eligible-for-ras-for-next-grade</code>, <code>accept-ras-for-next-grade</code></td><td><span class="b ok">Confirmed</span> on phase4 and phase3</td></tr>
+<tr><td>E2</td><td>Programs CWS and ALL: the eligibility service answers that they keep the old flow, and is-sms has none</td><td><code>ReEnrollmentEligibilityService</code> on the PHASE3 backend branch</td><td><span class="b in">Reported</span></td></tr>
+<tr><td>E3</td><td>Grade-look styling and dummy mode for the re-enrollment pages</td><td>—</td><td><span class="b in">Reported</span></td></tr>
+</table></div>
+
+<h3>Not gaps — unreachable or switched off in legacy</h3>
+<ul>
+  <li><code>syllabus-assigned-batch-teacher</code>: the dispatcher calls <code>student-batch-teacher-content</code>, which has no Java endpoint.</li>
+  <li><code>notifications</code>: its dispatcher entry is commented out (<code>pageConfig.js:137</code>). Notifications are a folder in the Inbox now.</li>
+  <li>Tasks, Events, PTM report, Course Timings, LMS page, Confirmation of Studies, Transfer Certificate, <code>student-id-card</code> as a page, <code>payment-history</code>: no dispatcher entry or no caller. The ID card download is in My Profile.</li>
+  <li>Leave form and support tickets: not loaded for students; the sidebar includes are commented out.</li>
+  <li>Batch important-announcement popup and welcome note: always hidden. Batch re-enrollment popup: text is fixed to September 2025 and was skipped on purpose.</li>
+</ul>
+
+<h2 id="open">9. Open decisions</h2>
+<p>These were put to the project owner on 2026-11-13 and have <b>not been answered</b>. Ask before assuming.</p>
+<ol>
+  <li><b>Which gap first.</b> Suggested, not agreed: D1 with B2 (small, and they touch money and account security), then class feedback (A1 with B1), the largest missing flow.</li>
+  <li><b>Live menu.</b> Whether to read the menu tables (read-only) or the menu through the running app, to learn which of A1–A6 are switched on for students per school.</li>
+  <li><b>Re-enrollment items.</b> Whether E1–E3 stay with the re-enrollment work on phase3.</li>
+  <li><b>Old shell.</b> Whether old-shell-only gaps (D9 and parts of B6, D8) drop to lowest priority once both grade flags are on in production.</li>
+  <li><b>D6 (b).</b> Whether to fix the dummy-mode profile first as a safety item.</li>
+</ol>
+
+<h2 id="unverified">10. Not verified</h2>
+<ul>
+  <li><b>Inbox against real data:</b> attachment download (the test account had no email with a file), reply, star, Mark all as read, "I have read this" and saving an email setting. They work in dummy mode. One real send, the Sent folder, reading an email and the settings panel were checked in the Balanced look.</li>
+  <li><b>Inbox in the old shell,</b> and the Playful and Mature looks with real data (seen in dummy mode only).</li>
+  <li><b>Dummy mode menu:</b> the left menu rail showed as an empty bar on every page opened in dummy mode during the Inbox checks. Not looked into; cause unknown.</li>
+  <li><b>The gap list:</b> read from source, not run. Parts of <code>K5BookView.jsx</code>, the legacy payment options dialog and the profile validation rules were only partly read.</li>
+  <li><b>Token sign-in on pages opened from the backend</b> (transcript and diploma tabs, receipt links, certificate files, exam sheet PDF): not opened.</li>
+  <li><b>Backend code read for the comparison</b> was the is-rest-api working tree on 2026-11-13; that branch received two more commits the same day.</li>
+</ul>
+
+<h2 id="gotchas">11. Gotchas</h2>
+<ul>
+  <li>A native <code>&lt;dialog&gt;</code> opened with <code>showModal()</code> ignores <code>autoFocus</code> on a field. Focus the field in the effect right after <code>showModal()</code> (see <code>K5InboxCompose.jsx</code>).</li>
+  <li>Text from announcements and previews can contain HTML entities; pass it through <code>plainText()</code> from <code>utils/inbox.js</code> before showing it.</li>
+  <li>"Mark all as read" covers all time, while the unread count shown covers the last 30 days. Do not disable the button from that count.</li>
+  <li>Local 404s on <code>/api/v1/*</code> usually mean the dev server was started before a rewrite changed, or the backend is down. Restart <code>npm run dev</code> before looking for a code fault.</li>
+  <li><code>next dev</code> rewrites the Next.js block at the top of <code>AGENTS.md</code>; commit it with your work, do not fight it.</li>
+  <li>Other people keep stashes in this working tree. Avoid <code>git stash</code> here; a pop once failed part-way with new files in place.</li>
+  <li>The backend restarts and signs the user out on any Java class change during local work.</li>
+</ul>
+
+<h2 id="docs">12. Related documents</h2>
+<ul>
+  <li><code>docs/migration/student_dashboard_module_plan.html</code> — the original plan (2026-10-15). Its module list was made from the controllers; where it differs from section 8 here, section 8 is the newer reading.</li>
+  <li><code>docs/migration/k5_handoff_2026-11-07.html</code> — My Profile and the grade looks.</li>
+  <li><code>docs/migration/grade_k5_dashboard_plan.html</code> — the grade-look design plan.</li>
+  <li><code>docs/migration/communications_migration_plan.html</code> — the earlier Inbox plan (2026-11-12). The design mockups replaced it where they differ.</li>
+  <li><code>docs/migration/dummy-student-mode-plan.md</code> — how dummy mode is meant to work.</li>
+  <li><code>docs/migration/sms_next_js_migration_student_test_cases.html</code> — student test cases (STU-DASH-*).</li>
+  <li><code>docs/sms-token-auth.md</code> — token sign-in and the per-tab account header.</li>
+</ul>
+<h3>If you start an assistant session on this work</h3>
+<pre>Continue the student dashboard work in is-sms. Read first:
+1. docs/migration/student_dashboard_handoff_2026-11-13.html (this handover; the work queue is section 8)
+2. AGENTS.md and CLAUDE.md
+Frontend branch: feature/version_1_3_0_phase4. Backend: is-rest-api feature/63_0_0_STUDENT_DASHBOARD_NEXTJS_PHASE4.
+Do not commit or push; show the work and wait for approval.
+Re-read any "Reported" row in section 8 against the legacy script before building it.</pre>
+</main>
+</body>
+</html>

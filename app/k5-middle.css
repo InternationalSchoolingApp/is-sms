@@ -255,3 +255,13 @@
 [data-k5-band="middle"] .k5m-r14 {
   border-radius: 14px;
 }
+
+/* Inbox (mockup .cm*, page "comm"): Balanced buttons are 10px rectangles with no shadow (Playful: pills with a hard
+   offset shadow); file chips keep a 12px corner. */
+[data-k5-band="middle"] .k5-cm-btn {
+  border-radius: 10px;
+  box-shadow: none;
+}
+[data-k5-band="middle"] .k5-cm-in {
+  min-height: 46px;
+}

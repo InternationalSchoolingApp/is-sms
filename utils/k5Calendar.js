@@ -97,7 +97,7 @@ export function initials(name) {
   return String(name || "")
     .replace(/^(Mr|Mrs|Ms|Miss|Dr)\.?\s+/i, "")
     .split(/\s+/)
-    .filter(Boolean)
+    .filter((p) => /[\p{L}\p{N}]/u.test(p[0] || ""))
     .slice(0, 2)
     .map((p) => p[0].toUpperCase())
     .join("");

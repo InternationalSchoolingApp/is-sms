@@ -194,6 +194,7 @@ function mapRights(m) {
 // the same lucide keys as the static nav. Falls back to a neutral dot.
 function iconForLabel(name, pageLink) {
   const s = `${name || ""} ${pageLink || ""}`.toLowerCase();
+  if (s.includes("communication") || s.includes("inbox")) return "inbox";
   if (s.includes("dashboard")) return "dashboard";
   if (s.includes("calendar")) return "calendar";
   if (s.includes("assigned") || s.includes("teacher")) return "teacher";
