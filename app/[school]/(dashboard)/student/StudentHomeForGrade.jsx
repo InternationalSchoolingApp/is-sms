@@ -18,21 +18,16 @@ const ContactCheckModal = dynamic(() => import("@/components/contact-check/Conta
 // The "Contact check" popup is mounted here once for all three looks (K–5, Grade 6–8 skin, standard). It comes
 // first: the "Complete Your Profile" popup of the K–5 home waits until it is over, has nothing to show, or stands
 // back for a live class / another popup (hooks/useContactCheck.js).
-
-// A graduated student who has to re-enroll is sent to the re-enrollment pages instead (useReEnrollmentEntry).
+//
+// A graduated student who has to re-enroll is sent to the re-enrollment pages instead (useReEnrollmentEntry): the home
+// (and with it the contact check popup) is not shown while that is being decided or the redirect is under way.
 export function StudentHomeForGrade() {
   const { school } = useParams();
-  const { isK5, isMiddle,context } = useDashboardContext();
+  const { isK5, isMiddle, context } = useDashboardContext();
   const contactCheck = useContactCheck();
-  return (
-    <>
-      {isK5 ? <StudentHomeK5 holdProfilePopup={!contactCheck.finished} /> : <StudentHome />}
-      {contactCheck.state.phase === "open" && <ContactCheckModal check={contactCheck} band={isK5 ? (isMiddle ? "middle" : "elementary") : "high"} />}
-    </>
-  );
-  
-/*
-const { checking } = useReEnrollmentEntry({
+  const dummy = useDummyStudent();
+  const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
+  const { checking } = useReEnrollmentEntry({
     school,
     schoolUUID: context?.schoolUUID,
     userId: context?.userId,
@@ -42,6 +37,10 @@ const { checking } = useReEnrollmentEntry({
   });
 
   if (checking) return <FullScreenLoader />;
-  return isK5 ? <StudentHomeK5 /> : <StudentHome />;
-  */
+  return (
+    <>
+      {isK5 ? <StudentHomeK5 holdProfilePopup={!contactCheck.finished} /> : <StudentHome />}
+      {contactCheck.state.phase === "open" && <ContactCheckModal check={contactCheck} band={isK5 ? (isMiddle ? "middle" : "elementary") : "high"} />}
+    </>
+  );
 }
