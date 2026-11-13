@@ -165,8 +165,9 @@ function sortValue(row, key) {
  * course), 8 "Total number of …" boxes, six columns with the teacher under the course. `subjects` = the student's courses.
  */
 export function K5BookedView({ course, subjects = [], onBack, onBook }) {
-  const { isMiddle } = useDashboardContext();
+  const { isMiddle, isHigh } = useDashboardContext();
   const middle = Boolean(isMiddle);
+  const high = Boolean(isHigh);
   const colorFor = useK5CourseColors();
   const [draft, setDraft] = useState(DEFAULT_FILTER);
   const [filter, setFilter] = useState(DEFAULT_FILTER);
@@ -262,7 +263,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
       {middle ? (
         // Grade 6–8: no card around the title — a 62px accent tile, a 30px heading, Back and Book a Class (n) on the right.
         <div className="flex flex-wrap items-center gap-4">
-          <span className="flex h-[62px] w-[62px] flex-none items-center justify-center bg-k5-act" style={{ borderRadius: 14 }} aria-hidden="true">
+          <span className="flex h-[62px] w-[62px] flex-none items-center justify-center bg-k5-act" style={{ borderRadius: high ? 10 : 14 }} aria-hidden="true">
             <svg width="34" height="34" viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="stroke-k5-ac">
               <rect x="4" y="3" width="16" height="18" rx="3" />
               <path d="M8 8h8M8 12h8M8 16h5" />
@@ -344,7 +345,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
                       </span>
                       <span
                         className="flex h-11 min-w-11 flex-none items-center justify-center px-1.5 font-k5-display text-[22px] font-bold"
-                        style={{ background: tile.color, color: isLeft ? "#3A2A00" : "#FFFFFF", borderRadius: 13 }}
+                        style={{ background: tile.color, color: isLeft ? "#3A2A00" : "#FFFFFF", borderRadius: high ? 10 : 13 }}
                       >
                         {counts[tile.key] ?? 0}
                       </span>

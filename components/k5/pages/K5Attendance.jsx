@@ -93,8 +93,7 @@ function AttendanceHeader() {
   return (
     <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
       <span
-        className={isMiddle ? "flex h-[62px] w-[62px] flex-none items-center justify-center bg-k5-act" : "flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-tt"}
-        style={isMiddle ? { borderRadius: 14 } : undefined}
+        className={isMiddle ? "k5h-r10 flex h-[62px] w-[62px] flex-none items-center justify-center rounded-[0.875rem] bg-k5-act" : "flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-tt"}
       >
         <svg width={isMiddle ? 34 : 48} height={isMiddle ? 34 : 48} viewBox="0 0 24 24" fill="none" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: isMiddle ? "var(--k5-ac)" : "var(--k5-tI)" }}>
           <rect x="5" y="4" width="14" height="17" rx="2" />
@@ -116,6 +115,7 @@ function AttendanceHeader() {
  * Monthly Summary (the ring and its three rows), and Attendance Details (filters and rows).
  */
 function AttendanceSkeleton() {
+  const { isHigh } = useDashboardContext();
   return (
     <K5Loading label="Loading your attendance" className="flex flex-col gap-4">
       <AttendanceHeader />
@@ -124,7 +124,7 @@ function AttendanceSkeleton() {
           <div key={i} className={`${K5_CARD} flex items-center gap-3.5 px-4 py-3.5`}>
             <span className="flex flex-1 flex-col gap-2">
               <K5Sk className="h-4 w-32" />
-              <K5Sk className="h-9 w-20" />
+              <K5Sk className={isHigh ? "h-8 w-20" : "h-9 w-20"} />
               <K5Sk className="h-5 w-36 rounded-full" />
             </span>
             <K5Sk className="h-[54px] w-[54px] flex-none rounded-[18px]" />
@@ -138,7 +138,7 @@ function AttendanceSkeleton() {
               <K5Sk className="h-7 w-56" />
               <K5Sk className="h-4 w-48" />
             </span>
-            <K5Sk className="h-[46px] w-40 rounded-[14px]" />
+            <K5Sk className={isHigh ? "k5h-r10 h-10 w-40 rounded-[14px]" : "h-[46px] w-40 rounded-[14px]"} />
           </div>
           <div className="grid h-[240px] grid-cols-[40px_minmax(0,1fr)] gap-1.5">
             <span className="flex flex-col justify-between py-1">
@@ -166,7 +166,7 @@ function AttendanceSkeleton() {
               ))}
             </div>
           </div>
-          <K5Sk className="h-[92px] w-full rounded-[20px]" />
+          <K5Sk className="k5h-r10 h-[92px] w-full rounded-[20px]" />
         </div>
       </div>
       <div className={`${K5_CARD} flex flex-col gap-3.5 px-5 py-[18px]`}>
@@ -177,18 +177,18 @@ function AttendanceSkeleton() {
           </span>
           <K5Sk className="h-4 w-44" />
         </div>
-        <div className="flex flex-wrap items-end gap-3 rounded-[20px] bg-k5-soft px-3.5 py-3">
+        <div className="k5h-r10 flex flex-wrap items-end gap-3 rounded-[20px] bg-k5-soft px-3.5 py-3">
           {Array.from({ length: 4 }, (_, i) => (
             <span key={i} className="flex min-w-[150px] flex-1 flex-col gap-1.5">
               <K5Sk className="h-3 w-12" />
-              <K5Sk className="h-[50px] w-full rounded-[14px]" />
+              <K5Sk className={isHigh ? "k5h-r10 h-[43px] w-full rounded-[14px]" : "h-[50px] w-full rounded-[14px]"} />
             </span>
           ))}
         </div>
         <div className="overflow-hidden rounded-[18px] border-[3px] border-k5-line">
-          <div className="h-14 bg-k5-ac/25" />
+          <div className={isHigh ? "h-12 bg-k5-ac/25" : "h-14 bg-k5-ac/25"} />
           {Array.from({ length: 4 }, (_, r) => (
-            <div key={r} className={`grid grid-cols-6 items-center gap-4 border-t-2 border-k5-line px-3.5 py-3.5 ${r % 2 ? "bg-k5-soft" : "bg-k5-card"}`}>
+            <div key={r} className={`grid grid-cols-6 items-center gap-4 border-t-2 border-k5-line px-3.5 ${isHigh ? "py-2.5" : "py-3.5"} ${r % 2 ? "bg-k5-soft" : "bg-k5-card"}`}>
               {Array.from({ length: 6 }, (_, c) => (
                 <K5Sk key={c} className={`h-4 ${c === 0 ? "w-6" : "w-4/5"}`} />
               ))}
@@ -350,12 +350,12 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                             aria-label={d ? `${long}: ${d.percent}% attendance` : `${long}: Not yet`}
                             className="group relative flex h-full min-w-0 flex-1 cursor-pointer flex-col items-center justify-end gap-1 border-none bg-transparent p-0"
                           >
-                            <span className="pointer-events-none absolute bottom-[calc(100%+6px)] left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap rounded-[10px] bg-k5-ink px-2.5 py-1 text-[13px] font-black text-k5-card opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100">
+                            <span className="k5h-r10 pointer-events-none absolute bottom-[calc(100%+6px)] left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap rounded-[10px] bg-k5-ink px-2.5 py-1 text-[13px] font-black text-k5-card opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100">
                               {long}: {d ? `${d.percent}%` : "Not yet"}
                             </span>
                             <span className={`text-[13px] font-black text-k5-ink ${d && isSel ? "opacity-100" : "opacity-0"}`}>{d ? `${d.percent}%` : ""}</span>
                             <span
-                              className={`w-[min(34px,78%)] rounded-t-lg box-border transition-[height] ${d ? "bg-k5-ac" : "border-2 border-dashed border-k5-line bg-k5-soft"} ${d && !isSel ? "opacity-[0.42]" : ""}`}
+                              className={`k5h-bar w-[min(34px,78%)] rounded-t-lg box-border transition-[height] ${d ? "bg-k5-ac" : "border-2 border-dashed border-k5-line bg-k5-soft"} ${d && !isSel ? "opacity-[0.42]" : ""}`}
                               style={{ height: d ? `${d.percent}%` : "8px" }}
                             />
                           </button>
@@ -404,7 +404,7 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                         ))}
                       </svg>
                       <span className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-                        <span className="font-k5-display text-[34px] font-bold leading-none">{filter ? { present: cur.present, late: cur.late, absent: cur.absent, missS: cur.absent, missT: 0 }[filter] : cur.total}</span>
+                        <span className="k5h-at-donut font-k5-display text-[34px] font-bold leading-none">{filter ? { present: cur.present, late: cur.late, absent: cur.absent, missS: cur.absent, missT: 0 }[filter] : cur.total}</span>
                         <span className="text-xs font-black text-k5-mut">{filter ? LABEL[filter] : "classes"}</span>
                       </span>
                     </div>
@@ -439,7 +439,7 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                       })}
                     </ul>
                   </div>
-                  <div className="flex items-center gap-3.5 rounded-[20px] border-[3px] px-3.5 py-3" style={{ background: badge.bg, borderColor: badge.c2 }}>
+                  <div className="k5h-r10 flex items-center gap-3.5 rounded-[20px] border-[3px] px-3.5 py-3" style={{ background: badge.bg, borderColor: badge.c2 }}>
                     <Medal b={badge} />
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="self-start rounded-full px-2.5 py-0.5 text-xs font-black uppercase tracking-[0.04em] text-white" style={{ background: badge.c2 }}>{badge.name}</span>
@@ -449,7 +449,7 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                   </div>
                 </>
               ) : (
-                <div className="rounded-[20px] bg-k5-soft px-4 py-[30px] text-center font-k5-display text-[19px] font-semibold text-k5-mut">Not yet · No classes this month.</div>
+                <div className="k5h-r10 rounded-[20px] bg-k5-soft px-4 py-[30px] text-center font-k5-display text-[19px] font-semibold text-k5-mut">Not yet · No classes this month.</div>
               )}
             </section>
           </div>

@@ -58,7 +58,6 @@ export function AppearanceDialog({ open, onClose, firstName = "" }) {
   // student's own name ("Hi Eshal! This is my voice!"). A voice not heard before can take 10–20 seconds the first time, so the
   // preview waits for it rather than falling back to a browser voice that does not sound like the one picked.
   const hearVoice = useCallback((patch) => {
-    debugger
     const next = sanitizeAppearance({ ...draft, ...patch });
     setDraft(next);
     speak(`Hi${firstName ? ` ${firstName}` : ""}! This is my voice!`, { force: true, voice: next.voice, voiceSpeed: next.voiceSpeed, wait: 25000 });

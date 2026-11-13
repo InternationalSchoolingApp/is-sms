@@ -81,7 +81,7 @@ function Time({ part, empty = "—" }) {
  * donut / legend above ("" = all).
  */
 export function K5AttendanceDetails({ status, onStatusChange }) {
-  const { context } = useDashboardContext();
+  const { context, isHigh } = useDashboardContext();
   const isStudent = (context?.role || "student") === "student";
   const labels = isStudent ? LABEL : DETAILED_LABEL;
   const userId = context?.userId;
@@ -153,7 +153,7 @@ export function K5AttendanceDetails({ status, onStatusChange }) {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-end gap-3 rounded-[20px] bg-k5-soft px-3.5 py-3">
+      <div className="k5h-r10 flex flex-wrap items-end gap-3 rounded-[20px] bg-k5-soft px-3.5 py-3">
         <label className={FIELD_LABEL}>
           Date
           <select value={dateFilter} onChange={(e) => changeDateFilter(e.target.value)} className={SELECT}>
@@ -165,13 +165,13 @@ export function K5AttendanceDetails({ status, onStatusChange }) {
             ))}
           </select>
         </label>
-        <div className={FIELD_LABEL}>
+        <div className={`${FIELD_LABEL} k5h-at-date`}>
           From
           <DatePicker
             icon={CalendarDays}
             value={ymdToPickerDate(from)}
             disabled={!isCustom}
-            height="h-[50px]"
+            height={isHigh ? "h-[43px]" : "h-[50px]"}
             fromDate={ymdToPickerDate(bounds?.min || from)}
             toDate={ymdToPickerDate(today)}
             onChange={(date) => {
@@ -180,10 +180,10 @@ export function K5AttendanceDetails({ status, onStatusChange }) {
             }}
           />
         </div>
-        <div className={FIELD_LABEL}>
+        <div className={`${FIELD_LABEL} k5h-at-date`}>
           To
           {/* To is always today: when Custom is on the picker opens, but today is the only day that can be chosen. */}
-          <DatePicker icon={CalendarDays} value={ymdToPickerDate(to)} disabled={!isCustom} height="h-[50px]" fromDate={ymdToPickerDate(today)} toDate={ymdToPickerDate(today)} onChange={() => {}} />
+          <DatePicker icon={CalendarDays} value={ymdToPickerDate(to)} disabled={!isCustom} height={isHigh ? "h-[43px]" : "h-[50px]"} fromDate={ymdToPickerDate(today)} toDate={ymdToPickerDate(today)} onChange={() => {}} />
         </div>
         <label className={FIELD_LABEL}>
           Status

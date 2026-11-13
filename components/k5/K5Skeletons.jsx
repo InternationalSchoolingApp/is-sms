@@ -197,6 +197,33 @@ export function K5HomeLeftSkeleton() {
   );
 }
 
+/** My Assigned Teacher's course cards while they load: icon tile and name, the teacher chip, the calendar button. */
+export function K5TeacherSkeleton({ count = 6 }) {
+  return (
+    <K5Loading label="Getting your courses" className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
+      {Array.from({ length: count }, (_, i) => (
+        <div key={i} className={`${K5_CARD} flex flex-col gap-3.5 p-4`}>
+          <div className="flex items-center gap-3">
+            <K5Sk className="h-[60px] w-[60px] flex-none rounded-[18px]" />
+            <span className="flex flex-1 flex-col gap-2">
+              <K5Sk className="h-5 w-3/4" />
+              <K5Sk className="h-3.5 w-1/3" />
+            </span>
+          </div>
+          <div className="flex items-center gap-2.5 rounded-full bg-k5-soft py-1.5 pl-1.5 pr-3">
+            <K5Sk className="h-10 w-10 flex-none rounded-full" />
+            <span className="flex flex-1 flex-col gap-1.5">
+              <K5Sk className="h-3 w-20" />
+              <K5Sk className="h-4 w-32" />
+            </span>
+          </div>
+          <K5Sk className="h-[52px] w-full rounded-full" />
+        </div>
+      ))}
+    </K5Loading>
+  );
+}
+
 /** My Profile: the hero card, the section list and a grid of fields. */
 export function K5ProfileSkeleton() {
   return (

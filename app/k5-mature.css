@@ -216,6 +216,7 @@
   }
 
   /* Flat buttons: the hard offset shadows of K–5 / Middle are gone, cards keep one soft layer. */
+  &[class*="shadow-[0_2px_0_"],
   &[class*="shadow-[0_3px_0_"],
   &[class*="shadow-[0_4px_0_"],
   &[class*="shadow-[0_5px_0_"],
@@ -293,4 +294,138 @@
 [data-k5-high] .k5h-ctile,
 [data-k5-high] .k5h-cchk {
   border-radius: 8px;
+}
+
+/* ── Book a Class (High.dc.html bk*) ────────────────────────────────────────────────────────────────── */
+/* Course cards: the coloured card holds a 52px icon tile (30px icon), a 15px name, the "Book a class" chip and the small
+   Booked class details button; the skeleton uses the same measures. */
+[data-k5-high] .k5h-b-stile {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+}
+[data-k5-high] .k5h-b-sicon {
+  width: 30px;
+  height: 30px;
+}
+[data-k5-high] .k5h-b-sname {
+  font-size: 15px;
+}
+[data-k5-high] .k5h-b-booked {
+  padding: 4px 10px;
+  border-width: 1.5px;
+}
+[data-k5-high] .k5h-b-pick {
+  padding: 5px 14px;
+}
+[data-k5-high] .k5h-b-details {
+  min-height: 32px;
+  padding: 4px 12px;
+  border-width: 1.5px;
+  font-size: 12px;
+}
+[data-k5-high] .k5h-b-scard-sk {
+  min-height: 150px;
+  padding: 10px;
+  border-width: 1.5px;
+  border-radius: 12px;
+}
+/* Days: 104px tall, a 28px date. */
+[data-k5-high] .k5h-b-day {
+  min-height: 104px;
+  padding: 8px 6px;
+}
+[data-k5-high] .k5h-b-dnum {
+  font-size: 28px;
+}
+[data-k5-high] .k5h-b-day-sk {
+  height: 104px;
+  border-radius: 12px;
+}
+/* Times: 170px columns, 84px tall, a 2px edge, a 17px time and a 24px sun / cloud. */
+[data-k5-high] .k5h-b-slots {
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+}
+[data-k5-high] .k5h-b-slot {
+  min-height: 84px;
+  padding: 8px;
+  gap: 6px;
+  border-width: 2px;
+}
+[data-k5-high] .k5h-b-time {
+  font-size: 17px;
+}
+[data-k5-high] .k5h-b-sico {
+  width: 24px;
+  height: 24px;
+}
+/* Buddy bar speaker button, "Book another class", Class Breakdown tiles and table. */
+[data-k5-high] .k5h-b-bud-btn {
+  width: 46px;
+  height: 46px;
+}
+[data-k5-high] .k5h-b-another {
+  min-height: 46px;
+}
+[data-k5-high] .k5h-b-stat {
+  padding: 12px 14px;
+}
+[data-k5-high] .k5h-b-stat-l {
+  font-size: 12px;
+}
+[data-k5-high] .k5h-b-stat-v {
+  font-size: 27px;
+  font-weight: 500;
+}
+[data-k5-high] .k5h-b-thead {
+  background: var(--k5-soft);
+  font-size: 13px;
+  font-weight: 700;
+}
+[data-k5-high] .k5h-b-count {
+  color: var(--k5-ink);
+}
+/* Confirm your class dialog: 15px values, 15px buttons, 13px initials. */
+[data-k5-high] .k5h-b-cfv,
+[data-k5-high] .k5h-b-cfbtn {
+  font-size: 15px;
+}
+[data-k5-high] .k5h-b-cfini {
+  font-size: 13px;
+}
+
+/* ── My Attendance (High.dc.html atXxx): 10px corners on the header tile, tip, badge, empty state and filter bar, 8px bar tops,
+   a 29px donut number, and the From / To pickers as 13px / 500 inputs with 10px corners. */
+[data-k5-high] .k5h-r10 {
+  border-radius: 10px;
+}
+[data-k5-high] .k5h-bar {
+  border-radius: 8px 8px 0 0;
+}
+[data-k5-high] .k5h-at-donut {
+  font-size: 29px;
+}
+[data-k5-high] .k5h-at-date button {
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+}
+[data-k5-high] .k5h-at-date button span {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ── My Performance (High.dc.html pm*): 12px hero, 16px number tiles. */
+[data-k5-high] .k5h-r12 {
+  border-radius: 12px;
+}
+[data-k5-high] .k5h-r16 {
+  border-radius: 16px;
+}
+[data-k5-high] .k5h-r8 {
+  border-radius: 8px;
+}
+[data-k5-high] .k5h-r14 {
+  border-radius: 14px;
 }

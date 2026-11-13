@@ -39,6 +39,23 @@ const COPY = {
     allSub: "Super job! New tickets come on Monday.",
     noLeft: "No tickets left",
   },
+  // Grade 9–12 (High.dc.html): classes are bought, so there are no weekly free classes and nothing expires on Friday.
+  high: {
+    sub: "Select a course, a day and a time. That's it!",
+    tickets: "My classes",
+    steps: ["Select a course", "Select a day", "Select a time"],
+    any: "Only the courses you bought classes for are shown.",
+    pickMe: "Book a class",
+    say: "This is where you book classes! Each class is with your teacher.",
+    say2: "Great choice! Now select a day.",
+    say3: () => "Now select a time.",
+    sayAll: "You booked all the classes you bought!",
+    allTitle: "All your classes are booked!",
+    allSub: "Buy extra classes to book more.",
+    noLeft: "No classes left",
+    fly: "Unused classes carry forward.",
+    bookedN: (n) => n + " booked",
+  },
   middle: {
     sub: "Select a course, a day and a time. That's it!",
     tickets: "My classes",
@@ -55,8 +72,8 @@ const COPY = {
   },
 };
 function useCopy() {
-  const { isMiddle } = useDashboardContext();
-  return { middle: Boolean(isMiddle), copy: isMiddle ? COPY.middle : COPY.k5 };
+  const { isMiddle, isHigh } = useDashboardContext();
+  return { middle: Boolean(isMiddle), high: Boolean(isHigh), copy: isHigh ? COPY.high : isMiddle ? COPY.middle : COPY.k5 };
 }
 const UNKNOWN_OUTCOME =
   "We could not confirm whether your class was booked. Please refresh the page and check your booked classes before trying again.";
@@ -108,15 +125,25 @@ function BookArt({ tall = false }) {
 }
 
 function BookHeader({ teacherName, onStart, startLabel, startLoading = false }) {
-  const { middle, copy } = useCopy();
+  const { middle, high, copy } = useCopy();
   return (
     <div className={`${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
-      <span className={`flex flex-none items-center justify-center ${middle ? "h-24 w-24" : "h-[84px] w-[84px]"}`}>
-        <BookArt tall={middle} />
-      </span>
+      {high ? (
+        <span aria-hidden="true" className="flex h-14 w-14 flex-none items-center justify-center rounded-[12px] bg-k5-act">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" style={{ stroke: "var(--k5-ac)" }}>
+            <rect x="3" y="5" width="18" height="16" rx="2" />
+            <path d="M3 10h18M8 3v4M16 3v4" />
+            <path d="M9 15.5l2 2 4-4" />
+          </svg>
+        </span>
+      ) : (
+        <span className={`flex flex-none items-center justify-center ${middle ? "h-24 w-24" : "h-[84px] w-[84px]"}`}>
+          <BookArt tall={middle} />
+        </span>
+      )}
       <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
         <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">Book a Class</h1>
-        <p className="m-0 text-lg font-extrabold text-k5-mut">{copy.sub}</p>
+        <p className="k5h-b-sub m-0 text-lg font-extrabold text-k5-mut">{copy.sub}</p>
         {/* Grade 6–8: no teacher chip here (each course card names its teacher); a "Book a Class (n)" button instead. */}
         {!middle && teacherName !== undefined && <TeacherChip name={teacherName} />}
         {middle && startLoading && (
@@ -157,7 +184,7 @@ export function K5BookNotice({ loading = false, children }) {
  * grown-ups / Class Breakdown bar — so nothing jumps when the data arrives.
  */
 function BookPageSkeleton() {
-  const { middle } = useCopy();
+  const { middle, high } = useCopy();
   return (
     <K5Loading label="Loading your classes" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-stretch gap-4">
@@ -166,7 +193,7 @@ function BookPageSkeleton() {
         </div>
         <section
           className="flex flex-[1_1_400px] flex-col gap-2.5 rounded-[26px] bg-k5-yt px-5 py-4"
-          style={middle ? { background: "color-mix(in srgb, var(--k5-ac) 13%, var(--k5-card))", border: "1.5px solid color-mix(in srgb, var(--k5-ac) 28%, var(--k5-card))", borderRadius: 18 } : undefined}
+          style={high ? { background: "var(--k5-act)", border: "none", borderRadius: 12 } : middle ? { background: "color-mix(in srgb, var(--k5-ac) 13%, var(--k5-card))", border: "1.5px solid color-mix(in srgb, var(--k5-ac) 28%, var(--k5-card))", borderRadius: 18 } : undefined}
         >
           <K5Sk className="h-7 w-36" />
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[18px] bg-white/45 px-2.5 py-2">
@@ -190,7 +217,7 @@ function BookPageSkeleton() {
           <K5Sk className="h-6 w-40" />
           <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
             {Array.from({ length: 3 }, (_, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-[14px] border-[3px] border-k5-yb bg-k5-yt px-3 py-2.5" style={{ borderRadius: 14 }}>
+              <div key={i} className="flex items-center gap-3 rounded-[14px] border-[3px] border-k5-yb bg-k5-yt px-3 py-2.5" style={{ borderRadius: high ? 10 : 14 }}>
                 <K5Sk className="h-[52px] w-[52px] flex-none rounded-xl" />
                 <span className="flex flex-1 flex-col gap-2">
                   <K5Sk className="h-4 w-full" />
@@ -217,8 +244,8 @@ function BookPageSkeleton() {
         <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3">
           {Array.from({ length: 5 }, (_, i) => (
             <div key={i} className="flex flex-col gap-2">
-              <div className="flex min-h-[200px] flex-col items-center gap-2.5 rounded-3xl border-[3px] border-k5-line px-3 pb-3.5 pt-4" style={middle ? { borderRadius: 16 } : undefined}>
-                <K5Sk className="h-[72px] w-[72px] rounded-[22px]" />
+              <div className="k5h-b-scard-sk flex min-h-[200px] flex-col items-center gap-2.5 rounded-3xl border-[3px] border-k5-line px-3 pb-3.5 pt-4" style={high ? { borderRadius: 12 } : middle ? { borderRadius: 16 } : undefined}>
+                <K5Sk className="k5h-b-stile h-[72px] w-[72px] rounded-[22px]" />
                 <K5Sk className="h-5 w-4/5" />
                 <K5Sk className="h-3.5 w-3/5" />
                 <K5Sk className="mt-auto h-9 w-32 rounded-full" />
@@ -257,7 +284,7 @@ function BuddyStrip({ say }) {
         type="button"
         onClick={() => speak(say, { force: true })}
         aria-label="Hear it"
-        className="flex h-11 w-11 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card text-k5-acx"
+        className="k5h-b-bud-btn flex h-11 w-11 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card text-k5-acx"
       >
         <Volume2 className="h-5 w-5" aria-hidden="true" />
       </button>
@@ -297,7 +324,7 @@ function CapTile({ used }) {
 
 /** "My class tickets" (mockup): this week's tickets, used ones are filled with a tick. */
 function Tickets({ perWeek, left, color }) {
-  const { middle, copy } = useCopy();
+  const { middle, high, copy } = useCopy();
   const total = Math.max(perWeek, left, 0);
   const shown = Math.min(total, MAX_TICKETS);
   const used = Math.max(total - left, 0);
@@ -307,7 +334,7 @@ function Tickets({ perWeek, left, color }) {
     <section
       aria-labelledby="k5-tix"
       className="flex flex-[1_1_400px] flex-col gap-2.5 rounded-[26px] bg-k5-yt px-5 py-4"
-      style={middle ? { background: "color-mix(in srgb, var(--k5-ac) 13%, var(--k5-card))", border: "1.5px solid color-mix(in srgb, var(--k5-ac) 28%, var(--k5-card))", borderRadius: 18 } : undefined}
+      style={high ? { background: "var(--k5-act)", border: "none", borderRadius: 12 } : middle ? { background: "color-mix(in srgb, var(--k5-ac) 13%, var(--k5-card))", border: "1.5px solid color-mix(in srgb, var(--k5-ac) 28%, var(--k5-card))", borderRadius: 18 } : undefined}
     >
       <h2 id="k5-tix" className="m-0 font-k5-display text-[22px] font-semibold">{copy.tickets}</h2>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[18px] bg-white/45 px-2.5 py-2">
@@ -324,7 +351,7 @@ function Tickets({ perWeek, left, color }) {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: middle ? "var(--k5-acx)" : "var(--k5-yX)" }}>
           <path d="M6 3h12M6 21h12M7 3c0 5 10 6 10 9s-10 4-10 9M17 3c0 5-10 6-10 9s10 4 10 9" />
         </svg>
-        Use them by Friday!
+        {high ? copy.fly : "Use them by Friday!"}
       </p>
     </section>
   );
@@ -422,7 +449,7 @@ function SubjectChip({ name, color }) {
 }
 
 function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, threePerRow = false }) {
-  const { middle, copy } = useCopy();
+  const { middle, high, copy } = useCopy();
   if (loading) {
     return (
       <K5Loading label="Loading your courses" className="">
@@ -443,24 +470,32 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
             type="button"
             aria-disabled={none}
             onClick={() => onPick(s)}
-            className={`flex min-h-[200px] flex-col items-center justify-start gap-2 rounded-3xl border-[3px] px-3 pb-3.5 pt-4 text-center text-k5-ink ${middle ? "flex-[1_1_auto]" : ""}`}
-            style={{ borderColor: color, background: courseTint(color), boxShadow: "0 5px 0 " + color, opacity: none ? 0.6 : 1, cursor: none ? "default" : "pointer", ...(middle ? { borderRadius: 16 } : {}) }}
+            className={
+              high
+                ? "k5h-b-scard-btn flex flex-[1_1_auto] flex-col items-center justify-start gap-1.5 border-none bg-transparent text-center text-k5-ink"
+                : `flex min-h-[200px] flex-col items-center justify-start gap-2 rounded-3xl border-[3px] px-3 pb-3.5 pt-4 text-center text-k5-ink ${middle ? "flex-[1_1_auto]" : ""}`
+            }
+            style={
+              high
+                ? { padding: "4px 4px 2px", borderRadius: 12, cursor: none ? "default" : "pointer" }
+                : { borderColor: color, background: courseTint(color), boxShadow: "0 5px 0 " + color, opacity: none ? 0.6 : 1, cursor: none ? "default" : "pointer", ...(middle ? { borderRadius: 16 } : {}) }
+            }
           >
-            <span className="flex h-[72px] w-[72px] flex-none items-center justify-center rounded-[22px] bg-k5-card" style={{ color }}>
-              <SubjectIcon name={s.name} className="h-10 w-10" />
+            <span className="k5h-b-stile flex h-[72px] w-[72px] flex-none items-center justify-center rounded-[22px] bg-k5-card" style={{ color }}>
+              <SubjectIcon name={s.name} className="k5h-b-sicon h-10 w-10" />
             </span>
-            <span className="font-k5-display text-[22px] font-semibold leading-[1.1]">{s.name}</span>
+            <span className="k5h-b-sname font-k5-display text-[22px] font-semibold leading-[1.1]">{s.name}</span>
             {middle && s.teacherName && <span className="text-sm font-extrabold leading-[1.2] text-k5-mut">{s.teacherName}</span>}
             {s.booked > 0 && (
-              <span className="flex items-center gap-1 whitespace-nowrap rounded-full border-[3px] border-k5-grn bg-k5-card px-2.5 py-1 text-[13px] font-black" style={middle ? { borderColor: "var(--k5-c-done)" } : undefined}>
+              <span className="k5h-b-booked flex items-center gap-1 whitespace-nowrap rounded-full border-[3px] border-k5-grn bg-k5-card px-2.5 py-1 text-[13px] font-black" style={middle ? { borderColor: "var(--k5-c-done)" } : undefined}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: "currentColor" }}>
                   <path d={CHECK_PATH} />
                 </svg>
-                {s.booked} booked
+                {high ? copy.bookedN(s.booked) : s.booked + " booked"}
               </span>
             )}
             {!none && (
-              <span className={`mt-auto rounded-full px-[18px] py-1.5 font-k5-display text-[17px] font-semibold ${middle ? "text-k5-card" : "text-white"}`} style={{ background: color }}>
+              <span className={`k5h-b-pick mt-auto rounded-full px-[18px] py-1.5 font-k5-display text-[17px] font-semibold ${middle ? "text-k5-card" : "text-white"}`} style={{ background: color }}>
                 {copy.pickMe}
               </span>
             )}
@@ -468,14 +503,19 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
         );
         if (!middle) return card;
         // Grade 6–8: under every course card, a small "Booked class details" button (that course's booked classes).
+        // Grade 9–12: both sit inside one coloured card (border, tint and the coloured edge belong to it).
         return (
-          <div key={s.subjectId} className="flex min-w-0 flex-col gap-2">
+          <div
+            key={s.subjectId}
+            className={high ? "k5h-b-scard flex min-w-0 flex-col" : "flex min-w-0 flex-col gap-2"}
+            style={high ? { gap: 6, padding: 10, border: "1.5px solid " + color, borderRadius: 12, background: courseTint(color), boxShadow: "0 4px 0 " + color, opacity: none ? 0.6 : 1 } : undefined}
+          >
             {card}
             <button
               type="button"
               onClick={() => onDetails(s.subjectId)}
               aria-label={"Booked class details: " + s.name}
-              className="flex min-h-10 cursor-pointer items-center justify-center gap-1 rounded-full border-[3px] border-k5-ac bg-k5-card px-3 py-1 text-center font-k5-display text-sm font-semibold leading-[1.15] text-k5-acx"
+              className="k5h-b-details flex min-h-10 cursor-pointer items-center justify-center gap-1 rounded-full border-[3px] border-k5-ac bg-k5-card px-3 py-1 text-center font-k5-display text-sm font-semibold leading-[1.15] text-k5-acx"
             >
               Booked class details
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="flex-none">
@@ -490,9 +530,17 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
 }
 
 function AllUsed() {
-  const { copy } = useCopy();
+  const { copy, high } = useCopy();
   return (
     <div className="flex flex-wrap items-center gap-[18px] rounded-3xl bg-k5-gt px-[22px] py-5">
+      {high ? (
+        <span aria-hidden="true" className="flex h-14 w-14 flex-none items-center justify-center rounded-full bg-k5-card">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" style={{ stroke: "var(--k5-grn)" }}>
+            <circle cx="12" cy="12" r="9.5" />
+            <path d="M8 12.5l2.8 2.8L16.5 9.5" />
+          </svg>
+        </span>
+      ) : (
       <svg width="88" height="64" viewBox="0 0 88 64" aria-hidden="true">
         <g transform="translate(4 14) rotate(-8)">
           <path d={TICKET_PATH} style={{ fill: "var(--k5-grn)", stroke: "var(--k5-ink)" }} strokeWidth="3" />
@@ -500,9 +548,10 @@ function AllUsed() {
         </g>
         <path d={STAR_PATH} transform="translate(64 2)" fill="#FFC531" style={{ stroke: "var(--k5-ink)" }} strokeWidth="1.4" />
       </svg>
+      )}
       <div className="flex flex-col gap-1">
         <h3 className="m-0 font-k5-display text-[26px] font-semibold">{copy.allTitle}</h3>
-        <p className="m-0 text-[17px] font-extrabold text-k5-gx">{copy.allSub}</p>
+        <p className={`m-0 text-[17px] font-extrabold ${high ? "text-k5-ink" : "text-k5-gx"}`}>{copy.allSub}</p>
       </div>
     </div>
   );
@@ -532,7 +581,7 @@ function dayModel(days, slots, skipDates, left) {
 }
 
 function DayStep({ model, onPick }) {
-  const { middle, copy } = useCopy();
+  const { middle, high, copy } = useCopy();
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(118px,1fr))] gap-2.5">
       {model.map((d) => (
@@ -541,14 +590,14 @@ function DayStep({ model, onPick }) {
           type="button"
           aria-disabled={!d.can}
           onClick={() => d.can && onPick(d)}
-          style={middle ? { borderRadius: 16, boxShadow: d.can ? (d.isToday ? "0 5px 0 var(--k5-acd)" : "0 5px 0 var(--k5-line)") : "none" } : undefined}
+          style={middle ? { borderRadius: high ? 12 : 16, boxShadow: d.can ? (d.isToday ? "0 5px 0 var(--k5-acd)" : "0 5px 0 var(--k5-line)") : "none" } : undefined}
           className={
-            "flex min-h-[150px] flex-col items-center gap-1 rounded-3xl border-[3px] px-1.5 py-3 text-k5-ink " +
+            "k5h-b-day flex min-h-[150px] flex-col items-center gap-1 rounded-3xl border-[3px] px-1.5 py-3 text-k5-ink " +
             (!d.can ? "cursor-default border-transparent bg-k5-soft opacity-55 " : d.isToday ? "cursor-pointer border-k5-ac bg-k5-act shadow-[0_5px_0_var(--k5-acd)] " : "cursor-pointer border-k5-line bg-k5-card shadow-[0_5px_0_var(--k5-line)] ")
           }
         >
           <span className="text-[15px] font-black text-k5-mut">{d.weekday}</span>
-          <span className="font-k5-display text-[44px] font-semibold leading-none">{d.num}</span>
+          <span className="k5h-b-dnum font-k5-display text-[44px] font-semibold leading-none">{d.num}</span>
           <span className={"rounded-full px-3 py-[3px] text-sm font-black " + (!d.can ? "bg-k5-line text-k5-mut" : d.isToday ? "bg-k5-ac text-white" : "bg-k5-yt text-k5-yx")}>{d.tag === "No tickets left" ? copy.noLeft : d.tag}</span>
           {d.can && <span className="mt-auto text-[13px] font-extrabold text-k5-mut">Free times: {d.free}</span>}
         </button>
@@ -558,10 +607,10 @@ function DayStep({ model, onPick }) {
 }
 
 function TimeStep({ dayItem, selected, onSelect }) {
-  const { middle } = useCopy();
+  const { middle, high } = useCopy();
   const list = dayItem.entries.slice().sort((a, b) => String(a.slot.bookedStartDate).localeCompare(String(b.slot.bookedStartDate)));
   return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
+    <div className="k5h-b-slots grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
       {list.map((entry, i) => {
         const { slot, state } = entry;
         const open = state === "available";
@@ -575,24 +624,24 @@ function TimeStep({ dayItem, selected, onSelect }) {
             aria-pressed={sel}
             aria-disabled={!open}
             onClick={() => open && onSelect(slot)}
-            style={middle ? { borderRadius: 16, boxShadow: open ? (sel ? "0 5px 0 var(--k5-acd)" : "0 5px 0 var(--k5-line)") : "none" } : undefined}
+            style={middle ? { borderRadius: high ? 12 : 16, boxShadow: open && !high ? (sel ? "0 5px 0 var(--k5-acd)" : "0 5px 0 var(--k5-line)") : "none" } : undefined}
             className={
-              "relative flex min-h-[120px] flex-col items-center gap-1.5 rounded-3xl border-4 px-2 py-2.5 text-k5-ink " +
+              "k5h-b-slot relative flex min-h-[120px] flex-col items-center gap-1.5 rounded-3xl border-4 px-2 py-2.5 text-k5-ink " +
               (!open ? "cursor-default border-transparent bg-k5-soft " + (state === "booked" ? "opacity-55" : "opacity-45") : sel ? "cursor-pointer border-k5-ac bg-k5-act shadow-[0_5px_0_var(--k5-acd)]" : "cursor-pointer border-k5-line bg-k5-card shadow-[0_5px_0_var(--k5-line)]")
             }
           >
             {am ? (
-              <svg width="32" height="32" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="k5h-b-sico" width="32" height="32" viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="12" cy="12" r="5" fill="#FFC531" />
                 <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" stroke="#FFB020" strokeWidth="2" strokeLinecap="round" />
               </svg>
             ) : (
-              <svg width="32" height="32" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="k5h-b-sico" width="32" height="32" viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="9" cy="9" r="4.5" fill="#FFC531" />
                 <path d="M8 20h10a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.5 1.5A3.3 3.3 0 0 0 8 20z" fill="#B9C6E4" />
               </svg>
             )}
-            <span className="font-k5-display text-2xl font-semibold leading-none">{niceTime(slot.displayStartTime)}</span>
+            <span className="k5h-b-time font-k5-display text-2xl font-semibold leading-none">{niceTime(slot.displayStartTime)}</span>
             <span className="text-[13px] font-black text-k5-mut">{am ? "Morning" : "Afternoon"}</span>
             <span className={"mt-auto rounded-full px-3 py-[3px] text-center text-sm font-black " + (open ? "bg-k5-gt text-k5-gx" : "bg-k5-card text-k5-mut")}>{chip}</span>
             {sel && (
@@ -628,20 +677,69 @@ function RuleTile({ tone, icon, children }) {
   );
 }
 
-function StatTile({ label, value }) {
+function StatTile({ label, value, sub }) {
   return (
-    <div className="flex flex-col rounded-[22px] bg-k5-act px-[18px] py-3.5">
-      <span className="text-base font-black text-k5-mut">{label}</span>
-      <span className="font-k5-display text-[40px] font-bold leading-[1.1]">{value}</span>
+    <div className="k5h-b-stat flex flex-col rounded-[22px] bg-k5-act px-[18px] py-3.5">
+      <span className="k5h-b-stat-l text-base font-black text-k5-mut">{label}</span>
+      <span className="k5h-b-stat-v font-k5-display text-[40px] font-bold leading-[1.1]">{value}</span>
+      {sub && <span className="text-xs font-medium text-k5-mut">{sub}</span>}
     </div>
   );
 }
 
 /** Grade 6–8 "Good to know": the three class rules, always visible between the tickets and the steps. */
 function MiddleRules({ perWeek, comp }) {
+  const { high } = useCopy();
   const tile = "flex items-center gap-3 rounded-[14px] border-[3px] border-k5-yb bg-k5-yt px-3 py-2.5";
   const box = "flex h-[52px] w-[52px] flex-none items-center justify-center bg-k5-card";
-  const text = "text-[17px] font-extrabold leading-[1.3]";
+  const text = "k5h-b-rule text-[17px] font-extrabold leading-[1.3]";
+  const tr = high ? 10 : 14;
+  if (high) {
+    // Grade 9–12 (High.dc.html): a different set of rules and simple outline icons.
+    const ico = { width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 1.8, style: { stroke: "var(--k5-yX)" } };
+    return (
+      <div role="group" aria-labelledby="k5-rules-m" className={`${K5_CARD} flex flex-col gap-2.5 px-5 py-4`}>
+        <h3 id="k5-rules-m" className="m-0 flex items-center gap-2 font-k5-display text-[22px] font-semibold">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" aria-hidden="true" style={{ stroke: "var(--k5-yX)" }}>
+            <circle cx="12" cy="12" r="9.5" />
+            <path d="M12 11v5.5M12 7.6v.01" />
+          </svg>
+          Good to know
+        </h3>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
+          <div className={tile} style={{ borderRadius: tr }}>
+            <span className={box} style={{ borderRadius: 12 }}>
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: "var(--k5-yX)" }}>
+                <rect x="3" y="5" width="18" height="16" rx="3" />
+                <path d="M3 10h18M8 3v4M16 3v4M7 14h2M11 14h2M15 14h2M7 17h2M11 17h2" />
+              </svg>
+            </span>
+            <span className={text}>Classes are Monday to Friday</span>
+          </div>
+          <div className={tile} style={{ borderRadius: tr }}>
+            <span className={box} style={{ borderRadius: 12 }}>
+              <svg {...ico} aria-hidden="true">
+                <path d="M20 11a8 8 0 0 0-14.3-4.9L4 8" />
+                <path d="M4 3.5V8h4.5" />
+                <path d="M4 13a8 8 0 0 0 14.3 4.9L20 16" />
+                <path d="M20 20.5V16h-4.5" />
+              </svg>
+            </span>
+            <span className={text}>There are no free classes in Self Study</span>
+          </div>
+          <div className={tile} style={{ borderRadius: tr }}>
+            <span className={box} style={{ borderRadius: 12 }}>
+              <svg {...ico} aria-hidden="true">
+                <path d="M6 3h12M6 21h12" />
+                <path d="M7 3c0 5 10 6 10 9s-10 4-10 9M17 3c0 5-10 6-10 9s10 4 10 9" />
+              </svg>
+            </span>
+            <span className={text}>You can book only the classes you buy</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div role="group" aria-labelledby="k5-rules-m" className={`${K5_CARD} flex flex-col gap-2.5 px-5 py-4`}>
       <h3 id="k5-rules-m" className="m-0 flex items-center gap-2 font-k5-display text-[22px] font-semibold">
@@ -691,7 +789,7 @@ function MiddleRules({ perWeek, comp }) {
 
 /** "For grown-ups" (mockup): the class numbers in one place, closed until a grown-up opens it. */
 function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
-  const { middle } = useCopy();
+  const { middle, high } = useCopy();
   const comp = details.compClassPerweek > 0;
   const n = (v) => Number(v) || 0;
   const sum = calc?.summary;
@@ -703,11 +801,14 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
   const card = (value) => (busy ? spinner("h-9 w-9") : calc ? value : "–");
   const perWeekAll = n(sum?.maxClassPerWeek) || n(free?.perWeek) + n(extra?.perWeek ?? extra?.perweek);
   const rows = calc?.subjects?.length ? calc.subjects : [{ subjectId: "all", subjectName: "All Courses", placeholder: true }];
+  // Grade 9–12: no "Left" column (High.dc.html), and the four tiles add up the table.
+  const cols = high ? TABLE_COLS.filter(([, key]) => key !== "unused") : TABLE_COLS;
+  const colSum = (key) => rows.reduce((a, r) => a + n(r.complimentary?.[key]) + n(r.customPlan?.[key]), 0);
   return (
     <section aria-labelledby="k5-grown" className={`${K5_CARD} flex flex-col gap-3.5 px-[18px] py-3.5`}>
       <button type="button" onClick={onToggle} aria-expanded={open} aria-controls="k5-grown-body" className="flex min-h-14 w-full cursor-pointer items-center gap-3 border-none bg-transparent p-0 text-start text-k5-ink">
-        <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-k5-vt">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: "var(--k5-vI)" }}>
+        <span className={`flex h-12 w-12 flex-none items-center justify-center rounded-2xl ${high ? "bg-k5-act" : "bg-k5-vt"}`}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" strokeWidth={high ? 1.8 : 2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: high ? "var(--k5-ac)" : "var(--k5-vI)" }}>
             <circle cx="8" cy="6" r="3" />
             <circle cx="17" cy="9" r="2.3" />
             <path d="M2.5 20v-1a5.5 5.5 0 0 1 11 0v1M13.5 20v-.5a3.5 3.5 0 0 1 7 0v.5" />
@@ -772,18 +873,29 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
           )}
 
           <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2.5">
-            <StatTile label="Total" value={card(n(free?.total) + n(extra?.total))} />
-            <StatTile label="Complimentary classes" value={card(n(free?.total))} />
-            <StatTile label="Extra classes" value={card(n(extra?.total))} />
-            <StatTile label="Per week" value={card(perWeekAll)} />
-            <StatTile label="Unused this week" value={card(n(free?.unused) + n(extra?.unused))} />
+            {high ? (
+              <>
+                <StatTile label="Purchased classes" sub="Extra classes you bought" value={card(n(extra?.total))} />
+                <StatTile label="Booked" value={card(colSum("booked"))} />
+                <StatTile label="Unused" value={card(n(free?.unused) + n(extra?.unused))} />
+                <StatTile label="Expired" value={card(colSum("expired"))} />
+              </>
+            ) : (
+              <>
+                <StatTile label="Total" value={card(n(free?.total) + n(extra?.total))} />
+                <StatTile label="Complimentary classes" value={card(n(free?.total))} />
+                <StatTile label="Extra classes" value={card(n(extra?.total))} />
+                <StatTile label="Per week" value={card(perWeekAll)} />
+                <StatTile label="Unused this week" value={card(n(free?.unused) + n(extra?.unused))} />
+              </>
+            )}
           </div>
 
           <div className="overflow-x-auto rounded-[22px] border-[3px] border-k5-line">
             <div role="table" aria-label="Class numbers" className="text-[15px] font-extrabold">
-              <div role="row" className="grid min-w-[900px] grid-cols-[minmax(200px,1.8fr)_repeat(7,minmax(92px,1fr))] items-center bg-k5-act text-[17px] font-black">
+              <div role="row" className={`k5h-b-thead grid items-center bg-k5-act text-[17px] font-black ${high ? "min-w-[800px] grid-cols-[minmax(200px,1.8fr)_repeat(6,minmax(92px,1fr))]" : "min-w-[900px] grid-cols-[minmax(200px,1.8fr)_repeat(7,minmax(92px,1fr))]"}`}>
                 <span role="columnheader" className="px-4 py-3.5 text-start">Course</span>
-                {TABLE_COLS.map(([label, , dot]) => (
+                {cols.map(([label, , dot]) => (
                   <span key={label} role="columnheader" className="px-3 py-3.5 text-center leading-[1.25]">
                     <span aria-hidden="true" className="me-1.5 inline-block h-3 w-3 rounded-full align-[-1px]" style={{ background: dot }} />
                     {label}
@@ -791,11 +903,11 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
                 ))}
               </div>
               {rows.map((s) => (
-                <div key={s.subjectId} role="row" className="grid min-w-[900px] grid-cols-[minmax(200px,1.8fr)_repeat(7,minmax(92px,1fr))] items-center border-t-2 border-k5-line">
+                <div key={s.subjectId} role="row" className={`grid items-center border-t-2 border-k5-line ${high ? "min-w-[800px] grid-cols-[minmax(200px,1.8fr)_repeat(6,minmax(92px,1fr))]" : "min-w-[900px] grid-cols-[minmax(200px,1.8fr)_repeat(7,minmax(92px,1fr))]"}`}>
                   <span role="cell" className="px-4 py-3 font-k5-display font-semibold">{s.subjectName}</span>
-                  {TABLE_COLS.map(([label, key, , tone]) => (
+                  {cols.map(([label, key, , tone]) => (
                     <span key={label} role="cell" className="px-3 py-2 text-center">
-                      <span className={"inline-block min-w-9 rounded-full px-2.5 py-0.5 font-black " + tone}>{busy ? spinner("h-5 w-5") : s.placeholder ? "–" : n(s.complimentary?.[key]) + n(s.customPlan?.[key])}</span>
+                      <span className={"k5h-b-count inline-block min-w-9 rounded-full px-2.5 py-0.5 font-black " + tone}>{busy ? spinner("h-5 w-5") : s.placeholder ? "–" : n(s.complimentary?.[key]) + n(s.customPlan?.[key])}</span>
                     </span>
                   ))}
                 </div>
@@ -813,12 +925,13 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
  * (940px, 20px round) — a title, a red close button, then the buddy, the steps and the booking.
  */
 function BookPopup({ onClose, children }) {
+  const { high } = useCopy();
   const themeProps = useK5ThemeProps(
     "flex max-h-[min(100%,calc(100vh-32px))] flex-col gap-[18px] overflow-y-auto rounded-[18px] border-[3px] border-k5-ink bg-k5-card p-[22px] text-k5-ink shadow-[0_8px_0_var(--k5-ink)] ring-0 sm:max-w-[940px]",
   );
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
-      <DialogContent showCloseButton={false} {...themeProps} style={{ borderRadius: 20 }}>
+      <DialogContent showCloseButton={false} {...themeProps} style={{ borderRadius: high ? 12 : 20 }}>
         <div className="flex items-center gap-3">
           <DialogTitle className="m-0 flex-1 font-k5-display text-[28px] font-semibold leading-[1.15]">Book a Class</DialogTitle>
           <DialogDescription className="sr-only">Select a course, a day and a time to book a class.</DialogDescription>
@@ -834,39 +947,86 @@ function BookPopup({ onClose, children }) {
   );
 }
 
-/** Grade 6–8: after a time is picked, a dialog asks "Book a Class for {course}" with the date, course and teacher (mockup bkCf). */
-function ConfirmBooking({ open, title, when, course, color, teacher, busy, onBack, onConfirm }) {
+/**
+ * Grades 6–12: after a time is picked, a dialog asks "Confirm your class" (mockup bkCf): a centred card with a calendar
+ * badge, the date and time, the course and the teacher in one list, then Back / Confirm.
+ */
+function ConfirmBooking({ open, when, course, color, teacher, busy, onBack, onConfirm }) {
   const themeProps = useK5ThemeProps(
-    "flex max-h-[min(100%,calc(100vh-32px))] flex-col gap-0 overflow-hidden rounded-[18px] border-[3px] border-k5-ink bg-k5-card p-0 text-k5-ink shadow-[0_8px_0_var(--k5-ink)] ring-0 sm:max-w-[560px]",
+    "flex max-h-[min(100%,calc(100vh-32px))] flex-col gap-[18px] overflow-y-auto rounded-[16px] border border-k5-line bg-k5-card px-[22px] pb-5 pt-6 text-k5-ink shadow-[0_20px_48px_rgba(16,24,40,0.22)] ring-0 sm:max-w-[460px]",
   );
+  const icon = { fill: "none", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 1.9, style: { stroke: "var(--k5-ac)" }, "aria-hidden": true };
+  const tile = "flex h-10 w-10 flex-none items-center justify-center bg-k5-act";
+  const label = "k5h-b-cfl text-[13px] font-medium text-k5-mut";
+  const value = "k5h-b-cfv text-[17px] font-semibold text-k5-ink";
   return (
     <Dialog open={open} onOpenChange={(next) => !next && !busy && onBack()}>
-      <DialogContent showCloseButton={false} {...themeProps} style={{ borderRadius: 20 }}>
-        <div className="flex items-center gap-3 bg-k5-ac px-[18px] py-4 text-white">
-          <DialogTitle className="m-0 min-w-0 flex-1 font-k5-display text-2xl font-semibold leading-[1.2]">{title}</DialogTitle>
-          <DialogDescription className="sr-only">Check the date, course and teacher, then confirm.</DialogDescription>
-          <button type="button" onClick={onBack} disabled={busy} aria-label="Close" className="flex h-10 w-10 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-white bg-k5-red text-white">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" strokeWidth="3" strokeLinecap="round" aria-hidden="true" style={{ stroke: "#FFFFFF" }}>
-              <path d="M6 6l12 12M18 6L6 18" />
+      <DialogContent showCloseButton={false} {...themeProps} style={{ borderRadius: 16 }}>
+        <button type="button" onClick={onBack} disabled={busy} aria-label="Close" className="absolute end-[14px] top-[14px] flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-k5-line bg-k5-card">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true" style={{ stroke: "var(--k5-mut)" }}>
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+        <div className="flex flex-col items-center gap-2.5 px-[30px] pb-0 pt-1 text-center">
+          <span aria-hidden="true" className="flex h-14 w-14 items-center justify-center rounded-full bg-k5-act">
+            <svg width="28" height="28" viewBox="0 0 24 24" {...icon}>
+              <rect x="3" y="5" width="18" height="16" rx="2" />
+              <path d="M3 10h18M8 3v4M16 3v4" />
+              <path d="M9 15.5l2 2 4-4" />
             </svg>
-          </button>
+          </span>
+          <DialogTitle className="k5h-b-cft m-0 font-k5-display text-2xl font-semibold leading-[1.2]">Confirm your class</DialogTitle>
+          <DialogDescription className="m-0 text-[15px] text-k5-mut">Please check the details before you book.</DialogDescription>
         </div>
-        <dl className="m-0 grid grid-cols-[max-content_1fr] items-baseline gap-x-[18px] gap-y-3.5 px-6 py-[22px] text-[17px]">
-          <dt className="font-black text-k5-mut">Date &amp; time:</dt>
-          <dd className="m-0 font-extrabold">{when}</dd>
-          <dt className="font-black text-k5-mut">Course Name:</dt>
-          <dd className="m-0 flex items-center gap-2 font-extrabold">
-            <span aria-hidden="true" className="h-3 w-3 flex-none rounded-full" style={{ background: color }} />
-            {course}
-          </dd>
-          <dt className="font-black text-k5-mut">Teacher Name:</dt>
-          <dd className="m-0 font-extrabold">{teacher}</dd>
-        </dl>
-        <div className="flex flex-wrap justify-end gap-3 border-t-[3px] border-k5-line px-[18px] py-3.5">
-          <button type="button" onClick={onBack} disabled={busy} className="min-h-[50px] cursor-pointer rounded-full border-none bg-k5-red px-6 font-k5-display text-[19px] font-semibold text-white disabled:opacity-60">
+        <div className="flex flex-col border border-k5-line bg-k5-soft" style={{ borderRadius: 12 }}>
+          <div className="flex items-center gap-3 px-3.5 py-3">
+            <span aria-hidden="true" className={tile} style={{ borderRadius: 10 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" {...icon}>
+                <rect x="3" y="5" width="18" height="16" rx="2" />
+                <path d="M3 10h18M8 3v4M16 3v4" />
+                <path d="M12 13.5v2.5l1.6 1" />
+              </svg>
+            </span>
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className={label}>Date &amp; time</span>
+              <span className={value}>{when}</span>
+            </span>
+          </div>
+          <div className="mx-3.5 h-px bg-k5-line" />
+          <div className="flex items-center gap-3 px-3.5 py-3">
+            <span aria-hidden="true" className={tile} style={{ borderRadius: 10 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" {...icon}>
+                <path d="M3 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H3z" />
+                <path d="M21 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z" />
+              </svg>
+            </span>
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className={label}>Course Name</span>
+              <span className={value + " inline-flex items-center gap-2"}>
+                <span aria-hidden="true" className="h-2.5 w-2.5 flex-none rounded-full" style={{ background: color }} />
+                {course}
+              </span>
+            </span>
+          </div>
+          <div className="mx-3.5 h-px bg-k5-line" />
+          <div className="flex items-center gap-3 px-3.5 py-3">
+            <span aria-hidden="true" className="k5h-b-cfini flex h-10 w-10 flex-none items-center justify-center rounded-full bg-k5-act font-k5-display text-[13px] font-semibold text-k5-ink">
+              {initialsOf(teacher)}
+            </span>
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className={label}>Teacher Name</span>
+              <span className={value}>{teacher}</span>
+            </span>
+          </div>
+        </div>
+        <div className="grid grid-cols-[1fr_1.4fr] gap-2.5">
+          <button type="button" onClick={onBack} disabled={busy} className="k5h-b-cfbtn min-h-[46px] cursor-pointer border border-k5-line bg-k5-card px-4 font-k5-display text-[17px] font-semibold text-k5-ink disabled:opacity-60" style={{ borderRadius: 10 }}>
             Back
           </button>
-          <button type="button" onClick={onConfirm} disabled={busy} className="min-h-[50px] cursor-pointer rounded-full border-none bg-k5-grn px-[26px] font-k5-display text-[19px] font-semibold text-white shadow-[0_4px_0_var(--k5-grnD)] disabled:opacity-60">
+          <button type="button" onClick={onConfirm} disabled={busy} className="k5h-b-cfbtn flex min-h-[46px] cursor-pointer items-center justify-center gap-2 border-none bg-k5-ac px-4 font-k5-display text-[17px] font-semibold text-white disabled:opacity-60" style={{ borderRadius: 10 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: "#FFFFFF" }}>
+              <path d="M5 12l5 5 9-10" />
+            </svg>
             {busy ? "Booking…" : "Confirm"}
           </button>
         </div>
@@ -882,7 +1042,7 @@ function ConfirmBooking({ open, title, when, course, color, teacher, busy, onBac
  * the submit (submitBookClassSlot) are the ones the weekly slot picker used; only the flow is steps.
  */
 export function K5BookView({ details, subjects, course, onShowBooked, onBooked, popup = false, onClose }) {
-  const { middle, copy } = useCopy();
+  const { middle, high, copy } = useCopy();
   const colorFor = useK5CourseColors();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
@@ -1088,7 +1248,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
               ? (
                 <K5Loading label="Loading available days" className="grid grid-cols-[repeat(auto-fit,minmax(118px,1fr))] gap-2.5">
                   {Array.from({ length: 5 }, (_, i) => (
-                    <K5Sk key={i} className="h-[150px] rounded-3xl" />
+                    <K5Sk key={i} className="k5h-b-day-sk h-[150px] rounded-3xl" />
                   ))}
                 </K5Loading>
               )
@@ -1151,6 +1311,14 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
 
           {step === 4 && done && (
             <div className="flex flex-wrap items-center justify-center gap-[22px] rounded-3xl bg-k5-gt p-[22px] text-center">
+              {high ? (
+                <span aria-hidden="true" className="flex h-[72px] w-[72px] flex-none items-center justify-center rounded-full bg-k5-card">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" style={{ stroke: "var(--k5-grn)" }}>
+                    <circle cx="12" cy="12" r="9.5" />
+                    <path d="M8 12.5l2.8 2.8L16.5 9.5" />
+                  </svg>
+                </span>
+              ) : (
               <svg width="140" height="88" viewBox="0 0 64 40" aria-hidden="true" className="flex-none">
                 <g transform="rotate(-8 32 20)">
                   <path d={TICKET_PATH} style={{ fill: color, stroke: "var(--k5-ink)" }} strokeWidth="2" />
@@ -1158,16 +1326,17 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                   <path d="M33 20l5 5 10-10" fill="none" stroke="#FFFFFF" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
                 </g>
               </svg>
+              )}
               <div className="flex flex-[1_1_260px] flex-col items-start gap-1.5 text-start">
                 <p className="m-0 font-k5-display text-[22px] font-semibold leading-[1.25]">
                   {done.name} · {done.weekday} {done.num} · {done.time}
                 </p>
-                <span className="text-[15px] font-extrabold text-k5-gx">with {teacherName}</span>
+                <span className={`text-[15px] font-extrabold ${high ? "text-k5-ink" : "text-k5-gx"}`}>with {teacherName}</span>
                 <div className="mt-2 flex flex-wrap gap-2.5">
                   <button
                     type="button"
                     onClick={another}
-                    className="min-h-[54px] cursor-pointer rounded-full border-none bg-[#FFC531] px-6 font-k5-display text-[19px] font-semibold text-[#1C2640] shadow-[0_5px_0_#C9930A]"
+                    className="k5h-b-another min-h-[54px] cursor-pointer rounded-full border-none bg-[#FFC531] px-6 font-k5-display text-[19px] font-semibold text-[#1C2640] shadow-[0_5px_0_#C9930A]"
                   >
                     Book another class
                   </button>
@@ -1188,7 +1357,6 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
     middle && confirming && picked && selected && dayItem ? (
         <ConfirmBooking
           open
-          title={"Book a Class for " + picked.name}
           when={format(new Date(dayItem.day.displayStartDateWithoutDay), "MMM dd, yyyy") + " · " + niceTime(selected.displayStartTime) + (end?.endTime ? " – " + end.endTime : "")}
           course={picked.name}
           color={color}
