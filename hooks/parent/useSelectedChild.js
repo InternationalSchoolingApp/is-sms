@@ -50,16 +50,15 @@ export function ParentChildProvider({ children: content }) {
 
   const byId = useMemo(() => new Map(parentChildren.map((c) => [String(c.userId), c])), [parentChildren]);
 
-  // The pick made on this page, else the one stored for this tab, else the only child. Each is checked against the
-  // gate's list, so an id that is not one of this parent's children never selects anything.
+  // The pick made on this page, else the one stored for this tab, else the only child (a parent with one child skips
+  // the picker). With several children and no pick yet, nothing is selected and the child picker shows. Each choice is
+  // checked against the gate's list, so an id that is not one of this parent's children never selects anything.
   let selectedId = null;
   if (parentChildren.length > 0) {
     const stored = readStored(key);
     if (picked && byId.has(picked)) selectedId = picked;
     else if (stored && byId.has(stored)) selectedId = stored;
-    // No pick or stored choice yet: the first child, as the legacy tabs open on Child 1. With children there is
-    // always a selection, so the page (and its theme) never waits on a choice.
-    else selectedId = String(parentChildren[0].userId);
+    else if (parentChildren.length === 1) selectedId = String(parentChildren[0].userId);
   }
 
   // A link from the earlier build may still carry ?child=: take it out of the address bar.
@@ -78,17 +77,24 @@ export function ParentChildProvider({ children: content }) {
     setPicked(id);
   };
 
+  // "Select Another Child": forget the choice, which brings back the picker.
+  const clearChild = () => {
+    writeStored(key, null);
+    setPicked(null);
+  };
+
   const value = {
     children: parentChildren,
     selectedChild: selectedId ? byId.get(selectedId) : null,
     selectChild,
+    clearChild,
     isLoading: !gradeResolved,
   };
 
   return <ParentChildContext.Provider value={value}>{content}</ParentChildContext.Provider>;
 }
 
-/** { children, selectedChild, selectChild(userId), isLoading } — parent dashboard only. */
+/** { children, selectedChild, selectChild(userId), clearChild(), isLoading } — parent dashboard only. */
 export function useSelectedChild() {
   const value = useContext(ParentChildContext);
   if (value === null) {

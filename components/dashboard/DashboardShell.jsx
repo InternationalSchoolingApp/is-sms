@@ -41,6 +41,8 @@ export function DashboardShell({ children }) {
   // A parent's rail is about the selected child (announcements, diary badge) and has no News, as in the legacy JSP.
   const isParent = context?.role === "parent";
   const selectedChild = useOptionalSelectedChild()?.selectedChild;
+  // While the parent is choosing a child (the picker screen) the page has no menu and no right rail, as in legacy.
+  const choosing = isParent && !selectedChild;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // Defaults to the collapsed icon-rail, matching the legacy dashboard.
   const [collapsed, setCollapsed] = useState(true);
@@ -91,20 +93,23 @@ export function DashboardShell({ children }) {
         session={session}
         userName={context.userName}
         onHamburger={onHamburger}
+        hideMenuButton={choosing}
         lmsProviderURL={lmsProviderURL}
         isPayLmsPaymentPending={isPayLmsPaymentPending}
       />
 
-      <Sidebar
-        menu={menu}
-        open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        collapsed={collapsed}
-        onExpand={() => setCollapsed(false)}
-      />
+      {!choosing && (
+        <Sidebar
+          menu={menu}
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          collapsed={collapsed}
+          onExpand={() => setCollapsed(false)}
+        />
+      )}
 
       <div
-        className={`flex min-h-screen flex-col pt-[56px] pb-[50px] transition-[padding] duration-200 ${collapsed ? "md:pl-16" : "md:pl-64"}`}
+        className={`flex min-h-screen flex-col pt-[56px] pb-[50px] transition-[padding] duration-200 ${choosing ? "" : collapsed ? "md:pl-16" : "md:pl-64"}`}
         style={isWideLayout ? { height: "100vh", minHeight: "100vh" } : undefined}
       >
         <main
@@ -122,6 +127,7 @@ export function DashboardShell({ children }) {
         )}
       </div>
 
+      {!choosing && (
       <RightActionRail
         studentUserId={isParent ? selectedChild?.userId : undefined}
         hideNews={isParent}
@@ -135,6 +141,7 @@ export function DashboardShell({ children }) {
         email={session?.email}
         schoolName={context.schoolName}
       />
+      )}
     </div>
   );
 }

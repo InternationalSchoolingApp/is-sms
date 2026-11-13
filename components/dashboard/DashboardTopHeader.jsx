@@ -10,6 +10,7 @@ import { logoutEverywhere } from "@/utils/logout";
 import { ChangePasswordModal } from "@/components/dashboard/ChangePasswordModal";
 import { useAddSiblings } from "@/hooks/useAddSiblings";
 import { CartHeaderButton } from "@/components/student/cart/CartHeaderButton";
+import { ChildSwitcher } from "@/components/parent/ChildSwitcher";
 
 /**
  * Fixed top header — mirrors the legacy Java Dashboard.jsp top bar:
@@ -21,7 +22,7 @@ import { CartHeaderButton } from "@/components/student/cart/CartHeaderButton";
  * reference and wired as "coming soon" toasts until their target pages/SSO are
  * built (profile/change-password = Phase C; LMS = LMS SSO). Log out is live.
  */
-export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onHamburger, lmsProviderURL, isPayLmsPaymentPending }) {
+export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onHamburger, hideMenuButton = false, lmsProviderURL, isPayLmsPaymentPending }) {
   const router = useRouter();
   const siblings = useAddSiblings();
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -44,14 +45,16 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
     <header className="fixed inset-x-0 top-[var(--maintenance-banner-h,0px)] z-50 flex h-[56px] items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 sm:px-5">
       {/* Left: hamburger + logo */}
       <div className="flex min-w-0 items-center gap-2">
-        <button
-          type="button"
-          aria-label="Toggle menu"
-          onClick={onHamburger}
-          className="rounded-md p-1.5 text-black hover:bg-slate-100"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
+        {!hideMenuButton && (
+          <button
+            type="button"
+            aria-label="Toggle menu"
+            onClick={onHamburger}
+            className="rounded-md p-1.5 text-black hover:bg-slate-100"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        )}
         {logoUrl ? (
           <Image src={logoUrl} alt={schoolName || ""} width={170} height={34} className="h-8 w-auto max-w-[140px] sm:max-w-[200px] object-contain" unoptimized />
         ) : (
@@ -90,6 +93,7 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
 
       {/* Right: cart + Add More Siblings + profile */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {isParent && <ChildSwitcher />}
         <CartHeaderButton />
         {/* Student's "Add More Siblings". A parent gets its own Add Another Child button (parent dashboard Phase D). */}
         {siblings.visible && !isParent && (
