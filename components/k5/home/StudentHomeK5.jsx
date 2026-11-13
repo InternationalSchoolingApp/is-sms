@@ -84,8 +84,9 @@ const isJoinable = (event) => event.eventKind === "class" && Boolean(event.url) 
  * the existing calendar, laid out as the Playful.dc.html planner: toolbar, colour clues,
  * a left column (mini calendar, Today, My Courses) and the Day / Week / Month plan.
  * The onboarding video and graduation popups behave exactly as on the existing home.
+ * holdProfilePopup: the "Complete Your Profile" popup waits (the contact check comes first, StudentHomeForGrade.jsx).
  */
-export function StudentHomeK5() {
+export function StudentHomeK5({ holdProfilePopup = false }) {
   const { context } = useDashboardContext();
   const dummy = useDummyStudent();
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
@@ -109,7 +110,7 @@ export function StudentHomeK5() {
           studentEmail={dashboardData.studentEmail}
         />
       )}
-      <K5CompleteProfileModal />
+      {!holdProfilePopup && <K5CompleteProfileModal />}
     </>
   );
 }
