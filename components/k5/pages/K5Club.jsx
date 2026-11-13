@@ -6,6 +6,7 @@ import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
+import { K5Loading, K5BlockSkeleton, K5CardsSkeleton } from "@/components/k5/K5Skeletons";
 
 // The three groups of the sidebar and how the mockup colours them.
 const GROUPS = {
@@ -92,7 +93,10 @@ export function K5Club({ pageLink, club, imageSrc, waiting, noAccess, registered
       </div>
 
       {waiting ? (
-        <p className="m-0 py-8 text-center font-k5-display text-2xl font-semibold text-k5-mut">Loading…</p>
+        <K5Loading label="Loading the club">
+          <K5BlockSkeleton height={180} />
+          <K5CardsSkeleton count={3} />
+        </K5Loading>
       ) : noAccess ? (
         <p className={`${K5_CARD} m-0 p-8 text-center font-k5-display text-2xl font-semibold text-k5-mut`}>You do not have access to this club.</p>
       ) : (
@@ -135,12 +139,12 @@ export function K5Club({ pageLink, club, imageSrc, waiting, noAccess, registered
                 {acts.map(([icon, title, text], i) => (
                   <li
                     key={title}
-                    className="relative flex flex-col items-center gap-1.5 rounded-3xl bg-k5-card px-[18px] pb-[18px] pt-11 text-center"
+                    className="k5-clact relative flex flex-col items-center gap-1.5 rounded-3xl bg-k5-card px-[18px] pb-[18px] pt-11 text-center"
                     style={{ border: `3px solid ${CARD_COLORS[i].bd}`, boxShadow: `0 6px 0 ${CARD_COLORS[i].bd}` }}
                   >
                     <span
                       aria-hidden="true"
-                      className="absolute -top-[30px] left-1/2 -ml-8 flex h-16 w-16 items-center justify-center rounded-full text-[32px] leading-none"
+                      className="k5-clactic absolute -top-[30px] left-1/2 -ml-8 flex h-16 w-16 items-center justify-center rounded-full text-[32px] leading-none"
                       style={{ background: CARD_COLORS[i].bg, border: `3px solid ${CARD_COLORS[i].bd}` }}
                     >
                       {icon}

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
+import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 
 const PAGE_SIZE = 10;
 const GRID = "56px minmax(130px,.9fr) minmax(100px,.7fr) minmax(220px,1.6fr) minmax(110px,.8fr) minmax(130px,.9fr) minmax(120px,.8fr) minmax(130px,.9fr)";
@@ -61,6 +63,66 @@ function feeAction(row, nextId, canView) {
   return null;
 }
 
+/** "My Fee Details" title row. Grade 6–8 (Middle.dc.html): no card around it, a 62px accent tile, a 30px heading. */
+function FeeHeader() {
+  const { isMiddle } = useDashboardContext();
+  return (
+    <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
+      <span
+        className={isMiddle ? "flex h-[62px] w-[62px] flex-none items-center justify-center bg-k5-act" : "flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-mt"}
+        style={isMiddle ? { borderRadius: 14 } : undefined}
+      >
+        <svg width={isMiddle ? 34 : 48} height={isMiddle ? 34 : 48} viewBox="0 0 24 24" fill="none" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: isMiddle ? "var(--k5-ac)" : "var(--k5-mI)" }}>
+          <rect x="3" y="5" width="18" height="14" rx="3" />
+          <path d="M3 10h18M7 15h4" />
+        </svg>
+      </span>
+      <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
+        <h1 className={`m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-4xl"}`}>My Fee Details</h1>
+        <p className={`m-0 font-extrabold text-k5-mut ${isMiddle ? "text-base" : "text-lg"}`}>See your fee payments and receipts.</p>
+      </div>
+    </div>
+  );
+}
+
+/** My Fee Details while it loads: the title, then the card (heading and search, header row, rows, entries and pager). */
+function FeeSkeleton() {
+  return (
+    <K5Loading label="Loading your fee details" className="flex flex-col gap-4">
+      <FeeHeader />
+      <div className={`${K5_CARD} flex flex-col gap-3.5 px-5 py-4`}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <K5Sk className="h-8 w-40" />
+          <K5Sk className="h-[50px] w-[340px] max-w-full rounded-full" />
+        </div>
+        <div className="overflow-hidden rounded-[18px] border-[3px] border-k5-line">
+          <div className="h-12 bg-k5-ac/25" />
+          {Array.from({ length: 5 }, (_, r) => (
+            <div key={r} className={`grid items-center gap-4 border-t-2 border-k5-line px-3.5 py-3 ${r % 2 ? "bg-k5-soft" : "bg-k5-card"}`} style={{ gridTemplateColumns: "40px 1fr .8fr 2fr .9fr 1fr 1fr 1.1fr" }}>
+              <K5Sk className="h-4 w-5" />
+              <K5Sk className="h-4 w-4/5" />
+              <K5Sk className="h-4 w-3/5" />
+              <K5Sk className="h-4 w-11/12" />
+              <K5Sk className="h-5 w-16" />
+              <K5Sk className="h-4 w-4/5" />
+              <K5Sk className="h-7 w-24 rounded-full" />
+              <K5Sk className="h-[42px] w-28 rounded-full" />
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          <K5Sk className="h-4 w-36" />
+          <span className="flex items-center gap-2">
+            <K5Sk className="h-11 w-24 rounded-[14px]" />
+            <K5Sk className="h-11 w-11 rounded-[14px]" />
+            <K5Sk className="h-11 w-16 rounded-[14px]" />
+          </span>
+        </div>
+      </div>
+    </K5Loading>
+  );
+}
+
 export function K5FeeDetails({ isLoading, payments, nextUserPaymentDetailsId, symbol, canView, onPay }) {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
@@ -75,24 +137,13 @@ export function K5FeeDetails({ isLoading, payments, nextUserPaymentDetailsId, sy
   const start = current * PAGE_SIZE;
   const visible = filtered.slice(start, start + PAGE_SIZE);
 
+  if (isLoading) return <FeeSkeleton />;
+
   return (
     <div className="flex flex-col gap-4">
-      <div className={`${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
-        <span className="flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-mt">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: "var(--k5-mI)" }}>
-            <rect x="3" y="5" width="18" height="14" rx="3" />
-            <path d="M3 10h18M7 15h4" />
-          </svg>
-        </span>
-        <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-          <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">My Fee Details</h1>
-          <p className="m-0 text-lg font-extrabold text-k5-mut">See your fee payments and receipts.</p>
-        </div>
-      </div>
+      <FeeHeader />
 
-      {isLoading ? (
-        <p className="m-0 py-8 text-center font-k5-display text-2xl font-semibold text-k5-mut">Loading…</p>
-      ) : (
+      {(
         <section aria-labelledby="k5-fh" className={`${K5_CARD} flex flex-col gap-3.5 px-5 py-4`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 id="k5-fh" className="m-0 font-k5-display text-2xl font-semibold">Fee Details</h2>

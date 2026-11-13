@@ -9,6 +9,7 @@ import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EditableCallingTimes } from "@/components/k5/pages/K5ProfileEditorsP3";
 import { OtpControl } from "@/components/k5/pages/K5ProfileOtp";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useIntlTelInput } from "@/hooks/useIntlTelInput";
 import { useProfileMaster } from "@/hooks/useProfileEditor";
 import { GENDERS, PARENTS, formatProfileDate, parseProfileDate } from "@/utils/profileEdit";
@@ -226,6 +227,7 @@ function Toggle({ on, onChange, children, icon: Icon }) {
 }
 
 function EditPhone({ editor, label, keys, required, emergencyKey, fieldId }) {
+  const { isMiddle } = useDashboardContext();
   const [numKey, isoKey, waKey] = keys;
   const unit = editor.unitOf(numKey);
   const st = editor.status(unit);
@@ -294,7 +296,7 @@ function EditPhone({ editor, label, keys, required, emergencyKey, fieldId }) {
           {required && req}
         </span>
       </span>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+      <div className={`flex flex-wrap items-center gap-x-4 gap-y-1.5 ${isMiddle ? "justify-between" : ""}`}>
         <Toggle on={editor.draft[waKey]} onChange={(v) => editor.set(waKey, v)} icon={WhatsAppIcon}>
           Available on WhatsApp
         </Toggle>
@@ -303,9 +305,21 @@ function EditPhone({ editor, label, keys, required, emergencyKey, fieldId }) {
             Emergency Contact
           </Toggle>
         )}
+        {isMiddle && (
+          <OtpControl
+            inline
+            otp={editor.otp}
+            fieldId={fieldId}
+            label={label}
+            saved={!st.dirty && Boolean(editor.draft[numKey])}
+            verified={editor.verified?.[fieldId]}
+            whatsApp={!st.dirty && Boolean(editor.draft[waKey])}
+            whatsAppVerified={editor.verified?.[`${fieldId}WhatsAppStatus`]}
+          />
+        )}
       </div>
       <UnitBar editor={editor} unit={unit} />
-      <OtpControl
+      {!isMiddle && <OtpControl
         otp={editor.otp}
         fieldId={fieldId}
         label={label}
@@ -313,7 +327,7 @@ function EditPhone({ editor, label, keys, required, emergencyKey, fieldId }) {
         verified={editor.verified?.[fieldId]}
         whatsApp={!st.dirty && Boolean(editor.draft[waKey])}
         whatsAppVerified={editor.verified?.[`${fieldId}WhatsAppStatus`]}
-      />
+      />}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { GRADING_SYSTEM, assetUrl, orNA, useProgressReport, useReportDownload } from "@/components/student/ProgressReportView";
 import { courseTone, num } from "@/components/k5/pages/k5PerformanceData";
 import { BackIcon } from "@/components/k5/pages/K5PerformanceIcons";
+import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
 
 const HEAD = "p-3 font-k5-display text-[15px] font-semibold";
 const ACT_GRID = { gridTemplateColumns: "1fr .9fr 2.2fr 1fr 1.1fr 1.1fr 1fr .8fr" };
@@ -67,6 +68,8 @@ function CourseReport({ enrollment, report, index }) {
   const grid = showModule ? ACT_GRID : ACT_GRID_NO_MODULE;
   const comp = num(grades.complete) ?? 0;
   const courseTone2 = gradeTone(grades.letter);
+  const { isMiddle } = useDashboardContext();
+  const teacher = valueOf(enrollment.teacherName);
 
   return (
     <section className={`${K5_CARD} flex flex-col gap-4 px-[22px] py-5`} style={{ borderTop: `8px solid ${tone.col}` }}>
@@ -80,6 +83,11 @@ function CourseReport({ enrollment, report, index }) {
         <div className="flex min-w-0 flex-[1_1_220px] flex-col gap-0.5">
           <span className="text-[13px] font-black uppercase tracking-[.08em] text-k5-mut">Course</span>
           <b className="font-k5-display text-2xl font-semibold leading-tight text-k5-ink">{name || "N/A"}</b>
+          {isMiddle && (
+            <span className="text-[15px] font-extrabold text-k5-mut">
+              Teacher Name: <b className="font-black text-k5-ink">{orNA(teacher)}</b>
+            </span>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
           {[valueOf(report.standardName), credit].filter(Boolean).map((chip) => (
@@ -179,6 +187,67 @@ function CourseReport({ enrollment, report, index }) {
   );
 }
 
+/** Progress Report while it loads: title bar, date search, student card and one course report (header, table, totals). */
+function ReportSkeleton() {
+  return (
+    <K5Loading label="Getting your report ready" className="k5-pr-page flex flex-col gap-[18px]">
+      <div className={`${K5_CARD} flex flex-wrap items-center gap-3.5 px-5 py-4`}>
+        <K5Sk className="h-12 w-28 rounded-full" />
+        <K5Sk className="h-8 w-80 max-w-full" />
+      </div>
+      <div className={`${K5_CARD} flex flex-wrap items-end gap-3 px-[18px] py-3.5`}>
+        <K5Sk className="h-[50px] w-[220px] rounded-[14px]" />
+        <K5Sk className="h-[50px] w-[220px] rounded-[14px]" />
+        <K5Sk className="h-[50px] w-24 rounded-full" />
+        <K5Sk className="ms-auto h-12 w-36 rounded-full" />
+      </div>
+      <div className={`${K5_CARD} flex flex-col gap-4 px-[22px] py-5`}>
+        <K5Sk className="h-[50px] w-[220px]" />
+        <div className="grid grid-cols-2 gap-3.5 max-[760px]:grid-cols-1">
+          {Array.from({ length: 2 }, (_, c) => (
+            <div key={c} className="flex flex-col overflow-hidden rounded-2xl border-[3px] border-k5-line">
+              {Array.from({ length: c ? 4 : 3 }, (_, r) => (
+                <div key={r} className="flex items-center gap-2 border-t-2 border-k5-line px-3.5 py-[9px] first:border-t-0">
+                  <K5Sk className="h-4 w-32" />
+                  <K5Sk className="h-4 w-28" />
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className={`${K5_CARD} flex flex-col gap-4 px-[22px] py-5`}>
+        <div className="flex flex-wrap items-center gap-3.5 rounded-[18px] bg-k5-soft px-4 py-3.5">
+          <K5Sk className="h-[52px] w-[52px] flex-none rounded-2xl" />
+          <span className="flex flex-[1_1_220px] flex-col gap-2">
+            <K5Sk className="h-3.5 w-16" />
+            <K5Sk className="h-6 w-72 max-w-full" />
+          </span>
+          <K5Sk className="h-7 w-24 rounded-full" />
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <K5Sk className="h-7 w-80 max-w-full" />
+          <K5Sk className="h-5 w-56" />
+        </div>
+        <div className="overflow-hidden rounded-[18px] border-[3px] border-k5-line">
+          <div className="h-12 bg-k5-soft" />
+          {Array.from({ length: 4 }, (_, r) => (
+            <div key={r} className="grid grid-cols-6 items-center gap-4 border-t-2 border-k5-line px-3 py-3">
+              {Array.from({ length: 6 }, (_, c) => (
+                <K5Sk key={c} className={`h-4 ${c === 2 ? "w-full" : "w-4/5"}`} />
+              ))}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-3.5 max-[760px]:grid-cols-1">
+          <K5Sk className="h-40 rounded-2xl" />
+          <K5Sk className="h-40 rounded-2xl" />
+        </div>
+      </div>
+    </K5Loading>
+  );
+}
+
 /** K–5 look of a Progress Report (Playful.dc.html progrep detail), same data and date search as ProgressReportView. */
 export function K5ProgressReportView({ url, onBack }) {
   const { context, logoUrl } = useDashboardContext();
@@ -187,8 +256,10 @@ export function K5ProgressReportView({ url, onBack }) {
   const first = enrollments[0];
   const ready = !isLoading && report?.status === "SUCCESS" && !report.reportMessage && !unsupported;
 
+  if (isLoading) return <ReportSkeleton />;
+
   return (
-    <div className="k5-pmpanel flex flex-col gap-[18px]">
+    <div className="k5-pmpanel k5-pr-page flex flex-col gap-[18px]">
       <div className={`${K5_CARD} flex flex-wrap items-center gap-3.5 px-5 py-4`}>
         <button
           type="button"
@@ -241,9 +312,7 @@ export function K5ProgressReportView({ url, onBack }) {
         {error && <p className="m-0 text-sm font-extrabold text-k5-ri">{error}</p>}
       </div>
 
-      {isLoading ? (
-        <section className={`${K5_CARD} p-[30px] text-center font-k5-display text-lg font-semibold text-k5-mut`}>Getting your report ready…</section>
-      ) : !ready ? (
+      {!ready ? (
         <section className={`${K5_CARD} p-[30px] text-center text-[17px] font-extrabold text-k5-mut`}>
           {unsupported ? "This report type is not available here yet." : report?.reportMessage || "Unable to load progress report detail."}
         </section>

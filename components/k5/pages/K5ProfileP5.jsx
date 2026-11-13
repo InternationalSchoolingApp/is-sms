@@ -6,6 +6,7 @@ import { Check, ChevronDown, Copy, Eye, EyeOff, KeyRound, Mail } from "lucide-re
 import toast from "react-hot-toast";
 import { activateSchoolEmail, confirmWithdrawal, getWithdrawal, resetSchoolEmailPassword, startWithdrawal, submitWithdrawalBank } from "@/services/profileP5Api";
 import { callServer } from "@/utils/serverCall";
+import { K5Loading, K5ListSkeleton } from "@/components/k5/K5Skeletons";
 
 /*
  * My Profile P5 on the K–5 page (mockup sections 6 and 7):
@@ -375,7 +376,7 @@ function BankSummary({ bank }) {
 function RequestCard({ req, onRefresh }) {
   const meta = statusOf(req.status);
   return (
-    <div className="flex flex-col gap-4 rounded-[20px] border-[3px] border-k5-line bg-k5-card px-5 py-[18px]">
+    <div className="k5m-r14 flex flex-col gap-4 rounded-[20px] border-[3px] border-k5-line bg-k5-card px-5 py-[18px]">
       <div className="flex flex-wrap items-start justify-between gap-2.5">
         <div className="flex min-w-0 flex-col gap-1">
           <span className="font-mono text-sm font-black text-k5-mut">{req.requestNo || `WD-${req.requestId}`}</span>
@@ -385,7 +386,7 @@ function RequestCard({ req, onRefresh }) {
         <span className={`rounded-full border-2 px-3 py-1 text-sm font-black ${BADGE[meta.tone]}`}>{meta.label}</span>
       </div>
       <Tracker status={req.status} />
-      <div className="rounded-[16px] border-[3px] border-k5-line bg-k5-soft px-4 py-3 text-[15px] font-extrabold">
+      <div className="k5m-r12 rounded-[16px] border-[3px] border-k5-line bg-k5-soft px-4 py-3 text-[15px] font-extrabold">
         <span className="text-k5-mut">Your request · </span>
         {req.description || "—"}
       </div>
@@ -487,7 +488,7 @@ function OtpBoxes({ value, onChange, onEnter }) {
             if (e.key === "Backspace" && !d && i > 0) refs.current[i - 1]?.focus();
             if (e.key === "Enter") onEnter?.();
           }}
-          className={`h-16 w-14 rounded-2xl border-[3px] text-center font-k5-display text-[28px] font-semibold text-k5-ink outline-none focus:border-k5-ac max-[420px]:h-[52px] max-[420px]:w-[42px] max-[420px]:text-[22px] ${d ? "border-k5-ac bg-k5-act" : "border-k5-line bg-k5-card"}`}
+          className={`k5m-r12 h-16 w-14 rounded-2xl border-[3px] text-center font-k5-display text-[28px] font-semibold text-k5-ink outline-none focus:border-k5-ac max-[420px]:h-[52px] max-[420px]:w-[42px] max-[420px]:text-[22px] ${d ? "border-k5-ac bg-k5-act" : "border-k5-line bg-k5-card"}`}
         />
       ))}
     </div>
@@ -579,7 +580,7 @@ function NewRequest({ reasons, onDone }) {
           View the full Fee Refund Policy
         </a>
       </Policy>
-      <label className="flex cursor-pointer items-start gap-3 rounded-[16px] border-[3px] border-k5-line bg-k5-soft px-4 py-3.5 text-base font-black leading-[1.4]">
+      <label className="k5m-r12 flex cursor-pointer items-start gap-3 rounded-[16px] border-[3px] border-k5-line bg-k5-soft px-4 py-3.5 text-base font-black leading-[1.4]">
         <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 h-5 w-5 flex-none cursor-pointer accent-[var(--k5-ac)]" />
         I have read and accept the Withdrawal Terms &amp; Conditions and the Fee Refund Policy.
       </label>
@@ -672,9 +673,9 @@ export function WithdrawalEditor({ m }) {
       </div>
       {HR}
       {query.isPending ? (
-        <p className="m-0 font-k5-display text-lg font-semibold text-k5-mut" role="status">
-          Loading your withdrawal requests…
-        </p>
+        <K5Loading label="Loading your withdrawal requests" className="">
+          <K5ListSkeleton rows={2} />
+        </K5Loading>
       ) : query.error ? (
         <Note tone="red" title="We couldn't load this">
           {clean(query.error)}{" "}

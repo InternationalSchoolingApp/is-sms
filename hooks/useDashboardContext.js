@@ -7,7 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { getDashboardChatLinks, getDashboardMenu, getStudentDashboardDetails, getStudentDemoData, getStudentMenuFlags } from "@/services/dashboardApi";
 import { applyStudentNavRules, mapBackendMenu } from "@/utils/dashboardNav";
-import { bandFromStandardId, isK5LearningProgram, isMiddleDashboardOn, isPreKStandard, isSelfStudyProgram, normalizeGradeBand } from "@/utils/gradeBand";
+import { bandFromStandardId, isHighDashboardOn, isK5LearningProgram, isMiddleDashboardOn, isPreKStandard, isSelfStudyProgram, normalizeGradeBand } from "@/utils/gradeBand";
 import { isDummyStudentMode } from "@/utils/paymentGatewayChecks";
 import { createDummyStudent } from "@/utils/dummyStudent";
 import { expireSession } from "@/utils/logout";
@@ -55,9 +55,10 @@ function parseGradeCache(raw) {
     const value = JSON.parse(raw);
     const gradeBand = normalizeGradeBand(value?.gradeBand);
     if (!gradeBand) return null;
-    const isMiddle = value.isMiddle === true && gradeBand === "MIDDLE" && isMiddleDashboardOn(false);
+    const isHigh = value.isHigh === true && gradeBand === "HIGH" && isHighDashboardOn(false);
+    const isMiddle = (value.isMiddle === true && gradeBand === "MIDDLE" && isMiddleDashboardOn(false)) || isHigh;
     const isK5 = value.isK5 === true && (gradeBand === "ELEMENTARY" || isMiddle);
-    return { gradeBand, isK5, isMiddle, isPreK: isK5 && !isMiddle && value.isPreK === true, isSelfStudy: value.isSelfStudy === true };
+    return { gradeBand, isK5, isMiddle, isHigh, isPreK: isK5 && !isMiddle && value.isPreK === true, isSelfStudy: value.isSelfStudy === true };
   } catch {
     return null;
   }
@@ -128,8 +129,10 @@ function useResolveGradeBand({ role, session, authenticated }) {
   const registrationType = details?.registrationType ?? null;
   const gradeBand = (dummyEnabled ? null : normalizeGradeBand(details?.gradeBand)) ?? bandFromStandardId(standardId) ?? "MIDDLE";
   const k5DashboardEnabled = dummyEnabled || details?.k5DashboardEnabled === true;
-  // Grade 6–8 reuses the K–5 dashboard with its own skin (see utils/gradeBand.js isMiddleDashboardOn).
-  const isMiddle = gradeBand === "MIDDLE" && isMiddleDashboardOn(dummyEnabled);
+  // Grade 6–8 reuses the K–5 dashboard with its own skin (see utils/gradeBand.js isMiddleDashboardOn); Grade 9–12 shares that
+  // structure ("isMiddle" is true for both) and adds the Mature look on top (isHigh, app/k5-mature.css).
+  const isHigh = gradeBand === "HIGH" && isHighDashboardOn(dummyEnabled);
+  const isMiddle = (gradeBand === "MIDDLE" && isMiddleDashboardOn(dummyEnabled)) || isHigh;
   const isK5 = (gradeBand === "ELEMENTARY" || isMiddle) && k5DashboardEnabled && isK5LearningProgram(registrationType);
   const fetched = authenticated && search !== null && (dummyEnabled ? !demoRowQuery.isLoading : !detailsQuery.isPending);
 
@@ -138,6 +141,8 @@ function useResolveGradeBand({ role, session, authenticated }) {
     isK5,
     // Sub-flag of isK5: Grade 6–8 — same components, "Balanced" skin.
     isMiddle: isK5 && isMiddle,
+    // Sub-flag of isMiddle: Grade 9–12 only (the Mature look).
+    isHigh: isK5 && isHigh,
     // Sub-flag of the K–5 UI: PreK / Nursery (standardId 17) gets the simpler variant (plan 12.8).
     isPreK: isK5 && !isMiddle && isPreKStandard(standardId),
     isSelfStudy: typeof details?.isSelfStudy === "boolean" ? details.isSelfStudy : isSelfStudyProgram(registrationType),
@@ -214,6 +219,8 @@ function useResolveDashboardContext({ role = "student" } = {}) {
   // Empty until the query settles, so the sidebar renders (empty) without
   // waiting on the (possibly missing) endpoint.
   const menu = menuQuery.data ?? [];
+  // True while the menu request is running: the K–5 / Grade 6–8 left rail shows skeleton tiles instead of an empty box.
+  const menuLoading = menuQuery.isLoading;
 
   // Header "Welcome back, {name}" — the same full name Login History shows (legacy USER_FULL_NAME).
   const studentName = useStudentName({ schoolUUID: session?.schoolUUID, userId: session?.userId, enabled: authenticated && role === "student" });
@@ -263,7 +270,7 @@ function useResolveDashboardContext({ role = "student" } = {}) {
       }
     : null;
 
-  return { status, session, context, menu, logoUrl, ready, ...grade };
+  return { status, session, context, menu, menuLoading, logoUrl, ready, ...grade };
 }
 
 export function DashboardProvider({ role = "student", children }) {

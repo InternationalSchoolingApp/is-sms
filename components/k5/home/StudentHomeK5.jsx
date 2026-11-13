@@ -25,6 +25,7 @@ import { classTitle, dayAt, dayKey, keyToDate, weekKeys } from "@/utils/k5Calend
 import { revealPlanTop } from "@/utils/k5Scroll";
 import { picoSay, setPicoLive } from "@/components/k5/pico/picoEvents";
 import { LIVE_ALERT_KEY } from "@/utils/liveAlertMemory";
+import { K5HomeLeftSkeleton, K5PlanSkeleton } from "@/components/k5/K5Skeletons";
 
 
 
@@ -83,8 +84,9 @@ const isJoinable = (event) => event.eventKind === "class" && Boolean(event.url) 
  * the existing calendar, laid out as the Playful.dc.html planner: toolbar, colour clues,
  * a left column (mini calendar, Today, My Courses) and the Day / Week / Month plan.
  * The onboarding video and graduation popups behave exactly as on the existing home.
+ * holdProfilePopup: the "Complete Your Profile" popup waits (the contact check comes first, StudentHomeForGrade.jsx).
  */
-export function StudentHomeK5() {
+export function StudentHomeK5({ holdProfilePopup = false }) {
   const { context } = useDashboardContext();
   const dummy = useDummyStudent();
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
@@ -108,7 +110,7 @@ export function StudentHomeK5() {
           studentEmail={dashboardData.studentEmail}
         />
       )}
-      <K5CompleteProfileModal />
+      {!holdProfilePopup && <K5CompleteProfileModal />}
     </>
   );
 }
@@ -203,14 +205,20 @@ function K5Planner({ timezone }) {
             onPick={openDayAndShow}
             onMonth={(dir) => model.setSelectedDate((d) => addMonths(d, dir))}
           />
-          <TodayCard todayKey={todayKey} days={days} />
-          <MyCourses courseRegistry={model.courseRegistry} courseVisibility={model.courseVisibility} onToggle={model.toggleCourseVisibility} />
+          {model.isLoading ? (
+            <K5HomeLeftSkeleton />
+          ) : (
+            <>
+              <TodayCard todayKey={todayKey} days={days} />
+              <MyCourses courseRegistry={model.courseRegistry} courseVisibility={model.courseVisibility} onToggle={model.toggleCourseVisibility} />
+            </>
+          )}
         </div>
 
         {/* Mobile (mockup .duo>[data-pin=plan]{order:-1}): the plan comes before the left column. */}
         <section ref={planRef} aria-label="My plans" data-pin="plan" className={`${K5_CARD} scroll-mt-[120px] @container box-border flex min-w-0 flex-[999_1_460px] flex-col gap-[18px] p-[22px] max-[760px]:order-first max-[560px]:p-3.5`}>
           {model.isLoading ? (
-            <p className="m-0 p-10 text-center text-lg font-extrabold text-k5-mut">Loading your plan…</p>
+            <K5PlanSkeleton />
           ) : model.isError ? (
             <p className="m-0 p-10 text-center text-lg font-extrabold text-k5-mut">Couldn&apos;t load your plan. Please try again shortly.</p>
           ) : view === "week" ? (

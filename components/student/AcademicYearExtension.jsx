@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { ArrowLeft, CalendarClock } from "lucide-react";
+import { ArrowLeft, CalendarClock, MessageSquareText } from "lucide-react";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { K5Extension } from "@/components/k5/pages/K5Extension";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useCartCheckout } from "@/hooks/useCartCheckout";
+import { useTalkToUs } from "@/hooks/useTalkToUs";
 import { useStudentAcademicYearExtension } from "@/hooks/useStudentAcademicYearExtension";
 import { availAcademicYearExtension, getAcademicYearExtensionProceed } from "@/services/dashboardApi";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
@@ -86,9 +87,19 @@ function buildProceed(response, subjectId) {
 }
 
 function ExtensionDetail({ data, image, busy, afterExtension1, onAvail, onBack }) {
+  const talkToUs = useTalkToUs();
   const cost = `USD ${data.extentionCost}`;
   const description = (() => {
-    if (data.showNotEligible) return <p className="font-semibold text-primary">{data.notEligibleMessage}</p>;
+    if (data.showNotEligible) {
+      return (
+        <>
+          <p className="font-semibold text-primary">{data.notEligibleMessage}</p>
+          <button type="button" onClick={talkToUs} className="mt-3 flex items-center gap-2 rounded-lg bg-green-700 px-4 py-2 font-bold text-white">
+            <MessageSquareText className="h-4 w-4" aria-hidden="true" /> Contact School Administrator
+          </button>
+        </>
+      );
+    }
     if (data.showExtension1 && !afterExtension1) {
       return (
         <>

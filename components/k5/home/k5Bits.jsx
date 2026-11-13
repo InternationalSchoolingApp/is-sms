@@ -2,6 +2,7 @@
 
 import { BookOpen, Calculator, Dumbbell, FlaskConical, Landmark, Monitor, Palette } from "lucide-react";
 import { subjectStyle } from "@/utils/k5Calendar";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 
 // Shared building blocks of the Grade K–5 home (Playful.dc.html card / pill / button values).
 
@@ -24,20 +25,33 @@ const SUBJECT_ICONS = {
   book: BookOpen,
 };
 
+// Grade 6–8 (Middle.dc.html): the "art" course is drawn as a globe, never a palette.
+function GlobeIcon({ className, strokeWidth = 2.2 }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
+    </svg>
+  );
+}
+
 /** Just the subject's icon (caller picks size and colour). */
 export function SubjectIcon({ name, className }) {
-  const Icon = SUBJECT_ICONS[subjectStyle(name).icon] || BookOpen;
+  const { isMiddle } = useDashboardContext();
+  const icon = subjectStyle(name).icon;
+  const Icon = isMiddle && icon === "art" ? GlobeIcon : SUBJECT_ICONS[icon] || BookOpen;
   return <Icon className={className} strokeWidth={2.2} aria-hidden="true" />;
 }
 
 /** Rounded tile with the subject's icon in its tint pair. */
 export function SubjectTile({ name, size = "lg" }) {
+  const { isMiddle } = useDashboardContext();
   const { icon, tile, ink } = subjectStyle(name);
-  const Icon = SUBJECT_ICONS[icon] || BookOpen;
-  const box = size === "lg" ? "h-[66px] w-[66px] rounded-[20px]" : "h-[38px] w-[38px] rounded-xl";
+  const Icon = isMiddle && icon === "art" ? GlobeIcon : SUBJECT_ICONS[icon] || BookOpen;
+  const box = size === "lg" ? "k5h-stile h-[66px] w-[66px] rounded-[20px]" : "k5h-ctile h-[38px] w-[38px] rounded-xl";
   return (
     <span className={`flex flex-none items-center justify-center ${box} ${tile}`}>
-      <Icon className={`${size === "lg" ? "h-9 w-9" : "h-5 w-5"} ${ink}`} strokeWidth={2.2} aria-hidden="true" />
+      <Icon className={`${size === "lg" ? "k5h-sicon h-9 w-9" : "h-5 w-5"} ${ink}`} strokeWidth={2.2} aria-hidden="true" />
     </span>
   );
 }
@@ -53,7 +67,7 @@ export function StatusPills({ counts }) {
   return (
     <div className="flex flex-wrap gap-2">
       {pills.map(([label, cls]) => (
-        <span key={label} className={`rounded-full px-3.5 py-2 text-[15px] font-black ${cls}`}>
+        <span key={label} className={`k5h-pill rounded-full px-3.5 py-2 text-[15px] font-black ${cls}`}>
           {label}
         </span>
       ))}
@@ -64,9 +78,9 @@ export function StatusPills({ counts }) {
 /** 78px header tile of a plan (date / WEEK / month). */
 export function PlanTile({ top, big, className = "bg-k5-ac shadow-[0_5px_0_var(--k5-acd)]", children }) {
   return (
-    <div className={`relative flex h-[78px] w-[78px] flex-none flex-col items-center justify-center rounded-[24px] ${className}`}>
-      <span className="text-[13px] font-black tracking-[0.08em] text-white">{top}</span>
-      {big != null && <span className="font-k5-display text-[34px] font-semibold leading-none text-white">{big}</span>}
+    <div className={`k5h-ptile relative flex h-[78px] w-[78px] flex-none flex-col items-center justify-center rounded-[24px] ${className}`}>
+      <span className="k5h-ptile-top text-[13px] font-black tracking-[0.08em] text-white">{top}</span>
+      {big != null && <span className="k5h-ptile-big font-k5-display text-[34px] font-semibold leading-none text-white">{big}</span>}
       {children}
     </div>
   );
@@ -77,7 +91,7 @@ export function PlanHeader({ tile, title, subtitle, children }) {
     <div className="flex flex-wrap items-center gap-4">
       {tile}
       <div className="flex flex-[1_1_200px] flex-col gap-0.5">
-        <h2 className="m-0 font-k5-display text-[32px] font-semibold leading-[1.05]">{title}</h2>
+        <h2 className="k5h-ptitle m-0 font-k5-display text-[32px] font-semibold leading-[1.05]">{title}</h2>
         {subtitle && <p className="m-0 text-[17px] font-extrabold text-k5-mut">{subtitle}</p>}
       </div>
       {children}

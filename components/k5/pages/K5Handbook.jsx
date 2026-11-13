@@ -4,6 +4,7 @@ import { Download } from "lucide-react";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
+import { K5Loading, K5BlockSkeleton } from "@/components/k5/K5Skeletons";
 
 const STAR_PATH = "M10 1l2.6 5.4 5.9.8-4.3 4.1 1 5.9L10 14.4 4.8 17.2l1-5.9L1.5 7.2l5.9-.8z";
 // Twinkling stars around the book (mockup .hbstar): position, size, colour, delay.
@@ -42,7 +43,9 @@ export function K5Handbook({ title, schoolName, loading, canView, filePath, poli
       </div>
 
       {loading ? (
-        <p className="m-0 py-8 text-center font-k5-display text-2xl font-semibold text-k5-mut">Loading…</p>
+        <K5Loading label="Loading the handbook">
+          <K5BlockSkeleton height={420} />
+        </K5Loading>
       ) : !canView ? (
         <div className={`${K5_CARD} p-8 text-center font-k5-display text-2xl font-semibold text-k5-mut`}>You do not have access to this module.</div>
       ) : (

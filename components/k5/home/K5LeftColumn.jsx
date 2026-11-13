@@ -203,14 +203,14 @@ export function MyCourses({ courseRegistry, courseVisibility, onToggle }) {
             className={`flex min-h-[52px] cursor-pointer items-center gap-2.5 rounded-[14px] border-none px-2 py-1 text-left ${shown ? (apiColor ? "" : tile) : "bg-k5-soft"}`}
             style={shown && apiColor ? { background: courseTint(apiColor) } : undefined}
           >
-            <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-xl bg-k5-card" style={apiColor ? { color: apiColor } : undefined}>
+            <span className="k5h-ctile flex h-[38px] w-[38px] flex-none items-center justify-center rounded-xl bg-k5-card" style={apiColor ? { color: apiColor } : undefined}>
               <SubjectIcon name={course.label} className={`h-[22px] w-[22px] ${apiColor ? "" : ink}`} />
             </span>
             <span className={`flex-1 text-[15px] font-black ${shown ? "text-k5-ink" : "text-k5-mut"}`}>{course.label}</span>
             {/* Mockup checkbox: filled in the subject colour with a tick while the course is shown. */}
             <span
               aria-hidden="true"
-              className={`flex h-[26px] w-[26px] flex-none items-center justify-center rounded-lg ${shown ? "" : "border-[3px] border-k5-line bg-k5-card"}`}
+              className={`k5h-cchk flex h-[26px] w-[26px] flex-none items-center justify-center rounded-lg ${shown ? "" : "border-[3px] border-k5-line bg-k5-card"}`}
               style={shown ? { background: color } : undefined}
             >
               {shown && <Check className="h-4 w-4 text-white" strokeWidth={3.5} />}

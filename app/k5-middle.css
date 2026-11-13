@@ -126,14 +126,11 @@
   }
 
   /* The class / activity / assignment cards and a few tiles set their border inline (style="border: 3px solid …"),
-     which no utility class can reach: !important beats inline styles. */
+     which no utility class can reach: !important beats inline styles. (Inline hard shadows stay: the mockup keeps a
+     coloured 0 5px 0 on the day / course / time cards.) */
   &[style*="border: 3px"],
   &[style*="border: 2px"] {
     border-width: 1.5px !important;
-  }
-  &[style*="box-shadow: 0 6px 0"],
-  &[style*="box-shadow: 0 5px 0"] {
-    box-shadow: var(--k5m-card) !important;
   }
 
   /* Radii: cards 26 → 18, tiles 18 → 12, controls 14 → 10 (mockup values). */
@@ -235,4 +232,26 @@
     font-weight: 700;
     box-shadow: 0 2px 4px rgba(11, 36, 71, 0.18);
   }
+}
+
+/* My Performance (mockup .pm*): its small panels are 12px / 8px / 14px where K–5 has 16px / 12px / 20px. Scoped to the
+   page, so the other pages keep their own corners. */
+[data-k5-band="middle"] :is(.k5-perf-page, .k5-pr-page) {
+  & .rounded-2xl {
+    border-radius: 12px;
+  }
+  & .rounded-xl {
+    border-radius: 8px;
+  }
+  & .rounded-\[20px\] {
+    border-radius: 14px;
+  }
+}
+
+/* My Profile (mockup .pfnb / .pfob / .pfck / .pfwdcard): the 16px panels are 12px and the 20px withdraw card is 14px. */
+[data-k5-band="middle"] .k5m-r12 {
+  border-radius: 12px;
+}
+[data-k5-band="middle"] .k5m-r14 {
+  border-radius: 14px;
 }
