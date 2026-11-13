@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import {
   Award, BarChart3, BookMarked, CalendarCheck, CalendarDays, ChevronDown, Circle, ClipboardCheck, FileText, Gamepad2,
-  Globe, GraduationCap, Handshake, History, LayoutDashboard, MoreHorizontal, ShoppingCart, Wallet, X,
+  Globe, GraduationCap, Handshake, History, Inbox, LayoutDashboard, MoreHorizontal, ShoppingCart, Wallet, X,
 } from "lucide-react";
+import { InboxBadge, isInboxMenuItem } from "@/components/student/inbox/InboxBadge";
 import { CLUB_ART } from "@/components/k5/clubMarks";
 import { NAV_ART } from "@/components/k5/navIcons";
 import { K5Sk } from "@/components/k5/K5Skeletons";
@@ -29,6 +30,7 @@ const ICONS = {
   handbook: [BookMarked, "bg-k5-rt", "text-k5-ri"],
   history: [History, "bg-k5-vt", "text-k5-vi"],
   certificate: [Award, "bg-k5-pt", "text-k5-pi"],
+  inbox: [Inbox, "bg-k5-bt", "text-k5-bi"],
   more: [MoreHorizontal, "bg-k5-soft", "text-k5-mut"],
 };
 const iconFor = (key) => ICONS[key] || [Circle, "bg-k5-soft", "text-k5-mut"];
@@ -193,6 +195,7 @@ function NavLink({ item, href, active, onNavigate, drag }) {
       className={`${ITEM_CLASS} ${active ? "bg-k5-ac text-white" : "text-k5-ink hover:bg-k5-soft"}`}
     >
       <NavTile icon={item.icon} active={active} />
+      {isInboxMenuItem(item) && <InboxBadge className="absolute left-[46px] top-0 shadow-[0_0_0_2px_var(--k5-card)]" />}
       <span className="k5-nl">{item.label}</span>
     </Link>
   );
@@ -222,6 +225,7 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
         className={`${ITEM_CLASS} cursor-pointer border-none ${childActive ? "bg-k5-act text-k5-acx" : "bg-transparent text-k5-ink hover:bg-k5-soft"}`}
       >
         <NavTile icon={item.icon} />
+        {isInboxMenuItem(item) && <InboxBadge className="absolute left-[46px] top-0 shadow-[0_0_0_2px_var(--k5-card)]" />}
         <span className="k5-nl">{item.label}</span>
         <span
           aria-hidden="true"
