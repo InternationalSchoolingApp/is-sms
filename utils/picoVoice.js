@@ -33,6 +33,11 @@ function remember(text, clip) {
   }
 }
 
+// After a failed answer (voice not set up, backend down) nothing is asked for a while, so a page does not fire a request
+// per sentence and fill the console with errors; the browser voice says everything meanwhile.
+const COOL_DOWN_MS = 5 * 60 * 1000;
+let coolUntil = 0;
+
 // text -> Promise<{url, times} | null>, so a sentence is asked for once per page life.
 const clips = new Map();
 // One <audio> per url, so a clip is downloaded once however often it is played.
@@ -76,17 +81,23 @@ export function clipFor(text, voice) {
     const known = validClip(readStore()[key]);
     if (known) {
       clips.set(key, Promise.resolve(known));
+    } else if (Date.now() < coolUntil) {
+      return Promise.resolve(null);
     } else {
       clips.set(
         key,
         askBackend(said, voice)
           .then((clip) => {
             if (clip) remember(key, clip);
-            else clips.delete(key); // try again next time
+            else {
+              clips.delete(key); // try again later
+              coolUntil = Date.now() + COOL_DOWN_MS;
+            }
             return clip;
           })
           .catch(() => {
             clips.delete(key);
+            coolUntil = Date.now() + COOL_DOWN_MS;
             return null;
           }),
       );

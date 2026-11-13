@@ -53,15 +53,11 @@ function Hero({ name, tips, pill, onPill, plain, hoverProps }) {
   const { isMiddle } = useDashboardContext();
   return (
     <section
-      className="relative flex flex-col gap-3 overflow-hidden rounded-[26px] border-[3px] border-k5-ac px-[26px] py-6 shadow-[0_6px_0_var(--k5-acl)]"
-      style={
+      className={`k5h-r12 relative flex flex-col gap-3 overflow-hidden border-[3px] border-k5-ac px-[26px] py-6 ${
         isMiddle
-          ? { background: "var(--k5-act)", boxShadow: "0 2px 0 var(--k5-acl)", borderRadius: 18 }
-          : {
-              background:
-                "radial-gradient(circle at 8% 0%, rgba(255,255,255,.55), rgba(255,255,255,0) 45%), radial-gradient(circle at 70% 120%, rgba(255,197,49,.18), rgba(255,197,49,0) 50%), var(--k5-act)",
-            }
-      }
+          ? "rounded-[1.125rem] bg-k5-act shadow-[0_2px_0_var(--k5-acl)]"
+          : "rounded-[26px] bg-[radial-gradient(circle_at_8%_0%,rgba(255,255,255,.55),rgba(255,255,255,0)_45%),radial-gradient(circle_at_70%_120%,rgba(255,197,49,.18),rgba(255,197,49,0)_50%),var(--k5-act)] shadow-[0_6px_0_var(--k5-acl)]"
+      }`}
       {...hoverProps}
     >
       {!plain && !isMiddle && <HeroScene />}
@@ -110,8 +106,7 @@ function Header({ session }) {
     <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
       <span
         aria-hidden="true"
-        className={`flex flex-none items-center justify-center ${isMiddle ? "h-[62px] w-[62px]" : "h-[76px] w-[76px] rounded-[24px]"}`}
-        style={isMiddle ? { background: "var(--k5-act)", color: "var(--k5-ac)", borderRadius: 14 } : { background: "var(--k5-gT)", color: "var(--k5-gI)" }}
+        className={`flex flex-none items-center justify-center ${isMiddle ? "k5h-r10 h-[62px] w-[62px] rounded-[0.875rem] bg-k5-act text-k5-ac" : "h-[76px] w-[76px] rounded-[24px] bg-k5-gt text-k5-gi"}`}
       >
         <ChartIcon size={isMiddle ? 34 : 42} width={2.3} />
       </span>
@@ -145,15 +140,16 @@ function BehindBanner({ names }) {
  * pills), the badge cards, the four number tiles and the course rows.
  */
 function PerformanceSkeleton() {
+  const { isMiddle, isHigh } = useDashboardContext();
   return (
     <K5Loading label="Loading your performance" className="flex flex-col gap-[18px]">
       <Header session={null} />
       <div className="flex flex-wrap gap-2.5">
         {Array.from({ length: 3 }, (_, i) => (
-          <K5Sk key={i} className="h-[50px] w-40 rounded-full" />
+          <K5Sk key={i} className={`w-40 rounded-full ${isHigh ? "h-[43px]" : "h-[50px]"}`} />
         ))}
       </div>
-      <div className={`${K5_CARD} flex flex-col gap-3 px-[26px] py-6`}>
+      <div className={`${isMiddle ? "k5h-r12 rounded-[1.125rem] border-[1.5px] border-k5-ac bg-k5-act" : K5_CARD} flex flex-col gap-3 px-[26px] py-6`}>
         <K5Sk className="h-8 w-72 max-w-full" />
         <K5Sk className="h-5 w-full max-w-[640px]" />
         <K5Sk className="h-5 w-2/3 max-w-[420px]" />
@@ -176,7 +172,7 @@ function PerformanceSkeleton() {
       </div>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(210px,1fr))] gap-3.5">
         {Array.from({ length: 4 }, (_, i) => (
-          <div key={i} className={`${K5_CARD} flex items-center gap-3.5 px-[18px] py-4`}>
+          <div key={i} className={`${K5_CARD} k5h-r16 flex items-center gap-3.5 px-[18px] py-4`}>
             <K5Sk className="h-[50px] w-[50px] flex-none rounded-2xl" />
             <span className="flex flex-1 flex-col gap-2">
               <K5Sk className="h-3.5 w-24" />
@@ -188,7 +184,7 @@ function PerformanceSkeleton() {
       </div>
       <div className="flex flex-col gap-3">
         {Array.from({ length: 3 }, (_, i) => (
-          <div key={i} className="flex items-center gap-4 rounded-[20px] border-[3px] border-k5-line bg-k5-card px-[18px] py-3.5">
+          <div key={i} className="k5h-r14 flex items-center gap-4 rounded-[20px] border-[3px] border-k5-line bg-k5-card px-[18px] py-3.5">
             <K5Sk className="h-16 w-16 flex-none rounded-full" />
             <span className="flex flex-1 flex-col gap-2">
               <K5Sk className="h-5 w-1/2" />

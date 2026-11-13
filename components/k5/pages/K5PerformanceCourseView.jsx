@@ -224,7 +224,7 @@ export function K5PerformanceCourseView({ course, index, onBack }) {
               {pace.text}
             </div>
             <div className="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-base font-extrabold" style={{ background: streak ? "var(--k5-oT)" : "var(--k5-soft)", color: streak ? "var(--k5-oI)" : "var(--k5-mut)" }}>
-              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-k5-card">
+              <span className="k5h-r8 flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-k5-card">
                 <SmallFlame on={streak > 0} />
               </span>
               <span>

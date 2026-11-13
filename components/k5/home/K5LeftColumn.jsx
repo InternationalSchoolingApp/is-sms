@@ -4,6 +4,7 @@ import { format, isSameMonth } from "date-fns";
 import { Check, CheckCircle2, ChevronLeft, ChevronRight, Clock, Star, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { K5_CARD, K5_ROUND_BTN, SubjectIcon } from "@/components/k5/home/k5Bits";
 import { getMonthGridDays } from "@/utils/calendarEvents";
 import { CLUE_COLORS, WEEKDAY_TEXT, classTitle, courseTint, dayAt, dayKey, safeCourseColor, subjectStyle, timeLabel, timeRange } from "@/utils/k5Calendar";
@@ -21,6 +22,7 @@ function dotColor(day) {
 
 /** Mini month calendar: picking a day opens it in the Day plan. */
 export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, onClose }) {
+  const { isMiddle } = useDashboardContext();
   const cells = getMonthGridDays(selectedDate);
   const inPopup = Boolean(onClose);
   const titleId = inPopup ? "k5-calpop-title" : "k5-mini-title";
@@ -73,16 +75,21 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
             );
           }
           const isToday = key === todayKey;
+          // The day open in the Day plan (when it is not today): a light tile with an accent ring (mockup selBg / selRing).
+          const isSel = !isToday && key === dayKey(selectedDate);
           const color = dotColor(dayAt(days, key));
           return (
             <div key={key} className="flex justify-center">
               <button
                 type="button"
                 aria-current={isToday ? "date" : undefined}
+                aria-pressed={isToday ? undefined : isSel}
                 aria-label={format(date, "EEEE, MMMM d")}
                 onClick={() => onPick(date)}
                 className={`relative flex cursor-pointer items-center justify-center rounded-full border-none font-black ${
-                  isToday ? "h-10 w-10 bg-k5-ac text-[17px] text-white shadow-[0_3px_0_var(--k5-acd)]" : "h-[38px] w-[38px] bg-transparent text-base text-k5-ink hover:bg-k5-soft"
+                  isToday ? "h-10 w-10 bg-k5-ac text-[17px] text-white shadow-[0_3px_0_var(--k5-acd)]" : isSel
+                      ? `h-[38px] w-[38px] bg-k5-act text-base text-k5-acx ${isMiddle ? "shadow-[inset_0_0_0_2px_var(--k5-ac)]" : "shadow-[inset_0_0_0_3px_var(--k5-ac)]"}`
+                      : "h-[38px] w-[38px] bg-transparent text-base text-k5-ink hover:bg-k5-soft"
                 }`}
               >
                 {date.getDate()}
