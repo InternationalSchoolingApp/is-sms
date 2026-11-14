@@ -42,7 +42,8 @@ function K5PasswordInput({ id, label, value, onChange, show, onToggle, autoCompl
   );
 }
 
-export function K5ChangePasswordModal({ onClose }) {
+/** forced: the dashboard's must-change prompt — no close button, no closing by clicking outside (see ChangePasswordModal). */
+export function K5ChangePasswordModal({ onClose, forced = false }) {
   const { context } = useDashboardContext();
   const dummy = useDummyStudent();
   const [oldPw, setOldPw] = useState("");
@@ -91,7 +92,7 @@ export function K5ChangePasswordModal({ onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+    <div data-blocking-popup="" className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={forced ? undefined : onClose}>
       <div
         className="flex w-full max-w-[440px] flex-col overflow-hidden rounded-[26px] border-[3px] border-k5-ink bg-k5-card shadow-[0_6px_0_var(--k5-ink)]"
         onClick={(e) => e.stopPropagation()}
@@ -102,14 +103,16 @@ export function K5ChangePasswordModal({ onClose }) {
             <KeyRound className="h-6 w-6 text-white" aria-hidden="true" />
           </span>
           <h2 className="m-0 min-w-0 flex-1 font-k5-display text-lg font-semibold text-white">Change Password</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-xl border-none bg-k5-red text-white shadow-[0_3px_0_#B91C1C]"
-          >
-            <X className="h-5 w-5" strokeWidth={3} />
-          </button>
+          {!forced && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-xl border-none bg-k5-red text-white shadow-[0_3px_0_#B91C1C]"
+            >
+              <X className="h-5 w-5" strokeWidth={3} />
+            </button>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-5 py-5">

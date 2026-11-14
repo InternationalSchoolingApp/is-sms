@@ -42,7 +42,11 @@ function PasswordInput({ id, label, value, onChange, show, onToggle, autoComplet
   );
 }
 
-export function ChangePasswordModal({ onClose }) {
+/**
+ * forced: the dashboard's "you must change your password" prompt (legacy changed-password-request with
+ * showChancle=No): no close button and no closing by clicking outside; it goes away once the password is changed.
+ */
+export function ChangePasswordModal({ onClose, forced = false }) {
   const { context } = useDashboardContext();
   const dummy = useDummyStudent();
   const [oldPw, setOldPw] = useState("");
@@ -91,7 +95,7 @@ export function ChangePasswordModal({ onClose }) {
   };
 
   return (
-    <div data-blocking-popup="" className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+    <div data-blocking-popup="" className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={forced ? undefined : onClose}>
       <div className="w-full max-w-md overflow-hidden rounded-xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between bg-primary px-5 py-3.5 text-white">
@@ -99,9 +103,11 @@ export function ChangePasswordModal({ onClose }) {
             <KeyRound className="h-5 w-5" />
             <h2 className="m-0 text-base font-bold">Change Password</h2>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="cursor-pointer border-none bg-transparent p-0 text-white hover:text-white/80">
-            <X className="h-5 w-5" />
-          </button>
+          {!forced && (
+            <button type="button" onClick={onClose} aria-label="Close" className="cursor-pointer border-none bg-transparent p-0 text-white hover:text-white/80">
+              <X className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-5 py-5">

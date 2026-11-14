@@ -14,8 +14,9 @@ import { Calendar } from "@/components/ui/calendar";
  * `height` is the trigger's Tailwind height class (e.g. "h-10"); defaults to "h-12".
  * Optional: `disabledDates` (extra react-day-picker matchers, e.g. blackout Date[]) on top of the from/to range,
  * and `defaultMonth` (month shown when nothing is picked; defaults to `toDate`, as before).
+ * Optional `placeholder`: grey text in the trigger while nothing is picked (for pickers without a floating `label`).
  */
-export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDate, error, disabled = false, height = "h-12", autoOpen = false, disabledDates, defaultMonth }) {
+export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDate, error, disabled = false, height = "h-12", autoOpen = false, disabledDates, defaultMonth, placeholder }) {
   const [open, setOpen] = useState(false);
   useEffect(() => { if (autoOpen) setOpen(true); }, [autoOpen]);
   const floated = open || Boolean(value);
@@ -45,7 +46,9 @@ export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDat
               {label}
             </span>
           )}
-          <span className="mt-0">{value ? value.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : ""}</span>
+          <span className="mt-0">
+            {value ? value.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : placeholder && !label ? <span className="text-slate-400">{placeholder}</span> : ""}
+          </span>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0">
           <Calendar

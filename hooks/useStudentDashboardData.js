@@ -43,6 +43,12 @@ export function useStudentDashboardData({ schoolUUID, userId }) {
     showGraduationCeremonyPopup: migration?.showGraduationCeremonyPopup === "Y",
     graduationCeremonyRegistrationDeadline: migration?.graduationCeremonyRegistrationDeadline || null,
     standardId: migration?.standardId ?? null,
+    // "N" = the regular dashboard (legacy rendereDashboardContent), "Y" = the graduate / migration content.
+    studentGraduate: migration?.studentGraduate ?? null,
+    // "Y": the legacy dashboard asks for the School System Training popup (studentTimePreference.js).
+    showStudentCourseSelectionModel: migration?.showStudentCourseSelectionModel ?? null,
+    // StudentDetailsDTO.nextGrade ("Grade 4"): the "Ready for …?" line of the next-grade re-enrollment popup.
+    nextGrade: details?.nextGrade || null,
     // StudentDetailsDTO.userTimezone (the student's configured zone; may be missing or invalid).
     userTimezone: details?.userTimezone || null,
   };
