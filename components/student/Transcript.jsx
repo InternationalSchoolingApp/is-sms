@@ -1,15 +1,15 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Award, FileX, MoreVertical } from "lucide-react";
+import { Award, FileX, GraduationCap, MoreVertical } from "lucide-react";
 import { K5Transcript } from "@/components/k5/pages/K5Transcript";
 import { MobileTableCard } from "@/components/student/MobileTableCard";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { useModuleRights } from "@/hooks/useModuleRights";
 import { useStudentTranscriptStatus } from "@/hooks/useStudentTranscriptStatus";
+import { transcriptLinks } from "@/utils/transcriptLinks";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || "";
-
-function ActionDropdown({ transcripts }) {
+function ActionDropdown({ links }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -22,7 +22,7 @@ function ActionDropdown({ transcripts }) {
     return () => document.removeEventListener("mousedown", close);
   }, [open]);
 
-  if (!transcripts.length) return <span className="text-xs text-black/40">--</span>;
+  if (!links.length) return <span className="text-xs text-black/40">--</span>;
 
   return (
     <div ref={ref} className="relative inline-block">
@@ -36,17 +36,17 @@ function ActionDropdown({ transcripts }) {
       </button>
       {open && (
         <div className="absolute right-0 z-20 mt-1 min-w-[180px] rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
-          {transcripts.map((t, i) => (
+          {links.map((link) => (
             <a
-              key={i}
-              href={`${BACKEND_URL}${t.viewPath}`}
+              key={link.key}
+              href={link.href}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
               onClick={() => setOpen(false)}
             >
-              <Award className="h-4 w-4 text-primary/60" aria-hidden="true" />
-              Transcript - {t.gradeName}
+              {link.kind === "diploma" ? <GraduationCap className="h-4 w-4 text-primary/60" aria-hidden="true" /> : <Award className="h-4 w-4 text-primary/60" aria-hidden="true" />}
+              {link.label}
             </a>
           ))}
         </div>
@@ -62,7 +62,11 @@ export function Transcript() {
     userId: context?.userId,
   });
 
-  if (isK5) return <K5Transcript isLoading={isLoading} student={student} transcripts={transcripts} />;
+  // Legacy: the transcript links are only listed when the module's viewed right is "Y" (roleAndModule.viewed).
+  const { waiting, canView } = useModuleRights("student-transcript");
+  const links = waiting || canView ? transcriptLinks(transcripts) : [];
+
+  if (isK5) return <K5Transcript isLoading={isLoading} student={student} links={links} />;
 
   return (
     <div className="mx-auto w-full max-w-5xl">
@@ -85,7 +89,7 @@ export function Transcript() {
                   { label: "Email", value: student.email },
                   { label: "Grade", value: student.grade },
                   { label: "Student ID", value: student.rollNumber },
-                  { label: "Action", value: <ActionDropdown transcripts={transcripts} /> },
+                  { label: "Action", value: <ActionDropdown links={links} /> },
                 ]}
               />
             </div>
@@ -109,7 +113,7 @@ export function Transcript() {
                     <td className="px-4 py-2.5">{student.grade}</td>
                     <td className="px-4 py-2.5">{student.rollNumber}</td>
                     <td className="px-4 py-2.5 text-center">
-                      <ActionDropdown transcripts={transcripts} />
+                      <ActionDropdown links={links} />
                     </td>
                   </tr>
                 </tbody>

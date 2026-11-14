@@ -1,13 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Award, FileX, MoreVertical, Search } from "lucide-react";
+import { Award, FileX, GraduationCap, MoreVertical, Search } from "lucide-react";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { K5Loading, K5TableSkeleton } from "@/components/k5/K5Skeletons";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || "";
 const GRID = "70px minmax(220px,1.4fr) minmax(220px,1.6fr) 110px minmax(170px,1fr) 90px";
 const COLUMNS = ["S. No.", "Student Name", "Email", "Grade", "Student ID", "Action"];
 // Phone: every row becomes a card, each value under its label (mockup .bdrow).
@@ -23,8 +22,8 @@ const initialsOf = (name) =>
     .join("");
 
 /** The ⋮ button of a row: opens a small menu with one item per published transcript. */
-function ActionMenu({ transcripts, open, onToggle, onClose, middle }) {
-  if (!transcripts.length) return <span className="text-sm font-extrabold text-k5-mut">--</span>;
+function ActionMenu({ links, open, onToggle, onClose, middle }) {
+  if (!links.length) return <span className="text-sm font-extrabold text-k5-mut">--</span>;
   return (
     <>
       <button
@@ -39,11 +38,11 @@ function ActionMenu({ transcripts, open, onToggle, onClose, middle }) {
       </button>
       {open && (
         <span role="menu" className="absolute end-2.5 top-[calc(100%-4px)] z-20 flex min-w-[230px] flex-col rounded-[18px] border-[3px] border-k5-ink bg-k5-card p-2 shadow-[0_6px_0_var(--k5-ink)]" style={middle ? { boxShadow: "0 2px 0 var(--k5-ink)" } : undefined}>
-          {transcripts.map((t, i) => (
+          {links.map((link) => (
             <a
-              key={i}
+              key={link.key}
               role="menuitem"
-              href={`${BACKEND_URL}${t.viewPath}`}
+              href={link.href}
               target="_blank"
               rel="noopener noreferrer"
               onClick={onClose}
@@ -51,9 +50,9 @@ function ActionMenu({ transcripts, open, onToggle, onClose, middle }) {
               style={middle ? { borderRadius: 8 } : undefined}
             >
               <span aria-hidden="true" className="flex h-8 w-8 flex-none items-center justify-center rounded-[10px] bg-k5-yt">
-                <Award className={`h-[18px] w-[18px] ${middle ? "text-k5-yx" : "text-k5-yi"}`} strokeWidth={2.4} />
+                {link.kind === "diploma" ? <GraduationCap className={`h-[18px] w-[18px] ${middle ? "text-k5-yx" : "text-k5-yi"}`} strokeWidth={2.4} /> : <Award className={`h-[18px] w-[18px] ${middle ? "text-k5-yx" : "text-k5-yi"}`} strokeWidth={2.4} />}
               </span>
-              Transcript - {t.gradeName}
+              {link.label}
             </a>
           ))}
         </span>
@@ -63,7 +62,7 @@ function ActionMenu({ transcripts, open, onToggle, onClose, middle }) {
 }
 
 /** K–5 look of Student Transcript (mockup Student Transcript): the same record and links as the existing page. */
-export function K5Transcript({ isLoading, student, transcripts }) {
+export function K5Transcript({ isLoading, student, links }) {
   const [query, setQuery] = useState("");
   const [perPage, setPerPage] = useState(10);
   const [page, setPage] = useState(1);
@@ -186,7 +185,7 @@ export function K5Transcript({ isLoading, student, transcripts }) {
                     <span className="k5h-tr-code rounded-lg bg-k5-soft px-2.5 py-0.5 font-mono text-sm font-extrabold">{row.id}</span>
                   </span>
                   <span role="cell" className="relative px-3.5 py-2 max-[760px]:order-1 max-[760px]:px-3 max-[760px]:py-1.5 max-[760px]:text-end">
-                    <ActionMenu middle={isMiddle} transcripts={transcripts} open={menuOpen} onToggle={() => setMenuOpen((v) => !v)} onClose={() => setMenuOpen(false)} />
+                    <ActionMenu middle={isMiddle} links={links} open={menuOpen} onToggle={() => setMenuOpen((v) => !v)} onClose={() => setMenuOpen(false)} />
                   </span>
                 </div>
               ))}

@@ -7,6 +7,7 @@ import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { GRADING_SYSTEM, assetUrl, orNA, useProgressReport, useReportDownload } from "@/components/student/ProgressReportView";
 import { courseTone, num } from "@/components/k5/pages/k5PerformanceData";
+import { courseWareCourses, courseWareItems, courseWareLayout, cwText } from "@/utils/courseWareReport";
 import { BackIcon } from "@/components/k5/pages/K5PerformanceIcons";
 import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
 
@@ -56,6 +57,112 @@ function Kv({ label, children }) {
       <span className="whitespace-nowrap font-black text-k5-mut">{label}:</span>
       <b className="min-w-0 font-black [overflow-wrap:anywhere]">{children}</b>
     </div>
+  );
+}
+
+/** Canvas (40) / Courseware (41) report of one course (legacy CanvasReport.jsp / CoursewareReport.jsp), in the grade look. */
+function CourseWareCourse({ course, report, index }) {
+  const layout = courseWareLayout(report);
+  const items = courseWareItems(course);
+  const tone = courseTone({ courseName: course.courseName }, index);
+  const courseGrade = gradeTone(course.courseGrade);
+  const heads = ["Sr.no", "Type", "Activity Name", layout.showDates && "Target Due Date", layout.showDates && "Submitted Date", "Percentage", "Grade"].filter(Boolean);
+  const grid = { gridTemplateColumns: layout.showDates ? "64px .9fr 2.2fr 1.1fr 1.1fr 1fr .8fr" : "64px .9fr 2.6fr 1fr .8fr" };
+
+  return (
+    <section className={`${K5_CARD} flex flex-col gap-4 px-[22px] py-5`} style={{ borderTop: `8px solid ${tone.col}` }}>
+      <div className="flex flex-wrap items-center gap-3.5 rounded-[18px] px-4 py-3.5" style={{ background: tone.lt }}>
+        <div className="flex min-w-0 flex-[1_1_220px] flex-col gap-0.5">
+          <span className="text-[13px] font-black uppercase tracking-[.08em] text-k5-mut">Course</span>
+          <b className="font-k5-display text-2xl font-semibold leading-tight text-k5-ink">{cwText(course.courseName)}</b>
+          <span className="text-[15px] font-extrabold text-k5-mut">
+            Teacher Name: <b className="font-black text-k5-ink">{cwText(course.teacherName)}</b>
+          </span>
+        </div>
+        {valueOf(course.gradeName || report.standardName) && (
+          <span className="whitespace-nowrap rounded-full border-2 bg-k5-card px-3 py-1 text-sm font-black" style={{ borderColor: tone.col }}>
+            {valueOf(course.gradeName || report.standardName)}
+          </span>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-0.5 text-center">
+        <h2 className="m-0 font-k5-display text-[26px] font-semibold uppercase tracking-[.02em] text-k5-acx">Detailed Student Grading Report</h2>
+        <span className="font-k5-display text-lg font-semibold uppercase">
+          Duration: {report.reportStartDate} - {report.reportEndDate}
+        </span>
+      </div>
+
+      <div className="k5-bdwrap overflow-x-auto rounded-[18px] border-[3px] border-k5-line bg-k5-card">
+        <div role="table" aria-label={course.courseName} className="k5-bdtbl min-w-[720px] text-[15px] font-extrabold">
+          <div role="row" className="k5-bdhead grid text-k5-ink" style={{ ...grid, background: tone.lt }}>
+            {heads.map((h) => (
+              <span key={h} role="columnheader" className={HEAD}>{h}</span>
+            ))}
+          </div>
+          {!items.length && <p className="m-0 p-5 text-center text-k5-mut">No activities in this period.</p>}
+          {items.map((item, i) => {
+            const gt = gradeTone(item.gradeLetter);
+            const tt = typeTone(item.type);
+            const cells = [
+              ["Sr.no", i + 1],
+              ["Type", <span key="t" className="rounded-full px-2.5 py-0.5 text-xs font-black tracking-[.04em]" style={{ background: tt.bg, color: tt.fg }}>{cwText(item.type)}</span>],
+              ["Activity Name", item.activityName],
+              layout.showDates && ["Target Due Date", cwText(item.dueDate)],
+              layout.showDates && ["Submitted Date", cwText(item.submittedDate)],
+              ["Percentage", cwText(item.percentage)],
+              [
+                "Grade",
+                item.gradeLetter ? (
+                  <span key="g" className="inline-block rounded-[10px] px-2.5 py-0.5 font-black" style={{ background: gt.bg, color: gt.fg }}>{item.gradeLetter}</span>
+                ) : (
+                  "N/A"
+                ),
+              ],
+            ].filter(Boolean);
+            return (
+              <div key={i} role="row" className="k5-bdrow grid items-center border-t-2 border-k5-line" style={grid}>
+                {cells.map(([label, value]) => (
+                  <span key={label} role="cell" data-l={label} className={`px-3 py-[11px] ${label === "Activity Name" ? "k5-bdwide" : ""}`}>{value}</span>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <span className="text-[13px] font-black text-k5-mut">*N/A - Not Available</span>
+
+      <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] items-start gap-3.5 max-[760px]:grid-cols-1">
+        {layout.showCounters ? (
+          <div className="flex flex-col overflow-hidden rounded-2xl border-[3px] border-k5-line text-center">
+            {[
+              ["Number of Activities - Submitted & Graded", cwText(course.submitGradedActivityCount)],
+              ["Number of Activities - Waiting for the Grade", cwText(course.waitingforGradeCount)],
+              ["Number of Activities - Not Submitted", cwText(course.notSubmittedActivityCount)],
+            ].map(([label, value]) => (
+              <div key={label} className="border-t-2 border-k5-line px-3.5 py-[9px] text-[15px] font-extrabold first:border-t-0">
+                {label}: <b className="font-black">{value}</b>
+              </div>
+            ))}
+            <div className="border-t-2 border-k5-line px-3.5 py-[9px] text-[15px] font-extrabold">
+              Last Submission Date: <b className="font-black">{cwText(course.lastSubmiteDate)}</b> | Activity Name: <b className="font-black">{cwText(course.lastSubmitActivityName)}</b>
+            </div>
+          </div>
+        ) : (
+          <div />
+        )}
+        <div className="flex flex-col overflow-hidden rounded-2xl border-[3px] border-k5-line">
+          <div className="flex items-center justify-between gap-2 px-3.5 py-[9px] text-[15px] font-extrabold">
+            <span className="font-black text-k5-mut">Course Grade:</span>
+            <b className="k5h-pr-chip rounded-[10px] px-3 font-k5-display text-[22px] font-semibold" style={{ background: courseGrade.bg, color: courseGrade.fg }}>{cwText(course.courseGrade)}</b>
+          </div>
+          <div className="flex items-center justify-between gap-2 border-t-2 border-k5-line px-3.5 py-[9px] text-[15px] font-extrabold">
+            <span className="font-black text-k5-mut">Current Overall Percentage:</span>
+            <b className="font-black">{cwText(course.currentOverallPercentage)}</b>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -251,10 +358,13 @@ function ReportSkeleton() {
 /** K–5 look of a Progress Report (Playful.dc.html progrep detail), same data and date search as ProgressReportView. */
 export function K5ProgressReportView({ url, onBack }) {
   const { context, logoUrl, isHigh } = useDashboardContext();
-  const { isLoading, report, startdate, enddate, setStartdate, setEnddate, search, error, enrollments, unsupported } = useProgressReport(url);
+  const { isLoading, report, startdate, enddate, setStartdate, setEnddate, search, error, enrollments, courseWare } = useProgressReport(url);
   const { preparing, download } = useReportDownload(report?.downloadUrl, "k5");
   const first = enrollments[0];
-  const ready = !isLoading && report?.status === "SUCCESS" && !report.reportMessage && !unsupported;
+  const courses = courseWare ? courseWareCourses(report) : [];
+  // The academic-year facts of the header: the gradebook enrolment, or (Canvas / Courseware) the first course.
+  const head = courseWare ? { start: courses[0]?.academicYearStartDate, end: courses[0]?.academicYearEndDate, teacher: courses[0]?.teacherName } : { start: first?.startdate, end: first?.enddate, teacher: valueOf(first?.teacherName) };
+  const ready = !isLoading && report?.status === "SUCCESS" && !report.reportMessage;
 
   if (isLoading) return <ReportSkeleton />;
 
@@ -314,7 +424,7 @@ export function K5ProgressReportView({ url, onBack }) {
 
       {!ready ? (
         <section className={`${K5_CARD} p-[30px] text-center text-[17px] font-extrabold text-k5-mut`}>
-          {unsupported ? "This report type is not available here yet." : report?.reportMessage || "Unable to load progress report detail."}
+          {report?.reportMessage || "Unable to load progress report detail."}
         </section>
       ) : (
         <>
@@ -331,20 +441,20 @@ export function K5ProgressReportView({ url, onBack }) {
                 <Kv label="Student ID"><span className="font-mono">{orNA(report.rollNumber)}</span></Kv>
               </div>
               <div className="flex flex-col overflow-hidden rounded-2xl border-[3px] border-k5-line">
-                <Kv label="Academic Year Start Date">{orNA(first?.startdate)}</Kv>
-                <Kv label="Academic Year End Date">{orNA(first?.enddate)}</Kv>
+                <Kv label="Academic Year Start Date">{orNA(head.start)}</Kv>
+                <Kv label="Academic Year End Date">{orNA(head.end)}</Kv>
                 <Kv label="Country">{orNA(report.country)}</Kv>
-                <Kv label="Teacher Name">{orNA(valueOf(first?.teacherName))}</Kv>
+                <Kv label="Teacher Name">{orNA(head.teacher)}</Kv>
               </div>
             </div>
           </section>
 
-          {!enrollments.length && (
+          {(courseWare ? !courses.length : !enrollments.length) && (
             <section className={`${K5_CARD} p-[30px] text-center text-[17px] font-extrabold text-k5-mut`}>No activities in this period.</section>
           )}
-          {enrollments.map((enrollment, i) => (
-            <CourseReport key={enrollment.id || i} enrollment={enrollment} report={report} index={i} />
-          ))}
+          {courseWare
+            ? courses.map((course, i) => <CourseWareCourse key={i} course={course} report={report} index={i} />)
+            : enrollments.map((enrollment, i) => <CourseReport key={enrollment.id || i} enrollment={enrollment} report={report} index={i} />)}
 
           <section className={`${K5_CARD} flex flex-wrap items-center justify-between gap-6 px-[22px] py-5`}>
             <div className="flex flex-col items-center gap-1">
