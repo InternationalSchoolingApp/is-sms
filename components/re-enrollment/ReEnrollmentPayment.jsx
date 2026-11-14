@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { FullScreenLoader } from "@/components/common/Loader";
-import { ReEnrollmentStepTitle } from "./ReEnrollmentFlow";
 import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
 import { CustomPlanTable, FeePaymentPlans } from "@/components/student-enroll/FeePaymentPlans";
 import { buildPlanOptions } from "@/components/student-enroll/Stage4ReviewPayment";
@@ -133,10 +132,6 @@ function PaymentScreen() {
 
   return (
     <>
-      <ReEnrollmentStepTitle subtitle={option.learningProgramLabel}>
-        Payment for <span className="text-primary">{option.grade?.name}</span>
-      </ReEnrollmentStepTitle>
-
       {!data ? (
         <div className="rounded-[15px] bg-white p-6 shadow-lg">
           <p className="text-sm font-semibold text-red-600">{detailsQuery.data?.message || "Could not load your payment options."}</p>

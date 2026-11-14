@@ -7,6 +7,14 @@
 .failHero h1{text-shadow:none}
 .failDescription{max-width:520px;margin:0;color:var(--k5-ink);font-size:16px;line-height:1.45}
 .failHero .art{background:radial-gradient(circle,color-mix(in srgb,var(--k5-acl),transparent 20%),transparent 72%)}
+.matureBadge{display:inline-flex;align-items:center;gap:7px;margin:0;padding:5px 10px;border:1px solid #ffffff55;border-radius:999px;background:#ffffff18;color:inherit;font-size:12px;font-weight:500}
+.gradePath{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:4px;font-size:12px;font-weight:500}
+.gradePath>span:first-child{padding:5px 11px;border:1px solid #ffffff45;border-radius:999px;background:#ffffff18;color:inherit}
+.pathLine{width:34px;height:0;border-top:1px dashed currentColor;opacity:.6}
+.nextGradePill{padding:5px 11px;border-radius:999px;background:var(--k5-card);color:var(--k5-acd)}
+.pathProgram{margin-left:6px;padding-left:12px;border-left:1px solid currentColor;opacity:.85}
+.matureMark{display:grid;place-items:center;flex:0 0 72px;width:72px;height:72px;border:1px solid #ffffff66;border-radius:50%;background:#ffffff18;color:white}
+.matureMark svg{width:38px;height:38px}
 .heroCopy{position:relative;z-index:1;flex:1;min-width:0}
 .congratulations{display:inline-flex;align-items:center;gap:8px;margin:0 0 14px;padding:8px 14px;background:#ffffff29;border:2px solid #ffffffbf;border-radius:999px;font:600 16px/1.2 var(--k5-fd)}
 .congratulations svg{color:#ffc531;fill:#ffc531;flex-shrink:0}
@@ -79,6 +87,22 @@
 :global([data-k5-band="middle"]) .optionTitle h3{font-size:20px}
 :global([data-k5-band="middle"]) .help h2{font-size:25px}
 :global([data-k5-band="middle"]) .timer>div{box-shadow:var(--k5m-card)}
+:global([data-k5-band="middle"]) .hero{min-height:176px;padding:24px;border-radius:18px;background:linear-gradient(115deg,var(--k5-acd),var(--k5-ac) 72%,color-mix(in srgb,var(--k5-ac),white 10%));color:white}
+:global([data-k5-band="middle"]) .hero.failHero{background:var(--k5-card);color:var(--k5-ink)}
+:global([data-k5-band="middle"]) .heroCopy{max-width:760px}
+:global([data-k5-band="middle"]) .hero h1{font-size:30px;line-height:1.2;text-shadow:none}
+:global([data-k5-band="middle"]) .art,:global([data-k5-band="middle"]) .confetti{display:none}
+:global([data-k5-band="middle"]) .matureBadge{border-color:#ffffff45;border-radius:10px;font-family:var(--k5-fb)}
+:global([data-k5-band="middle"]) .failHero .matureBadge{border-color:var(--k5-line);background:var(--k5-act)}
+:global([data-k5-band="middle"]) .gradePath{font-family:var(--k5-fb)}
+:global([data-k5-band="middle"]) .gradePath>span:first-child{border-color:#ffffff45}
+:global([data-k5-band="middle"]) .nextGradePill{border-radius:10px}
+:global([data-k5-band="middle"]) .pathProgram{border-color:#ffffff55}
+:global([data-k5-band="middle"]) .failHero .pathProgram{border-color:var(--k5-line)}
+:global([data-k5-band="middle"]) .matureMark{border-radius:50%;background:#ffffff18}
+:global([data-k5-band="middle"]) .failHero .matureMark{border-color:var(--k5-line);background:var(--k5-act);color:var(--k5-ac)}
+:global([data-k5-band="middle"]) .options>h2{font-size:13px;font-weight:500;letter-spacing:.6px;text-transform:uppercase;color:var(--k5-mut)}
+:global([data-k5-band="middle"]) .matureHeading{font-size:13px!important;font-weight:500!important;letter-spacing:.6px;text-transform:uppercase;color:var(--k5-mut)}
 
 :global([data-k5-high]) .hero{border-width:1px;border-radius:12px;box-shadow:var(--k5m-card)}
 :global([data-k5-high]) .card{border-width:1px;border-radius:12px;box-shadow:var(--k5m-card)}
@@ -95,12 +119,21 @@
 
 /* Mature High-school treatment: quiet surfaces, compact type and crisp actions. */
 :global([data-k5-high]) .hero{min-height:176px;padding:24px 30px;border-color:var(--k5-acl);background:linear-gradient(115deg,var(--k5-acd),var(--k5-ac) 72%,color-mix(in srgb,var(--k5-ac),white 10%));color:#fff}
-:global([data-k5-high]) .hero.failHero{background:linear-gradient(115deg,#eef4fb,#f7f9fc);color:var(--k5-ink)}
+:global([data-k5-high]) .hero.failHero{background:linear-gradient(115deg,var(--k5-card),var(--k5-soft));color:var(--k5-ink)}
 :global([data-k5-high]) .art,:global([data-k5-high]) .confetti{display:none}
 :global([data-k5-high]) .heroCopy{max-width:760px}
 :global([data-k5-high]) .congratulations{margin-bottom:10px;padding:6px 10px;border:1px solid #ffffff55;border-radius:8px;background:#ffffff14;font-size:13px}
 :global([data-k5-high]) .congratulations svg{width:18px;height:18px}
-:global([data-k5-high]) .hero h1{font-size:30px;line-height:1.25;text-shadow:none}
+:global([data-k5-high]) .hero h1{font-size:27px;line-height:1.25;text-shadow:none}
+:global([data-k5-high]) .hero h1 .ribbon{display:none}
+:global([data-k5-high]) .heroCopy{max-width:760px}
+:global([data-k5-high]) .matureBadge{border-radius:7px}
+:global([data-k5-high]) .failHero .matureBadge{border-color:var(--k5-line);background:var(--k5-act);color:var(--k5-ink)}
+:global([data-k5-high]) .gradePath{gap:10px}
+:global([data-k5-high]) .failHero .gradePath>span:first-child{border-color:var(--k5-line);background:var(--k5-card)}
+:global([data-k5-high]) .failHero .pathProgram{border-color:var(--k5-line)}
+:global([data-k5-high]) .matureMark{flex-basis:72px;width:72px;height:72px;border:1px solid #ffffff55;background:#ffffff18}
+:global([data-k5-high]) .failHero .matureMark{border-color:var(--k5-line);background:var(--k5-act);color:var(--k5-ac)}
 :global([data-k5-high]) .ribbon{margin-top:6px;padding:2px 12px;border-radius:7px;background:#ffffff1a;color:#fff;font-size:28px;line-height:1.2;transform:none;clip-path:none;box-shadow:none}
 :global([data-k5-high]) .failGreeting{padding:6px 10px;border-radius:8px;font-size:13px}
 :global([data-k5-high]) .failDescription{font-size:14px;color:var(--k5-mut)}
@@ -121,6 +154,7 @@
 :global([data-k5-high]) .withOffer{margin-top:16px;padding-top:14px;border-top:1px solid var(--k5-line)}
 :global([data-k5-high]) .options{gap:10px}
 :global([data-k5-high]) .options>h2{font-size:19px}
+:global([data-k5-high]) .matureHeading{font-size:12px!important;font-weight:500!important;letter-spacing:.6px;text-transform:uppercase;color:var(--k5-mut)}
 :global([data-k5-high]) .options>h2 svg{width:22px;height:22px}
 :global([data-k5-high]) .option{gap:14px;padding:14px;border-color:var(--k5-line);background:var(--k5-card)}
 :global([data-k5-high]) .tile{flex-basis:44px;height:44px;border-radius:8px;background:var(--k5-act);color:var(--k5-ac)}
@@ -136,4 +170,109 @@
 :global([data-k5-high]) .contact>span svg{width:18px;height:18px}
 :global([data-k5-high]) .contact h3{font-size:14px}
 :global([data-k5-high]) .contact p{font-size:12px}
-@media(max-width:600px){:global([data-k5-high]) .hero{padding:20px 16px}:global([data-k5-high]) .hero h1{font-size:25px}:global([data-k5-high]) .ribbon{font-size:24px}:global([data-k5-high]) .card{padding:14px}:global([data-k5-high]) .option{padding:12px}}
+@media(max-width:600px){:global([data-k5-band="middle"]) .hero h1{font-size:25px}:global([data-k5-band="middle"]) .hero{padding:20px 16px}:global([data-k5-high]) .hero{padding:20px 16px}:global([data-k5-high]) .hero h1{font-size:25px}:global([data-k5-high]) .ribbon{font-size:24px}:global([data-k5-high]) .card{padding:14px}:global([data-k5-high]) .option{padding:12px}}
+
+/* Match the supplied Grade 9–12 reference hero while keeping accents on dashboard blue. */
+:global([data-k5-high]) .layout{background-image:radial-gradient(rgba(27,33,48,.07) 1px,transparent 1.2px);background-position:0 0;background-size:20px 20px}
+:global([data-k5-high]) .hero{gap:20px;padding:24px 28px;border-color:#0a1f44;border-radius:12px;background:linear-gradient(135deg,#0a1f44 0%,#0b3d86 55%,#0866d9 100%);box-shadow:0 1px 2px rgba(16,24,40,.08),0 12px 28px rgba(10,31,68,.18);color:#fff}
+:global([data-k5-high]) .hero[data-result="fail"]{border-color:var(--k5-acl);background:#f7fafe;box-shadow:0 1px 2px rgba(16,24,40,.05);color:var(--k5-ink)}
+:global([data-k5-high]) .heroDecor{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+:global([data-k5-high]) .heroDecor i{position:absolute;display:block;pointer-events:none}
+:global([data-k5-high]) .heroDecor i:first-child{inset:0;background-image:linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px);background-size:28px 28px;-webkit-mask-image:linear-gradient(90deg,transparent 20%,#000 75%);mask-image:linear-gradient(90deg,transparent 20%,#000 75%)}
+:global([data-k5-high]) .heroDecor i:nth-child(2),:global([data-k5-high]) .heroDecor i:nth-child(3){top:50%;right:-120px;width:420px;height:420px;margin-top:-210px;border:1px solid rgba(255,255,255,.18);border-radius:50%}
+:global([data-k5-high]) .heroDecor i:nth-child(3){right:-60px;width:300px;height:300px;margin-top:-150px}
+:global([data-k5-high]) .hero[data-result="fail"] .heroDecor i:first-child{background-image:linear-gradient(rgba(2,127,254,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(2,127,254,.06) 1px,transparent 1px)}
+:global([data-k5-high]) .hero[data-result="fail"] .heroDecor i:nth-child(2),:global([data-k5-high]) .hero[data-result="fail"] .heroDecor i:nth-child(3){border-color:rgba(2,127,254,.16)}
+:global([data-k5-high]) .heroCopy{display:flex;flex-direction:column;align-items:flex-start;gap:12px;max-width:none}
+:global([data-k5-high]) .hero h1{font-size:27px;font-weight:500;letter-spacing:-.2px;line-height:1.15}
+:global([data-k5-high]) .matureBadge{padding:6px 12px;border:1px solid rgba(255,255,255,.35);border-radius:999px;background:rgba(255,255,255,.18);font-size:12px;line-height:1.3}
+:global([data-k5-high]) .hero[data-result="fail"] .matureBadge{border-color:var(--k5-acl);background:var(--k5-card);color:var(--k5-ink)}
+:global([data-k5-high]) .failDescription{max-width:560px;font-size:14px;font-weight:400;line-height:1.5;color:var(--k5-ink)}
+:global([data-k5-high]) .gradePath{gap:10px;margin-top:6px}
+:global([data-k5-high]) .gradePath>span:first-child{padding:5px 11px;border-color:rgba(255,255,255,.28);border-radius:999px;background:rgba(255,255,255,.14)}
+:global([data-k5-high]) .nextGradePill{border-radius:999px;color:var(--k5-acd)}
+:global([data-k5-high]) .hero[data-result="fail"] .gradePath>span:first-child{border-color:var(--k5-acl);background:var(--k5-card)}
+:global([data-k5-high]) .highMascot{position:relative;z-index:1;display:flex;flex:0 0 96px;align-items:flex-end;justify-content:center;width:96px;height:96px;overflow:hidden;border:2px solid #fff;border-radius:50%;background:#fff;box-sizing:border-box;box-shadow:0 0 0 8px rgba(255,255,255,.08),0 0 0 9px rgba(255,255,255,.18)}
+:global([data-k5-high]) .highMascot svg{width:59px;height:69px;overflow:visible}
+:global([data-k5-high]) .hero[data-result="fail"] .highMascot{background:var(--k5-act);box-shadow:0 0 0 8px rgba(2,127,254,.06),0 0 0 9px rgba(2,127,254,.16)}
+:global([data-k5-high]) .card{border:1.5px solid var(--k5-line);border-radius:12px;padding:18px;box-shadow:0 1px 2px rgba(16,24,40,.05)}
+:global([data-k5-high]) .offer{align-items:stretch;gap:16px}
+:global([data-k5-high]) .offerCopy{display:flex;flex:1 1 240px;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;min-width:0;padding:4px 6px}
+:global([data-k5-high]) .badge{gap:6px;padding:4px 12px 4px 8px;border-radius:999px;font-size:12px}
+:global([data-k5-high]) .badge svg{width:18px;height:18px}
+:global([data-k5-high]) .offerCopy h2{margin:0;font-size:26px;font-weight:900;line-height:1.1}
+:global([data-k5-high]) .offerCopy p{font-size:13px;line-height:1.4}
+:global([data-k5-high]) .countdown{flex:0 1 auto;gap:10px;padding:14px 16px;border:1px solid #bfe3cb;border-radius:16px;background:#f3faf5}
+:global([data-k5-high]) .ends{gap:10px;margin:0;font-size:13px;line-height:1.25}
+:global([data-k5-high]) .ends strong{font-size:15px;line-height:1.25}
+:global([data-k5-high]) .calendar{width:36px;height:36px;border-radius:10px}
+:global([data-k5-high]) .timer{gap:8px}
+:global([data-k5-high]) .timer>div{min-width:56px;padding:7px 6px;gap:2px;border:1px solid #bfe3cb;border-radius:12px;background:var(--k5-card);box-shadow:none}
+:global([data-k5-high]) .timer strong{font-size:19px;font-weight:500;line-height:1.1}
+:global([data-k5-high]) .timer span{font-size:11px}
+:global([data-k5-high]) .withOffer{margin-top:16px;padding-top:16px;border-top:1px solid var(--k5-line)}
+:global([data-k5-high]) .option{gap:14px;padding:16px 18px;border:1.5px solid var(--k5-ac);border-radius:12px;background:var(--k5-card);box-shadow:0 1px 2px rgba(16,24,40,.05)}
+:global([data-k5-high]) .tile{flex:0 0 46px;width:46px;height:46px;border-radius:10px;background:var(--k5-act);color:var(--k5-ac)}
+:global([data-k5-high]) .optionCopy{flex:1 1 240px;display:flex;flex-direction:column;gap:4px}
+:global([data-k5-high]) .optionTitle{gap:8px 10px;margin:0}
+:global([data-k5-high]) .optionTitle h3{font-size:16px;font-weight:500;line-height:1.2}
+:global([data-k5-high]) .saving{padding:2px 8px;border-radius:999px;font-size:11px;font-weight:500}
+:global([data-k5-high]) .optionCopy p{font-size:13px;font-weight:400;line-height:1.4}
+:global([data-k5-high]) .option .next{flex:none;min-width:150px;min-height:44px;padding:0 28px;border:1.5px solid var(--k5-ac);border-radius:999px;background:var(--k5-ac);box-shadow:none;font-size:14px;font-weight:500}
+/* Grade 6–8 Balanced reference: brighter blue hero, larger Pico, and lifted cards. */
+:global([data-k5-band="middle"]) .layout{background-image:radial-gradient(700px 420px at 100% 0%,rgba(2,127,254,.08),transparent 70%),radial-gradient(600px 420px at 0% 100%,rgba(79,170,255,.08),transparent 70%)}
+:global([data-k5-band="middle"]) .hero{min-height:220px;gap:22px;padding:28px 32px;border:1.5px solid #0b6fe8;border-radius:18px;background:linear-gradient(120deg,#0b6fe8 0%,#027ffe 45%,#4faaff 100%);box-shadow:0 14px 32px rgba(2,127,254,.24);color:#fff}
+:global([data-k5-band="middle"]) .hero[data-result="fail"]{border-color:var(--k5-acl);background:linear-gradient(135deg,#f4f9ff 0%,#e2efff 100%);box-shadow:0 1px 2px rgba(23,27,46,.05),0 10px 24px rgba(2,127,254,.08);color:var(--k5-ink)}
+:global([data-k5-band="middle"]) .heroDecor{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+:global([data-k5-band="middle"]) .heroDecor i{position:absolute;display:block;pointer-events:none}
+:global([data-k5-band="middle"]) .heroDecor i:first-child{top:-90px;right:-70px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.1)}
+:global([data-k5-band="middle"]) .heroDecor i:nth-child(2){right:110px;bottom:-120px;width:240px;height:240px;border:1.5px solid rgba(255,255,255,.22);border-radius:50%}
+:global([data-k5-band="middle"]) .heroDecor i:nth-child(3){right:140px;bottom:-90px;width:180px;height:180px;border:1.5px dashed rgba(255,255,255,.22);border-radius:50%}
+:global([data-k5-band="middle"]) .heroDecor i:nth-child(4){top:0;left:0;width:220px;height:140px;background-image:radial-gradient(rgba(255,255,255,.28) 1.4px,transparent 1.6px);background-size:16px 16px;-webkit-mask-image:linear-gradient(135deg,#000 0%,transparent 70%);mask-image:linear-gradient(135deg,#000 0%,transparent 70%)}
+:global([data-k5-band="middle"]) .heroDecor i:nth-child(5){top:10%;left:58%;width:18px;height:5px;border-radius:4px;background:#ffd25e;opacity:.85;transform:rotate(24deg)}
+:global([data-k5-band="middle"]) .heroDecor i:nth-child(6){bottom:12%;left:66%;width:14px;height:5px;border-radius:4px;background:#bfe0ff;opacity:.85;transform:rotate(-30deg)}
+:global([data-k5-band="middle"]) .heroDecor i:nth-child(7){top:44%;left:69%;width:12px;height:5px;border-radius:4px;background:#fff;opacity:.85;transform:rotate(60deg)}
+:global([data-k5-band="middle"]) .hero[data-result="fail"] .heroDecor i:first-child{background:rgba(2,127,254,.07)}
+:global([data-k5-band="middle"]) .hero[data-result="fail"] .heroDecor i:nth-child(2),:global([data-k5-band="middle"]) .hero[data-result="fail"] .heroDecor i:nth-child(3){border-color:rgba(2,127,254,.14)}
+:global([data-k5-band="middle"]) .hero[data-result="fail"] .heroDecor i:nth-child(4){background-image:radial-gradient(rgba(2,127,254,.16) 1.4px,transparent 1.6px)}
+:global([data-k5-band="middle"]) .hero[data-result="fail"] .heroDecor i:nth-child(n+5){display:none}
+:global([data-k5-band="middle"]) .heroCopy{display:flex;flex-direction:column;align-items:flex-start;gap:12px;max-width:none}
+:global([data-k5-band="middle"]) .hero h1{font-size:34px;font-weight:700;letter-spacing:-.4px;line-height:1.15;text-shadow:none}
+:global([data-k5-band="middle"]) .matureBadge{padding:7px 16px;border:1px solid rgba(255,255,255,.35);border-radius:999px;background:rgba(255,255,255,.18);font-size:14px;font-weight:700;line-height:1.3}
+:global([data-k5-band="middle"]) .hero[data-result="fail"] .matureBadge{border-color:var(--k5-acl);background:var(--k5-card);color:var(--k5-ink)}
+:global([data-k5-band="middle"]) .failDescription{max-width:560px;font-size:15px;font-weight:500;line-height:1.5;color:var(--k5-mut)}
+:global([data-k5-band="middle"]) .gradePath{gap:10px;margin-top:6px;font-size:14px}
+:global([data-k5-band="middle"]) .gradePath>span:first-child{padding:6px 13px;border-color:rgba(255,255,255,.28);border-radius:999px;background:rgba(255,255,255,.14)}
+:global([data-k5-band="middle"]) .nextGradePill{border-radius:999px}
+:global([data-k5-band="middle"]) .hero[data-result="fail"] .gradePath>span:first-child{border-color:var(--k5-acl);background:var(--k5-card)}
+:global([data-k5-band="middle"]) .highMascot{position:relative;z-index:1;display:flex;flex:0 0 128px;align-items:flex-end;justify-content:center;width:128px;height:128px;overflow:hidden;border:3px solid #fff;border-radius:50%;background:#fff;box-sizing:border-box;box-shadow:0 0 0 10px rgba(255,255,255,.14),0 0 0 22px rgba(255,255,255,.07),0 18px 30px rgba(0,40,110,.28)}
+:global([data-k5-band="middle"]) .highMascot svg{width:79px;height:92px;overflow:visible}
+:global([data-k5-band="middle"]) .hero[data-result="fail"] .highMascot{background:var(--k5-act);box-shadow:0 0 0 10px rgba(2,127,254,.08),0 0 0 22px rgba(2,127,254,.04)}
+:global([data-k5-band="middle"]) .card{padding:18px;border:1.5px solid var(--k5-line);border-radius:18px;background:var(--k5-card);box-shadow:0 1px 2px rgba(23,27,46,.05),0 6px 18px rgba(23,27,46,.06)}
+:global([data-k5-band="middle"]) .offer{align-items:stretch;gap:16px}
+:global([data-k5-band="middle"]) .offerCopy{display:flex;flex:1 1 240px;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;min-width:0;padding:4px 6px}
+:global([data-k5-band="middle"]) .badge{gap:6px;padding:4px 12px 4px 8px;border-radius:999px;font-size:14px;font-weight:700}
+:global([data-k5-band="middle"]) .badge svg{width:18px;height:18px}
+:global([data-k5-band="middle"]) .offerCopy h2{margin:0;font-size:32px;font-weight:900;line-height:1.1}
+:global([data-k5-band="middle"]) .offerCopy p{font-size:15px;font-weight:500;line-height:1.4}
+:global([data-k5-band="middle"]) .countdown{flex:0 1 auto;gap:10px;padding:14px 16px;border:1px solid #bfe3cb;border-radius:12px;background:linear-gradient(160deg,#e3f5ea,#d3eedd)}
+:global([data-k5-band="middle"]) .ends{gap:10px;margin:0;font-size:17px;line-height:1.25}
+:global([data-k5-band="middle"]) .ends strong{font-size:17px;line-height:1.25}
+:global([data-k5-band="middle"]) .calendar{width:36px;height:36px;border-radius:12px}
+:global([data-k5-band="middle"]) .timer{gap:8px}
+:global([data-k5-band="middle"]) .timer>div{min-width:62px;padding:8px 6px;gap:2px;border:1.5px solid #bfe3cb;border-radius:12px;background:linear-gradient(180deg,#fff,#f4fbf6);box-shadow:0 1px 2px rgba(23,27,46,.05)}
+:global([data-k5-band="middle"]) .timer strong{font-size:23px;font-weight:600;line-height:1.1}
+:global([data-k5-band="middle"]) .timer span{font-size:12px;font-weight:600}
+:global([data-k5-band="middle"]) .option{gap:16px;padding:18px 20px;border:1.5px solid var(--k5-ac);border-radius:18px;background:linear-gradient(90deg,var(--k5-act) 0%,#fff 38%);box-shadow:0 1px 2px rgba(23,27,46,.05),0 6px 18px rgba(23,27,46,.06);transition:transform .2s ease,box-shadow .2s ease}
+:global([data-k5-band="middle"]) .option:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(2,127,254,.14)}
+:global([data-k5-band="middle"]) .tile{flex:0 0 56px;width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#4faaff,#027ffe);box-shadow:0 6px 14px rgba(2,127,254,.28);color:#fff}
+:global([data-k5-band="middle"]) .tile svg{width:26px;height:26px}
+:global([data-k5-band="middle"]) .optionCopy{flex:1 1 240px}
+:global([data-k5-band="middle"]) .optionTitle{gap:8px 10px}
+:global([data-k5-band="middle"]) .optionTitle h3{font-size:19px;font-weight:600;line-height:1.2}
+:global([data-k5-band="middle"]) .saving{padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700}
+:global([data-k5-band="middle"]) .optionCopy p{font-size:15px;font-weight:500;line-height:1.4}
+:global([data-k5-band="middle"]) .option .next{flex:none;min-width:190px;min-height:54px;padding:0 28px;border:1.5px solid var(--k5-ac);border-radius:999px;background:linear-gradient(135deg,#2b93ff,#0068e0);box-shadow:0 2px 0 var(--k5-acd);font-size:18px;font-weight:600}
+:global([data-k5-band="middle"]) .help{background:linear-gradient(180deg,var(--k5-act) 0,#fff 150px)}
+@media(max-width:600px){:global([data-k5-band="middle"]) .hero{gap:14px;padding:22px 20px}:global([data-k5-band="middle"]) .hero h1{font-size:26px}:global([data-k5-band="middle"]) .highMascot{flex-basis:92px;width:92px;height:92px}:global([data-k5-band="middle"]) .highMascot svg{width:57px;height:66px}:global([data-k5-band="middle"]) .offerCopy h2{font-size:28px}:global([data-k5-band="middle"]) .countdown{flex:1 1 100%}:global([data-k5-band="middle"]) .timer>div{flex:1 1 0;min-width:0}:global([data-k5-band="middle"]) .option{gap:12px;padding:14px}:global([data-k5-band="middle"]) .tile{flex-basis:45px;width:45px;height:45px}:global([data-k5-band="middle"]) .optionTitle h3{font-size:17px}:global([data-k5-band="middle"]) .option .next{width:100%;min-width:0}}
+@media(max-width:600px){:global([data-k5-high]) .hero{gap:14px;padding:20px 16px}:global([data-k5-high]) .heroCopy{width:100%;align-items:center;text-align:center}:global([data-k5-high]) .hero h1{font-size:24px}:global([data-k5-high]) .gradePath{justify-content:center}:global([data-k5-high]) .highMascot{flex-basis:80px;width:80px;height:80px}}

@@ -184,7 +184,7 @@ function ProgramChips({ option, selected, disabled, onSelect }) {
  * resume at (currentStep).
  */
 export function ReEnrollmentOptions() {
-  const { isK5 } = useDashboardContext();
+  const { isK5, isMiddle, isHigh } = useDashboardContext();
   const router = useRouter();
   const { school } = useParams();
   const { session, context, eligibility, inProgress } = useReEnrollmentContext();
@@ -233,8 +233,11 @@ export function ReEnrollmentOptions() {
   if (isK5) {
     return <K5PassedOptions
       passed={passed}
+      isMiddle={isMiddle}
+      isHigh={isHigh}
       studentName={eligibility.studentName}
       grade={grade}
+      currentGrade={eligibility.currentGrade?.name}
       discount={discount}
       options={options}
       uniqueId={session.uniqueId}
