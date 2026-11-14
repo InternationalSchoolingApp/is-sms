@@ -87,7 +87,7 @@ export function K5Transcript({ isLoading, student, transcripts }) {
       {isMiddle ? (
         // Grade 6–8 (Middle.dc.html): no card around the title — a 62px accent tile with a clipboard, a 30px heading.
         <div className="flex flex-wrap items-center gap-4">
-          <span className="flex h-[62px] w-[62px] flex-none items-center justify-center bg-k5-act" style={{ borderRadius: 14 }}>
+          <span className="k5h-tr-tile flex h-[62px] w-[62px] flex-none items-center justify-center rounded-[14px] bg-k5-act">
             <svg width="34" height="34" viewBox="0 0 24 24" fill="none" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="stroke-k5-ac">
               <rect x="5" y="3" width="14" height="18" rx="2.5" />
               <path d="M9 3.5v2h6v-2" />
@@ -132,7 +132,7 @@ export function K5Transcript({ isLoading, student, transcripts }) {
                   setPerPage(Number(e.target.value));
                   setPage(1);
                 }}
-                className="min-h-[42px] rounded-xl border-[3px] border-k5-line bg-k5-card px-2.5 text-base font-black text-k5-ink"
+                className="k5h-pr-btn min-h-[42px] rounded-xl border-[3px] border-k5-line bg-k5-card px-2.5 text-base font-black text-k5-ink"
                 style={isMiddle ? { borderRadius: 8 } : undefined}
               >
                 {[10, 25, 50].map((n) => (
@@ -158,7 +158,7 @@ export function K5Transcript({ isLoading, student, transcripts }) {
           </div>
 
           <div className={`relative z-[6] rounded-[18px] border-[3px] border-k5-line bg-k5-card pb-0.5 max-[760px]:border-0 ${menuOpen ? "overflow-visible" : "overflow-x-auto max-[760px]:overflow-visible"}`}>
-            <div role="table" aria-label="Student Transcript" className="min-w-[900px] text-[15px] font-extrabold max-[760px]:flex max-[760px]:min-w-0 max-[760px]:flex-col max-[760px]:gap-2.5">
+            <div role="table" aria-label="Student Transcript" className="k5h-tr-table min-w-[900px] text-[15px] font-extrabold max-[760px]:flex max-[760px]:min-w-0 max-[760px]:flex-col max-[760px]:gap-2.5">
               <div role="row" style={{ "--cols": GRID }} className="grid grid-cols-[var(--cols)] rounded-t-[14px] bg-k5-ac font-k5-display text-base font-semibold text-white max-[760px]:hidden">
                 {COLUMNS.map((c) => (
                   <span key={c} role="columnheader" className="p-3.5">{c}</span>
@@ -183,7 +183,7 @@ export function K5Transcript({ isLoading, student, transcripts }) {
                     <span className="rounded-full bg-k5-act px-3 py-[3px] font-black text-k5-acx whitespace-nowrap">{row.grade}</span>
                   </span>
                   <span role="cell" data-l="Student ID" className={`${CELL} max-[760px]:col-span-full`}>
-                    <span className="rounded-lg bg-k5-soft px-2.5 py-0.5 font-mono text-sm font-extrabold">{row.id}</span>
+                    <span className="k5h-tr-code rounded-lg bg-k5-soft px-2.5 py-0.5 font-mono text-sm font-extrabold">{row.id}</span>
                   </span>
                   <span role="cell" className="relative px-3.5 py-2 max-[760px]:order-1 max-[760px]:px-3 max-[760px]:py-1.5 max-[760px]:text-end">
                     <ActionMenu middle={isMiddle} transcripts={transcripts} open={menuOpen} onToggle={() => setMenuOpen((v) => !v)} onClose={() => setMenuOpen(false)} />

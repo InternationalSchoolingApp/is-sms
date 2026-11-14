@@ -71,8 +71,7 @@ function FeeHeader() {
   return (
     <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
       <span
-        className={isMiddle ? "flex h-[62px] w-[62px] flex-none items-center justify-center bg-k5-act" : "flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-mt"}
-        style={isMiddle ? { borderRadius: 14 } : undefined}
+        className={isMiddle ? "k5h-fee-tile flex h-[62px] w-[62px] flex-none items-center justify-center rounded-[14px] bg-k5-act" : "flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-mt"}
       >
         <svg width={isMiddle ? 34 : 48} height={isMiddle ? 34 : 48} viewBox="0 0 24 24" fill="none" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: isMiddle ? "var(--k5-ac)" : "var(--k5-mI)" }}>
           <rect x="3" y="5" width="18" height="14" rx="3" />
@@ -189,7 +188,7 @@ export function K5FeeDetails({ isLoading, payments, nextUserPaymentDetailsId, sy
                     <span role="cell" data-l="Paid Date" className={`${CELL} max-[760px]:col-span-full`}>{payment.payDate || "--"}</span>
                     <span role="cell" data-l="Status" className={`${CELL} max-[760px]:col-span-full`}>
                       {success ? (
-                        <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-[#E4F4EA] py-1 pe-3 ps-1 text-[13px] font-black tracking-wide text-[#0E5A31]">
+                        <span className="k5h-fee-ok inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-[#E4F4EA] py-1 pe-3 ps-1 text-[13px] font-black tracking-wide text-[#0E5A31]">
                           <span aria-hidden="true" className="flex h-5 w-5 items-center justify-center rounded-full bg-[#13803F]">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-10" /></svg>
                           </span>
@@ -211,7 +210,7 @@ export function K5FeeDetails({ isLoading, payments, nextUserPaymentDetailsId, sy
                           href={payment.recieptLink}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex min-h-[42px] cursor-pointer items-center whitespace-nowrap rounded-full border-[3px] border-k5-ac bg-k5-card px-4 font-k5-display text-[15px] font-semibold text-k5-acx no-underline"
+                          className="k5h-pr-btn inline-flex min-h-[42px] cursor-pointer items-center whitespace-nowrap rounded-full border-[3px] border-k5-ac bg-k5-card px-4 font-k5-display text-[15px] font-semibold text-k5-acx no-underline"
                         >
                           View Receipt
                         </a>
@@ -220,7 +219,7 @@ export function K5FeeDetails({ isLoading, payments, nextUserPaymentDetailsId, sy
                         <button
                           type="button"
                           onClick={() => onPay?.(payment.id)}
-                          className="inline-flex min-h-[42px] cursor-pointer items-center whitespace-nowrap rounded-full border-none bg-k5-ac px-[18px] font-k5-display text-[15px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)]"
+                          className="k5h-pr-btn inline-flex min-h-[42px] cursor-pointer items-center whitespace-nowrap rounded-full border-none bg-k5-ac px-[18px] font-k5-display text-[15px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)]"
                         >
                           {action.label}
                         </button>

@@ -145,7 +145,7 @@ function BuyHeader({ showCart = false, cartLoading = false }) {
     <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
       {isMiddle ? (
         // Grade 6–8 (Middle.dc.html): no card around the title — a 62px accent tile, a 30px heading.
-        <span className={`flex h-[62px] w-[62px] flex-none items-center justify-center bg-k5-act ${isHigh ? "rounded-[10px]" : "rounded-[14px]"}`}>
+        <span className={`flex h-[62px] w-[62px] flex-none items-center justify-center bg-k5-act ${isHigh ? "rounded-[10px]" : "rounded-[0.875rem]"}`}>
           <svg width="34" height="34" viewBox="0 0 24 24" fill="none" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true" className="stroke-k5-ac">
             <circle cx="12" cy="12" r="9" />
             <path d="M12 8v8M8 12h8" />

@@ -162,7 +162,7 @@ function CourseReport({ enrollment, report, index }) {
         <div className="flex flex-col overflow-hidden rounded-2xl border-[3px] border-k5-line">
           <div className="flex items-center justify-between gap-2 px-3.5 py-[9px] text-[15px] font-extrabold">
             <span className="font-black text-k5-mut">Course Grade:</span>
-            <b className="rounded-[10px] px-3 font-k5-display text-[22px] font-semibold" style={{ background: courseTone2.bg, color: courseTone2.fg }}>{orNA(grades.letter)}</b>
+            <b className="k5h-pr-chip rounded-[10px] px-3 font-k5-display text-[22px] font-semibold" style={{ background: courseTone2.bg, color: courseTone2.fg }}>{orNA(grades.letter)}</b>
           </div>
           <div className="flex items-center justify-between gap-2 border-t-2 border-k5-line px-3.5 py-[9px] text-[15px] font-extrabold">
             <span className="font-black text-k5-mut">Current Overall Percentage:</span>
@@ -196,8 +196,8 @@ function ReportSkeleton() {
         <K5Sk className="h-8 w-80 max-w-full" />
       </div>
       <div className={`${K5_CARD} flex flex-wrap items-end gap-3 px-[18px] py-3.5`}>
-        <K5Sk className="h-[50px] w-[220px] rounded-[14px]" />
-        <K5Sk className="h-[50px] w-[220px] rounded-[14px]" />
+        <K5Sk className="k5h-pr-skel h-[50px] w-[220px] rounded-[14px]" />
+        <K5Sk className="k5h-pr-skel h-[50px] w-[220px] rounded-[14px]" />
         <K5Sk className="h-[50px] w-24 rounded-full" />
         <K5Sk className="ms-auto h-12 w-36 rounded-full" />
       </div>
@@ -250,7 +250,7 @@ function ReportSkeleton() {
 
 /** K–5 look of a Progress Report (Playful.dc.html progrep detail), same data and date search as ProgressReportView. */
 export function K5ProgressReportView({ url, onBack }) {
-  const { context, logoUrl } = useDashboardContext();
+  const { context, logoUrl, isHigh } = useDashboardContext();
   const { isLoading, report, startdate, enddate, setStartdate, setEnddate, search, error, enrollments, unsupported } = useProgressReport(url);
   const { preparing, download } = useReportDownload(report?.downloadUrl, "k5");
   const first = enrollments[0];
@@ -264,7 +264,7 @@ export function K5ProgressReportView({ url, onBack }) {
         <button
           type="button"
           onClick={onBack}
-          className="flex min-h-12 cursor-pointer items-center gap-2 rounded-full border-[3px] border-k5-line bg-k5-card pe-[18px] ps-3 font-k5-display text-[17px] font-semibold text-k5-ink shadow-[0_4px_0_var(--k5-line)]"
+          className="flex min-h-[48px] cursor-pointer items-center gap-2 rounded-full border-[3px] border-k5-line bg-k5-card pe-[18px] ps-3 font-k5-display text-[17px] font-semibold text-k5-ink shadow-[0_4px_0_var(--k5-line)]"
         >
           <BackIcon />
           Back
@@ -276,11 +276,11 @@ export function K5ProgressReportView({ url, onBack }) {
 
       <div className={`${K5_CARD} flex flex-col gap-2 px-[18px] py-3.5`}>
         <div className="flex flex-wrap items-end gap-3">
-          <div className="flex-[0_1_220px] max-[760px]:flex-[1_1_100%]">
-            <DatePicker icon={CalendarDays} label="Due Start Date" value={startdate} onChange={setStartdate} height="h-[50px]" />
+          <div className={`k5h-at-date max-[760px]:flex-[1_1_100%] ${isHigh ? "flex-[0_1_200px]" : "flex-[0_1_220px]"}`}>
+            <DatePicker icon={CalendarDays} label="Due Start Date" value={startdate} onChange={setStartdate} height={isHigh ? "h-[43px]" : "h-[50px]"} />
           </div>
-          <div className="flex-[0_1_220px] max-[760px]:flex-[1_1_100%]">
-            <DatePicker icon={CalendarDays} label="Due End Date" value={enddate} onChange={setEnddate} height="h-[50px]" />
+          <div className={`k5h-at-date max-[760px]:flex-[1_1_100%] ${isHigh ? "flex-[0_1_200px]" : "flex-[0_1_220px]"}`}>
+            <DatePicker icon={CalendarDays} label="Due End Date" value={enddate} onChange={setEnddate} height={isHigh ? "h-[43px]" : "h-[50px]"} />
           </div>
           <button
             type="button"
@@ -296,7 +296,7 @@ export function K5ProgressReportView({ url, onBack }) {
               onClick={download}
               disabled={preparing}
               aria-busy={preparing}
-              className="ms-auto flex min-h-12 cursor-pointer items-center gap-2 rounded-full border-[3px] border-k5-ac bg-k5-ac px-[18px] font-k5-display text-[17px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)] disabled:cursor-wait disabled:opacity-80 max-[760px]:ms-0 max-[760px]:flex-[1_1_100%] max-[760px]:justify-center"
+              className="ms-auto flex min-h-[48px] cursor-pointer items-center gap-2 rounded-full border-[3px] border-k5-ac bg-k5-ac px-[18px] font-k5-display text-[17px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)] disabled:cursor-wait disabled:opacity-80 max-[760px]:ms-0 max-[760px]:flex-[1_1_100%] max-[760px]:justify-center"
             >
               {preparing ? (
                 <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-[3px] border-white/40 border-t-white" />

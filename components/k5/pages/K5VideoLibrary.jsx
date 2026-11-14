@@ -3,6 +3,7 @@
 import { Check, CheckCircle2, ChevronLeft, ChevronRight, Gift, Hourglass, Lock, LockOpen, Play, RefreshCw, Search } from "lucide-react";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { VideoPlayer } from "@/components/student/videoLibrary/VideoPlayer";
 import { useK5CourseColors } from "@/hooks/useK5CourseColors";
 import { subjectStyle } from "@/utils/k5Calendar";
@@ -25,8 +26,8 @@ import {
 } from "@/utils/videoLibrary";
 
 const PILL_BUTTON =
-  "flex min-h-12 cursor-pointer items-center gap-2 rounded-full border-[3px] border-k5-line bg-k5-card px-[18px] font-k5-display text-[17px] font-semibold text-k5-ink shadow-[0_4px_0_var(--k5-line)] disabled:cursor-default disabled:opacity-45";
-const PRIMARY_BUTTON = "flex min-h-12 cursor-pointer items-center gap-2 rounded-full border-[3px] border-k5-ac bg-k5-ac px-[18px] font-k5-display text-[17px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)] disabled:cursor-default disabled:opacity-60";
+  "flex min-h-[48px] cursor-pointer items-center gap-2 rounded-full border-[3px] border-k5-line bg-k5-card px-[18px] font-k5-display text-[17px] font-semibold text-k5-ink shadow-[0_4px_0_var(--k5-line)] disabled:cursor-default disabled:opacity-45";
+const PRIMARY_BUTTON = "flex min-h-[48px] cursor-pointer items-center gap-2 rounded-full border-[3px] border-k5-ac bg-k5-ac px-[18px] font-k5-display text-[17px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)] disabled:cursor-default disabled:opacity-60";
 const tint = (color) => `color-mix(in srgb, ${color} 14%, white)`;
 
 function useCourseColor() {
@@ -65,7 +66,7 @@ function AccessBar({ access, playlists, busy, onTrial, onSubscribe }) {
 
   return (
     <div
-      className="flex flex-wrap items-center gap-3.5 rounded-3xl border-[3px] bg-k5-card px-[18px] py-3.5"
+      className="k5h-lb-access flex flex-wrap items-center gap-3.5 rounded-3xl border-[3px] bg-k5-card px-[18px] py-3.5"
       style={{ borderColor: locked ? "var(--k5-yB)" : "var(--k5-ac)", boxShadow: `0 5px 0 ${locked ? "var(--k5-yT)" : "var(--k5-act)"}` }}
     >
       <span aria-hidden="true" className={`flex h-14 w-14 flex-none items-center justify-center rounded-[18px] ${locked ? "bg-k5-yt text-k5-yi" : "bg-k5-act text-k5-acx"}`}>
@@ -118,7 +119,7 @@ function CourseChips({ playlists, activeIndex, onSelect }) {
             aria-selected={active}
             title={`${p.title}${p.locked ? " — locked" : ` — ${done} of ${steps.length} done`}`}
             onClick={() => onSelect(i)}
-            className="flex min-h-[52px] cursor-pointer items-center gap-2.5 rounded-full border-[3px] py-0 pe-2.5 ps-4 font-k5-display text-[17px] font-semibold max-[760px]:basis-full max-[760px]:text-base"
+            className="k5h-lb-chip flex min-h-[52px] cursor-pointer items-center gap-2.5 rounded-full border-[3px] py-0 pe-2.5 ps-4 font-k5-display text-[17px] font-semibold max-[760px]:basis-full max-[760px]:text-base"
             style={{ background: active ? "var(--k5-ac)" : "var(--k5-card)", borderColor: active ? "var(--k5-ac)" : "var(--k5-line)", color: active ? "#FFFFFF" : "var(--k5-ink)", boxShadow: `0 4px 0 ${active ? "var(--k5-acd)" : "var(--k5-line)"}` }}
           >
             <span aria-hidden="true" className="h-3.5 w-3.5 flex-none rounded-full" style={{ background: active ? "#FFFFFF" : color }} />
@@ -149,7 +150,7 @@ function Row({ video, apiBase, color, active, tag, title, seen, locked, onClick 
     >
       <span
         aria-hidden="true"
-        className="relative flex aspect-[16/10] w-24 flex-none items-center justify-center overflow-hidden rounded-xl bg-cover bg-center"
+        className="k5h-lb-mini relative flex aspect-[16/10] w-24 flex-none items-center justify-center overflow-hidden rounded-xl bg-cover bg-center"
         style={{ background: src ? `center / cover no-repeat url("${src}")` : tint(color), color }}
       >
         <span className={`flex h-[26px] w-[26px] items-center justify-center rounded-full bg-k5-card ${locked ? "text-k5-mut" : ""}`}>
@@ -224,22 +225,24 @@ export function K5VideoLibrary(props) {
     toggleAutoplay, playerRef, sideListRef, stageRef,
   } = props;
   const colorOf = useCourseColor();
+  const { isMiddle } = useDashboardContext();
   usePicoContentReady(true);
   const color = colorOf(p.title);
   const hits = query ? searchHits(playlists, query) : [];
 
   return (
     <div className="flex flex-col gap-[18px]">
-      <div className={`${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
-        <span aria-hidden="true" className="flex h-[76px] w-[76px] flex-none items-center justify-center rounded-3xl bg-k5-ot text-k5-oi">
-          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+      {/* Grade 6–8 / 9–12 (Middle / High.dc.html): no card around the title, a 62px accent tile, a 30px heading, 16px subtitle. */}
+      <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
+        <span aria-hidden="true" className={isMiddle ? "k5h-lb-tile flex h-[62px] w-[62px] flex-none items-center justify-center rounded-[14px] bg-k5-act text-k5-ink" : "flex h-[76px] w-[76px] flex-none items-center justify-center rounded-3xl bg-k5-ot text-k5-oi"}>
+          <svg width={isMiddle ? 34 : 42} height={isMiddle ? 34 : 42} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="5" width="18" height="14" rx="3" />
             <path d="M10 9.2v5.6l4.8-2.8z" />
           </svg>
         </span>
         <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-          <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">Videos</h1>
-          <p className="m-0 text-lg font-extrabold text-k5-mut">Your course playlists — watch the lessons in order</p>
+          <h1 className={`m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-4xl"}`}>Videos</h1>
+          <p className={`m-0 font-extrabold text-k5-mut ${isMiddle ? "text-base" : "text-lg"}`}>Your course playlists — watch the lessons in order</p>
         </div>
         <label className="flex min-h-[52px] min-w-0 flex-[0_1_340px] items-center gap-2.5 rounded-full border-[3px] border-k5-line bg-k5-soft px-4 max-[760px]:flex-[1_1_100%]">
           <Search className="h-5 w-5 flex-none text-k5-mut" strokeWidth={3} aria-hidden="true" />
@@ -345,7 +348,7 @@ export function K5VideoLibrary(props) {
                     <button type="button" disabled={stepIndex === 0} onClick={() => playStep(stepIndex - 1, 0)} className={`${PILL_BUTTON} ps-3`}>
                       <ChevronLeft className="h-5 w-5" strokeWidth={3} aria-hidden="true" /> Previous
                     </button>
-                    <label className="flex min-h-12 cursor-pointer select-none items-center gap-2.5 px-1.5 text-base font-black max-[760px]:order-3 max-[760px]:w-full">
+                    <label className="flex min-h-[48px] cursor-pointer select-none items-center gap-2.5 px-1.5 text-base font-black max-[760px]:order-3 max-[760px]:w-full">
                       <input type="checkbox" role="switch" checked={autoplay} onChange={(e) => toggleAutoplay(e.target.checked)} className="peer sr-only" />
                       <span className="relative block h-[30px] w-[52px] flex-none rounded-full bg-k5-line transition-colors after:absolute after:start-1 after:top-1 after:h-[22px] after:w-[22px] after:rounded-full after:bg-white after:shadow after:transition-all peer-checked:bg-k5-grn peer-checked:after:start-[26px] peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-k5-ac" />
                       Autoplay next

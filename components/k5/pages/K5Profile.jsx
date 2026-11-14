@@ -18,7 +18,7 @@ import { K5ProfileSkeleton } from "@/components/k5/K5Skeletons";
 
 // Base + one colour set each (two bg-/border- utilities on one element would fight).
 const BTN_BASE =
-  "flex min-h-12 cursor-pointer items-center gap-2 rounded-full border-[3px] px-[18px] font-k5-display text-[17px] font-semibold disabled:cursor-default disabled:opacity-45";
+  "flex min-h-[48px] cursor-pointer items-center gap-2 rounded-full border-[3px] px-[18px] font-k5-display text-[17px] font-semibold disabled:cursor-default disabled:opacity-45";
 const PILL_BTN = `${BTN_BASE} border-k5-line bg-k5-card text-k5-ink shadow-[0_4px_0_var(--k5-line)]`;
 const ACCENT_PILL_BTN = `${BTN_BASE} border-k5-ac bg-k5-ac text-white shadow-[0_4px_0_var(--k5-acd)]`;
 const SMALL_BTN =
@@ -454,7 +454,7 @@ function Avatar({ header, onPick }) {
         // eslint-disable-next-line @next/next/no-img-element
         <img src={header.photo} alt="" onError={() => setBroken(true)} className={`block h-24 w-24 rounded-full bg-[#FFC531] object-cover ${ring}`} />
       ) : (
-        <span aria-hidden="true" className={`flex h-24 w-24 items-center justify-center rounded-full bg-[#FFC531] font-k5-display text-[44px] font-bold text-[#1C2640] ${ring}`}>
+        <span aria-hidden="true" className={`flex h-24 w-24 items-center justify-center rounded-full bg-[#FFC531] font-k5-display text-[44px] font-bold text-[#1C2640] k5h-pf-av ${ring}`}>
           {header.initials}
         </span>
       )}
@@ -519,7 +519,7 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
       <div className={`${K5_CARD} flex flex-wrap items-center gap-[18px] px-[22px] py-[18px]`}>
         <Avatar header={model.header} onPick={actions ? pickPhoto : null} />
         <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1.5">
-          <h1 className="m-0 font-k5-display text-[34px] font-semibold leading-[1.05] [overflow-wrap:anywhere] max-[600px]:text-[28px]">{model.header.name || "My Profile"}</h1>
+          <h1 className="k5h-pf-h1 m-0 font-k5-display text-[34px] font-semibold leading-[1.05] [overflow-wrap:anywhere] max-[600px]:text-[28px]">{model.header.name || "My Profile"}</h1>
           <p className="m-0 text-[17px] font-extrabold text-k5-mut">
             My Profile
             {meta.map((item, i) => (
@@ -574,7 +574,7 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
                 type="button"
                 onClick={() => go(s)}
                 aria-current={on ? "step" : undefined}
-                className={`k5m-r12 flex min-h-14 w-full cursor-pointer items-center gap-2.5 rounded-2xl border-[3px] px-2.5 py-1.5 text-start font-k5-body text-[15px] font-black text-k5-ink max-[900px]:w-auto max-[900px]:max-w-[220px] max-[900px]:flex-none ${on ? "border-k5-ac bg-k5-act" : "border-transparent bg-k5-card"}`}
+                className={`k5m-r12 flex min-h-[56px] w-full cursor-pointer items-center gap-2.5 rounded-2xl border-[3px] px-2.5 py-1.5 text-start font-k5-body text-[15px] font-black text-k5-ink max-[900px]:w-auto max-[900px]:max-w-[220px] max-[900px]:flex-none ${on ? "border-k5-ac bg-k5-act" : "border-transparent bg-k5-card"}`}
               >
                 <span
                   className={`flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full font-k5-display text-[15px] font-semibold ${on ? "bg-k5-ac text-white" : "bg-k5-soft text-k5-ink"}`}

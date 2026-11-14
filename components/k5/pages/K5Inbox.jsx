@@ -64,7 +64,7 @@ function Folders({ inbox }) {
             type="button"
             aria-current={selected ? "true" : undefined}
             onClick={() => inbox.setFolder(folder.key)}
-            className={`flex min-h-[46px] w-full cursor-pointer items-center gap-3 rounded-full border-none px-3.5 text-left text-[16px] text-k5-ink max-[760px]:w-auto max-[760px]:flex-none ${selected ? "bg-k5-act font-black" : "bg-transparent font-extrabold hover:bg-k5-soft"}`}
+            className={`k5h-cm-tab flex min-h-[46px] w-full cursor-pointer items-center gap-3 rounded-full border-none px-3.5 text-left text-[16px] text-k5-ink max-[760px]:w-auto max-[760px]:flex-none ${selected ? "bg-k5-act font-black" : "bg-transparent font-extrabold hover:bg-k5-soft"}`}
           >
             <Icon className={`h-[22px] w-[22px] flex-none ${selected ? "text-k5-ac" : folder.key === "WHATSAPP" ? "text-k5-gi" : "text-k5-mut"}`} strokeWidth={2.2} aria-hidden="true" />
             <span className="min-w-0 flex-1 truncate">{folder.label}</span>
@@ -176,7 +176,7 @@ function SentRow({ item, inbox }) {
         aria-label={`Sent message, to ${row.to}, ${title}, ${time}`}
         className={`grid min-w-0 flex-1 cursor-pointer items-center gap-3 border-none bg-transparent py-3 pl-[18px] pr-[18px] text-left text-[16px] text-k5-ink max-[760px]:gap-y-1 max-[760px]:px-3.5 ${ROW_GRID}`}
       >
-        <span aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-full bg-k5-card text-[13px] font-extrabold">{initialsOf(row.first)}</span>
+        <span aria-hidden="true" className="k5h-cm-av flex h-10 w-10 items-center justify-center rounded-full bg-k5-card text-[13px] font-extrabold">{initialsOf(row.first)}</span>
         <span className="flex min-w-0 flex-col gap-[3px]">
           <span className="truncate font-extrabold">To: {row.to}</span>
           <span className="self-start rounded-full bg-k5-card px-[9px] py-px text-[11px] font-extrabold">Sent</span>
@@ -210,7 +210,7 @@ function Row({ item, inbox }) {
         aria-label={`${unread ? "Unread, " : ""}${channelLabel(item.channel)}, ${name}, ${title}, ${time}`}
         className={`grid min-w-0 flex-1 cursor-pointer items-center gap-3 border-none bg-transparent py-3 pl-0 pr-[18px] text-left text-[16px] text-k5-ink max-[760px]:gap-y-1 max-[760px]:pr-3.5 ${ROW_GRID}`}
       >
-        <span aria-hidden="true" className={`flex h-10 w-10 items-center justify-center rounded-full text-[13px] font-extrabold ${CHANNEL_TINT[item.channel]}`}>{initialsOf(name)}</span>
+        <span aria-hidden="true" className={`k5h-cm-av flex h-10 w-10 items-center justify-center rounded-full text-[13px] font-extrabold ${CHANNEL_TINT[item.channel]}`}>{initialsOf(name)}</span>
         <span className="flex min-w-0 flex-col gap-[3px]">
           <span className={`truncate ${unread ? "font-black" : "font-extrabold"}`}>{name}</span>
           <span className={`self-start rounded-full px-[9px] py-px text-[11px] font-extrabold ${CHANNEL_TINT[item.channel]}`}>{channelLabel(item.channel)}</span>
