@@ -103,16 +103,14 @@ export function K5ChangePasswordModal({ onClose, forced = false }) {
             <KeyRound className="h-6 w-6 text-white" aria-hidden="true" />
           </span>
           <h2 className="m-0 min-w-0 flex-1 font-k5-display text-lg font-semibold text-white">Change Password</h2>
-          {!forced && (
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close"
-              className="flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-xl border-none bg-k5-red text-white shadow-[0_3px_0_#B91C1C]"
-            >
-              <X className="h-5 w-5" strokeWidth={3} />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-xl border-none bg-k5-red text-white shadow-[0_3px_0_#B91C1C]"
+          >
+            <X className="h-5 w-5" strokeWidth={3} />
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-5 py-5">

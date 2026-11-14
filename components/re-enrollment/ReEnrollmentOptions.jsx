@@ -238,6 +238,7 @@ export function ReEnrollmentOptions() {
       studentName={eligibility.studentName}
       grade={grade}
       currentGrade={eligibility.currentGrade?.name}
+      academicYear={eligibility.academicYear || "2027–28"}
       discount={discount}
       options={options}
       uniqueId={session.uniqueId}

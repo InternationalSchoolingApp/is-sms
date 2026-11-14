@@ -30,7 +30,7 @@ function Offer({ discount }) {
   </div>;
 }
 
-export function K5PassedOptions({ passed, isMiddle, isHigh, studentName, grade, currentGrade, discount, options, uniqueId, pending, pendingType, choose, programOf }) {
+export function K5PassedOptions({ passed, isMiddle, isHigh, studentName, grade, currentGrade, academicYear, discount, options, uniqueId, pending, pendingType, choose, programOf }) {
   const hasDiscount = discount?.amount > 0;
   const mature = isMiddle || isHigh;
   const nextGradeOption = options.find(option => option.enrollmentType === "REGISTRATION_NEXT_GRADE");
@@ -49,6 +49,7 @@ export function K5PassedOptions({ passed, isMiddle, isHigh, studentName, grade, 
             <h1>{grade ? `You've been promoted to ${grade}` : heroGrade ? `Congratulations on completing ${heroGrade}` : "Congratulations!"}</h1>
             {grade && currentGrade && <div className={styles.gradePath} aria-label={`${currentGrade} to ${grade}`}>
               <span>{currentGrade}</span><span className={styles.pathLine} aria-hidden="true" /><span className={styles.nextGradePill}>{grade}</span>
+              <span className={styles.pathMeta}><span>Academic year</span><strong>{academicYear}</strong></span>
               {currentProgram && <span className={styles.pathProgram}>{currentProgram}</span>}
             </div>}
           </> : <>

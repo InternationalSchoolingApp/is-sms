@@ -188,6 +188,9 @@
 :global([data-k5-high]) .hero[data-result="fail"] .matureBadge{border-color:var(--k5-acl);background:var(--k5-card);color:var(--k5-ink)}
 :global([data-k5-high]) .failDescription{max-width:560px;font-size:14px;font-weight:400;line-height:1.5;color:var(--k5-ink)}
 :global([data-k5-high]) .gradePath{gap:10px;margin-top:6px}
+:global([data-k5-high]) .pathMeta{display:flex;flex-direction:column;gap:1px;margin-left:6px;padding-left:12px;border-left:1px solid rgba(255,255,255,.25)}
+:global([data-k5-high]) .pathMeta>span{color:rgba(255,255,255,.75);font-size:10px;letter-spacing:.6px;text-transform:uppercase}
+:global([data-k5-high]) .pathMeta strong{color:#fff;font-size:13px;font-weight:500}
 :global([data-k5-high]) .gradePath>span:first-child{padding:5px 11px;border-color:rgba(255,255,255,.28);border-radius:999px;background:rgba(255,255,255,.14)}
 :global([data-k5-high]) .nextGradePill{border-radius:999px;color:var(--k5-acd)}
 :global([data-k5-high]) .hero[data-result="fail"] .gradePath>span:first-child{border-color:var(--k5-acl);background:var(--k5-card)}
@@ -240,6 +243,9 @@
 :global([data-k5-band="middle"]) .hero[data-result="fail"] .matureBadge{border-color:var(--k5-acl);background:var(--k5-card);color:var(--k5-ink)}
 :global([data-k5-band="middle"]) .failDescription{max-width:560px;font-size:15px;font-weight:500;line-height:1.5;color:var(--k5-mut)}
 :global([data-k5-band="middle"]) .gradePath{gap:10px;margin-top:6px;font-size:14px}
+:global([data-k5-band="middle"]) .pathMeta{display:flex;flex-direction:column;gap:1px;margin-left:6px;padding-left:12px;border-left:1px solid rgba(255,255,255,.25)}
+:global([data-k5-band="middle"]) .pathMeta>span{color:rgba(255,255,255,.75);font-size:10px;letter-spacing:.6px;text-transform:uppercase}
+:global([data-k5-band="middle"]) .pathMeta strong{color:#fff;font-size:13px;font-weight:500}
 :global([data-k5-band="middle"]) .gradePath>span:first-child{padding:6px 13px;border-color:rgba(255,255,255,.28);border-radius:999px;background:rgba(255,255,255,.14)}
 :global([data-k5-band="middle"]) .nextGradePill{border-radius:999px}
 :global([data-k5-band="middle"]) .hero[data-result="fail"] .gradePath>span:first-child{border-color:var(--k5-acl);background:var(--k5-card)}
