@@ -18,7 +18,6 @@ import { useCartCheckout } from "@/hooks/useCartCheckout";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import {
   CART_KEYS,
-  useApplyCartDiscount,
   useCartDetails,
   useCreateCartPayment,
   useRemoveCartItem,
@@ -27,8 +26,6 @@ import {
 import { studentNavHref } from "@/utils/dashboardNav";
 import { formatAmount, weeksBetween, weeksLabel } from "@/utils/cartPlan";
 
-// cartDetailContent.js: maxlength 15, M.isAlphaNumericWithNoSpecialCharacter on the code field.
-const DISCOUNT_CODE_PATTERN = /^[A-Za-z0-9]{1,15}$/;
 const DISCOUNT_TOO_LARGE = "Discounted amount is more than the total amount";
 
 function PageTitle({ count }) {
@@ -89,7 +86,7 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
 /**
  * Cart (opened from the header cart button or a plan's Buy) — legacy
  * renderCardDetailsContent() in cartDetailContent.js: line items with remove /
- * edit, the discount code, the fee summary and CONFIRM AND PAY, which raises the
+ * edit, the fee summary and CONFIRM AND PAY, which raises the
  * payment (cart-payment), shows the Terms and Conditions and then runs the
  * shared payment-gateway flow.
  */
@@ -99,13 +96,11 @@ export function Cart() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const dummy = useDummyStudent();
-  const [code, setCode] = useState("");
   const [terms, setTerms] = useState(null);
 
   const cartQuery = useCartDetails(context?.userId);
   const currencyQuery = useSchoolCurrency(context?.schoolNumericId);
   const removeItem = useRemoveCartItem(context?.userId);
-  const applyDiscount = useApplyCartDiscount(context?.userId);
   const createPayment = useCreateCartPayment();
   const checkout = useCartCheckout({
     context,
@@ -145,28 +140,11 @@ export function Cart() {
   const details = response?.status === "1" ? response.details : null;
   const cart = details?.cart ?? {};
   const items = cart.cartItems ?? [];
-  const appliedCode = cart.discountCode || "";
-  const busy = removeItem.isPending || applyDiscount.isPending || createPayment.isPending || checkout.preparing;
+  const busy = removeItem.isPending || createPayment.isPending || checkout.preparing;
 
   async function remove(cartId) {
     const result = await removeItem.mutateAsync(cartId).catch(() => null);
     if (result?.status !== "1") toast.error(result?.message || "Unable to update cart");
-  }
-
-  async function toggleDiscount() {
-    const removing = Boolean(appliedCode);
-    const value = code.trim();
-    if (!removing && !DISCOUNT_CODE_PATTERN.test(value)) {
-      toast.error(value ? "Please use the English Keyboard while providing information" : "Enter a valid Scholarship code.");
-      return;
-    }
-    const result = await applyDiscount.mutateAsync({ scholarshipCode: value, remove: removing }).catch(() => null);
-    if (result?.status !== "1") {
-      toast.error(result?.message || "Unable to apply discount on cart");
-      return;
-    }
-    setCode("");
-    toast.success(removing ? "Discount code removed successfully" : "Discount code applied successfully");
   }
 
   async function confirmAndPay() {
@@ -265,13 +243,9 @@ export function Cart() {
           items={items}
           symbol={symbol}
           cart={cart}
-          appliedCode={appliedCode}
-          code={code}
-          onCode={setCode}
           busy={busy}
           canPay={items.length > 0 && !busy && cart.errorMsg !== DISCOUNT_TOO_LARGE}
           onRemove={remove}
-          onToggleDiscount={toggleDiscount}
           onPay={confirmAndPay}
         />
         {modals}
@@ -306,30 +280,6 @@ export function Cart() {
               <div className="flex justify-between font-semibold">
                 <span>Cart Total</span>
                 <span>{formatAmount(symbol, cart.cartTotal)}</span>
-              </div>
-              <div className="flex justify-between font-semibold">
-                <span>Discount Code</span>
-                <span>{appliedCode ? formatAmount(symbol, cart.cpDiscount) : ""}</span>
-              </div>
-              <div className="flex">
-                <input
-                  type="text"
-                  value={appliedCode || code}
-                  disabled={Boolean(appliedCode) || busy}
-                  maxLength={15}
-                  onChange={(e) => setCode(e.target.value.replace(/[^A-Za-z0-9]/g, ""))}
-                  aria-label="Discount code"
-                  className="min-w-0 flex-1 rounded-l-lg border border-slate-300 px-3 py-2 disabled:bg-slate-100"
-                />
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={toggleDiscount}
-                  title={appliedCode ? "Remove Discount Code" : "Apply Discount Code"}
-                  className="rounded-r-lg bg-primary px-4 font-semibold text-white disabled:opacity-50"
-                >
-                  {appliedCode ? "Remove" : "Apply"}
-                </button>
               </div>
               {cart.errorMsg && <p className="text-sm text-red-600">{cart.errorMsg}</p>}
               <div className="flex justify-between border-t border-slate-200 pt-3 font-semibold">
