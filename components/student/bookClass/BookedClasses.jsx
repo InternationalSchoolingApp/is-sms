@@ -8,7 +8,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { getStudentBookedClasses } from "@/services/bookClassApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
-import { BOOKED_CLASS_STATUS_STYLES } from "@/utils/bookClass";
+import { BOOKED_CLASS_STATUS_STYLES, bookedClassDateRange } from "@/utils/bookClass";
 import { MobileTableCard } from "@/components/student/MobileTableCard";
 import { TableFooter } from "@/components/student/TableFooter";
 import { K5BookedView } from "@/components/k5/pages/K5BookedView";
@@ -90,7 +90,7 @@ function compareRows(a, b, column) {
   return String(column.value(a) ?? "").localeCompare(String(column.value(b) ?? ""), undefined, { numeric: true, sensitivity: "base" });
 }
 
-const DEFAULT_FILTER = { dateType: "today", startDate: null, endDate: null, classStatus: "" };
+const DEFAULT_FILTER = { dateType: "week", startDate: null, endDate: null, classStatus: "" };
 
 // The DatePicker gives a Date; the backend expects "MMM dd, yyyy".
 function toBackendDate(date) {
@@ -116,19 +116,23 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
     queryFn: () =>
       dummy.enabled
         ? dummy.student.bookedClasses(course.subjectId)
-        : getStudentBookedClasses({
-            subjectId: course.subjectId,
-            studentStandardId: course.studentStandardId,
-            dateType: filter.dateType,
-            startDate: filter.dateType === "custom" ? toBackendDate(filter.startDate) : "",
-            endDate: filter.dateType === "custom" ? toBackendDate(filter.endDate) : "",
-            classStatus: filter.classStatus,
-          }),
+        : (() => {
+            const [from, to] = bookedClassDateRange(filter.dateType, filter.startDate, filter.endDate);
+            return getStudentBookedClasses({
+              subjectId: course.subjectId,
+              studentStandardId: course.studentStandardId,
+              dateType: filter.dateType,
+              startDate: toBackendDate(from),
+              endDate: toBackendDate(to),
+              classStatus: filter.classStatus,
+            });
+          })(),
     staleTime: 0,
   });
   const counts = data?.subjectCountDatials;
   const allRows = useMemo(() => data?.meetingDetails ?? [], [data]);
   const isCustom = draft.dateType === "custom";
+  const [shownFrom, shownTo] = bookedClassDateRange(draft.dateType, draft.startDate, draft.endDate);
 
   // Legacy DataTable: search over the shown text, click a header to sort, 10 rows a page.
   const [search, setSearch] = useState("");
@@ -171,7 +175,7 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
           <DatePicker
             icon={CalendarDays}
             label="Start Date"
-            value={draft.startDate}
+            value={shownFrom}
             disabled={!isCustom}
             onChange={(date) => setDraft({ ...draft, startDate: date ?? null, endDate: null })}
             height="h-10"
@@ -181,7 +185,7 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
           <DatePicker
             icon={CalendarDays}
             label="End Date"
-            value={draft.endDate}
+            value={shownTo}
             fromDate={draft.startDate ?? undefined}
             disabled={!isCustom}
             onChange={(date) => setDraft({ ...draft, endDate: date ?? null })}

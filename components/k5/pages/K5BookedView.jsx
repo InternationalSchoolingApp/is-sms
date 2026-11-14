@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
-import { addDays, endOfMonth, endOfWeek, format, isValid, startOfMonth, startOfWeek } from "date-fns";
+import { format, isValid } from "date-fns";
 import { ArrowLeft, CalendarDays, ChevronDown, ChevronUp } from "lucide-react";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -10,6 +10,7 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useK5CourseColors } from "@/hooks/useK5CourseColors";
 import { getStudentBookedClasses } from "@/services/bookClassApi";
+import { bookedClassDateRange } from "@/utils/bookClass";
 import { K5Loading, K5RowsSkeleton } from "@/components/k5/K5Skeletons";
 
 const DATE_TYPES = [
@@ -100,7 +101,7 @@ const COLUMNS_MIDDLE = [
 ];
 const GRID = "56px minmax(190px,1.6fr) minmax(130px,1.1fr) minmax(130px,1.1fr) minmax(110px,1fr) minmax(90px,.8fr) minmax(130px,1fr)";
 const GRID_MIDDLE = "64px minmax(240px,1.7fr) minmax(170px,1.2fr) minmax(170px,1.1fr) minmax(140px,.9fr) minmax(150px,.9fr)";
-const DEFAULT_FILTER = { dateType: "today", startDate: null, endDate: null, classStatus: "" };
+const DEFAULT_FILTER = { dateType: "week", startDate: null, endDate: null, classStatus: "" };
 const SELECT =
   "min-h-12 w-full rounded-[14px] border-[3px] border-k5-line bg-k5-card px-3 text-base font-bold text-k5-ink";
 const SELECT_MIDDLE = "min-h-[50px] w-full cursor-pointer rounded-[14px] border-[3px] border-k5-line bg-k5-card px-3 text-base font-extrabold text-k5-ink";
@@ -116,18 +117,6 @@ const initialsOf = (name) =>
     .slice(0, 2)
     .map((part) => part[0].toUpperCase())
     .join("");
-
-// The dates shown in the read-only From / To boxes while "Custom" is not picked (Middle.dc.html bdFromTx / bdToTx).
-function rangeOf(dateType) {
-  const now = new Date();
-  if (dateType === "yesterday") {
-    const y = addDays(now, -1);
-    return [y, y];
-  }
-  if (dateType === "week") return [startOfWeek(now, { weekStartsOn: 1 }), endOfWeek(now, { weekStartsOn: 1 })];
-  if (dateType === "month") return [startOfMonth(now), endOfMonth(now)];
-  return [now, now];
-}
 
 // A class with no result yet (empty or "N/A"): coming up = "Booked" (kids should not see "N/A"); one that is over keeps "N/A".
 function pillFor(row, table) {
@@ -187,14 +176,17 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
       queryFn: () =>
         dummy.enabled
           ? dummy.student.bookedClasses(subjectId)
-          : getStudentBookedClasses({
-              subjectId,
-              studentStandardId: course.studentStandardId,
-              dateType: filter.dateType,
-              startDate: filter.dateType === "custom" ? toBackendDate(filter.startDate) : "",
-              endDate: filter.dateType === "custom" ? toBackendDate(filter.endDate) : "",
-              classStatus: filter.classStatus,
-            }),
+          : (() => {
+              const [from, to] = bookedClassDateRange(filter.dateType, filter.startDate, filter.endDate);
+              return getStudentBookedClasses({
+                subjectId,
+                studentStandardId: course.studentStandardId,
+                dateType: filter.dateType,
+                startDate: toBackendDate(from),
+                endDate: toBackendDate(to),
+                classStatus: filter.classStatus,
+              });
+            })(),
       staleTime: 0,
     })),
   });
@@ -256,7 +248,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
   const pageNumbers = Array.from({ length: pages }, (_, i) => i + 1).filter(
     (n) => n === 1 || n === pages || Math.abs(n - current) <= 1,
   );
-  const [fromDate, toDate] = rangeOf(draft.dateType);
+  const [fromDate, toDate] = bookedClassDateRange(draft.dateType, draft.startDate, draft.endDate);
 
   return (
     <div className="flex flex-col gap-4">
@@ -400,10 +392,10 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
         ) : (
           <>
             <div className="min-w-[150px] flex-[1_1_150px]">
-              <DatePicker icon={CalendarDays} label="From" value={draft.startDate} disabled={!isCustom} onChange={(date) => setDraft({ ...draft, startDate: date ?? null, endDate: null })} height={middle ? "h-[50px]" : "h-12"} />
+              <DatePicker icon={CalendarDays} label="From" value={fromDate} disabled={!isCustom} onChange={(date) => setDraft({ ...draft, startDate: date ?? null, endDate: null })} height={middle ? "h-[50px]" : "h-12"} />
             </div>
             <div className="min-w-[150px] flex-[1_1_150px]">
-              <DatePicker icon={CalendarDays} label="To" value={draft.endDate} fromDate={draft.startDate ?? undefined} disabled={!isCustom} onChange={(date) => setDraft({ ...draft, endDate: date ?? null })} height={middle ? "h-[50px]" : "h-12"} />
+              <DatePicker icon={CalendarDays} label="To" value={toDate} fromDate={draft.startDate ?? undefined} disabled={!isCustom} onChange={(date) => setDraft({ ...draft, endDate: date ?? null })} height={middle ? "h-[50px]" : "h-12"} />
             </div>
           </>
         )}

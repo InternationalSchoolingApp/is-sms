@@ -1,8 +1,23 @@
-import { addMinutes, format, isValid, parse, startOfDay } from "date-fns";
+import { addDays, addMinutes, endOfMonth, endOfWeek, format, isValid, parse, startOfDay, startOfMonth, startOfWeek } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { FALLBACK_TIMEZONE } from "@/utils/calendarEvents";
 
 const SLOT_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
+/**
+ * From / To of the Booked Classes filter, as legacy studentBookClassContent.js: Today, Yesterday,
+ * Week (Sunday to Saturday), Month (1st to last day) in the browser's local date; Custom keeps the picked dates.
+ */
+export function bookedClassDateRange(dateType, startDate, endDate, now = new Date()) {
+  if (dateType === "custom") return [startDate ?? null, endDate ?? null];
+  if (dateType === "yesterday") {
+    const yesterday = addDays(now, -1);
+    return [yesterday, yesterday];
+  }
+  if (dateType === "week") return [startOfWeek(now, { weekStartsOn: 0 }), endOfWeek(now, { weekStartsOn: 0 })];
+  if (dateType === "month") return [startOfMonth(now), endOfMonth(now)];
+  return [now, now];
+}
 
 function parseSlot(value) {
   const date = parse(String(value || ""), SLOT_FORMAT, new Date());
