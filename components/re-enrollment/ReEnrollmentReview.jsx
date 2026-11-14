@@ -6,7 +6,9 @@ import toast from "react-hot-toast";
 import { Check } from "lucide-react";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { FeeBreakdown } from "@/components/re-enrollment/FeeBreakdown";
-import { ActionButton, Card, PageTitle } from "@/components/re-enrollment/ReEnrollmentParts";
+import { ReEnrollmentStepCard as Card, ReEnrollmentStepTitle as PageTitle } from "./ReEnrollmentFlow";
+import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
+import { Button } from "@/components/ui/button";
 import { buildPlanOptions } from "@/components/student-enroll/Stage4ReviewPayment";
 import { STATUS_SUCCESS, useCompleteReEnrollment, useReEnrollmentContext, useReEnrollmentReview } from "@/hooks/useReEnrollment";
 import { useReEnrollmentGateway } from "@/hooks/useReEnrollmentGateway";
@@ -76,13 +78,13 @@ function ReviewScreen() {
           <p className="text-sm font-semibold text-red-600">{reviewQuery.data?.message || "Could not load your review details."}</p>
           <div className="mt-4 flex gap-3">
             {previous && (
-              <ActionButton className="bg-slate-500 hover:bg-slate-600" onClick={() => router.push(reEnrollmentStepPath(school, previous))}>
+              <Button type="button" className="bg-slate-500 hover:bg-slate-600" onClick={() => router.push(reEnrollmentStepPath(school, previous))}>
                 Back
-              </ActionButton>
+              </Button>
             )}
-            <ActionButton onClick={() => reviewQuery.refetch()} disabled={reviewQuery.isFetching}>
+            <Button type="button" onClick={() => reviewQuery.refetch()} disabled={reviewQuery.isFetching}>
               Try again
-            </ActionButton>
+            </Button>
           </div>
         </Card>
       </>
@@ -109,29 +111,29 @@ function ReviewScreen() {
   return (
     <>
       <PageTitle>Kindly Review Your Details</PageTitle>
-      <div className={`grid gap-x-4 ${data.paymentRequired && hasCourses ? "lg:grid-cols-[1fr_2fr]" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
+      <div className={`grid items-start gap-4 md:gap-8 ${data.paymentRequired && hasCourses ? "lg:grid-cols-[555fr_723fr]" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
         {hasCourses && (
           <Card header="Selected Courses" headerRight={course?.standardName}>
-            <table className="w-full overflow-hidden rounded-[10px] border border-slate-200 text-xs">
+            <table className="w-full overflow-hidden rounded-lg border border-slate-200 text-sm">
               <thead className="bg-slate-100">
                 <tr>
-                  <th className="px-2 py-1.5 text-left font-bold">Course Name</th>
-                  {showCredits && <th className="px-2 py-1.5 text-left font-bold">Credit</th>}
+                  <th className="px-3 py-2 text-left font-bold">Course Name</th>
+                  {showCredits && <th className="px-3 py-2 text-left font-bold">Credit</th>}
                 </tr>
               </thead>
               <tbody>
                 {course.courseDTO.map((c, index) => (
                   <tr key={index} className="border-t border-slate-200">
-                    <td className="px-2 py-1.5">{c.courseName}</td>
-                    {showCredits && <td className="px-2 py-1.5">{c.creditScore}</td>}
+                    <td className="px-3 py-2">{c.courseName}</td>
+                    {showCredits && <td className="px-3 py-2">{c.creditScore}</td>}
                   </tr>
                 ))}
               </tbody>
               {showCredits && (
                 <tfoot className="bg-slate-100">
                   <tr className="border-t border-slate-200">
-                    <th className="px-2 py-1.5 text-left">Total Credit</th>
-                    <th className="px-2 py-1.5 text-left">{course.totalCredit}</th>
+                    <th className="px-3 py-2 text-left">Total Credit</th>
+                    <th className="px-3 py-2 text-left">{course.totalCredit}</th>
                   </tr>
                 </tfoot>
               )}
@@ -143,11 +145,11 @@ function ReviewScreen() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <h6 className="text-xs font-semibold text-black">Fee Already Paid (Advance Fee)</h6>
-                  <p className="text-[10px] text-slate-600">Your advance fee has been received successfully</p>
+                  <p className="text-xs text-slate-600">Your advance fee has been received successfully</p>
                   <span className="text-xs font-bold text-black">THANK YOU!</span>
                 </div>
                 <div className="border-l border-dashed border-green-500 px-2 text-black">
-                  <span className="block text-[10px] font-bold">PAID AMOUNT</span>
+                  <span className="block text-xs font-bold">PAID AMOUNT</span>
                   <h6 className="text-sm font-bold">{alreadyPaid.totalEntityFeeString}</h6>
                 </div>
               </div>
@@ -164,11 +166,11 @@ function ReviewScreen() {
         )}
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-3">
+      <MobileActionBar context={context} embedded>
         {previous ? (
-          <ActionButton className="px-6" disabled={busy} onClick={() => router.push(reEnrollmentStepPath(school, previous))}>
+          <Button type="button" variant="outline" className="px-4" disabled={busy} onClick={() => router.push(reEnrollmentStepPath(school, previous))}>
             Back
-          </ActionButton>
+          </Button>
         ) : (
           <span />
         )}
@@ -176,20 +178,20 @@ function ReviewScreen() {
           <div className="flex items-center gap-2">
             {/* Legacy "Pay Later": with the advance already paid the student may skip the remaining amount for now. */}
             {data.advanceFeeApplied && (
-              <ActionButton className="px-6" disabled={busy} onClick={proceedToDashboard}>
+              <Button type="button" className="px-6" disabled={busy} onClick={proceedToDashboard}>
                 {busy ? "Please wait…" : "Pay Later"}
-              </ActionButton>
+              </Button>
             )}
-            <ActionButton className="bg-green-600 px-6 hover:bg-green-700" disabled={busy} onClick={() => gateway.start(data)}>
+            <Button type="button" className="px-4" disabled={busy} onClick={() => gateway.start(data)}>
               {busy ? "Please wait…" : "Pay Now"}
-            </ActionButton>
+            </Button>
           </div>
         ) : (
-          <ActionButton className="px-6" disabled={busy} onClick={proceedToDashboard}>
+          <Button type="button" className="px-6" disabled={busy} onClick={proceedToDashboard}>
             {busy ? "Please wait…" : "Proceed to Dashboard"}
-          </ActionButton>
+          </Button>
         )}
-      </div>
+      </MobileActionBar>
       {gateway.modals}
     </>
   );

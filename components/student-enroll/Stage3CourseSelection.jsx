@@ -1844,7 +1844,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
       <div className="flex flex-col-reverse items-center justify-center gap-4 md:mt-10 md:pt-6 sm:flex-row">
         {/* <p className="text-xs text-black">Your course choices are saved as you make them.</p> */}
-        <MobileActionBar context={context}>
+        <MobileActionBar context={context} embedded={reEnrollment}>
           {onBack && (
             <Button type="button" variant="outline" className="cursor-pointer" onClick={onBack} disabled={busy}>
               {inReview ? "Cancel" : "Back"}

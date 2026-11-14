@@ -146,7 +146,7 @@ function stepState(index, currentIndex) {
 // step page). A fresh page load has none, so a refresh shows the check marks without replaying the gif.
 let previousStepIndex = null;
 
-function StepRow({ currentIndex, steps }) {
+export function StepRow({ currentIndex, steps }) {
   const arrivedForward = previousStepIndex !== null && currentIndex === previousStepIndex + 1;
   useEffect(() => {
     previousStepIndex = currentIndex;

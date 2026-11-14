@@ -10,6 +10,9 @@ import { STATUS_SUCCESS, useReEnrollmentContext, useSelectReEnrollmentOption } f
 import { expireSession } from "@/utils/logout";
 import { reEnrollmentStepPath } from "@/utils/reEnrollmentSteps";
 
+import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { K5PassedOptions } from "./K5PassedOptions";
+
 const pad = (n) => String(n);
 
 // Early re-enrollment offer card: saving amount, "Offer Ends on" date and the DAYS : HRS : MIN : SEC countdown.
@@ -181,6 +184,7 @@ function ProgramChips({ option, selected, disabled, onSelect }) {
  * resume at (currentStep).
  */
 export function ReEnrollmentOptions() {
+  const { isK5 } = useDashboardContext();
   const router = useRouter();
   const { school } = useParams();
   const { session, context, eligibility, inProgress } = useReEnrollmentContext();
@@ -220,10 +224,26 @@ export function ReEnrollmentOptions() {
   }
 
   // "Promoted to" names the Next Grade's grade (a grade 12 pass has no Next Grade, only Take an Individual Course).
-  const grade = options.find((option) => option.enrollmentType === "REGISTRATION_NEXT_GRADE")?.grade?.name;
+  const grade = options.find((option) => option.enrollmentType === "REGISTRATION_NEXT_GRADE")?.grade?.name
+    || options.find((option) => option.enrollmentType === "REGISTRATION_REPEAT_GRADE")?.grade?.name;
   const discount = eligibility.progressionDiscount;
   const hasDiscount = passed && discount?.amount > 0;
   const discountText = hasDiscount ? `${discount.currencyLabel ? `${discount.currencyLabel} ` : ""}${discount.amount}` : "";
+
+  if (isK5) {
+    return <K5PassedOptions
+      passed={passed}
+      studentName={eligibility.studentName}
+      grade={grade}
+      discount={discount}
+      options={options}
+      uniqueId={session.uniqueId}
+      pending={select.isPending}
+      pendingType={select.variables?.enrollmentType}
+      choose={choose}
+      programOf={programOf}
+    />;
+  }
 
   const optionButtons = (
     <div className="flex flex-col items-center gap-4">

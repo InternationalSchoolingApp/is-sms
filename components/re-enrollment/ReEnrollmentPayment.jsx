@@ -5,7 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { FullScreenLoader } from "@/components/common/Loader";
-import { ActionButton } from "@/components/re-enrollment/ReEnrollmentParts";
+import { ReEnrollmentStepTitle } from "./ReEnrollmentFlow";
+import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
 import { CustomPlanTable, FeePaymentPlans } from "@/components/student-enroll/FeePaymentPlans";
 import { buildPlanOptions } from "@/components/student-enroll/Stage4ReviewPayment";
 import {
@@ -132,25 +133,22 @@ function PaymentScreen() {
 
   return (
     <>
-      <div className="mb-4 mt-2 text-center">
-        <h1 className="text-1.5xl font-extrabold text-black sm:text-2xl">
-          Payment for <span className="text-primary">{option.grade?.name}</span>
-        </h1>
-        {option.learningProgramLabel && <p className="mt-1 text-sm font-semibold text-primary">{option.learningProgramLabel}</p>}
-      </div>
+      <ReEnrollmentStepTitle subtitle={option.learningProgramLabel}>
+        Payment for <span className="text-primary">{option.grade?.name}</span>
+      </ReEnrollmentStepTitle>
 
       {!data ? (
         <div className="rounded-[15px] bg-white p-6 shadow-lg">
           <p className="text-sm font-semibold text-red-600">{detailsQuery.data?.message || "Could not load your payment options."}</p>
           <div className="mt-4 flex gap-3">
             {previous && (
-              <ActionButton className="bg-slate-500 hover:bg-slate-600" onClick={() => router.push(reEnrollmentStepPath(school, previous))}>
+              <Button type="button" className="bg-slate-500 hover:bg-slate-600" onClick={() => router.push(reEnrollmentStepPath(school, previous))}>
                 Back
-              </ActionButton>
+              </Button>
             )}
-            <ActionButton onClick={() => detailsQuery.refetch()} disabled={detailsQuery.isFetching}>
+            <Button type="button" onClick={() => detailsQuery.refetch()} disabled={detailsQuery.isFetching}>
               Try again
-            </ActionButton>
+            </Button>
           </div>
         </div>
       ) : (
@@ -180,7 +178,7 @@ function PaymentScreen() {
             />
           )}
           {payNow && next === STEP_COURSE_SELECTION && <p className="mt-3 text-center text-sm text-slate-600">You will choose your courses after the payment.</p>}
-          <div className="mt-4 flex items-center justify-between gap-3">
+          <MobileActionBar context={context} embedded>
             {previous ? (
               <Button type="button" variant="outline" className="cursor-pointer" disabled={busy} onClick={() => router.push(reEnrollmentStepPath(school, previous))}>
                 Back
@@ -188,10 +186,10 @@ function PaymentScreen() {
             ) : (
               <span />
             )}
-            <ActionButton className="bg-green-600 px-6 hover:bg-green-700" disabled={busy || (customPlan ? customSchedule.length === 0 : !currentOption)} onClick={onContinue}>
+            <Button type="button" className="px-4" disabled={busy || (customPlan ? customSchedule.length === 0 : !currentOption)} onClick={onContinue}>
               {busy ? "Please wait…" : payNow ? "Continue to Pay" : "Continue"}
-            </ActionButton>
-          </div>
+            </Button>
+          </MobileActionBar>
         </div>
       )}
       {gateway.modals}

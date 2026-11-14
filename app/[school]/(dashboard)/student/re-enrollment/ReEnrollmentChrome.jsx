@@ -5,6 +5,7 @@ import { useParams, useRouter, useSelectedLayoutSegment } from "next/navigation"
 import { FullScreenLoader } from "@/components/common/Loader";
 import { SchoolThemeStyle } from "@/components/common/SchoolThemeStyle";
 import { ReEnrollmentProvider, useReEnrollmentContext } from "@/hooks/useReEnrollment";
+import { ReEnrollmentFlow } from "@/components/re-enrollment/ReEnrollmentFlow";
 import { expireSession } from "@/utils/logout";
 import { reEnrollmentStepPath, SEGMENT_TO_STEP, STEP_PAYMENT } from "@/utils/reEnrollmentSteps";
 
@@ -78,7 +79,7 @@ function Frame({ children }) {
   return (
     <>
       <SchoolThemeStyle rootcss={rootcss} />
-      <div className="mx-auto w-full max-w-[1310px]">{children}</div>
+      <div className="mx-auto w-full max-w-[1310px]"><ReEnrollmentFlow>{children}</ReEnrollmentFlow></div>
     </>
   );
 }

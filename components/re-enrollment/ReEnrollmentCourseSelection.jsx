@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { ReEnrollmentStepTitle } from "./ReEnrollmentFlow";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { Stage3CourseSelection } from "@/components/student-enroll/Stage3CourseSelection";
 import { eligibilityKey, useReEnrollmentContext } from "@/hooks/useReEnrollment";
@@ -31,18 +32,9 @@ export function ReEnrollmentCourseSelection() {
   const previous = previousStepBefore(steps, STEP_COURSE_SELECTION) ?? "OPTION";
   return (
     <>
-      <div className="mb-4 mt-2 text-center">
-        {isFlexy ? (
-          <h1 className="text-1.5xl font-extrabold text-black sm:text-2xl">{option.learningProgramLabel}</h1>
-        ) : (
-          <>
-            <h1 className="text-1.5xl font-extrabold text-black sm:text-2xl">
-              Select Your Courses for <span className="text-primary">{option.grade?.name}</span>
-            </h1>
-            {option.learningProgramLabel && <p className="mt-1 text-sm font-semibold text-primary">{option.learningProgramLabel}</p>}
-          </>
-        )}
-      </div>
+      <ReEnrollmentStepTitle subtitle={isFlexy ? undefined : option.learningProgramLabel}>
+        {isFlexy ? option.learningProgramLabel : <>Course Selection for <span className="text-primary">{option.grade?.name}</span></>}
+      </ReEnrollmentStepTitle>
       <Stage3CourseSelection
         reEnrollment
         context={context}
