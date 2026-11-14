@@ -272,7 +272,7 @@ export function ReserveSeatForNextGrade() {
     dummy.settled &&
     !dummy.enabled &&
     !dashboardData.isLoading &&
-    dashboardData.studentGraduate === "N";
+    !dashboardData.studentGraduate;
 
   const query = useQuery({
     queryKey: ["reserve-seat-next-grade", context?.schoolUUID, context?.userId],

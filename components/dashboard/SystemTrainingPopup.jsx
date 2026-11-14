@@ -207,8 +207,8 @@ export function SystemTrainingPopup() {
     dummy.settled &&
     !dummy.enabled &&
     !dashboardData.isLoading &&
-    dashboardData.studentGraduate === "N" &&
-    dashboardData.showStudentCourseSelectionModel === "Y";
+    !dashboardData.studentGraduate &&
+    dashboardData.showStudentCourseSelectionModel;
 
   const query = useQuery({
     queryKey: ["system-training-popup", context?.schoolUUID, context?.userId],
