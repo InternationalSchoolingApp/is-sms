@@ -8,6 +8,7 @@ import { AppearanceProvider } from "@/components/appearance/AppearanceProvider";
 import { ReadingRuler } from "@/components/appearance/ReadingRuler";
 import { K5Header } from "@/components/k5/K5Header";
 import { K5NavRail } from "@/components/k5/K5NavRail";
+import { K5QuoteOfMoment } from "@/components/k5/K5QuoteOfMoment";
 import { AppearanceDialog } from "@/components/k5/look/AppearanceDialog";
 import { PicoGuide } from "@/components/k5/pico/PicoGuide";
 import { setPicoLive } from "@/components/k5/pico/picoEvents";
@@ -106,7 +107,10 @@ function K5Frame({ children }) {
         <div aria-hidden="true" className="w-24 flex-none max-[760px]:hidden" />
         <K5NavRail menu={menu} loading={menuLoading} open={navOpen} onOpen={() => setNavOpen(true)} onClose={closeNav} isPreK={isPreK} userId={context.userId} />
 
-        <main className="flex min-w-0 flex-[1_1_auto] flex-col gap-4 max-[760px]:basis-full">{children}</main>
+        <main className="flex min-w-0 flex-[1_1_auto] flex-col gap-4 max-[760px]:basis-full">
+          <K5QuoteOfMoment />
+          {children}
+        </main>
 
         <div aria-hidden="true" className="w-20 flex-none max-[760px]:hidden" />
         <RightActionRail

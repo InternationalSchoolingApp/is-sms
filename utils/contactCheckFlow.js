@@ -116,6 +116,9 @@ export function createContactCheckFlow({ api, now = () => Date.now(), setTimer =
     alert: "", // a message for the whole step (a server refusal is shown as it is)
     done: null, // { channel, action, shown, alsoMobile }
     changed: false,
+    // true: opened by hand from the profile card (legacy openContactCheckPopup manual): one problem, no "Later" and
+    // no "Close for now", a plain Close instead, and nothing is spent or asked again.
+    manual: false,
     farewell: "", // a refusal met while leaving the last problem: the page shows it after the popup has closed
     hold: { live: false, popup: false }, // see setHold
     yielded: false,
@@ -228,6 +231,23 @@ export function createContactCheckFlow({ api, now = () => Date.now(), setTimer =
       else set({});
     },
 
+    /**
+     * The profile card's "Fix now": opens this one problem straight away (no dashboard sequencing). Closed by
+     * closeManual() or by finishing the steps; "later" is never called for it.
+     */
+    openManual(target) {
+      if (!target || state.phase === "open") return;
+      const problem = { ...target, mandatory: target.mandatory === true, laterLeft: Number(target.laterLeft) || 0 };
+      state = { ...state, items: [problem], manual: true, changed: false };
+      showItem(0);
+    },
+
+    /** Manual mode's Close button / X: leaves the popup unless a call is running. */
+    closeManual() {
+      if (!state.manual || state.phase !== "open" || state.busy) return;
+      finish();
+    },
+
     /** Step 1: which option is selected. */
     choose(action) {
       if (state.phase !== "open" || state.busy || state.step !== "choose") return;
@@ -334,7 +354,7 @@ export function createContactCheckFlow({ api, now = () => Date.now(), setTimer =
     async later() {
       if (state.phase !== "open" || state.busy || state.step !== "choose") return;
       const target = item();
-      if (target.mandatory) return;
+      if (target.mandatory || state.manual) return;
       set({ busy: true, alert: "" });
       const result = await call("later", { reviewId: target.id });
       if (!active(target)) return;
@@ -375,7 +395,7 @@ export function createContactCheckFlow({ api, now = () => Date.now(), setTimer =
     /** "Close for now": this page load only. "later" is not called, so no skip is spent and it is asked again. */
     closeForNow() {
       const target = item();
-      if (state.phase !== "open" || state.busy || !target || !target.mandatory || !target.closeNow) return;
+      if (state.phase !== "open" || state.busy || state.manual || !target || !target.mandatory || !target.closeNow) return;
       finish();
     },
   };

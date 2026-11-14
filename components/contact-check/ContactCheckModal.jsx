@@ -108,8 +108,8 @@ function StepAlert({ message, skin }) {
   );
 }
 
-function CloseForNow({ item, flow, busy, copy, skin }) {
-  if (!item.mandatory || !item.closeNow) return null;
+function CloseForNow({ item, flow, busy, copy, skin, manual = false }) {
+  if (manual || !item.mandatory || !item.closeNow) return null;
   return (
     <skin.Btn variant="quiet" onClick={flow.closeForNow} disabled={busy}>
       {copy.closeNowLabel}
@@ -128,7 +128,7 @@ function ChooseStep({ flow, state, item, copy, skin, band, timezone }) {
   useStepFocus(ref, `${item.id}:${item.mandatory}`);
 
   const when = !elementary && item.lastFailedAt ? formatWhen(item.lastFailedAt, timezone) : "";
-  const skipNote = item.mandatory ? copy.mandatory : item.laterLeft > 0 ? copy.skip(item.laterLeft) : "";
+  const skipNote = state.manual ? "" : item.mandatory ? copy.mandatory : item.laterLeft > 0 ? copy.skip(item.laterLeft) : "";
 
   return (
     <form
@@ -195,12 +195,18 @@ function ChooseStep({ flow, state, item, copy, skin, band, timezone }) {
       </div>
       <div className={skin.footer}>
         {skipNote && <span className={skin.footNote}>{skipNote}</span>}
-        {!item.mandatory && (
-          <skin.Btn variant="quiet" onClick={flow.later} disabled={state.busy}>
-            {copy.laterLabel}
+        {state.manual ? (
+          <skin.Btn variant="quiet" onClick={flow.closeManual} disabled={state.busy}>
+            Close
           </skin.Btn>
+        ) : (
+          !item.mandatory && (
+            <skin.Btn variant="quiet" onClick={flow.later} disabled={state.busy}>
+              {copy.laterLabel}
+            </skin.Btn>
+          )
         )}
-        <CloseForNow item={item} flow={flow} busy={state.busy} copy={copy} skin={skin} />
+        <CloseForNow item={item} flow={flow} busy={state.busy} copy={copy} skin={skin} manual={state.manual} />
         <skin.Btn type="submit" disabled={state.busy}>
           {copy.continueLabel}
         </skin.Btn>
@@ -491,7 +497,7 @@ function CodeStep({ flow, state, item, copy, skin }) {
         <skin.Btn variant="quiet" onClick={flow.back} disabled={busy}>
           {copy.backLabel}
         </skin.Btn>
-        <CloseForNow item={item} flow={flow} busy={busy} copy={copy} skin={skin} />
+        <CloseForNow item={item} flow={flow} busy={busy} copy={copy} skin={skin} manual={state.manual} />
         <skin.Btn type="submit" variant="success" disabled={busy || !sent}>
           <Check className="h-4 w-4" strokeWidth={3} aria-hidden="true" />
           {copy.verifyLabel}
@@ -598,7 +604,13 @@ export default function ContactCheckModal({ check, band }) {
   const title = state.step === "nowhatsapp" ? copy.noWhatsapp.title : copy.channels[item.channel].title;
   // The header's X is only there where the step has a way out: "Later" on step 1, and the last step's own button.
   const close =
-    state.step === "choose" && !item.mandatory ? { onClose: flow.later, closeLabel: copy.laterLabel } : state.step === "done" ? { onClose: flow.next, closeLabel: "Close" } : {};
+    state.manual && state.step !== "done"
+      ? { onClose: flow.closeManual, closeLabel: "Close" }
+      : state.step === "choose" && !item.mandatory
+        ? { onClose: flow.later, closeLabel: copy.laterLabel }
+        : state.step === "done"
+          ? { onClose: flow.next, closeLabel: "Close" }
+          : {};
   const stepKey = `${item.id}:${state.step}`;
   const props = { flow, state, item, copy, skin, band };
 

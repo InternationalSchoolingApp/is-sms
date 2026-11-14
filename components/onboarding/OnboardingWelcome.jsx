@@ -10,6 +10,7 @@ import { PaymentName } from "@/components/common/PaymentName";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
+import { CheckoutExtraDialogs } from "@/components/common/CheckoutExtraDialogs";
 import { ActionButton, Card, SupportCard } from "@/components/re-enrollment/ReEnrollmentParts";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
@@ -240,6 +241,7 @@ function OverdueStep({ context, dueFees, onPaid }) {
         Kindly complete the payment to avoid deactivation of the School Management System.
       </p>
 
+      <CheckoutExtraDialogs checkout={checkout} />
       <PaymentGatewayPickerModal
         open={Boolean(checkout.picker)}
         onOpenChange={(open) => !open && checkout.closePicker()}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { differenceInCalendarDays, parseISO } from "date-fns";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
@@ -157,6 +158,13 @@ function GradeHistory({ act, enrollId, onClose }) {
   );
 }
 
+// "Late by 3 days" for an assignment handed in after its due date (legacy late time on a submitted activity).
+function lateText(a) {
+  if (a.status !== "late" || !a.due || !a.submitted) return "";
+  const days = differenceInCalendarDays(parseISO(a.submitted), parseISO(a.due));
+  return days > 0 ? `Late by ${days} day${days === 1 ? "" : "s"}` : "";
+}
+
 // Submission status (API Formula Reference, Shared calculations §1) as a chip.
 const STATUS = {
   before_time: { label: "Before time", bg: "var(--k5-gT)", fg: "var(--k5-gX)" },
@@ -207,6 +215,7 @@ export function K5PerformanceCourseView({ course, index, onBack }) {
             <div><b className="font-black">Teacher:</b> {teacherName(course)}</div>
             <div><b className="font-black">Current Overall Score:</b> {scored ? `${Number(course.score).toFixed(2)}%` : "No score yet"}</div>
             <div><b className="font-black">Current Overall Grade:</b> {scored ? course.grade || "N/A" : "No score yet"}</div>
+            <div><b className="font-black">Remaining Days:</b> {course.daysLeft ?? "N/A"}</div>
             <div><b className="font-black">Duration:</b> {course.startDate && course.endDate ? `${fmtShort(course.startDate)} - ${fmtShort(course.endDate)}` : "N/A"}</div>
             <div className="mt-1.5 grid gap-2.5">
               {course.countable > 0 ? (
@@ -215,6 +224,12 @@ export function K5PerformanceCourseView({ course, index, onBack }) {
                 </Bar>
               ) : (
                 acts.length > 0 && <span className="text-k5-mut">No assignments to complete</span>
+              )}
+              {/* Legacy second bar (studentAcademicPerformanceContent.js): every activity of the course, not only the gradable ones. */}
+              {num(course.allProgress) != null && course.allTotal > 0 && (
+                <Bar pct={num(course.allProgress)} col={tone.col}>
+                  {`${num(course.allProgress).toFixed(2)}% of all activities completed (${course.allDone ?? 0} of ${course.allTotal})`}
+                </Bar>
               )}
             </div>
           </div>
@@ -282,6 +297,7 @@ export function K5PerformanceCourseView({ course, index, onBack }) {
                     <span role="cell" data-l="Time Spent (hh:mm:ss)" className="px-3.5 py-3 font-mono">{a.timeSpent || "N/A"}</span>
                     <span role="cell" data-l="Submitted Status" className="px-3.5 py-3">
                       <span className="whitespace-nowrap rounded-full px-2.5 py-0.5 text-[13px] font-black" style={{ background: s.bg, color: s.fg }}>{s.label}</span>
+                      {lateText(a) && <small className="mt-1 block text-[13px] font-extrabold text-k5-mut">{lateText(a)}</small>}
                     </span>
                     <span role="cell" data-l="Score" className="px-3.5 py-3 font-black" style={{ color: a.score == null ? undefined : a.passed ? "var(--k5-gX)" : "var(--k5-rI)" }}>{scoreTx}</span>
                     <span role="cell" data-l="Grade" className="px-3.5 py-3 font-black">{a.score == null ? "" : a.grade || ""}</span>

@@ -23,6 +23,7 @@ import {
 import { FullScreenLoader } from "@/components/common/Loader";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
+import { CheckoutExtraDialogs } from "@/components/common/CheckoutExtraDialogs";
 import { K5VideoLibrary } from "@/components/k5/pages/K5VideoLibrary";
 import { SubscribeModal } from "@/components/student/videoLibrary/SubscribeModal";
 import { VideoPlayer } from "@/components/student/videoLibrary/VideoPlayer";
@@ -691,6 +692,7 @@ export function VideoLibrary({ title = "Video Library" }) {
           }}
         />
       )}
+      <CheckoutExtraDialogs checkout={checkout} />
       {context && (
         <PaymentGatewayPickerModal
           open={Boolean(checkout.picker)}

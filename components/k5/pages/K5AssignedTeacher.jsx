@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarDays, ChevronDown, FileText, Folder, UserRoundCheck, X } from "lucide-react";
+import { CalendarDays, ChevronDown, FileText, Folder, Search, UserRoundCheck, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { K5_CARD, SubjectIcon } from "@/components/k5/home/k5Bits";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
@@ -155,8 +155,19 @@ function CourseContentDialog({ course, color, onClose }) {
 }
 
 /** K–5 look of "Syllabus & Assigned Teacher" (mockup My Assigned Teacher): one card per course, in the course's colour. */
+const PAGE_SIZE = 9;
+
 export function K5AssignedTeacher({ courses, isLoading }) {
   const [selected, setSelected] = useState(null);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  // Legacy search box + paging of the course list.
+  const matching = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return needle ? courses.filter((c) => `${c.courseName} ${c.teacherName || ""}`.toLowerCase().includes(needle)) : courses;
+  }, [courses, search]);
+  const pageCount = Math.max(1, Math.ceil(matching.length / PAGE_SIZE));
+  const shown = matching.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
   const { isMiddle, isHigh } = useDashboardContext();
   usePicoContentReady(!isLoading);
   const colorFor = useK5CourseColors();
@@ -193,8 +204,24 @@ export function K5AssignedTeacher({ courses, isLoading }) {
       ) : courses.length === 0 ? (
         <p className={`${K5_CARD} m-0 p-8 text-center font-k5-display text-2xl font-semibold text-k5-mut`}>No courses yet.</p>
       ) : (
+        <>
+          <label className="relative block max-w-sm">
+            <span className="sr-only">Search courses</span>
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-k5-mut" aria-hidden="true" />
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(0);
+              }}
+              placeholder="Search courses..."
+              className="min-h-12 w-full rounded-full border-[3px] border-k5-line bg-k5-card py-0 pl-11 pr-4 font-k5-body text-base font-extrabold text-k5-ink"
+            />
+          </label>
+          {matching.length === 0 && <p className={`${K5_CARD} m-0 p-6 text-center font-k5-display text-xl font-semibold text-k5-mut`}>No matching courses.</p>}
         <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
-          {courses.map((course) => {
+          {shown.map((course) => {
             const color = colorOf(course);
             return (
               <article key={course.coruseId} className={`${K5_CARD} flex flex-col gap-3.5 p-4`}>
@@ -230,6 +257,20 @@ export function K5AssignedTeacher({ courses, isLoading }) {
             );
           })}
         </div>
+          {pageCount > 1 && (
+            <nav aria-label="Courses pages" className="flex flex-wrap items-center justify-center gap-3">
+              <button type="button" disabled={page === 0} onClick={() => setPage((p) => p - 1)} className="min-h-11 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-5 font-k5-display text-base font-semibold text-k5-ink disabled:cursor-default disabled:opacity-50">
+                Previous
+              </button>
+              <span className="font-k5-display text-base font-semibold text-k5-mut">
+                Page {page + 1} of {pageCount}
+              </span>
+              <button type="button" disabled={page >= pageCount - 1} onClick={() => setPage((p) => p + 1)} className="min-h-11 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-5 font-k5-display text-base font-semibold text-k5-ink disabled:cursor-default disabled:opacity-50">
+                Next
+              </button>
+            </nav>
+          )}
+        </>
       )}
 
       {selected && <CourseContentDialog course={selected.course} color={selected.color} onClose={() => setSelected(null)} />}

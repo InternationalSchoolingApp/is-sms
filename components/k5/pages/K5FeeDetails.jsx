@@ -36,7 +36,7 @@ function PageButton({ children, ...props }) {
 
 const RETRY_STATUSES = ["PENDING", "FAILURE", "REJECTED"];
 
-function feeAction(row, nextId, canView) {
+function feeAction(row, nextId, schoolNumericId, canView) {
   const { status, paymentTitle: title, pgName, paymentTransferType: transferType } = row;
   if (status === "SUCCESS") return canView ? { kind: "receipt" } : null;
   if (status === "INITIATED" && pgName === "CASH") return null;
@@ -50,6 +50,8 @@ function feeAction(row, nextId, canView) {
     }
     if (status === "INITIATED" && transferType != 3) {
       if (pgName === "CONVERA") return { kind: "pay", label: "Change Payment Method", note: "Payment in Process" };
+      // Legacy studentFeeDetailsContent.js: a wire transfer waiting for review (school 5) shows only this text.
+      if (schoolNumericId == 5 && pgName === "WireTransfer") return { note: "Payment Under Process" };
       return null;
     }
     if (title === "BOOKSESSION_FEE" || title === "EXTENSION_FEE") return null;
@@ -126,6 +128,7 @@ function FeeSkeleton() {
 export function K5FeeDetails({ isLoading, payments, nextUserPaymentDetailsId, symbol, canView, onPay }) {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
+  const { context } = useDashboardContext();
   usePicoContentReady(!isLoading);
 
   const term = query.trim().toLowerCase();
@@ -169,7 +172,7 @@ export function K5FeeDetails({ isLoading, payments, nextUserPaymentDetailsId, sy
               </div>
               {visible.map((payment, i) => {
                 const serial = start + i + 1;
-                const action = feeAction(payment, nextUserPaymentDetailsId, canView);
+                const action = feeAction(payment, nextUserPaymentDetailsId, context?.schoolNumericId, canView);
                 const success = payment.status === "SUCCESS";
                 return (
                   <div

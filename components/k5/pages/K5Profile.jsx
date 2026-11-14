@@ -8,6 +8,7 @@ import { ConfirmDialog, EditableParents, EditablePersonal } from "@/components/k
 import { K5PhotoDialog } from "@/components/k5/pages/K5PhotoDialog";
 import { SchoolEmailEditor, WithdrawalEditor } from "@/components/k5/pages/K5ProfileP5";
 import { CustomFields } from "@/components/k5/pages/K5ProfileCustomFields";
+import { ContactSummaryCard } from "@/components/contact-check/ContactSummaryCard";
 import { EditableDocuments } from "@/components/k5/pages/K5ProfileDocs";
 import { DocumentVerification } from "@/components/k5/pages/K5ProfileDocVerification";
 import { EditablePreviousSchool, EditableSports, EditableTiming, ProgressReportPicker } from "@/components/k5/pages/K5ProfileEditorsP3";
@@ -634,13 +635,15 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
           </div>
 
           <View m={model} editor={editor} actions={actions} />
+          {/* Legacy: "My contact details" sits right after Personal Information (hidden until a contact needs attention). */}
+          {section.key === "personal" && !model.demo && <ContactSummaryCard />}
           {/* The school's own fields for this section (Timing's are switched off on the existing page). */}
           {["personal", "parents", "academic", "sports"].includes(section.key) && <CustomFields fields={model.customFields?.[section.key]} editor={editor} actions={actions} />}
 
           {!model.rightToEdit && (
             <p className="m-0 flex items-center gap-2 text-sm font-extrabold text-k5-mut">
               <Info className="h-4 w-4 flex-none" aria-hidden="true" />
-              Only the school can change these details.
+              {model.demo ? "Demo mode: this is a sample profile, so nothing here can be changed." : "Only the school can change these details."}
             </p>
           )}
 

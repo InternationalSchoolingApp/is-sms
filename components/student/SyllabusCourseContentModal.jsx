@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CalendarModal } from "@/components/dashboard/calendar/CalendarModal";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { getStudentCourseContent } from "@/services/dashboardApi";
-import { hasDueDate } from "@/utils/lmsCourseLink";
+import { hasDueDate, openLmsLesson } from "@/utils/lmsCourseLink";
 
 function asArray(value) {
   if (!value) return [];
@@ -40,7 +40,10 @@ export function SyllabusCourseContentModal({ course, onClose }) {
               <ul className="mt-1 space-y-1">
                 {asArray(module.items).map((item, itemIndex) => (
                   <li key={itemIndex} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 px-2 py-1.5">
-                    <span className="text-black">{item.contentName}</span>
+                    {/* Legacy redirectLmsFromStudentCourse: a lesson opens the LMS (or says why it cannot). */}
+                    <button type="button" onClick={() => openLmsLesson(item)} className="cursor-pointer border-none bg-transparent p-0 text-left text-primary hover:underline">
+                      {item.contentName}
+                    </button>
                     {hasDueDate(item.dueDate) && <span className="flex-shrink-0 text-xs text-black/50">Due {item.dueDate}</span>}
                   </li>
                 ))}

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { checkCartPayment } from "@/services/cartApi";
 import {
+  cancelPaymentAttempt,
   getAirwallexPaymentMethods,
   getPaymentGatewayOptions,
   getPaymentPaidStatus,
@@ -19,6 +20,7 @@ import {
   loadLocationGlobals,
 } from "@/utils/locationFinder";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { getPaymentBrowserId, resumeUrlForThisBrowser } from "@/utils/paymentBrowserId";
 import { expireSession } from "@/utils/logout";
 
 const STATUS_SUCCESS = "1";
@@ -26,6 +28,9 @@ const STATUS_SESSION_OUT = "3";
 // getPaymentPaidStatus() polling in commonPaymentGateway.js: every 10s, gives up after 10 checks.
 const PAID_STATUS_POLL_MS = 10000;
 const PAID_STATUS_MAX_CHECKS = 10;
+const STATUS_PAYMENT_IN_PROGRESS = "PAYMENT_IN_PROGRESS";
+const STATUS_ALREADY_PAID = "ALREADY_PAID";
+const STATUS_OLD_FEE = "OLD_FEE";
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
 
 /**
@@ -55,6 +60,11 @@ export function useCartCheckout({ context, onPaid }) {
   const [incomplete, setIncomplete] = useState(false);
   const [underReview, setUnderReview] = useState(false);
   const [dummyGateway, setDummyGateway] = useState(null);
+  // "You already started this payment" (PAYMENT_IN_PROGRESS) / "already paid" from invoke-payment-gateway:
+  // { attempt | alreadyPaidMessage, autoCancel, openedAt, relaunch: { gateway, details } }, shown by CheckoutExtraDialogs.
+  const [paymentInProgress, setPaymentInProgress] = useState(null);
+  // "School Payment Update" (OLD_FEE): the message of an old fee that can no longer be paid here.
+  const [oldFee, setOldFee] = useState("");
   const pollRef = useRef({ timer: null, count: 0 });
   const dummy = useDummyStudent();
 
@@ -92,6 +102,11 @@ export function useCartCheckout({ context, onPaid }) {
     setPreparing(true);
     try {
       const checked = await checkCartPayment({ userPaymentDetailsId });
+      if (checked?.statusCode === STATUS_OLD_FEE) {
+        // Legacy checkPayment: renderOldFeeCard(response) instead of a toast.
+        setOldFee(checked.message || "This fee can no longer be paid here. Please contact the school.");
+        return;
+      }
       if (checked?.status !== STATUS_SUCCESS) {
         fail(checked, "Could not start the payment. Please try again.");
         return;
@@ -179,13 +194,14 @@ export function useCartCheckout({ context, onPaid }) {
     pollRef.current.timer = setInterval(() => checkPaidStatus(userPaymentDetailsId, schoolId), PAID_STATUS_POLL_MS);
   }
 
-  async function launchGateway(gateway) {
+  // options.details / skipPopupProbe: the launch that follows "Start a new payment" (the picker is already closed).
+  async function launchGateway(gateway, options = {}) {
     if (dummy.enabled) {
       setPicker(null);
       setDummyGateway(gateway.name);
       return;
     }
-    const details = picker.details;
+    const details = options.details || picker.details;
     const payload = {
       location: getLocationValue(),
       browserDetails: details.upid,
@@ -196,19 +212,53 @@ export function useCartCheckout({ context, onPaid }) {
       paymentGateway: gateway.name,
       initiateVia: "",
       backUrl: window.location.href,
+      // invoke-payment-gateway runs from the Next.js server, so the backend would only see Node's User-Agent; the
+      // "payment already in progress" message shows the payer's real device and browser.
+      userAgent: navigator.userAgent,
+      // This browser's own id: if its checkout tab was closed and it comes back, the in-progress pop-up is skipped.
+      browserId: getPaymentBrowserId(),
       applyingFrom: "nextjs",
     };
     setLaunching(true);
     // isPopupBlocked(): legacy probes window.open('', '_blank') before the invoke call.
-    const probe = window.open("", "_blank");
-    if (!probe || probe.closed || typeof probe.closed === "undefined") {
-      setLaunching(false);
-      toast.error("Popup blocked. Please allow popups and try again.");
-      return;
+    if (!options.skipPopupProbe) {
+      const probe = window.open("", "_blank");
+      if (!probe || probe.closed || typeof probe.closed === "undefined") {
+        setLaunching(false);
+        toast.error("Popup blocked. Please allow popups and try again.");
+        return;
+      }
+      probe.close();
     }
-    probe.close();
     try {
       const response = await invokePaymentGateway(context.schoolUUID, payload);
+      const inProgress = response?.statusCode === STATUS_PAYMENT_IN_PROGRESS && response.details?.attemptRef;
+      // This browser started that payment (its checkout tab was closed): back to the same checkout when it can be.
+      const resumeUrl = inProgress ? resumeUrlForThisBrowser(response.details, gateway.name) : null;
+      if (resumeUrl) {
+        toast("Taking you back to the payment you started...");
+        window.location.assign(resumeUrl);
+        return;
+      }
+      if (inProgress || response?.statusCode === STATUS_ALREADY_PAID) {
+        setLaunching(false);
+        setPicker(null);
+        setPaymentInProgress({
+          attempt: inProgress ? response.details : null,
+          // Same browser, nothing to reopen: close it at the gateway and start again without asking.
+          autoCancel: Boolean(inProgress && response.details.sameBrowser),
+          alreadyPaidMessage: inProgress ? "" : response.message || "This fee is already paid. You don't need to pay again.",
+          openedAt: Date.now(),
+          relaunch: { gateway, details },
+        });
+        return;
+      }
+      if (response?.statusCode === STATUS_OLD_FEE) {
+        setLaunching(false);
+        setPicker(null);
+        setOldFee(response.message || "This fee can no longer be paid here. Please contact the school.");
+        return;
+      }
       if (response?.status !== STATUS_SUCCESS || !response.details?.redirectUrl) {
         setLaunching(false);
         setPicker(null);
@@ -287,5 +337,21 @@ export function useCartCheckout({ context, onPaid }) {
     dismissUnderReview: () => setUnderReview(false),
     dummyGateway,
     closeDummyCheckout: () => setDummyGateway(null),
+    // Shown by components/common/CheckoutExtraDialogs.jsx
+    paymentInProgress,
+    closePaymentInProgress: () => setPaymentInProgress(null),
+    cancelPaymentAttempt: (attemptRef) => cancelPaymentAttempt(context.schoolUUID, { attemptRef }),
+    // "Start a new payment" worked: the same gateway is launched again, without the popup probe (no user gesture here).
+    relaunchAfterCancel: () => {
+      const again = paymentInProgress?.relaunch;
+      if (again) launchGateway(again.gateway, { details: again.details, skipPopupProbe: true });
+    },
+    paidAlready: () => {
+      setPaymentInProgress(null);
+      onPaid?.();
+    },
+    sessionExpired: () => expireSession(context.schoolUUID),
+    oldFee,
+    closeOldFee: () => setOldFee(""),
   };
 }

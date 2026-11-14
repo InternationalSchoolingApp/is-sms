@@ -7,12 +7,13 @@ import toast from "react-hot-toast";
 import { Check, Info, Lock, X, CalendarDays } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
+import { CheckoutExtraDialogs } from "@/components/common/CheckoutExtraDialogs";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
 import { useCartCheckout } from "@/hooks/useCartCheckout";
-import { usePicoLive } from "@/components/k5/pico/picoEvents";
+import { useClassLive } from "@/hooks/useClassLive";
 import { acceptReserveSeat, getReserveSeatEligibility } from "@/services/reserveSeatApi";
 import { expireSession } from "@/utils/logout";
 
@@ -51,15 +52,6 @@ function sideButtonText(details) {
 }
 
 const acceptText = (details) => (details.eligibleFor === "ADV" ? "Re-Enroll Now For The Next Grade" : "Reserve a Seat Now For Next Grade");
-
-// Is a class live right now? K–5 / Grade 6–8 / High: what the planner tells the buddy. Standard home: a live event
-// drawn by the calendar (the same signals the contact-check popup uses).
-function useClassLive() {
-  const { isK5 } = useDashboardContext();
-  const picoLive = usePicoLive();
-  if (isK5) return { known: picoLive.ready, live: Boolean(picoLive.name) };
-  return { known: true, live: null };
-}
 
 /** "This offer is valid for a limited time only!" — a countdown of progressionDiscountDueDate days that starts again. */
 function OfferCountdown({ days }) {
@@ -385,6 +377,7 @@ export function ReserveSeatForNextGrade() {
         />
       )}
       {fee && <ReserveFeeDialog open onOpenChange={(open) => !open && setFee(null)} details={fee} busy={checkout.preparing} onPay={() => checkout.start(fee.userPaymentDetailsId)} />}
+      <CheckoutExtraDialogs checkout={checkout} />
       <PaymentGatewayPickerModal
         open={Boolean(checkout.picker)}
         onOpenChange={(open) => !open && checkout.closePicker()}

@@ -13,6 +13,7 @@ import { GraduationCeremonyModal } from "@/components/dashboard/GraduationCeremo
 import { EventDetailModal } from "@/components/dashboard/calendar/EventDetailModal";
 import { JoinClassModal } from "@/components/dashboard/calendar/JoinClassModal";
 import { K5Toolbar } from "@/components/k5/home/K5Toolbar";
+import { K5PlanFilters } from "@/components/k5/home/K5PlanFilters";
 import { ColourClues } from "@/components/k5/home/ColourClues";
 import { CalendarPopup, MiniCalendar, MyCourses, TodayCard } from "@/components/k5/home/K5LeftColumn";
 import { DayPlan } from "@/components/k5/home/DayPlan";
@@ -195,6 +196,8 @@ function K5Planner({ timezone }) {
           picoSay(clueText(key, days, now), "clues");
         }}
       />
+
+      {!isPreK && <K5PlanFilters filters={model.filters} onToggle={model.toggleFilter} />}
 
       <div className="flex flex-wrap items-start gap-5">
         <div className="sticky top-[calc(var(--maintenance-banner-h,0px)+100px)] box-border flex max-h-[calc(100vh-120px)] min-w-0 flex-[1_1_300px] flex-col gap-4 overflow-y-auto pb-3 pr-1 [scrollbar-width:thin] max-[1100px]:static max-[1100px]:max-h-none max-[1100px]:overflow-visible">

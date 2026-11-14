@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarClock, FileX } from "lucide-react";
+import { K5ExamSheet } from "@/components/k5/pages/K5ExamSheet";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useStudentExaminationDetails } from "@/hooks/useStudentExaminationDetails";
 
@@ -9,8 +10,10 @@ import { useStudentExaminationDetails } from "@/hooks/useStudentExaminationDetai
  * A single admin-uploaded PDF viewer, or a friendly "not uploaded yet" message.
  */
 export function ExamDetails() {
-  const { context } = useDashboardContext();
+  const { context, isK5 } = useDashboardContext();
   const { isLoading, fileUrl } = useStudentExaminationDetails({ schoolUUID: context?.schoolUUID, userId: context?.userId });
+
+  if (isK5) return <K5ExamSheet loading={!context || isLoading} fileUrl={fileUrl} />;
 
   return (
     <div className="mx-auto w-full max-w-4xl">

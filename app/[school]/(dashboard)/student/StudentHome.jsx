@@ -6,6 +6,7 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { StudentCalendarCard } from "@/components/dashboard/calendar/CalendarCard";
 import { OnboardingVideoModal } from "@/components/dashboard/OnboardingVideoModal";
 import { GraduationCeremonyModal } from "@/components/dashboard/GraduationCeremonyModal";
+import { CompleteProfileModal } from "@/components/dashboard/CompleteProfileModal";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
 import { studentNavHref } from "@/utils/dashboardNav";
 
@@ -18,7 +19,8 @@ import { studentNavHref } from "@/utils/dashboardNav";
  * (batch re-enroll popup + discount countdown) is intentionally NOT shown
  * here — it is migrated on a separate branch.
  */
-export function StudentHome() {
+// holdProfilePopup: the "Complete Your Profile" popup waits (the contact check comes first, StudentHomeForGrade.jsx).
+export function StudentHome({ holdProfilePopup = false }) {
   const { context, menu } = useDashboardContext();
   const { school } = useParams();
   // Flatten groups (children) and drop the home tile (no segment) and plain group headers (no segment, no children).
@@ -45,6 +47,7 @@ export function StudentHome() {
       */}
 
       <OnboardingVideoModal videoUrl={dashboardData.videoUrl} />
+      <CompleteProfileModal hold={holdProfilePopup} />
       {dashboardData.showGraduationCeremonyPopup && (
         <GraduationCeremonyModal
           registrationDeadline={dashboardData.graduationCeremonyRegistrationDeadline}

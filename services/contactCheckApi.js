@@ -62,3 +62,12 @@ export async function stopContactCheckWhatsapp({ reviewId: id } = {}) {
 export async function skipContactCheck({ reviewId: id } = {}) {
   return post("later", { reviewId: reviewId(id) });
 }
+
+/**
+ * Profile card "My contact details" (legacy loadContactCheckSummary): one row per channel.
+ * -> { contacts: [{ channel: "EMAIL"|"MOBILE"|"WHATSAPP"|"APP", label, value, isdCode, status:
+ *      "VERIFIED"|"OK"|"INVALID"|"NOT_REACHABLE"|"APP_NOT_INSTALLED"|"UNKNOWN", detail, reviewId }] }
+ */
+export async function loadContactSummary() {
+  return post("summary");
+}

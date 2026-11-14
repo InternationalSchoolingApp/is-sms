@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, isValid } from "date-fns";
-import { ArrowLeft, CalendarDays } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, CalendarDays, Search } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { getStudentBookedClasses } from "@/services/bookClassApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { BOOKED_CLASS_STATUS_STYLES } from "@/utils/bookClass";
 import { MobileTableCard } from "@/components/student/MobileTableCard";
+import { TableFooter } from "@/components/student/TableFooter";
 import { K5BookedView } from "@/components/k5/pages/K5BookedView";
 
 const DATE_TYPES = [
@@ -70,6 +71,25 @@ const LOOK = {
   },
 };
 
+// The table's columns (legacy DataTable): header, how a row sorts and what the search looks at.
+const PAGE_SIZE = 10;
+const COLUMNS = [
+  { header: "S. No." },
+  { header: "Class Timing | Time zone", value: (r) => `${r.meetingJoinDate} | ${r.startTime} - ${r.endTime} | ${r.timezone}`, sort: (r) => Date.parse(`${r.meetingJoinDate} ${r.startTime}`) },
+  { header: "Course Name", value: (r) => r.subjectName },
+  { header: "Teacher Name", value: (r) => r.name },
+  { header: "Booked Date", value: (r) => r.bookedDate, sort: (r) => Date.parse(r.bookedDate) },
+  { header: "Class Type", value: (r) => r.classTypeExtraOrComp },
+  { header: "Class Status", value: (r) => BOOKED_CLASS_STATUS_STYLES[r.meetingResult]?.label || "N/A" },
+];
+
+function compareRows(a, b, column) {
+  const keyA = column.sort ? column.sort(a) : column.value(a);
+  const keyB = column.sort ? column.sort(b) : column.value(b);
+  if (typeof keyA === "number" && typeof keyB === "number" && !Number.isNaN(keyA) && !Number.isNaN(keyB)) return keyA - keyB;
+  return String(column.value(a) ?? "").localeCompare(String(column.value(b) ?? ""), undefined, { numeric: true, sensitivity: "base" });
+}
+
 const DEFAULT_FILTER = { dateType: "today", startDate: null, endDate: null, classStatus: "" };
 
 // The DatePicker gives a Date; the backend expects "MMM dd, yyyy".
@@ -107,8 +127,26 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
     staleTime: 0,
   });
   const counts = data?.subjectCountDatials;
-  const rows = data?.meetingDetails ?? [];
+  const allRows = useMemo(() => data?.meetingDetails ?? [], [data]);
   const isCustom = draft.dateType === "custom";
+
+  // Legacy DataTable: search over the shown text, click a header to sort, 10 rows a page.
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState({ column: -1, descending: false });
+  const [page, setPage] = useState(0);
+  const matching = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    const found = needle ? allRows.filter((row) => COLUMNS.slice(1).some((c) => String(c.value(row) ?? "").toLowerCase().includes(needle))) : allRows;
+    if (sort.column < 1) return found;
+    const column = COLUMNS[sort.column];
+    return [...found].sort((a, b) => (sort.descending ? -1 : 1) * compareRows(a, b, column));
+  }, [allRows, search, sort]);
+  const rows = matching.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+  const offset = page * PAGE_SIZE;
+  const sortBy = (column) => {
+    setSort((old) => (old.column === column ? { column, descending: !old.descending } : { column, descending: false }));
+    setPage(0);
+  };
 
   return (
     <div className="mx-auto w-full">
@@ -164,23 +202,26 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
           onClick={() => {
             setDraft(DEFAULT_FILTER);
             setFilter(DEFAULT_FILTER);
+            setPage(0);
           }}
           className={look.reset}
         >
           Reset
         </button>
-        <button type="button" onClick={() => setFilter(draft)} className={look.search}>
+        <button type="button" onClick={() => {
+            setFilter(draft);
+            setPage(0);
+          }}
+          className={look.search}>
           Search
         </button>
-        {course.subjectId !== 0 && (
-          <button
-            type="button"
-            onClick={onBook}
-            className={`${look.book} ${course.weekLeftClass > 0 ? look.bookOn : look.bookOff}`}
-          >
-            Book a Class ({course.weekLeftClass})
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={onBook}
+          className={`${look.book} ${course.weekLeftClass > 0 ? look.bookOn : look.bookOff}`}
+        >
+          Book a Class ({course.weekLeftClass})
+        </button>
       </div>
 
       {counts && (
@@ -197,6 +238,23 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
         </div>
       )}
 
+      <div className="mt-3 flex justify-end">
+        <label className="relative block w-full max-w-[260px]">
+          <span className="sr-only">Search booked classes</span>
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-black/40" aria-hidden="true" />
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(0);
+            }}
+            placeholder="Search..."
+            className="w-full rounded-lg border border-slate-300 py-2 pl-8 pr-3 text-sm text-black"
+          />
+        </label>
+      </div>
+
       {/* Mobile: one card per booked class (column title beside each value) instead of a 900px table. */}
       <div className="mt-3 md:hidden">
         {isLoading || rows.length === 0 ? (
@@ -210,7 +268,7 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
                   <MobileTableCard
                     labelClassName={look.thead}
                     rows={[
-                      { label: "S. No.", value: index + 1 },
+                      { label: "S. No.", value: offset + index + 1 },
                       { label: "Class Timing | Time zone", value: `${row.meetingJoinDate} | ${row.startTime} - ${row.endTime} | ${row.timezone}` },
                       { label: "Course Name", value: row.subjectName },
                       { label: "Teacher Name", value: row.name },
@@ -233,8 +291,17 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
         <table className="min-w-[900px] w-full text-left text-sm">
           <thead className={look.thead}>
             <tr>
-              {["S. No.", "Class Timing | Time zone", "Course Name", "Teacher Name", "Booked Date", "Class Type", "Class Status"].map((h) => (
-                <th key={h} className="px-3 py-2 font-normal">{h}</th>
+              {COLUMNS.map((column, index) => (
+                <th key={column.header} aria-sort={sort.column === index ? (sort.descending ? "descending" : "ascending") : undefined} className="px-3 py-2 font-normal">
+                  {index === 0 ? (
+                    column.header
+                  ) : (
+                    <button type="button" onClick={() => sortBy(index)} className="inline-flex cursor-pointer items-center gap-1 border-none bg-transparent p-0 font-normal text-inherit">
+                      {column.header}
+                      {sort.column === index && (sort.descending ? <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" /> : <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />)}
+                    </button>
+                  )}
+                </th>
               ))}
             </tr>
           </thead>
@@ -248,7 +315,7 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
                 const status = BOOKED_CLASS_STATUS_STYLES[row.meetingResult];
                 return (
                   <tr key={`${row.meetingJoinDate}-${row.startTime}-${index}`} className="border-b border-slate-100">
-                    <td className="px-3 py-2">{index + 1}</td>
+                    <td className="px-3 py-2">{offset + index + 1}</td>
                     <td className="px-3 py-2">{row.meetingJoinDate} | {row.startTime} - {row.endTime} | {row.timezone}</td>
                     <td className="px-3 py-2">{row.subjectName}</td>
                     <td className="px-3 py-2">{row.name}</td>
@@ -268,6 +335,8 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
           </tbody>
         </table>
       </div>
+
+      {!isLoading && matching.length > 0 && <TableFooter page={page} pageSize={PAGE_SIZE} total={matching.length} onPageChange={setPage} />}
     </div>
   );
 }

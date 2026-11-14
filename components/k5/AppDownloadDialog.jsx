@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Bell, CalendarDays, Clock, MessagesSquare, NotebookText, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -155,18 +156,28 @@ function DancingPhone() {
  * store pages of the school app. Plain links that open the store in a new tab; nothing about
  * the student is sent anywhere.
  */
-export function AppDownloadDialog({ open, schoolName, onClose }) {
+export function AppDownloadDialog({ open, schoolName, onClose, lockSeconds = 0 }) {
+  // lockSeconds: the automatic install popup cannot be closed until its countdown ends (legacy 10 s). The state
+  // starts when the dialog mounts, so callers render it only while it is shown.
+  const [left, setLeft] = useState(lockSeconds);
+  useEffect(() => {
+    if (left <= 0) return undefined;
+    const id = setTimeout(() => setLeft((value) => value - 1), 1000);
+    return () => clearTimeout(id);
+  }, [left]);
+  const locked = left > 0;
   const themeProps = useK5ThemeProps(
     "max-h-[calc(100vh-32px)] gap-[18px] overflow-y-auto rounded-[32px] border-[3px] border-k5-ink bg-k5-card p-6 pb-[22px] text-k5-ink shadow-[0_8px_0_var(--k5-ink)] ring-0 sm:max-w-[720px] max-[480px]:p-4",
   );
   return (
-    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+    <Dialog open={open} onOpenChange={(next) => !next && !locked && onClose()} disablePointerDismissal={lockSeconds > 0}>
       <DialogContent showCloseButton={false} {...themeProps}>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close"
-          className="absolute right-4 top-4 flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-red bg-k5-red shadow-[0_3px_0_#9E1B2C]"
+          disabled={locked}
+          aria-label={locked ? `Close, available in ${left} seconds` : "Close"}
+          className="absolute right-4 top-4 flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-red bg-k5-red shadow-[0_3px_0_#9E1B2C] disabled:cursor-default disabled:opacity-50"
         >
           <X className="h-[18px] w-[18px] text-white" strokeWidth={3} aria-hidden="true" />
         </button>
@@ -218,9 +229,10 @@ export function AppDownloadDialog({ open, schoolName, onClose }) {
         <button
           type="button"
           onClick={onClose}
-          className="min-h-[52px] cursor-pointer self-end justify-self-end rounded-full border-none bg-[#FFC531] px-7 font-k5-display text-[19px] font-semibold text-[#1C2640] shadow-[0_5px_0_#C9930A]"
+          disabled={locked}
+          className="min-h-[52px] cursor-pointer self-end justify-self-end rounded-full border-none bg-[#FFC531] px-7 font-k5-display text-[19px] font-semibold text-[#1C2640] shadow-[0_5px_0_#C9930A] disabled:cursor-default disabled:opacity-60"
         >
-          All done
+          {locked ? `Close (${left}s)` : "All done"}
         </button>
       </DialogContent>
     </Dialog>

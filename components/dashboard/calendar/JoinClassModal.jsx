@@ -24,6 +24,8 @@ function statusLabel(dateStatus) {
 export function JoinClassModal({ event, schoolUUID, courseRegistry, onClose }) {
   const [details, setDetails] = useState(null);
   const [loadFailed, setLoadFailed] = useState(false);
+  // The backend's own refusal (legacy classDetailsOnModal: status 0 / 2 / 3 shows its message).
+  const [refusal, setRefusal] = useState("");
   const [copied, setCopied] = useState(false);
   const linkRef = useRef(null);
 
@@ -38,6 +40,7 @@ export function JoinClassModal({ event, schoolUUID, courseRegistry, onClose }) {
           window.open(url, "_blank", "noopener,noreferrer");
         }
       } else {
+        if (data && ["0", "2", "3"].includes(String(data.status)) && data.message) setRefusal(String(data.message));
         setLoadFailed(true);
       }
     });
@@ -79,7 +82,7 @@ export function JoinClassModal({ event, schoolUUID, courseRegistry, onClose }) {
         </div>
       )}
 
-      {loadFailed && <p className="text-sm text-black/70">Couldn&apos;t open this class right now. Please try again shortly.</p>}
+      {loadFailed && <p className="text-sm text-black/70">{refusal || "Couldn\u2019t open this class right now. Please try again shortly."}</p>}
 
       {details && details.classType === "SYS-TRAINING" && !isLive && (
         // Legacy calendarMeetingLinkValidateStudent: a School System Training that is not live is two lines (no Course /

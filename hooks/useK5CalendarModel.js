@@ -5,6 +5,7 @@ import { addDays, addMonths, addWeeks, startOfDay } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { useStudentCalendar } from "@/hooks/useStudentCalendar";
 import { buildDayMap, dayKey } from "@/utils/k5Calendar";
+import { applyCalendarFilters } from "@/utils/calendarEvents";
 
 const nowIn = (timezone) => toZonedTime(new Date(), timezone);
 
@@ -12,7 +13,7 @@ const nowIn = (timezone) => toZonedTime(new Date(), timezone);
  * Data for the Grade K–5 home planner: the existing school-calendar hook (same request,
  * normalization, course colours and course on/off as the legacy calendar), loaded a month
  * at a time and shown in `timezone`, plus a ticking `now` in that zone and per-day buckets.
- * Legacy filters other than the course on/off toggles have no K–5 UI, so they are ignored.
+ * The legacy filters (item kinds, assignment and class states, course on/off) all apply; K5PlanFilters is their UI.
  */
 export function useK5CalendarModel({ schoolUUID, userId, timezone }) {
   const [now, setNow] = useState(() => nowIn(timezone));
@@ -26,13 +27,7 @@ export function useK5CalendarModel({ schoolUUID, userId, timezone }) {
   const calendar = useStudentCalendar({ schoolUUID, userId, timezone, monthFetch: true, initialDate: startOfDay(nowIn(timezone)) });
   const { viewName, setViewName, selectedDate, setSelectedDate, filters, events } = calendar;
 
-  const visibleEvents = useMemo(
-    () =>
-      events.filter(
-        (e) => !((e.eventKind === "class" || e.eventKind === "assignment") && filters.courseVisibility[e.courseId] === false),
-      ),
-    [events, filters.courseVisibility],
-  );
+  const visibleEvents = useMemo(() => applyCalendarFilters(events, filters, now), [events, filters, now]);
   const days = useMemo(() => buildDayMap(visibleEvents, now), [visibleEvents, now]);
 
   const step = useCallback(
@@ -67,6 +62,8 @@ export function useK5CalendarModel({ schoolUUID, userId, timezone }) {
     isError: calendar.isError,
     courseRegistry: calendar.courseRegistry,
     courseVisibility: filters.courseVisibility,
+    filters,
+    toggleFilter: calendar.toggleFilter,
     toggleCourseVisibility: calendar.toggleCourseVisibility,
   };
 }

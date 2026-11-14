@@ -3,11 +3,15 @@
 import { useState } from "react";
 import { openLmsLink } from "@/utils/lmsCourseLink";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { ChevronDown, KeyRound, LogOut, Menu, MoreVertical, Palette, Smartphone, User } from "lucide-react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { ChevronDown, KeyRound, LogOut, Menu, MessageCircle, MoreVertical, Palette, ShoppingCart, Smartphone, User } from "lucide-react";
 import toast from "react-hot-toast";
 import { AppDownloadDialog } from "@/components/k5/AppDownloadDialog";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
+import { useCartCount } from "@/hooks/useStudentCart";
+import { useNeedHelp } from "@/hooks/useNeedHelp";
+import { studentNavHref } from "@/utils/dashboardNav";
 import { picoSay } from "@/components/k5/pico/picoEvents";
 import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
 import { logoutEverywhere } from "@/utils/logout";
@@ -37,6 +41,11 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, use
   // Same profile query as My Profile (shared cache): saving a new photo there refreshes this avatar too.
   const { model: profileModel } = useStudentProfile({ schoolUUID, userId });
   const photo = profileModel?.header?.photo || "";
+  // Legacy cartCountContent(): the cart button shows only while the cart has items, with the count as a badge.
+  const { school } = useParams();
+  const { data: cartCount = 0 } = useCartCount(userId);
+  const cartHref = studentNavHref(school, "cart");
+  const needHelp = useNeedHelp();
   const [menuOpen, setMenuOpen] = useState(false);
   const [changePwOpen, setChangePwOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -101,6 +110,33 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, use
             <circle cx="15" cy="7.5" r="1.6" fill="#1F7A3A" />
           </svg>
         </button>
+
+        {needHelp && (
+          <a
+            href={needHelp.href}
+            target="_blank"
+            rel="noreferrer"
+            title="Need help?"
+            className="flex min-h-12 items-center gap-2 rounded-full border-[3px] border-k5-line bg-k5-card py-0 pl-3 pr-[18px] font-k5-display text-[17px] font-semibold text-[#1F7A3A] no-underline shadow-k5-btn max-[760px]:hidden"
+          >
+            <MessageCircle className="h-[22px] w-[22px]" strokeWidth={2.4} aria-hidden="true" />
+            Need help?
+          </a>
+        )}
+
+        {cartCount > 0 && (
+          <Link
+            href={cartHref}
+            title="Cart"
+            aria-label={`Cart, ${cartCount} ${cartCount === 1 ? "item" : "items"}`}
+            className="relative flex h-[52px] w-[52px] items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card p-0 text-k5-acx no-underline shadow-k5-btn max-[760px]:hidden"
+          >
+            <ShoppingCart className="h-6 w-6" strokeWidth={2.4} aria-hidden="true" />
+            <span className="absolute -right-1.5 -top-1.5 flex h-[22px] min-w-[22px] items-center justify-center rounded-full border-2 border-k5-card bg-k5-red px-1 text-xs font-black leading-none text-white">
+              {cartCount}
+            </span>
+          </Link>
+        )}
 
         <button
           type="button"
@@ -231,6 +267,36 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, use
                 >
                   Theme &amp; look
                 </MoreItem>
+                {needHelp && (
+                  <MoreItem
+                    icon={
+                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-k5-act">
+                        <MessageCircle className="h-5 w-5 text-k5-acx" aria-hidden="true" />
+                      </span>
+                    }
+                    onClick={() => {
+                      setMoreOpen(false);
+                      window.open(needHelp.href, "_blank", "noopener,noreferrer");
+                    }}
+                  >
+                    Need help?
+                  </MoreItem>
+                )}
+                {cartCount > 0 && (
+                  <MoreItem
+                    icon={
+                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-k5-act">
+                        <ShoppingCart className="h-5 w-5 text-k5-acx" aria-hidden="true" />
+                      </span>
+                    }
+                    onClick={() => {
+                      setMoreOpen(false);
+                      router.push(cartHref);
+                    }}
+                  >
+                    Cart ({cartCount})
+                  </MoreItem>
+                )}
                 <MoreItem
                   icon={
                     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-k5-act">
