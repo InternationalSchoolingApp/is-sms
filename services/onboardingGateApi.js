@@ -250,3 +250,37 @@ export async function saveTimezone(timezoneId) {
   }
   return { ok: true, data: { message: answer.message || "" } };
 }
+
+/**
+ * Reschedule the School System Training (legacy Orientation.jsp -> saveTeacherTimePreference('STUDENT',
+ * 'rescheduleOrientationFrom'), saveType RESH): books the new slot; the backend moves the training, counts the
+ * reschedule and (for RESH) also sets the academic year start date to the new date. The time is checked against that
+ * date's free slots on the server, and the student's own studentStandardId is read on the server.
+ */
+export async function rescheduleSystemTraining({ date, stTime } = {}) {
+  const dates = legacyDates(date);
+  if (!dates) return { ok: false, code: "BAD_DATE", message: "Please select your system training date." };
+  if (!stTime) return { ok: false, code: "BAD_TIME", message: "Please select your system training time." };
+  const dashboard = await backendRequest({ path: "student/dashboard/dashboard-or-migration", buildBody: (me) => ({ userId: me.userId }) });
+  if (!dashboard.ok) return dashboard;
+  if (String(dashboard.data?.status) === "3") return SESSION_EXPIRED;
+  const studentStandardId = dashboard.data?.studentStandardId;
+  if (!studentStandardId) return { ok: false, code: "NO_STANDARD", message: "Your training could not be rescheduled. Please try again." };
+  const free = await fetchTrainingSlots(dates.mmm);
+  if (!free.ok) return free;
+  const slot = free.slots.find((s) => s.stTime === String(stTime));
+  if (!slot) return { ok: false, code: "SLOT_GONE", message: "This time is no longer available. Please choose another time." };
+  return saveTimePreference((me) => ({
+    userId: me.userId,
+    schoolId: me.schoolNumericId,
+    slotAddUserId: me.userId,
+    studentStandardId,
+    userRole: "STUDENT",
+    saveType: "RESH",
+    semesterStartDate: dates.mdy,
+    bookDate: dates.mmm,
+    bookStartTime: slot.stTime,
+    bookEndTime: addMinutes(slot.stTime, slot.duration),
+    teacherTimeList: [],
+  }));
+}

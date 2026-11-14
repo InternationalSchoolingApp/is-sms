@@ -28,6 +28,11 @@ export async function POST(request) {
     });
     const answer = response.ok ? await response.json().catch(() => null) : null;
     const clip = answer?.status === "1" ? answer.clip : null;
+    // The backend answered but has no clip on purpose (no TTS key in SETTINGS, too many new sentences, nothing to say):
+    // not a server failure, so no red 502 in the console — the page just uses the browser voice.
+    if (answer?.status === "0") {
+      return NextResponse.json({ url: null, times: [], message: answer.message || "No voice for this sentence." });
+    }
     if (!clip || !/^https?:\/\//i.test(clip.url || "")) {
       return NextResponse.json({ message: answer?.message || `HTTP ${response.status}` }, { status: 502 });
     }

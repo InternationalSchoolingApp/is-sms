@@ -81,7 +81,23 @@ export function JoinClassModal({ event, schoolUUID, courseRegistry, onClose }) {
 
       {loadFailed && <p className="text-sm text-black/70">Couldn&apos;t open this class right now. Please try again shortly.</p>}
 
-      {details && (
+      {details && details.classType === "SYS-TRAINING" && !isLive && (
+        // Legacy calendarMeetingLinkValidateStudent: a School System Training that is not live is two lines (no Course /
+        // Teacher rows — subjectName there is the participant, not a course).
+        <div className="my-4 text-center text-base font-medium text-black">
+          <p className="mb-2">
+            The {details.className} | {details.subjectName} is scheduled for {details.classDate}.
+          </p>
+          <p className="m-0">You can join the training on {details.canJoindateStart}.</p>
+          <div className="mt-4 flex justify-end">
+            <button type="button" onClick={onClose} className="rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-black hover:bg-black/5">
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {details && !(details.classType === "SYS-TRAINING" && !isLive) && (
         <>
           <DetailRow label="Course" value={course} />
           <DetailRow label="Date" value={details.classDate ? format(new Date(details.classDate), "MMM d, yyyy") : event.displayTime} />

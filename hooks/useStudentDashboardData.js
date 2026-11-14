@@ -47,5 +47,10 @@ export function useStudentDashboardData({ schoolUUID, userId }) {
     studentGraduate: migration?.studentGraduate === "Y",
     // StudentDetailsDTO.userTimezone (the student's configured zone; may be missing or invalid).
     userTimezone: details?.userTimezone || null,
+    // studentGraduate above is the boolean the re-enrollment branch uses too (false = the regular dashboard).
+    // showStudentCourseSelectionModel: the legacy dashboard asks for the School System Training popup (studentTimePreference.js).
+    showStudentCourseSelectionModel: migration?.showStudentCourseSelectionModel === "Y",
+    // StudentDetailsDTO.nextGrade ("Grade 4"): the "Ready for …?" line of the next-grade re-enrollment popup.
+    nextGrade: details?.nextGrade || null,
   };
 }

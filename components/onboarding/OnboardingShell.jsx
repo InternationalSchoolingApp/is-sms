@@ -54,7 +54,7 @@ export function OnboardingShell({ schoolName, logoUrl, rootcss, studentName, onL
         }}
       />
 
-      <main className="mx-auto w-full max-w-[1310px] flex-1 px-4 pb-24 pt-2 sm:px-6">{children}</main>
+      <main className="mx-auto w-full max-w-[1310px] flex-1 px-4 pb-4 pt-2 sm:px-6">{children}</main>
       <Footer schoolName={schoolName} inFlow />
       <Footer schoolName={schoolName} fixed />
     </div>
