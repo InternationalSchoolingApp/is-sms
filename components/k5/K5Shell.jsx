@@ -132,7 +132,7 @@ function K5Frame({ children }) {
         {copyrightLine(context.schoolName)}
       </footer>
 
-      <PicoGuide userId={context.userId} firstName={String(context.userName || "").split(" ")[0]} home={isHome} />
+      <PicoGuide userId={context.userId} firstName={String(context.userName || "").split(" ")[0]} schoolName={context.schoolName} home={isHome} />
       <SelectToSpeak />
       <ReadingRuler />
       <AppearanceDialog open={lookOpen} onClose={() => setLookOpen(false)} firstName={String(context.userName || "").split(" ")[0]} />

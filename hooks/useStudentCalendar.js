@@ -12,8 +12,11 @@ import {
   buildCourseRegistry,
   getBackendAgenda,
   getBrowserTimezone,
+  isEventActive,
   normalizeCalendarEvents,
 } from "@/utils/calendarEvents";
+import { buildFeedbackInfo } from "@/utils/classFeedback";
+import { notifyFeedbackEventEnded } from "@/utils/feedbackEvents";
 
 const STORAGE_KEY = "studentDashboardCalendarNew";
 
@@ -124,6 +127,30 @@ export function useStudentCalendar({ schoolUUID, userId, timezone: timezoneOptio
           if (!details) return;
           setAttendance((old) => ({ ...old, [event.id]: { attended: details.attended, onTime: details.onTime, lateSeconds: details.lateSeconds } }));
         });
+      });
+    };
+    check();
+    const id = setInterval(check, 15000);
+    return () => clearInterval(id);
+  }, [baseEvents, schoolUUID, timezone, dummy.settled, dummy.enabled]);
+
+  // Class feedback (legacy processLiveEventLifecycle): a class / activity this page saw LIVE and that has now ended tells the
+  // feedback host (components/dashboard/ClassFeedbackHost.jsx), once. An event already over when the page opened never does.
+  const liveSeen = useRef(new Set());
+  const feedbackSent = useRef(new Set());
+  useEffect(() => {
+    if (!schoolUUID || !dummy.settled || dummy.enabled) return undefined;
+    const check = () => {
+      const now = toZonedTime(new Date(), timezone);
+      baseEvents.forEach((event) => {
+        if ((event.eventKind !== "class" && event.eventKind !== "activity") || event.allDay || !event.startZoned || !event.endZoned) return;
+        if (isEventActive(event, now)) {
+          liveSeen.current.add(event.id);
+          return;
+        }
+        if (!liveSeen.current.has(event.id) || feedbackSent.current.has(event.id) || now < event.endZoned) return;
+        feedbackSent.current.add(event.id);
+        notifyFeedbackEventEnded(buildFeedbackInfo(event, timezone));
       });
     };
     check();

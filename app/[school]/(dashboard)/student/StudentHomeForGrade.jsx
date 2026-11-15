@@ -9,6 +9,7 @@ import { SystemTrainingPopup } from "@/components/dashboard/SystemTrainingPopup"
 import { ForcedPasswordChange } from "@/components/dashboard/ForcedPasswordChange";
 import { AppInstallPrompt } from "@/components/dashboard/AppInstallPrompt";
 import { OutlookReminder } from "@/components/dashboard/OutlookReminder";
+import { ClassFeedbackHost } from "@/components/dashboard/ClassFeedbackHost";
 import { StudentHome } from "./StudentHome";
 
 // Only fetched when the student has a contact problem to fix.
@@ -34,6 +35,8 @@ export function StudentHomeForGrade() {
       <AppInstallPrompt hold={!contactCheck.finished} />
       {/* School email (Outlook) activation reminder with a 5-minute snooze (legacy renderOutlookModalOnDashboard). */}
       <OutlookReminder hold={!contactCheck.finished} />
+      {/* Class feedback (legacy feedbackStudentTeacher.js): the rating form, the popup when a live class ends, the weekly Pending Feedback list. */}
+      <ClassFeedbackHost />
       {contactCheck.state.phase === "open" && <ContactCheckModal check={contactCheck} band={isK5 ? (isMiddle ? "middle" : "elementary") : "high"} />}
     </>
   );

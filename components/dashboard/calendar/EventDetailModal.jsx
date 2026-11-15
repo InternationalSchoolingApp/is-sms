@@ -3,6 +3,7 @@
 import { format } from "date-fns";
 import { ActivityDetailsModal } from "@/components/dashboard/calendar/ActivityDetailsModal";
 import { CalendarModal, DetailRow } from "@/components/dashboard/calendar/CalendarModal";
+import { RateFeedbackButton } from "@/components/dashboard/calendar/RateFeedbackButton";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { openLmsLesson } from "@/utils/lmsCourseLink";
 import {
@@ -57,9 +58,9 @@ function formatLate(seconds) {
 
 /**
  * A class that has ended (legacy openPastClassModal): batch name, Date, Status "Expired", start Time, Duration, Late and
- * the teacher (not for a batch class). The "Rate this class" button belongs to class feedback, which is another team's.
+ * the teacher (not for a batch class), and the "Rate this class" button when the class has a feedback form.
  */
-function PastClassDetail({ event }) {
+function PastClassDetail({ event, onClose }) {
   const minutes = event.startZoned && event.endZoned ? Math.round((event.endZoned - event.startZoned) / 60000) : 0;
   const teacher = event.category !== "BATCH" && event.origName && event.origName !== "Teacher" ? event.origName : null;
   return (
@@ -71,13 +72,16 @@ function PastClassDetail({ event }) {
       <DetailRow label="Duration" value={formatSpan(minutes)} />
       {event.lateSeconds > 0 && <DetailRow label="Late" value={formatLate(event.lateSeconds)} />}
       <DetailRow label="Teacher" value={teacher} />
+      <div className="flex justify-end pt-2">
+        <RateFeedbackButton event={event} onBeforeOpen={onClose} />
+      </div>
     </>
   );
 }
 
-function ClassOrActivityDetail({ event, courseRegistry }) {
+function ClassOrActivityDetail({ event, courseRegistry, onClose }) {
   const status = getEventStatus(event);
-  if (event.eventKind === "class" && status === "completed") return <PastClassDetail event={event} />;
+  if (event.eventKind === "class" && status === "completed") return <PastClassDetail event={event} onClose={onClose} />;
   const displayStatus = status === "completed" && event.eventKind === "class" ? getClassCompletionStatus(event) : status;
   const course = courseRegistry[event.courseId];
 
@@ -132,9 +136,8 @@ function HolidayOrEventDetail({ event }) {
 
 /**
  * Read-only event detail popup — the informational content from the legacy
- * openPastClassModal / openAssignmentModal / eventDetailsOnModal, minus the
- * join-class and feedback-submission actions (separate, larger pieces of
- * scope tracked for a follow-up pass).
+ * openPastClassModal / openAssignmentModal / eventDetailsOnModal, plus the
+ * "Rate this class" button of a finished class (class feedback).
  */
 export function EventDetailModal({ event, courseRegistry, onClose }) {
   if (!event) return null;
@@ -151,7 +154,7 @@ export function EventDetailModal({ event, courseRegistry, onClose }) {
       ) : event.eventKind === "holiday" || event.eventKind === "schoolEvent" ? (
         <HolidayOrEventDetail event={event} />
       ) : (
-        <ClassOrActivityDetail event={event} courseRegistry={courseRegistry} />
+        <ClassOrActivityDetail event={event} courseRegistry={courseRegistry} onClose={onClose} />
       )}
     </CalendarModal>
   );

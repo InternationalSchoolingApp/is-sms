@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { CalendarModal, DetailRow } from "@/components/dashboard/calendar/CalendarModal";
+import { RateFeedbackButton } from "@/components/dashboard/calendar/RateFeedbackButton";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
@@ -121,6 +122,8 @@ export function ActivityDetailsModal({ event, onClose }) {
             {joining ? "Opening…" : "Join Event"}
           </button>
         )}
+        {/* Legacy: "Rate this activity" sits before Close once the activity is over and has a feedback form. */}
+        <RateFeedbackButton event={event} onBeforeOpen={onClose} />
         <button type="button" onClick={onClose} className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-black">
           Close
         </button>

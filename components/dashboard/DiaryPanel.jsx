@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { format, parseISO } from "date-fns";
+import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Bookmark, NotebookText, X } from "lucide-react";
-import { getDiaryThreadList, getDiaryThreadMessages, markDiaryThreadRead } from "@/services/diaryApi";
+import { markDiaryThreadRead } from "@/utils/diaryClient";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { useChatScroll, useDiaryMessages, useDiaryThreads, useFloatingDate, useLoadMoreAtEnd } from "@/hooks/useDiaryPaging";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { DiaryAvatar, DiaryLoadError, DiaryMessageText, FloatingDateChip } from "@/components/dashboard/DiaryBits";
+import { Skeleton } from "@/components/ui/skeleton";
+import { diaryInstant, formatDiaryDate } from "@/utils/diaryDates";
+import { isOwnDiaryMessage } from "@/utils/diaryChat";
+import { DEFAULT_DIARY_CHAT_WITH, DIARY_CHAT_WITH, filterThreadsByChatWith, noDiaryEntriesText } from "@/utils/diaryFilter";
 
 // Roles that trigger the "Greetings from {school}!" letter template in
 // getParentSchoolDiaryTeacherCard/-ReplyCard (PARENT_MENTION_ROLE in
@@ -20,17 +26,33 @@ export function salutationFor(gender) {
   return "";
 }
 
-export function formatWhen(value) {
-  if (!value) return "";
-  const parsed = parseISO(String(value));
-  // DISPLAY_DATETIME_FORMATTER ("ddd, DD MMM, YYYY hh:mm A") from timezoneConverter.js.
-  return Number.isNaN(parsed.getTime()) ? "" : format(parsed, "EEE, d MMM, yyyy hh:mm a");
+// DISPLAY_DATETIME_FORMATTER ("ddd, DD MMM, YYYY hh:mm A"): the server date is in details.sourceTimezone and is shown in
+// the viewer's zone (utils/diaryDates.js; Asia/Singapore when the source zone is missing).
+export function formatWhen(value, sourceTimezone) {
+  return formatDiaryDate(value, sourceTimezone);
 }
 
-function ThreadList({ threads, onSelect }) {
-  if (threads.length === 0) return <p className="text-sm text-black/80 p-3 text-center">No diary conversations yet.</p>;
+/** A few grey rows while diary data loads (shadcn Skeleton). */
+function DiarySkeleton({ rows = 4 }) {
+  return (
+    <div role="status" aria-busy="true" className="flex flex-col gap-3 p-3">
+      <span className="sr-only">Loading…</span>
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="flex flex-col gap-2 rounded-xl border border-slate-100 p-3">
+          <Skeleton className="h-4 w-1/3" />
+          <Skeleton className="h-3 w-4/5" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ThreadList({ threads, chatWith, onSelect, sourceTimezone, endRef, loadingMore }) {
   return (
     <ul className="divide-y divide-slate-100">
+      {threads.length === 0 && !loadingMore && (
+        <li className="p-3 text-center text-sm font-semibold text-black/80">{noDiaryEntriesText(chatWith)}</li>
+      )}
       {threads.map((thread) => (
         <li key={thread.threadId} className="p-3 hover:bg-black/5">
           <button
@@ -38,9 +60,10 @@ function ThreadList({ threads, onSelect }) {
             onClick={() => onSelect(thread.threadId)}
             className="flex w-full items-start gap-2 text-left cursor-pointer"
           >
+            <DiaryAvatar name={thread.teacherName} src={thread.profilePic} className="h-10 w-10 bg-primary" initialsClassName="text-xs font-bold text-white" />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="truncate text-sm font-bold text-black">{thread.teacherName}</span>
+                <span className="truncate text-sm font-bold text-black">{`${salutationFor(thread.teacherGender)} ${thread.teacherName}`.trim()}</span>
                 {thread.unreadCount > 0 && (
                   <span className="flex-shrink-0 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
                     {thread.unreadCount}
@@ -49,10 +72,16 @@ function ThreadList({ threads, onSelect }) {
               </div>
               <p className="mt-0.5 truncate text-xs text-black/60">{thread.latestMessage}</p>
             </div>
-            <span className="flex-shrink-0 text-[10px] text-black/40">{formatWhen(thread.lastMessageAt)}</span>
+            <span className="flex-shrink-0 text-[10px] text-black/40">{formatWhen(thread.lastMessageAt, sourceTimezone)}</span>
           </button>
         </li>
       ))}
+      <li ref={endRef} aria-hidden="true" className="h-px" />
+      {loadingMore && (
+        <li>
+          <DiarySkeleton rows={1} />
+        </li>
+      )}
     </ul>
   );
 }
@@ -67,13 +96,13 @@ function ThreadList({ threads, onSelect }) {
  * a real reply from the thread's parent, or the viewer's own message, is
  * just plain text.
  */
-function DiaryEntryCard({ message, courseName, schoolName, viewerUserId }) {
-  const isOwn = String(message.senderUserId) === String(viewerUserId);
+function DiaryEntryCard({ message, courseName, schoolName, viewerUserId, viewerName, sourceTimezone }) {
+  const isOwn = isOwnDiaryMessage(message, { userId: viewerUserId, role: "STUDENT", userName: viewerName });
   const isStaffSender = STAFF_SENDER_ROLES.includes((message.senderRole || "").toUpperCase());
   const recipientName = message.mentions?.find((mention) => mention.roleType === "PARENT")?.userName || "Parent";
 
   return (
-    <div className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
+    <div data-diary-at={diaryInstant(message.createdAt, sourceTimezone)?.getTime()} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
       <div
         className={`w-full mt-2 rounded-2xl border border-slate-300/70 p-4 shadow-sm ${
           isOwn ? "bg-gradient-to-br from-sky-50 to-sky-100" : "bg-white"
@@ -92,14 +121,14 @@ function DiaryEntryCard({ message, courseName, schoolName, viewerUserId }) {
             <p className="font-caveat text-lg font-semibold text-black">Hope you are doing well.</p>
           </div>
         )}
-        <p className="font-caveat my-3 whitespace-pre-wrap text-xl text-black">{message.message}</p>
+        <DiaryMessageText text={message.message} mentions={message.mentions} className="font-caveat my-3 whitespace-pre-wrap text-xl text-black" />
         {isStaffSender && (
           <div className="mb-1">
             <p className="font-caveat text-lg text-black">Gratitude and prayers,</p>
             <p className="font-caveat text-lg text-black">{schoolName} Family</p>
           </div>
         )}
-        <small className="text-[11px] text-black/80">{formatWhen(message.createdAt)}</small>
+        <small className="text-[11px] text-black/80">{formatWhen(message.createdAt, sourceTimezone)}</small>
       </div>
     </div>
   );
@@ -114,23 +143,32 @@ function DiaryEntryCard({ message, courseName, schoolName, viewerUserId }) {
  */
 function ThreadView({ threadId, sessionUserId, schoolName }) {
   const dummy = useDummyStudent();
-  const messagesQuery = useQuery({
-    queryKey: ["diary-thread-messages", sessionUserId, threadId, dummy.key],
-    queryFn: () => (dummy.enabled ? dummy.student.diaryMessages(threadId) : getDiaryThreadMessages({ sessionUserId, threadId })),
-    enabled: Boolean(sessionUserId && threadId && dummy.settled),
-    refetchOnWindowFocus: false,
+  const queryClient = useQueryClient();
+  const { query: messagesQuery, messages, courseName, sourceTimezone } = useDiaryMessages({ sessionUserId, threadId });
+  const { context } = useDashboardContext();
+  const anchorRef = useRef(null);
+  // Opens on the newest message; the older ones load in above when the top is reached (legacy loadOldMessages).
+  useChatScroll(anchorRef, {
+    ready: !messagesQuery.isLoading,
+    pageCount: messagesQuery.data?.pages.length || 0,
+    hasNextPage: messagesQuery.hasNextPage,
+    isFetchingNextPage: messagesQuery.isFetchingNextPage,
+    fetchNextPage: messagesQuery.fetchNextPage,
   });
+  const floatingDate = useFloatingDate(anchorRef, { ready: !messagesQuery.isLoading, count: messages.length });
 
   // Dummy threads don't exist server-side: legacy skips the mark-read call in dummy mode.
   useEffect(() => {
-    if (sessionUserId && threadId && dummy.settled && !dummy.enabled) markDiaryThreadRead({ sessionUserId, threadId });
-  }, [sessionUserId, threadId, dummy.settled, dummy.enabled]);
-
-  const messages = messagesQuery.data?.details?.messages || [];
-  const courseName = messagesQuery.data?.details?.courseName;
+    if (!sessionUserId || !threadId || !dummy.settled || dummy.enabled) return;
+    // Once the thread is marked read the badge and the list's unread counts are refreshed (legacy gotoChat).
+    markDiaryThreadRead({ account: context?.uniqueId, threadId }).finally(() => {
+      queryClient.invalidateQueries({ queryKey: ["diary-unread-count", sessionUserId] });
+      queryClient.invalidateQueries({ queryKey: ["diary-threads", sessionUserId] });
+    });
+  }, [sessionUserId, threadId, dummy.settled, dummy.enabled, queryClient, context?.uniqueId]);
 
   return (
-    <div className="flex h-full flex-col p-3">
+    <div ref={anchorRef} className="flex h-full flex-col p-3">
       <div
         className="relative flex-1  rounded-xl border-l-4 border-sky-500 py-4 pl-10 pr-3"
         style={{
@@ -150,10 +188,14 @@ function ThreadView({ threadId, sessionUserId, schoolName }) {
           }}
         />
         <Bookmark aria-hidden="true" className="absolute -top-1 right-4 h-7 w-5 fill-primary text-primary" />
+        <FloatingDateChip label={floatingDate.label} visible={floatingDate.visible} className="bg-primary text-white" />
 
         <div className="space-y-4">
+          {messagesQuery.isFetchingNextPage && <DiarySkeleton rows={1} />}
           {messagesQuery.isLoading ? (
-            <p className="text-sm text-black/80 p-5">Loading…</p>
+            <DiarySkeleton rows={3} />
+          ) : messagesQuery.isError && messages.length === 0 ? (
+            <DiaryLoadError onRetry={() => messagesQuery.refetch()} className="text-black/80" buttonClassName="bg-primary text-white" />
           ) : messages.length === 0 ? (
             <p className="text-sm text-black/80 p-5">No messages yet.</p>
           ) : (
@@ -164,6 +206,8 @@ function ThreadView({ threadId, sessionUserId, schoolName }) {
                 courseName={courseName}
                 schoolName={schoolName}
                 viewerUserId={sessionUserId}
+                viewerName={context?.userName}
+                sourceTimezone={sourceTimezone}
               />
             ))
           )}
@@ -180,14 +224,10 @@ function ThreadView({ threadId, sessionUserId, schoolName }) {
  * to by teachers/parents only).
  */
 export function DiaryPanel({ sessionUserId, schoolName, onClose }) {
-  const dummy = useDummyStudent();
-  const threadsQuery = useQuery({
-    queryKey: ["diary-threads", sessionUserId, dummy.key],
-    queryFn: () => (dummy.enabled ? dummy.student.diaryThreads() : getDiaryThreadList({ sessionUserId })),
-    enabled: Boolean(sessionUserId && dummy.settled),
-    refetchOnWindowFocus: false,
-  });
-  const threads = threadsQuery.data?.details?.threads || [];
+  const { query: threadsQuery, threads, sourceTimezone } = useDiaryThreads({ sessionUserId });
+  const endRef = useLoadMoreAtEnd(threadsQuery);
+  const [chatWith, setChatWith] = useState(DEFAULT_DIARY_CHAT_WITH);
+  const shownThreads = filterThreadsByChatWith(threads, chatWith);
   const [selectedThreadId, setSelectedThreadId] = useState(null);
   const selectedThreadName = threads.find((thread) => thread.threadId === selectedThreadId)?.teacherName;
 
@@ -226,9 +266,30 @@ export function DiaryPanel({ sessionUserId, schoolName, onClose }) {
           {selectedThreadId ? (
             <ThreadView threadId={selectedThreadId} sessionUserId={sessionUserId} schoolName={schoolName} />
           ) : threadsQuery.isLoading ? (
-            <p className="text-sm text-black/80 p-4 text-center">Loading…</p>
+            <DiarySkeleton />
+          ) : threadsQuery.isError && threads.length === 0 ? (
+            <DiaryLoadError onRetry={() => threadsQuery.refetch()} className="text-black/80" buttonClassName="bg-primary text-white" />
           ) : (
-            <ThreadList threads={threads} onSelect={setSelectedThreadId} />
+            <>
+              <div className="border-b border-slate-100 px-4 py-3">
+                <label htmlFor="diary-chat-with" className="sr-only">
+                  Chat with
+                </label>
+                <select
+                  id="diary-chat-with"
+                  value={chatWith}
+                  onChange={(event) => setChatWith(event.target.value)}
+                  className="w-full cursor-pointer rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm font-semibold text-black"
+                >
+                  {DIARY_CHAT_WITH.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <ThreadList threads={shownThreads} chatWith={chatWith} onSelect={setSelectedThreadId} sourceTimezone={sourceTimezone} endRef={endRef} loadingMore={threadsQuery.isFetchingNextPage} />
+            </>
           )}
         </div>
       </div>

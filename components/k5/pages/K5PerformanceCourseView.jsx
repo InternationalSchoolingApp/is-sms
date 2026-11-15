@@ -226,11 +226,15 @@ export function K5PerformanceCourseView({ course, index, onBack }) {
                 acts.length > 0 && <span className="text-k5-mut">No assignments to complete</span>
               )}
               {/* Legacy second bar (studentAcademicPerformanceContent.js): every activity of the course, not only the gradable ones. */}
-              {num(course.allProgress) != null && course.allTotal > 0 && (
-                <Bar pct={num(course.allProgress)} col={tone.col}>
-                  {`${num(course.allProgress).toFixed(2)}% of all activities completed (${course.allDone ?? 0} of ${course.allTotal})`}
-                </Bar>
-              )}
+              {/* Buzz's completeall can arrive as a fraction (0.898) or a percent, so derive the percent from the counts. */}
+              {course.allTotal > 0 && (() => {
+                const allPct = Math.min(100, Math.round(((num(course.allDone) ?? 0) * 10000) / course.allTotal) / 100);
+                return (
+                  <Bar pct={allPct} col={tone.col}>
+                    {`${allPct.toFixed(2)}% of all activities completed (${course.allDone ?? 0} of ${course.allTotal})`}
+                  </Bar>
+                );
+              })()}
             </div>
           </div>
           <div className="flex flex-[1_1_280px] flex-col gap-2.5">

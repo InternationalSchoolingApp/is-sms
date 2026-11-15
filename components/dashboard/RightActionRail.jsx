@@ -5,12 +5,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MessageCircle, Megaphone, Newspaper, NotebookText } from "lucide-react";
 import { getAnnouncementDetails, getChatUnseenCount } from "@/services/dashboardApi";
 import { getAllArticles } from "@/services/newsApi";
-import { getDiaryUnreadCount } from "@/services/diaryApi";
+import { getDiaryUnreadCount } from "@/utils/diaryClient";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { buildChatSignInUrl } from "@/utils/chatLink";
 import { AnnouncementsPanel } from "@/components/dashboard/AnnouncementsPanel";
 import { NewsPanel } from "@/components/dashboard/NewsPanel";
 import { DiaryPanel } from "@/components/dashboard/DiaryPanel";
+import { useDiaryLivePolling } from "@/hooks/useDiaryLivePolling";
+import { diaryLog, diaryTrace } from "@/utils/diaryDebug";
 import { K5AnnouncementsPanel } from "@/components/k5/panels/K5AnnouncementsPanel";
 import { K5NewsPanel } from "@/components/k5/panels/K5NewsPanel";
 import { K5DiaryPanel } from "@/components/k5/panels/K5DiaryPanel";
@@ -71,17 +73,29 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
 
   const diaryCountQuery = useQuery({
     queryKey: ["diary-unread-count", userId, dummy.key],
-    queryFn: () => (dummy.enabled ? dummy.student.diaryUnreadCount() : getDiaryUnreadCount({ sessionUserId: userId })),
+    queryFn: () => (dummy.enabled ? dummy.student.diaryUnreadCount() : getDiaryUnreadCount({ account: uniqueId })),
     enabled: Boolean(userId && dummy.settled),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
   const unreadDiaryMessages = diaryCountQuery.data?.details?.unreadMessageCount || 0;
+  // Debug trail: every time the badge number changes, with a stack trace of what caused it.
+  useEffect(() => {
+    diaryTrace("BADGE now shows", { unreadDiaryMessages, queryStatus: diaryCountQuery.status, updatedAt: diaryCountQuery.dataUpdatedAt ? new Date(diaryCountQuery.dataUpdatedAt).toISOString() : null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unreadDiaryMessages]);
+  useEffect(() => {
+    diaryLog("badge query state", { status: diaryCountQuery.status, fetchStatus: diaryCountQuery.fetchStatus, enabled: Boolean(userId && dummy.settled), dummy: dummy.enabled, userId, account: uniqueId });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [diaryCountQuery.status, diaryCountQuery.fetchStatus]);
+  // Legacy diaryRealtimePoll(): ask the server whether the diary changed (works without the bridge iframe below).
+  useDiaryLivePolling({ userId, account: uniqueId, enabled: Boolean(userId && dummy.settled && !dummy.enabled) });
 
   // Belt-and-suspenders refresh around a diary visit, on top of the
   // postMessage push below — covers the moment between opening the panel
   // and the bridge iframe actually connecting/posting.
   const refreshDiaryBadge = () => {
+    diaryLog("diary opened / bridge DAIRY_COUNT_CHANGED -> re-reading badge + list");
     queryClient.invalidateQueries({ queryKey: ["diary-unread-count", userId] });
     queryClient.invalidateQueries({ queryKey: ["diary-threads", userId] });
   };
@@ -118,6 +132,7 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
       const msg = event.data;
       if (!msg || typeof msg !== "object") return;
 
+      if (msg.type === "DAIRY_COUNT_CHANGED" || msg.type === "diary-bridge-update") diaryLog(`bridge message ${msg.type}`, { origin: event.origin, data: msg });
       if (msg.type === "DAIRY_COUNT_CHANGED") {
         // This specific message's own listener (diaryBridgeEnsureConnected)
         // does check event.origin — matched here too.
@@ -131,29 +146,31 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
         // actually wired to a live iframe (diaryBridgeEnsureConnected above
         // is never called anywhere in the legacy codebase; this is the real
         // one) and an origin check here was silently dropping every message.
-        // checkUnreadMessageCount: paint the badge straight from the pushed
-        // count rather than round-tripping for it again.
-        if (msg.count !== undefined) {
-          queryClient.setQueryData(["diary-unread-count", userId], (old) => ({
-            ...old,
-            details: { ...old?.details, unreadMessageCount: Number(msg.count) || 0 },
-          }));
-        }
-        // refreshSchoolDiaryChat / lastMsgIdUpdated / showAndHideAcknowledge:
-        // a new message, or a status flip (open/closed — carried in `chats`,
-        // part of the same thread-messages response as `threadStatus`), for
-        // one or more threads. Refetch exactly those if currently open.
+        // The badge is NOT painted from the pushed `count`: the bridge counts unread conversations (one thread with three
+        // new notes is 1), while the badge shows unread messages (thread/unread-count unreadMessageCount, like legacy
+        // renderSchoolDiaryBtnCountOnce and its polling). So the real count is read again instead.
+        //
+        // The bridge also posts an empty update as soon as it loads ({chatId: "0", lastMessageId: "0", chats: []}). That is
+        // not a change: re-reading on it cancelled the count request already running and queued a new one behind every
+        // other dashboard call (server actions run one after another), so the badge showed up a minute late or not at all.
+        // Only an update that names a conversation is acted on; badge-version polling covers everything else.
+        const realId = (id) => id != null && id !== "" && String(id) !== "0";
         const changedThreadIds = new Set();
-        if (msg.chatId != null) changedThreadIds.add(String(msg.chatId));
+        if (realId(msg.chatId)) changedThreadIds.add(String(msg.chatId));
         if (Array.isArray(msg.chats)) {
-          msg.chats.forEach((chat) => chat?.chatId != null && changedThreadIds.add(String(chat.chatId)));
+          msg.chats.forEach((chat) => realId(chat?.chatId) && changedThreadIds.add(String(chat.chatId)));
         }
-        if (changedThreadIds.size > 0) {
-          queryClient.invalidateQueries({
-            predicate: (query) =>
-              query.queryKey[0] === "diary-thread-messages" && changedThreadIds.has(String(query.queryKey[2])),
-          });
+        if (changedThreadIds.size === 0) {
+          diaryLog("bridge update ignored (names no conversation)");
+          return;
         }
+        diaryLog("bridge update -> re-reading badge, list and threads", [...changedThreadIds]);
+        queryClient.invalidateQueries({ queryKey: ["diary-unread-count", userId] });
+        // refreshSchoolDiaryChat / lastMsgIdUpdated / showAndHideAcknowledge: a new message, or a status flip (open/closed),
+        // for one or more threads. Refetch exactly those if currently open.
+        queryClient.invalidateQueries({
+          predicate: (query) => query.queryKey[0] === "diary-thread-messages" && changedThreadIds.has(String(query.queryKey[2])),
+        });
         // checkUnreadMessageCount's list-refresh branch: live-update the
         // thread list (previews/unread badges) while it's being browsed.
         queryClient.invalidateQueries({ queryKey: ["diary-threads", userId] });

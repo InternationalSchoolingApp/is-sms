@@ -1,7 +1,8 @@
 "use client";
 
+import { useContext } from "react";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
-import { useAppearance } from "@/components/appearance/AppearanceProvider";
+import { AppearanceContext } from "@/components/appearance/AppearanceProvider";
 import { k5FontVariables } from "@/components/k5/k5Fonts";
 
 /**
@@ -9,7 +10,9 @@ import { k5FontVariables } from "@/components/k5/k5Fonts";
  * look. K5Shell puts them on its root; dialogs portal out of it, so they spread them too.
  */
 export function useK5ThemeProps(extraClassName = "") {
-  const { themeProps } = useAppearance();
+  // Popups that are also shown in the older shell (the install-the-app popup, the reschedule dialog) have no AppearanceProvider
+  // around them: they get the default K-5 look instead of an error.
+  const themeProps = useContext(AppearanceContext)?.themeProps ?? { className: "" };
   // Grade 6–8 students get the same K–5 components in the "Balanced" skin (app/k5-middle.css).
   const { isMiddle, isHigh } = useDashboardContext();
   const { className, ...data } = themeProps;

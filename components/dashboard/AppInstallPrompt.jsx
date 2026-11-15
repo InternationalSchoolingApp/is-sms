@@ -13,7 +13,8 @@ import { getAppInstallPromptEligible } from "@/services/dashboardApi";
  *   - only school 1 (the one school whose app is published), not inside an installed app / PWA window,
  *   - the server says this student has not used the app (app-last-activity),
  *   - not within 7 days of the last close (localStorage, per user),
- *   - never over a live class or another open popup (waits for them),
+ *   - never over a live class (a live class at that moment skips it for this page load, as in legacy) and never over
+ *     another open popup (waits its turn),
  *   - the close controls unlock after a 10 s countdown.
  * Closing it hides it for 7 days; the "Get the App" header button stays available any time.
  */
@@ -80,10 +81,18 @@ export function AppInstallPrompt({ hold = false }) {
   const ready = eligible.data === true && !hold && classLive.known && !settled;
   useEffect(() => {
     if (!ready) return undefined;
-    // Legacy: a live class (or any other popup) suppresses it; wait for the page to be free.
+    // Legacy resolveLiveClassSuppression(): a class that is live when the popup is due suppresses it for this page load
+    // (it does not wait for the class to end). Another open popup only makes it wait its turn (the contact check
+    // goes first in legacy too) - except the School System Training popup: legacy shows both, the training on top.
     const timer = setInterval(() => {
       const live = classLive.live ?? Boolean(document.querySelector(".calendar-live-dashed"));
-      if (live || document.querySelector('[role="dialog"]')) return;
+      if (live) {
+        clearInterval(timer);
+        setSettled(true);
+        return;
+      }
+      const otherOpen = [...document.querySelectorAll('[role="dialog"], [role="alertdialog"]')].some((el) => !el.closest("[data-system-training]") && !el.classList.contains("k5-bubble"));
+      if (otherOpen) return;
       clearInterval(timer);
       setSettled(true);
       setOpen(true);
@@ -96,6 +105,7 @@ export function AppInstallPrompt({ hold = false }) {
     <AppDownloadDialog
       open
       lockSeconds={COUNTDOWN_SECONDS}
+      underOthers
       schoolName={context?.schoolName}
       onClose={() => {
         rememberDismissed(userId);

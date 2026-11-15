@@ -156,7 +156,7 @@ function DancingPhone() {
  * store pages of the school app. Plain links that open the store in a new tab; nothing about
  * the student is sent anywhere.
  */
-export function AppDownloadDialog({ open, schoolName, onClose, lockSeconds = 0 }) {
+export function AppDownloadDialog({ open, schoolName, onClose, lockSeconds = 0, underOthers = false }) {
   // lockSeconds: the automatic install popup cannot be closed until its countdown ends (legacy 10 s). The state
   // starts when the dialog mounts, so callers render it only while it is shown.
   const [left, setLeft] = useState(lockSeconds);
@@ -171,7 +171,8 @@ export function AppDownloadDialog({ open, schoolName, onClose, lockSeconds = 0 }
   );
   return (
     <Dialog open={open} onOpenChange={(next) => !next && !locked && onClose()} disablePointerDismissal={lockSeconds > 0}>
-      <DialogContent showCloseButton={false} {...themeProps}>
+      {/* underOthers: the automatic install popup sits UNDER the School System Training popup (legacy shows both, the training on top). */}
+      <DialogContent showCloseButton={false} overlayClassName={underOthers ? "z-40" : undefined} data-app-install={underOthers ? "" : undefined} {...themeProps} className={`${themeProps.className}${underOthers ? " z-40" : ""}`}>
         <button
           type="button"
           onClick={onClose}
