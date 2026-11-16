@@ -11,7 +11,7 @@ import { K5Handbook } from "@/components/k5/pages/K5Handbook";
 
 // Backend static assets (legacy PATH_FOLDER_IMAGE2).
 const assetUrl = (file) => `${resolveBackendOrigin()}/static/theme2/images/${file}`;
-const IS_POLICIES_URL = "https://internationalschooling.org/student-policies-and-code-of-conduct/";
+const IS_POLICIES_URL = "https://internationalschooling.org/policies-and-code-of-conduct-2025/";
 
 /**
  * Student Handbook — legacy studentHandbook.js + studentHandbookContent.js. The handbook file is
