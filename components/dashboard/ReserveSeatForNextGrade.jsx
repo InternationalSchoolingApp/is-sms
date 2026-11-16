@@ -94,7 +94,7 @@ function OfferCountdown({ days }) {
 }
 
 /** Legacy enrollReserveModalContent: "Congratulations!" with the offer when there is one, else "Awesome!". */
-function EnrollReserveDialog({ open, onOpenChange, details, nextGrade, studentName, busy, onAccept }) {
+function EnrollReserveDialog({ open, onOpenChange, details, nextGrade, studentName, busy, onAccept, onMaybeLater }) {
   const offer = details.eligibleFor === "ADV" && (hasAmount(details.progressionDiscount) || hasAmount(details.planDiscount));
   const offerAmount = hasAmount(details.progressionDiscount) ? details.progressionDiscount : details.planDiscount;
   const accept = (
@@ -147,7 +147,7 @@ function EnrollReserveDialog({ open, onOpenChange, details, nextGrade, studentNa
               <div className="flex gap-2.5">
                 <button
                   type="button"
-                  onClick={() => onOpenChange(false)}
+                  onClick={() => { onOpenChange(false); onMaybeLater(); }}
                   className="flex-1 cursor-pointer rounded-[10px] border-none bg-primary/10 px-4 py-2.5 text-base font-bold text-primary"
                 >
                   Maybe Later
@@ -280,6 +280,7 @@ export function ReserveSeatForNextGrade() {
   const offerReady = Boolean(details && sideButtonText(details));
 
   const [enrollOpen, setEnrollOpen] = useState(false);
+  const [showSideButton, setShowSideButton] = useState(false);
   const [fee, setFee] = useState(null);
   const [accepting, setAccepting] = useState(false);
   const autoOpened = useRef(false);
@@ -294,7 +295,12 @@ export function ReserveSeatForNextGrade() {
     const id = setTimeout(() => {
       const live = classLive.live ?? Boolean(document.querySelector(".calendar-live-dashed"));
       autoOpened.current = true;
-      if (!live) setEnrollOpen(true);
+      if (!live) {
+        setEnrollOpen(true);
+        setShowSideButton(false);
+      } else {
+        setShowSideButton(true);
+      }
     }, 1500);
     return () => clearTimeout(id);
   }, [offerReady, classLive.known, classLive.live]);
@@ -353,12 +359,12 @@ export function ReserveSeatForNextGrade() {
 
   return (
     <>
-      {offerReady && (
-        <div className="fixed bottom-[20%] right-0 z-[998]">
+      {offerReady && showSideButton && !enrollOpen && !fee && !checkout.picker && (
+        <div className="fixed bottom-[8%] right-0 z-[998]">
           <button
             type="button"
             onClick={() => setEnrollOpen(true)}
-            className={`mr-1 cursor-pointer whitespace-nowrap rounded-md border border-white bg-secondary px-3 py-1.5 text-sm font-semibold text-white transition-transform duration-500 ease-in-out ${helpShown ? "translate-x-[400px]" : "translate-x-0"}`}
+            className={`mr-1 cursor-pointer whitespace-nowrap rounded-md border border-white bg-secondary px-3 py-1.5 text-sm font-semibold text-black transition-transform duration-500 ease-in-out ${helpShown ? "translate-x-[400px]" : "translate-x-0"}`}
           >
             {sideButtonText(details)}
           </button>
@@ -374,6 +380,7 @@ export function ReserveSeatForNextGrade() {
           studentName={context?.userName || ""}
           busy={accepting}
           onAccept={accept}
+          onMaybeLater={() => setShowSideButton(true)}
         />
       )}
       {fee && <ReserveFeeDialog open onOpenChange={(open) => !open && setFee(null)} details={fee} busy={checkout.preparing} onPay={() => checkout.start(fee.userPaymentDetailsId)} />}
