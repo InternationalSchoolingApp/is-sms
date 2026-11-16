@@ -103,7 +103,10 @@ export function JoinClassModal({ event, schoolUUID, courseRegistry, onClose }) {
       {details && !(details.classType === "SYS-TRAINING" && !isLive) && (
         <>
           <DetailRow label="Course" value={course} />
-          <DetailRow label="Date" value={details.classDate ? format(new Date(details.classDate), "MMM d, yyyy") : event.displayTime} />
+          {/* The class's day in the student's own timezone (the calendar's startZoned), like the Time row below. The backend's
+              classDate is a moment that new Date() read in the BROWSER's zone, so a 4:00 PM class of a student behind the
+              browser (e.g. New York vs an India laptop) showed the next day. */}
+          <DetailRow label="Date" value={event.startZoned ? format(event.startZoned, "MMM d, yyyy") : details.classDate || null} />
           <DetailRow label="Time" value={event.displayTime} />
           <DetailRow label="Teacher" value={event.origName} />
           <DetailRow label="Status" value={statusLabel(details.dateStatus)} />

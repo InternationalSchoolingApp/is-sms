@@ -25,7 +25,7 @@ import { K5DiaryPanel } from "@/components/k5/panels/K5DiaryPanel";
  * variant="k5": the Grade K–5 look (Messages / News / Notices / Teacher), same data and panels.
  * middle (with variant="k5"): the Grade 6–8 "Balanced" rail — one blue tint / rim for all four buttons.
  */
-export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueId, userRole, email, schoolName, variant = "default", middle = false }) {
+export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueId, userRole, email, schoolName, variant = "default", middle = false, high = false }) {
   const queryClient = useQueryClient();
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const [newsOpen, setNewsOpen] = useState(false);
@@ -209,16 +209,16 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
       {variant === "k5" ? (
         // Mockup rail: a column of pastel buttons on the right; below 760px a bottom tab bar.
         <div className="k5-rail fixed right-[calc(max(20px,(100vw-100%)/0)+0px)] top-[calc(var(--maintenance-banner-h,0px)+100px)] z-20 flex w-20 flex-col items-center gap-4 max-[760px]:inset-x-0 max-[760px]:bottom-0 max-[760px]:top-auto max-[760px]:z-40 max-[760px]:w-full max-[760px]:flex-row max-[760px]:items-start max-[760px]:justify-around max-[760px]:gap-0 max-[760px]:border-t-[3px] max-[760px]:border-k5-line max-[760px]:bg-k5-card max-[760px]:px-1 max-[760px]:pb-[max(8px,env(safe-area-inset-bottom))] max-[760px]:pt-2.5">
-          <K5RailButton middle={middle} label="Talk to us" pin="msg" onClick={openTalkToUs} badge={unseenChatMessages} tint="#C3F0DC" rim="#0E8F67" ink="#0B6B4D">
+          <K5RailButton middle={middle} high={high} label="Talk to us" pin="msg" onClick={openTalkToUs} badge={unseenChatMessages} tint="#C3F0DC" rim="#0E8F67" ink="#0B6B4D">
             <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path fill="#0B2447" d="M9.5 3C5.36 3 2 5.69 2 9c0 1.6.8 3.06 2.1 4.13L3 16.5l3.6-1.7c.9.27 1.88.42 2.9.42 4.14 0 7.5-2.76 7.5-6.1S13.64 3 9.5 3z" /><path fill="#0B2447" stroke={cut("#C3F0DC")} strokeWidth="1.6" d="M15.5 9.3c3.59 0 6.5 2.3 6.5 5.1 0 1.36-.68 2.58-1.8 3.5L21.2 21l-3.4-1.42c-.72.2-1.5.32-2.3.32-3.59 0-6.5-2.3-6.5-5.2s2.91-5.4 6.5-5.4z" /></svg>
           </K5RailButton>
-          <K5RailButton middle={middle} label="Announcement" onClick={() => setAnnouncementsOpen(true)} badge={newAnnouncementCount} tint="#D3E7FF" rim="#1477F8" ink="#0E5BC2">
+          <K5RailButton middle={middle} high={high} label="Announcement" onClick={() => setAnnouncementsOpen(true)} badge={newAnnouncementCount} tint="#D3E7FF" rim="#1477F8" ink="#0E5BC2">
             <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path fill="#0B2447" d="M2.5 9.6A1.6 1.6 0 0 1 4.1 8H8l7.3-4.6c.66-.42 1.5.06 1.5.84v13.52c0 .78-.84 1.26-1.5.84L8 14H7.6l.86 4.3a1 1 0 0 1-.98 1.2H5.9a1 1 0 0 1-.97-.77L3.9 14h.2A1.6 1.6 0 0 1 2.5 12.4z" /><rect x="18.4" y="9.2" width="3.2" height="3.6" rx="1.6" fill="#0B2447" /></svg>
           </K5RailButton>
-          <K5RailButton middle={middle} label="News" onClick={() => setNewsOpen(true)} badge={totalNews} tint="#FFE59E" rim="#F2B705" ink="#8A5A00">
+          <K5RailButton middle={middle} high={high} label="News" onClick={() => setNewsOpen(true)} badge={totalNews} tint="#FFE59E" rim="#F2B705" ink="#8A5A00">
             <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path fill="#0B2447" d="M6.5 4H20a1 1 0 0 1 1 1v13a2 2 0 0 1-2 2H5a3 3 0 0 1-3-3V8.5a1 1 0 0 1 1-1h2.5V5a1 1 0 0 1 1-1z" /><path d="M5.5 8.6V17a1 1 0 0 1-2 0V8.6" fill="none" stroke={cut("#FFE59E")} strokeWidth="1.3" /><rect x="8" y="7.2" width="5" height="4.2" rx=".6" fill={cut("#FFE59E")} /><rect x="9.2" y="8.4" width="2.6" height="1.8" fill="#0B2447" /><rect x="14.4" y="7.4" width="4.2" height="1.4" rx=".7" fill={cut("#FFE59E")} /><rect x="14.4" y="9.9" width="4.2" height="1.4" rx=".7" fill={cut("#FFE59E")} /><rect x="8" y="13" width="10.6" height="1.4" rx=".7" fill={cut("#FFE59E")} /><rect x="8" y="15.6" width="10.6" height="1.4" rx=".7" fill={cut("#FFE59E")} /></svg>
           </K5RailButton>
-          <K5RailButton middle={middle}
+          <K5RailButton middle={middle} high={high}
             label="Student's Diary"
             onClick={() => {
               setDiaryOpen(true);
@@ -292,13 +292,16 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
 
 // Grade K–5 rail button (Playful.dc.html .rail): 62px pastel circle on a coloured rim, label
 // under it, red count badge. In the mobile tab bar: a quarter of the width, 46px circle.
-function K5RailButton({ label, onClick, badge, tint, rim, ink, pin, middle, children }) {
+function K5RailButton({ label, onClick, badge, tint, rim, ink, pin, middle, high, children }) {
   // Grade 6–8 (Middle.dc.html .rail): every button is the same soft blue circle on a #027FFE rim.
   if (middle) {
     tint = "#EEF6FF";
     rim = "#027FFE";
     ink = "#0B2447";
   }
+  // Grade 9–12 (High.dc.html .rail): a flat #DCEEFF circle with no hard rim shadow - a little deeper than the Middle one,
+  // so the buttons stay visible on the page background.
+  if (high) tint = "#DCEEFF";
   return (
     <button
       type="button"
@@ -308,7 +311,7 @@ function K5RailButton({ label, onClick, badge, tint, rim, ink, pin, middle, chil
       className="relative flex w-20 cursor-pointer flex-col items-center gap-2 rounded-[18px] border-none bg-transparent py-1 text-center text-xs font-black leading-[1.15] text-k5-ink max-[760px]:w-1/4 max-[760px]:gap-1.5 max-[760px]:p-0"
     >
       <span
-        className="flex h-[62px] w-[62px] items-center justify-center rounded-full shadow-[0_6px_0_var(--rim)] max-[760px]:h-[46px] max-[760px]:w-[46px] max-[760px]:shadow-[0_4px_0_var(--rim)] max-[760px]:[&>svg]:h-6 max-[760px]:[&>svg]:w-6"
+        className={`flex h-[62px] w-[62px] items-center justify-center rounded-full max-[760px]:h-[46px] max-[760px]:w-[46px] max-[760px]:[&>svg]:h-6 max-[760px]:[&>svg]:w-6 ${high ? "shadow-none" : "shadow-[0_6px_0_var(--rim)] max-[760px]:shadow-[0_4px_0_var(--rim)]"}`}
         style={{ background: tint, color: ink, "--rim": rim }}
       >
         {children}

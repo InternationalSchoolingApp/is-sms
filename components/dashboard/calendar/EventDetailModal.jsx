@@ -106,7 +106,8 @@ function AssignmentDetail({ event }) {
   return (
     <>
       <DetailRow label="Course" value={event.subjectName} />
-      <DetailRow label="Due Date" value={event.dueDate ? format(new Date(event.dueDate), "MMM d, yyyy") : null} />
+      {/* A due date is a plain day ("2026-11-16"): read as that day, never as UTC midnight (which is the day before west of UTC). */}
+      <DetailRow label="Due Date" value={event.startZoned ? format(event.startZoned, "MMM d, yyyy") : event.dueDate || null} />
       <DetailRow label="Status" value={aStatus.label} />
       {aStatus.timingLabel && <DetailRow label="Timing" value={aStatus.timingLabel} />}
       {aStatus.status === "submitted" && <DetailRow label="Submitted" value={aStatus.dateDisplay} />}

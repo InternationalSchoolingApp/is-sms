@@ -38,7 +38,7 @@ export function K5Shell({ children }) {
 }
 
 function K5Frame({ children }) {
-  const { context, menu, menuLoading, logoUrl, session, isPreK, isMiddle, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
+  const { context, menu, menuLoading, logoUrl, session, isPreK, isMiddle, isHigh, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
   
   const pathname = usePathname();
   const dummy = useDummyStudent();
@@ -124,6 +124,7 @@ function K5Frame({ children }) {
         <RightActionRail
           variant="k5"
           middle={isMiddle}
+          high={isHigh}
           chatUrl={context.chatUrl}
           diaryUrl={context.diaryUrl}
           schoolUUID={context.schoolUUID}
