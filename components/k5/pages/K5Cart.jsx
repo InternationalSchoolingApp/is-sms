@@ -176,10 +176,10 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
 }
 
 /**
- * K–5 look of the cart (mockup Buy Extra Classes, cart view): the same items, discount code, totals and
+ * K–5 look of the cart (mockup Buy Extra Classes, cart view): the same items, totals and
  * CONFIRM AND PAY as the existing cart, in the Playful layout.
  */
-export function K5CartView({ school, count, items, symbol, cart, appliedCode, code, onCode, busy, canPay, onRemove, onToggleDiscount, onPay }) {
+export function K5CartView({ school, count, items, symbol, cart, busy, canPay, onRemove, onPay }) {
   const empty = items.length === 0;
   const look = useCartLook();
   usePicoContentReady(true);
@@ -211,36 +211,7 @@ export function K5CartView({ school, count, items, symbol, cart, appliedCode, co
             <span>Cart Total</span>
             <span>{formatAmount(symbol, cart.cartTotal)}</span>
           </div>
-          <label htmlFor="k5-code" className="text-base font-black">Discount Code</label>
-          <div className="flex overflow-hidden rounded-2xl border-[3px] bg-white" style={{ borderColor: cart.errorMsg ? "#E5243B" : appliedCode ? "#0E7A43" : look.blue, ...(look.middle ? { borderRadius: 12 } : {}) }}>
-            <input
-              id="k5-code"
-              type="text"
-              maxLength={15}
-              value={appliedCode || code}
-              disabled={Boolean(appliedCode) || busy}
-              onChange={(e) => onCode(e.target.value.replace(/[^A-Za-z0-9]/g, ""))}
-              placeholder="Type a code"
-              className="min-h-12 min-w-0 flex-1 border-none bg-transparent px-3.5 font-k5-body text-[17px] font-bold uppercase text-[#1E2242] outline-none disabled:bg-slate-100"
-            />
-            <button
-              type="button"
-              disabled={busy}
-              onClick={onToggleDiscount}
-              title={appliedCode ? "Remove Discount Code" : "Apply Discount Code"}
-              className="min-w-[92px] flex-none cursor-pointer border-none px-3 font-k5-display text-[17px] font-semibold text-white disabled:cursor-default disabled:opacity-50"
-              style={{ background: look.blue }}
-            >
-              {appliedCode ? "Remove" : "Apply"}
-            </button>
-          </div>
           {cart.errorMsg && <p className="-mt-1 m-0 text-sm font-extrabold text-[#E5243B]">{cart.errorMsg}</p>}
-          {appliedCode && (
-            <div className="flex justify-between gap-2.5 text-[17px] font-extrabold text-[#0E7A43]">
-              <span>Discount</span>
-              <span>− {formatAmount(symbol, cart.cpDiscount)}</span>
-            </div>
-          )}
           <div className="flex items-baseline justify-between gap-2.5 border-t-[3px] border-dashed border-k5-line pt-3.5">
             <span className="font-k5-display text-[22px] font-semibold">Total</span>
             <span className="font-k5-display text-[30px] font-bold" style={{ color: look.blue }}>{formatAmount(symbol, cart.totalPayAmount)}</span>

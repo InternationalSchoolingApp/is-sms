@@ -187,7 +187,6 @@ export function TodayCard({ todayKey, days }) {
 /** My Courses: every enrolled course, tap to show / hide its classes in the planner. */
 export function MyCourses({ courseRegistry, courseVisibility, onToggle }) {
   const courses = Object.values(courseRegistry || {});
-  console.log("MyCourses", { courses, courseVisibility });
   if (!courses.length) return null;
   return (
     <section aria-labelledby="k5-courses-title" className={`${K5_CARD} flex flex-col gap-2 p-4`}>

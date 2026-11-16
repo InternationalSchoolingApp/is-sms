@@ -807,7 +807,7 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
   return (
     <section aria-labelledby="k5-grown" className={`${K5_CARD} flex flex-col gap-3.5 px-[18px] py-3.5`}>
       <button type="button" onClick={onToggle} aria-expanded={open} aria-controls="k5-grown-body" className="flex min-h-14 w-full cursor-pointer items-center gap-3 border-none bg-transparent p-0 text-start text-k5-ink">
-        <span className={`flex h-12 w-12 flex-none items-center justify-center rounded-2xl ${high ? "bg-k5-act" : "bg-k5-vt"}`}>
+        <span className={`flex h-12 w-12 flex-none items-center justify-center ${high ? "rounded-2xl bg-k5-act" : "rounded-[0.75rem] bg-k5-vt"}`}>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" strokeWidth={high ? 1.8 : 2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: high ? "var(--k5-ac)" : "var(--k5-vI)" }}>
             <circle cx="8" cy="6" r="3" />
             <circle cx="17" cy="9" r="2.3" />

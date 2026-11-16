@@ -7,6 +7,7 @@ import { FullScreenLoader } from "@/components/common/Loader";
 import { K5Extension } from "@/components/k5/pages/K5Extension";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
+import { CheckoutExtraDialogs } from "@/components/common/CheckoutExtraDialogs";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useCartCheckout } from "@/hooks/useCartCheckout";
 import { useTalkToUs } from "@/hooks/useTalkToUs";
@@ -337,6 +338,7 @@ export function AcademicYearExtension() {
         </DialogContent>
       </Dialog>
 
+      <CheckoutExtraDialogs checkout={checkout} />
       {context && (
         <PaymentGatewayPickerModal
           open={Boolean(checkout.picker)}

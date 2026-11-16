@@ -48,8 +48,7 @@ function LoginHeader() {
   return (
     <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
       <span
-        className={isMiddle ? "flex h-[62px] w-[62px] flex-none items-center justify-center bg-k5-act" : "flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-tt"}
-        style={isMiddle ? { borderRadius: 14 } : undefined}
+        className={isMiddle ? "k5h-lg-tile flex h-[62px] w-[62px] flex-none items-center justify-center rounded-[14px] bg-k5-act" : "flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-tt"}
       >
         <svg width={isMiddle ? 34 : 48} height={isMiddle ? 34 : 48} viewBox="0 0 24 24" fill="none" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: isMiddle ? "var(--k5-ac)" : "var(--k5-tI)" }}>
           <path d="M3.5 12a8.5 8.5 0 1 0 2.5-6" />

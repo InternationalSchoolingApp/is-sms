@@ -450,3 +450,133 @@
 [data-k5-high] .k5-cm-tile {
   border-radius: 10px !important;
 }
+
+/* ── My Progress Reports (High.dc.html pr*): the title tile has 10px corners (Middle 14px); the View button, the pager buttons
+   and the Back / Download buttons keep the mockup's literal heights (42px list controls); the course grade chip has 10px corners. */
+[data-k5-high] .k5h-pr-tile,
+[data-k5-high] .k5h-fee-tile,
+[data-k5-high] .k5h-ct-tile,
+[data-k5-high] .k5h-ax-tile,
+[data-k5-high] .k5h-hb-tile,
+[data-k5-high] .k5h-lb-tile,
+[data-k5-high] .k5h-lg-tile,
+[data-k5-high] .k5h-tr-tile {
+  border-radius: 10px !important;
+}
+[data-k5-high] .k5h-pr-btn {
+  min-height: 42px !important;
+}
+[data-k5-high] .k5h-pr-chip {
+  border-radius: 10px !important;
+}
+[data-k5-high] .k5h-pr-skel {
+  height: 43px !important;
+  width: 200px !important;
+  border-radius: 10px !important;
+}
+
+/* ── My Fee Details (High.dc.html fee*): the title tile has 10px corners; the SUCCESS status pill takes ink text (K–5 green);
+   View Receipt and Pay Now / Try Again keep the mockup's literal 42px height (reuses k5h-pr-btn). */
+[data-k5-high] .k5h-fee-ok {
+  color: #1b2130 !important;
+}
+
+/* ── My Certificates (High.dc.html ct*): 10px title tile, a literal 46px "Request a certificate" button, and the golden
+   certificate card without the hard shadow, 12px corners and ink text (K–5: brown) - dt / badge / notice included. */
+[data-k5-high] .k5h-ct-req {
+  min-height: 46px !important;
+}
+[data-k5-high] .k5h-ct-cert {
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+[data-k5-high] .k5h-ct-inner {
+  border-radius: 12px !important;
+  color: #1b2130 !important;
+}
+[data-k5-high] .k5h-ct-inner dt,
+[data-k5-high] .k5h-ct-inner .k5h-ct-ink {
+  color: #1b2130 !important;
+}
+
+/* ── My Profile (High.dc.html pf*): the avatar initial is 37px and the name 29px (neither is on the type scale); the
+   school-email read-only boxes are 43px (a fixed height, not min-height, so the control-height map does not reach them). */
+[data-k5-high] .k5h-pf-av {
+  font-size: 37px;
+}
+[data-k5-high] .k5h-pf-h1 {
+  font-size: 29px;
+}
+[data-k5-high] .k5h-pf-ro {
+  height: 43px;
+}
+
+/* ── Inbox (High.dc.html cmbtn / cmtab / cmav): buttons are a literal 40px with 14px side padding (16px for the primary one),
+   the folder tabs 38px, and the list avatars keep their 13px / 800 initials (the type scale would make them 12px / 500). */
+[data-k5-high] .k5h-cm-btn {
+  min-height: 40px !important;
+  padding-inline: 14px !important;
+}
+[data-k5-high] .k5h-cm-btn.k5h-cm-btnp {
+  padding-inline: 16px !important;
+}
+[data-k5-high] .k5h-cm-tab {
+  min-height: 38px !important;
+}
+[data-k5-high] .k5h-cm-av {
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+[data-k5-high] .k5h-cm-file {
+  min-height: 52px !important;
+  border-radius: 10px !important;
+}
+
+/* ── Academic Year Extension (High.dc.html ax*): 10px title tile, 12px course cards, and the course name in the detail
+   heading is 29px (not on the type scale). */
+[data-k5-high] .k5h-ax-card {
+  border-radius: 12px !important;
+}
+[data-k5-high] .k5h-ax-h2 {
+  font-size: 29px;
+}
+
+/* ── Student Handbook (High.dc.html hb*): 12px stage, the book's pages 6/14px and its cover 4/12px, a 12px note, and the
+   heading is 29px (not on the type scale). */
+[data-k5-high] .k5h-hb-stage {
+  border-radius: 12px !important;
+}
+[data-k5-high] .k5h-hb-pages {
+  border-radius: 6px 14px 14px 6px !important;
+}
+[data-k5-high] .k5h-hb-cover {
+  border-radius: 4px 12px 12px 4px !important;
+}
+[data-k5-high] .k5h-hb-note {
+  border-radius: 12px !important;
+}
+[data-k5-high] .k5h-hb-h2 {
+  font-size: 29px;
+}
+
+/* ── Video Library (High.dc.html lb*): 10px title tile; the access card and the course chips are flat (the K–5 / Middle
+   hard offset shadow is an inline style, so it needs !important) and the access card has 12px corners. */
+[data-k5-high] .k5h-lb-access {
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+[data-k5-high] .k5h-lb-chip {
+  box-shadow: none !important;
+}
+[data-k5-high] .k5h-lb-mini {
+  border-radius: 8px !important;
+}
+
+/* ── Transcript (High.dc.html tr*): 10px title tile, a table with no minimum width (it fits the card), and the student-id chip
+   with 2px 6px padding (reuses k5h-pr-btn for the "Show" select's literal 42px). */
+[data-k5-high] .k5h-tr-table {
+  min-width: 0 !important;
+}
+[data-k5-high] .k5h-tr-code {
+  padding: 2px 6px !important;
+}
