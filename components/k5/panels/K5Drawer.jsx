@@ -8,7 +8,7 @@ import { X } from "lucide-react";
  * ink-bordered card, pastel header with a round icon, title / subtitle and a big red close button.
  * `accent` is the rim colour, `pastel` the header fill, `bg` the drawer fill.
  */
-export function K5Drawer({ title, subtitle, icon, accent, pastel, bg, width = 480, onClose, leading, footer, bodyClassName = "", children }) {
+export function K5Drawer({ title, subtitle, icon, accent, pastel, bg, width = 480, onClose, leading, footer, belowHeader, bodyClassName = "", children }) {
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") onClose();
@@ -50,6 +50,7 @@ export function K5Drawer({ title, subtitle, icon, accent, pastel, bg, width = 48
             <X className="h-4 w-4 text-white" strokeWidth={3} aria-hidden="true" />
           </button>
         </div>
+        {belowHeader}
         <div data-k5-drawer-body className={`flex min-h-0 flex-1 flex-col gap-3.5 ${bodyClassName}`}>
           {children}
         </div>

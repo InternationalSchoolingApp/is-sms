@@ -46,7 +46,7 @@ export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
   return (
     <article
       data-pin={status === "live" ? "live" : undefined}
-      className={`flex flex-wrap items-center gap-4 rounded-[24px] px-[18px] py-3.5 ${status === "live" ? "shadow-[0_0_0_6px_rgba(47,123,245,0.18)]" : ""} ${
+      className={`flex flex-wrap items-center gap-4 rounded-[24px] px-[18px] py-3.5 ${status === "live" ? "k5-live-pill" : ""} ${
         clue === CLUE_FOR_STATUS[status] ? CLUE_RING : ""
       }`}
       style={CARD_STATE[status]}
@@ -71,14 +71,14 @@ export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
       {status === "live" && (
         <div className="flex flex-none flex-col items-center gap-2">
           <span className="flex items-center gap-1.5 text-sm font-black text-k5-gx">
-            <span className="block h-2.5 w-2.5 animate-pulse rounded-full bg-k5-gi" />
+            <span className="block h-2.5 w-2.5 k5-live-dot rounded-full bg-k5-gi" />
             LIVE NOW
           </span>
           {joinable && (
             <button
               type="button"
               onClick={() => onJoin(event)}
-              className={`k5h-join flex cursor-pointer items-center gap-2 rounded-full border-none bg-k5-grn px-[22px] font-k5-display font-semibold text-white shadow-[0_5px_0_var(--k5-grnD)] ${
+              className={`k5h-join k5-live-join flex cursor-pointer items-center gap-2 rounded-full border-none bg-k5-grn px-[22px] font-k5-display font-semibold text-white shadow-[0_5px_0_var(--k5-grnD)] ${
                 isPreK ? "min-h-[76px] text-[26px]" : "min-h-[54px] text-[21px]"
               }`}
             >
@@ -155,20 +155,29 @@ function Assignments({ items, clue, onOpen }) {
 }
 
 /** Reason card for a day without classes (holiday / weekend / free day / self-study day). */
-export function NoClassDay({ reason, isToday }) {
+export function NoClassDay({ reason, isToday, onOpen }) {
   const Icon = reason.kind === "holiday" ? Flag : reason.kind === "study" ? Star : Smile;
+  const Wrap = onOpen ? "button" : "div";
+  // A holiday card is red like the Holiday colour clue; the other reasons keep the green card.
+  const holiday = reason.kind === "holiday";
   return (
-    <div className="flex flex-wrap items-center gap-4 rounded-[24px] bg-k5-gt px-5 py-[18px]">
-      <span className="flex h-[72px] w-[72px] flex-none items-center justify-center rounded-full bg-k5-ac">
+    <Wrap
+      {...(onOpen ? { type: "button", onClick: onOpen } : {})}
+      className={`flex w-full flex-wrap items-center gap-4 rounded-[24px] px-5 py-[18px] text-left ${
+        holiday ? "border-[3px] border-solid border-[var(--k5-holiday)] bg-k5-rt" : "border-none bg-k5-gt"
+      } ${onOpen ? "cursor-pointer" : ""}`}
+      style={holiday ? { "--k5-holiday": C.holiday } : undefined}
+    >
+      <span className={`flex h-[72px] w-[72px] flex-none items-center justify-center rounded-full ${holiday ? "bg-[var(--k5-holiday)]" : "bg-k5-ac"}`}>
         <Icon className="h-10 w-10 text-white" aria-hidden="true" />
       </span>
       <div className="flex flex-[1_1_220px] flex-col">
         <span className="font-k5-display text-[28px] font-semibold text-k5-ink">
           {reason.kind === "holiday" ? reason.title : isToday ? (reason.kind === "study" ? "No live classes today" : "No classes today!") : reason.title}
         </span>
-        <span className="text-[17px] font-extrabold text-k5-gx">{reason.text}</span>
+        <span className={`text-[17px] font-extrabold ${holiday ? "text-k5-ri" : "text-k5-gx"}`}>{reason.text}</span>
       </div>
-    </div>
+    </Wrap>
   );
 }
 
@@ -218,7 +227,6 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
   const subtitle = nClasses ? `${nClasses} class${nClasses === 1 ? "" : "es"}${isToday ? " today" : ""}` : "No classes";
   // The dotted "now" line goes right before the first item that has not finished yet.
   const nowIndex = isToday ? items.findIndex((it) => it.e.k5Status !== "done") : -1;
-
   return (
     <div className="flex flex-col gap-4">
       <PlanHeader
@@ -245,16 +253,20 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
         {isToday && <StatusPills counts={countStatuses(day.classes)} />}
       </PlanHeader>
 
-      {day.holidays.map((h) => (
-        <div
-          key={h.id}
-          className={`flex items-center gap-2 self-start rounded-full px-4 py-2 text-base font-black text-white ${clue === "holiday" ? CLUE_RING : ""}`}
-          style={{ background: C.holiday }}
-        >
-          <Flag className="h-4 w-4" aria-hidden="true" />
-          {h.title || h.eventTitle || "Holiday"}
-        </div>
-      ))}
+      {/* A day with no classes shows its holiday as the card below; the red chip is for a holiday that falls on a day with classes. */}
+      {items.length > 0 &&
+        day.holidays.map((h) => (
+          <button
+            key={h.id}
+            type="button"
+            onClick={() => onOpen(h)}
+            className={`flex cursor-pointer items-center gap-2 self-start rounded-full border-none px-4 py-2 text-base font-black text-white ${clue === "holiday" ? CLUE_RING : ""}`}
+            style={{ background: C.holiday }}
+          >
+            <Flag className="h-4 w-4" aria-hidden="true" />
+            {h.title || h.eventTitle || "Holiday"}
+          </button>
+        ))}
 
       {items.length > 0 ? (
         <div className="flex flex-col gap-3.5">
@@ -279,7 +291,7 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
         </div>
       ) : (
         <>
-          <NoClassDay reason={noClassReason(dateKey, day, { isSelfStudy, firstName })} isToday={isToday} />
+          <NoClassDay reason={noClassReason(dateKey, day, { isSelfStudy, firstName })} isToday={isToday} onOpen={day.holidays.length ? () => onOpen(day.holidays[0]) : undefined} />
           <K5Games locked={gamesLocked} />
         </>
       )}

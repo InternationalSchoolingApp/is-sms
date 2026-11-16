@@ -254,7 +254,9 @@ export async function getSchoolCalendar({ schoolUUID, userId, startDate, endDate
       headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify(body),
     });
-    return parseJsonResponse(response);
+    const dayEvents = await parseJsonResponse(response);
+    console.log("getSchoolCalendar", dayEvents);
+    return dayEvents;
   } catch {
     return null;
   }

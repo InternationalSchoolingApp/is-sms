@@ -44,7 +44,7 @@ export function K5PlanFilters({ filters, onToggle }) {
   const hidden = GROUPS.flatMap((g) => g.items).filter(([key]) => filters[key] === false).length;
   return (
     <div className="flex flex-col items-center gap-2">
-      <button
+      {/* <button
         type="button"
         aria-expanded={open}
         aria-controls={panelId}
@@ -53,7 +53,7 @@ export function K5PlanFilters({ filters, onToggle }) {
       >
         <SlidersHorizontal className="h-5 w-5" aria-hidden="true" />
         What to show{hidden > 0 ? ` (${hidden} hidden)` : ""}
-      </button>
+      </button> */}
       {open && (
         <div id={panelId} role="group" aria-label="What to show on my plan" className="flex w-full flex-col gap-3 rounded-[18px] border-[3px] border-k5-line bg-k5-card p-3.5">
           {GROUPS.map((group) => (
