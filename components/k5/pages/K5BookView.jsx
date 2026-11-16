@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 // import { useQueries } from "@tanstack/react-query"; // course-wise table (commented out below)
 import toast from "react-hot-toast";
@@ -9,6 +9,7 @@ import { Check, ChevronDown, ChevronLeft, Info, Volume2 } from "lucide-react";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { K5_CARD, SubjectIcon } from "@/components/k5/home/k5Bits";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
+import { picoSay } from "@/components/k5/pico/picoEvents";
 import { useSpeech } from "@/components/k5/pico/useSpeech";
 import { BUDDIES } from "@/constant/appearance";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
@@ -268,11 +269,18 @@ function BookPageSkeleton() {
   );
 }
 
-/** The student buddy says what to do on this step (mockup: Booky); tap the speaker to hear it. */
+/**
+ * The student buddy says what to do on this step (mockup: Booky bkSay): the line is also said out loud when the page opens and at
+ * every step (picoSay: the buddy voice, only when the student has its voice on), and the speaker button says it again. The
+ * corner bubble stays closed on this page (PicoGuide), this strip is the buddy here.
+ */
 function BuddyStrip({ say }) {
   const { preferences } = useAppearance();
   const { speak } = useSpeech();
   const buddy = BUDDIES[preferences.buddy] || BUDDIES.pico;
+  useEffect(() => {
+    if (say) picoSay(say);
+  }, [say]);
   return (
     <div role="status" className="flex items-center gap-3 rounded-[22px] bg-k5-vt py-2 pl-2 pr-2.5">
       <PicoMascot buddy={preferences.buddy} width={48} full={false} />

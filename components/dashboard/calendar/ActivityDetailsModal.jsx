@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
-import { CalendarModal, DetailRow } from "@/components/dashboard/calendar/CalendarModal";
+import { CalendarModal, DetailRow, calendarButtonClass, calendarNoteClass } from "@/components/dashboard/calendar/CalendarModal";
 import { RateFeedbackButton } from "@/components/dashboard/calendar/RateFeedbackButton";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
@@ -15,7 +15,7 @@ import { getBrowserTimezone, resolveTimezone } from "@/utils/calendarEvents";
 const pad = (value) => String(value).padStart(2, "0");
 
 /** Days / hours / minutes / seconds left (legacy "Time Remaining" boxes). */
-function Countdown({ ms }) {
+function Countdown({ ms, k5 }) {
   const total = Math.max(0, Math.floor(ms / 1000));
   const parts = [
     [Math.floor(total / 86400), "Days"],
@@ -25,12 +25,12 @@ function Countdown({ ms }) {
   ];
   return (
     <div className="my-3 text-center">
-      <p className="mb-1 text-black/60">Time Remaining</p>
+      <p className={k5 ? "mb-1.5 text-k5-mut" : "mb-1 text-black/60"}>Time Remaining</p>
       <div className="flex justify-center gap-2" role="timer">
         {parts.map(([value, label]) => (
-          <div key={label} className="min-w-14 rounded-lg bg-slate-100 px-2 py-1.5">
-            <div className="text-xl font-bold tabular-nums">{pad(value)}</div>
-            <div className="text-[11px] text-black/50">{label}</div>
+          <div key={label} className={k5 ? "min-w-14 rounded-2xl border-2 border-k5-line bg-k5-soft px-2 py-1.5" : "min-w-14 rounded-lg bg-slate-100 px-2 py-1.5"}>
+            <div className={k5 ? "font-k5-display text-2xl font-semibold tabular-nums" : "text-xl font-bold tabular-nums"}>{pad(value)}</div>
+            <div className={k5 ? "text-xs font-extrabold text-k5-mut" : "text-[11px] text-black/50"}>{label}</div>
           </div>
         ))}
       </div>
@@ -45,7 +45,7 @@ function Countdown({ ms }) {
  * The facts come from the calendar event; the purpose, attachment, join link and lead time from view-extra-activity.
  */
 export function ActivityDetailsModal({ event, onClose }) {
-  const { context } = useDashboardContext();
+  const { context, isK5 } = useDashboardContext();
   const dummy = useDummyStudent();
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
   const timezone = dummy.enabled ? getBrowserTimezone() : resolveTimezone(dashboardData.userTimezone);
@@ -95,36 +95,36 @@ export function ActivityDetailsModal({ event, onClose }) {
   const title = details?.categoryName || event.title || event.eventTitle || "Activity details";
   return (
     <CalendarModal title={title} onClose={onClose}>
-      {over && <p className="rounded-lg bg-slate-100 px-3 py-2 font-semibold text-black/70">Your activity has been completed.</p>}
-      {details?.activityPurpose && <p className="font-semibold">{details.activityPurpose}</p>}
+      {over && <p className={calendarNoteClass(isK5)}>Your activity has been completed.</p>}
+      {details?.activityPurpose && <p className={isK5 ? "m-0" : "font-semibold"}>{details.activityPurpose}</p>}
       <DetailRow label="Date" value={start ? format(start, "MMM d, yyyy") : null} />
       <DetailRow label="Time" value={event.displayTime} />
       <DetailRow label="Details" value={details?.activityTitle || event.title} />
       <DetailRow label="Teacher" value={event.origName} />
-      {query.isLoading && <p className="py-2 text-center text-black/50">Loading details…</p>}
-      {details && !over && <Countdown ms={untilStart} />}
+      {query.isLoading && <p className={isK5 ? "m-0 py-2 text-center text-k5-mut" : "py-2 text-center text-black/50"}>Loading details…</p>}
+      {details && !over && <Countdown ms={untilStart} k5={isK5} />}
       {details?.joiningLink && !over && !joinOpen && (
-        <p className="text-center text-xs text-black/60">Your joining link will be displayed {leadMinutes} minutes before the scheduled time.</p>
+        <p className={isK5 ? "m-0 text-center text-sm text-k5-mut" : "text-center text-xs text-black/60"}>Your joining link will be displayed {leadMinutes} minutes before the scheduled time.</p>
       )}
       {joinMessage && (
-        <p role="alert" className="text-center font-semibold text-red-600">
+        <p role="alert" className={isK5 ? "m-0 text-center font-black text-k5-ri" : "text-center font-semibold text-red-600"}>
           {joinMessage}
         </p>
       )}
-      <div className="flex flex-wrap justify-end gap-2 pt-2">
+      <div className={isK5 ? "flex flex-wrap justify-end gap-3 pt-2" : "flex flex-wrap justify-end gap-2 pt-2"}>
         {attachment && (
-          <a href={attachment} target="_blank" rel="noreferrer" className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white no-underline">
+          <a href={attachment} target="_blank" rel="noreferrer" className={`${calendarButtonClass(isK5, "primary")} no-underline`}>
             View Attachment
           </a>
         )}
         {joinOpen && (
-          <button type="button" onClick={join} disabled={joining} className="rounded-full bg-green-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+          <button type="button" onClick={join} disabled={joining} className={`${calendarButtonClass(isK5, "join")} disabled:opacity-60`}>
             {joining ? "Opening…" : "Join Event"}
           </button>
         )}
         {/* Legacy: "Rate this activity" sits before Close once the activity is over and has a feedback form. */}
         <RateFeedbackButton event={event} onBeforeOpen={onClose} />
-        <button type="button" onClick={onClose} className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-black">
+        <button type="button" onClick={onClose} className={calendarButtonClass(isK5, "close")}>
           Close
         </button>
       </div>

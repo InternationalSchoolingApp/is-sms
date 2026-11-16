@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAccountSession } from "@/lib/auth/session";
 import { diaryLog } from "@/utils/diaryDebug";
-import { getDiaryBadgeVersion, getDiaryThreadList, getDiaryThreadMessages, getDiaryUnreadCount, markDiaryThreadRead } from "@/services/diaryApi";
+import { getDiaryBadgeVersion, getDiaryMentionUsers, getDiaryThreadList, getDiaryThreadMessages, getDiaryUnreadCount, markDiaryThreadRead } from "@/services/diaryApi";
 
 /**
  * The School Diary reads for the student dashboard, as a Route Handler instead of Server Actions.
@@ -56,6 +56,10 @@ export async function POST(request) {
     case "messages":
       if (!threadId) return reply(400, { message: "Bad request" });
       answer = await getDiaryThreadMessages({ sessionUserId, threadId, page, size });
+      break;
+    case "mention-users":
+      if (!threadId) return reply(400, { message: "Bad request" });
+      answer = await getDiaryMentionUsers({ sessionUserId, threadId });
       break;
     case "mark-read":
       if (!threadId) return reply(400, { message: "Bad request" });

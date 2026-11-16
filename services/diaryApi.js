@@ -90,6 +90,17 @@ export async function replyToDiaryThread({ sessionUserId, threadId, message }) {
   }
 }
 
+// details: [{ userId, userName, roleType, ... }] - the people of the thread. Legacy suggestionList() takes the PARENT's userName as the
+// name a staff note is addressed to ("Mrs. Huma Zeb, Greetings from ...!").
+export async function getDiaryMentionUsers({ sessionUserId, threadId }) {
+  if (!hasBackendOrigin() || !sessionUserId || !threadId) return null;
+  try {
+    return await postDiary("/thread/mention-users", { sessionUserId, threadId });
+  } catch {
+    return null;
+  }
+}
+
 export async function markDiaryThreadRead({ sessionUserId, threadId }) {
   if (!hasBackendOrigin() || !sessionUserId || !threadId) return null;
   try {

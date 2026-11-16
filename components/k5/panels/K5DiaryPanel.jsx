@@ -7,7 +7,7 @@ import { STAFF_SENDER_ROLES, formatWhen, salutationFor } from "@/components/dash
 import { EmptyNote, K5Drawer } from "@/components/k5/panels/K5Drawer";
 import { markDiaryThreadRead } from "@/utils/diaryClient";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
-import { useChatScroll, useDiaryMessages, useDiaryThreads, useFloatingDate, useLoadMoreAtEnd } from "@/hooks/useDiaryPaging";
+import { useChatScroll, useDiaryMessages, useDiaryParentName, useDiaryThreads, useFloatingDate, useLoadMoreAtEnd } from "@/hooks/useDiaryPaging";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { DiaryAvatar, DiaryLoadError, DiaryMessageText, FloatingDateChip } from "@/components/dashboard/DiaryBits";
 import { diaryInstant } from "@/utils/diaryDates";
@@ -58,10 +58,10 @@ function ThreadList({ threads, chatWith, onSelect, sourceTimezone, endRef, loadi
   );
 }
 
-function Note({ message, courseName, schoolName, viewerUserId, viewerName, sourceTimezone }) {
+function Note({ message, courseName, schoolName, parentName, viewerUserId, viewerName, sourceTimezone }) {
+  debugger
   const isOwn = isOwnDiaryMessage(message, { userId: viewerUserId, role: "STUDENT", userName: viewerName });
   const isStaff = STAFF_SENDER_ROLES.includes((message.senderRole || "").toUpperCase());
-  const recipient = message.mentions?.find((m) => m.roleType === "PARENT")?.userName || "Parent";
   return (
     <div data-diary-at={diaryInstant(message.createdAt, sourceTimezone)?.getTime()} className={`flex w-full ${isOwn ? "justify-end" : "justify-start"}`}>
       <div
@@ -74,13 +74,21 @@ function Note({ message, courseName, schoolName, viewerUserId, viewerName, sourc
             {courseName ? ` · ${courseName}` : ""}
           </span>
         )}
+        {/* The legacy letter: addressed to the thread's parent, a greeting, then the note, then the closing. */}
         {isStaff && (
-          <span className="text-[15px] font-bold">
-            {recipient}, greetings from {schoolName}!
-          </span>
+          <div className="flex flex-col">
+            <span className="text-[17px] font-black">{parentName}</span>
+            <span className="text-[15px] font-extrabold text-[#6E44C9]">Greetings from {schoolName}!</span>
+            <span className="text-[15px] font-bold">Hope you are doing well.</span>
+          </div>
         )}
         <DiaryMessageText text={message.message} mentions={message.mentions} className="m-0 whitespace-pre-wrap text-base font-bold leading-[1.4] [overflow-wrap:anywhere]" mentionClassName="font-black text-[#1F9E5A]" />
-        {isStaff && <span className="text-sm font-bold text-[#4A5675]">{schoolName} Family</span>}
+        {isStaff && (
+          <div className="flex flex-col text-sm font-bold text-[#4A5675]">
+            <span>Gratitude and prayers,</span>
+            <span>{schoolName} Family</span>
+          </div>
+        )}
         <span className="self-end text-[11px] font-extrabold text-[#6B7489]">{formatWhen(message.createdAt, sourceTimezone)}</span>
       </div>
     </div>
@@ -91,6 +99,7 @@ function ThreadView({ threadId, sessionUserId, schoolName }) {
   const dummy = useDummyStudent();
   const queryClient = useQueryClient();
   const { query: messagesQuery, messages, courseName, sourceTimezone } = useDiaryMessages({ sessionUserId, threadId });
+  const parentName = useDiaryParentName({ threadId });
   const { context } = useDashboardContext();
   const anchorRef = useRef(null);
   // Opens on the newest note; the older ones load in above when the top is reached (legacy loadOldMessages).
@@ -134,7 +143,7 @@ function ThreadView({ threadId, sessionUserId, schoolName }) {
         </K5Loading>
       )}
       {messages.map((message) => (
-        <Note key={message.id} message={message} courseName={courseName} schoolName={schoolName} viewerUserId={sessionUserId} viewerName={context?.userName} sourceTimezone={sourceTimezone} />
+        <Note key={message.id} message={message} courseName={courseName} schoolName={schoolName} parentName={parentName} viewerUserId={sessionUserId} viewerName={context?.userName} sourceTimezone={sourceTimezone} />
       ))}
     </>
   );

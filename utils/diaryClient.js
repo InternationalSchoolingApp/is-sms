@@ -54,6 +54,9 @@ export const getDiaryThreadList = ({ account, page = 0, size = 20 } = {}) => ask
 /** details: { threadId, threadStatus, courseName, sourceTimezone, page, size, totalPages, messages } (each page oldest first). */
 export const getDiaryThreadMessages = ({ account, threadId, page = 0, size = 20 }) => askDiary("messages", { threadId, page, size }, account);
 
+/** details: [{ userId, userName, roleType }] of the thread (the parent's name for the staff notes). */
+export const getDiaryMentionUsers = ({ account, threadId }) => askDiary("mention-users", { threadId }, account);
+
 export const markDiaryThreadRead = ({ account, threadId }) => askDiary("mark-read", { threadId }, account);
 
 /** { status: 200, version, etag } | { status: 304 } | { status: <error> } | { status: 0 } (could not reach the app). */

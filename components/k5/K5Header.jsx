@@ -13,7 +13,7 @@ import { useCartCount } from "@/hooks/useStudentCart";
 import { useNeedHelp } from "@/hooks/useNeedHelp";
 import { studentNavHref } from "@/utils/dashboardNav";
 import { picoSay } from "@/components/k5/pico/picoEvents";
-import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
+import { K5LogoutDialog } from "@/components/k5/K5LogoutDialog";
 import { logoutEverywhere } from "@/utils/logout";
 import { K5ChangePasswordModal } from "@/components/k5/panels/K5ChangePasswordModal";
 
@@ -335,7 +335,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, use
 
       {changePwOpen && <K5ChangePasswordModal onClose={() => setChangePwOpen(false)} />}
 
-      <LogoutConfirmDialog
+      <K5LogoutDialog
         open={confirmLogout}
         busy={loggingOut}
         onCancel={() => setConfirmLogout(false)}

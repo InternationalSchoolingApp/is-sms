@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Eye, Megaphone, X } from "lucide-react";
+import { CalendarDays, CheckCircle2, Eye, Megaphone, X } from "lucide-react";
 import DOMPurify from "dompurify";
 import { submitAnnouncementAcknowledge } from "@/services/dashboardApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
@@ -15,6 +15,13 @@ export function K5AnnouncementDetailModal({ announcement, schoolUUID, userId, on
   const dummy = useDummyStudent();
   const [acknowledged, setAcknowledged] = useState(announcement.replyStatus === "Y");
   const [acknowledging, setAcknowledging] = useState(false);
+  // "Thanks for Acknowledgement" stays on screen for 5 seconds after an acknowledge goes through.
+  const [thanks, setThanks] = useState(false);
+  useEffect(() => {
+    if (!thanks) return undefined;
+    const id = setTimeout(() => setThanks(false), 5000);
+    return () => clearTimeout(id);
+  }, [thanks]);
   const attachmentUrl = getAttachmentUrl(announcement.attachment);
   // A picture opens in a preview dialog on this tab, any other file (PDF...) in a new tab (as in the legacy page).
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -29,6 +36,7 @@ export function K5AnnouncementDetailModal({ announcement, schoolUUID, userId, on
     if (result?.status !== "1" && result?.status !== 1) return;
 
     setAcknowledged(true);
+    setThanks(true);
     queryClient.setQueriesData({ queryKey: ["student-announcements", schoolUUID, userId] }, (data) => {
       if (!data) return data;
       return {
@@ -77,6 +85,13 @@ export function K5AnnouncementDetailModal({ announcement, schoolUUID, userId, on
         />
 
         {/* Actions */}
+        {thanks && (
+          <div role="status" aria-live="polite" className="flex items-center justify-center gap-2 border-t-[3px] border-k5-line bg-k5-gt px-5 py-3 font-k5-display text-[17px] font-semibold text-k5-gx">
+            <CheckCircle2 className="h-6 w-6 flex-none" strokeWidth={2.4} aria-hidden="true" />
+            Thanks for Acknowledgement
+          </div>
+        )}
+
         {(attachmentUrl || !acknowledged) && (
           <div className="flex gap-3 border-t-[3px] border-k5-line px-5 py-4">
             {attachmentUrl && (

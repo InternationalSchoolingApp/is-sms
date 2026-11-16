@@ -1,8 +1,9 @@
 "use client";
 
+import DOMPurify from "dompurify";
 import { format } from "date-fns";
 import { ActivityDetailsModal } from "@/components/dashboard/calendar/ActivityDetailsModal";
-import { CalendarModal, DetailRow } from "@/components/dashboard/calendar/CalendarModal";
+import { CalendarModal, DetailRow, calendarButtonClass } from "@/components/dashboard/calendar/CalendarModal";
 import { RateFeedbackButton } from "@/components/dashboard/calendar/RateFeedbackButton";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { openLmsLesson } from "@/utils/lmsCourseLink";
@@ -65,7 +66,7 @@ function PastClassDetail({ event, onClose }) {
   const teacher = event.category !== "BATCH" && event.origName && event.origName !== "Teacher" ? event.origName : null;
   return (
     <>
-      {event.category === "BATCH" && event.batchName && <p className="text-center text-base font-extrabold">{event.batchName}</p>}
+      {event.category === "BATCH" && event.batchName && <p className="m-0 text-center text-base font-extrabold">{event.batchName}</p>}
       <DetailRow label="Date" value={event.startZoned ? format(event.startZoned, "MMM d, yyyy") : null} />
       <DetailRow label="Status" value="Expired" />
       <DetailRow label="Time" value={event.startZoned ? format(event.startZoned, "h:mm a") : null} />
@@ -100,7 +101,7 @@ function ClassOrActivityDetail({ event, courseRegistry, onClose }) {
 }
 
 function AssignmentDetail({ event }) {
-  const { lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
+  const { lmsProviderURL, isPayLmsPaymentPending, isK5 } = useDashboardContext();
   const aStatus = getAssignmentStatus(event);
   return (
     <>
@@ -115,7 +116,7 @@ function AssignmentDetail({ event }) {
           <button
             type="button"
             onClick={() => openLmsLesson({ isPayLmsPaymentPending, lmsProviderUrl: lmsProviderURL })}
-            className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white"
+            className={calendarButtonClass(isK5, "primary")}
           >
             Attempt
           </button>
@@ -126,10 +127,16 @@ function AssignmentDetail({ event }) {
 }
 
 function HolidayOrEventDetail({ event }) {
+  const text = event.activities || event.title;
   return (
     <>
       <DetailRow label="Date" value={event.startZoned ? format(event.startZoned, "MMM d, yyyy") : null} />
-      {(event.activities || event.title) && <p className="pt-1 text-black/80">{event.activities || event.title}</p>}
+      {/* The description is HTML written by the school (<p>, <strong>...): render it, sanitized; inline colours are dropped so it follows the look. */}
+      {text && (/<[a-z][sS]*>/i.test(text) ? (
+        <div className="pt-1 leading-relaxed [&_p]:m-0 [&_p]:mb-2 [&_strong]:font-black [&_a]:underline" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(text, { FORBID_ATTR: ["style", "class"] }) }} />
+      ) : (
+        <p className="m-0 pt-1">{text}</p>
+      ))}
     </>
   );
 }

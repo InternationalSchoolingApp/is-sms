@@ -282,7 +282,7 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
                     active ? "bg-k5-act text-k5-acx" : "text-k5-ink hover:bg-k5-soft"
                   }`}
                 >
-                  {CLUB_ART[child.segment] && <ClubMark art={CLUB_ART[child.segment]} />}
+                  {CLUB_ART[child.segment] ? <ClubMark art={CLUB_ART[child.segment]} /> : <SubPicture item={child} parent={item} />}
                   <span className="min-w-0 truncate">{child.label}</span>
                 </Link>
               </li>
@@ -292,6 +292,17 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
       )}
     </>
   );
+}
+
+/**
+ * The little picture of a sub-menu item in the open menu (mockup: Academic Reports > Academic Performance / My Progress Report).
+ * Only items that have a mockup picture show one; the Communications group keeps plain names.
+ */
+function SubPicture({ item, parent }) {
+  const [failed, setFailed] = useState(false);
+  const picture = parent.icon === "inbox" ? "" : navPictureFor(item);
+  if (!picture || failed) return null;
+  return <OptimizedImage src={picture} alt="" width={32} height={32} className="block h-8 w-8 flex-none object-contain" onError={() => setFailed(true)} />;
 }
 
 /** A club's little picture (mockup .nsub): its flag for a language club, an emoji on a soft tile for the others. */
