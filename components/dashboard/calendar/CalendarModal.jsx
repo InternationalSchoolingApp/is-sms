@@ -11,7 +11,7 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
  * the body font of the student's look. It is not portalled out of the page, so the look (font, text size of the band, colours)
  * reaches it from the K–5 shell around it. The title, rows, notes, countdown and buttons below share that one look.
  */
-export function CalendarModal({ title, onClose, children }) {
+export function CalendarModal({ title, onClose, wide = false, children }) {
   const { isK5 } = useDashboardContext();
   if (isK5) {
     return (
@@ -20,7 +20,7 @@ export function CalendarModal({ title, onClose, children }) {
           role="dialog"
           aria-modal="true"
           aria-label={typeof title === "string" ? title : undefined}
-          className="relative max-h-[calc(100dvh-2rem)] w-full max-w-[480px] overflow-y-auto rounded-[28px] border-[3px] border-k5-ink bg-k5-card p-[22px] text-k5-ink shadow-[0_8px_0_var(--k5-ink)]"
+          className={`relative max-h-[calc(100dvh-2rem)] w-full ${wide ? "max-w-[900px]" : "max-w-[480px]"} overflow-y-auto rounded-[28px] border-[3px] border-k5-ink bg-k5-card p-[22px] text-k5-ink shadow-[0_8px_0_var(--k5-ink)]`}
           onClick={(e) => e.stopPropagation()}
         >
           <button
@@ -39,7 +39,7 @@ export function CalendarModal({ title, onClose, children }) {
   }
   return (
     <div data-blocking-popup="" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div className="relative w-full max-w-md rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div className={`relative w-full ${wide ? "max-w-4xl" : "max-w-md"} rounded-2xl bg-white p-5 shadow-xl`} onClick={(e) => e.stopPropagation()}>
         <button
           type="button"
           onClick={onClose}

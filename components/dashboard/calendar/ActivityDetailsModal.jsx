@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
@@ -20,8 +21,8 @@ function Countdown({ ms, k5 }) {
   const parts = [
     [Math.floor(total / 86400), "Days"],
     [Math.floor((total % 86400) / 3600), "Hours"],
-    [Math.floor((total % 3600) / 60), "Minutes"],
-    [total % 60, "Seconds"],
+    [Math.floor((total % 3600) / 60), "Min"],
+    [total % 60, "Sec"],
   ];
   return (
     <div className="my-3 text-center">
@@ -29,7 +30,7 @@ function Countdown({ ms, k5 }) {
       <div className="flex justify-center gap-2" role="timer">
         {parts.map(([value, label]) => (
           <div key={label} className={k5 ? "min-w-14 rounded-2xl border-2 border-k5-line bg-k5-soft px-2 py-1.5" : "min-w-14 rounded-lg bg-slate-100 px-2 py-1.5"}>
-            <div className={k5 ? "font-k5-display text-2xl font-semibold tabular-nums" : "text-xl font-bold tabular-nums"}>{pad(value)}</div>
+            <div className={k5 ? "font-k5-display text-2xl font-semibold tabular-nums" : "text-xl font-bold tabular-nums"}>{label === "Days" ? value : pad(value)}</div>
             <div className={k5 ? "text-xs font-extrabold text-k5-mut" : "text-[11px] text-black/50"}>{label}</div>
           </div>
         ))}
@@ -69,6 +70,10 @@ export function ActivityDetailsModal({ event, onClose }) {
 
   const [joining, setJoining] = useState(false);
   const [joinMessage, setJoinMessage] = useState("");
+  // Legacy: "View Attachment" opens the file in a dialog of this tab; "Join Event" opens the class in a new tab and leaves a
+  // "Join Class Now / copy the link" dialog here.
+  const [view, setView] = useState("details");
+  const [classLink, setClassLink] = useState("");
 
   const start = event.startZoned;
   const end = event.endZoned;
@@ -89,10 +94,59 @@ export function ActivityDetailsModal({ event, onClose }) {
       setJoinMessage(answer.message || "You cannot join this event right now.");
     } else if (answer.redirectUrl) {
       window.open(answer.redirectUrl, "_blank", "noopener,noreferrer");
+      setClassLink(answer.redirectUrl);
+      setView("joined");
+    }
+  };
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(classLink);
+      toast.success("Class link copied");
+    } catch {
+      toast.error("Could not copy the link. Please copy it from the box.");
     }
   };
 
   const title = details?.categoryName || event.title || event.eventTitle || "Activity details";
+  const activityName = details?.activityTitle || event.title || title;
+
+  if (view === "attachment" && attachment) {
+    return (
+      <CalendarModal title={title} onClose={onClose} wide>
+        <iframe src={attachment} title="Attachment" className="h-[60dvh] w-full rounded-xl border-0 bg-white" />
+        <div className="flex justify-end pt-2">
+          <button type="button" onClick={() => setView("details")} className={calendarButtonClass(isK5, "close")}>
+            Close
+          </button>
+        </div>
+      </CalendarModal>
+    );
+  }
+  if (view === "joined" && classLink) {
+    return (
+      <CalendarModal title={title} onClose={onClose}>
+        <p className="m-0 text-center">
+          The class {activityName} is scheduled for {start ? format(start, "MMM d, yyyy hh:mm a") : ""}
+        </p>
+        <div className="flex justify-center">
+          <a href={classLink} target="_blank" rel="noreferrer" className={`${calendarButtonClass(isK5, "primary")} no-underline`}>
+            Join Class Now
+          </a>
+        </div>
+        <hr className={isK5 ? "m-0 border-0 border-t-2 border-dashed border-k5-line" : "m-0 border-0 border-t border-dashed border-slate-300"} />
+        <p className="m-0 text-center">If you are facing issues with joining, copy the class link below and paste it into a new tab on your browser:</p>
+        <textarea readOnly value={classLink} rows={3} className={isK5 ? "w-full resize-none rounded-2xl border-2 border-k5-line bg-k5-soft p-2.5 font-k5-body text-sm text-k5-ink" : "w-full resize-none rounded-lg border border-slate-300 p-2 text-sm"} />
+        <div className={isK5 ? "flex flex-wrap justify-end gap-3 pt-1" : "flex flex-wrap justify-end gap-2 pt-1"}>
+          <button type="button" onClick={onClose} className={calendarButtonClass(isK5, "close")}>
+            Close
+          </button>
+          <button type="button" onClick={copyLink} className={calendarButtonClass(isK5, "primary")}>
+            Copy Class Link
+          </button>
+        </div>
+      </CalendarModal>
+    );
+  }
   return (
     <CalendarModal title={title} onClose={onClose}>
       {over && <p className={calendarNoteClass(isK5)}>Your activity has been completed.</p>}
@@ -102,7 +156,8 @@ export function ActivityDetailsModal({ event, onClose }) {
       <DetailRow label="Details" value={details?.activityTitle || event.title} />
       <DetailRow label="Teacher" value={event.origName} />
       {query.isLoading && <p className={isK5 ? "m-0 py-2 text-center text-k5-mut" : "py-2 text-center text-black/50"}>Loading details…</p>}
-      {details && !over && <Countdown ms={untilStart} k5={isK5} />}
+      {/* Legacy: the "Time Remaining" title and boxes disappear when the countdown reaches zero. */}
+      {details && !over && untilStart > 0 && <Countdown ms={untilStart} k5={isK5} />}
       {details?.joiningLink && !over && !joinOpen && (
         <p className={isK5 ? "m-0 text-center text-sm text-k5-mut" : "text-center text-xs text-black/60"}>Your joining link will be displayed {leadMinutes} minutes before the scheduled time.</p>
       )}
@@ -113,9 +168,9 @@ export function ActivityDetailsModal({ event, onClose }) {
       )}
       <div className={isK5 ? "flex flex-wrap justify-end gap-3 pt-2" : "flex flex-wrap justify-end gap-2 pt-2"}>
         {attachment && (
-          <a href={attachment} target="_blank" rel="noreferrer" className={`${calendarButtonClass(isK5, "primary")} no-underline`}>
+          <button type="button" onClick={() => setView("attachment")} className={calendarButtonClass(isK5, "primary")}>
             View Attachment
-          </a>
+          </button>
         )}
         {joinOpen && (
           <button type="button" onClick={join} disabled={joining} className={`${calendarButtonClass(isK5, "join")} disabled:opacity-60`}>

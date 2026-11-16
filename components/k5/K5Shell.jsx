@@ -96,6 +96,7 @@ function K5Frame({ children }) {
         logoUrl={logoUrl}
         session={session}
         userName={context.userName}
+        menu={menu}
         navOpen={navOpen}
         onMenu={() => setNavOpen((v) => !v)}
         onAppearance={() => setLookOpen(true)}
