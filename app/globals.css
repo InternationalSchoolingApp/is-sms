@@ -196,7 +196,7 @@ input:not(:-webkit-autofill) {
  * state — covered alongside the standard `:-webkit-autofill` since Chrome
  * applies both at different moments (selecting a suggestion vs. already
  * filled).
- */ 
+ */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
