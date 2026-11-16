@@ -21,7 +21,7 @@ import { MonthPlan, WeekPlan } from "@/components/k5/home/WeekMonthPlans";
 import { LiveClassAlert } from "@/components/k5/home/LiveClassAlert";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { K5CompleteProfileModal } from "@/components/k5/home/K5CompleteProfileModal";
-import { getBrowserTimezone, resolveTimezone } from "@/utils/calendarEvents";
+import { DUMMY_STUDENT_TIMEZONE, resolveTimezone } from "@/utils/calendarEvents";
 import { classTitle, dayAt, dayKey, keyToDate, weekKeys } from "@/utils/k5Calendar";
 import { revealPlanTop } from "@/utils/k5Scroll";
 import { picoSay, setPicoLive } from "@/components/k5/pico/picoEvents";
@@ -95,7 +95,7 @@ export function StudentHomeK5({ holdProfilePopup = false }) {
   // Clock and events use the student's configured timezone (Asia/Singapore when missing or
   // invalid). Dummy data is generated around the viewer's own clock, so dummy mode uses it.
   const ready = dummy.settled && !dashboardData.isLoading;
-  const timezone = dummy.enabled ? getBrowserTimezone() : resolveTimezone(dashboardData.userTimezone);
+  const timezone = dummy.enabled ? DUMMY_STUDENT_TIMEZONE : resolveTimezone(dashboardData.userTimezone);
 
   return (
     <>
