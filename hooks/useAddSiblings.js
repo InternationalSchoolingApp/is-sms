@@ -22,7 +22,10 @@ export function useAddSiblings() {
   const dummy = useDummyStudent();
   const schoolUUID = context?.schoolUUID;
   const userId = context?.userId;
-  const uniqueId = session?.uniqueId;
+  // The add-enrollment route's sessionUserId segment is the numeric USER.id.
+  // Older code passed uniqueId here, which the wizard correctly rejects as a
+  // tampered URL and then keeps its data queries disabled.
+  const sessionUserId = session?.studentUserId ?? session?.userId ?? userId;
 
   // ADD_SIBILING_BTN setting — only "true" shows the button
   const settingQuery = useQuery({
@@ -58,22 +61,22 @@ export function useAddSiblings() {
   const [busy, setBusy] = useState(false);
 
   const handleClick = useCallback(async () => {
-    if (dummy.enabled || !parentId || !schoolUUID || !uniqueId || busy) return;
+    if (dummy.enabled || !parentId || !schoolUUID || !sessionUserId || busy) return;
     setBusy(true);
     try {
-      const result = await enrollAnotherChild(schoolUUID, parentId, uniqueId);
+      const result = await enrollAnotherChild(schoolUUID, parentId, sessionUserId);
       if (!result) {
         toast.error("Could not start enrollment — please try again.");
         return;
       }
       const step = SIGNUP_PAGE_TO_STEP[result.signupPage] || "student-details";
-      window.open(`/${schoolUUID}/add-enrollment/${parentId}/${uniqueId}/step/${step}`, "_blank");
+      window.open(`/${schoolUUID}/add-enrollment/${parentId}/${sessionUserId}/step/${step}`, "_blank");
     } catch {
       toast.error("Something went wrong — please try again.");
     } finally {
       setBusy(false);
     }
-  }, [dummy.enabled, parentId, schoolUUID, uniqueId, busy]);
+  }, [dummy.enabled, parentId, schoolUUID, sessionUserId, busy]);
 
   return { visible, label, busy, handleClick, loading: profileQuery.isLoading || settingQuery.isLoading };
 }
