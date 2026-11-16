@@ -828,3 +828,57 @@ export async function saveUserTheme({ schoolUUID, userId, appearance }) {
     return null;
   }
 }
+
+/**
+ * "Need help?" WhatsApp contact for the header - legacy getChatEligibility(): POST /{schoolUUID}/api/v1/get-chat-eligibility
+ * { userId, schoolId } -> { ELIGIBLE_FOR_NEED_HELP: "Y"|"N", whatsAppIsd, whatsAppNumber }. Returns the wa.me address
+ * only when the school has a Need Help number, else null (no link shown).
+ */
+export async function getNeedHelpContact({ schoolUUID, userId, schoolNumericId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId || !schoolNumericId) return null;
+  try {
+    const answer = await postDashboardPayload(schoolUUID, "/api/v1/get-chat-eligibility", { userId, schoolId: schoolNumericId });
+    if (answer?.ELIGIBLE_FOR_NEED_HELP !== "Y") return null;
+    const number = `${answer.whatsAppIsd ?? ""}${answer.whatsAppNumber ?? ""}`.replace(/\D/g, "");
+    return number ? { href: `https://wa.me/+${number}?text=I+need+support.` } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * App-install prompt eligibility - legacy checkAppActivityEligibility(): GET /{UNIQUEUUID}/api/v1/dashboard/app-last-activity
+ * -> { status: 2, showInstallModal, appUsed }. The server decides (FCM install status + last-active grace);
+ * true = this student has not used the app, so the install popup may show.
+ */
+export async function getAppInstallPromptEligible({ uniqueId }) {
+  if (!hasBackendOrigin() || !uniqueId) return false;
+  try {
+    const baseUrl = await resolveServerBackendOrigin();
+    const response = await fetch(`${baseUrl}/${encodeURIComponent(uniqueId)}/api/v1/dashboard/app-last-activity`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      cache: "no-store",
+    });
+    const answer = await parseJsonResponse(response);
+    return Boolean(answer && String(answer.status) === "2" && (answer.showInstallModal === true || answer.appUsed === false));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Activity details - legacy renderViewActitifyDetails(): POST /{schoolUUID}/dashboard/view-extra-activity
+ * { activityId, meetingId, userId, occurrenceDate } -> { status: 1, categoryName, activityPurpose, activityTitle, filePath,
+ * uploadFile, showLinkBeforeMinutes, joiningLink, ... }. Null on any failure.
+ */
+export async function getActivityDetails({ schoolUUID, userId, activityId, occurrenceDate }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId || !activityId) return null;
+  try {
+    const request = { activityId: String(activityId), meetingId: "", userId };
+    if (occurrenceDate) request.occurrenceDate = occurrenceDate;
+    return await postDashboardPayload(schoolUUID, "/dashboard/view-extra-activity", request);
+  } catch {
+    return null;
+  }
+}

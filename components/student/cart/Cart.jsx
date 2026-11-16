@@ -9,6 +9,7 @@ import { Pencil, ShoppingCart, Trash2 } from "lucide-react";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
+import { CheckoutExtraDialogs } from "@/components/common/CheckoutExtraDialogs";
 import { CartTermsModal } from "@/components/student/cart/CartTermsModal";
 import { DummyCheckout } from "@/components/student/cart/DummyCheckout";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
@@ -182,6 +183,7 @@ export function Cart() {
         onClose={() => setTerms(null)}
         onPay={() => checkout.start(terms.userPaymentDetailsId)}
       />
+      <CheckoutExtraDialogs checkout={checkout} />
       <PaymentGatewayPickerModal
         open={Boolean(checkout.picker)}
         onOpenChange={(open) => !open && checkout.closePicker()}

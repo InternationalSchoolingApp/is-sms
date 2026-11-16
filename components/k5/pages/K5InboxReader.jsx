@@ -12,9 +12,9 @@ import {
 // Channel colour of the design (CH): the avatar and the type chip of a message.
 export const CHANNEL_TINT = { EMAIL: "bg-k5-bt", NOTIFICATION: "bg-k5-yt", ANNOUNCEMENT: "bg-k5-vt", WHATSAPP: "bg-k5-gt" };
 export const CM_BTN =
-  "k5-cm-btn inline-flex min-h-[48px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-[3px] border-k5-line bg-k5-card px-[18px] text-[16px] font-black text-k5-ink shadow-[0_4px_0_var(--k5-line)] disabled:cursor-default disabled:opacity-45";
+  "k5-cm-btn k5h-cm-btn inline-flex min-h-[48px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-[3px] border-k5-line bg-k5-card px-[18px] text-[16px] font-black text-k5-ink shadow-[0_4px_0_var(--k5-line)] disabled:cursor-default disabled:opacity-45";
 export const CM_BTN_PRIMARY =
-  "k5-cm-btn inline-flex min-h-[48px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-[3px] border-k5-ac bg-k5-ac px-5 text-[16px] font-black text-white shadow-[0_4px_0_var(--k5-acd)] disabled:cursor-default disabled:opacity-45";
+  "k5-cm-btn k5h-cm-btn k5h-cm-btnp inline-flex min-h-[48px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-[3px] border-k5-ac bg-k5-ac px-5 text-[16px] font-black text-white shadow-[0_4px_0_var(--k5-acd)] disabled:cursor-default disabled:opacity-45";
 
 /**
  * The email's own HTML, shown in a frame that cannot run scripts or touch the page (sandbox, no allow-scripts).
@@ -203,7 +203,7 @@ export function K5InboxReader({ inbox }) {
                     type="button"
                     disabled={Boolean(inbox.downloading)}
                     onClick={() => inbox.downloadAttachment(file)}
-                    className="k5-cm-file flex min-h-[52px] cursor-pointer items-center gap-2.5 rounded-[18px] border-[3px] border-k5-line bg-k5-soft px-3.5 py-2 text-left text-[14px] font-black text-k5-ink disabled:cursor-default"
+                    className="k5-cm-file k5h-cm-file flex min-h-[52px] cursor-pointer items-center gap-2.5 rounded-[18px] border-[3px] border-k5-line bg-k5-soft px-3.5 py-2 text-left text-[14px] font-black text-k5-ink disabled:cursor-default"
                   >
                     <FileText className="h-[22px] w-[22px] flex-none text-k5-red" strokeWidth={2} aria-hidden="true" />
                     <span className="[overflow-wrap:anywhere]">{inbox.downloading === file.name ? "Preparing…" : shownFileName(file.name)}</span>
@@ -216,7 +216,7 @@ export function K5InboxReader({ inbox }) {
                     href={announcementFile}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="k5-cm-file flex min-h-[52px] items-center gap-2.5 rounded-[18px] border-[3px] border-k5-line bg-k5-soft px-3.5 py-2 text-[14px] font-black text-k5-ink no-underline"
+                    className="k5-cm-file k5h-cm-file flex min-h-[52px] items-center gap-2.5 rounded-[18px] border-[3px] border-k5-line bg-k5-soft px-3.5 py-2 text-[14px] font-black text-k5-ink no-underline"
                   >
                     <FileText className="h-[22px] w-[22px] flex-none text-k5-red" strokeWidth={2} aria-hidden="true" />
                     Attachment

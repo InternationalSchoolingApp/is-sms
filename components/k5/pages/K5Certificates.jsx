@@ -148,8 +148,7 @@ function CertHeader({ onRequest }) {
   return (
     <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
       <span
-        className={isMiddle ? "flex h-[62px] w-[62px] flex-none items-center justify-center bg-k5-act" : "flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-pt"}
-        style={isMiddle ? { borderRadius: 14 } : undefined}
+        className={isMiddle ? "k5h-ct-tile flex h-[62px] w-[62px] flex-none items-center justify-center rounded-[14px] bg-k5-act" : "flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-pt"}
       >
         <CapIcon size={isMiddle ? 34 : 48} stroke={isMiddle ? "var(--k5-ac)" : undefined} />
       </span>
@@ -158,7 +157,7 @@ function CertHeader({ onRequest }) {
         <p className={`m-0 font-extrabold text-k5-mut ${isMiddle ? "text-base" : "text-[17px]"}`}>Certificates your school has issued to you. Anyone can check one is genuine with its Certificate ID.</p>
       </div>
       {onRequest ? (
-        <button type="button" onClick={onRequest} className={`${PRIMARY} min-h-[54px] text-lg max-[760px]:w-full max-[760px]:justify-center`}>
+        <button type="button" onClick={onRequest} className={`${PRIMARY} k5h-ct-req min-h-[54px] text-lg max-[760px]:w-full max-[760px]:justify-center`}>
           <Plus className="h-5 w-5" strokeWidth={3} aria-hidden="true" /> Request a certificate
         </button>
       ) : (
@@ -322,12 +321,12 @@ export function K5Certificates({ schoolName, requests, certificates, form, sent,
             {certs.map((c) => {
               const ready = c.pdfStatus === "READY" && c.pdfUrl;
               return (
-                <li key={c.certCode} className="k5-ctcert relative rounded-[26px] p-2.5 shadow-[0_6px_0_#C9930A]" style={{ background: "linear-gradient(135deg, #FFE7A3, #F2C14E 45%, #FFE7A3)", ...(isMiddle ? { boxShadow: "0 2px 0 #C9930A" } : null) }}>
-                  <div style={isMiddle ? { borderWidth: 1.5 } : undefined} className="box-border flex h-full flex-col gap-2.5 rounded-[18px] border-2 border-dashed border-[#D9A73A] bg-[#FFFBEE] px-[18px] pb-4 pt-[18px] text-[#3A2A00]">
+                <li key={c.certCode} className="k5-ctcert k5h-ct-cert relative rounded-[26px] p-2.5 shadow-[0_6px_0_#C9930A]" style={{ background: "linear-gradient(135deg, #FFE7A3, #F2C14E 45%, #FFE7A3)", ...(isMiddle ? { boxShadow: "0 2px 0 #C9930A" } : null) }}>
+                  <div style={isMiddle ? { borderWidth: 1.5 } : undefined} className="k5h-ct-inner box-border flex h-full flex-col gap-2.5 rounded-[18px] border-2 border-dashed border-[#D9A73A] bg-[#FFFBEE] px-[18px] pb-4 pt-[18px] text-[#3A2A00]">
                     <div className="flex items-center gap-3">
                       <Seal />
                       <div className="flex min-w-0 flex-col gap-0.5">
-                        {schoolName && <span className="text-xs font-black uppercase tracking-[0.08em] text-[#8A5A00]">{schoolName}</span>}
+                        {schoolName && <span className="k5h-ct-ink text-xs font-black uppercase tracking-[0.08em] text-[#8A5A00]">{schoolName}</span>}
                         <h3 className="m-0 font-k5-display text-[22px] font-semibold leading-[1.15]">{certificateTitle(c)}</h3>
                       </div>
                     </div>
@@ -341,7 +340,7 @@ export function K5Certificates({ schoolName, requests, certificates, form, sent,
                         <span className="rounded-lg bg-[#FFF1CC] px-2.5 py-0.5 font-mono text-sm font-extrabold [overflow-wrap:anywhere]">{c.certCode}</span>
                       </dd>
                     </dl>
-                    {!ready && <p className="m-0 text-sm font-extrabold text-[#8A5A00]">Your PDF is being prepared. Please check back in a few minutes.</p>}
+                    {!ready && <p className="k5h-ct-ink m-0 text-sm font-extrabold text-[#8A5A00]">Your PDF is being prepared. Please check back in a few minutes.</p>}
                     <div className="mt-1 flex flex-wrap gap-2">
                       {ready && (
                         <a href={c.pdfUrl} target="_blank" rel="noopener noreferrer" className={PRIMARY}>

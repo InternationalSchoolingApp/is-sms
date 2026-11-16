@@ -3,7 +3,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Award, Download, Plus, ShieldCheck } from "lucide-react";
+import { Award, Check, Download, Plus, Search, ShieldCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { K5Certificates } from "@/components/k5/pages/K5Certificates";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -14,7 +14,7 @@ import {
   getMyCertificateRequests,
   getMyCertificates,
 } from "@/services/certificateApi";
-import { certDate, certificateTitle, copyVerifyLink, enrolmentLabel, isCertificateOk, requestMeta, statusOf } from "@/utils/certificates";
+import { certDate, certificateTitle, copyVerifyLink, enrolmentLabel, isCertificateOk, requestMeta, requestSteps, statusOf } from "@/utils/certificates";
 
 const LIST_KEY = (userId) => ["my-certificates", userId];
 const REQUESTS_KEY = (userId) => ["my-certificate-requests", userId];
@@ -110,8 +110,45 @@ function useRequestForm({ onSent }) {
   };
 }
 
+// Status chip colours by how far the request is (legacy chip classes wait / ok / no / off).
+const CHIP_TONE = {
+  wait: "bg-amber-100 text-amber-800",
+  ok: "bg-green-100 text-green-800",
+  no: "bg-red-100 text-red-700",
+  off: "bg-slate-100 text-slate-600",
+};
+
+/** The request's progress track (legacy stepper): done steps ticked, the current one marked, the rest empty. */
+function RequestTrack({ status }) {
+  const track = requestSteps(status);
+  if (!track) return null;
+  return (
+    <ol aria-label="Progress" className="m-0 mt-2 flex list-none gap-1 p-0">
+      {track.labels.map((label, index) => {
+        const done = index < track.current;
+        const current = index === track.current;
+        return (
+          <li key={label} aria-current={current ? "step" : undefined} className="flex min-w-0 flex-1 flex-col items-center gap-1 text-center">
+            <span
+              aria-hidden="true"
+              className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${done ? "border-green-600 bg-green-600 text-white" : current ? "border-primary bg-white" : "border-slate-300 bg-white"}`}
+            >
+              {done && <Check className="h-3 w-3" strokeWidth={3.5} />}
+            </span>
+            <span className={`text-[11px] leading-tight ${current ? "font-bold text-black" : "text-slate-500"}`}>{label}</span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 /** Plain look (other grades): the same data, actions and form as the K–5 view. */
 function PlainCertificates({ requests, certificates, form, onCancel, onCopy }) {
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  // Legacy mcrRender: search over the title, type, template and certificate ID.
+  const shown = q ? certificates.items.filter((c) => [c.activityTitle, c.activityType, c.templateName, c.certCode].some((v) => v && String(v).toLowerCase().includes(q))) : certificates.items;
   return (
     <div className="mx-auto w-full space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 px-1">
@@ -133,10 +170,11 @@ function PlainCertificates({ requests, certificates, form, onCancel, onCopy }) {
               <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
                 <div>
                   <div className="font-semibold text-black">
-                    {r.typeName} <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{statusOf(r.status).label}</span>
+                    {r.typeName} <span className={`ml-1 rounded-full px-2 py-0.5 text-xs font-semibold ${CHIP_TONE[statusOf(r.status).tone] || CHIP_TONE.off}`}>{statusOf(r.status).label}</span>
                   </div>
                   <div className="text-xs text-slate-500">{requestMeta(r)}</div>
                   {r.status === "REJECTED" && r.rejectReason && <div className="text-xs text-red-600">Reason: {r.rejectReason}</div>}
+                  <RequestTrack status={r.status} />
                 </div>
                 <div className="flex gap-2">
                   {r.status === "PENDING" && (
@@ -156,7 +194,16 @@ function PlainCertificates({ requests, certificates, form, onCancel, onCopy }) {
       )}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
-        <h2 className="mb-3 font-bold text-black">My certificates</h2>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="m-0 font-bold text-black">My certificates</h2>
+          {certificates.items.length > 6 && (
+            <label className="relative block w-full max-w-[280px]">
+              <span className="sr-only">Search certificates</span>
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-black/40" aria-hidden="true" />
+              <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search certificates…" className="w-full rounded-lg border border-slate-300 py-2 pl-8 pr-3 text-sm text-black" />
+            </label>
+          )}
+        </div>
         {certificates.loading ? (
           <p className="py-6 text-center text-black/50">Loading…</p>
         ) : certificates.error ? (
@@ -165,7 +212,8 @@ function PlainCertificates({ requests, certificates, form, onCancel, onCopy }) {
           <p className="py-6 text-center text-black/60">You don&apos;t have any certificates yet. When your school issues you one, it will appear here.</p>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {certificates.items.map((c) => (
+            {shown.length === 0 && <li className="col-span-full py-4 text-center text-black/60">No certificate matches your search.</li>}
+            {shown.map((c) => (
               <li key={c.certCode} className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-black">
                 <div className="font-bold">{certificateTitle(c)}</div>
                 <div>Awarded to {c.recipientName}</div>

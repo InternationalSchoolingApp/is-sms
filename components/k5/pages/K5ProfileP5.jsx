@@ -22,7 +22,7 @@ const H3 = "m-0 font-k5-display text-xl font-semibold text-k5-ink";
 const LABEL = "relative flex min-w-0 flex-col gap-1.5 pt-1.5 text-sm font-black text-k5-mut [&>span:first-child]:pointer-events-none [&>span:first-child]:absolute [&>span:first-child]:start-3 [&>span:first-child]:top-0 [&>span:first-child]:z-[1] [&>span:first-child]:-translate-y-1/2 [&>span:first-child]:bg-k5-card [&>span:first-child]:px-1 [&>span:first-child]:text-xs [&>span:first-child]:leading-none";
 const INPUT =
   "h-[50px] w-full min-w-0 rounded-[14px] border-[3px] border-k5-line bg-k5-card px-3.5 pt-1 font-k5-body text-base font-extrabold text-k5-ink outline-none focus:border-k5-ac";
-const RO = "flex h-[50px] items-center gap-2 rounded-[14px] border-[3px] border-k5-line bg-k5-soft px-3.5 py-2 font-k5-body text-base font-extrabold text-k5-ink [overflow-wrap:anywhere]";
+const RO = "k5h-pf-ro flex h-[50px] items-center gap-2 rounded-[14px] border-[3px] border-k5-line bg-k5-soft px-3.5 py-2 font-k5-body text-base font-extrabold text-k5-ink [overflow-wrap:anywhere]";
 const ACCENT_BTN =
   "inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full border-[3px] border-k5-ac bg-k5-ac px-5 font-k5-display text-[17px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)] no-underline disabled:cursor-not-allowed disabled:opacity-50";
 const PLAIN_BTN =
@@ -441,7 +441,7 @@ function Policy({ title, children }) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex min-h-14 w-full cursor-pointer items-center gap-2.5 border-none bg-k5-card px-4 py-2 text-start font-k5-body text-[17px] font-black text-k5-ink"
+        className="flex min-h-[56px] w-full cursor-pointer items-center gap-2.5 border-none bg-k5-card px-4 py-2 text-start font-k5-body text-[17px] font-black text-k5-ink"
       >
         <span>{title}</span>
         <span className="rounded-full border-2 border-k5-yb bg-k5-yt px-2.5 py-0.5 text-xs font-black uppercase tracking-[0.04em] text-k5-yx">Please read</span>

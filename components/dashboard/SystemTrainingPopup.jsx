@@ -2,18 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { Salsa } from "next/font/google";
-import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { MessagesSquare, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { JoinClassModal } from "@/components/dashboard/calendar/JoinClassModal";
+import { K5SystemTrainingRescheduleDialog } from "@/components/dashboard/K5SystemTrainingReschedule";
+import { K5TrainingDialog } from "@/components/k5/panels/K5TrainingParts";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
 import { getSystemTrainingPopup } from "@/services/systemTrainingApi";
-import { studentNavHref } from "@/utils/dashboardNav";
 
 const salsa = Salsa({ weight: "400", subsets: ["latin"], display: "swap" });
 
@@ -34,7 +33,8 @@ const salsa = Salsa({ weight: "400", subsets: ["latin"], display: "swap" });
  *     welcome below is shown.
  * Before the training popup comes the one-time "Hello {name}! Welcome to the International Schooling Family!" popup
  * (remembered per user in localStorage and a cookie, closes by itself after 10 seconds). Neither opens over another
- * popup (they wait for it to close).
+ * popup (they wait for it to close). In the grade looks (isK5) the welcome popup is skipped: the buddy (Pico) says that
+ * welcome in its first tour tip instead.
  */
 
 const OTHER_POPUPS = '[data-blocking-popup], [data-slot="dialog-content"], dialog[open]';
@@ -76,9 +76,10 @@ function planFor(data) {
   return "pick";
 }
 
-// True while some other popup is open on the page (ours are marked data-system-training).
+// True while some other popup is open on the page (ours are marked data-system-training; the app-install popup does not
+// hold it back - legacy shows the training popup on top of it).
 function otherPopupOpen() {
-  return Array.from(document.querySelectorAll(OTHER_POPUPS)).some((el) => !el.closest("[data-system-training]"));
+  return Array.from(document.querySelectorAll(OTHER_POPUPS)).some((el) => !el.closest("[data-system-training], [data-app-install]"));
 }
 
 function WelcomeDialog({ open, firstName, onClose }) {
@@ -129,7 +130,7 @@ function WelcomeDialog({ open, firstName, onClose }) {
   );
 }
 
-function TrainingDialog({ open, data, chatHref, rescheduleHref, onJoin, onClose }) {
+function TrainingDialog({ open, data, chatHref, onReschedule, onJoin, onClose }) {
   const rescheduled = data.orientStatus === "RESCHEDULE";
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()} disablePointerDismissal>
@@ -159,9 +160,9 @@ function TrainingDialog({ open, data, chatHref, rescheduleHref, onJoin, onClose 
                     <p className="mb-2 text-lg font-semibold text-primary">Your school System Training has been rescheduled. </p>
                     <p className="mb-0 text-lg font-semibold text-primary">Please click below and select another date for the training.</p>
                     <p className="mb-0 mt-3">
-                      <Link href={rescheduleHref} onClick={onClose} className="inline-block rounded-md bg-green-600 px-12 py-1 text-lg font-semibold text-white no-underline">
+                      <button type="button" onClick={onReschedule} className="inline-block cursor-pointer border-none rounded-md bg-green-600 px-12 py-1 text-lg font-semibold text-white no-underline">
                         Reschedule
-                      </Link>
+                      </button>
                     </p>
                   </div>
                 ) : (
@@ -176,9 +177,9 @@ function TrainingDialog({ open, data, chatHref, rescheduleHref, onJoin, onClose 
                     </div>
                     <p className="mb-0 mt-2 text-base font-semibold text-primary">
                       If you wish to reschedule, please{" "}
-                      <Link href={rescheduleHref} onClick={onClose} className="text-primary underline">
+                      <button type="button" onClick={onReschedule} className="cursor-pointer border-none bg-transparent p-0 font-semibold text-primary underline">
                         click here
-                      </Link>
+                      </button>
                     </p>
                   </>
                 )}
@@ -196,9 +197,8 @@ function TrainingDialog({ open, data, chatHref, rescheduleHref, onJoin, onClose 
 }
 
 export function SystemTrainingPopup() {
-  const { context } = useDashboardContext();
+  const { context, isK5 } = useDashboardContext();
   // The reschedule page is the new Next.js page (legacy rescheduleOrientationUrl -> /join-orientation, Orientation.jsp).
-  const { school } = useParams();
   const dummy = useDummyStudent();
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
   const wanted =
@@ -225,6 +225,7 @@ export function SystemTrainingPopup() {
   const [step, setStep] = useState("waiting");
   const [ready, setReady] = useState(false);
   const [joining, setJoining] = useState(false);
+  const [rescheduling, setRescheduling] = useState(false);
 
   useEffect(() => {
     if (!plan || ready) return undefined;
@@ -232,10 +233,12 @@ export function SystemTrainingPopup() {
       if (otherPopupOpen()) return;
       clearInterval(id);
       setReady(true);
-      setStep(welcomeShown(context.userId) ? (plan === "booked" ? "training" : "done") : "welcome");
+      // The grade looks (isK5: Grade K–12) have the buddy: it welcomes the student in its first tour tip
+      // (components/k5/pico/PicoGuide.jsx), so the welcome popup is not opened there. The older shell keeps it.
+      setStep(isK5 || welcomeShown(context.userId) ? (plan === "booked" ? "training" : "done") : "welcome");
     }, 300);
     return () => clearInterval(id);
-  }, [plan, ready, context?.userId]);
+  }, [plan, ready, context?.userId, isK5]);
 
   // Remembered as soon as it is shown (legacy: no repeat after logout / refresh).
   useEffect(() => {
@@ -251,16 +254,35 @@ export function SystemTrainingPopup() {
   return (
     <>
       <WelcomeDialog open={step === "welcome"} firstName={firstName} onClose={closeWelcome} />
-      {plan === "booked" && (
-        <TrainingDialog
-          open={step === "training" && !joining}
-          data={data}
-          chatHref={chatHref}
-          rescheduleHref={studentNavHref(school, "system-training-reschedule")}
-          onJoin={() => setJoining(true)}
-          onClose={() => setStep("done")}
-        />
-      )}
+      {plan === "booked" &&
+        (isK5 ? (
+          // The grade looks have their own design of this popup (components/k5/panels/K5TrainingParts.jsx); same data and actions.
+          step === "training" &&
+          !joining && (
+            <>
+              <K5TrainingDialog
+                data={data}
+                chatHref={chatHref}
+                onReschedule={() => setRescheduling(true)}
+                onJoin={() => setJoining(true)}
+                onClose={() => setStep("done")}
+              />
+              {/* Reschedule opens over this popup, as in the mockup; a saved reschedule closes it and this popup shows the new time. */}
+              {rescheduling && <K5SystemTrainingRescheduleDialog onClose={() => setRescheduling(false)} />}
+            </>
+          )
+        ) : (
+          <TrainingDialog
+            open={step === "training" && !joining && !rescheduling}
+            data={data}
+            chatHref={chatHref}
+            onReschedule={() => setRescheduling(true)}
+            onJoin={() => setJoining(true)}
+            onClose={() => setStep("done")}
+          />
+        ))}
+      {/* The older shell opens the same Reschedule dialog (there is no separate reschedule page any more). */}
+      {plan === "booked" && !isK5 && rescheduling && <K5SystemTrainingRescheduleDialog onClose={() => setRescheduling(false)} />}
       {joining && (
         <JoinClassModal
           event={{ url: data.joinOrientationUrl, title: "School System Training" }}

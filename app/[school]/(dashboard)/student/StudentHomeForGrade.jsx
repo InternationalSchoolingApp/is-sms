@@ -12,6 +12,9 @@ import { StudentHomeK5 } from "@/components/k5/home/StudentHomeK5";
 import { ReserveSeatForNextGrade } from "@/components/dashboard/ReserveSeatForNextGrade";
 import { SystemTrainingPopup } from "@/components/dashboard/SystemTrainingPopup";
 import { ForcedPasswordChange } from "@/components/dashboard/ForcedPasswordChange";
+import { AppInstallPrompt } from "@/components/dashboard/AppInstallPrompt";
+import { OutlookReminder } from "@/components/dashboard/OutlookReminder";
+import { ClassFeedbackHost } from "@/components/dashboard/ClassFeedbackHost";
 import { StudentHome } from "./StudentHome";
 
 // Only fetched when the student has a contact problem to fix.
@@ -42,13 +45,19 @@ export function StudentHomeForGrade() {
   if (checking) return <FullScreenLoader />;
   return (
     <>
-      {isK5 ? <StudentHomeK5 holdProfilePopup={!contactCheck.finished} /> : <StudentHome />}
+      {isK5 ? <StudentHomeK5 holdProfilePopup={!contactCheck.finished} /> : <StudentHome holdProfilePopup={!contactCheck.finished} />}
       {/* Next-grade re-enrollment / reserve a seat (legacy getReserveASeatForNextGrade), every grade band. */}
       <ReserveSeatForNextGrade />
       {/* School System Training popup + one-time welcome (legacy getStudentTimePreference), every grade band. */}
       <SystemTrainingPopup />
       {/* Password due / sibling still on the temporary password: the must-change Change Password popup. */}
       <ForcedPasswordChange />
+      {/* "Install the app" popup (legacy initAppInstallNotification): after the contact check, never over a live class. */}
+      <AppInstallPrompt hold={!contactCheck.finished} />
+      {/* School email (Outlook) activation reminder with a 5-minute snooze (legacy renderOutlookModalOnDashboard). */}
+      <OutlookReminder hold={!contactCheck.finished} />
+      {/* Class feedback (legacy feedbackStudentTeacher.js): the rating form, the popup when a live class ends, the weekly Pending Feedback list. */}
+      <ClassFeedbackHost />
       {contactCheck.state.phase === "open" && <ContactCheckModal check={contactCheck} band={isK5 ? (isMiddle ? "middle" : "elementary") : "high"} />}
     </>
   );

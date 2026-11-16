@@ -10,6 +10,7 @@ import { useStudentGradebookReport } from "@/hooks/useStudentGradebookReport";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import { MobileTableCard } from "@/components/student/MobileTableCard";
+import { courseWareCourses, courseWareItems, courseWareLayout, cwText, isCourseWare } from "@/utils/courseWareReport";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 
 // Backend static assets (legacy PATH_FOLDER_IMAGE2).
@@ -81,6 +82,119 @@ function DetailRows({ rows }) {
         ))}
       </tbody>
     </table>
+  );
+}
+
+/** Canvas (40) / Courseware (41) report of one course (legacy CanvasReport.jsp / CoursewareReport.jsp). */
+function CourseWareReport({ course, report, logoUrl, layout }) {
+  const items = courseWareItems(course);
+  const head = ["Sr.no", "Type", "Activity Name", layout.showDates && "Target Due Date", layout.showDates && "Submitted Date", "Percentage", "Grade"].filter(Boolean);
+  return (
+    <div className="mb-6">
+      <div className="bg-[#fafdff] p-3">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            {logoUrl && (
+              <OptimizedImage src={logoUrl} alt="School logo" width={300} height={80} sizes="(max-width: 768px) 100vw, 300px" className="mb-6 h-auto w-full max-w-[300px]" />
+            )}
+            <DetailRows rows={[["Student Name", report.studentName], ["Grade", report.standardName], ["Course", cwText(course.courseName)]]} />
+          </div>
+          <div className="space-y-4">
+            <DetailRows rows={[["Academic Year Start Date", cwText(course.academicYearStartDate)], ["Academic Year End Date", cwText(course.academicYearEndDate)]]} />
+            <DetailRows rows={[["Student ID", report.rollNumber], ["Country", report.country], ["Teacher Name", cwText(course.teacherName)]]} />
+          </div>
+        </div>
+        <div className="mt-2 text-center">
+          <h3 className="text-lg font-bold uppercase text-[#007fff] sm:text-[30px] sm:leading-tight">Detailed Student Grading Report</h3>
+          <h4 className="text-base font-bold uppercase sm:text-2xl">
+            Duration: {report.reportStartDate} - {report.reportEndDate}
+          </h4>
+        </div>
+      </div>
+
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full min-w-[640px] border border-[#6fb0f1] text-center text-sm">
+          <thead>
+            <tr>
+              {head.map((label) => (
+                <th key={label} className="border border-[#6fb0f1] p-1 align-middle">
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {items.length === 0 && (
+              <tr>
+                <td colSpan={head.length} className="border border-[#cdcdcd] p-4 text-black/60">
+                  No activities in this period.
+                </td>
+              </tr>
+            )}
+            {items.map((item, index) => {
+              const scoreClass = SCORE_CLASS[item.colorScoreText] ?? "";
+              return (
+                <tr key={index} className={index % 2 ? "bg-white" : "bg-[#f5fafc]"}>
+                  <td className="border border-[#cdcdcd] p-2">{index + 1}</td>
+                  <td className="border border-[#cdcdcd] p-2">{item.type}</td>
+                  <td className="border border-[#cdcdcd] p-2 text-left">{item.activityName}</td>
+                  {layout.showDates && <td className="border border-[#cdcdcd] p-2">{cwText(item.dueDate)}</td>}
+                  {layout.showDates && <td className="border border-[#cdcdcd] p-2">{cwText(item.submittedDate)}</td>}
+                  <td className={`border border-[#cdcdcd] p-2 ${scoreClass}`}>{cwText(item.percentage)}</td>
+                  <td className={`border border-[#cdcdcd] p-2 ${scoreClass}`}>{cwText(item.gradeLetter)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-1 text-left font-bold">*N/A - Not Available</p>
+
+      <div className="mt-3 grid gap-4 md:grid-cols-[1fr_auto]">
+        {layout.showCounters ? (
+          <table className="w-full border border-[#6fb0f1] text-center text-sm sm:text-lg">
+            <tbody>
+              {[
+                ["Number of Activities - Submitted & Graded", course.submitGradedActivityCount],
+                ["Number of Activities - Waiting for the Grade", course.waitingforGradeCount],
+                ["Number of Activities - Not Submitted", course.notSubmittedActivityCount],
+              ].map(([label, value]) => (
+                <tr key={label}>
+                  <td className="border border-[#6fb0f1] p-2">
+                    {label}: <b>{cwText(value)}</b>
+                  </td>
+                </tr>
+              ))}
+              <tr>
+                <td className="border border-[#6fb0f1] p-2">
+                  Last Submission Date: <b>{cwText(course.lastSubmiteDate)}</b> | Activity Name: <b>{cwText(course.lastSubmitActivityName)}</b>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        ) : (
+          <div />
+        )}
+        <table className="h-fit w-full border border-[#6fb0f1] text-left text-sm sm:text-base md:w-auto">
+          <tbody>
+            {[
+              ["Course Grade", course.courseGrade],
+              ["Current Overall Percentage", course.currentOverallPercentage],
+            ].map(([label, value], index) => (
+              <tr key={label} className={index % 2 ? "bg-white" : "bg-[#f5fafc]"}>
+                <td className="border border-[#6fb0f1] p-2 text-right font-bold">{label}:</td>
+                <td className="border border-[#6fb0f1] p-2">{cwText(value)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-6 space-y-1">
+        <div className="-skew-x-[30deg] border-b-2 border-dashed border-[#91c8ff]" />
+        <div className="-skew-x-[30deg] border-b-2 border-dashed border-[#91c8ff]" />
+      </div>
+    </div>
   );
 }
 
@@ -280,7 +394,8 @@ export function useProgressReport(url) {
   const enrollments = Array.isArray(report?.gradebookEnroll)
     ? report.gradebookEnroll.filter((enrollment) => enrollment.grades?.items?.item?.length)
     : [];
-  const unsupported = report && ["40", "41"].includes(String(report.lmsProId));
+  // Canvas / Courseware answer with courseWareReport instead of the gradebook list.
+  const courseWare = isCourseWare(report);
 
   function search() {
     if (!startdate && !enddate) return setError("Please select report start date and end date");
@@ -302,7 +417,7 @@ export function useProgressReport(url) {
     });
   }
 
-  return { isLoading, report, startdate, enddate, setStartdate, setEnddate, search, error, enrollments, unsupported };
+  return { isLoading, report, startdate, enddate, setStartdate, setEnddate, search, error, enrollments, courseWare };
 }
 
 /** "…/send-mail-student-get-user-gradebook/<id>?payload=…" -> "?payload=…" (only the payload goes to our route). */
@@ -365,7 +480,7 @@ export function useReportDownload(link, design) {
  */
 export function ProgressReportView({ url, onBack }) {
   const { logoUrl } = useDashboardContext();
-  const { isLoading, report, startdate, enddate, setStartdate, setEnddate, search, error, enrollments, unsupported } = useProgressReport(url);
+  const { isLoading, report, startdate, enddate, setStartdate, setEnddate, search, error, enrollments, courseWare } = useProgressReport(url);
   const { preparing, download } = useReportDownload(report?.downloadUrl);
 
   return (
@@ -419,13 +534,14 @@ export function ProgressReportView({ url, onBack }) {
           <p className="py-8 text-center font-bold">{report?.reportMessage || "Unable to load progress report detail."}</p>
         ) : report.reportMessage ? (
           <p className="py-8 text-center font-bold">{report.reportMessage}</p>
-        ) : unsupported ? (
-          <p className="py-8 text-center font-bold">This report type is not available here yet.</p>
         ) : (
           <>
-            {enrollments.map((enrollment) => (
-              <EnrollmentReport key={enrollment.id} enrollment={enrollment} report={report} logoUrl={logoUrl} />
-            ))}
+            {courseWare
+              ? courseWareCourses(report).map((course, index) => (
+                  <CourseWareReport key={index} course={course} report={report} logoUrl={logoUrl} layout={courseWareLayout(report)} />
+                ))
+              : enrollments.map((enrollment) => <EnrollmentReport key={enrollment.id} enrollment={enrollment} report={report} logoUrl={logoUrl} />)}
+            {courseWare && courseWareCourses(report).length === 0 && <p className="py-8 text-center font-bold">No activities in this period.</p>}
 
             <div className="flex flex-wrap items-start justify-between gap-4">
               <OptimizedImage src={assetUrl("repost-bottom-graphic.png")} alt="" width={300} height={100} className="h-auto w-full max-w-[300px]" />

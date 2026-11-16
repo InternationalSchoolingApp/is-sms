@@ -11,7 +11,7 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
 const PAGE_SIZE = 10;
 const GRID = { gridTemplateColumns: "90px 1.4fr 1.6fr 1.2fr 130px" };
 const HEAD = "p-3.5 font-k5-display text-base font-semibold";
-const PAGE_BTN = "min-h-[42px] cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-3.5 font-k5-body text-[15px] font-black text-k5-mut disabled:cursor-default disabled:opacity-50";
+const PAGE_BTN = "k5h-pr-btn min-h-[42px] cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-3.5 font-k5-body text-[15px] font-black text-k5-mut disabled:cursor-default disabled:opacity-50";
 
 export function ReportIcon({ size = 20 }) {
   return (
@@ -29,8 +29,8 @@ function ReportsHeader() {
     <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
       <span
         aria-hidden="true"
-        className={`flex flex-none items-center justify-center ${isMiddle ? "h-[62px] w-[62px]" : "h-[76px] w-[76px] rounded-[24px]"}`}
-        style={isMiddle ? { background: "var(--k5-act)", color: "var(--k5-ac)", borderRadius: 14 } : { background: "var(--k5-gT)", color: "var(--k5-gI)" }}
+        className={`flex flex-none items-center justify-center ${isMiddle ? "k5h-pr-tile h-[62px] w-[62px] rounded-[14px]" : "h-[76px] w-[76px] rounded-[24px]"}`}
+        style={isMiddle ? { background: "var(--k5-act)", color: "var(--k5-ac)" } : { background: "var(--k5-gT)", color: "var(--k5-gI)" }}
       >
         <ReportIcon size={isMiddle ? 34 : 42} />
       </span>
@@ -122,7 +122,7 @@ export function K5ProgressReports({ isLoading, rows }) {
                       type="button"
                       onClick={() => setSelected(row.url)}
                       disabled={!row.url}
-                      className="inline-flex min-h-[42px] cursor-pointer items-center gap-2 rounded-full border-none bg-k5-ac px-4 font-k5-display text-base font-semibold text-white shadow-[0_3px_0_var(--k5-acd)] disabled:cursor-default disabled:opacity-50"
+                      className="k5h-pr-btn inline-flex min-h-[42px] cursor-pointer items-center gap-2 rounded-full border-none bg-k5-ac px-4 font-k5-display text-base font-semibold text-white shadow-[0_3px_0_var(--k5-acd)] disabled:cursor-default disabled:opacity-50"
                     >
                       View
                       <EyeIcon />

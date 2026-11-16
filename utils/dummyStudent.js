@@ -435,6 +435,9 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
         progress,
         submitted: submittedCount,
         countable: counted.length,
+        allDone: submittedCount + 2,
+        allTotal: counted.length + 2,
+        allProgress: Math.round(((submittedCount + 2) * 10000) / (counted.length + 2)) / 100,
         left: counted.length - submittedCount,
         hasScore,
         score,
@@ -673,10 +676,44 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
         },
       };
     });
+    // ?dummyLms=40 (Canvas) or 41 (Courseware): the report answers with courseWareReport instead of gradebookEnroll,
+    // the shape the Canvas / Courseware report endpoint sends (one entry per course).
+    const dummyLms = param("dummyLms");
+    const courseWareReport =
+      dummyLms === "40" || dummyLms === "41"
+        ? gradebookEnroll.map((enrollment) => {
+            const items = enrollment.grades.items.item.map((item) => ({
+              type: item.unitType,
+              activityName: item.unitTitle,
+              dueDate: item.duedate,
+              submittedDate: item.submitteddate,
+              percentage: item.unitPercent,
+              gradeLetter: item.letter,
+              colorScoreText: item.colorScoreText,
+            }));
+            return {
+              teacherName: enrollment.teacherName,
+              courseName: enrollment.entity.title,
+              gradeName: grade.label,
+              academicYearStartDate: enrollment.startdate,
+              academicYearEndDate: enrollment.enddate,
+              itemList: items,
+              submitGradedActivityCount: items.length,
+              notSubmittedActivityCount: 0,
+              waitingforGradeCount: 0,
+              lastSubmiteDate: items[items.length - 1].submittedDate,
+              lastSubmitActivityName: items[items.length - 1].activityName,
+              currentWeekPercentage: enrollment.grades.percentWeekly,
+              courseCompletionPercentage: enrollment.grades.complete,
+              courseGrade: enrollment.grades.letter,
+              currentOverallPercentage: enrollment.grades.percentage,
+            };
+          })
+        : null;
     return {
       status: "SUCCESS",
       reportMessage: "",
-      lmsProId: "37",
+      lmsProId: courseWareReport ? dummyLms : "37",
       studentName: userName(),
       standardName: grade.label,
       rollNumber: `MEXDIDI${260600000 + uid}`,
@@ -687,7 +724,8 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
       reportEndDate: displayDateOnly(reportEnd),
       subReportType: "weekly",
       downloadUrl: "",
-      gradebookEnroll,
+      gradebookEnroll: courseWareReport ? [] : gradebookEnroll,
+      ...(courseWareReport ? { courseWareReport } : {}),
     };
   }
 

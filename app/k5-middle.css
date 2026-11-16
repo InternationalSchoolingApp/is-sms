@@ -265,3 +265,24 @@
 [data-k5-band="middle"] .k5-cm-in {
   min-height: 46px;
 }
+
+/* ── Page title tiles (Middle.dc.html): a 62px accent tile with 14px corners. The pages used to force the 14px with an inline
+   style; they now use these hook classes (High overrides them to 10px in k5-mature.css, which is imported after this file). */
+[data-k5-band="middle"] :is(.k5h-pr-tile, .k5h-fee-tile, .k5h-ct-tile, .k5h-ax-tile, .k5h-hb-tile, .k5h-lb-tile, .k5h-lg-tile, .k5h-tr-tile) {
+  border-radius: 14px !important;
+}
+
+/* ── Book a Class (Middle.dc.html): the "Book a class" chip is 5px 14px and the small "Booked class details" button is 32px
+   high (K–5: 6px 18px / 40px). High has its own copy of these in k5-mature.css. */
+[data-k5-band="middle"] .k5h-b-pick {
+  padding: 5px 14px;
+}
+[data-k5-band="middle"] .k5h-b-details {
+  min-height: 32px;
+  padding: 4px 12px;
+}
+
+/* ── Home, My Courses (Middle.dc.html): the 38px course icon tile has 8px corners (rounded-xl would give 14px). */
+[data-k5-band="middle"] .k5h-ctile {
+  border-radius: 8px;
+}

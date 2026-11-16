@@ -11,7 +11,7 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useTalkToUs } from "@/hooks/useTalkToUs";
 
 const BUTTON =
-  "flex min-h-14 items-center gap-2.5 self-start rounded-full border-none bg-[#13803F] px-6 font-k5-display text-[19px] font-semibold text-white shadow-[0_5px_0_#0B5A2B] disabled:opacity-50 max-[760px]:w-full max-[760px]:justify-center";
+  "flex min-h-[56px] items-center gap-2.5 self-start rounded-full border-none bg-[#13803F] px-6 font-k5-display text-[19px] font-semibold text-white shadow-[0_5px_0_#0B5A2B] disabled:opacity-50 max-[760px]:w-full max-[760px]:justify-center";
 
 function useCourseColor() {
   const colorFor = useK5CourseColors();
@@ -46,7 +46,7 @@ function CourseTile({ course, image, color, tall, onClick }) {
     <Tag
       type={onClick ? "button" : undefined}
       onClick={onClick}
-      className={`flex w-full flex-col overflow-hidden rounded-3xl border-[3px] bg-k5-card p-0 text-start text-inherit ${onClick ? "k5-axcard cursor-pointer" : ""}`}
+      className={`k5h-ax-card flex w-full flex-col overflow-hidden rounded-3xl border-[3px] bg-k5-card p-0 text-start text-inherit ${onClick ? "k5-axcard cursor-pointer" : ""}`}
       style={{ borderColor: color, boxShadow: `0 ${isMiddle && !tall ? 2 : 6}px 0 ${color}`, font: "inherit", ...(isMiddle ? { borderRadius: 16 } : null) }}
     >
       <div className={`relative w-full overflow-hidden bg-k5-soft ${tall ? "h-[260px]" : "h-[170px]"}`}>
@@ -66,8 +66,7 @@ function ExtensionHeader() {
   return (
     <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
       <span
-        className={isMiddle ? "flex h-[62px] w-[62px] flex-none items-center justify-center bg-k5-act" : "flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-gt"}
-        style={isMiddle ? { borderRadius: 14 } : undefined}
+        className={isMiddle ? "k5h-ax-tile flex h-[62px] w-[62px] flex-none items-center justify-center rounded-[14px] bg-k5-act" : "flex h-[84px] w-[84px] flex-none items-center justify-center rounded-[26px] bg-k5-gt"}
       >
         <CirclePlus className={isMiddle ? "h-[34px] w-[34px] text-k5-ac" : "h-12 w-12 text-k5-gi"} strokeWidth={2.4} aria-hidden="true" />
       </span>
@@ -150,7 +149,7 @@ function DetailView({ selected, afterExtension1, busy, onAvail, onBack }) {
         <button
           type="button"
           onClick={onBack}
-          className="flex min-h-12 cursor-pointer items-center gap-2 rounded-full border-[3px] border-k5-line bg-k5-card pe-[18px] ps-3 font-k5-display text-[17px] font-semibold text-k5-ink shadow-[0_4px_0_var(--k5-line)]"
+          className="flex min-h-[48px] cursor-pointer items-center gap-2 rounded-full border-[3px] border-k5-line bg-k5-card pe-[18px] ps-3 font-k5-display text-[17px] font-semibold text-k5-ink shadow-[0_4px_0_var(--k5-line)]"
         >
           <ChevronLeft className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
           Back
@@ -161,7 +160,7 @@ function DetailView({ selected, afterExtension1, busy, onAvail, onBack }) {
       <section aria-labelledby="k5-axd" className={`${K5_CARD} grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)] items-center gap-[26px] p-[22px] max-[900px]:grid-cols-1 max-[760px]:gap-[18px] max-[760px]:p-3.5`}>
         <CourseTile course={data} image={image} color={color} tall />
         <div className="flex min-w-0 flex-col gap-3.5">
-          <h2 id="k5-axd" className="m-0 font-k5-display text-[34px] font-semibold leading-[1.1] max-[760px]:text-[28px]">{data.subjectName}</h2>
+          <h2 id="k5-axd" className="k5h-ax-h2 m-0 font-k5-display text-[34px] font-semibold leading-[1.1] max-[760px]:text-[28px]">{data.subjectName}</h2>
           <p className="m-0 text-xl font-extrabold leading-[1.45] text-k5-acx">
             {lines.map((line, i) => (
               <span key={i} className="block">{line}</span>

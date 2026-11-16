@@ -2,6 +2,7 @@
 
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { serviceKeyHeaders, smsAuthHeaders } from "@/lib/auth/session";
 
 /**
  * "Student Diary" is the legacy School Diary teacher<->student/parent
@@ -32,9 +33,11 @@ async function postDiary(path, body) {
   const baseUrl = await resolveServerBackendOrigin();
   const response = await fetch(`${baseUrl}/api/diary${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    // The backend now wants the signed-in user's SMS token (+ this server's service key) on every call, like the other services.
+    headers: { "Content-Type": "application/json", ...serviceKeyHeaders(), ...(await smsAuthHeaders()) },
     body: JSON.stringify({ payload: encodePayload(body) }),
   });
+  console.log("postDiary", path, body, response);
   return parseJsonResponse(response);
 }
 
@@ -68,7 +71,7 @@ export async function getDiaryThreadList({ sessionUserId, page = 0, size = 20 })
 
 // details: { threadId, threadStatus, courseName, sourceTimezone, page, size, totalPages, totalElements, messages: [...] }.
 // Same 0-indexed paging as getDiaryThreadList (see comment above).
-export async function getDiaryThreadMessages({ sessionUserId, threadId, page = 0, size = 50 }) {
+export async function getDiaryThreadMessages({ sessionUserId, threadId, page = 0, size = 20 }) {
   if (!hasBackendOrigin() || !sessionUserId || !threadId) return null;
   try {
     return await postDiary("/thread/messages", { sessionUserId, threadId, page, size });
@@ -93,5 +96,33 @@ export async function markDiaryThreadRead({ sessionUserId, threadId }) {
     return await postDiary("/thread/mark-read", { sessionUserId, threadId });
   } catch {
     return null;
+  }
+}
+
+/**
+ * "Has my diary changed?" - legacy diaryRealtimePoll(): GET /api/diary/badge-version. The person is the signed-in user
+ * (the SMS token), never a parameter. -> { status: 200, version, etag } | { status: 304 } (unchanged since `etag`) |
+ * { status: <http error> } | { status: 0 } (could not reach the server). version is null when the server cannot read it.
+ */
+export async function getDiaryBadgeVersion({ etag } = {}) {
+  if (!hasBackendOrigin()) return { status: 0 };
+  try {
+    const baseUrl = await resolveServerBackendOrigin();
+    const response = await fetch(`${baseUrl}/api/diary/badge-version`, {
+      method: "GET",
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+        ...serviceKeyHeaders(),
+        ...(await smsAuthHeaders()),
+        ...(etag ? { "If-None-Match": etag } : {}),
+      },
+    });
+    if (response.status === 304) return { status: 304 };
+    if (!response.ok) return { status: response.status };
+    const data = await response.json().catch(() => null);
+    return { status: 200, version: data?.version ?? null, etag: response.headers.get("ETag") };
+  } catch {
+    return { status: 0 };
   }
 }

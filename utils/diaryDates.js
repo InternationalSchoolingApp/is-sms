@@ -1,0 +1,39 @@
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
+import { isValid, parseISO } from "date-fns";
+import { getBrowserTimezone, resolveTimezone } from "@/utils/calendarEvents";
+
+/**
+ * The moment of a diary date - legacy parentSchoolDiaryFormatDate():
+ *   convertDatetimeWithFormat(date, details.sourceTimezone, getSystemTimezone(), ...).
+ * The server sends the date as a wall-clock string in `details.sourceTimezone` (no offset); it is read in that zone. A date
+ * that carries an offset / Z is taken as it is. Timezone rule: a missing or invalid source zone is read as Asia/Singapore,
+ * never as the browser's zone. null when the value is not a date.
+ */
+export function diaryInstant(value, sourceTimezone) {
+  if (!value) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  const isoLike = raw.includes("T") ? raw : raw.replace(" ", "T");
+  const hasOffset = /Z$/i.test(isoLike) || /[+-]\d\d:?\d\d$/.test(isoLike);
+  const instant = hasOffset ? parseISO(isoLike) : fromZonedTime(isoLike, resolveTimezone(sourceTimezone));
+  return isValid(instant) ? instant : null;
+}
+
+const viewerZone = (viewerTimezone) => resolveTimezone(viewerTimezone || getBrowserTimezone());
+
+/** "ddd, DD MMM, YYYY hh:mm A" in the viewer's own zone (the browser's, like legacy). */
+export function formatDiaryDate(value, sourceTimezone, viewerTimezone) {
+  const instant = diaryInstant(value, sourceTimezone);
+  return instant ? formatInTimeZone(instant, viewerZone(viewerTimezone), "EEE, dd MMM, yyyy hh:mm a") : "";
+}
+
+/** Legacy formatDiaryDate() of the floating date: Today, Yesterday, the weekday inside a week, else "Mon, 02 Nov". */
+export function diaryDayLabel(instant, viewerTimezone, now = new Date()) {
+  const zone = viewerZone(viewerTimezone);
+  const day = (date) => Date.parse(`${formatInTimeZone(date, zone, "yyyy-MM-dd")}T00:00:00Z`);
+  const diff = Math.round((day(now) - day(instant)) / 86400000);
+  if (diff === 0) return "Today";
+  if (diff === 1) return "Yesterday";
+  if (diff < 7) return formatInTimeZone(instant, zone, "EEEE");
+  return formatInTimeZone(instant, zone, "EEE, dd MMM");
+}

@@ -25,9 +25,17 @@ function readLocal(key) {
 // The 8 tips of the mockup tour; `pin` is the data-pin of the element the buddy spotlights.
 // A tip whose element is not on the page (no live class right now) is skipped.
 // `liveName` is the title of the class that is live right now (real data), when there is one.
-function tourSteps(firstName, buddyName, liveName) {
+// `welcome`: the very first tour of this student — the buddy also welcomes them to the school (this replaces the old
+// "Hello {name}! Welcome to the ... Family!" popup of the dashboard).
+function tourSteps(firstName, buddyName, liveName, welcome, schoolName) {
+  const welcomeLine = schoolName ? `Welcome to the ${schoolName} Family!` : "Welcome!";
   return [
-    { pin: null, text: `Hi${firstName ? ` ${firstName}` : ""}! I'm ${buddyName}, your calendar buddy. Tap Next and I'll show you around!` },
+    {
+      pin: null,
+      text: welcome
+        ? `Hello${firstName ? ` ${firstName}` : ""}! ${welcomeLine} I'm ${buddyName}, your calendar buddy. Tap Next and I'll show you around!`
+        : `Hi${firstName ? ` ${firstName}` : ""}! I'm ${buddyName}, your calendar buddy. Tap Next and I'll show you around!`,
+    },
     { pin: "live", text: `${liveName ? `Your ${liveName} class` : "Your class"} is live right now! Tap the green Join class button to go in.` },
     { pin: "mini", text: "This little calendar shows the whole month. A dot under a day means something is planned." },
     { pin: "views", text: "Tap Today, Week or Month to see your plans in different ways." },
@@ -125,11 +133,14 @@ function SpotHole({ pin, active }) {
  * buddy speaks in the student's voice (and turns the voice back on), the red X hides the bubble
  * only — the buddy stays and a tap brings it back. Below 760px the bubble opens above the buddy on tap.
  */
-export function PicoGuide({ userId, firstName, home = true }) {
+export function PicoGuide({ userId, firstName, schoolName, home = true }) {
   const { preferences, updatePreference, themeProps } = useAppearance();
   const { speak, stop, speaking, supported, word } = useSpeech();
   const tourKey = `${TOUR_KEY}${userId}`;
   const seen = useSyncExternalStore(noSubscribe, () => readLocal(tourKey), () => "1");
+  // Decided once, when the buddy appears: a student who has never done the tour is welcomed to the school as well.
+  // (Kept in state so the words do not change under the student when the tour is marked as seen.)
+  const [welcome] = useState(() => typeof window !== "undefined" && !readLocal(tourKey));
   const [state, setState] = useState({ open: null, index: 0, say: null, skipLive: false, pageTip: false });
   const live = usePicoLive();
   const pathname = usePathname();
@@ -137,7 +148,7 @@ export function PicoGuide({ userId, firstName, home = true }) {
   const onBook = pathname.includes("book-a-session");
   const [tipOn, setTipOn] = useState(false);
   const buddy = BUDDIES[preferences.buddy] || BUDDIES.pico;
-  const steps = tourSteps(firstName, buddy.name, live.name);
+  const steps = tourSteps(firstName, buddy.name, live.name, welcome, schoolName);
   const mobile = useSyncExternalStore(subscribeMobile, isMobileView, () => false);
   // The first tour opens by itself once the plan is known; the buddy stays quiet while the "LIVE NOW" popup waits.
   const autoOpen = home && !seen && live.ready;

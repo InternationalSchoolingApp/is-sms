@@ -11,7 +11,7 @@ import { getUserShortProfile } from "@/services/dashboardApi";
 /**
  * "You must change your password" on the student dashboard — legacy rendereDashboardContent: one second after the
  * dashboard loads, when the password is due (lastPassUpdatedDate) or a sibling added from enrollment is still on the
- * temporary password (addSiblingFirstLogin), the Change Password popup opens without a way to close it
+ * temporary password (addSiblingFirstLogin), the Change Password popup opens (it can only be left with Cancel, not by clicking outside)
  * (callCommonDashboardPageForPasswordChange('14','No')).
  *
  * The legacy page read both flags from the dashboard-or-migration answer, which never fills them, so the prompt never
