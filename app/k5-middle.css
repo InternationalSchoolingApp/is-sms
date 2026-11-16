@@ -106,7 +106,8 @@
  * The K–5 components carry these as Tailwind arbitrary values (border-[3px], rounded-[26px],
  * shadow-[0_6px_0_…]); plain (unlayered) rules win over those utilities. Only exact class names
  * are matched, so responsive variants (max-[760px]:…) are left alone. */
-:is([data-k5-band="middle"], [data-k5-band="middle"] *) {
+/* Re-enrollment steps share the Elementary form styles across every grade. */
+:is([data-k5-band="middle"], [data-k5-band="middle"] *):not(:where([data-re-enrollment-flow], [data-re-enrollment-flow] *)) {
   /* 3px → 1.5px (mockup: every card, tile, input and button). */
   &.border-\[3px\] {
     border-width: 1.5px;
