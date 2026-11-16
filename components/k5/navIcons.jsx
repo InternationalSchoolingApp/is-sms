@@ -1,4 +1,3 @@
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
 
 /*
  * Left-nav pictures of the Playful mockup (Playful.dc.html, the `.ni` items: a 36px PNG on a transparent 46px tile).
@@ -33,7 +32,7 @@ const SIDEBAR_PICTURES = [
 export function navPictureFor(item) {
   const text = `${item?.label || ""} ${item?.segment || ""} ${item?.module || ""}`.toLowerCase();
   const match = SIDEBAR_PICTURES.find(([pattern]) => pattern.test(text));
-  return match ? `${resolveBackendOrigin()}/static/theme2/images/sidebar-icon/${match[1]}.png` : "";
+  return match ? `/backend-static-assets/images/sidebar-icon/${match[1]}.png` : "";
 }
 
 // Drawn fallback icons (24px, stroke-only, colour from the tile) for an item without a picture.

@@ -75,11 +75,11 @@ export function studentDashboardDetailsQuery({ schoolUUID, userId }) {
 }
 
 /** A demo account's demo-data row — shared by the grade-band gate and useDummyStudent. */
-export function studentDemoRowQuery({ schoolUUID, userId, enabled }) {
+export function studentDemoRowQuery({ schoolUUID, userId, entityId, enabled }) {
   return {
-    queryKey: ["student-demo-data", schoolUUID, userId],
+    queryKey: ["student-demo-data", schoolUUID, userId, entityId ?? null],
     queryFn: async () => {
-      const response = await getStudentDemoData({ schoolUUID, userId });
+      const response = await getStudentDemoData({ schoolUUID, userId, entityId });
       return String(response?.status) === "1" && Array.isArray(response.details) ? response.details[0] ?? null : null;
     },
     enabled: Boolean(enabled && schoolUUID && userId),
@@ -112,7 +112,9 @@ function useResolveGradeBand({ role, session, authenticated }) {
   const demoUser = Boolean(session?.demoUser);
   const dummyEnabled = authenticated && isStudent && search !== null && isDummyStudentMode(demoUser);
 
-  const demoRowQuery = useQuery(studentDemoRowQuery({ schoolUUID: session?.schoolUUID, userId: session?.userId, enabled: dummyEnabled && demoUser }));
+  const demoRowQuery = useQuery(
+    studentDemoRowQuery({ schoolUUID: session?.schoolUUID, userId: session?.userId, entityId: session?.demoEntityId, enabled: dummyEnabled && demoUser }),
+  );
   const detailsQuery = useQuery({
     ...studentDashboardDetailsQuery({ schoolUUID: session?.schoolUUID, userId: session?.userId }),
     enabled: authenticated && isStudent && search !== null && !dummyEnabled,
@@ -151,6 +153,9 @@ function useResolveGradeBand({ role, session, authenticated }) {
     roleId: details?.roleAndModuleAssign?.roleAndModuleDTO?.[0]?.roleId ?? null,
     lmsProviderURL: details?.lmsProviderURL ?? "",
     isPayLmsPaymentPending: details?.isPayLmsPaymentPending ?? "",
+    // Dummy mode with the counselor's demo row: the dashboard shows that row's student name (legacy
+    // syncDummyStudentProfileName - header "Welcome back", profile).
+    demoStudentName: dummyEnabled ? String(demoRow?.studentName || "").trim() : "",
   };
 
   // Remember the live (non-dummy) result for this tab, so the next load skips the loader.
@@ -263,9 +268,11 @@ function useResolveDashboardContext({ role = "student" } = {}) {
         uniqueId: session.uniqueId,
         userRole: session.userRole ?? session.role ?? null,
         roleId,
-        userName: studentName,
+        userName: grade.demoStudentName || studentName,
         // Demo account (USER.DEMO_USER) — pass to isDummyStudentMode() like legacy isDemoUser.
         demoUser: Boolean(session.demoUser),
+        // The demo row picked at "view as user" (SSO hand-off); the demo-data request sends it as entityId.
+        demoEntityId: session.demoEntityId ?? null,
         chatUrl: chatLinksQuery.data?.chatUrl || "",
         diaryUrl: chatLinksQuery.data?.diaryUrl || "",
       }

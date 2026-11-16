@@ -224,6 +224,14 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
   }
 
   const userName = () => safeTeacherName(dbRow?.studentName) || param("demoStudentName") || fallbackName || "Demo Student";
+  // The learning program the counselor saved on the demo row (its code, e.g. SCHOLARSHIP = Self Study), else
+  // ?demoLearningProgram, else One to One - it decides Self-Study content and the grade look like a real student's.
+  const registrationType = (() => {
+    const code = String(dbRow?.learningProgram || param("demoLearningProgram") || "")
+      .trim()
+      .toUpperCase();
+    return /^[A-Z_]+$/.test(code) ? code : "ONE_TO_ONE";
+  })();
 
   // --- My Log in History (legacy dummyStudentLoginHistoryResponse) ---
   function loginHistory() {
@@ -1145,7 +1153,7 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
       showBatchImpAnnouncementModal: "N",
       showAcademicYearSelectionModel: "N",
       showSystemTrainingSelectionModel: "N",
-      registrationType: "ONE_TO_ONE",
+      registrationType,
       showGraduationCeremonyPopup: "N",
       graduationCeremonyRegistrationDeadline: "",
       showBatchReEnrollmentPopUp: "N",
@@ -1161,7 +1169,7 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
       standardId: grade.standardId,
       email: "demo.student@test.local",
       videoUrl: "N",
-      registrationType: "ONE_TO_ONE",
+      registrationType,
       showGraduationCeremonyPopup: "N",
       graduationCeremonyRegistrationDeadline: "",
     };
