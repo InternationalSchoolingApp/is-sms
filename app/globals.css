@@ -197,7 +197,7 @@ input:-internal-autofill-selected {
   -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
   box-shadow: 0 0 0 1000px #fff inset !important;
   -webkit-text-fill-color: oklch(0.145 0 0) !important;
-}
+} 
 
 /* Google reCAPTCHA v3's floating badge (invisible reCAPTCHA) is hidden here —
    the required attribution text is rendered inline instead, next to the
