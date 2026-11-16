@@ -55,6 +55,7 @@ export function CalendarModal({ title, onClose, children }) {
   );
 }
 
+
 export function DetailRow({ label, value }) {
   const { isK5 } = useDashboardContext();
   if (value === null || value === undefined || value === "") return null;
