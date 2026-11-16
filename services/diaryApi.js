@@ -37,7 +37,6 @@ async function postDiary(path, body) {
     headers: { "Content-Type": "application/json", ...serviceKeyHeaders(), ...(await smsAuthHeaders()) },
     body: JSON.stringify({ payload: encodePayload(body) }),
   });
-  console.log("postDiary", path, body, response);
   return parseJsonResponse(response);
 }
 

@@ -12,7 +12,6 @@ import { AnnouncementsPanel } from "@/components/dashboard/AnnouncementsPanel";
 import { NewsPanel } from "@/components/dashboard/NewsPanel";
 import { DiaryPanel } from "@/components/dashboard/DiaryPanel";
 import { useDiaryLivePolling } from "@/hooks/useDiaryLivePolling";
-import { diaryLog, diaryTrace } from "@/utils/diaryDebug";
 import { K5AnnouncementsPanel } from "@/components/k5/panels/K5AnnouncementsPanel";
 import { K5NewsPanel } from "@/components/k5/panels/K5NewsPanel";
 import { K5DiaryPanel } from "@/components/k5/panels/K5DiaryPanel";
@@ -79,15 +78,6 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
     refetchOnWindowFocus: false,
   });
   const unreadDiaryMessages = diaryCountQuery.data?.details?.unreadMessageCount || 0;
-  // Debug trail: every time the badge number changes, with a stack trace of what caused it.
-  useEffect(() => {
-    diaryTrace("BADGE now shows", { unreadDiaryMessages, queryStatus: diaryCountQuery.status, updatedAt: diaryCountQuery.dataUpdatedAt ? new Date(diaryCountQuery.dataUpdatedAt).toISOString() : null });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [unreadDiaryMessages]);
-  useEffect(() => {
-    diaryLog("badge query state", { status: diaryCountQuery.status, fetchStatus: diaryCountQuery.fetchStatus, enabled: Boolean(userId && dummy.settled), dummy: dummy.enabled, userId, account: uniqueId });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [diaryCountQuery.status, diaryCountQuery.fetchStatus]);
   // Legacy diaryRealtimePoll(): ask the server whether the diary changed (works without the bridge iframe below).
   useDiaryLivePolling({ userId, account: uniqueId, enabled: Boolean(userId && dummy.settled && !dummy.enabled) });
 
@@ -95,7 +85,6 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
   // postMessage push below — covers the moment between opening the panel
   // and the bridge iframe actually connecting/posting.
   const refreshDiaryBadge = () => {
-    diaryLog("diary opened / bridge DAIRY_COUNT_CHANGED -> re-reading badge + list");
     queryClient.invalidateQueries({ queryKey: ["diary-unread-count", userId] });
     queryClient.invalidateQueries({ queryKey: ["diary-threads", userId] });
   };
@@ -132,7 +121,6 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
       const msg = event.data;
       if (!msg || typeof msg !== "object") return;
 
-      if (msg.type === "DAIRY_COUNT_CHANGED" || msg.type === "diary-bridge-update") diaryLog(`bridge message ${msg.type}`, { origin: event.origin, data: msg });
       if (msg.type === "DAIRY_COUNT_CHANGED") {
         // This specific message's own listener (diaryBridgeEnsureConnected)
         // does check event.origin — matched here too.
@@ -160,11 +148,7 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
         if (Array.isArray(msg.chats)) {
           msg.chats.forEach((chat) => realId(chat?.chatId) && changedThreadIds.add(String(chat.chatId)));
         }
-        if (changedThreadIds.size === 0) {
-          diaryLog("bridge update ignored (names no conversation)");
-          return;
-        }
-        diaryLog("bridge update -> re-reading badge, list and threads", [...changedThreadIds]);
+        if (changedThreadIds.size === 0) return;
         queryClient.invalidateQueries({ queryKey: ["diary-unread-count", userId] });
         // refreshSchoolDiaryChat / lastMsgIdUpdated / showAndHideAcknowledge: a new message, or a status flip (open/closed),
         // for one or more threads. Refetch exactly those if currently open.
