@@ -224,7 +224,7 @@ export function K5Performance({ isLoading, performance, courseProviderId, plain 
   const goals = { ...(performance?.goals || {}), ...(dummy.enabled && dummyGoals ? dummyGoals : {}) };
   goals.remind = goals.remind !== "N";
   goals.compare = goals.compare !== "N";
-  const session = sessionInfo(tiles);
+  const session = sessionInfo(tiles, courses);
   const badges = badgeView(performance?.badges, goals.score);
   const tips = asArray(performance?.insights);
   const studentName = String(context?.userName || "").split(" ")[0] || "there";

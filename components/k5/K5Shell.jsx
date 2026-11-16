@@ -16,6 +16,8 @@ import { SelectToSpeak } from "@/components/k5/pico/SelectToSpeak";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { K5LiveClassWatcher } from "@/components/k5/home/K5LiveClassWatcher";
 import { studentNavHref } from "@/utils/dashboardNav";
 
 /**
@@ -39,6 +41,7 @@ function K5Frame({ children }) {
   const { context, menu, menuLoading, logoUrl, session, isPreK, isMiddle, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
   
   const pathname = usePathname();
+  const dummy = useDummyStudent();
   const { school } = useParams();
   const { isLoading: appearanceLoading, preferences } = useAppearance();
     const themeProps = useK5ThemeProps("relative flex min-h-screen flex-col overflow-x-clip bg-k5-page");
@@ -52,6 +55,10 @@ function K5Frame({ children }) {
     return () => setPicoLive({ menuReady: false });
   }, [menuCount]);
   const isHome = pathname === studentNavHref(school, "");
+  // Pico's first welcome is only for a student who completed enrollment: the dashboard is reached only by one (the backend sends
+  // a student still enrolling to the wizard), the grade band and details have loaded (context exists), and it is a real student,
+  // not a counselor's dummy/demo view.
+  const welcomeEligible = Boolean(context?.userId) && String(context?.role).toLowerCase() === "student" && dummy.settled && !dummy.enabled;
 
   // Same bfcache guard as DashboardShell: a restored page reloads so the session is re-checked.
   useEffect(() => {
@@ -133,7 +140,9 @@ function K5Frame({ children }) {
         {copyrightLine(context.schoolName)}
       </footer>
 
-      <PicoGuide userId={context.userId} firstName={String(context.userName || "").split(" ")[0]} schoolName={context.schoolName} home={isHome} />
+      {/* The home planner shows the live-class dialog itself; on every other page this does. */}
+      {!isHome && <K5LiveClassWatcher />}
+      <PicoGuide userId={context.userId} firstName={String(context.userName || "").split(" ")[0]} schoolName={context.schoolName} home={isHome} welcomeEligible={welcomeEligible} />
       <SelectToSpeak />
       <ReadingRuler />
       <AppearanceDialog open={lookOpen} onClose={() => setLookOpen(false)} firstName={String(context.userName || "").split(" ")[0]} />
