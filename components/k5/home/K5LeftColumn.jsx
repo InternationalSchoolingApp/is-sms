@@ -93,7 +93,7 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
                 }`}
               >
                 {date.getDate()}
-                {isToday && <Star className="absolute -right-1.5 -top-1.5 h-4 w-4 fill-[#FFC531] text-[#C9930A]" aria-hidden="true" />}
+                {isToday && !isMiddle && <Star className="absolute -right-1.5 -top-1.5 h-4 w-4 fill-[#FFC531] text-[#C9930A]" aria-hidden="true" />}
                 {color && !isToday && (
                   <span aria-hidden="true" className="absolute bottom-0.5 left-1/2 -ml-1 block h-2 w-2 rounded-full" style={{ background: color }} />
                 )}

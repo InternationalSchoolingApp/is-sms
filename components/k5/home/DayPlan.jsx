@@ -120,7 +120,12 @@ function ActivityCard({ event, clue, onOpen }) {
         <span className="text-[17px] font-extrabold text-k5-mut">{timeRange(event)}</span>
         <Teacher event={event} />
       </span>
-      {event.k5Status === "live" && <span className="flex-none rounded-full bg-k5-gt px-3.5 py-2 text-[15px] font-black text-k5-gx">Happening now</span>}
+      {event.k5Status === "live" && (
+        <span className="flex flex-none items-center gap-1.5 text-sm font-black text-k5-gx">
+          <span className="block h-2.5 w-2.5 k5-live-dot rounded-full bg-k5-gi" />
+          LIVE NOW
+        </span>
+      )}
     </button>
   );
 }
@@ -216,7 +221,7 @@ function TomorrowCard({ dateKey, days, isSelfStudy, onPeek }) {
  * are no classes, and a "Tomorrow" card that peeks at the next day.
  */
 export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStudy, firstName, onJoin, onOpen, onPeek, onShowCalendar }) {
-  const { isHigh } = useDashboardContext();
+  const { isHigh, isMiddle } = useDashboardContext(); // isMiddle is true for High too: no "today" star in either
   const day = dayAt(days, dateKey);
   const date = keyToDate(dateKey);
   const isToday = dateKey === todayKey;
@@ -236,7 +241,7 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
       <PlanHeader
         tile={
           <PlanTile top={format(date, "EEE").toUpperCase()} big={format(date, "d")}>
-            {isToday && <Star className="absolute -right-3 -top-3 h-[30px] w-[30px] fill-[#FFC531] text-[#C9930A]" aria-hidden="true" />}
+            {isToday && !isMiddle && <Star className="absolute -right-3 -top-3 h-[30px] w-[30px] fill-[#FFC531] text-[#C9930A]" aria-hidden="true" />}
           </PlanTile>
         }
         title={isToday ? "Today's Plan" : `${format(date, "EEEE")}'s Plan`}

@@ -135,7 +135,7 @@ const NEXT_HEAD = { background: C.upcoming, boxShadow: "0 4px 0 #A16207", color:
 
 /** Week plan (mockup My Week): seven day columns, Monday to Sunday; tap a day to open it. */
 export function WeekPlan({ keys, todayKey, selectedKey, days, courseRegistry, clue, isSelfStudy, onSelect, onOpenDay, onOpenEvent }) {
-  const { isHigh } = useDashboardContext();
+  const { isHigh, isMiddle } = useDashboardContext(); // isMiddle is true for High too: no "today" star in either
   // Like the month: tapping a day (its head, a class, a pill or the free card) picks it and brings the
   // summary under the grid into view. The summary's items open the class / activity / assignment.
   const panelRef = useRef(null);
@@ -192,7 +192,7 @@ export function WeekPlan({ keys, todayKey, selectedKey, days, courseRegistry, cl
               >
                 <span className="block text-[13px] font-black">{isToday ? "Today" : format(date, "EEE")}</span>
                 <span className="block font-k5-display text-[26px] font-semibold leading-[1.1]">{format(date, "d")}</span>
-                {isToday && (
+                {isToday && !isMiddle && (
                   <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" className="absolute -right-1.5 -top-2.5">
                     <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" fill="#FFC531" stroke="#A16207" strokeWidth="1.4" strokeLinejoin="round" />
                   </svg>

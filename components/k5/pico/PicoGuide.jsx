@@ -343,6 +343,13 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     }
   }, [open, pin, state.say?.id, reduced, mobile]);
 
+  // Is the tour itself on screen right now? A say that arrives while it is (a colour clue) belongs to the tour; one that
+  // arrives when it is not (Get the App, a joined club) is a message of its own: "1 / 1" and "All done", not "1 / 10".
+  const midTourRef = useRef(false);
+  useEffect(() => {
+    midTourRef.current = open && !state.pageTip;
+  }, [open, state.pageTip]);
+
   // picoSay(): the buddy opens and says the text (it comes from a tap, so speaking is allowed).
   useEffect(() => {
     const onSay = (e) => {
@@ -353,6 +360,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
         open: true,
         index: intro ? 0 : s.index,
         skipLive: intro ? Boolean(skipLive) : s.skipLive,
+        pageTip: intro || midTourRef.current ? s.pageTip : true,
         say: { text, pin: target || null, id: Date.now(), above: Boolean(above) },
       }));
       setTipOn(true);

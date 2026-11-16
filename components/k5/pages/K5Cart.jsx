@@ -284,7 +284,7 @@ export function K5TermsDialog({ open, intro, terms, extra, agreed, onAgree, busy
             onClick={onPay}
             className="min-h-14 cursor-pointer rounded-full border-none bg-k5-grn px-6 font-k5-display text-xl font-semibold text-white shadow-[0_5px_0_var(--k5-grnD)] disabled:cursor-default disabled:opacity-45"
           >
-            {busy ? "Please wait…" : `Pay Now${amountText ? ` · ${amountText}` : ""}`}
+            {busy ? "Please wait…" : `Pay Now${amountText ? ` ${amountText}` : ""}`}
           </button>
         </div>
       </DialogContent>
