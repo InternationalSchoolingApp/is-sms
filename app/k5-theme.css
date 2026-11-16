@@ -362,6 +362,55 @@
 .k5-live-ring {
   animation: k5LiveRing 1.6s ease-in-out infinite;
 }
+/* Live dot (mockup .live-dot / liveDot): fades to a quarter and back every second. */
+@keyframes k5LiveDot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+.k5-live-dot {
+  animation: k5LiveDot 1s ease-in-out infinite;
+}
+/* A live item of the Today card: the mockup's liveRing pulse around the pill. */
+@keyframes k5LivePill {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(47, 123, 245, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(47, 123, 245, 0);
+  }
+}
+.k5-live-pill {
+  animation: k5LivePill 1.6s ease-in-out infinite;
+}
+/* The Join class button of a live class: the same ring around its own hard shadow (flat in the High look). */
+@keyframes k5LiveJoin {
+  0%,
+  100% {
+    box-shadow: var(--k5-join-base, 0 5px 0 var(--k5-grnD)), 0 0 0 0 rgba(47, 123, 245, 0.5);
+  }
+  50% {
+    box-shadow: var(--k5-join-base, 0 5px 0 var(--k5-grnD)), 0 0 0 10px rgba(47, 123, 245, 0);
+  }
+}
+.k5-live-join {
+  animation: k5LiveJoin 1.6s ease-in-out infinite;
+}
+[data-k5-high] .k5-live-join {
+  --k5-join-base: 0 0 0 0 transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+  .k5-live-join,
+  .k5-live-dot,
+  .k5-live-pill {
+    animation: none;
+  }
+}
 /* Tour spotlight (mockup .spothole): fades in, then slides between tips. */
 @keyframes k5SpotIn {
   from {
@@ -1164,4 +1213,74 @@
   .k5-clact:hover .k5-clactic {
     animation: none;
   }
+}
+
+/* Log-out dialog ghost (Playful.dc.html .ghhop / .ghshadow / .ghwave / .ghtear / .ghspark): floats while calm, droops and
+   sobs on "Yes", spins and hops on "No". Reduced motion stops all of it (the rule above). */
+.k5-ghhop {
+  animation: k5GhFloat 3s ease-in-out infinite;
+}
+.k5-ghhop.k5-gh-sad {
+  animation: k5GhDroop 0.5s ease-out forwards;
+}
+.k5-ghhop.k5-gh-sad .k5-ghbody {
+  animation: k5GhSob 1.6s ease-in-out infinite;
+  transform-origin: 100px 190px;
+}
+.k5-ghhop.k5-gh-happy {
+  animation: k5GhHop 0.55s ease-in-out 0.7s infinite alternate;
+}
+.k5-ghhop.k5-gh-happy .k5-ghbody {
+  animation: k5GhSpin 0.75s cubic-bezier(0.3, 1.3, 0.5, 1) 1;
+  transform-origin: 100px 110px;
+}
+.k5-ghtear {
+  animation: k5GhTear 1.4s ease-in infinite;
+}
+.k5-ghspark {
+  animation: k5GhTw 1s ease-in-out infinite alternate;
+  transform-box: view-box;
+  transform-origin: 100px 100px;
+}
+.k5-ghshadow {
+  animation: k5GhShade 3s ease-in-out infinite;
+}
+.k5-ghshadow.k5-gs-sad {
+  animation: none;
+  transform: scaleX(1.15);
+}
+.k5-ghshadow.k5-gs-happy {
+  animation: k5GhShade 0.55s ease-in-out 0.7s infinite alternate;
+}
+@keyframes k5GhFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes k5GhDroop {
+  to { transform: translateY(10px) scale(0.94, 0.92); }
+}
+@keyframes k5GhSob {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+@keyframes k5GhHop {
+  from { transform: translateY(0); }
+  to { transform: translateY(-16px); }
+}
+@keyframes k5GhSpin {
+  from { transform: rotate(0) scale(0.9); }
+  to { transform: rotate(360deg) scale(1); }
+}
+@keyframes k5GhTear {
+  0% { transform: translateY(0); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(22px); opacity: 0; }
+}
+@keyframes k5GhTw {
+  from { opacity: 0.4; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1.08); }
+}
+@keyframes k5GhShade {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(0.82); }
 }

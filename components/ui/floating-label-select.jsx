@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { RequiredAsterisk } from "@/components/common/RequiredAsterisk";
+import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
 
 /**
  * Select/dropdown counterpart to FloatingLabelInput — same visual language
@@ -34,6 +35,47 @@ function k5Trigger({ disabled, open, error, k5Border }) {
 }
 function k5Label(floated, error) {
   return `bg-k5-card font-k5-body font-black ${floated ? (error ? "!text-k5-ri" : "!text-k5-ac") : "!text-base !text-k5-mut"}`;
+}
+
+/*
+ * The open list of a K–5 field (the K–5 / Grade 6–8 / Grade 9–12 My Profile): it is portalled out of the page, so it
+ * would lose the student's look - the font, the text size of the band (the Grade 6–8 / 9–12 skins resize text by class
+ * under data-k5-band / data-k5-high) and the colours. These pieces put useK5ThemeProps() on the list itself and give
+ * its rows the same text as the field (font-k5-body, text-base, font-extrabold, text-k5-ink).
+ */
+const K5_LIST_BOX = "rounded-[14px] border-[3px] border-k5-line bg-k5-card text-k5-ink shadow-k5-chunky ring-0";
+const K5_ROW = "font-k5-body text-base font-extrabold text-k5-ink";
+
+function K5SelectList({ options }) {
+  const themeProps = useK5ThemeProps(K5_LIST_BOX);
+  return (
+    <SelectContent {...themeProps}>
+      {options.map((option) => (
+        <SelectItem key={option.value} value={option.value} className={`${K5_ROW} min-h-10 rounded-[10px] py-2 focus:bg-k5-act focus:text-k5-acx`}>
+          {option.label}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  );
+}
+
+// The phone popup of a K–5 field: the same sheet, carrying the student's look.
+function K5MobileSheet(props) {
+  const k5Props = useK5ThemeProps("");
+  return <MobileSelectSheet {...props} k5 k5Props={k5Props} />;
+}
+
+function SelectSheet({ k5, ...props }) {
+  return k5 ? <K5MobileSheet {...props} /> : <MobileSelectSheet {...props} />;
+}
+
+function K5PopoverList({ children }) {
+  const themeProps = useK5ThemeProps(`w-(--anchor-width) min-w-56 p-0 ${K5_LIST_BOX}`);
+  return (
+    <PopoverContent sideOffset={4} {...themeProps}>
+      {children}
+    </PopoverContent>
+  );
 }
 
 export function FloatingLabelSelect({ searchable = false, ...props }) {
@@ -84,7 +126,7 @@ const SHEET_SEARCH_MIN_OPTIONS = 8;
 const SHEET_HEIGHT_RATIO = 0.6;
 const SHEET_HEADER_PX = 49;
 
-function MobileSelectSheet({ options, value, onSelect, onClose, searchable }) {
+function MobileSelectSheet({ options, value, onSelect, onClose, searchable, k5 = false, k5Props = null }) {
   const { top, height } = useVisualViewportBox();
   const [query, setQuery] = useState("");
   // True while the search box has focus, i.e. the on-screen keyboard is up.
@@ -119,13 +161,14 @@ function MobileSelectSheet({ options, value, onSelect, onClose, searchable }) {
 
   return createPortal(
     <div
-      className={`fixed inset-x-0 z-[100] bg-black/50 px-4 pt-4 ${searchFocused ? "pb-px" : "pb-4"}`}
+      {...(k5Props || {})}
+      className={cn(`fixed inset-x-0 z-[100] bg-black/50 px-4 pt-4 ${searchFocused ? "pb-px" : "pb-4"}`, k5Props?.className)}
       style={{ top, height: height ?? "100dvh" }}
       onClick={handleBackdrop}
       role="presentation"
     >
       <div
-        className="mx-auto flex max-w-md flex-col overflow-hidden rounded-lg bg-white shadow-xl"
+        className={cn("mx-auto flex max-w-md flex-col overflow-hidden rounded-lg bg-white shadow-xl", k5 && "rounded-[14px] border-[3px] border-k5-line bg-k5-card text-k5-ink")}
         style={{ maxHeight: panelMax }}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
@@ -143,7 +186,7 @@ function MobileSelectSheet({ options, value, onSelect, onClose, searchable }) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search..."
-                className="min-w-0 flex-1 py-1 text-base outline-none placeholder:text-slate-400"
+                className={cn("min-w-0 flex-1 py-1 text-base outline-none placeholder:text-slate-400", k5 && "bg-transparent font-k5-body font-extrabold text-k5-ink")}
               />
             </>
           ) : (
@@ -175,10 +218,10 @@ function MobileSelectSheet({ options, value, onSelect, onClose, searchable }) {
               key={option.value}
               type="button"
               onClick={() => onSelect(option.value)}
-              className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-base hover:bg-slate-100"
+              className={cn("flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-base hover:bg-slate-100", k5 && `${K5_ROW} hover:bg-k5-act`)}
             >
               <span className="truncate">{option.label}</span>
-              {option.value === value && <Check className="h-4 w-4 shrink-0 text-primary" />}
+              {option.value === value && <Check className={cn("h-4 w-4 shrink-0 text-primary", k5 && "text-k5-ac")} />}
             </button>
           ))}
         </div>
@@ -231,7 +274,8 @@ function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, 
             </button>
             <ChevronDown className={`pointer-events-none absolute right-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 ${disabled ? "text-slate-400" : "text-slate-500"}`} />
             {open && (
-              <MobileSelectSheet
+              <SelectSheet
+                k5={k5}
                 options={options}
                 value={value}
                 onSelect={(next) => {
@@ -253,13 +297,17 @@ function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, 
             >
               <SelectValue>{selected?.label ?? ""}</SelectValue>
             </SelectTrigger>
-            <SelectContent>
-              {options.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
+            {k5 ? (
+              <K5SelectList options={options} />
+            ) : (
+              <SelectContent>
+                {options.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            )}
           </Select>
         )}
       </div>
@@ -341,7 +389,7 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
               <span className="truncate relative bottom-0.75">{selected?.label ?? ""}</span>
             </button>
             <ChevronDown className={`pointer-events-none absolute right-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 ${disabled ? "text-slate-400" : "text-slate-500"}`} />
-            {open && <MobileSelectSheet searchable options={options} value={value} onSelect={handleSelect} onClose={() => handleOpenChange(false)} />}
+            {open && <SelectSheet k5={k5} searchable options={options} value={value} onSelect={handleSelect} onClose={() => handleOpenChange(false)} />}
           </>
         ) : (
           <Popover open={open} onOpenChange={handleOpenChange}>
@@ -357,7 +405,8 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
               <span className="truncate relative bottom-0.75">{selected?.label ?? ""}</span>
             </PopoverTrigger>
             <ChevronDown className={`pointer-events-none absolute right-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 ${disabled ? "text-slate-400" : "text-slate-500"}`} />
-            <PopoverContent className="w-(--anchor-width) min-w-56 p-0" sideOffset={4}>
+            {k5 ? (
+              <K5PopoverList>
               <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-2">
                 <Search className="h-4 w-4 shrink-0 text-slate-400" />
                 <input
@@ -365,7 +414,7 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search..."
-                  className="w-full text-sm outline-none placeholder:text-slate-400"
+                  className={cn("w-full text-sm outline-none placeholder:text-slate-400", k5 && "bg-transparent font-k5-body text-base font-extrabold text-k5-ink")}
                 />
               </div>
               <div className="max-h-60 overflow-y-auto p-1">
@@ -375,14 +424,42 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
                     key={option.value}
                     type="button"
                     onClick={() => handleSelect(option.value)}
-                    className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-slate-100"
+                    className={cn("flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-slate-100", k5 && `${K5_ROW} min-h-10 rounded-[10px] px-3 hover:bg-k5-act`)}
                   >
                     <span className="truncate">{option.label}</span>
-                    {option.value === value && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                    {option.value === value && <Check className={cn("h-4 w-4 shrink-0 text-primary", k5 && "text-k5-ac")} />}
                   </button>
                 ))}
               </div>
-            </PopoverContent>
+</K5PopoverList>
+            ) : (
+              <PopoverContent className="w-(--anchor-width) min-w-56 p-0" sideOffset={4}>
+              <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-2">
+                <Search className="h-4 w-4 shrink-0 text-slate-400" />
+                <input
+                  autoFocus={canAutoFocusSearch()}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search..."
+                  className={cn("w-full text-sm outline-none placeholder:text-slate-400", k5 && "bg-transparent font-k5-body text-base font-extrabold text-k5-ink")}
+                />
+              </div>
+              <div className="max-h-60 overflow-y-auto p-1">
+                {filtered.length === 0 && <p className="px-2 py-3 text-center text-sm text-slate-400">No results</p>}
+                {filtered.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handleSelect(option.value)}
+                    className={cn("flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-slate-100", k5 && `${K5_ROW} min-h-10 rounded-[10px] px-3 hover:bg-k5-act`)}
+                  >
+                    <span className="truncate">{option.label}</span>
+                    {option.value === value && <Check className={cn("h-4 w-4 shrink-0 text-primary", k5 && "text-k5-ac")} />}
+                  </button>
+                ))}
+              </div>
+</PopoverContent>
+            )}
           </Popover>
         )}
       </div>

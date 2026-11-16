@@ -184,7 +184,8 @@ function useResolveDashboardContext({ role = "student" } = {}) {
 
   // Before every other query: server actions run one at a time, and the shell waits for this one.
   const grade = useResolveGradeBand({ role, session, authenticated });
-  const roleId = session?.roleId ?? grade.roleId ?? null;
+  // The dashboard details' role id first; the sign-in's (SSO profile) when they have none, e.g. dummy mode.
+  const roleId = grade.roleId ?? session?.roleId ?? null;
 
   // Dynamic menu (faithful Java sidebar) — the only source for the sidebar now.
   // For students, item-level visibility/labels are then adjusted to match

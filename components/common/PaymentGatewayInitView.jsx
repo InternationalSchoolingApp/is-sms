@@ -50,7 +50,7 @@ function getSafeRedirectUrl(value) {
   }
 }
 
-export function getAirwallexCheckoutIntentUrl(value) {
+function getAirwallexCheckoutIntentUrl(value) {
   if (typeof value !== "string") return null;
 
   try {
@@ -74,7 +74,7 @@ export function getAirwallexCheckoutIntentUrl(value) {
   }
 }
 
-export function loadAirwallexSdk() {
+function loadAirwallexSdk() {
   if (window.Airwallex) return Promise.resolve(window.Airwallex);
   if (window.__airwallexSdkPromise) return window.__airwallexSdkPromise;
 
@@ -136,7 +136,7 @@ async function startAirwallexCheckout(checkoutUrl) {
 
 // The backend's own message wins (e.g. "This payment link has expired. Please start the payment again
 // from your fee page." for an invalid/expired attemptToken); a null response means it couldn't be reached.
-export function getFailureMessage(response) {
+function getFailureMessage(response) {
   const message = [response?.message, response?.htmlMessage].find((value) => typeof value === "string" && value.trim()) || "";
   const cleanMessage = message.replace(/^FAILED\|/, "").trim();
   if (cleanMessage) return cleanMessage;

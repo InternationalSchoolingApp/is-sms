@@ -212,7 +212,7 @@ function K5Planner({ timezone }) {
             <K5HomeLeftSkeleton />
           ) : (
             <>
-              <TodayCard todayKey={todayKey} days={days} />
+              <TodayCard todayKey={todayKey} days={days} courseRegistry={model.courseRegistry} onOpen={open} />
               <MyCourses courseRegistry={model.courseRegistry} courseVisibility={model.courseVisibility} onToggle={model.toggleCourseVisibility} />
             </>
           )}

@@ -1,4 +1,4 @@
-/**
+/** 
  * UAT-only "pick a backend" override — lets testers point this same
  * deployment at any of several UAT Spring Boot instances (different
  * IP:port combos) without a separate build/deploy per backend. Gated by
@@ -176,16 +176,16 @@ export function withLoginPayload(url, email, password) {
 
 /**
  * The Java app's own legacy enrollment continuation page
- * (http://localhost:8080/{school}/student/enrollment/process/{uniqueId}) — where a
+ * (http://localhost:8080/{school}/student/enrollment/process/{studentUserId}) — where a
  * student belongs when CONFIGURATION/ENROLLMENT_VIA_NEXTJS is off and this Next.js
  * wizard must not run. Like loginPageUrl() it is a JSP page the Java app has to
  * serve itself, so it uses the real backend origin and not the dev proxy. Returns
  * "" when anything needed to build it is missing, so callers can skip the redirect.
  */
-export function legacyEnrollmentProcessUrl(schoolUUID, uniqueId) {
+export function legacyEnrollmentProcessUrl(schoolUUID, studentUserId) {
   const backend = resolveBackendNavigationOrigin();
-  if (!backend || !schoolUUID || !uniqueId) return "";
-  return `${backend}/${schoolUUID}/student/enrollment/process/${encodeURIComponent(uniqueId)}`;
+  if (!backend || !schoolUUID || !studentUserId) return "";
+  return `${backend}/${schoolUUID}/student/enrollment/process/${encodeURIComponent(studentUserId)}`;
 }
 
 /**
@@ -223,13 +223,13 @@ export function legacyEnrollmentSignupUrl(schoolUUID, program, query = "") {
 }
 
 /**
- * The Java app's student dashboard (http://localhost:8080/{school}/dashboard/student/{uniqueId}) — where a
+ * The Java app's student dashboard (http://localhost:8080/{school}/dashboard/student/{studentUserId}) — where a
  * student belongs when re-enrollment does not apply, or when ENROLLMENT_VIA_NEXTJS is off. A JSP page the
  * Java app serves itself, so it uses the real backend origin and not the dev proxy. "" when anything needed
  * to build it is missing.
  */
-export function legacyDashboardUrl(schoolUUID, uniqueId) {
+export function legacyDashboardUrl(schoolUUID, studentUserId) {
   const backend = resolveBackendNavigationOrigin();
-  if (!backend || !schoolUUID || !uniqueId) return "";
-  return `${backend}/${schoolUUID}/dashboard/student/${encodeURIComponent(uniqueId)}`;
+  if (!backend || !schoolUUID || !studentUserId) return "";
+  return `${backend}/${schoolUUID}/dashboard/student/${encodeURIComponent(studentUserId)}`;
 }

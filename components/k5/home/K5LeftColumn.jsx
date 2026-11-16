@@ -1,12 +1,12 @@
 "use client";
 
 import { format, isSameMonth } from "date-fns";
-import { Check, CheckCircle2, ChevronLeft, ChevronRight, Clock, Star, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Star, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { K5_CARD, K5_ROUND_BTN, SubjectIcon } from "@/components/k5/home/k5Bits";
-import { getMonthGridDays } from "@/utils/calendarEvents";
+import { getEventColor, getMonthGridDays } from "@/utils/calendarEvents";
 import { CLUE_COLORS, WEEKDAY_TEXT, classTitle, courseTint, dayAt, dayKey, safeCourseColor, subjectStyle, timeLabel, timeRange } from "@/utils/k5Calendar";
 
 const WEEK_LETTERS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -133,53 +133,58 @@ export function CalendarPopup({ open, onClose, onPick, ...calendar }) {
   );
 }
 
-function TodayRow({ tile, title, text }) {
+/** One event of the Today card: a quiet pill; a class is dashed; a live one blinks like the mockup (a fading dot and a pulsing ring). */
+function TodayItem({ event, color, live, onOpen }) {
+  const isClass = event.eventKind === "class";
+  const title = isClass ? classTitle(event) : event.title || event.eventTitle;
+  const time = event.displayTime || timeRange(event);
   return (
-    <div className="flex items-center gap-3">
-      <span className={`flex h-11 w-11 flex-none items-center justify-center rounded-[14px] ${tile.className}`}>{tile.icon}</span>
-      <span className="flex flex-col">
-        <span className="text-base font-black">{title}</span>
-        <span className="text-[15px] font-bold text-k5-mut">{text}</span>
-      </span>
+    <button
+      type="button"
+      onClick={() => onOpen?.(event)}
+      className={`flex w-full cursor-pointer flex-col items-center rounded-[14px] bg-k5-card px-3 py-2 text-center text-k5-ink border-2 ${isClass ? "border-dashed" : "border-solid"} ${live ? "k5-live-pill" : ""}`}
+      style={{ borderColor: color }}
+    >
+      {title && (
+        <span className="flex items-center justify-center gap-2 text-[15px] font-black leading-tight">
+          {live && <span aria-hidden="true" className="k5-live-dot block h-2.5 w-2.5 flex-none rounded-full bg-k5-gi" />}
+          {title}
+        </span>
+      )}
+      {time && <span className="text-sm font-bold text-k5-mut">{time}</span>}
+    </button>
+  );
+}
+
+function TodayGroup({ label, items, courseRegistry, live = false, onOpen }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <h3 className="m-0 text-base font-black">{label}</h3>
+      {items.length === 0 ? (
+        <p className="m-0 text-[15px] font-bold text-k5-mut">No Class &amp; School Activity</p>
+      ) : (
+        items.map((event) => <TodayItem key={event.id} event={event} color={getEventColor(event, courseRegistry)} live={live} onOpen={onOpen} />)
+      )}
     </div>
   );
 }
 
-/** Today at a glance: live now, coming up, finished. */
-export function TodayCard({ todayKey, days }) {
-  const classes = dayAt(days, todayKey).classes;
-  const live = classes.find((c) => c.k5Status === "live");
-  const next = classes.filter((c) => c.k5Status === "next");
-  const done = classes.filter((c) => c.k5Status === "done");
+/**
+ * Today at a glance, like the legacy Today panel: Live, Upcoming and Completed "Class & School Activity" (the day's timed
+ * classes and school activities). The live ones blink (mockup liveDot / liveRing). Tapping one opens its details.
+ */
+export function TodayCard({ todayKey, days, courseRegistry, onOpen }) {
+  const day = dayAt(days, todayKey);
+  const timed = [...day.classes, ...day.activities].filter((event) => !event.allDay && event.startZoned).sort((x, y) => x.startZoned.getTime() - y.startZoned.getTime());
+  const group = (status) => timed.filter((event) => event.k5Status === status);
   return (
     <section aria-labelledby="k5-today-title" className={`${K5_CARD} flex flex-col gap-3 p-4`}>
       <h2 id="k5-today-title" className="m-0 font-k5-display text-[22px] font-semibold">
         Today
       </h2>
-      {!classes.length && (
-        <TodayRow tile={{ className: "bg-k5-gt", icon: <Star className="h-6 w-6 text-k5-gi" aria-hidden="true" /> }} title="No classes today" text="Check your plan for more" />
-      )}
-      {live && (
-        <TodayRow
-          tile={{ className: "bg-k5-gt", icon: <span className="block h-3.5 w-3.5 animate-pulse rounded-full bg-k5-gi" /> }}
-          title="Live now"
-          text={`${classTitle(live)} · ${timeRange(live)}`}
-        />
-      )}
-      {next.length > 0 && (
-        <TodayRow
-          tile={{ className: "bg-k5-yt", icon: <Clock className="h-6 w-6 text-k5-yi" aria-hidden="true" /> }}
-          title={`Coming up · ${next.length} class${next.length === 1 ? "" : "es"}`}
-          text={`Next: ${classTitle(next[0])} at ${timeLabel(next[0])}`}
-        />
-      )}
-      {done.length > 0 && (
-        <TodayRow
-          tile={{ className: "bg-k5-act", icon: <CheckCircle2 className="h-6 w-6 text-k5-acx" aria-hidden="true" /> }}
-          title="Finished"
-          text={`${classTitle(done[done.length - 1])} · ${timeRange(done[done.length - 1])}`}
-        />
-      )}
+      <TodayGroup label="Live Class & School Activity" items={group("live")} courseRegistry={courseRegistry} live onOpen={onOpen} />
+      <TodayGroup label="Upcoming Class & School Activity" items={group("next")} courseRegistry={courseRegistry} onOpen={onOpen} />
+      <TodayGroup label="Completed Class & School Activity" items={group("done")} courseRegistry={courseRegistry} onOpen={onOpen} />
     </section>
   );
 }

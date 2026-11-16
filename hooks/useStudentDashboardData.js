@@ -10,8 +10,9 @@ import { useDummyStudent } from "@/hooks/useDummyStudent";
  * fires on every load, combined into the fields Phase B's home widgets need:
  * the graduation-ceremony-popup trigger (+ its deadline/standardId/email) and
  * the onboarding video URL ("N" sentinel means no video to show).
- * Re-enrollment / batch-announcement / course-selection flags are read by the
- * backend response but intentionally not surfaced here — out of scope.
+ * `studentGraduate` drives the re-enrollment entry (hooks/useReEnrollmentEntry.js).
+ * Batch-announcement / course-selection flags are read by the backend response
+ * but intentionally not surfaced here — out of scope.
  */
 export function useStudentDashboardData({ schoolUUID, userId }) {
   const dummy = useDummyStudent();

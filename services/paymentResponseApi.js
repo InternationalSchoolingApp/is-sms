@@ -4,8 +4,9 @@ import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOri
 import { withSmsAuth } from "@/lib/auth/session";
 
 /**
- * JSON payment-response endpoints from PaymentResponseApiController.java.
- * Their shared base is /api/v1/{schoolId}/payment.
+ * JSON payment-response endpoints from PaymentResponseApiController.java:
+ * success at /api/v1/{schoolId}/common/{variant}, failure at
+ * /api/v1/{schoolId}/payment/response-failure/{customReference}.
  *
  * The response is the flattened set of model attributes the JSP reads —
  * `status` (SUCCESS/ERROR at the transport level), `responseStatus`
@@ -19,7 +20,7 @@ import { withSmsAuth } from "@/lib/auth/session";
  * as-is (the controller inspects them to decide which gateway's
  * paymentResponseX() to run: pgReferneceForStripe, id +
  * pgReferneceForAirwallex, resourcePath + pgReferneceForAFS, pgReferneceForYoco
- * + yocoToken, pgRefernece, UNIQUEUUID, paymentGateway, ...). Callers pass the
+ * + yocoToken, pgRefernece, paymentGateway, ...). Callers pass the
  * page's raw searchParams straight through, so nothing is dropped.
  */
 
@@ -83,12 +84,12 @@ export async function getPaymentResponseSuccess(schoolUUID, endpointPath, params
 }
 
 /**
- * Failure: /payment/response-failure/{customReference}/{UNIQUEUUID}.
- * customReference and UNIQUEUUID are PATH segments; everything else
- * (paymentGateway, token, gateway signature fields, ...) rides in the query.
+ * Failure: /payment/response-failure/{customReference}. customReference is a PATH
+ * segment; everything else (paymentGateway, token, gateway signature fields, ...)
+ * rides in the query.
  */
-export async function getPaymentResponseFailure(schoolUUID, customReference, uniqueUuid, paramsString) {
-  const path = `payment/response-failure/${encodeURIComponent(customReference)}/${encodeURIComponent(uniqueUuid)}`;
+export async function getPaymentResponseFailure(schoolUUID, customReference, paramsString) {
+  const path = `payment/response-failure/${encodeURIComponent(customReference)}`;
   return getJson(`${await backendUrl(schoolUUID, path)}${buildQuery(paramsString)}`);
 }
 

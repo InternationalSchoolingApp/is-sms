@@ -34,7 +34,7 @@ const SEGMENT_TO_STEP_KEY = {
 function WizardFrame({ children }) {
   const { school, program } = useParams();
   const segment = useSelectedLayoutSegment();
-  const { status, session, context, logoUrl, ready } = useEnrollmentContext();
+  const { status, session, context, logoUrl, rootcss, ready } = useEnrollmentContext();
 
   // Set tab title from the wizard's own session — the root layout's PageTitle
   // depends on the server-rendered session prop which can be stale when the
@@ -85,6 +85,7 @@ function WizardFrame({ children }) {
     <EnrollmentWizardShell
       schoolName={context.schoolName}
       logoUrl={logoUrl}
+      rootcss={rootcss}
       context={context}
       currentStepKey={currentStepKey}
       plain={plain}

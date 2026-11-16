@@ -291,7 +291,7 @@ function buildPlanOptions(fee, currencyCode) {
  * called when the primary action button is pressed.
  */
 
-export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEnrollmentCompleted, onBack, onSessionExpired, onOfflineSignup }) {
+export function AddStage3ReviewPayment({ context, userId, rollNo, onEnrollmentCompleted, onBack, onSessionExpired, onOfflineSignup }) {
   const reviewQuery = useStudentReviewDetails({
     context,
     userId,
@@ -309,7 +309,7 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
   const customPlan = context.customPaymentEnabled === true || reviewQuery.data?.customPaymentEnabled === true;
   const stageStatus = useSignupStageStatusPoll({
     context,
-    uniqueId,
+    studentUserId: userId,
     // Custom plans always return the backend's SSO redirect from stage-status;
     // polling it here would send the user straight back into this page forever.
     enabled: reviewQuery.isSuccess && !customPlan,
@@ -317,20 +317,23 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
   // Paid through the payment link in another browser: poll the thank-you API and switch to the thank-you view.
   const { parentId } = useParams();
   const { data: authSession } = useSession();
+  // The backend validates both session fields as the caller's numeric USER.id.
+  // uniqueId is a UUID and makes the poll look like an unauthorized request.
+  const callerUserId = authSession?.studentUserId ?? authSession?.userId;
   useEffect(() => {
-    if (!uniqueId || !parentId || !authSession?.uniqueId) return undefined;
+    if (!userId || !parentId || !callerUserId) return undefined;
     const timer = setInterval(async () => {
       const res = await getAddEnrollmentThankYou(authSession.schoolUUID, {
         parentId,
-        sessionUserId: authSession.userId,
-        sessionUniqueId: authSession.uniqueId,
-        childUniqueId: uniqueId,
+        sessionUserId: callerUserId,
+        sessionUniqueId: callerUserId,
+        childUserId: userId,
       }).catch(() => null);
       if (res?.status === "1" && isFirstPayment(res.data)) onEnrollmentCompleted?.(true);
     }, 5000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uniqueId, parentId, authSession?.uniqueId]);
+  }, [userId, parentId, authSession?.schoolUUID, callerUserId]);
   const paymentOption = useShowPaymentOption({ context, userId });
   const choosePlan = useChoosePaymentPlan({ context, userId });
   const submitApplication = useSubmitApplication({ context, userId });
@@ -338,7 +341,7 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
   const gatewayOptions = usePaymentGatewayOptions({ context });
   const invokeGateway = useInvokePaymentGateway({ context });
   const airwallexMethods = useAirwallexPaymentMethods({ context });
-  const offlinePayment = useOfflinePayment({ context, uniqueId });
+  const offlinePayment = useOfflinePayment({ context, studentUserId: userId });
 
   const countryOptions = useAddCountryOptions(context);
   const [notice, setNotice] = useState(null);
@@ -372,7 +375,15 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
 
   const data = reviewQuery.data?.status === STATUS_SUCCESS ? reviewQuery.data : null;
   const failure = reviewQuery.data && reviewQuery.data.status !== STATUS_SUCCESS ? reviewQuery.data : null;
-  const showPaymentOption = paymentOption.data;
+  // Mirrors the backend's own gate exactly (SignupStudentUtil#getStudentReivewDetails:
+  // `if (SHOW_PAYMENT_AT_ENROLLMENT == Y || customPaymentEnabled)`), rather than the
+  // separate get-commission-pay-by/SHOW_PAYMENT_OPTION flag (a different, legacy
+  // per-school setting that doesn't track the real per-referral-code partner
+  // entity this endpoint gates on — a B2B/partner school with its own payment
+  // handling showed "Continue to Pay" with no plan to choose because of that
+  // mismatch). feePaymentDetailsResponse is only ever present when the backend
+  // decided payment-at-enrollment applies, so its presence IS the answer.
+  const showPaymentOption = data ? (data.feePaymentDetailsResponse || data.customPaymentEnabled ? "Y" : "N") : undefined;
   const busy =
     reviewQuery.isFetching ||
     choosePlan.isPending || submitApplication.isPending || proceedToDashboard.isPending || gatewayOptions.isPending || airwallexMethods.isPending || invokeGateway.isPending;
@@ -786,11 +797,11 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
     }
   }
 
-  if (reviewQuery.isLoading || paymentOption.isLoading) {
+  if (reviewQuery.isLoading) {
     return (
       <div className="mt-6 grid gap-x-8 gap-y-8 lg:grid-cols-[555fr_723fr]" aria-busy="true">
         <ReviewDetailsSkeleton />
-        {paymentOption.data !== "N" && <PaymentOptionsSkeleton />}
+        <PaymentOptionsSkeleton />
         <FullScreenLoader />
       </div>
     );
@@ -876,10 +887,8 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
           <StudentInlineEdit
             context={context}
             userId={userId}
-            uniqueId={uniqueId}
             rollNo={rollNo}
             student={{ ...student, ...(isDualDiplomaProgram ? school : {}) }}
-            rollNo={rollNo}
             standardId={course?.standardId}
             onSaved={(fields) => finishEdit("student", fields)}
             onCancel={() => setEditing(null)}
@@ -1061,9 +1070,7 @@ export function AddStage3ReviewPayment({ context, userId, uniqueId, rollNo, onEn
               Back
             </Button>
           )}
-          {paymentOption.isLoading ? (
-            <p className="text-sm text-slate-500">Loading…</p>
-          ) : paymentPending && paymentUnderReview ? null : paymentPending ? (
+          {paymentPending && paymentUnderReview ? null : paymentPending ? (
             <Button type="button" onClick={confirmAndPay} disabled={busy || !!editing} className="rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90">
               {busy ? "Please wait…" : "Continue to Pay"}
             </Button>
