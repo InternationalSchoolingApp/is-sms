@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { format, getDay, isSameMonth } from "date-fns";
 import { BookOpen, CalendarRange, Check, ChevronRight, Flag, PartyPopper, Smile } from "lucide-react";
 import { CLUE_RING, K5_PRIMARY_BTN, PlanHeader, PlanTile, StatusPills } from "@/components/k5/home/k5Bits";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { getCourseColor, getMonthGridDays } from "@/utils/calendarEvents";
 import {
   CLUE_COLORS as C,
@@ -134,6 +135,7 @@ const NEXT_HEAD = { background: C.upcoming, boxShadow: "0 4px 0 #A16207", color:
 
 /** Week plan (mockup My Week): seven day columns, Monday to Sunday; tap a day to open it. */
 export function WeekPlan({ keys, todayKey, selectedKey, days, courseRegistry, clue, isSelfStudy, onSelect, onOpenDay, onOpenEvent }) {
+  const { isHigh } = useDashboardContext();
   // Like the month: tapping a day (its head, a class, a pill or the free card) picks it and brings the
   // summary under the grid into view. The summary's items open the class / activity / assignment.
   const panelRef = useRef(null);
@@ -213,7 +215,7 @@ export function WeekPlan({ keys, todayKey, selectedKey, days, courseRegistry, cl
                     {isSelfStudy ? <BookOpen className="h-[34px] w-[34px]" aria-hidden="true" /> : <FreeBalloon muted={isPast} />}
                     No classes!
                     {/* A day that is over has no games to invite to: only the Course work day line of a Self-Study student stays. */}
-                    {(isSelfStudy || !isPast) && <span className="text-xs font-extrabold">{isSelfStudy ? "Course work day" : "Tap to play a game"}</span>}
+                    {(isSelfStudy || !isPast) && <span className="text-xs font-extrabold">{isSelfStudy ? "Course work day" : isHigh ? "Open brain games" : "Tap to play a game"}</span>}
                   </button>
                 )}
               </div>

@@ -35,7 +35,7 @@ function GameTile({ game, onPlay, locked }) {
  * running game goes back to the picker (the live-class dialog opens over it, see StudentHomeK5).
  * `past`: the day is already over - the games are locked for it too, with its own note.
  */
-export function K5Games({ locked = false, past = false }) {
+export function K5Games({ locked = false, past = false, pending = false }) {
   const [gameId, setGameId] = useState(null);
   const [score, setScore] = useState(0);
   const [round, setRound] = useState(0);
@@ -72,7 +72,11 @@ export function K5Games({ locked = false, past = false }) {
             <span className="flex flex-col gap-0.5">
               <span className="font-k5-display text-lg font-semibold">Games are locked</span>
               <span className="text-[15px] font-bold leading-snug">
-                {past ? "This day is over. Pick today or a day to come to play." : "Your class is live right now! Join it first. The games open again when your class is over."}
+                {past
+                  ? "This day is over. Pick today or a day to come to play."
+                  : pending
+                    ? "You have a class today. The games open when all of today's classes are over."
+                    : "Your class is live right now! Join it first. The games open again when your class is over."}
               </span>
             </span>
           </div>

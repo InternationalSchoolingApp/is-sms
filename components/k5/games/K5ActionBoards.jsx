@@ -42,7 +42,8 @@ export function BalloonBoard({ onScore }) {
   const pop = (i) => {
     if (popped[i]) return;
     onScore();
-    if (preferences.speech !== "off") playPop();
+    // The pop is a game sound, not Pico's voice: muting Pico (speech "off") must not silence it. Its own switch: gameSound.
+    if (preferences.gameSound !== "off") playPop();
     setPopped((p) => ({ ...p, [i]: true }));
     setFx(xs[i]);
     later(() => setFx(null), 600);

@@ -63,6 +63,30 @@ export function noClassReason(key, day, { isSelfStudy, firstName }) {
   return { kind: "free", title: "No classes!", text: `There are no classes today. Enjoy your free day${firstName ? `, ${firstName}` : ""}!` };
 }
 
+/** The two event types that count as a class for the games: 1:1 / doubt sessions and batch classes. Nothing else does. */
+export const isGameClass = (event) => event?.eventType === "STUDENT_DOUBT_SESSION" || event?.eventType === "BATCH";
+
+/**
+ * May the games be opened for `dateKey`? { locked, reason } with reason "live" | "pending" | "past" | "classes" | null.
+ * Applied in this order (only isGameClass events count as classes):
+ *   1. a class is live right now (today)             -> locked on every date
+ *   2. a class today has not finished yet            -> locked on every date
+ *   3. the selected day is already over              -> locked (past days never open)
+ *   4. the selected day is a holiday                 -> open (each day of a holiday period has its own holiday entry)
+ *   5. the selected day has a class                  -> locked (open only for a day without a class)
+ *   6. otherwise (no class on the selected day)      -> open for that day only
+ */
+export function gameAccess(days, dateKey, todayKey) {
+  const todays = dayAt(days, todayKey).classes.filter(isGameClass);
+  if (todays.some((c) => c.k5Status === "live")) return { locked: true, reason: "live" };
+  if (todays.some((c) => c.k5Status !== "done")) return { locked: true, reason: "pending" };
+  if (dateKey < todayKey) return { locked: true, reason: "past" };
+  const day = dayAt(days, dateKey);
+  if (day.holidays.length) return { locked: false, reason: null };
+  if (day.classes.some(isGameClass)) return { locked: true, reason: "classes" };
+  return { locked: false, reason: null };
+}
+
 /** Short summary for a day (month summary bar, tomorrow card). */
 export function daySummary(key, day, todayKey, { isSelfStudy }) {
   const parts = [];

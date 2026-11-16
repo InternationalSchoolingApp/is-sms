@@ -19,8 +19,9 @@ const OTHER_POPUPS = '[data-blocking-popup], [data-slot="dialog-content"], dialo
 // A welcome that was cancelled by something other than the student (React Strict Mode, a route change) is tried again, a few times.
 const WELCOME_TRIES = 3;
 
-// The 8 tips of the mockup tour; `pin` is the data-pin of the element the buddy spotlights.
-// A tip whose element is not on the page (no live class right now) is skipped.
+// The tips of the home tour (the mockup's 8 plus inbox, LMS, announcements, news, diary, sibling, profile); `pin` is the
+// data-pin of the element the buddy spotlights. A tip whose element is not on the page (no live class right now, no
+// sibling card, the header buttons on a phone) is skipped.
 // `liveName` is the title of the class that is live right now (real data), when there is one.
 // `welcome`: the very first tour of this student - the buddy also welcomes them to the school (text: constant/picoModules.js).
 function tourSteps(firstName, buddyName, liveName, welcome, schoolName) {
@@ -31,15 +32,23 @@ function tourSteps(firstName, buddyName, liveName, welcome, schoolName) {
         ? picoWelcomeText({ firstName, schoolName, buddyName, tour: true })
         : `Hi${firstName ? ` ${firstName}` : ""}! I'm ${buddyName}, your school buddy. Tap Next and I'll show you around!`,
     },
-    
     { pin: "calendar", text: `This is your calendar, where all your classes and activities will appear. Click on an item to complete your coursework or join a class.` },
+    { pin: "prevnext", text: "Click on the arrows to view your plan for different days." },
     { pin: "live", text: `${liveName ? `Your ${liveName} class` : "Your class"} is live right now! Tap the green Join class button to go in.` },
     { pin: "mini", text: "This little calendar shows the whole month. A dot under a day means something is planned." },
     { pin: "views", text: "Tap Today, Week or Month to see your plans in different ways." },
     { pin: "look", text: "Tap the palette button to pick your favorite color, night mode, letters and text size!" },
     { pin: "clues", text: "Color clues tell you what each box means. Tap a clue and I'll explain it!" },
-    { pin: "side", text: "Use the side menu to book classes, see your teacher, join clubs and more. Hold and drag a button to move your favorites to the top!" },
+    { pin: "lms", text: "Click here to go to your Learning Management System (LMS). This is where you learn, complete your assignments, take quizzes, and appear for exams." },
+    { pin: "inbox", text: "This is your inbox. Check here regularly for emails and other communications from your school." },
     { pin: "msg", text: "Need help? Tap the green Talk to us button to chat with us!" },
+    { pin: "announcements", text: "This is the announcements section. The school shares updates about events, activities, clubs, and holidays here. Don't miss out!" },
+    { pin: "news", text: "Check here for the latest developments and updates in education." },
+    { pin: "diary", text: "This is your School Diary, where you can find important updates about your calendar and coursework from your teachers or the school." },
+    { pin: "sibling", text: "Have another sibling to enroll? Click here to get started!" },
+    { pin: "profile", text: "Click here to go to your profile. Keep your personal details up to date, share more about yourself with the school, and change your password whenever needed." },
+    { pin: "side", text: "Use the side menu to book classes, see your teacher, join clubs and more. Hold and drag a button to move your favorites to the top!" },
+    
   ];
 }
 const MOBILE_QUERY = "(max-width: 760px)";
@@ -50,10 +59,21 @@ const subscribeMobile = (callback) => {
 };
 const isMobileView = () => window.matchMedia(MOBILE_QUERY).matches;
 const pinEl = (pin) => (pin && typeof document !== "undefined" ? document.querySelector(`[data-pin="${pin}"]`) : null);
-const onPage = (pin) => !pin || Boolean(pinEl(pin));
+// The header buttons move into the "More" menu on a phone (display: none there): a tip about one is skipped, not shown without its spotlight.
+const SKIP_WHEN_HIDDEN = new Set(["lms", "inbox", "profile"]);
+const onPage = (pin) => {
+  if (!pin) return true;
+  const el = pinEl(pin);
+  if (!el) return false;
+  if (SKIP_WHEN_HIDDEN.has(pin)) {
+    const r = el.getBoundingClientRect();
+    return r.width > 0 || r.height > 0;
+  }
+  return true;
+};
 
 // Elements that never scroll (fixed chrome) — no page scroll before spotlighting them.
-const FIXED_PINS = new Set(["side", "msg", "look"]);
+const FIXED_PINS = new Set(["side", "msg", "look", "lms", "inbox", "profile", "announcements", "news", "diary"]);
 
 // A dialog (look, Get the App, live popup, joining a class...) or the opened side menu is on top:
 // the spotlight steps aside until it is gone.

@@ -1,6 +1,8 @@
 "use client";
 
+import { HighGames } from "@/components/k5/games/HighGames";
 import { K5Games } from "@/components/k5/games/K5Games";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { addDays, format } from "date-fns";
 import { CalendarDays, Check, ChevronRight, Clock, Flag, PartyPopper, Smile, Star, Video } from "lucide-react";
 import { CLUE_RING, K5_PRIMARY_BTN, PlanHeader, PlanTile, StatusPills, SubjectTile } from "@/components/k5/home/k5Bits";
@@ -11,6 +13,7 @@ import {
   countStatuses,
   dayAt,
   dayKey,
+  gameAccess,
   initials,
   isWeekendKey,
   keyToDate,
@@ -213,6 +216,7 @@ function TomorrowCard({ dateKey, days, isSelfStudy, onPeek }) {
  * are no classes, and a "Tomorrow" card that peeks at the next day.
  */
 export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStudy, firstName, onJoin, onOpen, onPeek, onShowCalendar }) {
+  const { isHigh } = useDashboardContext();
   const day = dayAt(days, dateKey);
   const date = keyToDate(dateKey);
   const isToday = dateKey === todayKey;
@@ -220,12 +224,10 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
     (a, b) => (a.e.startZoned?.getTime() || 0) - (b.e.startZoned?.getTime() || 0),
   );
   const nClasses = day.classes.length;
-  // Games are locked only while one of today's classes is live (the student must go to it): a free day picked
-  // from the calendar then shows them locked. With no live class right now — nothing today, classes still to come,
-  // or all done — they stay open. (The Middle mockup locks every day but today; the product rule is "live class".)
-  // A day that is already over never opens the games either.
+  // Games: a live or still-to-come class today (STUDENT_DOUBT_SESSION / BATCH) locks them on every date, a day that is
+  // already over never opens them; see gameAccess (utils/k5Calendar.js) for the full order.
   const dayOver = dateKey < todayKey;
-  const gamesLocked = dayOver || dayAt(days, todayKey).classes.some((c) => c.k5Status === "live");
+  const access = gameAccess(days, dateKey, todayKey);
   const subtitle = nClasses ? `${nClasses} class${nClasses === 1 ? "" : "es"}${isToday ? " today" : ""}` : "No classes";
   // The dotted "now" line goes right before the first item that has not finished yet.
   const nowIndex = isToday ? items.findIndex((it) => it.e.k5Status !== "done") : -1;
@@ -294,7 +296,8 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
       ) : (
         <>
           <NoClassDay reason={noClassReason(dateKey, day, { isSelfStudy, firstName })} isToday={isToday} onOpen={day.holidays.length ? () => onOpen(day.holidays[0]) : undefined} />
-          <K5Games locked={gamesLocked} past={dayOver} />
+          {/* Grade 9–12 has its own "Brain Games" (High.dc.html); the other looks share the K–5 games. */}
+          {isHigh ? <HighGames locked={access.locked} past={dayOver} /> : <K5Games locked={access.locked} past={dayOver} pending={access.reason === "pending"} />}
         </>
       )}
 

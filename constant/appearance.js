@@ -24,6 +24,7 @@ export const APPEARANCE_OPTIONS = {
   voiceSpeed: ["slow", "normal", "fast"],
   speech: ["on", "off"],
   buddyEnabled: ["on", "off"],
+  gameSound: ["on", "off"],
 };
 
 // Decision 08: Light by default (System stays available in the dialog).
@@ -46,6 +47,7 @@ export const DEFAULT_APPEARANCE = {
   voiceSpeed: "normal",
   speech: "on",
   buddyEnabled: "on",
+  gameSound: "on",
 };
 
 // School policy (admin CONFIGURATION keys arrive in Phase 4). Customization off = defaults
