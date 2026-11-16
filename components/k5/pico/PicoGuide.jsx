@@ -29,8 +29,10 @@ function tourSteps(firstName, buddyName, liveName, welcome, schoolName) {
       pin: null,
       text: welcome
         ? picoWelcomeText({ firstName, schoolName, buddyName, tour: true })
-        : `Hi${firstName ? ` ${firstName}` : ""}! I'm ${buddyName}, your calendar buddy. Tap Next and I'll show you around!`,
+        : `Hi${firstName ? ` ${firstName}` : ""}! I'm ${buddyName}, your school buddy. Tap Next and I'll show you around!`,
     },
+    
+    { pin: "calendar", text: `This is your calendar, where all your classes and activities will appear. Click on an item to complete your coursework or join a class.` },
     { pin: "live", text: `${liveName ? `Your ${liveName} class` : "Your class"} is live right now! Tap the green Join class button to go in.` },
     { pin: "mini", text: "This little calendar shows the whole month. A dot under a day means something is planned." },
     { pin: "views", text: "Tap Today, Week or Month to see your plans in different ways." },

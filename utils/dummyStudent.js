@@ -12,6 +12,8 @@
  * — see docs/migration/dummy-student-mode-plan.md.
  */
 
+import { toZonedTime } from "date-fns-tz";
+import { DUMMY_STUDENT_TIMEZONE } from "@/utils/calendarEvents";
 import { ELEMENTARY_GRADE_KEYS, GRADE_CONFIG, GRADE_KEYS, gradeKeyByLabel, gradeKeyByStandardId } from "@/utils/gradeBand";
 
 const SUBJECT_ROWS = {
@@ -56,7 +58,6 @@ const DUMMY_CLUB_ANNOUNCEMENT_POOL = [
   { name: "Music Club", category: "The Music Club", focus: "singing, rhythm, composition, and performance practice" },
   { name: "The Aurelian Club", category: "The STEM Club", focus: "science, technology, engineering, and math projects" },
 ];
-const DUMMY_STUDENT_TIMEZONE = "America/New_York";
 const ASSIGNMENT_KINDS = ["Homework", "Worksheet", "Practice Set", "Reading Assignment", "Project Task", "Quiz Preparation", "Lab Report", "Essay Draft"];
 const ACTIVITY_ROWS = { K: 2, 1: 2, 2: 2, 3: 2, 4: 2, 5: 2, 6: 2, 7: 2, 8: 2, 9: 2, 10: 2, 11: 2, 12: 2 };
 const DUMMY_ACTIVITY_NAMES = ["Meet Your Classmates", "Creative Reading Circle", "Math Puzzle Challenge", "Science Discovery Lab", "Storytelling Workshop", "Art and Ideas Club", "Brain Games Hour", "Presentation Practice"];
@@ -158,9 +159,11 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
   const dbRow = rowMatches ? row : null;
   const hasDemoContext = DEMO_PARAMS.some((name) => param(name));
 
+  // "Now" is the dummy student's own clock: America/New_York wall-clock time (so a class made "live now" is live in the New
+  // York calendar the dashboard shows, whatever zone the browser is in). The Date's local fields hold those New York values.
   function baseDate() {
     const value = param("dummyDate");
-    const now = new Date();
+    const now = toZonedTime(new Date(), DUMMY_STUDENT_TIMEZONE);
     if (!value) return now;
     if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
       const [y, m, d] = value.split("-").map(Number);
@@ -224,6 +227,14 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
   }
 
   const userName = () => safeTeacherName(dbRow?.studentName) || param("demoStudentName") || fallbackName || "Demo Student";
+  // The learning program the counselor saved on the demo row (its code, e.g. SCHOLARSHIP = Self Study), else
+  // ?demoLearningProgram, else One to One - it decides Self-Study content and the grade look like a real student's.
+  const registrationType = (() => {
+    const code = String(dbRow?.learningProgram || param("demoLearningProgram") || "")
+      .trim()
+      .toUpperCase();
+    return /^[A-Z_]+$/.test(code) ? code : "ONE_TO_ONE";
+  })();
 
   // --- My Log in History (legacy dummyStudentLoginHistoryResponse) ---
   function loginHistory() {
@@ -1145,7 +1156,7 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
       showBatchImpAnnouncementModal: "N",
       showAcademicYearSelectionModel: "N",
       showSystemTrainingSelectionModel: "N",
-      registrationType: "ONE_TO_ONE",
+      registrationType,
       showGraduationCeremonyPopup: "N",
       graduationCeremonyRegistrationDeadline: "",
       showBatchReEnrollmentPopUp: "N",
@@ -1161,7 +1172,8 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
       standardId: grade.standardId,
       email: "demo.student@test.local",
       videoUrl: "N",
-      registrationType: "ONE_TO_ONE",
+      userTimezone: DUMMY_STUDENT_TIMEZONE,
+      registrationType,
       showGraduationCeremonyPopup: "N",
       graduationCeremonyRegistrationDeadline: "",
     };

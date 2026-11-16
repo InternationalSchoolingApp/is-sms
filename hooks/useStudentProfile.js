@@ -34,8 +34,8 @@ export function useStudentProfile({ schoolUUID, userId }) {
   });
 
   const dummyAnswer = useMemo(
-    () => (dummy.enabled ? createDummyProfileAnswer({ name: context?.userName || "", schoolName: context?.schoolName || "" }) : null),
-    [dummy.enabled, context?.userName, context?.schoolName],
+    () => (dummy.enabled ? createDummyProfileAnswer({ name: context?.userName || "", schoolName: context?.schoolName || "", row: dummy.row }) : null),
+    [dummy.enabled, context?.userName, context?.schoolName, dummy.row],
   );
   const data = dummy.enabled ? dummyAnswer : query.data;
   const model = useMemo(() => (data ? { ...buildProfileModel(data), demo: dummy.enabled } : null), [data, dummy.enabled]);

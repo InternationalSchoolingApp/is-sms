@@ -8,13 +8,12 @@ import { useClubModule } from "@/hooks/useClubModule";
 import { useModuleRights } from "@/hooks/useModuleRights";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CLUBS } from "@/constant/Clubs";
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { K5Club, K5ClubDoneDialog } from "@/components/k5/pages/K5Club";
 import { picoSay } from "@/components/k5/pico/picoEvents";
 
 // Backend static assets (legacy PATH_FOLDER_IMAGE2).
-const assetUrl = (file) => `${resolveBackendOrigin()}/static/theme2/images/${file}`;
+const assetUrl = (file) => `/backend-static-assets/images/${file}`;
 
 /**
  * One club page (e.g. Language Club > Spanish) — legacy clubsCommonContent.js getClubsCommonCard:

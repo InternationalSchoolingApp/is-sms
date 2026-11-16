@@ -9,7 +9,7 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useStudentAttendanceDetails } from "@/hooks/useStudentAttendanceDetails";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
-import { getBrowserTimezone } from "@/utils/calendarEvents";
+import { DUMMY_STUDENT_TIMEZONE } from "@/utils/calendarEvents";
 import {
   DATE_FILTERS,
   STATUS_OPTIONS,
@@ -88,7 +88,7 @@ export function K5AttendanceDetails({ status, onStatusChange }) {
   const dummy = useDummyStudent();
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId });
   // The student's configured timezone when it is valid, else Asia/Singapore (a valid one is never overwritten).
-  const timeZone = resolveTimeZone(dummy.enabled ? getBrowserTimezone() : dashboardData.userTimezone);
+  const timeZone = resolveTimeZone(dummy.enabled ? DUMMY_STUDENT_TIMEZONE : dashboardData.userTimezone);
   const today = todayYmd(timeZone);
 
   const [dateFilter, setDateFilter] = useState("MONTH");

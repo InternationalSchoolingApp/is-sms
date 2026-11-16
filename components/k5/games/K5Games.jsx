@@ -33,8 +33,9 @@ function GameTile({ game, onPlay, locked }) {
  * that run only in the browser: nothing is sent or saved, and leaving a game stops it.
  * `locked` (a class is live right now): the tiles are dimmed, a "Games are locked" note explains it, and a
  * running game goes back to the picker (the live-class dialog opens over it, see StudentHomeK5).
+ * `past`: the day is already over - the games are locked for it too, with its own note.
  */
-export function K5Games({ locked = false }) {
+export function K5Games({ locked = false, past = false }) {
   const [gameId, setGameId] = useState(null);
   const [score, setScore] = useState(0);
   const [round, setRound] = useState(0);
@@ -70,7 +71,9 @@ export function K5Games({ locked = false }) {
             </span>
             <span className="flex flex-col gap-0.5">
               <span className="font-k5-display text-lg font-semibold">Games are locked</span>
-              <span className="text-[15px] font-bold leading-snug">Your class is live right now! Join it first. The games open again when your class is over.</span>
+              <span className="text-[15px] font-bold leading-snug">
+                {past ? "This day is over. Pick today or a day to come to play." : "Your class is live right now! Join it first. The games open again when your class is over."}
+              </span>
             </span>
           </div>
         )}

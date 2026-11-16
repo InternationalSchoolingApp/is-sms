@@ -32,7 +32,7 @@ function ThreadList({ threads, chatWith, onSelect, sourceTimezone, endRef, loadi
           <button
             type="button"
             onClick={() => onSelect(thread.threadId)}
-            className="flex w-full cursor-pointer items-center gap-3 rounded-[22px] border-[3px] border-[#D8C7F7] bg-white p-3 text-start text-[#2B2B3A] shadow-[0_3px_0_#D8C7F7]"
+            className="flex w-full cursor-pointer items-center gap-3 rounded-[22px] border-[3px] border-[#D8C7F7] bg-[#FFFFFF] p-3 text-start text-[#2B2B3A] shadow-[0_3px_0_#D8C7F7]"
           >
             <DiaryAvatar name={thread.teacherName} src={thread.profilePic} className="h-11 w-11 bg-[#9C6BF0]" initialsClassName="text-[15px] font-black text-white" />
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -81,7 +81,7 @@ function Note({ message, courseName, schoolName, parentName, chatWith, viewerUse
         />
       )}
       <div
-        className={`flex max-w-[82%] flex-col gap-[3px] rounded-[18px_18px_18px_4px] border-2 px-3 pb-1.5 pt-2 text-[#2B2B3A] ${isOwn ? "border-[#BFD7F7] bg-[#EAF3FF] shadow-[0_2px_0_#BFD7F7]" : school ? "border-[#C9DDF7] bg-white shadow-[0_2px_0_#C9DDF7]" : "border-[#D8C7F7] bg-white shadow-[0_2px_0_#D8C7F7]"}`}
+        className={`flex max-w-[82%] flex-col gap-[3px] rounded-[18px_18px_18px_4px] border-2 px-3 pb-1.5 pt-2 text-[#2B2B3A] ${isOwn ? "border-[#BFD7F7] bg-[#EAF3FF] shadow-[0_2px_0_#BFD7F7]" : school ? "border-[#C9DDF7] bg-[#FFFFFF] shadow-[0_2px_0_#C9DDF7]" : "border-[#D8C7F7] bg-[#FFFFFF] shadow-[0_2px_0_#D8C7F7]"}`}
       >
         {!isOwn && (
           <span className="text-xs font-black text-[#6E44C9]">
@@ -226,7 +226,7 @@ export function K5DiaryPanel({ sessionUserId, schoolName, onClose }) {
                   role="tab"
                   aria-selected={on}
                   onClick={() => setChatWith(option.value)}
-                  className={`flex min-h-[46px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-full border-[3px] font-k5-display text-[17px] font-semibold ${on ? "border-[#6E44C9] bg-[#6E44C9] text-white shadow-[0_3px_0_#4E2C9A]" : "border-[#D8C7F7] bg-white text-[#0B2447]"}`}
+                  className={`flex min-h-[46px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-full border-[3px] font-k5-display text-[17px] font-semibold ${on ? "border-[#6E44C9] bg-[#6E44C9] text-white shadow-[0_3px_0_#4E2C9A]" : "border-[#D8C7F7] bg-[#FFFFFF] text-[#0B2447]"}`}
                 >
                   <span aria-hidden="true" className="text-xl">
                     {option.value === "SCHOOL" ? "🏫" : "👩‍🏫"}
