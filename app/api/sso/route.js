@@ -186,6 +186,10 @@ async function handleSsoHandoff(request) {
       email: exchanged.email || "",
       schoolUUID: exchanged.schoolUUID || schoolUUID,
       schoolName: schoolName || exchanged.schoolName || "",
+      // The counselor's dummy student (view-as link, DEMO_USER=Y) opens the dashboard in dummy mode with its demo data and
+      // grade look, like the legacy isDemoUser. The role id lets the sidebar menu load when the dashboard details have none.
+      demoUser: String(exchanged.demoUser || "").toUpperCase() === "Y",
+      roleId: Number.isInteger(Number(exchanged.roleId)) && Number(exchanged.roleId) > 0 ? Number(exchanged.roleId) : null,
       backend,
       signedInAt: Date.now(),
     },

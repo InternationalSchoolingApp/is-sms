@@ -27,6 +27,18 @@ export function formatDiaryDate(value, sourceTimezone, viewerTimezone) {
   return instant ? formatInTimeZone(instant, viewerZone(viewerTimezone), "EEE, dd MMM, yyyy hh:mm a") : "";
 }
 
+/** The chip above a day's notes (mockup diary): "Wednesday, October 21", with "Today · " in front for today. In the viewer's zone. */
+export function diaryDayChipLabel(instant, viewerTimezone, now = new Date()) {
+  const zone = viewerZone(viewerTimezone);
+  const text = formatInTimeZone(instant, zone, "EEEE, MMMM d");
+  return formatInTimeZone(instant, zone, "yyyy-MM-dd") === formatInTimeZone(now, zone, "yyyy-MM-dd") ? `Today · ${text}` : text;
+}
+
+/** The day key (yyyy-MM-dd, viewer's zone) of a moment: notes with the same key sit under one chip. */
+export function diaryDayKey(instant, viewerTimezone) {
+  return formatInTimeZone(instant, viewerZone(viewerTimezone), "yyyy-MM-dd");
+}
+
 /** Legacy formatDiaryDate() of the floating date: Today, Yesterday, the weekday inside a week, else "Mon, 02 Nov". */
 export function diaryDayLabel(instant, viewerTimezone, now = new Date()) {
   const zone = viewerZone(viewerTimezone);

@@ -188,7 +188,7 @@ function ThreadView({ threadId, sessionUserId, schoolName }) {
           }}
         />
         <Bookmark aria-hidden="true" className="absolute -top-1 right-4 h-7 w-5 fill-primary text-primary" />
-        <FloatingDateChip label={floatingDate.label} visible={floatingDate.visible} className="bg-primary text-white" />
+        {/* <FloatingDateChip label={floatingDate.label} visible={floatingDate.visible} className="bg-primary text-white" /> */}
 
         <div className="space-y-4">
           {messagesQuery.isFetchingNextPage && <DiarySkeleton rows={1} />}

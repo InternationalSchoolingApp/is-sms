@@ -45,9 +45,7 @@ export function DiaryAvatar({ name, src, className = "", initialsClassName = "" 
 export function FloatingDateChip({ label, visible, className = "" }) {
   return (
     <div aria-hidden="true" className="pointer-events-none sticky top-2 z-10 flex justify-center">
-      <span
-        className={`-mt-2 rounded-full px-3 py-1 text-xs font-bold shadow transition-opacity duration-300 ${visible && label ? "opacity-100" : "opacity-100"} ${className}`}
-      >
+      <span className={`-rotate-2 bg-[rgba(232,218,255,0.92)] px-4 py-1 text-[13px] font-black text-[#4E2C9A] shadow-[0_1px_0_rgba(0,0,0,0.06)] ${visible && label ? "opacity-100" : "opacity-0"} `}>
         {label}
       </span>
     </div>

@@ -362,6 +362,55 @@
 .k5-live-ring {
   animation: k5LiveRing 1.6s ease-in-out infinite;
 }
+/* Live dot (mockup .live-dot / liveDot): fades to a quarter and back every second. */
+@keyframes k5LiveDot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+.k5-live-dot {
+  animation: k5LiveDot 1s ease-in-out infinite;
+}
+/* A live item of the Today card: the mockup's liveRing pulse around the pill. */
+@keyframes k5LivePill {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(47, 123, 245, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(47, 123, 245, 0);
+  }
+}
+.k5-live-pill {
+  animation: k5LivePill 1.6s ease-in-out infinite;
+}
+/* The Join class button of a live class: the same ring around its own hard shadow (flat in the High look). */
+@keyframes k5LiveJoin {
+  0%,
+  100% {
+    box-shadow: var(--k5-join-base, 0 5px 0 var(--k5-grnD)), 0 0 0 0 rgba(47, 123, 245, 0.5);
+  }
+  50% {
+    box-shadow: var(--k5-join-base, 0 5px 0 var(--k5-grnD)), 0 0 0 10px rgba(47, 123, 245, 0);
+  }
+}
+.k5-live-join {
+  animation: k5LiveJoin 1.6s ease-in-out infinite;
+}
+[data-k5-high] .k5-live-join {
+  --k5-join-base: 0 0 0 0 transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+  .k5-live-join,
+  .k5-live-dot,
+  .k5-live-pill {
+    animation: none;
+  }
+}
 /* Tour spotlight (mockup .spothole): fades in, then slides between tips. */
 @keyframes k5SpotIn {
   from {

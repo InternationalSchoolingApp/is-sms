@@ -35,7 +35,7 @@ export function LiveClassAlert({ event, now, firstName, onJoin, onClose }) {
       {event && (
         <DialogContent showCloseButton={false} {...themeProps}>
           <div className="flex items-center justify-center gap-2.5 bg-k5-grn px-6 py-3 font-k5-display text-xl font-semibold tracking-[0.06em] text-white">
-            <span aria-hidden="true" className="block h-3.5 w-3.5 animate-pulse rounded-full bg-[#FFC531]" />
+            <span aria-hidden="true" className="block h-3.5 w-3.5 k5-live-dot rounded-full bg-[#FFC531]" />
             LIVE NOW
           </div>
 
