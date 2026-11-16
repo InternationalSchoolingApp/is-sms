@@ -1,6 +1,6 @@
-import { TeacherStepPlaceholder } from "@/components/teacher-registration/TeacherStepPlaceholder";
+import { TeacherProfessionalDetailsStep } from "./TeacherProfessionalDetailsStep";
 
-// Server Component route for teacher registration step 2. Placeholder body until the real screen is built.
+// Server Component route for teacher registration step 2 (Professional details).
 export default function TeacherProfessionalDetailsPage() {
-  return <TeacherStepPlaceholder step={2} title="Professional details" />;
+  return <TeacherProfessionalDetailsStep />;
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { withServiceKey, withSmsAuth } from "@/lib/auth/session";
+import { getAccountSession, withServiceKey, withSmsAuth } from "@/lib/auth/session";
 import { isRecaptchaRequired, verifyRecaptcha } from "@/lib/recaptcha";
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
@@ -128,4 +128,50 @@ export async function getTeacherBasicDetails(schoolUUID, userId) {
  */
 export async function saveTeacherBasicDetails(schoolUUID, request) {
   return postPayload(schoolUUID, "teacher/signup/save-basic-details", request);
+}
+
+/**
+ * Step 2 prefill: POST teacher/signup/get-teacher-academic-professional-details with { userId } (the signed-in
+ * teacher's own, otherwise 403 -> null). Success is status "1" with details.teacherDetails (qualification,
+ * specialization, experience, organization, job description, selectedGrades CSV, demo link, declaration, and the
+ * saved documents' name/URL keys) and `recordingUrls` (the saved demo recording, best effort).
+ */
+export async function getTeacherProfessionalDetails(schoolUUID, userId) {
+  return postPayload(schoolUUID, "teacher/signup/get-teacher-academic-professional-details", { userId });
+}
+
+/**
+ * The course lists of Step 2: POST teacher/signup/get-teacher-signup-subject-details with { userId }. Success carries
+ * details.subjectDetails: the three bands' selectable titles (elementryAllSubject, middleAllSubject, highAllSubject)
+ * and this teacher's saved selection (elementrySelectedSubject, middleSelectedSubject, highSelectedSubject).
+ */
+export async function getTeacherSubjectDetails(schoolUUID, userId) {
+  return postPayload(schoolUUID, "teacher/signup/get-teacher-signup-subject-details", { userId });
+}
+
+/**
+ * Step 2 save: POST teacher/signup/save-academic-professional-details with { authentication, data }. Success is
+ * `status === "1"`; every failure answers a message (and a statusCode that differs per failure).
+ */
+export async function saveTeacherProfessionalDetails(schoolUUID, request) {
+  return postPayload(schoolUUID, "teacher/signup/save-academic-professional-details", request);
+}
+
+/**
+ * Removes the signed-in teacher's uploaded document of one fileType: POST teacher/signup/delete-document. The caller's
+ * uniqueId is read from the session here, never taken from the browser. Success is `status === "1"`.
+ */
+export async function deleteTeacherDocument(schoolUUID, fileType) {
+  const session = await getAccountSession();
+  if (!session?.uniqueId || session.schoolUUID !== schoolUUID) return null;
+  const response = await fetch(
+    await backendUrl(schoolUUID, "teacher/signup/delete-document"),
+    await withSmsAuth({
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ uniqueId: session.uniqueId, fileType: String(fileType) }).toString(),
+      cache: "no-store",
+    })
+  );
+  return parseJsonResponse(response);
 }
