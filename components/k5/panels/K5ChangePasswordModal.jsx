@@ -42,7 +42,8 @@ function K5PasswordInput({ id, label, value, onChange, show, onToggle, autoCompl
   );
 }
 
-export function K5ChangePasswordModal({ onClose }) {
+/** forced: the dashboard's must-change prompt — no X, no closing by clicking outside; the Cancel button closes it (see ChangePasswordModal). */
+export function K5ChangePasswordModal({ onClose, forced = false }) {
   const { context } = useDashboardContext();
   const dummy = useDummyStudent();
   const [oldPw, setOldPw] = useState("");
@@ -91,7 +92,7 @@ export function K5ChangePasswordModal({ onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+    <div data-blocking-popup="" className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={forced ? undefined : onClose}>
       <div
         className="flex w-full max-w-[440px] flex-col overflow-hidden rounded-[26px] border-[3px] border-k5-ink bg-k5-card shadow-[0_6px_0_var(--k5-ink)]"
         onClick={(e) => e.stopPropagation()}
@@ -139,13 +140,26 @@ export function K5ChangePasswordModal({ onClose }) {
             <p className="m-0 font-k5-display text-xs font-bold text-k5-red">Passwords do not match.</p>
           )}
 
-          <button
-            type="submit"
-            disabled={!canSubmit}
-            className="mt-1 w-full cursor-pointer rounded-full border-none bg-k5-ac py-3 font-k5-display text-[15px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)] transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {busy ? "Changing…" : "Change Password"}
-          </button>
+          {/* Legacy changed-password form: Change and Cancel, then the note about the SMS / LMS passwords. */}
+          <div className="mt-1 flex justify-end gap-2">
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              className="cursor-pointer rounded-full border-none bg-k5-ac px-5 py-2.5 font-k5-display text-[15px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)] transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {busy ? "Changing…" : "Change"}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="cursor-pointer rounded-full border-none bg-k5-red px-5 py-2.5 font-k5-display text-[15px] font-semibold text-white shadow-[0_4px_0_#B91C1C]"
+            >
+              Cancel
+            </button>
+          </div>
+          <p className="m-0 text-center font-k5-display text-xs font-bold leading-snug text-k5-ink">
+            <b>Note:</b> The password will be updated for your School Management System (SMS). Your Learning Management System (LMS) password will remain the same.
+          </p>
         </form>
       </div>
     </div>

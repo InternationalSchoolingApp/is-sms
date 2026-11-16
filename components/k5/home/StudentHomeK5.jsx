@@ -13,6 +13,7 @@ import { GraduationCeremonyModal } from "@/components/dashboard/GraduationCeremo
 import { EventDetailModal } from "@/components/dashboard/calendar/EventDetailModal";
 import { JoinClassModal } from "@/components/dashboard/calendar/JoinClassModal";
 import { K5Toolbar } from "@/components/k5/home/K5Toolbar";
+import { K5PlanFilters } from "@/components/k5/home/K5PlanFilters";
 import { ColourClues } from "@/components/k5/home/ColourClues";
 import { CalendarPopup, MiniCalendar, MyCourses, TodayCard } from "@/components/k5/home/K5LeftColumn";
 import { DayPlan } from "@/components/k5/home/DayPlan";
@@ -24,8 +25,9 @@ import { getBrowserTimezone, resolveTimezone } from "@/utils/calendarEvents";
 import { classTitle, dayAt, dayKey, keyToDate, weekKeys } from "@/utils/k5Calendar";
 import { revealPlanTop } from "@/utils/k5Scroll";
 import { picoSay, setPicoLive } from "@/components/k5/pico/picoEvents";
+import { LIVE_ALERT_KEY } from "@/utils/liveAlertMemory";
+import { K5HomeLeftSkeleton, K5PlanSkeleton } from "@/components/k5/K5Skeletons";
 
-const LIVE_ALERT_KEY = "is-k5-live-alert:";
 
 
 // "October 9, 16 and 28" for days of one month (a long list stops at 4 + "N more days").
@@ -83,8 +85,9 @@ const isJoinable = (event) => event.eventKind === "class" && Boolean(event.url) 
  * the existing calendar, laid out as the Playful.dc.html planner: toolbar, colour clues,
  * a left column (mini calendar, Today, My Courses) and the Day / Week / Month plan.
  * The onboarding video and graduation popups behave exactly as on the existing home.
+ * holdProfilePopup: the "Complete Your Profile" popup waits (the contact check comes first, StudentHomeForGrade.jsx).
  */
-export function StudentHomeK5() {
+export function StudentHomeK5({ holdProfilePopup = false }) {
   const { context } = useDashboardContext();
   const dummy = useDummyStudent();
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
@@ -108,7 +111,7 @@ export function StudentHomeK5() {
           studentEmail={dashboardData.studentEmail}
         />
       )}
-      <K5CompleteProfileModal />
+      {!holdProfilePopup && <K5CompleteProfileModal />}
     </>
   );
 }
@@ -141,7 +144,7 @@ function K5Planner({ timezone }) {
 
   const open = (event) => (isJoinable(event) ? setJoiningEvent(event) : setDetailEvent(event));
 
-  // Live-class alert: until the student answers it, once per live class per session.
+  // Live-class alert: until the student answers it, once per live class per login (utils/liveAlertMemory.js).
   const liveNow = dayAt(days, todayKey).classes.find((c) => c.k5Status === "live" && c.url);
   const alertKey = liveNow ? `${LIVE_ALERT_KEY}${context?.userId}:${liveNow.id}` : null;
   const alertSeen = useSyncExternalStore(noSubscribe, () => readSession(alertKey), () => "1");
@@ -194,6 +197,8 @@ function K5Planner({ timezone }) {
         }}
       />
 
+      {!isPreK && <K5PlanFilters filters={model.filters} onToggle={model.toggleFilter} />}
+
       <div className="flex flex-wrap items-start gap-5">
         <div className="sticky top-[calc(var(--maintenance-banner-h,0px)+100px)] box-border flex max-h-[calc(100vh-120px)] min-w-0 flex-[1_1_300px] flex-col gap-4 overflow-y-auto pb-3 pr-1 [scrollbar-width:thin] max-[1100px]:static max-[1100px]:max-h-none max-[1100px]:overflow-visible">
           <MiniCalendar
@@ -203,14 +208,20 @@ function K5Planner({ timezone }) {
             onPick={openDayAndShow}
             onMonth={(dir) => model.setSelectedDate((d) => addMonths(d, dir))}
           />
-          <TodayCard todayKey={todayKey} days={days} />
-          <MyCourses courseRegistry={model.courseRegistry} courseVisibility={model.courseVisibility} onToggle={model.toggleCourseVisibility} />
+          {model.isLoading ? (
+            <K5HomeLeftSkeleton />
+          ) : (
+            <>
+              <TodayCard todayKey={todayKey} days={days} />
+              <MyCourses courseRegistry={model.courseRegistry} courseVisibility={model.courseVisibility} onToggle={model.toggleCourseVisibility} />
+            </>
+          )}
         </div>
 
         {/* Mobile (mockup .duo>[data-pin=plan]{order:-1}): the plan comes before the left column. */}
         <section ref={planRef} aria-label="My plans" data-pin="plan" className={`${K5_CARD} scroll-mt-[120px] @container box-border flex min-w-0 flex-[999_1_460px] flex-col gap-[18px] p-[22px] max-[760px]:order-first max-[560px]:p-3.5`}>
           {model.isLoading ? (
-            <p className="m-0 p-10 text-center text-lg font-extrabold text-k5-mut">Loading your plan…</p>
+            <K5PlanSkeleton />
           ) : model.isError ? (
             <p className="m-0 p-10 text-center text-lg font-extrabold text-k5-mut">Couldn&apos;t load your plan. Please try again shortly.</p>
           ) : view === "week" ? (
@@ -305,7 +316,7 @@ function AddSiblingsCard() {
       </span>
       <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-0.5">
         <h2 className="m-0 font-k5-display text-[22px] font-semibold leading-[1.2]">Have another child to enroll?</h2>
-        <p className="m-0 text-base font-extrabold leading-[1.4] text-k5-mut">Your details are already saved, so you only need to fill in your child's details.</p>
+        <p className="m-0 text-base font-extrabold leading-[1.4] text-k5-mut">Your details are already saved, so you only need to fill in your child&apos;s details.</p>
       </div>
       <button
         type="button"

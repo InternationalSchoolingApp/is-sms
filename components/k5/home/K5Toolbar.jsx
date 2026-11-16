@@ -50,12 +50,12 @@ export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPre
 
   return (
     <div className={`${K5_CARD} flex flex-wrap items-center gap-3 px-4 pb-3 pt-3.5`}>
-      <div className="flex items-center gap-2.5 rounded-[22px] bg-k5-yt px-2.5 py-1.5 max-[760px]:box-border max-[760px]:w-full max-[760px]:flex-nowrap max-[760px]:gap-2 max-[760px]:px-2">
+      <div className="k5h-tbox flex items-center gap-2.5 rounded-[22px] bg-k5-yt px-2.5 py-1.5 max-[760px]:box-border max-[760px]:w-full max-[760px]:flex-nowrap max-[760px]:gap-2 max-[760px]:px-2">
         <K5ClockIcon kind={weather ? kindOf(weather.code) : "sun"} night={night} className="max-[760px]:!h-11 max-[760px]:!w-11" />
         <div className="flex flex-none flex-col items-start whitespace-nowrap text-start">
           <span className="font-k5-display text-[26px] font-bold leading-none text-k5-ink max-[760px]:text-[22px]">{format(now, "h:mm a")}</span>
           <span className="font-k5-display text-base font-semibold leading-[1.2] text-k5-ink">{greeting(now.getHours())}</span>
-          <span className="text-[13px] font-extrabold text-k5-yx">{zoneLabel(timezone)}</span>
+          <span className="k5h-zone text-[13px] font-extrabold text-k5-yx">{zoneLabel(timezone)}</span>
         </div>
         <K5WeatherTile weather={weather} />
       </div>

@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { INBOX_TIP } from "@/utils/inbox";
 import { usePathname } from "next/navigation";
 import { ChevronRight, Volume2, VolumeX, X } from "lucide-react";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 import { useSpeech } from "@/components/k5/pico/useSpeech";
-import { BUDDIES } from "@/constant/appearance";
+import { BUDDIES, voiceOf } from "@/constant/appearance";
 import { PICO_SAY_EVENT, usePicoLive } from "@/components/k5/pico/picoEvents";
 import { CLUBS } from "@/constant/Clubs";
+import { preparePicoClips } from "@/utils/picoVoice";
 
 const TOUR_KEY = "is-k5-tour:";
 const noSubscribe = () => () => {};
@@ -23,9 +25,17 @@ function readLocal(key) {
 // The 8 tips of the mockup tour; `pin` is the data-pin of the element the buddy spotlights.
 // A tip whose element is not on the page (no live class right now) is skipped.
 // `liveName` is the title of the class that is live right now (real data), when there is one.
-function tourSteps(firstName, buddyName, liveName) {
+// `welcome`: the very first tour of this student — the buddy also welcomes them to the school (this replaces the old
+// "Hello {name}! Welcome to the ... Family!" popup of the dashboard).
+function tourSteps(firstName, buddyName, liveName, welcome, schoolName) {
+  const welcomeLine = schoolName ? `Welcome to the ${schoolName} Family!` : "Welcome!";
   return [
-    { pin: null, text: `Hi${firstName ? ` ${firstName}` : ""}! I'm ${buddyName}, your calendar buddy. Tap Next and I'll show you around!` },
+    {
+      pin: null,
+      text: welcome
+        ? `Hello${firstName ? ` ${firstName}` : ""}! ${welcomeLine} I'm ${buddyName}, your calendar buddy. Tap Next and I'll show you around!`
+        : `Hi${firstName ? ` ${firstName}` : ""}! I'm ${buddyName}, your calendar buddy. Tap Next and I'll show you around!`,
+    },
     { pin: "live", text: `${liveName ? `Your ${liveName} class` : "Your class"} is live right now! Tap the green Join class button to go in.` },
     { pin: "mini", text: "This little calendar shows the whole month. A dot under a day means something is planned." },
     { pin: "views", text: "Tap Today, Week or Month to see your plans in different ways." },
@@ -48,6 +58,8 @@ const PAGE_TIPS = {
   "student-progress-report": "Here’s how you’re doing in every course!",
   "progress-detail": "Tap View to open a full report for that week!",
   "my-profile": "This page is all about you! Keep your details up to date.",
+  inbox: INBOX_TIP,
+  "inbox-compose": INBOX_TIP,
   "student-addon": "Want more classes? Pick a plan, then ask a grown-up to buy it!",
   cart: "Want more classes? Pick a plan, then ask a grown-up to buy it!",
   // Every club page (Language, Social and E-Sports clubs).
@@ -121,11 +133,14 @@ function SpotHole({ pin, active }) {
  * buddy speaks in the student's voice (and turns the voice back on), the red X hides the bubble
  * only — the buddy stays and a tap brings it back. Below 760px the bubble opens above the buddy on tap.
  */
-export function PicoGuide({ userId, firstName, home = true }) {
+export function PicoGuide({ userId, firstName, schoolName, home = true }) {
   const { preferences, updatePreference, themeProps } = useAppearance();
-  const { speak, stop, speaking, supported } = useSpeech();
+  const { speak, stop, speaking, supported, word } = useSpeech();
   const tourKey = `${TOUR_KEY}${userId}`;
   const seen = useSyncExternalStore(noSubscribe, () => readLocal(tourKey), () => "1");
+  // Decided once, when the buddy appears: a student who has never done the tour is welcomed to the school as well.
+  // (Kept in state so the words do not change under the student when the tour is marked as seen.)
+  const [welcome] = useState(() => typeof window !== "undefined" && !readLocal(tourKey));
   const [state, setState] = useState({ open: null, index: 0, say: null, skipLive: false, pageTip: false });
   const live = usePicoLive();
   const pathname = usePathname();
@@ -133,7 +148,7 @@ export function PicoGuide({ userId, firstName, home = true }) {
   const onBook = pathname.includes("book-a-session");
   const [tipOn, setTipOn] = useState(false);
   const buddy = BUDDIES[preferences.buddy] || BUDDIES.pico;
-  const steps = tourSteps(firstName, buddy.name, live.name);
+  const steps = tourSteps(firstName, buddy.name, live.name, welcome, schoolName);
   const mobile = useSyncExternalStore(subscribeMobile, isMobileView, () => false);
   // The first tour opens by itself once the plan is known; the buddy stays quiet while the "LIVE NOW" popup waits.
   const autoOpen = home && !seen && live.ready;
@@ -166,6 +181,13 @@ export function PicoGuide({ userId, firstName, home = true }) {
       setTipOn(false);
     }
   }
+  // The buddy's voice for this page is got ready once the page is idle: the page's tip, and on the home page the tour
+  // tips, so the student's tap (Next, Hear it) plays at once.
+  const voiceTexts = [pageTip?.text, ...(home ? steps.map((s) => s.text) : [])].filter(Boolean).join("|");
+  // preparePicoClips waits for the page to finish loading and the browser to be idle, so the page always comes first.
+  // In the voice and speed the student picked (a new pick gets its own clips).
+  const { voice: voicePick, voiceSpeed } = preferences;
+  useEffect(() => preparePicoClips(voiceTexts.split("|"), voiceOf(voicePick, voiceSpeed)), [voiceTexts, voicePick, voiceSpeed]);
   // The buddy also says it out loud (the student just tapped to get here, so speaking is allowed).
   useEffect(() => {
     if (pageTip) speak(pageTip.text);
@@ -314,7 +336,18 @@ export function PicoGuide({ userId, firstName, home = true }) {
             </div>
           </div>
           <p aria-live="polite" className="relative m-0 font-k5-display text-[21px] font-medium leading-[1.3] text-k5-ink">
-            {tip.text}
+            {word && word.text === tip.text.replace(/\s+/g, " ").trim()
+              ? // Recorded voice: the word being said lights up (LoginHighlight.jsp spokenHtml / follow).
+                tip.text
+                  .trim()
+                  .split(/\s+/)
+                  .map((w, i, all) => (
+                    <span key={i} className={i === word.n ? "rounded bg-[#FFC531] text-[#3A2A00]" : undefined}>
+                      {w}
+                      {i < all.length - 1 ? " " : ""}
+                    </span>
+                  ))
+              : tip.text}
           </p>
           <div className="relative flex items-center justify-between gap-2">
             {supported ? (

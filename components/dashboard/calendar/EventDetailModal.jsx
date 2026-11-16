@@ -1,7 +1,11 @@
 "use client";
 
 import { format } from "date-fns";
+import { ActivityDetailsModal } from "@/components/dashboard/calendar/ActivityDetailsModal";
 import { CalendarModal, DetailRow } from "@/components/dashboard/calendar/CalendarModal";
+import { RateFeedbackButton } from "@/components/dashboard/calendar/RateFeedbackButton";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { openLmsLesson } from "@/utils/lmsCourseLink";
 import {
   getAssignmentStatus,
   getClassCompletionStatus,
@@ -30,8 +34,54 @@ function statusLabel(status) {
   }
 }
 
-function ClassOrActivityDetail({ event, courseRegistry }) {
+// "1 hour 30 mins" (legacy openPastClassModal's Duration).
+function formatSpan(totalMinutes) {
+  if (!(totalMinutes > 0)) return null;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return [hours > 0 && `${hours} ${hours === 1 ? "hour" : "hours"}`, minutes > 0 && `${minutes} ${minutes === 1 ? "min" : "mins"}`].filter(Boolean).join(" ");
+}
+
+// "1 hour 2 mins 5 secs" (legacy Late row).
+function formatLate(seconds) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  return [
+    hours > 0 && `${hours} ${hours === 1 ? "hour" : "hours"}`,
+    minutes > 0 && `${minutes} ${minutes === 1 ? "min" : "mins"}`,
+    secs > 0 && `${secs} ${secs === 1 ? "sec" : "secs"}`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+/**
+ * A class that has ended (legacy openPastClassModal): batch name, Date, Status "Expired", start Time, Duration, Late and
+ * the teacher (not for a batch class), and the "Rate this class" button when the class has a feedback form.
+ */
+function PastClassDetail({ event, onClose }) {
+  const minutes = event.startZoned && event.endZoned ? Math.round((event.endZoned - event.startZoned) / 60000) : 0;
+  const teacher = event.category !== "BATCH" && event.origName && event.origName !== "Teacher" ? event.origName : null;
+  return (
+    <>
+      {event.category === "BATCH" && event.batchName && <p className="text-center text-base font-extrabold">{event.batchName}</p>}
+      <DetailRow label="Date" value={event.startZoned ? format(event.startZoned, "MMM d, yyyy") : null} />
+      <DetailRow label="Status" value="Expired" />
+      <DetailRow label="Time" value={event.startZoned ? format(event.startZoned, "h:mm a") : null} />
+      <DetailRow label="Duration" value={formatSpan(minutes)} />
+      {event.lateSeconds > 0 && <DetailRow label="Late" value={formatLate(event.lateSeconds)} />}
+      <DetailRow label="Teacher" value={teacher} />
+      <div className="flex justify-end pt-2">
+        <RateFeedbackButton event={event} onBeforeOpen={onClose} />
+      </div>
+    </>
+  );
+}
+
+function ClassOrActivityDetail({ event, courseRegistry, onClose }) {
   const status = getEventStatus(event);
+  if (event.eventKind === "class" && status === "completed") return <PastClassDetail event={event} onClose={onClose} />;
   const displayStatus = status === "completed" && event.eventKind === "class" ? getClassCompletionStatus(event) : status;
   const course = courseRegistry[event.courseId];
 
@@ -50,6 +100,7 @@ function ClassOrActivityDetail({ event, courseRegistry }) {
 }
 
 function AssignmentDetail({ event }) {
+  const { lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
   const aStatus = getAssignmentStatus(event);
   return (
     <>
@@ -58,6 +109,18 @@ function AssignmentDetail({ event }) {
       <DetailRow label="Status" value={aStatus.label} />
       {aStatus.timingLabel && <DetailRow label="Timing" value={aStatus.timingLabel} />}
       {aStatus.status === "submitted" && <DetailRow label="Submitted" value={aStatus.dateDisplay} />}
+      {/* Legacy openAssignmentModal: a pending assignment gets an Attempt button that opens the LMS. */}
+      {aStatus.label === "Pending" && (
+        <div className="flex justify-end pt-2">
+          <button
+            type="button"
+            onClick={() => openLmsLesson({ isPayLmsPaymentPending, lmsProviderUrl: lmsProviderURL })}
+            className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white"
+          >
+            Attempt
+          </button>
+        </div>
+      )}
     </>
   );
 }
@@ -73,12 +136,13 @@ function HolidayOrEventDetail({ event }) {
 
 /**
  * Read-only event detail popup — the informational content from the legacy
- * openPastClassModal / openAssignmentModal / eventDetailsOnModal, minus the
- * join-class and feedback-submission actions (separate, larger pieces of
- * scope tracked for a follow-up pass).
+ * openPastClassModal / openAssignmentModal / eventDetailsOnModal, plus the
+ * "Rate this class" button of a finished class (class feedback).
  */
 export function EventDetailModal({ event, courseRegistry, onClose }) {
   if (!event) return null;
+  // A school activity opens its own popup: purpose, attachment, countdown and the timed Join Event (legacy renderViewActitifyDetails).
+  if (event.eventKind === "activity") return <ActivityDetailsModal event={event} onClose={onClose} />;
   const title = event.title || event.eventTitle || "Event details";
   const accentColor = getEventColor(event, courseRegistry);
 
@@ -90,7 +154,7 @@ export function EventDetailModal({ event, courseRegistry, onClose }) {
       ) : event.eventKind === "holiday" || event.eventKind === "schoolEvent" ? (
         <HolidayOrEventDetail event={event} />
       ) : (
-        <ClassOrActivityDetail event={event} courseRegistry={courseRegistry} />
+        <ClassOrActivityDetail event={event} courseRegistry={courseRegistry} onClose={onClose} />
       )}
     </CalendarModal>
   );

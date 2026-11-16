@@ -8,6 +8,7 @@ import { AppearanceProvider } from "@/components/appearance/AppearanceProvider";
 import { ReadingRuler } from "@/components/appearance/ReadingRuler";
 import { K5Header } from "@/components/k5/K5Header";
 import { K5NavRail } from "@/components/k5/K5NavRail";
+import { K5QuoteOfMoment } from "@/components/k5/K5QuoteOfMoment";
 import { AppearanceDialog } from "@/components/k5/look/AppearanceDialog";
 import { PicoGuide } from "@/components/k5/pico/PicoGuide";
 import { setPicoLive } from "@/components/k5/pico/picoEvents";
@@ -35,7 +36,7 @@ export function K5Shell({ children }) {
 }
 
 function K5Frame({ children }) {
-  const { context, menu, logoUrl, session, isPreK, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
+  const { context, menu, menuLoading, logoUrl, session, isPreK, isMiddle, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
   
   const pathname = usePathname();
   const { school } = useParams();
@@ -102,15 +103,19 @@ function K5Frame({ children }) {
         isPayLmsPaymentPending={isPayLmsPaymentPending}
       />
 
-      <div className="k5-layout relative mx-auto box-border flex w-full max-w-[100%] flex-1 items-start gap-5 px-5 pb-[220px] pt-5 max-[760px]:flex-wrap">
+      <div className="k5-layout relative mx-auto box-border flex w-full max-w-[100%] flex-1 items-start gap-5 px-5 pb-[20px] pt-5 max-[760px]:flex-wrap">
         <div aria-hidden="true" className="w-24 flex-none max-[760px]:hidden" />
-        <K5NavRail menu={menu} open={navOpen} onOpen={() => setNavOpen(true)} onClose={closeNav} isPreK={isPreK} userId={context.userId} />
+        <K5NavRail menu={menu} loading={menuLoading} open={navOpen} onOpen={() => setNavOpen(true)} onClose={closeNav} isPreK={isPreK} userId={context.userId} />
 
-        <main className="flex min-w-0 flex-[1_1_auto] flex-col gap-4 max-[760px]:basis-full">{children}</main>
+        <main className="flex min-w-0 flex-[1_1_auto] flex-col gap-4 max-[760px]:basis-full">
+          <K5QuoteOfMoment />
+          {children}
+        </main>
 
         <div aria-hidden="true" className="w-20 flex-none max-[760px]:hidden" />
         <RightActionRail
           variant="k5"
+          middle={isMiddle}
           chatUrl={context.chatUrl}
           diaryUrl={context.diaryUrl}
           schoolUUID={context.schoolUUID}
@@ -127,10 +132,10 @@ function K5Frame({ children }) {
         {copyrightLine(context.schoolName)}
       </footer>
 
-      <PicoGuide userId={context.userId} firstName={String(context.userName || "").split(" ")[0]} home={isHome} />
+      <PicoGuide userId={context.userId} firstName={String(context.userName || "").split(" ")[0]} schoolName={context.schoolName} home={isHome} />
       <SelectToSpeak />
       <ReadingRuler />
-      <AppearanceDialog open={lookOpen} onClose={() => setLookOpen(false)} />
+      <AppearanceDialog open={lookOpen} onClose={() => setLookOpen(false)} firstName={String(context.userName || "").split(" ")[0]} />
     </div>
   );
 }

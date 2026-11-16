@@ -204,9 +204,9 @@ async function postDashboardPayload(schoolUUID, path, body) {
 /**
  * The dashboard orchestrator's first call — StudentDashboardOrMigrationDTO.
  * Carries the graduation-ceremony-popup / batch-announcement / re-enrollment
- * trigger flags read on every dashboard load. Re-enrollment fields
- * (showBatchReEnrollmentPopUp/Date) are read but never acted on here — that
- * flow is owned by a separate branch.
+ * trigger flags read on every dashboard load. `studentGraduate` sends the
+ * student to the re-enrollment pages (hooks/useReEnrollmentEntry.js); the batch
+ * re-enrollment popup fields (showBatchReEnrollmentPopUp/Date) are not acted on.
  */
 export async function getStudentDashboardOrMigration({ schoolUUID, userId }) {
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
@@ -356,11 +356,63 @@ export async function getStudentAcademicPerformance({ schoolUUID, userId, k5Perf
   try {
     // k5Performance: the new My Performance page; the backend answers from the daily cron's tables, not the LMS.
     const body = { userId, studentUserId: userId, ...(k5Performance ? { k5Performance: "Y", includeClassComparison: "Y" } : {}) };
-    return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-academic-performance", body);
+    const data =  await postDashboardPayload(schoolUUID, "/dashboard/parent/student-academic-performance", body);
+    console.log("getStudentAcademicPerformance data:", data, null, 2);
+    return data;
   } catch {
     return null;
   }
 }
+
+// export async function getStudentAcademicPerformance({schoolUUID,userId,k5Performance = false}) {
+//   if (!hasBackendOrigin() || !schoolUUID || !userId) {return null;}
+
+//     try {
+//         const body = {
+//             userId,
+//             studentUserId: userId,
+//             ...(k5Performance
+//                 ? {
+//                     k5Performance: "Y",
+//                     includeClassComparison: "Y"
+//                 }
+//                 : {})
+//         };
+
+//         console.log("Academic Performance Request:", {
+//             schoolUUID,
+//             body
+//         });
+
+//         const data = await postDashboardPayload(
+//             schoolUUID,
+//             "/dashboard/parent/student-academic-performance",
+//             body
+//         );
+
+//         console.log(
+//             "Academic Performance Full Response:",
+//             JSON.stringify(data, null, 2)
+//         );
+
+//         console.log(
+//             "Student Academic Performances:",
+//             JSON.stringify(data)
+            
+//         );
+
+//         console.log(
+//             "K5 Performance:",
+//             k5Performance
+//         );
+
+//         return data;
+
+//     } catch (error) {
+//         console.error("Academic Performance API Error:", error);
+//         return null;
+//     }
+// }
 
 /**
  * Progress Reports ("My Progress Reports", sidebar segment progress-detail) — legacy
@@ -595,11 +647,16 @@ export async function getStudentAssignedTeacher({ schoolUUID, userId }) {
 /**
  * Per-course content drawer (opened by clicking a course in Syllabus) —
  * live Buzz LMS module/item list, thin for non-LMS course providers.
+ * The answer is { status: "1", details: { lmsUserId, lmsCourseId, modules: [{ moduleName, items: [{ contentName, dueDate,
+ * lmsProviderUrl, isPayLmsPaymentPending }] }] } } (studentSyllabusAssignedTeacher.js reads details.modules). Callers get
+ * `details`, or null when the call failed (status other than "1").
  */
 export async function getStudentCourseContent({ schoolUUID, userId, lmsUserId, lmsCourseId }) {
   if (!hasBackendOrigin() || !schoolUUID || !userId || !lmsUserId) return null;
   try {
-    return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-course-content", { userId, studentUserId: userId, lmsUserId, lmsCourseId });
+    const response = await postDashboardPayload(schoolUUID, "/dashboard/parent/student-course-content", { userId, studentUserId: userId, lmsUserId, lmsCourseId });
+    console.log("getStudentCourseContent response:", JSON.stringify(response, null, 2));
+    return response && String(response.status) === "1" ? (response.details ?? { modules: [] }) : null;
   } catch {
     return null;
   }
@@ -767,6 +824,60 @@ export async function saveUserTheme({ schoolUUID, userId, appearance }) {
       userId,
       colorObj: { appearance },
     });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * "Need help?" WhatsApp contact for the header - legacy getChatEligibility(): POST /{schoolUUID}/api/v1/get-chat-eligibility
+ * { userId, schoolId } -> { ELIGIBLE_FOR_NEED_HELP: "Y"|"N", whatsAppIsd, whatsAppNumber }. Returns the wa.me address
+ * only when the school has a Need Help number, else null (no link shown).
+ */
+export async function getNeedHelpContact({ schoolUUID, userId, schoolNumericId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId || !schoolNumericId) return null;
+  try {
+    const answer = await postDashboardPayload(schoolUUID, "/api/v1/get-chat-eligibility", { userId, schoolId: schoolNumericId });
+    if (answer?.ELIGIBLE_FOR_NEED_HELP !== "Y") return null;
+    const number = `${answer.whatsAppIsd ?? ""}${answer.whatsAppNumber ?? ""}`.replace(/\D/g, "");
+    return number ? { href: `https://wa.me/+${number}?text=I+need+support.` } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * App-install prompt eligibility - legacy checkAppActivityEligibility(): GET /{UNIQUEUUID}/api/v1/dashboard/app-last-activity
+ * -> { status: 2, showInstallModal, appUsed }. The server decides (FCM install status + last-active grace);
+ * true = this student has not used the app, so the install popup may show.
+ */
+export async function getAppInstallPromptEligible({ uniqueId }) {
+  if (!hasBackendOrigin() || !uniqueId) return false;
+  try {
+    const baseUrl = await resolveServerBackendOrigin();
+    const response = await fetch(`${baseUrl}/${encodeURIComponent(uniqueId)}/api/v1/dashboard/app-last-activity`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      cache: "no-store",
+    });
+    const answer = await parseJsonResponse(response);
+    return Boolean(answer && String(answer.status) === "2" && (answer.showInstallModal === true || answer.appUsed === false));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Activity details - legacy renderViewActitifyDetails(): POST /{schoolUUID}/dashboard/view-extra-activity
+ * { activityId, meetingId, userId, occurrenceDate } -> { status: 1, categoryName, activityPurpose, activityTitle, filePath,
+ * uploadFile, showLinkBeforeMinutes, joiningLink, ... }. Null on any failure.
+ */
+export async function getActivityDetails({ schoolUUID, userId, activityId, occurrenceDate }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId || !activityId) return null;
+  try {
+    const request = { activityId: String(activityId), meetingId: "", userId };
+    if (occurrenceDate) request.occurrenceDate = occurrenceDate;
+    return await postDashboardPayload(schoolUUID, "/dashboard/view-extra-activity", request);
   } catch {
     return null;
   }

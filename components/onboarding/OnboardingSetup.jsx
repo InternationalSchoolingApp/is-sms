@@ -128,7 +128,7 @@ export function OnboardingSetup() {
   const heading = plan.step === "done" ? "very well done. Let's get started!" : plan.step === "reminder" ? "an important reminder" : "let's get started!";
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-3 py-6 sm:px-4">
+    <div className="mx-auto w-full max-w-6xl px-3 py-3 sm:px-4">
       <h2 className="mb-5 text-center text-xl font-bold text-black">
         Hi {firstName}, {heading}
       </h2>
@@ -229,7 +229,7 @@ function TrainingStep({ picker, onBooked }) {
             <p className="text-center text-sm text-slate-600">No slot available. Please pick another date</p>
           )}
           {!slots.isFetching && list.length > 0 && (
-            <div role="radiogroup" aria-label="Training time" className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div role="radiogroup" aria-label="Training time" className="grid grid-cols-2 gap-2 sm:grid-cols-3 max-h-[150px] overflow-y-auto">
               {list.map((slot) => {
                 const active = slot.stTime === stTime;
                 return (

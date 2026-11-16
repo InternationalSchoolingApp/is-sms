@@ -57,7 +57,7 @@ export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
           <Video className="h-3.5 w-3.5" aria-hidden="true" />
           {status === "live" ? "Live Class" : "Class"}
         </span>
-        <h3 className="m-0 font-k5-display text-[26px] font-semibold leading-[1.1]">{classTitle(event)}</h3>
+        <h3 className="k5h-ctitle m-0 font-k5-display text-[26px] font-semibold leading-[1.1]">{classTitle(event)}</h3>
         <p className="m-0 text-[17px] font-extrabold text-k5-mut">{timeRange(event)}</p>
         <Teacher event={event} />
       </button>
@@ -78,7 +78,7 @@ export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
             <button
               type="button"
               onClick={() => onJoin(event)}
-              className={`flex cursor-pointer items-center gap-2 rounded-full border-none bg-k5-grn px-[22px] font-k5-display font-semibold text-white shadow-[0_5px_0_var(--k5-grnD)] ${
+              className={`k5h-join flex cursor-pointer items-center gap-2 rounded-full border-none bg-k5-grn px-[22px] font-k5-display font-semibold text-white shadow-[0_5px_0_var(--k5-grnD)] ${
                 isPreK ? "min-h-[76px] text-[26px]" : "min-h-[54px] text-[21px]"
               }`}
             >
@@ -211,6 +211,10 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
     (a, b) => (a.e.startZoned?.getTime() || 0) - (b.e.startZoned?.getTime() || 0),
   );
   const nClasses = day.classes.length;
+  // Games are locked only while one of today's classes is live (the student must go to it): a free day picked
+  // from the calendar then shows them locked. With no live class right now — nothing today, classes still to come,
+  // or all done — they stay open. (The Middle mockup locks every day but today; the product rule is "live class".)
+  const gamesLocked = dayAt(days, todayKey).classes.some((c) => c.k5Status === "live");
   const subtitle = nClasses ? `${nClasses} class${nClasses === 1 ? "" : "es"}${isToday ? " today" : ""}` : "No classes";
   // The dotted "now" line goes right before the first item that has not finished yet.
   const nowIndex = isToday ? items.findIndex((it) => it.e.k5Status !== "done") : -1;
@@ -276,7 +280,7 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
       ) : (
         <>
           <NoClassDay reason={noClassReason(dateKey, day, { isSelfStudy, firstName })} isToday={isToday} />
-          <K5Games />
+          <K5Games locked={gamesLocked} />
         </>
       )}
 

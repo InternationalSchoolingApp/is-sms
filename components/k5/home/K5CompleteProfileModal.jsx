@@ -131,7 +131,7 @@ export function K5CompleteProfileModal() {
   const profileUrl = studentNavHref(school, "my-profile");
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4">
+    <div data-blocking-popup="" className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4">
       <div className="relative flex max-h-[90vh] w-full max-w-[520px] flex-col overflow-hidden rounded-3xl border-[3px] border-k5-line bg-k5-card shadow-xl">
         {/* Header */}
         <div className="flex items-center gap-3 border-b-[3px] border-k5-line bg-k5-ac px-5 py-4">

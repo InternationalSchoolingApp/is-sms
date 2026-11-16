@@ -3,12 +3,13 @@
 import { useEffect } from "react";
 import { useParams, useRouter, useSelectedLayoutSegment } from "next/navigation";
 import { FullScreenError, FullScreenLoader } from "@/components/common/Loader";
-import { loadAddEnrollmentChildUniqueId, loadAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
+import { loadAddEnrollmentChildUserId, loadAddEnrollmentRollNo } from "@/utils/addEnrollmentStorage";
+import { NotMappedModal } from "@/components/add-enrollment/NotMappedModal";
 import { AddEnrollmentWizardShell, WIZARD_STEP_META } from "@/components/add-enrollment/AddEnrollmentWizardShell";
 import { AddEnrollmentProvider, useAddEnrollmentContext } from "@/hooks/add-enrollment/useAddEnrollmentContext";
 import { useBackendSessionGuard } from "@/hooks/useBackendSessionGuard";
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
-import { expireSession, leaveAddEnrollmentWizard } from "@/utils/logout";
+import { expireSession, leaveAddEnrollmentWizard, logoutEverywhere } from "@/utils/logout";
 
 /**
  * Chrome for the "Add Another Student" wizard — 3-entry counterpart of
@@ -31,7 +32,7 @@ function AddWizardFrame({ children }) {
   const router = useRouter();
   const { school, parentId, sessionUserId } = useParams();
   const segment = useSelectedLayoutSegment();
-  const { status, session, context, logoUrl, ready, isError, completed, childUniqueId, childRollNo } =
+  const { status, session, context, logoUrl, rootcss, ready, isError, notMapped, completed, childUserId, childRollNo } =
     useAddEnrollmentContext();
 
   useEffect(() => {
@@ -47,15 +48,15 @@ function AddWizardFrame({ children }) {
   // is the thank-you one and a refresh stays there instead of re-entering the wizard.
   useEffect(() => {
     if (!completed) return;
-    // Name the finished child explicitly: the thank-you API finds it by roll number / unique id.
+    // Name the finished child explicitly: the thank-you API finds it by roll number / user id.
     // The child the backend resolved for this load (S003 = the paid one) first, the remembered one as fallback.
     const rollNo = childRollNo || loadAddEnrollmentRollNo(session?.schoolUUID, parentId);
-    const uniqueId = childUniqueId || loadAddEnrollmentChildUniqueId(session?.schoolUUID, parentId);
+    const childId = childUserId || loadAddEnrollmentChildUserId(session?.schoolUUID, parentId);
     const query = new URLSearchParams({ ae: "Y", replay: "Y", parentId, sessionUserId });
     if (rollNo) query.set("rollNo", rollNo);
-    if (uniqueId) query.set("childUniqueId", uniqueId);
+    if (childId) query.set("childUserId", childId);
     router.replace(`/${school}/common/payment-response-success?${query.toString()}`);
-  }, [completed, router, school, parentId, sessionUserId, childRollNo, childUniqueId, session?.schoolUUID]);
+  }, [completed, router, school, parentId, sessionUserId, childRollNo, childUserId, session?.schoolUUID]);
 
   useEffect(() => {
     const onPageShow = (e) => {
@@ -65,6 +66,9 @@ function AddWizardFrame({ children }) {
     return () => window.removeEventListener("pageshow", onPageShow);
   }, []);
 
+  if (notMapped) {
+    return <NotMappedModal onLogout={() => logoutEverywhere(session)} />;
+  }
   if (isError) {
     return (
       <FullScreenError message="We couldn't start this enrollment. Please go back to your dashboard and start Add Another Child again — if it keeps happening, contact support and we'll finish it for you." />
@@ -90,6 +94,7 @@ function AddWizardFrame({ children }) {
     <AddEnrollmentWizardShell
       schoolName={context.schoolName}
       logoUrl={logoUrl}
+      rootcss={rootcss}
       context={context}
       currentStepKey={currentStepKey}
       steps={getLearningProgramBackendValue(context.learningProgram) === "ONE_TO_ONE_FLEX" ? ADD_WIZARD_STEPS_FLEX : ADD_WIZARD_STEPS}

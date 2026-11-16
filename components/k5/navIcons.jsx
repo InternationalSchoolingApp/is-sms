@@ -1,4 +1,42 @@
-// Left-nav pictures, copied from the Playful mockup (24px, stroke-only, colour from the tile).
+import { resolveBackendOrigin } from "@/utils/backendOrigin";
+
+/*
+ * Left-nav pictures of the Playful mockup (Playful.dc.html, the `.ni` items: a 36px PNG on a transparent 46px tile).
+ * The PNGs live on the Java app with the other dashboard images: static/theme2/images/sidebar-icon/<name>.png.
+ * The menu comes from the database, so the picture is chosen from the item's name (and page link), most specific first
+ * ("Academic Performance" before "Academic Reports", "Language Club" before plain "Language").
+ */
+const SIDEBAR_PICTURES = [
+  [/communication|inbox/, "communication"],
+  [/dashboard/, "my-dashboard"],
+  [/assigned|teacher/, "my-assigned-teacher"],
+  [/book.*class|book-a-session/, "book-classes"],
+  [/buy|extra|addon/, "buy-extra-classes"],
+  [/attendance/, "my-attendance"],
+  [/transcript/, "my-transcript"],
+  [/performance/, "academic-performance"],
+  [/progress/, "my-progress-report"],
+  // Course Extension's page link is "academic-year-extention": checked before the "academic" of Academic Reports.
+  [/extension|extention/, "course-extension"],
+  [/report|academic/, "academic-reports"],
+  [/language/, "language-club"],
+  [/social/, "social-club"],
+  [/sport|game/, "e-sports-club"],
+  [/fee/, "my-fee-details"],
+  [/handbook/, "student-handbook"],
+  [/log ?in|history/, "my-login-history"],
+  [/library|video/, "library"],
+  [/certificate/, "certificates"],
+];
+
+/** The mockup picture URL for a nav item ({ label, segment }), or "" when the item has none (it keeps its drawn icon). */
+export function navPictureFor(item) {
+  const text = `${item?.label || ""} ${item?.segment || ""} ${item?.module || ""}`.toLowerCase();
+  const match = SIDEBAR_PICTURES.find(([pattern]) => pattern.test(text));
+  return match ? `${resolveBackendOrigin()}/static/theme2/images/sidebar-icon/${match[1]}.png` : "";
+}
+
+// Drawn fallback icons (24px, stroke-only, colour from the tile) for an item without a picture.
 // Key = the icon key of utils/dashboardNav.js.
 export const NAV_ART = {
   "dashboard": (

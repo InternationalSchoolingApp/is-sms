@@ -4,7 +4,7 @@ import { CalendarIcon, ChartIcon, CheckBoxIcon, UpRightIcon } from "@/components
 
 function Tile({ icon, bg, fg, label, value, children }) {
   return (
-    <div className="flex items-center gap-3.5 rounded-[22px] border-[3px] border-k5-line bg-k5-card px-[18px] py-4 shadow-[0_5px_0_var(--k5-line)]">
+    <div className="k5h-r16 flex items-center gap-3.5 rounded-[22px] border-[3px] border-k5-line bg-k5-card px-[18px] py-4 shadow-[0_5px_0_var(--k5-line)]">
       <span className="flex h-[50px] w-[50px] flex-none items-center justify-center rounded-2xl" style={{ background: bg, color: fg }}>
         {icon}
       </span>

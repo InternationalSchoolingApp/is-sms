@@ -15,15 +15,15 @@ import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 /**
  * Step 1 ("Student profile") of the Add Another Student wizard. Mirrors
  * app/[school]/enrollment/[program]/step/student-details/StudentDetailsStep.jsx,
- * but prefill/save use the CHILD's identity (childUserId/childUniqueId from
+ * but prefill/save use the CHILD's identity (childUserId from
  * enrollAnotherChild's response) instead of the logged-in session's own
  * userId/uniqueId — the caller (parent or sibling student) is never the
  */
 export function AddStudentDetailsStep() {
   const router = useRouter();
   const { school, parentId, sessionUserId } = useParams();
-  const { session, context, ready, childUserId, childUniqueId, childRollNo } = useAddEnrollmentContext();
-  const { redirecting } = useAddWizardResume({ currentStep: 1, context, childUniqueId, ready });
+  const { session, context, ready, childUserId, childRollNo } = useAddEnrollmentContext();
+  const { redirecting } = useAddWizardResume({ currentStep: 1, context, childUserId, ready });
   const prefill = useAddStudentDetailsPrefill({ context, userId: childUserId });
   const queryClient = useQueryClient();
   const [initialFields, setInitialFields] = useState(null);
@@ -44,16 +44,14 @@ export function AddStudentDetailsStep() {
     <AddStage1StudentDetails
       context={context}
       userId={childUserId}
-      uniqueId={childUniqueId}
       rollNo={childRollNo}
       initialFields={initialFields}
       onNext={(fields, saveResponse) => {
         const nextChildUserId = saveResponse?.data?.userId ?? saveResponse?.userId ?? childUserId;
-        const nextChildUniqueId = saveResponse?.data?.uniqueId ?? saveResponse?.uniqueId ?? childUniqueId;
-        if (nextChildUserId !== childUserId || nextChildUniqueId !== childUniqueId) {
-          queryClient.setQueryData(["add-enrollment-child", context.schoolUUID, parentId, session?.uniqueId], (old) => {
+        if (nextChildUserId !== childUserId) {
+          queryClient.setQueryData(["add-enrollment-child", context.schoolUUID, parentId, session?.studentUserId ?? session?.userId], (old) => {
             const prevData = old?.data || {};
-            return { ...(old || {}), data: { ...prevData, userId: nextChildUserId, uniqueId: nextChildUniqueId, signupPage: 2 } };
+            return { ...(old || {}), data: { ...prevData, userId: nextChildUserId, signupPage: 2 } };
           });
         }
         saveAddEnrollmentStudentFields(context.schoolUUID, nextChildUserId, fields);

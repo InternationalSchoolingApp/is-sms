@@ -6,17 +6,18 @@ import { usePathname, useParams } from "next/navigation";
 import {
   LayoutDashboard, CalendarDays, GraduationCap, CalendarCheck, ShoppingCart,
   ClipboardCheck, BarChart3, FileText, Globe, Handshake, Gamepad2, Wallet,
-  BookMarked, History, Circle, ChevronDown, X, Award,
+  BookMarked, History, Circle, ChevronDown, X, Award, Inbox,
 } from "lucide-react";
 import { dashboardNavHref } from "@/utils/dashboardNav";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { InboxBadge, isInboxMenuItem } from "@/components/student/inbox/InboxBadge";
 
 // String-key -> lucide component (keys come from utils/dashboardNav.js; all verified present).
 const ICONS = {
   dashboard: LayoutDashboard, calendar: CalendarDays, teacher: GraduationCap,
   "book-class": CalendarCheck, cart: ShoppingCart, attendance: ClipboardCheck,
   chart: BarChart3, file: FileText, globe: Globe, social: Handshake, game: Gamepad2,
-  fee: Wallet, handbook: BookMarked, history: History, certificate: Award, dot: Circle,
+  fee: Wallet, handbook: BookMarked, history: History, certificate: Award, inbox: Inbox, dot: Circle,
 };
 
 function iconFor(key) {
@@ -85,6 +86,7 @@ export function Sidebar({ menu, open = false, onClose, collapsed = false, onExpa
                 active={isActive(item.segment)}
                 collapsed={collapsed}
                 onNavigate={onClose}
+                badge={isInboxMenuItem(item)}
               />
             )
           )}
@@ -94,7 +96,7 @@ export function Sidebar({ menu, open = false, onClose, collapsed = false, onExpa
   );
 }
 
-function LinkItem({ href, label, Icon, active, collapsed, onNavigate }) {
+function LinkItem({ href, label, Icon, active, collapsed, onNavigate, badge = false }) {
   return (
     <li>
       <Link
@@ -107,7 +109,8 @@ function LinkItem({ href, label, Icon, active, collapsed, onNavigate }) {
         } ${active ? "bg-primary/10 text-primary" : "text-black hover:bg-slate-100"}`}
       >
         <Icon className={`h-[18px] w-[18px] shrink-0 ${active ? "text-primary" : "text-black"}`} aria-hidden="true" />
-        {!collapsed && <span className="truncate">{label}</span>}
+        {!collapsed && <span className="flex-1 truncate">{label}</span>}
+        {badge && !collapsed && <InboxBadge />}
       </Link>
     </li>
   );
@@ -148,6 +151,7 @@ function GroupItem({ item, hrefFor, collapsed, onExpand, onNavigate, isActive })
       >
         <Icon className={`h-[18px] w-[18px] shrink-0 ${childActive ? "text-primary" : "text-black"}`} aria-hidden="true" />
         <span className="flex-1 truncate text-left">{item.label}</span>
+        {isInboxMenuItem(item) && <InboxBadge />}
         <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${openGroup ? "rotate-180" : ""}`} aria-hidden="true" />
       </button>
       {openGroup && (

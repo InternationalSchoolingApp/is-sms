@@ -40,9 +40,9 @@ export function Card({ header, headerRight, className = "", bodyClassName = "px-
 }
 
 // Same support details the legacy re-enrollment page shows in its "Need Support?" card.
-const CHAT_BASE_URL = "https://support.internationalschooling.org";
-const SUPPORT_PHONE = "+15854990662";
-const SUPPORT_EMAIL = "admin.support@internationalschooling.org";
+export const CHAT_BASE_URL = "https://support.internationalschooling.org";
+export const SUPPORT_PHONE = "+15854990662";
+export const SUPPORT_EMAIL = "admin.support@internationalschooling.org";
 
 /** Legacy "Need Support?" side card of the re-enrollment page. */
 export function SupportCard({ uniqueId }) {

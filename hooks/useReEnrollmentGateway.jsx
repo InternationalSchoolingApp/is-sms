@@ -6,8 +6,10 @@ import { FullScreenLoader } from "@/components/common/Loader";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
-import { getPaymentPaidStatus } from "@/services/studentSignupBackendApi";
-import { isFramed, navigateTop } from "@/utils/embed";
+import { PaymentInProgressModal } from "@/components/student-enroll/PaymentInProgressModal";
+import { cancelPaymentAttempt, getPaymentPaidStatus } from "@/services/studentSignupBackendApi";
+import { getPaymentBrowserId } from "@/utils/paymentBrowserId";
+import { getPaymentAttemptRecovery } from "@/utils/paymentAttemptRecovery.mjs";
 import {
   STATUS_SESSION_OUT,
   STATUS_SUCCESS,
@@ -24,14 +26,6 @@ import {
   loadLocationGlobals,
 } from "@/utils/locationFinder";
 
-// The init page the backend returns for Stripe / Airwallex has an embedded twin next to it with the same query.
-function embeddedPaymentUrl(gatewayName, redirectUrl) {
-  const name = String(gatewayName || "").toLowerCase();
-  if (name !== "stripe" && name !== "airwallex") return null;
-  const from = `/common/${name}-payment-init/`;
-  return redirectUrl.includes(from) ? redirectUrl.replace(from, `/common/${name}-embedded/`) : null;
-}
-
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
 // getPaymentPaidStatus() polling in commonPaymentGateway.js: every 10s, gives up after 10 checks.
 const PAID_STATUS_POLL_MS = 10000;
@@ -47,17 +41,18 @@ const PAID_STATUS_MAX_CHECKS = 10;
  *   gateway.start(review);   // review: re-enrollment review response (paymentRequired = true)
  *   return <>... {gateway.modals}</>;
  */
-export function useReEnrollmentGateway({ context, uniqueId, onPaid, onSessionExpired }) {
+export function useReEnrollmentGateway({ context, studentUserId, onPaid, onSessionExpired }) {
   const gatewayOptions = usePaymentGatewayOptions({ context });
   const invokeGateway = useInvokePaymentGateway({ context });
   const airwallexMethods = useAirwallexPaymentMethods({ context });
-  const offlinePayment = useOfflinePayment({ context, uniqueId });
+  const offlinePayment = useOfflinePayment({ context, studentUserId });
 
   const [gatewayPicker, setGatewayPicker] = useState(null);
   const [launching, setLaunching] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [paymentIncomplete, setPaymentIncomplete] = useState(false);
   const [paymentUnderReview, setPaymentUnderReview] = useState(false);
+  const [paymentInProgress, setPaymentInProgress] = useState(null);
   const paidPollRef = useRef({ timer: null, count: 0 });
 
   // Coming back from the gateway with Back (bfcache) restores the page with the modal open and busy.
@@ -176,8 +171,8 @@ export function useReEnrollmentGateway({ context, uniqueId, onPaid, onSessionExp
     paidPollRef.current.timer = setInterval(() => checkPaidStatus(userPaymentDetailsId, schoolId), PAID_STATUS_POLL_MS);
   }
 
-  async function launchGateway(gateway) {
-    const details = gatewayPicker.details;
+  async function launchGateway(gateway, { details = gatewayPicker?.details } = {}) {
+    if (!details) return;
     const payload = {
       location: getLocationValue(),
       browserDetails: details.upid,
@@ -188,11 +183,30 @@ export function useReEnrollmentGateway({ context, uniqueId, onPaid, onSessionExp
       paymentGateway: gateway.name,
       initiateVia: "",
       backUrl: window.location.href,
+      userAgent: navigator.userAgent,
+      browserId: getPaymentBrowserId(),
       applyingFrom: "nextjs",
     };
     setLaunching(true);
     try {
       const response = await invokeGateway.mutateAsync(payload);
+      const recovery = getPaymentAttemptRecovery(response, gateway.name);
+      if (recovery?.resumeUrl) {
+        toast("Taking you back to the payment you started...");
+        // This tab is paying itself: the re-enrollment chrome must not take the fee turning paid for a payment made elsewhere.
+        window.__reEnrollmentGatewayStarted = true;
+        window.location.assign(recovery.resumeUrl);
+        return;
+      }
+      if (recovery) {
+        setLaunching(false);
+        setGatewayPicker(null);
+        setPaymentInProgress({
+          ...recovery.request,
+          relaunch: { gateway, details },
+        });
+        return;
+      }
       if (response?.status !== STATUS_SUCCESS || !response.details?.redirectUrl) {
         setLaunching(false);
         setGatewayPicker(null);
@@ -200,17 +214,8 @@ export function useReEnrollmentGateway({ context, uniqueId, onPaid, onSessionExp
         return;
       }
       toast("Please wait while redirecting to payment gateway...");
-      // Inside the dashboard's iframe the hosted gateway pages (Stripe Checkout, Airwallex hosted page) refuse to run, so Stripe and
-      // Airwallex open their embedded form on a page of this app, in the same frame (see PaymentEmbeddedView); they bring the payer
-      // back to the usual response page, in the frame as well. Any other gateway opens in the whole window, as before.
-      const redirectUrl = response.details.redirectUrl;
-      if (isFramed()) {
-        const embeddedUrl = embeddedPaymentUrl(gateway.name, redirectUrl);
-        if (embeddedUrl) window.location.assign(embeddedUrl);
-        else navigateTop(redirectUrl, { replace: false });
-      } else {
-        window.location.assign(redirectUrl);
-      }
+      window.__reEnrollmentGatewayStarted = true;
+      window.location.assign(response.details.redirectUrl);
       // Still here after a while (the navigation was blocked): free the button instead of spinning forever.
       setTimeout(() => setLaunching(false), 10000);
     } catch (err) {
@@ -283,6 +288,24 @@ export function useReEnrollmentGateway({ context, uniqueId, onPaid, onSessionExp
         onUploadProof={uploadProof}
         onSubmitOffline={submitOffline}
       />
+      {paymentInProgress && (
+        <PaymentInProgressModal
+          key={paymentInProgress.openedAt}
+          request={paymentInProgress}
+          onClose={() => setPaymentInProgress(null)}
+          onCancelAttempt={(attemptRef) => cancelPaymentAttempt(context.schoolUUID, { attemptRef })}
+          onCancelled={() => {
+            const { gateway, details } = paymentInProgress.relaunch;
+            setPaymentInProgress(null);
+            launchGateway(gateway, { details });
+          }}
+          onPaid={() => {
+            setPaymentInProgress(null);
+            onPaid?.();
+          }}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
       {paymentProcessing && <FullScreenLoader message="Payment is under process..." />}
       <Dialog open={paymentIncomplete} onOpenChange={(open) => !open && setPaymentIncomplete(false)}>
         <DialogContent className="text-center">

@@ -5,10 +5,13 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import {
   Award, BarChart3, BookMarked, CalendarCheck, CalendarDays, ChevronDown, Circle, ClipboardCheck, FileText, Gamepad2,
-  Globe, GraduationCap, Handshake, History, LayoutDashboard, MoreHorizontal, ShoppingCart, Wallet, X,
+  Globe, GraduationCap, Handshake, History, Inbox, LayoutDashboard, MoreHorizontal, ShoppingCart, Wallet, X,
 } from "lucide-react";
+import { InboxBadge, isInboxMenuItem } from "@/components/student/inbox/InboxBadge";
 import { CLUB_ART } from "@/components/k5/clubMarks";
-import { NAV_ART } from "@/components/k5/navIcons";
+import { NAV_ART, navPictureFor } from "@/components/k5/navIcons";
+import { OptimizedImage } from "@/components/common/OptimizedImage";
+import { K5Sk } from "@/components/k5/K5Skeletons";
 import { studentNavHref } from "@/utils/dashboardNav";
 
 // Icon key (utils/dashboardNav.js) -> lucide icon + the mockup's tile tint pair (T background / I icon).
@@ -28,6 +31,7 @@ const ICONS = {
   handbook: [BookMarked, "bg-k5-rt", "text-k5-ri"],
   history: [History, "bg-k5-vt", "text-k5-vi"],
   certificate: [Award, "bg-k5-pt", "text-k5-pi"],
+  inbox: [Inbox, "bg-k5-bt", "text-k5-bi"],
   more: [MoreHorizontal, "bg-k5-soft", "text-k5-mut"],
 };
 const iconFor = (key) => ICONS[key] || [Circle, "bg-k5-soft", "text-k5-mut"];
@@ -60,7 +64,7 @@ function parseOrder(raw) {
  * header menu button; below 760px it is a drawer. Items can be dragged into a personal
  * order (localStorage is-k5-nav:{userId}); authorization stays with the backend menu.
  */
-export function K5NavRail({ menu, open, onOpen, onClose, isPreK = false, userId }) {
+export function K5NavRail({ menu, loading = false, open, onOpen, onClose, isPreK = false, userId }) {
   const pathname = usePathname();
   const { school } = useParams();
   const navRef = useRef(null);
@@ -122,6 +126,21 @@ export function K5NavRail({ menu, open, onOpen, onClose, isPreK = false, userId 
           <X className="h-4 w-4" strokeWidth={3} aria-hidden="true" />
         </button>
 
+        {/* While the menu loads: the same tiles as the real items (76px wide, 46px icon box, a short label), pulsing. */}
+        {loading && items.length === 0 && (
+          <>
+            <span role="status" aria-busy="true" aria-live="polite" className="sr-only">
+              Loading the menu…
+            </span>
+            {Array.from({ length: 12 }, (_, i) => (
+              <span key={i} aria-hidden="true" className="k5-ni relative flex w-[76px] flex-none flex-col items-center gap-1 py-1">
+                <K5Sk className="h-[46px] w-[46px] rounded-[15px]" />
+                <K5Sk className="k5-nl h-2.5 w-12" />
+              </span>
+            ))}
+          </>
+        )}
+
         {items.map((item) =>
           item.children?.length ? (
             <NavGroup key={item.key} item={item} school={school} isActive={isActive} expandRail={onOpen} onNavigate={onClose} drag={drag} />
@@ -148,8 +167,18 @@ function flattenItems(items) {
 const ITEM_CLASS =
   "k5-ni relative flex w-[76px] flex-none touch-none select-none flex-col items-center gap-1 rounded-2xl py-1 text-center text-xs font-black leading-[1.15] no-underline [overflow-wrap:anywhere]";
 
-function NavTile({ icon, active }) {
+function NavTile({ icon, active, picture }) {
   const [Icon, tile, stroke] = iconFor(icon);
+  // The mockup's picture (a 36px PNG on a transparent tile); the drawn icon stays as the fallback when there is no
+  // picture for the item or it cannot be loaded.
+  const [pictureFailed, setPictureFailed] = useState(false);
+  if (picture && !pictureFailed) {
+    return (
+      <span className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[15px] bg-transparent">
+        <OptimizedImage src={picture} alt="" width={36} height={36} className="block h-9 w-9 object-contain" onError={() => setPictureFailed(true)} />
+      </span>
+    );
+  }
   return (
     <span className={`flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[15px] ${active ? "bg-white text-k5-ac" : `${tile} ${stroke}`}`}>
       {NAV_ART[icon] ? (
@@ -176,7 +205,8 @@ function NavLink({ item, href, active, onNavigate, drag }) {
       style={drag.style(item.key)}
       className={`${ITEM_CLASS} ${active ? "bg-k5-ac text-white" : "text-k5-ink hover:bg-k5-soft"}`}
     >
-      <NavTile icon={item.icon} active={active} />
+      <NavTile icon={item.icon} active={active} picture={navPictureFor(item)} />
+      {isInboxMenuItem(item) && <InboxBadge className="absolute left-[46px] top-0 shadow-[0_0_0_2px_var(--k5-card)]" />}
       <span className="k5-nl">{item.label}</span>
     </Link>
   );
@@ -205,7 +235,8 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
         style={drag.style(item.key)}
         className={`${ITEM_CLASS} cursor-pointer border-none ${childActive ? "bg-k5-act text-k5-acx" : "bg-transparent text-k5-ink hover:bg-k5-soft"}`}
       >
-        <NavTile icon={item.icon} />
+        <NavTile icon={item.icon} picture={navPictureFor(item)} />
+        {isInboxMenuItem(item) && <InboxBadge className="absolute left-[46px] top-0 shadow-[0_0_0_2px_var(--k5-card)]" />}
         <span className="k5-nl">{item.label}</span>
         <span
           aria-hidden="true"
@@ -230,19 +261,7 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
                   aria-current={active ? "page" : undefined}
                   className={`flex w-[52px] items-center justify-center rounded-xl py-1.5 no-underline ${active ? "bg-k5-act" : "hover:bg-k5-soft"}`}
                 >
-                  {art.flag ? (
-                    <span
-                      aria-hidden="true"
-                      className="flex h-6 w-[34px] flex-none items-center justify-center rounded-[7px] text-lg leading-none text-[#FFDE00] shadow-[0_0_0_2px_var(--k5-card),0_0_0_3px_var(--k5-line)]"
-                      style={{ background: art.flag }}
-                    >
-                      {art.mark}
-                    </span>
-                  ) : (
-                    <span aria-hidden="true" className="flex h-8 w-8 flex-none items-center justify-center rounded-[7px] bg-k5-soft text-lg leading-none shadow-[0_0_0_2px_var(--k5-card),0_0_0_3px_var(--k5-line)]">
-                      {art.emoji}
-                    </span>
-                  )}
+                  <ClubMark art={art} />
                 </Link>
               </li>
             );
@@ -250,7 +269,7 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
         </ul>
       )}
       {openGroup && (
-        <ul className="k5-sub w-full flex-col gap-1 ps-[58px]">
+        <ul className="k5-sub w-full flex-col gap-1 ps-[30px]">
           {item.children.map((child) => {
             const active = isActive(child.segment);
             return (
@@ -259,11 +278,12 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
                   href={studentNavHref(school, child.segment)}
                   onClick={onNavigate}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-11 items-center rounded-xl px-3 py-2 text-[15px] font-extrabold ${
+                  className={`flex min-h-11 items-center gap-2.5 rounded-xl px-3 py-1 text-[15px] font-extrabold ${
                     active ? "bg-k5-act text-k5-acx" : "text-k5-ink hover:bg-k5-soft"
                   }`}
                 >
-                  {child.label}
+                  {CLUB_ART[child.segment] && <ClubMark art={CLUB_ART[child.segment]} />}
+                  <span className="min-w-0 truncate">{child.label}</span>
                 </Link>
               </li>
             );
@@ -271,6 +291,26 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
         </ul>
       )}
     </>
+  );
+}
+
+/** A club's little picture (mockup .nsub): its flag for a language club, an emoji on a soft tile for the others. */
+function ClubMark({ art }) {
+  if (art.flag) {
+    return (
+      <span
+        aria-hidden="true"
+        className="flex h-6 w-[34px] flex-none items-center justify-center rounded-[7px] text-lg leading-none text-[#FFDE00] shadow-[0_0_0_2px_var(--k5-card),0_0_0_3px_var(--k5-line)]"
+        style={{ background: art.flag }}
+      >
+        {art.mark}
+      </span>
+    );
+  }
+  return (
+    <span aria-hidden="true" className="flex h-8 w-8 flex-none items-center justify-center rounded-[7px] bg-k5-soft text-lg leading-none shadow-[0_0_0_2px_var(--k5-card),0_0_0_3px_var(--k5-line)]">
+      {art.emoji}
+    </span>
   );
 }
 

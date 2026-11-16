@@ -3,6 +3,7 @@
 @import "shadcn/tailwind.css";
 @import "./k5-theme.css";
 @import "./k5-middle.css";
+@import "./k5-mature.css";
 @import "./appearance.css";
 @import "./k5-modules.css";
 @import "./profile-plain.css";
@@ -443,5 +444,28 @@ input:-internal-autofill-selected {
 @media (prefers-reduced-motion: reduce) {
   .calendar-live-dashed {
     animation: none;
+  }
+}
+/* Next-grade re-enrollment button pulse (legacy reserveSeatContent.js pulseScale). */
+@keyframes ras-pulse {
+  0% {
+    transform: scale(0.95);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(0.95);
+  }
+}
+
+/* School System Training welcome popup words (legacy animate.css zoomIn). */
+@keyframes st-zoom-in {
+  from {
+    opacity: 0;
+    transform: scale3d(0.3, 0.3, 0.3);
+  }
+  50% {
+    opacity: 1;
   }
 }

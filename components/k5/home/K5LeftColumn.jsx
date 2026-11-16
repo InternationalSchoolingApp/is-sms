@@ -4,6 +4,7 @@ import { format, isSameMonth } from "date-fns";
 import { Check, CheckCircle2, ChevronLeft, ChevronRight, Clock, Star, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { K5_CARD, K5_ROUND_BTN, SubjectIcon } from "@/components/k5/home/k5Bits";
 import { getMonthGridDays } from "@/utils/calendarEvents";
 import { CLUE_COLORS, WEEKDAY_TEXT, classTitle, courseTint, dayAt, dayKey, safeCourseColor, subjectStyle, timeLabel, timeRange } from "@/utils/k5Calendar";
@@ -21,6 +22,7 @@ function dotColor(day) {
 
 /** Mini month calendar: picking a day opens it in the Day plan. */
 export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, onClose }) {
+  const { isMiddle } = useDashboardContext();
   const cells = getMonthGridDays(selectedDate);
   const inPopup = Boolean(onClose);
   const titleId = inPopup ? "k5-calpop-title" : "k5-mini-title";
@@ -73,16 +75,21 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
             );
           }
           const isToday = key === todayKey;
+          // The day open in the Day plan (when it is not today): a light tile with an accent ring (mockup selBg / selRing).
+          const isSel = !isToday && key === dayKey(selectedDate);
           const color = dotColor(dayAt(days, key));
           return (
             <div key={key} className="flex justify-center">
               <button
                 type="button"
                 aria-current={isToday ? "date" : undefined}
+                aria-pressed={isToday ? undefined : isSel}
                 aria-label={format(date, "EEEE, MMMM d")}
                 onClick={() => onPick(date)}
                 className={`relative flex cursor-pointer items-center justify-center rounded-full border-none font-black ${
-                  isToday ? "h-10 w-10 bg-k5-ac text-[17px] text-white shadow-[0_3px_0_var(--k5-acd)]" : "h-[38px] w-[38px] bg-transparent text-base text-k5-ink hover:bg-k5-soft"
+                  isToday ? "h-10 w-10 bg-k5-ac text-[17px] text-white shadow-[0_3px_0_var(--k5-acd)]" : isSel
+                      ? `h-[38px] w-[38px] bg-k5-act text-base text-k5-acx ${isMiddle ? "shadow-[inset_0_0_0_2px_var(--k5-ac)]" : "shadow-[inset_0_0_0_3px_var(--k5-ac)]"}`
+                      : "h-[38px] w-[38px] bg-transparent text-base text-k5-ink hover:bg-k5-soft"
                 }`}
               >
                 {date.getDate()}
@@ -180,7 +187,6 @@ export function TodayCard({ todayKey, days }) {
 /** My Courses: every enrolled course, tap to show / hide its classes in the planner. */
 export function MyCourses({ courseRegistry, courseVisibility, onToggle }) {
   const courses = Object.values(courseRegistry || {});
-  console.log("MyCourses", { courses, courseVisibility });
   if (!courses.length) return null;
   return (
     <section aria-labelledby="k5-courses-title" className={`${K5_CARD} flex flex-col gap-2 p-4`}>
@@ -203,14 +209,14 @@ export function MyCourses({ courseRegistry, courseVisibility, onToggle }) {
             className={`flex min-h-[52px] cursor-pointer items-center gap-2.5 rounded-[14px] border-none px-2 py-1 text-left ${shown ? (apiColor ? "" : tile) : "bg-k5-soft"}`}
             style={shown && apiColor ? { background: courseTint(apiColor) } : undefined}
           >
-            <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-xl bg-k5-card" style={apiColor ? { color: apiColor } : undefined}>
+            <span className="k5h-ctile flex h-[38px] w-[38px] flex-none items-center justify-center rounded-xl bg-k5-card" style={apiColor ? { color: apiColor } : undefined}>
               <SubjectIcon name={course.label} className={`h-[22px] w-[22px] ${apiColor ? "" : ink}`} />
             </span>
             <span className={`flex-1 text-[15px] font-black ${shown ? "text-k5-ink" : "text-k5-mut"}`}>{course.label}</span>
             {/* Mockup checkbox: filled in the subject colour with a tick while the course is shown. */}
             <span
               aria-hidden="true"
-              className={`flex h-[26px] w-[26px] flex-none items-center justify-center rounded-lg ${shown ? "" : "border-[3px] border-k5-line bg-k5-card"}`}
+              className={`k5h-cchk flex h-[26px] w-[26px] flex-none items-center justify-center rounded-lg ${shown ? "" : "border-[3px] border-k5-line bg-k5-card"}`}
               style={shown ? { background: color } : undefined}
             >
               {shown && <Check className="h-4 w-4 text-white" strokeWidth={3.5} />}

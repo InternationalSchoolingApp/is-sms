@@ -14,14 +14,14 @@ import { reEnrollmentBasePath, reEnrollmentStepPath } from "@/utils/reEnrollment
  */
 export function useRequireSelectedOption(step) {
   const router = useRouter();
-  const { school, mode } = useParams();
+  const { school } = useParams();
   const { inProgress, steps, eligibility } = useReEnrollmentContext();
   const listed = steps.includes(step);
 
   useEffect(() => {
-    if (!inProgress) router.replace(reEnrollmentBasePath(school, mode));
-    else if (!listed) router.replace(reEnrollmentStepPath(school, eligibility.currentStep, mode));
-  }, [inProgress, listed, eligibility?.currentStep, router, school, mode]);
+    if (!inProgress) router.replace(reEnrollmentBasePath(school));
+    else if (!listed) router.replace(reEnrollmentStepPath(school, eligibility.currentStep));
+  }, [inProgress, listed, eligibility?.currentStep, router, school]);
 
   return inProgress && listed;
 }

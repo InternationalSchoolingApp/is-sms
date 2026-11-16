@@ -2,7 +2,7 @@
 
 import { BookOpen, Check, Hand, HeartPulse, Moon, ScanLine, Sun, Volume2 } from "lucide-react";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
-import { BUDDIES, DYSLEXIA_OFF, DYSLEXIA_ON, PAGE_COLORS, THEME_SWATCHES, VOICES } from "@/constant/appearance";
+import { BUDDIES, DYSLEXIA_OFF, DYSLEXIA_ON, PAGE_COLORS, THEME_SWATCHES, VOICE_SPEEDS, VOICES } from "@/constant/appearance";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 
 const OPTION =
@@ -138,19 +138,39 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
             </Section>
 
             <Section id="lk-voice" title="Buddy's voice" subtitle="Tap one to hear it!">
-              <div className="grid grid-cols-3 gap-2.5 min-[561px]:grid-cols-6">
+              <div className="grid grid-cols-4 gap-2.5 max-[560px]:grid-cols-2">
                 {Object.entries(VOICES).map(([key, v]) => (
                   <button
                     key={key}
                     type="button"
                     aria-pressed={preferences.voice === key}
-                    onClick={() => onHear?.(key)}
-                    className={`${OPTION} px-1 ${optionState(preferences.voice === key)}`}
+                    aria-label={`${v.name}, ${v.gender} voice, ${v.accent}`}
+                    onClick={() => (onHear ? onHear({ voice: key }) : _panelUpdate("voice", key))}
+                    className={`${OPTION} gap-0.5 px-1 ${optionState(preferences.voice === key)}`}
                   >
                     <Volume2 className="h-6 w-6 text-k5-acx" aria-hidden="true" />
-                    {v.name}
+                    <span>{v.name}</span>
+                    <span className="text-xs font-extrabold text-k5-mut">
+                      {v.gender === "boy" ? "Boy" : "Girl"} · {v.accent}
+                    </span>
                   </button>
                 ))}
+              </div>
+              <div className="flex flex-col gap-2">
+                <span className="text-[15px] font-black text-k5-mut">How fast?</span>
+                <div className="grid grid-cols-3 gap-2.5">
+                  {Object.entries(VOICE_SPEEDS).map(([key, s]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      aria-pressed={preferences.voiceSpeed === key}
+                      onClick={() => (onHear ? onHear({ voiceSpeed: key }) : _panelUpdate("voiceSpeed", key))}
+                      className={`${OPTION} ${optionState(preferences.voiceSpeed === key)}`}
+                    >
+                      {s.name}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <Choice name="speech" value="on" label="Buddy talks" />

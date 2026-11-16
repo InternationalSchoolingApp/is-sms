@@ -121,16 +121,15 @@ function resolveNationalityName(countries, nationalityId) {
  * sample exactly for POST {schoolId}/api/v1/parent/child/student-details:
  * a FLAT object (NOT the main-flow {authentication, signupStudent} nested
  * envelope) carrying the 7 user-entered fields plus the ids the controller
- * needs to resolve this child + parent (parentId, userId, uniqueId). DOB
+ * needs to resolve this child + parent (parentId, userId). DOB
  * stays MM-DD-YYYY (formatDobForRequest); standardId goes as a number so
  * the controller doesn't have to coerce it.
  */
-function buildAddSaveRequest({ fields, context, userId, uniqueId, countries }) {
+function buildAddSaveRequest({ fields, context, userId, countries }) {
   const nationalityName = resolveNationalityName(countries, fields.nationality);
   const payload = {
     parentId: context.parentId,
     userId,
-    uniqueId,
     firstName: fields.firstName,
     lastName: fields.lastName,
     dob: formatDobForRequest(fields.dob),
@@ -147,12 +146,12 @@ function buildAddSaveRequest({ fields, context, userId, uniqueId, countries }) {
   return payload;
 }
 
-export function useAddStudentDetailsSignup({ context, userId, uniqueId, countries }) {
+export function useAddStudentDetailsSignup({ context, userId, countries }) {
   return useMutation({
     mutationFn: (fields) =>
       saveAnotherChildStudentDetails(
         context.schoolUUID,
-        buildAddSaveRequest({ fields, context, userId, uniqueId, countries })
+        buildAddSaveRequest({ fields, context, userId, countries })
       ),
   });
 }

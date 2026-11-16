@@ -13,6 +13,7 @@ import {
 } from "@/services/paymentResponseApi";
 import { useSession } from "@/components/providers/AuthSessionProvider";
 import { getAddEnrollmentThankYou } from "@/services/addEnrollmentBackendApi";
+import { getReEnrollmentThankYou } from "@/services/reEnrollmentBackendApi";
 import { checkBackendSessionStatus, hasHeldAccount } from "@/services/sessionStatusApi";
 import { 
   clearAddEnrollmentChildState,
@@ -24,7 +25,6 @@ import { loginPageUrl, resolveBackendOrigin, withLoginPayload } from "@/utils/ba
 import { getBrowserDetailsForSignup } from "@/utils/utmCookies";
 import { expireSession, logoutEverywhere } from "@/utils/logout";
 import { copyrightLine } from "@/utils/schoolBrand";
-import { isFramed, navigateTop, useFramed } from "@/utils/embed";
 
 /**
  * Shared view for every /common/*payment-response-* route. Ports the render
@@ -66,18 +66,17 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   const params = useParams();
   const searchParams = useSearchParams();
 
-  const customReference = params.customReference;
-
-  // Add Another Student: the return URL carries ae=Y (+ parentId, sessionUserId = the caller's UNIQUEUUID).
-  // On the path-based failure URL those arrive glued onto the UNIQUEUUID segment ("{uuid}&ae=Y&parentId=..").
-  const [uuidSegment, ...gluedParts] = decodeURIComponent(params.UNIQUEUUID ?? "").split("&");
+  // The backend appends the add-enrollment flags (ae=Y|N, parentId, sessionUserId) with "&" to every return URL.
+  // The failure URL has no "?", so on it they arrive glued onto the customReference segment ("{ref}&ae=Y&parentId=..").
+  const [customReferenceSegment, ...gluedParts] = decodeURIComponent(params.customReference ?? "").split("&");
+  const customReference = customReferenceSegment || undefined;
   const glued = new URLSearchParams(gluedParts.join("&"));
   const addEnrollmentParam = (key) => searchParams.get(key) || glued.get(key) || "";
   const isAddEnrollmentUrl = addEnrollmentParam("ae").toUpperCase() === "Y";
-  const uniqueUuid = isAddEnrollmentUrl ? uuidSegment : params.UNIQUEUUID;
+  const uniqueUuid = params.UNIQUEUUID;
   const addEnrollment =
     isAddEnrollmentUrl && addEnrollmentParam("parentId") && addEnrollmentParam("sessionUserId")
-      ? { parentId: addEnrollmentParam("parentId"), sessionUniqueId: addEnrollmentParam("sessionUserId"), childUniqueId: uniqueUuid }
+      ? { parentId: addEnrollmentParam("parentId"), sessionUniqueId: addEnrollmentParam("sessionUserId"), childUserId: addEnrollmentParam("childUserId") }
       : null;
   // Normal enrollment gateway callbacks carry UNIQUEUUID directly; add-enrollment callbacks
   // carry the same identity plus ae=Y and the parent/session fields above.
@@ -87,6 +86,10 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   // replay=Y: the wizard found this child already paid (refresh / paid via the payment link) and sent the user
   // here WITHOUT gateway params, so there is nothing to verify — show the thank-you from the thank-you API.
   const isReplay = Boolean(addEnrollment) && addEnrollmentParam("replay").toUpperCase() === "Y";
+  // re=Y&replay=Y: the re-enrollment page saw its grade fee paid elsewhere (e.g. the custom plan's payment link) and sent
+  // the student here WITHOUT gateway params — show the thank-you from the re-enrollment thank-you API.
+  const isReEnrollmentReplay =
+    !isAddEnrollmentUrl && searchParams.get("re")?.toUpperCase() === "Y" && searchParams.get("replay")?.toUpperCase() === "Y";
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -183,6 +186,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   useEffect(() => {
     if (
       isReplay ||
+      isReEnrollmentReplay ||
       (requiresEnrollmentSession && sessionStatus !== "authenticated" && !sessionWaitDone) ||
       (isEnrollmentReturn && sessionStatus === "authenticated" && !backendSessionReady)
     ) return undefined;
@@ -191,7 +195,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       setLoading(true);
       const request =
         mode === "failure"
-          ? getPaymentResponseFailure(schoolUUID, customReference, uniqueUuid, search)
+          ? getPaymentResponseFailure(schoolUUID, customReference, search)
           : getPaymentResponseSuccess(schoolUUID, endpointPath, search);
 
       logPaymentBackendCall(
@@ -229,7 +233,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       cancelled = true;
       window.clearTimeout(requestTimer);
     };
-  }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, search, isReplay, isEnrollmentReturn, requiresEnrollmentSession, sessionStatus, sessionWaitDone, backendSessionReady, urlSettlementRef]);
+  }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, search, isReplay, isReEnrollmentReplay, isEnrollmentReturn, requiresEnrollmentSession, sessionStatus, sessionWaitDone, backendSessionReady, urlSettlementRef]);
 
   // settlement-status said SETTLED: the success endpoint now returns the normal thank-you, so fetch it
   // again and render that. If it still can't be loaded, the confirming card shows the payment as confirmed.
@@ -294,7 +298,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   const redirectToLogin =
     sessionStatus === "unauthenticated" &&
     !waitingForEnrollmentSession &&
-    (isReplay || !loading) &&
+    (isReplay || isReEnrollmentReplay || !loading) &&
     (!shownWithoutLogin || copiedUrlWithoutSession);
   // TEMP DEBUG [pay-debug]: every state change that feeds the login redirect
   useEffect(() => {
@@ -336,9 +340,11 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
         schoolUUID={schoolUUID}
         parentId={addEnrollment.parentId}
         rollNo={searchParams.get("rollNo") || ""}
-        childUniqueId={searchParams.get("childUniqueId") || ""}
+        childUserId={searchParams.get("childUserId") || ""}
         sessionCheckReady={backendSessionReady}
       />;
+
+  if (isReEnrollmentReplay) return <ReEnrollmentThankYouReplay schoolUUID={schoolUUID} />;
 
   if (loading) return <ProcessingLoader />;
 
@@ -398,7 +404,7 @@ function stage7ContentFromPaymentTitle(paymentTitle) {
 // Thank-you for an add-enrollment child that is already paid, built from the thank-you details API (child found
 // by the roll number the wizard left in storage). Same SuccessCard as a live payment return, incl. the
 // account-setup section on a first payment.
-function AddEnrollmentThankYouReplay({ schoolUUID, parentId, rollNo, childUniqueId, sessionCheckReady }) {
+function AddEnrollmentThankYouReplay({ schoolUUID, parentId, rollNo, childUserId, sessionCheckReady }) {
   const { data: session, status } = useSession();
   const [info, setInfo] = useState(undefined);
 
@@ -414,14 +420,16 @@ function AddEnrollmentThankYouReplay({ schoolUUID, parentId, rollNo, childUnique
     getAddEnrollmentThankYou(sessionSchool, {
       parentId,
       sessionUserId: session.userId,
-      sessionUniqueId: session.uniqueId,
+      sessionUniqueId: session.studentUserId ?? session.userId,
       studentRollNumber,
-      childUniqueId,
+      childUserId,
     })
       .then((res) => {
+        // TEMP-DEBUG: what the replay asked for and what the thank-you API answered
+        console.log("[payment-response] api response enroll/another/child/thank-you (replay)", { studentRollNumber, childUserId, res });
         const ok = res?.status === "1" && res.data;
         // Finished: the next wizard entry in this tab must not pick this child up again (this page's own refresh
-        // keeps working from the rollNo / childUniqueId in its URL).
+        // keeps working from the rollNo / childUserId in its URL).
         if (ok) clearAddEnrollmentChildState(sessionSchool, parentId);
         if (!cancelled) setInfo(ok ? res.data : null);
       })
@@ -429,7 +437,7 @@ function AddEnrollmentThankYouReplay({ schoolUUID, parentId, rollNo, childUnique
     return () => {
       cancelled = true;
     };
-  }, [sessionCheckReady, status, session?.userId, session?.uniqueId, session?.schoolUUID, schoolUUID, parentId, rollNo, childUniqueId]);
+  }, [sessionCheckReady, status, session?.userId, session?.studentUserId, session?.schoolUUID, schoolUUID, parentId, rollNo, childUserId]);
 
   if (status === "unauthenticated" || info === null) return <ErrorCard data={null} />;
   if (!sessionCheckReady || info === undefined) return <ProcessingLoader />;
@@ -445,6 +453,46 @@ function AddEnrollmentThankYouReplay({ schoolUUID, parentId, rollNo, childUnique
         returnUrl: info.returnUrl,
         displaySchoolName: session?.schoolName,
         accountSetup: isFirstPayment(info) ? info : null,
+      }}
+    />
+  );
+}
+
+// Thank-you for a re-enrollment grade fee paid elsewhere (the custom plan's payment link, another tab), built from the
+// re-enrollment thank-you API. Same SuccessCard and countdown as a live payment return; the countdown goes to the
+// student dashboard, which sends the student on to the next re-enrollment step (e.g. course selection).
+function ReEnrollmentThankYouReplay({ schoolUUID }) {
+  const { data: session, status } = useSession();
+  const [info, setInfo] = useState(undefined);
+
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.userId) return undefined;
+    let cancelled = false;
+    logPaymentBackendCall("POST", "/api/v1/student/re-enrollment/thank-you", "(replay)");
+    getReEnrollmentThankYou(session.schoolUUID || schoolUUID, { userId: session.userId })
+      .then((res) => !cancelled && setInfo(res?.status === "1" ? res : null))
+      .catch(() => !cancelled && setInfo(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [status, session?.userId, session?.schoolUUID, schoolUUID]);
+
+  if (status === "unauthenticated" || info === null) return <ErrorCard data={null} />;
+  if (info === undefined) return <ProcessingLoader />;
+  return (
+    <SuccessCard
+      data={{
+        ...stage7ContentFromPaymentTitle(info.paymentTitle),
+        enrollmentType: info.enrollmentType,
+        paymentName: info.paymentName,
+        userName: info.studentName,
+        payAmount: info.payAmount,
+        grade: info.grade,
+        learningProgram: info.learningProgram,
+        initiatedVia: "Link",
+        showReloadOption: "Y",
+        returnUrl: `/${schoolUUID}/student`,
+        displaySchoolName: session?.schoolName,
       }}
     />
   );
@@ -666,7 +714,7 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
           <AddEnrollmentAccountInfo
             schoolUUID={schoolUUID}
             parentId={addEnrollment.parentId}
-            childUniqueId={addEnrollment.childUniqueId}
+            childUserId={addEnrollment.childUserId}
             sessionUniqueId={addEnrollment.sessionUniqueId}
           />
         )}
@@ -700,7 +748,7 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
 // Add Another Student: loads the thank-you details (api/v1/enroll/another/child/thank-you) and shows the
 // account-setup section when the response says isFirstPayment = Y. The caller identity comes from the login
 // session when available, or from the payment callback URL; the child id also comes from that URL.
-function AddEnrollmentAccountInfo({ schoolUUID, parentId, childUniqueId, sessionUniqueId }) {
+function AddEnrollmentAccountInfo({ schoolUUID, parentId, childUserId, sessionUniqueId }) {
   const { data: session, status: sessionStatus } = useSession();
   // Payment-link returns can arrive without a NextAuth session. The callback URL
   // still carries the caller's unique id, so use it to ask the thank-you API for
@@ -720,10 +768,20 @@ function AddEnrollmentAccountInfo({ schoolUUID, parentId, childUniqueId, session
       loadAddEnrollmentRollNo(schoolUUID, parentId) ||
       // opened in another tab: no sessionStorage there, so use the copy the wizard left in localStorage
       loadLastAddEnrollmentRollNo(session?.schoolUUID || schoolUUID, parentId);
-    // The URL's sessionUserId is the enrolled CHILD's unique id; the thank-you API wants the caller's
-    // (sessionUserId and sessionUniqueId must be the same user), i.e. the logged-in session.
-    const callerUniqueId = session?.uniqueId || sessionUniqueId;
-    if (sessionStatus !== "authenticated" || !sessionUserId || !callerUniqueId) return undefined;
+    // The thank-you API wants the caller's numeric id in both sessionUserId and sessionUniqueId (they must be
+    // the same user), so reuse the id sent as sessionUserId rather than the URL's value.
+    const callerUniqueId = sessionUserId;
+    // TEMP DEBUG (remove once the section shows): which of the gates is closing?
+    console.log("[add-enrollment account section] gates", {
+      sessionStatus,
+      sessionUserId,
+      parentId,
+      callerUniqueId,
+      urlSessionUniqueId: sessionUniqueId,
+      childUserId,
+      rollNo,
+    });
+    if (!sessionUserId) return undefined;
     let cancelled = false;
     logPaymentBackendCall("POST", "/api/v1/enroll/another/child/thank-you", "(account info)");
     getAddEnrollmentThankYou(schoolUUID, {
@@ -731,7 +789,7 @@ function AddEnrollmentAccountInfo({ schoolUUID, parentId, childUniqueId, session
       sessionUserId,
       sessionUniqueId: callerUniqueId,
       studentRollNumber: rollNo,
-      childUniqueId,
+      childUserId,
     })
       .then((res) => {
         if (!cancelled && String(res?.status ?? "") === "1" && res.data) setInfo(res.data);
@@ -740,7 +798,7 @@ function AddEnrollmentAccountInfo({ schoolUUID, parentId, childUniqueId, session
     return () => {
       cancelled = true;
     };
-  }, [schoolUUID, parentId, childUniqueId, sessionUserId, sessionUniqueId, session?.schoolUUID, session?.uniqueId]);
+  }, [schoolUUID, parentId, childUserId, sessionUserId, sessionUniqueId, session?.schoolUUID]);
 
   // Only for the child's first payment, decided by the backend: payment title REGISTRATION_SUBJECT_FEE or
   // CUSTOMIZED_REGISTRATION_SUBJECT_FEE on a REGISTRATION_FRESH / REGISTRATION_FLEX_COURSE enrollment.

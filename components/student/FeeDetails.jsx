@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
+import { CheckoutExtraDialogs } from "@/components/common/CheckoutExtraDialogs";
 import { MobileTableCard } from "@/components/student/MobileTableCard";
 import { TableFooter } from "@/components/student/TableFooter";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -153,6 +154,7 @@ export function FeeDetails() {
           canView={canView}
           onPay={checkout.start}
         />
+        <CheckoutExtraDialogs checkout={checkout} />
         {context && (
           <PaymentGatewayPickerModal
             open={Boolean(checkout.picker)}
@@ -262,6 +264,7 @@ export function FeeDetails() {
         {!status && <TableFooter page={page} pageSize={PAGE_SIZE} total={payments.length} onPageChange={setPage} />}
       </div>
 
+      <CheckoutExtraDialogs checkout={checkout} />
       {context && (
         <PaymentGatewayPickerModal
           open={Boolean(checkout.picker)}

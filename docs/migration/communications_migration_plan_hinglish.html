@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Communications (Inbox) — Migration Plan (Hinglish)</title>
+<style>
+  :root{--bg:#0f1420;--panel:#151c2c;--panel2:#1b2436;--ink:#e8edf6;--mut:#9fb0c9;--line:#2a364d;--acc:#5b9dff;
+    --in:#2fbf71;--out:#ff4d5e;--rec:#5b9dff;--warn:#e0a52b;}
+  @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f5f7fb;--panel:#fff;--panel2:#eef2f8;--ink:#17202e;--mut:#536079;--line:#d7deea;--acc:#1f5fd6;--in:#1f9d57;--out:#d61f36;--rec:#1f5fd6;--warn:#b5821a;}}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.85em;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:.03em .4em}
+  .wrap{display:flex;max-width:1200px;margin:0 auto}
+  aside{position:sticky;top:0;align-self:flex-start;height:100vh;overflow:auto;width:250px;flex:0 0 250px;background:var(--panel);border-right:1px solid var(--line);padding:16px 12px}
+  aside .brand{font-weight:800;font-size:15px;padding:4px 6px 10px;line-height:1.3}
+  aside ol{list-style:none;margin:0;padding:0;counter-reset:s}
+  aside ol li a{display:block;padding:5px 8px;border-radius:7px;color:var(--mut);font-size:13.5px}
+  aside ol li a::before{counter-increment:s;content:counter(s) ". ";color:var(--acc)}
+  aside ol li a:hover{background:var(--panel2);color:var(--ink);text-decoration:none}
+  main{flex:1 1 auto;min-width:0;padding:24px 32px 120px}
+  header.top{border:1px solid var(--line);background:linear-gradient(135deg,var(--panel),var(--panel2));border-radius:16px;padding:22px 24px;margin-bottom:20px}
+  header.top h1{margin:0 0 6px;font-size:24px}
+  header.top .sub{color:var(--mut);font-size:14px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-size:12.5px;color:var(--mut)}
+  .meta b{color:var(--ink)}
+  .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+  .btn{display:inline-flex;align-items:center;gap:8px;font:600 14px/1 inherit;font-family:inherit;padding:10px 16px;border-radius:10px;border:1px solid var(--acc);background:var(--acc);color:#fff;cursor:pointer}
+  .btn.ghost{background:transparent;color:var(--acc)}
+  .btn:focus-visible{outline:3px solid color-mix(in srgb,var(--acc) 45%,transparent);outline-offset:2px}
+  section{border-top:1px solid var(--line);padding-top:22px;margin-top:26px;scroll-margin-top:12px}
+  section>h2{font-size:20px;margin:0 0 6px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  section>h2 .n{color:var(--acc);font-size:14px}
+  h3{font-size:16px;margin:18px 0 8px}
+  p{margin:8px 0}.lead{color:var(--mut)}
+  ul,ol{margin:8px 0;padding-left:22px}li{margin:3px 0}
+  .b{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;border:1px solid transparent;white-space:nowrap}
+  .b.in{color:var(--in);border-color:var(--in);background:color-mix(in srgb,var(--in) 14%,transparent)}
+  .b.out{color:#fff;background:var(--out);border-color:var(--out)}
+  .b.rec{color:var(--rec);border-color:var(--rec);background:color-mix(in srgb,var(--rec) 14%,transparent)}
+  .b.warn{color:var(--warn);border-color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+  .b.ph{background:var(--panel2);color:var(--ink);border-color:var(--line)}
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:12px 0}
+  table{border-collapse:collapse;width:100%;font-size:13px;min-width:620px}
+  th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--panel2);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  tbody tr:hover{background:color-mix(in srgb,var(--acc) 7%,transparent)}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:14px 0}
+  .card{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:14px 16px}
+  .card .big{font-size:26px;font-weight:800}.card .lbl{color:var(--mut);font-size:12.5px;margin-top:2px}
+  .note{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--panel);border-radius:10px;padding:12px 15px;margin:14px 0}
+  .note.out{border-left-color:var(--out)}.note.ok{border-left-color:var(--in)}.note.warn{border-left-color:var(--warn)}
+  .note b.t{display:block;margin-bottom:3px}
+  figure{margin:16px 0;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:14px}
+  figure svg{display:block;width:100%;height:auto}
+  figcaption{color:var(--mut);font-size:12.5px;margin-top:8px}
+  pre{overflow:auto;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:12.5px;line-height:1.5}
+  .svgbox{fill:var(--panel2);stroke:var(--line);stroke-width:1.4}
+  .svgacc{fill:color-mix(in srgb,var(--acc) 16%,var(--panel));stroke:var(--acc);stroke-width:1.4}
+  .svgin{fill:color-mix(in srgb,var(--in) 14%,var(--panel));stroke:var(--in);stroke-width:1.4}
+  .svgt{fill:var(--ink);font:600 13px -apple-system,Segoe UI,sans-serif}
+  .svgs{fill:var(--mut);font:12px -apple-system,Segoe UI,sans-serif}
+  .svgl{stroke:var(--mut);stroke-width:1.5;fill:none}
+  details{border:1px solid var(--line);border-radius:10px;background:var(--panel);margin:10px 0;padding:0 14px}
+  details>summary{cursor:pointer;padding:10px 0;font-weight:600}
+  .two{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  #demoOut{font-size:13px;color:var(--mut)}
+  @media (max-width:860px){.wrap{display:block}aside{position:static;height:auto;width:auto;border-right:0;border-bottom:1px solid var(--line)}main{padding:18px 16px 80px}}
+  @media print{aside,.actions,.no-print{display:none}main{padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<aside>
+  <div class="brand">Communications (Inbox)<br><span style="color:var(--mut);font-weight:500;font-size:12.5px">Migration plan (Hinglish)</span></div>
+  <ol>
+    <li><a href="#summary">Summary</a></li>
+    <li><a href="#legacy">Legacy screens aur files</a></li>
+    <li><a href="#endpoints">Endpoints ki list</a></li>
+    <li><a href="#examples">Request / response examples</a></li>
+    <li><a href="#security">Security review</a></li>
+    <li><a href="#target">is-sms me naya design</a></li>
+    <li><a href="#ui">UI: regular, K5, Middle</a></li>
+    <li><a href="#download">Attachment download example</a></li>
+    <li><a href="#phases">Phase-wise kaam</a></li>
+    <li><a href="#tests">Test cases</a></li>
+    <li><a href="#questions">Open questions</a></li>
+  </ol>
+</aside>
+<main>
+<header class="top">
+  <h1>Communications (Inbox): JSP se Next.js migration</h1>
+  <div class="sub">Legacy Inbox page (emails, notifications, announcements, WhatsApp, Sent, Compose aur Reply) ko <code>is-rest-api</code> (jQuery page) se <code>is-sms</code> (Next 16, React Query, Tailwind v4, shadcn ui) me le jaana hai. Sirf existing backend endpoints use honge, koi naya endpoint nahi banega.</div>
+  <div class="meta">
+    <span>Branch <b>feature/version_1_3_0_phase4</b></span>
+    <span>Sidebar pageLink <b>inbox</b> (+ <b>inbox-compose</b>)</span>
+    <span>Status <b>Sirf plan: app code change nahi hua</b></span>
+    <span>Date <b>2026-11-12</b></span>
+  </div>
+  <div class="actions no-print">
+    <button type="button" class="btn" id="downloadPage">⬇ Ye plan download karo (.html)</button>
+    <button type="button" class="btn ghost" onclick="window.print()">Print</button>
+  </div>
+</header>
+
+<!-- ================================================================== 1 -->
+<section id="summary">
+  <h2><span class="n">1</span> Summary</h2>
+  <p>Legacy Inbox ka server side already achha bana hua hai: <code>InboxController</code> (<code>{schoolId}/dashboard/inbox/*</code>) hamesha <b>token wale user</b> par kaam karta hai (<code>InboxService.viewer()</code> → <code>CurrentIdentity.getUser</code>), <code>inbox</code> module right check karta hai, aur har id (email, attachment, reply, recipients) dobara check karta hai. Isliye ye migration zyada tar <b>front-end rewrite</b> hai. Bas teen chhote Next.js route handlers chahiye un kaamon ke liye jo Server Action se nahi ho sakte: multipart send, sandboxed email body, aur attachment download.</p>
+  <div class="grid">
+    <div class="card"><div class="big">20</div><div class="lbl">Legacy endpoints use honge (17 inbox + 3 compose assist)</div></div>
+    <div class="card"><div class="big">0</div><div class="lbl">Naye backend endpoints chahiye</div></div>
+    <div class="card"><div class="big">3</div><div class="lbl">Next route handlers (send, email body, attachment)</div></div>
+    <div class="card"><div class="big">3</div><div class="lbl">Skins: regular, K5, Middle</div></div>
+  </div>
+  <div class="note ok"><b class="t">Aapke bataye hue endpoints</b>
+    <code>dashboard/inbox/compose/contacts</code>, <code>dashboard/inbox/children</code> aur <code>dashboard/inbox/list</code> teeno <code>InboxController</code> par hain. Teeno user ko token se padhte hain. Student ke liye <code>children</code> <code>{}</code> return karta hai (ye sirf parent ke liye bharta hai), isliye student dashboard par Child filter hidden rahega.</div>
+</section>
+
+<!-- ================================================================== 2 -->
+<section id="legacy">
+  <h2><span class="n">2</span> Legacy screens aur files</h2>
+  <h3>Files</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Layer</th><th>File (is-rest-api)</th><th>Kya karti hai</th></tr></thead>
+    <tbody>
+      <tr><td>Controller</td><td><code>v1/emailtracking/inbox/InboxController.java</code></td><td>Saare <code>/dashboard/inbox/*</code> endpoints. Response <code>{status:"1"|"0"|"2", message, data}</code>.</td></tr>
+      <tr><td>Service</td><td><code>v1/emailtracking/inbox/InboxService.java</code></td><td>Viewer (token user + parent ke children), 4 channels ki list merge karna, email / notification / announcement kholna, star, mark all read, unread counts, attachment check.</td></tr>
+      <tr><td>Filter</td><td><code>inbox/InboxFilter.java</code></td><td><code>{channel, read, from, to, categories, childUserId, search, withAttachments, starred, page, pageSize}</code></td></tr>
+      <tr><td>Attachments</td><td><code>inbox/EmailAttachmentStore.java</code></td><td>S3 presigned link, 5 minute tak valid.</td></tr>
+      <tr><td>Compose</td><td><code>mailbox/MailboxContacts.java</code>, <code>MailboxSender.java</code>, <code>MailboxSentFolder.java</code>, <code>MailboxSettings.java</code></td><td>Kaun kisko likh sakta hai, send (limits, file checks, daily cap, background send), Sent folder.</td></tr>
+      <tr><td>Compose help</td><td><code>mailbox/assist/MailboxAssistController.java</code></td><td><code>inbox/compose/assist</code>, <code>/templates</code>, <code>/ai-help</code>.</td></tr>
+      <tr><td>Page markup</td><td><code>static/theme2/js/custom/inboxContent.js</code></td><td>Poora page HTML strings se banata hai (tabs, filter form, list, reader / settings / compose dialogs).</td></tr>
+      <tr><td>Page logic</td><td><code>static/theme2/js/custom/inbox.js</code> (1,298 lines)</td><td>jQuery: <code>initInbox</code>, <code>loadInbox</code>, <code>openInboxItem</code>, <code>postInboxMessage</code>, <code>loadInboxSent</code>, recipient picker, filters.</td></tr>
+      <tr><td>Compose help UI</td><td><code>static/theme2/js/custom/inboxComposeAssist.js</code></td><td>Compose me templates aur AI writing help.</td></tr>
+      <tr><td>Routing</td><td><code>static/theme2/js/custom/pageConfig.js</code> lines 273–274</td><td>pageLinks <code>inbox</code> aur <code>inbox-compose</code> teeno JS files load karte hain. Iska apna JSP nahi hai: ye <code>#dashboardContentInHTML</code> me render hota hai.</td></tr>
+      <tr><td>Badge</td><td><code>adminController.js</code> <code>refreshInboxBadge()</code></td><td>Menu badge <code>/inbox/unread</code> se aata hai.</td></tr>
+      <tr><td>Email body view</td><td>JSP <code>ViewEmailTemplate</code></td><td>Sandboxed iframe ke liye server-rendered body.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Screens aur actions</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Screen</th><th>Actions</th><th>Endpoints</th></tr></thead>
+    <tbody>
+      <tr><td><b>Inbox list</b></td><td>Tabs All / Emails / Notifications / Announcements / WhatsApp / Sent. Filters: search, date preset (Today, Yesterday, Last 7, Last 30, Custom), read state, email category, child (sirf parents), with attachments, starred. Ek page par 20 (max newest 500). Star toggle. Mark all as read. Unread items bold.</td><td><code>list</code>, <code>star</code>, <code>mark-all-read</code>, <code>children</code>, <code>unread</code></td></tr>
+      <tr><td><b>Reader dialog</b></td><td>Email: sender, time, child chip, "deliver nahi hua" notice, attachments, sandboxed iframe me body, Print, Reply (sirf insaan ke likhe messages par), "in reply to" line. Notification: text. Announcement: text, attachment, "I have read this". WhatsApp: sirf naam (list ke data se khulta hai, koi call nahi).</td><td><code>email</code>, <code>email-content</code>, <code>attachment</code>, <code>notification</code>, <code>announcement</code>, <code>acknowledge</code>, <code>compose/reply</code></td></tr>
+      <tr><td><b>Email settings dialog</b></td><td>Optional categories (Announcements &amp; events, School partnerships, Other) aur Sunday weekly summary band/chalu karna.</td><td><code>email-settings</code>, <code>email-settings/save</code></td></tr>
+      <tr><td><b>Compose dialog</b></td><td>"Write a message" (<code>canCompose</code> false ho to hidden). To picker (search; student ko school office + apne teachers dikhte hain), subject (200), message (10,000), max 3 files (har ek 5 MB; pdf, jpg, jpeg, png, gif, doc(x), xls(x), ppt(x), txt, csv), bhejne se pehle check step, templates aur AI help (agar on ho).</td><td><code>compose/contacts</code>, <code>compose/send</code>, <code>compose/assist</code>, <code>compose/templates</code>, <code>compose/ai-help</code></td></tr>
+      <tr><td><b>Sent tab</b></td><td>User ke likhe messages ki list: recipients aur state (sent, not sent, sending, partly), background send ka progress.</td><td><code>sent</code></td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><b class="t">Students ke liye nahi</b><code>compose/audience</code>, <code>compose/audience-options</code> aur audience filter sirf teachers aur school admins ke liye hain. Student ko ye refuse karte hain, isliye student dashboard ke scope se bahar hain.</div>
+</section>
+
+<!-- ================================================================== 3 -->
+<section id="endpoints">
+  <h2><span class="n">3</span> Endpoints ki list</h2>
+  <p class="lead">Jab tak alag na likha ho, sab <code>POST {schoolUUID}/dashboard/inbox/&lt;path&gt;</code> hain, body <code>{payload: encode(json)}</code>. Answer: <code>{status, message, data}</code>; status <code>"1"</code> ok, <code>"0"</code> refused (message user ko dikha sakte hain), <code>"2"</code> error.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Path</th><th>Request (decoded)</th><th>data</th><th>Next.js caller</th></tr></thead>
+    <tbody>
+      <tr><td><code>list</code> <span class="b rec">aapka bataya</span></td><td><code>InboxFilter</code></td><td><code>{items: Item[], total, page, pageSize, lastPage}</code></td><td>Server Action <code>listInbox</code></td></tr>
+      <tr><td><code>children</code> <span class="b rec">aapka bataya</span></td><td><code>{}</code></td><td><code>{ "&lt;userId&gt;": "name" }</code>, student ke liye khaali</td><td><code>getInboxChildren</code></td></tr>
+      <tr><td><code>compose/contacts</code> <span class="b rec">aapka bataya</span></td><td><code>{search, role, page, filter?}</code></td><td><code>Book</code> (§4 dekho)</td><td><code>getComposeContacts</code></td></tr>
+      <tr><td><code>email</code></td><td><code>{id}</code></td><td><code>EmailDetail</code>; user ki copy read mark hoti hai</td><td><code>openInboxEmail</code></td></tr>
+      <tr><td><code>notification</code></td><td><code>{id}</code></td><td><code>{title, message, at}</code>; seen mark hota hai</td><td><code>openInboxNotification</code></td></tr>
+      <tr><td><code>announcement</code></td><td><code>{id, childUserId?}</code></td><td><code>{title, message, at, attachment, childName, requiresAck, acknowledged}</code></td><td><code>openInboxAnnouncement</code></td></tr>
+      <tr><td><code>acknowledge</code></td><td><code>{id, childUserId?}</code></td><td><code>{acknowledged:true, new}</code></td><td><code>acknowledgeInboxAnnouncement</code></td></tr>
+      <tr><td><code>mark-all-read</code></td><td><code>{}</code></td><td><code>{marked: n}</code></td><td><code>markAllInboxRead</code></td></tr>
+      <tr><td><code>star</code></td><td><code>{channel, id}</code></td><td><code>{starred}</code></td><td><code>toggleInboxStar</code></td></tr>
+      <tr><td><code>unread</code></td><td><code>{}</code></td><td><code>{EMAIL, NOTIFICATION, ANNOUNCEMENT, TOTAL}</code> (pichhle 30 din)</td><td><code>getInboxUnread</code></td></tr>
+      <tr><td><code>email-settings</code></td><td><code>{}</code></td><td><code>{ "&lt;key&gt;": true|false }</code></td><td><code>getEmailSettings</code></td></tr>
+      <tr><td><code>email-settings/save</code></td><td><code>{key, on}</code></td><td>save ke baad saari settings</td><td><code>saveEmailSetting</code></td></tr>
+      <tr><td><code>compose/reply</code></td><td><code>{id}</code></td><td><code>{inReplyToId, to: Contact, subject:"Re: …"}</code></td><td><code>getReplyDraft</code></td></tr>
+      <tr><td><code>compose/send</code></td><td>multipart: <code>payload</code> = encoded <code>{to:[userId], audiences:[], subject, message, inReplyToId}</code>, <code>files</code> ×≤3</td><td><code>{sent, people, names, skipped, message, background, emailOnly, group}</code></td><td>Route <code>POST /api/inbox/send</code></td></tr>
+      <tr><td><code>sent</code></td><td><code>{from, to, search, page, pageSize}</code></td><td><code>{items: SentItem[], total, page, pageSize, lastPage}</code></td><td><code>listInboxSent</code></td></tr>
+      <tr><td><code>GET email-content?payload=</code></td><td><code>payload</code> = <code>email</code> answer ka <code>contentPayload</code></td><td>Sandbox CSP wala HTML page</td><td>Route <code>GET /api/inbox/email-content</code></td></tr>
+      <tr><td><code>GET attachment?payload=</code></td><td><code>payload</code> = <code>Attachment.payload</code></td><td><b>302</b> se 5-minute S3 link; 403/400/503 plain text</td><td>Route <code>GET /api/inbox/attachment</code></td></tr>
+      <tr><td><code>compose/assist</code> <span class="b ph">optional</span></td><td><code>{}</code></td><td><code>{writerRole, schoolName, aiEnabled, aiRemaining, aiActions}</code></td><td><code>getComposeAssist</code></td></tr>
+      <tr><td><code>compose/templates</code> <span class="b ph">optional</span></td><td><code>{recipientKind}</code></td><td>template list</td><td><code>getComposeTemplates</code></td></tr>
+      <tr><td><code>compose/ai-help</code> <span class="b ph">optional</span></td><td><code>{action, text, instruction, targetLanguage}</code></td><td>suggestion text</td><td><code>composeAiHelp</code></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================================================================== 4 -->
+<section id="examples">
+  <h2><span class="n">4</span> Request / response examples</h2>
+  <p class="lead">Java records se banaye gaye hain. Values sirf example hain. Next server se jo body jaati hai wo hamesha <code>{"payload":"&lt;encoded json&gt;"}</code> hoti hai; neeche decoded payload dikhaya hai.</p>
+  <div class="two">
+  <div>
+  <h3>4.1 <code>dashboard/inbox/list</code></h3>
+<pre>// request (decoded payload)
+{
+  "channel": "ALL",            // ALL | EMAIL | NOTIFICATION | ANNOUNCEMENT | WHATSAPP
+  "read": "ALL",               // ALL | UNREAD | READ
+  "from": "2026-10-14",        // yyyy-MM-dd, range ≤ 366 din
+  "to":   "2026-11-12",
+  "categories": [],            // jaise ["Classes &amp; timetable"]
+  "childUserId": null,         // sirf parents
+  "search": "",
+  "withAttachments": false,
+  "starred": false,
+  "page": 1,
+  "pageSize": 20               // 20 | 50 | 100
+}</pre>
+  </div>
+  <div>
+  <h3>&nbsp;</h3>
+<pre>// response
+{ "status": "1", "message": null, "data": {
+  "items": [{
+    "channel": "EMAIL", "id": 918273, "at": 1762912800000,
+    "title": "Your class timetable for next week",
+    "preview": "Hello, here is your updated timetable…",
+    "sender": "Tara Iyer (Teacher)", "category": "Classes &amp; timetable",
+    "childUserId": null, "childName": null,
+    "read": false, "starred": false,
+    "attachments": true, "undelivered": false
+  }],
+  "total": 37, "page": 1, "pageSize": 20, "lastPage": 2
+}}</pre>
+  </div>
+  <div>
+  <h3>4.2 <code>dashboard/inbox/children</code></h3>
+<pre>// request: {}
+// STUDENT ka response (koi child nahi):
+{ "status": "1", "message": null, "data": {} }
+// PARENT ka response:
+{ "status": "1", "data": { "40211": "Asha Rao", "40377": "Ravi Rao" } }</pre>
+  </div>
+  <div>
+  <h3>4.3 <code>dashboard/inbox/compose/contacts</code></h3>
+<pre>// request
+{ "search": "", "role": "", "page": 0 }
+// student ka response
+{ "status": "1", "data": {
+  "enabled": true, "canCompose": true, "reason": null,
+  "search": false,             // poori list ek saath (admins ko pages me)
+  "maxRecipients": 5,          // MailboxSettings policy se
+  "contacts": [
+    { "userId": 0, "name": "&lt;school office&gt;", "role": "School office",
+      "context": null, "emailOnly": false },
+    { "userId": 5120, "name": "Tara Iyer", "role": "Teacher",
+      "context": "Your teacher", "emailOnly": false }
+  ],
+  "writer": { "kind": "STUDENT", "name": "Asha Rao", "role": "Student" },
+  "backgroundFrom": 50, "filter": false, "more": false
+}}
+// writing band ho to:
+{ "status": "1", "data": { "enabled": false, "canCompose": false,
+  "reason": "Writing messages is not switched on for your school yet.", … } }</pre>
+  </div>
+  <div>
+  <h3>4.4 <code>email</code> (ek email kholna)</h3>
+<pre>// request: { "id": 918273 }
+{ "status": "1", "data": {
+  "id": 918273, "subject": "Your class timetable for next week",
+  "sender": "Tara Iyer (Teacher)", "at": 1762912800000,
+  "category": "Classes &amp; timetable", "childName": null,
+  "attachments": [
+    { "name": "123456789_timetable.pdf", "payload": "&lt;encoded {emailId,name}&gt;" }
+  ],
+  "undelivered": false,
+  "contentPayload": "&lt;encoded {emailId}&gt;",
+  "message": true, "canReply": true,
+  "inReplyTo": { "id": 918001, "subject": "Question about Friday", "visible": true }
+}}
+// refused:
+{ "status": "0", "message": "This email could not be found in your inbox." }</pre>
+  </div>
+  <div>
+  <h3>4.5 <code>compose/send</code> (multipart)</h3>
+<pre>POST {school}/dashboard/inbox/compose/send
+Content-Type: multipart/form-data
+  payload = encode({
+    "to": [5120], "audiences": [],
+    "subject": "Question about Friday",
+    "message": "Hello Ma'am, …",
+    "inReplyToId": null })
+  files   = homework.pdf   (≤ 3 files, har ek ≤ 5 MB)
+
+{ "status": "1", "data": {
+  "sent": true, "people": 1, "names": ["Tara Iyer"],
+  "skipped": [], "message": "Your message was sent to Tara Iyer.",
+  "background": false, "emailOnly": 0, "group": "…" } }</pre>
+  </div>
+  <div>
+  <h3>4.6 <code>unread</code></h3>
+<pre>// request: {}
+{ "status": "1", "data": {
+  "EMAIL": 3, "NOTIFICATION": 1, "ANNOUNCEMENT": 2, "TOTAL": 6 } }</pre>
+  </div>
+  </div>
+</section>
+
+<!-- ================================================================== 5 -->
+<section id="security">
+  <h2><span class="n">5</span> Security review</h2>
+  <div class="note ok"><b class="t">Legacy backend me pehle se safe hai (jaisa hai waisa rakhna)</b>
+    <ul>
+      <li>Payload se koi user id nahi padhi jaati: har endpoint <code>InboxService.viewer()</code> (token user) use karta hai aur <code>inbox</code> module right check karta hai.</li>
+      <li><code>childUserId</code> viewer ke apne children se match hota hai; email, attachment, star aur reply ids check hote hain ki viewer unhe dekh sakta hai ya nahi.</li>
+      <li>Send me server har recipient dobara check karta hai, daily cap, subject/message length, file count, size, extension aur file signature bhi.</li>
+      <li>Email body <code>Content-Security-Policy: sandbox …; script-src 'none'</code> ke saath aati hai aur iframe me bina <code>allow-scripts</code> ke dikhti hai.</li>
+    </ul>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Gap / risk</th><th>Migration me fix</th><th>Kahan</th></tr></thead>
+    <tbody>
+      <tr><td>S1</td><td>is-sms me browser ke paas backend token cookie nahi hai, aur cookies forward karni bhi nahi hain. Legacy page <code>email-content</code> aur <code>attachment</code> seedha browser se kholta hai.</td><td>Dono ko Next route handlers se proxy karo jo <code>getAccountSession()</code> se <code>Authorization: Bearer</code> lagaye. Browser se sirf opaque <code>payload</code> liya jaaye; school session se aaye.</td><td><code>app/api/inbox/*</code></td></tr>
+      <tr><td>S2</td><td>Email HTML par bharosa nahi kar sakte.</td><td><code>dangerouslySetInnerHTML</code> kabhi use nahi. Iframe <code>sandbox="allow-same-origin allow-popups"</code> (scripts nahi) ke saath rakho. Proxy backend ka CSP header copy kare aur <code>X-Content-Type-Options: nosniff</code>, <code>Cache-Control: no-store</code> lagaye.</td><td><code>InboxReader</code>, email-content route</td></tr>
+      <tr><td>S3</td><td>Announcement attachments public S3 links hain (<code>FILE_UPLOAD_PATH + name</code>): file ka naam jisko pata ho wo khol sakta hai, koi access check nahi.</td><td>Phase 1: <code>utils/announcementAttachment.js</code> se legacy jaisa hi rakho (K5 announcements panel jaisa). Backend follow-up: inhe kisi existing checked endpoint se serve karo. <span class="b warn">question Q4</span></td><td>reader</td></tr>
+      <tr><td>S4</td><td>Server Action body limit default 1 MB hai; teen 5 MB files fail hongi, ya koi sab actions ki limit badha dega.</td><td>Send <code>POST /api/inbox/send</code> (route handler, <code>app/api/profile/document</code> jaisa pattern) se karo. Forward karne se pehle wahi count, size, extension check karo; backend dobara check karega.</td><td>send route</td></tr>
+      <tr><td>S5</td><td>Browser ki filter values seedha payload me jaati hain.</td><td>Server Action sirf allowed fields le: channel aur read enums se, dates <code>yyyy-MM-dd</code>, pageSize 20/50/100 me se, search 200 chars tak trim. Client se <code>userId</code> kabhi nahi liya jaayega.</td><td><code>services/inboxApi.js</code></td></tr>
+      <tr><td>S6</td><td>Open redirect risk: attachment endpoint 302 se URL deta hai.</td><td>Route <code>redirect: "manual"</code> se fetch kare, <code>Location</code> tabhi maane jab wo <code>https:</code> aur configured S3 host par ho, phir file stream kare. Browser ko backend ka URL kabhi nahi milta.</td><td>attachment route</td></tr>
+      <tr><td>S7</td><td>Timezone: backend list aur unread me "today" <code>Asia/Kolkata</code> se nikalta hai aur legacy page date presets IST me banata hai, jabki data Asia/Singapore me store hai.</td><td>Front end presets user ke timezone me banaye, fallback <b>Asia/Singapore</b> (project rule), aur time bhi waise hi dikhaye. Backend change ek question hai, is kaam ka hissa nahi. <span class="b warn">Q6</span></td><td><code>utils/inbox.js</code></td></tr>
+      <tr><td>S8</td><td>Compose ke beech session expire hua to draft kho jaata hai.</td><td>Draft component state me rakho; <code>SESSION_EXPIRED</code> par global dialog khulega (<code>callServer</code>) aur form clear nahi hoga.</td><td>ComposeDialog</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================================================================== 6 -->
+<section id="target">
+  <h2><span class="n">6</span> is-sms me naya design</h2>
+  <figure>
+    <svg viewBox="0 0 900 300" role="img" aria-label="Data flow: browser se Next server se Java backend">
+      <rect class="svgbox" x="10" y="20" width="250" height="260" rx="12"/>
+      <text class="svgt" x="26" y="46">Browser (client components)</text>
+      <text class="svgs" x="26" y="72">Inbox / K5Inbox</text>
+      <text class="svgs" x="26" y="94">hooks/useInbox.js (React Query)</text>
+      <text class="svgs" x="26" y="116">callServer(action)</text>
+      <text class="svgs" x="26" y="150">fetch('/api/inbox/send')</text>
+      <text class="svgs" x="26" y="172">iframe src=/api/inbox/email-content</text>
+      <text class="svgs" x="26" y="194">fetch('/api/inbox/attachment')</text>
+      <rect class="svgacc" x="330" y="20" width="260" height="260" rx="12"/>
+      <text class="svgt" x="346" y="46">Next server</text>
+      <text class="svgs" x="346" y="72">services/inboxApi.js ("use server")</text>
+      <text class="svgs" x="346" y="94">→ utils/backendRequest.js</text>
+      <text class="svgs" x="346" y="116">token getAccountSession() se</text>
+      <text class="svgs" x="346" y="150">app/api/inbox/send/route.js</text>
+      <text class="svgs" x="346" y="172">app/api/inbox/email-content/route.js</text>
+      <text class="svgs" x="346" y="194">app/api/inbox/attachment/route.js</text>
+      <text class="svgs" x="346" y="236">Bearer + service key, cookies nahi</text>
+      <rect class="svgin" x="660" y="20" width="230" height="260" rx="12"/>
+      <text class="svgt" x="676" y="46">is-rest-api</text>
+      <text class="svgs" x="676" y="72">InboxController</text>
+      <text class="svgs" x="676" y="94">{school}/dashboard/inbox/*</text>
+      <text class="svgs" x="676" y="116">viewer() = token user</text>
+      <text class="svgs" x="676" y="150">MailboxAssistController</text>
+      <text class="svgs" x="676" y="194">S3 (presigned, 5 min)</text>
+      <path class="svgl" d="M260 110 H330"/><path class="svgl" d="M322 104 L330 110 L322 116"/>
+      <path class="svgl" d="M260 172 H330"/><path class="svgl" d="M322 166 L330 172 L322 178"/>
+      <path class="svgl" d="M590 110 H660"/><path class="svgl" d="M652 104 L660 110 L652 116"/>
+      <path class="svgl" d="M590 172 H660"/><path class="svgl" d="M652 166 L660 172 L652 178"/>
+    </svg>
+    <figcaption>Browser kabhi seedha Java backend se baat nahi karta aur kabhi user id nahi bhejta.</figcaption>
+  </figure>
+
+  <h3>Nayi files</h3>
+  <div class="tw"><table>
+    <thead><tr><th>File</th><th>Kaam</th></tr></thead>
+    <tbody>
+      <tr><td><code>app/[school]/(dashboard)/student/inbox/page.jsx</code></td><td>pageLink <code>inbox</code> ka route; <code>&lt;Inbox /&gt;</code> render karega (baaki modules ki tarah <code>[...module]</code> catch-all ko override karega).</td></tr>
+      <tr><td><code>app/[school]/(dashboard)/student/inbox-compose/page.jsx</code></td><td>pageLink <code>inbox-compose</code>; <code>&lt;Inbox openCompose /&gt;</code> render karega. (Legacy <code>OPEN_PAGE_FROM_QUERY</code> se <code>?compose</code> ke saath bhi Inbox kholta tha; <code>?compose=1</code> bhi support karo.)</td></tr>
+      <tr><td><code>services/inboxApi.js</code></td><td><code>"use server"</code>. Ek chhota helper <code>inboxCall(path, body)</code> jo <code>backendRequest({ path: "dashboard/inbox/" + path, buildBody: () =&gt; body })</code> par chalta hai aur status <code>"0"</code>/<code>"2"</code> ko <code>{ok:false, code:"REFUSED", message}</code> banata hai. Exports: <code>listInbox</code>, <code>getInboxChildren</code>, <code>openInboxEmail</code>, <code>openInboxNotification</code>, <code>openInboxAnnouncement</code>, <code>acknowledgeInboxAnnouncement</code>, <code>markAllInboxRead</code>, <code>toggleInboxStar</code>, <code>getInboxUnread</code>, <code>getEmailSettings</code>, <code>saveEmailSetting</code>, <code>getComposeContacts</code>, <code>getReplyDraft</code>, <code>listInboxSent</code> (+ optional assist calls). Input whitelisting yahin hogi (S5).</td></tr>
+      <tr><td><code>app/api/inbox/send/route.js</code></td><td>POST multipart: <code>to[]</code>, <code>subject</code>, <code>message</code>, <code>inReplyToId</code>, <code>files</code>. Validate karta hai, <code>encodePayload</code> se payload encode karta hai, Bearer ke saath multipart forward karta hai. Backend ka <code>data</code> ya <code>{message}</code> 400/401/502 ke saath return karta hai.</td></tr>
+      <tr><td><code>app/api/inbox/email-content/route.js</code></td><td>GET <code>?payload=</code>; sandbox CSP ke saath HTML proxy karta hai.</td></tr>
+      <tr><td><code>app/api/inbox/attachment/route.js</code></td><td>GET <code>?payload=</code>; §8 dekho.</td></tr>
+      <tr><td><code>hooks/useInbox.js</code></td><td><code>useInboxList(filters)</code> (key <code>["inbox", userId, "list", filters]</code>, <code>placeholderData: keepPreviousData</code>), <code>useInboxItem(channel, id)</code>, <code>useInboxUnread()</code> (key <code>["inbox", userId, "unread"]</code>, sidebar / K5 nav badge ke liye), <code>useInboxChildren()</code>, <code>useEmailSettings()</code>, mutations <code>useToggleStar</code> (optimistic), <code>useMarkAllRead</code>, <code>useAcknowledge</code>. Item kholne par <code>list</code> + <code>unread</code> invalidate honge.</td></tr>
+      <tr><td><code>hooks/useInboxCompose.js</code></td><td><code>useComposeContacts()</code> (staleTime 5 min; student ko poori list milti hai isliye search client side), <code>useReplyDraft(id)</code>, <code>useSendInboxMessage()</code> (mutation → <code>/api/inbox/send</code>), <code>useInboxSent(filters)</code>.</td></tr>
+      <tr><td><code>utils/inbox.js</code></td><td>Channel meta (icon, label), categories list, user timezone me date presets (fallback Asia/Singapore), <code>formatInboxTime(epoch, tz)</code>, file rules (<code>MailboxSender</code> jaise: 3 files, 5 MB, extension list), <code>downloadInboxAttachment(a)</code>.</td></tr>
+      <tr><td><code>components/student/inbox/Inbox.jsx</code></td><td>Regular page: header actions, tabs, filters, list, pager. <code>useDashboardContext().isK5</code> true ho to <code>K5Inbox</code> dikhayega (<code>Attendance.jsx</code> jaisa pattern).</td></tr>
+      <tr><td><code>components/student/inbox/InboxFilters.jsx</code></td><td>Search, date preset + custom range <code>components/ui/date-picker.jsx</code> se (native date input kabhi nahi), read select, category select, attachments / starred checkboxes, child select (sirf jab <code>children</code> khaali na ho).</td></tr>
+      <tr><td><code>components/student/inbox/InboxList.jsx</code>, <code>InboxRow.jsx</code></td><td>Unread style, chips, paperclip, star button wali rows. Loading me Skeleton rows.</td></tr>
+      <tr><td><code>components/student/inbox/InboxReader.jsx</code></td><td>shadcn <code>Dialog</code> (mobile par Sheet). Email / notification / announcement / WhatsApp views, attachments, iframe body, Print, Reply, acknowledge.</td></tr>
+      <tr><td><code>components/student/inbox/ComposeDialog.jsx</code>, <code>RecipientPicker.jsx</code></td><td>To picker (chips + Popover me searchable list), subject, message counter, client checks ke saath file input, review step, Send. Error par draft bana rahe.</td></tr>
+      <tr><td><code>components/student/inbox/SentList.jsx</code>, <code>EmailSettingsDialog.jsx</code></td><td>Sent tab aur email settings switches.</td></tr>
+      <tr><td><code>components/k5/pages/K5Inbox.jsx</code> (+ <code>K5InboxReader.jsx</code>, <code>K5WriteToTeacher.jsx</code>)</td><td>K5 aur Middle skin (§7). Wahi hooks use karega.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><b class="t">Badalne wali files (chhote changes)</b> Sidebar menu pehle se DB se aata hai (<code>utils/dashboardNav.js mapBackendMenu</code>), isliye page banate hi <code>inbox</code> naye route par link karega; static menu me koi change nahi. Badge: <code>components/dashboard/Sidebar.jsx</code> aur <code>components/k5/K5NavRail.jsx</code> me <code>inbox</code> item par <code>useInboxUnread</code> se unread count dikhana.</div>
+</section>
+
+<!-- ================================================================== 7 -->
+<section id="ui">
+  <h2><span class="n">7</span> UI: regular, K5, Middle</h2>
+  <div class="two">
+    <div class="card"><b>Regular (Grade 9–12, non-K5 programs)</b>
+      <ul>
+        <li>Legacy jaisa layout: title "Inbox", actions Write a message / Email settings / Mark all as read.</li>
+        <li>Tabs segmented control jaise; phone par filters "Filters" Sheet me chale jaayein.</li>
+        <li>List rows: icon, title, sender, chips, preview, time, paperclip, star.</li>
+        <li>Reader desktop par Dialog, mobile par full-height Sheet; Print sirf reader print kare.</li>
+        <li>Loading me shadcn Skeleton rows, kabhi "Loading…" text nahi.</li>
+        <li>Send result aur refusal ke liye existing toast; Compose ke andar inline error.</li>
+      </ul>
+    </div>
+    <div class="card"><b>K5 (Grade K–5)</b>
+      <ul>
+        <li><code>K5Shell</code> ke andar <code>K5Inbox</code>; bade friendly cards, chuni hui look ka accent (selected/active states look accent se).</li>
+        <li>Simple tabs: <i>All</i>, <i>From my teachers</i>, <i>School news</i> (announcements + notifications). WhatsApp, category aur advanced filters hidden; default "Last 30 days".</li>
+        <li>"Write to my teacher" button <code>K5WriteToTeacher</code> kholta hai: cards se teacher chuno, subject + message, attachment (max 3), AI help nahi.</li>
+        <li>Pehli visit par Pico tip (baaki K5 pages ki tarah data load hone ka wait kare).</li>
+        <li><code>K5Skeletons.jsx</code> style ka Skeleton.</li>
+        <li>Font, size aur spacing appearance settings follow karein.</li>
+      </ul>
+    </div>
+    <div class="card"><b>Middle (Grade 6–8)</b>
+      <ul>
+        <li>Wahi <code>K5Inbox</code> component, <code>k5-middle.css</code> skin ke saath (env flag, <code>isMiddle</code>).</li>
+        <li>Poore tabs (All / Emails / Notifications / Announcements / Sent) aur search box dikhe; categories hidden.</li>
+        <li>Compose me poora <code>RecipientPicker</code>, skin ke hisaab se styled.</li>
+      </ul>
+    </div>
+    <div class="card"><b>Sab ke liye rules</b>
+      <ul>
+        <li>School ka naam hardcode nahi: office contact ka naam backend se aata hai; kisi heading me naam chahiye to <code>useSchoolName</code>.</li>
+        <li>Custom range ke liye icon wala shadcn date picker.</li>
+        <li>Time user ke timezone me, fallback Asia/Singapore.</li>
+        <li>Koi naya <code>&lt;img&gt;</code> nahi; attachments ka image preview nahi chahiye (sirf download).</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================== 8 -->
+<section id="download">
+  <h2><span class="n">8</span> Attachment download example</h2>
+  <p>Abhi legacy reader har attachment ko naye tab me <code>/dashboard/inbox/attachment?payload=…</code> se link karta hai; backend viewer ko dobara check karta hai aur <b>302</b> se 5-minute S3 link par bhejta hai. is-sms me browser ke paas backend token nahi hai, isliye Next server ye call karega aur file sahi naam ke saath stream karke wapas dega.</p>
+  <figure>
+    <svg viewBox="0 0 900 170" role="img" aria-label="Attachment download ka sequence">
+      <rect class="svgbox" x="10" y="20" width="190" height="56" rx="10"/><text class="svgt" x="24" y="44">1. "homework.pdf" click</text><text class="svgs" x="24" y="64">fetch /api/inbox/attachment</text>
+      <rect class="svgacc" x="240" y="20" width="200" height="56" rx="10"/><text class="svgt" x="254" y="44">2. Route: Bearer call</text><text class="svgs" x="254" y="64">redirect: "manual"</text>
+      <rect class="svgin" x="480" y="20" width="190" height="56" rx="10"/><text class="svgt" x="494" y="44">3. Backend check</text><text class="svgs" x="494" y="64">302 → S3 (5 min)</text>
+      <rect class="svgacc" x="240" y="100" width="200" height="56" rx="10"/><text class="svgt" x="254" y="124">4. Route host check,</text><text class="svgs" x="254" y="144">S3 body stream karta hai</text>
+      <rect class="svgbox" x="10" y="100" width="190" height="56" rx="10"/><text class="svgt" x="24" y="124">5. Blob → save</text><text class="svgs" x="24" y="144">"homework.pdf"</text>
+      <path class="svgl" d="M200 48 H240"/><path class="svgl" d="M440 48 H480"/><path class="svgl" d="M575 76 V128 H440"/><path class="svgl" d="M240 128 H200"/>
+    </svg>
+  </figure>
+
+  <h3>8.1 Route handler (server)</h3>
+<pre>// app/api/inbox/attachment/route.js  (planned)
+import { NextResponse } from "next/server";
+import { getAccountSession, serviceKeyHeaders } from "@/lib/auth/session";
+import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+
+const S3_HOSTS = (process.env.INBOX_ATTACHMENT_HOSTS || "s3.amazonaws.com").split(",");
+const plain = (status, message) =&gt; NextResponse.json({ message }, { status });
+
+export async function GET(request) {
+  const me = await getAccountSession();
+  if (!me?.accessToken || !me?.schoolUUID) return plain(401, "Your session has been logged out");
+  if (!hasBackendOrigin()) return plain(500, "The backend is not configured.");
+  const payload = request.nextUrl.searchParams.get("payload");   // opaque, email answer se
+  if (!payload) return plain(400, "The attachment link is missing.");
+
+  const base = await resolveServerBackendOrigin();
+  const check = await fetch(
+    `${base}/${me.schoolUUID}/dashboard/inbox/attachment?payload=${encodeURIComponent(payload)}`,
+    { headers: { ...serviceKeyHeaders(), Authorization: `Bearer ${me.accessToken}` },
+      redirect: "manual", cache: "no-store" });
+
+  if (check.status !== 302) {                    // 403 / 400 / 503: backend ka text dikha sakte hain
+    return plain(check.status === 401 ? 401 : check.status, await check.text());
+  }
+  const link = new URL(check.headers.get("location") || "", "https://invalid");
+  if (link.protocol !== "https:" || !S3_HOSTS.some((h) =&gt; link.hostname.endsWith(h))) {
+    return plain(502, "This attachment cannot be opened just now.");
+  }
+  const file = await fetch(link, { cache: "no-store" });
+  if (!file.ok || !file.body) return plain(502, "This attachment cannot be opened just now.");
+
+  // Stored naam "123456789_homework.pdf" jaise hote hain: 9-digit prefix ke baad wala hissa dikhao.
+  const stored = link.pathname.split("/").pop() || "attachment";
+  const shown = decodeURIComponent(stored).replace(/^[0-9]{9}_/, "");
+  const headers = new Headers({
+    "Content-Type": file.headers.get("content-type") || "application/octet-stream",
+    "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(shown)}`,
+    "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff",
+  });
+  const length = file.headers.get("content-length");
+  if (length) headers.set("Content-Length", length);
+  return new NextResponse(file.body, { status: 200, headers });  // stream, buffer nahi
+}</pre>
+
+  <h3>8.2 Client side (hook + button)</h3>
+<pre>// utils/inbox.js (planned)
+export async function downloadInboxAttachment(attachment) {
+  const response = await fetch(`/api/inbox/attachment?payload=${encodeURIComponent(attachment.payload)}`);
+  if (response.status === 401) { markSessionExpired(); throw new SessionExpiredError(); }
+  if (!response.ok) throw new Error((await response.json().catch(() =&gt; ({}))).message
+                                    || "This attachment cannot be opened just now.");
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement("a"), {
+    href: url, download: attachment.name.replace(/^[0-9]{9}_/, ""),
+  });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() =&gt; URL.revokeObjectURL(url), 1000);
+}
+
+// InboxReader.jsx
+&lt;Button variant="outline" size="sm" disabled={busy === a.name}
+  onClick={() =&gt; run(a.name, () =&gt; downloadInboxAttachment(a))}&gt;
+  &lt;Paperclip className="h-4 w-4" aria-hidden="true" /&gt;
+  {busy === a.name ? "Preparing…" : shownName(a.name)}
+&lt;/Button&gt;</pre>
+
+  <h3>8.3 Client wala hissa yahin try karo</h3>
+  <p class="lead">Ye button wahi Blob → <code>&lt;a download&gt;</code> steps chalata hai, bas server answer ki jagah ek chhoti banayi hui file se, taaki browser ka save behaviour dikh jaaye.</p>
+  <div class="actions no-print" style="margin-top:6px">
+    <button type="button" class="btn ghost" id="demoDownload">⬇ Example attachment download karo (timetable.txt)</button>
+  </div>
+  <p id="demoOut" aria-live="polite"></p>
+
+  <div class="note warn"><b class="t">Announcement attachments alag hain</b> Ye <code>/attachment</code> ke peeche nahi hain: announcement answer sirf file ka naam deta hai aur legacy page public upload path par link karta hai. Phase 1 me wahi rahega (<code>getAttachmentUrl</code> se, naye tab me). S3 / Q4 dekho.</div>
+</section>
+
+<!-- ================================================================== 9 -->
+<section id="phases">
+  <h2><span class="n">9</span> Phase-wise kaam</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Phase</th><th>Kaam</th><th>Kab done maana jaaye</th></tr></thead>
+    <tbody>
+      <tr><td><b>P0</b> Check</td><td>
+        <ol>
+          <li>Test student se login karke ek temporary script se har endpoint call karo aur confirm karo ki <code>/dashboard/inbox/*</code> par Bearer token chalta hai, dono GET aur multipart send bhi.</li>
+          <li>Confirm karo ki student role ke paas <code>inbox</code> right hai aur sidebar me pageLink <code>inbox</code> aata hai.</li>
+          <li>Har environment ke liye attachment links ka S3 host confirm karo.</li>
+        </ol></td><td>Next server se test student ke liye saare endpoints <code>status "1"</code> dete hain.</td></tr>
+      <tr><td><b>P1</b> Read-only Inbox</td><td>
+        <ol>
+          <li><code>services/inboxApi.js</code> (list, children, email, notification, announcement, acknowledge, unread, star, mark-all-read).</li>
+          <li><code>utils/inbox.js</code>, <code>hooks/useInbox.js</code>.</li>
+          <li>Route <code>student/inbox</code>, <code>Inbox</code>, filters, list, pager, skeletons.</li>
+          <li>Reader + <code>/api/inbox/email-content</code> + <code>/api/inbox/attachment</code>.</li>
+          <li>Sidebar aur K5 nav me unread badge.</li>
+        </ol></td><td>Student list, filter, open, star, acknowledge aur download kar sakta hai; kholne ke baad badge update hota hai.</td></tr>
+      <tr><td><b>P2</b> Compose aur reply</td><td>
+        <ol>
+          <li><code>getComposeContacts</code>, <code>getReplyDraft</code>, <code>/api/inbox/send</code>.</li>
+          <li><code>ComposeDialog</code>, <code>RecipientPicker</code>, review step, file checks.</li>
+          <li>Sent tab (<code>listInboxSent</code>, <code>SentList</code>), <code>inbox-compose</code> route aur <code>?compose=1</code>.</li>
+        </ol></td><td>Student school office ya teacher ko likh sakta hai, teacher ke message ka reply kar sakta hai, aur Sent me dekh sakta hai.</td></tr>
+      <tr><td><b>P3</b> K5 aur Middle</td><td>
+        <ol>
+          <li><code>K5Inbox</code>, <code>K5InboxReader</code>, <code>K5WriteToTeacher</code>.</li>
+          <li><code>k5-middle.css</code> me Middle skin rules; Pico tip.</li>
+        </ol></td><td>K5 aur Grade 6–8 test students ko apni skin dikhti hai, saare actions chalte hain.</td></tr>
+      <tr><td><b>P4</b> Extras</td><td>
+        <ol>
+          <li>Email settings dialog.</li>
+          <li>Compose templates aur AI help (sirf agar Q3 = haan).</li>
+          <li>WhatsApp tab (agar Q2 = haan).</li>
+        </ol></td><td>Jo scope tay hua, usme legacy jaisi parity.</td></tr>
+      <tr><td><b>P5</b> Verify</td><td>Neeche ke test cases browser me chalao (regular, K5, Middle, phone width), <code>npm run lint</code>, <code>npm run build</code>; cases ko <code>sms_next_js_migration_student_test_cases.html</code> me add karo.</td><td>Saare cases pass; lint aur build clean.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================================================================== 10 -->
+<section id="tests">
+  <h2><span class="n">10</span> Test cases</h2>
+  <div class="tw"><table>
+    <thead><tr><th>ID</th><th>Case</th><th>Expected</th></tr></thead>
+    <tbody>
+      <tr><td>IN-01</td><td>Sidebar se Inbox kholo</td><td>URL <code>/{school}/student/inbox</code>; pehle skeleton rows, phir pichhle 30 din, newest upar.</td></tr>
+      <tr><td>IN-02</td><td>Tabs badlo All / Emails / Notifications / Announcements</td><td>Sirf wahi channel; page 1 par reset; purani requests ke answers ignore.</td></tr>
+      <tr><td>IN-03</td><td>Date picker se custom dates, From &gt; To</td><td>Backend refusal "The start date must be on or before the end date." dikhe; list na badle.</td></tr>
+      <tr><td>IN-04</td><td>Ek saal se lamba range</td><td>"Please choose a date range of one year or less."</td></tr>
+      <tr><td>IN-05</td><td>Unread only + With attachments + Starred</td><td>Filters saath kaam karein; WhatsApp aur notifications legacy ki tarah bahar.</td></tr>
+      <tr><td>IN-06</td><td>Search text</td><td>Sirf matching items; kuch na mile to "Nothing here for these filters."</td></tr>
+      <tr><td>IN-07</td><td>Range me 500 se zyada items</td><td>Summary bataye ki sirf newest list hue hain aur chhoti dates suggest kare.</td></tr>
+      <tr><td>IN-08</td><td>Pager Newer / Older</td><td>Pehle / aakhri page par buttons disabled; "Page x of y".</td></tr>
+      <tr><td>IN-09</td><td>Unread email kholo</td><td>Reader me sender, time, iframe me body; row read ho jaaye; badge 1 kam.</td></tr>
+      <tr><td>IN-10</td><td>Email HTML me <code>&lt;script&gt;</code></td><td>Script nahi chalti (sandbox, CSP); app ki taraf se koi console error nahi.</td></tr>
+      <tr><td>IN-11</td><td>Email attachment download</td><td>File readable naam se save ho (prefix hata ke); beech me button "Preparing…" dikhaye.</td></tr>
+      <tr><td>IN-12</td><td>Attachment <code>payload</code> ko kisi aur email ki id se badlo</td><td>403 "This email could not be found in your inbox." toast me; kuch download nahi.</td></tr>
+      <tr><td>IN-13</td><td>Acknowledgement maangne wala announcement kholo, "I have read this" click</td><td>Button ki jagah confirmation text; dobara kholne par "You confirmed you have read this."</td></tr>
+      <tr><td>IN-14</td><td>Star / unstar</td><td>Icon turant badle (optimistic); refuse ho to toast ke saath wapas.</td></tr>
+      <tr><td>IN-15</td><td>Mark all as read</td><td>Saari rows read, badge 0 (announcements kholne tak rahenge, legacy jaisa).</td></tr>
+      <tr><td>IN-16</td><td>Student: Child filter</td><td>Hidden (<code>children</code> <code>{}</code> hai).</td></tr>
+      <tr><td>CO-01</td><td>Write a message: recipient list</td><td>Pehle school office, phir apne teachers "Your teacher" ke saath; doosre students nahi.</td></tr>
+      <tr><td>CO-02</td><td>School ke liye writing band</td><td>"Write a message" hidden; compose route khola to reason text dikhe.</td></tr>
+      <tr><td>CO-03</td><td>Khaali subject / 201-char subject / 10,001-char message ke saath send</td><td>Client wahi wording ke saath rok de; phir bhi backend refuse kare to uska message dikhe.</td></tr>
+      <tr><td>CO-04</td><td>4 files / 6 MB file / .exe attach</td><td>Upload se pehle hi legacy wording ke saath block.</td></tr>
+      <tr><td>CO-05</td><td>Teacher ko 2 attachments ke saath send</td><td>Backend message ke saath success toast; dialog band; Sent tab me state "sent".</td></tr>
+      <tr><td>CO-06</td><td>Send karte waqt server down</td><td>Inline error; subject, message aur files form me bane rahein.</td></tr>
+      <tr><td>CO-07</td><td>Teacher ke message ka reply</td><td>To = wahi teacher, subject "Re: …"; bheja message reader me "in reply to" dikhaye.</td></tr>
+      <tr><td>CO-08</td><td>School email (insaan ka likha nahi) par Reply button</td><td>Reply button nahi (<code>canReply</code> false).</td></tr>
+      <tr><td>CO-09</td><td>Daily cap poora</td><td>Compose me backend refusal text.</td></tr>
+      <tr><td>SE-01</td><td>Server Action body me <code>userId</code> daal ke tamper karo</td><td>Ignore: payload sirf server par banta hai.</td></tr>
+      <tr><td>SE-02</td><td>Session expire, phir item kholo</td><td>Global session-expired dialog; expiry ke baad koi request nahi jaati.</td></tr>
+      <tr><td>SE-03</td><td>Attachment backend non-S3 host par 302 de</td><td>Route 502 se refuse kare; browser redirect na ho.</td></tr>
+      <tr><td>TZ-01</td><td>User timezone khaali / galat</td><td>Time aur presets Asia/Singapore use karein.</td></tr>
+      <tr><td>UI-01</td><td>K5 student Inbox khole</td><td>K5 skin, simple tabs, "Write to my teacher", look ka accent, load ke baad Pico tip.</td></tr>
+      <tr><td>UI-02</td><td>Grade 6–8 student (Middle flag on)</td><td>Middle skin, poore tabs aur search ke saath.</td></tr>
+      <tr><td>UI-03</td><td>Phone width 375 px</td><td>Filters Sheet me, reader full-height, horizontal scroll nahi.</td></tr>
+      <tr><td>UI-04</td><td><code>/student/inbox-compose</code> aur <code>/student/inbox?compose=1</code></td><td>Inbox Compose khula hua ke saath khule.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================================================================== 11 -->
+<section id="questions">
+  <h2><span class="n">11</span> Open questions</h2>
+  <ol>
+    <li><b>Q1 Scope:</b> sirf student dashboard, ya parent dashboard bhi? (<code>children</code> endpoint aur Child filter sirf parents ke kaam ke hain.)</li>
+    <li><b>Q2 WhatsApp tab:</b> rakhna hai? Ye sirf template ka naam dikhata hai, text nahi.</li>
+    <li><b>Q3 Compose help:</b> templates aur AI writing help (<code>compose/assist</code>, <code>/templates</code>, <code>/ai-help</code>) students ko abhi dena hai, baad me, ya kabhi nahi? K5 ke liye plan me ye nahi hai.</li>
+    <li><b>Q4 Announcement attachments</b> abhi public S3 links hain. Is migration me waisa hi rakhein, ya pehle backend par existing checked endpoint se serve karke fix karein?</li>
+    <li><b>Q5 Attachment UX:</b> readable naam ke saath force download (Next se stream, plan ka default), ya legacy ki tarah 5-minute S3 link naye tab me kholein (simple, PDF browser me preview hota hai)?</li>
+    <li><b>Q6 Timezone:</b> backend <code>list</code> / <code>unread</code> me "today" ke liye <code>Asia/Kolkata</code> use karta hai aur store Asia/Singapore me karta hai. Backend ko user timezone + Asia/Singapore fallback par badlein, ya sirf front end fix karein?</li>
+    <li><b>Q7 Email settings dialog:</b> student dashboard par chahiye?</li>
+    <li><b>Q8 K5 tabs:</b> "All / From my teachers / School news" sahi simple tabs hain, ya K5 me bhi poore tabs hon?</li>
+  </ol>
+</section>
+</main>
+</div>
+
+<script>
+(function () {
+  function save(blob, name) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  document.getElementById("downloadPage").addEventListener("click", function () {
+    var html = "<!doctype html>\n" + document.documentElement.outerHTML;
+    save(new Blob([html], { type: "text/html;charset=utf-8" }), "communications_migration_plan_hinglish.html");
+  });
+  document.getElementById("demoDownload").addEventListener("click", function () {
+    var out = document.getElementById("demoOut");
+    out.textContent = "Preparing…";
+    // Asli code me: const blob = await (await fetch('/api/inbox/attachment?payload=…')).blob();
+    var text = "Example attachment\n\nMon  Maths 09:00\nTue  English 10:00\nWed  Science 09:30\n";
+    var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    var stored = "123456789_timetable.txt";
+    save(blob, stored.replace(/^[0-9]{9}_/, ""));
+    out.textContent = "\"timetable.txt\" save hui (" + blob.size + " bytes). Stored naam \"" + stored + "\" tha.";
+  });
+})();
+</script>
+</body>
+</html>

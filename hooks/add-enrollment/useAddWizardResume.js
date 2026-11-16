@@ -18,12 +18,12 @@ function resolveResumeStep(currentStep, marker) {
   return currentStep < marker ? Math.min(marker, 2) : marker;
 }
 
-export function useAddWizardResume({ currentStep, context, childUniqueId, ready }) {
+export function useAddWizardResume({ currentStep, context, childUserId, ready }) {
   const router = useRouter();
   const { school, parentId, sessionUserId } = useParams();
 
   const redirecting = useRef(null);
-  if (redirecting.current === null && ready && childUniqueId && typeof window !== "undefined") {
+  if (redirecting.current === null && ready && childUserId && typeof window !== "undefined") {
     let block = false;
     if (context?.customPaymentEnabled) {
       block = currentStep !== 3;
@@ -35,7 +35,7 @@ export function useAddWizardResume({ currentStep, context, childUniqueId, ready 
   }
 
   useEffect(() => {
-    if (!ready || !childUniqueId || typeof window === "undefined") return;
+    if (!ready || !childUserId || typeof window === "undefined") return;
     if (context?.customPaymentEnabled) {
       window.__addWizardResumeChecked = true;
       if (currentStep !== 3) router.replace(addEnrollmentStepPath(school, parentId, sessionUserId, 3));
@@ -49,7 +49,7 @@ export function useAddWizardResume({ currentStep, context, childUniqueId, ready 
       const target = resolveResumeStep(currentStep, signupPage);
       if (target !== currentStep) router.replace(addEnrollmentStepPath(school, parentId, sessionUserId, target));
     }
-  }, [ready, childUniqueId, currentStep, context?.customPaymentEnabled, context?.signupPage, router, school, parentId, sessionUserId]);
+  }, [ready, childUserId, currentStep, context?.customPaymentEnabled, context?.signupPage, router, school, parentId, sessionUserId]);
 
   return { redirecting: redirecting.current === true };
 }

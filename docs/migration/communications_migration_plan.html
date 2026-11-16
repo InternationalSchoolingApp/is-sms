@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Communications (Inbox) — Next.js Migration Plan</title>
+<style>
+  :root{--bg:#0f1420;--panel:#151c2c;--panel2:#1b2436;--ink:#e8edf6;--mut:#9fb0c9;--line:#2a364d;--acc:#5b9dff;
+    --in:#2fbf71;--out:#ff4d5e;--rec:#5b9dff;--warn:#e0a52b;}
+  @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f5f7fb;--panel:#fff;--panel2:#eef2f8;--ink:#17202e;--mut:#536079;--line:#d7deea;--acc:#1f5fd6;--in:#1f9d57;--out:#d61f36;--rec:#1f5fd6;--warn:#b5821a;}}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.85em;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:.03em .4em}
+  .wrap{display:flex;max-width:1200px;margin:0 auto}
+  aside{position:sticky;top:0;align-self:flex-start;height:100vh;overflow:auto;width:250px;flex:0 0 250px;background:var(--panel);border-right:1px solid var(--line);padding:16px 12px}
+  aside .brand{font-weight:800;font-size:15px;padding:4px 6px 10px;line-height:1.3}
+  aside ol{list-style:none;margin:0;padding:0;counter-reset:s}
+  aside ol li a{display:block;padding:5px 8px;border-radius:7px;color:var(--mut);font-size:13.5px}
+  aside ol li a::before{counter-increment:s;content:counter(s) ". ";color:var(--acc)}
+  aside ol li a:hover{background:var(--panel2);color:var(--ink);text-decoration:none}
+  main{flex:1 1 auto;min-width:0;padding:24px 32px 120px}
+  header.top{border:1px solid var(--line);background:linear-gradient(135deg,var(--panel),var(--panel2));border-radius:16px;padding:22px 24px;margin-bottom:20px}
+  header.top h1{margin:0 0 6px;font-size:24px}
+  header.top .sub{color:var(--mut);font-size:14px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-size:12.5px;color:var(--mut)}
+  .meta b{color:var(--ink)}
+  .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+  .btn{display:inline-flex;align-items:center;gap:8px;font:600 14px/1 inherit;font-family:inherit;padding:10px 16px;border-radius:10px;border:1px solid var(--acc);background:var(--acc);color:#fff;cursor:pointer}
+  .btn.ghost{background:transparent;color:var(--acc)}
+  .btn:focus-visible{outline:3px solid color-mix(in srgb,var(--acc) 45%,transparent);outline-offset:2px}
+  section{border-top:1px solid var(--line);padding-top:22px;margin-top:26px;scroll-margin-top:12px}
+  section>h2{font-size:20px;margin:0 0 6px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  section>h2 .n{color:var(--acc);font-size:14px}
+  h3{font-size:16px;margin:18px 0 8px}
+  p{margin:8px 0}.lead{color:var(--mut)}
+  ul,ol{margin:8px 0;padding-left:22px}li{margin:3px 0}
+  .b{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;border:1px solid transparent;white-space:nowrap}
+  .b.in{color:var(--in);border-color:var(--in);background:color-mix(in srgb,var(--in) 14%,transparent)}
+  .b.out{color:#fff;background:var(--out);border-color:var(--out)}
+  .b.rec{color:var(--rec);border-color:var(--rec);background:color-mix(in srgb,var(--rec) 14%,transparent)}
+  .b.warn{color:var(--warn);border-color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+  .b.ph{background:var(--panel2);color:var(--ink);border-color:var(--line)}
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:12px 0}
+  table{border-collapse:collapse;width:100%;font-size:13px;min-width:620px}
+  th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--panel2);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  tbody tr:hover{background:color-mix(in srgb,var(--acc) 7%,transparent)}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:14px 0}
+  .card{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:14px 16px}
+  .card .big{font-size:26px;font-weight:800}.card .lbl{color:var(--mut);font-size:12.5px;margin-top:2px}
+  .note{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--panel);border-radius:10px;padding:12px 15px;margin:14px 0}
+  .note.out{border-left-color:var(--out)}.note.ok{border-left-color:var(--in)}.note.warn{border-left-color:var(--warn)}
+  .note b.t{display:block;margin-bottom:3px}
+  figure{margin:16px 0;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:14px}
+  figure svg{display:block;width:100%;height:auto}
+  figcaption{color:var(--mut);font-size:12.5px;margin-top:8px}
+  pre{overflow:auto;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:12.5px;line-height:1.5}
+  .svgbox{fill:var(--panel2);stroke:var(--line);stroke-width:1.4}
+  .svgacc{fill:color-mix(in srgb,var(--acc) 16%,var(--panel));stroke:var(--acc);stroke-width:1.4}
+  .svgin{fill:color-mix(in srgb,var(--in) 14%,var(--panel));stroke:var(--in);stroke-width:1.4}
+  .svgt{fill:var(--ink);font:600 13px -apple-system,Segoe UI,sans-serif}
+  .svgs{fill:var(--mut);font:12px -apple-system,Segoe UI,sans-serif}
+  .svgl{stroke:var(--mut);stroke-width:1.5;fill:none}
+  details{border:1px solid var(--line);border-radius:10px;background:var(--panel);margin:10px 0;padding:0 14px}
+  details>summary{cursor:pointer;padding:10px 0;font-weight:600}
+  .two{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  #demoOut{font-size:13px;color:var(--mut)}
+  @media (max-width:860px){.wrap{display:block}aside{position:static;height:auto;width:auto;border-right:0;border-bottom:1px solid var(--line)}main{padding:18px 16px 80px}}
+  @media print{aside,.actions,.no-print{display:none}main{padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<aside>
+  <div class="brand">Communications (Inbox)<br><span style="color:var(--mut);font-weight:500;font-size:12.5px">Migration plan</span></div>
+  <ol>
+    <li><a href="#summary">Summary</a></li>
+    <li><a href="#legacy">Legacy screens &amp; files</a></li>
+    <li><a href="#endpoints">Endpoint inventory</a></li>
+    <li><a href="#examples">Request / response examples</a></li>
+    <li><a href="#security">Security review</a></li>
+    <li><a href="#target">Target design in is-sms</a></li>
+    <li><a href="#ui">UI: regular, K5, Middle</a></li>
+    <li><a href="#download">Attachment download example</a></li>
+    <li><a href="#phases">Phased task list</a></li>
+    <li><a href="#tests">Test cases</a></li>
+    <li><a href="#questions">Open questions</a></li>
+  </ol>
+</aside>
+<main>
+<header class="top">
+  <h1>Communications (Inbox): migration from JSP to Next.js</h1>
+  <div class="sub">Moves the legacy Inbox page (emails, notifications, announcements, WhatsApp, Sent, Compose and Reply) from <code>is-rest-api</code> (jQuery page) into <code>is-sms</code> (Next 16, React Query, Tailwind v4, shadcn ui). Only existing backend endpoints are used.</div>
+  <div class="meta">
+    <span>Branch <b>feature/version_1_3_0_phase4</b></span>
+    <span>Sidebar pageLink <b>inbox</b> (+ <b>inbox-compose</b>)</span>
+    <span>Status <b>Plan: no app code changed</b></span>
+    <span>Written <b>2026-11-12</b></span>
+  </div>
+  <div class="actions no-print">
+    <button type="button" class="btn" id="downloadPage">⬇ Download this plan (.html)</button>
+    <button type="button" class="btn ghost" onclick="window.print()">Print</button>
+  </div>
+</header>
+
+<!-- ================================================================== 1 -->
+<section id="summary">
+  <h2><span class="n">1</span> Summary</h2>
+  <p>The legacy Inbox is already well built on the server: <code>InboxController</code> (<code>{schoolId}/dashboard/inbox/*</code>) always works on the <b>token user</b> (<code>InboxService.viewer()</code> → <code>CurrentIdentity.getUser</code>), checks the module right <code>inbox</code>, and checks every id again (email, attachment, reply, recipients). So the migration is mostly a <b>front-end rewrite</b> plus three small Next.js route handlers for the parts a Server Action cannot carry (multipart send, the sandboxed email body, and attachment downloads).</p>
+  <div class="grid">
+    <div class="card"><div class="big">20</div><div class="lbl">Legacy endpoints used (17 inbox + 3 compose assist)</div></div>
+    <div class="card"><div class="big">0</div><div class="lbl">New backend endpoints needed</div></div>
+    <div class="card"><div class="big">3</div><div class="lbl">Next route handlers (send, email body, attachment)</div></div>
+    <div class="card"><div class="big">3</div><div class="lbl">Skins: regular, K5, Middle</div></div>
+  </div>
+  <div class="note ok"><b class="t">Endpoints the user named</b>
+    <code>dashboard/inbox/compose/contacts</code>, <code>dashboard/inbox/children</code> and <code>dashboard/inbox/list</code> are all on <code>InboxController</code>. All three read the user from the token. <code>children</code> returns <code>{}</code> for a student (it only fills for a parent), so the Child filter stays hidden on the student dashboard.</div>
+</section>
+
+<!-- ================================================================== 2 -->
+<section id="legacy">
+  <h2><span class="n">2</span> Legacy screens &amp; files</h2>
+  <h3>Files</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Layer</th><th>File (is-rest-api)</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>Controller</td><td><code>v1/emailtracking/inbox/InboxController.java</code></td><td>All <code>/dashboard/inbox/*</code> endpoints. Response <code>{status:"1"|"0"|"2", message, data}</code>.</td></tr>
+      <tr><td>Service</td><td><code>v1/emailtracking/inbox/InboxService.java</code></td><td>Viewer (token user + parent's children), list/merge of 4 channels, open email / notification / announcement, star, mark all read, unread counts, attachment check.</td></tr>
+      <tr><td>Filter</td><td><code>inbox/InboxFilter.java</code></td><td><code>{channel, read, from, to, categories, childUserId, search, withAttachments, starred, page, pageSize}</code></td></tr>
+      <tr><td>Attachments</td><td><code>inbox/EmailAttachmentStore.java</code></td><td>S3 presigned link, valid 5 minutes.</td></tr>
+      <tr><td>Compose</td><td><code>mailbox/MailboxContacts.java</code>, <code>MailboxSender.java</code>, <code>MailboxSentFolder.java</code>, <code>MailboxSettings.java</code></td><td>Who may write to whom, send (limits, file checks, daily cap, background send), Sent folder.</td></tr>
+      <tr><td>Compose help</td><td><code>mailbox/assist/MailboxAssistController.java</code></td><td><code>inbox/compose/assist</code>, <code>/templates</code>, <code>/ai-help</code>.</td></tr>
+      <tr><td>Page markup</td><td><code>static/theme2/js/custom/inboxContent.js</code></td><td>Builds the whole page as HTML strings (tabs, filter form, list, reader / settings / compose dialogs).</td></tr>
+      <tr><td>Page logic</td><td><code>static/theme2/js/custom/inbox.js</code> (1,298 lines)</td><td>jQuery: <code>initInbox</code>, <code>loadInbox</code>, <code>openInboxItem</code>, <code>postInboxMessage</code>, <code>loadInboxSent</code>, recipient picker, filters.</td></tr>
+      <tr><td>Compose help UI</td><td><code>static/theme2/js/custom/inboxComposeAssist.js</code></td><td>Templates and AI writing help in Compose.</td></tr>
+      <tr><td>Routing</td><td><code>static/theme2/js/custom/pageConfig.js</code> lines 273–274</td><td>pageLinks <code>inbox</code> and <code>inbox-compose</code> load the three JS files. No JSP of its own: it renders into <code>#dashboardContentInHTML</code>.</td></tr>
+      <tr><td>Badge</td><td><code>adminController.js</code> <code>refreshInboxBadge()</code></td><td>Menu badge from <code>/inbox/unread</code>.</td></tr>
+      <tr><td>Email body view</td><td>JSP <code>ViewEmailTemplate</code></td><td>Server-rendered body for the sandboxed iframe.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Screens and actions</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Screen</th><th>Actions</th><th>Endpoints</th></tr></thead>
+    <tbody>
+      <tr><td><b>Inbox list</b></td><td>Tabs All / Emails / Notifications / Announcements / WhatsApp / Sent. Filters: search, date preset (Today, Yesterday, Last 7, Last 30, Custom), read state, email category, child (parents), with attachments, starred. Pager 20 per page (newest 500 max). Star toggle. Mark all as read. Unread items bold.</td><td><code>list</code>, <code>star</code>, <code>mark-all-read</code>, <code>children</code>, <code>unread</code></td></tr>
+      <tr><td><b>Reader dialog</b></td><td>Email: sender, time, child chip, "not delivered" notice, attachments, body in sandboxed iframe, Print, Reply (person-written messages only), "in reply to" line. Notification: text. Announcement: text, attachment, "I have read this". WhatsApp: name only (opens from list data, no call).</td><td><code>email</code>, <code>email-content</code>, <code>attachment</code>, <code>notification</code>, <code>announcement</code>, <code>acknowledge</code>, <code>compose/reply</code></td></tr>
+      <tr><td><b>Email settings dialog</b></td><td>Turn off optional categories (Announcements &amp; events, School partnerships, Other) and the Sunday weekly summary.</td><td><code>email-settings</code>, <code>email-settings/save</code></td></tr>
+      <tr><td><b>Compose dialog</b></td><td>"Write a message" (hidden when <code>canCompose</code> false). To picker (search; a student sees the school office + their teachers), subject (200), message (10,000), up to 3 files (5 MB each; pdf, jpg, jpeg, png, gif, doc(x), xls(x), ppt(x), txt, csv), check-before-send step, templates and AI help (if on).</td><td><code>compose/contacts</code>, <code>compose/send</code>, <code>compose/assist</code>, <code>compose/templates</code>, <code>compose/ai-help</code></td></tr>
+      <tr><td><b>Sent tab</b></td><td>List of messages the user wrote: recipients and state (sent, not sent, sending, partly), progress for a background send.</td><td><code>sent</code></td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><b class="t">Not for students</b><code>compose/audience</code>, <code>compose/audience-options</code> and the audience filter are for teachers and school admins. They refuse a student, so they are out of scope for the student dashboard.</div>
+</section>
+
+<!-- ================================================================== 3 -->
+<section id="endpoints">
+  <h2><span class="n">3</span> Endpoint inventory</h2>
+  <p class="lead">All are <code>POST {schoolUUID}/dashboard/inbox/&lt;path&gt;</code> with body <code>{payload: encode(json)}</code> unless noted. Answer: <code>{status, message, data}</code>, status <code>"1"</code> ok, <code>"0"</code> refused (message is safe to show), <code>"2"</code> error.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Path</th><th>Request (decoded)</th><th>data</th><th>Next.js caller</th></tr></thead>
+    <tbody>
+      <tr><td><code>list</code> <span class="b rec">named</span></td><td><code>InboxFilter</code></td><td><code>{items: Item[], total, page, pageSize, lastPage}</code></td><td>Server Action <code>listInbox</code></td></tr>
+      <tr><td><code>children</code> <span class="b rec">named</span></td><td><code>{}</code></td><td><code>{ "&lt;userId&gt;": "name" }</code>, empty for students</td><td><code>getInboxChildren</code></td></tr>
+      <tr><td><code>compose/contacts</code> <span class="b rec">named</span></td><td><code>{search, role, page, filter?}</code></td><td><code>Book</code> (see §4)</td><td><code>getComposeContacts</code></td></tr>
+      <tr><td><code>email</code></td><td><code>{id}</code></td><td><code>EmailDetail</code>; marks the user's copy read</td><td><code>openInboxEmail</code></td></tr>
+      <tr><td><code>notification</code></td><td><code>{id}</code></td><td><code>{title, message, at}</code>; marks seen</td><td><code>openInboxNotification</code></td></tr>
+      <tr><td><code>announcement</code></td><td><code>{id, childUserId?}</code></td><td><code>{title, message, at, attachment, childName, requiresAck, acknowledged}</code></td><td><code>openInboxAnnouncement</code></td></tr>
+      <tr><td><code>acknowledge</code></td><td><code>{id, childUserId?}</code></td><td><code>{acknowledged:true, new}</code></td><td><code>acknowledgeInboxAnnouncement</code></td></tr>
+      <tr><td><code>mark-all-read</code></td><td><code>{}</code></td><td><code>{marked: n}</code></td><td><code>markAllInboxRead</code></td></tr>
+      <tr><td><code>star</code></td><td><code>{channel, id}</code></td><td><code>{starred}</code></td><td><code>toggleInboxStar</code></td></tr>
+      <tr><td><code>unread</code></td><td><code>{}</code></td><td><code>{EMAIL, NOTIFICATION, ANNOUNCEMENT, TOTAL}</code> (last 30 days)</td><td><code>getInboxUnread</code></td></tr>
+      <tr><td><code>email-settings</code></td><td><code>{}</code></td><td><code>{ "&lt;key&gt;": true|false }</code></td><td><code>getEmailSettings</code></td></tr>
+      <tr><td><code>email-settings/save</code></td><td><code>{key, on}</code></td><td>all settings after save</td><td><code>saveEmailSetting</code></td></tr>
+      <tr><td><code>compose/reply</code></td><td><code>{id}</code></td><td><code>{inReplyToId, to: Contact, subject:"Re: …"}</code></td><td><code>getReplyDraft</code></td></tr>
+      <tr><td><code>compose/send</code></td><td>multipart: <code>payload</code> = encoded <code>{to:[userId], audiences:[], subject, message, inReplyToId}</code>, <code>files</code> ×≤3</td><td><code>{sent, people, names, skipped, message, background, emailOnly, group}</code></td><td>Route <code>POST /api/inbox/send</code></td></tr>
+      <tr><td><code>sent</code></td><td><code>{from, to, search, page, pageSize}</code></td><td><code>{items: SentItem[], total, page, pageSize, lastPage}</code></td><td><code>listInboxSent</code></td></tr>
+      <tr><td><code>GET email-content?payload=</code></td><td><code>payload</code> = <code>contentPayload</code> from <code>email</code></td><td>HTML page with sandbox CSP</td><td>Route <code>GET /api/inbox/email-content</code></td></tr>
+      <tr><td><code>GET attachment?payload=</code></td><td><code>payload</code> = <code>Attachment.payload</code></td><td><b>302</b> to a 5-minute S3 link; 403/400/503 plain text</td><td>Route <code>GET /api/inbox/attachment</code></td></tr>
+      <tr><td><code>compose/assist</code> <span class="b ph">optional</span></td><td><code>{}</code></td><td><code>{writerRole, schoolName, aiEnabled, aiRemaining, aiActions}</code></td><td><code>getComposeAssist</code></td></tr>
+      <tr><td><code>compose/templates</code> <span class="b ph">optional</span></td><td><code>{recipientKind}</code></td><td>template list</td><td><code>getComposeTemplates</code></td></tr>
+      <tr><td><code>compose/ai-help</code> <span class="b ph">optional</span></td><td><code>{action, text, instruction, targetLanguage}</code></td><td>suggestion text</td><td><code>composeAiHelp</code></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================================================================== 4 -->
+<section id="examples">
+  <h2><span class="n">4</span> Request / response examples</h2>
+  <p class="lead">Built from the Java records. Values are examples only. The body that leaves the Next server is always <code>{"payload":"&lt;encoded json&gt;"}</code>; the JSON below is the decoded payload.</p>
+  <div class="two">
+  <div>
+  <h3>4.1 <code>dashboard/inbox/list</code></h3>
+<pre>// request (decoded payload)
+{
+  "channel": "ALL",            // ALL | EMAIL | NOTIFICATION | ANNOUNCEMENT | WHATSAPP
+  "read": "ALL",               // ALL | UNREAD | READ
+  "from": "2026-10-14",        // yyyy-MM-dd, range ≤ 366 days
+  "to":   "2026-11-12",
+  "categories": [],            // e.g. ["Classes &amp; timetable"]
+  "childUserId": null,         // parents only
+  "search": "",
+  "withAttachments": false,
+  "starred": false,
+  "page": 1,
+  "pageSize": 20               // 20 | 50 | 100
+}</pre>
+  </div>
+  <div>
+  <h3>&nbsp;</h3>
+<pre>// response
+{ "status": "1", "message": null, "data": {
+  "items": [{
+    "channel": "EMAIL", "id": 918273, "at": 1762912800000,
+    "title": "Your class timetable for next week",
+    "preview": "Hello, here is your updated timetable…",
+    "sender": "Tara Iyer (Teacher)", "category": "Classes &amp; timetable",
+    "childUserId": null, "childName": null,
+    "read": false, "starred": false,
+    "attachments": true, "undelivered": false
+  }],
+  "total": 37, "page": 1, "pageSize": 20, "lastPage": 2
+}}</pre>
+  </div>
+  <div>
+  <h3>4.2 <code>dashboard/inbox/children</code></h3>
+<pre>// request: {}
+// response for a STUDENT (no children):
+{ "status": "1", "message": null, "data": {} }
+// response for a PARENT:
+{ "status": "1", "data": { "40211": "Asha Rao", "40377": "Ravi Rao" } }</pre>
+  </div>
+  <div>
+  <h3>4.3 <code>dashboard/inbox/compose/contacts</code></h3>
+<pre>// request
+{ "search": "", "role": "", "page": 0 }
+// response for a student
+{ "status": "1", "data": {
+  "enabled": true, "canCompose": true, "reason": null,
+  "search": false,             // whole list at once (admins page)
+  "maxRecipients": 5,          // from MailboxSettings policy
+  "contacts": [
+    { "userId": 0, "name": "&lt;school office&gt;", "role": "School office",
+      "context": null, "emailOnly": false },
+    { "userId": 5120, "name": "Tara Iyer", "role": "Teacher",
+      "context": "Your teacher", "emailOnly": false }
+  ],
+  "writer": { "kind": "STUDENT", "name": "Asha Rao", "role": "Student" },
+  "backgroundFrom": 50, "filter": false, "more": false
+}}
+// writing switched off:
+{ "status": "1", "data": { "enabled": false, "canCompose": false,
+  "reason": "Writing messages is not switched on for your school yet.", … } }</pre>
+  </div>
+  <div>
+  <h3>4.4 <code>email</code> (open one email)</h3>
+<pre>// request: { "id": 918273 }
+{ "status": "1", "data": {
+  "id": 918273, "subject": "Your class timetable for next week",
+  "sender": "Tara Iyer (Teacher)", "at": 1762912800000,
+  "category": "Classes &amp; timetable", "childName": null,
+  "attachments": [
+    { "name": "123456789_timetable.pdf", "payload": "&lt;encoded {emailId,name}&gt;" }
+  ],
+  "undelivered": false,
+  "contentPayload": "&lt;encoded {emailId}&gt;",
+  "message": true, "canReply": true,
+  "inReplyTo": { "id": 918001, "subject": "Question about Friday", "visible": true }
+}}
+// refused:
+{ "status": "0", "message": "This email could not be found in your inbox." }</pre>
+  </div>
+  <div>
+  <h3>4.5 <code>compose/send</code> (multipart)</h3>
+<pre>POST {school}/dashboard/inbox/compose/send
+Content-Type: multipart/form-data
+  payload = encode({
+    "to": [5120], "audiences": [],
+    "subject": "Question about Friday",
+    "message": "Hello Ma'am, …",
+    "inReplyToId": null })
+  files   = homework.pdf   (≤ 3 files, ≤ 5 MB each)
+
+{ "status": "1", "data": {
+  "sent": true, "people": 1, "names": ["Tara Iyer"],
+  "skipped": [], "message": "Your message was sent to Tara Iyer.",
+  "background": false, "emailOnly": 0, "group": "…" } }</pre>
+  </div>
+  <div>
+  <h3>4.6 <code>unread</code></h3>
+<pre>// request: {}
+{ "status": "1", "data": {
+  "EMAIL": 3, "NOTIFICATION": 1, "ANNOUNCEMENT": 2, "TOTAL": 6 } }</pre>
+  </div>
+  </div>
+</section>
+
+<!-- ================================================================== 5 -->
+<section id="security">
+  <h2><span class="n">5</span> Security review</h2>
+  <div class="note ok"><b class="t">Already safe in the legacy backend (keep as is)</b>
+    <ul>
+      <li>No user id is read from the payload: every endpoint uses <code>InboxService.viewer()</code> (token user) and checks the <code>inbox</code> module right.</li>
+      <li><code>childUserId</code> is checked against the viewer's own children; email, attachment, star and reply ids are checked against what the viewer may see.</li>
+      <li>Send checks every recipient again on the server, the daily cap, subject/message length, file count, size, extension and file signature.</li>
+      <li>The email body is served with <code>Content-Security-Policy: sandbox …; script-src 'none'</code> and shown in an iframe without <code>allow-scripts</code>.</li>
+    </ul>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Gap / risk</th><th>Fix in the migration</th><th>Where</th></tr></thead>
+    <tbody>
+      <tr><td>S1</td><td>The browser in is-sms has no backend token cookie, and we must not forward cookies. The legacy page opens <code>email-content</code> and <code>attachment</code> straight from the browser.</td><td>Proxy both through Next route handlers that add <code>Authorization: Bearer</code> from <code>getAccountSession()</code>. Only the opaque <code>payload</code> is taken from the browser; school comes from the session.</td><td><code>app/api/inbox/*</code></td></tr>
+      <tr><td>S2</td><td>Email HTML is untrusted.</td><td>Never use <code>dangerouslySetInnerHTML</code>. Keep the iframe with <code>sandbox="allow-same-origin allow-popups"</code> (no scripts). The proxy copies the backend CSP header and sets <code>X-Content-Type-Options: nosniff</code> and <code>Cache-Control: no-store</code>.</td><td><code>InboxReader</code>, email-content route</td></tr>
+      <tr><td>S3</td><td>Announcement attachments are public S3 links (<code>FILE_UPLOAD_PATH + name</code>): anyone with the file name can open them, no access check.</td><td>Phase 1: keep parity using <code>utils/announcementAttachment.js</code> (same as the K5 announcements panel). Logged as a backend follow-up: serve them through an existing checked endpoint. <span class="b warn">question Q4</span></td><td>reader</td></tr>
+      <tr><td>S4</td><td>Server Action body limit is 1 MB by default; three 5 MB files would fail or tempt someone to raise the limit for all actions.</td><td>Send through <code>POST /api/inbox/send</code> (route handler, same pattern as <code>app/api/profile/document</code>). Validate count, size and extension there before forwarding; the backend checks again.</td><td>send route</td></tr>
+      <tr><td>S5</td><td>Filter values from the browser go straight into the payload.</td><td>The Server Action whitelists fields: channel and read from enums, dates as <code>yyyy-MM-dd</code>, pageSize in 20/50/100, search trimmed to 200 chars. No <code>userId</code> is ever accepted from the client.</td><td><code>services/inboxApi.js</code></td></tr>
+      <tr><td>S6</td><td>Open redirect risk: the attachment endpoint answers 302 to a URL.</td><td>The route fetches with <code>redirect: "manual"</code>, accepts the <code>Location</code> only when it is <code>https:</code> on the configured S3 host, then streams the file. The browser never gets a backend-supplied URL.</td><td>attachment route</td></tr>
+      <tr><td>S7</td><td>Timezone: backend list and unread use <code>Asia/Kolkata</code> for "today" and the legacy page builds date presets in IST, while data is stored in Asia/Singapore.</td><td>Front end builds presets in the user's timezone with <b>Asia/Singapore</b> fallback (project rule) and shows times the same way. Backend change is a question, not part of this work. <span class="b warn">Q6</span></td><td><code>utils/inbox.js</code></td></tr>
+      <tr><td>S8</td><td>Session expiry mid-compose loses the draft.</td><td>Keep the draft in component state; on <code>SESSION_EXPIRED</code> the global dialog opens (<code>callServer</code>) and the form is not cleared.</td><td>ComposeDialog</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================================================================== 6 -->
+<section id="target">
+  <h2><span class="n">6</span> Target design in is-sms</h2>
+  <figure>
+    <svg viewBox="0 0 900 300" role="img" aria-label="Data flow: browser to Next server to Java backend">
+      <rect class="svgbox" x="10" y="20" width="250" height="260" rx="12"/>
+      <text class="svgt" x="26" y="46">Browser (client components)</text>
+      <text class="svgs" x="26" y="72">Inbox / K5Inbox</text>
+      <text class="svgs" x="26" y="94">hooks/useInbox.js (React Query)</text>
+      <text class="svgs" x="26" y="116">callServer(action)</text>
+      <text class="svgs" x="26" y="150">fetch('/api/inbox/send')</text>
+      <text class="svgs" x="26" y="172">iframe src=/api/inbox/email-content</text>
+      <text class="svgs" x="26" y="194">fetch('/api/inbox/attachment')</text>
+      <rect class="svgacc" x="330" y="20" width="260" height="260" rx="12"/>
+      <text class="svgt" x="346" y="46">Next server</text>
+      <text class="svgs" x="346" y="72">services/inboxApi.js ("use server")</text>
+      <text class="svgs" x="346" y="94">→ utils/backendRequest.js</text>
+      <text class="svgs" x="346" y="116">token from getAccountSession()</text>
+      <text class="svgs" x="346" y="150">app/api/inbox/send/route.js</text>
+      <text class="svgs" x="346" y="172">app/api/inbox/email-content/route.js</text>
+      <text class="svgs" x="346" y="194">app/api/inbox/attachment/route.js</text>
+      <text class="svgs" x="346" y="236">Bearer + service key, no cookies</text>
+      <rect class="svgin" x="660" y="20" width="230" height="260" rx="12"/>
+      <text class="svgt" x="676" y="46">is-rest-api</text>
+      <text class="svgs" x="676" y="72">InboxController</text>
+      <text class="svgs" x="676" y="94">{school}/dashboard/inbox/*</text>
+      <text class="svgs" x="676" y="116">viewer() = token user</text>
+      <text class="svgs" x="676" y="150">MailboxAssistController</text>
+      <text class="svgs" x="676" y="194">S3 (presigned, 5 min)</text>
+      <path class="svgl" d="M260 110 H330"/><path class="svgl" d="M322 104 L330 110 L322 116"/>
+      <path class="svgl" d="M260 172 H330"/><path class="svgl" d="M322 166 L330 172 L322 178"/>
+      <path class="svgl" d="M590 110 H660"/><path class="svgl" d="M652 104 L660 110 L652 116"/>
+      <path class="svgl" d="M590 172 H660"/><path class="svgl" d="M652 166 L660 172 L652 178"/>
+    </svg>
+    <figcaption>The browser never talks to the Java backend directly and never sends a user id.</figcaption>
+  </figure>
+
+  <h3>New files</h3>
+  <div class="tw"><table>
+    <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>app/[school]/(dashboard)/student/inbox/page.jsx</code></td><td>Route for pageLink <code>inbox</code>; renders <code>&lt;Inbox /&gt;</code> (overrides the <code>[...module]</code> catch-all, like the other modules).</td></tr>
+      <tr><td><code>app/[school]/(dashboard)/student/inbox-compose/page.jsx</code></td><td>pageLink <code>inbox-compose</code>; renders <code>&lt;Inbox openCompose /&gt;</code>. (Legacy also opened Inbox with <code>?compose</code> via <code>OPEN_PAGE_FROM_QUERY</code>; support <code>?compose=1</code> too.)</td></tr>
+      <tr><td><code>services/inboxApi.js</code></td><td><code>"use server"</code>. One small helper <code>inboxCall(path, body)</code> over <code>backendRequest({ path: "dashboard/inbox/" + path, buildBody: () =&gt; body })</code> that maps status <code>"0"</code>/<code>"2"</code> to <code>{ok:false, code:"REFUSED", message}</code>. Exports: <code>listInbox</code>, <code>getInboxChildren</code>, <code>openInboxEmail</code>, <code>openInboxNotification</code>, <code>openInboxAnnouncement</code>, <code>acknowledgeInboxAnnouncement</code>, <code>markAllInboxRead</code>, <code>toggleInboxStar</code>, <code>getInboxUnread</code>, <code>getEmailSettings</code>, <code>saveEmailSetting</code>, <code>getComposeContacts</code>, <code>getReplyDraft</code>, <code>listInboxSent</code> (+ optional assist calls). Input whitelisting lives here (S5).</td></tr>
+      <tr><td><code>app/api/inbox/send/route.js</code></td><td>POST multipart: <code>to[]</code>, <code>subject</code>, <code>message</code>, <code>inReplyToId</code>, <code>files</code>. Validates, encodes the payload with <code>encodePayload</code>, forwards multipart with Bearer. Returns the backend <code>data</code> or <code>{message}</code> with 400/401/502.</td></tr>
+      <tr><td><code>app/api/inbox/email-content/route.js</code></td><td>GET <code>?payload=</code>; proxies the HTML with the sandbox CSP.</td></tr>
+      <tr><td><code>app/api/inbox/attachment/route.js</code></td><td>GET <code>?payload=&amp;name=</code>; see §8.</td></tr>
+      <tr><td><code>hooks/useInbox.js</code></td><td><code>useInboxList(filters)</code> (key <code>["inbox", userId, "list", filters]</code>, <code>placeholderData: keepPreviousData</code>), <code>useInboxItem(channel, id)</code>, <code>useInboxUnread()</code> (key <code>["inbox", userId, "unread"]</code>, used by the sidebar / K5 nav badge), <code>useInboxChildren()</code>, <code>useEmailSettings()</code>, mutations <code>useToggleStar</code> (optimistic), <code>useMarkAllRead</code>, <code>useAcknowledge</code>. Opening an item invalidates <code>list</code> + <code>unread</code>.</td></tr>
+      <tr><td><code>hooks/useInboxCompose.js</code></td><td><code>useComposeContacts()</code> (staleTime 5 min; client-side search since a student gets the whole list), <code>useReplyDraft(id)</code>, <code>useSendInboxMessage()</code> (mutation → <code>/api/inbox/send</code>), <code>useInboxSent(filters)</code>.</td></tr>
+      <tr><td><code>utils/inbox.js</code></td><td>Channel meta (icon, label), categories list, date presets in the user timezone with Asia/Singapore fallback, <code>formatInboxTime(epoch, tz)</code>, file rules (mirror <code>MailboxSender</code>: 3 files, 5 MB, extension list), <code>attachmentDownloadUrl(a)</code>.</td></tr>
+      <tr><td><code>components/student/inbox/Inbox.jsx</code></td><td>Regular page: header actions, tabs, filters, list, pager. Branches to <code>K5Inbox</code> when <code>useDashboardContext().isK5</code> (same pattern as <code>Attendance.jsx</code>).</td></tr>
+      <tr><td><code>components/student/inbox/InboxFilters.jsx</code></td><td>Search, date preset + custom range with <code>components/ui/date-picker.jsx</code> (never native date inputs), read select, category select, attachments / starred checkboxes, child select (only when <code>children</code> is not empty).</td></tr>
+      <tr><td><code>components/student/inbox/InboxList.jsx</code>, <code>InboxRow.jsx</code></td><td>Rows with unread style, chips, paperclip, star button. Skeleton rows while loading.</td></tr>
+      <tr><td><code>components/student/inbox/InboxReader.jsx</code></td><td>shadcn <code>Dialog</code> (Sheet on mobile). Email / notification / announcement / WhatsApp views, attachments, iframe body, Print, Reply, acknowledge.</td></tr>
+      <tr><td><code>components/student/inbox/ComposeDialog.jsx</code>, <code>RecipientPicker.jsx</code></td><td>To picker (chips + searchable list using Popover), subject, message counter, file input with client checks, review step, Send. Draft kept on error.</td></tr>
+      <tr><td><code>components/student/inbox/SentList.jsx</code>, <code>EmailSettingsDialog.jsx</code></td><td>Sent tab and email settings switches.</td></tr>
+      <tr><td><code>components/k5/pages/K5Inbox.jsx</code> (+ <code>K5InboxReader.jsx</code>, <code>K5WriteToTeacher.jsx</code>)</td><td>K5 and Middle skin (§7). Reuses the same hooks.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><b class="t">Changed files (small)</b> The sidebar menu already comes from the DB (<code>utils/dashboardNav.js mapBackendMenu</code>), so <code>inbox</code> will link to the new route once the page exists; no static menu change. Badge: add the unread count to <code>components/dashboard/Sidebar.jsx</code> and <code>components/k5/K5NavRail.jsx</code> for the <code>inbox</code> item using <code>useInboxUnread</code>.</div>
+</section>
+
+<!-- ================================================================== 7 -->
+<section id="ui">
+  <h2><span class="n">7</span> UI: regular, K5, Middle</h2>
+  <div class="two">
+    <div class="card"><b>Regular (Grade 9–12, non-K5 programs)</b>
+      <ul>
+        <li>Same layout as legacy: title "Inbox", actions Write a message / Email settings / Mark all as read.</li>
+        <li>Tabs as a segmented control; filters collapse into a "Filters" Sheet on phones.</li>
+        <li>List rows: icon, title, sender, chips, preview, time, paperclip, star.</li>
+        <li>Reader in a Dialog (desktop) / full-height Sheet (mobile); Print prints only the reader.</li>
+        <li>shadcn Skeleton rows while loading, never "Loading…".</li>
+        <li>Toast (existing toast) for send results and refusals; inline error inside Compose.</li>
+      </ul>
+    </div>
+    <div class="card"><b>K5 (Grade K–5)</b>
+      <ul>
+        <li><code>K5Inbox</code> inside <code>K5Shell</code>; big friendly cards, accent from the chosen look (selected/active states use the look accent).</li>
+        <li>Simple tabs: <i>All</i>, <i>From my teachers</i>, <i>School news</i> (announcements + notifications). WhatsApp, category and advanced filters hidden; default "Last 30 days".</li>
+        <li>"Write to my teacher" button opens <code>K5WriteToTeacher</code>: pick a teacher from cards, subject + message, 1 attachment shown at a time (still ≤3), no AI help.</li>
+        <li>Pico tip on first visit (waits for data to load, as other K5 pages).</li>
+        <li>Skeleton from <code>K5Skeletons.jsx</code> style.</li>
+        <li>Font, size and spacing follow the appearance settings.</li>
+      </ul>
+    </div>
+    <div class="card"><b>Middle (Grade 6–8)</b>
+      <ul>
+        <li>Same <code>K5Inbox</code> component with the <code>k5-middle.css</code> skin (env flag, <code>isMiddle</code>).</li>
+        <li>Shows the full tab set (All / Emails / Notifications / Announcements / Sent) and the search box; categories stay hidden.</li>
+        <li>Compose uses the full <code>RecipientPicker</code>, restyled by the skin.</li>
+      </ul>
+    </div>
+    <div class="card"><b>Shared rules</b>
+      <ul>
+        <li>No hardcoded school name: the office contact name comes from the backend; any heading text uses <code>useSchoolName</code>.</li>
+        <li>Dates: shadcn date picker with icon for the custom range.</li>
+        <li>Times shown in the user timezone, fallback Asia/Singapore.</li>
+        <li>No new <code>&lt;img&gt;</code>; image previews of attachments are not needed (download only).</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================== 8 -->
+<section id="download">
+  <h2><span class="n">8</span> Attachment download example</h2>
+  <p>Today the legacy reader links each attachment to <code>/dashboard/inbox/attachment?payload=…</code> in a new tab; the backend checks the viewer again and answers <b>302</b> to a 5-minute S3 link. In is-sms the browser has no backend token, so the Next server does the call and streams the file back with a real file name.</p>
+  <figure>
+    <svg viewBox="0 0 900 170" role="img" aria-label="Attachment download sequence">
+      <rect class="svgbox" x="10" y="20" width="190" height="56" rx="10"/><text class="svgt" x="24" y="44">1. Click "homework.pdf"</text><text class="svgs" x="24" y="64">fetch /api/inbox/attachment</text>
+      <rect class="svgacc" x="240" y="20" width="200" height="56" rx="10"/><text class="svgt" x="254" y="44">2. Route: Bearer call</text><text class="svgs" x="254" y="64">redirect: "manual"</text>
+      <rect class="svgin" x="480" y="20" width="190" height="56" rx="10"/><text class="svgt" x="494" y="44">3. Backend checks</text><text class="svgs" x="494" y="64">302 → S3 (5 min)</text>
+      <rect class="svgacc" x="240" y="100" width="200" height="56" rx="10"/><text class="svgt" x="254" y="124">4. Route checks host,</text><text class="svgs" x="254" y="144">streams S3 body back</text>
+      <rect class="svgbox" x="10" y="100" width="190" height="56" rx="10"/><text class="svgt" x="24" y="124">5. Blob → save as</text><text class="svgs" x="24" y="144">"homework.pdf"</text>
+      <path class="svgl" d="M200 48 H240"/><path class="svgl" d="M440 48 H480"/><path class="svgl" d="M575 76 V128 H440"/><path class="svgl" d="M240 128 H200"/>
+    </svg>
+  </figure>
+
+  <h3>8.1 Route handler (server)</h3>
+<pre>// app/api/inbox/attachment/route.js  (planned)
+import { NextResponse } from "next/server";
+import { getAccountSession, serviceKeyHeaders } from "@/lib/auth/session";
+import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+
+const S3_HOSTS = (process.env.INBOX_ATTACHMENT_HOSTS || "s3.amazonaws.com").split(",");
+const plain = (status, message) =&gt; NextResponse.json({ message }, { status });
+
+export async function GET(request) {
+  const me = await getAccountSession();
+  if (!me?.accessToken || !me?.schoolUUID) return plain(401, "Your session has been logged out");
+  if (!hasBackendOrigin()) return plain(500, "The backend is not configured.");
+  const payload = request.nextUrl.searchParams.get("payload");   // opaque, from the email answer
+  if (!payload) return plain(400, "The attachment link is missing.");
+
+  const base = await resolveServerBackendOrigin();
+  const check = await fetch(
+    `${base}/${me.schoolUUID}/dashboard/inbox/attachment?payload=${encodeURIComponent(payload)}`,
+    { headers: { ...serviceKeyHeaders(), Authorization: `Bearer ${me.accessToken}` },
+      redirect: "manual", cache: "no-store" });
+
+  if (check.status !== 302) {                    // 403 / 400 / 503: backend text is safe to show
+    return plain(check.status === 401 ? 401 : check.status, await check.text());
+  }
+  const link = new URL(check.headers.get("location") || "", "https://invalid");
+  if (link.protocol !== "https:" || !S3_HOSTS.some((h) =&gt; link.hostname.endsWith(h))) {
+    return plain(502, "This attachment cannot be opened just now.");
+  }
+  const file = await fetch(link, { cache: "no-store" });
+  if (!file.ok || !file.body) return plain(502, "This attachment cannot be opened just now.");
+
+  // Stored names look like "123456789_homework.pdf": show the part after the 9-digit prefix.
+  const stored = link.pathname.split("/").pop() || "attachment";
+  const shown = decodeURIComponent(stored).replace(/^[0-9]{9}_/, "");
+  const headers = new Headers({
+    "Content-Type": file.headers.get("content-type") || "application/octet-stream",
+    "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(shown)}`,
+    "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff",
+  });
+  const length = file.headers.get("content-length");
+  if (length) headers.set("Content-Length", length);
+  return new NextResponse(file.body, { status: 200, headers });  // streamed, not buffered
+}</pre>
+
+  <h3>8.2 Client side (hook + button)</h3>
+<pre>// utils/inbox.js (planned)
+export async function downloadInboxAttachment(attachment) {
+  const response = await fetch(`/api/inbox/attachment?payload=${encodeURIComponent(attachment.payload)}`);
+  if (response.status === 401) { markSessionExpired(); throw new SessionExpiredError(); }
+  if (!response.ok) throw new Error((await response.json().catch(() =&gt; ({}))).message
+                                    || "This attachment cannot be opened just now.");
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement("a"), {
+    href: url, download: attachment.name.replace(/^[0-9]{9}_/, ""),
+  });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() =&gt; URL.revokeObjectURL(url), 1000);
+}
+
+// InboxReader.jsx
+&lt;Button variant="outline" size="sm" disabled={busy === a.name}
+  onClick={() =&gt; run(a.name, () =&gt; downloadInboxAttachment(a))}&gt;
+  &lt;Paperclip className="h-4 w-4" aria-hidden="true" /&gt;
+  {busy === a.name ? "Preparing…" : shownName(a.name)}
+&lt;/Button&gt;</pre>
+
+  <h3>8.3 Try the client half here</h3>
+  <p class="lead">This button runs the same Blob → <code>&lt;a download&gt;</code> steps with a small made-up file instead of a server answer, so you can see the browser save dialog behaviour.</p>
+  <div class="actions no-print" style="margin-top:6px">
+    <button type="button" class="btn ghost" id="demoDownload">⬇ Download example attachment (timetable.txt)</button>
+  </div>
+  <p id="demoOut" aria-live="polite"></p>
+
+  <div class="note warn"><b class="t">Announcement attachments are different</b> They are not behind <code>/attachment</code>: the announcement answer gives a bare file name and the legacy page links to the public upload path. Phase 1 keeps that (via <code>getAttachmentUrl</code>, opened in a new tab). See S3 / Q4.</div>
+</section>
+
+<!-- ================================================================== 9 -->
+<section id="phases">
+  <h2><span class="n">9</span> Phased task list</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Phase</th><th>Tasks</th><th>Done when</th></tr></thead>
+    <tbody>
+      <tr><td><b>P0</b> Check</td><td>
+        <ol>
+          <li>Log in as a test student (see test login notes) and call each endpoint through a temporary script to confirm the Bearer token works for <code>/dashboard/inbox/*</code>, including the two GETs and multipart send.</li>
+          <li>Confirm the student role has the <code>inbox</code> right and the sidebar shows pageLink <code>inbox</code>.</li>
+          <li>Confirm the S3 host(s) for attachment links per environment.</li>
+        </ol></td><td>All endpoints answer <code>status "1"</code> for a test student from the Next server.</td></tr>
+      <tr><td><b>P1</b> Read-only Inbox</td><td>
+        <ol>
+          <li><code>services/inboxApi.js</code> (list, children, email, notification, announcement, acknowledge, unread, star, mark-all-read).</li>
+          <li><code>utils/inbox.js</code>, <code>hooks/useInbox.js</code>.</li>
+          <li>Route <code>student/inbox</code>, <code>Inbox</code>, filters, list, pager, skeletons.</li>
+          <li>Reader + <code>/api/inbox/email-content</code> + <code>/api/inbox/attachment</code>.</li>
+          <li>Unread badge in Sidebar and K5 nav.</li>
+        </ol></td><td>A student can list, filter, open, star, acknowledge and download; badge updates after opening.</td></tr>
+      <tr><td><b>P2</b> Compose &amp; reply</td><td>
+        <ol>
+          <li><code>getComposeContacts</code>, <code>getReplyDraft</code>, <code>/api/inbox/send</code>.</li>
+          <li><code>ComposeDialog</code>, <code>RecipientPicker</code>, review step, file checks.</li>
+          <li>Sent tab (<code>listInboxSent</code>, <code>SentList</code>), <code>inbox-compose</code> route and <code>?compose=1</code>.</li>
+        </ol></td><td>A student can write to the school office or a teacher, reply to a teacher's message, and see it under Sent.</td></tr>
+      <tr><td><b>P3</b> K5 &amp; Middle</td><td>
+        <ol>
+          <li><code>K5Inbox</code>, <code>K5InboxReader</code>, <code>K5WriteToTeacher</code>.</li>
+          <li>Middle skin rules in <code>k5-middle.css</code>; Pico tip.</li>
+        </ol></td><td>K5 and Grade 6–8 test students see their skin, all actions work.</td></tr>
+      <tr><td><b>P4</b> Extras</td><td>
+        <ol>
+          <li>Email settings dialog.</li>
+          <li>Compose templates and AI help (only if Q3 = yes).</li>
+          <li>WhatsApp tab (if Q2 = yes).</li>
+        </ol></td><td>Parity with legacy for the agreed scope.</td></tr>
+      <tr><td><b>P5</b> Verify</td><td>Run the test cases below in the browser (regular, K5, Middle, phone width), <code>npm run lint</code>, <code>npm run build</code>; add the cases to <code>sms_next_js_migration_student_test_cases.html</code>.</td><td>All cases pass; lint and build clean.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================================================================== 10 -->
+<section id="tests">
+  <h2><span class="n">10</span> Test cases</h2>
+  <div class="tw"><table>
+    <thead><tr><th>ID</th><th>Case</th><th>Expected</th></tr></thead>
+    <tbody>
+      <tr><td>IN-01</td><td>Open Inbox from the sidebar</td><td>URL <code>/{school}/student/inbox</code>; skeleton rows, then the last 30 days, newest first.</td></tr>
+      <tr><td>IN-02</td><td>Switch tabs All / Emails / Notifications / Announcements</td><td>Only that channel; page resets to 1; older request answers are ignored.</td></tr>
+      <tr><td>IN-03</td><td>Custom dates with the date picker, From after To</td><td>Backend refusal "The start date must be on or before the end date." shown; list unchanged.</td></tr>
+      <tr><td>IN-04</td><td>Range longer than one year</td><td>"Please choose a date range of one year or less."</td></tr>
+      <tr><td>IN-05</td><td>Unread only + With attachments + Starred</td><td>Filters combine; WhatsApp and notifications left out as in legacy.</td></tr>
+      <tr><td>IN-06</td><td>Search text</td><td>Matching items only; "Nothing here for these filters." when none.</td></tr>
+      <tr><td>IN-07</td><td>More than 500 items in range</td><td>Summary says only the newest are listed and suggests shorter dates.</td></tr>
+      <tr><td>IN-08</td><td>Pager Newer / Older</td><td>Buttons disabled on first / last page; page info "Page x of y".</td></tr>
+      <tr><td>IN-09</td><td>Open an unread email</td><td>Reader shows sender, time, body in iframe; row turns read; badge goes down by 1.</td></tr>
+      <tr><td>IN-10</td><td>Email HTML containing <code>&lt;script&gt;</code></td><td>Script does not run (sandbox, CSP); no console errors from the app.</td></tr>
+      <tr><td>IN-11</td><td>Download an email attachment</td><td>File saves with the readable name (prefix removed); button shows "Preparing…" meanwhile.</td></tr>
+      <tr><td>IN-12</td><td>Change the attachment <code>payload</code> to another email's id</td><td>403 "This email could not be found in your inbox." shown as a toast; nothing downloads.</td></tr>
+      <tr><td>IN-13</td><td>Open an announcement that asks for acknowledgement, click "I have read this"</td><td>Confirmation text replaces the button; reopening shows "You confirmed you have read this."</td></tr>
+      <tr><td>IN-14</td><td>Star / unstar</td><td>Icon flips at once (optimistic); reverts with a toast if refused.</td></tr>
+      <tr><td>IN-15</td><td>Mark all as read</td><td>All rows read, badge 0 (announcements stay until opened, as legacy).</td></tr>
+      <tr><td>IN-16</td><td>Student: Child filter</td><td>Hidden (<code>children</code> is <code>{}</code>).</td></tr>
+      <tr><td>CO-01</td><td>Write a message: recipient list</td><td>School office first, then own teachers with "Your teacher"; no other students.</td></tr>
+      <tr><td>CO-02</td><td>Writing switched off for the school</td><td>"Write a message" hidden; reason text shown if compose route is opened.</td></tr>
+      <tr><td>CO-03</td><td>Send with empty subject / 201-char subject / 10,001-char message</td><td>Client blocks with the same wording; backend message shown if it still refuses.</td></tr>
+      <tr><td>CO-04</td><td>Attach 4 files / a 6 MB file / an .exe</td><td>Blocked before upload with the legacy wording.</td></tr>
+      <tr><td>CO-05</td><td>Send to a teacher with 2 attachments</td><td>Success toast with the backend message; dialog closes; Sent tab lists it with state "sent".</td></tr>
+      <tr><td>CO-06</td><td>Server down while sending</td><td>Inline error; subject, message and files stay in the form.</td></tr>
+      <tr><td>CO-07</td><td>Reply to a teacher's message</td><td>To = that teacher, subject "Re: …"; sent message shows "in reply to" in the reader.</td></tr>
+      <tr><td>CO-08</td><td>Reply button on a school email (not person-written)</td><td>No Reply button (<code>canReply</code> false).</td></tr>
+      <tr><td>CO-09</td><td>Daily cap reached</td><td>Backend refusal text shown in Compose.</td></tr>
+      <tr><td>SE-01</td><td>Tamper the Server Action body to add <code>userId</code></td><td>Ignored: the payload is built on the server only.</td></tr>
+      <tr><td>SE-02</td><td>Session expires, then open an item</td><td>Global session-expired dialog; no request sent after expiry.</td></tr>
+      <tr><td>SE-03</td><td>Attachment backend answers 302 to a non-S3 host</td><td>Route refuses with 502; browser not redirected.</td></tr>
+      <tr><td>TZ-01</td><td>User timezone blank / invalid</td><td>Times and presets use Asia/Singapore.</td></tr>
+      <tr><td>UI-01</td><td>K5 student opens Inbox</td><td>K5 skin, simple tabs, "Write to my teacher", accent from the chosen look, Pico tip after load.</td></tr>
+      <tr><td>UI-02</td><td>Grade 6–8 student (Middle flag on)</td><td>Middle skin with full tabs and search.</td></tr>
+      <tr><td>UI-03</td><td>Phone width 375 px</td><td>Filters in a Sheet, reader full-height, no horizontal scroll.</td></tr>
+      <tr><td>UI-04</td><td><code>/student/inbox-compose</code> and <code>/student/inbox?compose=1</code></td><td>Inbox opens with Compose open.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================================================================== 11 -->
+<section id="questions">
+  <h2><span class="n">11</span> Open questions</h2>
+  <ol>
+    <li><b>Q1 Scope:</b> student dashboard only, or the parent dashboard as well? (The <code>children</code> endpoint and Child filter only matter for parents.)</li>
+    <li><b>Q2 WhatsApp tab:</b> keep it? It only shows the template name, not the text.</li>
+    <li><b>Q3 Compose help:</b> bring templates and AI writing help (<code>compose/assist</code>, <code>/templates</code>, <code>/ai-help</code>) to students now, later, or never? For K5 the plan leaves them out.</li>
+    <li><b>Q4 Announcement attachments</b> are public S3 links today. Keep parity in this migration, or fix it on the backend first by serving them through an existing checked endpoint?</li>
+    <li><b>Q5 Attachment UX:</b> force a download with the readable name (streamed through Next, plan default), or open the 5-minute S3 link in a new tab like legacy (simpler, PDFs preview in the browser)?</li>
+    <li><b>Q6 Timezone:</b> the backend uses <code>Asia/Kolkata</code> for "today" in <code>list</code> / <code>unread</code> and stores in Asia/Singapore. Change the backend to the user timezone with Asia/Singapore fallback, or leave it and only fix the front end?</li>
+    <li><b>Q7 Email settings dialog:</b> needed on the student dashboard?</li>
+    <li><b>Q8 K5 tabs:</b> are "All / From my teachers / School news" the right simplified tabs, or should K5 match the full set?</li>
+  </ol>
+</section>
+</main>
+</div>
+
+<script>
+(function () {
+  function save(blob, name) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  document.getElementById("downloadPage").addEventListener("click", function () {
+    var html = "<!doctype html>\n" + document.documentElement.outerHTML;
+    save(new Blob([html], { type: "text/html;charset=utf-8" }), "communications_migration_plan.html");
+  });
+  document.getElementById("demoDownload").addEventListener("click", function () {
+    var out = document.getElementById("demoOut");
+    out.textContent = "Preparing…";
+    // Stand-in for: const blob = await (await fetch('/api/inbox/attachment?payload=…')).blob();
+    var text = "Example attachment\n\nMon  Maths 09:00\nTue  English 10:00\nWed  Science 09:30\n";
+    var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    var stored = "123456789_timetable.txt";
+    save(blob, stored.replace(/^[0-9]{9}_/, ""));
+    out.textContent = "Saved \"timetable.txt\" (" + blob.size + " bytes). Stored name was \"" + stored + "\".";
+  });
+})();
+</script>
+</body>
+</html>

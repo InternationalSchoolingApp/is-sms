@@ -20,7 +20,8 @@ export const APPEARANCE_OPTIONS = {
   hand: ["right", "left"],
   motion: ["system", "reduced"],
   buddy: ["pico", "penny", "booky", "bolt", "twinkle"],
-  voice: ["cheerful", "calm", "squeaky", "robot", "slow", "emma"],
+  voice: ["heart", "bella", "nicole", "adam", "puck", "emma", "george", "alpha"],
+  voiceSpeed: ["slow", "normal", "fast"],
   speech: ["on", "off"],
   buddyEnabled: ["on", "off"],
 };
@@ -41,7 +42,8 @@ export const DEFAULT_APPEARANCE = {
   hand: "right",
   motion: "system",
   buddy: "pico",
-  voice: "cheerful",
+  voice: "heart",
+  voiceSpeed: "normal",
   speech: "on",
   buddyEnabled: "on",
 };
@@ -80,16 +82,31 @@ export const BUDDIES = {
   twinkle: { name: "Twinkle", color: "#FFB020", arm: "#E09400", feet: "#C27C00" },
 };
 
-// Web Speech presets (mockup).
+// The buddy's voices (backend TtsService, voice.sqoora.com). `id` is the service's voice, `language` the language it must
+// be sent with (a voice with another language gets the wrong accent). The backend allows only these (PicoVoiceController).
 export const VOICES = {
-  cheerful: { name: "Cheerful", pitch: 1.2, rate: 0.95 },
-  calm: { name: "Calm", pitch: 1.0, rate: 0.85 },
-  squeaky: { name: "Squeaky", pitch: 1.75, rate: 1.05 },
-  robot: { name: "Robot", pitch: 0.55, rate: 0.85 },
-  slow: { name: "Slow & clear", pitch: 1.15, rate: 0.7 },
-  // Emma: a British voice; tapping her in the look dialog plays a recorded hello (mockup playClip).
-  emma: { name: "Emma", pitch: 1.0, rate: 0.95, gb: true },
+  heart: { name: "Heart", id: "af_heart", language: "en-us", accent: "US", gender: "girl" },
+  bella: { name: "Bella", id: "af_bella", language: "en-us", accent: "US", gender: "girl" },
+  nicole: { name: "Nicole", id: "af_nicole", language: "en-us", accent: "US", gender: "girl" },
+  adam: { name: "Adam", id: "am_adam", language: "en-us", accent: "US", gender: "boy" },
+  puck: { name: "Puck", id: "am_puck", language: "en-us", accent: "US", gender: "boy" },
+  emma: { name: "Emma", id: "bf_emma", language: "en-gb", accent: "UK", gender: "girl" },
+  george: { name: "George", id: "bm_george", language: "en-gb", accent: "UK", gender: "boy" },
+  alpha: { name: "Alpha", id: "hf_alpha", language: "hi", accent: "Hindi", gender: "girl" },
 };
+
+// How fast the buddy talks (the service takes 0.5–2.0; 0.8–1.2 is enough for the dashboard).
+export const VOICE_SPEEDS = {
+  slow: { name: "Slow", value: 0.8 },
+  normal: { name: "Normal", value: 1.0 },
+  fast: { name: "Fast", value: 1.2 },
+};
+
+/** The voice a request sends: {id, language, speed} for these preferences (unknown keys take the defaults). */
+export function voiceOf(voice, speed) {
+  const v = VOICES[voice] || VOICES.heart;
+  return { id: v.id, language: v.language, speed: (VOICE_SPEEDS[speed] || VOICE_SPEEDS.normal).value };
+}
 
 /** Only allowlisted values survive; everything else takes the default. */
 export function sanitizeAppearance(value, defaults = DEFAULT_APPEARANCE) {

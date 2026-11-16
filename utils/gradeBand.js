@@ -59,6 +59,15 @@ export function isMiddleDashboardOn(dummy = false) {
   return Boolean(dummy) || process.env.NEXT_PUBLIC_MIDDLE_DASHBOARD === "true";
 }
 
+/**
+ * Grade 9–12 (HIGH) students get the same components as Grade 6–8 in the "Mature" look (app/k5-mature.css on top of
+ * app/k5-middle.css: Roboto, a smaller type scale, flat controls). Off unless NEXT_PUBLIC_HIGH_DASHBOARD=true (the backend
+ * k5DashboardEnabled flag still applies); always on in dummy mode.
+ */
+export function isHighDashboardOn(dummy = false) {
+  return Boolean(dummy) || process.env.NEXT_PUBLIC_HIGH_DASHBOARD === "true";
+}
+
 /** The band for a STANDARD_ID, or null when unknown. */
 export function bandFromStandardId(standardId) {
   return STANDARD_BANDS[Number(standardId)] ?? null;

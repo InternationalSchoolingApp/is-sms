@@ -5,11 +5,13 @@ import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { EyeIcon } from "@/components/k5/pages/K5PerformanceIcons";
 import { K5ProgressReportView } from "@/components/k5/pages/K5ProgressReportView";
+import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 
 const PAGE_SIZE = 10;
 const GRID = { gridTemplateColumns: "90px 1.4fr 1.6fr 1.2fr 130px" };
 const HEAD = "p-3.5 font-k5-display text-base font-semibold";
-const PAGE_BTN = "min-h-[42px] cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-3.5 font-k5-body text-[15px] font-black text-k5-mut disabled:cursor-default disabled:opacity-50";
+const PAGE_BTN = "k5h-pr-btn min-h-[42px] cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-3.5 font-k5-body text-[15px] font-black text-k5-mut disabled:cursor-default disabled:opacity-50";
 
 export function ReportIcon({ size = 20 }) {
   return (
@@ -17,6 +19,60 @@ export function ReportIcon({ size = 20 }) {
       <rect x="5" y="3" width="14" height="18" rx="2.5" />
       <path d="M9 8h6M9 12h6M9 16h3" />
     </svg>
+  );
+}
+
+/** Title row. Grade 6–8 (Middle.dc.html): no card, a 62px accent tile, a 30px heading. */
+function ReportsHeader() {
+  const { isMiddle } = useDashboardContext();
+  return (
+    <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
+      <span
+        aria-hidden="true"
+        className={`flex flex-none items-center justify-center ${isMiddle ? "k5h-pr-tile h-[62px] w-[62px] rounded-[14px]" : "h-[76px] w-[76px] rounded-[24px]"}`}
+        style={isMiddle ? { background: "var(--k5-act)", color: "var(--k5-ac)" } : { background: "var(--k5-gT)", color: "var(--k5-gI)" }}
+      >
+        <ReportIcon size={isMiddle ? 34 : 42} />
+      </span>
+      <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
+        <h1 id="k5-pr-title" className={`m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-4xl"}`}>Progress Report</h1>
+        <p className={`m-0 font-extrabold text-k5-mut ${isMiddle ? "text-base" : "text-lg"}`}>Your weekly reports, one for every week of school</p>
+      </div>
+    </div>
+  );
+}
+
+/** My Progress Reports while it loads: the title, then the table card (header row, five rows, entries and pager). */
+function ReportsSkeleton() {
+  return (
+    <K5Loading label="Loading your progress reports" className="flex flex-col gap-[18px]">
+      <ReportsHeader />
+      <div className={`${K5_CARD} flex flex-col gap-3.5 px-5 py-[18px]`}>
+        <div className="overflow-hidden rounded-[18px] border-[3px] border-k5-line">
+          <div className="h-12 bg-k5-ac/25" />
+          {Array.from({ length: 5 }, (_, r) => (
+            <div key={r} className={`grid items-center gap-4 border-t-2 border-k5-line px-3.5 py-3 ${r % 2 ? "bg-k5-card" : "bg-k5-soft"}`} style={GRID}>
+              <K5Sk className="h-4 w-6" />
+              <span className="flex items-center gap-2.5">
+                <K5Sk className="h-9 w-9 flex-none rounded-xl" />
+                <K5Sk className="h-4 w-24" />
+              </span>
+              <K5Sk className="h-4 w-4/5" />
+              <K5Sk className="h-4 w-3/5" />
+              <K5Sk className="h-[42px] w-24 rounded-full" />
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          <K5Sk className="h-4 w-48" />
+          <span className="flex items-center gap-1.5">
+            <K5Sk className="h-[42px] w-24 rounded-full" />
+            <K5Sk className="h-[42px] w-[42px] rounded-full" />
+            <K5Sk className="h-[42px] w-16 rounded-full" />
+          </span>
+        </div>
+      </div>
+    </K5Loading>
   );
 }
 
@@ -28,22 +84,16 @@ export function K5ProgressReports({ isLoading, rows }) {
 
   if (selected) return <K5ProgressReportView url={selected} onBack={() => setSelected(null)} />;
 
+  if (isLoading) return <ReportsSkeleton />;
+
   const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const pageRows = rows.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
   const from = rows.length ? page * PAGE_SIZE + 1 : 0;
   const to = Math.min(rows.length, (page + 1) * PAGE_SIZE);
 
   return (
-    <div className="flex flex-col gap-[18px]">
-      <div className={`${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
-        <span aria-hidden="true" className="flex h-[76px] w-[76px] flex-none items-center justify-center rounded-[24px]" style={{ background: "var(--k5-gT)", color: "var(--k5-gI)" }}>
-          <ReportIcon size={42} />
-        </span>
-        <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-          <h1 id="k5-pr-title" className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">Progress Report</h1>
-          <p className="m-0 text-lg font-extrabold text-k5-mut">Your weekly reports, one for every week of school</p>
-        </div>
-      </div>
+    <div className="k5-pr-page flex flex-col gap-[18px]">
+      <ReportsHeader />
 
       <section aria-labelledby="k5-pr-title" className={`${K5_CARD} flex flex-col gap-3.5 px-5 py-[18px]`}>
         <div className="k5-bdwrap overflow-x-auto rounded-[18px] border-[3px] border-k5-line bg-k5-card">
@@ -53,9 +103,7 @@ export function K5ProgressReports({ isLoading, rows }) {
                 <span key={h} role="columnheader" className={HEAD}>{h}</span>
               ))}
             </div>
-            {isLoading ? (
-              <p className="m-0 p-6 text-center font-k5-display text-lg font-semibold text-k5-mut">Loading…</p>
-            ) : !rows.length ? (
+            {!rows.length ? (
               <p className="m-0 p-6 text-center font-k5-display text-lg font-semibold text-k5-mut">No progress report found</p>
             ) : (
               pageRows.map((row, i) => (
@@ -74,7 +122,7 @@ export function K5ProgressReports({ isLoading, rows }) {
                       type="button"
                       onClick={() => setSelected(row.url)}
                       disabled={!row.url}
-                      className="inline-flex min-h-[42px] cursor-pointer items-center gap-2 rounded-full border-none bg-k5-ac px-4 font-k5-display text-base font-semibold text-white shadow-[0_3px_0_var(--k5-acd)] disabled:cursor-default disabled:opacity-50"
+                      className="k5h-pr-btn inline-flex min-h-[42px] cursor-pointer items-center gap-2 rounded-full border-none bg-k5-ac px-4 font-k5-display text-base font-semibold text-white shadow-[0_3px_0_var(--k5-acd)] disabled:cursor-default disabled:opacity-50"
                     >
                       View
                       <EyeIcon />
@@ -85,7 +133,7 @@ export function K5ProgressReports({ isLoading, rows }) {
             )}
           </div>
         </div>
-        {!isLoading && rows.length > 0 && (
+        {rows.length > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-2.5">
             <span className="text-base font-extrabold text-k5-mut">
               Showing {from} to {to} of {rows.length} entries

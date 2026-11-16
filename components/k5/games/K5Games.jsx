@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, Star } from "lucide-react";
+import { ChevronLeft, Lock, Star } from "lucide-react";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { BalloonBoard, MemoryBoard, MoleBoard } from "@/components/k5/games/K5ActionBoards";
 import { CountBoard, MathBoard, ShapeBoard } from "@/components/k5/games/K5QuizBoards";
@@ -10,13 +10,14 @@ import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 
 const PILL = "min-h-12 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-4 font-k5-display text-base font-semibold text-k5-ink";
 
-function GameTile({ game, onPlay }) {
+function GameTile({ game, onPlay, locked }) {
   const { preferences } = useAppearance();
   return (
     <button
       type="button"
-      onClick={onPlay}
-      className={"flex min-h-[170px] cursor-pointer flex-col items-center gap-2 rounded-3xl border-[3px] px-2.5 py-3.5 text-center text-k5-ink " + game.border + " " + game.bg + " " + game.rim}
+      onClick={locked ? undefined : onPlay}
+      aria-disabled={locked || undefined}
+      className={"flex min-h-[170px] flex-col items-center gap-2 rounded-3xl border-[3px] px-2.5 py-3.5 text-center text-k5-ink " + (locked ? "cursor-not-allowed opacity-50 " : "cursor-pointer ") + game.border + " " + game.bg + " " + game.rim}
     >
       <span aria-hidden="true" className="flex h-[72px] w-[72px] flex-none items-center justify-center rounded-[22px] bg-k5-card text-[44px] leading-none">
         {game.emoji || <PicoMascot buddy={preferences.buddy} width={48} full={false} />}
@@ -30,8 +31,10 @@ function GameTile({ game, onPlay }) {
 /**
  * "Pick a game!" for a free day (mockup: shown under the no-classes card). Six little games
  * that run only in the browser: nothing is sent or saved, and leaving a game stops it.
+ * `locked` (a class is live right now): the tiles are dimmed, a "Games are locked" note explains it, and a
+ * running game goes back to the picker (the live-class dialog opens over it, see StudentHomeK5).
  */
-export function K5Games() {
+export function K5Games({ locked = false }) {
   const [gameId, setGameId] = useState(null);
   const [score, setScore] = useState(0);
   const [round, setRound] = useState(0);
@@ -39,7 +42,7 @@ export function K5Games() {
   const fbTimer = useRef(null);
   useEffect(() => () => clearTimeout(fbTimer.current), []);
 
-  const game = GAMES.find((g) => g.id === gameId);
+  const game = locked ? null : GAMES.find((g) => g.id === gameId);
   const play = (id) => {
     setGameId(id);
     setScore(0);
@@ -60,9 +63,20 @@ export function K5Games() {
           <h3 id="k5-games-title" className="m-0 font-k5-display text-2xl font-semibold">Pick a game!</h3>
           <p className="m-0 text-[15px] font-extrabold text-k5-mut">Tap a game to play</p>
         </div>
+        {locked && (
+          <div role="note" className="flex items-center gap-3 rounded-[18px] border-[3px] border-k5-yb bg-k5-yt px-4 py-3 text-k5-yx">
+            <span aria-hidden="true" className="flex h-10 w-10 flex-none items-center justify-center rounded-[18px] bg-k5-card">
+              <Lock className="h-[22px] w-[22px]" strokeWidth={2.2} />
+            </span>
+            <span className="flex flex-col gap-0.5">
+              <span className="font-k5-display text-lg font-semibold">Games are locked</span>
+              <span className="text-[15px] font-bold leading-snug">Your class is live right now! Join it first. The games open again when your class is over.</span>
+            </span>
+          </div>
+        )}
         <div className="grid grid-cols-3 gap-3 max-[560px]:grid-cols-2">
           {GAMES.map((g) => (
-            <GameTile key={g.id} game={g} onPlay={() => play(g.id)} />
+            <GameTile key={g.id} game={g} locked={locked} onPlay={() => play(g.id)} />
           ))}
         </div>
       </section>

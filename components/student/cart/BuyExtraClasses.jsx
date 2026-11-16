@@ -23,8 +23,8 @@ function PageTitle() {
   );
 }
 
-function Notice({ children, isK5 }) {
-  if (isK5) return <K5BuyExtraNotice>{children}</K5BuyExtraNotice>;
+function Notice({ children, isK5, loading = false }) {
+  if (isK5) return <K5BuyExtraNotice loading={loading}>{children}</K5BuyExtraNotice>;
   return (
     <div className="mx-auto w-full">
       <PageTitle />
@@ -100,7 +100,7 @@ export function BuyExtraClasses({ initialSubjectId = null }) {
   const addToCart = useAddPlanToCart(context?.userId);
   const symbol = currencyQuery.data?.symbol ?? "";
 
-  if (!context || plansQuery.isLoading) return <Notice isK5={isK5}>Loading…</Notice>;
+  if (!context || plansQuery.isLoading) return <Notice isK5={isK5} loading>Loading…</Notice>;
   const response = plansQuery.data;
   if (!response || response.status !== "1") {
     return <Notice isK5={isK5}>{response?.message || "Unable to load plans right now. Please try again."}</Notice>;

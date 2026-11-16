@@ -24,6 +24,7 @@ import {
   ymdToPickerDate,
 } from "@/utils/attendanceDates";
 import { isSessionExpiredError } from "@/utils/sessionState";
+import { K5Loading, K5RowsSkeleton, K5Sk } from "@/components/k5/K5Skeletons";
 
 export const AC = { present: "#13803F", late: "#E8A200", absent: "#E5243B", missS: "#B81A2E", missT: "#E0457B" };
 export const ATB = { present: "#E4F4EA", late: "#FFF3D1", absent: "#FDE6E8", missS: "#FBE1E4", missT: "#FDEBF2" };
@@ -80,7 +81,7 @@ function Time({ part, empty = "—" }) {
  * donut / legend above ("" = all).
  */
 export function K5AttendanceDetails({ status, onStatusChange }) {
-  const { context } = useDashboardContext();
+  const { context, isHigh } = useDashboardContext();
   const isStudent = (context?.role || "student") === "student";
   const labels = isStudent ? LABEL : DETAILED_LABEL;
   const userId = context?.userId;
@@ -147,12 +148,12 @@ export function K5AttendanceDetails({ status, onStatusChange }) {
             </span>
           )}
           <span aria-live="polite" className="text-[15px] font-extrabold text-k5-mut">
-            {totalCount ? `Showing ${first + 1} to ${Math.min(totalCount, first + rows.length)} of ${totalCount} entries` : query.isLoading ? "Loading…" : "Showing 0 entries"}
+            {totalCount ? `Showing ${first + 1} to ${Math.min(totalCount, first + rows.length)} of ${totalCount} entries` : query.isLoading ? <K5Sk className="inline-block h-4 w-40 align-middle" /> : "Showing 0 entries"}
           </span>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-end gap-3 rounded-[20px] bg-k5-soft px-3.5 py-3">
+      <div className="k5h-r10 flex flex-wrap items-end gap-3 rounded-[20px] bg-k5-soft px-3.5 py-3">
         <label className={FIELD_LABEL}>
           Date
           <select value={dateFilter} onChange={(e) => changeDateFilter(e.target.value)} className={SELECT}>
@@ -164,13 +165,13 @@ export function K5AttendanceDetails({ status, onStatusChange }) {
             ))}
           </select>
         </label>
-        <div className={FIELD_LABEL}>
+        <div className={`${FIELD_LABEL} k5h-at-date`}>
           From
           <DatePicker
             icon={CalendarDays}
             value={ymdToPickerDate(from)}
             disabled={!isCustom}
-            height="h-[50px]"
+            height={isHigh ? "h-[43px]" : "h-[50px]"}
             fromDate={ymdToPickerDate(bounds?.min || from)}
             toDate={ymdToPickerDate(today)}
             onChange={(date) => {
@@ -179,10 +180,10 @@ export function K5AttendanceDetails({ status, onStatusChange }) {
             }}
           />
         </div>
-        <div className={FIELD_LABEL}>
+        <div className={`${FIELD_LABEL} k5h-at-date`}>
           To
           {/* To is always today: when Custom is on the picker opens, but today is the only day that can be chosen. */}
-          <DatePicker icon={CalendarDays} value={ymdToPickerDate(to)} disabled={!isCustom} height="h-[50px]" fromDate={ymdToPickerDate(today)} toDate={ymdToPickerDate(today)} onChange={() => {}} />
+          <DatePicker icon={CalendarDays} value={ymdToPickerDate(to)} disabled={!isCustom} height={isHigh ? "h-[43px]" : "h-[50px]"} fromDate={ymdToPickerDate(today)} toDate={ymdToPickerDate(today)} onChange={() => {}} />
         </div>
         <label className={FIELD_LABEL}>
           Status
@@ -240,11 +241,14 @@ export function K5AttendanceDetails({ status, onStatusChange }) {
                 </div>
               );
             })}
-            {!rows.length && (
-              <div className="px-4 py-7 text-center font-k5-display text-[19px] font-semibold text-k5-mut">
-                {query.isLoading || (query.isFetching && !details) ? "Loading…" : customError || "No classes here."}
-              </div>
-            )}
+            {!rows.length &&
+              (query.isLoading || (query.isFetching && !details) ? (
+                <K5Loading label="Loading your classes" className="">
+                  <K5RowsSkeleton rows={5} cols={6} />
+                </K5Loading>
+              ) : (
+                <div className="px-4 py-7 text-center font-k5-display text-[19px] font-semibold text-k5-mut">{customError || "No classes here."}</div>
+              ))}
           </div>
         </div>
       )}

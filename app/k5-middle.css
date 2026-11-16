@@ -126,14 +126,11 @@
   }
 
   /* The class / activity / assignment cards and a few tiles set their border inline (style="border: 3px solid …"),
-     which no utility class can reach: !important beats inline styles. */
+     which no utility class can reach: !important beats inline styles. (Inline hard shadows stay: the mockup keeps a
+     coloured 0 5px 0 on the day / course / time cards.) */
   &[style*="border: 3px"],
   &[style*="border: 2px"] {
     border-width: 1.5px !important;
-  }
-  &[style*="box-shadow: 0 6px 0"],
-  &[style*="box-shadow: 0 5px 0"] {
-    box-shadow: var(--k5m-card) !important;
   }
 
   /* Radii: cards 26 → 18, tiles 18 → 12, controls 14 → 10 (mockup values). */
@@ -196,6 +193,10 @@
   &[class*="shadow-[0_6px_0_var(--k5-grnD)]"] {
     box-shadow: 0 2px 0 var(--k5-grnD);
   }
+  &[class*="shadow-[0_4px_0_var(--rim)]"],
+  &[class*="shadow-[0_6px_0_var(--rim)]"] {
+    box-shadow: 0 2px 0 var(--rim);
+  }
   &[class*="shadow-[0_4px_0_var(--k5-line)]"],
   &[class*="shadow-[0_5px_0_var(--k5-line)]"],
   &[class*="shadow-[0_6px_0_var(--k5-line)]"],
@@ -220,4 +221,68 @@
   [data-k5-band="middle"] .k5-side:hover {
     box-shadow: var(--k5m-card), 0 18px 48px rgba(10, 16, 34, 0.28);
   }
+}
+
+/* Right action rail (mockup .rail): the count badge is Outfit 15px / 700 with a soft shadow (desktop; the
+   phone tab bar keeps its own smaller badge). */
+@media (min-width: 761px) {
+  [data-k5-band="middle"] .k5-rail-badge {
+    font-family: var(--k5-fd);
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(11, 36, 71, 0.18);
+  }
+}
+
+/* My Performance (mockup .pm*): its small panels are 12px / 8px / 14px where K–5 has 16px / 12px / 20px. Scoped to the
+   page, so the other pages keep their own corners. */
+[data-k5-band="middle"] :is(.k5-perf-page, .k5-pr-page) {
+  & .rounded-2xl {
+    border-radius: 12px;
+  }
+  & .rounded-xl {
+    border-radius: 8px;
+  }
+  & .rounded-\[20px\] {
+    border-radius: 14px;
+  }
+}
+
+/* My Profile (mockup .pfnb / .pfob / .pfck / .pfwdcard): the 16px panels are 12px and the 20px withdraw card is 14px. */
+[data-k5-band="middle"] .k5m-r12 {
+  border-radius: 12px;
+}
+[data-k5-band="middle"] .k5m-r14 {
+  border-radius: 14px;
+}
+
+/* Inbox (mockup .cm*, page "comm"): Balanced buttons are 10px rectangles with no shadow (Playful: pills with a hard
+   offset shadow); file chips keep a 12px corner. */
+[data-k5-band="middle"] .k5-cm-btn {
+  border-radius: 10px;
+  box-shadow: none;
+}
+[data-k5-band="middle"] .k5-cm-in {
+  min-height: 46px;
+}
+
+/* ── Page title tiles (Middle.dc.html): a 62px accent tile with 14px corners. The pages used to force the 14px with an inline
+   style; they now use these hook classes (High overrides them to 10px in k5-mature.css, which is imported after this file). */
+[data-k5-band="middle"] :is(.k5h-pr-tile, .k5h-fee-tile, .k5h-ct-tile, .k5h-ax-tile, .k5h-hb-tile, .k5h-lb-tile, .k5h-lg-tile, .k5h-tr-tile) {
+  border-radius: 14px !important;
+}
+
+/* ── Book a Class (Middle.dc.html): the "Book a class" chip is 5px 14px and the small "Booked class details" button is 32px
+   high (K–5: 6px 18px / 40px). High has its own copy of these in k5-mature.css. */
+[data-k5-band="middle"] .k5h-b-pick {
+  padding: 5px 14px;
+}
+[data-k5-band="middle"] .k5h-b-details {
+  min-height: 32px;
+  padding: 4px 12px;
+}
+
+/* ── Home, My Courses (Middle.dc.html): the 38px course icon tile has 8px corners (rounded-xl would give 14px). */
+[data-k5-band="middle"] .k5h-ctile {
+  border-radius: 8px;
 }

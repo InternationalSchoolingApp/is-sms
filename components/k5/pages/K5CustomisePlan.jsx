@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 
 const BLUE = "#1D6BF0";
 const BLUE_DEEP = "#1C47B8";
@@ -15,11 +16,16 @@ export function K5CustomiseDialog({ subjectName, count, minDisabled, maxDisabled
   const themeProps = useK5ThemeProps(
     "flex max-h-[calc(100vh-32px)] w-full flex-col gap-4 overflow-y-auto rounded-[28px] border-[3px] border-k5-ink bg-k5-card p-[22px] text-k5-ink shadow-[0_8px_0_var(--k5-ink)] ring-0 sm:max-w-[720px]",
   );
+  // Grade 6–8 (Middle.dc.html excust): #027FFE blue with a 2px #0057B8 edge, a #F4F8FF panel, 8–10px corners, 20px dialog.
+  const { isMiddle } = useDashboardContext();
+  const blue = isMiddle ? "#027FFE" : BLUE;
+  const deep = isMiddle ? "#0057B8" : BLUE_DEEP;
+  const m = (k5, middle) => (isMiddle ? middle : k5);
   const options = Array.from({ length: Math.max(weeksLeft, 0) }, (_, i) => i + 1);
   const heading = "font-k5-display text-lg font-semibold text-center";
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
-      <DialogContent showCloseButton={false} {...themeProps}>
+      <DialogContent showCloseButton={false} {...themeProps} style={m(undefined, { borderRadius: 20 })}>
         <div className="flex items-center gap-3">
           <span aria-hidden="true" className="flex h-14 w-14 flex-none items-center justify-center rounded-[18px] bg-k5-bt text-[30px]">🧮</span>
           <DialogTitle className="m-0 flex-1 font-k5-display text-[26px] font-semibold leading-[1.15]">Customise your plan</DialogTitle>
@@ -31,9 +37,9 @@ export function K5CustomiseDialog({ subjectName, count, minDisabled, maxDisabled
 
         <div className="flex flex-col gap-3.5">
           <h3 className="m-0 text-center font-k5-display text-[26px] font-semibold">{subjectName}</h3>
-          <div className="grid grid-cols-3 gap-3.5 rounded-[20px] bg-[#EAF2FF] p-4 max-[560px]:grid-cols-1">
+          <div className="grid grid-cols-3 gap-3.5 rounded-[20px] bg-[#EAF2FF] p-4 max-[560px]:grid-cols-1" style={m(undefined, { background: "#F4F8FF", borderRadius: 14 })}>
             <div className="flex flex-col items-center gap-2">
-              <span id="k5-cust-n" className={heading} style={{ color: BLUE }}>No. of classes</span>
+              <span id="k5-cust-n" className={heading} style={{ color: blue }}>No. of classes</span>
               <div role="group" aria-labelledby="k5-cust-n" className="flex items-center gap-1.5">
                 <button
                   type="button"
@@ -41,11 +47,11 @@ export function K5CustomiseDialog({ subjectName, count, minDisabled, maxDisabled
                   disabled={minDisabled}
                   onClick={() => onChange(count - 1)}
                   className="h-11 w-11 cursor-pointer rounded-xl border-[3px] border-k5-line bg-white text-2xl font-black disabled:cursor-default disabled:opacity-45"
-                  style={{ color: BLUE }}
+                  style={{ color: blue, ...m({}, { borderRadius: 8 }) }}
                 >
                   −
                 </button>
-                <span aria-live="polite" className="box-border flex h-11 min-w-12 items-center justify-center rounded-xl border-[3px] border-k5-line bg-white px-2 font-k5-display text-[22px] font-bold" style={{ color: BLUE }}>
+                <span aria-live="polite" className="box-border flex h-11 min-w-12 items-center justify-center rounded-xl border-[3px] border-k5-line bg-white px-2 font-k5-display text-[22px] font-bold" style={{ color: blue, ...m({}, { borderRadius: 8 }) }}>
                   {count}
                 </span>
                 <button
@@ -54,7 +60,7 @@ export function K5CustomiseDialog({ subjectName, count, minDisabled, maxDisabled
                   disabled={maxDisabled}
                   onClick={() => onChange(count + 1)}
                   className="h-11 w-11 cursor-pointer rounded-xl border-none text-2xl font-black text-white disabled:cursor-default disabled:opacity-45"
-                  style={{ background: BLUE, boxShadow: `0 3px 0 ${BLUE_DEEP}` }}
+                  style={{ background: blue, boxShadow: `${m("0 3px 0", "0 2px 0")} ${deep}`, ...m({}, { borderRadius: 8 }) }}
                 >
                   +
                 </button>
@@ -62,14 +68,14 @@ export function K5CustomiseDialog({ subjectName, count, minDisabled, maxDisabled
             </div>
 
             <div className="flex flex-col items-center gap-2">
-              <span className={heading} style={{ color: BLUE }}>Amount</span>
-              <span aria-live="polite" className="box-border flex min-h-[52px] min-w-[120px] items-center justify-center rounded-[14px] border-[3px] border-k5-line bg-white px-3.5 font-k5-display text-2xl font-bold" style={{ color: BLUE }}>
+              <span className={heading} style={{ color: blue }}>Amount</span>
+              <span aria-live="polite" className="box-border flex min-h-[52px] min-w-[120px] items-center justify-center rounded-[14px] border-[3px] border-k5-line bg-white px-3.5 font-k5-display text-2xl font-bold" style={{ color: blue }}>
                 {amountText}
               </span>
             </div>
 
             <div className="flex flex-col items-center gap-2">
-              <label htmlFor="k5-cust-w" className={heading} style={{ color: BLUE }}>Number of Weeks</label>
+              <label htmlFor="k5-cust-w" className={heading} style={{ color: blue }}>Number of Weeks</label>
               <select
                 id="k5-cust-w"
                 value={weeks}
@@ -91,7 +97,7 @@ export function K5CustomiseDialog({ subjectName, count, minDisabled, maxDisabled
               disabled={busy}
               onClick={() => onSubmit(false)}
               className="min-h-12 flex-[0_1_200px] cursor-pointer rounded-[14px] border-none text-base font-black text-white disabled:cursor-default disabled:opacity-50"
-              style={{ background: BLUE, boxShadow: `0 4px 0 ${BLUE_DEEP}` }}
+              style={{ background: blue, boxShadow: `${m("0 4px 0", "0 2px 0")} ${deep}` }}
             >
               Add to cart
             </button>
@@ -100,7 +106,7 @@ export function K5CustomiseDialog({ subjectName, count, minDisabled, maxDisabled
               disabled={busy}
               onClick={() => onSubmit(true)}
               className="min-h-12 flex-[0_1_200px] cursor-pointer rounded-[14px] border-2 bg-k5-card text-base font-black disabled:cursor-default disabled:opacity-50"
-              style={{ borderColor: BLUE, color: BLUE }}
+              style={{ borderColor: blue, color: blue, ...m({}, { borderWidth: 1.5 }) }}
             >
               Buy
             </button>
