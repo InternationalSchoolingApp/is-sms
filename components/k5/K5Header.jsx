@@ -13,8 +13,9 @@ import { useCartCount } from "@/hooks/useStudentCart";
 import { useNeedHelp } from "@/hooks/useNeedHelp";
 import { studentNavHref } from "@/utils/dashboardNav";
 import { picoSay } from "@/components/k5/pico/picoEvents";
-import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
+import { K5LogoutDialog } from "@/components/k5/K5LogoutDialog";
 import { logoutEverywhere } from "@/utils/logout";
+import { InboxBadge, isInboxMenuItem } from "@/components/student/inbox/InboxBadge";
 import { K5ChangePasswordModal } from "@/components/k5/panels/K5ChangePasswordModal";
 
 /**
@@ -37,7 +38,7 @@ function HeaderAvatar({ photo, initial, className, textClass }) {
  * "Make it yours!". Same actions as DashboardTopHeader — LMS, My Profile and Change Password
  * are still "coming soon"; Log out is live. "Get the App" opens the store links (constant/appLinks.js).
  */
-export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, userName, navOpen, onMenu, onAppearance, lmsProviderURL, isPayLmsPaymentPending }) {
+export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, userName, menu, navOpen, onMenu, onAppearance, lmsProviderURL, isPayLmsPaymentPending }) {
   // Same profile query as My Profile (shared cache): saving a new photo there refreshes this avatar too.
   const { model: profileModel } = useStudentProfile({ schoolUUID, userId });
   const photo = profileModel?.header?.photo || "";
@@ -46,6 +47,9 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, use
   const { data: cartCount = 0 } = useCartCount(userId);
   const cartHref = studentNavHref(school, "cart");
   const needHelp = useNeedHelp();
+  // The Communication (Inbox) button shows only when the student's menu has the Inbox right; its count is the menu badge's.
+  const hasInbox = (menu || []).some((item) => isInboxMenuItem(item));
+  const inboxHref = hasInbox ? studentNavHref(school, "inbox") : null;
   const [menuOpen, setMenuOpen] = useState(false);
   const [changePwOpen, setChangePwOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -93,6 +97,21 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, use
         )}
 
         <div className="flex-[1_1_20px]" />
+
+        {inboxHref && (
+          <Link
+            href={inboxHref}
+            title="Communication"
+            aria-label="Communication"
+            className="relative flex h-[52px] w-[52px] items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card p-0 text-k5-ac no-underline shadow-k5-btn max-[760px]:hidden"
+          >
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="14" rx="3" />
+              <path d="M3.5 7.5l8.5 6 8.5-6" />
+            </svg>
+            <InboxBadge className="absolute -right-1.5 -top-1.5 border-2 border-k5-card px-1.5 text-xs" />
+          </Link>
+        )}
 
         <button
           type="button"
@@ -335,7 +354,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, use
 
       {changePwOpen && <K5ChangePasswordModal onClose={() => setChangePwOpen(false)} />}
 
-      <LogoutConfirmDialog
+      <K5LogoutDialog
         open={confirmLogout}
         busy={loggingOut}
         onCancel={() => setConfirmLogout(false)}

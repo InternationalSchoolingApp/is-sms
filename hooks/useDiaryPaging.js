@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { getDiaryThreadList, getDiaryThreadMessages } from "@/utils/diaryClient";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { getDiaryMentionUsers, getDiaryThreadList, getDiaryThreadMessages } from "@/utils/diaryClient";
 import { diaryDayLabel } from "@/utils/diaryDates";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -71,6 +71,27 @@ export function useDiaryMessages({ sessionUserId, threadId }) {
     courseName: pages[0]?.details?.courseName,
     sourceTimezone: pages[0]?.details?.sourceTimezone,
   };
+}
+
+/**
+ * The name the staff notes of a thread are addressed to - legacy suggestionList(): the thread's PARENT user (`PARENT_MENTION_NAME`),
+ * "Parent" while it is not known (or in the demo). -> string
+ */
+export function useDiaryParentName({ threadId }) {
+  const dummy = useDummyStudent();
+  const account = useDashboardContext().context?.uniqueId;
+  const query = useQuery({
+    queryKey: ["diary-parent-name", account, threadId, dummy.key],
+    queryFn: async () => {
+      const answer = await getDiaryMentionUsers({ account, threadId });
+      const parent = (answer?.details || []).find((user) => user.roleType === "PARENT" && user.userName);
+      return parent ? parent.userName : "Parent";
+    },
+    enabled: Boolean(account && threadId && dummy.settled && !dummy.enabled),
+    staleTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+  });
+  return query.data || "Parent";
 }
 
 /** The nearest ancestor that really scrolls right now (the drawer / panel body around the list). */
