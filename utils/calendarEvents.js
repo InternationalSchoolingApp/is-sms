@@ -116,14 +116,8 @@ export function normalizeCalendarEvent(rawEvent, { timezone, courseDetails = [] 
   const tz = timezone || getBrowserTimezone();
   const eventKind = classifyEventKind(rawEvent);
 
-  const allDayEvent = rawEvent.allDay === true || eventKind === "holiday";
   let startZoned;
-  if (allDayEvent && /^\d{4}-\d{2}-\d{2}/.test(String(rawEvent.start || ""))) {
-    // An all-day event (a holiday) is a calendar date, not a moment: legacy FullCalendar strips the time of an allDay event, so
-    // it stays on its own day for every viewer. Converting "2026-11-17T00:00:00" from the holiday's zone to the student's
-    // zone moved it to the 16th for a student behind that zone.
-    startZoned = parseISO(`${String(rawEvent.start).slice(0, 10)}T00:00:00`);
-  } else if (eventKind === "assignment" && (rawEvent.dueDate || rawEvent.paceDate)) {
+  if (eventKind === "assignment" && (rawEvent.dueDate || rawEvent.paceDate)) {
     // Assignments carry a plain due date with no time/timezone: treat it as
     // that exact calendar day, no UTC round-trip (avoids shifting a day back
     // for timezones behind UTC).
@@ -137,10 +131,7 @@ export function normalizeCalendarEvent(rawEvent, { timezone, courseDetails = [] 
   } else {
     startZoned = normalizeDateTime(rawEvent.start || rawEvent.startDateTime || rawEvent.dueDate || rawEvent.paceDate, tz, rawEvent.timezone);
   }
-  const endZoned =
-    allDayEvent && /^\d{4}-\d{2}-\d{2}/.test(String(rawEvent.end || ""))
-      ? parseISO(`${String(rawEvent.end).slice(0, 10)}T00:00:00`)
-      : normalizeDateTime(rawEvent.end || rawEvent.endDateTime, tz, rawEvent.timezone);
+  const endZoned = eventKind === "holiday" ? null : normalizeDateTime(rawEvent.end || rawEvent.endDateTime, tz, rawEvent.timezone);
   const allDay = rawEvent.allDay === true || eventKind === "holiday";
 
   let courseId = getCourseId(rawEvent);
