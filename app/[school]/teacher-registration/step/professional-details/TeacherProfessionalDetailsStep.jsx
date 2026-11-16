@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { Button } from "@/components/ui/button";
 import { TeacherProfessionalDetails } from "@/components/teacher-registration/TeacherProfessionalDetails";
@@ -18,8 +17,8 @@ import { expireSession } from "@/utils/logout";
  * this step's own data (the saved record and the course lists, resolved BEFORE the form mounts: the form reads its
  * initial values at mount only) and the moves to step 1 (Back) and step 3 (after a save that completes the step).
  *
- * A save completes the step only when the teacher also has a demo; until the live recorder exists that is the "link
- * mode" teacher (a demo link already saved). Anyone else is told the details are saved and stays here.
+ * The form only saves with a demo (a chosen live recording, or the saved demo link of a "link mode" teacher), so a
+ * successful save always moves on to step 3.
  */
 export function TeacherProfessionalDetailsStep() {
   const router = useRouter();
@@ -57,14 +56,10 @@ export function TeacherProfessionalDetailsStep() {
       initial={initial}
       onSessionOut={() => expireSession(context.schoolUUID)}
       onBack={() => router.push(teacherStepPath(school, 1))}
-      onNext={({ linkMode }) => {
-        // The backend may have moved the teacher on (stage 12): re-read where they belong.
+      onNext={() => {
+        // The save moved the teacher on (stage 12): re-read where they belong, then go to the demo review.
         queryClient.invalidateQueries({ queryKey: ["teacher-registration-process"] });
-        if (linkMode) {
-          router.push(teacherStepPath(school, 3));
-        } else {
-          toast.success("Your professional details are saved.");
-        }
+        router.push(teacherStepPath(school, 3));
       }}
     />
   );

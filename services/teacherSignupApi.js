@@ -4,6 +4,7 @@ import { getAccountSession, withServiceKey, withSmsAuth } from "@/lib/auth/sessi
 import { isRecaptchaRequired, verifyRecaptcha } from "@/lib/recaptcha";
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { toTranscriptUrl } from "@/utils/teacherDemoRecording";
 
 // The action the teacher sign-up form's reCAPTCHA token is minted for (components/teacher-registration/TeacherAccountForm.jsx).
 const TEACHER_SIGNUP_RECAPTCHA_ACTION = "teacher_signup";
@@ -155,6 +156,95 @@ export async function getTeacherSubjectDetails(schoolUUID, userId) {
  */
 export async function saveTeacherProfessionalDetails(schoolUUID, request) {
   return postPayload(schoolUUID, "teacher/signup/save-academic-professional-details", request);
+}
+
+/**
+ * Step 2 demo recorder, 1: POST teacher/signup/create-teacher-registration-demo-meeting with only who and what
+ * (utils/teacherDemoRecording.js buildCreateDemoMeetingRequest): the server picks the title, the time (now, in the
+ * teacher's own timezone) and the duration. Success is { status: "success", data: { meetingId, title, ... } }; a refusal
+ * ("You have used all N attempts ...") is { status: "failed", message }; null on a non-2xx answer.
+ */
+export async function createTeacherDemoMeeting(schoolUUID, request) {
+  return postPayload(schoolUUID, "teacher/signup/create-teacher-registration-demo-meeting", request);
+}
+
+/**
+ * Step 2 demo recorder, 2: the Lens host link of a created meeting (GET ...start-teacher-registration-demo-meeting
+ * ?payload=). Success is { status: "1", redirectUrl }; status "3" = session out; anything else carries a message.
+ */
+export async function startTeacherDemoMeeting(schoolUUID, request) {
+  const query = `payload=${encodeURIComponent(encodePayload(request))}`;
+  const response = await fetch(
+    await backendUrl(schoolUUID, `teacher/signup/start-teacher-registration-demo-meeting?${query}`),
+    await withSmsAuth({ cache: "no-store" })
+  );
+  return parseJsonResponse(response);
+}
+
+/**
+ * The teacher's demo attempts: POST teacher/signup/get-teacher-demo-recordings with { userId, schoolId }. Success is
+ * { statusCode: "SUCCESS", sessionDataList, maxAttempts, attemptsUsed, canRecord } (utils/teacherDemoRecording.js
+ * mapDemoRecordings reads it); null on a non-2xx answer.
+ */
+export async function getTeacherDemoRecordings(schoolUUID, request) {
+  return postPayload(schoolUUID, "teacher/signup/get-teacher-demo-recordings", request);
+}
+
+/**
+ * Discards one of the teacher's own failed attempts so they can record again: POST
+ * teacher/signup/teacher-demo-recording-reattempt-by-teacher with { sessionId }. Success is statusCode "SUCCESS".
+ */
+export async function discardTeacherDemoAttempt(schoolUUID, sessionId) {
+  return postPayload(schoolUUID, "teacher/signup/teacher-demo-recording-reattempt-by-teacher", { sessionId });
+}
+
+/**
+ * A short-lived playable address for one of the signed-in teacher's own demo recordings: { url } or { message }.
+ * The backend signs any address it is given, so this only asks for one that is in the teacher's own recordings, and
+ * never for an archived one.
+ */
+export async function getTeacherDemoPlaybackUrl(schoolUUID, recordingUrl) {
+  const own = await findOwnDemoRecording(schoolUUID, recordingUrl);
+  if (own.message) return { message: own.message };
+  if (UNPLAYABLE_STORAGE_CLASSES.includes(own.storageClass)) {
+    return { message: "This recording is archived and cannot be played." };
+  }
+  const baseUrl = await resolveServerBackendOrigin();
+  const query = `payload=${encodeURIComponent(encodePayload({ url: recordingUrl }))}`;
+  const response = await fetch(`${baseUrl}/videos/signed-url?${query}`, await withSmsAuth({ cache: "no-store" }));
+  const body = await parseJsonResponse(response);
+  // Lens answers { status: 0, url } (0 = success, as in the legacy player).
+  return body && Number(body.status) === 0 && body.url ? { url: body.url } : { message: body?.message || "We couldn't load this recording." };
+}
+
+/**
+ * The transcript (a .vtt text file next to the recording) of one of the signed-in teacher's own demo recordings:
+ * { content } (the file's text, possibly empty) or { message }. The same rule as playback: only for a recording that is
+ * in the teacher's own list, and the file address is worked out here from that recording, never taken from the browser.
+ */
+export async function getTeacherDemoTranscript(schoolUUID, recordingUrl) {
+  const own = await findOwnDemoRecording(schoolUUID, recordingUrl);
+  if (own.message) return { message: own.message };
+  const transcriptUrl = toTranscriptUrl(recordingUrl);
+  if (!transcriptUrl) return { message: "No transcript available." };
+  const baseUrl = await resolveServerBackendOrigin();
+  const query = `payload=${encodeURIComponent(encodePayload({ url: transcriptUrl }))}`;
+  const response = await fetch(`${baseUrl}/transcript/show-content?${query}`, await withSmsAuth({ cache: "no-store" }));
+  const body = await parseJsonResponse(response);
+  return body && typeof body.content === "string" ? { content: body.content } : { message: "Failed to load transcript." };
+}
+
+const UNPLAYABLE_STORAGE_CLASSES = ["GLACIER", "DEEP_ARCHIVE", "RESTORING"];
+
+// { storageClass } of the recording when it is one of the signed-in teacher's own, otherwise { message }.
+async function findOwnDemoRecording(schoolUUID, recordingUrl) {
+  const session = await getAccountSession();
+  if (!session?.userId || session.schoolUUID !== schoolUUID) return { message: "Please sign in again." };
+  const list = await getTeacherDemoRecordings(schoolUUID, { userId: session.userId, schoolId: session.schoolNumericId });
+  const own = (list?.sessionDataList ?? []).flatMap((entry) => (Array.isArray(entry.recordingArray) ? entry.recordingArray : []));
+  const recording = own.find((candidate) => candidate?.url === recordingUrl);
+  if (!recording) return { message: "This recording is not available." };
+  return { storageClass: String(recording.storageClass ?? "").toUpperCase() };
 }
 
 /**

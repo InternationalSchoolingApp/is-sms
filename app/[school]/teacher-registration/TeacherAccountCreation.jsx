@@ -86,7 +86,7 @@ export function TeacherAccountCreation({ school, recaptchaRequired, recaptchaSit
             </p>
           </div>
           <div className="pointer-events-none relative -mx-10 mt-6 min-h-0 flex-1">
-            <Image src="/images/enrollement_bg.png" alt="" fill className="object-contain object-left-bottom" priority />
+            <Image src="/images/teacher-signup.png" alt="" fill className="object-contain object-left-bottom" priority />
           </div>
         </section>
 

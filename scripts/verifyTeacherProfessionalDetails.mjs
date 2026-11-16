@@ -30,6 +30,7 @@ const VALID_FIELDS = {
   lastJobDesc: "I teach well.",
   grades: ["12", "1"],
   courses: { ...EMPTY_TEACHER_COURSES, middle: ["Math"] },
+  demoMeetingId: "lens-meeting-1",
   declConfirmation: true,
 };
 
@@ -130,6 +131,13 @@ test("a complete form is valid; each rule fails on its own field", () => {
   fails({ grades: [] }, "grades");
   fails({ courses: EMPTY_TEACHER_COURSES }, "courses");
   fails({ declConfirmation: false }, "declConfirmation");
+  fails({ demoMeetingId: "" }, "demoMeetingId");
+  // the save before recording has no demo yet; a link-mode teacher never needs a recording
+  assert.equal(validateTeacherProfessionalDetails({ ...VALID_FIELDS, demoMeetingId: "" }, { ...options, requireDemo: false }).valid, true);
+  assert.equal(
+    validateTeacherProfessionalDetails({ ...VALID_FIELDS, demoMeetingId: "", demoVedioLink: "https://youtu.be/abc" }, { ...options, linkMode: true }).valid,
+    true
+  );
   fails({}, "documents", { documents: { ...ALL_DOCUMENTS, 75: undefined } });
   fails({ demoVedioLink: "not a link" }, "demoVedioLink", { documents: ALL_DOCUMENTS, linkMode: true });
   assert.equal(
@@ -151,7 +159,10 @@ test("the save request carries the legacy shape; the link only in link mode", ()
   assert.equal(normal.data.declConfirmation, "Y");
   assert.deepEqual(normal.data.middleSelectedSubject, ["Math"]);
   assert.equal("demoVedioLink" in normal.data, false);
-  assert.equal("demoMeetingId" in normal.data, false);
+  assert.equal(normal.data.demoMeetingId, "lens-meeting-1");
+  // the save before recording has no chosen recording: nothing is sent, so the stage is not advanced
+  const beforeRecording = buildSaveTeacherProfessionalRequest({ fields: { ...VALID_FIELDS, demoMeetingId: "" }, authentication, userId: 7 });
+  assert.equal("demoMeetingId" in beforeRecording.data, false);
 
   const link = buildSaveTeacherProfessionalRequest({
     fields: { ...VALID_FIELDS, demoVedioLink: " https://youtu.be/abc " },
@@ -160,4 +171,17 @@ test("the save request carries the legacy shape; the link only in link mode", ()
     linkMode: true,
   });
   assert.equal(link.data.demoVedioLink, "https://youtu.be/abc");
+  assert.equal("demoMeetingId" in link.data, false);
+});
+
+test("the save before recording owes neither a demo nor the declaration, everything else still counts", () => {
+  const draft = { ...VALID_FIELDS, demoMeetingId: "", declConfirmation: false };
+  const options = { documents: ALL_DOCUMENTS, requireDemo: false, requireDeclaration: false };
+  assert.equal(validateTeacherProfessionalDetails(draft, options).valid, true);
+  assert.equal(validateTeacherProfessionalDetails({ ...draft, grades: [] }, options).errors.grades !== undefined, true);
+  assert.equal(validateTeacherProfessionalDetails(draft, { documents: ALL_DOCUMENTS }).errors.declConfirmation !== undefined, true);
+  // it goes out as "N" with no demo in it
+  const request = buildSaveTeacherProfessionalRequest({ fields: draft, authentication: { userId: 7 }, userId: 7 });
+  assert.equal(request.data.declConfirmation, "N");
+  assert.equal("demoMeetingId" in request.data, false);
 });

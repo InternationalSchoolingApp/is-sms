@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, Briefcase, CalendarDays, GraduationCap, Link2, MessageSquareText, Pencil, Video } from "lucide-react";
+import { BookOpen, Briefcase, CalendarDays, GraduationCap, Link2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
@@ -9,9 +9,12 @@ import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { FloatingLabelTextarea } from "@/components/ui/floating-label-textarea";
 import { Req } from "@/components/common/Req";
+import { TeacherDemoRecorder } from "@/components/teacher-registration/TeacherDemoRecorder";
 import { TeacherDocumentField } from "@/components/teacher-registration/TeacherDocumentField";
 import { TeacherMultiSelectDialog } from "@/components/teacher-registration/TeacherMultiSelectDialog";
+import { useTeacherDemoRecordings } from "@/hooks/useTeacherDemoRecorder";
 import { useTeacherDocumentDelete, useTeacherProfessionalSave } from "@/hooks/useTeacherProfessionalDetails";
+import { effectiveDemoChoice } from "@/utils/teacherDemoRecording";
 import {
   TEACHER_COURSE_BANDS,
   TEACHER_DOCUMENTS,
@@ -74,8 +77,9 @@ function PickerButton({ label, error, onClick, children }) {
  * Documents live outside the save (upload-document / delete-document store them straight away), so they are tracked
  * here separately from `fields`.
  *
- * Demo: a teacher who already has a saved demo link gets the link field (legacy "link mode"); the live recorder is a
- * later piece, so until it exists everybody else sees a disabled placeholder.
+ * Demo: a teacher who already has a saved demo link gets the link field (legacy "link mode"); everybody else records a
+ * live demo (TeacherDemoRecorder) and chooses one of the recordings. Either way the step is complete only with a demo,
+ * so a save here always moves the teacher on.
  */
 export function TeacherProfessionalDetails({ context, school, userId, initial, onNext, onBack, onSessionOut }) {
   const [fields, setFields] = useState(initial.fields);
@@ -89,15 +93,20 @@ export function TeacherProfessionalDetails({ context, school, userId, initial, o
   const linkMode = initial.linkMode;
   const save = useTeacherProfessionalSave({ context, userId });
   const removeDocument = useTeacherDocumentDelete({ context });
+  const demo = useTeacherDemoRecordings({ context, userId, enabled: !linkMode });
   const gradeOptions = useMemo(() => getTeacherGradeOptions(context.schoolNumericId), [context.schoolNumericId]);
   const missingDocument = findMissingTeacherDocument(documents);
   const uploading = busyTypes.size > 0;
+  // A chosen recording only counts while it is still one of the finished attempts (an admin reset, say, can remove it);
+  // with exactly one finished attempt that one is the choice (as in the legacy wizard).
+  const chosenMeetingId = linkMode ? "" : effectiveDemoChoice(demo.data?.attempts, fields.demoMeetingId);
+  const effectiveFields = { ...fields, demoMeetingId: chosenMeetingId };
 
   useEffect(() => {
     setErrors((prev) => {
       const keys = [...everErroredFieldsRef.current];
       if (keys.length === 0) return prev;
-      const { errors: current } = validateTeacherProfessionalDetails(fields, { linkMode, documents });
+      const { errors: current } = validateTeacherProfessionalDetails({ ...fields, demoMeetingId: chosenMeetingId }, { linkMode, documents });
       const next = { ...prev };
       let changed = false;
       keys.forEach((key) => {
@@ -113,7 +122,7 @@ export function TeacherProfessionalDetails({ context, school, userId, initial, o
       });
       return changed ? next : prev;
     });
-  }, [fields, documents, linkMode]);
+  }, [fields, documents, linkMode, chosenMeetingId]);
 
   function setField(name, value) {
     setFields((prev) => ({ ...prev, [name]: value }));
@@ -143,15 +152,44 @@ export function TeacherProfessionalDetails({ context, school, userId, initial, o
     }
   }
 
+  /**
+   * "Live record your demo" opens only for a filled-in form, and saves it first, as the legacy page does: the recording
+   * takes a while, so the details must already be safe. The same checks as Next, except the demo itself (it does not
+   * exist yet) and the declaration (owed with the final Next). Resolves true when saved.
+   */
+  async function saveBeforeRecording() {
+    if (save.isPending || uploading) return false;
+    // No recording is sent with this save (the legacy page never did): a save that carries the demo is the final one.
+    const draft = { ...fields, demoMeetingId: "" };
+    const { valid, errors: fieldErrors } = validateTeacherProfessionalDetails(draft, {
+      linkMode,
+      documents,
+      requireDemo: false,
+      requireDeclaration: false,
+    });
+    Object.keys(fieldErrors).forEach((key) => everErroredFieldsRef.current.add(key));
+    setErrors(fieldErrors);
+    if (!valid) return false;
+    try {
+      const response = await save.mutateAsync({ fields: draft, linkMode });
+      if (response?.status === STATUS_SUCCESS) return true;
+      setErrors((prev) => ({ ...prev, form: response?.message || "Something went wrong. Please check your connection and try again." }));
+    } catch (err) {
+      console.error("TeacherProfessionalDetails save before recording failed:", err);
+      setErrors((prev) => ({ ...prev, form: "Something went wrong. Please check your connection and try again." }));
+    }
+    return false;
+  }
+
   async function handleSubmit() {
     if (save.isPending || uploading) return;
-    const { valid, errors: fieldErrors } = validateTeacherProfessionalDetails(fields, { linkMode, documents });
+    const { valid, errors: fieldErrors } = validateTeacherProfessionalDetails(effectiveFields, { linkMode, documents });
     Object.keys(fieldErrors).forEach((key) => everErroredFieldsRef.current.add(key));
     setErrors(fieldErrors);
     if (!valid) return;
 
     try {
-      const response = await save.mutateAsync({ fields, linkMode });
+      const response = await save.mutateAsync({ fields: effectiveFields, linkMode });
       if (!response) {
         setErrors((prev) => ({ ...prev, form: "Something went wrong. Please check your connection and try again." }));
         return;
@@ -291,13 +329,17 @@ export function TeacherProfessionalDetails({ context, school, userId, initial, o
           </p>
         </div>
       ) : (
-        <div className="mt-5 flex flex-col items-center gap-2 rounded-lg border border-slate-200 p-4 text-center">
-          <h3 className="text-base font-bold text-black">Record Your Demo</h3>
-          <Button type="button" disabled className="h-10 rounded-xl px-4 font-bold">
-            <Video className="h-4 w-4" /> LIVE RECORD YOUR DEMO
-          </Button>
-          <p className="text-xs text-slate-500">Live demo recording is coming to this page shortly.</p>
-        </div>
+        <TeacherDemoRecorder
+          context={context}
+          userId={userId}
+          demo={demo}
+          chosenId={chosenMeetingId}
+          onChoose={(meetingId) => setField("demoMeetingId", meetingId)}
+          onSaveFirst={saveBeforeRecording}
+          onSessionOut={onSessionOut}
+          busy={save.isPending || uploading}
+          error={errors.demoMeetingId}
+        />
       )}
 
       <div className="mt-5">

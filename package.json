@@ -13,7 +13,8 @@
     "verify:performance-data": "node --test scripts/verifyPerformanceData.mjs",
     "verify:contact-check": "node --test scripts/verifyContactCheckFlow.mjs",
     "verify:inbox": "node --test scripts/verifyInbox.mjs",
-    "verify:teacher-professional": "node --test scripts/verifyTeacherProfessionalDetails.mjs"
+    "verify:teacher-professional": "node --test scripts/verifyTeacherProfessionalDetails.mjs",
+    "verify:teacher-demo": "node --test scripts/verifyTeacherDemoRecording.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

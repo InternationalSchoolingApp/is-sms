@@ -164,6 +164,7 @@ export const INITIAL_TEACHER_PROFESSIONAL_FIELDS = {
   grades: [], // grade keys, see getTeacherGradeOptions
   courses: EMPTY_TEACHER_COURSES, // { elementary: [titles], middle: [...], high: [...] }
   demoVedioLink: "", // only used when the teacher already has a saved link (the legacy page's "link mode")
+  demoMeetingId: "", // the recording the teacher chose (a Lens meeting id); recorder mode only
   declConfirmation: false,
 };
 
@@ -188,6 +189,7 @@ export function mapTeacherProfessionalToFields(teacherDetails, subjectDetails) {
       high: Array.isArray(subjects.highSelectedSubject) ? subjects.highSelectedSubject : [],
     },
     demoVedioLink: decodeTeacherLegacyText(saved.demoVedioLink),
+    demoMeetingId: typeof saved.demoMeetingId === "string" ? saved.demoMeetingId.trim() : "",
     declConfirmation: saved.declConfirmation === "Y",
   };
 }
@@ -213,9 +215,16 @@ export function isValidTeacherDemoLink(link) {
 
 /**
  * Step 2 form validation; `errors` is keyed by field name (`documents` carries the first missing document's label).
- * `options.linkMode` = the demo link is part of the form; `options.documents` = the saved documents.
+ * `options.linkMode` = the demo link is part of the form; `options.documents` = the saved documents;
+ * `options.requireDemo` (default true) = a teacher who records their demo must also have chosen a recording;
+ * `options.requireDeclaration` (default true) = the declaration must be ticked. Both are false for the save that comes
+ * before recording: like the legacy page, the form is saved first (the recording takes a while), the demo does not exist
+ * yet and the declaration is only owed with the final Next.
  */
-export function validateTeacherProfessionalDetails(fields, { linkMode = false, documents = {} } = {}) {
+export function validateTeacherProfessionalDetails(
+  fields,
+  { linkMode = false, documents = {}, requireDemo = true, requireDeclaration = true } = {}
+) {
   const errors = {};
 
   if (!TEACHER_QUALIFICATION_OPTIONS.some((option) => option.value === fields.highestQualificationId)) {
@@ -245,15 +254,19 @@ export function validateTeacherProfessionalDetails(fields, { linkMode = false, d
   const missingDocument = findMissingTeacherDocument(documents);
   if (missingDocument) errors.documents = `Please upload ${missingDocument.label}`;
   if (linkMode && !isValidTeacherDemoLink(fields.demoVedioLink)) errors.demoVedioLink = "Please enter a valid demo link";
-  if (!fields.declConfirmation) errors.declConfirmation = "Please accept the declaration";
+  if (!linkMode && requireDemo && !fields.demoMeetingId) {
+    errors.demoMeetingId = "Please record your demo and choose a recording";
+  }
+  if (requireDeclaration && !fields.declConfirmation) errors.declConfirmation = "Please accept the declaration";
 
   return { valid: Object.keys(errors).length === 0, errors };
 }
 
 /**
  * The save-academic-professional-details body. The documents are uploaded one by one beforehand (upload-document),
- * so `attachments` stays empty. A meeting id is not sent from here: the recorder saves it itself. `demoVedioLink` goes
- * only in link mode (the backend writes only the keys it is sent).
+ * so `attachments` stays empty. `demoVedioLink` goes only in link mode, `demoMeetingId` (the chosen recording) only in
+ * recorder mode and only once one is chosen (the save before recording has none): the backend writes only the keys it
+ * is sent, and a saved demo is what moves the teacher on to the next step.
  */
 export function buildSaveTeacherProfessionalRequest({ fields, authentication, userId, linkMode = false }) {
   const data = {
@@ -272,5 +285,6 @@ export function buildSaveTeacherProfessionalRequest({ fields, authentication, us
     declConfirmation: fields.declConfirmation ? "Y" : "N",
   };
   if (linkMode) data.demoVedioLink = fields.demoVedioLink.trim();
+  else if (fields.demoMeetingId) data.demoMeetingId = fields.demoMeetingId;
   return { authentication, data };
 }
