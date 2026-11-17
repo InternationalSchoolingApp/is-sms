@@ -141,7 +141,8 @@ export async function login(
 
   const response = await fetch(`${baseUrl}/${schoolUUID}/api/v1/common/login`, {
     method: "POST",
-    headers,
+    // The public API needs this app's service key (a request without it is refused as "visitor_required").
+    headers: withServiceKey({ headers }).headers,
     credentials: "include",
     body: JSON.stringify({ payload: encodePayload(request) }),
   });

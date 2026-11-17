@@ -8,7 +8,7 @@ import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 import { useSpeech } from "@/components/k5/pico/useSpeech";
 import { BUDDIES, voiceOf } from "@/constant/appearance";
 import { PICO_SAY_EVENT, usePicoLive } from "@/components/k5/pico/picoEvents";
-import { HOME_MODULE, NO_MODULE_TEXT, picoModuleFor, picoWelcomeText } from "@/constant/picoModules";
+import { HOME_MODULE, NO_MODULE_TEXT, isClubModule, isLanguageClub, picoModuleFor, picoWelcomeText } from "@/constant/picoModules";
 import { TOUR_GET_APP_KEY, hasPicoModuleCookie, hasPicoWelcomeCookie, setPicoModuleCookie, setPicoWelcomeCookie } from "@/utils/picoCookies";
 import { preparePicoClips } from "@/utils/picoVoice";
 
@@ -185,12 +185,23 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   // The page the welcome was said on does not also explain itself (one voice at a time).
   if (welcomeSkip && welcomeSkip !== pageSegment) setWelcomeSkip(null);
 
-  const welcomeText = home ? steps[0].text : picoWelcomeText({ firstName, schoolName, buddyName: buddy.name, tour: false });
+  // On a club page the first hello is about that club (its own line from constant/picoModules.js), not the general welcome;
+  // a Language Club line already starts with a hello (Bonjour!...), so it gets no "Hello {name}!" in front.
+  const clubWelcome = !home && isClubModule(pageSegment);
+  const welcomeText = home
+    ? steps[0].text
+    : clubWelcome
+      ? isLanguageClub(pageSegment)
+        ? moduleNow.text
+        : `Hello${firstName ? ` ${firstName}` : ""}! ${moduleNow.text}`
+      : picoWelcomeText({ firstName, schoolName, buddyName: buddy.name, tour: false });
   const welcomeReady = welcomeDue && moduleReady && !live.pending && !onBook;
 
   const finishWelcome = () => {
     retryOff.current?.();
     setPicoWelcomeCookie(userId);
+    // The club's own line was the welcome, so the club page does not say it again by itself next time.
+    if (clubWelcome) setPicoModuleCookie(userId, pageSegment);
     setWelcomedNow(true);
   };
 

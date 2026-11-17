@@ -4,7 +4,6 @@ import { useState, useSyncExternalStore } from "react";
 import { Eye, EyeOff, Lock, TimerReset } from "lucide-react";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
-import { loginPageUrl, withLoginPayload } from "@/utils/backendOrigin";
 import { expireSession } from "@/utils/logout";
 import { SESSION_EXPIRED_MESSAGE, isSessionExpired, subscribeSessionExpired } from "@/utils/sessionState";
 
@@ -46,11 +45,28 @@ const LOOKS = {
   },
 };
 
+// Shown in the dialog (with blinking dots) while the password is being checked.
+const VERIFYING_MESSAGE = "Verifying your credentials";
+const WRONG_PASSWORD_MESSAGE = "You entered a wrong password.";
+const UNAVAILABLE_MESSAGE = "Unable to sign in right now. Please try again.";
+const VERIFYING_DETAIL = "Please wait while we securely restore your session.";
+
 const BAND_COPY = {
   elementary: { title: "Oops! You were logged out", hint: "Type your password to come back in." },
   middle: { title: "Your session has been logged out", hint: "Enter your password to log in again and carry on." },
   high: { title: "Your session has been logged out", hint: "Enter your password to sign in again and continue where you left off." },
 };
+
+// "..." after the verifying text: three dots that keep blinking one after another while the password is checked.
+function BlinkingDots() {
+  return (
+    <span aria-hidden="true" className="inline-flex">
+      <span className="animate-[dots-blink_1.2s_infinite]">.</span>
+      <span className="animate-[dots-blink_1.2s_infinite] [animation-delay:200ms]">.</span>
+      <span className="animate-[dots-blink_1.2s_infinite] [animation-delay:400ms]">.</span>
+    </span>
+  );
+}
 
 function Hourglass() {
   return (
@@ -77,8 +93,11 @@ function Hourglass() {
  * The one global "session expired" dialog (screenshot: centered card, dark blurred backdrop, hourglass, password,
  * Log in, "Logged in as ...", "Log in as a different user"). It opens when anything calls markSessionExpired()
  * (utils/sessionState.js) and cannot be dismissed - the session is gone. Sign-in reuses the existing
- * authentication: "Log in" goes through the Java login page with the saved e-mail + this password (the same hand-off
- * logoutEverywhere() uses), "Log in as a different user" is the existing expireSession() (sign out + login page).
+ * authentication: "Log in" checks the password with the existing Java login API (app/api/session/verify-password) while
+ * the dialog shows "Verifying your credentials...". A wrong password brings the form back with the error under the field;
+ * a right one opens the sign-in link that login answers with (this app's /api/sso), back to the same page. If the check
+ * cannot be made (network, backend down), the form comes back with a "try again" message under the field.
+ * "Log in as a different user" is the existing expireSession() (sign out + login page).
  */
 export function SessionExpiredDialog({ themed = false }) {
   const open = useSyncExternalStore(subscribeSessionExpired, isSessionExpired, () => false);
@@ -90,22 +109,54 @@ export function SessionExpiredDialog({ themed = false }) {
   const [password, setPassword] = useState("");
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const email = session?.email || "";
   const schoolUUID = context?.schoolUUID || session?.schoolUUID;
 
   if (!open || (isK5 && !themed)) return null;
   const look = LOOKS[band];
+  // While the password is checked the same dialog stays, with 'Verifying your credentials...' in place of the title, field
+  // and button, so the password cannot be sent twice.
+  const verifying = busy && Boolean(email);
 
-  function login(event) {
+  async function login(event) {
     event.preventDefault();
     if (busy || !password) return;
-    setBusy(true);
     if (!email) {
+      setBusy(true);
       expireSession(schoolUUID);
       return;
     }
-    // autologin=Y: the Java login page signs in with the password just typed instead of waiting for a click on Log in.
-    window.location.assign(withLoginPayload(loginPageUrl(schoolUUID), email, password) + "&autologin=Y");
+    setBusy(true);
+    setError("");
+    let answer = null;
+    try {
+      const response = await fetch("/api/session/verify-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, schoolUUID, schoolNumericId: context?.schoolNumericId ?? session?.schoolNumericId }),
+      });
+      answer = await response.json();
+    } catch {
+      answer = null;
+    }
+    if (answer?.ok && answer.ssoUrl) {
+      // Signed in: this app's sign-in link, back to the page the student was on.
+      const url = new URL(answer.ssoUrl, window.location.origin);
+      const here = window.location.pathname + window.location.search;
+      if (here.startsWith(`/${schoolUUID}/`)) url.searchParams.set("next", here);
+      window.location.assign(url.toString());
+      return;
+    }
+    if (answer?.wrongPassword || (answer && !answer.ok && answer.message)) {
+      setBusy(false);
+      setPassword("");
+      setError(answer.wrongPassword ? WRONG_PASSWORD_MESSAGE : answer.message);
+      return;
+    }
+    // The check could not be made (or no sign-in link came back): the form again, with the password kept for a retry.
+    setBusy(false);
+    setError(UNAVAILABLE_MESSAGE);
   }
 
   return (
@@ -124,36 +175,59 @@ export function SessionExpiredDialog({ themed = false }) {
         ) : (
           <Hourglass />
         )}
-        <h2 id="session-expired-title" className={`m-0 ${look.title}`}>{copy?.title ?? SESSION_EXPIRED_MESSAGE}</h2>
-        {copy && <p className="m-0 text-base font-medium opacity-80">{copy.hint}</p>}
-        <label className={`relative flex h-[54px] w-full items-center ${look.field}`}>
-          <Lock className="ml-4 h-4 w-4 flex-none opacity-70" aria-hidden="true" />
-          <input
-            type={visible ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password *"
-            aria-label="Password"
-            autoComplete="current-password"
-            autoFocus
-            className="h-full min-w-0 flex-1 border-none bg-transparent px-3 text-base outline-none placeholder:opacity-60"
-          />
-          <button type="button" onClick={() => setVisible((v) => !v)} aria-label={visible ? "Hide password" : "Show password"} className="mr-3 flex-none cursor-pointer border-none bg-transparent p-1 text-inherit">
-            {visible ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
-          </button>
-        </label>
-        <button type="submit" disabled={busy || !password} className={`min-w-[110px] cursor-pointer disabled:cursor-default disabled:opacity-60 ${band === "elementary" ? "" : "border-none"} ${look.button}`}>
-          {busy ? "Please wait…" : "Log in"}
-        </button>
-        <div className="text-base leading-snug">
-          {email && <div>Logged in as {email}</div>}
-          <div>
-            Not You?{" "}
-            <button type="button" onClick={() => expireSession(schoolUUID)} className={`cursor-pointer border-none bg-transparent p-0 text-base font-semibold hover:underline ${look.link}`}>
-              Log in as a different user
+        {verifying ? (
+          <>
+            <div role="status" aria-live="polite" className="flex flex-col items-center gap-2 py-2">
+              <p className="m-0 text-lg font-semibold">
+                {VERIFYING_MESSAGE}
+                <BlinkingDots />
+              </p>
+              <p className="m-0 text-base font-medium opacity-80">{VERIFYING_DETAIL}</p>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 id="session-expired-title" className={`m-0 ${look.title}`}>{copy?.title ?? SESSION_EXPIRED_MESSAGE}</h2>
+            {copy && <p className="m-0 text-base font-medium opacity-80">{copy.hint}</p>}
+            <label className={`relative flex h-[54px] w-full items-center ${look.field}`}>
+              <Lock className="ml-4 h-4 w-4 flex-none opacity-70" aria-hidden="true" />
+              <input
+                type={visible ? "text" : "password"}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error) setError("");
+                }}
+                placeholder="Password *"
+                aria-label="Password"
+                autoComplete="current-password"
+                autoFocus
+                className="h-full min-w-0 flex-1 border-none bg-transparent px-3 text-base outline-none placeholder:opacity-60"
+              />
+              <button type="button" onClick={() => setVisible((v) => !v)} aria-label={visible ? "Hide password" : "Show password"} className="mr-3 flex-none cursor-pointer border-none bg-transparent p-1 text-inherit">
+                {visible ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
+              </button>
+            </label>
+            {/* Just under the field: why the password was refused (a wrong password, or the account's own message). */}
+            {error && (
+              <p role="alert" className="-mt-2 m-0 w-full text-left text-base font-bold text-red-600">
+                {error}
+              </p>
+            )}
+            <button type="submit" disabled={busy || !password} className={`min-w-[110px] cursor-pointer disabled:cursor-default disabled:opacity-60 ${band === "elementary" ? "" : "border-none"} ${look.button}`}>
+              {busy ? "Please wait…" : "Log in"}
             </button>
-          </div>
-        </div>
+            <div className="text-base leading-snug">
+              {email && <div>Logged in as {email}</div>}
+              <div>
+                Not You?{" "}
+                <button type="button" onClick={() => expireSession(schoolUUID)} className={`cursor-pointer border-none bg-transparent p-0 text-base font-semibold hover:underline ${look.link}`}>
+                  Log in as a different user
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </form>
     </div>
   );
