@@ -36,29 +36,38 @@ export function K5PassedOptions({ passed, isMiddle, isHigh, studentName, grade, 
   const balanced = isMiddle && !isHigh;
   const nextGradeOption = options.find(option => option.enrollmentType === "REGISTRATION_NEXT_GRADE");
   const repeatGradeOption = options.find(option => option.enrollmentType === "REGISTRATION_REPEAT_GRADE");
-  const comeback = mature && Boolean(repeatGradeOption);
+  const individualCourseOption = options.find(option => option.enrollmentType === "REGISTRATION_IMPORVE_GRADES");
+  // Design: "Every comeback starts with one step" when the student has a single path; the neutral "Let's plan your next step" when choosing between Repeat and an Individual Course.
+  const completedGrade12 = passed && /^grade\s*12$/i.test(currentGrade?.trim() || "");
+  const promoted = passed && Boolean(grade);
+  const celebratoryHero = promoted || completedGrade12;
+  const comeback = mature && options.length > 0 && !(repeatGradeOption && individualCourseOption);
   const heroGrade = grade || (passed ? currentGrade : undefined);
   const currentProgram = nextGradeOption?.learningProgramLabel
     || options.find(option => option.enrollmentType === "REGISTRATION_REPEAT_GRADE")?.learningProgramLabel;
   return <div className={styles.layout}>
     <div className={styles.main}>
-      <section className={`${styles.hero} ${passed ? "" : styles.failHero}`} data-result={passed ? "pass" : "fail"}>
+      <section className={`${styles.hero} ${celebratoryHero ? "" : styles.failHero}`} data-result={celebratoryHero ? "pass" : "fail"}>
         {!mature && passed && <div className={styles.confetti} aria-hidden="true"><Star /><Star /><i /><i /><i /><i /></div>}
         {(isHigh || isMiddle) && <div className={styles.heroDecor} aria-hidden="true"><i /><i /><i />{balanced && <><i /><i /><i /><i /></>}</div>}
         <div className={styles.heroCopy}>
-          {mature ? passed ? <>
+          {completedGrade12 ? <>
+            <p className={styles.matureBadge}>Welcome back, {studentName}!</p>
+            <h1>Congratulations on completing Grade 12</h1>
+            <p className={styles.completionDescription}>Choose how you would like to continue your learning journey.</p>
+          </> : mature ? promoted ? <>
             <p className={styles.matureBadge}>Congratulations, Dear {studentName}!</p>
             <h1>{grade ? `You've been promoted to ${grade}` : heroGrade ? `Congratulations on completing ${heroGrade}` : "Congratulations!"}</h1>
             {grade && currentGrade && <div className={styles.gradePath} aria-label={`${currentGrade} to ${grade}`}>
               <span>{isHigh && <Check size={15} aria-hidden="true" />}{currentGrade}</span><span className={styles.pathLine} aria-hidden="true" /><span className={styles.nextGradePill}>{grade}</span>
               <span className={styles.pathMeta}><span>Academic year</span><strong>{academicYear}</strong></span>
-              {currentProgram && <span className={styles.pathProgram}>{isHigh && <span>Program</span>}{currentProgram}</span>}
+              {currentProgram && <span className={styles.pathProgram}><span>Program</span>{currentProgram}</span>}
             </div>}
           </> : <>
-            <p className={styles.matureBadge}>{comeback && repeatGradeOption ? `Dear ${studentName}, we believe in you!` : `Welcome back, ${studentName}!`}</p>
-            <h1>{comeback && repeatGradeOption ? "Every comeback starts with one step" : "Let's plan your next step"}</h1>
-            <p className={styles.failDescription}>{comeback && repeatGradeOption ? `A setback is not the end of the story. Repeat ${currentGrade || "your grade"} and finish stronger this time.` : "Choose how you would like to continue your learning journey."}</p>
-            {currentGrade && <div className={styles.gradePath}><span>{isHigh && <RefreshCw size={15} aria-hidden="true" />}{comeback && repeatGradeOption ? `Repeat ${currentGrade}` : `${currentGrade} · fresh start`}</span></div>}
+            <p className={styles.matureBadge}>{comeback ? `Dear ${studentName}, we believe in you!` : `Welcome back, ${studentName}!`}</p>
+            <h1>{comeback ? "Every comeback starts with one step" : "Let's plan your next step"}</h1>
+            <p className={styles.failDescription}>{comeback ? `A setback is not the end of the story. Repeat ${currentGrade || "your grade"} and finish stronger this time.` : "Choose how you would like to continue your learning journey."}</p>
+            {currentGrade && <div className={styles.gradePath}><span>{isHigh && <RefreshCw size={15} aria-hidden="true" />}{comeback ? `Repeat ${currentGrade}` : `${currentGrade} · fresh start`}</span></div>}
           </> : passed ? <>
             <p className={styles.congratulations}><Crown size={26} aria-hidden="true" />Congratulations, Dear {studentName}!</p>
             <h1>You&apos;ve been promoted{grade ? " to" : "!"}{grade && <><br /><span className={styles.ribbon}>{grade}</span></>}</h1>
@@ -73,7 +82,7 @@ export function K5PassedOptions({ passed, isMiddle, isHigh, studentName, grade, 
       <section className={`${styles.card} ${isHigh && !(passed && hasDiscount) ? styles.standalone : ""}`} aria-label="Re-enrollment options">
         {passed && hasDiscount && <Offer discount={discount} />}
         <div className={`${styles.options} ${passed && hasDiscount ? styles.withOffer : ""}`}>
-          <h2 className={mature ? styles.matureHeading : undefined}>{mature && !passed ? "Choose how you want to continue" : "Continue with"}{!mature && <Sparkles aria-hidden="true" />}</h2>
+          <h2 className={mature ? styles.matureHeading : undefined}>{mature && !promoted ? "Choose how you want to continue" : "Continue with"}{!mature && <Sparkles aria-hidden="true" />}</h2>
           {options.map(option => {
             const nextGrade = option.enrollmentType === "REGISTRATION_NEXT_GRADE";
             const optionGrade = option.grade?.name || grade;
@@ -86,7 +95,7 @@ export function K5PassedOptions({ passed, isMiddle, isHigh, studentName, grade, 
               <span className={styles.tile}>{individualCourse ? (isHigh ? <GraduationCap size={22} aria-hidden="true" /> : <BookOpen size={28} aria-hidden="true" />) : <RefreshCw size={28} aria-hidden="true" />}</span>
               <div className={styles.optionCopy}>
                 <div className={styles.optionTitle}><h3>{title}</h3>{hasDiscount && nextGrade && <span className={styles.saving}>Saves {discount.currencyLabel} {discount.amount}</span>}</div>
-                <p>{nextGrade ? `Continue with your ${programLabel ? `${programLabel} program` : "learning program"}${optionGrade ? ` in ${optionGrade}` : ""}` : individualCourse ? "Retake only the subject you did not pass." : repeatGrade && !passed ? `Repeat ${optionGrade || "this grade"} and finish stronger this time.` : passed ? "Keep learning and build your skills." : "Choose this option to continue your learning journey."}</p>
+                <p>{nextGrade ? `Continue with your ${programLabel ? `${programLabel} program` : "learning program"}${optionGrade ? ` in ${optionGrade}` : ""}` : individualCourse ? "Retake only the subject you did not pass." : repeatGrade && !promoted ? `Repeat ${optionGrade || "this grade"} and finish stronger this time.` : promoted ? "Keep learning and build your skills." : "Choose this option to continue your learning journey."}</p>
               </div>
               <button type="button" className={styles.next} disabled={pending} onClick={() => choose(option)} aria-label={`Next: ${title}`}>
                 {pending && pendingType === option.enrollmentType ? "Please wait…" : <>Next <ArrowRight size={20} aria-hidden="true" /></>}
@@ -101,7 +110,7 @@ export function K5PassedOptions({ passed, isMiddle, isHigh, studentName, grade, 
       <h2 id="k5-re-help"><Headphones size={30} aria-hidden="true" />Need Help?</h2>
       <a className={styles.next} href={`${CHAT_BASE_URL}/onboarding-support?uuid=${encodeURIComponent(uniqueId || "")}`} target="_blank" rel="noopener noreferrer"><MessageCircle aria-hidden="true" />Talk to us</a>
       <a className={styles.contact} href={`tel:${SUPPORT_PHONE.replace(/[^+\d]/g, "")}`}><span><Phone aria-hidden="true" /></span><div><h3>Phone Support</h3><p>{SUPPORT_PHONE}</p></div></a>
-      <a className={styles.contact} href={`mailto:${SUPPORT_EMAIL}`}><span><Mail aria-hidden="true" /></span><div><h3>Email Support</h3><p>{isHigh ? <>{SUPPORT_EMAIL.split("@")[0]}@<wbr />{SUPPORT_EMAIL.split("@")[1]}</> : SUPPORT_EMAIL}</p></div></a>
+      <a className={styles.contact} href={`mailto:${SUPPORT_EMAIL}`}><span><Mail aria-hidden="true" /></span><div><h3>Email Support</h3><p>{SUPPORT_EMAIL.split("@")[0]}@<wbr />{SUPPORT_EMAIL.split("@")[1]}</p></div></a>
     </aside>
   </div>;
 }

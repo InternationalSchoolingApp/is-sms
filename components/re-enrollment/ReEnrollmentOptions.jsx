@@ -110,7 +110,7 @@ function HelpCard({ uniqueId }) {
         href={chatUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="mb-3 flex items-center gap-3 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white transition-transform hover:scale-[1.02]"
+        className="mb-3 flex items-center gap-3 rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white transition-transform hover:scale-[1.02]"
       >
         <MessageCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
         Live Chat with School Administration
@@ -224,8 +224,11 @@ export function ReEnrollmentOptions() {
   }
 
   // "Promoted to" names the Next Grade's grade (a grade 12 pass has no Next Grade, only Take an Individual Course).
-  const grade = options.find((option) => option.enrollmentType === "REGISTRATION_NEXT_GRADE")?.grade?.name
-    || options.find((option) => option.enrollmentType === "REGISTRATION_REPEAT_GRADE")?.grade?.name;
+  const nextGradeName = options.find((option) => option.enrollmentType === "REGISTRATION_NEXT_GRADE")?.grade?.name;
+  const grade = nextGradeName || options.find((option) => option.enrollmentType === "REGISTRATION_REPEAT_GRADE")?.grade?.name;
+  // Passed a grade with no Next Grade (grade 12): the options are Repeat / Take an Individual Course, same as after a fail,
+  // so the card says the grade is completed instead of "promoted" (pass) or "Don't give up" (fail).
+  const completedGrade = passed && !nextGradeName ? eligibility.currentGrade?.name || grade : null;
   const discount = eligibility.progressionDiscount;
   const hasDiscount = passed && discount?.amount > 0;
   const discountText = hasDiscount ? `${discount.currencyLabel ? `${discount.currencyLabel} ` : ""}${discount.amount}` : "";
@@ -236,7 +239,8 @@ export function ReEnrollmentOptions() {
       isMiddle={isMiddle}
       isHigh={isHigh}
       studentName={eligibility.studentName}
-      grade={grade}
+      // A pass names the grade moved up to; a grade 12 pass has none and its card says the current grade is completed.
+      grade={passed ? nextGradeName : grade}
       currentGrade={eligibility.currentGrade?.name}
       academicYear={eligibility.academicYear || "2027–28"}
       discount={discount}
@@ -275,7 +279,13 @@ export function ReEnrollmentOptions() {
   return (
     <div className="mx-auto grid w-full max-w-6xl gap-4 lg:grid-cols-[2fr_1fr] lg:items-start">
       <div className="flex flex-col gap-4">
-        {passed ? (
+        {completedGrade ? (
+          <div className="rounded-2xl bg-gradient-to-r from-[#0a7cf0] to-[#0057b8] px-4 py-6 text-center text-white shadow-lg">
+            <p className="inline-block rounded-full bg-white/20 px-6 py-2 text-md font-bold sm:text-md">Congratulations, Dear {eligibility.studentName}!</p>
+            <h2 className="mt-4 text-3xl font-extrabold leading-tight sm:text-3xl">You&apos;ve completed {completedGrade}</h2>
+            <p className="mt-2 text-base font-semibold text-white/90">Want to strengthen your record? Retake the grade or choose individual courses.</p>
+          </div>
+        ) : passed ? (
           <div className="rounded-2xl bg-gradient-to-r from-[#0a7cf0] to-[#0057b8] px-4 py-6 text-center text-white shadow-lg">
             <p className="inline-block rounded-full bg-white/20 px-6 py-2 text-md font-bold sm:text-md">Congratulations, Dear {eligibility.studentName}!</p>
             <h2 className="mt-4 text-3xl font-extrabold leading-tight sm:text-3xl">
@@ -291,7 +301,7 @@ export function ReEnrollmentOptions() {
 
         {hasDiscount && <DiscountBanner discount={discount} />}
 
-        {passed && <StepList grade={grade} hasDiscount={hasDiscount} discountText={discountText} />}
+        {passed && !completedGrade && <StepList grade={grade} hasDiscount={hasDiscount} discountText={discountText} />}
 
         <div className="py-2">{optionButtons}</div>
       </div>

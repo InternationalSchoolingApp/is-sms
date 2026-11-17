@@ -11,6 +11,7 @@ import {
   activityTitle,
   classTitle,
   countStatuses,
+  cleanCourseLabel,
   dayAt,
   dayKey,
   gameAccess,
@@ -106,7 +107,7 @@ function ActivityCard({ event, clue, onOpen }) {
     <button
       type="button"
       onClick={() => onOpen(event)}
-      className={`flex w-full cursor-pointer flex-wrap items-center gap-4 rounded-[24px] border-[3px] border-solid px-[18px] py-3.5 text-left ${clue === "activity" ? CLUE_RING : ""}`}
+      className={`flex w-full cursor-pointer flex-wrap items-center gap-4 rounded-[24px] border-[3px] border-solid px-[18px] py-3.5 text-left ${event.k5Status === "live" ? "k5-live-pill k5-live-pill-act" : ""} ${clue === "activity" ? CLUE_RING : ""}`}
       style={{ borderColor: C.activity, background: "var(--k5-vt)" }}
     >
       <span className="flex h-[66px] w-[66px] flex-none items-center justify-center rounded-[20px] bg-k5-card">
@@ -153,7 +154,7 @@ function Assignments({ items, clue, onOpen }) {
         >
           <span className="flex min-w-0 flex-1 flex-col">
             <span className="text-base font-black text-k5-ink">{a.title || a.eventTitle || "Assignment"}</span>
-            {a.subjectName && <span className="text-sm font-bold text-k5-mut">{a.subjectName}</span>}
+            {a.subjectName && <span className="text-sm font-bold text-k5-mut">{cleanCourseLabel(a.subjectName)}</span>}
           </span>
           <span className={`flex-none rounded-full px-3 py-1 text-[13px] font-black ${ASSIGNMENT_PILL[a.k5Assignment.status]}`}>{a.k5Assignment.label}</span>
         </button>
@@ -225,8 +226,11 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
   const day = dayAt(days, dateKey);
   const date = keyToDate(dateKey);
   const isToday = dateKey === todayKey;
+  // Live first, then everything already finished, then what is still to come; by start time inside each group.
+  const GROUP = { live: 0, done: 1 };
+  const groupOf = (e) => GROUP[e.k5Status] ?? 2;
   const items = [...day.classes.map((e) => ({ kind: "class", e })), ...day.activities.map((e) => ({ kind: "activity", e }))].sort(
-    (a, b) => (a.e.startZoned?.getTime() || 0) - (b.e.startZoned?.getTime() || 0),
+    (a, b) => groupOf(a.e) - groupOf(b.e) || (a.e.startZoned?.getTime() || 0) - (b.e.startZoned?.getTime() || 0),
   );
   const nClasses = day.classes.length;
   // Games: a live or still-to-come class today (STUDENT_DOUBT_SESSION / BATCH) locks them on every date, a day that is
@@ -234,8 +238,8 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
   const dayOver = dateKey < todayKey;
   const access = gameAccess(days, dateKey, todayKey);
   const subtitle = nClasses ? `${nClasses} class${nClasses === 1 ? "" : "es"}${isToday ? " today" : ""}` : "No classes";
-  // The dotted "now" line goes right before the first item that has not finished yet.
-  const nowIndex = isToday ? items.findIndex((it) => it.e.k5Status !== "done") : -1;
+  // The dotted "now" line separates what is over (and live) from what is still to come: right before the first upcoming item.
+  const nowIndex = isToday ? items.findIndex((it) => groupOf(it.e) === 2) : -1;
   return (
     <div className="flex flex-col gap-4">
       <PlanHeader
@@ -259,7 +263,8 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
             <CalendarDays className="h-6 w-6" strokeWidth={2.4} aria-hidden="true" />
           </button>
         )}
-        {isToday && <StatusPills counts={countStatuses(day.classes)} />}
+        {/* The pills count what the timeline shows: classes and school activities (a live activity is "1 live" too). */}
+        {isToday && <StatusPills counts={countStatuses([...day.classes, ...day.activities])} />}
       </PlanHeader>
 
       {/* A day with no classes shows its holiday as the card below; the red chip is for a holiday that falls on a day with classes. */}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { openLmsLink } from "@/utils/lmsCourseLink";
+import { normalizeWebsite } from "@/constant/SchoolConstants";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Menu, LogOut, ChevronDown, User, KeyRound, UserPlus, Loader2 } from "lucide-react";
@@ -22,7 +23,7 @@ import { CartHeaderButton } from "@/components/student/cart/CartHeaderButton";
  * reference and wired as "coming soon" toasts until their target pages/SSO are
  * built (profile/change-password = Phase C; LMS = LMS SSO). Log out is live.
  */
-export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onHamburger, lmsProviderURL, isPayLmsPaymentPending }) {
+export function DashboardTopHeader({ schoolName, logoUrl, schoolWebsite, session, userName, onHamburger, lmsProviderURL, isPayLmsPaymentPending }) {
   const router = useRouter();
   const siblings = useAddSiblings();
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -51,14 +52,25 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
         >
           <Menu className="h-5 w-5" />
         </button>
-        {logoUrl ? (
-          <Image src={logoUrl} alt={schoolName || ""} width={170} height={34} className="h-8 w-auto max-w-[140px] sm:max-w-[200px] object-contain" unoptimized />
-        ) : (
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-xs font-bold text-white">IS</div>
-            <span className="hidden text-sm font-bold text-black sm:inline">{schoolName}</span>
-          </div>
-        )}
+        {/* Legacy header: the logo opens the school's website in a new tab (schoolSettingsLinks.schoolWebsite). */}
+        {(() => {
+          const logo = logoUrl ? (
+            <Image src={logoUrl} alt={schoolName || ""} width={170} height={34} className="h-8 w-auto max-w-[140px] sm:max-w-[200px] object-contain" unoptimized />
+          ) : (
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-xs font-bold text-white">IS</div>
+              <span className="hidden text-sm font-bold text-black sm:inline">{schoolName}</span>
+            </div>
+          );
+          const site = normalizeWebsite(schoolWebsite);
+          return site ? (
+            <a href={site} target="_blank" rel="noopener noreferrer" aria-label={`${schoolName || "School"} website`} title={site} className="flex flex-none items-center no-underline">
+              {logo}
+            </a>
+          ) : (
+            logo
+          );
+        })()}
       </div>
 
       {/* Center: LMS switch */}

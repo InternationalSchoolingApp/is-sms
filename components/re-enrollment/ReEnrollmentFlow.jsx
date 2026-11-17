@@ -39,9 +39,9 @@ export function ReEnrollmentStepTitle({ children, subtitle }) {
 
 export function ReEnrollmentStepCard({ header, headerRight, children }) {
   return <section className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
-    {header && <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
+    {header && <header className="flex flex-wrap items-center justify-between gap-2 border-primary bg-primary px-4 py-3 text-white">
       <h3 className="text-base font-semibold">{header}</h3>
-      {headerRight && <span className="rounded-md bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">{headerRight}</span>}
+      {headerRight && <span className="rounded-md bg-white px-3 py-1 text-sm font-semibold text-primary">{headerRight}</span>}
     </header>}
     <div className="px-4 py-3 text-sm">{children}</div>
   </section>;

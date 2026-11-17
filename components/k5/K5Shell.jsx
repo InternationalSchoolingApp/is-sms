@@ -10,6 +10,7 @@ import { K5Header } from "@/components/k5/K5Header";
 import { K5NavRail } from "@/components/k5/K5NavRail";
 import { K5QuoteOfMoment } from "@/components/k5/K5QuoteOfMoment";
 import { AppearanceDialog } from "@/components/k5/look/AppearanceDialog";
+import { SessionExpiredDialog } from "@/components/providers/SessionExpiredDialog";
 import { PicoGuide } from "@/components/k5/pico/PicoGuide";
 import { setPicoLive } from "@/components/k5/pico/picoEvents";
 import { SelectToSpeak } from "@/components/k5/pico/SelectToSpeak";
@@ -38,7 +39,7 @@ export function K5Shell({ children }) {
 }
 
 function K5Frame({ children }) {
-  const { context, menu, menuLoading, logoUrl, session, isPreK, isMiddle, isHigh, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
+  const { context, menu, menuLoading, logoUrl, schoolWebsite, session, isPreK, isMiddle, isHigh, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
   
   const pathname = usePathname();
   const dummy = useDummyStudent();
@@ -101,6 +102,7 @@ function K5Frame({ children }) {
         schoolUUID={context.schoolUUID}
         schoolName={context.schoolName}
         logoUrl={logoUrl}
+        schoolWebsite={schoolWebsite}
         session={session}
         userName={context.userName}
         menu={menu}
@@ -111,8 +113,8 @@ function K5Frame({ children }) {
         isPayLmsPaymentPending={isPayLmsPaymentPending}
       />
 
-      <div className="k5-layout relative mx-auto box-border flex w-full max-w-[100%] flex-1 items-start gap-5 px-5 pb-[20px] pt-5 max-[760px]:flex-wrap">
-        <div aria-hidden="true" className="w-24 flex-none max-[760px]:hidden" />
+      <div className="k5-layout relative mx-auto box-border flex w-full max-w-[100%] flex-1 items-start gap-3 px-5 pb-[20px] pt-5 max-[760px]:flex-wrap">
+        <div aria-hidden="true" className="w-[76px] flex-none max-[760px]:hidden" />
         <K5NavRail menu={menu} loading={menuLoading} open={navOpen} onOpen={() => setNavOpen(true)} onClose={closeNav} isPreK={isPreK} userId={context.userId} />
 
         <main className="flex min-w-0 flex-[1_1_auto] flex-col gap-4 max-[760px]:basis-full">
@@ -146,6 +148,8 @@ function K5Frame({ children }) {
       <PicoGuide userId={context.userId} firstName={String(context.userName || "").split(" ")[0]} schoolName={context.schoolName} home={isHome} welcomeEligible={welcomeEligible} />
       <SelectToSpeak />
       <ReadingRuler />
+      {/* The "session logged out" dialog, inside the student's own theme (colour, Day / Night, grade look). */}
+      <SessionExpiredDialog themed />
       <AppearanceDialog open={lookOpen} onClose={() => setLookOpen(false)} firstName={String(context.userName || "").split(" ")[0]} />
     </div>
   );

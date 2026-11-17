@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { openLmsLink } from "@/utils/lmsCourseLink";
 import Image from "next/image";
 import Link from "next/link";
@@ -12,7 +12,9 @@ import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useCartCount } from "@/hooks/useStudentCart";
 import { useNeedHelp } from "@/hooks/useNeedHelp";
 import { studentNavHref } from "@/utils/dashboardNav";
+import { normalizeWebsite } from "@/constant/SchoolConstants";
 import { picoSay } from "@/components/k5/pico/picoEvents";
+import { TOUR_GET_APP_KEY, hasPicoModuleCookie } from "@/utils/picoCookies";
 import { K5LogoutDialog } from "@/components/k5/K5LogoutDialog";
 import { logoutEverywhere } from "@/utils/logout";
 import { InboxBadge, isInboxMenuItem } from "@/components/student/inbox/InboxBadge";
@@ -38,7 +40,7 @@ function HeaderAvatar({ photo, initial, className, textClass }) {
  * "Make it yours!". Same actions as DashboardTopHeader — LMS, My Profile and Change Password
  * are still "coming soon"; Log out is live. "Get the App" opens the store links (constant/appLinks.js).
  */
-export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, userName, menu, navOpen, onMenu, onAppearance, lmsProviderURL, isPayLmsPaymentPending }) {
+export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsite, session, userName, menu, navOpen, onMenu, onAppearance, lmsProviderURL, isPayLmsPaymentPending }) {
   // Same profile query as My Profile (shared cache): saving a new photo there refreshes this avatar too.
   const { model: profileModel } = useStudentProfile({ schoolUUID, userId });
   const photo = profileModel?.header?.photo || "";
@@ -55,10 +57,28 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, use
   const [moreOpen, setMoreOpen] = useState(false);
   const [appOpen, setAppOpen] = useState(false);
   const [lms, setLms] = useState(false);
+  // The LMS switch: it flips on first, a moment later the LMS opens in a new tab, then the switch goes back off.
+  const lmsTimers = useRef([]);
+  useEffect(() => () => lmsTimers.current.forEach(clearTimeout), []);
+  const openLms = () => {
+    if (isPayLmsPaymentPending) {
+      toast(isPayLmsPaymentPending, { icon: "⚠️" });
+      return;
+    }
+    if (!lmsProviderURL || lms) return;
+    setLms(true);
+    lmsTimers.current.push(
+      setTimeout(() => {
+        openLmsLink(lmsProviderURL);
+        lmsTimers.current.push(setTimeout(() => setLms(false), 700));
+      }, 350),
+    );
+  };
   // Mockup openApp(): the dialog opens and the buddy says it too.
   const openApp = () => {
     setAppOpen(true);
-    picoSay("Get the app and take me with you on your phone!", null, { above: true });
+    // Not when the tour has already told the student about the app ("Download our app for a better experience!").
+    if (!hasPicoModuleCookie(userId, TOUR_GET_APP_KEY)) picoSay("Get the app and take me with you on your phone!", null, { above: true });
   };
   const router = useRouter();
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -87,14 +107,25 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, use
           <Menu className="h-6 w-6" strokeWidth={2.8} aria-hidden="true" />
         </button>
 
-        {logoUrl ? (
-          <Image src={logoUrl} alt={schoolName || ""} width={220} height={44} className="h-11 w-auto max-w-[220px] object-contain max-[760px]:h-9 max-[760px]:max-w-[170px]" unoptimized />
-        ) : (
-          <span className="flex flex-col">
-            <span className="font-k5-display text-[22px] font-semibold leading-tight text-k5-brand">{schoolName}</span>
-            <span className="text-xs font-extrabold text-k5-gx max-[760px]:hidden">Your Location. Your School. Your Time.</span>
-          </span>
-        )}
+        {/* Legacy header: the logo opens the school's website in a new tab (schoolSettingsLinks.schoolWebsite). */}
+        {(() => {
+          const logo = logoUrl ? (
+            <Image src={logoUrl} alt={schoolName || ""} width={220} height={44} className="h-11 w-auto max-w-[220px] object-contain max-[760px]:h-9 max-[760px]:max-w-[170px]" unoptimized />
+          ) : (
+            <span className="flex flex-col">
+              <span className="font-k5-display text-[22px] font-semibold leading-tight text-k5-brand">{schoolName}</span>
+              <span className="text-xs font-extrabold text-k5-gx max-[760px]:hidden">Your Location. Your School. Your Time.</span>
+            </span>
+          );
+          const site = normalizeWebsite(schoolWebsite);
+          return site ? (
+            <a href={site} target="_blank" rel="noopener noreferrer" aria-label={`${schoolName || "School"} website`} title={site} className="flex flex-none items-center no-underline">
+              {logo}
+            </a>
+          ) : (
+            logo
+          );
+        })()}
 
         <div className="flex-[1_1_20px]" />
 
@@ -104,7 +135,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, use
             title="Communication"
             aria-label="Communication"
             data-pin="inbox"
-            className="relative flex h-[52px] w-[52px] items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card p-0 text-k5-ac no-underline shadow-k5-btn max-[760px]:hidden"
+            className="k5h-hdbtn relative flex h-[52px] w-[52px] items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card p-0 text-k5-ac no-underline shadow-k5-btn max-[760px]:hidden"
           >
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <rect x="3" y="5" width="18" height="14" rx="3" />
@@ -121,7 +152,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, use
           aria-label="Appearance"
           title="Appearance"
           data-pin="look"
-          className="flex h-[52px] w-[52px] cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card p-0 shadow-k5-btn max-[760px]:hidden"
+          className="k5h-hdbtn flex h-[52px] w-[52px] cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card p-0 shadow-k5-btn max-[760px]:hidden"
         >
           <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8z" fill="#FFC531" stroke="#A16207" strokeWidth="1.6" />
@@ -162,7 +193,8 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, use
           type="button"
           onClick={openApp}
           aria-haspopup="dialog"
-          className="flex min-h-12 cursor-pointer items-center gap-2 rounded-full border-[3px] border-k5-ac bg-k5-card py-0 pl-3 pr-[18px] font-k5-display text-[17px] font-semibold text-k5-acx shadow-[0_4px_0_var(--k5-acl)] max-[760px]:hidden"
+          data-pin="getApp"
+          className="k5h-hdbtn flex min-h-12 cursor-pointer items-center gap-2 rounded-full border-[3px] border-k5-ac bg-k5-card py-0 pl-3 pr-[18px] font-k5-display text-[17px] font-semibold text-k5-acx shadow-[0_4px_0_var(--k5-acl)] max-[760px]:hidden"
         >
           <Smartphone className="h-[22px] w-[22px]" strokeWidth={2.4} aria-hidden="true" />
           Get the App
@@ -173,14 +205,8 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, use
           role="switch"
           aria-checked={lms}
           data-pin="lms"
-          onClick={() => {
-            if (isPayLmsPaymentPending) {
-              toast(isPayLmsPaymentPending, { icon: "⚠️" });
-            } else if (lmsProviderURL) {
-              openLmsLink(lmsProviderURL);
-            }
-          }}
-          className="flex min-h-12 items-center gap-2.5 rounded-full border-[3px] border-k5-line bg-k5-card py-0 pl-2 pr-4 text-[15px] font-black text-k5-mut max-[760px]:hidden"
+          onClick={openLms}
+          className="k5h-hdbtn flex min-h-12 items-center gap-2.5 rounded-full border-[3px] border-k5-line bg-k5-card py-0 pl-2 pr-4 text-[15px] font-black text-k5-mut max-[760px]:hidden"
         >
           <span className={`relative block h-7 w-12 rounded-full transition-colors ${lms ? "bg-k5-ac" : "bg-k5-line"}`}>
             <span className={`absolute top-[3px] block h-[22px] w-[22px] rounded-full bg-white transition-transform ${lms ? "translate-x-[23px]" : "translate-x-[3px]"}`} />

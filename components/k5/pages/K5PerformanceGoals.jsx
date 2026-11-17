@@ -427,7 +427,7 @@ export function K5PerformanceGoals({ goals, avg, courses, week, today, initial, 
                   <div className="mb-2 flex flex-wrap justify-between gap-2 text-[15px] font-black">
                     <span>Score</span>
                     <span>
-                      {scored ? `${score.toFixed(2)}%` : "—"} <em className="font-extrabold not-italic text-k5-mut">· Goal: {goals.score}%</em>
+                      {scored ? `${score.toFixed(2)}%` : "—"} <em className="font-extrabold not-italic text-k5-mut">· Final Goal: {goals.score}%</em>
                     </span>
                   </div>
                   {scored && <Bar pct={score} col={tone.col} mark={goals.score} />}

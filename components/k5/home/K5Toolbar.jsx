@@ -15,8 +15,11 @@ const VIEWS = [
 ];
 
 function greeting(hour) {
+  // `hour` is the hour in the student's timezone (now comes from nowIn(timezone)).
+  if (hour < 5) return "Good Evening!";
   if (hour < 12) return "Good Morning!";
   if (hour < 17) return "Good Afternoon!";
+  if (hour < 21) return "Good Evening!";
   return "Good Evening!";
 }
 
@@ -47,15 +50,17 @@ export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPre
   const weather = useK5Weather(timezone);
   // Real weather decides day / night and the picture; until it arrives, the clock does.
   const night = weather ? !weather.isDay : now.getHours() < 6 || now.getHours() >= 18;
+  // The Good Evening greeting gets a soft night-lavender card instead of the light yellow one.
+  const goodNight = greeting(now.getHours()) === "Good Evening!";
 
   return (
     <div className={`${K5_CARD} flex flex-wrap items-center gap-3 px-4 pb-3 pt-3.5`}>
-      <div className="k5h-tbox flex items-center gap-2.5 rounded-[22px] bg-k5-yt px-2.5 py-1.5 max-[760px]:box-border max-[760px]:w-full max-[760px]:flex-nowrap max-[760px]:gap-2 max-[760px]:px-2">
+      <div className={`k5h-tbox flex items-center gap-2.5 rounded-[22px] ${goodNight ? "bg-[#e6e3fb]" : "bg-k5-yt"} px-2.5 py-1.5 max-[760px]:box-border max-[760px]:w-full max-[760px]:flex-nowrap max-[760px]:gap-2 max-[760px]:px-2`}>
         <K5ClockIcon kind={weather ? kindOf(weather.code) : "sun"} night={night} className="max-[760px]:!h-11 max-[760px]:!w-11" />
         <div className="flex flex-none flex-col items-start whitespace-nowrap text-start">
           <span className="font-k5-display text-[26px] font-bold leading-none text-k5-ink max-[760px]:text-[22px]">{format(now, "h:mm a")}</span>
           <span className="font-k5-display text-base font-semibold leading-[1.2] text-k5-ink">{greeting(now.getHours())}</span>
-          <span className="k5h-zone text-[13px] font-extrabold text-k5-yx">{zoneLabel(timezone)}</span>
+          <span className={`k5h-zone text-[13px] font-extrabold ${goodNight ? "text-[#4b3fa6]" : "text-k5-yx"}`}>{zoneLabel(timezone)}</span>
         </div>
         <K5WeatherTile weather={weather} />
       </div>

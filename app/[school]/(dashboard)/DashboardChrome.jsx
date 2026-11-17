@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { DashboardProvider, useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDashboardSessionExpiry } from "@/hooks/useDashboardSessionExpiry";
+import { useNavigationSessionGuard } from "@/hooks/useNavigationSessionGuard";
 import { useOnboardingGate } from "@/hooks/useOnboardingGate";
 import { OnboardingFrame } from "@/components/onboarding/OnboardingFrame";
 import { FullScreenLoader } from "@/components/common/Loader";
@@ -16,6 +17,8 @@ import { rememberDashboardPath } from "@/utils/lastDashboardPath";
 function SessionExpiryWatcher() {
   const { context } = useDashboardContext();
   useDashboardSessionExpiry(context?.schoolUUID);
+  // Logged out in another tab: this tab shows the dialog instead of failing on the next menu click.
+  useNavigationSessionGuard(context?.uniqueId);
   return null;
 }
 

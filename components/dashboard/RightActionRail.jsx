@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MessageCircle, Megaphone, Newspaper, NotebookText } from "lucide-react";
 import { getAnnouncementDetails, getChatUnseenCount } from "@/services/dashboardApi";
@@ -24,7 +25,18 @@ import { K5DiaryPanel } from "@/components/k5/panels/K5DiaryPanel";
  * variant="k5": the Grade K–5 look (Messages / News / Notices / Teacher), same data and panels.
  * middle (with variant="k5"): the Grade 6–8 "Balanced" rail — one blue tint / rim for all four buttons.
  */
-export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueId, userRole, email, schoolName, variant = "default", middle = false, high = false }) {
+// Legacy parity: the re-enrollment screen (studentGraduate == 'Y' -> renderMigrationDetailsOptionContent) never called
+// getAnnouncementAndNewsContent(), so none of the four rail buttons (Talk to Us, Announcement, News, Diary) existed there.
+// Gating in this wrapper (not inside the rail) also keeps the rail's queries and the diary bridge iframe from mounting.
+const RE_ENROLLMENT_PATH = /\/student\/re-enrollment(\/|$)/;
+
+export function RightActionRail(props) {
+  const pathname = usePathname();
+  if (RE_ENROLLMENT_PATH.test(pathname || "")) return null;
+  return <RightActionRailContent {...props} />;
+}
+
+function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueId, userRole, email, schoolName, variant = "default", middle = false, high = false }) {
   const queryClient = useQueryClient();
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const [newsOpen, setNewsOpen] = useState(false);
@@ -192,7 +204,7 @@ export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
 
       {variant === "k5" ? (
         // Mockup rail: a column of pastel buttons on the right; below 760px a bottom tab bar.
-        <div className="k5-rail fixed right-[calc(max(20px,(100vw-100%)/0)+0px)] top-[calc(var(--maintenance-banner-h,0px)+100px)] z-20 flex w-20 flex-col items-center gap-4 max-[760px]:inset-x-0 max-[760px]:bottom-0 max-[760px]:top-auto max-[760px]:z-40 max-[760px]:w-full max-[760px]:flex-row max-[760px]:items-start max-[760px]:justify-around max-[760px]:gap-0 max-[760px]:border-t-[3px] max-[760px]:border-k5-line max-[760px]:bg-k5-card max-[760px]:px-1 max-[760px]:pb-[max(8px,env(safe-area-inset-bottom))] max-[760px]:pt-2.5">
+        <div className="k5-rail fixed -mt-1 right-[calc(max(20px,(100vw-100%)/0)+0px)] top-[calc(var(--maintenance-banner-h,0px)+100px)] z-20 flex w-20 flex-col items-center gap-1 max-[760px]:inset-x-0 max-[760px]:bottom-0 max-[760px]:top-auto max-[760px]:z-40 max-[760px]:w-full max-[760px]:flex-row max-[760px]:items-start max-[760px]:justify-around max-[760px]:gap-0 max-[760px]:border-t-[3px] max-[760px]:border-k5-line max-[760px]:bg-k5-card max-[760px]:px-1 max-[760px]:pb-[max(8px,env(safe-area-inset-bottom))] max-[760px]:pt-2.5">
           <K5RailButton middle={middle} high={high} label="Talk to us" pin="msg" onClick={openTalkToUs} badge={unseenChatMessages} tint="#C3F0DC" rim="#0E8F67" ink="#0B6B4D">
             <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path fill="#0B2447" d="M9.5 3C5.36 3 2 5.69 2 9c0 1.6.8 3.06 2.1 4.13L3 16.5l3.6-1.7c.9.27 1.88.42 2.9.42 4.14 0 7.5-2.76 7.5-6.1S13.64 3 9.5 3z" /><path fill="#0B2447" stroke={cut("#C3F0DC")} strokeWidth="1.6" d="M15.5 9.3c3.59 0 6.5 2.3 6.5 5.1 0 1.36-.68 2.58-1.8 3.5L21.2 21l-3.4-1.42c-.72.2-1.5.32-2.3.32-3.59 0-6.5-2.3-6.5-5.2s2.91-5.4 6.5-5.4z" /></svg>
           </K5RailButton>

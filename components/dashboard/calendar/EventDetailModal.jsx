@@ -7,6 +7,7 @@ import { CalendarModal, DetailRow, calendarButtonClass } from "@/components/dash
 import { RateFeedbackButton } from "@/components/dashboard/calendar/RateFeedbackButton";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { openLmsLesson } from "@/utils/lmsCourseLink";
+import { cleanCourseLabel } from "@/utils/k5Calendar";
 import {
   getAssignmentStatus,
   getClassCompletionStatus,
@@ -105,7 +106,7 @@ function AssignmentDetail({ event }) {
   const aStatus = getAssignmentStatus(event);
   return (
     <>
-      <DetailRow label="Course" value={event.subjectName} />
+      <DetailRow label="Course" value={cleanCourseLabel(event.subjectName)} />
       {/* A due date is a plain day ("2026-11-16"): read as that day, never as UTC midnight (which is the day before west of UTC). */}
       <DetailRow label="Due Date" value={event.startZoned ? format(event.startZoned, "MMM d, yyyy") : event.dueDate || null} />
       <DetailRow label="Status" value={aStatus.label} />

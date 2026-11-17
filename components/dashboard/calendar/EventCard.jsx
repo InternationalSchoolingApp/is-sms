@@ -1,6 +1,7 @@
 "use client";
 
 import { getAssignmentStatus, getClassCompletionStatus, getEventColor, getEventStatus } from "@/utils/calendarEvents";
+import { cleanCourseLabel } from "@/utils/k5Calendar";
 
 const STATUS_BADGE_STYLE = {
   live: { label: "LIVE", background: "#e53935" },
@@ -46,7 +47,7 @@ function getSubtitle(event, courseRegistry) {
   else if (event.eventKind === "holiday") parts.push("Holiday / Break");
   else if (event.eventKind === "schoolEvent") parts.push("School Event");
   else if (event.eventKind === "activity") parts.push("Activity");
-  else if (event.subjectName) parts.push(event.subjectName);
+  else if (event.subjectName) parts.push(cleanCourseLabel(event.subjectName));
 
   if (event.displayTime) parts.push(event.displayTime);
   if (event.origName) parts.push(event.origName);

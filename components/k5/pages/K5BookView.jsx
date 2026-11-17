@@ -469,7 +469,7 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
   const none = left < 1;
   return (
     // In the Grade 6–8 "Book a Class" dialog: three courses in a row, the rest on the next row (two on a small screen).
-    <div className={threePerRow ? "grid grid-cols-3 gap-3 max-[640px]:grid-cols-2" : "grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3"}>
+    <div className={threePerRow ? "grid grid-cols-3 gap-3 max-[640px]:grid-cols-2" : "grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3"}>
       {options.map((s) => {
         const color = colorFor({ id: s.subjectId, name: s.name }) || subjectStyle(s.name).color;
         const card = (

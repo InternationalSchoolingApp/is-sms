@@ -469,3 +469,9 @@ input:-internal-autofill-selected {
     opacity: 1;
   }
 }
+
+/* The three dots after "Verifying your credentials" (session-expired dialog) blink one after another. */
+@keyframes dots-blink {
+  0%, 80%, 100% { opacity: 0.15; }
+  40% { opacity: 1; }
+}

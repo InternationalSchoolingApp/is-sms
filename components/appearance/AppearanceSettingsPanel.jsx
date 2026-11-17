@@ -2,7 +2,8 @@
 
 import { BookOpen, Check, Hand, HeartPulse, Moon, ScanLine, Sun, Volume2 } from "lucide-react";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
-import { BUDDIES, DYSLEXIA_OFF, DYSLEXIA_ON, PAGE_COLORS, THEME_SWATCHES, VOICE_SPEEDS, VOICES } from "@/constant/appearance";
+import { BUDDIES, DYSLEXIA_OFF, DYSLEXIA_ON, GRADE_LOOKS, PAGE_COLORS, THEME_SWATCHES, VOICE_SPEEDS, VOICES, effectiveGradeLook, gradeLookOf } from "@/constant/appearance";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 
 const OPTION =
@@ -41,6 +42,55 @@ function Choice({ name, value, label, children, className = "", style }) {
   );
 }
 
+// Each Theme card's preview (mockup Look dialog > Theme): "Aa" in that look's font, its colour dots, and a card edge in
+// that look's style (chunky / soft shadow / flat).
+const LOOK_PREVIEW = {
+  playful: { card: "rounded-2xl border-[3px] border-[#D3E3FB] shadow-[0_3px_0_#D3E3FB]", font: "font-[family-name:var(--font-fredoka)] font-bold" },
+  balanced: { card: "rounded-xl border-[1.5px] border-[#D9E6F5] shadow-[0_4px_12px_rgba(23,27,46,0.08)]", font: "font-[family-name:var(--font-outfit)] font-semibold" },
+  mature: { card: "rounded-md border border-[#E3E7ED]", font: "font-[family-name:var(--font-roboto)] font-medium" },
+};
+
+/**
+ * Theme (mockup Look dialog): Playful / Balanced / Mature - any student may pick any of the three dashboard looks. The
+ * card of the look on screen is selected; picking the student's own grade look saves "auto" (it then follows the grade).
+ */
+function GradeLookSection() {
+  const { preferences, updatePreference, canCustomize } = useAppearance();
+  const { isMiddle, isHigh } = useDashboardContext();
+  const own = gradeLookOf({ isMiddle, isHigh });
+  const current = effectiveGradeLook(preferences.gradeLook, { isMiddle, isHigh });
+  return (
+    <Section id="lk-theme" title="Theme">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
+        {Object.entries(GRADE_LOOKS).map(([key, look]) => {
+          const selected = current === key;
+          const preview = LOOK_PREVIEW[key];
+          return (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={selected}
+              disabled={!canCustomize}
+              onClick={() => updatePreference("gradeLook", key === own ? "auto" : key)}
+              className={`flex cursor-pointer flex-col items-stretch gap-2.5 rounded-[14px] border-2 p-3 text-start text-k5-ink disabled:cursor-default ${optionState(selected)}`}
+            >
+              <span className={`flex items-center justify-between gap-2 bg-white px-3.5 py-3 ${preview.card}`}>
+                <span className={`text-[26px] leading-none text-[#1B2130] ${preview.font}`}>Aa</span>
+                <span className="flex gap-1">
+                  {look.dots.map((color) => (
+                    <span key={color} className="block h-3.5 w-3.5 rounded-full" style={{ background: color }} />
+                  ))}
+                </span>
+              </span>
+              <span className={`text-[15px] leading-tight ${preview.font}`}>{look.name}</span>
+            </button>
+          );
+        })}
+      </div>
+    </Section>
+  );
+}
+
 /**
  * The appearance settings, laid out like the mockup look dialog: favourite colour, day or night,
  * text size, letters, hand, buddy and voice on the left; the "Special help" panel (colour vision,
@@ -52,6 +102,7 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
   return (
     <div className="grid items-start gap-[22px] min-[921px]:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
       <div className="flex min-w-0 flex-col gap-5">
+        <GradeLookSection />
         <Section id="lk-color" title="Favorite color">
           <div className="grid grid-cols-5 gap-2.5">
             {Object.entries(THEME_SWATCHES).map(([key, t]) => (
