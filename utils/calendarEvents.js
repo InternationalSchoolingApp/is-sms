@@ -29,6 +29,13 @@ export const DEFAULT_COURSE_PALETTE = [
 // Project rule: Asia/Singapore is the fallback whenever a timezone can't be resolved.
 export const FALLBACK_TIMEZONE = "Asia/Singapore";
 
+/**
+ * A dummy (demo) student - the one a counselor creates in Dummy Student Dashboard and opens with "View as user" - always lives in
+ * America/New_York, whatever the browser's zone (legacy dummyStudentDashboardData.js DUMMY_STUDENT_TIMEZONE): the calendar, the
+ * clock, the class times and every date of the dummy data are read in it.
+ */
+export const DUMMY_STUDENT_TIMEZONE = "America/New_York";
+
 export function getBrowserTimezone() {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || FALLBACK_TIMEZONE;

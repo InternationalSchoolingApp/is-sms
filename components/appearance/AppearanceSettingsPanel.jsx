@@ -177,6 +177,22 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
                 <Choice name="speech" value="off" label="Buddy is quiet" />
               </div>
             </Section>
+
+            <Section id="lk-game-sound" title="Game sounds" subtitle="The pop and other sounds in the games. This does not change the buddy's voice.">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={preferences.gameSound !== "off"}
+                  aria-label="Game sounds"
+                  onClick={() => _panelUpdate("gameSound", preferences.gameSound === "off" ? "on" : "off")}
+                  className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${preferences.gameSound === "off" ? "bg-k5-line" : "bg-k5-ac"}`}
+                >
+                  <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ${preferences.gameSound === "off" ? "translate-x-0" : "translate-x-5"}`} />
+                </button>
+                <span className="text-[15px] font-bold text-k5-ink">{preferences.gameSound === "off" ? "Game sounds are off" : "Game sounds are on"}</span>
+              </div>
+            </Section>
           </>
         )}
       </div>

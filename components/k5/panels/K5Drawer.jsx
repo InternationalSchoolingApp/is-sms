@@ -34,7 +34,7 @@ export function K5Drawer({ title, subtitle, icon, accent, pastel, bg, width = 48
       >
         <div className="relative flex items-center gap-3.5 border-b-4 py-[18px] pl-5 pr-[18px] text-[#0B2447]" style={{ background: pastel, borderColor: accent }}>
           {leading}
-          <span className="flex h-14 w-14 flex-none items-center justify-center rounded-full bg-white" style={{ boxShadow: `0 4px 0 ${accent}` }}>
+          <span className="flex h-14 w-14 flex-none items-center justify-center rounded-full bg-[#FFFFFF]" style={{ boxShadow: `0 4px 0 ${accent}` }}>
             {icon}
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">

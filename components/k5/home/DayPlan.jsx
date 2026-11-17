@@ -1,6 +1,8 @@
 "use client";
 
+import { HighGames } from "@/components/k5/games/HighGames";
 import { K5Games } from "@/components/k5/games/K5Games";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { addDays, format } from "date-fns";
 import { CalendarDays, Check, ChevronRight, Clock, Flag, PartyPopper, Smile, Star, Video } from "lucide-react";
 import { CLUE_RING, K5_PRIMARY_BTN, PlanHeader, PlanTile, StatusPills, SubjectTile } from "@/components/k5/home/k5Bits";
@@ -11,6 +13,7 @@ import {
   countStatuses,
   dayAt,
   dayKey,
+  gameAccess,
   initials,
   isWeekendKey,
   keyToDate,
@@ -117,7 +120,12 @@ function ActivityCard({ event, clue, onOpen }) {
         <span className="text-[17px] font-extrabold text-k5-mut">{timeRange(event)}</span>
         <Teacher event={event} />
       </span>
-      {event.k5Status === "live" && <span className="flex-none rounded-full bg-k5-gt px-3.5 py-2 text-[15px] font-black text-k5-gx">Happening now</span>}
+      {event.k5Status === "live" && (
+        <span className="flex flex-none items-center gap-1.5 text-sm font-black text-k5-gx">
+          <span className="block h-2.5 w-2.5 k5-live-dot rounded-full bg-k5-gi" />
+          LIVE NOW
+        </span>
+      )}
     </button>
   );
 }
@@ -213,6 +221,7 @@ function TomorrowCard({ dateKey, days, isSelfStudy, onPeek }) {
  * are no classes, and a "Tomorrow" card that peeks at the next day.
  */
 export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStudy, firstName, onJoin, onOpen, onPeek, onShowCalendar }) {
+  const { isHigh, isMiddle } = useDashboardContext(); // isMiddle is true for High too: no "today" star in either
   const day = dayAt(days, dateKey);
   const date = keyToDate(dateKey);
   const isToday = dateKey === todayKey;
@@ -220,10 +229,10 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
     (a, b) => (a.e.startZoned?.getTime() || 0) - (b.e.startZoned?.getTime() || 0),
   );
   const nClasses = day.classes.length;
-  // Games are locked only while one of today's classes is live (the student must go to it): a free day picked
-  // from the calendar then shows them locked. With no live class right now — nothing today, classes still to come,
-  // or all done — they stay open. (The Middle mockup locks every day but today; the product rule is "live class".)
-  const gamesLocked = dayAt(days, todayKey).classes.some((c) => c.k5Status === "live");
+  // Games: a live or still-to-come class today (STUDENT_DOUBT_SESSION / BATCH) locks them on every date, a day that is
+  // already over never opens them; see gameAccess (utils/k5Calendar.js) for the full order.
+  const dayOver = dateKey < todayKey;
+  const access = gameAccess(days, dateKey, todayKey);
   const subtitle = nClasses ? `${nClasses} class${nClasses === 1 ? "" : "es"}${isToday ? " today" : ""}` : "No classes";
   // The dotted "now" line goes right before the first item that has not finished yet.
   const nowIndex = isToday ? items.findIndex((it) => it.e.k5Status !== "done") : -1;
@@ -232,7 +241,7 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
       <PlanHeader
         tile={
           <PlanTile top={format(date, "EEE").toUpperCase()} big={format(date, "d")}>
-            {isToday && <Star className="absolute -right-3 -top-3 h-[30px] w-[30px] fill-[#FFC531] text-[#C9930A]" aria-hidden="true" />}
+            {isToday && !isMiddle && <Star className="absolute -right-3 -top-3 h-[30px] w-[30px] fill-[#FFC531] text-[#C9930A]" aria-hidden="true" />}
           </PlanTile>
         }
         title={isToday ? "Today's Plan" : `${format(date, "EEEE")}'s Plan`}
@@ -292,7 +301,8 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
       ) : (
         <>
           <NoClassDay reason={noClassReason(dateKey, day, { isSelfStudy, firstName })} isToday={isToday} onOpen={day.holidays.length ? () => onOpen(day.holidays[0]) : undefined} />
-          <K5Games locked={gamesLocked} />
+          {/* Grade 9–12 has its own "Brain Games" (High.dc.html); the other looks share the K–5 games. */}
+          {isHigh ? <HighGames locked={access.locked} past={dayOver} /> : <K5Games locked={access.locked} past={dayOver} pending={access.reason === "pending"} />}
         </>
       )}
 

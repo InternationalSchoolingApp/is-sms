@@ -30,11 +30,11 @@ export function K5AnnouncementsPanel({ announcements, newCount, schoolUUID, user
             return (
               <article
                 key={item.announcementId}
-                className="flex gap-3 rounded-[22px] border-[3px] border-[#1477F8] p-3.5 shadow-[0_4px_0_#1477F8]"
-                style={{ background: isNew ? "#EAF3FF" : "var(--k5-card)" }}
+                // A new card is a light blue tint by day and a deep blue one at night (its title and date follow the look's ink).
+                className={`flex gap-3 rounded-[22px] border-[3px] border-[#1477F8] p-3.5 shadow-[0_4px_0_#1477F8] ${isNew ? "bg-[#EAF3FF] dark:bg-[#1B3563]" : "bg-k5-card"}`}
               >
-                <span aria-hidden="true" className="flex h-[54px] w-[54px] flex-none items-center justify-center rounded-2xl bg-[#D3E7FF]">
-                  <Megaphone className="h-7 w-7 text-[#0B5ED7]" />
+                <span aria-hidden="true" className="flex h-[54px] w-[54px] flex-none items-center justify-center rounded-2xl bg-[#D3E7FF] dark:bg-[#27447F]">
+                  <Megaphone className="h-7 w-7 text-[#0B5ED7] dark:text-[#9CC8FF]" />
                 </span>
                 <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                   <div className="flex flex-wrap items-center gap-1.5">

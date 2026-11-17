@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getDiaryBadgeVersion } from "@/utils/diaryClient";
-import { diaryLog } from "@/utils/diaryDebug";
 
 /*
  * Live diary updates by polling - legacy parentSchoolDiary.js diaryRealtimeStart / diaryRealtimePoll:
@@ -35,7 +34,6 @@ function startPoller(userId, account, queryClient) {
   const refresh = () => {
     clearTimeout(state.apply);
     state.apply = setTimeout(() => {
-      diaryLog("poll -> diary changed, re-reading badge + list + open thread", { userId });
       queryClient.invalidateQueries({ queryKey: ["diary-unread-count", userId] });
       queryClient.invalidateQueries({ queryKey: ["diary-threads", userId] });
       queryClient.invalidateQueries({ queryKey: ["diary-thread-messages", userId] });
@@ -43,10 +41,7 @@ function startPoller(userId, account, queryClient) {
   };
 
   async function poll() {
-    if (state.stopped || state.inFlight || document.visibilityState === "hidden") {
-      diaryLog("poll skipped", { stopped: state.stopped, inFlight: state.inFlight, visibility: document.visibilityState });
-      return;
-    }
+    if (state.stopped || state.inFlight || document.visibilityState === "hidden") return;
     state.inFlight = true;
     state.lastPollAt = Date.now();
     try {
@@ -54,29 +49,24 @@ function startPoller(userId, account, queryClient) {
       if (state.stopped) return;
       if (answer?.status === 304) {
         state.failures = 0;
-        diaryLog("poll -> 304 unchanged", { version: state.version });
       } else if (answer?.status === 200) {
         state.failures = 0;
         const version = answer.version != null ? String(answer.version) : null;
         if (version !== null) {
           const changed = state.version !== null && state.version !== version;
-          diaryLog(changed ? "poll -> version CHANGED" : state.version === null ? "poll -> baseline" : "poll -> same version", { was: state.version, now: version });
           state.version = version;
           state.etag = answer.etag || state.etag;
           if (changed) refresh();
         }
       } else {
         state.failures += 1;
-        diaryLog("poll -> failed, backing off", { answer, failures: state.failures });
       }
-    } catch (error) {
+    } catch {
       state.failures += 1;
-      diaryLog("poll -> error, backing off", { error: String(error), failures: state.failures });
     } finally {
       state.inFlight = false;
       if (!state.stopped && document.visibilityState !== "hidden") {
         const delay = nextDelay();
-        diaryLog("poll -> next poll in", `${Math.round(delay / 1000)} s`);
         schedule(delay);
       }
     }
@@ -85,21 +75,17 @@ function startPoller(userId, account, queryClient) {
   const onVisibility = () => {
     if (document.visibilityState === "hidden") {
       // Nothing runs in a hidden tab; the next poll happens when it comes back.
-      diaryLog("tab hidden - polling paused");
       clearTimeout(state.timer);
       return;
     }
     const since = Date.now() - state.lastPollAt;
-    diaryLog("tab visible again", { nextPollInSeconds: Math.round((since >= POLL_MS ? 0 : POLL_MS - since) / 1000) });
     schedule(since >= POLL_MS ? 0 : POLL_MS - since);
   };
 
   document.addEventListener("visibilitychange", onVisibility);
-  diaryLog("poller started", { userId, account });
   poll();
   return () => {
     state.stopped = true;
-    diaryLog("poller stopped", { userId });
     clearTimeout(state.timer);
     clearTimeout(state.apply);
     document.removeEventListener("visibilitychange", onVisibility);

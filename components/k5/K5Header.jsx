@@ -103,6 +103,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, use
             href={inboxHref}
             title="Communication"
             aria-label="Communication"
+            data-pin="inbox"
             className="relative flex h-[52px] w-[52px] items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card p-0 text-k5-ac no-underline shadow-k5-btn max-[760px]:hidden"
           >
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -171,6 +172,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, use
           type="button"
           role="switch"
           aria-checked={lms}
+          data-pin="lms"
           onClick={() => {
             if (isPayLmsPaymentPending) {
               toast(isPayLmsPaymentPending, { icon: "⚠️" });
@@ -194,6 +196,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, session, use
             onClick={() => setMenuOpen((v) => !v)}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
+            data-pin="profile"
             className="flex min-h-14 items-center gap-2.5 rounded-full border-[3px] border-k5-yb bg-k5-yt py-1 pl-1 pr-4 text-left"
           >
             <HeaderAvatar key={photo} photo={photo} initial={firstName.charAt(0).toUpperCase()} className="block h-[46px] w-[46px] flex-none rounded-full" textClass="bg-k5-hi font-k5-display text-[22px] font-bold text-[#1C2640]" />

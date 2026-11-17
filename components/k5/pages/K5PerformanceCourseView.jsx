@@ -9,7 +9,7 @@ import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
 import { getProgressReportGradeHistory } from "@/services/dashboardApi";
 import { resolveTimeZone } from "@/utils/attendanceDates";
-import { getBrowserTimezone } from "@/utils/calendarEvents";
+import { DUMMY_STUDENT_TIMEZONE } from "@/utils/calendarEvents";
 import { asArray, courseTone, fmtShort, num, paceInfo } from "@/components/k5/pages/k5PerformanceData";
 import { teacherName } from "@/components/k5/pages/K5PerformanceCourseList";
 import { BackIcon, CloseIcon, EyeIcon, HistoryIcon, PaceIcon, SmallFlame, TickIcon } from "@/components/k5/pages/K5PerformanceIcons";
@@ -54,7 +54,7 @@ function GradeHistory({ act, enrollId, onClose }) {
   const { schoolUUID, uniqueId, userId } = context ?? {};
   const dummy = useDummyStudent();
   const dashboardData = useStudentDashboardData({ schoolUUID, userId });
-  const timeZone = resolveTimeZone(dummy.enabled ? getBrowserTimezone() : dashboardData.userTimezone);
+  const timeZone = resolveTimeZone(dummy.enabled ? DUMMY_STUDENT_TIMEZONE : dashboardData.userTimezone);
   const { data, isLoading } = useQuery({
     queryKey: ["progress-report-grade-history", schoolUUID, act.id, enrollId, dummy.key],
     queryFn: () => (dummy.enabled ? dummy.student.academicGradeHistory(act.id) : getProgressReportGradeHistory({ schoolUUID, uniqueId, itemId: act.id, enrollId })),

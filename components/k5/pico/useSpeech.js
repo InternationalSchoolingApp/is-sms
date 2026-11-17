@@ -76,6 +76,7 @@ export function useSpeech() {
     setSpeaking(false);
   }, [supported, stopRecorded]);
 
+  // Resolves true when the clip started playing, false when the browser refused it (autoplay blocked, no gesture yet).
   const playRecorded = useCallback((text, clip) => {
     const audio = playerOf(clip.url);
     recordedRef.current = audio;
@@ -90,7 +91,13 @@ export function useSpeech() {
     audio.onpause = done;
     audio.currentTime = 0;
     setSpeaking(true);
-    audio.play()?.catch(done);
+    const started = Promise.resolve(audio.play()).then(
+      () => true,
+      () => {
+        done();
+        return false;
+      },
+    );
     const said = String(text).replace(/\s+/g, " ").trim();
     if (clip.times?.length) {
       let last = -1;
@@ -102,12 +109,14 @@ export function useSpeech() {
         }
       }, 30);
     }
+    return started;
   }, []);
 
   // Stand-in while the recorded voice is not ready: the browser's voice in the same accent and speed.
+  // Resolves true when the browser voice started, false when it was refused (not-allowed) or never started.
   const speakBrowser = useCallback(
     (text, chosen) => {
-      if (!supported) return;
+      if (!supported) return Promise.resolve(false);
       const synth = window.speechSynthesis;
       synth.cancel();
       const utterance = new window.SpeechSynthesisUtterance(text);
@@ -115,10 +124,22 @@ export function useSpeech() {
       utterance.lang = stand.lang;
       if (stand.voice) utterance.voice = stand.voice;
       utterance.rate = chosen.speed;
-      utterance.onstart = () => setSpeaking(true);
-      utterance.onend = () => setSpeaking(false);
-      utterance.onerror = () => setSpeaking(false);
-      synth.speak(utterance);
+      return new Promise((resolve) => {
+        const giveUp = setTimeout(() => resolve(false), 4000);
+        utterance.onstart = () => {
+          clearTimeout(giveUp);
+          setSpeaking(true);
+          resolve(true);
+        };
+        utterance.onend = () => setSpeaking(false);
+        utterance.onerror = (event) => {
+          clearTimeout(giveUp);
+          setSpeaking(false);
+          // A newer speak() cancels this one: that is not a refusal.
+          resolve(event?.error === "interrupted" || event?.error === "canceled" ? "cancelled" : false);
+        };
+        synth.speak(utterance);
+      });
     },
     [supported],
   );
@@ -126,10 +147,14 @@ export function useSpeech() {
   /**
    * voice / voiceSpeed: the look dialog's preview passes the one being tried; otherwise the student's choice.
    * wait: how long to wait for a clip that is not ready yet (the preview waits longer: a new voice takes a few seconds).
+   * Returns a Promise of what happened: "started" (the voice is playing), "blocked" (the browser refused it, e.g. autoplay
+   * before the student has touched the page), "cancelled" (a newer speak() / stop() took over), "off" (the buddy's voice is
+   * off) or - when neither a recorded clip nor the browser voice can play - "blocked". Callers that do not care may ignore it.
    */
   const speak = useCallback(
     (text, { force = false, voice = preferences.voice, voiceSpeed = preferences.voiceSpeed, wait = CLIP_WAIT_MS } = {}) => {
-      if (!text || (!force && preferences.speech !== "on")) return;
+      if (!text) return Promise.resolve("off");
+      if (!force && preferences.speech !== "on") return Promise.resolve("off");
       turnRef.current += 1;
       const turn = turnRef.current;
       stopRecorded();
@@ -138,22 +163,24 @@ export function useSpeech() {
       // Already known in this browser: play straight from the tap (no wait, and iOS keeps the tap's permission).
       const known = readyClip(text, chosen);
       if (known) {
-        playRecorded(text, known);
-        return;
+        return playRecorded(text, known).then((ok) => (turn !== turnRef.current ? "cancelled" : ok ? "started" : "blocked"));
       }
       let waited = null;
       const late = new Promise((resolve) => {
         waited = setTimeout(() => resolve(null), wait);
       });
       setSpeaking(true);
-      Promise.race([clipFor(text, chosen), late]).then((clip) => {
+      return Promise.race([clipFor(text, chosen), late]).then(async (clip) => {
         clearTimeout(waited);
-        if (turn !== turnRef.current) return;
-        if (clip) playRecorded(text, clip);
-        else {
-          setSpeaking(false);
-          speakBrowser(text, chosen);
+        if (turn !== turnRef.current) return "cancelled";
+        if (clip) {
+          const ok = await playRecorded(text, clip);
+          return turn !== turnRef.current ? "cancelled" : ok ? "started" : "blocked";
         }
+        setSpeaking(false);
+        const ok = await speakBrowser(text, chosen);
+        if (ok === "cancelled" || turn !== turnRef.current) return "cancelled";
+        return ok ? "started" : "blocked";
       });
     },
     [supported, stopRecorded, playRecorded, speakBrowser, preferences.speech, preferences.voice, preferences.voiceSpeed],

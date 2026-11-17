@@ -19,6 +19,20 @@ function SessionExpiryWatcher() {
   return null;
 }
 
+// The tab title of every dashboard page: "<student name> | Dashboard" ("Dashboard" until the name is known). The root
+// layout's PageTitle only knows the enrollment titles, so the dashboard sets its own; the pathname is a dependency so
+// the title is put back after every navigation inside the dashboard.
+function DashboardTitle() {
+  const { context } = useDashboardContext();
+  const pathname = usePathname();
+  const name = String(context?.userName || "").trim();
+  useEffect(() => {
+    if (isOnboardingPath(pathname)) return;
+    document.title = name ? `${name} | Dashboard` : "Dashboard";
+  }, [name, pathname]);
+  return null;
+}
+
 // Same URLs for every grade: a Grade K–5 student (isK5) gets the K–5 chrome, everyone else
 // the existing shell. Holds the loader until the grade band is known, so neither shell flashes.
 function ShellForGrade({ children }) {
@@ -74,6 +88,7 @@ export function DashboardChrome({ role = "student", children }) {
       <SessionExpiryWatcher />
       <SessionExpiredDialog />
       <LastPathRecorder />
+      <DashboardTitle />
       <DashboardBody role={role}>{children}</DashboardBody>
     </DashboardProvider>
   );

@@ -7,11 +7,10 @@ import { MobileTableCard } from "@/components/student/MobileTableCard";
 import { TableFooter } from "@/components/student/TableFooter";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useStudentLoginHistory } from "@/hooks/useStudentLoginHistory";
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 
 // Backend static assets (legacy PATH_FOLDER_IMAGE2).
-const assetUrl = (file) => `${resolveBackendOrigin()}/static/theme2/images/${file}`;
+const assetUrl = (file) => `/backend-static-assets/images/${file}`;
 const PAGE_SIZE = 10;
 const HEADERS = ["S.No", "Log in Date | Time", "Log out Date | Time", "Location", "Duration"];
 

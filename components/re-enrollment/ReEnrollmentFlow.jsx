@@ -17,7 +17,7 @@ export function ReEnrollmentFlow({ children }) {
   if (!activeStep) return children;
   const displaySteps = steps.map(key => ({ key, label: STEP_LABELS[key] || key, icon: ICONS[key] || ClipboardCheck }));
   const currentIndex = displaySteps.findIndex(step => step.key === activeStep);
-  return <div className={styles.flow}>
+  return <div className={styles.flow} data-re-enrollment-flow>
     <header className="mb-6 text-center md:mb-8">
       <h1 className="text-xl font-extrabold sm:text-2xl">{option?.learningProgramLabel ? `${option.learningProgramLabel} Re-Enrollment` : "Re-Enrollment"}</h1>
       {currentIndex >= 0 && <p className="mt-1 text-sm text-slate-500">Step {currentIndex + 1} of {displaySteps.length} · {STEP_LABELS[activeStep]}</p>}

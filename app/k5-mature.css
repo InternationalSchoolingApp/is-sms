@@ -35,7 +35,8 @@
   font-weight: 500;
 }
 
-:is([data-k5-high], [data-k5-high] *) {
+/* Keep grade-specific type and control overrides outside shared re-enrollment forms. */
+:is([data-k5-high], [data-k5-high] *):not(:where([data-re-enrollment-flow], [data-re-enrollment-flow] *)) {
   /* Type scale */
   &.text-\[11px\] {
     font-size: 11px;

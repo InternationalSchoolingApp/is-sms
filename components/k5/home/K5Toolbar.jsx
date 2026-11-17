@@ -60,7 +60,7 @@ export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPre
         <K5WeatherTile weather={weather} />
       </div>
 
-      <div className="flex items-center gap-1.5 max-[760px]:flex-[1_1_100%] max-[760px]:justify-center">
+      <div data-pin="prevnext" className="flex items-center gap-1.5 max-[760px]:flex-[1_1_100%] max-[760px]:justify-center">
         <button type="button" aria-label={`Previous ${unit}`} onClick={onPrev} className={K5_ROUND_BTN}>
           <ChevronLeft className="h-[22px] w-[22px]" strokeWidth={3} aria-hidden="true" />
         </button>

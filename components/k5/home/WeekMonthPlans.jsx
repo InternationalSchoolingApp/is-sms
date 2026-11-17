@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { format, getDay, isSameMonth } from "date-fns";
 import { BookOpen, CalendarRange, Check, ChevronRight, Flag, PartyPopper, Smile } from "lucide-react";
 import { CLUE_RING, K5_PRIMARY_BTN, PlanHeader, PlanTile, StatusPills } from "@/components/k5/home/k5Bits";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { getCourseColor, getMonthGridDays } from "@/utils/calendarEvents";
 import {
   CLUE_COLORS as C,
@@ -117,12 +118,13 @@ function DayExtras({ day, clue, onOpenEvent, onOpenDay }) {
 }
 
 /** Mockup balloon for a free day (.isFree card). */
-function FreeBalloon() {
+function FreeBalloon({ muted = false }) {
+  const fill = muted ? "#B4BBC9" : "#FF5A7A";
   return (
     <svg width="34" height="50" viewBox="0 0 64 96" aria-hidden="true">
-      <path d="M32 68 Q27 80 34 94" fill="none" stroke="#8A94A8" strokeWidth="3" />
-      <ellipse cx="32" cy="32" rx="26" ry="31" fill="#FF5A7A" />
-      <path d="M27 62 L37 62 L32 69 Z" fill="#FF5A7A" />
+      <path d="M32 68 Q27 80 34 94" fill="none" stroke={muted ? "#C6CBD6" : "#8A94A8"} strokeWidth="3" />
+      <ellipse cx="32" cy="32" rx="26" ry="31" fill={fill} />
+      <path d="M27 62 L37 62 L32 69 Z" fill={fill} />
     </svg>
   );
 }
@@ -133,6 +135,7 @@ const NEXT_HEAD = { background: C.upcoming, boxShadow: "0 4px 0 #A16207", color:
 
 /** Week plan (mockup My Week): seven day columns, Monday to Sunday; tap a day to open it. */
 export function WeekPlan({ keys, todayKey, selectedKey, days, courseRegistry, clue, isSelfStudy, onSelect, onOpenDay, onOpenEvent }) {
+  const { isHigh, isMiddle } = useDashboardContext(); // isMiddle is true for High too: no "today" star in either
   // Like the month: tapping a day (its head, a class, a pill or the free card) picks it and brings the
   // summary under the grid into view. The summary's items open the class / activity / assignment.
   const panelRef = useRef(null);
@@ -189,7 +192,7 @@ export function WeekPlan({ keys, todayKey, selectedKey, days, courseRegistry, cl
               >
                 <span className="block text-[13px] font-black">{isToday ? "Today" : format(date, "EEE")}</span>
                 <span className="block font-k5-display text-[26px] font-semibold leading-[1.1]">{format(date, "d")}</span>
-                {isToday && (
+                {isToday && !isMiddle && (
                   <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" className="absolute -right-1.5 -top-2.5">
                     <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" fill="#FFC531" stroke="#A16207" strokeWidth="1.4" strokeLinejoin="round" />
                   </svg>
@@ -204,11 +207,15 @@ export function WeekPlan({ keys, todayKey, selectedKey, days, courseRegistry, cl
                   <button
                     type="button"
                     onClick={() => pick(date)}
-                    className="flex min-h-40 flex-1 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[14px] border-[3px] border-dashed border-k5-gi bg-k5-gt px-1.5 py-3 text-center text-[15px] font-black text-k5-gx"
+                    // A day that is over is slate like its head: its games are locked (Day plan), so the card is not a green invitation.
+                    className={`flex min-h-40 flex-1 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[14px] border-[3px] border-dashed px-1.5 py-3 text-center text-[15px] font-black ${
+                      isPast ? "border-k5-line bg-k5-soft text-k5-mut" : "border-k5-gi bg-k5-gt text-k5-gx"
+                    }`}
                   >
-                    {isSelfStudy ? <BookOpen className="h-[34px] w-[34px]" aria-hidden="true" /> : <FreeBalloon />}
+                    {isSelfStudy ? <BookOpen className="h-[34px] w-[34px]" aria-hidden="true" /> : <FreeBalloon muted={isPast} />}
                     No classes!
-                    <span className="text-xs font-extrabold">{isSelfStudy ? "Course work day" : "Tap to play a game"}</span>
+                    {/* A day that is over has no games to invite to: only the Course work day line of a Self-Study student stays. */}
+                    {(isSelfStudy || !isPast) && <span className="text-xs font-extrabold">{isSelfStudy ? "Course work day" : isHigh ? "Open brain games" : "Tap to play a game"}</span>}
                   </button>
                 )}
               </div>
@@ -413,7 +420,7 @@ export function MonthPlan({ selectedDate, selectedKey, todayKey, days, courseReg
               )}
               <span className="flex max-w-full flex-col gap-1 @max-[640px]:hidden">
                 {free && (
-                  <span className="flex items-center gap-1 rounded-full bg-k5-gt px-2 py-[3px] text-xs font-black text-k5-gx">
+                  <span className={`flex items-center gap-1 rounded-full px-2 py-[3px] text-xs font-black ${key < todayKey ? "bg-k5-soft text-k5-mut" : "bg-k5-gt text-k5-gx"}`}>
                     <Smile className="h-3 w-3" aria-hidden="true" />
                     Free day
                   </span>

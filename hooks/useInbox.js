@@ -17,7 +17,7 @@ import {
   DEFAULT_INBOX_FILTERS, EMPTY_INBOX, EMPTY_SENT, INBOX_FOLDERS, SEND_ERROR, SEND_UNREACHABLE, SENT_FOLDER, SETTING_OFF, SETTING_ON, emailSettingRows,
   inboxListRequest, listSummary, shownFileName,
 } from "@/utils/inbox";
-import { getBrowserTimezone } from "@/utils/calendarEvents";
+import { DUMMY_STUDENT_TIMEZONE } from "@/utils/calendarEvents";
 import { SessionExpiredError, isSessionExpired, isSessionExpiredError, markSessionExpired } from "@/utils/sessionState";
 
 /**
@@ -141,7 +141,7 @@ function useInboxSource() {
     [dummy.enabled, dummy.key, userId, band, studentName, schoolName],
   );
   // Dummy messages are placed around the viewer's own clock, so dummy mode shows them in the browser's zone.
-  const timeZone = resolveTimeZone(dummy.enabled ? getBrowserTimezone() : dashboardData.userTimezone);
+  const timeZone = resolveTimeZone(dummy.enabled ? DUMMY_STUDENT_TIMEZONE : dashboardData.userTimezone);
   const ready = Boolean(userId) && dummy.settled && (dummy.enabled || !dashboardData.isLoading);
   return { source, ready, timeZone, schoolName, scope: ["inbox", userId, dummy.key] };
 }

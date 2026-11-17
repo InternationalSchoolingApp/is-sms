@@ -21,7 +21,7 @@ import { MonthPlan, WeekPlan } from "@/components/k5/home/WeekMonthPlans";
 import { LiveClassAlert } from "@/components/k5/home/LiveClassAlert";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { K5CompleteProfileModal } from "@/components/k5/home/K5CompleteProfileModal";
-import { getBrowserTimezone, resolveTimezone } from "@/utils/calendarEvents";
+import { DUMMY_STUDENT_TIMEZONE, resolveTimezone } from "@/utils/calendarEvents";
 import { classTitle, dayAt, dayKey, keyToDate, weekKeys } from "@/utils/k5Calendar";
 import { revealPlanTop } from "@/utils/k5Scroll";
 import { picoSay, setPicoLive } from "@/components/k5/pico/picoEvents";
@@ -95,7 +95,7 @@ export function StudentHomeK5({ holdProfilePopup = false }) {
   // Clock and events use the student's configured timezone (Asia/Singapore when missing or
   // invalid). Dummy data is generated around the viewer's own clock, so dummy mode uses it.
   const ready = dummy.settled && !dashboardData.isLoading;
-  const timezone = dummy.enabled ? getBrowserTimezone() : resolveTimezone(dashboardData.userTimezone);
+  const timezone = dummy.enabled ? DUMMY_STUDENT_TIMEZONE : resolveTimezone(dashboardData.userTimezone);
 
   return (
     <>
@@ -219,7 +219,7 @@ function K5Planner({ timezone }) {
         </div>
 
         {/* Mobile (mockup .duo>[data-pin=plan]{order:-1}): the plan comes before the left column. */}
-        <section ref={planRef} aria-label="My plans" data-pin="plan" className={`${K5_CARD} scroll-mt-[120px] @container box-border flex min-w-0 flex-[999_1_460px] flex-col gap-[18px] p-[22px] max-[760px]:order-first max-[560px]:p-3.5`}>
+        <section ref={planRef} aria-label="My plans" data-pin="calendar" className={`${K5_CARD} scroll-mt-[120px] @container box-border flex min-w-0 flex-[999_1_460px] flex-col gap-[18px] p-[22px] max-[760px]:order-first max-[560px]:p-3.5`}>
           {model.isLoading ? (
             <K5PlanSkeleton />
           ) : model.isError ? (
@@ -306,7 +306,7 @@ function AddSiblingsCard() {
   const siblings = useAddSiblings();
   if (!siblings.visible) return null;
   return (
-    <section aria-label="Have another child to enroll?" className={`${K5_CARD} flex flex-wrap items-center gap-3.5 px-5 py-3.5`}>
+    <section aria-label="Have another child to enroll?" data-pin="sibling" className={`${K5_CARD} flex flex-wrap items-center gap-3.5 px-5 py-3.5`}>
       <span aria-hidden="true" className="flex h-14 w-14 flex-none items-center justify-center rounded-[18px] bg-k5-act text-k5-acx">
         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <circle cx="9" cy="8" r="3.6" />

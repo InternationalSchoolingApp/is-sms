@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getAccountSession } from "@/lib/auth/session";
-import { diaryLog } from "@/utils/diaryDebug";
 import { getDiaryBadgeVersion, getDiaryMentionUsers, getDiaryThreadList, getDiaryThreadMessages, getDiaryUnreadCount, markDiaryThreadRead } from "@/services/diaryApi";
 
 /**
@@ -28,9 +27,7 @@ const toInt = (value, fallback) => {
 
 export async function POST(request) {
   const me = await getAccountSession();
-  const tabAccount = request.headers.get("x-account");
   if (!me?.accessToken || !me?.userId) {
-    diaryLog("route 401 - no signed-in account for this request", { tabAccount });
     return reply(401, { message: "Your session has been logged out" });
   }
 
@@ -67,19 +64,10 @@ export async function POST(request) {
       break;
     case "badge-version": {
       const version = await getDiaryBadgeVersion({ etag: typeof body?.etag === "string" ? body.etag.slice(0, 64) : undefined });
-      diaryLog("route badge-version", { userId: sessionUserId, tabAccount, sentEtag: body?.etag, answer: version });
       return reply(200, version);
     }
     default:
       return reply(400, { message: "Bad request" });
   }
-  diaryLog(`route ${body?.action}`, {
-    userId: sessionUserId,
-    tabAccount,
-    threadId,
-    ok: Boolean(answer),
-    unreadMessageCount: answer?.details?.unreadMessageCount,
-    unreadThreadCount: answer?.details?.unreadThreadCount,
-  });
   return answer ? reply(200, answer) : reply(502, { message: "The diary could not be loaded right now." });
 }

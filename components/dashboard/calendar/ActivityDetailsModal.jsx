@@ -11,7 +11,7 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
 import { getActivityDetails, getClassJoinDetails } from "@/services/dashboardApi";
-import { getBrowserTimezone, resolveTimezone } from "@/utils/calendarEvents";
+import { DUMMY_STUDENT_TIMEZONE, resolveTimezone } from "@/utils/calendarEvents";
 
 const pad = (value) => String(value).padStart(2, "0");
 
@@ -49,7 +49,7 @@ export function ActivityDetailsModal({ event, onClose }) {
   const { context, isK5 } = useDashboardContext();
   const dummy = useDummyStudent();
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
-  const timezone = dummy.enabled ? getBrowserTimezone() : resolveTimezone(dashboardData.userTimezone);
+  const timezone = dummy.enabled ? DUMMY_STUDENT_TIMEZONE : resolveTimezone(dashboardData.userTimezone);
   const activityId = event.eventId ?? event.activityId ?? event.id;
   const occurrenceDate = event.occurrenceDate || event.localDateKey || "";
 

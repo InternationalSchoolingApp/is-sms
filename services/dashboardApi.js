@@ -611,13 +611,15 @@ export async function getStudentAcademicDetails({ schoolUUID, userId }) {
 /**
  * Demo student data row — legacy dummyStudentDashboardData.js hydrateDbRows().
  * POST /{schoolUUID}/dashboard/student/demo-data (ParentDashboardDemoDataController, session-gated,
- * demo student accounts only). No entityId is sent: the backend falls back to the demo row picked at
- * "view as user" time (session DEMO_DASHBOARD_USER). Response: { status: "1", details: [row] }.
+ * demo student accounts only). entityId = the demo row picked at "view as user" (it comes with the SSO hand-off, like
+ * the legacy DEMO_DASHBOARD_USER); without it the backend falls back to its own session, which this app does not have.
+ * Response: { status: "1", details: [row] }.
  */
-export async function getStudentDemoData({ schoolUUID, userId }) {
+export async function getStudentDemoData({ schoolUUID, userId, entityId }) {
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  const id = Number(entityId);
   try {
-    return await postDashboardPayload(schoolUUID, "/dashboard/student/demo-data", { userId });
+    return await postDashboardPayload(schoolUUID, "/dashboard/student/demo-data", Number.isInteger(id) && id > 0 ? { userId, entityId: id } : { userId });
   } catch {
     return null;
   }

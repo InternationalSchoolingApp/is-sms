@@ -5,13 +5,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { Newspaper } from "lucide-react";
 import { NewsDetailModal } from "@/components/dashboard/NewsDetailModal";
-import { NewsAllModal } from "@/components/dashboard/NewsAllModal";
+import { K5NewsAllModal } from "@/components/k5/panels/K5NewsAllModal";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { EmptyNote, K5Drawer } from "@/components/k5/panels/K5Drawer";
-import { getArticlesByIds } from "@/services/newsApi";
+import { getAllArticles, getArticlesByIds } from "@/services/newsApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 
 const PER_PAGE = 3;
+const NEWS_PAGE_SIZE = 10;
 
 function formatNewsDate(value) {
   if (!value) return "";
@@ -30,6 +31,10 @@ export function K5NewsPanel({ articles, totalNews, userId, onClose }) {
   const [selected, setSelected] = useState(null);
   const [allArticles, setAllArticles] = useState(null);
   const [markingAll, setMarkingAll] = useState(false);
+  // "Latest News" (View all news): the stories of the pages loaded so far, and whether another page may exist.
+  const [allPage, setAllPage] = useState(1);
+  const [allHasMore, setAllHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(0);
   const dummy = useDummyStudent();
   const queryClient = useQueryClient();
@@ -38,18 +43,39 @@ export function K5NewsPanel({ articles, totalNews, userId, onClose }) {
   const current = Math.min(page, pages - 1);
   const visible = articles.slice(current * PER_PAGE, current * PER_PAGE + PER_PAGE);
 
+  // Legacy showNewsDataByIds: the listed stories are acknowledged (get-article-by-ids), and the modal then shows the FULL
+  // news list, page by page (get-all-articles, 10 a page - getNewsListData). The by-ids answer only holds the stories that
+  // were listed in the drawer, so it is not what the modal shows. Dummy mode shows the dummy list itself.
   const handleViewAll = async () => {
     setMarkingAll(true);
-    const result = dummy.enabled ? dummy.student.newsList() : await getArticlesByIds({ ids: articles.map((a) => a.id), userId });
-    console.log("K5NewsPanel: view all news result", result);
+    let first;
+    if (dummy.enabled) {
+      first = dummy.student.newsList();
+    } else {
+      await getArticlesByIds({ ids: articles.map((a) => a.id), userId });
+      first = await getAllArticles({ page: 1, size: NEWS_PAGE_SIZE });
+    }
     setMarkingAll(false);
-    setAllArticles(result?.list || []);
-    setSelected(!result?.list || []);
-    console.log("K5NewsPanel: view all news articles", allArticles || []);
+    const list = first?.list || [];
+    setAllPage(1);
+    setAllHasMore(!dummy.enabled && (first?.totalNews ?? 0) >= NEWS_PAGE_SIZE && list.length >= NEWS_PAGE_SIZE);
+    // The "Latest News" card replaces the drawer until it is closed (allArticles is its own state).
+    setAllArticles(list);
     queryClient.setQueriesData({ queryKey: ["news-articles"] }, (data) => (data ? { ...data, totalNews: 0 } : data));
   };
 
   
+
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    const next = allPage + 1;
+    const result = await getAllArticles({ page: next, size: NEWS_PAGE_SIZE });
+    setLoadingMore(false);
+    const more = result?.list || [];
+    setAllPage(next);
+    setAllHasMore(more.length >= NEWS_PAGE_SIZE);
+    setAllArticles((current) => [...(current || []), ...more.filter((item) => !(current || []).some((c) => c.id === item.id))]);
+  };
 
   const goTo = (next, el) => {
     if (next < 0 || next >= pages) return;
@@ -61,7 +87,7 @@ export function K5NewsPanel({ articles, totalNews, userId, onClose }) {
 
   return (
     <>
-      {!selected && (
+      {!selected && !allArticles && (
         <K5Drawer
           title="News"
           subtitle={totalNews > 0 ? `${totalNews} new` : "Fresh stories"}
@@ -124,7 +150,7 @@ export function K5NewsPanel({ articles, totalNews, userId, onClose }) {
         </K5Drawer>
       )}
       {selected && !allArticles && <NewsDetailModal article={selected} userId={userId} onClose={() => setSelected(null)} />}
-      {allArticles && <NewsAllModal articles={allArticles} onClose={() => {setAllArticles(null); setSelected(null)}} />}
+      {allArticles && <K5NewsAllModal articles={allArticles} hasMore={allHasMore} loadingMore={loadingMore} onMore={handleLoadMore} onClose={() => setAllArticles(null)} />}
     </>
   );
 }

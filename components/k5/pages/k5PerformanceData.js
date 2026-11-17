@@ -84,12 +84,26 @@ export function paceInfo(course) {
   return { ...p, text };
 }
 
-/** Session pill: the latest course end date. */
-export function sessionInfo(tiles) {
+/**
+ * Session pill: the earliest course start date and the latest course end date (both from the performance answer: each
+ * course's startDate / endDate). Without a start date the pill shows the end only, as before.
+ */
+export function sessionInfo(tiles, courses = []) {
   if (!tiles?.endDate) return null;
   const endYear = Number(tiles.endDate.slice(0, 4));
+  const startIso = asArray(courses)
+    .map((course) => String(course?.startDate || "").slice(0, 10))
+    .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date))
+    .sort()[0];
+  const startYear = startIso ? Number(startIso.slice(0, 4)) : endYear - 1;
   const endsTx = fmtShort(tiles.endDate);
-  return { label: `Session ${endYear - 1}–${String(endYear).slice(2)} · Ends ${endsTx}`, endsTx, days: tiles.daysLeft ?? 0 };
+  const startsTx = startIso ? fmtShort(startIso) : "";
+  return {
+    label: `Session ${startYear}–${String(endYear).slice(2)} · ${startsTx ? `Starts ${startsTx} · ` : ""}Ends ${endsTx}`,
+    startsTx,
+    endsTx,
+    days: tiles.daysLeft ?? 0,
+  };
 }
 
 // ---- My Goals ---------------------------------------------------------------------------------------------

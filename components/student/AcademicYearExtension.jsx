@@ -13,7 +13,6 @@ import { useCartCheckout } from "@/hooks/useCartCheckout";
 import { useTalkToUs } from "@/hooks/useTalkToUs";
 import { useStudentAcademicYearExtension } from "@/hooks/useStudentAcademicYearExtension";
 import { availAcademicYearExtension, getAcademicYearExtensionProceed } from "@/services/dashboardApi";
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import { expireSession } from "@/utils/logout";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 
@@ -22,7 +21,7 @@ const GENERIC_ERROR = "Something went wrong. Please try again.";
 
 function courseImage(course, fallback) {
   if (course.imgURl) return course.imgURl;
-  if (course.subjectIcon) return `${resolveBackendOrigin()}/static/theme2/images/subjects/${course.subjectIcon}`;
+  if (course.subjectIcon) return `/backend-static-assets/images/subjects/${course.subjectIcon}`;
   return fallback;
 }
 
