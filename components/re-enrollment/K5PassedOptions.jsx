@@ -38,19 +38,24 @@ export function K5PassedOptions({ passed, isMiddle, isHigh, studentName, grade, 
   const repeatGradeOption = options.find(option => option.enrollmentType === "REGISTRATION_REPEAT_GRADE");
   const individualCourseOption = options.find(option => option.enrollmentType === "REGISTRATION_IMPORVE_GRADES");
   // Design: "Every comeback starts with one step" when the student has a single path; the neutral "Let's plan your next step" when choosing between Repeat and an Individual Course.
-  // Grade 12 pass has no next grade, so there is no "promoted" hero: it shows the neutral "plan your next step" hero (Repeat / Individual Course).
+  const completedGrade12 = passed && /^grade\s*12$/i.test(currentGrade?.trim() || "");
   const promoted = passed && Boolean(grade);
+  const celebratoryHero = promoted || completedGrade12;
   const comeback = mature && options.length > 0 && !(repeatGradeOption && individualCourseOption);
   const heroGrade = grade || (passed ? currentGrade : undefined);
   const currentProgram = nextGradeOption?.learningProgramLabel
     || options.find(option => option.enrollmentType === "REGISTRATION_REPEAT_GRADE")?.learningProgramLabel;
   return <div className={styles.layout}>
     <div className={styles.main}>
-      <section className={`${styles.hero} ${promoted ? "" : styles.failHero}`} data-result={promoted ? "pass" : "fail"}>
+      <section className={`${styles.hero} ${celebratoryHero ? "" : styles.failHero}`} data-result={celebratoryHero ? "pass" : "fail"}>
         {!mature && passed && <div className={styles.confetti} aria-hidden="true"><Star /><Star /><i /><i /><i /><i /></div>}
         {(isHigh || isMiddle) && <div className={styles.heroDecor} aria-hidden="true"><i /><i /><i />{balanced && <><i /><i /><i /><i /></>}</div>}
         <div className={styles.heroCopy}>
-          {mature ? promoted ? <>
+          {completedGrade12 ? <>
+            <p className={styles.matureBadge}>Welcome back, {studentName}!</p>
+            <h1>Congratulations on completing Grade 12</h1>
+            <p className={styles.completionDescription}>Choose how you would like to continue your learning journey.</p>
+          </> : mature ? promoted ? <>
             <p className={styles.matureBadge}>Congratulations, Dear {studentName}!</p>
             <h1>{grade ? `You've been promoted to ${grade}` : heroGrade ? `Congratulations on completing ${heroGrade}` : "Congratulations!"}</h1>
             {grade && currentGrade && <div className={styles.gradePath} aria-label={`${currentGrade} to ${grade}`}>
