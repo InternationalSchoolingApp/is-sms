@@ -124,6 +124,32 @@ export function FeeBreakdown({ fee, option, variantMode, gradeName, advance = fa
         </div>
       )}
       <Discounts youSave={plan?.youSave} />
+      {(installment || useAdvance) && plan?.monthlyFees?.length > 0 && (
+        <table className="my-2 w-full overflow-hidden rounded-lg border border-slate-200 text-sm">
+          <thead>
+            <tr className="bg-primary text-white">
+              <th className="px-2 py-1.5 text-left">Fee Schedule</th>
+              <th className="px-2 py-1.5 text-right">Total Fee</th>
+              <th className="px-2 py-1.5 text-right">{useAdvance ? "Status" : "Paying Now"}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {plan.monthlyFees.map((monthly, index) => (
+              <tr key={index} className="border-t border-slate-200">
+                <td className="px-2 py-1.5"><SupText>{monthly.paymentLabel}</SupText></td>
+                <td className="px-2 py-1.5 text-right">{monthly.amountString}</td>
+                {useAdvance ? (
+                  <td className={`px-2 py-1.5 text-right font-semibold ${monthly.status === "SUCCESS" ? "text-green-700" : "text-amber-600"}`}>
+                    {monthly.status === "SUCCESS" ? `Paid (${monthly.paidDate})` : `Scheduled (${monthly.scheduledDate})`}
+                  </td>
+                ) : (
+                  <td className="px-2 py-1.5 text-right font-bold">{index === 0 ? monthly.amountString : ""}</td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
       <Row label="Payable Fee" value={payableOverride ?? plan?.payableFeeString} strong />
     </div>
   );
