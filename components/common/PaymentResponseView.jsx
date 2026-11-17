@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link"; 
 import Image from "next/image";
@@ -25,6 +25,7 @@ import { loginPageUrl, resolveBackendOrigin, withLoginPayload } from "@/utils/ba
 import { getBrowserDetailsForSignup } from "@/utils/utmCookies";
 import { expireSession, logoutEverywhere } from "@/utils/logout";
 import { copyrightLine } from "@/utils/schoolBrand";
+import { TAB_ACCOUNT_STORAGE_KEY } from "@/components/auth/TabAccount";
 
 /**
  * Shared view for every /common/*payment-response-* route. Ports the render
@@ -56,6 +57,20 @@ export function PaymentResponseView({ endpointPath, mode = "success", schoolUUID
       <PaymentResponseContent endpointPath={endpointPath} mode={mode} schoolUUID={schoolUUID} />
     </Suspense>
   );
+}
+
+// sessionStorage has no change event for the same tab; the value is read once per render.
+function subscribeNever() {
+  return () => {};
+}
+
+/** The account this tab works for (components/auth/TabAccount.jsx), or "" when it names none. */
+function readTabAccount() {
+  try {
+    return window.sessionStorage.getItem(TAB_ACCOUNT_STORAGE_KEY) || "";
+  } catch {
+    return "";
+  }
 }
 
 function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFromRoute }) {
@@ -159,6 +174,37 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
     };
   }, [requiresEnrollmentSession, sessionStatus, router, heldAccount]);
 
+  // The gateway's return is a full page load, which cannot carry the tab's X-Account header. With several accounts
+  // in this browser and no UNIQUEUUID in the return URL (e.g. other-payment-response-success for a dashboard
+  // Extra Class Fee), proxy.js cannot tell whose page it is and renders it signed out, and the page then sent the
+  // signed-in student to login. This tab still remembers its account (TabAccount's sessionStorage): refresh once
+  // (that request carries X-Account, so the proxy picks the account) and decide on login only after it.
+  // Add-enrollment returns have their own session wait above.
+  // tabAccount: null while hydrating (sessionStorage unknown), "" when the tab names no account.
+  const tabAccount = useSyncExternalStore(subscribeNever, readTabAccount, () => null);
+  // "idle" -> "started" (refresh sent, committed together with its result) -> "timedOut" (it never settled).
+  const [tabSessionRefresh, setTabSessionRefresh] = useState("idle");
+  const [tabSessionRefreshing, startTabSessionRefresh] = useTransition();
+  const needsTabSessionPickup = !requiresEnrollmentSession && sessionStatus !== "authenticated" && Boolean(tabAccount);
+  useEffect(() => {
+    if (!needsTabSessionPickup || tabSessionRefresh !== "idle") return;
+    startTabSessionRefresh(() => {
+      setTabSessionRefresh("started");
+      router.refresh();
+    });
+  }, [needsTabSessionPickup, tabSessionRefresh, router]);
+  // Never hold the page on this: a refresh that does not settle stops counting after a few seconds.
+  useEffect(() => {
+    if (tabSessionRefresh !== "started") return undefined;
+    const timeoutId = window.setTimeout(() => setTabSessionRefresh("timedOut"), 10_000);
+    return () => window.clearTimeout(timeoutId);
+  }, [tabSessionRefresh]);
+  const tabSessionPickup =
+    tabAccount !== null &&
+    (!needsTabSessionPickup || tabSessionRefresh === "timedOut" || (tabSessionRefresh === "started" && !tabSessionRefreshing))
+      ? "done"
+      : "pending";
+
   useEffect(() => {
     if (!requiresBackendSessionCheck) return undefined;
     let cancelled = false;
@@ -187,6 +233,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
     if (
       isReplay ||
       isReEnrollmentReplay ||
+      tabSessionPickup !== "done" ||
       (requiresEnrollmentSession && sessionStatus !== "authenticated" && !sessionWaitDone) ||
       (isEnrollmentReturn && sessionStatus === "authenticated" && !backendSessionReady)
     ) return undefined;
@@ -233,7 +280,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       cancelled = true;
       window.clearTimeout(requestTimer);
     };
-  }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, search, isReplay, isReEnrollmentReplay, isEnrollmentReturn, requiresEnrollmentSession, sessionStatus, sessionWaitDone, backendSessionReady, urlSettlementRef]);
+  }, [endpointPath, mode, schoolUUID, customReference, uniqueUuid, search, isReplay, isReEnrollmentReplay, tabSessionPickup, isEnrollmentReturn, requiresEnrollmentSession, sessionStatus, sessionWaitDone, backendSessionReady, urlSettlementRef]);
 
   // settlement-status said SETTLED: the success endpoint now returns the normal thank-you, so fetch it
   // again and render that. If it still can't be loaded, the confirming card shows the payment as confirmed.
@@ -298,6 +345,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
   const redirectToLogin =
     sessionStatus === "unauthenticated" &&
     !waitingForEnrollmentSession &&
+    tabSessionPickup === "done" &&
     (isReplay || isReEnrollmentReplay || !loading) &&
     (!shownWithoutLogin || copiedUrlWithoutSession);
   // TEMP DEBUG [pay-debug]: every state change that feeds the login redirect
@@ -316,10 +364,11 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       shownWithoutLogin,
       copiedUrlWithoutSession,
       redirectToLogin,
+      tabSessionPickup,
       url: window.location.href,
       at: new Date().toISOString(),
     });
-  }, [sessionStatus, loading, data, isReplay, shownWithoutLogin, copiedUrlWithoutSession, redirectToLogin, waitingForEnrollmentSession, sessionWaitExpired, heldAccount]);
+  }, [sessionStatus, loading, data, isReplay, shownWithoutLogin, copiedUrlWithoutSession, redirectToLogin, waitingForEnrollmentSession, sessionWaitExpired, heldAccount, tabSessionPickup]);
   useEffect(() => {
     if (redirectToLogin && !window.__loggingOut) {
       console.log("[pay-debug] REDIRECTING TO LOGIN", { sessionStatus, loading, responseStatus: data?.responseStatus, url: window.location.href });

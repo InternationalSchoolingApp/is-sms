@@ -15,11 +15,13 @@
  * Server Component: no client bundle, just the script.
  */
 const ACCOUNT_ID = /^[A-Za-z0-9_-]{1,64}$/;
+/** sessionStorage key holding this tab's account (read by PaymentResponseView after a gateway return). */
+export const TAB_ACCOUNT_STORAGE_KEY = "isx-account";
 
 export function TabAccount({ account }) {
   const known = typeof account === "string" && ACCOUNT_ID.test(account) ? account : null;
   const script = `(function () {
-  var KEY = "isx-account";
+  var KEY = ${JSON.stringify(TAB_ACCOUNT_STORAGE_KEY)};
   var known = ${JSON.stringify(known)};
   try {
     if (known) window.sessionStorage.setItem(KEY, known);
