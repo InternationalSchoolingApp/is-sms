@@ -142,7 +142,7 @@ function TodayItem({ event, color, live, onOpen }) {
     <button
       type="button"
       onClick={() => onOpen?.(event)}
-      className={`flex w-full cursor-pointer flex-col items-center rounded-[14px] bg-k5-card px-3 py-2 text-center text-k5-ink border-2 ${isClass ? "border-dashed" : "border-solid"} ${live ? "k5-live-pill" : ""}`}
+      className={`flex w-full cursor-pointer flex-col items-center rounded-[14px] bg-k5-card px-3 py-2 text-center text-k5-ink border-2 ${isClass ? "border-dashed" : "border-solid"} ${live ? (isClass ? "k5-live-pill" : "k5-live-pill k5-live-pill-act") : ""}`}
       style={{ borderColor: color }}
     >
       {title && (
@@ -163,7 +163,7 @@ function TodayGroup({ label, items, courseRegistry, live = false, onOpen }) {
       {items.length === 0 ? (
         <p className="m-0 text-[15px] font-bold text-k5-mut">No Class &amp; School Activity</p>
       ) : (
-        items.map((event) => <TodayItem key={event.id} event={event} color={getEventColor(event, courseRegistry)} live={live} onOpen={onOpen} />)
+        items.map((event) => <TodayItem key={event.id} event={event} color={event.eventKind === "class" ? getEventColor(event, courseRegistry) : CLUE_COLORS.activity} live={live} onOpen={onOpen} />)
       )}
     </div>
   );
