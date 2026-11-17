@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { addDays, addMonths, addWeeks, format, startOfMonth, startOfWeek } from "date-fns";
+import { useQueries } from "@tanstack/react-query";
+import { addDays, addMonths, addWeeks, endOfMonth, format, startOfDay, startOfMonth, startOfWeek } from "date-fns";
 import { toZonedTime, fromZonedTime, formatInTimeZone } from "date-fns-tz";
 import { getLiveClassAttendanceStatus, getSchoolCalendar } from "@/services/dashboardApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
@@ -10,7 +10,6 @@ import {
   DEFAULT_CALENDAR_FILTERS,
   applyCalendarFilters,
   buildCourseRegistry,
-  getBackendAgenda,
   getBrowserTimezone,
   isEventActive,
   normalizeCalendarEvents,
@@ -50,7 +49,7 @@ function saveStoredPrefs(prefs) {
   }
 }
 
-// The fetch window for each view. "today" intentionally over-fetches by a day
+// The fetch window for each view (old dashboard shell). "today" intentionally over-fetches by a day
 // on either side (legacy behavior) and the UI filters down client-side, which
 // avoids an extra request when the user nudges the date by one day.
 function getFetchRange(viewName, selectedDate) {
@@ -65,40 +64,127 @@ function getFetchRange(viewName, selectedDate) {
   return { start: addDays(selectedDate, -1), end: addDays(selectedDate, 1) };
 }
 
+// ── The Grade K–5 / Middle / High home asks for as few days as the legacy dashboard does ─────────────────────
+// The backend works day by day (one holiday lookup per day), so the size of the window is the cost. Legacy requests:
+//   first render  agendaDay   today .. today + 1        (the Today card and the Tomorrow card)
+//   Today click   agendaDay   selected - 1 .. selected + 1
+//   Week click    agendaWeek  the week (Monday .. Sunday here, the K–5 week)
+//   Month click   month       the month
+// Each window is its own request; the answers are merged, so what is already loaded is never requested for again.
+const ymd = (date) => format(date, "yyyy-MM-dd");
+const rangeOf = (start, end) => ({ startDate: ymd(start), endDate: ymd(end) });
+const rangeKey = (r) => r.startDate + "|" + r.endDate;
+const coveredBy = (ranges, from, to) => ranges.some((r) => r.startDate <= from && r.endDate >= to);
+
+/** The month of `date`, first to last day (only these days show data in the mini calendar and the month plan). */
+const monthRange = (date) => rangeOf(startOfMonth(date), endOfMonth(date));
+
+/** What the current view needs: `must` = days that have to be loaded to draw it, `ask` = the window to request when they are not. */
+function lazyNeed(viewName, selectedDate, anchor) {
+  if (viewName === "week") {
+    const start = startOfWeek(selectedDate, { weekStartsOn: 1 });
+    const r = rangeOf(start, addDays(start, 6));
+    return { must: [r.startDate, r.endDate], ask: r };
+  }
+  if (viewName === "month") {
+    const r = monthRange(selectedDate);
+    return { must: [r.startDate, r.endDate], ask: r };
+  }
+  const day = ymd(selectedDate);
+  // Today (the first render's day) also draws the Tomorrow card.
+  const must = day === ymd(anchor) ? [day, ymd(addDays(anchor, 1))] : [day, day];
+  return { must, ask: rangeOf(addDays(selectedDate, -1), addDays(selectedDate, 1)) };
+}
+
+// How long after the first answer the mini calendar's month is loaded in the background (its dots). It is a second,
+// bigger request, so it waits for the first screen to be done. Set to null to load a month only when its view is opened.
+const MONTH_PREFETCH_DELAY_MS = 1500;
+
 /**
  * Options used by the Grade K–5 home (defaults keep the existing calendar unchanged):
- * `timezone` shows events in that zone instead of the browser's, `monthFetch` always loads
- * the selected date's whole month (± a week) so the mini calendar and every view share one
- * request, and `initialDate` is the first selected date.
+ * `timezone` shows events in that zone instead of the browser's, `monthFetch` switches on the lazy windows above
+ * (first render = today + tomorrow only; Week / Month / other days are requested when opened), `prefetchMonth` also
+ * loads the selected month in the background for the mini calendar's dots, and `initialDate` is the first selected date.
  */
-export function useStudentCalendar({ schoolUUID, userId, timezone: timezoneOption, monthFetch = false, initialDate }) {
+export function useStudentCalendar({ schoolUUID, userId, timezone: timezoneOption, monthFetch = false, prefetchMonth = false, initialDate }) {
   const [viewName, setViewName] = useState("today");
   const [selectedDate, setSelectedDate] = useState(() => initialDate || new Date());
+  const [anchor] = useState(() => startOfDay(initialDate || new Date()));
   const [filters, setFilters] = useState(() => ({ ...DEFAULT_CALENDAR_FILTERS, ...(loadStoredPrefs().filters || {}) }));
   const [courseColors, setCourseColors] = useState(() => loadStoredPrefs().courseColors || {});
   const timezone = timezoneOption || getBrowserTimezone();
-  const fetchView = monthFetch ? "month" : viewName;
+  const lazy = monthFetch;
 
-  const { start, end } = useMemo(() => getFetchRange(fetchView, selectedDate), [fetchView, selectedDate]);
-  const startDate = format(start, "yyyy-MM-dd");
-  const endDate = format(end, "yyyy-MM-dd");
+  // The windows that have been requested for so far (lazy mode): the first render's, then whatever the student opened.
+  const base = useMemo(() => rangeOf(anchor, addDays(anchor, 1)), [anchor]);
+  const [extras, setExtras] = useState([]);
+  const addExtra = useCallback((range) => setExtras((prev) => (prev.some((r) => rangeKey(r) === rangeKey(range)) ? prev : [...prev, range])), []);
+
+  const need = useMemo(() => {
+    if (lazy) return lazyNeed(viewName, selectedDate, anchor);
+    const { start, end } = getFetchRange(viewName, selectedDate);
+    return { must: null, ask: rangeOf(start, end) };
+  }, [lazy, viewName, selectedDate, anchor]);
+  const requested = useMemo(() => (lazy ? [base, ...extras] : []), [lazy, base, extras]);
+  const needsFetch = !lazy || !coveredBy(requested, need.must[0], need.must[1]);
+  const wanted = useMemo(() => (lazy ? (needsFetch ? [...requested, need.ask] : requested) : [need.ask]), [lazy, requested, needsFetch, need]);
+  // Remember the window being asked for (state adjusted while rendering, React's way): it stays loaded when the view changes.
+  if (lazy && needsFetch && !extras.some((r) => rangeKey(r) === rangeKey(need.ask))) setExtras((prev) => [...prev, need.ask]);
 
   // Dummy (demo) student mode: legacy patchDummySchoolCalendar's generated classes/assignments/holidays/activities.
   const dummy = useDummyStudent();
-  const query = useQuery({
-    queryKey: ["student-school-calendar", schoolUUID, userId, getBackendAgenda(fetchView), startDate, endDate, timezone, dummy.key],
-    queryFn: () =>
-      dummy.enabled
-        ? dummy.student.calendar({ startDate, endDate, timezone })
-        : getSchoolCalendar({ schoolUUID, userId, startDate, endDate }),
-    enabled: Boolean(schoolUUID && userId && dummy.settled),
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
+  const enabled = Boolean(schoolUUID && userId && dummy.settled);
+  const results = useQueries({
+    queries: wanted.map((range) => ({
+      queryKey: ["student-school-calendar", schoolUUID, userId, range.startDate, range.endDate, timezone, dummy.key],
+      queryFn: () =>
+        dummy.enabled
+          ? dummy.student.calendar({ ...range, timezone })
+          : getSchoolCalendar({ schoolUUID, userId, startDate: range.startDate, endDate: range.endDate }),
+      enabled,
+      staleTime: 60_000,
+      refetchOnWindowFocus: false,
+    })),
   });
 
+  // The selected month's dots for the mini calendar, once the first screen is in (lazy mode, home only).
+  const firstDone = lazy && Boolean(results[0]?.isSuccess);
+  const monthKey = lazy ? rangeKey(monthRange(selectedDate)) : "";
+  useEffect(() => {
+    if (!lazy || !prefetchMonth || !firstDone || MONTH_PREFETCH_DELAY_MS === null) return undefined;
+    const timer = setTimeout(() => addExtra(monthRange(selectedDate)), MONTH_PREFETCH_DELAY_MS);
+    return () => clearTimeout(timer);
+    // selectedDate itself is not a dependency: only a different month matters
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lazy, prefetchMonth, firstDone, monthKey, addExtra]);
+
+  // Merge the answers: events once each (a later answer replaces an earlier one), holidays together, the course list of the first.
+  const signature = results.map((r) => r.dataUpdatedAt).join(",") + "#" + wanted.map(rangeKey).join(",");
+  const loadedRanges = wanted.filter((_, i) => results[i]?.isSuccess);
+  const data = useMemo(() => {
+    const byKey = new Map();
+    const holidays = new Set();
+    let courseDetails;
+    let anyData = false;
+    results.forEach((r) => {
+      const d = r.data;
+      if (!d) return;
+      anyData = true;
+      (d.event || []).forEach((event) => byKey.set([event.id ?? event.eventId ?? "", event.start ?? event.dueDate ?? event.paceDate ?? "", event.eventType ?? ""].join("|"), event));
+      (d.holidays || []).forEach((h) => holidays.add(h));
+      if (courseDetails === undefined && d.courseDetails) courseDetails = d.courseDetails;
+    });
+    return anyData ? { event: [...byKey.values()], holidays: [...holidays], courseDetails } : null;
+    // results is a new array every render; the signature says when it really changed
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature]);
+  // Loading until the days the view draws are in (nothing to load without a signed-in student).
+  const isLoading = !dummy.settled || (lazy ? enabled && !coveredBy(loadedRanges, need.must[0], need.must[1]) : Boolean(results[0]?.isLoading));
+  const isError = isLoading && results.length > 0 && results.every((r) => r.isError);
+
   const baseEvents = useMemo(
-    () => normalizeCalendarEvents(query.data?.event, { timezone, courseDetails: query.data?.courseDetails }),
-    [query.data, timezone]
+    () => normalizeCalendarEvents(data?.event, { timezone, courseDetails: data?.courseDetails }),
+    [data, timezone]
   );
 
   // Missed / Late refresh (legacy handleEventCompleted + refreshEventAttendance): when a class ends while the page is open,
@@ -164,8 +250,8 @@ export function useStudentCalendar({ schoolUUID, userId, timezone: timezoneOptio
   );
 
   const courseRegistry = useMemo(
-    () => buildCourseRegistry(normalizedEvents, courseColors, query.data?.courseDetails),
-    [normalizedEvents, courseColors, query.data?.courseDetails]
+    () => buildCourseRegistry(normalizedEvents, courseColors, data?.courseDetails),
+    [normalizedEvents, courseColors, data?.courseDetails]
   );
 
   useEffect(() => {
@@ -206,9 +292,9 @@ export function useStudentCalendar({ schoolUUID, userId, timezone: timezoneOptio
     goPrev,
     goNext,
     timezone,
-    isLoading: !dummy.settled || query.isLoading,
-    isError: query.isError,
-    holidays: query.data?.holidays || [],
+    isLoading,
+    isError,
+    holidays: data?.holidays || [],
     events: normalizedEvents,
     filteredEvents,
     courseRegistry,

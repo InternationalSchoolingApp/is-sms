@@ -114,7 +114,7 @@ export function K5NavRail({ menu, loading = false, open, onOpen, onClose, isPreK
         aria-label="Main menu"
         data-pin="side"
         data-open={open}
-        className="k5-side fixed [scrollbar-width:thin]   z-20 flex max-h-[calc(100vh-120px)] flex-col items-center gap-1 overflow-y-auto overflow-x-hidden rounded-[26px] border-[3px] border-k5-line bg-k5-card px-1.5 py-2.5 shadow-k5-chunky"
+        className="k5-side fixed [scrollbar-width:thin] z-20 flex max-h-[calc(100vh-120px)] flex-col items-center gap-1 overflow-y-auto overflow-x-hidden rounded-[26px] border-[3px] border-k5-line bg-k5-card px-1.5 py-2.5 shadow-k5-chunky"
       >
         <button
           type="button"
@@ -132,7 +132,7 @@ export function K5NavRail({ menu, loading = false, open, onOpen, onClose, isPreK
               Loading the menu…
             </span>
             {Array.from({ length: 12 }, (_, i) => (
-              <span key={i} aria-hidden="true" className="k5-ni relative flex w-[76px] flex-none flex-col items-center gap-1 py-1">
+              <span key={i} aria-hidden="true" className="k5-ni relative flex w-[46px] flex-none flex-col items-center gap-1 py-1">
                 <K5Sk className="h-[46px] w-[46px] rounded-[15px]" />
                 <K5Sk className="k5-nl h-2.5 w-12" />
               </span>
@@ -164,7 +164,7 @@ function flattenItems(items) {
 }
 
 const ITEM_CLASS =
-  "k5-ni relative flex w-[76px] flex-none touch-none select-none flex-col items-center gap-1 rounded-2xl py-1 text-center text-xs font-black leading-[1.15] no-underline [overflow-wrap:anywhere]";
+  "k5-ni relative flex w-[46px] h-[46px] flex-none touch-none select-none flex-col items-center gap-1 rounded-2xl text-center text-xs font-black leading-[1.15] no-underline [overflow-wrap:anywhere]";
 
 function NavTile({ icon, active, picture }) {
   const [Icon, tile, stroke] = iconFor(icon);

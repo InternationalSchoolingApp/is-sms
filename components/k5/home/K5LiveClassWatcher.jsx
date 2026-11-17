@@ -41,7 +41,7 @@ export function K5LiveClassWatcher() {
 
 function Watcher({ timezone }) {
   const { context } = useDashboardContext();
-  const model = useK5CalendarModel({ schoolUUID: context?.schoolUUID, userId: context?.userId, timezone });
+  const model = useK5CalendarModel({ schoolUUID: context?.schoolUUID, userId: context?.userId, timezone, prefetchMonth: false });
   const [joiningEvent, setJoiningEvent] = useState(null);
   const firstName = String(context?.userName || "").split(" ")[0];
 

@@ -140,7 +140,7 @@
  * Plain (unlayered) rules so they win over the item's Tailwind utilities.
  */
 .k5-side {
-  width: 96px;
+  width: 76px;
   transition: width 0.22s ease, box-shadow 0.22s ease;
 }
 .k5-side .k5-nl,
@@ -387,6 +387,19 @@
 }
 .k5-live-pill {
   animation: k5LivePill 1.6s ease-in-out infinite;
+}
+/* A live school activity: the same pulse in the School Activity colour of the colour clues (not the live-class blue). */
+@keyframes k5LivePillAct {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--k5-c-act) 50%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--k5-c-act) 0%, transparent);
+  }
+}
+.k5-live-pill.k5-live-pill-act {
+  animation-name: k5LivePillAct;
 }
 /* The Join class button of a live class: the same ring around its own hard shadow (flat in the High look). */
 @keyframes k5LiveJoin {
