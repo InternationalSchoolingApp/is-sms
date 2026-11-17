@@ -98,6 +98,8 @@
 :global([data-k5-band="middle"]:not([data-k5-high])) .gradePath>span:first-child{border-color:#ffffff45}
 :global([data-k5-band="middle"]:not([data-k5-high])) .nextGradePill{border-radius:10px}
 :global([data-k5-band="middle"]:not([data-k5-high])) .pathProgram{border-color:#ffffff55}
+:global([data-k5-band="middle"]:not([data-k5-high])) .pathProgram{display:flex;flex-direction:column;gap:1px;font-size:13px;opacity:1}
+:global([data-k5-band="middle"]:not([data-k5-high])) .pathProgram>span{font-size:10px;letter-spacing:.6px;text-transform:uppercase;opacity:.75}
 :global([data-k5-band="middle"]:not([data-k5-high])) .failHero .pathProgram{border-color:var(--k5-line)}
 :global([data-k5-band="middle"]:not([data-k5-high])) .matureMark{border-radius:50%;background:#ffffff18}
 :global([data-k5-band="middle"]:not([data-k5-high])) .failHero .matureMark{border-color:var(--k5-line);background:var(--k5-act);color:var(--k5-ac)}
