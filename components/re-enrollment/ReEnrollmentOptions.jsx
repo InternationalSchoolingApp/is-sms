@@ -110,7 +110,7 @@ function HelpCard({ uniqueId }) {
         href={chatUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="mb-3 flex items-center gap-3 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white transition-transform hover:scale-[1.02]"
+        className="mb-3 flex items-center gap-3 rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white transition-transform hover:scale-[1.02]"
       >
         <MessageCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
         Live Chat with School Administration

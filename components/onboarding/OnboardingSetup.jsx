@@ -285,8 +285,8 @@ function AcademicStep({ picker, fresh, chatUrl, uniqueId, session, onSaved }) {
 
   return (
     <Card header={`${fresh ? "Step 1 of 1 - " : ""}Academic Year Start Date`} bodyClassName="px-4 py-5 sm:px-6">
-      <p className="mb-2 text-center text-sm text-slate-600">Your academic year start date is when you will start your classes.</p>
-      <h3 className="mb-3 text-center text-base font-semibold text-primary">I want to start my academic year on</h3>
+      <p className="mb-2 px-3 py-3 text-center text-md font-bold bg-primary/10 text-primary">Your academic year start date is when you will start your classes.</p>
+      <h3 className="mb-3 text-center text-base font-bold text-primary">I want to start my academic year on</h3>
       <div className="mx-auto max-w-sm">
         <DatePicker
           icon={CalendarDays}
