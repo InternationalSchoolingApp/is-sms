@@ -17,7 +17,8 @@
     "verify:teacher-demo": "node --test scripts/verifyTeacherDemoRecording.mjs",
     "verify:teacher-review": "node --test scripts/verifyTeacherReview.mjs",
     "verify:teacher-contract": "node --test scripts/verifyTeacherContract.mjs",
-    "verify:teacher-verification": "node --test scripts/verifyTeacherVerification.mjs"
+    "verify:teacher-verification": "node --test scripts/verifyTeacherVerification.mjs",
+    "verify:teacher-bank": "node --test scripts/verifyTeacherBank.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

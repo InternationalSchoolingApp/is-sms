@@ -259,6 +259,46 @@ export async function submitTeacherProfileForReview(schoolUUID, request) {
 }
 
 /**
+ * Step 6 bank details prefill: GET teacher/signup/get-teacher-bank-details/{uniqueId} (the signed-in teacher's own, from
+ * the session, never one the browser names). Success is { status "1", data: { hasBankDetails, ... } } with the account
+ * number and the IBAN masked ("****1234"); null on a non-2xx answer.
+ */
+export async function getTeacherBankDetails(schoolUUID) {
+  const session = await getAccountSession();
+  if (!session?.uniqueId || session.schoolUUID !== schoolUUID) return null;
+  const response = await fetch(
+    await backendUrl(schoolUUID, `teacher/signup/get-teacher-bank-details/${encodeURIComponent(session.uniqueId)}`),
+    await withSmsAuth({ cache: "no-store" })
+  );
+  return parseJsonResponse(response);
+}
+
+/**
+ * Step 6 submit: POST teacher/signup/save-teacher-bank-details with { data } (utils/teacherBank.js buildSaveBankRequest).
+ * It completes the registration (stage 23 to 0). Success is `status === "1"`; "3" = session out; anything else carries a
+ * message (a rule the form did not catch, or a profile that is not on the bank step).
+ */
+export async function saveTeacherBankDetails(schoolUUID, request) {
+  return postPayload(schoolUUID, "teacher/signup/save-teacher-bank-details", request);
+}
+
+/**
+ * The last move of the registration: GET api/v1/teacher/registration/dashboard-link/{uniqueId} (the signed-in teacher's
+ * own). The Java teacher dashboard needs the browser's Java login, which a Next.js login does not give, so the backend
+ * hands out a one-time link that gives it. Success is { status "1", url } (only for a registered teacher); null on a
+ * non-2xx answer.
+ */
+export async function getTeacherDashboardLink(schoolUUID) {
+  const session = await getAccountSession();
+  if (!session?.uniqueId || session.schoolUUID !== schoolUUID) return null;
+  const response = await fetch(
+    await backendUrl(schoolUUID, `api/v1/teacher/registration/dashboard-link/${encodeURIComponent(session.uniqueId)}`),
+    await withSmsAuth({ cache: "no-store" })
+  );
+  return parseJsonResponse(response);
+}
+
+/**
  * Step 5 verification prefill: POST teacher/signup/get-teacher-verification-details with { userId } (the signed-in teacher's
  * own, otherwise 403 -> null). Success is status "1" with details.teacherVerification (the social links, the "I have none"
  * flag as haveSocialMediaAccount, the police acceptance), details.employeeReference (the references) and

@@ -566,7 +566,7 @@
               <li><b>Documents Under Verification</b> lock screen (the legacy modal's wording), which polls like the P5 lock. When an admin redirects the teacher to bank details (23), they go to Step 6. The Review and Contract steps no longer show the review lock to a teacher who is on Verification.</li>
             </ul></div>
             <div class="box"><h4>Bank &amp; finish</h4><ul>
-              <li>Prefill from the new <code>get-teacher-bank-details</code> (legacy is always blank).</li>
+              <li>Prefill from the new <code>get-teacher-bank-details</code> (legacy is always blank). The account number and the IBAN come back masked ("****1234"): they are only shown as a hint and are typed again, and the server refuses a value that starts with "*" (saving a masked value back would overwrite the real number).</li>
               <li>Fields:
                 <ul>
                   <li>Currency, account number, IBAN, and account type (Savings, Checking or Current). Fix the legacy placeholder value <code>" "</code>, which lets an unselected type through.</li>
@@ -575,9 +575,10 @@
                   <li>Optional: SWIFT, IFSC, routing number and other details.</li>
                 </ul>
               </li>
-              <li>Submit to <code>save-teacher-bank-details</code> (<code>accountType:'BANK_ACCOUNT'</code>), and firstReset becomes 0.</li>
-              <li>Show "Redirecting to dashboard", then hash-POST to the legacy <code>/{school}/dashboard/teacher/{uuid}</code> using <code>withLoginPayload</code>.</li>
-              <li>The process endpoint returns REDIRECT for firstReset 0, so a stale tab can't reopen the wizard.</li>
+              <li>As built: the currency and the account type start unchosen and both are required (the legacy page preselected AED, and its account-type placeholder was a space that slipped past its own check). Bank account only (the legacy screen never offered PayPal), no proof document (the legacy markup was commented out), no Back, names and bank names sent as typed (legacy title-cased them: "ICICI" became "Icici"), the phone digits only as in legacy. The currency list is the legacy list.</li>
+              <li>Submit to <code>save-teacher-bank-details</code> (<code>accountType:'BANK_ACCOUNT'</code>, <code>source:'NEXTJS'</code>), and firstReset becomes 0. <b>The server enforces it</b> (the legacy save checked seven fields and nothing else, took any user at any stage and moved them to "registered"): the caller must be the teacher (token user), on the bank step (stage 23) or already registered; the whole Next.js request is checked before anything is written (every starred field, the e-mail, phone and codes, lengths, no markup, no masked number). The joining date is set once, not on every save.</li>
+              <li><b>Finishing, as built (the plan's hash-POST and <code>withLoginPayload</code> do not work):</b> a Next.js login does not give the browser a Java login, and <code>withLoginPayload</code> only prefills the Java login page with a password the wizard never holds. So after the save the page asks <code>GET api/v1/teacher/registration/dashboard-link/{uniqueId}</code> (signed-in teacher only, and only once registered) for a one-time link (the same SSO_TOKENS table and expiry as the Java to Next.js handoff), shows "Redirecting to Dashboard" and follows it to the new Java endpoint <code>{school}/teacher/signup/enter-dashboard</code>. That spends the token and signs the teacher in to this browser the way the login page does (not the admin's view-as-user, which marks the session as a demo), then goes on to <code>/dashboard/teacher/{uuid}</code>. If no link can be had the teacher sees "Registration complete, please log in" with Go to Login. This goes away when the teacher dashboard moves to Next.js (P8).</li>
+              <li>The page does not read the wizard's stage again after the save: a registered teacher's stage answers REDIRECT to the login page, which would pre-empt the hand-off. A stale tab or a reload still lands on the login page, as planned.</li>
             </ul></div>
           </div>
           <div class="exit"><b>Exit</b>A teacher goes from sign-up to the teacher dashboard without opening a single JSP wizard page.</div>

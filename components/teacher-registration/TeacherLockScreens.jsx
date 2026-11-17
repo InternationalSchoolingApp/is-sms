@@ -101,6 +101,30 @@ export function TeacherVerificationUnderReview(props) {
 }
 
 /**
+ * The registration is complete: the legacy "Redirecting to Dashboard" while the one-time dashboard link is fetched and
+ * followed, or, when no link could be had, a plain "log in to continue" with Go to Login.
+ */
+export function TeacherRegistrationComplete({ failed, onGoToLogin }) {
+  return (
+    <div className="mx-auto mt-6 max-w-xl rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm md:mt-8" data-testid="teacher-registration-complete">
+      <h2 className="text-xl font-extrabold text-black md:text-2xl">Registration Complete</h2>
+      {failed ? (
+        <>
+          <p className="mt-4 text-[15px] font-bold text-black">Your registration is complete. Please log in to continue to your dashboard.</p>
+          <Button type="button" onClick={onGoToLogin} className="mt-5 cursor-pointer rounded-md bg-primary px-5 hover:bg-primary/90">
+            Go to Login
+          </Button>
+        </>
+      ) : (
+        <p className="mt-4 flex items-center justify-center gap-2 text-[15px] font-bold text-black" role="status">
+          <Loader2 className="h-4 w-4 animate-spin" /> Redirecting to Dashboard
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
  * A declined teacher (stage 15 / 25): the backend's message ("Your profile has been declined") and a Log out button.
  * The legacy wizard ended the teacher's login and showed the message on the login page; here the wizard shows it.
  */

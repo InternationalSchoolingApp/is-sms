@@ -1,6 +1,7 @@
-import { TeacherStepPlaceholder } from "@/components/teacher-registration/TeacherStepPlaceholder";
+import { TeacherBankStep } from "./TeacherBankStep";
 
-// Server Component route for teacher registration step 6. Placeholder body until the real screen is built.
-export default function TeacherBankDetailsPage() {
-  return <TeacherStepPlaceholder step={6} title="Bank details" />;
+// Server Component route for teacher registration step 6 ("Bank details"): the bank form, and, once it is saved, the
+// hand-off to the teacher dashboard.
+export default function TeacherBankPage() {
+  return <TeacherBankStep />;
 }
