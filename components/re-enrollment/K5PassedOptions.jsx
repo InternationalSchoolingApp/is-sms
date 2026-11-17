@@ -84,18 +84,20 @@ export function K5PassedOptions({ passed, isMiddle, isHigh, studentName, grade, 
         <div className={`${styles.options} ${passed && hasDiscount ? styles.withOffer : ""}`}>
           <h2 className={mature ? styles.matureHeading : undefined}>{mature && !promoted ? "Choose how you want to continue" : "Continue with"}{!mature && <Sparkles aria-hidden="true" />}</h2>
           {options.map(option => {
+            if (completedGrade12 && option.enrollmentType === "REGISTRATION_IMPORVE_GRADES") return null;
             const nextGrade = option.enrollmentType === "REGISTRATION_NEXT_GRADE";
             const optionGrade = option.grade?.name || grade;
             const selectedProgram = programOf(option);
             const programLabel = option.programs?.find(program => program.learningProgram === selectedProgram)?.learningProgramLabel || option.learningProgramLabel;
             const repeatGrade = option.enrollmentType === "REGISTRATION_REPEAT_GRADE";
             const individualCourse = option.enrollmentType === "REGISTRATION_IMPORVE_GRADES";
-            const title = nextGrade ? `Re-Enroll Today${optionGrade ? ` for ${optionGrade}` : ""}` : repeatGrade ? "Repeat the entire grade" : (isHigh ? "Take an Individual Course" : "Take an individual course");
+            const completedCourse = completedGrade12 && repeatGrade;
+            const title = completedCourse ? "Enroll in a single course program - Flexy" : nextGrade ? `Re-Enroll Today${optionGrade ? ` for ${optionGrade}` : ""}` : repeatGrade ? "Repeat the entire grade" : (isHigh ? "Take an Individual Course" : "Take an individual course");
             return <div className={styles.option} key={option.enrollmentType}>
-              <span className={styles.tile}>{individualCourse ? (isHigh ? <GraduationCap size={22} aria-hidden="true" /> : <BookOpen size={28} aria-hidden="true" />) : <RefreshCw size={28} aria-hidden="true" />}</span>
+              <span className={styles.tile}>{completedCourse ? <GraduationCap size={22} aria-hidden="true" /> : individualCourse ? (isHigh ? <GraduationCap size={22} aria-hidden="true" /> : <BookOpen size={28} aria-hidden="true" />) : <RefreshCw size={28} aria-hidden="true" />}</span>
               <div className={styles.optionCopy}>
                 <div className={styles.optionTitle}><h3>{title}</h3>{hasDiscount && nextGrade && <span className={styles.saving}>Saves {discount.currencyLabel} {discount.amount}</span>}</div>
-                <p>{nextGrade ? `Continue with your ${programLabel ? `${programLabel} program` : "learning program"}${optionGrade ? ` in ${optionGrade}` : ""}` : individualCourse ? "Retake only the subject you did not pass." : repeatGrade && !promoted ? `Repeat ${optionGrade || "this grade"} and finish stronger this time.` : promoted ? "Keep learning and build your skills." : "Choose this option to continue your learning journey."}</p>
+                <p>{completedCourse ? "Pick the courses you want and learn at your own pace." : nextGrade ? `Continue with your ${programLabel ? `${programLabel} program` : "learning program"}${optionGrade ? ` in ${optionGrade}` : ""}` : individualCourse ? "Retake only the subject you did not pass." : repeatGrade && !promoted ? `Repeat ${optionGrade || "this grade"} and finish stronger this time.` : promoted ? "Keep learning and build your skills." : "Choose this option to continue your learning journey."}</p>
               </div>
               <button type="button" className={styles.next} disabled={pending} onClick={() => choose(option)} aria-label={`Next: ${title}`}>
                 {pending && pendingType === option.enrollmentType ? "Please wait…" : <>Next <ArrowRight size={20} aria-hidden="true" /></>}

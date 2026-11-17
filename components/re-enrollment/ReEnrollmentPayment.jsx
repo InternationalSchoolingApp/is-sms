@@ -161,6 +161,7 @@ function PaymentScreen() {
             )
           ) : (
             <FeePaymentPlans
+              isReEnrollment
               fee={data}
               options={planOptions}
               selected={currentPlan}
