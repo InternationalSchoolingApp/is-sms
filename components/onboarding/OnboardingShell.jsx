@@ -24,7 +24,11 @@ export function OnboardingShell({ schoolName, logoUrl, rootcss, studentName, onL
           {logoUrl ? (
             <Image src={logoUrl} alt={schoolName || ""} width={160} height={36} className="h-9 w-auto max-w-[160px] sm:max-w-[220px]" unoptimized />
           ) : (
-            <p className="text-sm font-bold text-black">{schoolName}</p>
+            // Same fallback as the dashboard header while the logo link is still loading (or a school has none).
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-xs font-bold text-white">IS</div>
+              <span className="hidden text-sm font-bold text-black sm:inline">{schoolName}</span>
+            </div>
           )}
           <div className="flex items-center gap-3">
             {studentName && <span className="hidden text-sm font-semibold text-slate-700 sm:inline">{studentName}</span>}

@@ -177,6 +177,8 @@ function useResolveGradeBand({ role, session, authenticated }) {
 function useResolveDashboardContext({ role = "student" } = {}) {
   const { data: session, status } = useSession();
   const [logoUrl, setLogoUrl] = useState(null);
+  // True once the logo request has finished (found, missing or failed) - lets a page wait for the real logo.
+  const [logoSettled, setLogoSettled] = useState(false);
   const authenticated = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
   const queryClient = useQueryClient();
 
@@ -250,7 +252,10 @@ function useResolveDashboardContext({ role = "student" } = {}) {
       .then((links) => {
         if (!cancelled && links?.logoUrl) setLogoUrl(links.logoUrl);
       })
-      .catch((err) => console.error("School links fetch failed:", err));
+      .catch((err) => console.error("School links fetch failed:", err))
+      .finally(() => {
+        if (!cancelled) setLogoSettled(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -278,7 +283,7 @@ function useResolveDashboardContext({ role = "student" } = {}) {
       }
     : null;
 
-  return { status, session, context, menu, menuLoading, logoUrl, ready, ...grade };
+  return { status, session, context, menu, menuLoading, logoUrl, logoSettled, ready, ...grade };
 }
 
 export function DashboardProvider({ role = "student", children }) {

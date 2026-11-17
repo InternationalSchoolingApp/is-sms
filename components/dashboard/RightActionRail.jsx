@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MessageCircle, Megaphone, Newspaper, NotebookText } from "lucide-react";
 import { getAnnouncementDetails, getChatUnseenCount } from "@/services/dashboardApi";
@@ -24,7 +25,18 @@ import { K5DiaryPanel } from "@/components/k5/panels/K5DiaryPanel";
  * variant="k5": the Grade K–5 look (Messages / News / Notices / Teacher), same data and panels.
  * middle (with variant="k5"): the Grade 6–8 "Balanced" rail — one blue tint / rim for all four buttons.
  */
-export function RightActionRail({ chatUrl, diaryUrl, schoolUUID, userId, uniqueId, userRole, email, schoolName, variant = "default", middle = false, high = false }) {
+// Legacy parity: the re-enrollment screen (studentGraduate == 'Y' -> renderMigrationDetailsOptionContent) never called
+// getAnnouncementAndNewsContent(), so none of the four rail buttons (Talk to Us, Announcement, News, Diary) existed there.
+// Gating in this wrapper (not inside the rail) also keeps the rail's queries and the diary bridge iframe from mounting.
+const RE_ENROLLMENT_PATH = /\/student\/re-enrollment(\/|$)/;
+
+export function RightActionRail(props) {
+  const pathname = usePathname();
+  if (RE_ENROLLMENT_PATH.test(pathname || "")) return null;
+  return <RightActionRailContent {...props} />;
+}
+
+function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueId, userRole, email, schoolName, variant = "default", middle = false, high = false }) {
   const queryClient = useQueryClient();
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const [newsOpen, setNewsOpen] = useState(false);

@@ -4,8 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { CalendarDays, CheckCircle2, Info } from "lucide-react";
-import { FullScreenLoader } from "@/components/common/Loader";
+import { CalendarDays, CheckCircle2, Info, LoaderCircle, MessageCircle } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ActionButton, Card, SupportCard } from "@/components/re-enrollment/ReEnrollmentParts";
@@ -122,13 +121,21 @@ export function OnboardingSetup() {
       </div>
     );
   }
-  if (!live || query.isPending || leaving) return <FullScreenLoader />;
+  if (!live || query.isPending || leaving) {
+    // Inline (not the dark full-screen overlay): the frame's logo / name sit above and would be dimmed while loading.
+    return (
+      <div role="status" aria-live="polite" className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-primary">
+        <LoaderCircle className="size-10 animate-spin" aria-hidden="true" />
+        <p className="text-sm font-semibold">Loading your details...</p>
+      </div>
+    );
+  }
 
   const firstName = String(context.userName || "").split(" ")[0] || "there";
   const heading = plan.step === "done" ? "very well done. Let's get started!" : plan.step === "reminder" ? "an important reminder" : "let's get started!";
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-3 py-3 sm:px-4">
+    <div className="mx-auto w-full max-w-[1310px] px-4 py-3 sm:px-6">
       <h2 className="mb-5 text-center text-xl font-bold text-black">
         Hi {firstName}, {heading}
       </h2>
@@ -293,7 +300,7 @@ function AcademicStep({ picker, fresh, chatUrl, uniqueId, session, onSaved }) {
         />
       </div>
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
-        <button type="button" onClick={() => setDecideLater(true)} className="cursor-pointer text-sm font-semibold text-red-600 underline-offset-2 hover:underline">
+        <button type="button" onClick={() => setDecideLater(true)} className="cursor-pointer rounded-md border border-red-600 px-5 py-2 text-sm font-semibold text-red-600 hover:bg-red-50">
           Decide Later
         </button>
         <ActionButton className={date ? GREEN : ""} disabled={!date} onClick={() => setConfirming(true)}>
@@ -308,12 +315,18 @@ function AcademicStep({ picker, fresh, chatUrl, uniqueId, session, onSaved }) {
           </DialogHeader>
           <p className="text-sm text-black">Please choose your academic year start date carefully. You will not be able to edit this later.</p>
           {chatLink && (
-            <p className="text-sm">
-              For any queries, please{" "}
-              <a href={chatLink} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary underline">
+            <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
+              <p>For any queries:</p>
+              <a
+                href={chatLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-fit items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white transition-transform hover:scale-[1.02] hover:bg-green-700"
+              >
+                <MessageCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
                 Live Chat with School Administration
               </a>
-            </p>
+            </div>
           )}
           <div className="mt-2 flex justify-center gap-2">
             <button type="button" disabled={save.isPending} onClick={() => setConfirming(false)} className="cursor-pointer rounded-md border border-primary px-5 py-2 text-sm font-semibold text-primary hover:bg-primary/5 disabled:opacity-60">
