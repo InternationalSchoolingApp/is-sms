@@ -101,7 +101,7 @@ export function K5PassedOptions({ passed, isMiddle, isHigh, studentName, grade, 
       <h2 id="k5-re-help"><Headphones size={30} aria-hidden="true" />Need Help?</h2>
       <a className={styles.next} href={`${CHAT_BASE_URL}/onboarding-support?uuid=${encodeURIComponent(uniqueId || "")}`} target="_blank" rel="noopener noreferrer"><MessageCircle aria-hidden="true" />Talk to us</a>
       <a className={styles.contact} href={`tel:${SUPPORT_PHONE.replace(/[^+\d]/g, "")}`}><span><Phone aria-hidden="true" /></span><div><h3>Phone Support</h3><p>{SUPPORT_PHONE}</p></div></a>
-      <a className={styles.contact} href={`mailto:${SUPPORT_EMAIL}`}><span><Mail aria-hidden="true" /></span><div><h3>Email Support</h3><p>{isHigh ? <>{SUPPORT_EMAIL.split("@")[0]}@<wbr />{SUPPORT_EMAIL.split("@")[1]}</> : SUPPORT_EMAIL}</p></div></a>
+      <a className={styles.contact} href={`mailto:${SUPPORT_EMAIL}`}><span><Mail aria-hidden="true" /></span><div><h3>Email Support</h3><p>{SUPPORT_EMAIL.split("@")[0]}@<wbr />{SUPPORT_EMAIL.split("@")[1]}</p></div></a>
     </aside>
   </div>;
 }
