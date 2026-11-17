@@ -6,21 +6,15 @@ import toast from "react-hot-toast";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import {
-  useDiscardTeacherDemoAttempt,
-  useStartTeacherDemo,
-  useTeacherDemoPlayback,
-  useTeacherDemoTranscript,
-} from "@/hooks/useTeacherDemoRecorder";
+import { TeacherDemoRecordingViewer } from "@/components/teacher-registration/TeacherDemoRecordingViewer";
+import { useDiscardTeacherDemoAttempt, useStartTeacherDemo } from "@/hooks/useTeacherDemoRecorder";
 import {
   DEMO_STATE,
   DEMO_STATE_LABELS,
   demoRecordButtonLabel,
   formatDemoDateTime,
   isPendingDemoState,
-  parseDemoTranscript,
   readyDemoAttempts,
-  transcriptSourceUrl,
 } from "@/utils/teacherDemoRecording";
 
 const GUIDELINES = [
@@ -88,17 +82,6 @@ function closeTab(tab) {
   }
 }
 
-// Next to each recording file: can it be played right now (legacy "Available / Archived / Restoring" badges).
-function AvailabilityBadge({ availability }) {
-  const [text, tone] =
-    availability === "archived"
-      ? ["Archived", "bg-amber-50 text-amber-700"]
-      : availability === "restoring"
-        ? ["Restoring", "bg-sky-50 text-sky-700"]
-        : ["Available", "bg-emerald-50 text-emerald-700"];
-  return <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${tone}`}>{text}</span>;
-}
-
 function StateBadge({ state }) {
   const tone =
     state === DEMO_STATE.READY
@@ -129,10 +112,6 @@ export function TeacherDemoRecorder({ context, userId, demo, chosenId, onChoose,
   const [opening, setOpening] = useState(false); // saving the form before the drawer opens
   const [hostLink, setHostLink] = useState(null); // { hostUrl, title } while the "Start Demo" dialog is open
   const [playing, setPlaying] = useState(null); // an attempt whose recordings are open
-  const [video, setVideo] = useState(null); // { url, label } while a recording plays
-  const [transcript, setTranscript] = useState(null); // { lines | null } while the transcript is open
-  const [playError, setPlayError] = useState("");
-  const [loadingUrl, setLoadingUrl] = useState("");
   const [redoingId, setRedoingId] = useState(null); // the attempt being removed and redone
   const [confirmRedo, setConfirmRedo] = useState(null); // a finished attempt waiting for "yes, remove it"
   const [startError, setStartError] = useState("");
@@ -140,9 +119,6 @@ export function TeacherDemoRecorder({ context, userId, demo, chosenId, onChoose,
 
   const startDemo = useStartTeacherDemo({ context, userId });
   const discard = useDiscardTeacherDemoAttempt({ context });
-  const playback = useTeacherDemoPlayback({ context });
-  const readTranscript = useTeacherDemoTranscript({ context });
-  const transcriptSource = transcriptSourceUrl(playing?.recordings);
 
   const data = demo.data;
   const attempts = data?.attempts ?? [];
@@ -215,34 +191,6 @@ export function TeacherDemoRecorder({ context, userId, demo, chosenId, onChoose,
       toast.error("Something went wrong. Please try again.");
     } finally {
       setOpening(false);
-    }
-  }
-
-  async function handlePlay(recording) {
-    setPlayError("");
-    setLoadingUrl(recording.url);
-    try {
-      const answer = await playback.mutateAsync(recording.url);
-      if (answer?.url) setVideo({ url: answer.url, label: recording.label });
-      else setPlayError(answer?.message || "We couldn't load this recording.");
-    } catch {
-      setPlayError("We couldn't load this recording.");
-    } finally {
-      setLoadingUrl("");
-    }
-  }
-
-  async function handleReadTranscript(recordingUrl) {
-    setPlayError("");
-    setLoadingUrl(recordingUrl);
-    try {
-      const answer = await readTranscript.mutateAsync(recordingUrl);
-      if (typeof answer?.content === "string") setTranscript({ lines: parseDemoTranscript(answer.content) });
-      else setPlayError(answer?.message || "Failed to load transcript.");
-    } catch {
-      setPlayError("Failed to load transcript.");
-    } finally {
-      setLoadingUrl("");
     }
   }
 
@@ -496,78 +444,7 @@ export function TeacherDemoRecorder({ context, userId, demo, chosenId, onChoose,
         </DialogContent>
       </Dialog>
 
-      {/* every file Lens made for the attempt (screen share, speaker view, audio ...), then its transcript */}
-      <Dialog open={playing !== null} onOpenChange={(open) => !open && setPlaying(null)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold">Available Recordings | {playing?.label}</DialogTitle>
-            <DialogDescription>Play a recording, or read the transcript of the meeting.</DialogDescription>
-          </DialogHeader>
-          {playError && <p className="text-xs text-red-600">{playError}</p>}
-          <div className="flex flex-col divide-y divide-slate-100">
-            {playing?.recordings.length === 0 && <p className="py-2 text-xs text-slate-500">No recordings available.</p>}
-            {playing?.recordings.map((recording, index) => (
-              <div key={recording.url} className="flex items-center justify-between gap-2 py-2">
-                <span className="flex flex-wrap items-center gap-2 text-sm text-black">
-                  {index + 1}. {recording.label}
-                  <AvailabilityBadge availability={recording.availability} />
-                </span>
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={!recording.playable || loadingUrl === recording.url}
-                  onClick={() => handlePlay(recording)}
-                  className="cursor-pointer"
-                >
-                  {loadingUrl === recording.url ? "Loading…" : "Play"}
-                </Button>
-              </div>
-            ))}
-            {transcriptSource && (
-              <div className="flex items-center justify-between gap-2 py-2">
-                <span className="text-sm text-black">{playing.recordings.length + 1}. Transcript</span>
-                <Button type="button" size="sm" disabled={loadingUrl === transcriptSource} onClick={() => handleReadTranscript(transcriptSource)} className="cursor-pointer">
-                  {loadingUrl === transcriptSource ? "Loading…" : "Read"}
-                </Button>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={video !== null} onOpenChange={(open) => !open && setVideo(null)}>
-        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold">Demo Video | {video?.label}</DialogTitle>
-            <DialogDescription className="sr-only">Playing your demo recording.</DialogDescription>
-          </DialogHeader>
-          {video && (
-            <video key={video.url} className="max-h-[70vh] w-full rounded-md bg-black" controls autoPlay src={video.url}>
-              Your browser does not support the video tag.
-            </video>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={transcript !== null} onOpenChange={(open) => !open && setTranscript(null)}>
-        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold">Transcript</DialogTitle>
-            <DialogDescription className="sr-only">The transcript of your demo meeting.</DialogDescription>
-          </DialogHeader>
-          <div className="max-h-[65vh] overflow-y-auto text-left">
-            {transcript?.lines ? (
-              transcript.lines.map((line, index) => (
-                <p key={index} className="min-h-[1em] text-sm whitespace-pre-wrap text-black">
-                  {line}
-                </p>
-              ))
-            ) : (
-              <p className="text-base text-black">No Transcript Available</p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <TeacherDemoRecordingViewer context={context} attempt={playing} onClose={() => setPlaying(null)} />
     </div>
   );
 }

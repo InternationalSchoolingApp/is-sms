@@ -240,7 +240,7 @@
 
       <div class="stepper">
         <div><small>STEP 1</small><b>Personal Details</b><em>firstReset 11</em></div>
-        <div><small>STEP 2</small><b>Professional Details + Demo</b><em>firstReset 12</em></div>
+        <div><small>STEP 2</small><b>Professional Details + Demo</b><em>11 &rarr; 12</em></div>
         <div><small>STEP 3</small><b>Demo Under Review</b><em>13 / 24 lock</em></div>
         <div><small>STEP 4</small><b>Contract Details</b><em>14 / 19 &rarr; 22</em></div>
         <div><small>STEP 5</small><b>Verification</b><em>22 &rarr; 21 lock</em></div>
@@ -374,7 +374,7 @@
             </ul></div>
             <div class="box"><h4>New JSON APIs</h4><ul>
               <li><code>GET {school}/api/v1/teacher/registration/process/{uuid}?hash=</code>: returns firstReset, signupPage, the wizard step (1&ndash;6), and a <code>state</code>: <code>FORM</code>, <code>LOCKED</code> (lock reason UNDER_REVIEW or VERIFICATION) or <code>REDIRECT</code> for declined, withdrawn or completed teachers. The "contract expired" case is not a state here: it comes from the existing agreement-details response and is handled inside the Contract step (P5). It reuses the logic of <code>signupTeacherProccess</code>, with one fix: firstReset 20 (a legacy state no admin option can set any more) opens the Contract step, the same as 14, instead of falling through to Step 2.</li>
-              <li>Teacher stage-status endpoint for lock-screen polling, shaped like the student <code>SignupStageStatusResponse</code> (status, signupPage, redirectUri).</li>
+              <li>Teacher stage-status endpoint for lock-screen polling. As built it answers exactly like the process endpoint (the same <code>TeacherRegistrationStageResponse</code>), and the lock screen simply refetches the wizard's process query every 30 seconds.</li>
               <li><code>teacher/signup/get-teacher-bank-details</code>, so Step 6 can be prefilled. Mask the account number in the response.</li>
               <li><code>teacher/signup/upload-document</code>, a multipart endpoint that takes one file plus its <code>fileType</code>. Storage is the same as legacy teacher uploads: <code>AttachmentUtils</code> logic, the bucket from <code>SCHOOL_SETTINGS_AWS</code> (testseri locally), public-read, and the <code>ATTACHMENTS</code> row upserted per (<code>LOGIN_ID</code>, <code>ATTACHMENT_TYPE</code>). Two things differ:
                 <ul>
@@ -483,7 +483,7 @@
               </li>
               <li><b>Grades Taught</b> dialog: multi-select. Schools 1 and 6 offer KG&ndash;12; others offer 1&ndash;12.</li>
               <li><b>Courses Taught</b> dialog: Elementary, Middle and High tabs, multi-select, with selected chips. At least one course is required.</li>
-              <li>Uploads (JPG, PNG or PDF, max about 10 MB):
+              <li>Uploads (JPG, PNG or PDF; the backend takes about 10 MB, but as built the upload goes through a Next.js route handler that caps files at 4.4 MB because of Vercel's body limit; a larger limit needs a direct-to-backend upload, still open):
                 <ul>
                   <li>Highest Degree (fileType 2)</li>
                   <li>CV (4)</li>
@@ -514,7 +514,7 @@
               <li>Re-attempt calls <code>teacher-demo-recording-reattempt-by-teacher</code>, then starts a new meeting.</li>
               <li>Playback uses <code>videos/signed-url</code> and plays in a <code>&lt;video&gt;</code> modal. Archived recordings (Glacier or Deep Archive) can't be played. The transcript comes from <code>transcript/show-content</code>.</li>
               <li>The chosen recording is saved as <code>demoMeetingId</code> with the stage. Teachers with a saved <code>demoVedioLink</code> keep the old "paste a demo link" mode.</li>
-              <li>Watch out: <code>get-teacher-demo-recordings</code> and <code>create-…-demo-meeting</code> expect a <b>raw JSON body</b>, not the <code>payload</code> envelope.</li>
+              <li>As built, every demo call (<code>get-teacher-demo-recordings</code>, <code>create-…-demo-meeting</code>, the re-attempt) goes through the <code>payload</code> envelope like the other teacher calls; the backend now also checks the signed-in teacher owns the meeting or session.</li>
             </ul></div>
           </div>
           <div class="exit"><b>Exit</b>The teacher records a demo, sees it become playable, picks it, saves, and firstReset becomes 12. Refreshing mid-recording resumes polling. Re-attempts stop at the configured limit. Meeting creation and the polling and table logic are tested automatically in the browser; one real recording run is done by hand, following a checklist.</div>
@@ -530,15 +530,16 @@
           <p class="goal">The teacher submits for review, waits for an admin decision, then signs the contract.</p>
           <div class="cols">
             <div class="box"><h4>Review &amp; lock</h4><ul>
-              <li>Step 3 is read-only, with Personal and Professional sections. Edit returns to Step 1 or 2 <b>and reloads their data</b> (legacy only switches tabs). The demo "View" opens the recording.</li>
+              <li>Step 3 is read-only, with Personal and Professional sections. Personal Edit opens a popup right on the review (as in the student review: Save, and nothing is sent when nothing changed); Professional Edit returns to Step 2 <b>and reloads its data</b> (legacy only switches tabs). The demo "View" opens the recording.</li>
               <li>Next opens the <b>Note</b> confirmation ("no changes once submitted"). Submit calls <code>profile-confirmation</code> (<code>SEND_MAIL_FOR_PENDING_APPROVAL</code>) and firstReset becomes 13.</li>
-              <li><b>Demo Under Review</b> lock screen, for firstReset 13 and 24: its only actions are Log out and Check status. It polls the stage-status endpoint every 30 seconds, so approval (14) moves the teacher to Step 4 automatically.</li>
+              <li><b>Demo Under Review</b> lock screen, for firstReset 13 and 24 (the legacy modal's wording, the same for both): its only actions are Log out and Check status. It refetches the wizard's process query every 30 seconds (paused while the tab is hidden), so approval (14) moves the teacher to Step 4 automatically.</li>
+              <li><b>The lock is enforced on the server too</b> (the legacy wizard only hid its forms): <code>save-basic-details</code> and <code>save-academic-professional-details</code> refuse a profile that is with the school (13, 14, 19&ndash;24), and <code>profile-confirmation</code> takes only the signed-in teacher's own profile at stage 12. Review reads everything it shows from the server, so a reload shows the same.</li>
             </ul></div>
             <div class="box"><h4>Contract</h4><ul>
-              <li>Load from <code>get-teacher-signup-agreement-details</code>. If <code>validityEnd</code> is missing or in the past, show the <b>Contract Expired</b> lock (Log out only) and stop.</li>
-              <li>Render the agreement HTML <b>sanitized</b> with DOMPurify, since the HTML comes from the backend. Show the logo, or the letterhead for WLP schools, plus the recipient block and date.</li>
-              <li>Signature upload: JPG or PNG, 300 KB or less. It is placed in the signature box and today's date is filled in. Add the "Acceptance of Offer" checkbox.</li>
-              <li>"Accept Contract" opens the <b>Are you sure?</b> dialog. Yes calls <code>save-Teacher-Declaration</code> with the contract HTML (including the signature), plus ip-api location JSON and browser details. firstReset becomes 22. The backend uses <code>decodePreservePlus</code>.</li>
+              <li>Load from <code>get-teacher-signup-agreement-details</code>. The <b>server</b> decides what the teacher sees (<code>contractState</code>): <b>NOT_READY</b> (no published contract: "Your contract is being prepared", the legacy page wrongly called this expired), <b>EXPIRED</b> (the legacy "Contract Expired" wording; the end of the last valid day in the teacher's own timezone, Singapore if none), <b>READY</b> (the contract to sign) or <b>ACCEPTED</b>. Both waiting screens have Check status and look again every 30 seconds, so a published or re-issued contract appears by itself. The teacher only ever gets a published contract, and only their own (staff keep reading anyone's for the admin pages).</li>
+              <li>Render the agreement HTML <b>sanitized</b> with DOMPurify, since the HTML comes from the backend. Show the logo, or the letterhead for WLP schools (the backend now returns it, with the school's address and the publish date and time), plus the recipient block and date.</li>
+              <li>Signature upload: JPG or PNG, 300 KB or less, checked in the browser and again on the server (the file's real type, not its claimed one). It is previewed in the signature box with today's date, as in legacy. A contract that has no signature area cannot be accepted. Add the "Acceptance of Offer" checkbox.</li>
+              <li>"Accept Contract" opens the <b>Are you sure?</b> dialog. Yes calls <code>save-Teacher-Declaration</code> with <b>only the signature image</b>: the server puts it and today's date into the published contract itself (the legacy page posted the whole HTML, which the server stored as it came, so the terms could be changed and the HTML went raw to the admin screens). The address and browser recorded with the acceptance are the ones the Next.js server saw, not a browser-side ip-api lookup. firstReset becomes 22. The server accepts only the signed-in teacher's own, latest, published, unexpired, not yet accepted contract, and only at stages 14, 19 and 20 (the legacy endpoint took any stage, so a teacher at any step could jump to 22). The page treats only <code>status "1"</code> as success (legacy treated any answer that was not an explicit failure as accepted).</li>
               <li>Back is hidden on Steps 4&ndash;6, as in legacy.</li>
             </ul></div>
           </div>
@@ -666,8 +667,8 @@
           <tr><td>2</td><td><code>get-teacher-academic-professional-details</code> &middot; <code>get-teacher-signup-subject-details</code></td><td>load</td><td><span class="badge b-reuse">reuse</span></td></tr>
           <tr><td>2</td><td><code>save-academic-professional-details</code></td><td>→ 12</td><td><span class="badge b-reuse">reuse</span> unchanged, sent with no attachments</td></tr>
           <tr><td>2, 5</td><td><code>teacher/signup/upload-document</code> (multipart, browser → backend)</td><td>one file, synchronous S3 upload, <code>ATTACHMENTS</code> upsert</td><td><span class="badge b-new">new</span></td></tr>
-          <tr><td>2 demo</td><td><code>create-teacher-registration-demo-meeting</code> (raw JSON) &middot; <code>GET start-teacher-registration-demo-meeting</code></td><td>Lens meeting</td><td><span class="badge b-reuse">reuse</span></td></tr>
-          <tr><td>2 demo</td><td><code>get-teacher-demo-recordings</code> (raw JSON) &middot; <code>teacher-demo-recording-reattempt-by-teacher</code></td><td>poll / re-attempt</td><td><span class="badge b-reuse">reuse</span></td></tr>
+          <tr><td>2 demo</td><td><code>create-teacher-registration-demo-meeting</code> &middot; <code>GET start-teacher-registration-demo-meeting</code></td><td>Lens meeting</td><td><span class="badge b-reuse">reuse</span></td></tr>
+          <tr><td>2 demo</td><td><code>get-teacher-demo-recordings</code> &middot; <code>teacher-demo-recording-reattempt-by-teacher</code></td><td>poll / re-attempt</td><td><span class="badge b-reuse">reuse</span></td></tr>
           <tr><td>2 demo</td><td><code>videos/signed-url</code> &middot; <code>transcript/show-content</code> &middot; <code>api/v1/get-setting</code></td><td>playback, attempt limit</td><td><span class="badge b-reuse">reuse</span></td></tr>
           <tr><td>3</td><td><code>profile-confirmation</code></td><td>→ 13, under-review emails</td><td><span class="badge b-reuse">reuse</span></td></tr>
           <tr><td>4</td><td><code>get-teacher-signup-agreement-details</code> &middot; <code>save-Teacher-Declaration</code></td><td>→ 22, contract PDF</td><td><span class="badge b-reuse">reuse</span></td></tr>
@@ -709,7 +710,7 @@
           <tr><td>Note: review documents</td><td>Step 5 Next</td><td>shared <code>ConfirmDialog</code></td><td>P6</td></tr>
           <tr><td>Documents Under Verification (locked)</td><td>after submit, firstReset 21</td><td>full-page lock + polling</td><td>P6</td></tr>
           <tr><td>Logout confirm</td><td>header logout</td><td>shared <code>LogoutConfirmDialog</code></td><td>P2</td></tr>
-          <tr><td>Profile declined</td><td>firstReset 15 / 25</td><td>process API → REDIRECT to login with message</td><td>P1/P2</td></tr>
+          <tr><td>Profile declined</td><td>firstReset 15 / 25</td><td>process API → REDIRECT with the message; the wizard shows a "Profile declined" screen with Log out (the Java login page cannot show the message to a Next.js session). Withdrawn and completed teachers (no message) go to the login page.</td><td>P1/P2</td></tr>
         </tbody>
       </table></div>
     </section>
@@ -725,13 +726,13 @@
           <tr><td><code>app/[school]/teacher-registration/step/layout.jsx</code> + <code>TeacherWizardChrome.jsx</code></td><td><span class="badge b-new">new</span> mount the shell once</td></tr>
           <tr><td><code>app/[school]/teacher-registration/step/{personal-details, professional-details, review, contract, verification, bank-details}/</code></td><td><span class="badge b-new">new</span> server <code>page.jsx</code> + client <code>*Step.jsx</code></td></tr>
           <tr><td><code>components/teacher-registration/*</code></td><td><span class="badge b-new">new</span> stage components, demo recorder, pickers, lock screens</td></tr>
-          <tr><td><code>hooks/useTeacherRegistrationContext.js</code>, <code>useTeacherWizardResume.js</code>, <code>useTeacherStageStatusPoll.js</code>, <code>useDemoRecordings.js</code></td><td><span class="badge b-new">new</span> cloned from the student hooks</td></tr>
-          <tr><td><code>services/teacherSignupApi.js</code>, <code>teacherSignupBackendApi.js</code></td><td><span class="badge b-new">new</span></td></tr>
+          <tr><td><code>hooks/useTeacherRegistrationContext.js</code>, <code>useTeacherWizardResume.js</code>, <code>useTeacherReview.js</code> (submit and the 30 s status check), <code>useTeacherDemoRecorder.js</code></td><td><span class="badge b-new">new</span> cloned from the student hooks</td></tr>
+          <tr><td><code>services/teacherSignupApi.js</code> (the only service file; there is no separate backend one)</td><td><span class="badge b-new">new</span></td></tr>
           <tr><td><code>utils/teacherRegistrationSteps.js</code></td><td><span class="badge b-new">new</span></td></tr>
           <tr><td><code>auth.js</code>, <code>app/api/sso/route.js</code>, <code>proxy.js</code>, <code>next.config.mjs</code></td><td><span class="badge b-risk">shared, edit carefully</span> teacher branch</td></tr>
           <tr><td><code>utils/authentication.js</code>, <code>utils/backendOrigin.js</code>, <code>components/common/PageTitle.jsx</code>, <code>components/EnrollmentPixel.jsx</code></td><td><span class="badge b-risk">shared</span> userType parameter, legacy teacher URLs, title, Meta pixel route regex</td></tr>
           <tr><td><code>components/student-enroll/{InfoModal, ConfirmDialog, LogoutConfirmDialog, MobileActionBar}.jsx</code></td><td><span class="badge b-reuse">import as-is</span> no move, no change to student files</td></tr>
-          <tr><td><code>package.json</code></td><td><span class="badge b-new">add</span> <code>dompurify</code> for the contract HTML</td></tr>
+          <tr><td><code>package.json</code></td><td><span class="badge b-reuse">reuse</span> <code>dompurify</code> (already a dependency) for the contract HTML</td></tr>
         </tbody>
       </table></div>
       <h3>is-rest-api</h3>
@@ -828,7 +829,7 @@
           <tr><td>Q16</td><td>Hash validation</td><td>Only the new endpoints check <code>userLoginHash</code>. The gap in the existing shared endpoints is a separate task.</td></tr>
           <tr><td>Q19</td><td>reCAPTCHA gap</td><td>The teacher stage-1 skip depends on the new teacher setting, not <code>ENROLLMENT_VIA_NEXTJS</code>.</td></tr>
           <tr><td>Q24</td><td>Public-read S3 objects</td><td>Kept for parity; making them private is a separate task.</td></tr>
-          <tr><td>Q13</td><td>Sanitize the contract HTML</td><td>Add <code>dompurify</code>.</td></tr>
+          <tr><td>Q13</td><td>Sanitize the contract HTML</td><td>Use <code>dompurify</code>, which the app already has.</td></tr>
         </tbody>
       </table></div>
 

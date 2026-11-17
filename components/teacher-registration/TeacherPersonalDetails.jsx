@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Building2, Cake, Mail, Map, MapPin, User, VenusAndMars } from "lucide-react";
+import { Building2, Cake, Mail, Map, MapPin, User, VenusAndMars, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
@@ -13,6 +14,7 @@ import { useCityOptions, useCountryOptions, useStateOptions } from "@/hooks/useS
 import { useTeacherBasicDetailsSave } from "@/hooks/useTeacherSignup";
 import {
   TEACHER_GENDER_OPTIONS,
+  formatTeacherDobForRequest,
   getTeacherDobPickerBounds,
   teacherNameFieldProps,
   validateTeacherPersonalDetails,
@@ -61,6 +63,54 @@ function PersonalDetailsSkeleton() {
   );
 }
 
+// The dialog of the review screen's Edit (the student review's EditCard): title and close button on one row, only the
+// form scrolls, a centred Save at the bottom. A save in progress cannot be closed.
+function PersonalEditCard({ saving, onSave, onCancel, formError, children }) {
+  return (
+    <Dialog open onOpenChange={(open) => !open && !saving && onCancel()}>
+      <DialogContent showCloseButton={false} className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[1112px]">
+        <DialogHeader className="flex shrink-0 flex-row items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-7 md:border-0 md:pb-0 md:pt-6">
+          <DialogTitle className="flex-1 text-center text-xl font-bold leading-7 text-black">Personal Details</DialogTitle>
+          {!saving && (
+            <DialogClose
+              aria-label="Close"
+              className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md bg-red-500 text-white hover:bg-red-600"
+            >
+              <X className="h-4 w-4" />
+            </DialogClose>
+          )}
+        </DialogHeader>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-2 sm:px-7 md:pb-2">
+          {children}
+          {formError && <p className="mt-4 text-center text-sm font-semibold text-red-600">{formError}</p>}
+        </div>
+        <div className="flex shrink-0 justify-center border-t border-slate-200 bg-white px-4 py-4 sm:px-7 md:border-0 md:pb-6 md:pt-6">
+          <Button type="button" onClick={onSave} disabled={saving} className="cursor-pointer rounded-md bg-primary px-4 hover:bg-primary/90">
+            {saving ? "Saving…" : "Save"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// What a save would send, in one comparable string: the review's Save skips the request when nothing changed (legacy).
+function personalSignature(fields) {
+  return JSON.stringify([
+    String(fields.firstName ?? "").trim(),
+    String(fields.middleName ?? "").trim(),
+    String(fields.lastName ?? "").trim(),
+    formatTeacherDobForRequest(fields.dob),
+    fields.gender,
+    fields.countryId,
+    fields.stateId,
+    fields.cityId,
+    String(fields.contactNumber ?? "").replace(/[-\s]/g, ""),
+    String(fields.countryCode ?? "").toUpperCase(),
+    String(fields.countryIsdCode ?? ""),
+  ]);
+}
+
 /**
  * Step 1 of the teacher registration ("Personal details"): name, date of birth (18-99), gender, the account's
  * e-mail (read-only), phone, and country / state / city. Content only: rendered inside the wizard shell by
@@ -68,8 +118,13 @@ function PersonalDetailsSkeleton() {
  * contract is the legacy page's (teacher/signup/save-basic-details), see hooks/useTeacherSignup.js.
  *
  * `initialFields` is read at mount only (the phone widget, too), so the container resolves the saved record first.
+ *
+ * With `onCancel` it is the review screen's Edit instead: the same fields in a dialog with a Save (the close button
+ * calls onCancel), and a Save with nothing changed closes without a request. `onNext(fields, { changed })` is called
+ * after a save (changed false = nothing was sent).
  */
-export function TeacherPersonalDetails({ context, userId, initialFields, onNext }) {
+export function TeacherPersonalDetails({ context, userId, initialFields, onNext, onCancel }) {
+  const isDialog = typeof onCancel === "function";
   const [fields, setFields] = useState(() => ({ ...INITIAL_FIELDS, ...initialFields }));
   const [errors, setErrors] = useState({});
   // Every field that has ever shown an error this session (it only grows): a field is re-checked live while it is
@@ -123,6 +178,10 @@ export function TeacherPersonalDetails({ context, userId, initialFields, onNext 
     Object.keys(fieldErrors).forEach((key) => everErroredFieldsRef.current.add(key));
     setErrors(fieldErrors);
     if (!valid) return;
+    if (isDialog && personalSignature(fields) === personalSignature({ ...INITIAL_FIELDS, ...initialFields })) {
+      onNext?.(fields, { changed: false });
+      return;
+    }
 
     try {
       const response = await save.mutateAsync(fields);
@@ -135,21 +194,19 @@ export function TeacherPersonalDetails({ context, userId, initialFields, onNext 
         setErrors((prev) => ({ ...prev, form: response.message || "Something went wrong. Please try again." }));
         return;
       }
-      onNext?.(fields);
+      onNext?.(fields, { changed: true });
     } catch (err) {
       console.error("TeacherPersonalDetails submit failed:", err);
       setErrors((prev) => ({ ...prev, form: "Something went wrong. Please check your connection and try again." }));
     }
   }
 
-  if (!countries.isSuccess) {
+  if (!countries.isSuccess && !isDialog) {
     return <PersonalDetailsSkeleton />;
   }
 
-  return (
-    <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:px-8 lg:py-6">
-      <h2 className="text-center text-xl font-extrabold text-black md:text-2xl">Personal Details</h2>
-
+  const formBody = countries.isSuccess ? (
+    <>
       {/* Row 1: first name, last name, email. Row 2: date of birth, gender, mobile. Row 3: country, state, city. */}
       <div className="mt-4.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
         <FloatingLabelInput
@@ -250,6 +307,30 @@ export function TeacherPersonalDetails({ context, userId, initialFields, onNext 
           searchable
         />
       </div>
+
+    </>
+  ) : (
+    <div className="mt-4.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: 9 }).map((_, i) => (
+        <FieldSkeleton key={i} />
+      ))}
+    </div>
+  );
+
+  // The review screen's Edit (as the student review's edit popups): the same fields in a dialog with a Save.
+  if (isDialog) {
+    return (
+      <PersonalEditCard saving={save.isPending} onSave={handleSubmit} onCancel={onCancel} formError={errors.form}>
+        {formBody}
+      </PersonalEditCard>
+    );
+  }
+
+  return (
+    <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:px-8 lg:py-6">
+      <h2 className="text-center text-xl font-extrabold text-black md:text-2xl">Personal Details</h2>
+
+      {formBody}
 
       {errors.form && <p className="mt-4 text-center text-sm font-semibold text-red-600">{errors.form}</p>}
 

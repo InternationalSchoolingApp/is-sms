@@ -1,6 +1,6 @@
-import { TeacherStepPlaceholder } from "@/components/teacher-registration/TeacherStepPlaceholder";
+import { TeacherContractStep } from "./TeacherContractStep";
 
-// Server Component route for teacher registration step 4. Placeholder body until the real screen is built.
+// Server Component route for teacher registration step 4 ("Contract"): the school's contract to read, sign and accept.
 export default function TeacherContractPage() {
-  return <TeacherStepPlaceholder step={4} title="Contract" />;
+  return <TeacherContractStep />;
 }

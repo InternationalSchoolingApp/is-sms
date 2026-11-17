@@ -14,7 +14,9 @@
     "verify:contact-check": "node --test scripts/verifyContactCheckFlow.mjs",
     "verify:inbox": "node --test scripts/verifyInbox.mjs",
     "verify:teacher-professional": "node --test scripts/verifyTeacherProfessionalDetails.mjs",
-    "verify:teacher-demo": "node --test scripts/verifyTeacherDemoRecording.mjs"
+    "verify:teacher-demo": "node --test scripts/verifyTeacherDemoRecording.mjs",
+    "verify:teacher-review": "node --test scripts/verifyTeacherReview.mjs",
+    "verify:teacher-contract": "node --test scripts/verifyTeacherContract.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

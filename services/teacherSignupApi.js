@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { getAccountSession, withServiceKey, withSmsAuth } from "@/lib/auth/session";
 import { isRecaptchaRequired, verifyRecaptcha } from "@/lib/recaptcha";
 import { encodePayload } from "@/utils/payloadEncoding";
@@ -245,6 +246,47 @@ async function findOwnDemoRecording(schoolUUID, recordingUrl) {
   const recording = own.find((candidate) => candidate?.url === recordingUrl);
   if (!recording) return { message: "This recording is not available." };
   return { storageClass: String(recording.storageClass ?? "").toUpperCase() };
+}
+
+/**
+ * Step 3 submit: POST teacher/signup/profile-confirmation with { authentication } (the signed-in teacher's own; the
+ * backend refuses anyone else's). It moves the teacher from stage 12 to 13 ("under review") and mails the teacher and
+ * the school. Success is `status === "1"`; "3" = session out; anything else carries a message (e.g. the profile is not
+ * at the stage that can be submitted).
+ */
+export async function submitTeacherProfileForReview(schoolUUID, request) {
+  return postPayload(schoolUUID, "teacher/signup/profile-confirmation", request);
+}
+
+/**
+ * Step 4 contract: POST teacher/signup/get-teacher-signup-agreement-details with { userId } (the signed-in teacher's own,
+ * otherwise 403 -> null). Success is status "1" with details.teacherAgreementDetails, whose `contractState` (NOT_READY,
+ * READY, EXPIRED, ACCEPTED) the server decides (utils/teacherContract.js mapContractDetails reads it).
+ */
+export async function getTeacherAgreementDetails(schoolUUID, userId) {
+  return postPayload(schoolUUID, "teacher/signup/get-teacher-signup-agreement-details", { userId });
+}
+
+/**
+ * Step 4 accept: POST teacher/signup/save-Teacher-Declaration. Only the teacher's own signature image goes to the
+ * backend, which puts it into the published contract itself; the address and browser recorded with the acceptance are
+ * the ones THIS server saw (the browser's own claim is not trusted, and no third-party lookup is made from the page).
+ * The caller's userId comes from the session, never from the browser. Success is `status === "1"`; a refusal (not
+ * ready, expired, already accepted, bad signature) carries a message; null on a non-2xx answer.
+ */
+export async function acceptTeacherContract(schoolUUID, { agreementLogId, signatureImage }) {
+  const session = await getAccountSession();
+  if (!session?.userId || session.schoolUUID !== schoolUUID) return null;
+  const incoming = await headers();
+  const clientIp = (incoming.get("x-forwarded-for") || "").split(",")[0].trim() || (incoming.get("x-real-ip") || "").trim();
+  return postPayload(schoolUUID, "teacher/signup/save-Teacher-Declaration", {
+    userId: session.userId,
+    agreementLogId: String(agreementLogId),
+    controlType: "SIGNUP",
+    signatureImage,
+    clientIp,
+    userAgent: incoming.get("user-agent") || "",
+  });
 }
 
 /**

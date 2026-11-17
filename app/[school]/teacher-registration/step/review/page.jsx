@@ -1,6 +1,7 @@
-import { TeacherStepPlaceholder } from "@/components/teacher-registration/TeacherStepPlaceholder";
+import { TeacherReviewStep } from "./TeacherReviewStep";
 
-// Server Component route for teacher registration step 3. Placeholder body until the real screen is built.
+// Server Component route for teacher registration step 3 ("Review"): the read-only review of the saved details, and,
+// once they are submitted, the "Demo Under Review" screen.
 export default function TeacherReviewPage() {
-  return <TeacherStepPlaceholder step={3} title="Review" />;
+  return <TeacherReviewStep />;
 }

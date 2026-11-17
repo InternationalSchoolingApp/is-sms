@@ -19,6 +19,9 @@ export const TEACHER_STATE_FORM = "FORM";
 export const TEACHER_STATE_LOCKED = "LOCKED";
 export const TEACHER_STATE_REDIRECT = "REDIRECT";
 
+// The react-query key of teacher/registration/process (the context's own query); refetch it to ask the backend again.
+export const TEACHER_PROCESS_QUERY_KEY = "teacher-registration-process";
+
 /**
  * Shared by every teacher registration step (the provider is mounted once by the step layout, so the side effects
  * below fire a single time and not once per step). Resolves, for the signed-in teacher:
@@ -57,7 +60,7 @@ function useResolveTeacherRegistrationContext() {
   const viaLegacyFlow = viaNextjs.data === false;
 
   const process = useQuery({
-    queryKey: ["teacher-registration-process", session?.schoolUUID, session?.uniqueId],
+    queryKey: [TEACHER_PROCESS_QUERY_KEY, session?.schoolUUID, session?.uniqueId],
     queryFn: () => {
       recordApiAttempt(
         "getTeacherRegistrationProcess",
@@ -80,17 +83,22 @@ function useResolveTeacherRegistrationContext() {
     if (legacyUrl) window.location.replace(legacyUrl);
   }, [viaLegacyFlow, session?.schoolUUID, session?.uniqueId]);
 
-  const processData = process.data;  const sessionOut = processData?.status === TEACHER_STATUS_SESSION_OUT;
+  const processData = process.data;
+  const sessionOut = processData?.status === TEACHER_STATUS_SESSION_OUT;
   // REDIRECT: declined, withdrawn or already registered, so there is nothing to do in the wizard. The backend names
-  // the destination (the school's login page).
+  // the destination (the school's login page). A declined teacher comes with a message ("Your profile has been
+  // declined"): the login page cannot show it to a Next.js session (the message lives in the Java session), so the
+  // wizard shows it itself (`declinedMessage`) with a Log out button; withdrawn and registered teachers (no message)
+  // go straight to the login page.
   const processRedirect = processData?.state === TEACHER_STATE_REDIRECT ? processData : null;
+  const declinedMessage = processRedirect?.message ? String(processRedirect.message) : "";
   useEffect(() => {
     if (sessionOut) {
       expireSession(session?.schoolUUID);
-    } else if (processRedirect?.redirectUri) {
+    } else if (processRedirect?.redirectUri && !declinedMessage) {
       window.location.replace(processRedirect.redirectUri);
     }
-  }, [sessionOut, processRedirect, session?.schoolUUID]);
+  }, [sessionOut, processRedirect, declinedMessage, session?.schoolUUID]);
 
   useEffect(() => {
     if (!session?.schoolNumericId) return;
@@ -124,7 +132,7 @@ function useResolveTeacherRegistrationContext() {
       }
     : null;
 
-  return { status, session, context, logoUrl, ready, wrongRole };
+  return { status, session, context, logoUrl, ready, wrongRole, declinedMessage };
 }
 
 /** Mounts the teacher registration context once and shares it with the shell and every step page. */

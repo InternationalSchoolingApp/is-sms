@@ -5,6 +5,7 @@ import { useParams, useSelectedLayoutSegment } from "next/navigation";
 import { BookOpen, ClipboardCheck, FileSignature, Landmark, ShieldCheck, User } from "lucide-react";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { EnrollmentWizardShell } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
+import { TeacherDeclined } from "@/components/teacher-registration/TeacherLockScreens";
 import { TeacherRegistrationProvider, useTeacherRegistrationContext } from "@/hooks/useTeacherRegistrationContext";
 import { useBackendSessionGuard } from "@/hooks/useBackendSessionGuard";
 import { expireSession, logoutEverywhere } from "@/utils/logout";
@@ -31,7 +32,7 @@ const TEACHER_STEPS = [
 function TeacherWizardFrame({ children }) {
   const { school } = useParams();
   const segment = useSelectedLayoutSegment();
-  const { status, session, context, logoUrl, ready, wrongRole } = useTeacherRegistrationContext();
+  const { status, session, context, logoUrl, ready, wrongRole, declinedMessage } = useTeacherRegistrationContext();
 
   useEffect(() => {
     if (!ready) return;
@@ -76,6 +77,11 @@ function TeacherWizardFrame({ children }) {
         </div>
       </div>
     );
+  }
+
+  // A declined teacher has nothing to do in the wizard: the message and a Log out button.
+  if (declinedMessage) {
+    return <TeacherDeclined message={declinedMessage} onLogout={() => logoutEverywhere(session)} />;
   }
 
   // Nothing of the wizard shows until the teacher's context is ready (each step used to gate on this itself).
