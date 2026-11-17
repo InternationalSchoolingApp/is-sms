@@ -10,6 +10,7 @@ import { ReEnrollmentStepCard as Card, ReEnrollmentStepTitle as PageTitle } from
 import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
 import { Button } from "@/components/ui/button";
 import { buildPlanOptions } from "@/components/student-enroll/Stage4ReviewPayment";
+import { SupText } from "@/components/student-enroll/FeePaymentPlans";
 import { STATUS_SUCCESS, useCompleteReEnrollment, useReEnrollmentContext, useReEnrollmentReview } from "@/hooks/useReEnrollment";
 import { useReEnrollmentGateway } from "@/hooks/useReEnrollmentGateway";
 import { useShowPaymentOption } from "@/hooks/useCourseSelection";
@@ -98,7 +99,12 @@ function ReviewScreen() {
   const course = data.course;
   const fee = data.fee;
   const showCredits = !hidesCourseCredits(course?.standardId);
-  const alreadyPaid = fee?.feeAlreayPaid;
+  // Admin confirmed custom plan: the review shows its installments (paid or due), not the One-Time / Installment plan
+  // lines, and its paid installments are not an "advance fee".
+  const customDetails = fee?.customPaymentEnabled ? fee?.paymentCalculationResponse?.paymentDetails : null;
+  const customSchedule = customDetails?.schedulePayments || [];
+  const customPlan = customSchedule.length > 0;
+  const alreadyPaid = customPlan ? null : fee?.feeAlreayPaid;
   const selectedOption =
     planOptions.find((o) => o.mode === fee?.paymentMode || o.variants?.some((v) => v.mode === fee?.paymentMode)) ?? planOptions[0];
   const feeTitle = `Selected Fee Plan ${selectedOption?.kind === "annual" ? "(One-Time)" : selectedOption?.kind === "registration" ? "(Reserve an Enrollment Seat)" : "(Pay in easy installments)"}`;
@@ -166,7 +172,15 @@ function ReviewScreen() {
             )}
           </Card>
         )}
-        {showFeeCard && (
+        {showFeeCard && customPlan && (
+          <Card header="Selected Fee Plan (Customized Payment Plan)">
+            <CustomPlanSummary schedule={customSchedule} totalDue={customDetails.totalPayableAmountString} />
+            <p className="mt-2 text-center text-xs text-slate-500">
+              <b>Note:</b> All fees mentioned above are in {data.currencyIsoCode || "USD"}
+            </p>
+          </Card>
+        )}
+        {showFeeCard && !customPlan && (
           <Card header={feeTitle}>
             <FeeBreakdown fee={fee} option={selectedOption} variantMode={fee.paymentMode} gradeName={course?.standardName || data.grade?.name} advance={useAdvanceFee} courseFeeLabel="Course Fee" payableOverride={zeroPayable} />
             <p className="mt-2 text-center text-xs text-slate-500">
@@ -204,5 +218,38 @@ function ReviewScreen() {
       </MobileActionBar>
       {gateway.modals}
     </>
+  );
+}
+
+/** The custom plan's installments, each marked Paid (with its date) or Due, and the amount still due. */
+function CustomPlanSummary({ schedule, totalDue }) {
+  return (
+    <div>
+      <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 text-sm">
+        {schedule.map((payment) => {
+          const paid = Boolean(payment.paymentDate);
+          return (
+            <li key={payment.id} className="flex items-center justify-between gap-3 px-3 py-2">
+              <div className="min-w-0">
+                <p className="font-semibold text-black">
+                  <SupText>{payment.paymentTitle}</SupText>
+                </p>
+                <p className="text-xs text-slate-600">{paid ? `Paid on ${payment.paymentDate}` : `Due on ${payment.schedulePayDate}`}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${paid ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                  {paid ? "Paid" : "Due"}
+                </span>
+                <span className="font-bold text-black">{payment.payAmountString}</span>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3">
+        <span className="text-base font-bold text-black">Payable Fee</span>
+        <span className="text-lg font-bold text-black">{totalDue}</span>
+      </div>
+    </div>
   );
 }
