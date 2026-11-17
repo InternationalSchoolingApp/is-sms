@@ -24,3 +24,14 @@ export function getSchoolWebsiteUrl(schoolUUID) {
     const match = SCHOOL_URLS.find((item) => item.schoolUUID === schoolUUID);
     return match?.url || "https://internationalschooling.org/";
 }
+
+/**
+ * The school's website address from schoolSettingsLinks.schoolWebsite, ready for an <a href>: a missing scheme gets https://,
+ * anything that is not http(s) is dropped (the legacy header put the raw value in href). Empty / unusable: null.
+ */
+export function normalizeWebsite(value) {
+    const text = String(value || "").trim();
+    if (!text) return null;
+    const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(text) ? text : `https://${text}`;
+    return /^https?:\/\//i.test(withScheme) ? withScheme : null;
+}

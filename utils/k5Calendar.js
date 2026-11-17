@@ -110,7 +110,10 @@ export function weekKeys(date) {
   return Array.from({ length: 7 }, (_, i) => dayKey(addDays(start, i)));
 }
 
-export const classTitle = (event) => event.courseName || event.subjectName || event.eventTitle || event.title || "Class";
+/** LMS course names carry a version/org suffix ("English I v24 (GS) IS-ORG 00"): the student sees only "English I". */
+export const cleanCourseLabel = (name) => String(name || "").replace(/\s+v\d+\b.*$/i, "").trim();
+
+export const classTitle =(event) => event.courseName || event.subjectName || event.eventTitle || event.title || "Class";
 export const activityTitle = (event) => event.title || event.eventTitle || "School activity";
 export const timeLabel = (event) => (event.startZoned && !event.allDay ? format(event.startZoned, "h:mm a") : "");
 export const timeRange = (event) =>

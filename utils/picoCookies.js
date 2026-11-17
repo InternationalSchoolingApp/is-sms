@@ -17,6 +17,9 @@
 export const PICO_WELCOME_COOKIE_PREFIX = "pico_welcome_completed_";
 export const PICO_MODULE_COOKIE_PREFIX = "pico_module_";
 
+/** The module key of the tour's "Download our app" tip: once said, a click on Get the App does not make the buddy say it again. */
+export const TOUR_GET_APP_KEY = "tour-getApp";
+
 /** True for any cookie Pico owns: /api/cookie-flush and logout leave these alone. */
 export const isPicoCookie = (name) => String(name).startsWith(PICO_WELCOME_COOKIE_PREFIX) || String(name).startsWith(PICO_MODULE_COOKIE_PREFIX);
 

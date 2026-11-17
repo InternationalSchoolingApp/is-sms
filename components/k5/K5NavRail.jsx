@@ -120,7 +120,7 @@ export function K5NavRail({ menu, loading = false, open, onOpen, onClose, isPreK
           type="button"
           onClick={onClose}
           aria-label="Close menu"
-          className="k5-nclose hidden h-11 w-11 flex-none items-center justify-center self-end rounded-full border-[3px] border-k5-line bg-k5-card text-k5-mut"
+          className="k5-nclose hidden h-11 w-11 flex-none items-center justify-center cursor-pointer self-end rounded-full border-[3px] border-red-500 bg-red-500 text-white hover:border-red-600 hover:bg-red-600"
         >
           <X className="h-4 w-4" strokeWidth={3} aria-hidden="true" />
         </button>
@@ -205,7 +205,7 @@ function NavLink({ item, href, active, onNavigate, drag }) {
       className={`${ITEM_CLASS} ${active ? "bg-k5-ac text-white" : "text-k5-ink hover:bg-k5-soft"}`}
     >
       <NavTile icon={item.icon} active={active} picture={navPictureFor(item)} />
-      {isInboxMenuItem(item) && <InboxBadge className="absolute left-[46px] top-0 shadow-[0_0_0_2px_var(--k5-card)]" />}
+      {isInboxMenuItem(item) && <InboxBadge className="absolute left-[32px] top-0 shadow-[0_0_0_2px_var(--k5-card)] [.k5-side:hover_&]:left-[36px] [.k5-side[data-open='true']_&]:left-[36px]" />}
       <span className="k5-nl">{item.label}</span>
     </Link>
   );
@@ -235,7 +235,7 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
         className={`${ITEM_CLASS} cursor-pointer border-none ${childActive ? "bg-k5-act text-k5-acx" : "bg-transparent text-k5-ink hover:bg-k5-soft"}`}
       >
         <NavTile icon={item.icon} picture={navPictureFor(item)} />
-        {isInboxMenuItem(item) && <InboxBadge className="absolute left-[46px] top-0 shadow-[0_0_0_2px_var(--k5-card)]" />}
+        {isInboxMenuItem(item) && <InboxBadge className="absolute left-[40px] top-0 shadow-[0_0_0_2px_var(--k5-card)]" />}
         <span className="k5-nl">{item.label}</span>
         <span
           aria-hidden="true"

@@ -267,6 +267,12 @@
   min-height: 46px;
 }
 
+/* Header buttons (Communication, Appearance, Get the App, the LMS switch): a soft drop shadow in Grade 6–8 and 9–12 (this band
+   rule covers both). !important because each button also carries a K–5 hard-shadow class that the rules above remap. */
+[data-k5-band="middle"] .k5h-hdbtn {
+  box-shadow: 0 2px 6px rgba(16, 24, 40, 0.16) !important;
+}
+
 /* ── Page title tiles (Middle.dc.html): a 62px accent tile with 14px corners. The pages used to force the 14px with an inline
    style; they now use these hook classes (High overrides them to 10px in k5-mature.css, which is imported after this file). */
 [data-k5-band="middle"] :is(.k5h-pr-tile, .k5h-fee-tile, .k5h-ct-tile, .k5h-ax-tile, .k5h-hb-tile, .k5h-lb-tile, .k5h-lg-tile, .k5h-tr-tile) {

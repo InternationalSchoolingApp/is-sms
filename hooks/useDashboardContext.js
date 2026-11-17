@@ -177,8 +177,8 @@ function useResolveGradeBand({ role, session, authenticated }) {
 function useResolveDashboardContext({ role = "student" } = {}) {
   const { data: session, status } = useSession();
   const [logoUrl, setLogoUrl] = useState(null);
-  // True once the logo request has finished (found, missing or failed) - lets a page wait for the real logo.
-  const [logoSettled, setLogoSettled] = useState(false);
+  // The school's website (schoolSettingsLinks.schoolWebsite): the header logo opens it in a new tab, as in the legacy header.
+  const [schoolWebsite, setSchoolWebsite] = useState(null);
   const authenticated = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
   const queryClient = useQueryClient();
 
@@ -250,7 +250,9 @@ function useResolveDashboardContext({ role = "student" } = {}) {
     let cancelled = false;
     getSchoolSettingsLinks(session.schoolNumericId)
       .then((links) => {
-        if (!cancelled && links?.logoUrl) setLogoUrl(links.logoUrl);
+        if (cancelled) return;
+        if (links?.logoUrl) setLogoUrl(links.logoUrl);
+        if (links?.schoolWebsite) setSchoolWebsite(links.schoolWebsite);
       })
       .catch((err) => console.error("School links fetch failed:", err))
       .finally(() => {
@@ -283,7 +285,7 @@ function useResolveDashboardContext({ role = "student" } = {}) {
       }
     : null;
 
-  return { status, session, context, menu, menuLoading, logoUrl, logoSettled, ready, ...grade };
+  return { status, session, context, menu, menuLoading, logoUrl, schoolWebsite, ready, ...grade };
 }
 
 export function DashboardProvider({ role = "student", children }) {

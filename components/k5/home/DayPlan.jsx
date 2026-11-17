@@ -11,6 +11,7 @@ import {
   activityTitle,
   classTitle,
   countStatuses,
+  cleanCourseLabel,
   dayAt,
   dayKey,
   gameAccess,
@@ -153,7 +154,7 @@ function Assignments({ items, clue, onOpen }) {
         >
           <span className="flex min-w-0 flex-1 flex-col">
             <span className="text-base font-black text-k5-ink">{a.title || a.eventTitle || "Assignment"}</span>
-            {a.subjectName && <span className="text-sm font-bold text-k5-mut">{a.subjectName}</span>}
+            {a.subjectName && <span className="text-sm font-bold text-k5-mut">{cleanCourseLabel(a.subjectName)}</span>}
           </span>
           <span className={`flex-none rounded-full px-3 py-1 text-[13px] font-black ${ASSIGNMENT_PILL[a.k5Assignment.status]}`}>{a.k5Assignment.label}</span>
         </button>

@@ -38,7 +38,7 @@ export function K5Shell({ children }) {
 }
 
 function K5Frame({ children }) {
-  const { context, menu, menuLoading, logoUrl, session, isPreK, isMiddle, isHigh, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
+  const { context, menu, menuLoading, logoUrl, schoolWebsite, session, isPreK, isMiddle, isHigh, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
   
   const pathname = usePathname();
   const dummy = useDummyStudent();
@@ -101,6 +101,7 @@ function K5Frame({ children }) {
         schoolUUID={context.schoolUUID}
         schoolName={context.schoolName}
         logoUrl={logoUrl}
+        schoolWebsite={schoolWebsite}
         session={session}
         userName={context.userName}
         menu={menu}

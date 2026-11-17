@@ -9,7 +9,7 @@ import { useSpeech } from "@/components/k5/pico/useSpeech";
 import { BUDDIES, voiceOf } from "@/constant/appearance";
 import { PICO_SAY_EVENT, usePicoLive } from "@/components/k5/pico/picoEvents";
 import { HOME_MODULE, NO_MODULE_TEXT, picoModuleFor, picoWelcomeText } from "@/constant/picoModules";
-import { hasPicoModuleCookie, hasPicoWelcomeCookie, setPicoModuleCookie, setPicoWelcomeCookie } from "@/utils/picoCookies";
+import { TOUR_GET_APP_KEY, hasPicoModuleCookie, hasPicoWelcomeCookie, setPicoModuleCookie, setPicoWelcomeCookie } from "@/utils/picoCookies";
 import { preparePicoClips } from "@/utils/picoVoice";
 
 const noSubscribe = () => () => {};
@@ -28,27 +28,25 @@ function tourSteps(firstName, buddyName, liveName, welcome, schoolName) {
   return [
     {
       pin: null,
-      text: welcome
-        ? picoWelcomeText({ firstName, schoolName, buddyName, tour: true })
-        : `Hi${firstName ? ` ${firstName}` : ""}! I'm ${buddyName}, your school buddy. Tap Next and I'll show you around!`,
+      text: welcome ? picoWelcomeText({ firstName, schoolName, buddyName, tour: true }) : `Hi${firstName ? ` ${firstName}` : ""}! I'm ${buddyName}, your school buddy. Tap Next and I'll show you around!`,
     },
     { pin: "calendar", text: `This is your calendar, where all your classes and activities will appear. Click on an item to complete your coursework or join a class.` },
-    { pin: "prevnext", text: "Click on the arrows to view your plan for different days." },
     { pin: "live", text: `${liveName ? `Your ${liveName} class` : "Your class"} is live right now! Tap the green Join class button to go in.` },
     { pin: "mini", text: "This little calendar shows the whole month. A dot under a day means something is planned." },
     { pin: "views", text: "Tap Today, Week or Month to see your plans in different ways." },
-    { pin: "look", text: "Tap the palette button to pick your favorite color, night mode, letters and text size!" },
+    { pin: "prevnext", text: "Click on the arrows to view your plan for different days." },
     { pin: "clues", text: "Color clues tell you what each box means. Tap a clue and I'll explain it!" },
-    { pin: "lms", text: "Click here to go to your Learning Management System (LMS). This is where you learn, complete your assignments, take quizzes, and appear for exams." },
+    { pin: "side", text: "Use the side menu to book classes, see your teacher, join clubs and more. Hold and drag a button to move your favorites to the top!" },
     { pin: "inbox", text: "This is your inbox. Check here regularly for emails and other communications from your school." },
+    { pin: "look", text: "Tap the palette button to pick your favorite color, night mode, letters and text size!" },
+    { pin: "getApp", text: "Download our app for a better experience!" },
+    { pin: "lms", text: "Click here to go to your Learning Management System (LMS). This is where you learn, complete your assignments, take quizzes, and appear for exams." },
+    { pin: "profile", text: "Click here to go to your profile. Keep your personal details up to date, share more about yourself with the school, and change your password whenever needed." },
+    { pin: "sibling", text: "Have another sibling to enroll? Click here to get started!" },
     { pin: "msg", text: "Need help? Tap the green Talk to us button to chat with us!" },
     { pin: "announcements", text: "This is the announcements section. The school shares updates about events, activities, clubs, and holidays here. Don't miss out!" },
     { pin: "news", text: "Check here for the latest developments and updates in education." },
     { pin: "diary", text: "This is your School Diary, where you can find important updates about your calendar and coursework from your teachers or the school." },
-    { pin: "sibling", text: "Have another sibling to enroll? Click here to get started!" },
-    { pin: "profile", text: "Click here to go to your profile. Keep your personal details up to date, share more about yourself with the school, and change your password whenever needed." },
-    { pin: "side", text: "Use the side menu to book classes, see your teacher, join clubs and more. Hold and drag a button to move your favorites to the top!" },
-    
   ];
 }
 const MOBILE_QUERY = "(max-width: 760px)";
@@ -60,7 +58,7 @@ const subscribeMobile = (callback) => {
 const isMobileView = () => window.matchMedia(MOBILE_QUERY).matches;
 const pinEl = (pin) => (pin && typeof document !== "undefined" ? document.querySelector(`[data-pin="${pin}"]`) : null);
 // The header buttons move into the "More" menu on a phone (display: none there): a tip about one is skipped, not shown without its spotlight.
-const SKIP_WHEN_HIDDEN = new Set(["lms", "inbox", "profile"]);
+const SKIP_WHEN_HIDDEN = new Set(["lms", "inbox", "profile", "getApp"]);
 const onPage = (pin) => {
   if (!pin) return true;
   const el = pinEl(pin);
@@ -73,7 +71,7 @@ const onPage = (pin) => {
 };
 
 // Elements that never scroll (fixed chrome) — no page scroll before spotlighting them.
-const FIXED_PINS = new Set(["side", "msg", "look", "lms", "inbox", "profile", "announcements", "news", "diary"]);
+const FIXED_PINS = new Set(["side", "msg", "look", "getApp", "lms", "inbox", "profile", "announcements", "news", "diary"]);
 
 // A dialog (look, Get the App, live popup, joining a class...) or the opened side menu is on top:
 // the spotlight steps aside until it is gone.
@@ -156,8 +154,13 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   const buddy = BUDDIES[preferences.buddy] || BUDDIES.pico;
   const steps = tourSteps(firstName, buddy.name, live.name, welcome, schoolName);
   const mobile = useSyncExternalStore(subscribeMobile, isMobileView, () => false);
-  // The first tour opens by itself once the plan is known; the buddy stays quiet while the "LIVE NOW" popup waits.
-  const autoOpen = home && !seen && live.ready;
+  // No dialog is open on this page (checked by the effect below, only while the buddy has something to say by itself).
+  // Kept as "the page it was seen clear on", so a new page is never taken as clear before it has been looked at.
+  const pageSegment = pathname.split("/").filter(Boolean).pop();
+  const [clearAt, setClearAt] = useState(null);
+  const clear = clearAt === pageSegment;
+  // The first tour opens by itself once the plan is known and no dialog is open; the buddy stays quiet while the "LIVE NOW" popup waits.
+  const autoOpen = home && !seen && live.ready && clear;
   // Desktop: open for the first tour and after a tap; mobile: while tapped open (and after the buddy speaks up).
   const wanted = mobile ? tipOn : (state.open ?? autoOpen);
   const open = wanted && !live.pending && !onBook;
@@ -169,13 +172,11 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   const reduced = themeProps["data-motion"] === "reduced";
 
   // ---- What the student is looking at, and whether it has finished loading ----
-  const pageSegment = pathname.split("/").filter(Boolean).pop();
   const moduleNow = home ? HOME_MODULE : picoModuleFor(pageSegment);
   // Real content on screen: the home plan has loaded, or the page said so (usePicoContentReady); the left menu has its items.
   const moduleReady = live.menuReady && (home ? live.ready : live.contentReady);
 
   // ---- 1. The first welcome ----
-  const [clear, setClear] = useState(false);
   const [welcomeSkip, setWelcomeSkip] = useState(null);
   const [attempt, setAttempt] = useState(0);
   const welcomeRun = useRef(false);
@@ -186,18 +187,6 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
 
   const welcomeText = home ? steps[0].text : picoWelcomeText({ firstName, schoolName, buddyName: buddy.name, tour: false });
   const welcomeReady = welcomeDue && moduleReady && !live.pending && !onBook;
-
-  // The welcome waits for any popup of the dashboard (profile, training, password...) to be gone.
-  useEffect(() => {
-    if (!welcomeReady) return;
-    const check = () => setClear(!document.querySelector(OTHER_POPUPS));
-    const first = setTimeout(check, 300);
-    const timer = setInterval(check, 700);
-    return () => {
-      clearTimeout(first);
-      clearInterval(timer);
-    };
-  }, [welcomeReady]);
 
   const finishWelcome = () => {
     retryOff.current?.();
@@ -270,7 +259,23 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   const moduleHeard = doneModules.has(pageSegment) || hasPicoModuleCookie(userId, pageSegment);
   // One key per page; null while the page loads, while the welcome is still owed, on the page the welcome has just been
   // said on, and for a module that has already been explained.
-  const tipKey = pageTip && moduleReady && !welcomeDue && welcomeSkip !== pageSegment && (!moduleHeard || tipFor === pageSegment) ? pageSegment : null;
+  // A page explains itself only once no dialog is open (a dialog it already started under does not stop it).
+  const tipWaiting = Boolean(pageTip) && moduleReady && !welcomeDue && welcomeSkip !== pageSegment;
+  const tipKey = tipWaiting && ((!moduleHeard && clear) || tipFor === pageSegment) ? pageSegment : null;
+
+  // Anything the buddy says by itself (the welcome / the tour, a page's explanation) waits for every dialog of the dashboard
+  // (profile, training, password, app install, live class...) to be closed, and starts as soon as the last one is gone.
+  const watchDialogs = welcomeReady || (tipWaiting && !moduleHeard);
+  useEffect(() => {
+    if (!watchDialogs) return undefined;
+    const check = () => setClearAt(document.querySelector(OTHER_POPUPS) ? null : pageSegment);
+    const first = setTimeout(check, 300);
+    const timer = setInterval(check, 700);
+    return () => {
+      clearTimeout(first);
+      clearInterval(timer);
+    };
+  }, [watchDialogs, pageSegment]);
   if (tipKey !== tipFor) {
     // Adjusted while rendering (React's way to reset state when an input changes), not in an effect.
     setTipFor(tipKey);
@@ -423,6 +428,8 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     if (i >= steps.length) return finish();
     setState((s) => ({ ...s, open: true, index: i, say: null }));
     speak(steps[i].text);
+    // The buddy has now told about the app: a click on Get the App no longer makes it say it again (K5Header openApp).
+    if (steps[i].pin === "getApp") setPicoModuleCookie(userId, TOUR_GET_APP_KEY);
   };
   // Mockup hear / pinTap: asking the buddy to talk also turns its voice back on.
   const hear = () => {
