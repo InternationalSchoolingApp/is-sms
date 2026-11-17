@@ -222,7 +222,9 @@ function TomorrowCard({ dateKey, days, isSelfStudy, onPeek }) {
  * are no classes, and a "Tomorrow" card that peeks at the next day.
  */
 export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStudy, firstName, onJoin, onOpen, onPeek, onShowCalendar }) {
-  const { isHigh, isMiddle } = useDashboardContext(); // isMiddle is true for High too: no "today" star in either
+  // isMiddle follows the picked look (true for Mature too): no "today" star in either. The brain games follow the grade.
+  const { isMiddle, isHigh: lookIsHigh, gradeIsHigh } = useDashboardContext();
+  const isHigh = gradeIsHigh ?? lookIsHigh;
   const day = dayAt(days, dateKey);
   const date = keyToDate(dateKey);
   const isToday = dateKey === todayKey;

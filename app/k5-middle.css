@@ -194,10 +194,6 @@
   &[class*="shadow-[0_6px_0_var(--k5-grnD)]"] {
     box-shadow: 0 2px 0 var(--k5-grnD);
   }
-  &[class*="shadow-[0_4px_0_var(--rim)]"],
-  &[class*="shadow-[0_6px_0_var(--rim)]"] {
-    box-shadow: 0 2px 0 var(--rim);
-  }
   &[class*="shadow-[0_4px_0_var(--k5-line)]"],
   &[class*="shadow-[0_5px_0_var(--k5-line)]"],
   &[class*="shadow-[0_6px_0_var(--k5-line)]"],

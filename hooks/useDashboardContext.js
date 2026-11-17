@@ -159,7 +159,9 @@ function useResolveGradeBand({ role, session, authenticated }) {
   };
 
   // Remember the live (non-dummy) result for this tab, so the next load skips the loader.
-  const saveCache = isStudent && fetched && !dummyEnabled && cacheKey ? JSON.stringify(resolved) : null;
+  // Only a real answer is remembered: when get-student-dashboard failed (no details) the defaults above are a guess, and a
+  // cached guess would keep this tab on the default dashboard.
+  const saveCache = isStudent && fetched && !dummyEnabled && cacheKey && details ? JSON.stringify(resolved) : null;
   useEffect(() => {
     if (!saveCache) return;
     try {
@@ -294,6 +296,22 @@ export function DashboardProvider({ role = "student", children }) {
   
   const value = useResolveDashboardContext({ role });
   return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;
+}
+
+/**
+ * The dashboard look a student picked (Look dialog > Theme: playful / balanced / mature) for everything inside: isMiddle /
+ * isHigh then follow the look, so every K-5 page, rail and dialog draws in that look. The student's real grade stays in
+ * gradeIsMiddle / gradeIsHigh, for what the grade decides (e.g. the High brain games, which look is auto).
+ */
+export function DashboardLookProvider({ look, children }) {
+  const value = useContext(DashboardContext);
+  const scoped = useMemo(() => {
+    if (!value || !look) return value;
+    const gradeIsMiddle = value.gradeIsMiddle ?? value.isMiddle;
+    const gradeIsHigh = value.gradeIsHigh ?? value.isHigh;
+    return { ...value, gradeIsMiddle, gradeIsHigh, isMiddle: look !== "playful", isHigh: look === "mature" };
+  }, [value, look]);
+  return <DashboardContext.Provider value={scoped}>{children}</DashboardContext.Provider>;
 }
 
 export function useDashboardContext() {
