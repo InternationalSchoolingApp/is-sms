@@ -12,6 +12,7 @@ import { reEnrollmentStepPath } from "@/utils/reEnrollmentSteps";
 
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { K5PassedOptions } from "./K5PassedOptions";
+import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 
 const pad = (n) => String(n);
 
@@ -192,6 +193,7 @@ export function ReEnrollmentOptions() {
   // resume=1 (login / coming back from the payment): continue at the step the student is on instead of showing the options.
   const [resume] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("resume") === "1");
   const [pickedPrograms, setPickedPrograms] = useState({});
+  usePicoContentReady(!(resume && inProgress));
 
   useEffect(() => {
     if (resume && inProgress && eligibility.currentStep) router.replace(reEnrollmentStepPath(school, eligibility.currentStep));

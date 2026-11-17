@@ -69,6 +69,7 @@ export const PICO_MODULES = {
   "progress-detail": { title: "My Progress Reports", text: "Tap View to open a full report for that week!" },
   "my-profile": { title: "My Profile", text: "This page is all about you! Keep your details up to date." },
   "fee-details": { title: "Fee Details", text: "This is your Fee Details section. Here you can see your payments and what is still due." },
+  "re-enrollment": { title: "Re-enrollment", text: "This is the re-enrollment dashboard, click on the available options to continue your learning journey" },
   "batch-student-examination-sheet": { title: "Exam Sheet", text: "This is your Exam Sheet. Here you can see your exam marks." },
   inbox: { title: "Communication", text: INBOX_TIP },
   "inbox-compose": { title: "Communication", text: INBOX_TIP },
