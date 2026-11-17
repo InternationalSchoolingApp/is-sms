@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { buildPlanOptions } from "@/components/student-enroll/Stage4ReviewPayment";
 import { STATUS_SUCCESS, useCompleteReEnrollment, useReEnrollmentContext, useReEnrollmentReview } from "@/hooks/useReEnrollment";
 import { useReEnrollmentGateway } from "@/hooks/useReEnrollmentGateway";
+import { useShowPaymentOption } from "@/hooks/useCourseSelection";
+import { formatMoneyWithCommas, getCurrencyDisplaySymbol } from "@/utils/currencyDisplay";
 import { useRequireSelectedOption } from "@/hooks/useRequireSelectedOption";
 import { dashboardBasePath } from "@/utils/dashboardNav";
 import { expireSession } from "@/utils/logout";
@@ -36,6 +38,8 @@ function ReviewScreen() {
   const { session, context, option, steps } = useReEnrollmentContext();
   const userId = session.userId;
   const reviewQuery = useReEnrollmentReview({ context, userId });
+  // Legacy SHOW_PAYMENT_OPTION (get-commission-pay-by): "Y" shows the fee card even when nothing is due any more.
+  const showPaymentOption = useShowPaymentOption({ context, userId });
   const complete = useCompleteReEnrollment({ context, userId });
   const gateway = useReEnrollmentGateway({
     context,
@@ -99,6 +103,9 @@ function ReviewScreen() {
     planOptions.find((o) => o.mode === fee?.paymentMode || o.variants?.some((v) => v.mode === fee?.paymentMode)) ?? planOptions[0];
   const feeTitle = `Selected Fee Plan ${selectedOption?.kind === "annual" ? "(One-Time)" : selectedOption?.kind === "registration" ? "(Reserve an Enrollment Seat)" : "(Pay in easy installments)"}`;
   const hasCourses = (course?.courseDTO || []).length > 0;
+  // Legacy review (feePaymentReview1): the fee card is there whenever SHOW_PAYMENT_OPTION is "Y", also when the advance
+  // fee already covered everything (payable $0.00); a pending payment always shows it.
+  const showFeeCard = Boolean(fee) && (data.paymentRequired || showPaymentOption.data === "Y");
   // Legacy review: next grade / repeat with the grade fee already paid shows the advance plan's lines (and payable fee),
   // unless the plan is the reserve-a-seat or a custom one.
   const payMode = course?.payMode || fee?.paymentMode;
@@ -108,10 +115,13 @@ function ReviewScreen() {
     payMode !== "registration" &&
     !String(payMode || "").startsWith("c_");
 
+  // Nothing is due (the advance fee covered it): the legacy review shows the payable fee as $0.00.
+  const zeroPayable = !data.paymentRequired && useAdvanceFee ? `${getCurrencyDisplaySymbol(data.currencyIsoCode)}${formatMoneyWithCommas(0)}` : undefined;
+
   return (
     <>
       <PageTitle>Kindly Review Your Details</PageTitle>
-      <div className={`grid items-start gap-4 md:gap-8 ${data.paymentRequired && hasCourses ? "lg:grid-cols-[555fr_723fr]" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
+      <div className={`grid items-start gap-4 md:gap-8 ${showFeeCard && hasCourses ? "lg:grid-cols-[555fr_723fr]" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
         {hasCourses && (
           <Card header="Selected Courses" headerRight={course?.standardName}>
             <table className="w-full overflow-hidden rounded-lg border border-slate-200 text-sm">
@@ -156,9 +166,9 @@ function ReviewScreen() {
             )}
           </Card>
         )}
-        {data.paymentRequired && fee && (
+        {showFeeCard && (
           <Card header={feeTitle}>
-            <FeeBreakdown fee={fee} option={selectedOption} variantMode={fee.paymentMode} gradeName={course?.standardName || data.grade?.name} advance={useAdvanceFee} courseFeeLabel="Course Fee" />
+            <FeeBreakdown fee={fee} option={selectedOption} variantMode={fee.paymentMode} gradeName={course?.standardName || data.grade?.name} advance={useAdvanceFee} courseFeeLabel="Course Fee" payableOverride={zeroPayable} />
             <p className="mt-2 text-center text-xs text-slate-500">
               <b>Note:</b> All fees mentioned above are in {data.currencyIsoCode || "USD"}
             </p>
