@@ -10,7 +10,6 @@ import { TeacherContract } from "@/components/teacher-registration/TeacherContra
 import { TeacherContractExpired, TeacherContractNotReady } from "@/components/teacher-registration/TeacherLockScreens";
 import {
   TEACHER_PROCESS_QUERY_KEY,
-  TEACHER_STATE_FORM,
   useTeacherRegistrationContext,
 } from "@/hooks/useTeacherRegistrationContext";
 import { useTeacherWizardResume } from "@/hooks/useTeacherWizardResume";
@@ -41,7 +40,8 @@ export function TeacherContractStep() {
   const accept = useAcceptTeacherContract({ context });
 
   // The backend now places the teacher somewhere else (accepted, so on to Verification; or put back by the school): go there.
-  const elsewhere = ready && context.state === TEACHER_STATE_FORM && context.wizardStep && context.wizardStep !== STEP ? context.wizardStep : null;
+  // (Whatever the state: a teacher whose verification is submitted is LOCKED, and belongs on Verification.)
+  const elsewhere = ready && context.wizardStep && context.wizardStep !== STEP ? context.wizardStep : null;
   useEffect(() => {
     if (elsewhere !== null) router.replace(teacherStepPath(school, elsewhere));
   }, [elsewhere, router, school]);

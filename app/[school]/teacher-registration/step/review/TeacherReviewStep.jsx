@@ -11,7 +11,6 @@ import { TeacherReview } from "@/components/teacher-registration/TeacherReview";
 import { TeacherUnderReview } from "@/components/teacher-registration/TeacherLockScreens";
 import {
   TEACHER_PROCESS_QUERY_KEY,
-  TEACHER_STATE_FORM,
   TEACHER_STATE_LOCKED,
   useTeacherRegistrationContext,
 } from "@/hooks/useTeacherRegistrationContext";
@@ -168,7 +167,8 @@ export function TeacherReviewStep() {
   const [submitted, setSubmitted] = useState(false);
 
   // The school approved the profile while the teacher was waiting here (the status check saw it): on to the next step.
-  const nextStep = ready && context.state === TEACHER_STATE_FORM && context.wizardStep > 3 ? context.wizardStep : null;
+  // (Whatever the state: a teacher whose verification is submitted is LOCKED too, but for Verification, not for review.)
+  const nextStep = ready && context.wizardStep > 3 ? context.wizardStep : null;
   useEffect(() => {
     if (nextStep !== null) router.replace(teacherStepPath(school, nextStep));
   }, [nextStep, router, school]);

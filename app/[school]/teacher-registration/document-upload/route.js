@@ -1,6 +1,7 @@
 import { getAccountSession, withSmsAuth } from "@/lib/auth/session";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { TEACHER_DOCUMENTS, TEACHER_DOCUMENT_MAX_BYTES, validateTeacherDocumentFile } from "@/utils/teacherProfessionalDetails";
+import { TEACHER_VERIFICATION_DOCUMENTS } from "@/utils/teacherVerification";
 
 /**
  * One document of the teacher registration's professional-details step. A Route Handler rather than a Server Action
@@ -14,7 +15,9 @@ import { TEACHER_DOCUMENTS, TEACHER_DOCUMENT_MAX_BYTES, validateTeacherDocumentF
  *   { status: "1", fileType, originalName, fileUrl }  or  { status: "0", message }.
  */
 
-const ALLOWED_FILE_TYPES = new Set(TEACHER_DOCUMENTS.map((doc) => doc.fileType));
+// The documents of the professional-details step and of the verification step (the backend also refuses a type at a stage
+// where it can no longer be changed). The bank proof joins them with the bank step.
+const ALLOWED_FILE_TYPES = new Set([...TEACHER_DOCUMENTS, ...TEACHER_VERIFICATION_DOCUMENTS].map((doc) => doc.fileType));
 
 function failure(message, httpStatus = 200) {
   return Response.json({ status: "0", message }, { status: httpStatus });

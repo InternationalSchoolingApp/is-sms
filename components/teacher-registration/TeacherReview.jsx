@@ -67,7 +67,7 @@ export function TeacherReview({ context, fullName, personalRows, professionalRow
   }
 
   return (
-    <div className="mx-auto mt-4 max-w-4xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:px-8 lg:py-6">
+    <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:px-8 lg:py-6">
       <h2 className="text-center text-xl font-extrabold text-black md:text-2xl">Demo Under Review</h2>
       <p className="mt-1 text-center text-sm text-slate-600">Kindly Review your details</p>
 

@@ -88,6 +88,19 @@ export function TeacherContractExpired(props) {
 }
 
 /**
+ * The legacy "Documents Under Verification" modal as a screen of the wizard: shown from the moment the verification is
+ * submitted (stage 21), until the school moves the teacher on to the bank details. Like the review's lock it looks again
+ * by itself every 30 s and has Check status and Log out.
+ */
+export function TeacherVerificationUnderReview(props) {
+  return (
+    <ContractWaiting testId="teacher-verification-under-review" title="Documents Under Verification" {...props}>
+      Your verification documents are currently under review. We will get back to you within 1 week.
+    </ContractWaiting>
+  );
+}
+
+/**
  * A declined teacher (stage 15 / 25): the backend's message ("Your profile has been declined") and a Log out button.
  * The legacy wizard ended the teacher's login and showed the message on the login page; here the wizard shows it.
  */

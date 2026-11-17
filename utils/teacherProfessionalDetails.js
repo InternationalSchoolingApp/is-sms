@@ -97,7 +97,7 @@ export function validateTeacherDocumentFile(file) {
   const extension = String(file.name || "").split(".").pop().toLowerCase();
   if (!TEACHER_DOCUMENT_EXTENSIONS.includes(extension)) return "Only JPG, PNG or PDF files are allowed";
   if (!file.size) return "The file is empty";
-  if (file.size > TEACHER_DOCUMENT_MAX_BYTES) return `The file must be ${TEACHER_DOCUMENT_MAX_LABEL} or smaller`;
+  if (file.size > TEACHER_DOCUMENT_MAX_BYTES) return `The file must be ${TEACHER_DOCUMENT_MAX_LABEL} or smaller. Please compress it and try again.`;
   return null;
 }
 

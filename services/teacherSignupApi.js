@@ -259,6 +259,26 @@ export async function submitTeacherProfileForReview(schoolUUID, request) {
 }
 
 /**
+ * Step 5 verification prefill: POST teacher/signup/get-teacher-verification-details with { userId } (the signed-in teacher's
+ * own, otherwise 403 -> null). Success is status "1" with details.teacherVerification (the social links, the "I have none"
+ * flag as haveSocialMediaAccount, the police acceptance), details.employeeReference (the references) and
+ * details.attachments (the four documents' name and URL); a part that is not saved yet is a string, not an object.
+ */
+export async function getTeacherVerificationDetails(schoolUUID, userId) {
+  return postPayload(schoolUUID, "teacher/signup/get-teacher-verification-details", { userId });
+}
+
+/**
+ * Step 5 submit: POST teacher/signup/save-teacher-verification with { requestData } (utils/teacherVerification.js
+ * buildSaveVerificationRequest: no attachments, the documents were uploaded one by one). It moves the teacher from stage 22
+ * to 21 ("documents under verification") and mails the teacher and the school. Success is `status === "1"`; "3" = session
+ * out; anything else carries a message (a rule the form did not catch, or a profile not at the stage that can submit).
+ */
+export async function saveTeacherVerification(schoolUUID, request) {
+  return postPayload(schoolUUID, "teacher/signup/save-teacher-verification", request);
+}
+
+/**
  * Step 4 contract: POST teacher/signup/get-teacher-signup-agreement-details with { userId } (the signed-in teacher's own,
  * otherwise 403 -> null). Success is status "1" with details.teacherAgreementDetails, whose `contractState` (NOT_READY,
  * READY, EXPIRED, ACCEPTED) the server decides (utils/teacherContract.js mapContractDetails reads it).

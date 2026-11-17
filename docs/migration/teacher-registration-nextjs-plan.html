@@ -558,11 +558,12 @@
             <div class="box"><h4>Verification</h4><ul>
               <li>Load from <code>get-teacher-verification-details</code>.</li>
               <li>Social media: LinkedIn, Facebook, Instagram and X. At least one is required, <i>or</i> the teacher ticks "I do not have any active social media accounts", which clears and disables the four fields.</li>
-              <li>Recommendation letters 1 and 2 (fileTypes 73 and 74).</li>
-              <li>References 1 and 2: name, email, phone (intl-tel) and designation are all required.</li>
-              <li>Police verification declaration (shows the teacher's name), Police Verification document (72) and Last Salary Slip (41).</li>
-              <li>Show validation messages in the legacy order. The <b>Note</b> confirmation then calls <code>save-teacher-verification</code> (it has <b>no</b> <code>authentication</code> block) and firstReset becomes 21.</li>
-              <li><b>Documents Under Verification</b> lock screen, which polls like the P5 lock. When an admin redirects the teacher to bank details (23), they go to Step 6.</li>
+              <li>Recommendation letters 1 and 2 (fileTypes 73 and 74), uploaded the moment they are chosen (the same as Step 2, same 4.4 MB cap, so a larger scan has to be compressed).</li>
+              <li>References 1 and 2 (exactly two): name (letters and spaces), email (the backend's rule, which allows a "+" and long endings), phone (intl-tel, must be valid) and designation are all required; the same email twice, or the teacher's own, is refused. Social links must be web addresses.</li>
+              <li>Police verification declaration (shows the teacher's name), Police Verification document (72) and Last Salary Slip (41): all mandatory, as in legacy.</li>
+              <li>Show validation messages in the legacy order. The <b>Note</b> confirmation then calls <code>save-teacher-verification</code> with no attachments (the documents are already stored) and firstReset becomes 21 (a Remarks row is written). There is no Back (as in legacy) and no draft.</li>
+              <li><b>The server enforces it</b> (the legacy endpoints checked nothing): the caller must be the teacher (token user), at stage 22 only; the whole request is checked and the four documents must be stored <i>before</i> anything is written (legacy saved the row first, so a failed reference left it half-saved and the admin list showed "Submitted"); upload and delete of each document type work only at the stage that owns it (verification documents at 22, professional ones until the profile is with the school, bank proof at 23). Reading the verification details is for the teacher themselves or school staff.</li>
+              <li><b>Documents Under Verification</b> lock screen (the legacy modal's wording), which polls like the P5 lock. When an admin redirects the teacher to bank details (23), they go to Step 6. The Review and Contract steps no longer show the review lock to a teacher who is on Verification.</li>
             </ul></div>
             <div class="box"><h4>Bank &amp; finish</h4><ul>
               <li>Prefill from the new <code>get-teacher-bank-details</code> (legacy is always blank).</li>

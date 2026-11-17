@@ -90,7 +90,7 @@ export function TeacherContract({ contract, logoUrl, onAccept }) {
   }
 
   return (
-    <div className="mx-auto mt-4 max-w-4xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:px-8 lg:py-6">
+    <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-4 lg:px-8 lg:py-6">
       <h2 className="text-center text-xl font-extrabold text-black md:text-2xl">Contract Details</h2>
 
       {letterhead && (
