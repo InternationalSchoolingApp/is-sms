@@ -13,6 +13,10 @@ import { getStudentBookedClasses } from "@/services/bookClassApi";
 import { bookedClassDateRange } from "@/utils/bookClass";
 import { K5Loading, K5RowsSkeleton } from "@/components/k5/K5Skeletons";
 
+// The From / To calendars are not limited to the current year: any date from 10 years back to 10 years ahead can be picked.
+const PICKER_MIN = new Date(new Date().getFullYear() - 10, 0, 1);
+const PICKER_MAX = new Date(new Date().getFullYear() + 10, 11, 31);
+
 const DATE_TYPES = [
   { value: "today", label: "Today" },
   { value: "yesterday", label: "Yesterday" },
@@ -392,10 +396,10 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
         ) : (
           <>
             <div className="min-w-[150px] flex-[1_1_150px]">
-              <DatePicker icon={CalendarDays} label="From" value={fromDate} disabled={!isCustom} onChange={(date) => setDraft({ ...draft, startDate: date ?? null, endDate: null })} height={middle ? "h-[50px]" : "h-12"} />
+              <DatePicker icon={CalendarDays} label="From" value={fromDate} fromDate={PICKER_MIN} toDate={PICKER_MAX} disabled={!isCustom} onChange={(date) => setDraft({ ...draft, startDate: date ?? null, endDate: null })} height={middle ? "h-[50px]" : "h-12"} />
             </div>
             <div className="min-w-[150px] flex-[1_1_150px]">
-              <DatePicker icon={CalendarDays} label="To" value={toDate} fromDate={draft.startDate ?? undefined} disabled={!isCustom} onChange={(date) => setDraft({ ...draft, endDate: date ?? null })} height={middle ? "h-[50px]" : "h-12"} />
+              <DatePicker icon={CalendarDays} label="To" value={toDate} fromDate={draft.startDate ?? PICKER_MIN} toDate={PICKER_MAX} disabled={!isCustom} onChange={(date) => setDraft({ ...draft, endDate: date ?? null })} height={middle ? "h-[50px]" : "h-12"} />
             </div>
           </>
         )}

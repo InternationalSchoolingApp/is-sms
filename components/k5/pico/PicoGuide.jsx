@@ -276,6 +276,14 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
       clearInterval(timer);
     };
   }, [watchDialogs, pageSegment]);
+  // A sentence that belonged to another page (the Book a Class buddy strip, a module's explanation) never carries over to the
+  // page the student has moved to: it would be shown and said there. The new page then says its own (or nothing, once heard).
+  const [sayPath, setSayPath] = useState(pathname);
+  if (pathname !== sayPath) {
+    setSayPath(pathname);
+    setState((s) => (s.pageTip ? { ...s, open: false, say: null, pageTip: false } : s));
+    setTipOn(false);
+  }
   if (tipKey !== tipFor) {
     // Adjusted while rendering (React's way to reset state when an input changes), not in an effect.
     setTipFor(tipKey);

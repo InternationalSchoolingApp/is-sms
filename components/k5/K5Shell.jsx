@@ -10,6 +10,7 @@ import { K5Header } from "@/components/k5/K5Header";
 import { K5NavRail } from "@/components/k5/K5NavRail";
 import { K5QuoteOfMoment } from "@/components/k5/K5QuoteOfMoment";
 import { AppearanceDialog } from "@/components/k5/look/AppearanceDialog";
+import { SessionExpiredDialog } from "@/components/providers/SessionExpiredDialog";
 import { PicoGuide } from "@/components/k5/pico/PicoGuide";
 import { setPicoLive } from "@/components/k5/pico/picoEvents";
 import { SelectToSpeak } from "@/components/k5/pico/SelectToSpeak";
@@ -147,6 +148,8 @@ function K5Frame({ children }) {
       <PicoGuide userId={context.userId} firstName={String(context.userName || "").split(" ")[0]} schoolName={context.schoolName} home={isHome} welcomeEligible={welcomeEligible} />
       <SelectToSpeak />
       <ReadingRuler />
+      {/* The "session logged out" dialog, inside the student's own theme (colour, Day / Night, grade look). */}
+      <SessionExpiredDialog themed />
       <AppearanceDialog open={lookOpen} onClose={() => setLookOpen(false)} firstName={String(context.userName || "").split(" ")[0]} />
     </div>
   );

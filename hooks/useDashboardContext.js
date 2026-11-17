@@ -179,6 +179,8 @@ function useResolveDashboardContext({ role = "student" } = {}) {
   const [logoUrl, setLogoUrl] = useState(null);
   // The school's website (schoolSettingsLinks.schoolWebsite): the header logo opens it in a new tab, as in the legacy header.
   const [schoolWebsite, setSchoolWebsite] = useState(null);
+  // True once the school-links request has finished (logo found or not), so a page can wait for the logo before showing.
+  const [logoSettled, setLogoSettled] = useState(false);
   const authenticated = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
   const queryClient = useQueryClient();
 
@@ -285,7 +287,7 @@ function useResolveDashboardContext({ role = "student" } = {}) {
       }
     : null;
 
-  return { status, session, context, menu, menuLoading, logoUrl, schoolWebsite, ready, ...grade };
+  return { status, session, context, menu, menuLoading, logoUrl, logoSettled, schoolWebsite, ready, ...grade };
 }
 
 export function DashboardProvider({ role = "student", children }) {
