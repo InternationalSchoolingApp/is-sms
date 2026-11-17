@@ -575,8 +575,9 @@ const RE_ENROLL_TYPES = new Set([
 ]);
 
 function successTitle(data) {
-  if (data.contentFor === "FIRST-PAYMENT" && data.advanceFeePaid === "N") {
-    return RE_ENROLL_TYPES.has(data.enrollmentType) ? "Successfully Re-Enrolled" : "Successfully Enrolled";
+  if (data.contentFor === "FIRST-PAYMENT") {
+    if (RE_ENROLL_TYPES.has(data.enrollmentType)) return "Successfully Re-Enrolled";
+    if (data.advanceFeePaid === "N") return "Successfully Enrolled";
   }
   return "Payment Successful";
 }
@@ -715,6 +716,7 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
   const primaryCta = successPrimaryCta(data);
 
   const isEnrolled = successTitle(data).includes("Enrolled");
+  const isReEnrolled = isEnrolled && RE_ENROLL_TYPES.has(data.enrollmentType);
   const firstName = String(data.userName || "").trim().split(/\s+/)[0];
 
   // Add Another Student link return: the success response itself already carries the child's login credentials
@@ -731,7 +733,7 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
           <span className="flex size-9 shrink-0 sm:size-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600" aria-hidden="true">
             <Check className="size-5" strokeWidth={3} />
           </span>
-          {isEnrolled ? "You are successfully enrolled!" : "Payment successful!"}
+          {isReEnrolled ? <span className="whitespace-nowrap text-[clamp(14px,4vw,20px)] sm:text-[22px]">You are successfully Re-enrolled!</span> : isEnrolled ? "You are successfully enrolled!" : "Payment successful!"}
         </h2>
         {data.displaySchoolName && (
           <p className="mt-3 text-sm text-slate-800 sm:text-base">Thank you for choosing {data.displaySchoolName}.</p>
