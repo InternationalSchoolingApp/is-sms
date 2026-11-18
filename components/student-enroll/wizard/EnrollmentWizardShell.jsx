@@ -254,7 +254,7 @@ function StepCircle({ icon: Icon, state, justCompleted, animate }) {
 function LogoMark({ schoolName, logoUrl }) {
   if (logoUrl) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={logoUrl} alt={schoolName || ""} className="h-9 w-auto max-w-[160px] sm:max-w-[220px]" />;
+    return <img src={logoUrl} alt={schoolName || ""} className="h-9 w-auto max-w-[160px] sm:max-w-[220px] object-contain" />;
   }
 
   return (

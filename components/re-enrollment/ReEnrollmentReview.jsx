@@ -105,24 +105,44 @@ function ReviewScreen() {
   const customSchedule = customDetails?.schedulePayments || [];
   const customPlan = customSchedule.length > 0;
   const alreadyPaid = customPlan ? null : fee?.feeAlreayPaid;
-  const selectedOption =
-    planOptions.find((o) => o.mode === fee?.paymentMode || o.variants?.some((v) => v.mode === fee?.paymentMode)) ?? planOptions[0];
-  const feeTitle = `Selected Fee Plan ${selectedOption?.kind === "annual" ? "(One-Time)" : selectedOption?.kind === "registration" ? "(Reserve an Enrollment Seat)" : "(Pay in easy installments)"}`;
+  const payMode = course?.payMode || fee?.paymentMode;
+  const individualCourse = data.enrollmentType === "REGISTRATION_IMPORVE_GRADES";
+  // Legacy review (feePaymentReview1) picks the table from the record's plan: Take an Individual Course always shows the
+  // One-Time lines, a reserve-a-seat record the seat fee (also when the seat is already paid and the plan list has no
+  // seat option any more), otherwise the plan the record holds.
+  const selectedOption = individualCourse
+    ? planOptions.find((o) => o.kind === "annual") ?? planOptions[0]
+    : payMode === "registration"
+      ? { kind: "registration", mode: "registration" }
+      : planOptions.find((o) => o.mode === payMode || o.variants?.some((v) => v.mode === payMode)) ?? planOptions[0];
+  // Legacy title (StudentMigrationUtil feeSetionTitile): from the record's PAY_MODE.
+  const feeTitle = `Selected Fee Plan ${
+    payMode === "registration"
+      ? "(Reserve an Enrollment Seat)"
+      : payMode === "annually" || payMode === "a_annually"
+        ? "(One-Time)"
+        : String(payMode || "").startsWith("c_")
+          ? "(Customized)"
+          : "(Pay in easy installments)"
+  }`;
   const hasCourses = (course?.courseDTO || []).length > 0;
   // Legacy review (feePaymentReview1): the fee card is there whenever SHOW_PAYMENT_OPTION is "Y", also when the advance
   // fee already covered everything (payable $0.00); a pending payment always shows it.
   const showFeeCard = Boolean(fee) && (data.paymentRequired || showPaymentOption.data === "Y");
   // Legacy review: next grade / repeat with the grade fee already paid shows the advance plan's lines (and payable fee),
   // unless the plan is the reserve-a-seat or a custom one.
-  const payMode = course?.payMode || fee?.paymentMode;
   const useAdvanceFee =
     ["REGISTRATION_NEXT_GRADE", "REGISTRATION_REPEAT_GRADE"].includes(data.enrollmentType) &&
     data.advanceFeeApplied &&
     payMode !== "registration" &&
     !String(payMode || "").startsWith("c_");
 
-  // Nothing is due (the advance fee covered it): the legacy review shows the payable fee as $0.00.
-  const zeroPayable = !data.paymentRequired && useAdvanceFee ? `${getCurrencyDisplaySymbol(data.currencyIsoCode)}${formatMoneyWithCommas(0)}` : undefined;
+  // Nothing is due (the advance fee covered it): the legacy review shows the payable fee as $0.00 (next grade / repeat on
+  // the advance plan, and Take an Individual Course with the advance already paid and no extra course fee).
+  const zeroPayable =
+    !data.paymentRequired && (useAdvanceFee || (individualCourse && data.advanceFeeApplied))
+      ? `${getCurrencyDisplaySymbol(data.currencyIsoCode)}${formatMoneyWithCommas(0)}`
+      : undefined;
 
   return (
     <>
@@ -173,8 +193,14 @@ function ReviewScreen() {
           </Card>
         )}
         {showFeeCard && customPlan && (
-          <Card header="Selected Fee Plan (Customized Payment Plan)">
-            <CustomPlanSummary schedule={customSchedule} totalDue={customDetails.totalPayableAmountString} />
+          <Card header="Selected Fee Plan (Customized)">
+            <CustomPlanSummary
+              schedule={customSchedule}
+              extraFees={customPlanExtraFees(fee)}
+              totalDue={customDetails.totalPayableAmount}
+              totalDueString={customDetails.totalPayableAmountString}
+              currencySymbol={getCurrencyDisplaySymbol(data.currencyIsoCode)}
+            />
             <p className="mt-2 text-center text-xs text-slate-500">
               <b>Note:</b> All fees mentioned above are in {data.currencyIsoCode || "USD"}
             </p>
@@ -221,8 +247,20 @@ function ReviewScreen() {
   );
 }
 
-/** The custom plan's installments, each marked Paid (with its date) or Due, and the amount still due. */
-function CustomPlanSummary({ schedule, totalDue }) {
+/** Legacy getCustomizedPlanExtraFees(): unpaid "Extra Course Fee" rows of the advance schedule, added to a custom plan. */
+function customPlanExtraFees(fee) {
+  return (fee?.advanceFeeDetails?.monthlyFees || []).filter(
+    (m) => m && m.paymentLabel === "Extra Course Fee" && m.status !== "SUCCESS" && m.amount > 0,
+  );
+}
+
+/**
+ * The custom plan's installments, each marked Paid (with its date) or Due, the unpaid extra course fees, and the amount
+ * still due (legacy getCustomizedPaymentTable(): plan total plus the extra fees).
+ */
+function CustomPlanSummary({ schedule, extraFees, totalDue, totalDueString, currencySymbol }) {
+  const extraTotal = extraFees.reduce((sum, f) => sum + Number(f.amount || 0), 0);
+  const payable = extraTotal > 0 ? `${currencySymbol}${formatMoneyWithCommas(Number(totalDue || 0) + extraTotal)}` : totalDueString;
   return (
     <div>
       <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 text-sm">
@@ -245,10 +283,19 @@ function CustomPlanSummary({ schedule, totalDue }) {
             </li>
           );
         })}
+        {extraFees.map((extra, index) => (
+          <li key={`extra-${index}`} className="flex items-center justify-between gap-3 px-3 py-2">
+            <div className="min-w-0">
+              <p className="font-semibold text-black">{extra.paymentLabel}</p>
+              <p className="text-xs text-slate-600">Scheduled {extra.scheduledDate}</p>
+            </div>
+            <span className="shrink-0 font-bold text-black">{extra.amountString}</span>
+          </li>
+        ))}
       </ul>
       <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3">
         <span className="text-base font-bold text-black">Payable Fee</span>
-        <span className="text-lg font-bold text-black">{totalDue}</span>
+        <span className="text-lg font-bold text-black">{payable}</span>
       </div>
     </div>
   );

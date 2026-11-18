@@ -16,7 +16,8 @@ import { setPicoLive } from "@/components/k5/pico/picoEvents";
 import { SelectToSpeak } from "@/components/k5/pico/SelectToSpeak";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
-import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { DashboardLookProvider, useDashboardContext } from "@/hooks/useDashboardContext";
+import { effectiveGradeLook } from "@/constant/appearance";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { K5LiveClassWatcher } from "@/components/k5/home/K5LiveClassWatcher";
 import { studentNavHref } from "@/utils/dashboardNav";
@@ -33,9 +34,20 @@ export function K5Shell({ children }) {
   const { context } = useDashboardContext();
   return (
     <AppearanceProvider scope="k5" userId={context.userId} schoolUUID={context.schoolUUID}>
-      <K5Frame>{children}</K5Frame>
+      <K5LookScope>
+        <K5Frame>{children}</K5Frame>
+      </K5LookScope>
     </AppearanceProvider>
   );
+}
+
+// The look the student picked in the Look dialog (Theme), else their grade's look: everything in the shell (header, rails,
+// pages, dialogs) reads isMiddle / isHigh for that look.
+function K5LookScope({ children }) {
+  const { isMiddle, isHigh } = useDashboardContext();
+  const { preferences } = useAppearance();
+  const look = effectiveGradeLook(preferences.gradeLook, { isMiddle, isHigh });
+  return <DashboardLookProvider look={look}>{children}</DashboardLookProvider>;
 }
 
 function K5Frame({ children }) {

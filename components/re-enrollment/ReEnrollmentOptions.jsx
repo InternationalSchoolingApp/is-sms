@@ -12,6 +12,7 @@ import { reEnrollmentStepPath } from "@/utils/reEnrollmentSteps";
 
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { K5PassedOptions } from "./K5PassedOptions";
+import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 
 const pad = (n) => String(n);
 
@@ -192,6 +193,7 @@ export function ReEnrollmentOptions() {
   // resume=1 (login / coming back from the payment): continue at the step the student is on instead of showing the options.
   const [resume] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("resume") === "1");
   const [pickedPrograms, setPickedPrograms] = useState({});
+  usePicoContentReady(!(resume && inProgress));
 
   useEffect(() => {
     if (resume && inProgress && eligibility.currentStep) router.replace(reEnrollmentStepPath(school, eligibility.currentStep));
@@ -200,9 +202,12 @@ export function ReEnrollmentOptions() {
   if (resume && inProgress) return <FullScreenLoader />;
 
   const passed = eligibility.result === "PASS";
+  const completedGrade12 = passed && /^grade\s*12$/i.test(eligibility.currentGrade?.name?.trim() || "");
   const options = eligibility.options || [];
   // The learning program picked under each option; the option's default (first in `programs`) until the student picks another.
-  const programOf = (option) => pickedPrograms[option.enrollmentType] ?? option.learningProgram;
+  const programOf = (option) => completedGrade12 && option.enrollmentType === "REGISTRATION_IMPORVE_GRADES"
+    ? "ONE_TO_ONE_FLEX"
+    : pickedPrograms[option.enrollmentType] ?? option.learningProgram;
 
   async function choose(option) {
     if (select.isPending) return;

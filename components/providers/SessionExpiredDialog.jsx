@@ -4,6 +4,7 @@ import { useState, useSyncExternalStore } from "react";
 import { Eye, EyeOff, Lock, TimerReset } from "lucide-react";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { resolveBackendNavigationOrigin } from "@/utils/backendOrigin";
 import { expireSession } from "@/utils/logout";
 import { SESSION_EXPIRED_MESSAGE, isSessionExpired, subscribeSessionExpired } from "@/utils/sessionState";
 
@@ -145,6 +146,11 @@ export function SessionExpiredDialog({ themed = false }) {
       const url = new URL(answer.ssoUrl, window.location.origin);
       const here = window.location.pathname + window.location.search;
       if (here.startsWith(`/${schoolUUID}/`)) url.searchParams.set("next", here);
+      // Which backend this sign-in belongs to (UAT only; /api/sso ignores it elsewhere). Without it, a browser whose site data
+      // was cleared has lost its backend choice, the dashboard's server calls go to the default route, the dashboard details
+      // fail, and the student lands on the default dashboard instead of their own.
+      const backend = resolveBackendNavigationOrigin();
+      if (backend) url.searchParams.set("backend", backend);
       window.location.assign(url.toString());
       return;
     }
@@ -191,6 +197,9 @@ export function SessionExpiredDialog({ themed = false }) {
             {copy && <p className="m-0 text-base font-medium opacity-80">{copy.hint}</p>}
             <label className={`relative flex h-[54px] w-full items-center ${look.field}`}>
               <Lock className="ml-4 h-4 w-4 flex-none opacity-70" aria-hidden="true" />
+              {/* The signed-in user's e-mail for the browser's password manager: it then offers (and fills) only this user's
+                  saved password, not every account saved for the site. */}
+              <input type="text" name="username" autoComplete="username" value={email} readOnly hidden aria-hidden="true" tabIndex={-1} />
               <input
                 type={visible ? "text" : "password"}
                 value={password}

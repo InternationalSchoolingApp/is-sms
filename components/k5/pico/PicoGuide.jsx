@@ -219,8 +219,10 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
       finishWelcome();
       return;
     }
-    speak(text).then((result) => {
-      if (result === "started") {
+    // By itself: only in the recorded voice, once /api/pico-voice has it (never the browser voice).
+    speak(text, { clipOnly: true }).then((result) => {
+      // "unavailable": the recorded voice could not be made - the bubble showed the welcome, so it counts as delivered.
+      if (result === "started" || result === "unavailable") {
         finishWelcome();
       } else if (result === "blocked") {
         // The browser refused to speak before the student touched the page: nothing is marked; the welcome is said at the
@@ -229,7 +231,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
         const retry = () => {
           retryOff.current?.();
           if (userActed.current) return;
-          speak(text, { force: true }).then((again) => {
+          speak(text, { force: true, clipOnly: true }).then((again) => {
             if (again === "started") finishWelcome();
           });
         };
@@ -328,15 +330,15 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
       setPicoModuleCookie(userId, key);
       setDoneModules((set) => new Set(set).add(key));
     };
-    speak(text).then((result) => {
+    speak(text, { clipOnly: true }).then((result) => {
       if (currentTip.current !== key) return;
-      if (result === "started" || result === "off") {
+      if (result === "started" || result === "off" || result === "unavailable") {
         delivered();
       } else if (result === "blocked" && !moduleRetryOff.current) {
         const retry = () => {
           moduleRetryOff.current?.();
           if (currentTip.current !== key) return;
-          speak(text, { force: true }).then((again) => {
+          speak(text, { force: true, clipOnly: true }).then((again) => {
             if (again === "started" && currentTip.current === key) delivered();
           });
         };
@@ -388,7 +390,8 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
         say: { text, pin: target || null, id: Date.now(), above: Boolean(above) },
       }));
       setTipOn(true);
-      speak(text);
+      // A page asked the buddy to talk (often by itself, e.g. the Book a Class strip): only in the recorded voice.
+      speak(text, { clipOnly: true });
     };
     window.addEventListener(PICO_SAY_EVENT, onSay);
     return () => window.removeEventListener(PICO_SAY_EVENT, onSay);

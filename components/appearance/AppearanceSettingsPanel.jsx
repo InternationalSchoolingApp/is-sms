@@ -56,9 +56,11 @@ const LOOK_PREVIEW = {
  */
 function GradeLookSection() {
   const { preferences, updatePreference, canCustomize } = useAppearance();
-  const { isMiddle, isHigh } = useDashboardContext();
-  const own = gradeLookOf({ isMiddle, isHigh });
-  const current = effectiveGradeLook(preferences.gradeLook, { isMiddle, isHigh });
+  // The student's real grade (inside the shell isMiddle / isHigh follow the picked look).
+  const { isMiddle, isHigh, gradeIsMiddle, gradeIsHigh } = useDashboardContext();
+  const grade = { isMiddle: gradeIsMiddle ?? isMiddle, isHigh: gradeIsHigh ?? isHigh };
+  const own = gradeLookOf(grade);
+  const current = effectiveGradeLook(preferences.gradeLook, grade);
   return (
     <Section id="lk-theme" title="Theme">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
