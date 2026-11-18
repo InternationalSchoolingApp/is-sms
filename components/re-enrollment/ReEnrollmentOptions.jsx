@@ -202,9 +202,12 @@ export function ReEnrollmentOptions() {
   if (resume && inProgress) return <FullScreenLoader />;
 
   const passed = eligibility.result === "PASS";
+  const completedGrade12 = passed && /^grade\s*12$/i.test(eligibility.currentGrade?.name?.trim() || "");
   const options = eligibility.options || [];
   // The learning program picked under each option; the option's default (first in `programs`) until the student picks another.
-  const programOf = (option) => pickedPrograms[option.enrollmentType] ?? option.learningProgram;
+  const programOf = (option) => completedGrade12 && option.enrollmentType === "REGISTRATION_IMPORVE_GRADES"
+    ? "ONE_TO_ONE_FLEX"
+    : pickedPrograms[option.enrollmentType] ?? option.learningProgram;
 
   async function choose(option) {
     if (select.isPending) return;
