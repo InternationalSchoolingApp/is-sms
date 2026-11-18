@@ -2,7 +2,7 @@
 
 import { BookOpen } from "lucide-react";
 import { MobileTableCard } from "@/components/student/MobileTableCard";
-import { formatAmount, hasEnded, weeksBetween, weeksLabel } from "@/utils/cartPlan";
+import { formatAmount, hasEnded } from "@/utils/cartPlan";
 
 /**
  * "Purchased Plans" table — legacy getPurchasedPlans(): the paid plans of the
@@ -28,7 +28,6 @@ export function PurchasedPlans({ items, subjectId, symbol, isoCode }) {
               rows={[
                 { label: "S.No", value: index + 1 },
                 { label: "No. of Classes", value: item.classCount },
-                { label: "Duration Plan", value: `${item.planStartDate} to ${item.planEndDate} (${weeksLabel(weeksBetween(item.planStartDate, item.planEndDate))})` },
                 { label: `Fee Paid${isoCode ? ` (${isoCode})` : ""}`, value: formatAmount(symbol, item.planAmount) },
                 {
                   label: "Plan Status",
@@ -45,7 +44,6 @@ export function PurchasedPlans({ items, subjectId, symbol, isoCode }) {
             <tr>
               <th className="px-3 py-2">S.No</th>
               <th className="px-3 py-2">No. of Classes</th>
-              <th className="px-3 py-2">Duration Plan</th>
               <th className="px-3 py-2">Fee Paid{isoCode ? ` (${isoCode})` : ""}</th>
               <th className="px-3 py-2">Plan Status</th>
             </tr>
@@ -55,9 +53,6 @@ export function PurchasedPlans({ items, subjectId, symbol, isoCode }) {
               <tr key={item.cartId ?? index} className="border-t border-slate-200 odd:bg-slate-50">
                 <td className="px-3 py-2">{index + 1}</td>
                 <td className="px-3 py-2">{item.classCount}</td>
-                <td className="px-3 py-2">
-                  {item.planStartDate} to {item.planEndDate} ({weeksLabel(weeksBetween(item.planStartDate, item.planEndDate))})
-                </td>
                 <td className="px-3 py-2">{formatAmount(symbol, item.planAmount)}</td>
                 <td className="px-3 py-2">
                   {hasEnded(item.planEndDate) ? <span className="text-red-600">Inactive</span> : <span className="text-primary">Active</span>}
