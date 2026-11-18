@@ -241,7 +241,9 @@ export function TeacherDemoRecorder({ context, userId, demo, chosenId, onChoose,
       )}
       {error && <p className="text-xs text-red-600">{error}</p>}
 
-      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+      {/* A click outside must not close the drawer (the teacher is mid-recording, and a stray click would lose the
+          place): only the close button, the Select button or Escape close it. */}
+      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen} disablePointerDismissal>
         {/* header and footer stay put; only the middle scrolls, so the footer sits on the drawer's bottom edge */}
         <SheetContent side="right" className="gap-0 p-0 sm:max-w-lg">
           <SheetHeader className="shrink-0 p-4 pr-12">
