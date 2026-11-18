@@ -104,7 +104,8 @@ function StateBadge({ state }) {
  *
  *   demo:        useTeacherDemoRecordings() of the parent (the same data the parent validates the choice against)
  *   chosenId:    the chosen recording's Lens meeting id, "" = none   onChoose(meetingId)
- *   onSaveFirst(): validates and saves the form, resolves true when the recorder may open (the parent shows what is missing)
+ *   onSaveFirst(): validates and saves the form, resolves true when the recorder may open (the parent shows what is missing);
+ *     false = the form is incomplete, a string = the server refused the save and that is why
  *   busy:        the form is saving or uploading, so recording must wait
  */
 export function TeacherDemoRecorder({ context, userId, demo, chosenId, onChoose, onSaveFirst, onSessionOut, busy, error }) {
@@ -184,8 +185,9 @@ export function TeacherDemoRecorder({ context, userId, demo, chosenId, onChoose,
     if (opening || busy) return;
     setOpening(true);
     try {
-      if (await onSaveFirst()) setDrawerOpen(true);
-      else toast.error("Please complete the highlighted details first.");
+      const saved = await onSaveFirst();
+      if (saved === true) setDrawerOpen(true);
+      else toast.error(typeof saved === "string" ? saved : "Please complete the highlighted details first.");
     } catch (err) {
       console.error("TeacherDemoRecorder save before opening failed:", err);
       toast.error("Something went wrong. Please try again.");

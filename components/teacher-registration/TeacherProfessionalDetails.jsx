@@ -155,7 +155,8 @@ export function TeacherProfessionalDetails({ context, school, userId, initial, o
   /**
    * "Live record your demo" opens only for a filled-in form, and saves it first, as the legacy page does: the recording
    * takes a while, so the details must already be safe. The same checks as Next, except the demo itself (it does not
-   * exist yet) and the declaration (owed with the final Next). Resolves true when saved.
+   * exist yet) and the declaration (owed with the final Next). Resolves true when saved, false when the form is
+   * incomplete (the errors are shown on it), or the server's message when the save itself was refused.
    */
   async function saveBeforeRecording() {
     if (save.isPending || uploading) return false;
@@ -173,12 +174,15 @@ export function TeacherProfessionalDetails({ context, school, userId, initial, o
     try {
       const response = await save.mutateAsync({ fields: draft, linkMode });
       if (response?.status === STATUS_SUCCESS) return true;
-      setErrors((prev) => ({ ...prev, form: response?.message || "Something went wrong. Please check your connection and try again." }));
+      const message = response?.message || "Something went wrong. Please check your connection and try again.";
+      setErrors((prev) => ({ ...prev, form: message }));
+      return message; // the server refused the save: the recorder shows why instead of "complete the highlighted details"
     } catch (err) {
       console.error("TeacherProfessionalDetails save before recording failed:", err);
-      setErrors((prev) => ({ ...prev, form: "Something went wrong. Please check your connection and try again." }));
+      const message = "Something went wrong. Please check your connection and try again.";
+      setErrors((prev) => ({ ...prev, form: message }));
+      return message;
     }
-    return false;
   }
 
   async function handleSubmit() {
