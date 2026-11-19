@@ -107,7 +107,7 @@ function ActivityCard({ event, clue, onOpen }) {
     <button
       type="button"
       onClick={() => onOpen(event)}
-      className={`flex w-full cursor-pointer flex-wrap items-center gap-4 rounded-[24px] border-[3px] border-solid px-[18px] py-3.5 text-left ${event.k5Status === "live" ? "k5-live-pill k5-live-pill-act" : ""} ${clue === "activity" ? CLUE_RING : ""}`}
+      className={`k5-lift flex w-full cursor-pointer flex-wrap items-center gap-4 rounded-[24px] border-[3px] border-solid px-[18px] py-3.5 text-left ${event.k5Status === "live" ? "k5-live-pill k5-live-pill-act" : ""} ${clue === "activity" ? CLUE_RING : ""}`}
       style={{ borderColor: C.activity, background: "var(--k5-vt)" }}
     >
       <span className="flex h-[66px] w-[66px] flex-none items-center justify-center rounded-[20px] bg-k5-card">
@@ -184,7 +184,7 @@ export function NoClassDay({ reason, isToday, onOpen }) {
         <span className="font-k5-display text-[28px] font-semibold text-k5-ink">
           {reason.kind === "holiday" ? reason.title : isToday ? (reason.kind === "study" ? "No live classes today" : "No classes today!") : reason.title}
         </span>
-        <span className={`text-[17px] font-extrabold ${holiday ? "text-k5-ri" : "text-k5-gx"}`}>{reason.text}</span>
+        {/* <span className={`text-[17px] font-extrabold ${holiday ? "text-k5-ri" : "text-k5-gx"}`}>{reason.text}</span> */}
       </div>
     </Wrap>
   );

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { CountUp } from "@/components/motion/CountUp";
+import { ProgressSparkle } from "@/components/motion/canvas/ProgressCanvas";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { K5AttendanceDetails, AC, ATB, LABEL } from "@/components/k5/pages/K5AttendanceDetails";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
@@ -272,7 +274,7 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
             />
             <StatTile
               label={`Attendance · ${monthLong}`}
-              value={cur ? `${cur.percent}%` : "–"}
+              value={cur ? <><CountUp value={cur.percent} />%</> : "–"}
               valueClass="text-k5-gx"
               tileClass="bg-k5-gt"
               icon={
@@ -381,7 +383,7 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
               {cur ? (
                 <>
                   <div className="flex flex-wrap items-center gap-[18px]">
-                    <div className="relative h-[160px] w-[160px] flex-none">
+                    <div className="relative h-[160px] w-[160px] flex-none"><ProgressSparkle />
                       <svg width="160" height="160" viewBox="0 0 160 160" role="img" aria-label={`You came to ${cur.total - cur.absent} of ${cur.total} classes.`}>
                         <circle cx="80" cy="80" r={R} fill="none" strokeWidth="20" style={{ stroke: "var(--k5-soft)" }} />
                         {slices.map((s) => (
@@ -404,7 +406,7 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                         ))}
                       </svg>
                       <span className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-                        <span className="k5h-at-donut font-k5-display text-[34px] font-bold leading-none">{filter ? { present: cur.present, late: cur.late, absent: cur.absent, missS: cur.absent, missT: 0 }[filter] : cur.total}</span>
+                        <span className="k5h-at-donut font-k5-display text-[34px] font-bold leading-none"><CountUp value={filter ? { present: cur.present, late: cur.late, absent: cur.absent, missS: cur.absent, missT: 0 }[filter] : cur.total} /></span>
                         <span className="text-xs font-black text-k5-mut">{filter ? LABEL[filter] : "classes"}</span>
                       </span>
                     </div>
@@ -432,7 +434,7 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                                 )}
                               </span>
                               <span className="flex-1 text-base font-extrabold">{LABEL[k]}</span>
-                              <span className="font-k5-display text-[22px] font-bold">{count}</span>
+                              <span className="font-k5-display text-[22px] font-bold"><CountUp value={count} /></span>
                             </button>
                           </li>
                         );

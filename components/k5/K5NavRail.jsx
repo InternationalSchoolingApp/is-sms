@@ -13,6 +13,9 @@ import { NAV_ART, navPictureFor } from "@/components/k5/navIcons";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { K5Sk } from "@/components/k5/K5Skeletons";
 import { studentNavHref } from "@/utils/dashboardNav";
+import { motion } from "framer-motion";
+import { DUR, EASE_OUT } from "@/components/motion/motionConfig";
+import { useMotionBand } from "@/components/motion/useMotionBand";
 
 // Icon key (utils/dashboardNav.js) -> lucide icon + the mockup's tile tint pair (T background / I icon).
 const ICONS = {
@@ -164,7 +167,7 @@ function flattenItems(items) {
 }
 
 const ITEM_CLASS =
-  "k5-ni relative flex w-[46px] h-[46px] flex-none touch-none select-none flex-col items-center gap-1 rounded-2xl text-center text-xs font-black leading-[1.15] no-underline [overflow-wrap:anywhere]";
+  "k5-ni relative isolate flex w-[46px] h-[46px] flex-none touch-none select-none flex-col items-center gap-1 rounded-2xl text-center text-xs font-black leading-[1.15] no-underline transition-colors duration-150 [overflow-wrap:anywhere]";
 
 function NavTile({ icon, active, picture }) {
   const [Icon, tile, stroke] = iconFor(icon);
@@ -179,7 +182,7 @@ function NavTile({ icon, active, picture }) {
     );
   }
   return (
-    <span className={`flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[15px] ${active ? "bg-white text-k5-ac" : `${tile} ${stroke}`}`}>
+    <span className={`flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[15px] transition-colors duration-150 ${active ? "bg-white text-k5-ac delay-100" : `${tile} ${stroke}`}`}>
       {NAV_ART[icon] ? (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           {NAV_ART[icon]}
@@ -188,6 +191,26 @@ function NavTile({ icon, active, picture }) {
         <Icon className="h-6 w-6" strokeWidth={2.3} aria-hidden="true" />
       )}
     </span>
+  );
+}
+
+/**
+ * The active item's highlight. One shared element (layoutId) that slides from the old active item to the new one, instead
+ * of two backgrounds switching. layout="position" moves it only: the pill's size follows the item's own CSS width
+ * (the rail widening on hover is a CSS transition), so a hover never stretches or squashes it. Under Reduced Motion
+ * MotionProvider makes the move instant. The label and tile of the item wait 100 ms (delay-100) so white text never
+ * shows on a page-coloured background while the pill is still on its way.
+ */
+function NavPill() {
+  const band = useMotionBand();
+  return (
+    <motion.span
+      layoutId="k5-nav-pill"
+      layout="position"
+      aria-hidden="true"
+      className="absolute inset-0 -z-10 rounded-2xl bg-k5-ac"
+      transition={band === "high" ? { duration: DUR.card, ease: EASE_OUT } : { type: "spring", stiffness: 520, damping: 40 }}
+    />
   );
 }
 
@@ -202,8 +225,9 @@ function NavLink({ item, href, active, onNavigate, drag }) {
       onClick={(e) => (drag.consumeClick() ? e.preventDefault() : onNavigate())}
       {...drag.handlers(item.key)}
       style={drag.style(item.key)}
-      className={`${ITEM_CLASS} ${active ? "bg-k5-ac text-white" : "text-k5-ink hover:bg-k5-soft"}`}
+      className={`${ITEM_CLASS} ${active ? "text-white delay-100" : "text-k5-ink hover:bg-k5-soft"}`}
     >
+      {active && <NavPill />}
       <NavTile icon={item.icon} active={active} picture={navPictureFor(item)} />
       {isInboxMenuItem(item) && <InboxBadge className="absolute left-[32px] top-0 shadow-[0_0_0_2px_var(--k5-card)] [.k5-side:hover_&]:left-[36px] [.k5-side[data-open='true']_&]:left-[36px]" />}
       <span className="k5-nl">{item.label}</span>
@@ -258,7 +282,7 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
                   title={child.label}
                   aria-label={child.label}
                   aria-current={active ? "page" : undefined}
-                  className={`flex w-[52px] items-center justify-center rounded-xl py-1.5 no-underline ${active ? "bg-k5-act" : "hover:bg-k5-soft"}`}
+                  className={`flex w-[52px] items-center justify-center rounded-xl py-1.5 no-underline transition-colors duration-150 ${active ? "bg-k5-act" : "hover:bg-k5-soft"}`}
                 >
                   <ClubMark art={art} />
                 </Link>

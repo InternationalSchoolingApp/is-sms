@@ -7,6 +7,12 @@ import { RightActionRail } from "@/components/dashboard/RightActionRail";
 import { AppearanceProvider } from "@/components/appearance/AppearanceProvider";
 import { ReadingRuler } from "@/components/appearance/ReadingRuler";
 import { K5Header } from "@/components/k5/K5Header";
+import { MotionProvider, useMotion } from "@/components/motion/MotionProvider";
+import { PageReveal } from "@/components/motion/PageReveal";
+import { BlindsRoute } from "@/components/motion/BlindsRoute";
+import { CelebrationHost } from "@/components/motion/canvas/CelebrationHost";
+import { ZOOM } from "@/components/motion/motionConfig";
+import { CanvasBackground } from "@/components/motion/canvas/CanvasBackground";
 import { K5NavRail } from "@/components/k5/K5NavRail";
 import { K5QuoteOfMoment } from "@/components/k5/K5QuoteOfMoment";
 import { AppearanceDialog } from "@/components/k5/look/AppearanceDialog";
@@ -35,7 +41,9 @@ export function K5Shell({ children }) {
   return (
     <AppearanceProvider scope="k5" userId={context.userId} schoolUUID={context.schoolUUID}>
       <K5LookScope>
-        <K5Frame>{children}</K5Frame>
+        <MotionProvider>
+          <K5Frame>{children}</K5Frame>
+        </MotionProvider>
       </K5LookScope>
     </AppearanceProvider>
   );
@@ -57,6 +65,7 @@ function K5Frame({ children }) {
   const dummy = useDummyStudent();
   const { school } = useParams();
   const { isLoading: appearanceLoading, preferences } = useAppearance();
+  const { band: motionBand, reduced: motionReduced } = useMotion();
     const themeProps = useK5ThemeProps("relative flex min-h-screen flex-col overflow-x-clip bg-k5-page");
   const [navOpen, setNavOpen] = useState(false);
   const [lookOpen, setLookOpen] = useState(false);
@@ -101,6 +110,18 @@ function K5Frame({ children }) {
     };
   }, [preferences.textSize, preferences.font, preferences.reading]);
 
+  // Toasts live outside the shell (AppToaster, root layout): hand them the band's zoom and the Motion setting through CSS
+  // variables, like the toast font above. Reduced Motion makes the toast appear without any movement (0 s).
+  useEffect(() => {
+    const el = document.documentElement;
+    el.style.setProperty("--app-toast-zoom", String(ZOOM[motionBand]));
+    el.style.setProperty("--app-toast-dur", motionReduced ? "0s" : "0.22s");
+    return () => {
+      el.style.removeProperty("--app-toast-zoom");
+      el.style.removeProperty("--app-toast-dur");
+    };
+  }, [motionBand, motionReduced]);
+
   // A route change closes the opened nav / drawer.
   const [lastPath, setLastPath] = useState(pathname);
   if (pathname !== lastPath) {
@@ -108,7 +129,10 @@ function K5Frame({ children }) {
     setNavOpen(false);
   }
   return (
-    <div {...themeProps} data-k5-prek={isPreK ? "true" : undefined} style={appearanceLoading ? { opacity: 0, transition: "opacity 0.3s ease" } : { opacity: 1, transition: "opacity 0.3s ease" }}>
+    <div {...themeProps} data-k5-prek={isPreK ? "true" : undefined} data-motion-band={motionBand} style={appearanceLoading ? { opacity: 0 } : undefined}>
+      <CanvasBackground themeKey={`${themeProps["data-k5-theme"]}|${themeProps.className}`} />
+      <BlindsRoute />
+      <CelebrationHost />
       <K5Header
         userId={context.userId}
         schoolUUID={context.schoolUUID}
@@ -129,10 +153,10 @@ function K5Frame({ children }) {
         <div aria-hidden="true" className="w-[76px] flex-none max-[760px]:hidden" />
         <K5NavRail menu={menu} loading={menuLoading} open={navOpen} onOpen={() => setNavOpen(true)} onClose={closeNav} isPreK={isPreK} userId={context.userId} />
 
-        <main className="flex min-w-0 flex-[1_1_auto] flex-col gap-4 max-[760px]:basis-full">
+        <PageReveal className="flex min-w-0 flex-[1_1_auto] flex-col gap-4 max-[760px]:basis-full">
           <K5QuoteOfMoment />
           {children}
-        </main>
+        </PageReveal>
 
         <div aria-hidden="true" className="w-20 flex-none max-[760px]:hidden" />
         <RightActionRail
@@ -151,7 +175,7 @@ function K5Frame({ children }) {
       </div>
 
       {/* Below 760px the action rail is a fixed bottom tab bar — keep the footer clear of it. */}
-      <footer className="px-4 pb-6 pt-2 text-center text-[13px] font-bold text-k5-mut max-[760px]:pb-[110px]">
+      <footer className="relative px-4 pb-6 pt-2 text-center text-[13px] font-bold text-k5-mut max-[760px]:pb-[110px]">
         {copyrightLine(context.schoolName)}
       </footer>
 

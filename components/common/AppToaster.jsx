@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { Toaster } from "react-hot-toast";
+import { ToastBar, Toaster } from "react-hot-toast";
 
 export function AppToaster() {
   useEffect(() => {
@@ -61,6 +61,20 @@ export function AppToaster() {
       position="top-center"
       containerStyle={{ top: "var(--app-toast-top, 30vh)" }}
       toastOptions={{ style: { fontSize: "var(--app-toast-font-size, 14px)", fontFamily: "var(--app-toast-font-family, inherit)", letterSpacing: "var(--app-toast-letter-spacing, normal)" } }}
-    />
+    >
+      {/* One animation only: the library's own enter / exit style is replaced by ours (Zoom In plus a short slide down, a lighter
+          zoom out). Duration and start scale come from CSS variables that K5Shell sets from the student's band and Motion setting;
+          app/appearance.css has the keyframes and the fallbacks. Position is untouched (containerStyle above). */}
+      {(t) => (
+        <ToastBar
+          toast={t}
+          style={{
+            animation: t.visible
+              ? "appToastIn var(--app-toast-dur, 0.22s) cubic-bezier(0.22, 1, 0.36, 1) both"
+              : "appToastOut calc(var(--app-toast-dur, 0.22s) * 0.8) ease-in both",
+          }}
+        />
+      )}
+    </Toaster>
   );
 }

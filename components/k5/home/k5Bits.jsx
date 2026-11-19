@@ -3,6 +3,7 @@
 import { BookOpen, Calculator, Dumbbell, FlaskConical, Landmark, Monitor, Palette } from "lucide-react";
 import { subjectStyle } from "@/utils/k5Calendar";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { CountUp } from "@/components/motion/CountUp";
 
 // Shared building blocks of the Grade K–5 home (Playful.dc.html card / pill / button values).
 
@@ -115,16 +116,16 @@ export function SubjectTile({ name, size = "lg" }) {
 /** "1 done · 1 live · 3 to go" pills. */
 export function StatusPills({ counts }) {
   const pills = [
-    counts.done ? [`${counts.done} done`, "bg-k5-act text-k5-acx"] : null,
-    counts.live ? [`${counts.live} live`, "bg-k5-gt text-k5-gx"] : null,
-    counts.next ? [`${counts.next} to go`, "bg-k5-yt text-k5-yx"] : null,
+    counts.done ? ["done", counts.done, "bg-k5-act text-k5-acx"] : null,
+    counts.live ? ["live", counts.live, "bg-k5-gt text-k5-gx"] : null,
+    counts.next ? ["to go", counts.next, "bg-k5-yt text-k5-yx"] : null,
   ].filter(Boolean);
   if (!pills.length) return null;
   return (
     <div className="flex flex-wrap gap-2">
-      {pills.map(([label, cls]) => (
+      {pills.map(([label, n, cls]) => (
         <span key={label} className={`k5h-pill rounded-full px-3.5 py-2 text-[15px] font-black ${cls}`}>
-          {label}
+          <CountUp value={n} /> {label}
         </span>
       ))}
     </div>
@@ -148,7 +149,7 @@ export function PlanHeader({ tile, title, subtitle, children }) {
       {tile}
       <div className="flex flex-[1_1_200px] flex-col gap-0.5">
         <h2 className="k5h-ptitle m-0 font-k5-display text-[32px] font-semibold leading-[1.05]">{title}</h2>
-        {subtitle && <p className="m-0 text-[17px] font-extrabold text-k5-mut">{subtitle}</p>}
+        {/* {subtitle && <p className="m-0 text-[17px] font-extrabold text-k5-mut">{subtitle}</p>} */}
       </div>
       {children}
     </div>
