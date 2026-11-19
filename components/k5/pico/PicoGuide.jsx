@@ -18,6 +18,8 @@ const noSubscribe = () => () => {};
 const OTHER_POPUPS = '[data-blocking-popup], [data-slot="dialog-content"], dialog[open]';
 // A welcome that was cancelled by something other than the student (React Strict Mode, a route change) is tried again, a few times.
 const WELCOME_TRIES = 3;
+// Pages whose very first visit is a 2-step welcome tour (welcome + the page's own explanation), like the dashboard's tour.
+const WELCOME_TOUR_PAGES = new Set(["re-enrollment"]);
 
 // The tips of the home tour (the mockup's 8 plus inbox, LMS, announcements, news, diary, sibling, profile); `pin` is the
 // data-pin of the element the buddy spotlights. A tip whose element is not on the page (no live class right now, no
@@ -152,11 +154,18 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   const onBook = pathname.includes("book-a-session");
   const [tipOn, setTipOn] = useState(false);
   const buddy = BUDDIES[preferences.buddy] || BUDDIES.pico;
-  const steps = tourSteps(firstName, buddy.name, live.name, welcome, schoolName);
+  const pageSegment = pathname.split("/").filter(Boolean).pop();
+  // A student's first visit to one of these pages is a short tour of its own: the welcome, then what the page is for (2 steps).
+  const tourPage = !home && welcome && WELCOME_TOUR_PAGES.has(pageSegment) ? picoModuleFor(pageSegment) : null;
+  const steps = tourPage
+    ? [
+        { pin: null, text: picoWelcomeText({ firstName, schoolName, buddyName: buddy.name, tour: false }) },
+        { pin: null, text: tourPage.text },
+      ]
+    : tourSteps(firstName, buddy.name, live.name, welcome, schoolName);
   const mobile = useSyncExternalStore(subscribeMobile, isMobileView, () => false);
   // No dialog is open on this page (checked by the effect below, only while the buddy has something to say by itself).
   // Kept as "the page it was seen clear on", so a new page is never taken as clear before it has been looked at.
-  const pageSegment = pathname.split("/").filter(Boolean).pop();
   const [clearAt, setClearAt] = useState(null);
   const clear = clearAt === pageSegment;
   // The first tour opens by itself once the plan is known and no dialog is open; the buddy stays quiet while the "LIVE NOW" popup waits.
@@ -201,7 +210,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     retryOff.current?.();
     setPicoWelcomeCookie(userId);
     // The club's own line was the welcome, so the club page does not say it again by itself next time.
-    if (clubWelcome) setPicoModuleCookie(userId, pageSegment);
+    if (clubWelcome || tourPage) setPicoModuleCookie(userId, pageSegment);
     setWelcomedNow(true);
   };
 
@@ -211,6 +220,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     const text = welcomeText;
     // The bubble shows the welcome (on the home page it is the tour's first tip).
     if (home) setState((s) => ({ ...s, open: true, index: 0, say: null }));
+    else if (tourPage) setState((s) => ({ ...s, open: true, index: 0, say: null, pageTip: false, pageTour: true }));
     else setState((s) => ({ ...s, open: true, index: 0, say: { text, pin: null, id: "welcome" }, pageTip: true }));
     setTipOn(true);
     setWelcomeSkip(pageSegment);
@@ -294,7 +304,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   const [sayPath, setSayPath] = useState(pathname);
   if (pathname !== sayPath) {
     setSayPath(pathname);
-    setState((s) => (s.pageTip ? { ...s, open: false, say: null, pageTip: false } : s));
+    setState((s) => (s.pageTip || s.pageTour ? { ...s, open: false, say: null, pageTip: false, pageTour: false } : s));
     setTipOn(false);
   }
   if (tipKey !== tipFor) {
@@ -310,7 +320,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   }
   // The buddy's voice for this page is got ready once the page is idle: the page's text, and on the home page the tour
   // tips, so the student's tap (Next, Hear it) plays at once. In the voice and speed the student picked.
-  const voiceTexts = [pageTip?.text, moduleNow?.text, ...(home ? steps.map((t) => t.text) : [])].filter(Boolean).join("|");
+  const voiceTexts = [pageTip?.text, moduleNow?.text, ...(home || tourPage ? steps.map((t) => t.text) : [])].filter(Boolean).join("|");
   const { voice: voicePick, voiceSpeed } = preferences;
   useEffect(() => preparePicoClips(voiceTexts.split("|"), voiceOf(voicePick, voiceSpeed)), [voiceTexts, voicePick, voiceSpeed]);
   // The explanation is also said out loud - once per arrival. Its cookie is set only when the voice really starts (or, with
@@ -335,19 +345,30 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
       if (result === "started" || result === "off" || result === "unavailable") {
         delivered();
       } else if (result === "blocked" && !moduleRetryOff.current) {
-        const retry = () => {
-          moduleRetryOff.current?.();
-          if (currentTip.current !== key) return;
-          speak(text, { force: true, clipOnly: true }).then((again) => {
-            if (again === "started" && currentTip.current === key) delivered();
-          });
-        };
-        const events = ["pointerdown", "keydown"];
-        events.forEach((name) => document.addEventListener(name, retry, { capture: true, once: true }));
-        moduleRetryOff.current = () => {
+        // The browser refuses sound before the student has touched the page (e.g. right after login). The first real tap, click
+        // or key press on this page says it. Every event that counts as a user gesture is listened to (a touch screen only
+        // counts on pointerup / touchend), and a try that is still refused (not a gesture) keeps waiting for the next one.
+        const events = ["pointerdown", "pointerup", "touchend", "click", "keydown"];
+        const stopWaiting = () => {
           events.forEach((name) => document.removeEventListener(name, retry, { capture: true }));
           moduleRetryOff.current = null;
         };
+        let trying = false;
+        const retry = () => {
+          if (currentTip.current !== key) {
+            stopWaiting();
+            return;
+          }
+          if (trying) return; // one tap fires several events: the sentence is started once
+          trying = true;
+          speak(text, { force: true, clipOnly: true }).then((again) => {
+            // "cancelled": the student's own tap (Hear it, the buddy) took the voice over, so they have heard it - no second try.
+            if ((again === "started" || again === "cancelled") && currentTip.current === key) delivered();
+            else trying = false;
+          });
+        };
+        events.forEach((name) => document.addEventListener(name, retry, { capture: true }));
+        moduleRetryOff.current = stopWaiting;
       }
     });
     return () => moduleRetryOff.current?.();

@@ -78,17 +78,24 @@ const coveredBy = (ranges, from, to) => ranges.some((r) => r.startDate <= from &
 
 /** The month of `date`, first to last day (only these days show data in the mini calendar and the month plan). */
 const monthRange = (date) => rangeOf(startOfMonth(date), endOfMonth(date));
+/** The request for a month: one day more on each side (see lazyNeed). */
+const monthAsk = (date) => rangeOf(addDays(startOfMonth(date), -1), addDays(endOfMonth(date), 1));
 
-/** What the current view needs: `must` = days that have to be loaded to draw it, `ask` = the window to request when they are not. */
+/**
+ * What the current view needs: `must` = days that have to be loaded to draw it, `ask` = the window to request when they are not.
+ * Every `ask` reaches one day further on each side (legacy asks yesterday / today / tomorrow): the backend answers by its own
+ * dates, so a class just after midnight in the student's zone (12:30 AM Kolkata) is still "the day before" there and would
+ * be missing until a wider request (the month) came in.
+ */
 function lazyNeed(viewName, selectedDate, anchor) {
   if (viewName === "week") {
     const start = startOfWeek(selectedDate, { weekStartsOn: 1 });
     const r = rangeOf(start, addDays(start, 6));
-    return { must: [r.startDate, r.endDate], ask: r };
+    return { must: [r.startDate, r.endDate], ask: rangeOf(addDays(start, -1), addDays(start, 7)) };
   }
   if (viewName === "month") {
     const r = monthRange(selectedDate);
-    return { must: [r.startDate, r.endDate], ask: r };
+    return { must: [r.startDate, r.endDate], ask: monthAsk(selectedDate) };
   }
   const day = ymd(selectedDate);
   // Today (the first render's day) also draws the Tomorrow card.
@@ -103,7 +110,7 @@ const MONTH_PREFETCH_DELAY_MS = 1500;
 /**
  * Options used by the Grade K–5 home (defaults keep the existing calendar unchanged):
  * `timezone` shows events in that zone instead of the browser's, `monthFetch` switches on the lazy windows above
- * (first render = today + tomorrow only; Week / Month / other days are requested when opened), `prefetchMonth` also
+ * (first render = yesterday + today + tomorrow, like legacy; Week / Month / other days are requested when opened), `prefetchMonth` also
  * loads the selected month in the background for the mini calendar's dots, and `initialDate` is the first selected date.
  */
 export function useStudentCalendar({ schoolUUID, userId, timezone: timezoneOption, monthFetch = false, prefetchMonth = false, initialDate }) {
@@ -116,7 +123,8 @@ export function useStudentCalendar({ schoolUUID, userId, timezone: timezoneOptio
   const lazy = monthFetch;
 
   // The windows that have been requested for so far (lazy mode): the first render's, then whatever the student opened.
-  const base = useMemo(() => rangeOf(anchor, addDays(anchor, 1)), [anchor]);
+  // Like legacy: yesterday, today and tomorrow (see lazyNeed - a just-after-midnight class is on the backend's day before).
+  const base = useMemo(() => rangeOf(addDays(anchor, -1), addDays(anchor, 1)), [anchor]);
   const [extras, setExtras] = useState([]);
   const addExtra = useCallback((range) => setExtras((prev) => (prev.some((r) => rangeKey(r) === rangeKey(range)) ? prev : [...prev, range])), []);
 
@@ -152,7 +160,7 @@ export function useStudentCalendar({ schoolUUID, userId, timezone: timezoneOptio
   const monthKey = lazy ? rangeKey(monthRange(selectedDate)) : "";
   useEffect(() => {
     if (!lazy || !prefetchMonth || !firstDone || MONTH_PREFETCH_DELAY_MS === null) return undefined;
-    const timer = setTimeout(() => addExtra(monthRange(selectedDate)), MONTH_PREFETCH_DELAY_MS);
+    const timer = setTimeout(() => addExtra(monthAsk(selectedDate)), MONTH_PREFETCH_DELAY_MS);
     return () => clearTimeout(timer);
     // selectedDate itself is not a dependency: only a different month matters
     // eslint-disable-next-line react-hooks/exhaustive-deps

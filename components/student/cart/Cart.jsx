@@ -25,7 +25,7 @@ import {
   useSchoolCurrency,
 } from "@/hooks/useStudentCart";
 import { studentNavHref } from "@/utils/dashboardNav";
-import { formatAmount, weeksBetween, weeksLabel } from "@/utils/cartPlan";
+import { formatAmount } from "@/utils/cartPlan";
 
 const DISCOUNT_TOO_LARGE = "Discounted amount is more than the total amount";
 
@@ -39,7 +39,6 @@ function PageTitle({ count }) {
 }
 
 function CartItem({ item, symbol, school, busy, onRemove }) {
-  const weeks = weeksBetween(item.planStartDate, item.planEndDate);
   return (
     <li className="flex gap-3 rounded-xl border border-slate-200 p-3">
       {item.imgURl && (
@@ -49,12 +48,6 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
         <h3 className="mb-1 text-base font-bold">{item.subjectName}</h3>
         <p>
           No. of Classes: <b>{item.classCount} extra {item.classCount === 1 ? "class" : "classes"}</b>
-        </p>
-        <p>
-          Plan Duration:{" "}
-          <b>
-            {item.planStartDate} - {item.planEndDate} ({weeksLabel(weeks)})
-          </b>
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <span>

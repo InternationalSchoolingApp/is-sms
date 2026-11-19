@@ -219,8 +219,7 @@ function PlanCard({ plan, weeks, symbol, busy, onAdd, middle = false }) {
         </button>
       </div>
       <div className="mt-3.5 flex flex-col gap-2">
-        {note(`You will receive ${plan.classCount} classes. Finish them within ${validWeeks} weeks.`)}
-        {note(`After ${validWeeks} weeks, all unused classes will expire.`)}
+        {note(`You will receive ${plan.classCount} classes. Use them within the academic year.`)}
       </div>
       {expired && <p className="m-0 pt-1 text-center text-sm font-extrabold text-k5-ri">Enrollment for this course ends too soon for this plan.</p>}
     </article>

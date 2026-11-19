@@ -73,7 +73,8 @@ function ReviewScreen() {
     }
   }
 
-  if (reviewQuery.isLoading || finishing) return <FullScreenLoader />;
+  // The review of the previous visit (other courses / plan) stays cached: wait for this visit's read instead of showing the old amount.
+  if (reviewQuery.isLoading || !reviewQuery.isFetchedAfterMount || finishing) return <FullScreenLoader />;
 
   if (!data) {
     return (
