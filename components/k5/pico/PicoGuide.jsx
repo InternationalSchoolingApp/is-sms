@@ -241,7 +241,8 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
           retryOff.current?.();
           if (userActed.current) return;
           speak(text, { force: true, clipOnly: true }).then((again) => {
-            if (again === "started") finishWelcome();
+            // "cancelled": the student's own tap (Next, Hear it, X) took the voice over - they have the welcome, so it is done.
+            if (again === "started" || again === "cancelled") finishWelcome();
           });
         };
         const events = ["pointerdown", "keydown"];
@@ -444,8 +445,14 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
 
   if (preferences.buddyEnabled === "off") return null;
 
+  // The student answered the welcome bubble (Next, Hear it, X, a tap on the buddy) while its voice was still owed (e.g. the
+  // browser blocked it after login): the welcome has been delivered, so it is marked now and not said again on the next visit.
+  const welcomeAnswered = () => {
+    if (welcomeRun.current && welcomeDue) finishWelcome();
+  };
   // Red X: closes the bubble only. The buddy stays; a tap brings the same tip back.
   const hide = () => {
+    welcomeAnswered();
     userActed.current = true;
     retryOff.current?.();
     stop();
@@ -454,6 +461,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     setState((s) => ({ ...s, open: false }));
   };
   const finish = () => {
+    welcomeAnswered();
     userActed.current = true;
     retryOff.current?.();
     stop();
@@ -462,6 +470,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     setState({ open: false, index: 0, say: null, skipLive: false, pageTip: false });
   };
   const next = () => {
+    welcomeAnswered();
     userActed.current = true;
     if (state.pageTip) return finish();
     let i = state.index + 1;
@@ -475,6 +484,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   };
   // Mockup hear / pinTap: asking the buddy to talk also turns its voice back on.
   const hear = () => {
+    welcomeAnswered();
     userActed.current = true;
     if (preferences.speech !== "on") updatePreference("speech", "on");
     speak(tip.text, { force: true });
@@ -482,6 +492,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   // A tap explains the page the student is on (the dashboard on the home page). The home tour that is already open
   // keeps speaking its tip. A page still loading is waited for. A page Pico has no text for gets a short fallback.
   const tap = () => {
+    welcomeAnswered();
     userActed.current = true;
     if (onBook) return;
     if (mobile && tipOn) {
