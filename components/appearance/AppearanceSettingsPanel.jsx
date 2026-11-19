@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { BookOpen, Check, Hand, HeartPulse, Moon, ScanLine, Sun, Volume2 } from "lucide-react";
+import { SpecialHelpBanner, SpecialHelpLock, SpecialHelpRequestForm, SpecialHelpSent } from "@/components/appearance/SpecialHelpGate";
+import { useSpecialHelp } from "@/hooks/useSpecialHelp";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { BUDDIES, DYSLEXIA_OFF, DYSLEXIA_ON, GRADE_LOOKS, PAGE_COLORS, THEME_SWATCHES, VOICE_SPEEDS, VOICES, effectiveGradeLook, gradeLookOf } from "@/constant/appearance";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -99,8 +102,27 @@ function GradeLookSection() {
  * reading help, dyslexia tools) on the right. Every change applies instantly and is saved on its own.
  * Buddy + voice only show where a buddy exists (`withBuddy`, K–5).
  */
-export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
+export function AppearanceSettingsPanel({ withBuddy = false, onHear, firstName = "" }) {
   const { preferences, updatePreference: _panelUpdate } = useAppearance();
+  const specialHelp = useSpecialHelp();
+  const [view, setView] = useState("settings");
+  const [routedTo, setRoutedTo] = useState("");
+  if (view === "request") {
+    return (
+      <SpecialHelpRequestForm
+        onBack={() => setView("settings")}
+        onSend={async (form) => {
+          const result = await specialHelp.send(form);
+          if (result.ok) {
+            setRoutedTo(result.routedTo);
+            setView("sent");
+          }
+          return result;
+        }}
+      />
+    );
+  }
+  if (view === "sent") return <SpecialHelpSent firstName={firstName} routedTo={routedTo} onDone={() => setView("settings")} />;
   return (
     <div className="grid items-start gap-[22px] min-[921px]:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
       <div className="flex min-w-0 flex-col gap-5">
@@ -250,7 +272,7 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
         )}
       </div>
 
-      <div className="flex min-w-0 flex-col gap-5 rounded-[26px] border-[3px] border-dashed border-k5-line bg-k5-soft p-4">
+      <div className="relative flex min-w-0 flex-col gap-5 rounded-[26px] border-[3px] border-dashed border-k5-line bg-k5-soft p-4">
         <div className="flex items-center gap-2.5">
           <span className="flex h-10 w-10 flex-none items-center justify-center rounded-[14px] bg-k5-vt">
             <HeartPulse className="h-6 w-6 text-k5-vi" aria-hidden="true" />
@@ -261,6 +283,12 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
           </div>
         </div>
 
+        {specialHelp.justEnabled && specialHelp.state === "Y" && <SpecialHelpBanner />}
+        <div
+          inert={specialHelp.locked || specialHelp.loading}
+          aria-hidden={specialHelp.locked || undefined}
+          className={`flex flex-col gap-5 transition-[filter,opacity] ${specialHelp.locked || specialHelp.loading ? "pointer-events-none select-none opacity-35 grayscale" : ""}`}
+        >
         <Section id="lk-cv" title="Color vision" subtitle="Pick colors that are easy for your eyes to tell apart.">
           <div className="grid grid-cols-2 gap-3">
             <Choice name="colorVision" value="standard" label="Standard">
@@ -284,6 +312,8 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
         </Section>
 
         <DyslexiaSection />
+        </div>
+        {specialHelp.locked && <SpecialHelpLock state={specialHelp.state} requestedAt={specialHelp.requestedAt} onAsk={() => setView("request")} />}
       </div>
     </div>
   );
