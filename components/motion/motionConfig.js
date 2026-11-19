@@ -5,13 +5,11 @@
 //  - short: 150-300 ms, ease-out; entrance animations only, never an exit that delays navigation;
 //  - canvas effects are capped (particle counts, one shared loop) so low-end laptops stay smooth.
 export const EASE_OUT = [0.22, 1, 0.36, 1];
-export const EASE_IN_OUT = [0.65, 0, 0.35, 1];
 
 export const DUR = {
   fast: 0.15, // small interactions: hover, press, badge
   card: 0.24, // card Zoom In
   dropdown: 0.2, // menus and dropdowns
-  blinds: 0.3, // page transition (Curtains: Blinds)
   slow: 0.5,
   count: 0.6, // count-up
   celebration: 1.2, // confetti / achievement
@@ -29,8 +27,6 @@ export const SPRING = {
 // Delay between siblings in a stagger (s): about 40 ms, so even a long list never feels slow.
 export const STAGGER = { k5: 0.04, middle: 0.04, high: 0.03 };
 
-// Curtains: Blinds page transition.
-export const BLINDS = { strips: 7, duration: 0.3 };
 
 // Canvas effects. Counts are for a 1440x900 viewport and scale with area; "low power" halves them.
 export const CANVAS = {

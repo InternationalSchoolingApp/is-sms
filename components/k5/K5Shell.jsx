@@ -9,7 +9,6 @@ import { ReadingRuler } from "@/components/appearance/ReadingRuler";
 import { K5Header } from "@/components/k5/K5Header";
 import { MotionProvider, useMotion } from "@/components/motion/MotionProvider";
 import { PageReveal } from "@/components/motion/PageReveal";
-import { BlindsRoute } from "@/components/motion/BlindsRoute";
 import { CelebrationHost } from "@/components/motion/canvas/CelebrationHost";
 import { ZOOM } from "@/components/motion/motionConfig";
 import { CanvasBackground } from "@/components/motion/canvas/CanvasBackground";
@@ -131,7 +130,6 @@ function K5Frame({ children }) {
   return (
     <div {...themeProps} data-k5-prek={isPreK ? "true" : undefined} data-motion-band={motionBand} style={appearanceLoading ? { opacity: 0 } : undefined}>
       <CanvasBackground themeKey={`${themeProps["data-k5-theme"]}|${themeProps.className}`} />
-      <BlindsRoute />
       <CelebrationHost />
       <K5Header
         userId={context.userId}
