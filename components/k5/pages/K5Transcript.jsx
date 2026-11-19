@@ -39,6 +39,7 @@ export function K5Transcript({ isLoading, student, transcripts = [], links }) {
           id: student.rollNumber,
           transcriptLink: links.find((link) => link.key === `t${index}`),
           diplomaLink: links.find((link) => link.key === `d${index}`),
+          verificationLink: links.find((link) => link.key === `v${index}`),
         }))
       : [{ key: "current", grade: student.grade, id: student.rollNumber }];
     const q = query.trim().toLowerCase();
@@ -152,9 +153,7 @@ export function K5Transcript({ isLoading, student, transcripts = [], links }) {
                     <DownloadButton href={row.diplomaLink?.href} label={row.diplomaLink?.label || "diploma"} />
                   </span>
                   <span role="cell" data-l="Academic Verification" className={CELL}>
-                    <button type="button" disabled title="Academic verification download is not available yet" className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[14px] border-[2px] border-k5-ac bg-k5-card px-3 font-k5-display text-[15px] font-semibold text-k5-acx shadow-[0_2px_0_var(--k5-acd)]">
-                      Download <Download className="h-4 w-4" aria-hidden="true" />
-                    </button>
+                    <DownloadButton href={row.verificationLink?.href} label={row.verificationLink?.label || "academic verification"} />
                   </span>
                 </div>
               ))}
