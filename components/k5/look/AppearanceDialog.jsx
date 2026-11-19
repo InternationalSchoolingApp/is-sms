@@ -40,6 +40,7 @@ export function AppearanceDialog({ open, onClose, firstName = "" }) {
   const draftValue = useMemo(() => ({
     ...appearance,
     preferences: draft,
+    isDark: draft.mode === "dark" || (draft.mode === "system" && appearance.isDark),
     updatePreference: (name, value) => {
       setDraft((prev) => sanitizeAppearance({ ...prev, [name]: value }));
     },

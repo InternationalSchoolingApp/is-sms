@@ -50,13 +50,13 @@ export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
   return (
     <article
       data-pin={status === "live" ? "live" : undefined}
-      className={`flex flex-wrap items-center gap-4 rounded-[24px] px-[18px] py-3.5 ${status === "live" ? "k5-live-pill" : ""} ${
+      className={`flex flex-wrap items-center gap-4 rounded-[24px] px-[18px] py-3.5 k5-button-motion ${status === "live" ? "k5-live-pill" : ""} ${
         clue === CLUE_FOR_STATUS[status] ? CLUE_RING : ""
       }`}
       style={CARD_STATE[status]}
     >
       <SubjectTile name={classTitle(event)} />
-      <button type="button" onClick={() => onOpen(event)} className="flex flex-[1_1_220px] cursor-pointer flex-col gap-[3px] border-none bg-transparent p-0 text-left">
+      <button type="button" onClick={() => onOpen(event)} className="motion-none flex flex-[1_1_220px] cursor-pointer flex-col gap-[3px] border-none bg-transparent p-0 text-left">
         <span className="flex items-center gap-1.5 self-start rounded-full bg-k5-card px-2.5 py-[3px] text-[13px] font-black text-k5-ink">
           <Video className="h-3.5 w-3.5" aria-hidden="true" />
           {status === "live" ? "Live Class" : "Class"}

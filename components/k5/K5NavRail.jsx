@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import { InboxBadge, isInboxMenuItem } from "@/components/student/inbox/InboxBadge";
 import { CLUB_ART } from "@/components/k5/clubMarks";
-import { NAV_ART, navPictureFor } from "@/components/k5/navIcons";
+import { NAV_ART, highNavIconFor, navPictureFor } from "@/components/k5/navIcons";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { K5Sk } from "@/components/k5/K5Skeletons";
 import { studentNavHref } from "@/utils/dashboardNav";
@@ -169,11 +170,23 @@ function flattenItems(items) {
 const ITEM_CLASS =
   "k5-ni relative isolate flex w-[46px] h-[46px] flex-none touch-none select-none flex-col items-center gap-1 rounded-2xl text-center text-xs font-black leading-[1.15] no-underline transition-colors duration-150 [overflow-wrap:anywhere]";
 
-function NavTile({ icon, active, picture }) {
+function NavTile({ item, icon, active, picture }) {
+  const { isHigh } = useDashboardContext();
   const [Icon, tile, stroke] = iconFor(icon);
   // The mockup's picture (a 36px PNG on a transparent tile); the drawn icon stays as the fallback when there is no
   // picture for the item or it cannot be loaded.
   const [pictureFailed, setPictureFailed] = useState(false);
+  // High (Mature) look: the mockup's line icon in the item's colour on a transparent tile, white when active.
+  const high = isHigh ? highNavIconFor(item) : null;
+  if (high) {
+    return (
+      <span className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[10px] bg-transparent">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`transition-[stroke] duration-150 ${active ? "stroke-white delay-100" : high.tone}`}>
+          {high.art}
+        </svg>
+      </span>
+    );
+  }
   if (picture && !pictureFailed) {
     return (
       <span className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[15px] bg-transparent">
@@ -228,7 +241,7 @@ function NavLink({ item, href, active, onNavigate, drag }) {
       className={`${ITEM_CLASS} ${active ? "text-white delay-100" : "text-k5-ink hover:bg-k5-soft"}`}
     >
       {active && <NavPill />}
-      <NavTile icon={item.icon} active={active} picture={navPictureFor(item)} />
+      <NavTile item={item} icon={item.icon} active={active} picture={navPictureFor(item)} />
       {isInboxMenuItem(item) && <InboxBadge className="absolute left-[32px] top-0 shadow-[0_0_0_2px_var(--k5-card)] [.k5-side:hover_&]:left-[36px] [.k5-side[data-open='true']_&]:left-[36px]" />}
       <span className="k5-nl">{item.label}</span>
     </Link>
@@ -258,7 +271,7 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
         style={drag.style(item.key)}
         className={`${ITEM_CLASS} cursor-pointer border-none ${childActive ? "bg-k5-act text-k5-acx" : "bg-transparent text-k5-ink hover:bg-k5-soft"}`}
       >
-        <NavTile icon={item.icon} picture={navPictureFor(item)} />
+        <NavTile item={item} icon={item.icon} picture={navPictureFor(item)} />
         {isInboxMenuItem(item) && <InboxBadge className="absolute left-[40px] top-0 shadow-[0_0_0_2px_var(--k5-card)]" />}
         <span className="k5-nl">{item.label}</span>
         <span
@@ -322,7 +335,19 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
  * Only items that have a mockup picture show one; the Communications group keeps plain names.
  */
 function SubPicture({ item, parent }) {
+  const { isHigh } = useDashboardContext();
   const [failed, setFailed] = useState(false);
+  // High (Mature) look: the mockup's 18px line icon on a soft green 32px tile (Academic Reports' sub-pages only).
+  const high = isHigh && parent.icon !== "inbox" ? highNavIconFor(item) : null;
+  if (high) {
+    return (
+      <span aria-hidden="true" className="flex h-8 w-8 flex-none items-center justify-center rounded-[10px] bg-k5-gt shadow-[0_0_0_2px_var(--k5-card),0_0_0_3px_var(--k5-line)]">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="[stroke:var(--k5-hn-g)]">
+          {high.art}
+        </svg>
+      </span>
+    );
+  }
   const picture = parent.icon === "inbox" ? "" : navPictureFor(item);
   if (!picture || failed) return null;
   return <OptimizedImage src={picture} alt="" width={32} height={32} className="block h-8 w-8 flex-none object-contain" onError={() => setFailed(true)} />;

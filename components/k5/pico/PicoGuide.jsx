@@ -597,7 +597,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
         type="button"
         onClick={tap}
         aria-label={`${buddy.name}, your calendar buddy. Tap to hear ${buddy.name}.`}
-        className="k5-pin-bob flex h-full w-full cursor-pointer items-end justify-center border-none bg-transparent p-0 max-[760px]:[&_svg]:!h-[60px] max-[760px]:[&_svg]:!w-12"
+        className="k5-lift k5-pin-bob flex h-full w-full cursor-pointer items-end justify-center border-none bg-transparent p-0 max-[760px]:[&_svg]:!h-[60px] max-[760px]:[&_svg]:!w-12"
       >
         <PicoMascot buddy={preferences.buddy} width={66} talking={speaking} />
       </button>

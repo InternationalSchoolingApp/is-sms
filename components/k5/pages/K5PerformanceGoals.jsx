@@ -231,9 +231,12 @@ const LINE_STYLE = {
   not_started: { background: "var(--k5-card)", borderColor: "var(--k5-line)" },
 };
 
-/** Mockup Tab 2 "My Goals" (PRD §3). */
-/** plain: the regular dashboard look (score goal ring and a completion bar instead of the star jar and road). */
-export function K5PerformanceGoals({ goals, avg, courses, week, today, initial, onSave, plain = false, compareAvailable = false }) {
+/**
+ * The "My goals" card: the student's score goal and finish date, the score star / ring and the completion track, with
+ * "Set my goals" opening the goals dialog. Shown on My Performance (My Goals tab) and on the home page above the
+ * Today / Week / Month planner; both read the same performance data and save through useMyGoals.
+ */
+export function K5MyGoalsCard({ goals, avg, courses, today, initial, onSave, plain = false, compareAvailable = false }) {
   const [open, setOpen] = useState(false);
   const n = courses.length;
   // Completion: average course progress vs average time used (today's target).
@@ -241,6 +244,107 @@ export function K5PerformanceGoals({ goals, avg, courses, week, today, initial, 
   const exp = n ? courses.reduce((s, c) => s + (num(c.target) ?? 0), 0) / n : 0;
   const totalLeft = courses.reduce((s, c) => s + (c.left || 0), 0);
   const gap = avg == null ? null : goals.score - avg;
+  const pastFinish = Boolean(today && goals.finishBy && goals.finishBy < today);
+  const days = today ? daysTo(goals.finishBy, today) : null;
+
+  return (
+    <>
+        <section className={`${K5_CARD} flex flex-col gap-3.5 px-[22px] py-5`}>
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="m-0 font-k5-display text-2xl font-semibold leading-tight">My goals</h2>
+            <button type="button" onClick={() => setOpen(true)} className={`${BTN_PRIMARY} ms-auto`}>
+              <PenIcon />
+              Set my goals
+            </button>
+          </div>
+          <div className="relative flex items-center gap-[18px] overflow-hidden rounded-[22px] bg-k5-act px-5 py-[18px] max-[760px]:items-start">
+            <span aria-hidden="true" className="k5-pkspark absolute end-[22px] top-3 h-2.5 w-2.5 rounded-full bg-[#FFC531]" />
+            <span aria-hidden="true" className="k5-pkspark absolute bottom-3.5 end-16 h-[7px] w-[7px] rounded-full bg-[#FF8FA3] [animation-delay:.6s]" />
+            <span aria-hidden="true" className="k5-pkspark absolute end-[110px] top-[26px] h-1.5 w-1.5 rounded-full bg-k5-ac [animation-delay:1.1s]" />
+            {!plain && <Dart />}
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <div className="font-k5-display text-2xl font-semibold leading-[1.35]">
+                Aim for{" "}
+                <span className="inline-block rounded-full border-2 border-k5-ac bg-k5-card px-2.5 text-k5-acx">{goals.score}% average</span> and finish by{" "}
+                <span className="inline-block rounded-full border-2 border-k5-ac bg-k5-card px-2.5 text-k5-acx">{fmtShort(goals.finishBy)}</span>
+              </div>
+              <p className="m-0 text-base font-extrabold leading-normal text-k5-ink">
+                {gap == null ? "Your average will show here once your work is graded." : gap > 0 ? `You’re ${gap.toFixed(1)}% away from your score goal.` : "Goal reached — keep it there."}{" "}
+                {pastFinish ? (
+                  <b className="font-black" style={{ color: "var(--k5-rI)" }}>Past your finish date — set a new one.</b>
+                ) : (
+                  today && (
+                    <>
+                      About <b className="font-black text-k5-acx">{perWeekText(totalLeft, goals.finishBy, today)}</b> across your courses gets you there on time.
+                    </>
+                  )
+                )}
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))] gap-3.5">
+            <div className="flex items-center gap-4 rounded-[22px] border-[3px] border-k5-line bg-k5-card px-[18px] py-4">
+              {plain ? (
+                <ProgressRing pct={avg == null ? 0 : (avg / goals.score) * 100} col="var(--k5-ac)" lt="var(--k5-act)" />
+              ) : (
+                <StarJar fill={avg == null ? 0 : avg / goals.score} />
+              )}
+              <span className="flex min-w-0 flex-col gap-1">
+                <b className="font-k5-display text-lg font-semibold">Score goal</b>
+                <span className="flex flex-wrap items-baseline gap-1.5">
+                  <b className="font-k5-display text-[32px] font-semibold leading-none">{avg == null ? "—" : `${Number(avg).toFixed(1)}%`}</b>
+                  <span className="text-[15px] font-black text-k5-mut">of {goals.score}%</span>
+                </span>
+                <span className="self-start rounded-full bg-[#FFF1C2] px-3 py-[3px] text-sm font-black text-[#7A4E00]">
+                  {gap == null ? "No score yet" : gap > 0 ? `${gap.toFixed(1)}% to go` : "Goal reached — keep it there"}
+                </span>
+              </span>
+            </div>
+            <div className="flex flex-col gap-2.5 rounded-[22px] border-[3px] border-k5-line bg-k5-card px-[18px] py-4">
+              <span className="flex flex-wrap items-baseline justify-between gap-2.5">
+                <b className="font-k5-display text-lg font-semibold">Completion</b>
+                <span>
+                  <b className="font-k5-display text-[32px] font-semibold leading-none">{Math.round(ov)}%</b> <span className="text-[15px] font-black text-k5-mut">done</span>
+                </span>
+              </span>
+              {plain ? (
+                <Bar pct={ov} col="var(--k5-grn)" mark={exp} />
+              ) : (
+              <div role="img" aria-label={`You are ${Math.round(ov)}% of the way. Today’s target is ${Math.round(exp)}%.`} className="relative me-3.5 ms-1.5 h-[70px]">
+                <span aria-hidden="true" className="absolute inset-x-0 top-[34px] h-[22px] rounded-full bg-[#5B6478] shadow-[inset_0_-3px_0_rgba(0,0,0,.18)]" />
+                <span aria-hidden="true" className="absolute inset-x-2.5 top-[44px] h-0 border-t-[3px] border-dashed border-white/85" />
+                <span aria-hidden="true" className="absolute start-0 top-[34px] h-[22px] rounded-full bg-k5-grn shadow-[inset_0_-3px_0_rgba(0,0,0,.18)]" style={{ width: `${Math.min(100, Math.round(ov))}%` }} />
+                <span aria-hidden="true" className="absolute top-[26px] -ms-0.5 h-[38px] w-1 rounded-sm bg-[#2A2F4A]" style={{ insetInlineStart: `${Math.min(100, Math.round(exp))}%` }} />
+                <span aria-hidden="true" className="absolute top-1 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#2A2F4A] px-2 py-px text-[11px] font-black text-white" style={{ insetInlineStart: `${Math.min(100, Math.round(exp))}%` }}>
+                  Today
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="k5-pkme absolute top-[22px] -ms-5 flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-k5-grn bg-white font-k5-display text-[17px] font-bold text-k5-grnd shadow-[0_3px_0_rgba(28,38,64,.2)]"
+                  style={{ insetInlineStart: `${Math.min(100, Math.round(ov))}%` }}
+                >
+                  {initial}
+                </span>
+                <svg aria-hidden="true" width="34" height="48" viewBox="0 0 34 48" className="absolute -end-3.5 top-0 block">
+                  <path d="M5 46 V4" stroke="#2A2F4A" strokeWidth="3.5" strokeLinecap="round" />
+                  <path className="k5-pkflag" d="M6 5 h22 l-5 7 5 7 h-22 z" fill="#E8455E" stroke="#2A2F4A" strokeWidth="2.5" strokeLinejoin="round" />
+                </svg>
+              </div>
+              )}
+              <small className="text-sm font-extrabold leading-snug text-k5-mut">
+                Today’s target is {Math.round(exp)}% · {pastFinish ? "Past your finish date" : `${days} days to your finish date`}
+              </small>
+            </div>
+          </div>
+        </section>
+      {open && <GoalsDialog goals={goals} avg={avg} today={today} totalLeft={totalLeft} canCompare={compareAvailable} onClose={() => setOpen(false)} onSave={onSave} />}
+    </>
+  );
+}
+
+/** Mockup Tab 2 "My Goals" (PRD §3). */
+/** plain: the regular dashboard look (score goal ring and a completion bar instead of the star jar and road). */
+export function K5PerformanceGoals({ goals, avg, courses, week, today, initial, onSave, plain = false, compareAvailable = false }) {
   const lines = asArray(week?.lines);
   const doneLines = lines.filter((l) => l.state === "done").length;
   const cleared = lines.length > 0 && doneLines === lines.length;
@@ -249,94 +353,7 @@ export function K5PerformanceGoals({ goals, avg, courses, week, today, initial, 
 
   return (
     <div className="k5-pmpanel flex flex-col gap-[18px]">
-      <section className={`${K5_CARD} flex flex-col gap-3.5 px-[22px] py-5`}>
-        <div className="flex flex-wrap items-center gap-3">
-          <h2 className="m-0 font-k5-display text-2xl font-semibold leading-tight">My goals</h2>
-          <button type="button" onClick={() => setOpen(true)} className={`${BTN_PRIMARY} ms-auto`}>
-            <PenIcon />
-            Set my goals
-          </button>
-        </div>
-        <div className="relative flex items-center gap-[18px] overflow-hidden rounded-[22px] bg-k5-act px-5 py-[18px] max-[760px]:items-start">
-          <span aria-hidden="true" className="k5-pkspark absolute end-[22px] top-3 h-2.5 w-2.5 rounded-full bg-[#FFC531]" />
-          <span aria-hidden="true" className="k5-pkspark absolute bottom-3.5 end-16 h-[7px] w-[7px] rounded-full bg-[#FF8FA3] [animation-delay:.6s]" />
-          <span aria-hidden="true" className="k5-pkspark absolute end-[110px] top-[26px] h-1.5 w-1.5 rounded-full bg-k5-ac [animation-delay:1.1s]" />
-          {!plain && <Dart />}
-          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-            <div className="font-k5-display text-2xl font-semibold leading-[1.35]">
-              Aim for{" "}
-              <span className="inline-block rounded-full border-2 border-k5-ac bg-k5-card px-2.5 text-k5-acx">{goals.score}% average</span> and finish by{" "}
-              <span className="inline-block rounded-full border-2 border-k5-ac bg-k5-card px-2.5 text-k5-acx">{fmtShort(goals.finishBy)}</span>
-            </div>
-            <p className="m-0 text-base font-extrabold leading-normal text-k5-ink">
-              {gap == null ? "Your average will show here once your work is graded." : gap > 0 ? `You’re ${gap.toFixed(1)}% away from your score goal.` : "Goal reached — keep it there."}{" "}
-              {pastFinish ? (
-                <b className="font-black" style={{ color: "var(--k5-rI)" }}>Past your finish date — set a new one.</b>
-              ) : (
-                today && (
-                  <>
-                    About <b className="font-black text-k5-acx">{perWeekText(totalLeft, goals.finishBy, today)}</b> across your courses gets you there on time.
-                  </>
-                )
-              )}
-            </p>
-          </div>
-        </div>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))] gap-3.5">
-          <div className="flex items-center gap-4 rounded-[22px] border-[3px] border-k5-line bg-k5-card px-[18px] py-4">
-            {plain ? (
-              <ProgressRing pct={avg == null ? 0 : (avg / goals.score) * 100} col="var(--k5-ac)" lt="var(--k5-act)" />
-            ) : (
-              <StarJar fill={avg == null ? 0 : avg / goals.score} />
-            )}
-            <span className="flex min-w-0 flex-col gap-1">
-              <b className="font-k5-display text-lg font-semibold">Score goal</b>
-              <span className="flex flex-wrap items-baseline gap-1.5">
-                <b className="font-k5-display text-[32px] font-semibold leading-none">{avg == null ? "—" : `${Number(avg).toFixed(1)}%`}</b>
-                <span className="text-[15px] font-black text-k5-mut">of {goals.score}%</span>
-              </span>
-              <span className="self-start rounded-full bg-[#FFF1C2] px-3 py-[3px] text-sm font-black text-[#7A4E00]">
-                {gap == null ? "No score yet" : gap > 0 ? `${gap.toFixed(1)}% to go` : "Goal reached — keep it there"}
-              </span>
-            </span>
-          </div>
-          <div className="flex flex-col gap-2.5 rounded-[22px] border-[3px] border-k5-line bg-k5-card px-[18px] py-4">
-            <span className="flex flex-wrap items-baseline justify-between gap-2.5">
-              <b className="font-k5-display text-lg font-semibold">Completion</b>
-              <span>
-                <b className="font-k5-display text-[32px] font-semibold leading-none">{Math.round(ov)}%</b> <span className="text-[15px] font-black text-k5-mut">done</span>
-              </span>
-            </span>
-            {plain ? (
-              <Bar pct={ov} col="var(--k5-grn)" mark={exp} />
-            ) : (
-            <div role="img" aria-label={`You are ${Math.round(ov)}% of the way. Today’s target is ${Math.round(exp)}%.`} className="relative me-3.5 ms-1.5 h-[70px]">
-              <span aria-hidden="true" className="absolute inset-x-0 top-[34px] h-[22px] rounded-full bg-[#5B6478] shadow-[inset_0_-3px_0_rgba(0,0,0,.18)]" />
-              <span aria-hidden="true" className="absolute inset-x-2.5 top-[44px] h-0 border-t-[3px] border-dashed border-white/85" />
-              <span aria-hidden="true" className="absolute start-0 top-[34px] h-[22px] rounded-full bg-k5-grn shadow-[inset_0_-3px_0_rgba(0,0,0,.18)]" style={{ width: `${Math.min(100, Math.round(ov))}%` }} />
-              <span aria-hidden="true" className="absolute top-[26px] -ms-0.5 h-[38px] w-1 rounded-sm bg-[#2A2F4A]" style={{ insetInlineStart: `${Math.min(100, Math.round(exp))}%` }} />
-              <span aria-hidden="true" className="absolute top-1 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#2A2F4A] px-2 py-px text-[11px] font-black text-white" style={{ insetInlineStart: `${Math.min(100, Math.round(exp))}%` }}>
-                Today
-              </span>
-              <span
-                aria-hidden="true"
-                className="k5-pkme absolute top-[22px] -ms-5 flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-k5-grn bg-white font-k5-display text-[17px] font-bold text-k5-grnd shadow-[0_3px_0_rgba(28,38,64,.2)]"
-                style={{ insetInlineStart: `${Math.min(100, Math.round(ov))}%` }}
-              >
-                {initial}
-              </span>
-              <svg aria-hidden="true" width="34" height="48" viewBox="0 0 34 48" className="absolute -end-3.5 top-0 block">
-                <path d="M5 46 V4" stroke="#2A2F4A" strokeWidth="3.5" strokeLinecap="round" />
-                <path className="k5-pkflag" d="M6 5 h22 l-5 7 5 7 h-22 z" fill="#E8455E" stroke="#2A2F4A" strokeWidth="2.5" strokeLinejoin="round" />
-              </svg>
-            </div>
-            )}
-            <small className="text-sm font-extrabold leading-snug text-k5-mut">
-              Today’s target is {Math.round(exp)}% · {pastFinish ? "Past your finish date" : `${days} days to your finish date`}
-            </small>
-          </div>
-        </div>
-      </section>
+      <K5MyGoalsCard goals={goals} avg={avg} courses={courses} today={today} initial={initial} onSave={onSave} plain={plain} compareAvailable={compareAvailable} />
 
       <section className={`${K5_CARD} flex flex-col gap-3.5 px-[22px] py-5`}>
         <div className="flex flex-wrap items-center gap-3">
@@ -479,7 +496,6 @@ export function K5PerformanceGoals({ goals, avg, courses, week, today, initial, 
         </div>
       </section>
 
-      {open && <GoalsDialog goals={goals} avg={avg} today={today} totalLeft={totalLeft} canCompare={compareAvailable} onClose={() => setOpen(false)} onSave={onSave} />}
     </div>
   );
 }

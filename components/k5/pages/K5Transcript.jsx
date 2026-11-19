@@ -145,13 +145,13 @@ export function K5Transcript({ isLoading, student, transcripts = [], links }) {
                   <span role="cell" data-l="Student ID" className={`${CELL} max-[760px]:col-span-full`}>
                     <span className="k5h-tr-code rounded-lg bg-k5-soft px-2.5 py-0.5 font-mono text-sm font-extrabold">{row.id}</span>
                   </span>
-                  <span role="cell" data-l="Transcript" className="px-3.5 py-2 max-[760px]:order-2 max-[760px]:px-3 max-[760px]:py-1.5">
+                  <span role="cell" data-l="Transcript" className={CELL}>
                     <DownloadButton href={row.transcriptLink?.href} label={row.transcriptLink?.label || "transcript"} />
                   </span>
-                  <span role="cell" data-l="Diploma" className="px-3.5 py-2 max-[760px]:order-2 max-[760px]:px-3 max-[760px]:py-1.5">
+                  <span role="cell" data-l="Diploma" className={CELL}>
                     <DownloadButton href={row.diplomaLink?.href} label={row.diplomaLink?.label || "diploma"} />
                   </span>
-                  <span role="cell" data-l="Academic Verification" className="px-3.5 py-2 max-[760px]:order-2 max-[760px]:px-3 max-[760px]:py-1.5">
+                  <span role="cell" data-l="Academic Verification" className={CELL}>
                     <button type="button" disabled title="Academic verification download is not available yet" className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[14px] border-[2px] border-k5-ac bg-k5-card px-3 font-k5-display text-[15px] font-semibold text-k5-acx shadow-[0_2px_0_var(--k5-acd)]">
                       Download <Download className="h-4 w-4" aria-hidden="true" />
                     </button>
