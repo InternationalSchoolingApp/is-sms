@@ -66,7 +66,7 @@ export function Transcript() {
   const { waiting, canView } = useModuleRights("student-transcript");
   const links = waiting || canView ? transcriptLinks(transcripts) : [];
 
-  if (isK5) return <K5Transcript isLoading={isLoading} student={student} links={links} />;
+  if (isK5) return <K5Transcript isLoading={isLoading} student={student} transcripts={transcripts} links={links} />;
 
   return (
     <div className="mx-auto w-full max-w-5xl">

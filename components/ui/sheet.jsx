@@ -39,7 +39,7 @@ function SheetOverlay({
     <DialogPrimitive.Backdrop
       data-slot="sheet-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/80 duration-200 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 isolate z-50 bg-black/80 data-open:duration-250 data-closed:duration-200 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className
       )}
       {...props}
@@ -50,12 +50,12 @@ function SheetOverlay({
 const SIDE_CLASSES = {
   // The right drawer gets a 3D hinge-swing (see .ai-sheet-right in globals.css)
   // instead of a flat slide, so it needs no animate-in/out utility classes.
-  right: "inset-y-0 right-0 h-full w-full border-l ai-sheet-right sm:max-w-md",
+    right: "inset-y-0 right-0 h-full w-full border-l ai-sheet-right sm:max-w-md",
   left:
-    "inset-y-0 left-0 h-full w-full border-r duration-300 ease-in-out data-open:animate-in data-open:slide-in-from-left data-closed:animate-out data-closed:slide-out-to-left sm:max-w-md",
-  top: "inset-x-0 top-0 h-auto w-full border-b duration-300 ease-in-out data-open:animate-in data-open:slide-in-from-top data-closed:animate-out data-closed:slide-out-to-top",
+    "inset-y-0 left-0 h-full w-full border-r data-open:duration-250 data-closed:duration-200 ease-in-out data-open:animate-in data-open:slide-in-from-left data-closed:animate-out data-closed:slide-out-to-left sm:max-w-md",
+  top: "inset-x-0 top-0 h-auto w-full border-b data-open:duration-250 data-closed:duration-200 ease-in-out data-open:animate-in data-open:slide-in-from-top data-closed:animate-out data-closed:slide-out-to-top",
   bottom:
-    "inset-x-0 bottom-0 h-auto w-full border-t duration-300 ease-in-out data-open:animate-in data-open:slide-in-from-bottom data-closed:animate-out data-closed:slide-out-to-bottom",
+    "inset-x-0 bottom-0 h-auto w-full border-t data-open:duration-250 data-closed:duration-200 ease-in-out data-open:animate-in data-open:slide-in-from-bottom data-closed:animate-out data-closed:slide-out-to-bottom",
 }
 
 function SheetContent({

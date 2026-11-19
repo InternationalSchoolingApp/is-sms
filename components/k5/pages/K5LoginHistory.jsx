@@ -42,7 +42,7 @@ function PageButton({ children, ...props }) {
   );
 }
 
-/** "Login History" title row. Grade 6–8 (Middle.dc.html): no card, a 62px accent tile, a 30px heading. */
+/** "Log in History" title row. Grade 6–8 (Middle.dc.html): no card, a 62px accent tile, a 30px heading. */
 function LoginHeader() {
   const { isMiddle } = useDashboardContext();
   return (
@@ -57,14 +57,14 @@ function LoginHeader() {
         </svg>
       </span>
       <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-        <h1 className={`m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-4xl"}`}>Login History</h1>
+        <h1 className={`m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-4xl"}`}>Log in History</h1>
         <p className={`m-0 font-extrabold text-k5-mut ${isMiddle ? "text-base" : "text-lg"}`}>See when and where you logged in.</p>
       </div>
     </div>
   );
 }
 
-/** Login History while it loads: the title, the three summary tiles, then the sessions card (heading and search, table, pager) and the notice. */
+/** Log in History while it loads: the title, the three summary tiles, then the sessions card (heading and search, table, pager) and the notice. */
 function LoginSkeleton() {
   return (
     <K5Loading label="Loading your log in history" className="flex flex-col gap-4">
@@ -113,7 +113,7 @@ function LoginSkeleton() {
 }
 
 /**
- * K–5 look of My Log in History (mockup Login History): First / Last / Total login tiles, the
+ * K–5 look of My Log in History (mockup Log in History): First / Last / Total log in tiles, the
  * "Log in Sessions" table with search and pages, and the security notice. Same data as the existing page.
  */
 export function K5LoginHistory({ isLoading, attendance }) {
@@ -147,19 +147,19 @@ export function K5LoginHistory({ isLoading, attendance }) {
       {(
         <>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-3.5">
-            <SummaryTile label="First Login" value={firstDate || "N/A"} pill={firstTime || "N/A"} pillClass="bg-k5-gt text-k5-gx" tileClass="bg-k5-gt">
+            <SummaryTile label="First Log in" value={firstDate || "N/A"} pill={firstTime || "N/A"} pillClass="bg-k5-gt text-k5-gx" tileClass="bg-k5-gt">
               <svg {...svgProps} style={{ stroke: "var(--k5-gX)" }}>
                 <rect x="3" y="5" width="18" height="16" rx="3" />
                 <path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4" />
               </svg>
             </SummaryTile>
-            <SummaryTile label="Last Login | Duration" value={attendance.lastLogin || "N/A"} pill={attendance.duration || "N/A"} pillClass="bg-k5-yt text-k5-yx" tileClass="bg-k5-yt">
+            <SummaryTile label="Last Log in | Duration" value={attendance.lastLogin || "N/A"} pill={attendance.duration || "N/A"} pillClass="bg-k5-yt text-k5-yx" tileClass="bg-k5-yt">
               <svg {...svgProps} style={{ stroke: "var(--k5-yX)" }}>
                 <circle cx="12" cy="12" r="8.5" />
                 <path d="M12 7.5V12l3 2" />
               </svg>
             </SummaryTile>
-            <SummaryTile label="Total Login | Duration" value="Till Now" pill={attendance.totalLoginDuretion || "N/A"} pillClass="bg-k5-bt text-k5-bi" tileClass="bg-k5-bt">
+            <SummaryTile label="Total Log in | Duration" value="Till Now" pill={attendance.totalLoginDuretion || "N/A"} pillClass="bg-k5-bt text-k5-bi" tileClass="bg-k5-bt">
               <svg {...svgProps} style={{ stroke: "var(--k5-bI)" }}>
                 <path d="M3 17l6-6 4 4 8-8" />
                 <path d="M15 7h6v6" />
@@ -250,7 +250,7 @@ export function K5LoginHistory({ isLoading, attendance }) {
               </svg>
             </span>
             <p className="m-0 text-base font-extrabold leading-normal">
-              <strong className="font-k5-display text-lg font-semibold text-k5-yx">Security Notice:</strong> If you notice any suspicious login activity or unrecognized locations, please contact your administrator immediately. Your account security is important to us.
+              <strong className="font-k5-display text-lg font-semibold text-k5-yx">Security Notice:</strong> If you notice any suspicious log in activity or unrecognized locations, please contact your administrator immediately. Your account security is important to us.
             </p>
           </div>
         </>

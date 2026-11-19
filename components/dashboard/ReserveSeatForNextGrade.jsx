@@ -295,12 +295,9 @@ export function ReserveSeatForNextGrade() {
     const id = setTimeout(() => {
       const live = classLive.live ?? Boolean(document.querySelector(".calendar-live-dashed"));
       autoOpened.current = true;
-      if (!live) {
-        setEnrollOpen(true);
-        setShowSideButton(false);
-      } else {
-        setShowSideButton(true);
-      }
+      // Legacy: the side button is on the page as soon as the offer is eligible, behind the popup too.
+      setShowSideButton(true);
+      if (!live) setEnrollOpen(true);
     }, 1500);
     return () => clearTimeout(id);
   }, [offerReady, classLive.known, classLive.live]);
@@ -359,12 +356,12 @@ export function ReserveSeatForNextGrade() {
 
   return (
     <>
-      {offerReady && showSideButton && !enrollOpen && !fee && !checkout.picker && (
-        <div className="fixed bottom-[8%] right-0 z-[998]">
+      {offerReady && showSideButton && !fee && !checkout.picker && (
+        <div className="fixed bottom-[8%] right-0 z-40">
           <button
             type="button"
             onClick={() => setEnrollOpen(true)}
-            className={`mr-1 cursor-pointer whitespace-nowrap rounded-md border border-white bg-secondary px-3 py-1.5 text-sm font-semibold text-black transition-transform duration-500 ease-in-out ${helpShown ? "translate-x-[400px]" : "translate-x-0"}`}
+            className={`mr-1 cursor-pointer whitespace-nowrap rounded-md border-none bg-[#172554] px-3 py-1.5 text-sm font-semibold text-white transition-transform duration-500 ease-in-out ${helpShown ? "translate-x-[400px]" : "translate-x-0"}`}
           >
             {sideButtonText(details)}
           </button>

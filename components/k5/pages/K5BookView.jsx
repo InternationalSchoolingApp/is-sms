@@ -469,7 +469,7 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
   const none = left < 1;
   return (
     // In the Grade 6–8 "Book a Class" dialog: three courses in a row, the rest on the next row (two on a small screen).
-    <div className={threePerRow ? "grid grid-cols-3 gap-3 max-[640px]:grid-cols-2" : "grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3"}>
+    <div className={threePerRow ? "grid grid-cols-3 gap-3 max-[640px]:grid-cols-2" : "grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3"}>
       {options.map((s) => {
         const color = colorFor({ id: s.subjectId, name: s.name }) || subjectStyle(s.name).color;
         const card = (
@@ -492,7 +492,7 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
             <span className="k5h-b-stile flex h-[72px] w-[72px] flex-none items-center justify-center rounded-[22px] bg-k5-card" style={{ color }}>
               <SubjectIcon name={s.name} className="k5h-b-sicon h-10 w-10" />
             </span>
-            <span className="k5h-b-sname font-k5-display text-[22px] font-semibold leading-[1.1]">{s.name}</span>
+            <span className="k5h-b-sname font-k5-display text-[20px] font-semibold leading-[1.1]">{s.name}</span>
             {middle && s.teacherName && <span className="text-sm font-extrabold leading-[1.2] text-k5-mut">{s.teacherName}</span>}
             {s.booked > 0 && (
               <span className="k5h-b-booked flex items-center gap-1 whitespace-nowrap rounded-full border-[3px] border-k5-grn bg-k5-card px-2.5 py-1 text-[13px] font-black" style={middle ? { borderColor: "var(--k5-c-done)" } : undefined}>
@@ -814,7 +814,7 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
   const colSum = (key) => rows.reduce((a, r) => a + n(r.complimentary?.[key]) + n(r.customPlan?.[key]), 0);
   return (
     <section aria-labelledby="k5-grown" className={`${K5_CARD} flex flex-col gap-3.5 px-[18px] py-3.5`}>
-      <button type="button" onClick={onToggle} aria-expanded={open} aria-controls="k5-grown-body" className="flex min-h-14 w-full cursor-pointer items-center gap-3 border-none bg-transparent p-0 text-start text-k5-ink">
+      <button type="button" onClick={onToggle} aria-expanded={open} aria-controls="k5-grown-body" className="motion-none flex min-h-14 w-full cursor-pointer items-center gap-3 border-none bg-transparent p-0 text-start text-k5-ink">
         <span className={`flex h-12 w-12 flex-none items-center justify-center ${high ? "rounded-2xl bg-k5-act" : "rounded-[0.75rem] bg-k5-vt"}`}>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" strokeWidth={high ? 1.8 : 2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: high ? "var(--k5-ac)" : "var(--k5-vI)" }}>
             <circle cx="8" cy="6" r="3" />
@@ -826,9 +826,9 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
           <span id="k5-grown" className="font-k5-display text-[22px] font-semibold">{middle ? "Class Breakdown" : "For grown-ups"}</span>
           <span className="text-sm font-extrabold text-k5-mut">All the class numbers in one place</span>
         </span>
-        <span className="flex items-center gap-1.5 rounded-full border-[3px] border-k5-line px-3.5 py-1.5 text-[15px] font-black">
+        <span className={`flex items-center gap-1.5 rounded-full border-[3px] border-k5-line px-3.5 py-1.5 text-[15px] font-black ${open ? "k5-zoom-in" : "k5-zoom-toggle-out"}`}>
           {open ? "Hide" : "Show"}
-          <ChevronDown className={"h-4 w-4 " + (open ? "rotate-180" : "")} strokeWidth={3} aria-hidden="true" />
+          <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`} strokeWidth={3} aria-hidden="true" />
         </span>
       </button>
       {open && (

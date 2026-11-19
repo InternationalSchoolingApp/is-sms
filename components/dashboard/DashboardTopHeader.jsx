@@ -146,6 +146,12 @@ export function DashboardTopHeader({ schoolName, logoUrl, schoolWebsite, session
                   className="flex w-full items-center gap-3 px-4 py-3 text-sm font-semibold text-black hover:bg-slate-100">
                   <KeyRound className="h-4 w-4" /> Change Password
                 </button>
+                {siblings.visible && (
+                  <button type="button" role="menuitem" disabled={siblings.busy} onClick={() => { setMenuOpen(false); siblings.handleClick(); }}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-sm font-semibold text-black hover:bg-slate-100 disabled:opacity-60">
+                    {siblings.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />} {siblings.label}
+                  </button>
+                )}
                 <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); setConfirmLogout(true); }}
                   className="flex w-full items-center gap-3 border-t border-slate-200 px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50">
                   <LogOut className="h-4 w-4" /> Log out

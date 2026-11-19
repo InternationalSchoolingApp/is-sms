@@ -1,6 +1,7 @@
 "use client";
 
 import { K5_CARD } from "@/components/k5/home/k5Bits";
+import { CountUp } from "@/components/motion/CountUp";
 import { STREAK_BADGES } from "@/components/k5/pages/k5PerformanceData";
 import { ArrowUpIcon, Flame } from "@/components/k5/pages/K5PerformanceIcons";
 
@@ -28,7 +29,7 @@ export function K5PerformanceStreak({ courses }) {
             </span>
             <span className="flex min-w-0 flex-col gap-0.5" style={{ color: best ? "var(--k5-oI)" : "var(--k5-mut)" }}>
               <b className="font-k5-display text-2xl font-semibold leading-tight">
-                {best === 0 ? "No streak yet" : best === 1 ? "1 on time!" : `${best} on time in a row!`}
+                {best === 0 ? "No streak yet" : best === 1 ? "1 on time!" : <><CountUp value={best} /> on time in a row!</>}
               </b>
               <span className="text-[15px] font-black">
                 {best ? `Your best is in ${top.courseName}` : "Submit your next activity on time to start one."}

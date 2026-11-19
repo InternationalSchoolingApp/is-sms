@@ -249,6 +249,357 @@
   --k5-fb: var(--font-atkinson), sans-serif;
 }
 
+/* ── Dyslexia mode: OpenDyslexic (local files in public/fonts/opendyslexic) on every dashboard text ── */
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("/fonts/opendyslexic/OpenDyslexic-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("/fonts/opendyslexic/OpenDyslexic-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("/fonts/opendyslexic/OpenDyslexic-Italic.otf") format("opentype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("/fonts/opendyslexic/OpenDyslexic-BoldItalic.otf") format("opentype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+.theme-k5[data-dyslexia="on"] {
+  --k5-fd: "OpenDyslexic", sans-serif;
+  --k5-fb: "OpenDyslexic", sans-serif;
+}
+.theme-k5[data-dyslexia="on"],
+.theme-k5[data-dyslexia="on"] * {
+  font-family: "OpenDyslexic", sans-serif !important;
+}
+
+/* OpenDyslexic is already wide: drop the extra letter spacing, keep Large text smaller and let long words wrap,
+   so cards and buttons do not overflow. */
+.theme-k5[data-dyslexia="on"],
+.theme-k5[data-dyslexia="on"] main,
+.theme-k5[data-dyslexia="on"][role="dialog"],
+.theme-k5[data-dyslexia="on"] .k5-bubble {
+  letter-spacing: 0 !important;
+  word-spacing: 0.05em !important;
+}
+.theme-k5[data-dyslexia="on"][data-text-size="small"] main {
+  zoom: 0.8;
+}
+.theme-k5[data-dyslexia="on"][data-text-size="large"] main {
+  zoom: 1;
+}
+.theme-k5[data-dyslexia="on"] main {
+  overflow-wrap: break-word;
+}
+.theme-k5[data-dyslexia="on"] main p {
+  line-height: 1.5;
+}
+
+/* Header and right rail sit outside <main>: same fix, plus smaller, lighter labels so they fit their fixed boxes. */
+.theme-k5[data-dyslexia="on"] header,
+.theme-k5[data-dyslexia="on"] header *,
+.theme-k5[data-dyslexia="on"] .k5-rail,
+.theme-k5[data-dyslexia="on"] .k5-rail * {
+  letter-spacing: 0 !important;
+  word-spacing: 0 !important;
+  overflow-wrap: break-word;
+}
+/* The rail's buttons have a fixed width, so a long label ("Announcement") may break anywhere: break-word would keep the whole
+   word as the minimum width and overflow the 80 px button. */
+.theme-k5[data-dyslexia="on"] .k5-rail button {
+  overflow-wrap: anywhere;
+}
+.theme-k5[data-dyslexia="on"] header {
+  font-size: 0.875rem;
+}
+.theme-k5[data-dyslexia="on"] header button,
+.theme-k5[data-dyslexia="on"] header a {
+  font-weight: 400;
+}
+.theme-k5[data-dyslexia="on"] .k5-rail button {
+  font-size: 0.625rem;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+/* ── Card hover / press feedback (home plan cards, course tiles): a light lift on hover, a small press. Strength follows the
+   grade band (set on the shell as data-motion-band); Reduced Motion turns it off. Hover only where a real pointer exists. ── */
+.theme-k5 .k5-lift:not([data-slot="button"]) {
+  transition: transform 0.15s ease-out;
+}
+@media (hover: hover) {
+  .theme-k5[data-motion-band="k5"] .k5-lift:not([data-slot="button"]):hover {
+    transform: translateY(-3px);
+  }
+  .theme-k5[data-motion-band="middle"] .k5-lift:not([data-slot="button"]):hover {
+    transform: translateY(-2px);
+  }
+  .theme-k5[data-motion-band="high"] .k5-lift:not([data-slot="button"]):hover {
+    transform: translateY(-1px);
+  }
+}
+.theme-k5 .k5-lift:not([data-slot="button"]):active {
+  transform: scale(0.98);
+}
+.theme-k5[data-motion="reduced"] .k5-lift:hover,
+.theme-k5[data-motion="reduced"] .k5-lift:active {
+  transform: none;
+}
+
+/* Shared dashboard buttons: one transform owner, with intensity from the existing grade band. */
+.theme-k5 [data-slot="button"] {
+  transition-duration: 200ms;
+}
+@media (hover: hover) {
+  .theme-k5:not([data-k5-band]) [data-slot="button"]:not(:disabled):not([aria-disabled="true"]):hover {
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 6px 16px rgb(15 23 42 / 18%);
+  }
+  .theme-k5[data-k5-band="middle"]:not([data-k5-high="true"]) [data-slot="button"]:not(:disabled):not([aria-disabled="true"]):hover {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 5px 14px rgb(15 23 42 / 15%);
+  }
+  .theme-k5[data-k5-high="true"] [data-slot="button"]:not(:disabled):not([aria-disabled="true"]):hover {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 4px 12px rgb(15 23 42 / 12%);
+  }
+}
+.theme-k5 [data-slot="button"]:not(:disabled):not([aria-disabled="true"]):active {
+  transform: scale(0.97);
+}
+.theme-k5 button:not(.k5-lift):not(.k5-live-ring) {
+  transition: transform 200ms ease-out, box-shadow 200ms ease-out;
+}
+@media (hover: hover) {
+  .theme-k5:not([data-k5-band]) button:not(.k5-lift):not(.k5-live-ring):not(:disabled):not([aria-disabled="true"]):hover {
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 6px 16px rgb(15 23 42 / 18%);
+  }
+  .theme-k5[data-k5-band="middle"]:not([data-k5-high="true"]) button:not(.k5-lift):not(.k5-live-ring):not(:disabled):not([aria-disabled="true"]):hover {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 5px 14px rgb(15 23 42 / 15%);
+  }
+  .theme-k5[data-k5-high="true"] button:not(.k5-lift):not(.k5-live-ring):not(:disabled):not([aria-disabled="true"]):hover {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 4px 12px rgb(15 23 42 / 12%);
+  }
+}
+.theme-k5 button:not(.k5-lift):not(.k5-live-ring):not(:disabled):not([aria-disabled="true"]):active {
+  transform: scale(0.97);
+}
+.theme-k5 button.motion-none,
+.theme-k5 [data-slot="button"].motion-none {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+.theme-k5[data-motion="reduced"] [data-slot="button"] {
+  transition: none !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+.theme-k5[data-motion="reduced"] button:not(.k5-lift):not(.k5-live-ring) {
+  transition: none !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Opt-in text reveals for stable headings, supporting copy and status labels. */
+@keyframes k5HeadingReveal {
+  from { opacity: 0; transform: translateY(6px) scale(var(--k5-zoom-from, 0.94)); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes k5ParagraphReveal {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes k5StatusReveal {
+  0% { opacity: 0; transform: translateY(3px); }
+  100% { opacity: 1; transform: none; }
+}
+.k5-heading-reveal { animation: k5HeadingReveal 240ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.k5-paragraph-reveal { animation: k5ParagraphReveal 220ms ease-out both; }
+.k5-status-reveal { animation: k5StatusReveal 180ms ease-out both; }
+
+.k5-games-slide {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition: grid-template-rows 280ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease-out;
+}
+.k5-games-slide[data-collapsed] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+
+/* Same grade-tuned hover / press feedback for links styled as buttons. */
+.theme-k5 .k5-button-motion {
+  transition: transform 200ms ease-out, box-shadow 200ms ease-out;
+}
+@media (hover: hover) {
+  .theme-k5:not([data-k5-band]) .k5-button-motion:not([aria-disabled="true"]):hover {
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 6px 16px rgb(15 23 42 / 18%);
+  }
+  .theme-k5[data-k5-band="middle"]:not([data-k5-high="true"]) .k5-button-motion:not([aria-disabled="true"]):hover {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 5px 14px rgb(15 23 42 / 15%);
+  }
+  .theme-k5[data-k5-high="true"] .k5-button-motion:not([aria-disabled="true"]):hover {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 4px 12px rgb(15 23 42 / 12%);
+  }
+}
+.theme-k5 .k5-button-motion:not([aria-disabled="true"]):active {
+  transform: scale(0.97);
+}
+.theme-k5[data-motion="reduced"] .k5-button-motion,
+.theme-k5[data-motion="reduced"] .k5-button-motion:hover,
+.theme-k5[data-motion="reduced"] .k5-button-motion:active {
+  transition: none !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ── Zoom In for pieces that appear by display / mount (header menus, the sidebar's labels): the same start scale as the
+   DOM Zoom In (K-5 0.80, Middle 0.88, High 0.94, set from the shell's data-motion-band). Reduced Motion stops it (rule below). ── */
+.theme-k5 {
+  --k5-zoom-from: 0.94;
+}
+.theme-k5[data-motion-band="k5"] {
+  --k5-zoom-from: 0.8;
+}
+.theme-k5[data-k5-band="middle"]:not([data-k5-high="true"]) {
+  --k5-zoom-from: 0.88;
+}
+.theme-k5[data-k5-band="middle"][data-k5-high="true"] {
+  --k5-zoom-from: 0.94;
+}
+.theme-k5[data-motion-band="high"] {
+  --k5-zoom-from: 0.94;
+}
+@keyframes k5ZoomIn {
+  from {
+    opacity: 0;
+    transform: scale(var(--k5-zoom-from, 0.9));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.k5-zoom-in {
+  animation: k5ZoomIn 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes k5ZoomOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+.k5-zoom-out {
+  animation: k5ZoomOut 0.2s cubic-bezier(0.4, 0, 1, 1) both;
+}
+@keyframes k5ZoomToggleOut {
+  from {
+    opacity: 0.82;
+    transform: scale(1.08);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.k5-zoom-toggle-out {
+  animation: k5ZoomToggleOut 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes k5FadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.k5-fade-in {
+  animation: k5FadeIn 0.2s ease-out both;
+}
+/* The old shell has no Appearance setting: the OS "reduce motion" setting is the only switch there (inside .theme-k5 the rule
+   further down also covers the student's own Motion setting). */
+@media (prefers-reduced-motion: reduce) {
+  .k5-zoom-in,
+  .k5-zoom-out,
+  .k5-zoom-toggle-out,
+  .k5-fade-in,
+  .k5-heading-reveal,
+  .k5-paragraph-reveal,
+  .k5-status-reveal,
+  [data-slot="dialog-content"],
+  [data-slot="dialog-overlay"],
+  [data-slot="sheet-content"],
+  [data-slot="sheet-overlay"],
+  [data-slot="popover-content"] {
+    animation: none;
+  }
+  .theme-k5 button:not(.k5-lift):not(.k5-live-ring),
+  .theme-k5 [data-slot="button"] { transition: none !important; transform: none !important; box-shadow: none !important; }
+}
+.k5-side[data-open="true"] .k5-nl,
+.k5-side[data-open="true"] .k5-sub {
+  transform-origin: left center;
+  animation: k5ZoomIn 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@media (hover: hover) and (min-width: 761px) {
+  .k5-side:hover .k5-nl,
+  .k5-side:hover .k5-sub {
+    transform-origin: left center;
+    animation: k5ZoomIn 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+/* ── Toasts (AppToaster): Zoom In plus a short slide down from the top, a lighter zoom out. Timing / start scale are set on
+   <html> by K5Shell (--app-toast-dur, --app-toast-zoom); outside the K-5 shell they fall back to 0.22 s / 0.9. ── */
+@keyframes appToastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(var(--app-toast-zoom, 0.9));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes appToastOut {
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --app-toast-dur: 0s;
+  }
+}
+
 /* ── Which hand: left hand moves the menu to the right and the action rail to the left ── */
 @media (min-width: 761px) {
   .theme-k5[data-hand="left"] .k5-layout {

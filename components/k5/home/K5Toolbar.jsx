@@ -43,7 +43,7 @@ function titles(viewName, selectedDate) {
  * previous / next, the period title, and the Today / Week / Month switch. PreK has no
  * Month view (plan 12.8). The weather tile shows real weather for the timezone city and is hidden until it arrives.
  */
-export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPrev, onNext, onToday, isCurrent, isPreK }) {
+export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPrev, onNext, onToday, isPreK }) {
   const [big, small] = titles(viewName, selectedDate);
   const views = isPreK ? VIEWS.filter((v) => v.key !== "month") : VIEWS;
   const unit = viewName === "week" ? "week" : viewName === "month" ? "month" : "day";
@@ -78,14 +78,6 @@ export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPre
         </button>
       </div>
 
-      <div className="flex flex-[1_1_0px] flex-wrap items-center justify-center gap-2.5 max-[760px]:order-5 max-[760px]:flex-[0_1_auto]">
-        {!isCurrent && (
-          <button type="button" onClick={onToday} className="min-h-11 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-4 text-[15px] font-black text-k5-acx">
-            Back to today
-          </button>
-        )}
-      </div>
-
       <div role="group" aria-label="Calendar view" data-pin="views" className="ms-auto flex flex-none gap-1 rounded-full bg-k5-act p-[5px] max-[760px]:me-auto">
         {views.map((v) => {
           const active = v.key === viewName;
@@ -94,7 +86,10 @@ export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPre
               key={v.key}
               type="button"
               aria-pressed={active}
-              onClick={() => onView(v.key)}
+              onClick={() => {
+                if (v.key === "today") onToday();
+                onView(v.key);
+              }}
               className={`min-h-11 cursor-pointer rounded-full border-none px-[15px] font-k5-display text-[17px] font-semibold ${
                 active ? "bg-k5-ac text-white shadow-[0_4px_0_var(--k5-acd)]" : "bg-transparent text-k5-ink"
               }`}

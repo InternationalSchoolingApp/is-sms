@@ -144,6 +144,7 @@ export function AppearanceProvider({ scope = "k5", userId, schoolUUID, policy = 
         "data-tint": preferences.pageColor !== "none" ? preferences.pageColor : undefined,
         "data-plain": preferences.plainText === "on" ? "true" : undefined,
         "data-font": preferences.font,
+        "data-dyslexia": preferences.dyslexia === "on" ? "on" : undefined,
         "data-hand": preferences.hand,
         "data-motion": reduced ? "reduced" : "full",
         "data-buddy-enabled": preferences.buddyEnabled,

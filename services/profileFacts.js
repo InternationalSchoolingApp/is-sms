@@ -42,6 +42,27 @@ function contactsOf(sp) {
     guardianEmail: { value: t(g.guardianEmail) },
   };
 }
+/**
+ * The signed-in user's own saved profile, as the existing page gets it (profile-view-content-new): { enrolment, sp } with
+ * sp = profileData.studentProfile (sp[0] personal, sp[1] parents, sp[2] academic ...). Same two calls as loadMyProfileFacts.
+ */
+export async function loadMyProfileRaw() {
+  const dashboard = await backendRequest({ path: "student/dashboard/get-student-dashboard", checkSession: null, buildBody: (me) => ({ userId: me.userId }) });
+  if (!dashboard.ok) return dashboard;
+  const enrolment = Number(dashboard.data?.studentStandardId) || 0;
+  if (!enrolment) return { ok: false, code: "NO_ENROLMENT", message: "No current enrolment was found on your profile." };
+  const loaded = await backendRequest({
+    path: "dashboard/profile-view-content-new",
+    buildBody: (me) => ({ userId: me.userId, actionType: "1a", studentStandardId: enrolment }),
+  });
+  if (!loaded.ok) return loaded;
+  const sp = loaded.data?.profileData?.studentProfile;
+  if (String(loaded.data?.status) !== "1" || !Array.isArray(sp)) {
+    return { ok: false, code: "PROFILE", message: loaded.data?.message || "Your profile could not be loaded." };
+  }
+  return { ok: true, data: { enrolment, sp } };
+}
+
 export async function loadMyProfileFacts() {
   const dashboard = await backendRequest({ path: "student/dashboard/get-student-dashboard", checkSession: null, buildBody: (me) => ({ userId: me.userId }) });
   console.log("loadMyProfileFacts dashboard", dashboard);
