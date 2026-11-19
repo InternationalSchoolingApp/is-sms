@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronLeft, Lock, Star } from "lucide-react";
+import { ChevronLeft, Lock, Star } from "lucide-react";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { BalloonBoard, MemoryBoard, MoleBoard } from "@/components/k5/games/K5ActionBoards";
 import { CountBoard, MathBoard, ShapeBoard } from "@/components/k5/games/K5QuizBoards";
 import { GAMES } from "@/components/k5/games/gameLogic";
+import { GameSectionToggle } from "@/components/k5/games/GameSectionToggle";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 
 const PILL = "min-h-12 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-4 font-k5-display text-base font-semibold text-k5-ink";
@@ -60,50 +61,38 @@ export function K5Games({ locked = false, past = false, pending = false }) {
 
   if (!game) {
     return (
-      <section aria-labelledby="k5-games-title" className="flex flex-col bg-blue-100 dark:bg-blue-900 p-4 rounded-3xl">
-        <span
-          type="button"
-          aria-expanded={gamesOpen}
-          aria-controls="k5-games-list"
-          onClick={() => setGamesOpen((open) => !open)}
-          className="flex min-h-12 w-full cursor-pointer items-center justify-between rounded-xl border-0 bg-transparent p-0 text-left text-k5-ink"
+      <section aria-labelledby="k5-games-title" className="flex flex-col rounded-3xl bg-blue-100 p-4 dark:bg-blue-900">
+        <GameSectionToggle
+          open={gamesOpen}
+          onToggle={() => setGamesOpen((open) => !open)}
+          titleId="k5-games-title"
+          panelId="k5-games-list"
+          titleClassName="font-k5-display text-2xl font-semibold"
         >
-          <span id="k5-games-title" className="font-k5-display text-2xl font-semibold">Your Games</span>
-          <ChevronDown className={`h-5 w-5 transition-transform duration-200 ${gamesOpen ? "rotate-180" : ""}`} aria-hidden="true" />
-        </span>
-        <div
-          id="k5-games-list"
-          aria-hidden={!gamesOpen}
-          inert={!gamesOpen || undefined}
-          data-collapsed={!gamesOpen || undefined}
-          className="k5-games-slide"
-        >
-          <div className="flex min-h-0 flex-col gap-3 overflow-hidden">
-            <h3 className="m-0 font-k5-display text-lg font-semibold">Pick a game!</h3>
-            {locked && (
-              <div role="note" className="flex items-center gap-3 rounded-[18px] border-[3px] border-k5-yb bg-k5-yt px-4 py-3 text-k5-yx">
-                <span aria-hidden="true" className="flex h-10 w-10 flex-none items-center justify-center rounded-[18px] bg-k5-card">
-                  <Lock className="h-[22px] w-[22px]" strokeWidth={2.2} />
+          <h3 className="m-0 font-k5-display text-lg font-semibold">Pick a game!</h3>
+          {locked && (
+            <div role="note" className="flex items-center gap-3 rounded-[18px] border-[3px] border-k5-yb bg-k5-yt px-4 py-3 text-k5-yx">
+              <span aria-hidden="true" className="flex h-10 w-10 flex-none items-center justify-center rounded-[18px] bg-k5-card">
+                <Lock className="h-[22px] w-[22px]" strokeWidth={2.2} />
+              </span>
+              <span className="flex flex-col gap-0.5">
+                <span className="font-k5-display text-lg font-semibold">Games are locked</span>
+                <span className="text-[15px] font-bold leading-snug">
+                  {past
+                    ? "This day is over. Pick today or a day to come to play."
+                    : pending
+                      ? "You have a class today. The games open when all of today's classes are over."
+                      : "Your class is live right now! Join it first. The games open again when your class is over."}
                 </span>
-                <span className="flex flex-col gap-0.5">
-                  <span className="font-k5-display text-lg font-semibold">Games are locked</span>
-                  <span className="text-[15px] font-bold leading-snug">
-                    {past
-                      ? "This day is over. Pick today or a day to come to play."
-                      : pending
-                        ? "You have a class today. The games open when all of today's classes are over."
-                        : "Your class is live right now! Join it first. The games open again when your class is over."}
-                  </span>
-                </span>
-              </div>
-            )}
-            <div className="grid grid-cols-3 gap-3 max-[560px]:grid-cols-2 p-3">
-              {GAMES.map((g) => (
-                <GameTile key={g.id} game={g} locked={locked} onPlay={() => play(g.id)} />
-              ))}
+              </span>
             </div>
+          )}
+          <div className="grid grid-cols-3 gap-3 p-3 max-[560px]:grid-cols-2">
+            {GAMES.map((g) => (
+              <GameTile key={g.id} game={g} locked={locked} onPlay={() => play(g.id)} />
+            ))}
           </div>
-        </div>
+        </GameSectionToggle>
       </section>
     );
   }

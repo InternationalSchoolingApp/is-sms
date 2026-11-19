@@ -242,6 +242,10 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
   const subtitle = nClasses ? `${nClasses} class${nClasses === 1 ? "" : "es"}${isToday ? " today" : ""}` : "No classes";
   // The dotted "now" line separates what is over (and live) from what is still to come: right before the first upcoming item.
   const nowIndex = isToday ? items.findIndex((it) => groupOf(it.e) === 2) : -1;
+  // Today with classes or activities: once every class is over (nothing live, nothing still to come) the games open under
+  // the timeline too, not only on a day without classes.
+  const gamesAfterPlan = isToday && items.length > 0 && !access.locked;
+  const games = isHigh ? <HighGames locked={access.locked} past={dayOver} /> : <K5Games locked={access.locked} past={dayOver} pending={access.reason === "pending"} />;
   return (
     <div className="flex flex-col gap-4">
       <PlanHeader
@@ -309,9 +313,10 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
         <>
           <NoClassDay reason={noClassReason(dateKey, day, { isSelfStudy, firstName })} isToday={isToday} onOpen={day.holidays.length ? () => onOpen(day.holidays[0]) : undefined} />
           {/* Grade 9–12 has its own "Brain Games" (High.dc.html); the other looks share the K–5 games. */}
-          {isHigh ? <HighGames locked={access.locked} past={dayOver} /> : <K5Games locked={access.locked} past={dayOver} pending={access.reason === "pending"} />}
+          {games}
         </>
       )}
+      {gamesAfterPlan && games}
 
       <Assignments items={day.assignments} clue={clue} onOpen={onOpen} />
 
