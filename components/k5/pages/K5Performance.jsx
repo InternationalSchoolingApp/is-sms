@@ -3,12 +3,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import { saveMyGoals } from "@/services/profileSaveApi";
+import { callServer } from "@/utils/serverCall";
 import { K5PerformanceGoals } from "@/components/k5/pages/K5PerformanceGoals";
 import { K5PerformanceCompare } from "@/components/k5/pages/K5PerformanceCompare";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
-import { useMyGoals } from "@/hooks/useMyGoals";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { studentNavHref } from "@/utils/dashboardNav";
 import { K5PerformanceStats } from "@/components/k5/pages/K5PerformanceStats";
 import { K5PerformanceCourseList } from "@/components/k5/pages/K5PerformanceCourseList";
@@ -17,7 +21,7 @@ import { K5PerformanceScoreCard } from "@/components/k5/pages/K5PerformanceScore
 import { K5PerformanceStreak } from "@/components/k5/pages/K5PerformanceStreak";
 import { K5PerformanceAchievements } from "@/components/k5/pages/K5PerformanceAchievements";
 import { ChartIcon, HeroScene, PeopleIcon, TargetIcon } from "@/components/k5/pages/K5PerformanceIcons";
-import { asArray, badgeView, courseKey, sessionInfo } from "@/components/k5/pages/k5PerformanceData";
+import { asArray, badgeView, courseKey, fmtShort, sessionInfo } from "@/components/k5/pages/k5PerformanceData";
 import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
 
 const TABS = [
@@ -198,6 +202,8 @@ function PerformanceSkeleton() {
 /** plain: the regular dashboard look for Middle / High school (no mascot, stars or kid panels). */
 export function K5Performance({ isLoading, performance, courseProviderId, plain = false }) {
   const { context } = useDashboardContext();
+  const dummy = useDummyStudent();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState("perf");
   const [pill, setPill] = useState(0);
   // contentPill: which lower box to show. For K5 it only changes on click; for plain it follows the pill.
@@ -206,20 +212,44 @@ export function K5Performance({ isLoading, performance, courseProviderId, plain 
   const stablePill = useCallback((fn) => setPill(fn), []);
   const hoverProps = useAutoRotate(PILLS.length, stablePill, tab === "perf");
   const [openKey, setOpenKey] = useState(null);
-  // Goals and how they are saved: shared with the home page's "My goals" card.
-  const { goals, saveGoals, saving: savingGoals } = useMyGoals(performance);
+  const [savingGoals, setSavingGoals] = useState(false);
+  // Demo / ?dummyStudent=Y: goals live on the page only, nothing is written to the backend.
+  const [dummyGoals, setDummyGoals] = useState(null);
   usePicoContentReady(!isLoading);
 
   const courses = asArray(performance?.courses);
   const tiles = performance?.tiles || null;
   const compareAvailable = performance?.compareAvailable === true;
   const today = performance?.today;
+  const goals = { ...(performance?.goals || {}), ...(dummy.enabled && dummyGoals ? dummyGoals : {}) };
+  goals.remind = goals.remind !== "N";
+  goals.compare = goals.compare !== "N";
   const session = sessionInfo(tiles, courses);
   const badges = badgeView(performance?.badges, goals.score);
   const tips = asArray(performance?.insights);
   const studentName = String(context?.userName || "").split(" ")[0] || "there";
   const behindNames = goals.remind ? courses.filter((c) => c.pace === "behind").map((c) => c.courseName) : [];
 
+  const saveGoals = async (next) => {
+    if (dummy.enabled) {
+      setDummyGoals({ ...next, saved: true });
+      toast.success(`Goals saved — aiming for ${next.score}% by ${fmtShort(next.finishBy)}`);
+      return true;
+    }
+    setSavingGoals(true);
+    try {
+      await callServer(() => saveMyGoals(next));
+      toast.success(`Goals saved — aiming for ${next.score}% by ${fmtShort(next.finishBy)}`);
+      // The dialog closes now and the page recalculates behind it.
+      queryClient.invalidateQueries({ queryKey: ["student-academic-performance"] });
+      return true;
+    } catch (error) {
+      toast.error(String(error?.message || "Your goals could not be saved.").replace(/^[A-Z0-9_]+: /, ""));
+      return false;
+    } finally {
+      setSavingGoals(false);
+    }
+  };
   const turnOnCompare = () => saveGoals({ score: goals.score, finishBy: goals.finishBy, remind: goals.remind ? "Y" : "N", compare: "Y" });
 
   const openIndex = openKey == null ? -1 : courses.findIndex((c) => courseKey(c) === openKey);

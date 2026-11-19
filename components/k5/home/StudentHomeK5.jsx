@@ -12,7 +12,6 @@ import { GraduationCeremonyModal } from "@/components/dashboard/GraduationCeremo
 import { EventDetailModal } from "@/components/dashboard/calendar/EventDetailModal";
 import { JoinClassModal } from "@/components/dashboard/calendar/JoinClassModal";
 import { K5Toolbar } from "@/components/k5/home/K5Toolbar";
-import { K5HomeGoals } from "@/components/k5/home/K5HomeGoals";
 import { K5PlanFilters } from "@/components/k5/home/K5PlanFilters";
 import { ColourClues } from "@/components/k5/home/ColourClues";
 import { CalendarPopup, MiniCalendar, MyCourses, TodayCard } from "@/components/k5/home/K5LeftColumn";
@@ -193,8 +192,6 @@ function K5Planner({ timezone }) {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* My goals (same card as My Performance > My Goals), right above the Today / Week / Month planner. */}
-      <K5HomeGoals />
       <K5Toolbar
         now={now}
         timezone={timezone}
