@@ -73,7 +73,9 @@ export async function getWelcomeDetails() {
     const tzData = details.timeZone || {};
     const options = (Array.isArray(tzData.timezones) ? tzData.timezones : []).map(timezoneOption).filter((o) => o.value);
     const detected = options.find((o) => o.value === String(tzData.currentTimezoneId ?? ""));
-    const fallback = options.find((o) => o.zone === FALLBACK_TIMEZONE);
+    // The list names zones "Country/City" ("Singapore/Singapore"), not by IANA id, so Asia/Singapore is found by its city.
+    const fallbackCity = FALLBACK_TIMEZONE.split("/").pop();
+    const fallback = options.find((o) => o.zone === FALLBACK_TIMEZONE || o.zone.split("/").pop() === fallbackCity);
     timezone = {
       options: options.map(({ value, label }) => ({ value, label })),
       selected: (detected || fallback)?.value || "",

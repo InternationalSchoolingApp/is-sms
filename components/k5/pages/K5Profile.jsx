@@ -107,8 +107,8 @@ function Ring({ pct }) {
   const C = 2 * Math.PI * 15;
   const color = pct >= 70 ? "var(--k5-ac)" : pct > 0 ? "#E8A200" : "var(--k5-line)";
   return (
-    <span className="relative block h-10 w-10 flex-none" aria-hidden="true">
-      <svg width="40" height="40" viewBox="0 0 40 40" className="block -rotate-90">
+    <span className="relative block h-[3.25rem] w-[3.25rem] flex-none" aria-hidden="true">
+      <svg viewBox="0 0 40 40" className="block h-full w-full -rotate-90">
         <circle cx="20" cy="20" r="15" fill="none" strokeWidth="5" style={{ stroke: "var(--k5-line)" }} />
         <circle
           cx="20"

@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarIcon, ChartIcon, CheckBoxIcon, UpRightIcon } from "@/components/k5/pages/K5PerformanceIcons";
+import { CountUp } from "@/components/motion/CountUp";
 
 function Tile({ icon, bg, fg, label, value, children }) {
   return (
@@ -23,16 +24,16 @@ export function K5PerformanceStats({ tiles, session }) {
   const avg = tiles.avgScore;
   return (
     <section aria-label="My Performance" className="grid grid-cols-[repeat(auto-fit,minmax(210px,1fr))] gap-3.5">
-      <Tile icon={<ChartIcon size={22} />} bg="var(--k5-bT)" fg="var(--k5-bI)" label="Average score" value={avg == null ? "No score yet" : `${Number(avg).toFixed(1)}%`}>
+      <Tile icon={<ChartIcon size={22} />} bg="var(--k5-bT)" fg="var(--k5-bI)" label="Average score" value={avg == null ? "No score yet" : <><CountUp value={avg} decimals={1} />%</>}>
         {avg == null ? "nothing graded yet" : `across ${tiles.scoredCourses} course${tiles.scoredCourses === 1 ? "" : "s"}`}
       </Tile>
-      <Tile icon={<CheckBoxIcon />} bg="var(--k5-gT)" fg="var(--k5-gI)" label="Assignments submitted" value={tiles.submitted}>
+      <Tile icon={<CheckBoxIcon />} bg="var(--k5-gT)" fg="var(--k5-gI)" label="Assignments submitted" value={<CountUp value={tiles.submitted} />}>
         {`${tiles.toGo} still to go`}
       </Tile>
-      <Tile icon={<UpRightIcon />} bg="var(--k5-vT)" fg="var(--k5-vI)" label="Courses ahead" value={`${tiles.ahead} of ${tiles.totalCourses}`}>
+      <Tile icon={<UpRightIcon />} bg="var(--k5-vT)" fg="var(--k5-vI)" label="Courses ahead" value={<><CountUp value={tiles.ahead} /> of {tiles.totalCourses}</>}>
         <span style={{ color: "var(--k5-bI)" }}>{tiles.onTrack} on track</span> · <span style={{ color: "var(--k5-red)" }}>{tiles.behind} behind</span>
       </Tile>
-      <Tile icon={<CalendarIcon />} bg="var(--k5-tT)" fg="var(--k5-tI)" label="Days left" value={session ? session.days : "—"}>
+      <Tile icon={<CalendarIcon />} bg="var(--k5-tT)" fg="var(--k5-tI)" label="Days left" value={session ? <CountUp value={session.days} /> : "—"}>
         {session ? `Ends ${session.endsTx}` : ""}
       </Tile>
     </section>

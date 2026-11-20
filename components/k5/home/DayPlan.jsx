@@ -50,13 +50,13 @@ export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
   return (
     <article
       data-pin={status === "live" ? "live" : undefined}
-      className={`flex flex-wrap items-center gap-4 rounded-[24px] px-[18px] py-3.5 ${status === "live" ? "k5-live-pill" : ""} ${
+      className={`flex flex-wrap items-center gap-4 rounded-[24px] px-[18px] py-3.5 k5-button-motion ${status === "live" ? "k5-live-pill" : ""} ${
         clue === CLUE_FOR_STATUS[status] ? CLUE_RING : ""
       }`}
       style={CARD_STATE[status]}
     >
       <SubjectTile name={classTitle(event)} />
-      <button type="button" onClick={() => onOpen(event)} className="flex flex-[1_1_220px] cursor-pointer flex-col gap-[3px] border-none bg-transparent p-0 text-left">
+      <button type="button" onClick={() => onOpen(event)} className="motion-none flex flex-[1_1_220px] cursor-pointer flex-col gap-[3px] border-none bg-transparent p-0 text-left">
         <span className="flex items-center gap-1.5 self-start rounded-full bg-k5-card px-2.5 py-[3px] text-[13px] font-black text-k5-ink">
           <Video className="h-3.5 w-3.5" aria-hidden="true" />
           {status === "live" ? "Live Class" : "Class"}
@@ -107,7 +107,7 @@ function ActivityCard({ event, clue, onOpen }) {
     <button
       type="button"
       onClick={() => onOpen(event)}
-      className={`flex w-full cursor-pointer flex-wrap items-center gap-4 rounded-[24px] border-[3px] border-solid px-[18px] py-3.5 text-left ${event.k5Status === "live" ? "k5-live-pill k5-live-pill-act" : ""} ${clue === "activity" ? CLUE_RING : ""}`}
+      className={`k5-lift flex w-full cursor-pointer flex-wrap items-center gap-4 rounded-[24px] border-[3px] border-solid px-[18px] py-3.5 text-left ${event.k5Status === "live" ? "k5-live-pill k5-live-pill-act" : ""} ${clue === "activity" ? CLUE_RING : ""}`}
       style={{ borderColor: C.activity, background: "var(--k5-vt)" }}
     >
       <span className="flex h-[66px] w-[66px] flex-none items-center justify-center rounded-[20px] bg-k5-card">
@@ -184,7 +184,7 @@ export function NoClassDay({ reason, isToday, onOpen }) {
         <span className="font-k5-display text-[28px] font-semibold text-k5-ink">
           {reason.kind === "holiday" ? reason.title : isToday ? (reason.kind === "study" ? "No live classes today" : "No classes today!") : reason.title}
         </span>
-        <span className={`text-[17px] font-extrabold ${holiday ? "text-k5-ri" : "text-k5-gx"}`}>{reason.text}</span>
+        {/* <span className={`text-[17px] font-extrabold ${holiday ? "text-k5-ri" : "text-k5-gx"}`}>{reason.text}</span> */}
       </div>
     </Wrap>
   );
@@ -223,7 +223,7 @@ function TomorrowCard({ dateKey, days, isSelfStudy, onPeek }) {
  */
 export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStudy, firstName, onJoin, onOpen, onPeek, onShowCalendar }) {
   // isMiddle follows the picked look (true for Mature too): no "today" star in either. The brain games follow the grade.
-  const { isMiddle, isHigh: lookIsHigh, gradeIsHigh } = useDashboardContext();
+  const { isMiddle, isHigh: lookIsHigh, gradeIsHigh, gradeBand } = useDashboardContext();
   const isHigh = gradeIsHigh ?? lookIsHigh;
   const day = dayAt(days, dateKey);
   const date = keyToDate(dateKey);
@@ -242,6 +242,10 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
   const subtitle = nClasses ? `${nClasses} class${nClasses === 1 ? "" : "es"}${isToday ? " today" : ""}` : "No classes";
   // The dotted "now" line separates what is over (and live) from what is still to come: right before the first upcoming item.
   const nowIndex = isToday ? items.findIndex((it) => groupOf(it.e) === 2) : -1;
+  // Today with classes or activities: once every class is over (nothing live, nothing still to come) the games open under
+  // the timeline too, not only on a day without classes.
+  const gamesAfterPlan = isToday && items.length > 0 && !access.locked;
+  const games = isHigh ? <HighGames locked={access.locked} past={dayOver} /> : <K5Games locked={access.locked} past={dayOver} pending={access.reason === "pending"} middle={gradeBand === "MIDDLE"} />;
   return (
     <div className="flex flex-col gap-4">
       <PlanHeader
@@ -309,9 +313,10 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
         <>
           <NoClassDay reason={noClassReason(dateKey, day, { isSelfStudy, firstName })} isToday={isToday} onOpen={day.holidays.length ? () => onOpen(day.holidays[0]) : undefined} />
           {/* Grade 9–12 has its own "Brain Games" (High.dc.html); the other looks share the K–5 games. */}
-          {isHigh ? <HighGames locked={access.locked} past={dayOver} /> : <K5Games locked={access.locked} past={dayOver} pending={access.reason === "pending"} />}
+          {games}
         </>
       )}
+      {gamesAfterPlan && games}
 
       <Assignments items={day.assignments} clue={clue} onOpen={onOpen} />
 

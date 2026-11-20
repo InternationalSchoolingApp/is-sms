@@ -34,8 +34,15 @@ export function useStudentDashboardData({ schoolUUID, userId }) {
     refetchOnWindowFocus: false,
   });
 
+  // The details themselves, subscribed: the combined query above keeps the copy it took when it ran, so a time zone saved
+  // later (Welcome page, My Profile) - which refreshes this shared query - shows up here without a page reload.
+  const detailsQuery = useQuery({
+    ...studentDashboardDetailsQuery({ schoolUUID, userId }),
+    enabled: Boolean(schoolUUID && userId && dummy.settled && !dummy.enabled),
+  });
+
   const migration = query.data?.migration;
-  const details = query.data?.details;
+  const details = (!dummy.enabled && detailsQuery.data) || query.data?.details;
 
   return {
     isLoading: query.isLoading,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Award, FileX, GraduationCap, MoreVertical } from "lucide-react";
+import { Award, FileX, GraduationCap, MoreVertical, ShieldCheck } from "lucide-react";
 import { K5Transcript } from "@/components/k5/pages/K5Transcript";
 import { MobileTableCard } from "@/components/student/MobileTableCard";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -45,7 +45,13 @@ function ActionDropdown({ links }) {
               className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
               onClick={() => setOpen(false)}
             >
-              {link.kind === "diploma" ? <GraduationCap className="h-4 w-4 text-primary/60" aria-hidden="true" /> : <Award className="h-4 w-4 text-primary/60" aria-hidden="true" />}
+              {link.kind === "diploma" ? (
+                <GraduationCap className="h-4 w-4 text-primary/60" aria-hidden="true" />
+              ) : link.kind === "verification" ? (
+                <ShieldCheck className="h-4 w-4 text-primary/60" aria-hidden="true" />
+              ) : (
+                <Award className="h-4 w-4 text-primary/60" aria-hidden="true" />
+              )}
               {link.label}
             </a>
           ))}
@@ -66,7 +72,7 @@ export function Transcript() {
   const { waiting, canView } = useModuleRights("student-transcript");
   const links = waiting || canView ? transcriptLinks(transcripts) : [];
 
-  if (isK5) return <K5Transcript isLoading={isLoading} student={student} links={links} />;
+  if (isK5) return <K5Transcript isLoading={isLoading} student={student} transcripts={transcripts} links={links} />;
 
   return (
     <div className="mx-auto w-full max-w-5xl">

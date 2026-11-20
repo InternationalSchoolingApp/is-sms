@@ -247,7 +247,7 @@ export function K5AssignedTeacher({ courses, isLoading }) {
                 <button
                   type="button"
                   onClick={() => setSelected({ course, color })}
-                  className={`mt-auto flex min-h-[52px] cursor-pointer items-center justify-center gap-2 rounded-full border-none font-k5-display text-lg font-semibold text-white ${isMiddle ? "shadow-none" : "shadow-[0_4px_0_rgba(0,0,0,0.22)]"}`}
+                  className={`mt-auto flex min-h-[52px] cursor-pointer items-center justify-center gap-2 px-2 rounded-full border-none font-k5-display text-lg font-semibold text-white ${isMiddle ? "shadow-none" : "shadow-[0_4px_0_rgba(0,0,0,0.22)]"}`}
                   style={{ background: color }}
                 >
                   <CalendarDays className="h-[22px] w-[22px]" strokeWidth={2.4} aria-hidden="true" />

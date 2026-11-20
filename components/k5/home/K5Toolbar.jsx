@@ -43,7 +43,7 @@ function titles(viewName, selectedDate) {
  * previous / next, the period title, and the Today / Week / Month switch. PreK has no
  * Month view (plan 12.8). The weather tile shows real weather for the timezone city and is hidden until it arrives.
  */
-export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPrev, onNext, onToday, isCurrent, isPreK }) {
+export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPrev, onNext, onToday, isPreK }) {
   const [big, small] = titles(viewName, selectedDate);
   const views = isPreK ? VIEWS.filter((v) => v.key !== "month") : VIEWS;
   const unit = viewName === "week" ? "week" : viewName === "month" ? "month" : "day";
@@ -54,8 +54,8 @@ export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPre
   const goodNight = greeting(now.getHours()) === "Good Evening!";
 
   return (
-    <div className={`${K5_CARD} flex flex-wrap items-center gap-3 px-4 pb-3 pt-3.5`}>
-      <div className={`k5h-tbox flex items-center gap-2.5 rounded-[22px] ${goodNight ? "bg-[#e6e3fb]" : "bg-k5-yt"} px-2.5 py-1.5 max-[760px]:box-border max-[760px]:w-full max-[760px]:flex-nowrap max-[760px]:gap-2 max-[760px]:px-2`}>
+    <div className={`${K5_CARD} flex flex-wrap items-center gap-3 px-4 pb-3 pt-3.5 in-data-[hand=left]:flex-row-reverse in-data-[hand=left]:justify-end min-[1101px]:in-data-[hand=left]:grid min-[1101px]:in-data-[hand=left]:grid-cols-[1fr_auto_1fr]`}>
+      <div className={`k5h-tbox in-data-[hand=left]:ms-auto min-[1101px]:in-data-[hand=left]:order-3 min-[1101px]:in-data-[hand=left]:justify-self-end flex items-center gap-2.5 rounded-[22px] ${goodNight ? "bg-[#e6e3fb]" : "bg-k5-yt"} px-2.5 py-1.5 max-[760px]:box-border max-[760px]:w-full max-[760px]:flex-nowrap max-[760px]:gap-2 max-[760px]:px-2`}>
         <K5ClockIcon kind={weather ? kindOf(weather.code) : "sun"} night={night} className="max-[760px]:!h-11 max-[760px]:!w-11" />
         <div className="flex flex-none flex-col items-start whitespace-nowrap text-start">
           <span className="font-k5-display text-[26px] font-bold leading-none text-k5-ink max-[760px]:text-[22px]">{format(now, "h:mm a")}</span>
@@ -65,7 +65,7 @@ export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPre
         <K5WeatherTile weather={weather} />
       </div>
 
-      <div data-pin="prevnext" className="flex items-center gap-1.5 max-[760px]:flex-[1_1_100%] max-[760px]:justify-center">
+      <div data-pin="prevnext" className="min-[1101px]:in-data-[hand=left]:order-2 min-[1101px]:in-data-[hand=left]:justify-self-center flex items-center gap-1.5 max-[760px]:flex-[1_1_100%] max-[760px]:justify-center">
         <button type="button" aria-label={`Previous ${unit}`} onClick={onPrev} className={K5_ROUND_BTN}>
           <ChevronLeft className="h-[22px] w-[22px]" strokeWidth={3} aria-hidden="true" />
         </button>
@@ -78,15 +78,7 @@ export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPre
         </button>
       </div>
 
-      <div className="flex flex-[1_1_0px] flex-wrap items-center justify-center gap-2.5 max-[760px]:order-5 max-[760px]:flex-[0_1_auto]">
-        {!isCurrent && (
-          <button type="button" onClick={onToday} className="min-h-11 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-4 text-[15px] font-black text-k5-acx">
-            Back to today
-          </button>
-        )}
-      </div>
-
-      <div role="group" aria-label="Calendar view" data-pin="views" className="ms-auto flex flex-none gap-1 rounded-full bg-k5-act p-[5px] max-[760px]:me-auto">
+      <div role="group" aria-label="Calendar view" data-pin="views" className="ms-auto in-data-[hand=left]:ms-0! min-[1101px]:in-data-[hand=left]:order-1 min-[1101px]:in-data-[hand=left]:justify-self-start flex flex-none gap-1 rounded-full bg-k5-act p-[5px] max-[760px]:me-auto">
         {views.map((v) => {
           const active = v.key === viewName;
           return (
@@ -94,7 +86,10 @@ export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPre
               key={v.key}
               type="button"
               aria-pressed={active}
-              onClick={() => onView(v.key)}
+              onClick={() => {
+                if (v.key === "today") onToday();
+                onView(v.key);
+              }}
               className={`min-h-11 cursor-pointer rounded-full border-none px-[15px] font-k5-display text-[17px] font-semibold ${
                 active ? "bg-k5-ac text-white shadow-[0_4px_0_var(--k5-acd)]" : "bg-transparent text-k5-ink"
               }`}

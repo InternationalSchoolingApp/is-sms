@@ -142,7 +142,7 @@ function TodayItem({ event, color, live, onOpen }) {
     <button
       type="button"
       onClick={() => onOpen?.(event)}
-      className={`flex w-full cursor-pointer flex-col items-center rounded-[14px] bg-k5-card px-3 py-2 text-center text-k5-ink border-2 ${isClass ? "border-dashed" : "border-solid"} ${live ? (isClass ? "k5-live-pill" : "k5-live-pill k5-live-pill-act") : ""}`}
+      className={`k5-lift flex w-full cursor-pointer flex-col items-center rounded-[14px] bg-k5-card px-3 py-2 text-center text-k5-ink border-2 ${isClass ? "border-dashed" : "border-solid"} ${live ? (isClass ? "k5-live-pill" : "k5-live-pill k5-live-pill-act") : ""}`}
       style={{ borderColor: color }}
     >
       {title && (
@@ -211,7 +211,7 @@ export function MyCourses({ courseRegistry, courseVisibility, onToggle }) {
             aria-pressed={shown}
             onClick={() => onToggle(course.id)}
             title={shown ? "Hide this course in my plan" : "Show this course in my plan"}
-            className={`flex min-h-[52px] cursor-pointer items-center gap-2.5 rounded-[14px] border-none px-2 py-1 text-left ${shown ? (apiColor ? "" : tile) : "bg-k5-soft"}`}
+            className={`k5-lift flex min-h-[52px] cursor-pointer items-center gap-2.5 rounded-[14px] border-none px-2 py-1 text-left ${shown ? (apiColor ? "" : tile) : "bg-k5-soft"}`}
             style={shown && apiColor ? { background: courseTint(apiColor) } : undefined}
           >
             <span className="k5h-ctile flex h-[38px] w-[38px] flex-none items-center justify-center rounded-xl bg-k5-card" style={apiColor ? { color: apiColor } : undefined}>

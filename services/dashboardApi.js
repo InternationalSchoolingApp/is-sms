@@ -834,6 +834,33 @@ export async function saveUserTheme({ schoolUUID, userId, appearance }) {
 }
 
 /**
+ * Special help status for the signed-in student - POST /{schoolUUID}/dashboard/student/special-help/status
+ * { userId } -> details { specialHelp: "N" | "R" | "Y", requestedAt, enabledAt }. null on any error (the panel then stays open).
+ */
+export async function getSpecialHelpStatus({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/student/special-help/status", { userId });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The student asks for Special help - POST /{schoolUUID}/dashboard/student/special-help/request
+ * { userId, tools: string[], reason, condition } -> details { specialHelp: "R", requestedAt, routedTo }.
+ * Returns the backend's answer ({ status, message, details }), or null when it could not be reached.
+ */
+export async function requestSpecialHelp({ schoolUUID, userId, tools, reason, condition }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/student/special-help/request", { userId, tools, reason, condition });
+  } catch {
+    return null;
+  }
+}
+
+/**
  * "Need help?" WhatsApp contact for the header - legacy getChatEligibility(): POST /{schoolUUID}/api/v1/get-chat-eligibility
  * { userId, schoolId } -> { ELIGIBLE_FOR_NEED_HELP: "Y"|"N", whatsAppIsd, whatsAppNumber }. Returns the wa.me address
  * only when the school has a Need Help number, else null (no link shown).
