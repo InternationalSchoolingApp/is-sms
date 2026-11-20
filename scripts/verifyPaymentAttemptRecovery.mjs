@@ -52,4 +52,4 @@ assert.equal(alreadyPaid.request.alreadyPaidMessage, "This fee is already paid. 
 assert.equal(alreadyPaid.request.attempt, null);
 assert.equal(getPaymentAttemptRecovery({ statusCode: "FAILED" }, "Stripe"), null);
 
-console.log("payment attempt recovery: all checks passed");
+// console.log("payment attempt recovery: all checks passed");

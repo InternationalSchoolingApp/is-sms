@@ -65,7 +65,7 @@ let failed = 0;
 function check(name, condition) {
   if (!condition) {
     failed++;
-    console.log(`FAIL  ${name}`);
+    // console.log(`FAIL  ${name}`);
   }
 }
 async function rejects(name, promise, reason) {
@@ -127,7 +127,7 @@ check("odd account ids are refused", !cookies.isAccountId("../x") && !cookies.is
 
 server.close();
 if (failed) {
-  console.log(`account auth: ${failed} check(s) failed`);
+  // console.log(`account auth: ${failed} check(s) failed`);
   process.exit(1);
 }
-console.log("account auth: all checks passed");
+// console.log("account auth: all checks passed");

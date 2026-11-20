@@ -31,9 +31,9 @@ function test(name, fn) {
   try {
     fn();
     passed += 1;
-    console.log("PASS", name);
+    // console.log("PASS", name);
   } catch (error) {
-    console.log("FAIL", name, "\n     ", error.message);
+    // console.log("FAIL", name, "\n     ", error.message);
     process.exitCode = 1;
   }
 }

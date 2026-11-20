@@ -13,7 +13,7 @@ function EventChip({ event, courseRegistry, onSelect, widthClassName = "w-full" 
   const status = getEventStatus(event);
   const isClass = event.eventKind === "class";
   const isLive = status === "live";
-  console.log("event", event)
+  // console.log("event", event)
   return (
     <button
       type="button"

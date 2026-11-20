@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import { use3D } from "@/components/three/use3D";
 import { CalendarDays } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { GOAL_SCORES, addDays, asArray, courseKey, courseTone, daysTo, fmtDay, fmtShort, fmtWeekday, num, paceInfo, perWeek, perWeekText } from "@/components/k5/pages/k5PerformanceData";
 import { ArrowRightIcon, PaceIcon, ProgressRing, TickIcon } from "@/components/k5/pages/K5PerformanceIcons";
+
+// The Score goal star in 3D (three.js) only when 3D is allowed; otherwise the 2D StarJar below stays.
+const StarJar3D = dynamic(() => import("@/components/three/StarJar3D"), { ssr: false, loading: () => null });
 
 const BTN = "flex min-h-[46px] cursor-pointer items-center gap-2 rounded-full border-[3px] px-[18px] font-k5-display text-[17px] font-semibold disabled:cursor-default disabled:opacity-50";
 const BTN_GHOST = `${BTN} border-k5-line bg-k5-card text-k5-ink shadow-[0_4px_0_var(--k5-line)]`;
@@ -234,6 +239,7 @@ const LINE_STYLE = {
 /** Mockup Tab 2 "My Goals" (PRD §3). */
 /** plain: the regular dashboard look (score goal ring and a completion bar instead of the star jar and road). */
 export function K5PerformanceGoals({ goals, avg, courses, week, today, initial, onSave, plain = false, compareAvailable = false }) {
+  const three = use3D();
   const [open, setOpen] = useState(false);
   const n = courses.length;
   // Completion: average course progress vs average time used (today's target).
@@ -287,7 +293,13 @@ export function K5PerformanceGoals({ goals, avg, courses, week, today, initial, 
             {plain ? (
               <ProgressRing pct={avg == null ? 0 : (avg / goals.score) * 100} col="var(--k5-ac)" lt="var(--k5-act)" />
             ) : (
-              <StarJar fill={avg == null ? 0 : avg / goals.score} />
+              three.enabled ? (
+                <span aria-hidden="true" data-motion-3d="star-jar" className="block h-[112px] w-[112px] flex-none">
+                  <StarJar3D fill={avg == null ? 0 : avg / goals.score} />
+                </span>
+              ) : (
+                <StarJar fill={avg == null ? 0 : avg / goals.score} />
+              )
             )}
             <span className="flex min-w-0 flex-col gap-1">
               <b className="font-k5-display text-lg font-semibold">Score goal</b>

@@ -109,7 +109,7 @@ function useResolveAddEnrollmentContext() {
         childUserId: storedUserId,
       });
       // TEMP-DEBUG: which stored child the refresh checked and what the thank-you API said
-      console.log("[add-enrollment] paidCheck", { storedUserId, storedRollNo, message: res?.message, status: res?.status, isFirstPayment: res?.data?.isFirstPayment });
+      // console.log("[add-enrollment] paidCheck", { storedUserId, storedRollNo, message: res?.message, status: res?.status, isFirstPayment: res?.data?.isFirstPayment });
       return { storedUserId, paid: res?.status === "1" && isFirstPayment(res.data) };
     },
     enabled: Boolean(authenticated && parentId && !urlUserMismatch),
@@ -135,13 +135,13 @@ function useResolveAddEnrollmentContext() {
         isFreshEntry()
       );
       // TEMP-DEBUG: what refresh sent and what the backend answered (S003 = already paid, S002 = resumed, S001/other = new)
-      console.log("[add-enrollment] enroll/another/child", {
-        sentRollNo: childData?.rollNo || loadAddEnrollmentRollNo(session.schoolUUID, parentId),
-        sessionStudentUserId: callerUserId,
-        statusCode: response?.statusCode,
-        message: response?.message,
-        response,
-      });
+      // console.log("[add-enrollment] enroll/another/child", {
+      //   sentRollNo: childData?.rollNo || loadAddEnrollmentRollNo(session.schoolUUID, parentId),
+      //   sessionStudentUserId: callerUserId,
+      //   statusCode: response?.statusCode,
+      //   message: response?.message,
+      //   response,
+      // });
       saveAddEnrollmentRollNo(session.schoolUUID, parentId, response?.data?.rollNo);
       return response;
     },
@@ -182,7 +182,7 @@ function useResolveAddEnrollmentContext() {
     queryFn: async () => {
       const response = await getAddEnrollmentProcess(session.schoolUUID, childUserId);
       // TEMP-DEBUG: enrollment/process response (remove after checking statusCode / redirectTo)
-      console.log("[add-enrollment] enrollment/process response", { childUserId, response });
+      // console.log("[add-enrollment] enrollment/process response", { childUserId, response });
       return response;
     },
     enabled: Boolean(authenticated && childUserId),
@@ -232,7 +232,7 @@ function useResolveAddEnrollmentContext() {
         studentRollNumber: childRollNo || loadAddEnrollmentRollNo(session.schoolUUID, parentId),
         childUserId,
       });
-      console.log("[add-enrollment] first-payment check", { childUserId, status: res?.status, isFirstPayment: res?.data?.isFirstPayment });
+      // console.log("[add-enrollment] first-payment check", { childUserId, status: res?.status, isFirstPayment: res?.data?.isFirstPayment });
       return res?.status === "1" && isFirstPayment(res.data);
     },
     enabled: Boolean(authenticated && completionSignal && childUserId),

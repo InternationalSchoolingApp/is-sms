@@ -37,7 +37,7 @@ try {
   assert.equal((await getIpLocation()).timezone, "Europe/Amsterdam");
   assert.equal(serverCalls, 1);
   assert.equal(browserCalls, 1);
-  console.log("IP location checks passed: browser path, network changes, failures, UAT override.");
+  // console.log("IP location checks passed: browser path, network changes, failures, UAT override.");
 } finally {
   globalThis.fetch = originalFetch;
   delete globalThis.__locationTest;

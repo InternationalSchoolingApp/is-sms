@@ -21,6 +21,11 @@ import { getSlotEnd, getSlotState } from "@/utils/bookClass";
 import { getCourseSlots } from "@/utils/bookClassClient";
 import { courseTint, subjectStyle } from "@/utils/k5Calendar";
 import { K5Loading, K5CardsSkeleton, K5Sk } from "@/components/k5/K5Skeletons";
+import dynamic from "next/dynamic";
+import { use3D } from "@/components/three/use3D";
+
+// The booked ticket in 3D (three.js) only when 3D is allowed; otherwise the 2D ticket below stays.
+const Ticket3D = dynamic(() => import("@/components/three/Ticket3D"), { ssr: false, loading: () => null });
 
 const MAX_TICKETS = 10;
 const BOOK_SAY = "This is where you book classes! Each ticket is one class with a teacher.";
@@ -1153,6 +1158,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   const { middle, high, copy } = useCopy();
   const colorFor = useK5CourseColors();
   const queryClient = useQueryClient();
+  const three = use3D();
   const [step, setStep] = useState(1);
   const [picked, setPicked] = useState(null);
   const [dayKey, setDayKey] = useState(null);
@@ -1515,6 +1521,11 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                     <circle cx="12" cy="12" r="9.5" />
                     <path d="M8 12.5l2.8 2.8L16.5 9.5" />
                   </svg>
+                </span>
+              ) : three.enabled ? (
+                // flies in, the stub tears off, then the tick pops (components/three/Ticket3D.jsx)
+                <span aria-hidden="true" data-motion-3d="ticket" className="block h-[88px] w-[140px] flex-none">
+                  <Ticket3D color={color} band={three.band} />
                 </span>
               ) : (
               <svg width="140" height="88" viewBox="0 0 64 40" aria-hidden="true" className="flex-none">

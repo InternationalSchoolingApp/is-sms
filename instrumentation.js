@@ -29,10 +29,10 @@ export function register() {
         body = "<unreadable>";
       }
       const shown = body.length > MAX_BODY ? `${body.slice(0, MAX_BODY)}…(${body.length} chars)` : body;
-      console.log(`[api-log] ${method} ${url} -> ${response.status} (${Date.now() - started}ms)\n          ${shown}`);
+      // console.log(`[api-log] ${method} ${url} -> ${response.status} (${Date.now() - started}ms)\n          ${shown}`);
       return response;
     } catch (err) {
-      console.log(`[api-log] ${method} ${url} -> FAILED (${Date.now() - started}ms)`, err?.message);
+      // console.log(`[api-log] ${method} ${url} -> FAILED (${Date.now() - started}ms)`, err?.message);
       throw err;
     }
   };

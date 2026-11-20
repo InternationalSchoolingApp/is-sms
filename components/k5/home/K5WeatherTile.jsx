@@ -1,5 +1,11 @@
 "use client";
 
+import dynamic from "next/dynamic";
+import { use3D } from "@/components/three/use3D";
+
+// The 3D sky (three.js) is loaded only when 3D is allowed; until then, and otherwise, the CSS sky below is shown.
+const WeatherScene3D = dynamic(() => import("@/components/three/WeatherScene3D"), { ssr: false, loading: () => null });
+
 // WMO weather code -> the mockup kinds.
 export function kindOf(code) {
   if (code === 0) return "sun";
@@ -38,6 +44,9 @@ const STARS = [
  * kid-friendly tip, on a day or night sky. Shows nothing until real weather has arrived.
  */
 export function K5WeatherTile({ weather }) {
+  // K-5 and Middle with WebGL, no reduced motion and not a low-power device: a moving 3D sky behind the text
+  // (components/three/WeatherScene3D.jsx). High and everyone else keep the CSS sky (glow, stars, drops, flakes).
+  const three = use3D();
   if (!weather) return null;
 
   const night = !weather.isDay;
@@ -54,14 +63,22 @@ export function K5WeatherTile({ weather }) {
       aria-label={"Weather: " + c + " degrees Celsius, " + f + " degrees Fahrenheit, " + label + ". " + tip}
       className={"relative box-border flex min-h-[78px] min-w-[170px] flex-[1_1_190px] flex-col items-center justify-center gap-px overflow-hidden rounded-[18px] px-4 py-1.5 text-center max-[760px]:min-h-[70px] max-[760px]:min-w-0 max-[760px]:flex-[1_1_auto] max-[760px]:px-2 " + (night ? "bg-[linear-gradient(135deg,#0B1A3F_0%,#1F2F5C_100%)]" : "bg-[linear-gradient(135deg,#CFE3FF_0%,#E9F2FF_100%)]")}
     >
-      {night &&
+      {three.enabled && (
+        <span aria-hidden="true" data-motion-3d="weather" className="absolute inset-0 block">
+          <WeatherScene3D kind={kind} night={night} />
+        </span>
+      )}
+      {!three.enabled &&
+        night &&
         STARS.map(([left, top, size, opacity]) => (
           <span key={left} aria-hidden="true" className="absolute block rounded-full bg-white" style={{ left: left + "%", top: top + "%", width: size, height: size, opacity }} />
         ))}
-      {!night && <span aria-hidden="true" className="absolute -right-6 -top-6 block h-[90px] w-[90px] rounded-full bg-[radial-gradient(circle,#FFE58A_0%,rgba(255,213,79,0.55)_45%,rgba(255,213,79,0)_70%)]" />}
-      {(kind === "rain" || kind === "storm") &&
+      {!three.enabled && !night && <span aria-hidden="true" className="absolute -right-6 -top-6 block h-[90px] w-[90px] rounded-full bg-[radial-gradient(circle,#FFE58A_0%,rgba(255,213,79,0.55)_45%,rgba(255,213,79,0)_70%)]" />}
+      {!three.enabled &&
+        (kind === "rain" || kind === "storm") &&
         DROPS.map((left, i) => <span key={left} aria-hidden="true" className="k5-wx-drop" style={{ left: left + "%", animationDelay: i * 0.25 + "s" }} />)}
-      {kind === "snow" &&
+      {!three.enabled &&
+        kind === "snow" &&
         DROPS.map((left, i) => <span key={left} aria-hidden="true" className="k5-wx-flake" style={{ left: left + "%", animationDelay: i * 0.5 + "s" }} />)}
       <span className={"relative whitespace-nowrap font-k5-display text-[28px] font-bold leading-[1.05] " + ink}>
         {c + "\u00B0"} <span className="text-xl font-semibold">{"| " + f + " F"}</span>
