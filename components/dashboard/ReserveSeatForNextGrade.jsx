@@ -357,7 +357,7 @@ export function ReserveSeatForNextGrade() {
   return (
     <>
       {offerReady && showSideButton && !fee && !checkout.picker && (
-        <div className="fixed bottom-[8%] right-0 z-40">
+        <div className="fixed right-0 top-[calc(var(--maintenance-banner-h,0px)+500px)] z-40 max-[760px]:top-auto max-[760px]:bottom-[12%]">
           <button
             type="button"
             onClick={() => setEnrollOpen(true)}
