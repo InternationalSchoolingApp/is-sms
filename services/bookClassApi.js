@@ -107,7 +107,7 @@ export async function getClassCalculationForGrownUps({ studentStandardId }) {
   if (!hasBackendOrigin() || !me || !studentStandardId) return null;
   try {
     const data = await callBackend(me.schoolUUID, "/dashboard/class-calculation-for-grown-ups", { studentStandardId });
-    // console.log("getClassCalculationForGrownUps", JSON.stringify({ studentStandardId, data }, null, 2));
+    console.log("getClassCalculationForGrownUps", JSON.stringify({ studentStandardId, data }, null, 2));
     return data?.details ?? null;
   } catch {
     return null;
@@ -224,7 +224,7 @@ export async function getStudentBookedClasses({ subjectId, studentStandardId, da
       { userId: me.userId, subjectId, studentStandardId, callFrom: "STUDENT", startDate, endDate, classStatus, dateType },
       { method: "GET", asQuery: true },
     );
-    // console.log("getStudentBookedClasses", { userId: me.userId, subjectId, studentStandardId, callFrom: "STUDENT", startDate, endDate, classStatus, dateType, data });
+    console.log("getStudentBookedClasses", { userId: me.userId, subjectId, studentStandardId, callFrom: "STUDENT", startDate, endDate, classStatus, dateType, data });
     return data;
   } catch {
     return null;

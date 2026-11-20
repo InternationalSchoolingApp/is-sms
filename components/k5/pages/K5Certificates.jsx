@@ -1,20 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import dynamic from "next/dynamic";
 import { Download, Link2, Plus, Search, ShieldCheck, X } from "lucide-react";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { certDate, certificateTitle, enrolmentLabel, requestMeta, requestSteps, statusOf } from "@/utils/certificates";
 import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
-import { use3D } from "@/components/three/use3D";
-
-// The gold seal of an issued certificate as a 3D coin (three.js, the same coin as the Achievements medals) only when 3D is
-// allowed. Every coin is its own WebGL canvas, so only the first MAX_3D_SEALS certificates get one; the rest keep the 2D Seal.
-const Medal3D = dynamic(() => import("@/components/three/Medal3D"), { ssr: false, loading: () => null });
-const SEAL_MEDAL = { icon: "star", fill: "#F2B600", ring: "#C9930A", ribbon: "#E5243B", glyph: "#FFFFFF" };
-const MAX_3D_SEALS = 6;
 
 const PRIMARY = "inline-flex min-h-[46px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-none bg-k5-ac px-[18px] font-k5-display text-base font-semibold text-white no-underline shadow-[0_4px_0_var(--k5-acd)] disabled:cursor-default disabled:opacity-50";
 const SECONDARY = "inline-flex min-h-[46px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-[3px] border-k5-line bg-k5-card px-4 font-k5-display text-base font-semibold text-k5-ink no-underline shadow-[0_4px_0_var(--k5-line)]";
@@ -239,9 +231,6 @@ function CertCardSkeleton() {
 export function K5Certificates({ schoolName, requests, certificates, form, sent, onSentClose, onCancel, onCopy }) {
   const [query, setQuery] = useState("");
   const { isMiddle } = useDashboardContext();
-  const three = use3D();
-  // Pointing at a certificate spins its seal once more (each hover bumps that certificate's key).
-  const [spins, setSpins] = useState({});
   usePicoContentReady(!requests.loading && !certificates.loading);
   const q = query.trim().toLowerCase();
   const certs = q
@@ -329,20 +318,13 @@ export function K5Certificates({ schoolName, requests, certificates, form, sent,
           </div>
         ) : (
           <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4 p-0 max-[760px]:grid-cols-1">
-            {certs.map((c, index) => {
+            {certs.map((c) => {
               const ready = c.pdfStatus === "READY" && c.pdfUrl;
-              const seal3d = three.enabled && index < MAX_3D_SEALS;
               return (
-                <li key={c.certCode} onPointerEnter={seal3d ? () => setSpins((v) => ({ ...v, [c.certCode]: (v[c.certCode] || 0) + 1 })) : undefined} className="k5-ctcert k5h-ct-cert relative rounded-[26px] p-2.5 shadow-[0_6px_0_#C9930A]" style={{ background: "linear-gradient(135deg, #FFE7A3, #F2C14E 45%, #FFE7A3)", ...(isMiddle ? { boxShadow: "0 2px 0 #C9930A" } : null) }}>
+                <li key={c.certCode} className="k5-ctcert k5h-ct-cert relative rounded-[26px] p-2.5 shadow-[0_6px_0_#C9930A]" style={{ background: "linear-gradient(135deg, #FFE7A3, #F2C14E 45%, #FFE7A3)", ...(isMiddle ? { boxShadow: "0 2px 0 #C9930A" } : null) }}>
                   <div style={isMiddle ? { borderWidth: 1.5 } : undefined} className="k5h-ct-inner box-border flex h-full flex-col gap-2.5 rounded-[18px] border-2 border-dashed border-[#D9A73A] bg-[#FFFBEE] px-[18px] pb-4 pt-[18px] text-[#3A2A00]">
                     <div className="flex items-center gap-3">
-                      {seal3d ? (
-                        <span aria-hidden="true" data-motion-3d="seal" className="block h-[66px] w-[58px] flex-none">
-                          <Medal3D medal={SEAL_MEDAL} band={three.band} spinKey={spins[c.certCode] || 0} />
-                        </span>
-                      ) : (
-                        <Seal />
-                      )}
+                      <Seal />
                       <div className="flex min-w-0 flex-col gap-0.5">
                         {schoolName && <span className="k5h-ct-ink text-xs font-black uppercase tracking-[0.08em] text-[#8A5A00]">{schoolName}</span>}
                         <h3 className="m-0 font-k5-display text-[22px] font-semibold leading-[1.15]">{certificateTitle(c)}</h3>

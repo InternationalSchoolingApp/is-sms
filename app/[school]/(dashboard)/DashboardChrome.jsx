@@ -12,7 +12,6 @@ import { SessionExpiredDialog } from "@/components/providers/SessionExpiredDialo
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { K5Shell } from "@/components/k5/K5Shell";
 import { rememberDashboardPath } from "@/utils/lastDashboardPath";
-import { DeviceIntro } from "@/components/device-intro/DeviceIntro";
 
 // Needs the dashboard context (schoolUUID), so it lives inside DashboardProvider.
 function SessionExpiryWatcher() {
@@ -93,15 +92,7 @@ export function DashboardChrome({ role = "student", children }) {
       <SessionExpiredDialog />
       <LastPathRecorder />
       <DashboardTitle />
-      {/* Once per login: the real dashboard is shown on the screen of a 3D device, which then grows to fill the viewport
-          (components/device-intro/DeviceIntro.jsx). Other roles render the body as it was. */}
-      {role === "student" ? (
-        <DeviceIntro>
-          <DashboardBody role={role}>{children}</DashboardBody>
-        </DeviceIntro>
-      ) : (
-        <DashboardBody role={role}>{children}</DashboardBody>
-      )}
+      <DashboardBody role={role}>{children}</DashboardBody>
     </DashboardProvider>
   );
 }

@@ -8,11 +8,6 @@ import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { BUDDIES, DYSLEXIA_OFF, DYSLEXIA_ON, GRADE_LOOKS, PAGE_COLORS, THEME_SWATCHES, VOICE_SPEEDS, VOICES, effectiveGradeLook, gradeLookOf } from "@/constant/appearance";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
-import dynamic from "next/dynamic";
-import { use3D } from "@/components/three/use3D";
-
-// The buddy in 3D (three.js, built from shapes) only when 3D is allowed; otherwise the 2D PicoMascot stays.
-const Buddy3D = dynamic(() => import("@/components/three/Buddy3D"), { ssr: false, loading: () => null });
 
 const OPTION =
   "flex min-h-[84px] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[20px] border-[3px] px-1 py-2 text-[15px] font-black text-k5-ink";
@@ -32,7 +27,7 @@ function Section({ id, title, subtitle, children }) {
   );
 }
 
-function Choice({ name, value, label, children, className = "", style, onHover }) {
+function Choice({ name, value, label, children, className = "", style }) {
   const { preferences, updatePreference, canCustomize } = useAppearance();
   const selected = preferences[name] === value;
   return (
@@ -41,32 +36,12 @@ function Choice({ name, value, label, children, className = "", style, onHover }
       aria-pressed={selected}
       disabled={!canCustomize}
       onClick={() => updatePreference(name, value)}
-      onPointerEnter={onHover ? () => onHover(true) : undefined}
-      onPointerLeave={onHover ? () => onHover(false) : undefined}
       className={`${OPTION} ${style ? (selected ? "border-k5-ac" : "border-k5-line") : optionState(selected)} disabled:cursor-default ${className}`}
       style={style}
     >
       {children}
       <span>{label}</span>
     </button>
-  );
-}
-
-/** One buddy card of "Your buddy": the 3D buddy (sways and waves when chosen or pointed at) or the 2D face. */
-function BuddyChoice({ id, buddy }) {
-  const three = use3D();
-  const { preferences } = useAppearance();
-  const [hover, setHover] = useState(false);
-  return (
-    <Choice name="buddy" value={id} label={buddy.name} onHover={three.enabled ? setHover : undefined} className="!min-h-0 gap-1.5 !px-1 !pb-2 !pt-2.5 font-k5-display !text-[17px] font-semibold">
-      {three.enabled ? (
-        <span aria-hidden="true" data-motion-3d="buddy" className="block h-[84px] w-[64px]">
-          <Buddy3D buddy={id} look={buddy} animate={hover || preferences.buddy === id} />
-        </span>
-      ) : (
-        <PicoMascot buddy={id} width={44} full={false} />
-      )}
-    </Choice>
   );
 }
 
@@ -299,7 +274,9 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear, firstName =
               </div>
               <div className={`grid grid-cols-5 gap-2.5 ${preferences.buddyEnabled === "off" ? "pointer-events-none opacity-40" : ""}`}>
                 {Object.entries(BUDDIES).map(([key, b]) => (
-                  <BuddyChoice key={key} id={key} buddy={b} />
+                  <Choice key={key} name="buddy" value={key} label={b.name} className="!min-h-0 gap-1.5 !px-1 !pb-2 !pt-2.5 font-k5-display !text-[17px] font-semibold">
+                    <PicoMascot buddy={key} width={44} full={false} />
+                  </Choice>
                 ))}
               </div>
             </Section>

@@ -255,7 +255,7 @@ export async function getSchoolCalendar({ schoolUUID, userId, startDate, endDate
       body: JSON.stringify(body),
     });
     const dayEvents = await parseJsonResponse(response);
-    // console.log("getSchoolCalendar", dayEvents);
+    console.log("getSchoolCalendar", dayEvents);
     return dayEvents;
   } catch {
     return null;
@@ -359,7 +359,7 @@ export async function getStudentAcademicPerformance({ schoolUUID, userId, k5Perf
     // k5Performance: the new My Performance page; the backend answers from the daily cron's tables, not the LMS.
     const body = { userId, studentUserId: userId, ...(k5Performance ? { k5Performance: "Y", includeClassComparison: "Y" } : {}) };
     const data =  await postDashboardPayload(schoolUUID, "/dashboard/parent/student-academic-performance", body);
-    // console.log("getStudentAcademicPerformance data:", data, null, 2);
+    console.log("getStudentAcademicPerformance data:", data, null, 2);
     return data;
   } catch {
     return null;
@@ -463,7 +463,7 @@ export async function getStudentProgressReportDetail({ schoolUUID, uniqueId, stu
       { studentUserId, lmsUserId: lmsEnrollmentId, entityId: lmsCourseId },
       uniqueId,
     );
-    // console.log("getStudentProgressReportDetail data:", JSON.stringify(data, null, 2));
+    console.log("getStudentProgressReportDetail data:", JSON.stringify(data, null, 2));
     return data;
   } catch {
     return null;
@@ -659,7 +659,7 @@ export async function getStudentCourseContent({ schoolUUID, userId, lmsUserId, l
   if (!hasBackendOrigin() || !schoolUUID || !userId || !lmsUserId) return null;
   try {
     const response = await postDashboardPayload(schoolUUID, "/dashboard/parent/student-course-content", { userId, studentUserId: userId, lmsUserId, lmsCourseId });
-    // console.log("getStudentCourseContent response:", JSON.stringify(response, null, 2));
+    console.log("getStudentCourseContent response:", JSON.stringify(response, null, 2));
     return response && String(response.status) === "1" ? (response.details ?? { modules: [] }) : null;
   } catch {
     return null;

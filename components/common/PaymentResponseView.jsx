@@ -253,6 +253,7 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
       );
       request
         .then((res) => {
+          console.log("[payment-response] backend response", res);
           if (cancelled) return;
           if (!res) {
             if (urlSettlementRef) setConfirming({ ref: urlSettlementRef });
@@ -349,28 +350,28 @@ function PaymentResponseContent({ endpointPath, mode, schoolUUID: schoolUUIDFrom
     (!shownWithoutLogin || copiedUrlWithoutSession);
   // TEMP DEBUG [pay-debug]: every state change that feeds the login redirect
   useEffect(() => {
-    // console.log("[pay-debug] view state", {
-    //   sessionStatus,
-    //   waitingForEnrollmentSession,
-    //   sessionWaitExpired,
-    //   heldAccount,
-    //   loading,
-    //   hasData: Boolean(data),
-    //   responseStatus: data?.responseStatus,
-    //   statusCode: data?.statusCode,
-    //   initiatedVia: data?.initiatedVia,
-    //   isReplay,
-    //   shownWithoutLogin,
-    //   copiedUrlWithoutSession,
-    //   redirectToLogin,
-    //   tabSessionPickup,
-    //   url: window.location.href,
-    //   at: new Date().toISOString(),
-    // });
+    console.log("[pay-debug] view state", {
+      sessionStatus,
+      waitingForEnrollmentSession,
+      sessionWaitExpired,
+      heldAccount,
+      loading,
+      hasData: Boolean(data),
+      responseStatus: data?.responseStatus,
+      statusCode: data?.statusCode,
+      initiatedVia: data?.initiatedVia,
+      isReplay,
+      shownWithoutLogin,
+      copiedUrlWithoutSession,
+      redirectToLogin,
+      tabSessionPickup,
+      url: window.location.href,
+      at: new Date().toISOString(),
+    });
   }, [sessionStatus, loading, data, isReplay, shownWithoutLogin, copiedUrlWithoutSession, redirectToLogin, waitingForEnrollmentSession, sessionWaitExpired, heldAccount, tabSessionPickup]);
   useEffect(() => {
     if (redirectToLogin && !window.__loggingOut) {
-      // console.log("[pay-debug] REDIRECTING TO LOGIN", { sessionStatus, loading, responseStatus: data?.responseStatus, url: window.location.href });
+      console.log("[pay-debug] REDIRECTING TO LOGIN", { sessionStatus, loading, responseStatus: data?.responseStatus, url: window.location.href });
       window.location.replace(loginPageUrl(schoolUUID));
     }
   }, [redirectToLogin, schoolUUID, sessionStatus, loading, data?.responseStatus]);
@@ -474,7 +475,7 @@ function AddEnrollmentThankYouReplay({ schoolUUID, parentId, rollNo, childUserId
     })
       .then((res) => {
         // TEMP-DEBUG: what the replay asked for and what the thank-you API answered
-        // console.log("[payment-response] api response enroll/another/child/thank-you (replay)", { studentRollNumber, childUserId, res });
+        console.log("[payment-response] api response enroll/another/child/thank-you (replay)", { studentRollNumber, childUserId, res });
         const ok = res?.status === "1" && res.data;
         // Finished: the next wizard entry in this tab must not pick this child up again (this page's own refresh
         // keeps working from the rollNo / childUserId in its URL).
@@ -822,15 +823,15 @@ function AddEnrollmentAccountInfo({ schoolUUID, parentId, childUserId, sessionUn
     // the same user), so reuse the id sent as sessionUserId rather than the URL's value.
     const callerUniqueId = sessionUserId;
     // TEMP DEBUG (remove once the section shows): which of the gates is closing?
-    // console.log("[add-enrollment account section] gates", {
-    //   sessionStatus,
-    //   sessionUserId,
-    //   parentId,
-    //   callerUniqueId,
-    //   urlSessionUniqueId: sessionUniqueId,
-    //   childUserId,
-    //   rollNo,
-    // });
+    console.log("[add-enrollment account section] gates", {
+      sessionStatus,
+      sessionUserId,
+      parentId,
+      callerUniqueId,
+      urlSessionUniqueId: sessionUniqueId,
+      childUserId,
+      rollNo,
+    });
     if (!sessionUserId) return undefined;
     let cancelled = false;
     logPaymentBackendCall("POST", "/api/v1/enroll/another/child/thank-you", "(account info)");
@@ -1165,7 +1166,7 @@ const SETTLEMENT_POLL_MS = 4000;
 const SETTLEMENT_MAX_POLLS = 15; // about 60 s
 
 function logPaymentBackendCall(method, path, note = "") {
-  // console.log(`[payment-response] backend request ${method} ${path}${note ? ` ${note}` : ""}`);
+  console.log(`[payment-response] backend request ${method} ${path}${note ? ` ${note}` : ""}`);
 }
 
 function isConfirmationPending(res) {
