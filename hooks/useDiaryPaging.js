@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { getDiaryMentionUsers, getDiaryThreadList, getDiaryThreadMessages } from "@/utils/diaryClient";
 import { diaryDayLabel } from "@/utils/diaryDates";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
@@ -163,9 +165,11 @@ export function useChatScroll(anchorRef, { ready, pageCount, hasNextPage, isFetc
 /**
  * The floating day label of a chat (legacy updateDateLabel): while the notes are scrolled it names the day of the one at
  * the top (Today, Yesterday, a weekday, "Mon, 02 Nov") and it fades a moment after the scrolling stops. Each message element
- * carries its moment in `data-diary-at` (ms). -> { label, visible }
+ * carries its moment in `data-diary-at` (ms). The label is in the dashboard language. -> { label, visible }
  */
 export function useFloatingDate(anchorRef, { ready, count }) {
+  const t = useTranslations("diary");
+  const locale = useDateFnsLocale();
   const [state, setState] = useState({ label: "", visible: false });
   useEffect(() => {
     if (!ready) return undefined;
@@ -182,7 +186,7 @@ export function useFloatingDate(anchorRef, { ready, count }) {
         else break;
       }
       const at = found ? Number(found.dataset.diaryAt) : NaN;
-      if (Number.isFinite(at)) setState({ label: diaryDayLabel(new Date(at)), visible: true });
+      if (Number.isFinite(at)) setState({ label: diaryDayLabel(new Date(at), undefined, new Date(), { locale, t }), visible: true });
     };
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(update);
@@ -195,6 +199,6 @@ export function useFloatingDate(anchorRef, { ready, count }) {
       cancelAnimationFrame(frame);
       clearTimeout(hide);
     };
-  }, [ready, count, anchorRef]);
+  }, [ready, count, anchorRef, locale, t]);
   return state;
 }

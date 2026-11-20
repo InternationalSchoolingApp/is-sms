@@ -1,0 +1,54 @@
+{
+  "sidebar": {
+    "ariaLabel": "Panel del estudiante",
+    "menu": "Menú",
+    "closeMenu": "Cerrar menú"
+  },
+  "rail": {
+    "talkToUs": "Habla con nosotros",
+    "k5TalkToUs": "Háblanos",
+    "announcement": "Anuncios",
+    "news": "Noticias",
+    "studentDiary": "Diario del estudiante",
+    "k5Diary": "Mi diario",
+    "withNew": "{label}, {count, plural, one {# nuevo} other {# nuevos}}"
+  },
+  "loadingDashboard": "Cargando tu panel…",
+  "pageTitle": {
+    "dashboard": "Panel",
+    "withName": "{name} | Panel"
+  },
+  "placeholder": {
+    "module": "Módulo",
+    "comingSoon": "Este módulo se está migrando y estará disponible pronto (fase C)."
+  },
+  "sessionExpired": {
+    "title": "Se cerró tu sesión",
+    "bands": {
+      "elementary": {
+        "title": "¡Uy! Se cerró tu sesión",
+        "hint": "Escribe tu contraseña para volver a entrar."
+      },
+      "middle": {
+        "title": "Se cerró tu sesión",
+        "hint": "Escribe tu contraseña para volver a iniciar sesión y seguir."
+      },
+      "high": {
+        "title": "Se cerró tu sesión",
+        "hint": "Escribe tu contraseña para volver a iniciar sesión y continuar donde lo dejaste."
+      }
+    },
+    "verifying": "Verificando tus credenciales",
+    "verifyingDetail": "Espera mientras restauramos tu sesión de forma segura.",
+    "wrongPassword": "La contraseña que escribiste es incorrecta.",
+    "unavailable": "No es posible iniciar sesión ahora. Inténtalo de nuevo.",
+    "passwordPlaceholder": "Contraseña *",
+    "password": "Contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "showPassword": "Mostrar contraseña",
+    "logIn": "Iniciar sesión",
+    "loggedInAs": "Sesión iniciada como {email}",
+    "notYou": "¿No eres tú?",
+    "differentUser": "Iniciar sesión con otro usuario"
+  }
+}

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { ClassFeedbackModal } from "@/components/dashboard/calendar/ClassFeedbackModal";
 import { PendingFeedbackPopup } from "@/components/dashboard/calendar/PendingFeedbackPopup";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -43,6 +45,9 @@ import { SessionExpiredError } from "@/utils/sessionState";
 export function ClassFeedbackHost() {
   const { context } = useDashboardContext();
   const dummy = useDummyStudent();
+  const t = useTranslations("feedback");
+  const tc = useTranslations("common");
+  const dateLocale = useDateFnsLocale();
   const userId = context?.userId;
   const schoolUUID = context?.schoolUUID;
   const dashboardData = useStudentDashboardData({ schoolUUID, userId });
@@ -70,6 +75,7 @@ export function ClassFeedbackHost() {
       afterClass: afterClass.value,
       delay: delay.value,
       testUsers: testUsers.value,
+      errorText: tc("status.somethingWentWrong"),
     };
   });
 
@@ -100,7 +106,7 @@ export function ClassFeedbackHost() {
         setModal({ key: `${info.id}-${Date.now()}`, info, url, rightSlide });
       }
     } catch (error) {
-      if (!(error instanceof SessionExpiredError)) toast.error("Something went wrong. Please try again.");
+      if (!(error instanceof SessionExpiredError)) toast.error(cfg.errorText);
     } finally {
       busy.current = false;
     }
@@ -156,9 +162,9 @@ export function ClassFeedbackHost() {
       {modal && (
         <ClassFeedbackModal
           key={modal.key}
-          title={modal.info.eventTitle || modal.info.title || "Class"}
-          dateTime={classDateTimeOf(modal.info)}
-          teacher={isFeedbackActivity(modal.info) ? "" : teacherDisplayOf(modal.info)}
+          title={modal.info.eventTitle || modal.info.title || t("modal.classFallback")}
+          dateTime={classDateTimeOf(modal.info, { locale: dateLocale })}
+          teacher={isFeedbackActivity(modal.info) ? "" : teacherDisplayOf(modal.info) === "Teacher" ? tc("words.teacher") : teacherDisplayOf(modal.info)}
           url={modal.url}
           rightSlide={modal.rightSlide}
           onClose={() => setModal(null)}

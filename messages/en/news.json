@@ -1,0 +1,43 @@
+{
+  "title": "News",
+  "articleCount": "{count, plural, one {# article} other {# articles}}",
+  "empty": "No news yet.",
+  "marking": "Marking…",
+  "viewAll": "View All News",
+  "latest": "Latest News",
+  "noneAvailable": "No news available.",
+  "readTime": "Read Time {minutes} min",
+  "source": "News Source",
+  "readFullArticle": "Read Full Article →",
+  "viewOriginalSource": "View original source →",
+  "relative": {
+    "yearsMonths": "{years, plural, one {# year} other {# years}} {months, plural, one {# month} other {# months}} ago",
+    "monthsDays": "{months, plural, one {# month} other {# months}} {days, plural, one {# day} other {# days}} ago",
+    "days": "{days, plural, one {# day} other {# days}} ago",
+    "today": "today",
+    "daysHours": "{days, plural, one {# day} other {# days}} {hours, plural, one {# hour} other {# hours}} ago",
+    "hoursMinutes": "{hours, plural, one {# hour} other {# hours}} {minutes, plural, one {# minute} other {# minutes}} ago",
+    "minutes": "{minutes, plural, one {# minute} other {# minutes}} ago"
+  },
+  "announcements": {
+    "title": "Announcement(s)",
+    "newCount": "{count} New",
+    "empty": "No announcements yet.",
+    "new": "New",
+    "learnMore": "Learn More →",
+    "startDate": "Start Date",
+    "thanks": "Thanks for Acknowledgement",
+    "viewAttachment": "View Attachment",
+    "submitting": "Submitting…",
+    "acknowledge": "Kindly Acknowledge",
+    "timeLabels": {
+      "upcoming": "upcoming",
+      "1_day_ago": "1 day ago",
+      "last_week": "last week"
+    }
+  },
+  "preview": {
+    "title": "Preview",
+    "imageAlt": "Announcement attachment"
+  }
+}

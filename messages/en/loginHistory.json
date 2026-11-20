@@ -1,0 +1,20 @@
+{
+  "title": "Login History - {name}",
+  "empty": "No login history found",
+  "firstLogin": "First Log in",
+  "lastLogin": "Last Log in | Duration",
+  "totalLogin": "Total Log in | Duration",
+  "tillNow": "Till Now",
+  "sessions": "Log in Sessions",
+  "searchPlaceholder": "Search sessions...",
+  "showingSessions": "Showing {start}-{end} of {total} sessions",
+  "securityNoticeLabel": "Security Notice:",
+  "securityNotice": "If you notice any suspicious login activity or unrecognized locations, please contact your administrator immediately. Your account security is important to us.",
+  "table": {
+    "sNo": "S.No",
+    "login": "Log in Date | Time",
+    "logout": "Log out Date | Time",
+    "location": "Location",
+    "duration": "Duration"
+  }
+}

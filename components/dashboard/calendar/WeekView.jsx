@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { format, isSameDay } from "date-fns";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { bucketEventsForWeek, getEventColor, getEventStatus, getWeekDays } from "@/utils/calendarEvents";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -13,6 +15,7 @@ function EventChip({ event, courseRegistry, onSelect, widthClassName = "w-full" 
   const status = getEventStatus(event);
   const isClass = event.eventKind === "class";
   const isLive = status === "live";
+  const t = useTranslations("calendar");
   console.log("event", event)
   return (
     <button
@@ -34,7 +37,7 @@ function EventChip({ event, courseRegistry, onSelect, widthClassName = "w-full" 
       }
       title={event.title || event.eventTitle}
     >
-      {event.title || event.eventTitle || "Untitled"}
+      {event.title || event.eventTitle || t("untitled")}
     </button>
   );
 }
@@ -51,6 +54,8 @@ export function WeekView({ events, selectedDate, courseRegistry, onSelectDay, on
   const weekDays = getWeekDays(selectedDate);
   const buckets = bucketEventsForWeek(events, weekDays);
   const today = new Date();
+  const t = useTranslations("calendar");
+  const dateLocale = useDateFnsLocale();
 
   useEffect(() => {
     if (bodyRef.current) bodyRef.current.scrollTop = 7 * ROW_HEIGHT;
@@ -69,7 +74,7 @@ export function WeekView({ events, selectedDate, courseRegistry, onSelectDay, on
               onClick={() => onSelectDay(day)}
               className="flex flex-col items-center gap-1 border-l border-slate-200 py-2 hover:bg-black/5"
             >
-              <span className="text-[10px] font-bold uppercase text-black/50">{format(day, "EEE")}</span>
+              <span className="text-[10px] font-bold uppercase text-black/50">{format(day, "EEE", { locale: dateLocale })}</span>
               <span
                 className={`flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold ${
                   isToday ? "bg-primary text-white" : "text-black"
@@ -83,7 +88,7 @@ export function WeekView({ events, selectedDate, courseRegistry, onSelectDay, on
       </div>
 
       <div className="grid border-b border-slate-200" style={{ gridTemplateColumns: "56px repeat(7, 1fr)" }}>
-        <div className="py-1 text-right text-[10px] font-bold text-black/40">All day</div>
+        <div className="py-1 text-right text-[10px] font-bold text-black/40">{t("allDay")}</div>
         {weekDays.map((day) => {
           const key = format(day, "yyyy-MM-dd");
           const allDayEvents = buckets[key]?.allDay || [];
@@ -101,7 +106,7 @@ export function WeekView({ events, selectedDate, courseRegistry, onSelectDay, on
         <div className="grid" style={{ gridTemplateColumns: "56px repeat(7, 1fr)" }}>
           {HOURS.map((hour) => (
             <div key={`label-${hour}`} className="border-b border-dashed border-slate-100 pr-2 text-right text-[10px] text-black/40" style={{ height: ROW_HEIGHT }}>
-              {format(new Date(2000, 0, 1, hour), "h a")}
+              {format(new Date(2000, 0, 1, hour), "h a", { locale: dateLocale })}
             </div>
           )).reduce((rows, label, idx) => {
             // interleave hour label with its 7 day cells so the grid stays a single flat list
@@ -146,7 +151,7 @@ export function WeekView({ events, selectedDate, courseRegistry, onSelectDay, on
                       onClick={() => {onSelectDay(day)}}
                       className="absolute inset-x-0.5 bottom-0 cursor-pointer z-10 block rounded bg-primary/10 px-1 text-[10px] font-bold text-primary hover:underline"
                     >
-                      +{overflow} more
+                      {t("moreCount", { count: overflow })}
                     </button>
                   )}
                 </div>

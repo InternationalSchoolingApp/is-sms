@@ -1,0 +1,122 @@
+{
+  "title": "Book a Class",
+  "titleWithTeacher": "Book a Class with {teacher}",
+  "titleForSubject": "Book a Class for {subject}",
+  "titleForSubjectWithTeacher": "Book a Class for {subject} with {teacher}",
+  "noTeacher": "You do not have a teacher assigned yet",
+  "weekFullyBooked": "You have booked all your classes for this week",
+  "loadError": "Unable to load your classes right now. Please try again.",
+  "notPurchased": "Oops! Looks like you haven't purchased a class yet.",
+  "goToBuyExtra": "Go to Buy Extra Classes",
+  "yearNotStarted": "Your academic year has not started yet. You will be able to book your classes once your academic year starts",
+  "bookThisWeek": "Book Classes for this week",
+  "bookedClasses": "Booked Classes",
+  "bookAClass": "Book a class",
+  "bookWithTeacher": "Book a class with {teacher}",
+  "bookCount": "Book a Class ({count})",
+  "picker": {
+    "selectCourse": "Select Course*",
+    "viewSlots": "View Available Slots"
+  },
+  "complimentary": {
+    "title": "Your Complimentary Classes",
+    "for42Weeks": "For 42 weeks",
+    "perWeek": "per week"
+  },
+  "courses": {
+    "selectedOne": "Your Selected Course",
+    "selectedMany": "Your Selected Courses",
+    "selectedCount": "Your {count} Selected Courses",
+    "total": "Total:",
+    "booked": "Booked:",
+    "expired": "Expired:"
+  },
+  "instructions": {
+    "title": "Class Booking Instructions",
+    "weekly": "Weekly Class Structure: Monday to Friday",
+    "canBook": "You can book {count, plural, one {# class} other {# classes}} in a week.",
+    "canBookComplimentary": "You can book {count, plural, one {# complimentary class} other {# complimentary classes}} in a week.",
+    "expire": "Unbooked complimentary classes will expire at the end of week."
+  },
+  "counts": {
+    "left": "Left",
+    "missedByYou": "Missed by You",
+    "missedByTeacher": "Missed by Teacher",
+    "rescheduled": "Rescheduled",
+    "completed": "Completed"
+  },
+  "slots": {
+    "unknownOutcome": "We could not confirm whether your class was booked. Please refresh the page and check your booked classes before trying again.",
+    "booked": "Your class has been booked.",
+    "bookFailed": "Unable to book this class. Please try again.",
+    "loading": "Loading available slots…",
+    "teacherLoadError": "Unable to load teacher details. Please try again.",
+    "none": "No class slots are available for this week.",
+    "confirmTitle": "Confirm your class",
+    "booking": "Booking...",
+    "course": "Course",
+    "teacher": "Teacher",
+    "date": "Date",
+    "time": "Time",
+    "timezone": "Timezone",
+    "available": "Available",
+    "bookedLegend": "Booked",
+    "notAvailable": "Not Available",
+    "weeklySlots": "{teacher}'s weekly class slots from {from} to {to}**",
+    "allInTimezone": "**All slots are in the {timezone} timezone",
+    "duration": "**Duration of each class is {minutes} minutes"
+  },
+  "booked": {
+    "title": "Booked Classes — {course}",
+    "titleK5": "My booked classes — {course}",
+    "dateToday": "Today",
+    "dateYesterday": "Yesterday",
+    "dateWeek": "Week",
+    "dateMonth": "Month",
+    "dateCustom": "Custom",
+    "selectStatus": "Select Status",
+    "statusBooked": "Booked",
+    "statusCompleted": "Completed",
+    "statusReschedule": "Reschedule Session",
+    "statusMissedByYou": "Missed by you",
+    "totalNumberOf": "Total number of",
+    "counts": {
+      "total": "Classes",
+      "booked": "Classes Booked",
+      "left": "Classes Left",
+      "expired": "Classes Expired",
+      "missedByYou": "Classes Missed by You",
+      "rescheduled": "Classes Rescheduled",
+      "completed": "Classes Completed",
+      "missedByTeacher": "Classes Missed by Teacher"
+    },
+    "columns": {
+      "sNo": "S. No.",
+      "timing": "Class Timing | Time zone",
+      "courseName": "Course Name",
+      "teacherName": "Teacher Name",
+      "bookedDate": "Booked Date",
+      "classType": "Class Type",
+      "classStatus": "Class Status"
+    },
+    "searchLabel": "Search booked classes",
+    "searchPlaceholder": "Search..."
+  },
+  "labels": {
+    "all_courses": "All Courses",
+    "rescheduled": "Rescheduled",
+    "missed_by_student": "Missed by Student",
+    "missed_by_teacher": "Missed by Teacher",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "complimentary": "Complimentary",
+    "extra": "Extra",
+    "mon": "MON",
+    "tue": "TUE",
+    "wed": "WED",
+    "thu": "THU",
+    "fri": "FRI",
+    "sat": "SAT",
+    "sun": "SUN"
+  }
+}

@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 // WMO weather code -> the mockup kinds.
 export function kindOf(code) {
   if (code === 0) return "sun";
@@ -11,14 +13,15 @@ export function kindOf(code) {
   return "rain";
 }
 
+// [label, tip] message keys (k5Home.weather.labels.* / tips.*): "Sunny" / "Wear a hat!", "Clear sky" / "Look at the stars!"...
 const TEXT = {
-  sun: (night) => [night ? "Clear sky" : "Sunny", night ? "Look at the stars!" : "Wear a hat!"],
-  partly: (night) => ["Partly cloudy", night ? "Stay cozy tonight!" : "Great day to learn!"],
-  cloud: (night) => ["Cloudy", night ? "Stay cozy tonight!" : "Great day to learn!"],
-  fog: () => ["Foggy", "Stay close to a grown-up!"],
-  rain: () => ["Rainy", "Bring an umbrella!"],
-  snow: () => ["Snowy", "Wear your mittens!"],
-  storm: () => ["Stormy", "Stay inside today!"],
+  sun: (night) => [night ? "clear" : "sunny", night ? "stars" : "hat"],
+  partly: (night) => ["partly", night ? "cozy" : "learn"],
+  cloud: (night) => ["cloudy", night ? "cozy" : "learn"],
+  fog: () => ["foggy", "grownUp"],
+  rain: () => ["rainy", "umbrella"],
+  snow: () => ["snowy", "mittens"],
+  storm: () => ["stormy", "inside"],
 };
 
 const DROPS = [12, 34, 58, 80];
@@ -38,11 +41,14 @@ const STARS = [
  * kid-friendly tip, on a day or night sky. Shows nothing until real weather has arrived.
  */
 export function K5WeatherTile({ weather }) {
+  const t = useTranslations("k5Home.weather");
   if (!weather) return null;
 
   const night = !weather.isDay;
   const kind = kindOf(weather.code);
-  const [label, tip] = TEXT[kind](night);
+  const [labelKey, tipKey] = TEXT[kind](night);
+  const label = t(`labels.${labelKey}`);
+  const tip = t(`tips.${tipKey}`);
   const c = Math.round(weather.celsius);
   const f = Math.round(((weather.celsius * 9) / 5 + 32) * 10) / 10;
   const ink = night ? "text-white" : "text-[#13254D]";
@@ -51,7 +57,7 @@ export function K5WeatherTile({ weather }) {
   return (
     <div
       role="img"
-      aria-label={"Weather: " + c + " degrees Celsius, " + f + " degrees Fahrenheit, " + label + ". " + tip}
+      aria-label={t("aria", { c, f, label, tip })}
       className={"relative box-border flex min-h-[78px] min-w-[170px] flex-[1_1_190px] flex-col items-center justify-center gap-px overflow-hidden rounded-[18px] px-4 py-1.5 text-center max-[760px]:min-h-[70px] max-[760px]:min-w-0 max-[760px]:flex-[1_1_auto] max-[760px]:px-2 " + (night ? "bg-[linear-gradient(135deg,#0B1A3F_0%,#1F2F5C_100%)]" : "bg-[linear-gradient(135deg,#CFE3FF_0%,#E9F2FF_100%)]")}
     >
       {night &&

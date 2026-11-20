@@ -1,0 +1,93 @@
+{
+  "shell": {
+    "logOff": "Se déconnecter"
+  },
+  "welcome": {
+    "loadFailed": "Impossible de charger vos informations. Veuillez réessayer."
+  },
+  "timezone": {
+    "saved": "Votre fuseau horaire est enregistré.",
+    "saveFailed": "Votre fuseau horaire n'a pas pu être enregistré.",
+    "title": "Confirmez votre fuseau horaire",
+    "intro": "Avant de commencer, veuillez sélectionner votre pays et votre fuseau horaire :",
+    "label": "Fuseau horaire",
+    "loadFailed": "Impossible de charger les fuseaux horaires",
+    "proceedWith": "Voulez-vous continuer avec <b>{zone}</b> ?",
+    "classesFollow": "Notez que tous vos cours suivront ce fuseau horaire.",
+    "changeLater": "Pour changer de fuseau horaire plus tard, allez dans la section <b>« Mon profil »</b> de votre tableau de bord.",
+    "saving": "Enregistrement..."
+  },
+  "overdue": {
+    "paymentReceived": "Paiement reçu.",
+    "hi": "Bonjour {name} !",
+    "hiThere": "Bonjour !",
+    "deactivated": "Votre LMS est désactivé en raison de frais impayés depuis le {date}.",
+    "noOverdue": "Aucun paiement en retard.",
+    "pendingFee": "Frais en attente",
+    "grade": "Classe",
+    "feeDescription": "Description des frais",
+    "dueFee": "Montant dû",
+    "dueDate": "Date d'échéance",
+    "status": "Statut",
+    "totalDue": "Total des frais dus",
+    "payNow": "Payer maintenant pour continuer les cours",
+    "whyTimely": "Pourquoi payer à temps est-il important ?",
+    "payInAdvance": "Veuillez payer à l'avance pour continuer vos cours.",
+    "avoidDeactivation": "Veuillez effectuer le paiement pour éviter la désactivation du système de gestion scolaire.",
+    "statusUpdated": "Le statut de vos frais sera mis à jour dès réception du paiement."
+  },
+  "feeStatus": {
+    "pending": "En attente",
+    "overdue": "En retard",
+    "due": "Dû",
+    "unpaid": "Impayé",
+    "paid": "Payé",
+    "partially_paid": "Partiellement payé"
+  },
+  "setup": {
+    "loadFailed": "Impossible de charger vos informations. Veuillez réessayer.",
+    "loading": "Chargement de vos informations...",
+    "heading": "Bonjour {name}, {kind, select, done {bravo ! Commençons !} reminder {un rappel important} other {commençons !}}",
+    "headingNoName": "Bonjour, {kind, select, done {bravo ! Commençons !} reminder {un rappel important} other {commençons !}}"
+  },
+  "training": {
+    "topicsIntro": "Pendant la formation au système scolaire, vous apprendrez",
+    "topicClasses": "Comment réserver et rejoindre des cours",
+    "topicCourses": "Les cours, les bulletins de progression et les évaluations",
+    "booked": "Votre formation au système scolaire a été réservée.",
+    "bookFailed": "Votre formation au système scolaire n'a pas pu être réservée.",
+    "chooseDateToContinue": "Choisissez une date pour continuer",
+    "title": "Réservez votre formation au système scolaire",
+    "bookOn": "Je veux réserver ma formation au système scolaire le",
+    "dateLabel": "Choisir la date de la formation",
+    "selectTime": "Choisissez l'heure :",
+    "loadingTimes": "Chargement des horaires disponibles…",
+    "timesFailed": "Les horaires de formation n'ont pas pu être chargés.",
+    "noSlot": "Aucun créneau disponible. Veuillez choisir une autre date",
+    "timeLabel": "Horaire de la formation",
+    "saving": "Enregistrement..."
+  },
+  "academic": {
+    "saved": "La date de début de votre année scolaire est enregistrée.",
+    "saveFailed": "La date de début de votre année scolaire n'a pas pu être enregistrée.",
+    "title": "Date de début de l'année scolaire",
+    "titleStep": "Étape 1 sur 1 - Date de début de l'année scolaire",
+    "explain": "La date de début de votre année scolaire est le jour où vous commencerez vos cours.",
+    "startOn": "Je veux commencer mon année scolaire le",
+    "dateLabel": "Choisir la date de début",
+    "decideLater": "Décider plus tard",
+    "chooseCarefully": "Choisissez soigneusement la date de début de votre année scolaire. Vous ne pourrez pas la modifier plus tard.",
+    "queries": "Pour toute question :",
+    "editDate": "Modifier la date",
+    "mandatory": "Choisir la date de début de votre {kind, select, training {formation au système} other {année scolaire}} est obligatoire pour commencer vos cours. Vous pouvez toujours vous reconnecter pour terminer la procédure.",
+    "queriesTalk": "Pour toute question, veuillez <link>contacter l'administration de l'école</link>",
+    "batchReminder": "Le groupe d'apprentissage pour le fuseau UTC+ commencera le 18 septembre 2024.<br></br>et le groupe d'apprentissage pour le fuseau UTC- commencera le 25 septembre 2024."
+  },
+  "done": {
+    "title": "Tout est prêt !",
+    "startDateIs": "La date de début de votre année scolaire est le {date}",
+    "trainingConfirmed": "Votre formation au système scolaire a bien été confirmée.",
+    "dateTime": "Date et heure : <b>{value}</b>",
+    "emailSent": "Une confirmation a également été envoyée à votre adresse e-mail enregistrée."
+  }
+}

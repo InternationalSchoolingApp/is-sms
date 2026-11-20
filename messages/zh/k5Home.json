@@ -1,0 +1,210 @@
+{
+  "planner": {
+    "gettingReady": "正在准备你的计划…",
+    "myPlans": "我的计划",
+    "loadError": "无法加载你的计划，请稍后再试。",
+    "picoOffYouGo": "快去上{name}课吧！学习愉快！",
+    "picoOffYouGoName": "快去上{name}课吧！{first}，学习愉快！",
+    "picoStillLive": "好的！你的课还在直播中。准备好了就点绿色的“进入课堂”按钮。",
+    "picoStillLiveName": "好的！你的{name}课还在直播中。准备好了就点绿色的“进入课堂”按钮。",
+    "picoStillLiveDashboard": "好的！你的课还在直播中。准备好了可以从你的主页进入。",
+    "picoStillLiveDashboardName": "好的！你的{name}课还在直播中。准备好了可以从你的主页进入。"
+  },
+  "clue": {
+    "daysMore": "{list}，还有另外 {count, plural, other {# 天}}",
+    "daysAnd": "{list}和{last}",
+    "assignmentSome": "绿点是作业。我帮你点亮了：{days}！",
+    "assignmentNone": "绿点是作业。这个月你没有作业！",
+    "activitySome": "紫色方块是学校活动，比如{date}的{title}！",
+    "aSchoolActivity": "一个学校活动",
+    "activityNone": "紫色方块是学校活动。这个月没有活动！",
+    "holidaySome": "红色方块表示假期。{days}{count, plural, other {放假}}。不用上学！",
+    "holidayNone": "红色方块表示假期。这个月没有假期！",
+    "done": "灰色方块是你已经上完的课。真棒！",
+    "liveNow": "蓝色虚线方块是直播课。你的老师现在在线，快点“进入”吧！",
+    "live": "蓝色虚线方块是直播课。上课开始时，点“进入”！",
+    "next": "黄色方块是即将开始的课。马上就要开始啦！"
+  },
+  "calendar": {
+    "previousMonth": "上个月",
+    "nextMonth": "下个月",
+    "closeCalendar": "关闭日历",
+    "dotLegend": "圆点 = 有安排"
+  },
+  "today": {
+    "none": "没有课程和学校活动",
+    "live": "正在进行的课程和学校活动",
+    "upcoming": "即将开始的课程和学校活动",
+    "completed": "已完成的课程和学校活动"
+  },
+  "courses": {
+    "title": "我的课程",
+    "hide": "在我的计划中隐藏这门课",
+    "show": "在我的计划中显示这门课"
+  },
+  "pills": {
+    "done": "已完成",
+    "live": "直播中",
+    "toGo": "待上"
+  },
+  "clues": {
+    "group": "颜色提示",
+    "title": "颜色提示：",
+    "tap": "点一个提示！",
+    "assignment": "作业",
+    "done": "已上完的课",
+    "live": "直播课",
+    "upcoming": "即将开始的课",
+    "activity": "学校活动",
+    "holiday": "假期"
+  },
+  "filters": {
+    "label": "在我的计划中显示什么",
+    "groups": {
+      "plan": "我的计划中",
+      "assignments": "作业",
+      "classes": "课程"
+    },
+    "items": {
+      "classes": "课程",
+      "activities": "活动",
+      "schoolEvents": "学校活动",
+      "holidays": "假期",
+      "pendingAssignments": "待完成",
+      "submittedAssignments": "已提交",
+      "upcomingAssignments": "即将到来",
+      "liveActivities": "直播中",
+      "upcomingActivities": "即将开始",
+      "pastActivities": "已结束",
+      "missedClasses": "缺席",
+      "lateJoinClasses": "迟到"
+    }
+  },
+  "toolbar": {
+    "zone": "{city}时间",
+    "myWeek": "我的一周",
+    "greeting": {
+      "morning": "早上好！",
+      "afternoon": "下午好！",
+      "evening": "晚上好！"
+    },
+    "previous": {
+      "day": "前一天",
+      "week": "上一周",
+      "month": "上个月"
+    },
+    "next": {
+      "day": "后一天",
+      "week": "下一周",
+      "month": "下个月"
+    },
+    "calendarView": "日历视图",
+    "views": {
+      "today": "今天",
+      "week": "周",
+      "month": "月"
+    }
+  },
+  "weather": {
+    "labels": {
+      "clear": "晴朗的夜空",
+      "sunny": "晴天",
+      "partly": "多云间晴",
+      "cloudy": "多云",
+      "foggy": "有雾",
+      "rainy": "下雨",
+      "snowy": "下雪",
+      "stormy": "暴风雨"
+    },
+    "tips": {
+      "stars": "看看星星吧！",
+      "hat": "戴上帽子！",
+      "cozy": "今晚暖暖和和的！",
+      "learn": "学习的好日子！",
+      "grownUp": "待在大人身边！",
+      "umbrella": "带上雨伞！",
+      "mittens": "戴上手套！",
+      "inside": "今天待在室内吧！"
+    },
+    "aria": "天气：摄氏 {c} 度，华氏 {f} 度，{label}。{tip}"
+  },
+  "day": {
+    "liveClass": "直播课",
+    "class": "课程",
+    "done": "完成！",
+    "liveNow": "正在直播",
+    "joinClass": "进入课堂",
+    "starts": "{time} 开始",
+    "schoolActivity": "学校活动",
+    "schoolActivityUntitled": "学校活动",
+    "assignments": "作业",
+    "assignment": "作业",
+    "assignmentStatus": {
+      "submitted": "已提交",
+      "pending": "待完成",
+      "upcoming": "即将到来"
+    },
+    "noLiveClassesToday": "今天没有直播课",
+    "noClassesToday": "今天没有课！",
+    "tomorrowClasses": "明天：{count, plural, other {# 节课}}",
+    "tomorrowFree": "明天：没有课！自由的一天！",
+    "tomorrowNone": "明天：没有课",
+    "peek": "看看",
+    "classesToday": "{count, plural, other {今天 # 节课}}",
+    "classes": "{count, plural, other {# 节课}}",
+    "noClasses": "没有课",
+    "todaysPlan": "今天的计划",
+    "dayPlan": "{day}的计划",
+    "showCalendar": "显示日历",
+    "holiday": "假期"
+  },
+  "plans": {
+    "chip": "{name}，{time}",
+    "chipLive": "{name}，{time}，正在直播——进入课堂",
+    "done": "已完成",
+    "live": "直播",
+    "schoolActivityUntitled": "学校活动",
+    "holiday": "假期",
+    "activityLabel": "学校活动：{title}",
+    "assignment": "作业",
+    "assignmentLabel": "作业：{title}",
+    "assignments": "{count, plural, other {# 项作业}}",
+    "assignmentsOpenDay": "{count, plural, other {# 项作业}}——打开这一天",
+    "weekTile": "周",
+    "myWeek": "我的一周",
+    "weekSubtitle": "{range} · 点一天来打开",
+    "noClasses": "没有课！",
+    "courseWorkDay": "课程学习日",
+    "openBrainGames": "打开益智游戏",
+    "tapToPlay": "点一下来玩游戏",
+    "legend": "= 你的 {count, plural, other {# 门课}}",
+    "join": "进入{name}",
+    "openThisDay": "打开这一天",
+    "eventsOnDay": "这一天的安排",
+    "myMonth": "我的一个月",
+    "monthSubtitle": "点任意一天，看看有什么安排",
+    "dayAria": "{date}：{summary}",
+    "allDone": "全部完成",
+    "classes": "{count, plural, other {# 节课}}",
+    "freeDay": "自由日"
+  },
+  "liveAlert": {
+    "liveNow": "正在直播",
+    "hurry": "快点！你的课开始了，老师在等你！",
+    "hurryName": "快点，{name}！你的课开始了，老师在等你！",
+    "startedJustNow": "刚刚开始",
+    "startedMinutes": "{count, plural, other {# 分钟}}前开始",
+    "startedHours": "{count, plural, other {# 小时}}前开始",
+    "joinNow": "立即进入课堂",
+    "notNow": "现在不，显示我的日历"
+  },
+  "completeProfile": {
+    "title": "完善你的资料",
+    "unknownField": "未知字段",
+    "required": "必填",
+    "fieldsNeedAttention": "{count, plural, other {# 个字段需要你处理}}",
+    "requiredNote": "有些字段是必填的，请填写后继续。",
+    "later": "稍后",
+    "goToProfile": "前往我的资料"
+  }
+}

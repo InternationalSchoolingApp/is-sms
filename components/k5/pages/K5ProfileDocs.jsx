@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Download, Eye, FileText, Trash2, Upload, X } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { ConfirmDialog } from "@/components/k5/pages/K5ProfileEditors";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -75,6 +76,8 @@ export function DocCropDialog({ file, onCancel, onCrop }) {
   const [rect, setRect] = useState(null);
   const drag = useRef(null);
   const cropRef = useRef(null);
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
   useEscape(Boolean(file), onCancel);
 
   const show = (url) => {
@@ -131,10 +134,10 @@ export function DocCropDialog({ file, onCancel, onCrop }) {
       onCrop(new File([blob], nameWithExt(file.name, ext), { type }));
     };
     canvas.toBlob((blob) => {
-      if (!blob) return toast.error("The picture could not be cropped.");
+      if (!blob) return toast.error(t("docsUi.cropError"));
       // A big PNG can pass 5 MB once cropped; a JPEG of the same part keeps it under the limit.
       if (blob.size > MAX_BYTES) {
-        canvas.toBlob((jpeg) => (jpeg ? finish(jpeg, "image/jpeg") : toast.error("The picture could not be cropped.")), "image/jpeg", 0.85);
+        canvas.toBlob((jpeg) => (jpeg ? finish(jpeg, "image/jpeg") : toast.error(t("docsUi.cropError"))), "image/jpeg", 0.85);
       } else finish(blob, outType);
     }, outType, 0.92);
   };
@@ -187,9 +190,9 @@ export function DocCropDialog({ file, onCancel, onCrop }) {
       <div role="dialog" aria-modal="true" aria-labelledby="k5-doc-crop-h" className={`${DIALOG} max-w-[780px]`}>
         <div className={HEAD}>
           <h2 id="k5-doc-crop-h" className="m-0 font-k5-display text-lg font-semibold">
-            Crop the image
+            {t("docsUi.cropTitle")}
           </h2>
-          <button type="button" onClick={onCancel} aria-label="Close" className={CLOSE_BTN}>
+          <button type="button" onClick={onCancel} aria-label={tc("actions.close")} className={CLOSE_BTN}>
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
@@ -202,8 +205,8 @@ export function DocCropDialog({ file, onCancel, onCrop }) {
                 ref={cropRef}
                 tabIndex={0}
                 role="group"
-                aria-roledescription="crop area"
-                aria-label="Crop area. Drag to move, use the arrow keys, or drag a corner to resize."
+                aria-roledescription={t("docsUi.cropRole")}
+                aria-label={t("docsUi.cropArea")}
                 data-mode="move"
                 onPointerDown={start}
                 onKeyDown={nudge}
@@ -225,19 +228,19 @@ export function DocCropDialog({ file, onCancel, onCrop }) {
             </div>
           ) : (
             <span className="text-sm font-black text-k5-mut" role="status">
-              Loading the picture…
+              {t("docsUi.loadingPicture")}
             </span>
           )}
         </div>
         <div className="flex flex-wrap justify-end gap-2 border-t-[3px] border-k5-line px-4 py-3">
           <button type="button" onClick={onCancel} className={`${FOOT_BTN} bg-k5-ink text-white`}>
-            Cancel
+            {tc("actions.cancel")}
           </button>
           <button type="button" onClick={crop} disabled={!pic} className={`${FOOT_BTN} bg-k5-ac text-white`}>
-            Crop
+            {t("docsUi.crop")}
           </button>
           <button type="button" onClick={rotate} disabled={!pic} className={`${FOOT_BTN} bg-k5-ac text-white`}>
-            Rotate
+            {t("docsUi.rotate")}
           </button>
         </div>
       </div>
@@ -249,6 +252,8 @@ export function DocCropDialog({ file, onCancel, onCrop }) {
 
 /** The existing page's "Preview File" dialog: the picture, or the PDF with a Download PDF link. */
 export function DocPreviewDialog({ doc, onClose }) {
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
   useEscape(Boolean(doc), onClose);
   if (!doc) return null;
   return (
@@ -256,9 +261,9 @@ export function DocPreviewDialog({ doc, onClose }) {
       <div role="dialog" aria-modal="true" aria-labelledby="k5-doc-view-h" onClick={(e) => e.stopPropagation()} className={`${DIALOG} max-w-[720px]`}>
         <div className={HEAD}>
           <h2 id="k5-doc-view-h" className="m-0 min-w-0 truncate font-k5-display text-lg font-semibold">
-            Preview File{doc.name ? ` · ${doc.name}` : ""}
+            {doc.name ? t("docsUi.previewNamed", { name: doc.name }) : t("docsUi.preview")}
           </h2>
-          <button type="button" onClick={onClose} aria-label="Close" className={CLOSE_BTN}>
+          <button type="button" onClick={onClose} aria-label={tc("actions.close")} className={CLOSE_BTN}>
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
@@ -273,13 +278,13 @@ export function DocPreviewDialog({ doc, onClose }) {
                 className="inline-flex min-h-9 items-center gap-2 self-end rounded-[10px] bg-k5-ac px-3 text-sm font-black text-white no-underline"
               >
                 <Download className="h-4 w-4" aria-hidden="true" />
-                Download PDF
+                {t("docsUi.downloadPdf")}
               </a>
-              <iframe src={doc.url} title={doc.name || "PDF document"} className="h-[65dvh] w-full rounded-[10px] border-[3px] border-k5-line bg-white" />
+              <iframe src={doc.url} title={doc.name || t("docsUi.pdfDocument")} className="h-[65dvh] w-full rounded-[10px] border-[3px] border-k5-line bg-white" />
             </>
           ) : (
             // eslint-disable-next-line @next/next/no-img-element -- an uploaded proof (S3) or a local object URL of any size
-            <img src={doc.url} alt={doc.label || "Document"} className="mx-auto block max-h-[70dvh] max-w-full rounded-[10px] object-contain" />
+            <img src={doc.url} alt={doc.label || t("docsUi.document")} className="mx-auto block max-h-[70dvh] max-w-full rounded-[10px] object-contain" />
           )}
         </div>
       </div>
@@ -291,10 +296,13 @@ export function DocPreviewDialog({ doc, onClose }) {
 
 function DocSlot({ doc, waiting, busy, onChoose, onView, onRemove }) {
   const inputId = `k5-doc-${doc.key}`;
-  const shown = waiting || (doc.url ? { name: doc.name || doc.label } : null);
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
+  const label = t(`docs.${doc.key}`);
+  const shown = waiting || (doc.url ? { name: doc.name || label } : null);
   return (
     <div className="relative flex min-w-0 flex-col gap-1.5">
-      <span className="text-sm font-black text-k5-acx">{doc.label}:</span>
+      <span className="text-sm font-black text-k5-acx">{t("docsUi.labelColon", { label })}</span>
       {shown ? (
         <div className="flex min-w-0 items-center gap-2">
           <div className="flex h-[50px] min-w-0 flex-1 items-center gap-2 rounded-[14px] border-[3px] border-dashed border-k5-ac bg-k5-card px-2.5 py-1.5">
@@ -307,12 +315,12 @@ function DocSlot({ doc, waiting, busy, onChoose, onView, onRemove }) {
               </TooltipTrigger>
               <TooltipContent>{shown.name}</TooltipContent>
             </Tooltip>
-            {waiting && <span className="flex-none rounded-full bg-k5-yt px-2 py-0.5 text-[11px] font-black text-k5-yx">Not saved</span>}
+            {waiting && <span className="flex-none rounded-full bg-k5-yt px-2 py-0.5 text-[11px] font-black text-k5-yx">{t("docsUi.notSaved")}</span>}
           </div>
-          <button type="button" onClick={onView} aria-label={`View ${doc.label}`} title="View" className={`${ICON_BTN} bg-[#13803F]`}>
+          <button type="button" onClick={onView} aria-label={t("docsUi.viewNamed", { name: label })} title={tc("actions.view")} className={`${ICON_BTN} bg-[#13803F]`}>
             <Eye className="h-5 w-5" aria-hidden="true" />
           </button>
-          <button type="button" onClick={onRemove} disabled={busy} aria-label={`Delete ${doc.label}`} title="Delete" className={`${ICON_BTN} bg-[#DC2F45]`}>
+          <button type="button" onClick={onRemove} disabled={busy} aria-label={t("docsUi.deleteNamed", { name: label })} title={tc("actions.delete")} className={`${ICON_BTN} bg-[#DC2F45]`}>
             <Trash2 className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
@@ -335,7 +343,7 @@ function DocSlot({ doc, waiting, busy, onChoose, onView, onRemove }) {
             className="flex h-[50px] cursor-pointer items-center justify-center gap-2 rounded-[14px] border-[3px] border-dashed border-k5-ac bg-k5-card px-3 text-sm font-black text-k5-acx hover:bg-k5-act"
           >
             <Upload className="h-4 w-4" aria-hidden="true" />
-            Upload
+            {tc("actions.upload")}
           </label>
         </>
       )}
@@ -351,6 +359,8 @@ export function EditableDocuments({ m, actions }) {
   const [preview, setPreview] = useState(null);
   const [confirm, setConfirm] = useState(null);
   const urls = useRef(new Set());
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
 
   useEffect(() => {
     const live = urls.current;
@@ -373,17 +383,17 @@ export function EditableDocuments({ m, actions }) {
     });
 
   const choose = (docType, file) => {
-    if (file.size > MAX_BYTES) return toast.error("Please upload files in PDF, JPG, PNG, and JPEG with max size of 5MB");
+    if (file.size > MAX_BYTES) return toast.error(t("docsUi.tooBig"));
     if (file.type === "application/pdf") return keep(docType, file);
     if (IMAGE_TYPES.includes(file.type)) return setCropFor({ docType, file });
-    return toast.error("Please upload files in PDF, JPG, PNG, and JPEG Format");
+    return toast.error(t("docsUi.wrongType"));
   };
 
   const remove = (docType) => {
     if (waiting[docType]) return drop(docType);
     setConfirm({
-      message: "Are you sure you want to remove this document?",
-      okLabel: "Yes, remove",
+      message: t("docsUi.removeConfirm"),
+      okLabel: t("docsUi.yesRemove"),
       cancel: () => setConfirm(null),
       accept: () => {
         setConfirm(null);
@@ -395,7 +405,7 @@ export function EditableDocuments({ m, actions }) {
   const count = Object.keys(waiting).length;
   const saving = actions.busy === "doc:save";
   const save = async () => {
-    if (!count) return toast.error("No attachment file is selected");
+    if (!count) return toast.error(t("docsUi.noFile"));
     const ok = await actions.uploadDocuments(Object.entries(waiting).map(([docType, w]) => ({ docType, file: w.file })));
     if (ok) Object.keys(waiting).forEach(drop);
   };
@@ -413,21 +423,21 @@ export function EditableDocuments({ m, actions }) {
               waiting={w}
               busy={Boolean(actions.busy)}
               onChoose={(file) => choose(docType, file)}
-              onView={() => setPreview(w ? { url: w.url, name: w.name, pdf: w.pdf, label: doc.label } : { url: doc.url, name: doc.name, pdf: isPdf(doc), label: doc.label })}
+              onView={() => setPreview(w ? { url: w.url, name: w.name, pdf: w.pdf, label: t(`docs.${doc.key}`) } : { url: doc.url, name: doc.name, pdf: isPdf(doc), label: t(`docs.${doc.key}`) })}
               onRemove={() => remove(docType)}
             />
           );
         })}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2.5">
-        <p className="m-0 text-[13px] font-extrabold text-k5-mut">JPG, PNG or PDF, up to 5 MB. Pictures can be cropped before saving.</p>
+        <p className="m-0 text-[13px] font-extrabold text-k5-mut">{t("docsUi.hint")}</p>
         <button
           type="button"
           onClick={save}
           disabled={!count || Boolean(actions.busy)}
           className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-[10px] border-none bg-[#13803F] px-4 font-k5-body text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {saving ? "Saving…" : count ? `Save Documents (${count})` : "Save Documents"}
+          {saving ? tc("status.saving") : count ? t("docsUi.saveCount", { count }) : t("docsUi.save")}
         </button>
       </div>
       <DocCropDialog

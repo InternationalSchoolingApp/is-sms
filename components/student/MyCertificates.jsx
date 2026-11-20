@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useLocale, useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Award, Check, Download, Plus, Search, ShieldCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -14,7 +15,8 @@ import {
   getMyCertificateRequests,
   getMyCertificates,
 } from "@/services/certificateApi";
-import { certDate, certificateTitle, copyVerifyLink, enrolmentLabel, isCertificateOk, requestMeta, requestSteps, statusOf } from "@/utils/certificates";
+import { certDate, copyVerifyLink, enrolmentLabel, isCertificateOk, requestMeta, requestSteps, statusOf } from "@/utils/certificates";
+import { useLocaleTag } from "@/i18n/dateLocale";
 
 const LIST_KEY = (userId) => ["my-certificates", userId];
 const REQUESTS_KEY = (userId) => ["my-certificate-requests", userId];
@@ -31,6 +33,7 @@ function listResult(query, fallback) {
  * asks for one, the grade (enrolment, current first) and an optional purpose.
  */
 function useRequestForm({ onSent }) {
+  const t = useTranslations("certificates");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ typeId: "", otherName: "", standardId: "", purpose: "" });
   const [typeError, setTypeError] = useState(false);
@@ -47,7 +50,7 @@ function useRequestForm({ onSent }) {
   const type = types.find((t) => String(t.id) === String(form.typeId));
   // The current enrolment is chosen unless the student picks another one.
   const standardId = form.standardId || String((enrolments.find((e) => e.current) || enrolments[0])?.studentStandardId ?? "");
-  const optionsError = optionsQuery.isLoading ? "" : !optionsQuery.data ? "Could not load the options." : !ok ? optionsQuery.data.message || "Could not load the options." : !types.length ? "Your school is not taking requests right now." : "";
+  const optionsError = optionsQuery.isLoading ? "" : !optionsQuery.data ? t("form.optionsError") : !ok ? optionsQuery.data.message || t("form.optionsError") : !types.length ? t("form.notTakingRequests") : "";
 
   function start() {
     setForm({ typeId: "", otherName: "", standardId: "", purpose: "" });
@@ -59,15 +62,15 @@ function useRequestForm({ onSent }) {
     if (sending) return;
     if (!type) {
       setTypeError(true);
-      toast.error("Please choose the certificate you need.");
+      toast.error(t("form.chooseType"));
       return;
     }
     if (type.askName && !form.otherName.trim()) {
-      toast.error("Please enter the name of the certificate you need.");
+      toast.error(t("form.enterName"));
       return;
     }
     if (enrolments.length && !standardId) {
-      toast.error("Please choose the grade.");
+      toast.error(t("form.chooseGrade"));
       return;
     }
     setSending(true);
@@ -82,7 +85,7 @@ function useRequestForm({ onSent }) {
         setOpen(false);
         onSent();
       } else {
-        toast.error(response?.message || "Could not send the request. Please try again.");
+        toast.error(response?.message || t("form.sendError"));
       }
     } finally {
       setSending(false);
@@ -120,10 +123,11 @@ const CHIP_TONE = {
 
 /** The request's progress track (legacy stepper): done steps ticked, the current one marked, the rest empty. */
 function RequestTrack({ status }) {
+  const t = useTranslations("certificates");
   const track = requestSteps(status);
   if (!track) return null;
   return (
-    <ol aria-label="Progress" className="m-0 mt-2 flex list-none gap-1 p-0">
+    <ol aria-label={t("progress")} className="m-0 mt-2 flex list-none gap-1 p-0">
       {track.labels.map((label, index) => {
         const done = index < track.current;
         const current = index === track.current;
@@ -135,7 +139,7 @@ function RequestTrack({ status }) {
             >
               {done && <Check className="h-3 w-3" strokeWidth={3.5} />}
             </span>
-            <span className={`text-[11px] leading-tight ${current ? "font-bold text-black" : "text-slate-500"}`}>{label}</span>
+            <span className={`text-[11px] leading-tight ${current ? "font-bold text-black" : "text-slate-500"}`}>{t(`steps.${track.keys[index]}`)}</span>
           </li>
         );
       })}
@@ -145,6 +149,16 @@ function RequestTrack({ status }) {
 
 /** Plain look (other grades): the same data, actions and form as the K–5 view. */
 function PlainCertificates({ requests, certificates, form, onCancel, onCopy }) {
+  const t = useTranslations("certificates");
+  const tc = useTranslations("common");
+  // English keeps the existing "03 Nov 2026" (en-GB) look.
+  const locale = useLocale();
+  const languageTag = useLocaleTag();
+  const localeTag = locale === "en" ? "en-GB" : languageTag;
+  const statusLabel = (status) => {
+    const s = statusOf(status);
+    return s.key ? t(`steps.${s.key}`) : s.label;
+  };
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
   // Legacy mcrRender: search over the title, type, template and certificate ID.
@@ -154,37 +168,37 @@ function PlainCertificates({ requests, certificates, form, onCancel, onCopy }) {
       <div className="flex flex-wrap items-center justify-between gap-3 px-1">
         <div className="flex items-center gap-2">
           <Award className="h-5 w-5 text-primary" aria-hidden="true" />
-          <h1 className="text-lg font-extrabold text-black sm:text-xl">My Certificates</h1>
+          <h1 className="text-lg font-extrabold text-black sm:text-xl">{t("title")}</h1>
         </div>
         <button type="button" onClick={form.start} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white">
-          <Plus className="h-4 w-4" aria-hidden="true" /> Request a certificate
+          <Plus className="h-4 w-4" aria-hidden="true" /> {t("requestButton")}
         </button>
       </div>
-      <p className="px-1 text-sm text-black/70">Certificates your school has issued to you. Anyone can check one is genuine with its Certificate ID.</p>
+      <p className="px-1 text-sm text-black/70">{t("intro")}</p>
 
       {requests.items.length > 0 && (
         <section className="rounded-2xl border border-slate-200 bg-white p-4">
-          <h2 className="mb-3 font-bold text-black">My requests</h2>
+          <h2 className="mb-3 font-bold text-black">{t("myRequests")}</h2>
           <ul className="divide-y divide-slate-100">
             {requests.items.map((r) => (
               <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
                 <div>
                   <div className="font-semibold text-black">
-                    {r.typeName} <span className={`ml-1 rounded-full px-2 py-0.5 text-xs font-semibold ${CHIP_TONE[statusOf(r.status).tone] || CHIP_TONE.off}`}>{statusOf(r.status).label}</span>
+                    {r.typeName} <span className={`ml-1 rounded-full px-2 py-0.5 text-xs font-semibold ${CHIP_TONE[statusOf(r.status).tone] || CHIP_TONE.off}`}>{statusLabel(r.status)}</span>
                   </div>
-                  <div className="text-xs text-slate-500">{requestMeta(r)}</div>
-                  {r.status === "REJECTED" && r.rejectReason && <div className="text-xs text-red-600">Reason: {r.rejectReason}</div>}
+                  <div className="text-xs text-slate-500">{requestMeta(r, { requested: (date) => t("requestedOn", { date }), localeTag })}</div>
+                  {r.status === "REJECTED" && r.rejectReason && <div className="text-xs text-red-600">{t("reason", { reason: r.rejectReason })}</div>}
                   <RequestTrack status={r.status} />
                 </div>
                 <div className="flex gap-2">
                   {r.status === "PENDING" && (
-                    <button type="button" onClick={() => onCancel(r)} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold">Cancel</button>
+                    <button type="button" onClick={() => onCancel(r)} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold">{tc("actions.cancel")}</button>
                   )}
                   {r.status === "APPROVED" && r.pdfUrl && (
-                    <a href={r.pdfUrl} target="_blank" rel="noopener noreferrer" className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white">Download</a>
+                    <a href={r.pdfUrl} target="_blank" rel="noopener noreferrer" className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white">{tc("actions.download")}</a>
                   )}
                   {r.status === "APPROVED" && r.verifyUrl && (
-                    <a href={r.verifyUrl} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold">Verify</a>
+                    <a href={r.verifyUrl} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold">{t("verify")}</a>
                   )}
                 </div>
               </li>
@@ -195,42 +209,42 @@ function PlainCertificates({ requests, certificates, form, onCancel, onCopy }) {
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="m-0 font-bold text-black">My certificates</h2>
+          <h2 className="m-0 font-bold text-black">{t("myCertificates")}</h2>
           {certificates.items.length > 6 && (
             <label className="relative block w-full max-w-[280px]">
-              <span className="sr-only">Search certificates</span>
+              <span className="sr-only">{t("searchLabel")}</span>
               <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-black/40" aria-hidden="true" />
-              <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search certificates…" className="w-full rounded-lg border border-slate-300 py-2 pl-8 pr-3 text-sm text-black" />
+              <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("searchPlaceholder")} className="w-full rounded-lg border border-slate-300 py-2 pl-8 pr-3 text-sm text-black" />
             </label>
           )}
         </div>
         {certificates.loading ? (
-          <p className="py-6 text-center text-black/50">Loading…</p>
+          <p className="py-6 text-center text-black/50">{tc("status.loading")}</p>
         ) : certificates.error ? (
           <p className="py-6 text-center text-red-600">{certificates.error}</p>
         ) : !certificates.items.length ? (
-          <p className="py-6 text-center text-black/60">You don&apos;t have any certificates yet. When your school issues you one, it will appear here.</p>
+          <p className="py-6 text-center text-black/60">{t("empty")}</p>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {shown.length === 0 && <li className="col-span-full py-4 text-center text-black/60">No certificate matches your search.</li>}
+            {shown.length === 0 && <li className="col-span-full py-4 text-center text-black/60">{t("noMatch")}</li>}
             {shown.map((c) => (
               <li key={c.certCode} className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-black">
-                <div className="font-bold">{certificateTitle(c)}</div>
-                <div>Awarded to {c.recipientName}</div>
-                <div>Issued {certDate(c.issueDate)}</div>
-                <div className="font-mono text-xs">Certificate ID: {c.certCode}</div>
+                <div className="font-bold">{c.activityTitle || c.templateName || t("certificate")}</div>
+                <div>{t("awardedTo", { name: c.recipientName })}</div>
+                <div>{t("issued", { date: certDate(c.issueDate, localeTag) })}</div>
+                <div className="font-mono text-xs">{t("certificateId", { id: c.certCode })}</div>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {c.pdfStatus === "READY" && c.pdfUrl ? (
                     <a href={c.pdfUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 font-semibold text-white">
-                      <Download className="h-4 w-4" aria-hidden="true" /> Download PDF
+                      <Download className="h-4 w-4" aria-hidden="true" /> {t("downloadPdf")}
                     </a>
                   ) : (
-                    <span className="text-xs text-slate-500">Your PDF is being prepared. Please check back in a few minutes.</span>
+                    <span className="text-xs text-slate-500">{t("pdfPreparing")}</span>
                   )}
                   <a href={c.verifyUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 font-semibold">
-                    <ShieldCheck className="h-4 w-4" aria-hidden="true" /> Verify
+                    <ShieldCheck className="h-4 w-4" aria-hidden="true" /> {t("verify")}
                   </a>
-                  <button type="button" onClick={() => onCopy(c.verifyUrl)} className="rounded-lg border border-slate-300 px-3 py-1.5 font-semibold">Copy link</button>
+                  <button type="button" onClick={() => onCopy(c.verifyUrl)} className="rounded-lg border border-slate-300 px-3 py-1.5 font-semibold">{t("copyLink")}</button>
                 </div>
               </li>
             ))}
@@ -241,13 +255,13 @@ function PlainCertificates({ requests, certificates, form, onCancel, onCopy }) {
       <Dialog open={form.open} onOpenChange={(open) => !open && form.close()}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Request a certificate</DialogTitle>
+            <DialogTitle>{t("requestButton")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 text-sm text-black">
             <label className="block">
-              Certificate you need *
+              {t("form.typeLabel")}
               <select value={form.form.typeId} onChange={(e) => form.set("typeId", e.target.value)} disabled={form.loading || !form.types.length} className="mt-1 w-full rounded-md border border-slate-300 px-2 py-2">
-                <option value="">{form.loading ? "Loading…" : form.optionsError || "Choose…"}</option>
+                <option value="">{form.loading ? tc("status.loading") : form.optionsError || t("form.choose")}</option>
                 {form.types.map((t) => (
                   <option key={t.id} value={t.id}>{t.typeName}</option>
                 ))}
@@ -255,28 +269,28 @@ function PlainCertificates({ requests, certificates, form, onCancel, onCopy }) {
             </label>
             {form.type?.askName && (
               <label className="block">
-                Name of the certificate *
-                <input value={form.form.otherName} maxLength={150} onChange={(e) => form.set("otherName", e.target.value)} placeholder="e.g. Bonafide Certificate" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-2" />
+                {t("form.nameLabel")}
+                <input value={form.form.otherName} maxLength={150} onChange={(e) => form.set("otherName", e.target.value)} placeholder={t("form.namePlaceholder")} className="mt-1 w-full rounded-md border border-slate-300 px-2 py-2" />
               </label>
             )}
             {form.enrolments.length > 0 && (
               <label className="block">
-                Grade *
+                {t("form.gradeLabel")}
                 <select value={form.standardId} onChange={(e) => form.set("standardId", e.target.value)} className="mt-1 w-full rounded-md border border-slate-300 px-2 py-2">
                   {form.enrolments.map((e) => (
-                    <option key={e.studentStandardId} value={e.studentStandardId}>{enrolmentLabel(e)}</option>
+                    <option key={e.studentStandardId} value={e.studentStandardId}>{enrolmentLabel(e, t("form.current"))}</option>
                   ))}
                 </select>
               </label>
             )}
             <label className="block">
-              Purpose (optional)
-              <textarea rows={3} maxLength={500} value={form.form.purpose} onChange={(e) => form.set("purpose", e.target.value)} placeholder="e.g. a visa application" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-2" />
+              {t("form.purposeLabel")}
+              <textarea rows={3} maxLength={500} value={form.form.purpose} onChange={(e) => form.set("purpose", e.target.value)} placeholder={t("form.purposePlaceholder")} className="mt-1 w-full rounded-md border border-slate-300 px-2 py-2" />
             </label>
             <div className="flex justify-end gap-2">
-              <button type="button" onClick={form.close} className="rounded-lg border border-slate-300 px-4 py-2 font-semibold">Cancel</button>
+              <button type="button" onClick={form.close} className="rounded-lg border border-slate-300 px-4 py-2 font-semibold">{tc("actions.cancel")}</button>
               <button type="button" disabled={form.sending || !form.types.length} onClick={form.send} className="rounded-lg bg-primary px-4 py-2 font-semibold text-white disabled:opacity-50">
-                {form.sending ? "Sending…" : "Send request"}
+                {form.sending ? t("form.sending") : t("form.send")}
               </button>
             </div>
           </div>
@@ -292,13 +306,14 @@ function PlainCertificates({ requests, certificates, form, onCancel, onCopy }) {
  * verification page, copy link) and the "Request a certificate" form.
  */
 export function MyCertificates() {
+  const t = useTranslations("certificates");
   const { context, isK5 } = useDashboardContext();
   const userId = context?.userId;
   const queryClient = useQueryClient();
   const [sent, setSent] = useState(false);
   const listQuery = useQuery({ queryKey: LIST_KEY(userId), queryFn: getMyCertificates, enabled: Boolean(userId), staleTime: 0 });
   const requestsQuery = useQuery({ queryKey: REQUESTS_KEY(userId), queryFn: getMyCertificateRequests, enabled: Boolean(userId), staleTime: 0 });
-  const certificates = !context ? { loading: true, items: [], error: "" } : listResult(listQuery, "Could not load your certificates. Please try again.");
+  const certificates = !context ? { loading: true, items: [], error: "" } : listResult(listQuery, t("loadError"));
   const requests = !context ? { loading: true, items: [], error: "" } : listResult(requestsQuery, "");
 
   const reloadRequests = () => queryClient.invalidateQueries({ queryKey: REQUESTS_KEY(userId) });
@@ -306,20 +321,20 @@ export function MyCertificates() {
     onSent: () => {
       reloadRequests();
       if (isK5) setSent(true);
-      else toast.success("Your request has been sent to the school. You will see it here once it is approved.");
+      else toast.success(t("toast.sent"));
     },
   });
 
   async function cancelRequest(request) {
-    if (!window.confirm("Cancel this request?")) return;
+    if (!window.confirm(t("confirmCancel"))) return;
     const response = await cancelMyCertificateRequest({ requestId: request.id });
-    if (isCertificateOk(response)) toast.success("Request cancelled");
-    else toast.error(response?.message || "Could not cancel the request.");
+    if (isCertificateOk(response)) toast.success(t("toast.cancelled"));
+    else toast.error(response?.message || t("toast.cancelError"));
     reloadRequests();
   }
 
   async function copyLink(url) {
-    if (await copyVerifyLink(url)) toast.success("Verification link copied");
+    if (await copyVerifyLink(url, t("copyPrompt"))) toast.success(t("toast.linkCopied"));
   }
 
   if (isK5) {

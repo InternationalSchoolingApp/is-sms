@@ -1,0 +1,48 @@
+// Generated list of this language's message namespaces (one JSON file each). Add a namespace in every language.
+import common from "./common.json";
+import shared from "./shared.json";
+import sharedCommon from "./sharedCommon.json";
+import nav from "./nav.json";
+import menu from "./menu.json";
+import header from "./header.json";
+import home from "./home.json";
+import calendar from "./calendar.json";
+import diary from "./diary.json";
+import news from "./news.json";
+import feedback from "./feedback.json";
+import attendance from "./attendance.json";
+import fees from "./fees.json";
+import profile from "./profile.json";
+import certificates from "./certificates.json";
+import performance from "./performance.json";
+import progressReport from "./progressReport.json";
+import syllabus from "./syllabus.json";
+import transcript from "./transcript.json";
+import clubs from "./clubs.json";
+import handbook from "./handbook.json";
+import loginHistory from "./loginHistory.json";
+import academicYear from "./academicYear.json";
+import exams from "./exams.json";
+import bookClass from "./bookClass.json";
+import cart from "./cart.json";
+import inbox from "./inbox.json";
+import videoLibrary from "./videoLibrary.json";
+import reEnrollment from "./reEnrollment.json";
+import onboarding from "./onboarding.json";
+import contactCheck from "./contactCheck.json";
+import k5 from "./k5.json";
+import k5Home from "./k5Home.json";
+import k5Panels from "./k5Panels.json";
+import k5Games from "./k5Games.json";
+import pico from "./pico.json";
+import k5Booking from "./k5Booking.json";
+import k5Inbox from "./k5Inbox.json";
+import k5Modules from "./k5Modules.json";
+import k5Profile from "./k5Profile.json";
+import k5Performance from "./k5Performance.json";
+import k5Attendance from "./k5Attendance.json";
+import k5Reports from "./k5Reports.json";
+
+const messages = { common, shared, sharedCommon, nav, menu, header, home, calendar, diary, news, feedback, attendance, fees, profile, certificates, performance, progressReport, syllabus, transcript, clubs, handbook, loginHistory, academicYear, exams, bookClass, cart, inbox, videoLibrary, reEnrollment, onboarding, contactCheck, k5, k5Home, k5Panels, k5Games, pico, k5Booking, k5Inbox, k5Modules, k5Profile, k5Performance, k5Attendance, k5Reports };
+
+export default messages;

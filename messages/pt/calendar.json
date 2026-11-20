@@ -1,0 +1,173 @@
+{
+  "views": {
+    "today": "Hoje",
+    "week": "Semana",
+    "month": "Mês"
+  },
+  "legend": {
+    "title": "Legenda:",
+    "assignment": "Tarefa",
+    "class": "Aula",
+    "schoolActivity": "Atividade escolar",
+    "holiday": "Feriado"
+  },
+  "loading": "Carregando seu calendário…",
+  "loadError": "Não foi possível carregar seu calendário. Tente novamente em instantes.",
+  "backToMonth": "Voltar ao mês",
+  "backToWeek": "Voltar à semana",
+  "timeOfDay": {
+    "morning": "Manhã",
+    "afternoon": "Tarde",
+    "evening": "Fim de tarde",
+    "night": "Noite"
+  },
+  "filters": {
+    "today": "Hoje",
+    "liveGroup": "Aulas e atividades escolares ao vivo",
+    "upcomingGroup": "Próximas aulas e atividades escolares",
+    "completedGroup": "Aulas e atividades escolares concluídas",
+    "noClassOrActivity": "Nenhuma aula ou atividade escolar",
+    "myCourses": "Meus cursos",
+    "hideCourse": "Ocultar curso",
+    "showCourse": "Mostrar curso",
+    "changeCourseColor": "Alterar a cor do curso",
+    "pickColor": "Escolher a cor {color}",
+    "assignments": "Tarefas",
+    "pending": "Pendentes",
+    "submitted": "Entregues",
+    "upcoming": "Próximas",
+    "classStatus": "Status das aulas",
+    "live": "Ao vivo",
+    "expired": "Encerradas",
+    "missedClass": "Aula perdida",
+    "lateJoinClass": "Entrada atrasada",
+    "events": "Eventos",
+    "schoolActivities": "Atividades escolares",
+    "schoolEvents": "Eventos escolares",
+    "holidays": "Feriados",
+    "holidaysAndBreaks": "Feriados e recessos"
+  },
+  "nothingScheduledOn": "Nada agendado para {date}.",
+  "nothingScheduledDay": "Nada agendado para este dia.",
+  "untitled": "Sem título",
+  "moreCount": "+{count} mais",
+  "allDay": "Dia inteiro",
+  "badges": {
+    "live": "AO VIVO",
+    "upcoming": "PRÓXIMA",
+    "expired": "ENCERRADA",
+    "missed": "PERDIDA",
+    "lateJoin": "ATRASADO"
+  },
+  "assignmentStatus": {
+    "submitted": "Entregue",
+    "upcoming": "Próxima",
+    "pending": "Pendente"
+  },
+  "assignmentTiming": {
+    "onTime": "No prazo",
+    "early": "Antecipada ({count, plural, one {# dia} other {# dias}})",
+    "late": "Atrasada ({count, plural, one {# dia} other {# dias}})"
+  },
+  "eventKind": {
+    "holiday": "Feriado / Recesso",
+    "schoolEvent": "Evento escolar",
+    "activity": "Atividade"
+  },
+  "eventDetails": "Detalhes do evento",
+  "attempt": "Fazer",
+  "detail": {
+    "date": "Data",
+    "time": "Horário",
+    "details": "Detalhes",
+    "teacher": "Professor",
+    "status": "Status",
+    "duration": "Duração",
+    "late": "Atraso",
+    "lateBy": "Atrasado em",
+    "with": "Com",
+    "batch": "Turma",
+    "grade": "Série",
+    "course": "Curso",
+    "dueDate": "Data de entrega",
+    "timing": "Prazo",
+    "submitted": "Entregue em"
+  },
+  "status": {
+    "live": "Ao vivo",
+    "upcoming": "Próxima",
+    "missed": "Perdida",
+    "lateJoin": "Entrada atrasada",
+    "expired": "Encerrada"
+  },
+  "duration": {
+    "minutes": "{count, plural, one {# minuto} other {# minutos}}",
+    "hours": "{count, plural, one {# hora} other {# horas}}",
+    "mins": "{count, plural, one {# min} other {# min}}",
+    "secs": "{count, plural, one {# s} other {# s}}"
+  },
+  "activity": {
+    "title": "Detalhes da atividade",
+    "attachment": "Anexo",
+    "timeRemaining": "Tempo restante",
+    "countdown": {
+      "days": "Dias",
+      "hours": "Horas",
+      "min": "Min",
+      "sec": "Seg"
+    },
+    "couldNotOpen": "Não foi possível abrir agora. Tente novamente em um minuto.",
+    "cannotJoin": "Você não pode participar deste evento agora.",
+    "linkCopied": "Link da aula copiado",
+    "copyFailed": "Não foi possível copiar o link. Copie-o da caixa.",
+    "scheduledFor": "A aula {name} está agendada para {date}",
+    "joinClassNow": "Entrar na aula agora",
+    "completed": "Sua atividade foi concluída.",
+    "loadingDetails": "Carregando detalhes…",
+    "joinLinkNotice": "Seu link de acesso será exibido {minutes} minutos antes do horário agendado.",
+    "viewAttachment": "Ver anexo",
+    "opening": "Abrindo…",
+    "joinEvent": "Participar do evento"
+  },
+  "join": {
+    "title": "Entrar na aula",
+    "almostThere": "Quase lá, aguarde…",
+    "couldNotOpen": "Não foi possível abrir esta aula agora. Tente novamente em instantes.",
+    "trainingScheduled": "A sessão {className} | {subjectName} está agendada para {date}.",
+    "trainingJoinOn": "Você poderá participar do treinamento em {date}.",
+    "status": {
+      "live": "Ao vivo agora",
+      "upcoming": "Próxima",
+      "ended": "Encerrada",
+      "unavailable": "Indisponível"
+    },
+    "joinIssues": "Se estiver com problemas para entrar, copie o link da aula abaixo e cole-o em uma nova aba do navegador:",
+    "copied": "Copiado!",
+    "copyClassLink": "Copiar link da aula",
+    "joinClass": "Entrar na aula"
+  },
+  "k5": {
+    "noClass": {
+      "holidayTitle": "Feriado",
+      "holidayText": "É feriado. Hoje não tem aula!",
+      "weekendTitle": "Fim de semana!",
+      "weekendText": "É fim de semana. Hoje não tem aula!",
+      "studyTitle": "Sem aulas ao vivo",
+      "studyText": "Continue seus cursos hoje!",
+      "freeTitle": "Sem aulas!",
+      "freeText": "Hoje não tem aulas. Aproveite seu dia livre!",
+      "freeTextNamed": "Hoje não tem aulas. Aproveite seu dia livre, {name}!"
+    },
+    "summary": {
+      "holiday": "{name} · Sem aula",
+      "classes": "{count, plural, one {# aula} other {# aulas}}",
+      "classesLive": "{count, plural, one {# aula} other {# aulas}} · {name} está ao vivo agora!",
+      "classesDone": "{count, plural, one {# aula} other {# aulas}} · tudo feito",
+      "assignmentsDue": "{count, plural, one {# tarefa para entregar} other {# tarefas para entregar}}",
+      "schoolActivity": "Atividade escolar",
+      "weekend": "Fim de semana! Sem aula.",
+      "selfStudy": "Sem aulas ao vivo. Dia de estudar seus cursos!",
+      "free": "Sem aulas hoje. Dia livre!"
+    }
+  }
+}

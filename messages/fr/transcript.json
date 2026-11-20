@@ -1,0 +1,18 @@
+{
+  "title": "Relevé de notes de l'élève",
+  "actionsLabel": "Actions du relevé de notes",
+  "notPublished": "Votre relevé de notes n'a pas encore été publié.",
+  "links": {
+    "transcript": "Relevé de notes - {grade}",
+    "transcriptNew": "Relevé de notes - {grade} (Nouveau)",
+    "diploma": "Diplôme - {grade}"
+  },
+  "table": {
+    "sNo": "N°",
+    "studentName": "Nom de l'élève",
+    "email": "E-mail",
+    "grade": "Niveau",
+    "studentId": "Identifiant de l'élève",
+    "action": "Action"
+  }
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { BookOpen, Check, Hand, HeartPulse, Moon, ScanLine, Sun, Volume2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { BUDDIES, DYSLEXIA_OFF, DYSLEXIA_ON, GRADE_LOOKS, PAGE_COLORS, THEME_SWATCHES, VOICE_SPEEDS, VOICES, effectiveGradeLook, gradeLookOf } from "@/constant/appearance";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -61,8 +62,9 @@ function GradeLookSection() {
   const grade = { isMiddle: gradeIsMiddle ?? isMiddle, isHigh: gradeIsHigh ?? isHigh };
   const own = gradeLookOf(grade);
   const current = effectiveGradeLook(preferences.gradeLook, grade);
+  const t = useTranslations("header.appearance");
   return (
-    <Section id="lk-theme" title="Theme">
+    <Section id="lk-theme" title={t("theme")}>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
         {Object.entries(GRADE_LOOKS).map(([key, look]) => {
           const selected = current === key;
@@ -84,7 +86,7 @@ function GradeLookSection() {
                   ))}
                 </span>
               </span>
-              <span className={`text-[15px] leading-tight ${preview.font}`}>{look.name}</span>
+              <span className={`text-[15px] leading-tight ${preview.font}`}>{t(`looks.${key}`)}</span>
             </button>
           );
         })}
@@ -101,15 +103,18 @@ function GradeLookSection() {
  */
 export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
   const { preferences, updatePreference: _panelUpdate } = useAppearance();
+  const t = useTranslations("header.appearance");
+  // Accent names of the voices (constant/appearance.js VOICES[].accent), translated when known.
+  const accent = (value) => (t.has(`accents.${value}`) ? t(`accents.${value}`) : value);
   return (
     <div className="grid items-start gap-[22px] min-[921px]:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
       <div className="flex min-w-0 flex-col gap-5">
         <GradeLookSection />
-        <Section id="lk-color" title="Favorite color">
+        <Section id="lk-color" title={t("favoriteColor")}>
           <div className="grid grid-cols-5 gap-2.5">
-            {Object.entries(THEME_SWATCHES).map(([key, t]) => (
-              <Choice key={key} name="theme" value={key} label={t.name}>
-                <span className="flex h-[58px] w-[58px] items-center justify-center rounded-full" style={{ background: t.color }}>
+            {Object.entries(THEME_SWATCHES).map(([key, swatch]) => (
+              <Choice key={key} name="theme" value={key} label={t(`colors.${key}`)}>
+                <span className="flex h-[58px] w-[58px] items-center justify-center rounded-full" style={{ background: swatch.color }}>
                   {preferences.theme === key && <Check className="h-7 w-7 text-white" strokeWidth={3.5} aria-hidden="true" />}
                 </span>
               </Choice>
@@ -117,40 +122,40 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
           </div>
         </Section>
 
-        <Section id="lk-mode" title="Day or night?">
+        <Section id="lk-mode" title={t("dayOrNight")}>
           <div className="grid grid-cols-2 gap-3">
-            <Choice name="mode" value="light" label="Day" className="font-k5-display text-xl font-semibold !text-[#1C2640]" style={{ background: "#FFF0CC" }}>
+            <Choice name="mode" value="light" label={t("day")} className="font-k5-display text-xl font-semibold !text-[#1C2640]" style={{ background: "#FFF0CC" }}>
               <Sun className="h-7 w-7 text-[#FFC531]" aria-hidden="true" />
             </Choice>
-            <Choice name="mode" value="dark" label="Night" className="font-k5-display text-xl font-semibold !text-white" style={{ background: "#1B2547" }}>
+            <Choice name="mode" value="dark" label={t("night")} className="font-k5-display text-xl font-semibold !text-white" style={{ background: "#1B2547" }}>
               <Moon className="h-7 w-7 text-[#FFC531]" aria-hidden="true" />
             </Choice>
           </div>
         </Section>
 
-        <Section id="lk-size" title="Text size">
+        <Section id="lk-size" title={t("textSize")}>
           <div className="grid grid-cols-3 gap-3">
-            <Choice name="textSize" value="small" label="Small">
+            <Choice name="textSize" value="small" label={t("small")}>
               <span className="font-k5-display text-lg font-semibold">Aa</span>
             </Choice>
-            <Choice name="textSize" value="medium" label="Medium">
+            <Choice name="textSize" value="medium" label={t("medium")}>
               <span className="font-k5-display text-2xl font-semibold">Aa</span>
             </Choice>
-            <Choice name="textSize" value="large" label="Large">
+            <Choice name="textSize" value="large" label={t("large")}>
               <span className="font-k5-display text-[32px] font-semibold leading-none">Aa</span>
             </Choice>
           </div>
         </Section>
 
-        <Section id="lk-font" title="Letters">
+        <Section id="lk-font" title={t("letters")}>
           <div className="grid grid-cols-3 gap-3">
             {[
-              ["cute", "Cute", "Abc", "var(--font-fredoka)"],
-              ["simple", "Simple", "Abc", "var(--font-lexend)"],
-              ["easy", "Easy to read", "Abc", "var(--font-andika)"],
-              ["clear", "Super clear", "Il1 O0", "var(--font-atkinson)"],
-            ].map(([value, label, sample, family]) => (
-              <Choice key={value} name="font" value={value} label={label}>
+              ["cute", "Abc", "var(--font-fredoka)"],
+              ["simple", "Abc", "var(--font-lexend)"],
+              ["easy", "Abc", "var(--font-andika)"],
+              ["clear", "Il1 O0", "var(--font-atkinson)"],
+            ].map(([value, sample, family]) => (
+              <Choice key={value} name="font" value={value} label={t(`fonts.${value}`)}>
                 <span className="text-[30px] font-bold leading-none" style={{ fontFamily: family }}>
                   {sample}
                 </span>
@@ -159,16 +164,16 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
           </div>
         </Section>
 
-        <Section id="lk-hand" title="Which hand do you use?" subtitle="We move the menu to the other side, so your hand never covers it.">
+        <Section id="lk-hand" title={t("hand")} subtitle={t("handSub")}>
           <div className="grid grid-cols-2 gap-3">
-            <HandChoice value="left" label="Left hand" sub="Menu goes on the right" flip />
-            <HandChoice value="right" label="Right hand" sub="Menu goes on the left" />
+            <HandChoice value="left" label={t("leftHand")} sub={t("leftHandSub")} flip />
+            <HandChoice value="right" label={t("rightHand")} sub={t("rightHandSub")} />
           </div>
         </Section>
 
         {withBuddy && (
           <>
-            <Section id="lk-buddy" title="Your buddy">
+            <Section id="lk-buddy" title={t("buddy")}>
               <div className="mb-2 flex items-center gap-3">
                 <button
                   type="button"
@@ -179,7 +184,7 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
                 >
                   <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ${preferences.buddyEnabled === "off" ? "translate-x-0" : "translate-x-5"}`} />
                 </button>
-                <span className="text-[15px] font-bold text-k5-ink">{preferences.buddyEnabled === "off" ? "Buddy is hidden" : "Buddy is showing"}</span>
+                <span className="text-[15px] font-bold text-k5-ink">{preferences.buddyEnabled === "off" ? t("buddyHidden") : t("buddyShowing")}</span>
               </div>
               <div className={`grid grid-cols-5 gap-2.5 ${preferences.buddyEnabled === "off" ? "pointer-events-none opacity-40" : ""}`}>
                 {Object.entries(BUDDIES).map(([key, b]) => (
@@ -190,29 +195,29 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
               </div>
             </Section>
 
-            <Section id="lk-voice" title="Buddy's voice" subtitle="Tap one to hear it!">
+            <Section id="lk-voice" title={t("voice")} subtitle={t("voiceSub")}>
               <div className="grid grid-cols-4 gap-2.5 max-[560px]:grid-cols-2">
                 {Object.entries(VOICES).map(([key, v]) => (
                   <button
                     key={key}
                     type="button"
                     aria-pressed={preferences.voice === key}
-                    aria-label={`${v.name}, ${v.gender} voice, ${v.accent}`}
+                    aria-label={t("voiceAria", { name: v.name, gender: v.gender, accent: accent(v.accent) })}
                     onClick={() => (onHear ? onHear({ voice: key }) : _panelUpdate("voice", key))}
                     className={`${OPTION} gap-0.5 px-1 ${optionState(preferences.voice === key)}`}
                   >
                     <Volume2 className="h-6 w-6 text-k5-acx" aria-hidden="true" />
                     <span>{v.name}</span>
                     <span className="text-xs font-extrabold text-k5-mut">
-                      {v.gender === "boy" ? "Boy" : "Girl"} · {v.accent}
+                      {v.gender === "boy" ? t("boy") : t("girl")} · {accent(v.accent)}
                     </span>
                   </button>
                 ))}
               </div>
               <div className="flex flex-col gap-2">
-                <span className="text-[15px] font-black text-k5-mut">How fast?</span>
+                <span className="text-[15px] font-black text-k5-mut">{t("howFast")}</span>
                 <div className="grid grid-cols-3 gap-2.5">
-                  {Object.entries(VOICE_SPEEDS).map(([key, s]) => (
+                  {Object.entries(VOICE_SPEEDS).map(([key]) => (
                     <button
                       key={key}
                       type="button"
@@ -220,30 +225,30 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
                       onClick={() => (onHear ? onHear({ voiceSpeed: key }) : _panelUpdate("voiceSpeed", key))}
                       className={`${OPTION} ${optionState(preferences.voiceSpeed === key)}`}
                     >
-                      {s.name}
+                      {t(`speeds.${key}`)}
                     </button>
                   ))}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <Choice name="speech" value="on" label="Buddy talks" />
-                <Choice name="speech" value="off" label="Buddy is quiet" />
+                <Choice name="speech" value="on" label={t("buddyTalks")} />
+                <Choice name="speech" value="off" label={t("buddyQuiet")} />
               </div>
             </Section>
 
-            <Section id="lk-game-sound" title="Game sounds" subtitle="The pop and other sounds in the games. This does not change the buddy's voice.">
+            <Section id="lk-game-sound" title={t("gameSounds")} subtitle={t("gameSoundsSub")}>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   role="switch"
                   aria-checked={preferences.gameSound !== "off"}
-                  aria-label="Game sounds"
+                  aria-label={t("gameSounds")}
                   onClick={() => _panelUpdate("gameSound", preferences.gameSound === "off" ? "on" : "off")}
                   className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${preferences.gameSound === "off" ? "bg-k5-line" : "bg-k5-ac"}`}
                 >
                   <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ${preferences.gameSound === "off" ? "translate-x-0" : "translate-x-5"}`} />
                 </button>
-                <span className="text-[15px] font-bold text-k5-ink">{preferences.gameSound === "off" ? "Game sounds are off" : "Game sounds are on"}</span>
+                <span className="text-[15px] font-bold text-k5-ink">{preferences.gameSound === "off" ? t("gameSoundsOff") : t("gameSoundsOn")}</span>
               </div>
             </Section>
           </>
@@ -256,29 +261,29 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
             <HeartPulse className="h-6 w-6 text-k5-vi" aria-hidden="true" />
           </span>
           <div className="flex flex-col">
-            <h3 className="m-0 font-k5-display text-[22px] font-semibold leading-[1.1]">Special help</h3>
-            <span className="text-sm font-extrabold text-k5-mut">Colour-blind colours, reading help and dyslexia tools</span>
+            <h3 className="m-0 font-k5-display text-[22px] font-semibold leading-[1.1]">{t("specialHelp")}</h3>
+            <span className="text-sm font-extrabold text-k5-mut">{t("specialHelpSub")}</span>
           </div>
         </div>
 
-        <Section id="lk-cv" title="Color vision" subtitle="Pick colors that are easy for your eyes to tell apart.">
+        <Section id="lk-cv" title={t("colorVision")} subtitle={t("colorVisionSub")}>
           <div className="grid grid-cols-2 gap-3">
-            <Choice name="colorVision" value="standard" label="Standard">
+            <Choice name="colorVision" value="standard" label={t("standard")}>
               <Swatches colors={["#2563EB", "#C92F6E", "#6A3FC4", "#8A6A00", "#C92A2F"]} />
             </Choice>
-            <Choice name="colorVision" value="cvd" label="Color-blind friendly">
+            <Choice name="colorVision" value="cvd" label={t("colorBlind")}>
               <Swatches colors={["#0072B2", "#B34700", "#A3507F", "#E69F00", "#00795A"]} />
             </Choice>
           </div>
         </Section>
 
-        <Section id="lk-sp" title="Reading help" subtitle="More space between letters and words can make reading easier.">
+        <Section id="lk-sp" title={t("readingHelp")} subtitle={t("readingHelpSub")}>
           <div className="grid grid-cols-2 gap-3">
-            <Choice name="reading" value="normal" label="Normal spacing">
-              <span aria-hidden="true" className="text-xl font-extrabold">read me</span>
+            <Choice name="reading" value="normal" label={t("normalSpacing")}>
+              <span aria-hidden="true" className="text-xl font-extrabold">{t("readMe")}</span>
             </Choice>
-            <Choice name="reading" value="spaced" label="Extra spacing">
-              <span aria-hidden="true" className="text-xl font-extrabold tracking-[0.14em] [word-spacing:0.3em]">read me</span>
+            <Choice name="reading" value="spaced" label={t("extraSpacing")}>
+              <span aria-hidden="true" className="text-xl font-extrabold tracking-[0.14em] [word-spacing:0.3em]">{t("readMe")}</span>
             </Choice>
           </div>
         </Section>
@@ -335,19 +340,20 @@ function Toggle({ label, sub, on, onToggle, children, large = false }) {
 function DyslexiaSection() {
   const { preferences, updatePreference, updatePreferences } = useAppearance();
   const { dyslexia, plainText, ruler, pageColor } = preferences;
+  const t = useTranslations("header.appearance");
   return (
     <section aria-labelledby="lk-dx" className="flex flex-col gap-3 rounded-[22px] bg-k5-card p-3.5">
       <div className="flex flex-col gap-0.5">
         <h3 id="lk-dx" className="m-0 flex items-center gap-2 font-k5-display text-xl font-semibold">
           <BookOpen className="h-6 w-6 text-k5-vi" aria-hidden="true" />
-          Dyslexia help
+          {t("dyslexiaHelp")}
         </h3>
-        <p className="m-0 text-[15px] font-bold text-k5-mut">Research-based settings that make reading easier.</p>
+        <p className="m-0 text-[15px] font-bold text-k5-mut">{t("dyslexiaHelpSub")}</p>
       </div>
       <Toggle
         large
-        label="Dyslexia mode"
-        sub="One tap: easy-to-read font, more space, soft page colour, plain letters"
+        label={t("dyslexiaMode")}
+        sub={t("dyslexiaModeSub")}
         on={dyslexia === "on"}
         onToggle={() => updatePreferences(dyslexia === "on" ? DYSLEXIA_OFF : DYSLEXIA_ON)}
       >
@@ -356,8 +362,8 @@ function DyslexiaSection() {
         </span>
       </Toggle>
       <div className="flex flex-col gap-2">
-        <span className="font-k5-display text-[17px] font-semibold">Page colour</span>
-        <div role="group" aria-label="Page colour" className="grid grid-cols-5 gap-2">
+        <span className="font-k5-display text-[17px] font-semibold">{t("pageColour")}</span>
+        <div role="group" aria-label={t("pageColour")} className="grid grid-cols-5 gap-2">
           {Object.entries(PAGE_COLORS).map(([value, c]) => (
             <button
               key={value}
@@ -367,16 +373,16 @@ function DyslexiaSection() {
               className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-2xl border-[3px] px-1 py-2 text-[13px] font-black text-k5-ink ${optionState(pageColor === value)}`}
             >
               <span aria-hidden="true" className="block h-9 w-9 rounded-full border-2 border-k5-line" style={{ background: c.color }} />
-              {c.name}
+              {t(`pageColors.${value}`)}
             </button>
           ))}
         </div>
       </div>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-2.5">
-        <Toggle label="Reading ruler" sub="A bright strip follows your finger or mouse" on={ruler === "on"} onToggle={() => updatePreference("ruler", ruler === "on" ? "off" : "on")}>
+        <Toggle label={t("readingRuler")} sub={t("readingRulerSub")} on={ruler === "on"} onToggle={() => updatePreference("ruler", ruler === "on" ? "off" : "on")}>
           <ScanLine className="h-8 w-8 flex-none text-k5-vi" aria-hidden="true" />
         </Toggle>
-        <Toggle label="Plain letters" sub="No ALL CAPS or slanted text" on={plainText === "on"} onToggle={() => updatePreference("plainText", plainText === "on" ? "off" : "on")}>
+        <Toggle label={t("plainLetters")} sub={t("plainLettersSub")} on={plainText === "on"} onToggle={() => updatePreference("plainText", plainText === "on" ? "off" : "on")}>
           <span aria-hidden="true" className="flex h-8 w-8 flex-none items-center justify-center text-xl font-extrabold text-k5-vi">Ab</span>
         </Toggle>
       </div>

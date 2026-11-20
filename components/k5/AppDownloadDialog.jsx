@@ -3,28 +3,31 @@
 import { useEffect, useState } from "react";
 import { Bell, CalendarDays, Clock, MessagesSquare, NotebookText, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { useTranslations } from "next-intl";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/constant/appLinks";
 
+// Labels: k5.appDownload.features.<key> / steps.<key>.
 const FEATURES = [
-  [Bell, "All updates in one place", "bg-k5-yt", "text-k5-yx"],
-  [Clock, "Class reminders", "bg-k5-pt", "text-k5-pi"],
-  [CalendarDays, "Class calendar", "bg-k5-bt", "text-k5-bi"],
-  [NotebookText, "Student\u2019s Diary", "bg-k5-ot", "text-k5-oi"],
-  [MessagesSquare, "Chat with teachers", "bg-k5-gt", "text-k5-gx"],
+  [Bell, "updates", "bg-k5-yt", "text-k5-yx"],
+  [Clock, "reminders", "bg-k5-pt", "text-k5-pi"],
+  [CalendarDays, "calendar", "bg-k5-bt", "text-k5-bi"],
+  [NotebookText, "diary", "bg-k5-ot", "text-k5-oi"],
+  [MessagesSquare, "chat", "bg-k5-gt", "text-k5-gx"],
 ];
 
-const STEPS = ["Open your phone camera", "Scan the code", "Tap the link and install"];
+const STEPS = ["openCamera", "scanCode", "tapLink"];
 
 function PlayBadge() {
+  const t = useTranslations("k5.appDownload");
   return (
     <>
       <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
         <path d="M6 3.5v17l14-8.5z" fill="#FFFFFF" />
       </svg>
       <span className="flex flex-col whitespace-nowrap leading-[1.1]">
-        <span className="text-[10px] font-extrabold opacity-90">GET IT ON</span>
+        <span className="text-[10px] font-extrabold opacity-90">{t("getItOn")}</span>
         <span className="font-k5-display text-lg font-semibold">Google Play</span>
       </span>
     </>
@@ -32,6 +35,7 @@ function PlayBadge() {
 }
 
 function AppStoreBadge() {
+  const t = useTranslations("k5.appDownload");
   return (
     <>
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="flex-none">
@@ -39,7 +43,7 @@ function AppStoreBadge() {
         <circle cx="12" cy="18" r="1" fill="#FFFFFF" />
       </svg>
       <span className="flex flex-col whitespace-nowrap leading-[1.1]">
-        <span className="text-[10px] font-extrabold opacity-90">Download on the</span>
+        <span className="text-[10px] font-extrabold opacity-90">{t("downloadOnThe")}</span>
         <span className="font-k5-display text-lg font-semibold">App Store</span>
       </span>
     </>
@@ -48,18 +52,19 @@ function AppStoreBadge() {
 
 // Android first, like the mockup. The QR code is dark on white so every phone camera can read it.
 const STORES = [
-  { key: "android", name: "Android", url: PLAY_STORE_URL, label: "Get it on Google Play", Badge: PlayBadge, look: "bg-[#1F7A3A] shadow-[0_4px_0_#145A29]" },
-  { key: "ios", name: "iOS", url: APP_STORE_URL, label: "Download on the App Store", Badge: AppStoreBadge, look: "bg-black shadow-[0_4px_0_#3B4663]" },
+  { key: "android", name: "Android", url: PLAY_STORE_URL, label: "googlePlay", Badge: PlayBadge, look: "bg-[#1F7A3A] shadow-[0_4px_0_#145A29]" },
+  { key: "ios", name: "iOS", url: APP_STORE_URL, label: "appStore", Badge: AppStoreBadge, look: "bg-black shadow-[0_4px_0_#3B4663]" },
 ];
 
 function StoreCard({ store }) {
+  const t = useTranslations("k5.appDownload");
   const { Badge } = store;
   return (
     <div className="flex items-center gap-3.5 rounded-3xl border-[3px] border-k5-line bg-k5-soft px-3.5 pb-[30px] pt-3.5 max-[760px]:pb-3.5">
       <div className="relative flex-none rounded-[18px] bg-white p-1.5 max-[760px]:hidden">
-        <QRCodeSVG value={store.url} size={96} level="M" bgColor="#FFFFFF" fgColor="#1C2640" marginSize={0} role="img" title={"QR code for " + store.name} className="block" />
+        <QRCodeSVG value={store.url} size={96} level="M" bgColor="#FFFFFF" fgColor="#1C2640" marginSize={0} role="img" title={t("qrFor", { store: store.name })} className="block" />
         <span className="absolute bottom-[-24px] left-1/2 -translate-x-1/2 -rotate-3 whitespace-nowrap rounded-full bg-[#FFC531] px-2.5 py-0.5 font-k5-display text-[13px] font-semibold text-[#1C2640] shadow-[0_2px_0_#C9930A]">
-          Scan me!
+          {t("scanMe")}
         </span>
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -68,7 +73,7 @@ function StoreCard({ store }) {
           href={store.url}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={store.label}
+          aria-label={t(`storeLink.${store.label}`)}
           className={"flex min-h-[54px] items-center gap-2 rounded-2xl px-3 py-1.5 text-white no-underline " + store.look}
         >
           <Badge />
@@ -80,9 +85,10 @@ function StoreCard({ store }) {
 
 /** The animated "phone scans, downloads, installs" picture next to the steps (mockup demo). */
 function StepsDemo() {
+  const t = useTranslations("k5.appDownload");
   return (
     <div className="ms-auto flex flex-none flex-col items-center gap-1.5">
-      <svg width="150" height="150" viewBox="92 0 150 150" role="img" aria-label="A phone scans the code, downloads the app and installs it" className="block max-w-full">
+      <svg width="150" height="150" viewBox="92 0 150 150" role="img" aria-label={t("demoLabel")} className="block max-w-full">
         <rect x="92" y="0" width="150" height="150" rx="18" className="fill-k5-card" />
         <g className="k5-demo-phone">
           <rect x="134" y="14" width="66" height="122" rx="13" fill="#1C2640" />
@@ -117,17 +123,18 @@ function StepsDemo() {
         </g>
       </svg>
       <div className="grid justify-items-center font-k5-display text-[15px] font-semibold">
-        <span className="k5-demo-c1 text-k5-gx [grid-area:1/1]">Scanning…</span>
-        <span className="k5-demo-c2 text-k5-acx opacity-0 [grid-area:1/1]">Downloading…</span>
-        <span className="k5-demo-c3 text-k5-yx opacity-0 [grid-area:1/1]">Installed! Yay!</span>
+        <span className="k5-demo-c1 text-k5-gx [grid-area:1/1]">{t("demo.scanning")}</span>
+        <span className="k5-demo-c2 text-k5-acx opacity-0 [grid-area:1/1]">{t("demo.downloading")}</span>
+        <span className="k5-demo-c3 text-k5-yx opacity-0 [grid-area:1/1]">{t("demo.installed")}</span>
       </div>
     </div>
   );
 }
 
 function SchoolPin({ schoolName }) {
+  const t = useTranslations("k5.appDownload");
   return (
-    <svg width="64" height="78" viewBox="0 0 64 78" role="img" aria-label={schoolName || "School"} className="k5-pico-idle flex-none max-[480px]:hidden">
+    <svg width="64" height="78" viewBox="0 0 64 78" role="img" aria-label={schoolName || t("school")} className="k5-pico-idle flex-none max-[480px]:hidden">
       <ellipse cx="32" cy="75" rx="12" ry="2.5" fill="#1C2640" opacity="0.12" />
       <path d="M32 2C16 2 4 14 4 29.5 4 49 32 73 32 73s28-24 28-43.5C60 14 48 2 32 2z" fill="#2F7BF5" />
       <path d="M32 2C16 2 4 14 4 29.5c0 3 .6 6 1.6 9C8 22 18 11 32 11s24 11 26.4 27.5c1-3 1.6-6 1.6-9C60 14 48 2 32 2z" fill="#5C9BFF" opacity="0.6" />
@@ -159,6 +166,8 @@ function DancingPhone() {
 export function AppDownloadDialog({ open, schoolName, onClose, lockSeconds = 0, underOthers = false }) {
   // lockSeconds: the automatic install popup cannot be closed until its countdown ends (legacy 10 s). The state
   // starts when the dialog mounts, so callers render it only while it is shown.
+  const t = useTranslations("k5.appDownload");
+  const tc = useTranslations("common");
   const [left, setLeft] = useState(lockSeconds);
   useEffect(() => {
     if (left <= 0) return undefined;
@@ -177,7 +186,7 @@ export function AppDownloadDialog({ open, schoolName, onClose, lockSeconds = 0, 
           type="button"
           onClick={onClose}
           disabled={locked}
-          aria-label={locked ? `Close, available in ${left} seconds` : "Close"}
+          aria-label={locked ? t("closeIn", { count: left }) : tc("actions.close")}
           className="absolute right-4 top-4 flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-red bg-k5-red shadow-[0_3px_0_#9E1B2C] disabled:cursor-default disabled:opacity-50"
         >
           <X className="h-[18px] w-[18px] text-white" strokeWidth={3} aria-hidden="true" />
@@ -186,22 +195,22 @@ export function AppDownloadDialog({ open, schoolName, onClose, lockSeconds = 0, 
         <div className="flex items-center gap-3.5 pr-[52px]">
           <SchoolPin schoolName={schoolName} />
           <div className="flex min-w-0 flex-col gap-1">
-            <span className="text-xs font-black uppercase tracking-[0.08em] text-k5-vi">{schoolName ? `${schoolName} app` : "School app"}</span>
-            <DialogTitle className="m-0 font-k5-display text-[28px] font-semibold leading-[1.1]">Stay connected with our app!</DialogTitle>
+            <span className="text-xs font-black uppercase tracking-[0.08em] text-k5-vi">{schoolName ? t("schoolApp", { school: schoolName }) : t("schoolAppGeneric")}</span>
+            <DialogTitle className="m-0 font-k5-display text-[28px] font-semibold leading-[1.1]">{t("title")}</DialogTitle>
             <DialogDescription className="m-0 flex flex-wrap items-center gap-2 text-base font-extrabold text-k5-mut">
-              <span>Everything for school, right on your phone.</span>
+              <span>{t("subtitle")}</span>
               <DancingPhone />
             </DialogDescription>
           </div>
         </div>
 
-        <ul aria-label="What you get" className="m-0 flex list-none flex-wrap gap-2 p-0">
+        <ul aria-label={t("whatYouGet")} className="m-0 flex list-none flex-wrap gap-2 p-0">
           {FEATURES.map(([Icon, label, bg, ink]) => (
             <li key={label} className={"flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3 " + bg}>
               <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-k5-card">
                 <Icon className={"h-[18px] w-[18px] " + ink} strokeWidth={2.3} aria-hidden="true" />
               </span>
-              <span className="text-sm font-black text-k5-ink">{label}</span>
+              <span className="text-sm font-black text-k5-ink">{t(`features.${label}`)}</span>
             </li>
           ))}
         </ul>
@@ -214,12 +223,12 @@ export function AppDownloadDialog({ open, schoolName, onClose, lockSeconds = 0, 
 
         <div className="flex flex-wrap items-center gap-4 rounded-[20px] bg-k5-act px-4 py-3.5 max-[760px]:hidden">
           <div className="flex flex-[1_1_220px] flex-col gap-3">
-            <span className="font-k5-display text-xl font-semibold">Easy as 1, 2, 3</span>
+            <span className="font-k5-display text-xl font-semibold">{t("easySteps")}</span>
             <ol className="m-0 flex list-none flex-col gap-3 p-0">
               {STEPS.map((step, i) => (
                 <li key={step} className="flex items-center gap-2.5">
                   <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full bg-k5-ac font-k5-display text-[15px] font-semibold text-white">{i + 1}</span>
-                  <span className="text-[15px] font-extrabold leading-tight text-k5-ink">{step}</span>
+                  <span className="text-[15px] font-extrabold leading-tight text-k5-ink">{t(`steps.${step}`)}</span>
                 </li>
               ))}
             </ol>
@@ -233,7 +242,7 @@ export function AppDownloadDialog({ open, schoolName, onClose, lockSeconds = 0, 
           disabled={locked}
           className="min-h-[52px] cursor-pointer self-end justify-self-end rounded-full border-none bg-[#FFC531] px-7 font-k5-display text-[19px] font-semibold text-[#1C2640] shadow-[0_5px_0_#C9930A] disabled:cursor-default disabled:opacity-60"
         >
-          {locked ? `Close (${left}s)` : "All done"}
+          {locked ? t("closeCountdown", { count: left }) : t("allDone")}
         </button>
       </DialogContent>
     </Dialog>

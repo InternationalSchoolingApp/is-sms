@@ -5,6 +5,7 @@ import { openLmsLink } from "@/utils/lmsCourseLink";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ChevronDown, KeyRound, Loader2, LogOut, Menu, MessageCircle, MoreVertical, Palette, ShoppingCart, Smartphone, User, UserPlus } from "lucide-react";
 import toast from "react-hot-toast";
 import { AppDownloadDialog } from "@/components/k5/AppDownloadDialog";
@@ -20,6 +21,7 @@ import { K5LogoutDialog } from "@/components/k5/K5LogoutDialog";
 import { logoutEverywhere } from "@/utils/logout";
 import { InboxBadge, isInboxMenuItem } from "@/components/student/inbox/InboxBadge";
 import { K5ChangePasswordModal } from "@/components/k5/panels/K5ChangePasswordModal";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 
 /**
  * Round avatar of the welcome chip / More menu: the student's profile photo, or the first letter when there is none
@@ -43,6 +45,8 @@ function HeaderAvatar({ photo, initial, className, textClass }) {
  */
 export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsite, session, userName, menu, navOpen, onMenu, onAppearance, lmsProviderURL, isPayLmsPaymentPending }) {
   // Same profile query as My Profile (shared cache): saving a new photo there refreshes this avatar too.
+  const t = useTranslations("k5.header");
+  const tc = useTranslations("common");
   const { model: profileModel } = useStudentProfile({ schoolUUID, userId });
   const photo = profileModel?.header?.photo || "";
   // Legacy cartCountContent(): the cart button shows only while the cart has items, with the count as a badge.
@@ -72,7 +76,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
     setLms(true);
     lmsTimers.current.push(
       setTimeout(() => {
-        openLmsLink(lmsProviderURL);
+        openLmsLink(lmsProviderURL, { couldNotOpen: tc("lms.couldNotOpen") });
         lmsTimers.current.push(setTimeout(() => setLms(false), 700));
       }, 350),
     );
@@ -81,7 +85,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
   const openApp = () => {
     setAppOpen(true);
     // Not when the tour has already told the student about the app ("Download our app for a better experience!").
-    if (!hasPicoModuleCookie(userId, TOUR_GET_APP_KEY)) picoSay("Get the app and take me with you on your phone!", null, { above: true });
+    if (!hasPicoModuleCookie(userId, TOUR_GET_APP_KEY)) picoSay(t("picoGetApp"), null, { above: true });
   };
   const router = useRouter();
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -89,19 +93,22 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
   const openProfile = () => {
     const role = String(session?.role ?? session?.userRole ?? "").toLowerCase();
     if (role === "student" && session?.schoolUUID) router.push(`/${session.schoolUUID}/student/my-profile`);
-    else toast("My Profile — coming soon", { icon: "🚧" });
+    else toast(t("profileComingSoon"), { icon: "🚧" });
   };
   const [loggingOut, setLoggingOut] = useState(false);
 
-  const displayName = userName || "Student";
+  const displayName = userName || tc("words.student");
   const firstName = displayName.split(" ")[0];
+  // useAddSiblings returns English ("Add More Siblings" / "Resume {name}'s Enrollment"): shown in the student's language here.
+  const resumeMatch = /^Resume (.+)'s Enrollment$/.exec(siblings.label || "");
+  const siblingsLabel = resumeMatch ? t("resumeEnrollment", { name: resumeMatch[1] }) : siblings.label === "Add More Siblings" ? t("addSiblings") : siblings.label;
 
   return (
     <header className="sticky top-[var(--maintenance-banner-h,0px)] z-30 border-b-4 border-k5-line bg-k5-card">
       <div className="mx-auto flex max-w-[100%] flex-wrap items-center gap-3 px-5 py-2.5 max-[760px]:flex-nowrap max-[760px]:px-3">
         <button
           type="button"
-          aria-label="Menu"
+          aria-label={t("menu")}
           aria-controls="k5-sidenav"
           aria-expanded={navOpen}
           onClick={onMenu}
@@ -117,12 +124,12 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
           ) : (
             <span className="flex flex-col">
               <span className="font-k5-display text-[22px] font-semibold leading-tight text-k5-brand">{schoolName}</span>
-              <span className="text-xs font-extrabold text-k5-gx max-[760px]:hidden">Your Location. Your School. Your Time.</span>
+              <span className="text-xs font-extrabold text-k5-gx max-[760px]:hidden">{t("tagline")}</span>
             </span>
           );
           const site = normalizeWebsite(schoolWebsite);
           return site ? (
-            <a href={site} target="_blank" rel="noopener noreferrer" aria-label={`${schoolName || "School"} website`} title={site} className="flex flex-none items-center no-underline">
+            <a href={site} target="_blank" rel="noopener noreferrer" aria-label={schoolName ? t("schoolWebsite", { school: schoolName }) : t("schoolWebsiteGeneric")} title={site} className="flex flex-none items-center no-underline">
               {logo}
             </a>
           ) : (
@@ -135,8 +142,8 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
         {inboxHref && (
           <Link
             href={inboxHref}
-            title="Communication"
-            aria-label="Communication"
+            title={t("communication")}
+            aria-label={t("communication")}
             data-pin="inbox"
             className="k5h-hdbtn k5-button-motion relative flex h-[52px] w-[52px] items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card p-0 text-k5-ac no-underline shadow-k5-btn max-[760px]:hidden"
           >
@@ -152,8 +159,8 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
           type="button"
           onClick={onAppearance}
           aria-haspopup="dialog"
-          aria-label="Appearance"
-          title="Appearance"
+          aria-label={t("appearance")}
+          title={t("appearance")}
           data-pin="look"
           className="k5h-hdbtn flex h-[52px] w-[52px] cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card p-0 shadow-k5-btn max-[760px]:hidden"
         >
@@ -170,19 +177,19 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
             href={needHelp.href}
             target="_blank"
             rel="noreferrer"
-            title="Need help?"
+            title={t("needHelp")}
             className="flex min-h-12 items-center gap-2 rounded-full border-[3px] border-k5-line bg-k5-card py-0 pl-3 pr-[18px] font-k5-display text-[17px] font-semibold text-[#1F7A3A] no-underline shadow-k5-btn max-[760px]:hidden"
           >
             <MessageCircle className="h-[22px] w-[22px]" strokeWidth={2.4} aria-hidden="true" />
-            Need help?
+            {t("needHelp")}
           </a>
         )}
 
         {cartCount > 0 && (
           <Link
             href={cartHref}
-            title="Cart"
-            aria-label={`Cart, ${cartCount} ${cartCount === 1 ? "item" : "items"}`}
+            title={t("cart")}
+            aria-label={t("cartItems", { count: cartCount })}
             className="relative flex h-[52px] w-[52px] items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card p-0 text-k5-acx no-underline shadow-k5-btn max-[760px]:hidden"
           >
             <ShoppingCart className="h-6 w-6" strokeWidth={2.4} aria-hidden="true" />
@@ -200,7 +207,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
           className="k5h-hdbtn flex min-h-12 cursor-pointer items-center gap-2 rounded-full border-[3px] border-k5-ac bg-k5-card py-0 pl-3 pr-[18px] font-k5-display text-[17px] font-semibold text-k5-acx shadow-[0_4px_0_var(--k5-acl)] max-[760px]:hidden"
         >
           <Smartphone className="h-[22px] w-[22px]" strokeWidth={2.4} aria-hidden="true" />
-          Get the App
+          {t("getApp")}
         </button>
 
         <button
@@ -217,6 +224,8 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
           LMS
         </button>
 
+        {/* Dashboard language (stays visible on phones: it is the one control a student who cannot read the current language needs). */}
+        <LanguageSwitcher variant="k5" />
 
         {/* Below 760px the palette, LMS and the welcome chip move into the More menu (mockup .hd-more). */}
         <div className="relative max-[760px]:hidden">
@@ -230,8 +239,8 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
           >
             <HeaderAvatar key={photo} photo={photo} initial={firstName.charAt(0).toUpperCase()} className="block h-[46px] w-[46px] flex-none rounded-full" textClass="bg-k5-hi font-k5-display text-[22px] font-bold text-[#1C2640]" />
             <span className="hidden flex-col sm:flex">
-              <span className="text-[13px] font-extrabold text-k5-yx">Welcome back,</span>
-              <span className="font-k5-display text-xl font-semibold leading-none text-k5-ink">{firstName}!</span>
+              <span className="text-[13px] font-extrabold text-k5-yx">{t("welcomeBack")}</span>
+              <span className="font-k5-display text-xl font-semibold leading-none text-k5-ink">{t("nameExclaim", { name: firstName })}</span>
             </span>
             <ChevronDown className="h-[18px] w-[18px] text-k5-ink" strokeWidth={2.6} aria-hidden="true" />
           </button>
@@ -246,7 +255,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
                 </div>
                 <MenuItem
                   Icon={User}
-                  label="My Profile"
+                  label={t("myProfile")}
                   onClick={() => {
                     setMenuOpen(false);
                     openProfile();
@@ -254,7 +263,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
                 />
                 <MenuItem
                   Icon={KeyRound}
-                  label="Change Password"
+                  label={t("changePassword")}
                   onClick={() => {
                     setMenuOpen(false);
                     setChangePwOpen(true);
@@ -264,7 +273,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
                   <MenuItem
                     Icon={siblings.busy ? Loader2 : UserPlus}
                     spin={siblings.busy}
-                    label={siblings.label}
+                    label={siblingsLabel}
                     disabled={siblings.busy}
                     onClick={() => {
                       setMenuOpen(false);
@@ -274,7 +283,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
                 )}
                 <MenuItem
                   Icon={LogOut}
-                  label="Log out"
+                  label={tc("actions.logOut")}
                   danger
                   onClick={() => {
                     setMenuOpen(false);
@@ -293,14 +302,14 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
             onClick={() => setMoreOpen((v) => !v)}
             aria-haspopup="menu"
             aria-expanded={moreOpen}
-            aria-label="More options"
+            aria-label={t("moreOptions")}
             className="flex h-[52px] w-[52px] cursor-pointer items-center justify-center rounded-2xl border-[3px] border-k5-line bg-k5-card text-k5-ink"
           >
             <MoreVertical className="h-6 w-6" strokeWidth={2.8} aria-hidden="true" />
           </button>
           {moreOpen && (
             <>
-              <button type="button" aria-label="Close menu" onClick={() => setMoreOpen(false)} className="fixed inset-0 z-[54] cursor-pointer border-none bg-[rgba(10,16,34,0.25)] p-0" />
+              <button type="button" aria-label={t("closeMenu")} onClick={() => setMoreOpen(false)} className="fixed inset-0 z-[54] cursor-pointer border-none bg-[rgba(10,16,34,0.25)] p-0" />
               <div
                 role="menu"
                 className="k5-zoom-in origin-top-right absolute end-0 top-[60px] z-[55] flex w-[250px] flex-col gap-0.5 rounded-[22px] border-[3px] border-k5-ink bg-k5-card p-2 shadow-[0_6px_0_var(--k5-ink)]"
@@ -314,7 +323,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
                 >
                   <span className="flex flex-col leading-tight">
                     <span>{firstName}</span>
-                    <span className="text-[13px] font-extrabold text-k5-mut">My profile</span>
+                    <span className="text-[13px] font-extrabold text-k5-mut">{t("myProfile")}</span>
                   </span>
                 </MoreItem>
                 <MoreItem
@@ -328,7 +337,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
                     onAppearance();
                   }}
                 >
-                  Theme &amp; look
+                  {t("themeAndLook")}
                 </MoreItem>
                 {needHelp && (
                   <MoreItem
@@ -342,7 +351,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
                       window.open(needHelp.href, "_blank", "noopener,noreferrer");
                     }}
                   >
-                    Need help?
+                    {t("needHelp")}
                   </MoreItem>
                 )}
                 {cartCount > 0 && (
@@ -357,7 +366,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
                       router.push(cartHref);
                     }}
                   >
-                    Cart ({cartCount})
+                    {t("cartCount", { count: cartCount })}
                   </MoreItem>
                 )}
                 <MoreItem
@@ -371,7 +380,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
                     openApp();
                   }}
                 >
-                  Get the App
+                  {t("getApp")}
                 </MoreItem>
                 <span aria-hidden="true" className="mx-1.5 my-1 block h-0.5 bg-k5-line" />
                 <MoreItem
@@ -386,7 +395,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
                     setConfirmLogout(true);
                   }}
                 >
-                  Log out
+                  {tc("actions.logOut")}
                 </MoreItem>
               </div>
             </>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Star } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { calendarButtonClass } from "@/components/dashboard/calendar/CalendarModal";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
@@ -19,6 +20,7 @@ import { openClassFeedback } from "@/utils/feedbackEvents";
 export function RateFeedbackButton({ event, onBeforeOpen }) {
   const { context, isK5 } = useDashboardContext();
   const dummy = useDummyStudent();
+  const t = useTranslations("feedback");
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
   const userId = context?.userId;
   const eligible =
@@ -33,7 +35,7 @@ export function RateFeedbackButton({ event, onBeforeOpen }) {
   if (!eligible || !canShowFeedbackButton(event, { showFromDate: showFromDate.value, testUsers: testUsers.value, userId })) return null;
 
   const timezone = resolveTimezone(dashboardData.userTimezone);
-  const label = event.eventKind === "activity" ? "Rate this activity" : "Rate this class";
+  const label = event.eventKind === "activity" ? t("rate.activity") : t("rate.class");
   return (
     <button
       type="button"

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { CalendarModal } from "@/components/dashboard/calendar/CalendarModal";
 import { getAssignedTeachersForAllCourses } from "@/services/bookClassApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
@@ -14,6 +15,8 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
  */
 export function AllCoursesPickerModal({ studentStandardId, onPick, onClose }) {
   const [subjectId, setSubjectId] = useState("");
+  const t = useTranslations("bookClass");
+  const tc = useTranslations("common");
   const { isK5 } = useDashboardContext();
   const dummy = useDummyStudent();
   const { data, isLoading } = useQuery({
@@ -26,11 +29,11 @@ export function AllCoursesPickerModal({ studentStandardId, onPick, onClose }) {
   const picked = list.find((s) => String(s.subjectId) === String(subjectId));
 
   return (
-    <CalendarModal title={singleTeacher && list[0] ? `Book a Class with ${list[0].teacherName}` : "Book a Class"} onClose={onClose}>
+    <CalendarModal title={singleTeacher && list[0] ? t("titleWithTeacher", { teacher: list[0].teacherName }) : t("title")} onClose={onClose}>
       {isLoading ? (
-        <p className="py-4 text-center text-black/50">Loading…</p>
+        <p className="py-4 text-center text-black/50">{tc("status.loading")}</p>
       ) : list.length === 0 ? (
-        <p className="py-4 text-center text-black/60">You do not have a teacher assigned yet</p>
+        <p className="py-4 text-center text-black/60">{t("noTeacher")}</p>
       ) : (
         <>
           <select
@@ -38,7 +41,7 @@ export function AllCoursesPickerModal({ studentStandardId, onPick, onClose }) {
             onChange={(e) => setSubjectId(e.target.value)}
             className={isK5 ? "min-h-12 w-full rounded-full border-[3px] border-k5-line bg-k5-card px-4 text-base font-bold text-k5-ink" : "w-full rounded-lg border border-slate-300 px-3 py-2 text-black"}
           >
-            <option value="">Select Course*</option>
+            <option value="">{t("picker.selectCourse")}</option>
             {list.map((s) => (
               <option key={s.subjectId} value={s.subjectId}>
                 {singleTeacher ? s.subjectName : `${s.subjectName} | ${s.teacherName}`}
@@ -52,7 +55,7 @@ export function AllCoursesPickerModal({ studentStandardId, onPick, onClose }) {
               onClick={() => onPick({ subjectId: picked.subjectId, name: picked.subjectName, studentStandardId })}
               className={isK5 ? "min-h-12 cursor-pointer rounded-full border-none bg-k5-ac px-6 font-k5-display text-lg font-semibold text-white shadow-[0_4px_0_var(--k5-acd)] disabled:opacity-40" : "rounded-lg bg-primary px-4 py-2 font-bold text-white disabled:opacity-40"}
             >
-              View Available Slots
+              {t("picker.viewSlots")}
             </button>
           </div>
         </>

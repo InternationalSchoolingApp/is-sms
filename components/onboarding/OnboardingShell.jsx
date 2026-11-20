@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Image from "next/image";
 import { LogOut } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Footer } from "@/components/common/Footer";
 import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
 import { SchoolThemeStyle } from "@/components/common/SchoolThemeStyle";
 import { OptimizedImage } from "../common/OptimizedImage";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 
 /**
  * Standalone page frame of the onboarding pages: the light dashboard background, a plain header with the school
@@ -14,6 +16,7 @@ import { OptimizedImage } from "../common/OptimizedImage";
  * re-enrollment pages' shell; those now open inside the student dashboard layout.)
  */
 export function OnboardingShell({ schoolName, logoUrl, rootcss, studentName, onLogout, children }) {
+  const t = useTranslations("onboarding.shell");
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -25,12 +28,13 @@ export function OnboardingShell({ schoolName, logoUrl, rootcss, studentName, onL
           {logoUrl ? (<OptimizedImage src={logoUrl} alt={schoolName || ""} width={160} height={36} className="h-9 w-auto max-w-[160px] sm:max-w-[220px] object-contain" />) : ( <p className="text-sm font-bold text-primary">{schoolName}</p>)}
           <div className="flex items-center gap-3">
             {studentName && <span className="hidden text-sm font-semibold text-slate-700 sm:inline">{studentName}</span>}
+            <LanguageSwitcher />
             <button
               type="button"
               onClick={() => setConfirmLogout(true)}
               className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-red-600 px-2.5 py-1.5 text-sm font-semibold text-white duration-150 hover:bg-red-700"
             >
-              <LogOut className="h-4 w-4 stroke-3" /> Log Off
+              <LogOut className="h-4 w-4 stroke-3" /> {t("logOff")}
             </button>
           </div>
         </div>

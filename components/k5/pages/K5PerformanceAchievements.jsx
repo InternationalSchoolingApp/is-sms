@@ -1,13 +1,18 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+import { useLocaleTag } from "@/i18n/dateLocale";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
+import { fmtShort } from "@/components/k5/pages/k5PerformanceData";
 import { Medal } from "@/components/k5/pages/K5PerformanceIcons";
 
 /** Mockup "Achievements" (.pmbadges): earned medals (kept for good, with their date) and locked ones. */
 export function K5PerformanceAchievements({ badges }) {
+  const t = useTranslations("k5Performance");
+  const tag = useLocaleTag();
   return (
     <section className={`${K5_CARD} flex flex-col gap-3.5 px-[22px] py-5`}>
-      <h2 className="m-0 font-k5-display text-2xl font-semibold leading-tight">Achievements</h2>
+      <h2 className="m-0 font-k5-display text-2xl font-semibold leading-tight">{t("achievements.title")}</h2>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3">
         {badges.map((b) => (
           <div
@@ -20,10 +25,14 @@ export function K5PerformanceAchievements({ badges }) {
             </span>
             <span className="min-w-0">
               <b className="block font-k5-display text-base font-semibold" style={b.earned ? { color: b.medal.fg } : undefined}>
-                {b.name}
+                {t.has(`achievements.names.${b.id}`) ? t(`achievements.names.${b.id}`) : b.name}
               </b>
               <small className="text-[13px] font-extrabold" style={{ color: b.earned ? b.medal.fg : "var(--k5-mut)" }}>
-                {b.desc}
+                {b.earned
+                  ? t("achievements.earned", { date: fmtShort(b.earnedOn, tag) })
+                  : t.has(`achievements.unlock.${b.id}`)
+                    ? t("achievements.locked", { how: t(`achievements.unlock.${b.id}`, { score: b.goalScore }) })
+                    : b.desc}
               </small>
             </span>
           </div>

@@ -1,0 +1,354 @@
+{
+  "title": "Mi rendimiento",
+  "breadcrumbDashboard": "Panel",
+  "loading": "Cargando tu rendimiento",
+  "noScoreYet": "Aún sin nota",
+  "starsLabel": "{n} de 5 estrellas",
+  "session": {
+    "withStart": "Periodo {start}–{end} · Empieza {starts} · Termina {ends}",
+    "endOnly": "Periodo {start}–{end} · Termina {ends}"
+  },
+  "tabs": {
+    "perf": "Rendimiento",
+    "goals": "Mis metas",
+    "class": "Comparar con la clase"
+  },
+  "hero": {
+    "greeting": "¡Hola, {name}! Vas muy bien.",
+    "greetingPlain": "Hola, {name}, así vas.",
+    "there": "tú",
+    "pillLabel": "{n} / 3: {label}",
+    "pills": {
+      "progress": "Progreso",
+      "streak": "Racha",
+      "scores": "Notas"
+    },
+    "quiet": {
+      "progress": "Sigue así — tu progreso aparecerá aquí después de la próxima actualización diaria.",
+      "streak": "Entrega tu próxima actividad a tiempo para empezar una racha.",
+      "scores": "Tus notas aparecerán aquí cuando corrijan tu trabajo."
+    }
+  },
+  "behindBanner": "Vas por detrás de la meta de hoy en {names}. ¡Un poco de trabajo hoy y vuelves al ritmo!",
+  "stars": {
+    "superstar": {
+      "label": "Superestrella",
+      "range": "90–100%",
+      "msg": "¡Trabajo increíble! Eres una superestrella."
+    },
+    "great": {
+      "label": "Genial",
+      "range": "80–89%",
+      "msg": "¡Muy bien! Te falta poco para ser Superestrella."
+    },
+    "good": {
+      "label": "Bien",
+      "range": "70–79%",
+      "msg": "¡Vas bien! Sigue practicando para ganar más estrellas."
+    },
+    "gettingThere": {
+      "label": "Casi",
+      "range": "60–69%",
+      "msg": "¡Ya casi! Cada intento te hace mejor."
+    },
+    "practise": {
+      "label": "A practicar",
+      "range": "Menos de 60%",
+      "msg": "Practiquemos juntos. ¡Tú puedes!"
+    },
+    "perfect": "¡Nota perfecta! Acertaste todas las respuestas."
+  },
+  "pace": {
+    "ahead": {
+      "label": "Adelantado",
+      "note": "Adelantado — {gap}% por delante de la meta de hoy"
+    },
+    "onTrack": {
+      "label": "Al día",
+      "note": "Al día — justo en la meta de hoy"
+    },
+    "behind": {
+      "label": "Atrasado",
+      "note": "Atrasado — {gap}% por detrás de la meta de hoy"
+    }
+  },
+  "teacher": {
+    "mr": "Sr.",
+    "ms": "Sra."
+  },
+  "achievements": {
+    "title": "Logros",
+    "names": {
+      "EARLY_SUBMITTER": "Entrega temprana",
+      "CLEAN_SWEEP": "Sin fallos",
+      "PERFECT_SCORE": "Nota perfecta",
+      "HALFWAY": "A mitad de camino",
+      "ON_TARGET": "En la meta"
+    },
+    "earned": "Ganado el {date}",
+    "locked": "Bloqueado · {how}",
+    "unlock": {
+      "EARLY_SUBMITTER": "5 tareas antes de la fecha límite",
+      "CLEAN_SWEEP": "100% tres veces seguidas",
+      "PERFECT_SCORE": "100% en dos cursos",
+      "HALFWAY": "50% hecho en un curso",
+      "ON_TARGET": "promedio de {score}%"
+    }
+  },
+  "score": {
+    "title": "Mi nota",
+    "subtitle": "Las estrellas muestran cómo vas.",
+    "empty": "Tus estrellas aparecerán aquí cuando corrijan tu trabajo.",
+    "levelExclaim": "¡{label}!",
+    "average": "Tu promedio es {avg}%",
+    "levels": "Niveles de estrellas",
+    "youAreHere": "Estás aquí",
+    "next": "Saca {min}% o más para llegar a {label}. ¡Solo {more}% más!",
+    "top": "Estás en lo más alto. ¡Sigue brillando!"
+  },
+  "streak": {
+    "title": "Mi racha",
+    "subtitle": "Entrega tu trabajo a tiempo y tu racha crece.",
+    "none": "Aún sin racha",
+    "one": "¡1 a tiempo!",
+    "many": "¡<n></n> a tiempo seguidas!",
+    "bestIn": "Tu mejor racha está en {course}",
+    "startHint": "Entrega tu próxima actividad a tiempo para empezar una.",
+    "next": "¡Solo {count} más a tiempo para ganar la insignia {badge}!",
+    "allEarned": "¡Ganaste todas las insignias de racha!",
+    "badges": {
+      "spark": "Chispa",
+      "flame": "Llama",
+      "blaze": "Hoguera",
+      "fireStar": "Estrella de fuego"
+    }
+  },
+  "stats": {
+    "avgScore": "Promedio",
+    "nothingGraded": "nada corregido todavía",
+    "acrossCourses": "en {count, plural, one {# curso} other {# cursos}}",
+    "submitted": "Tareas entregadas",
+    "toGo": "faltan {count}",
+    "coursesAhead": "Cursos adelantados",
+    "aheadOf": "<n></n> de {total}",
+    "onTrack": "{count} al día",
+    "behind": "{count} atrasados",
+    "daysLeft": "Días restantes",
+    "ends": "Termina el {date}"
+  },
+  "courseList": {
+    "title": "Mis cursos",
+    "clickHint": "Haz clic en un curso para ver sus tareas",
+    "empty": "No se encontró rendimiento académico",
+    "emptyHint": "Tus cursos aparecerán aquí después de la próxima actualización diaria.",
+    "perfect100": "¡100 perfecto!",
+    "superstar": "¡Superestrella!",
+    "score": "Nota",
+    "scoreGrade": "Nota · Calificación {grade}",
+    "scoreLine": "nota <u>{score}%</u>",
+    "scoreNone": "nota —",
+    "onTime": "{count} a tiempo",
+    "viewAssignments": "Ver tareas"
+  },
+  "courseView": {
+    "facts": {
+      "course": "Curso:",
+      "teacher": "Profesor:",
+      "score": "Nota general actual:",
+      "grade": "Calificación general actual:",
+      "daysLeft": "Días restantes:",
+      "duration": "Periodo:"
+    },
+    "gradableDone": "{pct}% de las actividades calificables completadas ({done} de {total})",
+    "allDone": "{pct}% de todas las actividades completadas ({done} de {total})",
+    "nothingToComplete": "No hay tareas por hacer",
+    "streakRun": "{count, plural, one {# entrega a tiempo seguida} other {# entregas a tiempo seguidas}}",
+    "noStreak": "<b>Aún sin racha</b> — entrega tu próxima actividad a tiempo para empezar una.",
+    "countsLabel": "Número de tareas",
+    "stats": {
+      "total": "Total de tareas",
+      "excused": "Exentas",
+      "submitted": "Entregadas",
+      "upcoming": "Próximas",
+      "missed": "Perdidas",
+      "passed": "Aprobadas",
+      "failed": "Suspendidas",
+      "before": "Entregadas ANTES DE TIEMPO",
+      "onTime": "Entregadas A TIEMPO",
+      "late": "Entregadas TARDE"
+    },
+    "noAssignments": "Las tareas aparecerán después de la próxima actualización diaria.",
+    "assignments": "Tareas",
+    "columns": {
+      "activityName": "Nombre de la actividad",
+      "dueDate": "Fecha límite",
+      "submittedDate": "Fecha de entrega",
+      "timeSpent": "Tiempo dedicado (hh:mm:ss)",
+      "submittedStatus": "Estado de entrega",
+      "score": "Nota",
+      "grade": "Calificación",
+      "detailedStatus": "Detalle de la tarea",
+      "status": "Estado"
+    },
+    "status": {
+      "beforeTime": "Antes de tiempo",
+      "onTime": "A tiempo",
+      "late": "Tarde",
+      "missed": "Perdida",
+      "upcoming": "Próxima",
+      "excused": "Exenta"
+    },
+    "lateBy": "Tarde por {count, plural, one {# día} other {# días}}",
+    "history": {
+      "title": "Historial de notas",
+      "loading": "Cargando los intentos",
+      "empty": "Aún no hay intentos.",
+      "latest": "Más reciente",
+      "columns": {
+        "date": "Fecha",
+        "visits": "Visitas",
+        "time": "Tiempo",
+        "score": "Nota",
+        "by": "Por"
+      }
+    }
+  },
+  "goals": {
+    "saved": "Metas guardadas — apuntando a {score}% para el {date}",
+    "saveError": "No se pudieron guardar tus metas.",
+    "title": "Mis metas",
+    "setGoals": "Poner mis metas",
+    "aim": "Apunta a <chip>{score}% de promedio</chip> y termina para el <chip>{date}</chip>",
+    "avgPending": "Tu promedio aparecerá aquí cuando corrijan tu trabajo.",
+    "away": "Te falta {gap}% para tu meta de nota.",
+    "reachedFull": "Meta alcanzada — mantenla.",
+    "reached": "Meta alcanzada — mantenla",
+    "pastFinishNew": "Ya pasó tu fecha final — elige una nueva.",
+    "aboutPerWeek": "Unas <b>{count, plural, one {# tarea por semana} other {# tareas por semana}}</b> en tus cursos te llevan a tiempo.",
+    "scoreGoal": "Meta de nota",
+    "ofScore": "de {score}%",
+    "gapToGo": "faltan {gap}%",
+    "completion": "Avance",
+    "done": "hecho",
+    "roadLabel": "Llevas el {ov}% del camino. La meta de hoy es {exp}%.",
+    "today": "Hoy",
+    "targetToday": "La meta de hoy es {exp}%",
+    "pastFinish": "Ya pasó tu fecha final",
+    "daysToFinish": "{count, plural, one {# día} other {# días}} para tu fecha final",
+    "due": "Para el {date}",
+    "week": {
+      "title": "Metas de esta semana",
+      "doneOf": "{done} de {total} hechas",
+      "updated": "Se actualiza cada día con tus entregas",
+      "empty": "No hay nada para entregar esta semana.",
+      "catchUp": "{course} · Recuperación",
+      "done": "Hecho",
+      "overdue": "Atrasada",
+      "cleared": "Semana completada — sigues por delante de la meta."
+    },
+    "byCourse": {
+      "title": "Metas por curso",
+      "legend": "Línea negra = tu meta de nota y la meta de hoy",
+      "score": "Nota",
+      "finalGoal": "· Meta final: {score}%",
+      "goalMet": "Meta cumplida",
+      "toGoal": "faltan {gap}% para la meta",
+      "progress": "Progreso",
+      "pctDone": "{pct}% hecho",
+      "targetToday": "· Meta de hoy: {pct}%",
+      "targetMet": "Meta cumplida · {gap}% por delante",
+      "toTarget": "faltan {gap}% para la meta de hoy",
+      "left": "{count, plural, one {tarea pendiente} other {tareas pendientes}}",
+      "perWeek": "por semana para terminar el {date}",
+      "daysToFinish": "{count, plural, one {día para tu fecha final} other {días para tu fecha final}}",
+      "nextUp": "Lo siguiente"
+    },
+    "dialog": {
+      "intro": "Elige tu meta para este periodo. Puedes cambiarla cuando quieras.",
+      "targetScore": "Promedio objetivo",
+      "belowSchool": "Por debajo de la meta de la escuela",
+      "letterSchool": "{letter} · Meta de la escuela",
+      "alreadyThere": "Tienes {avg}% — ya llegaste. ¡Apunta más alto si quieres!",
+      "toGo": "Tienes {avg}% — te faltan {gap}%.",
+      "finishBy": "Terminar todos mis cursos para el",
+      "recommended": "Recomendado · 2 semanas antes",
+      "courseEnd": "Fecha de fin del curso",
+      "pickDate": "Elegir una fecha",
+      "pickDateBy": "Elegir una fecha (antes del {date})",
+      "ownPlan": "Termina a tu ritmo",
+      "perWeekAll": "Son unas {count, plural, one {# tarea por semana} other {# tareas por semana}} en todos tus cursos.",
+      "reminders": "Recordatorios y comparaciones",
+      "compareTitle": "Mostrar cómo me comparo con mi clase",
+      "compareHelp": "Nunca se muestran los nombres ni las notas de los demás.",
+      "save": "Guardar metas"
+    }
+  },
+  "compare": {
+    "title": "Cómo te comparas",
+    "private": "Solo para ti · nunca se muestran los nombres ni las notas de otros estudiantes",
+    "summary": "Tu nota está por encima del promedio de la clase en <g>{above} de {total}</g> cursos, y vas a mejor ritmo que la mayoría en <g>{ahead} de {total}</g>.",
+    "course": "Curso",
+    "off": "La comparación con la clase está desactivada",
+    "offHint": "Actívala para ver cómo se comparan tu nota y tu progreso con los de tus compañeros.",
+    "turnOn": "Activar comparación",
+    "turningOn": "Activando…",
+    "notEnough": "Aún no hay suficientes compañeros para comparar",
+    "notEnoughHint": "Solo comparamos cuando hay suficientes datos. Nunca se muestran los nombres ni las notas de los demás.",
+    "comparedWith": "Comparado con {count} estudiantes este periodo",
+    "standing": "Tu posición general",
+    "ofClass": "de la clase",
+    "top": "En el {pct}% superior",
+    "bottom": "En el {pct}% inferior",
+    "you": "Tú",
+    "class": "Clase",
+    "classAverage": "Promedio de la clase",
+    "scale": {
+      "behind": "Más atrás",
+      "middle": "Mitad de la clase",
+      "leading": "A la cabeza de la clase"
+    },
+    "cards": {
+      "score": "Nota",
+      "progress": "Progreso",
+      "onTime": "Entregas a tiempo"
+    },
+    "verdicts": {
+      "scoreHigh": "Mejor que el {pct}% de la clase",
+      "scoreMid": "Justo en la mitad de la clase ({pct}%)",
+      "scoreLow": "Por detrás del {pct}% de la clase — puedes subir",
+      "paceHigh": "Mejor ritmo que el {pct}% de la clase",
+      "paceMid": "Al ritmo de la mitad de la clase ({pct}%)",
+      "paceLow": "El {pct}% de la clase va a mejor ritmo",
+      "timeHigh": "Más puntual que el {pct}% de la clase",
+      "timeMid": "Tan puntual como la mayoría ({pct}%)",
+      "timeLow": "La mayoría de tus compañeros entrega a tiempo más a menudo"
+    },
+    "dist": {
+      "title": "Dónde está la clase",
+      "hint": "estudiantes por ritmo",
+      "label": "{count} estudiantes · estás en: {band}"
+    },
+    "bands": {
+      "wellBehind": "Muy atrás",
+      "behind": "Atrás",
+      "onSchedule": "Al día",
+      "ahead": "Adelante",
+      "wellAhead": "Muy adelante"
+    },
+    "tip": {
+      "ahead": "Termina para el {date} y seguirás por delante del {pct}% de los estudiantes de este curso.",
+      "perWeek": "Hacer {count, plural, one {# tarea por semana} other {# tareas por semana}} te pondría por encima del promedio de la clase en pocas semanas.",
+      "general": "Unas tareas más cada semana te pondrían por encima del promedio de la clase en pocas semanas."
+    },
+    "glance": {
+      "title": "Todos los cursos de un vistazo",
+      "columns": {
+        "course": "Curso",
+        "yourScore": "Tu nota",
+        "classAvg": "Promedio de la clase",
+        "yourProgress": "Tu progreso",
+        "standing": "Tu posición"
+      }
+    }
+  }
+}

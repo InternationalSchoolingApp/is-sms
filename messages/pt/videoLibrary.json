@@ -1,0 +1,126 @@
+{
+  "title": "Videoteca",
+  "subtitle": "Suas playlists de cursos — assista às aulas em ordem",
+  "thumbPlaceholder": "VÍDEO",
+  "plans": {
+    "TRIAL": "Teste grátis",
+    "THREE_COURSES": "Plano de 3 cursos",
+    "CUSTOM": "Plano personalizado",
+    "ALL": "Plano com todos os cursos",
+    "LIFETIME": "Plano do curso completo",
+    "fallback": "Plano"
+  },
+  "planNames": {
+    "free_trial": "Teste grátis",
+    "3_courses": "3 cursos",
+    "custom": "Personalizado",
+    "all_courses": "Todos os cursos",
+    "full_course": "Curso completo"
+  },
+  "access": {
+    "startTrial": "Começar teste grátis de {days} dias",
+    "subscribe": "Assinar",
+    "renew": "Renovar",
+    "allLocked": "Os vídeos dos seus cursos estão bloqueados.",
+    "someLocked": "{locked} de {total} cursos estão bloqueados.",
+    "allOpen": "Todos os seus cursos estão liberados.",
+    "planWithCourses": "{plan} · {count, plural, one {# curso} other {# cursos}}",
+    "endsToday": "termina hoje",
+    "daysLeft": "{count, plural, one {falta # dia} other {faltam # dias}}",
+    "until": "até {date}",
+    "untilCourseEnds": "até o fim do seu curso",
+    "needSubscription": "Os vídeos exigem uma assinatura"
+  },
+  "chips": {
+    "label": "Seus cursos",
+    "lockedTitle": "{title} — bloqueado",
+    "doneTitle": "{title} — {done} de {total} concluídas"
+  },
+  "module": "Módulo {number}",
+  "moreVideos": "Mais vídeos",
+  "videos": "Vídeos",
+  "watched": "Assistido",
+  "watchedTitle": "Assistido: {title}",
+  "plusMore": "+{count} mais",
+  "plusMoreSpaced": "+ {count} mais",
+  "locked": {
+    "ended": "Este curso terminou em {date}, por isso {noun, select, lesson {as aulas estão fechadas} other {os vídeos estão fechados}}.",
+    "notCovered": "Seu plano do curso completo não inclui este curso.",
+    "subscribeToWatch": "Assine para assistir {noun, select, lesson {{count, plural, one {a # aula} other {às # aulas}}} other {{count, plural, one {ao # vídeo} other {aos # vídeos}}}}{standard}.",
+    "titleLocked": "{title} está bloqueado",
+    "thisCourseLocked": "Este curso está bloqueado"
+  },
+  "search": {
+    "noneTitle": "Nenhum vídeo encontrado",
+    "noneText": "Nada corresponde a \"{query}\" nos seus cursos.",
+    "results": "{count, plural, one {# vídeo} other {# vídeos}} para \"{query}\"",
+    "placeholder": "Pesquisar em todos os seus vídeos...",
+    "label": "Pesquisar vídeos"
+  },
+  "empty": {
+    "title": "Ainda não há vídeos",
+    "text": "Os vídeos dos seus cursos aparecerão aqui assim que seus professores os adicionarem."
+  },
+  "player": {
+    "lessonHeading": "Módulo {module} · Aula {lesson} — {title}",
+    "video": "Vídeo",
+    "continuing": "Continuando de onde você parou ({time}) ·",
+    "startOver": "Recomeçar",
+    "explanations": "Explicações:",
+    "main": "Principal",
+    "videoNumber": "Vídeo {number}",
+    "autoplayTitle": "Reproduzir a próxima aula quando esta terminar",
+    "autoplay": "Reprodução automática",
+    "nextLesson": "Próxima aula",
+    "unableToLoad": "Não foi possível carregar este vídeo.",
+    "frameTitle": "Player de vídeo"
+  },
+  "playlist": {
+    "label": "Playlist do curso",
+    "position": "{kind, select, lesson {Aula} other {Vídeo}} {current} de {total}",
+    "watched": "{done} de {total} {noun, select, lessons {aulas assistidas} other {vídeos assistidos}}"
+  },
+  "toasts": {
+    "paid": "Pagamento recebido. Os vídeos dos seus cursos estão liberados.",
+    "trialStarted": "Seu teste grátis começou — aproveite todos os vídeos dos seus cursos!",
+    "trialFailed": "Não foi possível iniciar o teste."
+  },
+  "loadError": {
+    "title": "Não foi possível carregar os vídeos",
+    "text": "Atualize a página e tente novamente."
+  },
+  "payment": {
+    "processing": "Pagamento em processamento...",
+    "oops": "Ops!",
+    "incomplete": "Pagamento incompleto",
+    "underReview": "Seu pagamento está em análise.",
+    "underReviewText": "Os vídeos dos seus cursos serão liberados assim que o pagamento for recebido."
+  },
+  "subscribe": {
+    "title": "Assinar os vídeos dos cursos",
+    "courseCount": "{count, plural, one {# curso} other {# cursos}}",
+    "onlyUntilEnd": "{course}, até o fim do seu curso{until}",
+    "allUntilEnd": "Todos os seus cursos, até o fim do seu curso{until}",
+    "allCourses": "Todos os seus {count} cursos",
+    "chooseThree": "Escolha 3 dos seus cursos",
+    "chooseCount": "Escolha {count} dos seus cursos",
+    "perMonth": "/ mês",
+    "perMonthPerCourse": "/ mês · {fee} por curso",
+    "oneTime": "pagamento único",
+    "loadFailed": "Não foi possível carregar os planos.",
+    "loadFailedRetry": "Não foi possível carregar os planos. Tente novamente.",
+    "paymentFailed": "Não foi possível iniciar o pagamento.",
+    "paymentFailedRetry": "Não foi possível iniciar o pagamento. Tente novamente.",
+    "startsOn": " · começa em {date}",
+    "loading": "Carregando planos…",
+    "notAvailable": "As assinaturas não estão disponíveis no momento.",
+    "choosePlan": "Escolha um plano",
+    "chooseCourses": "Escolha {count, plural, one {# curso} other {# cursos}}",
+    "pickedOf": "{picked} de {need}",
+    "oneTimeUntilEnd": "pagamento único · até o fim do seu curso",
+    "oneMonth": "1 mês",
+    "secure": "Pagamento online seguro · o link de pagamento também é enviado para o seu e-mail",
+    "preparing": "Preparando o pagamento…",
+    "continue": "Continuar para o pagamento"
+  }
+}

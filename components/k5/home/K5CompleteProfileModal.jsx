@@ -4,12 +4,14 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { X, Loader2, UserCircle, CheckCircle2, AlertCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { loadProfileCompletingProcess } from "@/services/profileActionsApi";
 import { callServer } from "@/utils/serverCall";
 import { studentNavHref } from "@/utils/dashboardNav";
 
-function fieldLabel(field) {
-  return field.labelName || field.fieldId || "Unknown field";
+// Field names come from the school's profile setup (shown as-is); t = the k5Home.completeProfile translator.
+function fieldLabel(field, t) {
+  return field.labelName || field.fieldId || t("unknownField");
 }
 
 function isMissing(field) {
@@ -18,6 +20,7 @@ function isMissing(field) {
 }
 
 function SectionBlock({ section }) {
+  const t = useTranslations("k5Home.completeProfile");
   const items = section.parentChildList || [];
   const groups = section.parentChildGroupList || [];
   const missing = items.filter(isMissing);
@@ -38,8 +41,8 @@ function SectionBlock({ section }) {
           {missing.map((f) => (
             <li key={f.id || f.fieldId} className="flex items-center gap-2 text-sm text-k5-mut">
               <AlertCircle className="h-4 w-4 flex-none text-amber-500" />
-              <span className="font-extrabold">{fieldLabel(f)}</span>
-              {f.mandatoryOption === "Y" && <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-black text-k5-ri">Required</span>}
+              <span className="font-extrabold">{fieldLabel(f, t)}</span>
+              {f.mandatoryOption === "Y" && <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-black text-k5-ri">{t("required")}</span>}
             </li>
           ))}
         </ul>
@@ -51,8 +54,8 @@ function SectionBlock({ section }) {
             {g.missing.map((f) => (
               <li key={f.id || f.fieldId} className="flex items-center gap-2 text-sm text-k5-mut">
                 <AlertCircle className="h-4 w-4 flex-none text-amber-500" />
-                <span className="font-extrabold">{fieldLabel(f)}</span>
-                {f.mandatoryOption === "Y" && <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-black text-k5-ri">Required</span>}
+                <span className="font-extrabold">{fieldLabel(f, t)}</span>
+                {f.mandatoryOption === "Y" && <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-black text-k5-ri">{t("required")}</span>}
               </li>
             ))}
           </ul>
@@ -64,6 +67,8 @@ function SectionBlock({ section }) {
 
 export function K5CompleteProfileModal() {
   const { school } = useParams();
+  const t = useTranslations("k5Home.completeProfile");
+  const tc = useTranslations("common");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dismissed, setDismissed] = useState(false);
@@ -137,13 +142,13 @@ export function K5CompleteProfileModal() {
         {/* Header */}
         <div className="flex items-center gap-3 border-b-[3px] border-k5-line bg-k5-ac px-5 py-4">
           <UserCircle className="h-7 w-7 flex-none text-white" />
-          <h2 className="m-0 flex-1 font-k5-display text-xl font-semibold text-white">Complete Your Profile</h2>
+          <h2 className="m-0 flex-1 font-k5-display text-xl font-semibold text-white">{t("title")}</h2>
           {!hasMandatory && (
             <button
               type="button"
               onClick={() => setDismissed(true)}
               className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-none bg-white/20 text-white hover:bg-white/30"
-              aria-label="Close"
+              aria-label={tc("actions.close")}
             >
               <X className="h-5 w-5" strokeWidth={2.5} />
             </button>
@@ -154,7 +159,7 @@ export function K5CompleteProfileModal() {
         <div className="flex flex-col gap-4 overflow-y-auto p-5 [scrollbar-width:thin]">
           <div className="flex items-center gap-2 rounded-2xl border-[3px] border-amber-400 bg-amber-50 px-4 py-3 text-sm font-black text-amber-700">
             <AlertCircle className="h-5 w-5 flex-none" />
-            <span>{totalMissing} field{totalMissing !== 1 ? "s" : ""} need{totalMissing === 1 ? "s" : ""} your attention</span>
+            <span>{t("fieldsNeedAttention", { count: totalMissing })}</span>
           </div>
 
           {nowSections.map((section) => (
@@ -163,7 +168,7 @@ export function K5CompleteProfileModal() {
 
           {hasMandatory && (
             <p className="m-0 rounded-xl bg-red-50 px-4 py-2.5 text-[13px] font-extrabold text-k5-ri">
-              Some fields are required. Please complete them to continue.
+              {t("requiredNote")}
             </p>
           )}
         </div>
@@ -176,7 +181,7 @@ export function K5CompleteProfileModal() {
               onClick={() => setDismissed(true)}
               className="min-h-11 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-5 font-k5-display text-[15px] font-semibold text-k5-mut hover:bg-k5-soft"
             >
-              Later
+              {t("later")}
             </button>
           )}
           <Link
@@ -184,7 +189,7 @@ export function K5CompleteProfileModal() {
             className="flex min-h-11 items-center gap-2 rounded-full border-[3px] border-k5-ac bg-k5-ac px-5 font-k5-display text-[15px] font-semibold text-white no-underline shadow-[0_3px_0_var(--k5-acd)] hover:brightness-105"
           >
             <CheckCircle2 className="h-4.5 w-4.5" />
-            Go to My Profile
+            {t("goToProfile")}
           </Link>
         </div>
       </div>

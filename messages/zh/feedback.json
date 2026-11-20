@@ -1,0 +1,29 @@
+{
+  "rate": {
+    "class": "评价这节课",
+    "activity": "评价这个活动"
+  },
+  "modal": {
+    "titleWithTeacher": "{title} <muted>由</muted> {teacher} <muted>授课</muted>",
+    "tagline": "帮助我们改善你的学习体验",
+    "confidential": "我们想听到你真实的想法。你的回答是保密的，请放心如实作答。",
+    "classFallback": "课程"
+  },
+  "pending": {
+    "title": "待提交的反馈",
+    "subtitle": "请提交你本周待完成的反馈。",
+    "total": "总计",
+    "activities": "活动",
+    "classes": "课程"
+  },
+  "category": {
+    "class": "课程",
+    "activity": "活动",
+    "batch": "班级课",
+    "sports": "体育",
+    "one_to_one": "一对一",
+    "academic": "学术",
+    "student_doubt_session": "答疑课",
+    "n_a": "不适用"
+  }
+}

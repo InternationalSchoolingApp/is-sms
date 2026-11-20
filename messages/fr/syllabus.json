@@ -1,0 +1,17 @@
+{
+  "title": "Enseignants attribués aux cours",
+  "searchLabel": "Rechercher",
+  "searchPlaceholder": "Rechercher...",
+  "noCourses": "Aucun cours attribué pour l'instant.",
+  "noMatches": "Aucun résultat correspondant",
+  "notAssigned": "Pas encore attribué",
+  "table": {
+    "sNo": "N°",
+    "courses": "Cours choisis",
+    "teacher": "Enseignant attribué"
+  },
+  "content": {
+    "empty": "Aucun contenu de cours disponible pour l'instant.",
+    "due": "À rendre le {date}"
+  }
+}

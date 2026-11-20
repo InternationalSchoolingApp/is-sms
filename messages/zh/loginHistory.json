@@ -1,0 +1,20 @@
+{
+  "title": "登录记录 - {name}",
+  "empty": "未找到登录记录",
+  "firstLogin": "首次登录",
+  "lastLogin": "上次登录 | 时长",
+  "totalLogin": "登录总计 | 时长",
+  "tillNow": "截至目前",
+  "sessions": "登录会话",
+  "searchPlaceholder": "搜索会话...",
+  "showingSessions": "显示第 {start}-{end} 个会话，共 {total} 个",
+  "securityNoticeLabel": "安全提示：",
+  "securityNotice": "如发现可疑的登录活动或陌生的登录地点，请立即联系管理员。您的账户安全对我们非常重要。",
+  "table": {
+    "sNo": "序号",
+    "login": "登录日期 | 时间",
+    "logout": "退出日期 | 时间",
+    "location": "位置",
+    "duration": "时长"
+  }
+}

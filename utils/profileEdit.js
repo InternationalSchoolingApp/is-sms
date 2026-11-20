@@ -81,11 +81,12 @@ export function reportAnchor(today = new Date()) {
   d.setDate(d.getDate() + (6 - d.getDay()));
   return d;
 }
-export function reportRange(days, today = new Date()) {
+// `locale` (optional date-fns locale, i18n/dateLocale.js) names the months in the dashboard language.
+export function reportRange(days, today = new Date(), locale) {
   const start = reportAnchor(today);
   const end = new Date(start);
   end.setDate(end.getDate() + (days === 7 ? 6 : days));
-  const long = (x) => format(x, "MMMM d, yyyy");
+  const long = (x) => format(x, "MMMM d, yyyy", locale ? { locale } : undefined);
   return `${long(start)} – ${long(end)}`;
 }
 

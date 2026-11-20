@@ -1,0 +1,11 @@
+{
+  "title": "Student Handbook",
+  "noAccess": "You do not have access to this module.",
+  "download": "Download Handbook",
+  "policyNote": "It is the responsibility of the student and the parent to keep a check on the updated terms and policies of the school. <link>Click Here</link> to know more.",
+  "moduleNames": {
+    "student_handbook": "Student Handbook",
+    "child_handbook": "Child Handbook",
+    "parent_handbook": "Parent Handbook"
+  }
+}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Square, Volume2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useSpeech } from "@/components/k5/pico/useSpeech";
 
 /**
@@ -9,6 +10,7 @@ import { useSpeech } from "@/components/k5/pico/useSpeech";
  * reads it aloud in the buddy's voice. Hidden where the browser has no speech synthesis.
  */
 export function SelectToSpeak() {
+  const t = useTranslations("pico");
   const { supported, speaking, speak, stop } = useSpeech();
   const [text, setText] = useState("");
 
@@ -36,7 +38,7 @@ export function SelectToSpeak() {
         className="flex min-h-[52px] cursor-pointer items-center gap-2 rounded-full border-none bg-k5-ac px-6 font-k5-display text-lg font-semibold text-white shadow-[0_5px_0_var(--k5-acd)]"
       >
         {speaking ? <Square className="h-5 w-5" aria-hidden="true" /> : <Volume2 className="h-5 w-5" aria-hidden="true" />}
-        {speaking ? "Stop" : "Listen"}
+        {speaking ? t("stop") : t("listen")}
       </button>
     </div>
   );

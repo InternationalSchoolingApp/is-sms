@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Sparkles, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useQuoteOfMoment } from "@/hooks/useQuoteOfMoment";
 
 // Dismissed for the rest of the page load (legacy __quoteOfMomentDismissed), across module changes.
@@ -24,11 +25,12 @@ function highlighted(text) {
 
 /** Legacy "Quote of the Moment" card, shown above the module in the grade-look shell. */
 export function K5QuoteOfMoment() {
+  const t = useTranslations("k5.quote");
   const quote = useQuoteOfMoment();
   const [closed, setClosed] = useState(dismissed);
   if (!quote || closed) return null;
   return (
-    <section aria-label="Quote of the moment" className="relative flex items-center gap-4 rounded-[18px] border-[3px] border-k5-line bg-k5-act py-4 pe-14 ps-4">
+    <section aria-label={t("label")} className="relative flex items-center gap-4 rounded-[18px] border-[3px] border-k5-line bg-k5-act py-4 pe-14 ps-4">
       <span aria-hidden="true" className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-k5-card text-k5-acx">
         <Sparkles className="h-5 w-5" />
       </span>
@@ -38,7 +40,7 @@ export function K5QuoteOfMoment() {
       </div>
       <button
         type="button"
-        aria-label="Dismiss quote"
+        aria-label={t("dismiss")}
         onClick={() => {
           dismissed = true;
           setClosed(true);

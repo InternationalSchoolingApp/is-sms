@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useLocale } from "next-intl";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { voiceOf } from "@/constant/appearance";
 import { clipFor, playerOf, readyClip, wordAt } from "@/utils/picoVoice";
@@ -19,6 +20,7 @@ const CLIP_WAIT_MS = 60000;
  */
 export function useSpeech() {
   const { preferences } = useAppearance();
+  const locale = useLocale();
   const supported = useSyncExternalStore(noSubscribe, hasSpeech, () => false);
   const [speaking, setSpeaking] = useState(false);
   // The word being said in a recorded clip: {text, n}, for the bubble's word-by-word highlight.
@@ -99,7 +101,8 @@ export function useSpeech() {
       const turn = turnRef.current;
       stopRecorded();
       if (supported) window.speechSynthesis.cancel();
-      const chosen = voiceOf(voice, voiceSpeed);
+      // In the dashboard's language: outside English the same-gender voice of that language (constant/appearance.js).
+      const chosen = voiceOf(voice, voiceSpeed, locale);
       // Already known in this browser: play straight from the tap (no wait, and iOS keeps the tap's permission).
       const known = readyClip(text, chosen);
       if (known) {
@@ -122,7 +125,7 @@ export function useSpeech() {
         return "unavailable";
       });
     },
-    [supported, stopRecorded, playRecorded, preferences.speech, preferences.voice, preferences.voiceSpeed],
+    [supported, stopRecorded, playRecorded, preferences.speech, preferences.voice, preferences.voiceSpeed, locale],
   );
 
   useEffect(

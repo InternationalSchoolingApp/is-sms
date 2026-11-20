@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { CalendarDays, CheckCircle2, Eye, Megaphone, X } from "lucide-react";
 import DOMPurify from "dompurify";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { submitAnnouncementAcknowledge } from "@/services/dashboardApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { getAttachmentUrl, isImageAttachment } from "@/utils/announcementAttachment";
@@ -11,6 +13,9 @@ import { AttachmentPreviewDialog } from "@/components/dashboard/AttachmentPrevie
 import { formatAnnouncementDate } from "@/components/dashboard/AnnouncementDetailModal";
 
 export function K5AnnouncementDetailModal({ announcement, schoolUUID, userId, onClose }) {
+  const t = useTranslations("k5Panels.announcement");
+  const tc = useTranslations("common");
+  const locale = useDateFnsLocale();
   const queryClient = useQueryClient();
   const dummy = useDummyStudent();
   const [acknowledged, setAcknowledged] = useState(announcement.replyStatus === "Y");
@@ -64,7 +69,7 @@ export function K5AnnouncementDetailModal({ announcement, schoolUUID, userId, on
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={tc("actions.close")}
             className="flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-xl border-none bg-k5-red text-white shadow-[0_3px_0_#B91C1C]"
           >
             <X className="h-5 w-5" strokeWidth={3} />
@@ -74,8 +79,8 @@ export function K5AnnouncementDetailModal({ announcement, schoolUUID, userId, on
         {/* Date pill */}
         <div className="flex items-center gap-2 bg-k5-act px-5 py-2.5">
           <CalendarDays className="h-5 w-5 text-k5-acx" aria-hidden="true" />
-          <span className="font-k5-display text-sm font-semibold text-k5-acx">Start Date</span>
-          <span className="ms-auto font-k5-display text-[15px] font-bold text-k5-ink">{formatAnnouncementDate(announcement.createdDate)}</span>
+          <span className="font-k5-display text-sm font-semibold text-k5-acx">{t("startDate")}</span>
+          <span className="ms-auto font-k5-display text-[15px] font-bold text-k5-ink">{formatAnnouncementDate(announcement.createdDate, { locale })}</span>
         </div>
 
         {/* Body */}
@@ -88,7 +93,7 @@ export function K5AnnouncementDetailModal({ announcement, schoolUUID, userId, on
         {thanks && (
           <div role="status" aria-live="polite" className="flex items-center justify-center gap-2 border-t-[3px] border-k5-line bg-k5-gt px-5 py-3 font-k5-display text-[17px] font-semibold text-k5-gx">
             <CheckCircle2 className="h-6 w-6 flex-none" strokeWidth={2.4} aria-hidden="true" />
-            Thanks for Acknowledgement
+            {t("thanks")}
           </div>
         )}
 
@@ -107,7 +112,7 @@ export function K5AnnouncementDetailModal({ announcement, schoolUUID, userId, on
                   : { target: "_blank", rel: "noopener noreferrer" })}
                 className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-full border-none bg-k5-ac px-4 py-3 font-k5-display text-[15px] font-semibold text-white no-underline shadow-[0_4px_0_var(--k5-acd)]"
               >
-                <Eye className="h-5 w-5" /> View Attachment
+                <Eye className="h-5 w-5" /> {t("viewAttachment")}
               </a>
             )}
             {!acknowledged && (
@@ -117,7 +122,7 @@ export function K5AnnouncementDetailModal({ announcement, schoolUUID, userId, on
                 disabled={acknowledging}
                 className="flex-1 cursor-pointer rounded-full border-[3px] border-k5-ac bg-k5-card px-4 py-3 font-k5-display text-[15px] font-semibold text-k5-acx disabled:opacity-50"
               >
-                {acknowledging ? "Submitting…" : "Kindly Acknowledge"}
+                {acknowledging ? t("submitting") : t("acknowledge")}
               </button>
             )}
           </div>

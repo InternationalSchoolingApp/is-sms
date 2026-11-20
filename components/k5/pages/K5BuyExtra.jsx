@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { CheckCircle2, PlusCircle, ShoppingCart } from "lucide-react";
 import { K5_CARD, SubjectIcon } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
@@ -18,11 +19,18 @@ import { studentNavHref } from "@/utils/dashboardNav";
 import { courseTint, subjectStyle } from "@/utils/k5Calendar";
 import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
 
-// "Grade 3" from the student's standard (the mockup's grade chip); nothing when it is not known.
+// "Grade 3" from the student's standard (the mockup's grade chip); nothing when it is not known. Shown through gradeText().
 function gradeLabel(standardId) {
   if (standardId == null) return "";
   if (Number(standardId) === 17) return "PreK";
   return Object.values(GRADE_CONFIG).find((g) => g.standardId === Number(standardId))?.label ?? "";
+}
+
+/** gradeLabel's English ("Grade 3", "PreK") in the dashboard language (t: the k5Booking.buyExtra translator). */
+function gradeText(label, t) {
+  const match = /^Grade (\w+)$/.exec(label || "");
+  if (match) return t("grade", { grade: match[1] });
+  return label === "PreK" ? t("preK") : label;
 }
 
 /** Centered message card (loading, errors) in the K–5 look. */
@@ -62,8 +70,9 @@ function PlanCardSkeleton() {
  */
 function BuyExtraSkeleton() {
   const { isMiddle, isHigh } = useDashboardContext();
+  const t = useTranslations("k5Booking.buyExtra");
   return (
-    <K5Loading label="Loading the plans" className="flex flex-col gap-4">
+    <K5Loading label={t("loading")} className="flex flex-col gap-4">
       <BuyHeader cartLoading />
       <div className={`${K5_CARD} flex flex-col gap-[22px] px-[22px] pb-7 pt-6`}>
         {isHigh ? (
@@ -141,6 +150,7 @@ function BuyHeader({ showCart = false, cartLoading = false }) {
   const { context, isMiddle, isHigh } = useDashboardContext();
   const { school } = useParams();
   const { data: count = 0 } = useCartCount(showCart && context?.role === "student" ? context?.userId : null);
+  const t = useTranslations("k5Booking.buyExtra");
   return (
     <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
       {isMiddle ? (
@@ -157,18 +167,18 @@ function BuyHeader({ showCart = false, cartLoading = false }) {
         </span>
       )}
       <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-        <h1 className={`m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-4xl"}`}>Buy Extra Classes</h1>
-        <p className={`m-0 font-extrabold text-k5-mut ${isMiddle ? "text-base" : "text-lg"}`}>Want more classes? Pick a plan with your grown-up.</p>
+        <h1 className={`m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-4xl"}`}>{t("title")}</h1>
+        <p className={`m-0 font-extrabold text-k5-mut ${isMiddle ? "text-base" : "text-lg"}`}>{t("subtitle")}</p>
       </div>
       {cartLoading && <K5Sk className="h-[52px] w-32 rounded-full" />}
       {showCart && (
         <Link
           href={studentNavHref(school, "cart")}
-          aria-label={`Cart, ${count} ${count === 1 ? "item" : "items"}`}
+          aria-label={t("cartLabel", { count })}
           className={`flex min-h-[52px] items-center gap-2.5 rounded-full px-[18px] font-k5-display text-lg font-semibold text-white no-underline ${isMiddle ? "bg-[#027FFE] shadow-[0_2px_0_#0057B8]" : "bg-[#1D6BF0] shadow-[0_4px_0_#1C47B8]"}`}
         >
           <ShoppingCart className="h-[22px] w-[22px]" strokeWidth={2.4} aria-hidden="true" />
-          Cart
+          {t("cart")}
           <span className={`flex h-7 min-w-7 items-center justify-center rounded-full bg-white px-2 text-[15px] font-black ${isMiddle ? "text-[#027FFE]" : "text-[#1D6BF0]"}`}>{count}</span>
         </Link>
       )}
@@ -180,6 +190,7 @@ function PlanCard({ plan, weeks, symbol, busy, onAdd, middle = false }) {
   // The plan's validity is capped by the weeks left in the course's enrollment.
   const validWeeks = Math.min(plan.validity, weeks);
   const expired = validWeeks < 1;
+  const t = useTranslations("k5Booking.buyExtra");
   const note = (text) => (
     <span className="flex items-start gap-2.5 text-base font-bold leading-[1.4] text-k5-ink">
       <CheckCircle2 className="mt-0.5 h-[22px] w-[22px] flex-none text-k5-ac" strokeWidth={2.2} aria-hidden="true" />
@@ -188,15 +199,14 @@ function PlanCard({ plan, weeks, symbol, busy, onAdd, middle = false }) {
   );
   return (
     <article className="flex flex-col gap-1.5 rounded-[26px] border-[3px] border-k5-line bg-k5-card p-[22px] shadow-k5-chunky">
-      <span className="font-k5-display text-2xl font-semibold text-k5-ink">{plan.classCount} Classes</span>
+      <span className="font-k5-display text-2xl font-semibold text-k5-ink">{t("classes", { count: plan.classCount })}</span>
       <div className="mb-3 mt-1 flex flex-wrap items-center gap-2.5">
         <span className="font-k5-display text-[44px] font-bold leading-none text-k5-ink">{formatAmount(symbol, plan.amount)}</span>
         {Number(plan.saving) > 0 && (
           <span
             className={`-rotate-3 rounded-full border-[#E0A800] bg-[#FFC531] px-3.5 py-1.5 text-[15px] font-black text-[#3A2A00] ${middle ? "border-[1.5px] shadow-[0_2px_0_#E0A800,0_0_0_4px_rgba(255,197,49,0.28)]" : "border-2 shadow-[0_3px_0_#E0A800,0_0_0_4px_rgba(255,197,49,0.28)]"}`}
           >
-            Saving {symbol}
-            {plan.saving}!
+            {t("saving", { amount: `${symbol}${plan.saving}` })}
           </span>
         )}
       </div>
@@ -207,7 +217,7 @@ function PlanCard({ plan, weeks, symbol, busy, onAdd, middle = false }) {
           onClick={() => onAdd(plan, validWeeks, false)}
           className="min-h-[52px] min-w-0 flex-1 cursor-pointer whitespace-nowrap rounded-[18px] border-[3px] border-k5-ac bg-k5-card px-2 font-k5-display text-[17px] font-semibold text-k5-acx disabled:cursor-default disabled:opacity-50"
         >
-          Add to cart
+          {t("addToCart")}
         </button>
         <button
           type="button"
@@ -215,13 +225,13 @@ function PlanCard({ plan, weeks, symbol, busy, onAdd, middle = false }) {
           onClick={() => onAdd(plan, validWeeks, true)}
           className="min-h-[52px] min-w-0 flex-1 cursor-pointer rounded-[18px] border-none bg-k5-ac px-2 font-k5-display text-lg font-semibold text-white shadow-[0_4px_0_var(--k5-acd)] disabled:cursor-default disabled:opacity-50"
         >
-          Buy
+          {t("buy")}
         </button>
       </div>
       <div className="mt-3.5 flex flex-col gap-2">
-        {note(`You will receive ${plan.classCount} classes. Use them within the academic year.`)}
+        {note(t("receiveNote", { count: plan.classCount }))}
       </div>
-      {expired && <p className="m-0 pt-1 text-center text-sm font-extrabold text-k5-ri">Enrollment for this course ends too soon for this plan.</p>}
+      {expired && <p className="m-0 pt-1 text-center text-sm font-extrabold text-k5-ri">{t("tooSoon")}</p>}
     </article>
   );
 }
@@ -232,9 +242,10 @@ function PlanCard({ plan, weeks, symbol, busy, onAdd, middle = false }) {
  */
 export function K5BuyExtraClasses({ subjects, subject, singleCourse, onSelect, fixedPlans, customPlan, weeks, symbol, busy, onAdd, onCustomise, purchased }) {
   const { context, isMiddle, isHigh } = useDashboardContext();
+  const t = useTranslations("k5Booking.buyExtra");
   usePicoContentReady(true);
   const { standardId } = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
-  const grade = gradeLabel(standardId);
+  const grade = gradeText(gradeLabel(standardId), t);
   return (
     <div className="flex flex-col gap-4">
       <BuyHeader showCart />
@@ -270,7 +281,7 @@ export function K5BuyExtraClasses({ subjects, subject, singleCourse, onSelect, f
         />
       ) : (
       <div className={`${K5_CARD} flex flex-col gap-[22px] px-[22px] pb-7 pt-6`}>
-        <h2 className="m-0 text-center font-k5-display text-[28px] font-semibold text-k5-ink">Please Select a Plan</h2>
+        <h2 className="m-0 text-center font-k5-display text-[28px] font-semibold text-k5-ink">{t("selectPlan")}</h2>
         <div className="flex flex-wrap items-center justify-between gap-3">
           {grade ? <span className="rounded-full bg-k5-act px-[18px] py-2 font-k5-display text-xl font-semibold text-k5-acx">{grade}</span> : <span />}
           {customPlan && subject && (
@@ -279,13 +290,13 @@ export function K5BuyExtraClasses({ subjects, subject, singleCourse, onSelect, f
               onClick={onCustomise}
               className="min-h-12 cursor-pointer rounded-2xl border-[3px] border-k5-ac bg-k5-card px-5 font-k5-display text-lg font-semibold text-k5-acx shadow-[0_4px_0_var(--k5-acl)]"
             >
-              Customise your plan
+              {t("customise")}
             </button>
           )}
         </div>
 
         {!singleCourse && (
-          <div role="group" aria-label="Course" className="flex flex-wrap gap-2.5">
+          <div role="group" aria-label={t("course")} className="flex flex-wrap gap-2.5">
             {subjects.map((s) => {
               const active = s.subjectId === subject?.subjectId;
               const color = subjectStyle(s.subjectName).color;
@@ -312,7 +323,7 @@ export function K5BuyExtraClasses({ subjects, subject, singleCourse, onSelect, f
           {fixedPlans.map((plan) => (
             <PlanCard key={plan.planId} plan={plan} weeks={weeks} symbol={symbol} busy={busy} onAdd={onAdd} />
           ))}
-          {fixedPlans.length === 0 && <p className="m-0 font-extrabold text-k5-mut">No plans are available for this course.</p>}
+          {fixedPlans.length === 0 && <p className="m-0 font-extrabold text-k5-mut">{t("noPlans")}</p>}
         </div>
 
         {purchased}
@@ -328,6 +339,7 @@ export function K5BuyExtraClasses({ subjects, subject, singleCourse, onSelect, f
  * the plans on the right. One course only: just the plans, under "Select Plan".
  */
 function MiddlePlans({ subjects, subject, singleCourse, onSelect, fixedPlans, customPlan, weeks, symbol, busy, onAdd, onCustomise, grade, purchased }) {
+  const t = useTranslations("k5Booking.buyExtra");
   const step = (n, text) => (
     <h2 className="m-0 border-b-[3px] border-k5-ac pb-1 font-k5-display text-[22px] font-semibold text-k5-ink">
       {n && <span className="text-k5-ac">{n} </span>}
@@ -339,17 +351,17 @@ function MiddlePlans({ subjects, subject, singleCourse, onSelect, fixedPlans, cu
       {fixedPlans.map((plan) => (
         <PlanCard key={plan.planId} plan={plan} weeks={weeks} symbol={symbol} busy={busy} onAdd={onAdd} middle />
       ))}
-      {fixedPlans.length === 0 && <p className="m-0 font-extrabold text-k5-mut">No plans are available for this course.</p>}
+      {fixedPlans.length === 0 && <p className="m-0 font-extrabold text-k5-mut">{t("noPlans")}</p>}
     </div>
   );
   return (
     <div className={`${K5_CARD} flex flex-col gap-[22px] px-[22px] pb-7 pt-6`}>
       <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3">
         <div className="flex flex-wrap items-baseline gap-x-[26px] gap-y-1.5">
-          {singleCourse ? step("", "Please Select a Plan") : (
+          {singleCourse ? step("", t("selectPlan")) : (
             <>
-              {step("Step 1:", "Please select a course")}
-              {step("Step 2:", "Select Plan")}
+              {step(t("step", { number: 1 }), t("selectCourse"))}
+              {step(t("step", { number: 2 }), t("selectPlanShort"))}
             </>
           )}
         </div>
@@ -361,7 +373,7 @@ function MiddlePlans({ subjects, subject, singleCourse, onSelect, fixedPlans, cu
               onClick={onCustomise}
               className="min-h-12 cursor-pointer rounded-xl border-[3px] border-k5-ac bg-k5-card px-5 font-k5-display text-lg font-semibold text-k5-acx shadow-[0_2px_0_var(--k5-acl)]"
             >
-              Customise your plan
+              {t("customise")}
             </button>
           )}
         </div>
@@ -371,7 +383,7 @@ function MiddlePlans({ subjects, subject, singleCourse, onSelect, fixedPlans, cu
         plans
       ) : (
         <div className="flex flex-wrap items-start gap-[22px]">
-          <div role="radiogroup" aria-label="Please select a course" className="flex min-w-0 flex-[1_1_240px] flex-col gap-2.5">
+          <div role="radiogroup" aria-label={t("selectCourse")} className="flex min-w-0 flex-[1_1_240px] flex-col gap-2.5">
             {subjects.map((s) => {
               const on = s.subjectId === subject?.subjectId;
               const color = subjectStyle(s.subjectName).color;
@@ -414,6 +426,8 @@ function HighPlans({ subjects, subject, onSelect, fixedPlans, customPlan, weeks,
   const { context } = useDashboardContext();
   const { school } = useParams();
   const router = useRouter();
+  const t = useTranslations("k5Booking.buyExtra");
+  const tc = useTranslations("common");
   const colorFor = useK5CourseColors();
   const cart = useCartDetails(context?.role === "student" ? context?.userId : null);
   const { data: cartCount = 0 } = useCartCount(context?.role === "student" ? context?.userId : null);
@@ -470,7 +484,7 @@ function HighPlans({ subjects, subject, onSelect, fixedPlans, customPlan, weeks,
                 </span>
                 {n > 0 && (
                   <span className="rounded-full bg-k5-gt px-2.5 py-[3px] text-[0.75rem] font-[600] text-k5-ink">
-                    {n} in cart
+                    {t("inCartCount", { count: n })}
                   </span>
                 )}
               </div>
@@ -480,21 +494,21 @@ function HighPlans({ subjects, subject, onSelect, fixedPlans, customPlan, weeks,
               {s.teacherName && <span className="text-[0.8125rem] text-k5-mut">{s.teacherName}</span>}
               <div className="mt-auto flex items-end justify-between gap-2 pt-1.5">
                 <span className="flex flex-col">
-                  <span className="text-[0.75rem] text-k5-mut">From</span>
+                  <span className="text-[0.75rem] text-k5-mut">{t("from")}</span>
                   <span className="font-k5-display text-[1.25rem] font-[600] text-k5-ink">{cheapest == null ? "–" : formatAmount(symbol, cheapest)}</span>
                 </span>
                 <button
                   type="button"
                   aria-haspopup="dialog"
-                  aria-label={"View plans: " + s.subjectName}
+                  aria-label={t("viewPlansFor", { subject: s.subjectName })}
                   onClick={() => {
                     onSelect(s.subjectId);
                     setOpen(true);
                   }}
                   className="flex min-h-[2.875rem] cursor-pointer flex-col items-center justify-center rounded-[10px] border border-k5-ac bg-k5-card px-4 py-1 font-k5-display text-[0.875rem] font-[600] leading-[1.15] text-k5-ac"
                 >
-                  View plans
-                  <span className="text-[0.6875rem] font-[500] text-k5-mut">{fixedPlans.length} plans + customise</span>
+                  {t("viewPlans")}
+                  <span className="text-[0.6875rem] font-[500] text-k5-mut">{t("plansAndCustomise", { count: fixedPlans.length })}</span>
                 </button>
               </div>
             </article>
@@ -512,10 +526,10 @@ function HighPlans({ subjects, subject, onSelect, fixedPlans, customPlan, weeks,
                 {subject?.subjectName}
               </DialogTitle>
               <DialogDescription className="m-0 text-[0.8125rem] text-white">
-                Choose a plan for this course
+                {t("choosePlan")}
               </DialogDescription>
             </span>
-            <button type="button" onClick={() => setOpen(false)} disabled={working} aria-label="Close" className="flex h-10 w-10 flex-none cursor-pointer items-center justify-center rounded-full border border-white bg-k5-red disabled:cursor-default disabled:opacity-60">
+            <button type="button" onClick={() => setOpen(false)} disabled={working} aria-label={tc("actions.close")} className="flex h-10 w-10 flex-none cursor-pointer items-center justify-center rounded-full border border-white bg-k5-red disabled:cursor-default disabled:opacity-60">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" strokeWidth="3" strokeLinecap="round" aria-hidden="true" className="stroke-white">
                 <path d="M6 6l12 12M18 6L6 18" />
               </svg>
@@ -531,18 +545,17 @@ function HighPlans({ subjects, subject, onSelect, fixedPlans, customPlan, weeks,
                 <div key={plan.planId} className="flex flex-wrap items-center gap-3.5 rounded-[12px] border border-k5-line bg-k5-card px-3.5 py-3 sm:flex-nowrap">
                   <span className="relative mt-1.5 flex h-[68px] w-[72px] flex-none flex-col items-center justify-center rounded-[10px] bg-k5-act font-k5-display text-[1.375rem] font-[600] leading-none text-k5-ink">
                     {plan.classCount}
-                    <span className="text-[0.6875rem] font-[500] text-k5-mut">classes</span>
+                    <span className="text-[0.6875rem] font-[500] text-k5-mut">{t("classesWord", { count: plan.classCount })}</span>
                     {Number(plan.saving) > 0 && (
                       <span className="absolute -top-[11px] -start-2 whitespace-nowrap rounded-full border border-[#E0A800] bg-[#FFC531] px-[9px] py-[3px] font-k5-body text-[0.75rem] font-[700] text-[#3A2A00]">
-                        Saving {symbol}
-                        {plan.saving}!
+                        {t("saving", { amount: `${symbol}${plan.saving}` })}
                       </span>
                     )}
                   </span>
                   <span className="flex min-w-0 flex-[1_1_140px] flex-col gap-0.5">
-                    <span className="font-k5-display text-[1rem] font-[500] text-k5-ink">{plan.classCount} Classes</span>
+                    <span className="font-k5-display text-[1rem] font-[500] text-k5-ink">{t("classes", { count: plan.classCount })}</span>
                     <span className="text-[0.75rem] text-k5-mut">
-                      {expired ? "Enrollment for this course ends too soon for this plan." : "Couldn't finish in time? No worries, your unused classes carry forward."}
+                      {expired ? t("tooSoon") : t("carryForward")}
                     </span>
                   </span>
                   <span className="whitespace-nowrap font-k5-display text-[1.125rem] font-[600] text-k5-ink">
@@ -558,23 +571,23 @@ function HighPlans({ subjects, subject, onSelect, fixedPlans, customPlan, weeks,
                     {mine ? (
                       <>
                         <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-k5-ac/30 border-t-k5-ac" />
-                        Adding…
+                        {t("adding")}
                       </>
                     ) : done ? (
-                      "✓ In cart"
+                      t("inCart")
                     ) : (
-                      "Add to cart"
+                      t("addToCart")
                     )}
                   </button>
                 </div>
               );
             })}
-            {fixedPlans.length === 0 && <p className="m-0 text-[0.8125rem] text-k5-mut">No plans are available for this course.</p>}
+            {fixedPlans.length === 0 && <p className="m-0 text-[0.8125rem] text-k5-mut">{t("noPlans")}</p>}
             {customPlan && (
               <div className="flex flex-wrap items-center gap-3.5 rounded-[12px] border border-dashed border-k5-ac bg-k5-card px-3.5 py-3 sm:flex-nowrap">
                 <span className="flex min-w-0 flex-[1_1_180px] flex-col gap-0.5">
-                  <span className="font-k5-display text-[1rem] font-[500] text-k5-ink">Customise your plan</span>
-                  <span className="text-[0.75rem] text-k5-mut">Choose your own number of classes and weeks.</span>
+                  <span className="font-k5-display text-[1rem] font-[500] text-k5-ink">{t("customise")}</span>
+                  <span className="text-[0.75rem] text-k5-mut">{t("customiseHint")}</span>
                 </span>
                 <button
                   type="button"
@@ -585,7 +598,7 @@ function HighPlans({ subjects, subject, onSelect, fixedPlans, customPlan, weeks,
                   }}
                   className="min-h-[2.5625rem] cursor-pointer rounded-[12px] border-[1.5px] border-k5-ac bg-k5-card px-5 font-k5-display text-[0.9375rem] font-[500] text-k5-acx disabled:cursor-default disabled:opacity-50"
                 >
-                  Customise your plan
+                  {t("customise")}
                 </button>
               </div>
             )}
@@ -597,7 +610,7 @@ function HighPlans({ subjects, subject, onSelect, fixedPlans, customPlan, weeks,
               onClick={() => router.push(studentNavHref(school, "cart"))}
               className="min-h-[2.75rem] cursor-pointer rounded-full border-none bg-k5-ac px-5 font-k5-display text-[0.9375rem] font-[600] text-white disabled:cursor-default disabled:opacity-50"
             >
-              Go to cart ({cartCount})
+              {t("goToCart", { count: cartCount })}
             </button>
           </div>
         </DialogContent>

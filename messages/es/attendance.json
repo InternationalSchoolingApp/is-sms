@@ -1,0 +1,24 @@
+{
+  "title": "Mi asistencia",
+  "notFound": "No se encontraron datos de asistencia",
+  "sessionExpired": "Tu sesión ha expirado. Vuelve a iniciar sesión.",
+  "classesToday": "Clases de hoy",
+  "attendanceMonth": "Asistencia ({month} {year})",
+  "lateMonth": "Retrasos ({month} {year})",
+  "byMonth": "Asistencia por mes ({year})",
+  "monthlySummary": "Resumen del mes ({month})",
+  "classesHeldThisMonth": "Clases impartidas este mes",
+  "states": {
+    "present": "Presente",
+    "late": "Tarde",
+    "absent": "Ausente"
+  },
+  "delta": {
+    "percent": "{value} % respecto al mes pasado",
+    "classes": "{value} {count, plural, one {clase} other {clases}} respecto al mes pasado"
+  },
+  "chart": {
+    "series": "Asistencia",
+    "classesAttended": "{attended} de {held} clases asistidas"
+  }
+}

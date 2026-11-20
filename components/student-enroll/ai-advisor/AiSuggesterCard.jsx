@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ChevronRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -13,6 +14,7 @@ import { Button } from "@/components/ui/button";
  * here" row below it — same `onOpen` action either way.
  */
 export function AiSuggesterCard({ onOpen, disabled }) {
+  const t = useTranslations("shared.aiSuggester");
   return (
     <>
       <div className="ai-pulse mt-3 hidden rounded-xl border border-[#cdf1cb] bg-[#e2f5f0] px-4 py-3 md:flex md:flex-row md:items-center md:gap-3">
@@ -20,11 +22,11 @@ export function AiSuggesterCard({ onOpen, disabled }) {
           <Sparkles className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-black">Not sure which courses to pick?</p>
-          <p className="text-xs text-slate-700">Answer a few quick questions and let our smart course picker suggest courses for you.</p>
+          <p className="text-sm font-bold text-black">{t("title")}</p>
+          <p className="text-xs text-slate-700">{t("text")}</p>
         </div>
         <Button type="button" onClick={onOpen} disabled={disabled} className="shrink-0 bg-[#3fa43c] hover:bg-[#3fa43c]/90">
-          <Sparkles className="h-4 w-4" /> Smart Course Picker
+          <Sparkles className="h-4 w-4" /> {t("button")}
         </Button>
       </div>
 
@@ -38,7 +40,7 @@ export function AiSuggesterCard({ onOpen, disabled }) {
           <Sparkles className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1 text-black">
-          <p className="text-sm font-bold">Help me choose courses</p>
+          <p className="text-sm font-bold">{t("mobile")}</p>
         </div>
         <ChevronRight className="h-4 w-4 shrink-0 text-black" aria-hidden="true" />
       </button>

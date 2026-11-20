@@ -5,6 +5,7 @@ import { openLmsLink } from "@/utils/lmsCourseLink";
 import { normalizeWebsite } from "@/constant/SchoolConstants";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Menu, LogOut, ChevronDown, User, KeyRound, UserPlus, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
@@ -12,6 +13,7 @@ import { logoutEverywhere } from "@/utils/logout";
 import { ChangePasswordModal } from "@/components/dashboard/ChangePasswordModal";
 import { useAddSiblings } from "@/hooks/useAddSiblings";
 import { CartHeaderButton } from "@/components/student/cart/CartHeaderButton";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 
 /**
  * Fixed top header — mirrors the legacy Java Dashboard.jsp top bar:
@@ -25,20 +27,22 @@ import { CartHeaderButton } from "@/components/student/cart/CartHeaderButton";
  */
 export function DashboardTopHeader({ schoolName, logoUrl, schoolWebsite, session, userName, onHamburger, lmsProviderURL, isPayLmsPaymentPending }) {
   const router = useRouter();
+  const t = useTranslations("header");
+  const tc = useTranslations("common");
   const siblings = useAddSiblings();
   const [confirmLogout, setConfirmLogout] = useState(false);
   // My Profile is the signed-in student's own page (app/[school]/(dashboard)/student/my-profile).
   const openProfile = () => {
     const role = String(session?.role ?? session?.userRole ?? "").toLowerCase();
     if (role === "student" && session?.schoolUUID) router.push(`/${session.schoolUUID}/student/my-profile`);
-    else toast("My Profile — coming soon", { icon: "🚧" });
+    else toast(t("myProfileComingSoon"), { icon: "🚧" });
   };
   const [loggingOut, setLoggingOut] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [changePwOpen, setChangePwOpen] = useState(false);
   const [lms, setLms] = useState(false);
 
-  const displayName = userName || "Student";
+  const displayName = userName || tc("words.student");
 
   return (
     <header className="fixed inset-x-0 top-[var(--maintenance-banner-h,0px)] z-50 flex h-[56px] items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 sm:px-5">
@@ -46,7 +50,7 @@ export function DashboardTopHeader({ schoolName, logoUrl, schoolWebsite, session
       <div className="flex min-w-0 items-center gap-2">
         <button
           type="button"
-          aria-label="Toggle menu"
+          aria-label={t("toggleMenu")}
           onClick={onHamburger}
           className="rounded-md p-1.5 text-black hover:bg-slate-100"
         >
@@ -64,7 +68,7 @@ export function DashboardTopHeader({ schoolName, logoUrl, schoolWebsite, session
           );
           const site = normalizeWebsite(schoolWebsite);
           return site ? (
-            <a href={site} target="_blank" rel="noopener noreferrer" aria-label={`${schoolName || "School"} website`} title={site} className="flex flex-none items-center no-underline">
+            <a href={site} target="_blank" rel="noopener noreferrer" aria-label={t("schoolWebsite", { school: schoolName || t("schoolFallback") })} title={site} className="flex flex-none items-center no-underline">
               {logo}
             </a>
           ) : (
@@ -75,17 +79,17 @@ export function DashboardTopHeader({ schoolName, logoUrl, schoolWebsite, session
 
       {/* Center: LMS switch */}
       <div className="flex items-center gap-2">
-        <span className="text-xs font-bold text-black">LMS</span>
+        <span className="text-xs font-bold text-black">{t("lms")}</span>
         <button
           type="button"
           role="switch"
           aria-checked={lms}
-          aria-label="Switch to LMS"
+          aria-label={t("switchToLms")}
           onClick={() => {
             if (isPayLmsPaymentPending) {
               toast(isPayLmsPaymentPending, { icon: "⚠️" });
             } else if (lmsProviderURL) {
-              openLmsLink(lmsProviderURL);
+              openLmsLink(lmsProviderURL, { couldNotOpen: t("lmsCouldNotOpen") });
             }
           }}
           className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${lms ? "bg-primary" : "bg-slate-300"}`}
@@ -108,6 +112,8 @@ export function DashboardTopHeader({ schoolName, logoUrl, schoolWebsite, session
           </button>
         )}
 
+        <LanguageSwitcher />
+
         <div className="relative">
           <button
             type="button"
@@ -120,7 +126,7 @@ export function DashboardTopHeader({ schoolName, logoUrl, schoolWebsite, session
               <User className="h-5 w-5" />
             </span>
             <span className="hidden text-right leading-tight sm:block">
-              <span className="block text-[11px] text-black/60">Welcome back,</span>
+              <span className="block text-[11px] text-black/60">{t("welcomeBack")}</span>
               <span className="block text-sm font-bold text-black">{displayName}</span>
             </span>
             <ChevronDown className="h-4 w-4 text-black" />
@@ -140,11 +146,11 @@ export function DashboardTopHeader({ schoolName, logoUrl, schoolWebsite, session
                 </div>
                 <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); openProfile(); }}
                   className="flex w-full items-center gap-3 px-4 py-3 text-sm font-semibold text-black hover:bg-slate-100">
-                  <User className="h-4 w-4" /> My Profile
+                  <User className="h-4 w-4" /> {t("myProfile")}
                 </button>
                 <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); setChangePwOpen(true); }}
                   className="flex w-full items-center gap-3 px-4 py-3 text-sm font-semibold text-black hover:bg-slate-100">
-                  <KeyRound className="h-4 w-4" /> Change Password
+                  <KeyRound className="h-4 w-4" /> {t("changePassword")}
                 </button>
                 {siblings.visible && (
                   <button type="button" role="menuitem" disabled={siblings.busy} onClick={() => { setMenuOpen(false); siblings.handleClick(); }}
@@ -154,7 +160,7 @@ export function DashboardTopHeader({ schoolName, logoUrl, schoolWebsite, session
                 )}
                 <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); setConfirmLogout(true); }}
                   className="flex w-full items-center gap-3 border-t border-slate-200 px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50">
-                  <LogOut className="h-4 w-4" /> Log out
+                  <LogOut className="h-4 w-4" /> {tc("actions.logOut")}
                 </button>
               </div>
             </>

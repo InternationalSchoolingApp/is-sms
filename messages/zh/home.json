@@ -1,0 +1,116 @@
+{
+  "reEnrollmentLoadFailed": "无法加载您的重新注册信息。",
+  "completeProfile": {
+    "title": "完善您的个人资料",
+    "required": "必填",
+    "unknownField": "未知字段",
+    "fieldsNeedAttention": "{count, plural, other {# 个字段需要您处理}}",
+    "mandatoryNote": "部分字段为必填项，请填写后继续。",
+    "later": "稍后",
+    "goToProfile": "前往我的个人资料"
+  },
+  "graduation": {
+    "title": "诚邀您参加毕业典礼！🎓",
+    "registerBy": "请在 {date} 前报名参加。",
+    "attendAs": "您将以何种身份参加",
+    "options": {
+      "graduate": "毕业生",
+      "attendee": "来宾",
+      "performer": "表演者"
+    },
+    "continue": "继续报名"
+  },
+  "onboardingVideo": {
+    "welcome": "欢迎！{name}",
+    "talkToAdmin": "联系学校管理部门",
+    "watchAgain": "再看一遍",
+    "bookTraining": "预约系统培训"
+  },
+  "outlook": {
+    "copied": "已复制",
+    "copyFailed": "无法复制，请手动复制。",
+    "hidePassword": "隐藏密码",
+    "showPassword": "显示密码",
+    "copyLabel": "复制{label}",
+    "title": "激活您的学校邮箱",
+    "description": "这是您在 Outlook 上的官方学校邮箱。我们会将课程安排、付款通知和公告发送到这个邮箱。请立即登录并激活。",
+    "schoolEmail": "学校邮箱：{email}",
+    "temporaryPassword": "临时密码",
+    "loginOnce": "请先用这些信息登录一次，然后设置您自己的密码。",
+    "activate": "激活您的学校邮箱",
+    "later": "稍后再说",
+    "needHelp": "需要帮助？",
+    "whatsapp": "通过 WhatsApp 联系我们",
+    "unableToProceed": "无法继续"
+  },
+  "reserveSeat": {
+    "enrollGroupLearning": "报名 {year} 小组学习",
+    "enrollNextGrade": "报名下一年级",
+    "reserveSeat": "预留名额",
+    "acceptReEnroll": "立即重新注册下一年级",
+    "acceptReserve": "立即为下一年级预留名额",
+    "limitedOffer": "此优惠限时有效！",
+    "countdown": {
+      "days": "天",
+      "hours": "小时",
+      "minutes": "分钟",
+      "seconds": "秒"
+    },
+    "congratulations": "恭喜！",
+    "awesome": "太棒了！",
+    "hi": "{name}，你好！",
+    "eligible": "您现在可以重新注册下一年级了",
+    "exclusiveReEnrollment": "重新注册专属优惠",
+    "exclusiveOneTime": "一次性专属优惠",
+    "specialDiscount": "您可享受特别折扣",
+    "off": "优惠",
+    "maybeLater": "以后再说",
+    "readyFor": "准备好升入 {grade} 了吗？",
+    "feeTitleGroupLearning": "立即报名 {year} 小组学习",
+    "feeTitlePayCourseFee": "支付 {grade} 课程费用",
+    "feeTitleReserve": "为下一年级预留名额",
+    "totalFee": "总费用",
+    "oneTimeDiscount": "一次性折扣",
+    "progressionDiscount": "升级折扣",
+    "additionalDiscount": "额外折扣",
+    "payableFee": "应付费用（美元）",
+    "feeNoteGrade": "*此应付费用适用于 {grade}",
+    "feeNoteGradeCredits": "*此应付费用适用于 {grade}，共 {credits} 个常规学分。",
+    "feeNoteReserve": "*此费用将在重新注册时从您的课程费用中扣除",
+    "proceedToPay": "前往付款",
+    "needHelp": "需要帮助吗？",
+    "paymentReceived": "已收到付款。",
+    "somethingWrong": "出了点问题",
+    "paymentProcessing": "付款正在处理中...",
+    "oops": "哎呀！",
+    "paymentIncomplete": "付款未完成",
+    "underReview": "您的付款正在审核中。",
+    "underReviewDetail": "收到付款后，您的费用状态将会更新。"
+  },
+  "systemTraining": {
+    "hello": "{name}，你好！",
+    "welcomeAlt": "欢迎",
+    "welcomeLine1": "欢迎加入",
+    "welcomeLine2": "International Schooling 大家庭！",
+    "title": "学校系统培训",
+    "liveChat": "与学校管理部门在线聊天",
+    "rescheduledLine1": "您的学校系统培训已改期。",
+    "rescheduledLine2": "请点击下方按钮，为培训选择其他日期。",
+    "reschedule": "改期",
+    "isOn": "您的学校系统培训时间为 {dateTime}。",
+    "wishReschedule": "如需改期，请<link>点击这里</link>"
+  },
+  "reschedule": {
+    "loading": "正在加载学校系统培训",
+    "loadFailed": "暂时无法加载学校系统培训，请稍后再试。",
+    "selectDate": "请选择系统培训日期。",
+    "selectTime": "请选择系统培训时间。",
+    "failed": "无法为培训改期。",
+    "rescheduled": "学校系统培训已改期。",
+    "chooseSlot": "请选择一个时段"
+  },
+  "checkout": {
+    "oldFeeTitle": "学校付款通知",
+    "importantNotice": "重要通知"
+  }
+}

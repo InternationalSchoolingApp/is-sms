@@ -2,6 +2,7 @@
 
 import { BookOpen, ClipboardCheck, CreditCard } from "lucide-react";
 import { useSelectedLayoutSegment } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { StepRow } from "@/components/student-enroll/wizard/EnrollmentWizardShell";
 import { useReEnrollmentContext } from "@/hooks/useReEnrollment";
 import { SEGMENT_TO_STEP, STEP_LABELS } from "@/utils/reEnrollmentSteps";
@@ -11,19 +12,22 @@ const ICONS = { PAYMENT: CreditCard, COURSE_SELECTION: BookOpen, REVIEW: Clipboa
 
 /** Presentation only: eligibility owns the step order and the route owns the active step. */
 export function ReEnrollmentFlow({ children }) {
+  const t = useTranslations("reEnrollment.flow");
   const segment = useSelectedLayoutSegment();
   const { steps, option } = useReEnrollmentContext();
   const activeStep = SEGMENT_TO_STEP[segment];
   if (!activeStep) return children;
-  const displaySteps = steps.map(key => ({ key, label: STEP_LABELS[key] || key, icon: ICONS[key] || ClipboardCheck }));
+  // STEP_LABELS (utils/reEnrollmentSteps.js) stays English; the step names are reEnrollment.flow.steps.<STEP>.
+  const stepLabel = key => (t.has(`steps.${key}`) ? t(`steps.${key}`) : STEP_LABELS[key] || key);
+  const displaySteps = steps.map(key => ({ key, label: stepLabel(key), icon: ICONS[key] || ClipboardCheck }));
   const currentIndex = displaySteps.findIndex(step => step.key === activeStep);
   return <div className={styles.flow} data-re-enrollment-flow>
     <header className="mb-6 text-center md:mb-8">
-      <h1 className="text-xl font-extrabold sm:text-2xl">{option?.learningProgramLabel ? `${option.learningProgramLabel} Re-Enrollment` : "Re-Enrollment"}</h1>
-      {currentIndex >= 0 && <p className="mt-1 text-sm text-slate-500">Step {currentIndex + 1} of {displaySteps.length} · {STEP_LABELS[activeStep]}</p>}
-      {currentIndex >= 0 && <nav aria-label="Re-enrollment progress">
+      <h1 className="text-xl font-extrabold sm:text-2xl">{option?.learningProgramLabel ? t("titleWithProgram", { program: option.learningProgramLabel }) : t("title")}</h1>
+      {currentIndex >= 0 && <p className="mt-1 text-sm text-slate-500">{t("stepOf", { step: currentIndex + 1, total: displaySteps.length, label: stepLabel(activeStep) })}</p>}
+      {currentIndex >= 0 && <nav aria-label={t("progress")}>
         <StepRow steps={displaySteps} currentIndex={currentIndex} />
-        <ol className="sr-only">{displaySteps.map((step, index) => <li key={step.key} aria-current={index === currentIndex ? "step" : undefined}>{step.label}: {index < currentIndex ? "Completed" : index === currentIndex ? "Current step" : "Upcoming"}</li>)}</ol>
+        <ol className="sr-only">{displaySteps.map((step, index) => <li key={step.key} aria-current={index === currentIndex ? "step" : undefined}>{t("stepState", { label: step.label, state: index < currentIndex ? "done" : index === currentIndex ? "current" : "upcoming" })}</li>)}</ol>
       </nav>}
     </header>
     {children}

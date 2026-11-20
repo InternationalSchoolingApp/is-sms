@@ -1,0 +1,28 @@
+{
+  "title": "Diário do aluno",
+  "titleWithName": "Diário do aluno - {name}",
+  "backToList": "Voltar à lista do diário",
+  "chatWithLabel": "Conversar com",
+  "chatWith": {
+    "teacher": "Professor",
+    "school": "Escola"
+  },
+  "empty": {
+    "teacher": "Nenhuma anotação recente no diário com o professor",
+    "school": "Nenhuma anotação recente no diário com a escola"
+  },
+  "noMessages": "Nenhuma mensagem ainda.",
+  "parent": "Responsável",
+  "letter": {
+    "greetings": "Saudações de {school}!",
+    "hopeWell": "Esperamos que você esteja bem.",
+    "gratitude": "Com gratidão e orações,",
+    "family": "Família {school}"
+  },
+  "loadError": "Não foi possível carregar o diário agora.",
+  "dates": {
+    "today": "Hoje",
+    "yesterday": "Ontem",
+    "todayChip": "Hoje · {date}"
+  }
+}

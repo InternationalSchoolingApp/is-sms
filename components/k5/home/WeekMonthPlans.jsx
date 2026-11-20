@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react";
 import { format, getDay, isSameMonth } from "date-fns";
 import { BookOpen, CalendarRange, Check, ChevronRight, Flag, PartyPopper, Smile } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { CLUE_RING, K5_PRIMARY_BTN, PlanHeader, PlanTile, StatusPills } from "@/components/k5/home/k5Bits";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { getCourseColor, getMonthGridDays } from "@/utils/calendarEvents";
@@ -30,22 +32,24 @@ const CLUE_FOR_STATUS = { done: "done", live: "live", next: "upcoming" };
 // A class in the week grid. Tapping it does what tapping the class card does in the Day plan:
 // a live / upcoming class with a join link opens the join flow, anything else its details.
 function ClassChip({ event, courseRegistry, clue, onOpen }) {
+  const t = useTranslations("k5Home.plans");
+  const locale = useDateFnsLocale();
   const live = event.k5Status === "live";
   return (
     <button
       type="button"
       onClick={() => onOpen(event)}
-      aria-label={`${classTitle(event)}, ${timeLabel(event)}${live ? ", live now — join class" : ""}`}
+      aria-label={live ? t("chipLive", { name: classTitle(event), time: timeLabel(event, locale) }) : t("chip", { name: classTitle(event), time: timeLabel(event, locale) })}
       className={`flex w-full cursor-pointer items-center gap-1.5 rounded-xl px-1.5 py-[5px] text-left ${clue === CLUE_FOR_STATUS[event.k5Status] ? "outline outline-[3px] outline-offset-2 outline-[#FFC531]" : ""}`}
       style={CHIP_STATE[event.k5Status]}
     >
       <span aria-hidden="true" className="block h-2.5 w-2.5 flex-none rounded-full" style={{ background: getCourseColor(courseRegistry, event.courseId) }} />
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-[13px] font-black text-k5-ink">{classTitle(event)}</span>
-        <span className="text-xs font-extrabold text-k5-mut">{timeLabel(event)}</span>
+        <span className="text-xs font-extrabold text-k5-mut">{timeLabel(event, locale)}</span>
       </span>
-      {event.k5Status === "done" && <Check className="h-4 w-4 flex-none text-k5-acx" strokeWidth={3} aria-label="Done" />}
-      {live && <span className="flex-none animate-pulse rounded-full px-1.5 py-0.5 text-[11px] font-black text-white" style={{ background: C.liveText }}>LIVE</span>}
+      {event.k5Status === "done" && <Check className="h-4 w-4 flex-none text-k5-acx" strokeWidth={3} aria-label={t("done")} />}
+      {live && <span className="flex-none animate-pulse rounded-full px-1.5 py-0.5 text-[11px] font-black text-white" style={{ background: C.liveText }}>{t("live")}</span>}
     </button>
   );
 }
@@ -81,13 +85,15 @@ function SmallPill({ icon: Icon, children, style, className = "", highlighted, o
  * details like in the Day plan (several assignments: the pill opens the day instead).
  */
 function DayExtras({ day, clue, onOpenEvent, onOpenDay }) {
+  const t = useTranslations("k5Home.plans");
   const open = (event) => (onOpenEvent ? () => onOpenEvent(event) : undefined);
+  const actTitle = (a) => (a.title || a.eventTitle ? activityTitle(a) : t("schoolActivityUntitled"));
   const nA = day.assignments.length;
   return (
     <>
       {day.holidays.map((h) => (
         <SmallPill key={h.id} icon={Flag} style={{ background: C.holiday }} highlighted={clue === "holiday"} onClick={open(h)}>
-          {h.title || h.eventTitle || "Holiday"}
+          {h.title || h.eventTitle || t("holiday")}
         </SmallPill>
       ))}
       {day.activities.map((a) => (
@@ -97,9 +103,9 @@ function DayExtras({ day, clue, onOpenEvent, onOpenDay }) {
           style={{ background: C.activityText, boxShadow: `0 3px 0 ${C.activityShadow}` }}
           highlighted={clue === "activity"}
           onClick={open(a)}
-          label={`School activity: ${activityTitle(a)}`}
+          label={t("activityLabel", { title: actTitle(a) })}
         >
-          {activityTitle(a)}
+          {actTitle(a)}
         </SmallPill>
       ))}
       {nA > 0 && (
@@ -108,9 +114,9 @@ function DayExtras({ day, clue, onOpenEvent, onOpenDay }) {
           style={{ background: C.assignment }}
           highlighted={clue === "assignment"}
           onClick={onOpenEvent ? (nA === 1 ? open(day.assignments[0]) : onOpenDay) : undefined}
-          label={nA === 1 ? `Assignment: ${day.assignments[0].title || "Assignment"}` : `${nA} assignments — open this day`}
+          label={nA === 1 ? t("assignmentLabel", { title: day.assignments[0].title || t("assignment") }) : t("assignmentsOpenDay", { count: nA })}
         >
-          {nA === 1 ? day.assignments[0].title || "1 assignment" : `${nA} assignments`}
+          {nA === 1 ? day.assignments[0].title || t("assignments", { count: 1 }) : t("assignments", { count: nA })}
         </SmallPill>
       )}
     </>
@@ -138,6 +144,9 @@ export function WeekPlan({ keys, todayKey, selectedKey, days, courseRegistry, cl
   // isMiddle follows the picked look (true for Mature too): no "today" star in either. The brain games follow the grade.
   const { isMiddle, isHigh: lookIsHigh, gradeIsHigh } = useDashboardContext();
   const isHigh = gradeIsHigh ?? lookIsHigh;
+  const t = useTranslations("k5Home.plans");
+  const tc = useTranslations("common");
+  const locale = useDateFnsLocale();
   // Like the month: tapping a day (its head, a class, a pill or the free card) picks it and brings the
   // summary under the grid into view. The summary's items open the class / activity / assignment.
   const panelRef = useRef(null);
@@ -160,12 +169,12 @@ export function WeekPlan({ keys, todayKey, selectedKey, days, courseRegistry, cl
     <div className="flex flex-col gap-4">
       <PlanHeader
         tile={
-          <PlanTile top="WEEK" className="bg-[#0F766E] shadow-[0_5px_0_#0B5E58]">
+          <PlanTile top={t("weekTile")} className="bg-[#0F766E] shadow-[0_5px_0_#0B5E58]">
             <CalendarRange className="mt-1 h-7 w-7 text-white" aria-hidden="true" />
           </PlanTile>
         }
-        title="My Week"
-        subtitle={`${format(first, "MMMM d")} – ${format(last, first.getMonth() === last.getMonth() ? "d" : "MMMM d")} · tap a day to open it`}
+        title={t("myWeek")}
+        subtitle={t("weekSubtitle", { range: `${format(first, "MMMM d", { locale })} – ${format(last, first.getMonth() === last.getMonth() ? "d" : "MMMM d", { locale })}` })}
       >
         <StatusPills counts={countStatuses(all)} />
       </PlanHeader>
@@ -192,8 +201,8 @@ export function WeekPlan({ keys, todayKey, selectedKey, days, courseRegistry, cl
                 className={`relative cursor-pointer rounded-2xl border-none px-1 py-2 text-center ${key === selectedKey ? "outline outline-[3px] outline-offset-2 outline-[#FFC531]" : ""}`}
                 style={head}
               >
-                <span className="block text-[13px] font-black">{isToday ? "Today" : format(date, "EEE")}</span>
-                <span className="block font-k5-display text-[26px] font-semibold leading-[1.1]">{format(date, "d")}</span>
+                <span className="block text-[13px] font-black">{isToday ? tc("dates.today") : format(date, "EEE", { locale })}</span>
+                <span className="block font-k5-display text-[26px] font-semibold leading-[1.1]">{format(date, "d", { locale })}</span>
                 {isToday && !isMiddle && (
                   <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" className="absolute -right-1.5 -top-2.5">
                     <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" fill="#FFC531" stroke="#A16207" strokeWidth="1.4" strokeLinejoin="round" />
@@ -215,9 +224,9 @@ export function WeekPlan({ keys, todayKey, selectedKey, days, courseRegistry, cl
                     }`}
                   >
                     {isSelfStudy ? <BookOpen className="h-[34px] w-[34px]" aria-hidden="true" /> : <FreeBalloon muted={isPast} />}
-                    No classes!
+                    {t("noClasses")}
                     {/* A day that is over has no games to invite to: only the Course work day line of a Self-Study student stays. */}
-                    {(isSelfStudy || !isPast) && <span className="text-xs font-extrabold">{isSelfStudy ? "Course work day" : isHigh ? "Open brain games" : "Tap to play a game"}</span>}
+                    {(isSelfStudy || !isPast) && <span className="text-xs font-extrabold">{isSelfStudy ? t("courseWorkDay") : isHigh ? t("openBrainGames") : t("tapToPlay")}</span>}
                   </button>
                 )}
               </div>
@@ -241,10 +250,12 @@ export function WeekPlan({ keys, todayKey, selectedKey, days, courseRegistry, cl
   );
 }
 
+// React keys; the names shown come from the dashboard language's date-fns locale (abbreviated day names).
 const WEEK_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 /** Mockup legend: one dot per course colour, "= your N classes". Hidden in a narrow plan. */
 function MonthLegend({ courseRegistry }) {
+  const t = useTranslations("k5Home.plans");
   const courses = Object.values(courseRegistry || {});
   if (!courses.length) return null;
   return (
@@ -253,7 +264,7 @@ function MonthLegend({ courseRegistry }) {
         <span key={c.id} aria-hidden="true" className="block h-2.5 w-2.5 rounded-full" style={{ background: c.color }} />
       ))}
       <span className="ml-1">
-        = your {courses.length} class{courses.length === 1 ? "" : "es"}
+        {t("legend", { count: courses.length })}
       </span>
     </div>
   );
@@ -261,18 +272,22 @@ function MonthLegend({ courseRegistry }) {
 
 /** The picked day under the Week / Month grid: its summary, a way to join a live class, "Open this day" and its events. */
 function DaySummary({ panelRef, selectedKey, days, todayKey, isSelfStudy, courseRegistry, clue, onOpenEvent, onOpenDay }) {
+  const t = useTranslations("k5Home.plans");
+  const tCalendar = useTranslations("calendar");
+  const locale = useDateFnsLocale();
   const selectedDay = dayAt(days, selectedKey);
+  const actTitle = (a) => (a.title || a.eventTitle ? activityTitle(a) : t("schoolActivityUntitled"));
   const liveClass = selectedDay.classes.find((c) => c.k5Status === "live" && c.url);
   const selectedEvents = [...selectedDay.classes, ...selectedDay.holidays, ...selectedDay.activities, ...selectedDay.assignments];
 
   return (
       <div ref={panelRef} aria-live="polite" className="move_to_today flex scroll-mb-6 flex-wrap items-center gap-3.5 rounded-[24px] border-[3px] border-k5-yb bg-k5-yt px-[18px] py-4">
         <span className="flex h-14 w-14 flex-none items-center justify-center rounded-[18px] bg-k5-card font-k5-display text-[26px] font-semibold text-k5-ink">
-          {format(keyToDate(selectedKey), "d")}
+          {format(keyToDate(selectedKey), "d", { locale })}
         </span>
         <div className="flex flex-[1_1_220px] flex-col">
-          <span className="font-k5-display text-[22px] font-semibold">{format(keyToDate(selectedKey), "EEEE, MMMM d")}</span>
-          <span className="text-base font-extrabold text-k5-yx">{daySummary(selectedKey, selectedDay, todayKey, { isSelfStudy })}</span>
+          <span className="font-k5-display text-[22px] font-semibold">{format(keyToDate(selectedKey), "EEEE, MMMM d", { locale })}</span>
+          <span className="text-base font-extrabold text-k5-yx">{daySummary(selectedKey, selectedDay, todayKey, { isSelfStudy, t: tCalendar })}</span>
         </div>
         {/* A live class on the picked day can be joined right here, like in the Day plan. */}
         {liveClass && (
@@ -284,17 +299,17 @@ function DaySummary({ panelRef, selectedKey, days, todayKey, isSelfStudy, course
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M8 5v14l11-7z" />
             </svg>
-            Join {classTitle(liveClass)}
+            {t("join", { name: classTitle(liveClass) })}
           </button>
         )}
         <button type="button" onClick={() => onOpenDay(keyToDate(selectedKey))} className={K5_PRIMARY_BTN}>
-          Open this day
+          {t("openThisDay")}
           <ChevronRight className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
         </button>
         {/* The picked day's events, each one tappable (month cells are buttons themselves, so
             their pills only show — here they open the class / activity / assignment). */}
         {selectedEvents.length > 0 && (
-          <ul aria-label="Events on this day" className="m-0 flex basis-full list-none flex-wrap gap-2 p-0">
+          <ul aria-label={t("eventsOnDay")} className="m-0 flex basis-full list-none flex-wrap gap-2 p-0">
             {selectedDay.classes.map((c) => (
               <li key={c.id} className="w-[230px] max-w-full">
                 <ClassChip event={c} courseRegistry={courseRegistry} clue={clue} onOpen={onOpenEvent} />
@@ -303,7 +318,7 @@ function DaySummary({ panelRef, selectedKey, days, todayKey, isSelfStudy, course
             {selectedDay.holidays.map((h) => (
               <li key={h.id} className="flex">
                 <SmallPill icon={Flag} style={{ background: C.holiday }} highlighted={clue === "holiday"} onClick={() => onOpenEvent(h)} className="py-1.5 text-[13px]">
-                  {h.title || h.eventTitle || "Holiday"}
+                  {h.title || h.eventTitle || t("holiday")}
                 </SmallPill>
               </li>
             ))}
@@ -314,10 +329,10 @@ function DaySummary({ panelRef, selectedKey, days, todayKey, isSelfStudy, course
                   style={{ background: C.activityText, boxShadow: `0 3px 0 ${C.activityShadow}` }}
                   highlighted={clue === "activity"}
                   onClick={() => onOpenEvent(a)}
-                  label={`School activity: ${activityTitle(a)}`}
+                  label={t("activityLabel", { title: actTitle(a) })}
                   className="py-1.5 text-[13px]"
                 >
-                  {activityTitle(a)}
+                  {actTitle(a)}
                 </SmallPill>
               </li>
             ))}
@@ -328,10 +343,10 @@ function DaySummary({ panelRef, selectedKey, days, todayKey, isSelfStudy, course
                   style={{ background: C.assignment }}
                   highlighted={clue === "assignment"}
                   onClick={() => onOpenEvent(a)}
-                  label={`Assignment: ${a.title || "Assignment"}`}
+                  label={t("assignmentLabel", { title: a.title || t("assignment") })}
                   className="py-1.5 text-[13px]"
                 >
-                  {a.title || "Assignment"}
+                  {a.title || t("assignment")}
                 </SmallPill>
               </li>
             ))}
@@ -343,6 +358,9 @@ function DaySummary({ panelRef, selectedKey, days, todayKey, isSelfStudy, course
 
 /** Month plan: a 6-week grid with class dots and day pills, plus a summary of the picked day. */
 export function MonthPlan({ selectedDate, selectedKey, todayKey, days, courseRegistry, clue, isSelfStudy, onSelect, onOpenDay, onOpenEvent }) {
+  const t = useTranslations("k5Home.plans");
+  const tCalendar = useTranslations("calendar");
+  const locale = useDateFnsLocale();
   const cells = getMonthGridDays(selectedDate);
   // Picking a day fills the summary panel under the grid: scroll it into view when it is off-screen.
   const panelRef = useRef(null);
@@ -356,9 +374,9 @@ export function MonthPlan({ selectedDate, selectedKey, todayKey, days, courseReg
   return (
     <div className="flex flex-col gap-3.5">
       <PlanHeader
-        tile={<PlanTile top={format(selectedDate, "MMM").toUpperCase()} big={format(selectedDate, "yyyy")} className="bg-[#6A3FC4] shadow-[0_5px_0_#4C2A94] [&>span:last-child]:text-[26px]" />}
-        title="My Month"
-        subtitle="Tap any day to see what's planned"
+        tile={<PlanTile top={format(selectedDate, "MMM", { locale }).toUpperCase()} big={format(selectedDate, "yyyy", { locale })} className="bg-[#6A3FC4] shadow-[0_5px_0_#4C2A94] [&>span:last-child]:text-[26px]" />}
+        title={t("myMonth")}
+        subtitle={t("monthSubtitle")}
       >
         <MonthLegend courseRegistry={courseRegistry} />
       </PlanHeader>
@@ -366,7 +384,7 @@ export function MonthPlan({ selectedDate, selectedKey, todayKey, days, courseReg
       <div className="grid grid-cols-7 gap-2 text-center font-k5-display text-base font-semibold">
         {WEEK_SHORT.map((d, i) => (
           <span key={d} className={WEEKDAY_TEXT[i]}>
-            {d}
+            {locale.localize.day(i, { width: "abbreviated" })}
           </span>
         ))}
       </div>
@@ -392,7 +410,7 @@ export function MonthPlan({ selectedDate, selectedKey, todayKey, days, courseReg
               key={key}
               type="button"
               aria-pressed={isSel}
-              aria-label={`${format(date, "EEEE, MMMM d")}: ${daySummary(key, day, todayKey, { isSelfStudy })}`}
+              aria-label={t("dayAria", { date: format(date, "EEEE, MMMM d", { locale }), summary: daySummary(key, day, todayKey, { isSelfStudy, t: tCalendar }) })}
               onClick={() => {
                 if (key === selectedKey) revealElement(panelRef.current);
                 else revealPanel.current = true;
@@ -416,7 +434,7 @@ export function MonthPlan({ selectedDate, selectedKey, todayKey, days, courseReg
                     ))}
                   </span>
                   <span className={`text-xs font-black @max-[640px]:hidden ${isToday ? "text-white" : key < todayKey ? "text-k5-acx" : "text-k5-mut"}`}>
-                    {allDone ? "All done" : `${day.classes.length} class${day.classes.length === 1 ? "" : "es"}`}
+                    {allDone ? t("allDone") : t("classes", { count: day.classes.length })}
                   </span>
                 </span>
               )}
@@ -424,7 +442,7 @@ export function MonthPlan({ selectedDate, selectedKey, todayKey, days, courseReg
                 {free && (
                   <span className={`flex items-center gap-1 rounded-full px-2 py-[3px] text-xs font-black ${key < todayKey ? "bg-k5-soft text-k5-mut" : "bg-k5-gt text-k5-gx"}`}>
                     <Smile className="h-3 w-3" aria-hidden="true" />
-                    Free day
+                    {t("freeDay")}
                   </span>
                 )}
                 <DayExtras day={day} clue={clue} />

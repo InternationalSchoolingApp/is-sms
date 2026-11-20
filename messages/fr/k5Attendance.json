@@ -1,0 +1,115 @@
+{
+  "header": {
+    "title": "Ma présence",
+    "subtitle": "Regarde à combien de cours tu as participé."
+  },
+  "loading": "Chargement de ta présence",
+  "sessionExpired": "Ta session a expiré. Reconnecte-toi, s'il te plaît.",
+  "notFound": "Aucun détail de présence trouvé",
+  "tiles": {
+    "classesToday": "Cours aujourd'hui",
+    "attendance": "Présence · {month}",
+    "late": "Retards · {month}",
+    "sameAs": "Comme en {month}",
+    "changeFrom": "{arrow} {diff} % par rapport à {month}"
+  },
+  "views": {
+    "today": "Aujourd'hui",
+    "week": "Semaine",
+    "month": "Mois",
+    "year": "Année scolaire"
+  },
+  "overview": {
+    "title": "Vue d'ensemble",
+    "hint": "Touche un mois pour voir son résumé.",
+    "comingSoon": "Bientôt disponible · Choisis Année scolaire pour voir tes mois.",
+    "barLabel": "{month} : {percent} % de présence",
+    "barTip": "{month} : {percent} %",
+    "barNotYet": "{month} : pas encore"
+  },
+  "summary": {
+    "title": "Résumé du mois",
+    "cameTo": "Tu as participé à {came} cours sur {total}.",
+    "classesWord": "{count, plural, one {cours} other {cours}}",
+    "sliceTitle": "{label} : {count}",
+    "empty": "Pas encore · Aucun cours ce mois-ci."
+  },
+  "badges": {
+    "star": {
+      "name": "Star de la présence",
+      "msg": "Super star ! Tu ne rates presque jamais un cours."
+    },
+    "regular": {
+      "name": "Super régulier",
+      "msg": "Bravo ! Continue comme ça."
+    },
+    "goodEffort": {
+      "name": "Bel effort",
+      "msg": "Essayons de venir à chaque cours !"
+    },
+    "keepGoing": {
+      "name": "Continue",
+      "msg": "Essayons de venir à chaque cours !"
+    }
+  },
+  "status": {
+    "present": "Présent",
+    "late": "En retard",
+    "absent": "Absent",
+    "missS": "Manqué par l'élève",
+    "missT": "Manqué par l'enseignant"
+  },
+  "absentLabels": {
+    "absent": "Absent",
+    "missed_by_student": "Manqué par l'élève",
+    "missed_by_teacher": "Manqué par l'enseignant"
+  },
+  "details": {
+    "title": "Détails de présence",
+    "hint": "Touche une couleur du graphique pour voir seulement ces cours.",
+    "showAll": "Tout afficher",
+    "showingNone": "Affichage de 0 entrée",
+    "dateFilters": {
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "week": "Semaine",
+      "month": "Mois",
+      "custom": "Personnalisé"
+    },
+    "notAvailable": "{label} (non disponible)",
+    "statusOptions": {
+      "select": "Choisir un statut",
+      "all": "Tous",
+      "present": "Présent",
+      "late": "En retard",
+      "absent": "Absent"
+    },
+    "lookBack": "Tu peux remonter {days, plural, one {# jour} other {# jours}} en arrière. « Au » est toujours aujourd'hui.",
+    "errors": {
+      "unavailable": "La période personnalisée n'est pas disponible pour le moment.",
+      "invalidDate": "Choisis une date valide.",
+      "toIsToday": "La date « Au » est toujours aujourd'hui.",
+      "noFuture": "Tu ne peux pas choisir une date future.",
+      "lookBackOnly": "Tu peux remonter seulement {days, plural, one {# jour} other {# jours}} en arrière."
+    },
+    "loadError": "Impossible de charger les détails de présence.",
+    "columns": {
+      "srNo": "N°",
+      "date": "Date",
+      "class": "Cours",
+      "startTime": "Début",
+      "endTime": "Fin",
+      "joined": "Arrivée",
+      "status": "Statut"
+    },
+    "joinedNotes": {
+      "onTime": "À l'heure",
+      "minLate": "{minutes} min de retard",
+      "teacherAbsent": "L'enseignant n'a pas pu venir",
+      "didNotJoin": "Pas venu"
+    },
+    "loading": "Chargement de tes cours",
+    "empty": "Aucun cours ici.",
+    "pages": "Pages"
+  }
+}

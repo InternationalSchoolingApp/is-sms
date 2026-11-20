@@ -1,0 +1,210 @@
+{
+  "planner": {
+    "gettingReady": "On prépare ton planning…",
+    "myPlans": "Mes plannings",
+    "loadError": "Impossible de charger ton planning. Réessaie dans un moment.",
+    "picoOffYouGo": "En route pour le cours de {name} ! Amuse-toi bien en apprenant !",
+    "picoOffYouGoName": "En route pour le cours de {name} ! Amuse-toi bien en apprenant, {first} !",
+    "picoStillLive": "D'accord ! Ton cours est toujours en direct. Touche le bouton vert Rejoindre le cours quand tu es prêt.",
+    "picoStillLiveName": "D'accord ! Ton cours de {name} est toujours en direct. Touche le bouton vert Rejoindre le cours quand tu es prêt.",
+    "picoStillLiveDashboard": "D'accord ! Ton cours est toujours en direct. Tu peux le rejoindre depuis ton tableau de bord quand tu es prêt.",
+    "picoStillLiveDashboardName": "D'accord ! Ton cours de {name} est toujours en direct. Tu peux le rejoindre depuis ton tableau de bord quand tu es prêt."
+  },
+  "clue": {
+    "daysMore": "{list} et {count, plural, one {# autre jour} other {# autres jours}}",
+    "daysAnd": "{list} et {last}",
+    "assignmentSome": "Les points verts sont des devoirs. Je les ai allumés pour toi : {days} !",
+    "assignmentNone": "Les points verts sont des devoirs. Tu n'en as aucun ce mois-ci !",
+    "activitySome": "Les cases violettes sont des activités de l'école, comme {title} le {date} !",
+    "aSchoolActivity": "une activité de l'école",
+    "activityNone": "Les cases violettes sont des activités de l'école. Il n'y en a aucune ce mois-ci !",
+    "holidaySome": "Les cases rouges, ce sont les vacances. {days} : {count, plural, one {jour férié} other {jours fériés}}. Pas d'école !",
+    "holidayNone": "Les cases rouges, ce sont les vacances. Pas de vacances ce mois-ci !",
+    "done": "Les cases grises sont les cours que tu as déjà finis. Bravo !",
+    "liveNow": "Les cases bleues en pointillés sont des cours en direct. Ton prof est en ligne maintenant, alors touche Rejoindre !",
+    "live": "Les cases bleues en pointillés sont des cours en direct. Quand un cours commence, touche Rejoindre !",
+    "next": "Les cases jaunes sont les cours à venir. Ils vont bientôt commencer !"
+  },
+  "calendar": {
+    "previousMonth": "Mois précédent",
+    "nextMonth": "Mois suivant",
+    "closeCalendar": "Fermer le calendrier",
+    "dotLegend": "Point = quelque chose de prévu"
+  },
+  "today": {
+    "none": "Aucun cours ni activité",
+    "live": "Cours et activités en direct",
+    "upcoming": "Cours et activités à venir",
+    "completed": "Cours et activités terminés"
+  },
+  "courses": {
+    "title": "Mes cours",
+    "hide": "Cacher ce cours dans mon planning",
+    "show": "Afficher ce cours dans mon planning"
+  },
+  "pills": {
+    "done": "fini",
+    "live": "en direct",
+    "toGo": "à venir"
+  },
+  "clues": {
+    "group": "Indices de couleur",
+    "title": "Indices de couleur :",
+    "tap": "Touche un indice !",
+    "assignment": "Devoir",
+    "done": "Cours fini",
+    "live": "Cours en direct",
+    "upcoming": "Cours à venir",
+    "activity": "Activité de l'école",
+    "holiday": "Vacances"
+  },
+  "filters": {
+    "label": "Ce qu'il faut afficher dans mon planning",
+    "groups": {
+      "plan": "Dans mon planning",
+      "assignments": "Devoirs",
+      "classes": "Cours"
+    },
+    "items": {
+      "classes": "Cours",
+      "activities": "Activités",
+      "schoolEvents": "Événements de l'école",
+      "holidays": "Vacances",
+      "pendingAssignments": "À faire",
+      "submittedAssignments": "Rendus",
+      "upcomingAssignments": "À venir",
+      "liveActivities": "En direct",
+      "upcomingActivities": "À venir",
+      "pastActivities": "Passés",
+      "missedClasses": "Manqués",
+      "lateJoinClasses": "Arrivée en retard"
+    }
+  },
+  "toolbar": {
+    "zone": "Heure de {city}",
+    "myWeek": "Ma semaine",
+    "greeting": {
+      "morning": "Bonjour !",
+      "afternoon": "Bon après-midi !",
+      "evening": "Bonsoir !"
+    },
+    "previous": {
+      "day": "Jour précédent",
+      "week": "Semaine précédente",
+      "month": "Mois précédent"
+    },
+    "next": {
+      "day": "Jour suivant",
+      "week": "Semaine suivante",
+      "month": "Mois suivant"
+    },
+    "calendarView": "Vue du calendrier",
+    "views": {
+      "today": "Aujourd'hui",
+      "week": "Semaine",
+      "month": "Mois"
+    }
+  },
+  "weather": {
+    "labels": {
+      "clear": "Ciel dégagé",
+      "sunny": "Ensoleillé",
+      "partly": "Quelques nuages",
+      "cloudy": "Nuageux",
+      "foggy": "Brouillard",
+      "rainy": "Pluvieux",
+      "snowy": "Neigeux",
+      "stormy": "Orageux"
+    },
+    "tips": {
+      "stars": "Regarde les étoiles !",
+      "hat": "Mets un chapeau !",
+      "cozy": "Reste bien au chaud ce soir !",
+      "learn": "Super journée pour apprendre !",
+      "grownUp": "Reste près d'un adulte !",
+      "umbrella": "Prends un parapluie !",
+      "mittens": "Mets tes moufles !",
+      "inside": "Reste à l'intérieur aujourd'hui !"
+    },
+    "aria": "Météo : {c} degrés Celsius, {f} degrés Fahrenheit, {label}. {tip}"
+  },
+  "day": {
+    "liveClass": "Cours en direct",
+    "class": "Cours",
+    "done": "Fini !",
+    "liveNow": "EN DIRECT",
+    "joinClass": "Rejoindre le cours",
+    "starts": "Commence à {time}",
+    "schoolActivity": "Activité de l'école",
+    "schoolActivityUntitled": "Activité de l'école",
+    "assignments": "Devoirs",
+    "assignment": "Devoir",
+    "assignmentStatus": {
+      "submitted": "Rendu",
+      "pending": "À faire",
+      "upcoming": "À venir"
+    },
+    "noLiveClassesToday": "Pas de cours en direct aujourd'hui",
+    "noClassesToday": "Pas de cours aujourd'hui !",
+    "tomorrowClasses": "Demain : {count, plural, one {# cours} other {# cours}}",
+    "tomorrowFree": "Demain : pas de cours ! Journée libre !",
+    "tomorrowNone": "Demain : pas de cours",
+    "peek": "Voir",
+    "classesToday": "{count, plural, one {# cours aujourd'hui} other {# cours aujourd'hui}}",
+    "classes": "{count, plural, one {# cours} other {# cours}}",
+    "noClasses": "Pas de cours",
+    "todaysPlan": "Mon planning du jour",
+    "dayPlan": "Planning du {day}",
+    "showCalendar": "Afficher le calendrier",
+    "holiday": "Jour férié"
+  },
+  "plans": {
+    "chip": "{name}, {time}",
+    "chipLive": "{name}, {time}, en direct — rejoins le cours",
+    "done": "Fini",
+    "live": "DIRECT",
+    "schoolActivityUntitled": "Activité de l'école",
+    "holiday": "Jour férié",
+    "activityLabel": "Activité de l'école : {title}",
+    "assignment": "Devoir",
+    "assignmentLabel": "Devoir : {title}",
+    "assignments": "{count, plural, one {# devoir} other {# devoirs}}",
+    "assignmentsOpenDay": "{count, plural, one {# devoir} other {# devoirs}} — ouvrir ce jour",
+    "weekTile": "SEM.",
+    "myWeek": "Ma semaine",
+    "weekSubtitle": "{range} · touche un jour pour l'ouvrir",
+    "noClasses": "Pas de cours !",
+    "courseWorkDay": "Journée de travail",
+    "openBrainGames": "Ouvrir les jeux de réflexion",
+    "tapToPlay": "Touche pour jouer",
+    "legend": "= tes {count, plural, one {# cours} other {# cours}}",
+    "join": "Rejoindre {name}",
+    "openThisDay": "Ouvrir ce jour",
+    "eventsOnDay": "Événements de ce jour",
+    "myMonth": "Mon mois",
+    "monthSubtitle": "Touche un jour pour voir ce qui est prévu",
+    "dayAria": "{date} : {summary}",
+    "allDone": "Tout est fini",
+    "classes": "{count, plural, one {# cours} other {# cours}}",
+    "freeDay": "Journée libre"
+  },
+  "liveAlert": {
+    "liveNow": "EN DIRECT",
+    "hurry": "Vite ! Ton cours a commencé. Ton prof t'attend !",
+    "hurryName": "Vite, {name} ! Ton cours a commencé. Ton prof t'attend !",
+    "startedJustNow": "Vient de commencer",
+    "startedMinutes": "A commencé il y a {count, plural, one {# minute} other {# minutes}}",
+    "startedHours": "A commencé il y a {count, plural, one {# heure} other {# heures}}",
+    "joinNow": "Rejoindre le cours",
+    "notNow": "Pas maintenant, montre mon calendrier"
+  },
+  "completeProfile": {
+    "title": "Complète ton profil",
+    "unknownField": "Champ inconnu",
+    "required": "Obligatoire",
+    "fieldsNeedAttention": "{count, plural, one {# champ à compléter} other {# champs à compléter}}",
+    "requiredNote": "Certains champs sont obligatoires. Complète-les pour continuer.",
+    "later": "Plus tard",
+    "goToProfile": "Aller à mon profil"
+  }
+}

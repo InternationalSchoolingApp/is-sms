@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
@@ -12,6 +13,8 @@ import { Skeleton } from "@/components/ui/skeleton";
  */
 export function ClassFeedbackModal({ title, dateTime, teacher, url, rightSlide = false, onClose }) {
   const [loaded, setLoaded] = useState(false);
+  const t = useTranslations("feedback");
+  const tc = useTranslations("common");
   return (
     <div data-blocking-popup="" className={`fixed inset-0 z-[60] bg-black/50 ${rightSlide ? "" : "flex items-center justify-center p-4"}`}>
       <div
@@ -31,26 +34,22 @@ export function ClassFeedbackModal({ title, dateTime, teacher, url, rightSlide =
             </div>
           )}
           <h2 className="m-0 mb-1 text-lg font-bold">
-            {title}
-            {teacher && (
-              <>
-                {" "}
-                <span className="font-normal opacity-95">with</span> {teacher}
-              </>
-            )}
+            {teacher
+              ? t.rich("modal.titleWithTeacher", { title, teacher, muted: (chunks) => <span className="font-normal opacity-95">{chunks}</span> })
+              : title}
           </h2>
-          <p className="m-0 text-xs opacity-90">Help Us Improve Your Learning Experience</p>
+          <p className="m-0 text-xs opacity-90">{t("modal.tagline")}</p>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={tc("actions.close")}
             className="absolute right-4 top-3 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-none bg-transparent text-white hover:bg-white/20"
           >
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
         <p className="m-0 border-b bg-slate-50 px-3 py-2 text-center text-xs font-semibold leading-snug text-slate-500">
-          We want to hear what you really think. Your responses are confidential, so please feel free to be honest.
+          {t("modal.confidential")}
         </p>
         <div className="relative min-h-[320px] flex-1">
           {!loaded && (

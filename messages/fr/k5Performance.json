@@ -1,0 +1,354 @@
+{
+  "title": "Mes résultats",
+  "breadcrumbDashboard": "Tableau de bord",
+  "loading": "Chargement de tes résultats",
+  "noScoreYet": "Pas encore de note",
+  "starsLabel": "{n} étoiles sur 5",
+  "session": {
+    "withStart": "Session {start}–{end} · Début {starts} · Fin {ends}",
+    "endOnly": "Session {start}–{end} · Fin {ends}"
+  },
+  "tabs": {
+    "perf": "Résultats",
+    "goals": "Mes objectifs",
+    "class": "Comparaison avec la classe"
+  },
+  "hero": {
+    "greeting": "Coucou {name}, tu avances bien !",
+    "greetingPlain": "Bonjour {name}, voici où tu en es.",
+    "there": "toi",
+    "pillLabel": "{n} / 3 : {label}",
+    "pills": {
+      "progress": "Progrès",
+      "streak": "Série",
+      "scores": "Notes"
+    },
+    "quiet": {
+      "progress": "Continue — tes progrès s'afficheront ici après la prochaine mise à jour du jour.",
+      "streak": "Rends ta prochaine activité à l'heure pour commencer une série.",
+      "scores": "Tes notes s'afficheront ici quand ton travail sera corrigé."
+    }
+  },
+  "behindBanner": "Tu es en retard sur l'objectif du jour en {names}. Un petit effort aujourd'hui et tu seras de nouveau dans les temps !",
+  "stars": {
+    "superstar": {
+      "label": "Superstar",
+      "range": "90–100 %",
+      "msg": "Travail incroyable ! Tu es une superstar."
+    },
+    "great": {
+      "label": "Super",
+      "range": "80–89 %",
+      "msg": "Bravo ! Encore un petit effort pour devenir une Superstar."
+    },
+    "good": {
+      "label": "Bien",
+      "range": "70–79 %",
+      "msg": "C'est bien ! Continue à t'entraîner pour gagner plus d'étoiles."
+    },
+    "gettingThere": {
+      "label": "Presque",
+      "range": "60–69 %",
+      "msg": "Tu y es presque ! Chaque essai te rend meilleur."
+    },
+    "practise": {
+      "label": "Entraînons-nous",
+      "range": "Moins de 60 %",
+      "msg": "Entraînons-nous ensemble. Tu peux y arriver !"
+    },
+    "perfect": "Note parfaite ! Tu as tout bon."
+  },
+  "pace": {
+    "ahead": {
+      "label": "En avance",
+      "note": "En avance — {gap} % d'avance sur l'objectif du jour"
+    },
+    "onTrack": {
+      "label": "Dans les temps",
+      "note": "Dans les temps — pile autour de l'objectif du jour"
+    },
+    "behind": {
+      "label": "En retard",
+      "note": "En retard — {gap} % de retard sur l'objectif du jour"
+    }
+  },
+  "teacher": {
+    "mr": "M.",
+    "ms": "Mme"
+  },
+  "achievements": {
+    "title": "Récompenses",
+    "names": {
+      "EARLY_SUBMITTER": "Toujours en avance",
+      "CLEAN_SWEEP": "Sans faute",
+      "PERFECT_SCORE": "Note parfaite",
+      "HALFWAY": "À mi-chemin",
+      "ON_TARGET": "Dans le mille"
+    },
+    "earned": "Gagné le {date}",
+    "locked": "Verrouillé · {how}",
+    "unlock": {
+      "EARLY_SUBMITTER": "5 devoirs rendus avant la date limite",
+      "CLEAN_SWEEP": "100 % trois fois de suite",
+      "PERFECT_SCORE": "100 % dans deux cours",
+      "HALFWAY": "50 % terminé dans un cours",
+      "ON_TARGET": "{score} % de moyenne"
+    }
+  },
+  "score": {
+    "title": "Ma note",
+    "subtitle": "Les étoiles montrent comment tu t'en sors.",
+    "empty": "Tes étoiles s'afficheront ici quand ton travail sera corrigé.",
+    "levelExclaim": "{label} !",
+    "average": "Ta moyenne est de {avg} %",
+    "levels": "Niveaux d'étoiles",
+    "youAreHere": "Tu es ici",
+    "next": "Obtiens {min} % ou plus pour passer au niveau {label}. Plus que {more} % !",
+    "top": "Tu es tout en haut. Continue de briller !"
+  },
+  "streak": {
+    "title": "Ma série",
+    "subtitle": "Rends ton travail à l'heure et ta série grandit.",
+    "none": "Pas encore de série",
+    "one": "1 à l'heure !",
+    "many": "<n></n> à l'heure d'affilée !",
+    "bestIn": "Ta meilleure série est en {course}",
+    "startHint": "Rends ta prochaine activité à l'heure pour en commencer une.",
+    "next": "Encore {count} à l'heure pour gagner le badge {badge} !",
+    "allEarned": "Tu as gagné tous les badges de série !",
+    "badges": {
+      "spark": "Étincelle",
+      "flame": "Flamme",
+      "blaze": "Brasier",
+      "fireStar": "Étoile de feu"
+    }
+  },
+  "stats": {
+    "avgScore": "Moyenne",
+    "nothingGraded": "rien n'est encore noté",
+    "acrossCourses": "{count, plural, one {sur # cours} other {sur # cours}}",
+    "submitted": "Devoirs rendus",
+    "toGo": "encore {count} à faire",
+    "coursesAhead": "Cours en avance",
+    "aheadOf": "<n></n> sur {total}",
+    "onTrack": "{count} dans les temps",
+    "behind": "{count} en retard",
+    "daysLeft": "Jours restants",
+    "ends": "Fin le {date}"
+  },
+  "courseList": {
+    "title": "Mes cours",
+    "clickHint": "Clique sur un cours pour voir ses devoirs",
+    "empty": "Aucun résultat scolaire trouvé",
+    "emptyHint": "Tes cours apparaîtront ici après la prochaine mise à jour du jour.",
+    "perfect100": "100 parfait !",
+    "superstar": "Superstar !",
+    "score": "Note",
+    "scoreGrade": "Note · Niveau {grade}",
+    "scoreLine": "note <u>{score} %</u>",
+    "scoreNone": "note —",
+    "onTime": "{count} à l'heure",
+    "viewAssignments": "Voir les devoirs"
+  },
+  "courseView": {
+    "facts": {
+      "course": "Cours :",
+      "teacher": "Enseignant :",
+      "score": "Note globale actuelle :",
+      "grade": "Niveau global actuel :",
+      "daysLeft": "Jours restants :",
+      "duration": "Période :"
+    },
+    "gradableDone": "{pct} % des activités notées terminées ({done} sur {total})",
+    "allDone": "{pct} % de toutes les activités terminées ({done} sur {total})",
+    "nothingToComplete": "Aucun devoir à faire",
+    "streakRun": "{count, plural, one {# devoir rendu à l'heure d'affilée} other {# devoirs rendus à l'heure d'affilée}}",
+    "noStreak": "<b>Pas encore de série</b> — rends ta prochaine activité à l'heure pour en commencer une.",
+    "countsLabel": "Nombre de devoirs",
+    "stats": {
+      "total": "Total des devoirs",
+      "excused": "Dispensés",
+      "submitted": "Rendus",
+      "upcoming": "À venir",
+      "missed": "Manqués",
+      "passed": "Réussis",
+      "failed": "Échoués",
+      "before": "Rendus EN AVANCE",
+      "onTime": "Rendus À L'HEURE",
+      "late": "Rendus EN RETARD"
+    },
+    "noAssignments": "Les devoirs apparaîtront après la prochaine mise à jour du jour.",
+    "assignments": "Devoirs",
+    "columns": {
+      "activityName": "Nom de l'activité",
+      "dueDate": "Date limite",
+      "submittedDate": "Date de remise",
+      "timeSpent": "Temps passé (hh:mm:ss)",
+      "submittedStatus": "État de remise",
+      "score": "Note",
+      "grade": "Niveau",
+      "detailedStatus": "Détail du devoir",
+      "status": "Statut"
+    },
+    "status": {
+      "beforeTime": "En avance",
+      "onTime": "À l'heure",
+      "late": "En retard",
+      "missed": "Manqué",
+      "upcoming": "À venir",
+      "excused": "Dispensé"
+    },
+    "lateBy": "En retard de {count, plural, one {# jour} other {# jours}}",
+    "history": {
+      "title": "Historique des notes",
+      "loading": "Chargement des essais",
+      "empty": "Pas encore d'essai.",
+      "latest": "Le plus récent",
+      "columns": {
+        "date": "Date",
+        "visits": "Visites",
+        "time": "Temps",
+        "score": "Note",
+        "by": "Par"
+      }
+    }
+  },
+  "goals": {
+    "saved": "Objectifs enregistrés — viser {score} % d'ici le {date}",
+    "saveError": "Impossible d'enregistrer tes objectifs.",
+    "title": "Mes objectifs",
+    "setGoals": "Choisir mes objectifs",
+    "aim": "Vise <chip>{score} % de moyenne</chip> et termine d'ici le <chip>{date}</chip>",
+    "avgPending": "Ta moyenne s'affichera ici quand ton travail sera corrigé.",
+    "away": "Tu es à {gap} % de ton objectif de note.",
+    "reachedFull": "Objectif atteint — garde le cap.",
+    "reached": "Objectif atteint — garde le cap",
+    "pastFinishNew": "La date de fin est passée — choisis-en une nouvelle.",
+    "aboutPerWeek": "Environ <b>{count, plural, one {# devoir par semaine} other {# devoirs par semaine}}</b> dans tes cours et tu finiras à temps.",
+    "scoreGoal": "Objectif de note",
+    "ofScore": "sur {score} %",
+    "gapToGo": "encore {gap} %",
+    "completion": "Avancement",
+    "done": "fait",
+    "roadLabel": "Tu as fait {ov} % du chemin. L'objectif du jour est de {exp} %.",
+    "today": "Aujourd'hui",
+    "targetToday": "L'objectif du jour est de {exp} %",
+    "pastFinish": "Date de fin passée",
+    "daysToFinish": "{count, plural, one {# jour} other {# jours}} avant ta date de fin",
+    "due": "Pour le {date}",
+    "week": {
+      "title": "Objectifs de la semaine",
+      "doneOf": "{done} sur {total} faits",
+      "updated": "Mis à jour chaque jour selon tes devoirs rendus",
+      "empty": "Rien à rendre cette semaine.",
+      "catchUp": "{course} · Rattrapage",
+      "done": "Fait",
+      "overdue": "En retard",
+      "cleared": "Semaine terminée — tu restes en avance sur l'objectif."
+    },
+    "byCourse": {
+      "title": "Objectifs par cours",
+      "legend": "Ligne noire = ton objectif de note et l'objectif du jour",
+      "score": "Note",
+      "finalGoal": "· Objectif final : {score} %",
+      "goalMet": "Objectif atteint",
+      "toGoal": "encore {gap} % avant l'objectif",
+      "progress": "Progrès",
+      "pctDone": "{pct} % fait",
+      "targetToday": "· Objectif du jour : {pct} %",
+      "targetMet": "Objectif atteint · {gap} % d'avance",
+      "toTarget": "encore {gap} % avant l'objectif du jour",
+      "left": "{count, plural, one {devoir restant} other {devoirs restants}}",
+      "perWeek": "par semaine pour finir d'ici le {date}",
+      "daysToFinish": "{count, plural, one {jour avant ta date de fin} other {jours avant ta date de fin}}",
+      "nextUp": "À faire ensuite"
+    },
+    "dialog": {
+      "intro": "Choisis ton objectif pour cette session. Tu peux le changer à tout moment.",
+      "targetScore": "Moyenne visée",
+      "belowSchool": "Sous l'objectif de l'école",
+      "letterSchool": "{letter} · Objectif de l'école",
+      "alreadyThere": "Tu es à {avg} % — tu y es déjà. Vise plus haut si tu veux !",
+      "toGo": "Tu es à {avg} % — encore {gap} %.",
+      "finishBy": "Terminer tous mes cours d'ici le",
+      "recommended": "Conseillé · 2 semaines plus tôt",
+      "courseEnd": "Date de fin du cours",
+      "pickDate": "Choisir une date",
+      "pickDateBy": "Choisir une date (avant le {date})",
+      "ownPlan": "Termine à ton rythme",
+      "perWeekAll": "Cela fait environ {count, plural, one {# devoir par semaine} other {# devoirs par semaine}} pour tous tes cours.",
+      "reminders": "Rappels et comparaisons",
+      "compareTitle": "Me comparer avec ma classe",
+      "compareHelp": "Les noms et les notes des autres ne sont jamais affichés.",
+      "save": "Enregistrer mes objectifs"
+    }
+  },
+  "compare": {
+    "title": "Où tu en es",
+    "private": "Rien que pour toi · les noms et les notes des autres élèves ne sont jamais affichés",
+    "summary": "Ta note est au-dessus de la moyenne de la classe dans <g>{above} cours sur {total}</g>, et tu avances plus vite que la plupart de tes camarades dans <g>{ahead} sur {total}</g>.",
+    "course": "Cours",
+    "off": "La comparaison avec la classe est désactivée",
+    "offHint": "Active-la pour voir comment ta note et tes progrès se comparent à ceux des autres dans tes cours.",
+    "turnOn": "Activer la comparaison",
+    "turningOn": "Activation…",
+    "notEnough": "Pas encore assez de camarades pour comparer",
+    "notEnoughHint": "On compare seulement quand il y a assez de données. Les noms et les notes des autres ne sont jamais affichés.",
+    "comparedWith": "Comparé à {count} élèves cette session",
+    "standing": "Ta place dans la classe",
+    "ofClass": "de la classe",
+    "top": "Dans les {pct} % premiers",
+    "bottom": "Dans les {pct} % derniers",
+    "you": "Toi",
+    "class": "Classe",
+    "classAverage": "Moyenne de la classe",
+    "scale": {
+      "behind": "Plus en retard",
+      "middle": "Milieu de la classe",
+      "leading": "En tête de la classe"
+    },
+    "cards": {
+      "score": "Note",
+      "progress": "Progrès",
+      "onTime": "Devoirs rendus à l'heure"
+    },
+    "verdicts": {
+      "scoreHigh": "Mieux que {pct} % de la classe",
+      "scoreMid": "Autour du milieu de la classe ({pct} %)",
+      "scoreLow": "Derrière {pct} % de la classe — tu peux encore monter",
+      "paceHigh": "Plus rapide que {pct} % de la classe",
+      "paceMid": "Au même rythme que le milieu de la classe ({pct} %)",
+      "paceLow": "{pct} % de la classe avancent plus vite",
+      "timeHigh": "Plus ponctuel que {pct} % de la classe",
+      "timeMid": "Aussi ponctuel que la plupart ({pct} %)",
+      "timeLow": "La plupart de tes camarades rendent plus souvent à l'heure"
+    },
+    "dist": {
+      "title": "Où en est la classe",
+      "hint": "élèves par rythme",
+      "label": "{count} élèves · tu es : {band}"
+    },
+    "bands": {
+      "wellBehind": "Très en retard",
+      "behind": "En retard",
+      "onSchedule": "Dans les temps",
+      "ahead": "En avance",
+      "wellAhead": "Très en avance"
+    },
+    "tip": {
+      "ahead": "Termine d'ici le {date} pour rester devant {pct} % des élèves de ce cours.",
+      "perWeek": "Faire {count, plural, one {# devoir par semaine} other {# devoirs par semaine}} te ferait passer au-dessus de la moyenne de la classe en quelques semaines.",
+      "general": "Quelques devoirs de plus chaque semaine te feraient passer au-dessus de la moyenne de la classe en quelques semaines."
+    },
+    "glance": {
+      "title": "Tous les cours en un coup d'œil",
+      "columns": {
+        "course": "Cours",
+        "yourScore": "Ta note",
+        "classAvg": "Moyenne de la classe",
+        "yourProgress": "Tes progrès",
+        "standing": "Ta place"
+      }
+    }
+  }
+}

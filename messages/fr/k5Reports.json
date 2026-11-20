@@ -1,0 +1,78 @@
+{
+  "list": {
+    "title": "Bulletin de progrès",
+    "subtitle": "Tes bulletins de la semaine, un pour chaque semaine d'école",
+    "loading": "Chargement de tes bulletins",
+    "empty": "Aucun bulletin trouvé",
+    "columns": {
+      "srNo": "N°",
+      "type": "Type de bulletin",
+      "frequency": "Période",
+      "published": "Date de publication",
+      "view": "Voir"
+    }
+  },
+  "types": {
+    "weekly_progress_report": "Bulletin hebdomadaire",
+    "biweekly_progress_report": "Bulletin bimensuel",
+    "monthly_progress_report": "Bulletin mensuel",
+    "quiz": "QUIZ",
+    "assignment": "DEVOIR",
+    "lesson": "LEÇON"
+  },
+  "view": {
+    "loading": "Préparation de ton bulletin",
+    "title": "Résumé des notes",
+    "titleWithName": "Résumé des notes | {name}",
+    "dueStartDate": "Date de début",
+    "dueEndDate": "Date de fin",
+    "preparing": "Préparation…",
+    "errors": {
+      "pickDates": "Choisis la date de début et la date de fin du bulletin.",
+      "startBeforeEnd": "La date de début doit être avant la date de fin.",
+      "reopen": "Ouvre à nouveau le bulletin depuis la liste."
+    },
+    "loadError": "Impossible de charger le détail du bulletin.",
+    "student": "Élève",
+    "schoolLogo": "Logo de l'école",
+    "labelColon": "{label} :",
+    "studentName": "Nom de l'élève",
+    "grade": "Niveau",
+    "studentId": "Identifiant de l'élève",
+    "yearStart": "Début de l'année scolaire",
+    "yearEnd": "Fin de l'année scolaire",
+    "country": "Pays",
+    "teacherName": "Nom de l'enseignant",
+    "course": "Cours",
+    "teacherLine": "Enseignant : <b>{name}</b>",
+    "detailedTitle": "Rapport détaillé des notes de l'élève",
+    "duration": "Période : {start} - {end}",
+    "noActivities": "Aucune activité sur cette période.",
+    "columns": {
+      "srNo": "N°",
+      "module": "Module | Activité",
+      "type": "Type",
+      "activityName": "Nom de l'activité",
+      "timeSpent": "Temps passé (hh:mm:ss)",
+      "dueDate": "Date limite",
+      "submittedDate": "Date de remise",
+      "percentage": "Pourcentage",
+      "grade": "Note"
+    },
+    "naNote": "*N/D - Non disponible",
+    "counters": {
+      "totalTime": "Temps total d'activité : <b>{value}</b>",
+      "submittedGraded": "Activités remises et notées : <b>{value}</b>",
+      "waitingGrade": "Activités en attente de note : <b>{value}</b>",
+      "notSubmitted": "Activités non remises : <b>{value}</b>"
+    },
+    "lastSubmission": "Dernière remise : <b>{date}</b> | Activité : <b>{activity}</b>",
+    "courseGrade": "Note du cours :",
+    "overallPercentage": "Pourcentage global actuel :",
+    "weekPercentage": "Pourcentage de la semaine :",
+    "completionPercentage": "Progression du cours :",
+    "schoolOfficial": "Responsable de l'école",
+    "gradingSystem": "Système de notation",
+    "below60": "Moins de 60"
+  }
+}

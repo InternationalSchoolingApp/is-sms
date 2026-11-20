@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ShoppingCart } from "lucide-react";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useCartCount } from "@/hooks/useStudentCart";
@@ -13,6 +14,7 @@ import { studentNavHref } from "@/utils/dashboardNav";
  */
 export function CartHeaderButton() {
   const { context } = useDashboardContext();
+  const t = useTranslations("cart.header");
   const { school } = useParams();
   const isStudent = context?.role === "student";
   const { data: count = 0 } = useCartCount(isStudent ? context?.userId : null);
@@ -21,8 +23,8 @@ export function CartHeaderButton() {
   return (
     <Link
       href={studentNavHref(school, "cart")}
-      title="Cart"
-      aria-label={`Cart, ${count} ${count === 1 ? "item" : "items"}`}
+      title={t("cart")}
+      aria-label={t("cartItems", { count })}
       className="relative rounded-full bg-amber-100 p-2 text-amber-600 hover:bg-amber-200"
     >
       <ShoppingCart className="h-4 w-4" />

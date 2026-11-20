@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { BookOpen } from "lucide-react";
 import { MobileTableCard } from "@/components/student/MobileTableCard";
 import { formatAmount, hasEnded } from "@/utils/cartPlan";
@@ -10,6 +11,7 @@ import { formatAmount, hasEnded } from "@/utils/cartPlan";
  * `subjectId` null = no filtering.
  */
 export function PurchasedPlans({ items, subjectId, symbol, isoCode }) {
+  const t = useTranslations("cart.purchased");
   const rows = subjectId == null ? items : items.filter((item) => String(item.subjectId) === String(subjectId));
   if (rows.length === 0) return null;
   const subjectName = rows[0].subjectName;
@@ -18,7 +20,7 @@ export function PurchasedPlans({ items, subjectId, symbol, isoCode }) {
     <div className="mt-8">
       <h2 className="mb-3 flex items-center gap-2 font-bold text-black">
         <BookOpen className="h-6 w-6 rounded bg-primary p-1 text-white" aria-hidden="true" />
-        Purchased Plans{subjectName ? ` - ${subjectName}` : ""}
+        {subjectName ? t("titleWithCourse", { course: subjectName }) : t("title")}
       </h2>
       {/* Mobile: one card per plan (column title beside each value). */}
       <ul className="space-y-3 md:hidden">
@@ -26,12 +28,12 @@ export function PurchasedPlans({ items, subjectId, symbol, isoCode }) {
           <li key={item.cartId ?? index}>
             <MobileTableCard
               rows={[
-                { label: "S.No", value: index + 1 },
-                { label: "No. of Classes", value: item.classCount },
-                { label: `Fee Paid${isoCode ? ` (${isoCode})` : ""}`, value: formatAmount(symbol, item.planAmount) },
+                { label: t("sNo"), value: index + 1 },
+                { label: t("classes"), value: item.classCount },
+                { label: isoCode ? t("feePaidIn", { currency: isoCode }) : t("feePaid"), value: formatAmount(symbol, item.planAmount) },
                 {
-                  label: "Plan Status",
-                  value: hasEnded(item.planEndDate) ? <span className="text-red-600">Inactive</span> : <span className="text-primary">Active</span>,
+                  label: t("planStatus"),
+                  value: hasEnded(item.planEndDate) ? <span className="text-red-600">{t("inactive")}</span> : <span className="text-primary">{t("active")}</span>,
                 },
               ]}
             />
@@ -42,10 +44,10 @@ export function PurchasedPlans({ items, subjectId, symbol, isoCode }) {
         <table className="w-full min-w-[560px] text-left text-sm">
           <thead className="bg-primary text-white">
             <tr>
-              <th className="px-3 py-2">S.No</th>
-              <th className="px-3 py-2">No. of Classes</th>
-              <th className="px-3 py-2">Fee Paid{isoCode ? ` (${isoCode})` : ""}</th>
-              <th className="px-3 py-2">Plan Status</th>
+              <th className="px-3 py-2">{t("sNo")}</th>
+              <th className="px-3 py-2">{t("classes")}</th>
+              <th className="px-3 py-2">{isoCode ? t("feePaidIn", { currency: isoCode }) : t("feePaid")}</th>
+              <th className="px-3 py-2">{t("planStatus")}</th>
             </tr>
           </thead>
           <tbody>
@@ -55,7 +57,7 @@ export function PurchasedPlans({ items, subjectId, symbol, isoCode }) {
                 <td className="px-3 py-2">{item.classCount}</td>
                 <td className="px-3 py-2">{formatAmount(symbol, item.planAmount)}</td>
                 <td className="px-3 py-2">
-                  {hasEnded(item.planEndDate) ? <span className="text-red-600">Inactive</span> : <span className="text-primary">Active</span>}
+                  {hasEnded(item.planEndDate) ? <span className="text-red-600">{t("inactive")}</span> : <span className="text-primary">{t("active")}</span>}
                 </td>
               </tr>
             ))}

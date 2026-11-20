@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { Newspaper } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { NewsDetailModal } from "@/components/dashboard/NewsDetailModal";
 import { K5NewsAllModal } from "@/components/k5/panels/K5NewsAllModal";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
@@ -14,10 +16,11 @@ import { useDummyStudent } from "@/hooks/useDummyStudent";
 const PER_PAGE = 3;
 const NEWS_PAGE_SIZE = 10;
 
-function formatNewsDate(value) {
+// locale: the date-fns locale of the dashboard language (month name).
+function formatNewsDate(value, locale) {
   if (!value) return "";
   const parsed = parseISO(String(value));
-  return Number.isNaN(parsed.getTime()) ? "" : format(parsed, "MMM d, yyyy");
+  return Number.isNaN(parsed.getTime()) ? "" : format(parsed, "MMM d, yyyy", { locale });
 }
 
 
@@ -28,6 +31,9 @@ function formatNewsDate(value) {
  * them, then clear the badge client-side only).
  */
 export function K5NewsPanel({ articles, totalNews, userId, onClose }) {
+  const t = useTranslations("k5Panels.news");
+  const tc = useTranslations("common");
+  const locale = useDateFnsLocale();
   const [selected, setSelected] = useState(null);
   const [allArticles, setAllArticles] = useState(null);
   const [markingAll, setMarkingAll] = useState(false);
@@ -89,8 +95,8 @@ export function K5NewsPanel({ articles, totalNews, userId, onClose }) {
     <>
       {!selected && !allArticles && (
         <K5Drawer
-          title="News"
-          subtitle={totalNews > 0 ? `${totalNews} new` : "Fresh stories"}
+          title={t("title")}
+          subtitle={totalNews > 0 ? t("newCount", { count: totalNews }) : t("fresh")}
           icon={<Newspaper className="h-[30px] w-[30px] text-[#0B2447]" aria-hidden="true" />}
           accent="#F2B705"
           pastel="#FFE59E"
@@ -100,7 +106,7 @@ export function K5NewsPanel({ articles, totalNews, userId, onClose }) {
           onClose={onClose}
         >
         {articles.length === 0 ? (
-          <EmptyNote>No news yet.</EmptyNote>
+          <EmptyNote>{t("empty")}</EmptyNote>
         ) : (
           <>
             {visible.map((item) => (
@@ -114,7 +120,7 @@ export function K5NewsPanel({ articles, totalNews, userId, onClose }) {
                   )}
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-1.5 text-sm font-extrabold">
-                  <span className="text-k5-yi">{formatNewsDate(item.publishDate)}</span>
+                  <span className="text-k5-yi">{formatNewsDate(item.publishDate, locale)}</span>
                   {item.sourceName && <span className="text-k5-mut">{item.sourceName}</span>}
                 </div>
                 <button
@@ -122,19 +128,19 @@ export function K5NewsPanel({ articles, totalNews, userId, onClose }) {
                   onClick={() => setSelected(item)}
                   className="min-h-11 w-fit cursor-pointer rounded-full border-none bg-[#F2B705] px-4 text-[15px] font-black text-[#0B2447] shadow-[0_3px_0_#8A6100]"
                 >
-                  Read the story
+                  {t("readStory")}
                 </button>
               </article>
             ))}
-            <nav aria-label="News pages" className="flex items-center justify-between gap-2.5 pt-1">
+            <nav aria-label={t("pages")} className="flex items-center justify-between gap-2.5 pt-1">
               <button type="button" aria-disabled={current === 0} onClick={(e) => goTo(current - 1, e.currentTarget)} className={`${navBtn} bg-k5-card text-k5-ink`}>
-                Back
+                {tc("actions.back")}
               </button>
               <span className="text-sm font-extrabold text-k5-mut">
-                Page {current + 1} of {pages}
+                {tc("table.page", { page: current + 1, pages })}
               </span>
               <button type="button" aria-disabled={current === pages - 1} onClick={(e) => goTo(current + 1, e.currentTarget)} className={`${navBtn} bg-[#F2B705] shadow-[0_4px_0_#8A6100]`}>
-                Next
+                {tc("actions.next")}
               </button>
             </nav>
             <button
@@ -143,7 +149,7 @@ export function K5NewsPanel({ articles, totalNews, userId, onClose }) {
               disabled={markingAll}
               className="min-h-12 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-4 text-base font-black text-k5-ink disabled:opacity-60"
             >
-              {markingAll ? "Opening…" : "View all news"}
+              {markingAll ? t("opening") : t("viewAll")}
             </button>
           </>
         )}

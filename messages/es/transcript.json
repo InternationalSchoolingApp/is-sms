@@ -1,0 +1,18 @@
+{
+  "title": "Expediente académico del estudiante",
+  "actionsLabel": "Acciones del expediente",
+  "notPublished": "Tu expediente académico aún no se ha publicado.",
+  "links": {
+    "transcript": "Expediente - {grade}",
+    "transcriptNew": "Expediente - {grade} (Nuevo)",
+    "diploma": "Diploma - {grade}"
+  },
+  "table": {
+    "sNo": "N.º",
+    "studentName": "Nombre del estudiante",
+    "email": "Correo electrónico",
+    "grade": "Grado",
+    "studentId": "ID del estudiante",
+    "action": "Acción"
+  }
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { Mail, MessageCircle, Phone } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 /**
  * Building blocks of the re-enrollment screens. They follow the legacy re-enrollment (student dashboard) look:
@@ -46,10 +47,11 @@ export const SUPPORT_EMAIL = "admin.support@internationalschooling.org";
 
 /** Legacy "Need Support?" side card of the re-enrollment page. */
 export function SupportCard({ uniqueId }) {
+  const t = useTranslations("reEnrollment.support");
   const chatUrl = `${CHAT_BASE_URL}/onboarding-support?uuid=${encodeURIComponent(uniqueId || "")}`;
   return (
     <aside className="rounded-[15px] bg-white p-4 shadow-lg">
-      <h4 className="mb-3 text-base font-bold text-black">Need Support?</h4>
+      <h4 className="mb-3 text-base font-bold text-black">{t("needSupport")}</h4>
       <a
         href={chatUrl}
         target="_blank"
@@ -57,19 +59,19 @@ export function SupportCard({ uniqueId }) {
         className="mb-3 flex items-center gap-3 rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white transition-transform hover:scale-[1.02]"
       >
         <MessageCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
-        Live Chat with School Administration
+        {t("liveChat")}
       </a>
       <div className="mb-3 flex items-center gap-3 text-sm">
         <Phone className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
         <div>
-          <p className="font-semibold text-black">Phone Support</p>
+          <p className="font-semibold text-black">{t("phone")}</p>
           <p className="text-slate-600">{SUPPORT_PHONE}</p>
         </div>
       </div>
       <div className="flex items-center gap-3 text-sm">
         <Mail className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
         <div className="min-w-0">
-          <p className="font-semibold text-black">Email Support</p>
+          <p className="font-semibold text-black">{t("email")}</p>
           <a href={`mailto:${SUPPORT_EMAIL}`} className="break-words text-slate-600">
             {SUPPORT_EMAIL}
           </a>

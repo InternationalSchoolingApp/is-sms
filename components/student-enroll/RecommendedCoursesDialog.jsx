@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { BookOpen, GraduationCap } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
  
 export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm, busy }) {
+  const t = useTranslations("shared.recommendedCourses");
   const courses = data?.recommendedCourses || [];
   const isMandatory = (course) => course.courseMandatory === 1;
 
@@ -59,7 +61,7 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
       <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
         <DialogHeader className="shrink-0 gap-0 border-b px-4 py-3 pr-12">
           <DialogTitle className="text-lg">
-            Recommended Courses{data?.gradeName ? ` for ${data.gradeName}` : ""}
+            {data?.gradeName ? t("titleForGrade", { grade: data.gradeName }) : t("title")}
           </DialogTitle>
         </DialogHeader>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
@@ -69,7 +71,7 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
                 <GraduationCap className="h-4 w-4" />
               </span>
               <div className="inline-flex flex-col">
-                  <p className="flex-1 text-sm font-bold text-black-900">Total Courses</p>
+                  <p className="flex-1 text-sm font-bold text-black-900">{t("totalCourses")}</p>
                   {/* <p className="flex-1 text-xs text-black-900">Including all recommended courses</p> */}
               </div>
               <span className="flex h-8 w-8 ml-auto shrink-0 items-center justify-center rounded-md bg-[#d8e4fb] text-black-900 text-2xl font-bold">
@@ -79,7 +81,7 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
 
             {mandatoryCourses.length > 0 && (
               <div>
-                <p className="mb-2 text-sm font-semibold text-black-900">These courses are mandatory ({mandatoryCourses.length})</p>
+                <p className="mb-2 text-sm font-semibold text-black-900">{t("mandatoryHeading", { count: mandatoryCourses.length })}</p>
                 <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200">
                   {mandatoryCourses.map((course) => (
                     <li key={course.subjectId} className="flex items-center gap-3 px-3 py-2 text-sm">
@@ -91,7 +93,7 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
                           {/* <span className="shrink-0 text-xs text-slate-500">{course.subjectCredit} Credit</span> */}
                         </div>
                       <span className="shrink-0 rounded-md bg-emerald-50 px-2 py-1 text-center text-xs font-semibold text-emerald ml-auto">
-                        Mandatory
+                        {t("mandatory")}
                       </span>
                     </li>
                   ))}
@@ -102,9 +104,9 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
             {optionalCourses.length > 0 && (
               <div>
                 <div className="mb-2 flex items-center justify-between gap-3 mt-2">
-                  <p className="text-sm font-semibold text-black-900">We also recommend these courses</p>
+                  <p className="text-sm font-semibold text-black-900">{t("optionalHeading")}</p>
                   <Button type="button" size="sm" onClick={toggleAll} className="rounded-md bg-primary hover:bg-primary/90">
-                    {allOptionalChecked ? "Remove All" : "+ Add All"}
+                    {allOptionalChecked ? t("removeAll") : t("addAll")}
                   </Button>
                 </div>
                 <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200">
@@ -129,12 +131,12 @@ export function RecommendedCoursesDialog({ data, selectedIds, onClose, onConfirm
             )}
           </div>   
           <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs border border-amber-400 text-black-900 mt-2">
-            <strong>Note:</strong> Adding these will replace the courses you&apos;ve already selected. You can still change them afterwards.
+            {t.rich("note", { strong: (chunks) => <strong>{chunks}</strong> })}
           </p>
         </div>
         <DialogFooter className="mx-0 mb-0 shrink-0 border-t bg-white px-4 py-3 sm:justify-center">
           <Button type="button" onClick={handleConfirm} disabled={busy} className="rounded-md bg-primary px-10 hover:bg-primary/90">
-            {busy ? "Please wait…" : "Confirm"}
+            {busy ? t("pleaseWait") : t("confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

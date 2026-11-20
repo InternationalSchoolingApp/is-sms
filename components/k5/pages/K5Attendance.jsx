@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { useLocaleTag } from "@/i18n/dateLocale";
 import { CountUp } from "@/components/motion/CountUp";
 import { ProgressSparkle } from "@/components/motion/canvas/ProgressCanvas";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
-import { K5AttendanceDetails, AC, ATB, LABEL } from "@/components/k5/pages/K5AttendanceDetails";
+import { K5AttendanceDetails, AC, ATB } from "@/components/k5/pages/K5AttendanceDetails";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -16,9 +18,11 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
  * (K5AttendanceDetails) loads its own page from student-attendance-details.
  */
 
-const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const MON_LONG = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const VIEWS = [["today", "Today"], ["week", "Week"], ["month", "Month"], ["year", "Academic Year"]];
+// Month names in the dashboard language (`tag` from useLocaleTag): "Jan", "January", "January 2026" in English.
+const monthName = (tag, month, width) => new Intl.DateTimeFormat(tag, { month: width, timeZone: "UTC" }).format(new Date(Date.UTC(2000, month - 1, 15)));
+const monthYear = (tag, year, month) => new Intl.DateTimeFormat(tag, { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(year, month - 1, 15)));
+// Values of the view picker; their labels are k5Attendance.views.*.
+const VIEWS = ["today", "week", "month", "year"];
 
 const n = (v) => Number(v) || 0;
 const pad = (v) => String(v).padStart(2, "0");
@@ -67,11 +71,12 @@ function Medal({ b }) {
 // Every level wears the gold medal card of the mockup's Attendance Star; the level only changes its chip and message.
 const GOLD = { c1: "#FFC531", c2: "#C9930A", r1: "#E5243B", r2: "#B81A2E", bg: "#FFF8DC" };
 
+// `level` picks the chip and message (k5Attendance.badges.<level>.name / .msg).
 function badgeOf(p) {
-  if (p >= 95) return { ...GOLD, name: "Attendance Star", msg: "Super star! You almost never miss a class." };
-  if (p >= 90) return { ...GOLD, name: "Super Regular", msg: "Great job! Keep it up." };
-  if (p >= 80) return { ...GOLD, name: "Good Effort", msg: "Let's try to come to every class!" };
-  return { ...GOLD, name: "Keep Going", msg: "Let's try to come to every class!" };
+  if (p >= 95) return { ...GOLD, level: "star" };
+  if (p >= 90) return { ...GOLD, level: "regular" };
+  if (p >= 80) return { ...GOLD, level: "goodEffort" };
+  return { ...GOLD, level: "keepGoing" };
 }
 
 function StatTile({ label, value, valueClass, tileClass, icon, children }) {
@@ -92,6 +97,7 @@ function StatTile({ label, value, valueClass, tileClass, icon, children }) {
 /** "My Attendance" title row. Grade 6–8 (Middle.dc.html): no card around it, a 62px accent tile, a 30px heading. */
 function AttendanceHeader() {
   const { isMiddle } = useDashboardContext();
+  const t = useTranslations("k5Attendance");
   return (
     <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
       <span
@@ -105,8 +111,8 @@ function AttendanceHeader() {
         </svg>
       </span>
       <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-        <h1 className={`m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-4xl"}`}>My Attendance</h1>
-        <p className={`m-0 font-extrabold text-k5-mut ${isMiddle ? "text-base" : "text-lg"}`}>See how many classes you came to.</p>
+        <h1 className={`m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-4xl"}`}>{t("header.title")}</h1>
+        <p className={`m-0 font-extrabold text-k5-mut ${isMiddle ? "text-base" : "text-lg"}`}>{t("header.subtitle")}</p>
       </div>
     </div>
   );
@@ -118,8 +124,9 @@ function AttendanceHeader() {
  */
 function AttendanceSkeleton() {
   const { isHigh } = useDashboardContext();
+  const t = useTranslations("k5Attendance");
   return (
-    <K5Loading label="Loading your attendance" className="flex flex-col gap-4">
+    <K5Loading label={t("loading")} className="flex flex-col gap-4">
       <AttendanceHeader />
       <div className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-3.5">
         {Array.from({ length: 3 }, (_, i) => (
@@ -216,6 +223,8 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
   const [picked, setPicked] = useState(null);
   const [view, setView] = useState("year");
   const [filter, setFilter] = useState("");
+  const t = useTranslations("k5Attendance");
+  const tag = useLocaleTag();
   usePicoContentReady(!isLoading);
 
   // The current month, or - while it has no classes yet - the latest month that has some.
@@ -226,7 +235,7 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
     return -1;
   })();
   const diff = cur && prevIdx >= 0 ? cur.percent - data[prevIdx].percent : null;
-  const monthLong = `${MON_LONG[slots[sel].month - 1]} ${slots[sel].year}`;
+  const monthLong = monthYear(tag, slots[sel].year, slots[sel].month);
   const badge = cur ? badgeOf(cur.percent) : null;
 
   const toggleFilter = (k) => setFilter((f) => (f === k ? "" : k));
@@ -255,13 +264,13 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
 
       {!summary ? (
         <div className={`${K5_CARD} p-8 text-center font-k5-display text-2xl font-semibold text-k5-mut`}>
-          {sessionOut ? "Your session has expired. Please log in again." : "Attendance details not found"}
+          {sessionOut ? t("sessionExpired") : t("notFound")}
         </div>
       ) : (
         <>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-3.5">
             <StatTile
-              label="Classes Today"
+              label={t("tiles.classesToday")}
               value={n(summary.classesToday)}
               valueClass="text-k5-vi"
               tileClass="bg-k5-vt"
@@ -273,7 +282,7 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
               }
             />
             <StatTile
-              label={`Attendance · ${monthLong}`}
+              label={t("tiles.attendance", { month: monthLong })}
               value={cur ? <><CountUp value={cur.percent} />%</> : "–"}
               valueClass="text-k5-gx"
               tileClass="bg-k5-gt"
@@ -286,13 +295,13 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
               {diff !== null && (
                 <span className={`self-start rounded-full px-2.5 py-0.5 text-[13px] font-black ${diff >= 0 ? "bg-k5-gt text-k5-gx" : "bg-k5-rt text-k5-ri"}`}>
                   {diff === 0
-                    ? `Same as ${MON_LONG[slots[prevIdx].month - 1]}`
-                    : `${diff > 0 ? "▲" : "▼"} ${Math.round(Math.abs(diff) * 10) / 10}% from ${MON_LONG[slots[prevIdx].month - 1]}`}
+                    ? t("tiles.sameAs", { month: monthName(tag, slots[prevIdx].month, "long") })
+                    : t("tiles.changeFrom", { arrow: diff > 0 ? "▲" : "▼", diff: Math.round(Math.abs(diff) * 10) / 10, month: monthName(tag, slots[prevIdx].month, "long") })}
                 </span>
               )}
             </StatTile>
             <StatTile
-              label={`Late · ${monthLong}`}
+              label={t("tiles.late", { month: monthLong })}
               value={cur ? cur.late : 0}
               valueClass="text-k5-yx"
               tileClass="bg-k5-yt"
@@ -309,19 +318,19 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
             <section aria-labelledby="k5-at-perf" className={`${K5_CARD} flex flex-col gap-3.5 px-5 py-[18px]`}>
               <div className="flex flex-wrap items-start justify-between gap-2.5">
                 <div className="flex min-w-0 flex-col gap-0.5">
-                  <h2 id="k5-at-perf" className="m-0 font-k5-display text-2xl font-semibold">Performance Overview</h2>
-                  <span className="text-[15px] font-extrabold text-k5-mut">Tap a month to see its summary.</span>
+                  <h2 id="k5-at-perf" className="m-0 font-k5-display text-2xl font-semibold">{t("overview.title")}</h2>
+                  <span className="text-[15px] font-extrabold text-k5-mut">{t("overview.hint")}</span>
                 </div>
-                <select value={view} onChange={(e) => setView(e.target.value)} aria-label="Performance Overview" className="min-h-[46px] cursor-pointer rounded-[14px] border-[3px] border-k5-line bg-k5-card px-3 text-base font-extrabold text-k5-ink">
-                  {VIEWS.map(([v, label]) => (
-                    <option key={v} value={v}>{label}</option>
+                <select value={view} onChange={(e) => setView(e.target.value)} aria-label={t("overview.title")} className="min-h-[46px] cursor-pointer rounded-[14px] border-[3px] border-k5-line bg-k5-card px-3 text-base font-extrabold text-k5-ink">
+                  {VIEWS.map((v) => (
+                    <option key={v} value={v}>{t(`views.${v}`)}</option>
                   ))}
                 </select>
               </div>
 
               {view !== "year" ? (
                 <div className="flex h-[240px] items-center justify-center rounded-[20px] bg-k5-soft px-4 text-center font-k5-display text-[19px] font-semibold text-k5-mut">
-                  Coming soon · Pick Academic Year to see your months.
+                  {t("overview.comingSoon")}
                 </div>
               ) : (
                 <div className="grid grid-cols-[40px_minmax(0,1fr)] gap-1.5">
@@ -334,11 +343,10 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                     {[100, 75, 50, 25].map((p) => (
                       <span key={p} aria-hidden="true" className="absolute inset-x-0 border-t border-dashed border-k5-line" style={{ bottom: `${p}%` }} />
                     ))}
-                    <div role="group" aria-label="Performance Overview" className="absolute inset-0 flex items-end gap-1">
+                    <div role="group" aria-label={t("overview.title")} className="absolute inset-0 flex items-end gap-1">
                       {slots.map((s, j) => {
                         const d = data[j];
-                        const label = MON[s.month - 1];
-                        const long = `${MON_LONG[s.month - 1]} ${s.year}`;
+                        const long = monthYear(tag, s.year, s.month);
                         const isSel = j === sel;
                         return (
                           <button
@@ -349,11 +357,11 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                               setFilter("");
                             }}
                             aria-pressed={isSel}
-                            aria-label={d ? `${long}: ${d.percent}% attendance` : `${long}: Not yet`}
+                            aria-label={d ? t("overview.barLabel", { month: long, percent: d.percent }) : t("overview.barNotYet", { month: long })}
                             className="group relative flex h-full min-w-0 flex-1 cursor-pointer flex-col items-center justify-end gap-1 border-none bg-transparent p-0"
                           >
                             <span className="k5h-r10 pointer-events-none absolute bottom-[calc(100%+6px)] left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap rounded-[10px] bg-k5-ink px-2.5 py-1 text-[13px] font-black text-k5-card opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100">
-                              {long}: {d ? `${d.percent}%` : "Not yet"}
+                              {d ? t("overview.barTip", { month: long, percent: d.percent }) : t("overview.barNotYet", { month: long })}
                             </span>
                             <span className={`text-[13px] font-black text-k5-ink ${d && isSel ? "opacity-100" : "opacity-0"}`}>{d ? `${d.percent}%` : ""}</span>
                             <span
@@ -368,7 +376,7 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                   <span />
                   <div aria-hidden="true" className="flex gap-1">
                     {slots.map((s, j) => (
-                      <span key={j} className={`min-w-0 flex-1 overflow-hidden whitespace-nowrap text-center text-[13px] ${j === sel ? "font-black text-k5-ink" : "font-bold text-k5-mut"}`}>{MON[s.month - 1]}</span>
+                      <span key={j} className={`min-w-0 flex-1 overflow-hidden whitespace-nowrap text-center text-[13px] ${j === sel ? "font-black text-k5-ink" : "font-bold text-k5-mut"}`}>{monthName(tag, s.month, "short")}</span>
                     ))}
                   </div>
                 </div>
@@ -377,14 +385,14 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
 
             <section aria-labelledby="k5-at-sum" className={`${K5_CARD} flex flex-col gap-3.5 px-5 py-[18px]`}>
               <div className="flex flex-col gap-0.5">
-                <h2 id="k5-at-sum" className="m-0 font-k5-display text-2xl font-semibold">Monthly Summary</h2>
+                <h2 id="k5-at-sum" className="m-0 font-k5-display text-2xl font-semibold">{t("summary.title")}</h2>
                 <span className="text-[15px] font-black text-k5-acx">{monthLong}</span>
               </div>
               {cur ? (
                 <>
                   <div className="flex flex-wrap items-center gap-[18px]">
                     <div className="relative h-[160px] w-[160px] flex-none"><ProgressSparkle />
-                      <svg width="160" height="160" viewBox="0 0 160 160" role="img" aria-label={`You came to ${cur.total - cur.absent} of ${cur.total} classes.`}>
+                      <svg width="160" height="160" viewBox="0 0 160 160" role="img" aria-label={t("summary.cameTo", { came: cur.total - cur.absent, total: cur.total })}>
                         <circle cx="80" cy="80" r={R} fill="none" strokeWidth="20" style={{ stroke: "var(--k5-soft)" }} />
                         {slices.map((s) => (
                           <circle
@@ -401,13 +409,13 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                             onClick={() => toggleFilter(s.k)}
                             style={{ opacity: s.op, cursor: "pointer" }}
                           >
-                            <title>{`${LABEL[s.k]}: ${s.count}`}</title>
+                            <title>{t("summary.sliceTitle", { label: t(`status.${s.k}`), count: s.count })}</title>
                           </circle>
                         ))}
                       </svg>
                       <span className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
                         <span className="k5h-at-donut font-k5-display text-[34px] font-bold leading-none"><CountUp value={filter ? { present: cur.present, late: cur.late, absent: cur.absent, missS: cur.absent, missT: 0 }[filter] : cur.total} /></span>
-                        <span className="text-xs font-black text-k5-mut">{filter ? LABEL[filter] : "classes"}</span>
+                        <span className="text-xs font-black text-k5-mut">{filter ? t(`status.${filter}`) : t("summary.classesWord", { count: cur.total })}</span>
                       </span>
                     </div>
                     <ul className="m-0 flex flex-[1_1_150px] list-none flex-col gap-2 p-0">
@@ -433,7 +441,7 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
                                 )}
                               </span>
-                              <span className="flex-1 text-base font-extrabold">{LABEL[k]}</span>
+                              <span className="flex-1 text-base font-extrabold">{t(`status.${k}`)}</span>
                               <span className="font-k5-display text-[22px] font-bold"><CountUp value={count} /></span>
                             </button>
                           </li>
@@ -444,14 +452,14 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                   <div className="k5h-r10 flex items-center gap-3.5 rounded-[20px] border-[3px] px-3.5 py-3" style={{ background: badge.bg, borderColor: badge.c2 }}>
                     <Medal b={badge} />
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <span className="self-start rounded-full px-2.5 py-0.5 text-xs font-black uppercase tracking-[0.04em] text-white" style={{ background: badge.c2 }}>{badge.name}</span>
-                      <span className="font-k5-display text-[19px] font-semibold leading-[1.2]">{badge.msg}</span>
-                      <span className="text-[15px] font-extrabold text-k5-mut">You came to {cur.total - cur.absent} of {cur.total} classes.</span>
+                      <span className="self-start rounded-full px-2.5 py-0.5 text-xs font-black uppercase tracking-[0.04em] text-white" style={{ background: badge.c2 }}>{t(`badges.${badge.level}.name`)}</span>
+                      <span className="font-k5-display text-[19px] font-semibold leading-[1.2]">{t(`badges.${badge.level}.msg`)}</span>
+                      <span className="text-[15px] font-extrabold text-k5-mut">{t("summary.cameTo", { came: cur.total - cur.absent, total: cur.total })}</span>
                     </div>
                   </div>
                 </>
               ) : (
-                <div className="k5h-r10 rounded-[20px] bg-k5-soft px-4 py-[30px] text-center font-k5-display text-[19px] font-semibold text-k5-mut">Not yet · No classes this month.</div>
+                <div className="k5h-r10 rounded-[20px] bg-k5-soft px-4 py-[30px] text-center font-k5-display text-[19px] font-semibold text-k5-mut">{t("summary.empty")}</div>
               )}
             </section>
           </div>

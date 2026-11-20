@@ -1,0 +1,20 @@
+{
+  "title": "Histórico de acesso - {name}",
+  "empty": "Nenhum histórico de acesso encontrado",
+  "firstLogin": "Primeiro acesso",
+  "lastLogin": "Último acesso | Duração",
+  "totalLogin": "Total de acessos | Duração",
+  "tillNow": "Até agora",
+  "sessions": "Sessões de acesso",
+  "searchPlaceholder": "Pesquisar sessões...",
+  "showingSessions": "Mostrando {start}-{end} de {total} sessões",
+  "securityNoticeLabel": "Aviso de segurança:",
+  "securityNotice": "Se você notar alguma atividade de acesso suspeita ou locais desconhecidos, entre em contato com o administrador imediatamente. A segurança da sua conta é importante para nós.",
+  "table": {
+    "sNo": "Nº",
+    "login": "Data | Hora de acesso",
+    "logout": "Data | Hora de saída",
+    "location": "Local",
+    "duration": "Duração"
+  }
+}

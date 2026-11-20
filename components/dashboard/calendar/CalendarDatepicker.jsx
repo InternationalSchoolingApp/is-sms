@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { parseISO } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 
 /**
  * Sidebar mini-calendar (legacy bootstrap-datepicker in
@@ -12,6 +13,7 @@ import { Calendar } from "@/components/ui/calendar";
  * legacy's changeDate handler, which never force-switches the view.
  */
 export function CalendarDatepicker({ selectedDate, onSelectDate, events }) {
+  const dateLocale = useDateFnsLocale();
   const eventDates = useMemo(() => {
     const seen = new Set();
     const dates = [];
@@ -27,6 +29,7 @@ export function CalendarDatepicker({ selectedDate, onSelectDate, events }) {
     <Calendar
       key={selectedDate.toDateString()}
       mode="single"
+      locale={dateLocale}
       selected={selectedDate}
       onSelect={(date) => date && onSelectDate(date)}
       defaultMonth={selectedDate}

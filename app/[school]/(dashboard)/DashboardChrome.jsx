@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { DashboardProvider, useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDashboardSessionExpiry } from "@/hooks/useDashboardSessionExpiry";
 import { useNavigationSessionGuard } from "@/hooks/useNavigationSessionGuard";
@@ -28,11 +29,13 @@ function SessionExpiryWatcher() {
 function DashboardTitle() {
   const { context } = useDashboardContext();
   const pathname = usePathname();
+  const t = useTranslations("nav.pageTitle");
   const name = String(context?.userName || "").trim();
+  const title = name ? t("withName", { name }) : t("dashboard");
   useEffect(() => {
     if (isOnboardingPath(pathname)) return;
-    document.title = name ? `${name} | Dashboard` : "Dashboard";
-  }, [name, pathname]);
+    document.title = title;
+  }, [title, pathname]);
   return null;
 }
 

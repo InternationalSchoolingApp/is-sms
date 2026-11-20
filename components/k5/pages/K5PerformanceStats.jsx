@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { CalendarIcon, ChartIcon, CheckBoxIcon, UpRightIcon } from "@/components/k5/pages/K5PerformanceIcons";
 import { CountUp } from "@/components/motion/CountUp";
 
@@ -20,21 +21,22 @@ function Tile({ icon, bg, fg, label, value, children }) {
 
 /** Mockup .pmtiles: average score, assignments submitted, courses ahead, days left (Performance tab tiles). */
 export function K5PerformanceStats({ tiles, session }) {
+  const t = useTranslations("k5Performance");
   if (!tiles || !tiles.totalCourses) return null;
   const avg = tiles.avgScore;
   return (
-    <section aria-label="My Performance" className="grid grid-cols-[repeat(auto-fit,minmax(210px,1fr))] gap-3.5">
-      <Tile icon={<ChartIcon size={22} />} bg="var(--k5-bT)" fg="var(--k5-bI)" label="Average score" value={avg == null ? "No score yet" : <><CountUp value={avg} decimals={1} />%</>}>
-        {avg == null ? "nothing graded yet" : `across ${tiles.scoredCourses} course${tiles.scoredCourses === 1 ? "" : "s"}`}
+    <section aria-label={t("title")} className="grid grid-cols-[repeat(auto-fit,minmax(210px,1fr))] gap-3.5">
+      <Tile icon={<ChartIcon size={22} />} bg="var(--k5-bT)" fg="var(--k5-bI)" label={t("stats.avgScore")} value={avg == null ? t("noScoreYet") : <><CountUp value={avg} decimals={1} />%</>}>
+        {avg == null ? t("stats.nothingGraded") : t("stats.acrossCourses", { count: tiles.scoredCourses })}
       </Tile>
-      <Tile icon={<CheckBoxIcon />} bg="var(--k5-gT)" fg="var(--k5-gI)" label="Assignments submitted" value={<CountUp value={tiles.submitted} />}>
-        {`${tiles.toGo} still to go`}
+      <Tile icon={<CheckBoxIcon />} bg="var(--k5-gT)" fg="var(--k5-gI)" label={t("stats.submitted")} value={<CountUp value={tiles.submitted} />}>
+        {t("stats.toGo", { count: tiles.toGo })}
       </Tile>
-      <Tile icon={<UpRightIcon />} bg="var(--k5-vT)" fg="var(--k5-vI)" label="Courses ahead" value={<><CountUp value={tiles.ahead} /> of {tiles.totalCourses}</>}>
-        <span style={{ color: "var(--k5-bI)" }}>{tiles.onTrack} on track</span> · <span style={{ color: "var(--k5-red)" }}>{tiles.behind} behind</span>
+      <Tile icon={<UpRightIcon />} bg="var(--k5-vT)" fg="var(--k5-vI)" label={t("stats.coursesAhead")} value={t.rich("stats.aheadOf", { total: tiles.totalCourses, n: () => <CountUp value={tiles.ahead} /> })}>
+        <span style={{ color: "var(--k5-bI)" }}>{t("stats.onTrack", { count: tiles.onTrack })}</span> · <span style={{ color: "var(--k5-red)" }}>{t("stats.behind", { count: tiles.behind })}</span>
       </Tile>
-      <Tile icon={<CalendarIcon />} bg="var(--k5-tT)" fg="var(--k5-tI)" label="Days left" value={session ? <CountUp value={session.days} /> : "—"}>
-        {session ? `Ends ${session.endsTx}` : ""}
+      <Tile icon={<CalendarIcon />} bg="var(--k5-tT)" fg="var(--k5-tI)" label={t("stats.daysLeft")} value={session ? <CountUp value={session.days} /> : "—"}>
+        {session ? t("stats.ends", { date: session.endsTx }) : ""}
       </Tile>
     </section>
   );

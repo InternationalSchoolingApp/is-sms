@@ -1,0 +1,210 @@
+{
+  "planner": {
+    "gettingReady": "Preparando tu plan…",
+    "myPlans": "Mis planes",
+    "loadError": "No se pudo cargar tu plan. Inténtalo de nuevo en un momento.",
+    "picoOffYouGo": "¡A tu clase de {name}! ¡Diviértete aprendiendo!",
+    "picoOffYouGoName": "¡A tu clase de {name}! ¡Diviértete aprendiendo, {first}!",
+    "picoStillLive": "¡Vale! Tu clase sigue en directo. Toca el botón verde Unirse a la clase cuando estés listo.",
+    "picoStillLiveName": "¡Vale! Tu clase de {name} sigue en directo. Toca el botón verde Unirse a la clase cuando estés listo.",
+    "picoStillLiveDashboard": "¡Vale! Tu clase sigue en directo. Puedes unirte desde tu panel cuando estés listo.",
+    "picoStillLiveDashboardName": "¡Vale! Tu clase de {name} sigue en directo. Puedes unirte desde tu panel cuando estés listo."
+  },
+  "clue": {
+    "daysMore": "{list} y {count, plural, one {# día más} other {# días más}}",
+    "daysAnd": "{list} y {last}",
+    "assignmentSome": "Los puntos verdes son tareas. Te las iluminé: ¡{days}!",
+    "assignmentNone": "Los puntos verdes son tareas. ¡No tienes ninguna este mes!",
+    "activitySome": "Las cajas moradas son actividades de la escuela, como {title} el {date}!",
+    "aSchoolActivity": "una actividad de la escuela",
+    "activityNone": "Las cajas moradas son actividades de la escuela. ¡No hay ninguna este mes!",
+    "holidaySome": "Las cajas rojas son días festivos. {days}: {count, plural, one {es festivo} other {son festivos}}. ¡No hay clases!",
+    "holidayNone": "Las cajas rojas son días festivos. ¡No hay festivos este mes!",
+    "done": "Las cajas grises son clases que ya terminaste. ¡Muy bien!",
+    "liveNow": "Las cajas azules con rayas son clases en directo. Tu profe está en línea ahora, ¡toca Unirse!",
+    "live": "Las cajas azules con rayas son clases en directo. Cuando empiece una, ¡toca Unirse!",
+    "next": "Las cajas amarillas son las próximas clases. ¡Empezarán pronto!"
+  },
+  "calendar": {
+    "previousMonth": "Mes anterior",
+    "nextMonth": "Mes siguiente",
+    "closeCalendar": "Cerrar calendario",
+    "dotLegend": "Punto = algo planeado"
+  },
+  "today": {
+    "none": "Sin clases ni actividades",
+    "live": "Clases y actividades en directo",
+    "upcoming": "Próximas clases y actividades",
+    "completed": "Clases y actividades terminadas"
+  },
+  "courses": {
+    "title": "Mis cursos",
+    "hide": "Ocultar este curso en mi plan",
+    "show": "Mostrar este curso en mi plan"
+  },
+  "pills": {
+    "done": "hecho",
+    "live": "en directo",
+    "toGo": "por hacer"
+  },
+  "clues": {
+    "group": "Pistas de colores",
+    "title": "Pistas de colores:",
+    "tap": "¡Toca una pista!",
+    "assignment": "Tarea",
+    "done": "Clase hecha",
+    "live": "Clase en directo",
+    "upcoming": "Próxima clase",
+    "activity": "Actividad escolar",
+    "holiday": "Festivo"
+  },
+  "filters": {
+    "label": "Qué mostrar en mi plan",
+    "groups": {
+      "plan": "En mi plan",
+      "assignments": "Tareas",
+      "classes": "Clases"
+    },
+    "items": {
+      "classes": "Clases",
+      "activities": "Actividades",
+      "schoolEvents": "Eventos escolares",
+      "holidays": "Festivos",
+      "pendingAssignments": "Pendientes",
+      "submittedAssignments": "Entregadas",
+      "upcomingAssignments": "Próximas",
+      "liveActivities": "En directo",
+      "upcomingActivities": "Próximas",
+      "pastActivities": "Pasadas",
+      "missedClasses": "Perdidas",
+      "lateJoinClasses": "Entrada tarde"
+    }
+  },
+  "toolbar": {
+    "zone": "Hora de {city}",
+    "myWeek": "Mi semana",
+    "greeting": {
+      "morning": "¡Buenos días!",
+      "afternoon": "¡Buenas tardes!",
+      "evening": "¡Buenas noches!"
+    },
+    "previous": {
+      "day": "Día anterior",
+      "week": "Semana anterior",
+      "month": "Mes anterior"
+    },
+    "next": {
+      "day": "Día siguiente",
+      "week": "Semana siguiente",
+      "month": "Mes siguiente"
+    },
+    "calendarView": "Vista del calendario",
+    "views": {
+      "today": "Hoy",
+      "week": "Semana",
+      "month": "Mes"
+    }
+  },
+  "weather": {
+    "labels": {
+      "clear": "Cielo despejado",
+      "sunny": "Soleado",
+      "partly": "Parcialmente nublado",
+      "cloudy": "Nublado",
+      "foggy": "Niebla",
+      "rainy": "Lluvioso",
+      "snowy": "Nevado",
+      "stormy": "Tormenta"
+    },
+    "tips": {
+      "stars": "¡Mira las estrellas!",
+      "hat": "¡Ponte un sombrero!",
+      "cozy": "¡Quédate calentito esta noche!",
+      "learn": "¡Gran día para aprender!",
+      "grownUp": "¡Quédate cerca de un adulto!",
+      "umbrella": "¡Lleva un paraguas!",
+      "mittens": "¡Ponte los guantes!",
+      "inside": "¡Quédate dentro hoy!"
+    },
+    "aria": "Tiempo: {c} grados Celsius, {f} grados Fahrenheit, {label}. {tip}"
+  },
+  "day": {
+    "liveClass": "Clase en directo",
+    "class": "Clase",
+    "done": "¡Hecho!",
+    "liveNow": "EN DIRECTO",
+    "joinClass": "Unirse a la clase",
+    "starts": "Empieza a las {time}",
+    "schoolActivity": "Actividad escolar",
+    "schoolActivityUntitled": "Actividad escolar",
+    "assignments": "Tareas",
+    "assignment": "Tarea",
+    "assignmentStatus": {
+      "submitted": "Entregada",
+      "pending": "Pendiente",
+      "upcoming": "Próxima"
+    },
+    "noLiveClassesToday": "Hoy no hay clases en directo",
+    "noClassesToday": "¡Hoy no hay clases!",
+    "tomorrowClasses": "Mañana: {count, plural, one {# clase} other {# clases}}",
+    "tomorrowFree": "Mañana: ¡no hay clases! ¡Día libre!",
+    "tomorrowNone": "Mañana: no hay clases",
+    "peek": "Echar un vistazo",
+    "classesToday": "{count, plural, one {# clase hoy} other {# clases hoy}}",
+    "classes": "{count, plural, one {# clase} other {# clases}}",
+    "noClasses": "Sin clases",
+    "todaysPlan": "Plan de hoy",
+    "dayPlan": "Plan del {day}",
+    "showCalendar": "Mostrar calendario",
+    "holiday": "Festivo"
+  },
+  "plans": {
+    "chip": "{name}, {time}",
+    "chipLive": "{name}, {time}, en directo — únete a la clase",
+    "done": "Hecho",
+    "live": "DIRECTO",
+    "schoolActivityUntitled": "Actividad escolar",
+    "holiday": "Festivo",
+    "activityLabel": "Actividad escolar: {title}",
+    "assignment": "Tarea",
+    "assignmentLabel": "Tarea: {title}",
+    "assignments": "{count, plural, one {# tarea} other {# tareas}}",
+    "assignmentsOpenDay": "{count, plural, one {# tarea} other {# tareas}} — abrir este día",
+    "weekTile": "SEMANA",
+    "myWeek": "Mi semana",
+    "weekSubtitle": "{range} · toca un día para abrirlo",
+    "noClasses": "¡Sin clases!",
+    "courseWorkDay": "Día de trabajo",
+    "openBrainGames": "Abrir juegos mentales",
+    "tapToPlay": "Toca para jugar",
+    "legend": "= {count, plural, one {tu # clase} other {tus # clases}}",
+    "join": "Unirse a {name}",
+    "openThisDay": "Abrir este día",
+    "eventsOnDay": "Eventos de este día",
+    "myMonth": "Mi mes",
+    "monthSubtitle": "Toca un día para ver lo que hay planeado",
+    "dayAria": "{date}: {summary}",
+    "allDone": "Todo hecho",
+    "classes": "{count, plural, one {# clase} other {# clases}}",
+    "freeDay": "Día libre"
+  },
+  "liveAlert": {
+    "liveNow": "EN DIRECTO",
+    "hurry": "¡Rápido! Tu clase ya empezó. ¡Tu profe te está esperando!",
+    "hurryName": "¡Rápido, {name}! Tu clase ya empezó. ¡Tu profe te está esperando!",
+    "startedJustNow": "Acaba de empezar",
+    "startedMinutes": "Empezó hace {count, plural, one {# minuto} other {# minutos}}",
+    "startedHours": "Empezó hace {count, plural, one {# hora} other {# horas}}",
+    "joinNow": "Unirse a la clase ya",
+    "notNow": "Ahora no, mostrar mi calendario"
+  },
+  "completeProfile": {
+    "title": "Completa tu perfil",
+    "unknownField": "Campo desconocido",
+    "required": "Obligatorio",
+    "fieldsNeedAttention": "{count, plural, one {# campo necesita tu atención} other {# campos necesitan tu atención}}",
+    "requiredNote": "Algunos campos son obligatorios. Complétalos para continuar.",
+    "later": "Más tarde",
+    "goToProfile": "Ir a mi perfil"
+  }
+}

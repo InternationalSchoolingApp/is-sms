@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { LoaderCircle, XCircle } from "lucide-react";
 import { DEFAULT_SCHOOL_UUID } from "@/constant/SchoolConstants";
 
@@ -14,13 +15,14 @@ import { DEFAULT_SCHOOL_UUID } from "@/constant/SchoolConstants";
 // (PaymentResponseView.jsx, PaymentGatewayInitView.jsx).
 export function Loader({ size = 150, className = "" }) {
   const pathname = usePathname();
+  const t = useTranslations("sharedCommon");
   const schoolSlug = pathname?.split("/")[1];
   const isDefaultSchool = !schoolSlug || schoolSlug === DEFAULT_SCHOOL_UUID;
 
   if (!isDefaultSchool) {
     return (
       <LoaderCircle
-        aria-label="Loading"
+        aria-label={t("loading")}
         className={`animate-spin ${className}`}
         style={{ width: Math.round(size * 0.4), height: Math.round(size * 0.4) }}
       />
@@ -30,7 +32,7 @@ export function Loader({ size = 150, className = "" }) {
   return (
     <Image
       src="/loader-new.gif"
-      alt="Loading"
+      alt={t("loading")}
       width={size}
       height={Math.round((size * 300) / 373)}
       unoptimized

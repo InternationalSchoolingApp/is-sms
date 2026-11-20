@@ -1,0 +1,11 @@
+{
+  "title": "Guide de l'élève",
+  "noAccess": "Vous n'avez pas accès à ce module.",
+  "download": "Télécharger le guide",
+  "policyNote": "Il incombe à l'élève et aux parents de suivre les mises à jour des conditions et des règlements de l'école. <link>Cliquez ici</link> pour en savoir plus.",
+  "moduleNames": {
+    "student_handbook": "Guide de l'élève",
+    "child_handbook": "Guide de l'enfant",
+    "parent_handbook": "Guide des parents"
+  }
+}

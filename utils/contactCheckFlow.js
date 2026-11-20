@@ -46,8 +46,11 @@ export function displayValue(item) {
   return value;
 }
 
-/** A time in the student's own time zone; Asia/Singapore when that is missing, blank or not valid. */
-export function formatWhen(value, timezone) {
+/**
+ * A time in the student's own time zone; Asia/Singapore when that is missing, blank or not valid.
+ * locale: optional BCP 47 tag of the dashboard language (default "en-GB").
+ */
+export function formatWhen(value, timezone, locale = "en-GB") {
   if (value === null || value === undefined || value === "") return "";
   const text = String(value);
   let date;
@@ -58,9 +61,9 @@ export function formatWhen(value, timezone) {
   const options = { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" };
   const zone = String(timezone || "").trim() || FALLBACK_TIMEZONE;
   try {
-    return new Intl.DateTimeFormat("en-GB", { ...options, timeZone: zone }).format(date);
+    return new Intl.DateTimeFormat(locale || "en-GB", { ...options, timeZone: zone }).format(date);
   } catch {
-    return new Intl.DateTimeFormat("en-GB", { ...options, timeZone: FALLBACK_TIMEZONE }).format(date);
+    return new Intl.DateTimeFormat(locale || "en-GB", { ...options, timeZone: FALLBACK_TIMEZONE }).format(date);
   }
 }
 

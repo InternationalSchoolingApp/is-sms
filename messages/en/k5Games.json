@@ -1,0 +1,110 @@
+{
+  "yourGames": "Your Games",
+  "pickGame": "Pick a game!",
+  "locked": {
+    "title": "Games are locked",
+    "past": "This day is over. Pick today or a day to come to play.",
+    "pending": "You have a class today. The games open when all of today's classes are over.",
+    "live": "Your class is live right now! Join it first. The games open again when your class is over."
+  },
+  "games": {
+    "balloon": {
+      "name": "Balloon Pop",
+      "how": "Tap the balloons to pop them!"
+    },
+    "memory": {
+      "name": "Memory Match",
+      "how": "Flip two cards. Find the pairs!"
+    },
+    "mole": {
+      "name": "Pop-Up Pals",
+      "how": "Tap the friend before it hides!"
+    },
+    "count": {
+      "name": "Count the Stars",
+      "how": "How many stars do you see?"
+    },
+    "math": {
+      "name": "Quick Math",
+      "how": "Pick the right answer!"
+    },
+    "shape": {
+      "name": "Find the Shape",
+      "how": "Tap the shape I ask for!"
+    }
+  },
+  "score": "Score {score}",
+  "startOver": "Start over",
+  "greatJob": "Great job!",
+  "tryAgain": "Try again!",
+  "shapes": {
+    "circle": "circle",
+    "square": "square",
+    "triangle": "triangle",
+    "star": "star",
+    "heart": "heart"
+  },
+  "tapShape": {
+    "circle": "Tap the circle!",
+    "square": "Tap the square!",
+    "triangle": "Tap the triangle!",
+    "star": "Tap the star!",
+    "heart": "Tap the heart!"
+  },
+  "balloons": {
+    "pink": "Pop the pink balloon",
+    "yellow": "Pop the yellow balloon",
+    "blue": "Pop the blue balloon",
+    "green": "Pop the green balloon",
+    "purple": "Pop the purple balloon",
+    "orange": "Pop the orange balloon"
+  },
+  "boards": {
+    "balloonGame": "Balloon Pop game",
+    "pop": "Pop!",
+    "hiddenCard": "Hidden card",
+    "allPairs": "You found all the pairs!",
+    "startOver": "Start over",
+    "time": "Time: {seconds}",
+    "hole": "Hole {n}",
+    "timesUp": "Time’s up! You caught {count}!",
+    "moleHow": "Tap the friend before it hides!",
+    "playAgain": "Play again",
+    "start": "Start"
+  },
+  "high": {
+    "title": "Brain Games",
+    "subtitle": "Short puzzles that train logic, numbers and memory.",
+    "locked": "Games are locked",
+    "lockedText": "Games unlock only on a day with no classes, or after you finish all your classes and activities for the day.",
+    "lockedPast": "This day is over. Pick today or a day to come to play.",
+    "games": {
+      "count": {
+        "name": "Number Series",
+        "how": "Find the next number in the pattern."
+      },
+      "math": {
+        "name": "Mental Math",
+        "how": "Solve it in your head, no calculator."
+      },
+      "shape": {
+        "name": "Odd One Out",
+        "how": "One number breaks the rule. Find it."
+      },
+      "memory": {
+        "name": "Memory Grid",
+        "how": "Flip two cards at a time. Match all 8 pairs."
+      }
+    },
+    "whatNext": "What comes next?",
+    "solve": "Solve",
+    "percentOf": "{p}% of {n}",
+    "oddOne": "Which number doesn't belong?",
+    "hiddenCard": "Hidden card",
+    "allPairs": "All pairs matched.",
+    "startOver": "Start over",
+    "score": "Score {score}",
+    "correct": "Correct",
+    "notQuite": "Not quite. Try again."
+  }
+}

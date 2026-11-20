@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Award, FileX, GraduationCap, MoreVertical } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { K5Transcript } from "@/components/k5/pages/K5Transcript";
 import { MobileTableCard } from "@/components/student/MobileTableCard";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -10,6 +11,7 @@ import { useStudentTranscriptStatus } from "@/hooks/useStudentTranscriptStatus";
 import { transcriptLinks } from "@/utils/transcriptLinks";
 
 function ActionDropdown({ links }) {
+  const t = useTranslations("transcript");
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -30,7 +32,7 @@ function ActionDropdown({ links }) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-white transition-colors hover:bg-primary/90"
-        aria-label="Transcript actions"
+        aria-label={t("actionsLabel")}
       >
         <MoreVertical className="h-4 w-4" />
       </button>
@@ -46,7 +48,11 @@ function ActionDropdown({ links }) {
               onClick={() => setOpen(false)}
             >
               {link.kind === "diploma" ? <GraduationCap className="h-4 w-4 text-primary/60" aria-hidden="true" /> : <Award className="h-4 w-4 text-primary/60" aria-hidden="true" />}
-              {link.label}
+              {link.kind === "diploma"
+                ? t("links.diploma", { grade: link.grade })
+                : link.isNew
+                  ? t("links.transcriptNew", { grade: link.grade })
+                  : t("links.transcript", { grade: link.grade })}
             </a>
           ))}
         </div>
@@ -56,6 +62,8 @@ function ActionDropdown({ links }) {
 }
 
 export function Transcript() {
+  const t = useTranslations("transcript");
+  const tc = useTranslations("common");
   const { context, isK5 } = useDashboardContext();
   const { isLoading, student, transcripts } = useStudentTranscriptStatus({
     schoolUUID: context?.schoolUUID,
@@ -72,24 +80,24 @@ export function Transcript() {
     <div className="mx-auto w-full max-w-5xl">
       <div className="flex items-center gap-2 px-1 pb-4">
         <Award className="h-5 w-5 text-primary" aria-hidden="true" />
-        <h1 className="text-lg font-extrabold text-black sm:text-xl">Student Transcript</h1>
+        <h1 className="text-lg font-extrabold text-black sm:text-xl">{t("title")}</h1>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white">
         {isLoading ? (
-          <div className="flex h-[200px] items-center justify-center text-sm text-black/60">Loading…</div>
+          <div className="flex h-[200px] items-center justify-center text-sm text-black/60">{tc("status.loading")}</div>
         ) : student ? (
           <>
             {/* Mobile: the record as one card (column title beside each value). */}
             <div className="px-4 pt-4 md:hidden">
               <MobileTableCard
                 rows={[
-                  { label: "S. No.", value: 1 },
-                  { label: "Student Name", value: student.name },
-                  { label: "Email", value: student.email },
-                  { label: "Grade", value: student.grade },
-                  { label: "Student ID", value: student.rollNumber },
-                  { label: "Action", value: <ActionDropdown links={links} /> },
+                  { label: t("table.sNo"), value: 1 },
+                  { label: t("table.studentName"), value: student.name },
+                  { label: t("table.email"), value: student.email },
+                  { label: t("table.grade"), value: student.grade },
+                  { label: t("table.studentId"), value: student.rollNumber },
+                  { label: t("table.action"), value: <ActionDropdown links={links} /> },
                 ]}
               />
             </div>
@@ -97,12 +105,12 @@ export function Transcript() {
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="bg-primary text-white">
-                    <th className="whitespace-nowrap px-4 py-2.5 font-semibold">S. No.</th>
-                    <th className="whitespace-nowrap px-4 py-2.5 font-semibold">Student Name</th>
-                    <th className="whitespace-nowrap px-4 py-2.5 font-semibold">Email</th>
-                    <th className="whitespace-nowrap px-4 py-2.5 font-semibold">Grade</th>
-                    <th className="whitespace-nowrap px-4 py-2.5 font-semibold">Student ID</th>
-                    <th className="whitespace-nowrap px-4 py-2.5 text-center font-semibold">Action</th>
+                    <th className="whitespace-nowrap px-4 py-2.5 font-semibold">{t("table.sNo")}</th>
+                    <th className="whitespace-nowrap px-4 py-2.5 font-semibold">{t("table.studentName")}</th>
+                    <th className="whitespace-nowrap px-4 py-2.5 font-semibold">{t("table.email")}</th>
+                    <th className="whitespace-nowrap px-4 py-2.5 font-semibold">{t("table.grade")}</th>
+                    <th className="whitespace-nowrap px-4 py-2.5 font-semibold">{t("table.studentId")}</th>
+                    <th className="whitespace-nowrap px-4 py-2.5 text-center font-semibold">{t("table.action")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -119,12 +127,12 @@ export function Transcript() {
                 </tbody>
               </table>
             </div>
-            <div className="px-4 py-2 text-xs text-black/50">Showing 1 to 1 of 1 entries</div>
+            <div className="px-4 py-2 text-xs text-black/50">{tc("table.showingEntries", { from: 1, to: 1, total: 1 })}</div>
           </>
         ) : (
           <div className="flex h-[200px] flex-col items-center justify-center gap-2 text-center">
             <FileX className="h-8 w-8 text-black/30" aria-hidden="true" />
-            <p className="text-sm text-black/60">Your transcript has not been published yet.</p>
+            <p className="text-sm text-black/60">{t("notPublished")}</p>
           </div>
         )}
       </div>

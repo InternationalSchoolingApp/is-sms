@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { BookOpen, Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useStudentAssignedTeacher } from "@/hooks/useStudentAssignedTeacher";
 import { SyllabusCourseContentModal } from "@/components/student/SyllabusCourseContentModal";
@@ -17,6 +18,8 @@ const PAGE_SIZE = 10;
  * covered here (out of scope, same as re-enrollment being its own branch).
  */
 export function Syllabus() {
+  const t = useTranslations("syllabus");
+  const tc = useTranslations("common");
   const { context, isK5 } = useDashboardContext();
   const { schoolUUID, userId } = context ?? {};
   const { isLoading, courses } = useStudentAssignedTeacher({ schoolUUID, userId });
@@ -38,10 +41,10 @@ export function Syllabus() {
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-3">
           <div className="flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-primary" aria-hidden="true" />
-            <h1 className="m-0 text-lg font-bold text-black sm:text-xl">Assigned Course Teachers</h1>
+            <h1 className="m-0 text-lg font-bold text-black sm:text-xl">{t("title")}</h1>
           </div>
           <label className="relative block w-full max-w-[260px]">
-            <span className="sr-only">Search sessions</span>
+            <span className="sr-only">{t("searchLabel")}</span>
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-black/40" aria-hidden="true" />
             <input
               type="search"
@@ -50,7 +53,7 @@ export function Syllabus() {
                 setSearch(event.target.value);
                 setPage(0);
               }}
-              placeholder="Search sessions..."
+              placeholder={t("searchPlaceholder")}
               className="w-full rounded-lg border border-slate-300 py-2 pl-8 pr-3 text-sm text-black"
             />
           </label>
@@ -60,22 +63,22 @@ export function Syllabus() {
           <table className="w-full whitespace-nowrap text-left text-sm text-black">
             <thead className="bg-primary text-white">
               <tr>
-                <th className="py-3 pl-4 pr-3 font-normal">S.No</th>
-                <th className="px-3 py-3 font-normal">Selected Courses</th>
-                <th className="px-3 py-3 font-normal">Assigned Teacher</th>
+                <th className="py-3 pl-4 pr-3 font-normal">{t("table.sNo")}</th>
+                <th className="px-3 py-3 font-normal">{t("table.courses")}</th>
+                <th className="px-3 py-3 font-normal">{t("table.teacher")}</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
                   <td colSpan={3} className="py-8 text-center text-black/50">
-                    Loading…
+                    {tc("status.loading")}
                   </td>
                 </tr>
               ) : visible.length === 0 ? (
                 <tr>
                   <td colSpan={3} className="py-8 text-center text-black/50">
-                    {courses.length === 0 ? "No courses assigned yet." : "No matching records found"}
+                    {courses.length === 0 ? t("noCourses") : t("noMatches")}
                   </td>
                 </tr>
               ) : (
@@ -87,7 +90,7 @@ export function Syllabus() {
                         {course.courseName}
                       </button>
                     </td>
-                    <td className="px-3 py-3">{course.teacherName || "Not assigned yet"}</td>
+                    <td className="px-3 py-3">{course.teacherName || t("notAssigned")}</td>
                   </tr>
                 ))
               )}

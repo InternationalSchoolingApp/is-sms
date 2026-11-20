@@ -126,27 +126,39 @@ export function plainText(html) {
   return text.replace(/\n{3,}/g, "\n\n").trim();
 }
 
-const partsIn = (epoch, timeZone, options) => new Intl.DateTimeFormat("en-US", { timeZone: resolveTimeZone(timeZone), ...options }).format(new Date(epoch));
+const partsIn = (epoch, timeZone, options, locale = "en-US") =>
+  new Intl.DateTimeFormat(locale || "en-US", { timeZone: resolveTimeZone(timeZone), ...options }).format(new Date(epoch));
 
-/** A row's time: "9:12 AM" for today, "Oct 21" this year, "Oct 21, 2025" before that — in the student's time zone. */
-export function rowTime(epoch, timeZone, now = new Date()) {
+/**
+ * A row's time: "9:12 AM" for today, "Oct 21" this year, "Oct 21, 2025" before that — in the student's time zone.
+ * `locale` (optional, BCP 47, e.g. useLocaleTag()) words the month in the dashboard's language; English when left out.
+ */
+export function rowTime(epoch, timeZone, now = new Date(), locale = "en-US") {
   if (!epoch) return "";
   const zone = resolveTimeZone(timeZone);
   const day = todayYmd(zone, new Date(epoch));
-  const today = todayYmd(zone, now);
-  if (day === today) return partsIn(epoch, zone, { hour: "numeric", minute: "2-digit" });
-  if (day.slice(0, 4) === today.slice(0, 4)) return partsIn(epoch, zone, { month: "short", day: "numeric" });
-  return partsIn(epoch, zone, { month: "short", day: "numeric", year: "numeric" });
+  const today = todayYmd(zone, now ?? new Date());
+  if (day === today) return partsIn(epoch, zone, { hour: "numeric", minute: "2-digit" }, locale);
+  if (day.slice(0, 4) === today.slice(0, 4)) return partsIn(epoch, zone, { month: "short", day: "numeric" }, locale);
+  return partsIn(epoch, zone, { month: "short", day: "numeric", year: "numeric" }, locale);
 }
 
-/** The reader's time: "Thu, Oct 22, 2026, 9:12 AM" in the student's time zone. */
-export function fullTime(epoch, timeZone) {
+/** The reader's time: "Thu, Oct 22, 2026, 9:12 AM" in the student's time zone (`locale` as rowTime). */
+export function fullTime(epoch, timeZone, locale = "en-US") {
   if (!epoch) return "";
-  return partsIn(epoch, timeZone, { weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+  return partsIn(epoch, timeZone, { weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }, locale);
 }
 
 /** Stored attachment names look like "123456789_homework.pdf": the part after the 9-digit prefix is shown. */
 export const shownFileName = (name) => String(name || "").replace(/^[0-9]{9}_/, "") || "Attachment";
+
+/** The numbers behind listSummary(), for a translated line: null when there is nothing; `reach` is how many can be listed. */
+export function listSummaryParts({ total, page, pageSize, lastPage, shown }) {
+  if (!total) return null;
+  const start = (page - 1) * pageSize + 1;
+  const reach = lastPage * pageSize;
+  return { total, start, end: start + shown - 1, of: Math.min(total, reach), reach, more: total > reach };
+}
 
 /** "37 messages", "1–20 of 37" and the "only the newest are listed" note of the existing page. */
 export function listSummary({ total, page, pageSize, lastPage, shown }) {
@@ -188,40 +200,63 @@ const extensionOf = (name) => {
   return dot < 0 ? "" : text.slice(dot + 1).toLowerCase();
 };
 
+/**
+ * The first thing wrong with the chosen files ({ name, size }) as a code — { code, values } or null — for a translated
+ * message (inbox.compose.problems.<code>); fileProblem() words it in English.
+ */
+export function fileProblemCode(files) {
+  if (files.length > MAX_FILES) return { code: "tooManyFiles", values: { max: MAX_FILES } };
+  for (const file of files) {
+    if (!FILE_EXTENSIONS.includes(extensionOf(file.name))) return { code: "fileType", values: { name: file.name } };
+    if (file.size > MAX_FILE_BYTES) return { code: "fileTooLarge", values: { name: file.name } };
+    if (file.size === 0) return { code: "fileEmpty", values: { name: file.name } };
+  }
+  return null;
+}
+
+const FILE_PROBLEM_TEXT = {
+  tooManyFiles: () => "You can attach at most 3 files to one message.",
+  fileType: ({ name }) => `The file "${name}" cannot be attached. You can attach PDF, Word, Excel, PowerPoint, picture (JPG, PNG, GIF), text and CSV files.`,
+  fileTooLarge: ({ name }) => `The file "${name}" is larger than 5 MB. Please make it smaller, or share a link to it instead.`,
+  fileEmpty: ({ name }) => `The file "${name}" is empty. Please choose it again.`,
+};
+
 /** The first thing wrong with the chosen files ({ name, size }), in the existing page's words; "" when all is well. */
 export function fileProblem(files) {
-  if (files.length > MAX_FILES) return "You can attach at most 3 files to one message.";
-  for (const file of files) {
-    if (!FILE_EXTENSIONS.includes(extensionOf(file.name))) {
-      return `The file "${file.name}" cannot be attached. You can attach PDF, Word, Excel, PowerPoint, picture (JPG, PNG, GIF), text and CSV files.`;
-    }
-    if (file.size > MAX_FILE_BYTES) return `The file "${file.name}" is larger than 5 MB. Please make it smaller, or share a link to it instead.`;
-    if (file.size === 0) return `The file "${file.name}" is empty. Please choose it again.`;
-  }
-  return "";
+  const problem = fileProblemCode(files);
+  return problem ? FILE_PROBLEM_TEXT[problem.code](problem.values) : "";
 }
 
 export const tooManyPeople = (max) => `You can write to at most ${max} people in one message.`;
 
-/** What stops a send, checked in the existing page's order: { field, message } or null. A reply has its person and subject already. */
+/**
+ * What stops a send, checked in the existing page's order: { field, message, code, values } or null (`code` / `values`:
+ * the inbox.compose.problems.* message for a translated text). A reply has its person and subject already.
+ */
 export function composeProblem({ to, subject, message, files, reply }) {
-  if (!reply && !to.length) return { field: "to", message: "Please choose at least one person to write to." };
-  if (!reply && !String(subject || "").trim()) return { field: "subject", message: "Please add a subject." };
-  if (!String(message || "").trim()) return { field: "message", message: "Please write your message." };
-  const problem = fileProblem(files);
-  return problem ? { field: "files", message: problem } : null;
+  if (!reply && !to.length) return { field: "to", message: "Please choose at least one person to write to.", code: "noPeople", values: {} };
+  if (!reply && !String(subject || "").trim()) return { field: "subject", message: "Please add a subject.", code: "noSubject", values: {} };
+  if (!String(message || "").trim()) return { field: "message", message: "Please write your message.", code: "noMessage", values: {} };
+  const problem = fileProblemCode(files);
+  return problem ? { field: "files", message: fileProblem(files), code: problem.code, values: problem.values } : null;
 }
 
+/** The two "check before sending" warnings as codes ("noAttachment", "placeholder"), for translated texts. */
+export function composeWarningCodes({ subject, message, files }) {
+  const codes = [];
+  if (/\b(attach|attached|attaching|attachment|attachments|file|files)\b/i.test(message || "") && !files.length) codes.push("noAttachment");
+  if (/<[^<>]{1,40}>|\[[^\[\]]{1,40}\]/.test(`${subject || ""} ${message || ""}`)) codes.push("placeholder");
+  return codes;
+}
+
+const WARNING_TEXT = {
+  noAttachment: "No attachment found: your message mentions an attachment or a file, but nothing is attached.",
+  placeholder: "Something is still to fill in: the subject or message has a word in <angle> or [square] brackets from the template.",
+};
+
 /** The two "check before sending" warnings of the existing page; they do not stop a send. */
-export function composeWarnings({ subject, message, files }) {
-  const warnings = [];
-  if (/\b(attach|attached|attaching|attachment|attachments|file|files)\b/i.test(message || "") && !files.length) {
-    warnings.push("No attachment found: your message mentions an attachment or a file, but nothing is attached.");
-  }
-  if (/<[^<>]{1,40}>|\[[^\[\]]{1,40}\]/.test(`${subject || ""} ${message || ""}`)) {
-    warnings.push("Something is still to fill in: the subject or message has a word in <angle> or [square] brackets from the template.");
-  }
-  return warnings;
+export function composeWarnings(draft) {
+  return composeWarningCodes(draft).map((code) => WARNING_TEXT[code]);
 }
 
 /** Something would be lost by starting again: text, files, or (a new message) a subject or people. */
@@ -233,6 +268,30 @@ export const charCount = (text) => `${String(text || "").length.toLocaleString()
 export const fileSize = (bytes) => `${Math.max(1, Math.round(bytes / 1024)).toLocaleString()} KB`;
 
 const SENT_STATE = { NOT_SENT: "not sent by email; it is still in their Inbox", SENDING: "sending" };
+
+/** What sentRow() is made of, for a translated row: the first names, how many more, the background progress and who it did not reach. */
+export function sentRowParts(item) {
+  const names = (item.recipients || []).map((r) => r.name);
+  const count = Math.max(item.recipientCount || 0, names.length);
+  const notSent = (item.recipients || []).filter((r) => r.state === "NOT_SENT").map((r) => r.name);
+  const notSentCount = Math.max(item.notSentCount || 0, notSent.length);
+  return {
+    names: names.slice(0, 3),
+    more: count > 3 ? count - 3 : 0,
+    first: names[0] || "",
+    progress: item.progress || null,
+    sending: !item.progress && item.state === "SENDING",
+    notSentCount,
+    notSentNames: notSentCount > 5 ? [] : notSent,
+    failed: notSentCount > 0,
+  };
+}
+
+/** The people of sentToLine(), for a translated line: [{ name, state }] (state "NOT_SENT" / "SENDING" / other) and how many more. */
+export function sentToParts(item) {
+  const people = (item.recipients || []).map((r) => ({ name: r.name, state: r.state }));
+  return { people, more: Math.max(0, (item.recipientCount || 0) - people.length) };
+}
 
 /** A Sent row (MailboxSentFolder.SentItem) -> what the list shows: who it went to and anything that did not go. */
 export function sentRow(item) {
@@ -309,7 +368,7 @@ export function templateKind(people) {
 export function templateGroups(templates, kind) {
   const list = Array.isArray(templates) ? templates : [];
   if (kind !== "ALL") return list.length ? [{ label: "", templates: list }] : [];
-  return TEMPLATE_GROUPS.map(([key, label]) => ({ label, templates: list.filter((t) => t.recipientKind === key) })).filter((group) => group.templates.length);
+  return TEMPLATE_GROUPS.map(([key, label]) => ({ kind: key, label, templates: list.filter((t) => t.recipientKind === key) })).filter((group) => group.templates.length);
 }
 
 /** Fills [Recipient name], [Child name], [Your name], [School name]; a name that is not known leaves its words in place. */
@@ -325,3 +384,27 @@ export function fillTemplate(text, { people = [], writerName = "", schoolName = 
 }
 
 export const replaceWithTemplate = (title) => `Replace what you have written with the template "${title}"?`;
+
+// ---- texts the hook hands out (hooks/useInbox.js), and their translations --------------------------------------------
+
+export const LOAD_ERROR = "Your inbox could not be loaded just now. Please try again in a minute.";
+export const ATTACHMENT_ERROR = "This attachment cannot be opened just now. Please try again later.";
+export const BODY_ERROR = "This email could not be shown just now.";
+
+// The English texts of this module that reach the page as plain strings -> their inbox.messages.* key.
+const MESSAGE_KEYS = {
+  [LOAD_ERROR]: "loadError",
+  [ATTACHMENT_ERROR]: "attachmentError",
+  [BODY_ERROR]: "bodyError",
+  [SEND_ERROR]: "sendError",
+  [SEND_UNREACHABLE]: "sendUnreachable",
+  [REPLY_ERROR]: "replyError",
+  [COMPOSE_CLOSED]: "composeClosed",
+  [EMPTY_INBOX]: "emptyInbox",
+  [EMPTY_SENT]: "emptySent",
+  [SETTING_ON]: "settingOn",
+  [SETTING_OFF]: "settingOff",
+};
+
+/** The inbox.messages.* key of a text this module hands out, or "" (the backend's own words have none and are shown as they are). */
+export const inboxMessageKey = (text) => MESSAGE_KEYS[text] || "";

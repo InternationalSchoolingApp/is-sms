@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useLabelTranslator } from "@/i18n/labels";
 import {
   Award, BarChart3, BookMarked, CalendarCheck, CalendarDays, ChevronDown, Circle, ClipboardCheck, FileText, Gamepad2,
   Globe, GraduationCap, Handshake, History, Inbox, LayoutDashboard, MoreHorizontal, ShoppingCart, Wallet, X,
@@ -39,6 +41,25 @@ const ICONS = {
 };
 const iconFor = (key) => ICONS[key] || [Circle, "bg-k5-soft", "text-k5-mut"];
 
+/**
+ * Display name of a nav item in the student's language: menu labels are DB module names (menu namespace), club pages
+ * are club names (clubs.names). The raw label stays in the item for the picture lookup and everything else.
+ */
+function useNavLabel() {
+  const t = useTranslations("k5.nav");
+  const tMenu = useLabelTranslator("menu");
+  const tClub = useLabelTranslator("clubs.names");
+  const one = (raw) => {
+    const menuName = tMenu(raw);
+    return menuName !== raw ? menuName : tClub(raw);
+  };
+  return (item) => {
+    if (item.key === "k5-more") return t("more");
+    if (item.labelParts) return t("groupItem", { group: one(item.labelParts[0]), item: one(item.labelParts[1]) });
+    return one(item.label);
+  };
+}
+
 // PreK keeps only the essentials on top; everything else goes under "More" (plan section 12.8).
 const PREK_PRIMARY_ICONS = new Set(["dashboard", "teacher", "book-class"]);
 
@@ -71,6 +92,7 @@ export function K5NavRail({ menu, loading = false, open, onOpen, onClose, isPreK
   const pathname = usePathname();
   const { school } = useParams();
   const navRef = useRef(null);
+  const t = useTranslations("k5.nav");
 
   const orderKey = userId ? `${NAV_ORDER_PREFIX}${userId}` : null;
   const savedRaw = useSyncExternalStore(noSubscribe, () => readOrder(orderKey), () => null);
@@ -109,12 +131,12 @@ export function K5NavRail({ menu, loading = false, open, onOpen, onClose, isPreK
   };
   return (
     <>
-      {open && <button type="button" aria-label="Close menu" onClick={onClose} className="fixed inset-0 z-[45] cursor-pointer bg-[rgba(10,16,34,0.35)]" />}
+      {open && <button type="button" aria-label={t("closeMenu")} onClick={onClose} className="fixed inset-0 z-[45] cursor-pointer bg-[rgba(10,16,34,0.35)]" />}
 
       <nav
         id="k5-sidenav"
         ref={navRef}
-        aria-label="Main menu"
+        aria-label={t("mainMenu")}
         data-pin="side"
         data-open={open}
         className="k5-side fixed [scrollbar-width:thin] z-20 flex max-h-[calc(100vh-120px)] flex-col items-center gap-1 overflow-y-auto overflow-x-hidden rounded-[26px] border-[3px] border-k5-line bg-k5-card px-1.5 py-2.5 shadow-k5-chunky"
@@ -122,7 +144,7 @@ export function K5NavRail({ menu, loading = false, open, onOpen, onClose, isPreK
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close menu"
+          aria-label={t("closeMenu")}
           className="k5-nclose hidden h-11 w-11 flex-none items-center justify-center cursor-pointer self-end rounded-full border-[3px] border-red-500 bg-red-500 text-white hover:border-red-600 hover:bg-red-600"
         >
           <X className="h-4 w-4" strokeWidth={3} aria-hidden="true" />
@@ -132,7 +154,7 @@ export function K5NavRail({ menu, loading = false, open, onOpen, onClose, isPreK
         {loading && items.length === 0 && (
           <>
             <span role="status" aria-busy="true" aria-live="polite" className="sr-only">
-              Loading the menu…
+              {t("loading")}
             </span>
             {Array.from({ length: 12 }, (_, i) => (
               <span key={i} aria-hidden="true" className="k5-ni relative flex w-[46px] flex-none flex-col items-center gap-1 py-1">
@@ -163,7 +185,9 @@ export function K5NavRail({ menu, loading = false, open, onOpen, onClose, isPreK
 }
 
 function flattenItems(items) {
-  return items.flatMap((item) => (item.children?.length ? item.children.map((child) => ({ ...child, label: `${item.label}: ${child.label}` })) : [item]));
+  return items.flatMap((item) =>
+    item.children?.length ? item.children.map((child) => ({ ...child, label: `${item.label}: ${child.label}`, labelParts: [item.label, child.label] })) : [item],
+  );
 }
 
 const ITEM_CLASS =
@@ -215,11 +239,13 @@ function NavPill() {
 }
 
 function NavLink({ item, href, active, onNavigate, drag }) {
+  const navLabel = useNavLabel();
+  const label = navLabel(item);
   return (
     <Link
       href={href}
-      title={item.label}
-      aria-label={item.label}
+      title={label}
+      aria-label={label}
       aria-current={active ? "page" : undefined}
       draggable={false}
       onClick={(e) => (drag.consumeClick() ? e.preventDefault() : onNavigate())}
@@ -230,12 +256,14 @@ function NavLink({ item, href, active, onNavigate, drag }) {
       {active && <NavPill />}
       <NavTile icon={item.icon} active={active} picture={navPictureFor(item)} />
       {isInboxMenuItem(item) && <InboxBadge className="absolute left-[32px] top-0 shadow-[0_0_0_2px_var(--k5-card)] [.k5-side:hover_&]:left-[36px] [.k5-side[data-open='true']_&]:left-[36px]" />}
-      <span className="k5-nl">{item.label}</span>
+      <span className="k5-nl">{label}</span>
     </Link>
   );
 }
 
 function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
+  const navLabel = useNavLabel();
+  const label = navLabel(item);
   const childActive = item.children.some((child) => isActive(child.segment));
   const [openGroup, setOpenGroup] = useState(childActive);
   // A club group shows its clubs as little pictures (flags / emoji) right under it, even in the narrow rail.
@@ -245,8 +273,8 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
     <>
       <button
         type="button"
-        title={item.label}
-        aria-label={item.label}
+        title={label}
+        aria-label={label}
         aria-expanded={openGroup}
         onClick={(e) => {
           if (drag.consumeClick()) return e.preventDefault();
@@ -260,7 +288,7 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
       >
         <NavTile icon={item.icon} picture={navPictureFor(item)} />
         {isInboxMenuItem(item) && <InboxBadge className="absolute left-[40px] top-0 shadow-[0_0_0_2px_var(--k5-card)]" />}
-        <span className="k5-nl">{item.label}</span>
+        <span className="k5-nl">{label}</span>
         <span
           aria-hidden="true"
           className="k5-chev absolute end-1 top-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full border-2 border-k5-line bg-k5-card text-k5-mut"
@@ -279,8 +307,8 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
                 <Link
                   href={studentNavHref(school, child.segment)}
                   onClick={onNavigate}
-                  title={child.label}
-                  aria-label={child.label}
+                  title={navLabel(child)}
+                  aria-label={navLabel(child)}
                   aria-current={active ? "page" : undefined}
                   className={`flex w-[52px] items-center justify-center rounded-xl py-1.5 no-underline transition-colors duration-150 ${active ? "bg-k5-act" : "hover:bg-k5-soft"}`}
                 >
@@ -306,7 +334,7 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
                   }`}
                 >
                   {CLUB_ART[child.segment] ? <ClubMark art={CLUB_ART[child.segment]} /> : <SubPicture item={child} parent={item} />}
-                  <span className="min-w-0 truncate">{child.label}</span>
+                  <span className="min-w-0 truncate">{navLabel(child)}</span>
                 </Link>
               </li>
             );

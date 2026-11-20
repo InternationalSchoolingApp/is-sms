@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronLeft, Lock, Star } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { BalloonBoard, MemoryBoard, MoleBoard } from "@/components/k5/games/K5ActionBoards";
 import { CountBoard, MathBoard, ShapeBoard } from "@/components/k5/games/K5QuizBoards";
@@ -11,6 +12,7 @@ import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 const PILL = "min-h-12 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-4 font-k5-display text-base font-semibold text-k5-ink";
 
 function GameTile({ game, onPlay, locked }) {
+  const t = useTranslations("k5Games");
   const { preferences } = useAppearance();
   return (
     <button
@@ -22,7 +24,7 @@ function GameTile({ game, onPlay, locked }) {
       <span aria-hidden="true" className="flex h-[72px] w-[72px] flex-none items-center justify-center rounded-[22px] bg-k5-card text-[44px] leading-none">
         {game.emoji || <PicoMascot buddy={preferences.buddy} width={48} full={false} />}
       </span>
-      <span className="font-k5-display text-xl font-semibold leading-tight">{game.name}</span>
+      <span className="font-k5-display text-xl font-semibold leading-tight">{t(`games.${game.id}.name`)}</span>
       {/* <span className="text-sm font-extrabold text-k5-mut">{game.how}</span> */}
     </button>
   );
@@ -36,6 +38,8 @@ function GameTile({ game, onPlay, locked }) {
  * `past`: the day is already over - the games are locked for it too, with its own note.
  */
 export function K5Games({ locked = false, past = false, pending = false }) {
+  const t = useTranslations("k5Games");
+  const tc = useTranslations("common");
   const [gameId, setGameId] = useState(null);
   const [score, setScore] = useState(0);
   const [round, setRound] = useState(0);
@@ -68,7 +72,7 @@ export function K5Games({ locked = false, past = false, pending = false }) {
           onClick={() => setGamesOpen((open) => !open)}
           className="flex min-h-12 w-full cursor-pointer items-center justify-between rounded-xl border-0 bg-transparent p-0 text-left text-k5-ink"
         >
-          <span id="k5-games-title" className="font-k5-display text-2xl font-semibold">Your Games</span>
+          <span id="k5-games-title" className="font-k5-display text-2xl font-semibold">{t("yourGames")}</span>
           <ChevronDown className={`h-5 w-5 transition-transform duration-200 ${gamesOpen ? "rotate-180" : ""}`} aria-hidden="true" />
         </span>
         <div
@@ -79,20 +83,16 @@ export function K5Games({ locked = false, past = false, pending = false }) {
           className="k5-games-slide"
         >
           <div className="flex min-h-0 flex-col gap-3 overflow-hidden">
-            <h3 className="m-0 font-k5-display text-lg font-semibold">Pick a game!</h3>
+            <h3 className="m-0 font-k5-display text-lg font-semibold">{t("pickGame")}</h3>
             {locked && (
               <div role="note" className="flex items-center gap-3 rounded-[18px] border-[3px] border-k5-yb bg-k5-yt px-4 py-3 text-k5-yx">
                 <span aria-hidden="true" className="flex h-10 w-10 flex-none items-center justify-center rounded-[18px] bg-k5-card">
                   <Lock className="h-[22px] w-[22px]" strokeWidth={2.2} />
                 </span>
                 <span className="flex flex-col gap-0.5">
-                  <span className="font-k5-display text-lg font-semibold">Games are locked</span>
+                  <span className="font-k5-display text-lg font-semibold">{t("locked.title")}</span>
                   <span className="text-[15px] font-bold leading-snug">
-                    {past
-                      ? "This day is over. Pick today or a day to come to play."
-                      : pending
-                        ? "You have a class today. The games open when all of today's classes are over."
-                        : "Your class is live right now! Join it first. The games open again when your class is over."}
+                    {past ? t("locked.past") : pending ? t("locked.pending") : t("locked.live")}
                   </span>
                 </span>
               </div>
@@ -109,25 +109,25 @@ export function K5Games({ locked = false, past = false, pending = false }) {
   }
 
   return (
-    <section aria-label={game.name} className="flex flex-col gap-3">
+    <section aria-label={t(`games.${game.id}.name`)} className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex min-w-0 items-center gap-3">
           <button type="button" onClick={() => setGameId(null)} className={PILL + " flex flex-none items-center gap-1.5 pl-2.5"}>
             <ChevronLeft className="h-5 w-5 text-k5-acx" strokeWidth={3} aria-hidden="true" />
-            Back
+            {tc("actions.back")}
           </button>
           <div className="flex min-w-0 flex-col">
-            <h3 className="m-0 font-k5-display text-2xl font-semibold">{game.name}</h3>
-            <p className="m-0 text-[15px] font-extrabold text-k5-mut">{game.how}</p>
+            <h3 className="m-0 font-k5-display text-2xl font-semibold">{t(`games.${game.id}.name`)}</h3>
+            <p className="m-0 text-[15px] font-extrabold text-k5-mut">{t(`games.${game.id}.how`)}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span aria-live="polite" aria-label={"Score " + score} className="flex items-center gap-1.5 rounded-full bg-k5-yt px-3.5 py-2 text-[17px] font-black text-k5-yx">
+          <span aria-live="polite" aria-label={t("score", { score })} className="flex items-center gap-1.5 rounded-full bg-k5-yt px-3.5 py-2 text-[17px] font-black text-k5-yx">
             <Star className="h-5 w-5 fill-[#FFC531] text-k5-yi" aria-hidden="true" />
             {score}
           </span>
           <button type="button" onClick={() => play(game.id)} className={PILL + " text-[15px]"}>
-            Start over
+            {t("startOver")}
           </button>
         </div>
       </div>
@@ -141,7 +141,7 @@ export function K5Games({ locked = false, past = false, pending = false }) {
 
       {fb !== null && (
         <div aria-live="assertive" className={"self-center rounded-full px-[22px] py-2 font-k5-display text-[22px] font-semibold text-white " + (fb ? "bg-k5-grn" : "bg-[#C2410C]")}>
-          {fb ? "Great job!" : "Try again!"}
+          {fb ? t("greatJob") : t("tryAgain")}
         </div>
       )}
     </section>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { ChevronLeft, Info, Lock, Pencil, PlusCircle, ScrollText, Trash2, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
@@ -24,6 +25,7 @@ function useCartLook() {
 
 function CartHeader({ count, school, backHref, countLoading = false }) {
   const { middle } = useCartLook();
+  const t = useTranslations("k5Booking.cart");
   return (
     <div className={middle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
       {middle ? (
@@ -41,16 +43,16 @@ function CartHeader({ count, school, backHref, countLoading = false }) {
       )}
       <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
         <h1 className={`m-0 font-k5-display font-semibold leading-[1.05] ${middle ? "text-[30px]" : "text-4xl"}`}>
-          {countLoading ? "Your Cart" : `Your Cart (${count} ${count === 1 ? "item" : "items"})`}
+          {countLoading ? t("title") : t("titleCount", { count })}
         </h1>
-        <p className={`m-0 font-extrabold text-k5-mut ${middle ? "text-base" : "text-lg"}`}>Check your classes, then pay.</p>
+        <p className={`m-0 font-extrabold text-k5-mut ${middle ? "text-base" : "text-lg"}`}>{t("subtitle")}</p>
       </div>
       <Link
         href={backHref ?? studentNavHref(school, "student-addon")}
         className="flex min-h-[52px] items-center gap-2 rounded-full border-[3px] border-k5-line bg-k5-card px-[18px] font-k5-display text-lg font-semibold text-k5-ink no-underline shadow-[0_4px_0_var(--k5-line)]"
       >
         <ChevronLeft className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
-        Back to plans
+        {t("backToPlans")}
       </Link>
     </div>
   );
@@ -69,8 +71,9 @@ export function K5CartNotice({ school, loading = false, children }) {
 
 /** The cart while it loads, laid out like the cart: items on the left (class box, details, edit / remove), Fee Details on the right. */
 function CartSkeleton({ school }) {
+  const t = useTranslations("k5Booking.cart");
   return (
-    <K5Loading label="Loading your cart" className="flex flex-col gap-4">
+    <K5Loading label={t("loading")} className="flex flex-col gap-4">
       <CartHeader count={0} school={school} countLoading />
       <div className="flex flex-wrap items-start gap-[18px]">
         <div className="flex min-w-0 flex-[999_1_480px] flex-col gap-3.5">
@@ -114,6 +117,7 @@ function CartSkeleton({ school }) {
 
 function CartItem({ item, symbol, school, busy, onRemove }) {
   const look = useCartLook();
+  const t = useTranslations("k5Booking.cart");
   const label = "text-[15px] font-extrabold text-k5-mut";
   return (
     <article className={`${K5_CARD} flex flex-wrap items-center gap-4 p-4`}>
@@ -123,23 +127,23 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
         style={look.middle ? { background: look.grad, boxShadow: "0 2px 0 #0057B8" } : { background: look.grad }}
       >
         <span className="font-k5-display text-[44px] font-bold leading-none">{item.classCount}</span>
-        <span className="mt-1 text-sm font-black uppercase tracking-[0.06em]">classes</span>
+        <span className="mt-1 text-sm font-black uppercase tracking-[0.06em]">{t("classesWord", { count: item.classCount })}</span>
       </div>
       <dl className="m-0 grid min-w-0 flex-[1_1_240px] grid-cols-[auto_1fr] items-baseline gap-x-3.5 gap-y-2">
         {item.subjectName && (
           <>
-            <dt className={label}>Course</dt>
+            <dt className={label}>{t("course")}</dt>
             <dd className="m-0 flex items-center gap-2 font-k5-display text-[19px] font-semibold">
               {look.middle && <span aria-hidden="true" className="h-3 w-3 flex-none rounded-full" style={{ background: subjectStyle(item.subjectName).color }} />}
               {item.subjectName}
             </dd>
           </>
         )}
-        <dt className={label}>No. of classes</dt>
+        <dt className={label}>{t("classCount")}</dt>
         <dd className="m-0 font-k5-display text-[19px] font-semibold">
-          {item.classCount} extra {item.classCount === 1 ? "class" : "classes"}
+          {t("extraClasses", { count: item.classCount })}
         </dd>
-        <dt className={label}>Plan fee</dt>
+        <dt className={label}>{t("planFee")}</dt>
         <dd className="m-0 font-k5-display text-[22px] font-bold" style={{ color: look.blue }}>
           {formatAmount(symbol, item.planAmount)}
         </dd>
@@ -147,8 +151,8 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
       <div className="ms-auto flex gap-2">
         <Link
           href={`${studentNavHref(school, "student-addon")}?subject=${item.subjectId}`}
-          aria-label="Change plan"
-          title="Change plan"
+          aria-label={t("changePlan")}
+          title={t("changePlan")}
           className="flex h-12 w-12 items-center justify-center rounded-[14px] text-white shadow-[0_4px_0_#1C47B8]"
           style={look.middle ? { background: look.blue, boxShadow: `0 2px 0 ${look.deep}` } : { background: look.blue }}
         >
@@ -156,8 +160,8 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
         </Link>
         <button
           type="button"
-          aria-label="Remove from cart"
-          title="Remove"
+          aria-label={t("removeFromCart")}
+          title={t("remove")}
           disabled={busy}
           onClick={() => onRemove(item.cartId)}
           className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-[14px] border-none bg-[#E5243B] text-white shadow-[0_4px_0_#A3172A] disabled:cursor-default disabled:opacity-50"
@@ -177,6 +181,7 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
 export function K5CartView({ school, count, items, symbol, cart, busy, canPay, onRemove, onPay }) {
   const empty = items.length === 0;
   const look = useCartLook();
+  const t = useTranslations("k5Booking.cart");
   usePicoContentReady(true);
   return (
     <div className="flex flex-col gap-4">
@@ -186,13 +191,13 @@ export function K5CartView({ school, count, items, symbol, cart, busy, canPay, o
           {empty ? (
             <div className={`${K5_CARD} flex flex-col items-center gap-3.5 px-[22px] py-[30px] text-center`}>
               <span aria-hidden="true" className="text-[56px] leading-none">🛒</span>
-              <p className="m-0 font-k5-display text-[22px] font-semibold">Your cart is empty.</p>
+              <p className="m-0 font-k5-display text-[22px] font-semibold">{t("empty")}</p>
               <Link
                 href={studentNavHref(school, "student-addon")}
                 className="flex min-h-[50px] items-center rounded-2xl px-[22px] font-k5-display text-lg font-semibold text-white no-underline shadow-[0_4px_0_#1C47B8]"
                 style={look.middle ? { background: look.blue, borderRadius: 12, boxShadow: `0 2px 0 ${look.deep}` } : { background: look.blue }}
               >
-                See plans
+                {t("seePlans")}
               </Link>
             </div>
           ) : (
@@ -201,14 +206,14 @@ export function K5CartView({ school, count, items, symbol, cart, busy, canPay, o
         </div>
 
         <aside aria-labelledby="k5-fee" className={`${K5_CARD} flex min-w-0 flex-[1_1_320px] flex-col gap-3.5 p-5`}>
-          <h2 id="k5-fee" className="m-0 font-k5-display text-[26px] font-semibold">Fee Details</h2>
+          <h2 id="k5-fee" className="m-0 font-k5-display text-[26px] font-semibold">{t("feeDetails")}</h2>
           <div className="flex justify-between gap-2.5 text-lg font-extrabold">
-            <span>Cart Total</span>
+            <span>{t("cartTotal")}</span>
             <span>{formatAmount(symbol, cart.cartTotal)}</span>
           </div>
           {cart.errorMsg && <p className="-mt-1 m-0 text-sm font-extrabold text-[#E5243B]">{cart.errorMsg}</p>}
           <div className="flex items-baseline justify-between gap-2.5 border-t-[3px] border-dashed border-k5-line pt-3.5">
-            <span className="font-k5-display text-[22px] font-semibold">Total</span>
+            <span className="font-k5-display text-[22px] font-semibold">{t("total")}</span>
             <span className="font-k5-display text-[30px] font-bold" style={{ color: look.blue }}>{formatAmount(symbol, cart.totalPayAmount)}</span>
           </div>
           <button
@@ -218,11 +223,11 @@ export function K5CartView({ school, count, items, symbol, cart, busy, canPay, o
             className="min-h-[60px] cursor-pointer rounded-[18px] border-none font-k5-display text-[22px] font-semibold tracking-[0.03em] text-white shadow-[0_5px_0_#1C47B8] disabled:cursor-default disabled:opacity-45"
             style={look.middle ? { background: look.blue, boxShadow: `0 2px 0 ${look.deep}` } : { background: look.blue }}
           >
-            Confirm and Pay
+            {t("confirmAndPay")}
           </button>
           <span className="flex items-center justify-center gap-1.5 text-[13px] font-extrabold text-k5-mut">
             <Lock className="h-3.5 w-3.5" aria-hidden="true" />
-            Safe and secure payment
+            {t("securePayment")}
           </span>
         </aside>
       </div>
@@ -235,6 +240,7 @@ export function K5TermsDialog({ open, intro, terms, extra, agreed, onAgree, busy
   const themeProps = useK5ThemeProps(
     "flex max-h-[min(780px,calc(100vh-32px))] w-full flex-col gap-3.5 overflow-hidden rounded-[28px] border-[3px] border-k5-ink bg-k5-card p-[26px] text-k5-ink shadow-[0_8px_0_var(--k5-ink)] ring-0 sm:max-w-[920px] max-[480px]:p-4",
   );
+  const tt = useTranslations("k5Booking.terms");
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent showCloseButton={false} {...themeProps}>
@@ -242,9 +248,9 @@ export function K5TermsDialog({ open, intro, terms, extra, agreed, onAgree, busy
           <span className="flex h-16 w-16 flex-none items-center justify-center rounded-[20px] bg-k5-ot">
             <ScrollText className="h-9 w-9 text-k5-oi" strokeWidth={2} aria-hidden="true" />
           </span>
-          <DialogTitle className="m-0 min-w-0 flex-1 font-k5-display text-[28px] font-semibold leading-[1.1]">Terms and Conditions</DialogTitle>
-          <DialogDescription className="sr-only">Fee refund policy and terms for Extra Classes</DialogDescription>
-          <button type="button" onClick={onClose} aria-label="Close" className="flex h-12 w-12 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-card bg-[#D7263D] text-white shadow-[0_3px_0_#9E1B2C]">
+          <DialogTitle className="m-0 min-w-0 flex-1 font-k5-display text-[28px] font-semibold leading-[1.1]">{tt("title")}</DialogTitle>
+          <DialogDescription className="sr-only">{tt("description")}</DialogDescription>
+          <button type="button" onClick={onClose} aria-label={tt("close")} className="flex h-12 w-12 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-card bg-[#D7263D] text-white shadow-[0_3px_0_#9E1B2C]">
             <X className="h-5 w-5" strokeWidth={3.5} aria-hidden="true" />
           </button>
         </div>
@@ -271,7 +277,7 @@ export function K5TermsDialog({ open, intro, terms, extra, agreed, onAgree, busy
         <div className={`flex flex-wrap items-center gap-3.5 rounded-[20px] border-[3px] px-4 py-3.5 ${agreed ? "border-k5-grn bg-k5-gt" : "border-k5-line bg-k5-soft"}`}>
           <label className="flex min-w-[240px] flex-1 cursor-pointer items-start gap-3 text-base font-black leading-[1.4]">
             <input type="checkbox" checked={agreed} onChange={(e) => onAgree(e.target.checked)} className="mt-0.5 h-7 w-7 flex-none cursor-pointer accent-[var(--k5-grn)]" />
-            I confirm that I have read and agree to the above-mentioned fee refund policy and terms &amp; conditions.
+            {tt("agree")}
           </label>
           <button
             type="button"
@@ -279,7 +285,7 @@ export function K5TermsDialog({ open, intro, terms, extra, agreed, onAgree, busy
             onClick={onPay}
             className="min-h-14 cursor-pointer rounded-full border-none bg-k5-grn px-6 font-k5-display text-xl font-semibold text-white shadow-[0_5px_0_var(--k5-grnD)] disabled:cursor-default disabled:opacity-45"
           >
-            {busy ? "Please wait…" : `Pay Now${amountText ? ` ${amountText}` : ""}`}
+            {busy ? tt("pleaseWait") : amountText ? tt("payNowAmount", { amount: amountText }) : tt("payNow")}
           </button>
         </div>
       </DialogContent>

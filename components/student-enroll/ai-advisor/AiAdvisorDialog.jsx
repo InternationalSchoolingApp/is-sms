@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 import { Check, FileUp, MessageCircle, Plus, Send, Sparkles, X } from "lucide-react";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -24,33 +25,30 @@ const STATUS_SESSION_OUT = "3";
 const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
 // Answers a retry cannot change, so the error screen offers only "Close".
 const NO_RETRY_CODES = new Set(["LIMIT_REACHED", "CHAT_LIMIT_REACHED", "NOT_AVAILABLE"]);
+// Labels: shared.aiAdvisor.bands.<value>.
 const BANDS = [
   { value: "strong", label: "Strong" },
   { value: "average", label: "Average" },
   { value: "weak", label: "Needs work" },
   { value: "unknown", label: "Not sure" },
 ];
-const QUICK_QUESTIONS = [
-  "What's the difference between Honors and AP?",
-  "Which elective fits my goals?",
-  "Is my course load too heavy?",
-];
-// Why each question is asked, keyed by the backend's question id (AdvisorQuestions.java).
-const QUESTION_HINTS = {
-  recoverSubjects: "We'll put these first so you can earn back the courses you need.",
-  career: "This helps us pick electives and course levels that lead toward that path.",
-  college: "Colleges in different countries look for different courses, so we'll match them.",
-  favoriteSubjects: "We'll lean toward higher levels or extra electives in these courses.",
-  hardSubjects: "We'll keep these at a comfortable level so your year isn't overloaded.",
-  homeSchoolSubjects: "We'll avoid suggesting courses you're already taking at your school.",
-  challenge: "This decides how many Honors or advanced courses we suggest.",
-  freeTime: "This helps us find electives you'll actually enjoy.",
+// Message keys (shared.aiAdvisor.quickQuestions.*); the chip's translated text is what gets asked.
+const QUICK_QUESTIONS = ["honorsVsAp", "elective", "courseLoad"];
+// Why each question is asked: shared.aiAdvisor.hints.<question id> (backend AdvisorQuestions.java ids).
+// Suggestion action badges: shared.aiAdvisor.actions.<ADD | UPGRADE | REPLACE | ADDITIONAL>.
+// Notices are kept in English (the "choose your courses" check reads them); the frontend's own ones are translated at render.
+const NOTICE_KEYS = {
+  [GENERIC_ERROR]: "genericError",
+  "We couldn't read your marksheet right now. You can continue without it.": "readFailed",
+  "Please keep at least one course, or skip this step.": "keepOne",
 };
-const ACTION_BADGE = {
-  ADD: "Add",
-  UPGRADE: "Upgrade",
-  REPLACE: "Swap",
-  ADDITIONAL: "Try this",
+// prepareMarksheetFiles() (utils/marksheetFiles.js) errors -> shared.signupValidation keys.
+const MARKSHEET_ERROR_KEYS = {
+  "Please choose a PDF or photo of your marksheet.": "marksheetNoFile",
+  "Each PDF must be under 4 MB. Try a photo of the page instead.": "marksheetPdfTooLarge",
+  "We couldn't open that photo. Please try a JPG or PNG.": "marksheetPhotoUnreadable",
+  "Please upload a PDF, JPG, PNG or WEBP file.": "marksheetBadType",
+  "These files are too large together. Please upload fewer or smaller files.": "marksheetTooLarge",
 };
 
 function usePrefersReducedMotion() {
@@ -176,14 +174,15 @@ function OptionCard({ selected, onClick, children, multi }) {
 
 /** One questionnaire question per screen, with progress, a hint and a select-all for multi-choice. */
 function QuestionStep({ question, index, total, answers, onToggle, onSetAll }) {
+  const t = useTranslations("shared.aiAdvisor");
   const picked = answers[question.id] || [];
   const allPicked = question.options.length > 0 && picked.length === question.options.length;
-  const hint = question.hint || QUESTION_HINTS[question.id];
+  const hint = question.hint || (t.has(`hints.${question.id}`) ? t(`hints.${question.id}`) : undefined);
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
         <p className="text-xs font-semibold text-slate-600">
-          Question {index + 1} of {total}
+          {t("questionOf", { index: index + 1, total })}
         </p>
         <div className="flex gap-1" aria-hidden="true">
           {Array.from({ length: total }).map((_, i) => (
@@ -201,7 +200,7 @@ function QuestionStep({ question, index, total, answers, onToggle, onSetAll }) {
         </legend>
         <div className="flex flex-wrap items-center justify-center gap-2">
           <span className="rounded-md bg-primary px-2 py-0.5 text-xs font-semibold text-white">
-            {question.multi ? "Choose all that apply" : "Choose one"}
+            {question.multi ? t("chooseAll") : t("chooseOne")}
           </span>
           {question.multi && (
             <button
@@ -209,7 +208,7 @@ function QuestionStep({ question, index, total, answers, onToggle, onSetAll }) {
               onClick={() => onSetAll(allPicked ? [] : question.options.map((o) => o.value))}
               className="text-xs font-semibold text-primary cursor-pointer underline-offset-2 hover:underline"
             >
-              {allPicked ? "Clear all" : "Select all"}
+              {allPicked ? t("clearAll") : t("selectAll")}
             </button>
           )}
         </div>
@@ -226,7 +225,7 @@ function QuestionStep({ question, index, total, answers, onToggle, onSetAll }) {
           ))}
         </div>
         {question.multi && picked.length > 0 && (
-          <p className="text-xs text-slate-600">{picked.length} selected</p>
+          <p className="text-xs text-slate-600">{t("nSelected", { count: picked.length })}</p>
         )}
       </fieldset>
     </div>
@@ -234,6 +233,7 @@ function QuestionStep({ question, index, total, answers, onToggle, onSetAll }) {
 }
 
 function MarksheetTable({ marksheet, onChange }) {
+  const t = useTranslations("shared.aiAdvisor");
   const rows = marksheet.subjects;
   function update(index, patch) {
     onChange({ ...marksheet, subjects: rows.map((row, i) => (i === index ? { ...row, ...patch } : row)) });
@@ -243,10 +243,10 @@ function MarksheetTable({ marksheet, onChange }) {
       <table className="w-full min-w-[420px] text-sm">
         <thead>
           <tr className="text-left text-xs text-slate-600">
-            <th className="py-1 pr-2 font-semibold">Course</th>
-            <th className="py-1 pr-2 font-semibold">Result</th>
-            <th className="py-1 pr-2 font-semibold">How you did</th>
-            <th className="py-1" aria-label="Remove" />
+            <th className="py-1 pr-2 font-semibold">{t("course")}</th>
+            <th className="py-1 pr-2 font-semibold">{t("result")}</th>
+            <th className="py-1 pr-2 font-semibold">{t("howYouDid")}</th>
+            <th className="py-1" aria-label={t("remove")} />
           </tr>
         </thead>
         <tbody>
@@ -254,7 +254,7 @@ function MarksheetTable({ marksheet, onChange }) {
             <tr key={index} className="border-t border-slate-100">
               <td className="py-1.5 pr-2">
                 <input
-                  aria-label="Course"
+                  aria-label={t("course")}
                   value={row.name}
                   onChange={(e) => update(index, { name: e.target.value })}
                   className="h-8 w-full rounded-md border border-slate-300 px-2 outline-none focus:border-primary"
@@ -262,7 +262,7 @@ function MarksheetTable({ marksheet, onChange }) {
               </td>
               <td className="py-1.5 pr-2">
                 <input
-                  aria-label="Result"
+                  aria-label={t("result")}
                   value={row.score ? `${row.score}${row.maxScore ? `/${row.maxScore}` : ""}` : row.letterGrade || ""}
                   onChange={(e) => {
                     const [score, maxScore] = e.target.value.split("/");
@@ -273,14 +273,14 @@ function MarksheetTable({ marksheet, onChange }) {
               </td>
               <td className="py-1.5 pr-2">
                 <select
-                  aria-label="How you did"
+                  aria-label={t("howYouDid")}
                   value={row.band}
                   onChange={(e) => update(index, { band: e.target.value })}
                   className="h-8 rounded-md border border-slate-300 bg-white px-2 outline-none focus:border-primary"
                 >
                   {BANDS.map((band) => (
                     <option key={band.value} value={band.value}>
-                      {band.label}
+                      {t(`bands.${band.value}`)}
                     </option>
                   ))}
                 </select>
@@ -288,7 +288,7 @@ function MarksheetTable({ marksheet, onChange }) {
               <td className="py-1.5 text-right">
                 <button
                   type="button"
-                  aria-label={`Remove ${row.name || "course"}`}
+                  aria-label={row.name ? t("removeNamed", { name: row.name }) : t("removeCourse")}
                   onClick={() => onChange({ ...marksheet, subjects: rows.filter((_, i) => i !== index) })}
                   className="rounded p-1 text-slate-500 hover:text-red-600"
                 >
@@ -304,7 +304,7 @@ function MarksheetTable({ marksheet, onChange }) {
         onClick={() => onChange({ ...marksheet, subjects: [...rows, { name: "", score: "", maxScore: "", letterGrade: "", band: "unknown" }] })}
         className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary"
       >
-        <Plus className="h-4 w-4" /> Add a course
+        <Plus className="h-4 w-4" /> {t("addCourse")}
       </button>
     </div>
   );
@@ -320,6 +320,7 @@ function formatCredit(value) {
  * Shown only when the list was short; the extra course is counted separately.
  */
 function ListProgress({ currentCredit, fullListCredit, suggestions, checked }) {
+  const t = useTranslations("shared.aiAdvisor");
   const full = Number(fullListCredit) || 0;
   const current = Number(currentCredit) || 0;
   if (full <= 0 || current >= full) return null;
@@ -333,11 +334,11 @@ function ListProgress({ currentCredit, fullListCredit, suggestions, checked }) {
       <div className="flex items-center justify-between gap-2 text-sm text-black">
         <span className="flex items-center gap-1.5 font-semibold">
           {complete && <Check className="h-4 w-4 text-[#3fa43c]" />}
-          {complete ? "Your list will be complete" : "Your list after applying"}
+          {complete ? t("listComplete") : t("listAfterApplying")}
         </span>
         <span className="shrink-0 font-semibold">
-          {formatCredit(Math.min(inList, full))} of {formatCredit(full)} courses
-          {extra > 0 && <span className="font-normal text-slate-600"> + {formatCredit(extra)} extra</span>}
+          {t("ofCourses", { current: formatCredit(Math.min(inList, full)), full: formatCredit(full) })}
+          {extra > 0 && <span className="font-normal text-slate-600">{t("extra", { count: formatCredit(extra) })}</span>}
         </span>
       </div>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
@@ -345,7 +346,7 @@ function ListProgress({ currentCredit, fullListCredit, suggestions, checked }) {
       </div>
       {!complete && (
         <p className="mt-1.5 text-xs text-slate-600">
-          Tick more suggestions, or add courses yourself on this page, to complete your list.
+          {t("tickMore")}
         </p>
       )}
     </div>
@@ -353,6 +354,7 @@ function ListProgress({ currentCredit, fullListCredit, suggestions, checked }) {
 }
 
 function SuggestionCard({ suggestion, checked, onToggle, index, extra, onNoThanks, busy }) {
+  const t = useTranslations("shared.aiAdvisor");
   return (
     <li
       className={`ai-rise rounded-lg border px-3 py-2.5 ${extra ? "border-[#3fa43c] bg-[#e2f5f0]" : "border-slate-200 bg-white"}`}
@@ -362,7 +364,7 @@ function SuggestionCard({ suggestion, checked, onToggle, index, extra, onNoThank
         <Checkbox
           checked={checked}
           onCheckedChange={onToggle}
-          aria-label={`Include ${suggestion.title}`}
+          aria-label={t("include", { title: suggestion.title ?? "" })}
           className="mt-0.5"
           disabled={busy}
         />
@@ -374,7 +376,7 @@ function SuggestionCard({ suggestion, checked, onToggle, index, extra, onNoThank
                 extra ? "bg-[#3fa43c] text-white" : "bg-[#e6f3ff] text-primary"
               }`}
             >
-              {ACTION_BADGE[suggestion.action] || "AI pick"}
+              {t.has(`actions.${suggestion.action}`) ? t(`actions.${suggestion.action}`) : t("aiPick")}
             </span>
           </div>
           {suggestion.category && <p className="text-xs text-slate-600">{suggestion.category}</p>}
@@ -391,7 +393,7 @@ function SuggestionCard({ suggestion, checked, onToggle, index, extra, onNoThank
               disabled={busy}
               className="mt-1.5 text-xs font-semibold text-slate-600 underline hover:text-black"
             >
-              No thanks
+              {t("noThanks")}
             </button>
           )}
         </div>
@@ -401,8 +403,9 @@ function SuggestionCard({ suggestion, checked, onToggle, index, extra, onNoThank
 }
 
 function TypingDots() {
+  const t = useTranslations("shared.aiAdvisor");
   return (
-    <span className="inline-flex items-center gap-1" aria-label="Typing">
+    <span className="inline-flex items-center gap-1" aria-label={t("typing")}>
       {[0, 1, 2].map((i) => (
         <span key={i} className="ai-rise h-1.5 w-1.5 rounded-full bg-slate-400" style={{ animationDelay: `${i * 150}ms`, animationIterationCount: "infinite", animationDirection: "alternate" }} />
       ))}
@@ -421,6 +424,8 @@ function TypingDots() {
  * parent or sibling is logged in); left out on the main signup.
  */
 export function AiAdvisorDialog({ open, onClose, context, school, program, gradeName, onApplied, onSessionExpired, studentUserId }) {
+  const t = useTranslations("shared.aiAdvisor");
+  const tv = useTranslations("shared.signupValidation");
   const start = useAdvisorStart({ context, studentUserId });
   const upload = useMarksheetUpload({ school, program, studentUserId });
   const confirmMarks = useConfirmMarksheet({ context, studentUserId });
@@ -454,6 +459,16 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
   useEffect(() => {
     chatEnd.current?.scrollIntoView({ block: "end" });
   }, [chatLog.length, chat.isPending]);
+
+  // A notice / failed chat answer in the student's language when the frontend wrote it; backend messages as they are.
+  function localText(message) {
+    if (!message) return message;
+    if (NOTICE_KEYS[message]) return t(NOTICE_KEYS[message]);
+    if (MARKSHEET_ERROR_KEYS[message]) return tv(MARKSHEET_ERROR_KEYS[message]);
+    const tooMany = /^You can upload up to (\d+) files?\.$/.exec(message);
+    if (tooMany) return tv("marksheetTooMany", { count: Number(tooMany[1]) });
+    return message;
+  }
 
   function sessionOut() {
     onClose();
@@ -610,7 +625,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
   /** source: the suggestion set the items belong to (the suggester's, or one chat answer's). */
   async function handleApply(itemIds, confirmations = [], source = result) {
     if (itemIds.length === 0) {
-      toast.error("Please pick at least one suggestion.");
+      toast.error(t("pickOne"));
       return;
     }
     try {
@@ -624,20 +639,20 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
         return;
       }
       if (response.status !== STATUS_SUCCESS) {
-        toast.error(response.message || GENERIC_ERROR);
+        toast.error(response.message || t("genericError"));
         return;
       }
       const appliedIds = new Set(response.appliedItemIds || []);
       const landed = source.suggestions.filter((s) => appliedIds.has(s.itemId)).map((s) => s.subjectId);
       onApplied?.(response.courseDetails, landed);
-      if (appliedIds.size > 0) toast.success(response.message || "Suggestions added");
+      if (appliedIds.size > 0) toast.success(response.message || t("suggestionsAdded"));
       (response.skipped || []).forEach((s) => {
         const title = source.suggestions.find((x) => x.itemId === s.itemId)?.title;
-        toast.error(title ? `${title}: ${s.reason}` : s.reason);
+        toast.error(title ? t("skippedItem", { title, reason: s.reason ?? "" }) : s.reason);
       });
       onClose();
     } catch {
-      toast.error(GENERIC_ERROR);
+      toast.error(t("genericError"));
     }
   }
 
@@ -712,10 +727,10 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
   }
 
   const thinkingSteps = [
-    ...(marksheetId ? ["Reading your results"] : []),
-    `Checking the ${gradeName || "grade"} rules`,
-    "Matching your interests",
-    "Choosing courses for you",
+    ...(marksheetId ? [t("readingResults")] : []),
+    gradeName ? t("checkingRules", { grade: gradeName }) : t("checkingRulesNoGrade"),
+    t("matchingInterests"),
+    t("choosingCourses"),
   ];
   const regular = result?.suggestions.filter((s) => s.action !== "ADDITIONAL") || [];
   const extras = result?.suggestions.filter((s) => s.action === "ADDITIONAL") || [];
@@ -728,7 +743,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#3fa43c] text-white">
               <Sparkles className="h-4 w-4" />
             </span>
-            Smart Course Picker
+            {t("title")}
             {/* <BsStars className="text-[#ffcd2b]" /> */}
           </SheetTitle>
         </SheetHeader>
@@ -736,16 +751,16 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
           {step === "loading" && (
             <>
-              <ThinkingChecklist steps={["Getting a few questions ready"]} finished={false} />
+              <ThinkingChecklist steps={[t("gettingReady")]} finished={false} />
               <ShimmerCards count={2} />
             </>
           )}
 
           {step === "error" && (
             <div className="space-y-3">
-              <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-black">{notice || GENERIC_ERROR}</p>
+              <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-black">{localText(notice || GENERIC_ERROR)}</p>
               {!/choose your courses/i.test(notice) && (
-                <p className="text-sm text-slate-700">You can still choose your courses yourself on this page.</p>
+                <p className="text-sm text-slate-700">{t("chooseYourself")}</p>
               )}
             </div>
           )}
@@ -753,13 +768,13 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
           {step === "marksheet" && (
             <div className="space-y-3">
               <div>
-                <h3 className="text-base font-semibold text-black">Add last year&apos;s marksheet (optional)</h3>
-                <p className="text-sm text-slate-700">We&apos;ll read your marks to suggest the right level for each course.</p>
+                <h3 className="text-base font-semibold text-black">{t("marksheetTitle")}</h3>
+                <p className="text-sm text-slate-700">{t("marksheetText")}</p>
               </div>
               {setup?.confirmedMarksheet && (
                 <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-[#e6f3ff] px-3 py-2">
                   <p className="text-sm text-black">
-                    We already have your marksheet ({setup.confirmedMarksheet.subjects?.length || 0} courses).
+                    {t("marksheetOnFile", { count: setup.confirmedMarksheet.subjects?.length || 0 })}
                   </p>
                   <Button
                     type="button"
@@ -769,7 +784,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                       goToQuestions();
                     }}
                   >
-                    Use it
+                    {t("useIt")}
                   </Button>
                 </div>
               )}
@@ -782,8 +797,8 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                 }}
               >
                 <FileUp className="h-7 w-7 text-primary" />
-                <span className="text-sm font-semibold text-black">Upload a PDF or photo</span>
-                <span className="text-xs text-slate-600">Up to {setup?.marksheetMaxFiles || 3} files · PDF, JPG, PNG</span>
+                <span className="text-sm font-semibold text-black">{t("uploadTitle")}</span>
+                <span className="text-xs text-slate-600">{t("uploadLimits", { count: setup?.marksheetMaxFiles || 3 })}</span>
                 <input
                   ref={fileInput}
                   type="file"
@@ -796,14 +811,14 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                   }}
                 />
               </label>
-              {notice && <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-black">{notice}</p>}
+              {notice && <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-black">{localText(notice)}</p>}
               <ConsentNote text={setup?.consentNote} />
             </div>
           )}
 
           {step === "reading" && (
             <>
-              <ThinkingChecklist steps={["Uploading your marksheet", "Reading courses and marks", "Checking the results"]} finished={false} />
+              <ThinkingChecklist steps={[t("uploading"), t("readingMarks"), t("checkingResults")]} finished={false} />
               <ShimmerCards count={3} />
             </>
           )}
@@ -811,16 +826,16 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
           {step === "confirmMarks" && marksheet && (
             <div className="space-y-3">
               <div>
-                <h3 className="text-base font-semibold text-black">Is this right?</h3>
-                <p className="text-sm text-slate-700">{marksheet.message || "Fix anything we read wrong."}</p>
+                <h3 className="text-base font-semibold text-black">{t("isThisRight")}</h3>
+                <p className="text-sm text-slate-700">{marksheet.message || t("fixWrong")}</p>
               </div>
               {marksheet.confidence === "low" && (
                 <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-black">
-                  The file was hard to read. Please check every row carefully.
+                  {t("hardToRead")}
                 </p>
               )}
               <MarksheetTable marksheet={marksheet} onChange={setMarksheet} />
-              {notice && <p className="text-sm text-red-600">{notice}</p>}
+              {notice && <p className="text-sm text-red-600">{localText(notice)}</p>}
               <ConsentNote text={setup?.consentNote} />
             </div>
           )}
@@ -836,7 +851,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                 onSetAll={(values) => setAnswers((prev) => ({ ...prev, [currentQuestion.id]: values }))}
               />
             ) : (
-              <p className="text-sm text-slate-700">We have everything we need. Get your suggestions when you&apos;re ready.</p>
+              <p className="text-sm text-slate-700">{t("haveEverything")}</p>
             )
           )}
 
@@ -863,7 +878,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                 />
               )}
               {result.suggestions.length === 0 ? (
-                <p className="text-sm text-black">{result.message || "Your current courses already look like a good fit."}</p>
+                <p className="text-sm text-black">{result.message || t("goodFit")}</p>
               ) : (
                 <>
                   {regular.length > 0 && (
@@ -888,7 +903,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                   )}
                   {extras.length > 0 && (
                     <div className="space-y-2">
-                      <p className="text-sm font-semibold text-black">Want to try one more?</p>
+                      <p className="text-sm font-semibold text-black">{t("tryOneMore")}</p>
                       <ul className="space-y-2">
                         {extras.map((s, index) => (
                           <SuggestionCard
@@ -921,13 +936,16 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
             <div className="space-y-3">
               {chatLog.length === 0 && (
                 <div className="space-y-2">
-                  <p className="text-sm text-slate-700">Ask anything about choosing your courses.</p>
+                  <p className="text-sm text-slate-700">{t("askAnything")}</p>
                   <div className="flex flex-wrap gap-2">
-                    {QUICK_QUESTIONS.map((q) => (
-                      <Chip key={q} multi selected={false} onClick={() => handleAsk(q)}>
-                        {q}
-                      </Chip>
-                    ))}
+                    {QUICK_QUESTIONS.map((key) => {
+                      const q = t(`quickQuestions.${key}`);
+                      return (
+                        <Chip key={key} multi selected={false} onClick={() => handleAsk(q)}>
+                          {q}
+                        </Chip>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -944,7 +962,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                       }`}
                     >
                       <p className="whitespace-pre-line">
-                        {entry.fresh ? <TypedText text={entry.text} /> : entry.text}
+                        {entry.fresh ? <TypedText text={entry.text} /> : entry.failed ? localText(entry.text) : entry.text}
                       </p>
                       {entry.suggestions?.length > 0 && (
                         <div className="mt-2 space-y-2">
@@ -968,7 +986,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                             onClick={() => handleApply([...entry.checked], [], entry)}
                             disabled={busy || entry.checked.size === 0}
                           >
-                            {apply.isPending ? "Adding…" : `Apply (${entry.checked.size})`}
+                            {apply.isPending ? t("adding") : t("applyCount", { count: entry.checked.size })}
                           </Button>
                         </div>
                       )}
@@ -990,7 +1008,7 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
 
           {step === "confirm" && pending && (
             <div className="space-y-3">
-              <h3 className="text-base font-semibold text-black">Please confirm</h3>
+              <h3 className="text-base font-semibold text-black">{t("pleaseConfirm")}</h3>
               <ul className="space-y-2">
                 {pending.required.map((c, index) => (
                   <li key={`${c.itemId}-${c.type}-${index}`} className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-black">
@@ -1005,16 +1023,16 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
         <SheetFooter className="mx-0 mb-0 shrink-0 flex-row flex-wrap justify-center gap-2 border-t bg-white px-4 py-3">
           {step === "marksheet" && (
             <Button type="button" variant="outline" onClick={() => goToQuestions()}>
-              Skip this step
+              {t("skipStep")}
             </Button>
           )}
           {step === "confirmMarks" && (
             <>
               <Button type="button" variant="outline" onClick={() => goToQuestions()} disabled={busy}>
-                Skip marksheet
+                {t("skipMarksheet")}
               </Button>
               <Button type="button" onClick={handleConfirmMarks} disabled={busy}>
-                {confirmMarks.isPending ? "Saving…" : "Looks right"}
+                {confirmMarks.isPending ? t("saving") : t("looksRight")}
               </Button>
             </>
           )}
@@ -1031,16 +1049,16 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                   disabled={busy}
                   className="w-auto"
                 >
-                  Skip all questions
+                  {t("skipAll")}
                 </Button>
               </span>
               {questionIndex > 0 && (
                 <Button type="button" variant="outline" onClick={() => setQuestionIndex((i) => i - 1)} disabled={busy}>
-                  Back
+                  {t("back")}
                 </Button>
               )}
               <Button type="button" variant="outline" onClick={skipQuestion} disabled={busy}>
-                Skip
+                {t("skip")}
               </Button>
               {onLastQuestion ? (
                 <Button
@@ -1049,23 +1067,23 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                   disabled={busy || !(answers[currentQuestion.id] || []).length}
                   className="bg-[#3fa43c] hover:bg-[#3fa43c]/90"
                 >
-                  <Sparkles className="h-4 w-4" /> Get suggestions
+                  <Sparkles className="h-4 w-4" /> {t("getSuggestions")}
                 </Button>
               ) : (
                 <Button type="button" onClick={nextQuestion} disabled={busy || !(answers[currentQuestion.id] || []).length}>
-                  Next
+                  {t("next")}
                 </Button>
               )}
             </>
           )}
           {step === "questions" && !currentQuestion && (
             <Button type="button" onClick={() => handleSuggest()} disabled={busy} className="bg-[#3fa43c] hover:bg-[#3fa43c]/90">
-              <Sparkles className="h-4 w-4" /> Get suggestions
+              <Sparkles className="h-4 w-4" /> {t("getSuggestions")}
             </Button>
           )}
           {step === "suggestions" && setup?.chatEnabled && (
             <Button type="button" variant="ghost" onClick={openChat} disabled={busy} className="text-[#3fa43c]">
-              <MessageCircle className="h-4 w-4" /> Ask a question
+              <MessageCircle className="h-4 w-4" /> {t("askQuestion")}
             </Button>
           )}
           {step === "chat" && (
@@ -1078,19 +1096,19 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
             >
               {cameFrom !== "chat" && (
                 <Button type="button" variant="outline" size="sm" onClick={() => setStep(cameFrom)} disabled={chat.isPending}>
-                  Back
+                  {t("back")}
                 </Button>
               )}
               <input
                 id="ai-advisor-question"
-                aria-label="Your question"
+                aria-label={t("yourQuestion")}
                 value={chatInput}
                 maxLength={500}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask about your courses…"
+                placeholder={t("askPlaceholder")}
                 className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-primary"
               />
-              <Button type="submit" size="sm" disabled={!chatInput.trim() || chat.isPending} aria-label="Send">
+              <Button type="submit" size="sm" disabled={!chatInput.trim() || chat.isPending} aria-label={t("send")}>
                 <Send className="h-4 w-4" />
               </Button>
             </form>
@@ -1103,17 +1121,17 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                 onClick={() => handleApply(result.suggestions.map((s) => s.itemId))}
                 disabled={busy}
               >
-                Apply all
+                {t("applyAll")}
               </Button>
               <Button type="button" onClick={() => handleApply([...checked])} disabled={busy || checked.size === 0}>
-                {apply.isPending ? "Adding…" : `Apply selected (${checked.size})`}
+                {apply.isPending ? t("adding") : t("applySelected", { count: checked.size })}
               </Button>
             </>
           )}
           {step === "confirm" && pending && (
             <>
               <Button type="button" variant="outline" onClick={() => setStep(pending.returnTo || "suggestions")} disabled={busy}>
-                Back
+                {t("back")}
               </Button>
               <Button
                 type="button"
@@ -1126,18 +1144,18 @@ export function AiAdvisorDialog({ open, onClose, context, school, program, grade
                 }
                 disabled={busy}
               >
-                {apply.isPending ? "Adding…" : "Confirm & add"}
+                {apply.isPending ? t("adding") : t("confirmAndAdd")}
               </Button>
             </>
           )}
           {step === "error" && retry && (
             <Button type="button" variant="outline" onClick={() => retry()} disabled={busy}>
-              Try again
+              {t("tryAgain")}
             </Button>
           )}
           {(step === "error" || (step === "suggestions" && result?.suggestions.length === 0)) && (
             <Button type="button" onClick={onClose}>
-              Close
+              {t("close")}
             </Button>
           )}
         </SheetFooter>

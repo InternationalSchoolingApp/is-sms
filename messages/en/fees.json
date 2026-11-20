@@ -1,0 +1,40 @@
+{
+  "title": "Fee Details",
+  "empty": "No fee details found",
+  "paymentReceived": "Payment received.",
+  "paymentProcessing": "Payment is under process...",
+  "oops": "Oops!",
+  "paymentIncomplete": "Payment Incomplete",
+  "underReviewTitle": "Your payment is under review.",
+  "underReviewText": "Your fee status will be updated once the payment is received.",
+  "table": {
+    "sNo": "S.No",
+    "scheduledDate": "Scheduled Date",
+    "grade": "Grade",
+    "paymentName": "Payment Name",
+    "paidFee": "Paid Fee",
+    "paidDate": "Paid Date",
+    "status": "Status",
+    "viewReceipt": "View Receipt"
+  },
+  "actions": {
+    "viewReceipt": "View Receipt",
+    "tryAgain": "Try Again",
+    "payNow": "Pay Now",
+    "changePaymentMethod": "Change Payment Method",
+    "paymentInProcess": "Payment in Process",
+    "paymentUnderProcess": "Payment Under Process"
+  },
+  "statuses": {
+    "success": "SUCCESS",
+    "paid": "PAID",
+    "pending": "PENDING",
+    "initiated": "INITIATED",
+    "failure": "FAILURE",
+    "rejected": "REJECTED",
+    "cancelled": "CANCELLED",
+    "expired": "EXPIRED",
+    "refunded": "REFUNDED",
+    "scheduled": "SCHEDULED"
+  }
+}

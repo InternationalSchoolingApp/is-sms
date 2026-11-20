@@ -1,0 +1,29 @@
+{
+  "rate": {
+    "class": "Rate this class",
+    "activity": "Rate this activity"
+  },
+  "modal": {
+    "titleWithTeacher": "{title} <muted>with</muted> {teacher}",
+    "tagline": "Help Us Improve Your Learning Experience",
+    "confidential": "We want to hear what you really think. Your responses are confidential, so please feel free to be honest.",
+    "classFallback": "Class"
+  },
+  "pending": {
+    "title": "Pending Feedback",
+    "subtitle": "Please submit your pending weekly feedback.",
+    "total": "Total",
+    "activities": "Activities",
+    "classes": "Classes"
+  },
+  "category": {
+    "class": "CLASS",
+    "activity": "ACTIVITY",
+    "batch": "BATCH",
+    "sports": "SPORTS",
+    "one_to_one": "ONE_TO_ONE",
+    "academic": "ACADEMIC",
+    "student_doubt_session": "STUDENT_DOUBT_SESSION",
+    "n_a": "N/A"
+  }
+}

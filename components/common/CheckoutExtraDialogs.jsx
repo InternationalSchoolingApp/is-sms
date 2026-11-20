@@ -1,6 +1,7 @@
 "use client";
 
 import { Info } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { PaymentInProgressModal } from "@/components/student-enroll/PaymentInProgressModal";
 import { SupportCard } from "@/components/re-enrollment/ReEnrollmentParts";
@@ -16,6 +17,8 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
  */
 export function CheckoutExtraDialogs({ checkout }) {
   const { context } = useDashboardContext();
+  const t = useTranslations("home.checkout");
+  const tc = useTranslations("common");
   const request = checkout.paymentInProgress;
   return (
     <>
@@ -33,20 +36,20 @@ export function CheckoutExtraDialogs({ checkout }) {
       <Dialog open={Boolean(checkout.oldFee)} onOpenChange={(open) => !open && checkout.closeOldFee()} disablePointerDismissal>
         <DialogContent showCloseButton={false} className="gap-0 overflow-hidden rounded-[20px] border-0 p-0 sm:max-w-[460px]">
           <div className="flex items-center justify-center bg-primary px-3 py-3">
-            <DialogTitle className="m-0 text-lg font-medium normal-case text-white">School Payment Update</DialogTitle>
+            <DialogTitle className="m-0 text-lg font-medium normal-case text-white">{t("oldFeeTitle")}</DialogTitle>
           </div>
           <div className="bg-white px-6 py-5">
             <div className="mb-4 rounded-[15px] border border-amber-400 bg-amber-50 px-3 py-3 text-[#92400E]">
               <p className="mb-2 flex items-center gap-2 font-semibold">
                 <Info className="h-4 w-4" aria-hidden="true" />
-                Important Notice
+                {t("importantNotice")}
               </p>
               <DialogDescription className="m-0 text-[#92400E]">{checkout.oldFee}</DialogDescription>
             </div>
             <SupportCard uniqueId={context?.uniqueId} />
             <div className="mt-4 text-center">
               <button type="button" onClick={checkout.closeOldFee} className="cursor-pointer rounded-[10px] border-none bg-primary px-8 py-2.5 text-lg font-semibold text-white">
-                Close
+                {tc("actions.close")}
               </button>
             </div>
           </div>

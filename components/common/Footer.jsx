@@ -1,10 +1,16 @@
-import { copyrightLine } from "@/utils/schoolBrand";
+"use client";
+
+import { useTranslations } from "next-intl";
+
 // `fixed`: the wizard footer, shown from md only, pinned to the bottom of the viewport. Below md the copyright line
 // is the in-flow one at the end of the page (`inFlow`).
 // `inFlow`: the mobile-only copyright line at the end of the page content (pinned to the bottom of the
 // content area, directly above the fixed Back / Next bar); hidden from md.
 // `inBar`: the mobile-only copyright line inside the fixed Back / Next bar (MobileActionBar); hidden from md.
 export function Footer({ schoolName, fixed = false, inBar = false, inFlow = false }) {
+  // Same line as utils/schoolBrand.js copyrightLine(), in the page's language.
+  const t = useTranslations("sharedCommon");
+  const year = new Date().getFullYear();
   return (
     <footer
       className={`border-t border-slate-200/70 text-center text-xs text-slate-500 ${
@@ -17,7 +23,7 @@ export function Footer({ schoolName, fixed = false, inBar = false, inFlow = fals
           : "relative z-10 hidden bg-white py-4 md:block"
       }`}
     >
-      {copyrightLine(schoolName)}
+      {schoolName ? t("copyrightWithSchool", { year: String(year), school: schoolName }) : t("copyright", { year: String(year) })}
     </footer>
   );
 }

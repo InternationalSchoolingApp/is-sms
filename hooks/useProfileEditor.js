@@ -3,11 +3,50 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { getProfileMaster, saveMyProfile } from "@/services/profileSaveApi";
 import { getSettingsByTypeAndKey } from "@/services/settingsApi";
 import { buildDraft, buildEditContext, buildUnits, sameValue } from "@/utils/profileEdit";
 import { loadPhoneUtils } from "@/utils/profilePhone";
 import { callServer } from "@/utils/serverCall";
+
+// The English messages utils/profileEdit.js and utils/profilePhone.js return (they stay English there) ->
+// profile.validation.<key>. The editor shows (status().error, toasts, confirm.message) the translated text.
+const MESSAGE_KEYS = {
+  "Either field value is invalid or empty.": "invalidOrEmpty",
+  "Please choose the country code.": "chooseCountryCode",
+  "First name is required.": "firstNameRequired",
+  "Last name is required.": "lastNameRequired",
+  "Please choose a gender.": "chooseGender",
+  "Please choose a country.": "chooseCountry",
+  "Please choose a state.": "chooseState",
+  "Please choose a city.": "chooseCity",
+  "Please choose a timezone.": "chooseTimezone",
+  "Please choose a nationality.": "chooseNationality",
+  "Invalid URL.": "invalidUrl",
+  "Please keep at least one way to reach you.": "keepOneChannel",
+  "You are about to change your timezone. All your future booked classes will move to the new timezone.": "confirmTimezone",
+  "You are about to change your nationality. Do you want to continue?": "confirmNationality",
+  "Your current report frequency stays active until its end date. The new one starts only after the current period ends.": "confirmReportType",
+};
+const ANY_COUNTRY = "the selected country";
+
+function useProfileMessage() {
+  const t = useTranslations("profile.validation");
+  return useCallback(
+    (message) => {
+      if (!message) return message;
+      const key = MESSAGE_KEYS[message];
+      if (key) return t(key);
+      let m = /^Please enter a valid phone number for (.+)\.$/.exec(message);
+      if (m) return m[1] === ANY_COUNTRY ? t("phoneInvalidAny") : t("phoneInvalid", { country: m[1] });
+      m = /^Phone number for (.+) can be at most (\d+) digits\.$/.exec(message);
+      if (m) return m[1] === ANY_COUNTRY ? t("phoneTooLongAny", { max: m[2] }) : t("phoneTooLong", { country: m[1], max: m[2] });
+      return message;
+    },
+    [t],
+  );
+}
 
 /** One dropdown list (countries / timezones / states of a country / cities of a state), cached per id. */
 export function useProfileMaster(kind, id, enabled = true) {
@@ -32,6 +71,8 @@ export function useProfileMaster(kind, id, enabled = true) {
  *           undo(unitId), saveAll(), dirtyCount, busy, confirm: { message, accept, cancel } | null, countries }.
  */
 export function useProfileEditor({ profile, studentStandardId, refetch, enabled = true }) {
+  const tt = useTranslations("profile.toast");
+  const localize = useProfileMessage();
   const base = useMemo(() => (profile ? buildDraft(profile) : {}), [profile]);
   const ctx = useMemo(() => buildEditContext(profile), [profile]);
   const units = useMemo(() => buildUnits(ctx), [ctx]);
@@ -126,9 +167,9 @@ export function useProfileEditor({ profile, studentStandardId, refetch, enabled 
         setSaved(new Set(ids));
         clearTimeout(savedTimer.current);
         savedTimer.current = setTimeout(() => setSaved(new Set()), 2500);
-        toast.success(list.length > 1 ? "All your changes are saved!" : result?.message || "Saved!");
+        toast.success(list.length > 1 ? tt("allSaved") : result?.message || tt("saved"));
       } catch (error) {
-        const message = String(error?.message || "Your changes could not be saved.").replace(/^[A-Z_0-9]+:\s*/, "");
+        const message = String(error?.message || tt("changesNotSaved")).replace(/^[A-Z_0-9]+:\s*/, "");
         setErrors((prev) => ({ ...prev, ...Object.fromEntries(ids.map((id) => [id, message])) }));
         toast.error(message);
       } finally {
@@ -139,7 +180,7 @@ export function useProfileEditor({ profile, studentStandardId, refetch, enabled 
         });
       }
     },
-    [draft, ctx, countries, studentStandardId, refetch],
+    [draft, ctx, countries, studentStandardId, refetch, tt],
   );
 
   const save = useCallback(
@@ -149,7 +190,7 @@ export function useProfileEditor({ profile, studentStandardId, refetch, enabled 
       const problems = {};
       list.forEach((u) => {
         const problem = u.validate?.(draft, checkCtx);
-        if (problem) problems[u.id] = problem;
+        if (problem) problems[u.id] = localize(problem);
       });
       if (Object.keys(problems).length) {
         setErrors((prev) => ({ ...prev, ...problems }));
@@ -166,11 +207,11 @@ export function useProfileEditor({ profile, studentStandardId, refetch, enabled 
           setConfirm(null);
           const toSave = [...plain, ...approved];
           if (toSave.length) run(toSave);
-          else if (list.length > 1) toast("No confirmed changes available to save.");
+          else if (list.length > 1) toast(tt("noConfirmedChanges"));
           return;
         }
         setConfirm({
-          message: asking[i].confirm,
+          message: localize(asking[i].confirm),
           accept: () => {
             approved.push(asking[i]);
             ask(i + 1);
@@ -181,7 +222,7 @@ export function useProfileEditor({ profile, studentStandardId, refetch, enabled 
       if (asking.length) ask(0);
       else run(list);
     },
-    [units, isDirty, draft, run, checkCtx],
+    [units, isDirty, draft, run, checkCtx, localize, tt],
   );
 
   const saveAll = useCallback(() => save(dirtyUnits.map((u) => u.id)), [save, dirtyUnits]);

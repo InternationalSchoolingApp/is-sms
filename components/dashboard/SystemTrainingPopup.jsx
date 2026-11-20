@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Salsa } from "next/font/google";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { MessagesSquare, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { JoinClassModal } from "@/components/dashboard/calendar/JoinClassModal";
@@ -89,24 +90,28 @@ function WelcomeDialog({ open, firstName, onClose }) {
     const id = setTimeout(onClose, 10000);
     return () => clearTimeout(id);
   }, [open, onClose]);
-  const words = ["Welcome", "to", "the", "International", "Schooling", "Family!"];
+  const t = useTranslations("home.systemTraining");
+  const tc = useTranslations("common");
+  // Two lines, each word zooming in after the previous one (the line break comes after the first line).
+  const lineOne = t("welcomeLine1").split(" ").filter(Boolean);
+  const words = [...lineOne, ...t("welcomeLine2").split(" ").filter(Boolean)];
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()} disablePointerDismissal>
       <DialogContent data-system-training="" showCloseButton={false} className="w-[calc(100%-32px)] max-w-[480px] gap-0 overflow-hidden rounded-[20px] border bg-white p-2 shadow-lg sm:max-w-[480px]">
         <div className="relative rounded-[20px] border border-primary bg-[url('/images/system-training/welcome-bg-tile.png')] bg-repeat px-3 py-4 text-center">
           <div className="flex justify-end">
-            <button type="button" aria-label="Close" onClick={onClose} className="cursor-pointer border-none bg-transparent text-black">
+            <button type="button" aria-label={tc("actions.close")} onClick={onClose} className="cursor-pointer border-none bg-transparent text-black">
               <X className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
           <DialogTitle className={`${salsa.className} mb-3 animate-[st-zoom-in_0.6s_both] text-[30px] font-semibold tracking-[0.2px] text-black`}>
-            Hello {firstName}!
+            {t("hello", { name: firstName })}
           </DialogTitle>
           <div className="mb-3">
             {/* Animated GIF: next/image would serve it unoptimized anyway, so it is marked so here. */}
             <Image
               src="/images/system-training/MascotAlpha.gif"
-              alt="Welcome"
+              alt={t("welcomeAlt")}
               width={260}
               height={260}
               unoptimized
@@ -116,11 +121,11 @@ function WelcomeDialog({ open, firstName, onClose }) {
           </div>
           <DialogDescription className={`${salsa.className} text-[26px] font-bold leading-none text-black`}>
             {words.map((word, i) => (
-              <span key={word}>
-                <span className={`inline-block animate-[st-zoom-in_0.6s_both] ${["", "[animation-delay:0.12s]", "[animation-delay:0.24s]", "[animation-delay:0.36s]", "[animation-delay:0.48s]", "[animation-delay:0.6s]"][i]}`}>
+              <span key={`${i}-${word}`}>
+                <span className={`inline-block animate-[st-zoom-in_0.6s_both] ${["", "[animation-delay:0.12s]", "[animation-delay:0.24s]", "[animation-delay:0.36s]", "[animation-delay:0.48s]", "[animation-delay:0.6s]"][i] ?? ""}`}>
                   {word}
                 </span>
-                {i === 2 ? <br /> : i < words.length - 1 ? " " : null}
+                {i === lineOne.length - 1 ? <br /> : i < words.length - 1 ? " " : null}
               </span>
             ))}
           </DialogDescription>
@@ -132,11 +137,13 @@ function WelcomeDialog({ open, firstName, onClose }) {
 
 function TrainingDialog({ open, data, chatHref, onReschedule, onJoin, onClose }) {
   const rescheduled = data.orientStatus === "RESCHEDULE";
+  const t = useTranslations("home.systemTraining");
+  const tc = useTranslations("common");
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()} disablePointerDismissal>
       <DialogContent data-system-training="" showCloseButton={false} className="w-[calc(100%-32px)] max-w-[480px] gap-0 overflow-hidden p-0 text-center sm:max-w-[480px]">
         <div className="flex items-center justify-center bg-primary px-4 py-2 text-white">
-          <DialogTitle className="m-0 mr-auto text-lg font-medium normal-case text-white">School System Training</DialogTitle>
+          <DialogTitle className="m-0 mr-auto text-lg font-medium normal-case text-white">{t("title")}</DialogTitle>
         </div>
         <div className="flex w-full flex-wrap px-1 py-3">
           {chatHref && (
@@ -145,8 +152,8 @@ function TrainingDialog({ open, data, chatHref, onReschedule, onJoin, onClose })
                 href={chatHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                title="Live Chat with School Administration"
-                aria-label="Live Chat with School Administration"
+                title={t("liveChat")}
+                aria-label={t("liveChat")}
                 className="ml-auto mr-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white"
               >
                 <MessagesSquare className="h-5 w-5" aria-hidden="true" />
@@ -157,29 +164,32 @@ function TrainingDialog({ open, data, chatHref, onReschedule, onJoin, onClose })
             <div className="w-full text-center font-bold">
                 {rescheduled ? (
                   <div className="rounded-[10px] border border-[#007fff] p-2">
-                    <p className="mb-2 text-lg font-semibold text-primary">Your school System Training has been rescheduled. </p>
-                    <p className="mb-0 text-lg font-semibold text-primary">Please click below and select another date for the training.</p>
+                    <p className="mb-2 text-lg font-semibold text-primary">{t("rescheduledLine1")} </p>
+                    <p className="mb-0 text-lg font-semibold text-primary">{t("rescheduledLine2")}</p>
                     <p className="mb-0 mt-3">
                       <button type="button" onClick={onReschedule} className="inline-block cursor-pointer border-none rounded-md bg-green-600 px-12 py-1 text-lg font-semibold text-white no-underline">
-                        Reschedule
+                        {t("reschedule")}
                       </button>
                     </p>
                   </div>
                 ) : (
                   <>
                     <div className="rounded-[10px] border border-[#007fff] p-2">
-                      <p className="mb-3 text-lg font-semibold text-primary">Your School System Training is on {data.orientationdateTimeInStudentTimeZone}.</p>
+                      <p className="mb-3 text-lg font-semibold text-primary">{t("isOn", { dateTime: data.orientationdateTimeInStudentTimeZone ?? "" })}</p>
                       <p className="mb-1 mt-3">
                         <button type="button" onClick={onJoin} className="cursor-pointer rounded-md border-none bg-green-600 px-4 py-1.5 font-semibold text-white">
-                          Join
+                          {tc("actions.join")}
                         </button>
                       </p>
                     </div>
                     <p className="mb-0 mt-2 text-base font-semibold text-primary">
-                      If you wish to reschedule, please{" "}
-                      <button type="button" onClick={onReschedule} className="cursor-pointer border-none bg-transparent p-0 font-semibold text-primary underline">
-                        click here
-                      </button>
+                      {t.rich("wishReschedule", {
+                        link: (chunks) => (
+                          <button type="button" onClick={onReschedule} className="cursor-pointer border-none bg-transparent p-0 font-semibold text-primary underline">
+                            {chunks}
+                          </button>
+                        ),
+                      })}
                     </p>
                   </>
                 )}
@@ -188,7 +198,7 @@ function TrainingDialog({ open, data, chatHref, onReschedule, onJoin, onClose })
         </div>
         <div className="flex justify-center border-t px-4 py-3">
           <button type="button" onClick={onClose} className="ml-auto cursor-pointer rounded-md border border-primary bg-white px-3 py-1.5 font-semibold text-primary">
-            Close
+            {tc("actions.close")}
           </button>
         </div>
       </DialogContent>
@@ -198,6 +208,8 @@ function TrainingDialog({ open, data, chatHref, onReschedule, onJoin, onClose })
 
 export function SystemTrainingPopup() {
   const { context, isK5 } = useDashboardContext();
+  const t = useTranslations("home.systemTraining");
+  const tc = useTranslations("common");
   // The reschedule page is the new Next.js page (legacy rescheduleOrientationUrl -> /join-orientation, Orientation.jsp).
   const dummy = useDummyStudent();
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
@@ -247,7 +259,7 @@ export function SystemTrainingPopup() {
 
   if (!wanted || !plan) return null;
 
-  const firstName = String(context?.userName || "").split(" ")[0] || "Student";
+  const firstName = String(context?.userName || "").split(" ")[0] || tc("words.student");
   const chatHref = context?.chatUrl && context?.uniqueId ? `${context.chatUrl}/onboarding-support?uuid=${context.uniqueId}` : "";
   const closeWelcome = () => setStep(plan === "booked" ? "training" : "done");
 
@@ -285,7 +297,7 @@ export function SystemTrainingPopup() {
       {plan === "booked" && !isK5 && rescheduling && <K5SystemTrainingRescheduleDialog onClose={() => setRescheduling(false)} />}
       {joining && (
         <JoinClassModal
-          event={{ url: data.joinOrientationUrl, title: "School System Training" }}
+          event={{ url: data.joinOrientationUrl, title: t("title") }}
           schoolUUID={context?.schoolUUID}
           onClose={() => setJoining(false)}
         />

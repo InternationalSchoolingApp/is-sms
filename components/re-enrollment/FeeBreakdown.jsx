@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { SupText } from "@/components/student-enroll/FeePaymentPlans";
 
 /**
@@ -9,6 +10,7 @@ import { SupText } from "@/components/student-enroll/FeePaymentPlans";
  * `option` is a plan from buildPlanOptions(); `variantMode` picks one of its installment variants.
  */
 function Lines({ details, sign = "+" }) {
+  const tc = useTranslations("common");
   if (!details?.totalEntityFee > 0) return null;
   return (
     <div className="mb-2">
@@ -31,7 +33,7 @@ function Lines({ details, sign = "+" }) {
       </div>
       <hr className="my-2 border-slate-200" />
       <div className="flex justify-between font-semibold text-slate-800">
-        <span>Total</span>
+        <span>{tc("words.total")}</span>
         <span>{details.totalEntityFeeString}</span>
       </div>
     </div>
@@ -48,13 +50,14 @@ function Row({ label, value, strong, className = "" }) {
 }
 
 function Discounts({ youSave }) {
+  const t = useTranslations("reEnrollment.fee");
   const items = youSave?.entityDescriptions?.length
     ? youSave.entityDescriptions.map((item) => ({ label: item.entityDescription, fee: item.entityFee }))
     : (youSave?.description || []).map((label, index) => ({ label, fee: youSave.entityFees?.[index] }));
   if (items.length === 0) return null;
   return (
     <div className="my-2 rounded-[15px] border border-green-500 bg-[#F0FDF4] p-3">
-      <h5 className="mb-2 text-base font-semibold text-black">Fee Discounts</h5>
+      <h5 className="mb-2 text-base font-semibold text-black">{t("discounts")}</h5>
       {items.map((item, index) => (
         <div key={index} className="flex justify-between gap-3 py-0.5">
           <span>{index + 1}. <SupText>{item.label}</SupText></span>
@@ -63,7 +66,7 @@ function Discounts({ youSave }) {
       ))}
       <hr className="my-2 border-slate-300" />
       <div className="flex justify-between text-base font-bold text-black">
-        <span>You Save</span>
+        <span>{t("youSave")}</span>
         <span>-{youSave.totalEntityFeeString}</span>
       </div>
     </div>
@@ -76,14 +79,15 @@ function Discounts({ youSave }) {
  * what is still due after the advance, not the plan's full amount.
  */
 export function FeeBreakdown({ fee, option, variantMode, gradeName, advance = false, courseFeeLabel, payableOverride }) {
+  const t = useTranslations("reEnrollment.fee");
   if (!fee) return null;
   const useAdvance = advance && Boolean(fee.advanceFeeDetails);
   if (!useAdvance && !option) return null;
   if (!useAdvance && option.kind === "registration") {
     return (
       <div className="text-sm">
-        <Row label="Payable Fee" value={fee.enrollmentFee?.enrollmentFeeString} strong />
-        <p className="mt-1 text-xs text-slate-500">‘Reserve an Enrollment Seat’ fee of {fee.enrollmentFee?.enrollmentFeeString} is non-refundable.</p>
+        <Row label={t("payable")} value={fee.enrollmentFee?.enrollmentFeeString} strong />
+        <p className="mt-1 text-xs text-slate-500">{t("seatNonRefundable", { fee: fee.enrollmentFee?.enrollmentFeeString ?? "" })}</p>
       </div>
     );
   }
@@ -95,25 +99,25 @@ export function FeeBreakdown({ fee, option, variantMode, gradeName, advance = fa
   return (
     <div className="text-sm">
       <div className="flex justify-between font-semibold text-black">
-        <span>{courseFeeLabel || `Fee for ${gradeName}`}</span>
+        <span>{courseFeeLabel || t("feeFor", { grade: gradeName ?? "" })}</span>
         <span>{fee.courseFeeString}</span>
       </div>
       <hr className="my-2 border-slate-200" />
       {fee.courseExtraFeeDetails?.totalEntityFee > 0 && (
         <>
-          <div className="mb-1 font-semibold text-slate-800">Extra Course Fee</div>
+          <div className="mb-1 font-semibold text-slate-800">{t("extraCourseFee")}</div>
           <Lines details={fee.courseExtraFeeDetails} />
         </>
       )}
       {fee.courseMaterialFeeDetails?.totalEntityFee > 0 && (
         <>
-          <div className="mb-1 font-semibold text-slate-800">External Material Fee</div>
+          <div className="mb-1 font-semibold text-slate-800">{t("materialFee")}</div>
           <Lines details={fee.courseMaterialFeeDetails} />
         </>
       )}
       {alreadyPaid?.totalEntityFee > 0 && (
         <div className="mb-2 flex justify-between gap-3 font-semibold text-green-700">
-          <span>Fee Already Paid <SupText>{(alreadyPaid.description || []).map((d) => `(${d})`).join(" ")}</SupText></span>
+          <span>{t("alreadyPaid")} <SupText>{(alreadyPaid.description || []).map((d) => `(${d})`).join(" ")}</SupText></span>
           <span className="text-right">
             {(alreadyPaid.entityFees || []).map((f, index) => (
               <span key={index} className="block">
@@ -128,9 +132,9 @@ export function FeeBreakdown({ fee, option, variantMode, gradeName, advance = fa
         <table className="my-2 w-full overflow-hidden rounded-lg border border-slate-200 text-sm">
           <thead>
             <tr className="bg-primary text-white">
-              <th className="px-2 py-1.5 text-left">Fee Schedule</th>
-              <th className="px-2 py-1.5 text-right">Total Fee</th>
-              <th className="px-2 py-1.5 text-right">{useAdvance ? "Status" : "Paying Now"}</th>
+              <th className="px-2 py-1.5 text-left">{t("schedule")}</th>
+              <th className="px-2 py-1.5 text-right">{t("totalFee")}</th>
+              <th className="px-2 py-1.5 text-right">{useAdvance ? t("status") : t("payingNow")}</th>
             </tr>
           </thead>
           <tbody>
@@ -140,7 +144,7 @@ export function FeeBreakdown({ fee, option, variantMode, gradeName, advance = fa
                 <td className="px-2 py-1.5 text-right">{monthly.amountString}</td>
                 {useAdvance ? (
                   <td className={`px-2 py-1.5 text-right font-semibold ${monthly.status === "SUCCESS" ? "text-green-700" : "text-amber-600"}`}>
-                    {monthly.status === "SUCCESS" ? `Paid (${monthly.paidDate})` : `Scheduled (${monthly.scheduledDate})`}
+                    {monthly.status === "SUCCESS" ? t("paidOn", { date: monthly.paidDate ?? "" }) : t("scheduledOn", { date: monthly.scheduledDate ?? "" })}
                   </td>
                 ) : (
                   <td className="px-2 py-1.5 text-right font-bold">{index === 0 ? monthly.amountString : ""}</td>
@@ -150,7 +154,7 @@ export function FeeBreakdown({ fee, option, variantMode, gradeName, advance = fa
           </tbody>
         </table>
       )}
-      <Row label="Payable Fee" value={payableOverride ?? plan?.payableFeeString} strong />
+      <Row label={t("payable")} value={payableOverride ?? plan?.payableFeeString} strong />
     </div>
   );
 }

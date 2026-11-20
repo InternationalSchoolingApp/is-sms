@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { CalendarDays, ChevronDown, FileText, Folder, Search, UserRoundCheck, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { K5_CARD, SubjectIcon } from "@/components/k5/home/k5Bits";
@@ -50,6 +51,8 @@ function CourseContentDialog({ course, color, onClose }) {
   });
   const modules = asArray(data?.modules);
   const [closed, setClosed] = useState({});
+  const t = useTranslations("k5Modules.assignedTeacher");
+  const tc = useTranslations("common");
   const tint = courseTint(color);
 
   return (
@@ -57,16 +60,16 @@ function CourseContentDialog({ course, color, onClose }) {
       {/* Grade 6–8: the dialog is 20px round (the shared skin would make it 18px); Grade 9–12: 12px. */}
       <DialogContent showCloseButton={false} {...themeProps} style={isHigh ? { borderRadius: 12 } : isMiddle ? { borderRadius: 20 } : undefined}>
         <div className="flex items-center gap-3 py-3.5 pl-5 pr-4 text-white" style={{ background: color }}>
-          <DialogTitle className="m-0 min-w-0 flex-1 font-k5-display text-[22px] font-semibold leading-[1.2]">Course calendar: {course.courseName}</DialogTitle>
-          <DialogDescription className="sr-only">Lessons and due dates for {course.courseName}</DialogDescription>
-          <button type="button" onClick={onClose} aria-label="Close" className="flex h-11 w-11 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-white bg-[#D7263D] text-white">
+          <DialogTitle className="m-0 min-w-0 flex-1 font-k5-display text-[22px] font-semibold leading-[1.2]">{t("calendarTitle", { course: course.courseName })}</DialogTitle>
+          <DialogDescription className="sr-only">{t("calendarDescription", { course: course.courseName })}</DialogDescription>
+          <button type="button" onClick={onClose} aria-label={tc("actions.close")} className="flex h-11 w-11 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-white bg-[#D7263D] text-white">
             <X className="h-4 w-4" strokeWidth={3.5} aria-hidden="true" />
           </button>
         </div>
         <div className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-scroll overscroll-contain p-4">
           {isLoading ? (
-            <K5Loading label="Getting your lessons" className="flex flex-col gap-3.5">
-              <p className="m-0 text-center text-[15px] font-extrabold text-k5-mut">Getting your lessons… this can take a little while.</p>
+            <K5Loading label={t("gettingLessons")} className="flex flex-col gap-3.5">
+              <p className="m-0 text-center text-[15px] font-extrabold text-k5-mut">{t("gettingLessonsLong")}</p>
               {[3, 2].map((rows, m) => (
                 <div key={m} className="overflow-hidden rounded-[22px] border-[3px] border-k5-line">
                   <div className="flex items-center gap-3 bg-k5-soft px-3.5 py-2.5">
@@ -89,7 +92,7 @@ function CourseContentDialog({ course, color, onClose }) {
               ))}
             </K5Loading>
           ) : modules.length === 0 ? (
-            <p className="m-0 rounded-[20px] bg-k5-soft px-4 py-7 text-center font-k5-display text-xl font-semibold text-k5-mut" style={isHigh ? { borderRadius: 10 } : isMiddle ? { borderRadius: 14 } : undefined}>{data === null ? "Unable to load the course calendar." : "No course content found."}</p>
+            <p className="m-0 rounded-[20px] bg-k5-soft px-4 py-7 text-center font-k5-display text-xl font-semibold text-k5-mut" style={isHigh ? { borderRadius: 10 } : isMiddle ? { borderRadius: 14 } : undefined}>{data === null ? t("loadError") : t("noContent")}</p>
           ) : (
             modules.map((module, index) => {
               const items = asArray(module.items);
@@ -108,12 +111,12 @@ function CourseContentDialog({ course, color, onClose }) {
                       <Folder className="h-6 w-6" style={{ color }} strokeWidth={2.2} aria-hidden="true" />
                     </span>
                     <span className="min-w-0 flex-1 font-k5-display text-xl font-semibold">{module.moduleName}</span>
-                    <span className="text-sm font-extrabold text-k5-mut">{items.length} {items.length === 1 ? "lesson" : "lessons"}</span>
+                    <span className="text-sm font-extrabold text-k5-mut">{t("lessonCount", { count: items.length })}</span>
                   </button>
                   {open && items.length === 0 && (
                     <div className="flex items-center gap-3 border-t-2 border-k5-line px-3.5 py-2.5 text-k5-mut" style={isMiddle ? { borderTopWidth: 1.5 } : undefined}>
-                      <span className="min-w-0 flex-1 font-k5-display text-lg font-semibold">No content found</span>
-                      <span className="flex-none whitespace-nowrap rounded-full bg-k5-soft px-3 py-1.5 text-sm font-black">N/A</span>
+                      <span className="min-w-0 flex-1 font-k5-display text-lg font-semibold">{t("noContentShort")}</span>
+                      <span className="flex-none whitespace-nowrap rounded-full bg-k5-soft px-3 py-1.5 text-sm font-black">{tc("status.na")}</span>
                     </div>
                   )}
                   {open &&
@@ -123,7 +126,7 @@ function CourseContentDialog({ course, color, onClose }) {
                         <button
                           key={itemIndex}
                           type="button"
-                          onClick={() => openLmsLesson(item)}
+                          onClick={() => openLmsLesson(item, { couldNotOpen: tc("lms.couldNotOpen"), notAvailable: tc("lms.notAvailable") })}
                           className="flex w-full cursor-pointer items-center gap-3 border-x-0 border-b-0 border-t-2 border-solid border-k5-line bg-transparent px-3.5 py-2.5 text-start text-k5-ink"
                           style={isMiddle ? { borderTopWidth: 1.5 } : undefined}
                         >
@@ -136,10 +139,10 @@ function CourseContentDialog({ course, color, onClose }) {
                           </span>
                           {hasDueDate(item.dueDate) ? (
                             <span className="flex-none whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-black text-k5-ink" style={{ background: tint }}>
-                              Due {item.dueDate}
+                              {t("due", { date: item.dueDate })}
                             </span>
                           ) : (
-                            <span className="flex-none whitespace-nowrap rounded-full bg-k5-soft px-3 py-1.5 text-sm font-black text-k5-mut">N/A</span>
+                            <span className="flex-none whitespace-nowrap rounded-full bg-k5-soft px-3 py-1.5 text-sm font-black text-k5-mut">{tc("status.na")}</span>
                           )}
                         </button>
                       );
@@ -169,6 +172,8 @@ export function K5AssignedTeacher({ courses, isLoading }) {
   const pageCount = Math.max(1, Math.ceil(matching.length / PAGE_SIZE));
   const shown = matching.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
   const { isMiddle, isHigh } = useDashboardContext();
+  const t = useTranslations("k5Modules.assignedTeacher");
+  const tc = useTranslations("common");
   usePicoContentReady(!isLoading);
   const colorFor = useK5CourseColors();
   // The colour the student already sees on the home plan; a course without one falls back to its subject colour.
@@ -183,8 +188,8 @@ export function K5AssignedTeacher({ courses, isLoading }) {
             <UserRoundCheck className="h-[34px] w-[34px] text-k5-ac" strokeWidth={2} aria-hidden="true" />
           </span>
           <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-            <h1 className="m-0 font-k5-display text-[30px] font-semibold leading-[1.05]">My Assigned Teacher</h1>
-            <p className="m-0 text-base font-extrabold text-k5-mut">Your courses and the teacher for each one</p>
+            <h1 className="m-0 font-k5-display text-[30px] font-semibold leading-[1.05]">{t("title")}</h1>
+            <p className="m-0 text-base font-extrabold text-k5-mut">{t("subtitle")}</p>
           </div>
         </div>
       ) : (
@@ -193,8 +198,8 @@ export function K5AssignedTeacher({ courses, isLoading }) {
             <UserRoundCheck className="h-12 w-12 text-k5-vi" strokeWidth={2} aria-hidden="true" />
           </span>
           <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-            <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">My Assigned Teacher</h1>
-            <p className="m-0 text-lg font-extrabold text-k5-mut">Your courses and the teacher for each one</p>
+            <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">{t("title")}</h1>
+            <p className="m-0 text-lg font-extrabold text-k5-mut">{t("subtitle")}</p>
           </div>
         </div>
       )}
@@ -202,11 +207,11 @@ export function K5AssignedTeacher({ courses, isLoading }) {
       {isLoading ? (
         <K5TeacherSkeleton />
       ) : courses.length === 0 ? (
-        <p className={`${K5_CARD} m-0 p-8 text-center font-k5-display text-2xl font-semibold text-k5-mut`}>No courses yet.</p>
+        <p className={`${K5_CARD} m-0 p-8 text-center font-k5-display text-2xl font-semibold text-k5-mut`}>{t("noCourses")}</p>
       ) : (
         <>
           <label className="relative block max-w-sm">
-            <span className="sr-only">Search courses</span>
+            <span className="sr-only">{t("searchLabel")}</span>
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-k5-mut" aria-hidden="true" />
             <input
               type="search"
@@ -215,11 +220,11 @@ export function K5AssignedTeacher({ courses, isLoading }) {
                 setSearch(event.target.value);
                 setPage(0);
               }}
-              placeholder="Search courses..."
+              placeholder={t("searchPlaceholder")}
               className="min-h-12 w-full rounded-full border-[3px] border-k5-line bg-k5-card py-0 pl-11 pr-4 font-k5-body text-base font-extrabold text-k5-ink"
             />
           </label>
-          {matching.length === 0 && <p className={`${K5_CARD} m-0 p-6 text-center font-k5-display text-xl font-semibold text-k5-mut`}>No matching courses.</p>}
+          {matching.length === 0 && <p className={`${K5_CARD} m-0 p-6 text-center font-k5-display text-xl font-semibold text-k5-mut`}>{t("noMatches")}</p>}
         <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
           {shown.map((course) => {
             const color = colorOf(course);
@@ -240,8 +245,8 @@ export function K5AssignedTeacher({ courses, isLoading }) {
                     {course.teacherName ? initials(course.teacherName) : "?"}
                   </span>
                   <span className="flex min-w-0 flex-col leading-[1.2]">
-                    <span className="text-[13px] font-black text-[var(--k5-vX)]">Your teacher</span>
-                    <span className="font-k5-display text-[17px] font-semibold text-k5-ink">{course.teacherName || "Not picked yet"}</span>
+                    <span className="text-[13px] font-black text-[var(--k5-vX)]">{t("yourTeacher")}</span>
+                    <span className="font-k5-display text-[17px] font-semibold text-k5-ink">{course.teacherName || t("notPicked")}</span>
                   </span>
                 </div>
                 <button
@@ -251,22 +256,22 @@ export function K5AssignedTeacher({ courses, isLoading }) {
                   style={{ background: color }}
                 >
                   <CalendarDays className="h-[22px] w-[22px]" strokeWidth={2.4} aria-hidden="true" />
-                  See course calendar
+                  {t("seeCalendar")}
                 </button>
               </article>
             );
           })}
         </div>
           {pageCount > 1 && (
-            <nav aria-label="Courses pages" className="flex flex-wrap items-center justify-center gap-3">
+            <nav aria-label={t("pages")} className="flex flex-wrap items-center justify-center gap-3">
               <button type="button" disabled={page === 0} onClick={() => setPage((p) => p - 1)} className="min-h-11 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-5 font-k5-display text-base font-semibold text-k5-ink disabled:cursor-default disabled:opacity-50">
-                Previous
+                {tc("actions.previous")}
               </button>
               <span className="font-k5-display text-base font-semibold text-k5-mut">
-                Page {page + 1} of {pageCount}
+                {tc("table.page", { page: page + 1, pages: pageCount })}
               </span>
               <button type="button" disabled={page >= pageCount - 1} onClick={() => setPage((p) => p + 1)} className="min-h-11 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-5 font-k5-display text-base font-semibold text-k5-ink disabled:cursor-default disabled:opacity-50">
-                Next
+                {tc("actions.next")}
               </button>
             </nav>
           )}

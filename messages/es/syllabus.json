@@ -1,0 +1,17 @@
+{
+  "title": "Profesores asignados",
+  "searchLabel": "Buscar",
+  "searchPlaceholder": "Buscar...",
+  "noCourses": "Aún no tienes cursos asignados.",
+  "noMatches": "No se encontraron registros coincidentes",
+  "notAssigned": "Aún sin asignar",
+  "table": {
+    "sNo": "N.º",
+    "courses": "Cursos seleccionados",
+    "teacher": "Profesor asignado"
+  },
+  "content": {
+    "empty": "Aún no hay contenido del curso disponible.",
+    "due": "Entrega: {date}"
+  }
+}

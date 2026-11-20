@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useStudentAcademicPerformance } from "@/hooks/useStudentAcademicPerformance";
 import { K5Performance } from "@/components/k5/pages/K5Performance";
@@ -20,7 +21,7 @@ const assetUrl = (file) => `${resolveBackendOrigin()}/${IMAGES}${file}`;
 // (legacy getStudentAcademicPerformanceSupportsDetailedView).
 const DETAILED_PROVIDERS = [36, 37, 38];
 
-// Legacy getStudentAcademicPerformancePaceHtml.
+// Legacy getStudentAcademicPerformancePaceHtml. Shown labels: performance.pace.<key of PACE>.
 const PACE = {
   Ahead: { label: "Ahead", className: "text-green-600", image: "forward.gif", size: 27 },
   OnTrack: { label: "On Track", className: "text-primary", image: "still.png", size: 24 },
@@ -28,21 +29,24 @@ const PACE = {
   GettingStarted: { label: "Get Started", className: "text-primary", image: "still.png", size: 24 },
 };
 
-// Legacy getSalutationByGender.
+// Legacy getSalutationByGender. Returns the performance.salutation.* key ("" for none).
 function salutation(gender) {
   const normalized = String(gender ?? "").trim().toLowerCase();
-  if (normalized === "male") return "Mr.";
-  if (normalized === "female") return "Ms.";
+  if (normalized === "male") return "mr";
+  if (normalized === "female") return "ms";
   return "";
 }
 
-function formatPercent(value) {
+function formatPercent(value, na) {
   const percent = parseFloat(value || 0);
-  return Number.isNaN(percent) ? "N/A" : `${percent.toFixed(2)}%`;
+  return Number.isNaN(percent) ? na : `${percent.toFixed(2)}%`;
 }
 
 function Pace({ value }) {
-  const pace = PACE[value] ?? { label: value || "N/A", className: "text-black", image: "still.png", size: 24 };
+  const t = useTranslations("performance");
+  const tc = useTranslations("common");
+  const known = PACE[value];
+  const pace = known ? { ...known, label: t(`pace.${value}`) } : { label: value || tc("status.na"), className: "text-black", image: "still.png", size: 24 };
   return (
     <div className={`flex items-center ${pace.className}`}>
       <OptimizedImage src={assetUrl(pace.image)} alt={pace.label} width={pace.size} height={pace.size} className="object-contain" />
@@ -78,6 +82,9 @@ function ProgressBar({ value }) {
  * providers show the empty state (not an error).
  */
 export function Performance() {
+  const t = useTranslations("performance");
+  const tc = useTranslations("common");
+  const na = tc("status.na");
   const { context, isK5 } = useDashboardContext();
   const { schoolUUID, userId } = context ?? {};
   // Every student asks for the new My Performance page; the backend builds it for the Agilix Buzz providers.
@@ -97,40 +104,41 @@ export function Performance() {
   }
 
   const headers = [
-    "Course Name",
-    "Score",
-    detailed && "Pace",
-    "Teacher Name",
-    "End Date",
-    "Remaining Days",
-    detailed && "Pending Assignment",
-    detailed && "Progress (gradable)",
-    detailed && "Progress (all activities)",
+    t("table.courseName"),
+    t("table.score"),
+    detailed && t("table.pace"),
+    t("table.teacherName"),
+    t("table.endDate"),
+    t("table.remainingDays"),
+    detailed && t("table.pendingAssignment"),
+    detailed && t("table.progressGradable"),
+    detailed && t("table.progressAll"),
   ].filter(Boolean);
 
-  const status = isLoading ? "Loading…" : courses.length === 0 ? "No academic performance found" : null;
+  const status = isLoading ? tc("status.loading") : courses.length === 0 ? t("empty") : null;
   // One record per course: its cells in the order of `headers`, shared by the table and the phone cards.
   const records = pageRows.map((course) => {
     // Names that already carry a title (dummy-mode teachers: "Ms. Olivia Parker") keep it as is.
     const hasTitle = /^(Mr|Mrs|Ms|Miss|Dr)\.?\s/i.test(course.teacherName || "");
-    const teacher = [hasTitle ? "" : salutation(course.teacherGender), course.teacherName || "N/A"].filter(Boolean).join(" ");
+    const title = hasTitle ? "" : salutation(course.teacherGender);
+    const teacher = [title ? t(`salutation.${title}`) : "", course.teacherName || na].filter(Boolean).join(" ");
     const name =
       detailed && course.lmsEnrollmentId && course.lmsCourseId ? (
         <button type="button" onClick={() => setSelected({ ...course, studentUserId: userId })} className="text-primary hover:underline">
-          {course.courseName || "N/A"}
+          {course.courseName || na}
         </button>
       ) : (
-        course.courseName || "N/A"
+        course.courseName || na
       );
     const cells = [
       name,
-      formatPercent(course.score),
+      formatPercent(course.score, na),
       ...(detailed ? [<Pace key="pace" value={course.progressPace} />] : []),
       teacher,
-      course.endDate || "N/A",
-      course.remainingDays || "N/A",
+      course.endDate || na,
+      course.remainingDays || na,
       ...(detailed
-        ? [course.pendingAssignment ?? "N/A", <ProgressBar key="pg" value={course.progressGradable} />, <ProgressBar key="pa" value={course.progressAllActivity} />]
+        ? [course.pendingAssignment ?? na, <ProgressBar key="pg" value={course.progressGradable} />, <ProgressBar key="pa" value={course.progressAllActivity} />]
         : []),
     ];
     return { key: course.lmsEnrollmentId || course.courseName, cells };
@@ -139,7 +147,7 @@ export function Performance() {
   return (
     <div className="w-full">
       <div className="rounded-[10px] border border-slate-200 bg-white py-4">
-        <h4 className="mb-3 ml-5 text-xl font-bold text-black">Academic Performance</h4>
+        <h4 className="mb-3 ml-5 text-xl font-bold text-black">{t("title")}</h4>
 
         {/* Mobile: one card per course (column title beside each value) instead of a wide table. */}
         <div className="md:hidden">

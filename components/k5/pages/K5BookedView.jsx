@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { format, isValid } from "date-fns";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, CalendarDays, ChevronDown, ChevronUp } from "lucide-react";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -12,6 +13,8 @@ import { useK5CourseColors } from "@/hooks/useK5CourseColors";
 import { getStudentBookedClasses } from "@/services/bookClassApi";
 import { bookedClassDateRange } from "@/utils/bookClass";
 import { K5Loading, K5RowsSkeleton } from "@/components/k5/K5Skeletons";
+import { useLabelTranslator } from "@/i18n/labels";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 
 // The From / To calendars are not limited to the current year: any date from 10 years back to 10 years ahead can be picked.
 const PICKER_MIN = new Date(new Date().getFullYear() - 10, 0, 1);
@@ -19,91 +22,92 @@ const PICKER_MAX = new Date(new Date().getFullYear() + 10, 11, 31);
 // Today's date stands out in both calendars (the default style is a faint grey).
 const TODAY_CLASS = "rounded-(--cell-radius) bg-primary/15 font-bold text-primary ring-2 ring-primary/60 data-[selected=true]:rounded-none";
 
+// `label` (here and in the lists below) is a k5Booking.booked message key, translated where it is shown.
 const DATE_TYPES = [
-  { value: "today", label: "Today" },
-  { value: "yesterday", label: "Yesterday" },
-  { value: "week", label: "This week" },
-  { value: "month", label: "This month" },
-  { value: "custom", label: "Pick dates" },
+  { value: "today", label: "dates.today" },
+  { value: "yesterday", label: "dates.yesterday" },
+  { value: "week", label: "dates.thisWeek" },
+  { value: "month", label: "dates.thisMonth" },
+  { value: "custom", label: "dates.pickDates" },
 ];
 // Grade 6–8 (Middle.dc.html bdWhenOpts): the labels of the existing page.
 const DATE_TYPES_MIDDLE = [
-  { value: "today", label: "Today" },
-  { value: "yesterday", label: "Yesterday" },
-  { value: "week", label: "Week" },
-  { value: "month", label: "Month" },
-  { value: "custom", label: "Custom" },
+  { value: "today", label: "dates.today" },
+  { value: "yesterday", label: "dates.yesterday" },
+  { value: "week", label: "dates.week" },
+  { value: "month", label: "dates.month" },
+  { value: "custom", label: "dates.custom" },
 ];
 const STATUSES = [
-  { value: "", label: "All" },
-  { value: "Booked", label: "Booked" },
-  { value: "Completed", label: "Completed" },
-  { value: "Reschedule Session", label: "Rescheduled" },
-  { value: "Missed by Student", label: "Missed by you" },
+  { value: "", label: "statuses.all" },
+  { value: "Booked", label: "statuses.booked" },
+  { value: "Completed", label: "statuses.completed" },
+  { value: "Reschedule Session", label: "statuses.rescheduled" },
+  { value: "Missed by Student", label: "statuses.missedByYou" },
 ];
 const STATUSES_MIDDLE = [
-  { value: "", label: "Select Status" },
-  { value: "Booked", label: "Booked" },
-  { value: "Completed", label: "Completed" },
-  { value: "Reschedule Session", label: "Reschedule Session" },
-  { value: "Missed by Student", label: "Missed by you" },
+  { value: "", label: "statuses.select" },
+  { value: "Booked", label: "statuses.booked" },
+  { value: "Completed", label: "statuses.completed" },
+  { value: "Reschedule Session", label: "statuses.rescheduleSession" },
+  { value: "Missed by Student", label: "statuses.missedByYou" },
 ];
 // Count tiles. `status` = the backend status filter a tap applies (null = not a filter).
 const TILES = [
-  { key: "total", label: "Classes", status: "", color: "var(--k5-ac)" },
-  { key: "booked", label: "Booked", status: "Booked", color: "#1f9d55" },
-  { key: "left", label: "Left", status: null, color: "#2f80ed" },
-  { key: "expired", label: "Expired", status: null, color: "#8a8fa3" },
-  { key: "missedByYou", label: "Missed by you", status: "Missed by Student", color: "#e5243b" },
-  { key: "rescheduled", label: "Rescheduled", status: "Reschedule Session", color: "#f08a24" },
-  { key: "completed", label: "Completed", status: "Completed", color: "#7c4dff" },
-  { key: "missedByTeacher", label: "Missed by teacher", status: null, color: "#d6336c" },
+  { key: "total", label: "tiles.classes", status: "", color: "var(--k5-ac)" },
+  { key: "booked", label: "statuses.booked", status: "Booked", color: "#1f9d55" },
+  { key: "left", label: "tiles.left", status: null, color: "#2f80ed" },
+  { key: "expired", label: "tiles.expired", status: null, color: "#8a8fa3" },
+  { key: "missedByYou", label: "statuses.missedByYou", status: "Missed by Student", color: "#e5243b" },
+  { key: "rescheduled", label: "statuses.rescheduled", status: "Reschedule Session", color: "#f08a24" },
+  { key: "completed", label: "statuses.completed", status: "Completed", color: "#7c4dff" },
+  { key: "missedByTeacher", label: "statuses.missedByTeacher", status: null, color: "#d6336c" },
 ];
 // Grade 6–8 tiles: [colour, tint, ink] per box, and the wording of the page ("Total number of / Classes Booked").
 const TILES_MIDDLE = [
-  { key: "total", label: "Classes", status: "", color: "#027FFE", tint: "#EAF2FF", ink: "#1557C9" },
-  { key: "booked", label: "Classes Booked", status: "Booked", color: "#22A447", tint: "#E9F8EE", ink: "#167A33" },
-  { key: "left", label: "Classes Left", status: null, color: "#F2B600", tint: "#FFF8DC", ink: "#946C00", hint: "Book now ›" },
-  { key: "expired", label: "Classes Expired", status: null, color: "#E5243B", tint: "#FDECEE", ink: "#B81A2E" },
-  { key: "missedByYou", label: "Classes Missed by You", status: "Missed by Student", color: "#5B6475", tint: "#F1F3F7", ink: "#3E4656" },
-  { key: "rescheduled", label: "Classes Rescheduled", status: "Reschedule Session", color: "#F08C00", tint: "#FFF2E0", ink: "#B35F00" },
-  { key: "completed", label: "Classes Completed", status: "Completed", color: "#9B4DCA", tint: "#F5ECFC", ink: "#7A34A6" },
-  { key: "missedByTeacher", label: "Classes Missed by Teacher", status: null, color: "#E0457B", tint: "#FDEBF2", ink: "#B52A5C" },
+  { key: "total", label: "tiles.classes", status: "", color: "#027FFE", tint: "#EAF2FF", ink: "#1557C9" },
+  { key: "booked", label: "tilesMiddle.booked", status: "Booked", color: "#22A447", tint: "#E9F8EE", ink: "#167A33" },
+  { key: "left", label: "tilesMiddle.left", status: null, color: "#F2B600", tint: "#FFF8DC", ink: "#946C00", hint: "tilesMiddle.bookNow" },
+  { key: "expired", label: "tilesMiddle.expired", status: null, color: "#E5243B", tint: "#FDECEE", ink: "#B81A2E" },
+  { key: "missedByYou", label: "tilesMiddle.missedByYou", status: "Missed by Student", color: "#5B6475", tint: "#F1F3F7", ink: "#3E4656" },
+  { key: "rescheduled", label: "tilesMiddle.rescheduled", status: "Reschedule Session", color: "#F08C00", tint: "#FFF2E0", ink: "#B35F00" },
+  { key: "completed", label: "tilesMiddle.completed", status: "Completed", color: "#9B4DCA", tint: "#F5ECFC", ink: "#7A34A6" },
+  { key: "missedByTeacher", label: "tilesMiddle.missedByTeacher", status: null, color: "#E0457B", tint: "#FDEBF2", ink: "#B52A5C" },
 ];
 const STATUS_PILL = {
-  "Reschedule Session": { label: "Rescheduled", bg: "#f08a24", fg: "#fff" },
-  "Missed by Student": { label: "Missed by you", bg: "#e5243b", fg: "#fff" },
-  "Missed by Teacher": { label: "Missed by teacher", bg: "#d6336c", fg: "#fff" },
-  Completed: { label: "Completed", bg: "#7c4dff", fg: "#fff" },
-  Cancelled: { label: "Cancelled", bg: "#6b7280", fg: "#fff" },
-  Booked: { label: "Booked", bg: "#1f9d55", fg: "#fff" },
+  "Reschedule Session": { label: "statuses.rescheduled", bg: "#f08a24", fg: "#fff" },
+  "Missed by Student": { label: "statuses.missedByYou", bg: "#e5243b", fg: "#fff" },
+  "Missed by Teacher": { label: "statuses.missedByTeacher", bg: "#d6336c", fg: "#fff" },
+  Completed: { label: "statuses.completed", bg: "#7c4dff", fg: "#fff" },
+  Cancelled: { label: "statuses.cancelled", bg: "#6b7280", fg: "#fff" },
+  Booked: { label: "statuses.booked", bg: "#1f9d55", fg: "#fff" },
 };
 // Grade 6–8: the same statuses as tint + ink pairs (Middle.dc.html BDS).
 const STATUS_PILL_MIDDLE = {
-  "Reschedule Session": { label: "Rescheduled", bg: "#FFF2E0", fg: "#B35F00" },
-  "Missed by Student": { label: "Missed by You", bg: "#F1F3F7", fg: "#3E4656" },
-  "Missed by Teacher": { label: "Missed by Teacher", bg: "#FDEBF2", fg: "#B52A5C" },
-  Completed: { label: "Completed", bg: "#F5ECFC", fg: "#7A34A6" },
-  Cancelled: { label: "Cancelled", bg: "#F1F3F7", fg: "#3E4656" },
-  Booked: { label: "Booked", bg: "#E9F8EE", fg: "#167A33" },
+  "Reschedule Session": { label: "statuses.rescheduled", bg: "#FFF2E0", fg: "#B35F00" },
+  "Missed by Student": { label: "statuses.missedByYou", bg: "#F1F3F7", fg: "#3E4656" },
+  "Missed by Teacher": { label: "statuses.missedByTeacher", bg: "#FDEBF2", fg: "#B52A5C" },
+  Completed: { label: "statuses.completed", bg: "#F5ECFC", fg: "#7A34A6" },
+  Cancelled: { label: "statuses.cancelled", bg: "#F1F3F7", fg: "#3E4656" },
+  Booked: { label: "statuses.booked", bg: "#E9F8EE", fg: "#167A33" },
 };
 const COLUMNS = [
-  { key: "no", label: "No.", sortable: false },
-  { key: "date", label: "Date and time", sortable: true },
-  { key: "course", label: "Course", sortable: true },
-  { key: "teacher", label: "Teacher", sortable: true },
-  { key: "booked", label: "Booked on", sortable: true },
-  { key: "type", label: "Type", sortable: true },
-  { key: "status", label: "Status", sortable: true },
+  { key: "no", label: "columns.no", sortable: false },
+  { key: "date", label: "columns.dateTime", sortable: true },
+  { key: "course", label: "columns.course", sortable: true },
+  { key: "teacher", label: "columns.teacher", sortable: true },
+  { key: "booked", label: "columns.bookedOn", sortable: true },
+  { key: "type", label: "columns.type", sortable: true },
+  { key: "status", label: "columns.status", sortable: true },
 ];
 // Grade 6–8: six columns, the teacher sits under the course name.
 const COLUMNS_MIDDLE = [
-  { key: "date", label: "S. No.", sortable: true },
-  { key: "date", label: "Class Timing | Time zone", sortable: true },
-  { key: "course", label: "Course Name", sortable: true },
-  { key: "booked", label: "Booked Date", sortable: true },
-  { key: "type", label: "Class Type", sortable: true },
-  { key: "status", label: "Class Status", sortable: true },
+  { key: "date", label: "columnsMiddle.srNo", sortable: true },
+  { key: "date", label: "columnsMiddle.timing", sortable: true },
+  { key: "course", label: "columnsMiddle.course", sortable: true },
+  { key: "booked", label: "columnsMiddle.bookedDate", sortable: true },
+  { key: "type", label: "columnsMiddle.type", sortable: true },
+  { key: "status", label: "columnsMiddle.status", sortable: true },
 ];
 const GRID = "56px minmax(190px,1.6fr) minmax(130px,1.1fr) minmax(130px,1.1fr) minmax(110px,1fr) minmax(90px,.8fr) minmax(130px,1fr)";
 const GRID_MIDDLE = "64px minmax(240px,1.7fr) minmax(170px,1.2fr) minmax(170px,1.1fr) minmax(140px,.9fr) minmax(150px,.9fr)";
@@ -163,6 +167,11 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
   const { isMiddle, isHigh } = useDashboardContext();
   const middle = Boolean(isMiddle);
   const high = Boolean(isHigh);
+  const t = useTranslations("k5Booking.booked");
+  const tc = useTranslations("common");
+  // Class types come from the backend ("Extra", "Complimentary"): translated for display only.
+  const tType = useLabelTranslator("k5Booking.booked.classTypes");
+  const dateLocale = useDateFnsLocale();
   const colorFor = useK5CourseColors();
   const [draft, setDraft] = useState(DEFAULT_FILTER);
   const [filter, setFilter] = useState(DEFAULT_FILTER);
@@ -270,18 +279,18 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
             </svg>
           </span>
           <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-            <h1 className="m-0 font-k5-display text-[30px] font-semibold leading-[1.05]">Booked Class Details</h1>
-            <p className="m-0 text-base font-extrabold text-k5-mut">All the classes you booked, in one place.</p>
+            <h1 className="m-0 font-k5-display text-[30px] font-semibold leading-[1.05]">{t("titleMiddle")}</h1>
+            <p className="m-0 text-base font-extrabold text-k5-mut">{t("subtitleMiddle")}</p>
           </div>
           <div className="flex flex-wrap gap-2.5">
             <button type="button" onClick={onBack} className="flex min-h-[52px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-[3px] border-k5-line bg-k5-card px-[18px] font-k5-display text-[17px] font-semibold text-k5-ink shadow-k5-chunky">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M15 6l-6 6 6 6" />
               </svg>
-              Back
+              {tc("actions.back")}
             </button>
             <button type="button" onClick={onBook} className="min-h-[52px] cursor-pointer whitespace-nowrap rounded-full border-none bg-k5-ac px-5 font-k5-display text-[17px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)]">
-              Book a Class ({weekLeft})
+              {t("bookClass", { count: weekLeft })}
             </button>
           </div>
         </div>
@@ -291,13 +300,13 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
             <CalendarDays className="h-11 w-11 text-k5-ink" />
           </span>
           <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-            <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">My booked classes</h1>
+            <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">{t("title")}</h1>
             <p className="m-0 text-lg font-extrabold text-k5-mut">{course.name}</p>
             {teacherName && (
               <span className="mt-1 flex items-center gap-2.5 self-start rounded-full bg-k5-vt py-1 pl-1 pr-3.5">
                 <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-k5-vi font-k5-display text-[15px] font-semibold text-white">{initialsOf(teacherName)}</span>
                 <span className="flex flex-col leading-[1.15]">
-                  <span className="text-xs font-black text-[var(--k5-vX)]">Your teacher</span>
+                  <span className="text-xs font-black text-[var(--k5-vX)]">{t("yourTeacher")}</span>
                   <span className="font-k5-display text-[17px] font-semibold">{teacherName}</span>
                 </span>
               </span>
@@ -305,11 +314,11 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
           </div>
           <div className="flex flex-wrap gap-2.5">
             <button type="button" onClick={onBack} className="flex min-h-[52px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-[3px] border-k5-line bg-k5-card px-[18px] font-k5-display text-[17px] font-semibold text-k5-ink shadow-[0_4px_0_var(--k5-line)]">
-              <ArrowLeft className="h-5 w-5" aria-hidden="true" /> Back
+              <ArrowLeft className="h-5 w-5" aria-hidden="true" /> {tc("actions.back")}
             </button>
             {canBook && (
               <button type="button" onClick={onBook} className="min-h-[52px] cursor-pointer whitespace-nowrap rounded-full border-none bg-k5-ac px-5 font-k5-display text-[17px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)]">
-                Book a Class ({course.weekLeftClass ?? 0})
+                {t("bookClass", { count: course.weekLeftClass ?? 0 })}
               </button>
             )}
           </div>
@@ -318,7 +327,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
 
       {counts && (
         <section aria-labelledby="k5-bd-hint" className="flex flex-col gap-2.5">
-          <p id="k5-bd-hint" className="m-0 text-base font-extrabold text-k5-mut">Tap a box to see only those classes.</p>
+          <p id="k5-bd-hint" className="m-0 text-base font-extrabold text-k5-mut">{t("tapBox")}</p>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2.5 max-[760px]:grid-cols-2">
             {middle
               ? TILES_MIDDLE.map((tile) => {
@@ -339,9 +348,9 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
                       className={`flex items-center gap-2.5 border-[3px] bg-k5-card py-2 pl-3 pr-2.5 text-left text-k5-ink ${tappable ? "cursor-pointer" : "cursor-default"}`}
                     >
                       <span className="flex min-w-0 flex-[1_1_auto] flex-col leading-[1.2]">
-                        <span className="font-k5-display text-sm font-semibold">Total number of</span>
-                        <span className="text-[13px] font-black" style={{ color: tile.ink }}>{tile.label}</span>
-                        {tile.hint && <span className="text-xs font-black" style={{ color: tile.ink }}>{tile.hint}</span>}
+                        <span className="font-k5-display text-sm font-semibold">{t("totalNumberOf")}</span>
+                        <span className="text-[13px] font-black" style={{ color: tile.ink }}>{t(tile.label)}</span>
+                        {tile.hint && <span className="text-xs font-black" style={{ color: tile.ink }}>{t(tile.hint)}</span>}
                       </span>
                       <span
                         className="flex h-11 min-w-11 flex-none items-center justify-center px-1.5 font-k5-display text-[22px] font-bold"
@@ -368,7 +377,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
                       <span style={{ background: tile.color }} className="flex h-11 min-w-11 flex-none items-center justify-center rounded-full px-2 font-k5-display text-xl font-semibold text-white">
                         {counts[tile.key] ?? 0}
                       </span>
-                      <span className="text-[15px] font-extrabold leading-tight">{tile.label}</span>
+                      <span className="text-[15px] font-extrabold leading-tight">{t(tile.label)}</span>
                     </button>
                   );
                 })}
@@ -378,21 +387,21 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
 
       <div className={`${K5_CARD} flex items-end gap-3 px-[18px] py-3.5 ${middle ? "flex-nowrap max-[900px]:flex-wrap" : "flex-wrap"}`}>
         <label className="flex min-w-[150px] flex-[1_1_150px] flex-col gap-1 text-[13px] font-black text-k5-mut">
-          {middle ? "Date" : "When"}
+          {middle ? t("filters.date") : t("filters.when")}
           <select value={draft.dateType} onChange={(e) => apply({ ...draft, dateType: e.target.value, startDate: null, endDate: null })} className={middle ? SELECT_MIDDLE : SELECT} style={middle ? { borderRadius: 10 } : undefined}>
             {(middle ? DATE_TYPES_MIDDLE : DATE_TYPES).map((d) => (
-              <option key={d.value} value={d.value}>{d.label}</option>
+              <option key={d.value} value={d.value}>{t(d.label)}</option>
             ))}
           </select>
         </label>
         {middle && !isCustom ? (
           <>
-            {[["From", fromDate], ["To", toDate]].map(([label, date]) => (
+            {[["from", fromDate], ["to", toDate]].map(([label, date]) => (
               <div key={label} className="flex min-w-[150px] flex-[1_1_150px] flex-col gap-1 text-[13px] font-black text-k5-mut">
-                {label}
+                {tc(`dates.${label}`)}
                 <span className="flex min-h-[50px] items-center gap-2 overflow-hidden whitespace-nowrap rounded-[14px] border-[3px] border-k5-line bg-k5-soft px-3 text-base font-extrabold text-k5-ink" style={{ borderRadius: 10 }}>
                   <CalendarDays className="h-[18px] w-[18px] flex-none text-k5-mut" strokeWidth={2.4} aria-hidden="true" />
-                  {format(date, "MMM dd, yyyy")}
+                  {format(date, "MMM dd, yyyy", { locale: dateLocale })}
                 </span>
               </div>
             ))}
@@ -400,16 +409,16 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
         ) : (
           <>
             <div className="min-w-[150px] flex-[1_1_150px]">
-              <DatePicker icon={CalendarDays} label="From" value={fromDate} fromDate={PICKER_MIN} toDate={PICKER_MAX} defaultMonth={new Date()} todayClassName={TODAY_CLASS} disabled={!isCustom} onChange={(date) => setDraft({ ...draft, startDate: date ?? null, endDate: null })} height={middle ? "h-[50px]" : "h-12"} />
+              <DatePicker icon={CalendarDays} label={tc("dates.from")} value={fromDate} fromDate={PICKER_MIN} toDate={PICKER_MAX} defaultMonth={new Date()} todayClassName={TODAY_CLASS} disabled={!isCustom} onChange={(date) => setDraft({ ...draft, startDate: date ?? null, endDate: null })} height={middle ? "h-[50px]" : "h-12"} />
             </div>
             <div className="min-w-[150px] flex-[1_1_150px]">
-              <DatePicker icon={CalendarDays} label="To" value={toDate} fromDate={draft.startDate ?? PICKER_MIN} toDate={PICKER_MAX} defaultMonth={toPickerMonth} todayClassName={TODAY_CLASS} disabled={!isCustom} onChange={(date) => setDraft({ ...draft, endDate: date ?? null })} height={middle ? "h-[50px]" : "h-12"} />
+              <DatePicker icon={CalendarDays} label={tc("dates.to")} value={toDate} fromDate={draft.startDate ?? PICKER_MIN} toDate={PICKER_MAX} defaultMonth={toPickerMonth} todayClassName={TODAY_CLASS} disabled={!isCustom} onChange={(date) => setDraft({ ...draft, endDate: date ?? null })} height={middle ? "h-[50px]" : "h-12"} />
             </div>
           </>
         )}
         {middle && (
           <label className="flex min-w-[150px] flex-[1_1_150px] flex-col gap-1 text-[13px] font-black text-k5-mut">
-            Course Name
+            {t("filters.courseName")}
             <select
               value={crs}
               onChange={(e) => {
@@ -419,7 +428,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
               className={SELECT_MIDDLE}
               style={{ borderRadius: 10 }}
             >
-              <option value="">All Courses</option>
+              <option value="">{t("filters.allCourses")}</option>
               {realSubjects.map((s) => (
                 <option key={s.subjectId} value={String(s.subjectId)}>{s.name}</option>
               ))}
@@ -427,21 +436,21 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
           </label>
         )}
         <label className="flex min-w-[150px] flex-[1_1_150px] flex-col gap-1 text-[13px] font-black text-k5-mut">
-          Status
+          {t("filters.status")}
           <select value={draft.classStatus} onChange={(e) => apply({ ...draft, classStatus: e.target.value })} className={middle ? SELECT_MIDDLE : SELECT} style={middle ? { borderRadius: 10 } : undefined}>
             {(middle ? STATUSES_MIDDLE : STATUSES).map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
+              <option key={s.value} value={s.value}>{t(s.label)}</option>
             ))}
           </select>
         </label>
         {isCustom && (
           <button type="button" onClick={() => { setFilter(draft); setPage(1); }} className="min-h-12 cursor-pointer rounded-full border-none bg-k5-ac px-5 font-k5-display text-[17px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)]">
-            Search
+            {tc("actions.search")}
           </button>
         )}
         {dirty && (
           <button type="button" onClick={reset} className="min-h-12 cursor-pointer rounded-full border-none bg-[#E5243B] px-5 font-k5-display text-[17px] font-semibold text-white shadow-[0_4px_0_#A81226]">
-            Reset
+            {tc("actions.reset")}
           </button>
         )}
       </div>
@@ -449,7 +458,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
       <div className={`${K5_CARD} flex flex-col gap-3.5 px-5 py-4`}>
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           <label className="flex items-center gap-2 text-base font-extrabold">
-            Show
+            {t("show")}
             <select
               value={perPage}
               onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1); }}
@@ -460,49 +469,49 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
                 <option key={n} value={n}>{n}</option>
               ))}
             </select>
-            {middle ? "entries" : "classes"}
+            {middle ? t("entries") : t("classesWord")}
           </label>
           <span aria-live="polite" className="text-[15px] font-extrabold text-k5-mut">
             {sorted.length === 0
-              ? middle ? "Showing 0 to 0 of 0 entries" : "No classes"
+              ? middle ? tc("table.showingEntries", { from: 0, to: 0, total: 0 }) : t("noClasses")
               : middle
-                ? `Showing ${start + 1} to ${Math.min(start + perPage, sorted.length)} of ${sorted.length} entries`
-                : `Showing ${start + 1}–${Math.min(start + perPage, sorted.length)} of ${sorted.length}`}
+                ? tc("table.showingEntries", { from: start + 1, to: Math.min(start + perPage, sorted.length), total: sorted.length })
+                : t("showingRange", { from: start + 1, to: Math.min(start + perPage, sorted.length), total: sorted.length })}
           </span>
         </div>
 
         <div className="overflow-x-auto rounded-[18px] border-[3px] border-k5-line max-[760px]:overflow-visible max-[760px]:border-0">
-          <div role="table" aria-label={middle ? "Booked Class Details" : "My booked classes"} className="min-w-[900px] text-[15px] font-extrabold max-[760px]:flex max-[760px]:min-w-0 max-[760px]:flex-col max-[760px]:gap-2.5">
+          <div role="table" aria-label={middle ? t("titleMiddle") : t("title")} className="min-w-[900px] text-[15px] font-extrabold max-[760px]:flex max-[760px]:min-w-0 max-[760px]:flex-col max-[760px]:gap-2.5">
             <div role="row" style={{ "--cols": middle ? GRID_MIDDLE : GRID }} className="grid grid-cols-[var(--cols)] bg-k5-ac max-[760px]:hidden">
               {(middle ? COLUMNS_MIDDLE : COLUMNS).map((c, idx) => (
                 <span key={c.label + idx} role="columnheader" aria-sort={sort.key === c.key ? (sort.dir === "asc" ? "ascending" : "descending") : "none"} className="flex px-1 py-1">
                   {c.sortable && middle ? (
                     <button type="button" onClick={() => toggleSort(c.key)} className="flex min-h-12 w-full cursor-pointer items-center justify-between gap-1.5 rounded-lg border-none bg-transparent px-2.5 text-start font-k5-display text-base font-semibold text-white">
-                      {c.label}
+                      {t(c.label)}
                       <span aria-hidden="true" style={{ opacity: sort.key === c.key ? 1 : 0.55 }}>{sort.key === c.key ? (sort.dir === "asc" ? "▲" : "▼") : "▲▼"}</span>
                     </button>
                   ) : c.sortable ? (
                     <button type="button" onClick={() => toggleSort(c.key)} className="flex min-h-12 w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border-none bg-transparent px-2.5 text-left font-k5-display text-base font-semibold text-white">
-                      {c.label}
+                      {t(c.label)}
                       {sort.key === c.key ? (sort.dir === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />) : <ChevronDown className="h-4 w-4 opacity-40" />}
                     </button>
                   ) : (
-                    <span className="flex min-h-12 items-center px-2.5 font-k5-display text-base font-semibold text-white">{c.label}</span>
+                    <span className="flex min-h-12 items-center px-2.5 font-k5-display text-base font-semibold text-white">{t(c.label)}</span>
                   )}
                 </span>
               ))}
             </div>
 
             {isLoading ? (
-              <K5Loading label="Loading your booked classes" className="">
+              <K5Loading label={t("loading")} className="">
                 <K5RowsSkeleton rows={5} cols={middle ? 6 : 7} />
               </K5Loading>
             ) : visible.length === 0 ? (
               <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
-                <span className="font-k5-display text-xl font-semibold">{middle ? "No classes here. Try another filter!" : "No classes found"}</span>
+                <span className="font-k5-display text-xl font-semibold">{middle ? t("emptyMiddle") : t("empty")}</span>
                 {dirty && (
                   <button type="button" onClick={reset} className="min-h-12 cursor-pointer rounded-full border-none bg-k5-ac px-5 font-k5-display text-[17px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)]">
-                    {middle ? "Reset" : "Show all"}
+                    {middle ? tc("actions.reset") : t("showAll")}
                   </button>
                 )}
               </div>
@@ -518,24 +527,24 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
                     style={{ background: pill?.bg || "var(--k5-soft)", color: pill?.fg || "var(--k5-ink)" }}
                     className={`inline-block whitespace-nowrap rounded-full px-3 text-sm ${middle ? "py-1 font-black" : "py-1 font-black"}`}
                   >
-                    {pill?.label || row.meetingResult || "N/A"}
+                    {pill ? t(pill.label) : row.meetingResult && row.meetingResult !== "N/A" ? row.meetingResult : tc("status.na")}
                   </span>
                 );
                 if (middle) {
                   return (
                     <div key={rowKey} role="row" style={{ "--cols": GRID_MIDDLE, ...(i % 2 ? {} : {}) }} className={rowClass}>
                       <span role="cell" className="px-3.5 py-3 max-[760px]:order-1 max-[760px]:px-3 max-[760px]:py-1.5 max-[760px]:font-k5-display max-[760px]:text-lg max-[760px]:font-semibold">{start + i + 1}</span>
-                      <span role="cell" data-l="Class Timing | Time zone" className={`px-3.5 py-2.5 leading-snug max-[760px]:col-span-full ${cellLabel}`}>
+                      <span role="cell" data-l={t("columnsMiddle.timing")} className={`px-3.5 py-2.5 leading-snug max-[760px]:col-span-full ${cellLabel}`}>
                         <span className="block font-black">{row.meetingJoinDate}</span>
                         <span className="block text-[13px] text-k5-mut">{niceTime(row.startTime)} - {niceTime(row.endTime)} | {row.timezone}</span>
                       </span>
-                      <span role="cell" data-l="Course Name" className={`px-3.5 py-2.5 ${cellLabel}`}>
+                      <span role="cell" data-l={t("columnsMiddle.course")} className={`px-3.5 py-2.5 ${cellLabel}`}>
                         <span aria-hidden="true" style={{ background: color || "var(--k5-ac)" }} className="me-2 inline-block h-3 w-3 rounded-full align-[-1px]" />
                         {row.subjectName}
                         <span className="ms-5 block text-[13px] text-k5-mut">{row.name}</span>
                       </span>
-                      <span role="cell" data-l="Booked Date" className={`px-3.5 py-2.5 ${cellLabel}`}>{row.bookedDate}</span>
-                      <span role="cell" data-l="Class Type" className={`px-3.5 py-2.5 ${cellLabel}`}>{row.classTypeExtraOrComp}</span>
+                      <span role="cell" data-l={t("columnsMiddle.bookedDate")} className={`px-3.5 py-2.5 ${cellLabel}`}>{row.bookedDate}</span>
+                      <span role="cell" data-l={t("columnsMiddle.type")} className={`px-3.5 py-2.5 ${cellLabel}`}>{tType(row.classTypeExtraOrComp)}</span>
                       <span role="cell" className="px-3.5 py-2.5 max-[760px]:order-1 max-[760px]:px-3 max-[760px]:py-1.5 max-[760px]:text-end">{status}</span>
                     </div>
                   );
@@ -543,17 +552,17 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
                 return (
                   <div key={rowKey} role="row" style={{ "--cols": GRID }} className={rowClass}>
                     <span role="cell" className="px-3.5 py-2.5 max-[760px]:order-1 max-[760px]:px-3 max-[760px]:py-1.5 max-[760px]:font-k5-display max-[760px]:text-lg max-[760px]:font-semibold">{start + i + 1}</span>
-                    <span role="cell" data-l="Date and time" className={`px-3.5 py-2.5 leading-snug max-[760px]:col-span-full ${cellLabel}`}>
+                    <span role="cell" data-l={t("columns.dateTime")} className={`px-3.5 py-2.5 leading-snug max-[760px]:col-span-full ${cellLabel}`}>
                       <span className="block font-black">{row.meetingJoinDate}</span>
                       <span className="block text-[13px] text-k5-mut">{niceTime(row.startTime)} - {niceTime(row.endTime)} | {row.timezone}</span>
                     </span>
-                    <span role="cell" data-l="Course" className={`px-3.5 py-2.5 ${cellLabel}`}>
+                    <span role="cell" data-l={t("columns.course")} className={`px-3.5 py-2.5 ${cellLabel}`}>
                       <span aria-hidden="true" style={{ background: color || "var(--k5-ac)" }} className="mr-2 inline-block h-3 w-3 rounded-full align-[-1px]" />
                       {row.subjectName}
                     </span>
-                    <span role="cell" data-l="Teacher" className={`px-3.5 py-2.5 ${cellLabel}`}>{row.name}</span>
-                    <span role="cell" data-l="Booked on" className={`px-3.5 py-2.5 ${cellLabel}`}>{row.bookedDate}</span>
-                    <span role="cell" data-l="Type" className={`px-3.5 py-2.5 ${cellLabel}`}>{row.classTypeExtraOrComp}</span>
+                    <span role="cell" data-l={t("columns.teacher")} className={`px-3.5 py-2.5 ${cellLabel}`}>{row.name}</span>
+                    <span role="cell" data-l={t("columns.bookedOn")} className={`px-3.5 py-2.5 ${cellLabel}`}>{row.bookedDate}</span>
+                    <span role="cell" data-l={t("columns.type")} className={`px-3.5 py-2.5 ${cellLabel}`}>{tType(row.classTypeExtraOrComp)}</span>
                     <span role="cell" className="px-3.5 py-2.5 max-[760px]:order-1 max-[760px]:px-3 max-[760px]:py-1.5 max-[760px]:text-end">{status}</span>
                   </div>
                 );
@@ -563,9 +572,9 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
         </div>
 
         {pages > 1 && (
-          <nav aria-label="Pages" className="flex flex-wrap items-center justify-end gap-2">
+          <nav aria-label={t("pages")} className="flex flex-wrap items-center justify-end gap-2">
             <button type="button" disabled={current === 1} onClick={() => setPage(current - 1)} className="min-h-11 cursor-pointer rounded-[14px] border-[3px] border-k5-line bg-k5-card px-4 font-k5-display text-base font-semibold text-k5-ink disabled:cursor-default disabled:opacity-40">
-              Previous
+              {tc("actions.previous")}
             </button>
             {pageNumbers.map((n, idx) => (
               <span key={n} className="flex items-center gap-2">
@@ -581,7 +590,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
               </span>
             ))}
             <button type="button" disabled={current === pages} onClick={() => setPage(current + 1)} className="min-h-11 cursor-pointer rounded-[14px] border-[3px] border-k5-line bg-k5-card px-4 font-k5-display text-base font-semibold text-k5-ink disabled:cursor-default disabled:opacity-40">
-              Next
+              {tc("actions.next")}
             </button>
           </nav>
         )}

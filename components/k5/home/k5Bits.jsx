@@ -1,6 +1,7 @@
 "use client";
 
 import { BookOpen, Calculator, Dumbbell, FlaskConical, Landmark, Monitor, Palette } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { subjectStyle } from "@/utils/k5Calendar";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { CountUp } from "@/components/motion/CountUp";
@@ -113,8 +114,12 @@ export function SubjectTile({ name, size = "lg" }) {
   );
 }
 
+// Pill label -> k5Home.pills.<key>.
+const PILL_KEYS = { done: "done", live: "live", "to go": "toGo" };
+
 /** "1 done · 1 live · 3 to go" pills. */
 export function StatusPills({ counts }) {
+  const t = useTranslations("k5Home.pills");
   const pills = [
     counts.done ? ["done", counts.done, "bg-k5-act text-k5-acx"] : null,
     counts.live ? ["live", counts.live, "bg-k5-gt text-k5-gx"] : null,
@@ -125,7 +130,7 @@ export function StatusPills({ counts }) {
     <div className="flex flex-wrap gap-2">
       {pills.map(([label, n, cls]) => (
         <span key={label} className={`k5h-pill rounded-full px-3.5 py-2 text-[15px] font-black ${cls}`}>
-          <CountUp value={n} /> {label}
+          <CountUp value={n} /> {t(PILL_KEYS[label])}
         </span>
       ))}
     </div>

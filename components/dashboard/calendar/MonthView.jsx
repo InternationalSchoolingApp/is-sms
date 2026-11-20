@@ -1,9 +1,10 @@
 "use client";
 
 import { format, isSameDay, isSameMonth } from "date-fns";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { bucketEventsByDate, getEventColor, getMonthGridDays } from "@/utils/calendarEvents";
 
-const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MAX_VISIBLE_PER_DAY = 3;
 
 /**
@@ -16,11 +17,15 @@ export function MonthView({ events, selectedDate, courseRegistry, onSelectDay, o
   const days = getMonthGridDays(selectedDate);
   const buckets = bucketEventsByDate(events);
   const today = new Date();
+  const t = useTranslations("calendar");
+  const dateLocale = useDateFnsLocale();
+  // Sun..Sat heads in the dashboard language: the grid's first row is a Sunday-to-Saturday week.
+  const weekdayLabels = days.slice(0, 7).map((day) => format(day, "EEE", { locale: dateLocale }));
 
   return (
     <div className="flex h-full flex-col">
       <div className="grid grid-cols-7 border-b border-slate-200">
-        {WEEKDAY_LABELS.map((label) => (
+        {weekdayLabels.map((label) => (
           <div key={label} className="py-2 text-center text-[10px] font-bold uppercase text-black/50">
             {label}
           </div>
@@ -64,10 +69,10 @@ export function MonthView({ events, selectedDate, courseRegistry, onSelectDay, o
                     className={`truncate rounded px-1 py-0.5 text-[10px] font-semibold border-2 cursor-pointer ${ event.eventKind == 'class' ? 'border-dashed':''}  hover:opacity-90`}
                     style={{ borderColor: getEventColor(event, courseRegistry), color:getEventColor(event, courseRegistry)}}
                   >
-                    {event.title || event.eventTitle || "Untitled"}
+                    {event.title || event.eventTitle || t("untitled")}
                   </div>
                 ))}
-                {overflow > 0 && <span className="block text-[10px] font-bold text-primary">+{overflow} more</span>}
+                {overflow > 0 && <span className="block text-[10px] font-bold text-primary">{t("moreCount", { count: overflow })}</span>}
               </div>
             </button>
           );

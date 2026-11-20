@@ -1,0 +1,126 @@
+{
+  "title": "视频库",
+  "subtitle": "你的课程播放列表 — 按顺序观看课程",
+  "thumbPlaceholder": "视频",
+  "plans": {
+    "TRIAL": "免费试用",
+    "THREE_COURSES": "3 门课程套餐",
+    "CUSTOM": "自定义套餐",
+    "ALL": "全部课程套餐",
+    "LIFETIME": "完整课程套餐",
+    "fallback": "套餐"
+  },
+  "planNames": {
+    "free_trial": "免费试用",
+    "3_courses": "3 门课程",
+    "custom": "自定义",
+    "all_courses": "全部课程",
+    "full_course": "完整课程"
+  },
+  "access": {
+    "startTrial": "开始 {days} 天免费试用",
+    "subscribe": "订阅",
+    "renew": "续订",
+    "allLocked": "你的课程视频已锁定。",
+    "someLocked": "{total} 门课程中有 {locked} 门已锁定。",
+    "allOpen": "你的所有课程均已开放。",
+    "planWithCourses": "{plan} · {count, plural, other {# 门课程}}",
+    "endsToday": "今天结束",
+    "daysLeft": "{count, plural, other {剩余 # 天}}",
+    "until": "至 {date}",
+    "untilCourseEnds": "至课程结束",
+    "needSubscription": "观看视频需要订阅"
+  },
+  "chips": {
+    "label": "你的课程",
+    "lockedTitle": "{title} — 已锁定",
+    "doneTitle": "{title} — 已完成 {done}/{total}"
+  },
+  "module": "模块 {number}",
+  "moreVideos": "更多视频",
+  "videos": "视频",
+  "watched": "已观看",
+  "watchedTitle": "已观看：{title}",
+  "plusMore": "+另外 {count} 个",
+  "plusMoreSpaced": "+ 另外 {count} 个",
+  "locked": {
+    "ended": "此课程已于 {date} 结束，因此其{noun, select, lesson {课时} other {视频}}已关闭。",
+    "notCovered": "你的完整课程套餐不包括此课程。",
+    "subscribeToWatch": "订阅即可观看其 {noun, select, lesson {{count, plural, other {# 节课}}} other {{count, plural, other {# 个视频}}}}{standard}。",
+    "titleLocked": "{title} 已锁定",
+    "thisCourseLocked": "此课程已锁定"
+  },
+  "search": {
+    "noneTitle": "未找到视频",
+    "noneText": "你的课程中没有与“{query}”匹配的内容。",
+    "results": "“{query}”的搜索结果：{count, plural, other {# 个视频}}",
+    "placeholder": "搜索你的所有视频...",
+    "label": "搜索视频"
+  },
+  "empty": {
+    "title": "暂无视频",
+    "text": "老师添加视频后，你的课程视频将显示在这里。"
+  },
+  "player": {
+    "lessonHeading": "模块 {module} · 第 {lesson} 课 — {title}",
+    "video": "视频",
+    "continuing": "从上次观看的位置继续（{time}）·",
+    "startOver": "从头开始",
+    "explanations": "讲解：",
+    "main": "主视频",
+    "videoNumber": "视频 {number}",
+    "autoplayTitle": "本课结束后播放下一课",
+    "autoplay": "自动播放下一个",
+    "nextLesson": "下一课",
+    "unableToLoad": "无法加载此视频。",
+    "frameTitle": "视频播放器"
+  },
+  "playlist": {
+    "label": "课程播放列表",
+    "position": "{kind, select, lesson {第 {current} 课} other {第 {current} 个视频}}，共 {total} 个",
+    "watched": "已观看 {done}/{total} 个{noun, select, lessons {课时} other {视频}}"
+  },
+  "toasts": {
+    "paid": "已收到付款。你的课程视频已开放。",
+    "trialStarted": "你的免费试用已开始 — 尽情观看所有课程视频吧！",
+    "trialFailed": "无法开始试用。"
+  },
+  "loadError": {
+    "title": "无法加载视频",
+    "text": "请刷新页面后重试。"
+  },
+  "payment": {
+    "processing": "付款处理中...",
+    "oops": "哎呀！",
+    "incomplete": "付款未完成",
+    "underReview": "你的付款正在审核中。",
+    "underReviewText": "收到付款后，你的课程视频将开放。"
+  },
+  "subscribe": {
+    "title": "订阅课程视频",
+    "courseCount": "{count, plural, other {# 门课程}}",
+    "onlyUntilEnd": "{course}，至课程结束{until}",
+    "allUntilEnd": "你的所有课程，至课程结束{until}",
+    "allCourses": "你的全部 {count} 门课程",
+    "chooseThree": "任选 3 门课程",
+    "chooseCount": "选择 {count} 门课程",
+    "perMonth": "/ 月",
+    "perMonthPerCourse": "/ 月 · 每门课程 {fee}",
+    "oneTime": "一次性",
+    "loadFailed": "无法加载套餐。",
+    "loadFailedRetry": "无法加载套餐，请重试。",
+    "paymentFailed": "无法开始付款。",
+    "paymentFailedRetry": "无法开始付款，请重试。",
+    "startsOn": " · {date} 开始",
+    "loading": "正在加载套餐…",
+    "notAvailable": "目前无法订阅。",
+    "choosePlan": "选择套餐",
+    "chooseCourses": "选择 {count, plural, other {# 门课程}}",
+    "pickedOf": "{picked}/{need}",
+    "oneTimeUntilEnd": "一次性 · 至课程结束",
+    "oneMonth": "1 个月",
+    "secure": "安全在线支付 · 付款链接也会通过邮件发送给你",
+    "preparing": "正在准备付款…",
+    "continue": "继续付款"
+  }
+}

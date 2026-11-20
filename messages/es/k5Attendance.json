@@ -1,0 +1,115 @@
+{
+  "header": {
+    "title": "Mi asistencia",
+    "subtitle": "Mira a cuántas clases viniste."
+  },
+  "loading": "Cargando tu asistencia",
+  "sessionExpired": "Tu sesión ha caducado. Vuelve a iniciar sesión, por favor.",
+  "notFound": "No se encontraron detalles de asistencia",
+  "tiles": {
+    "classesToday": "Clases de hoy",
+    "attendance": "Asistencia · {month}",
+    "late": "Retrasos · {month}",
+    "sameAs": "Igual que en {month}",
+    "changeFrom": "{arrow} {diff}% respecto a {month}"
+  },
+  "views": {
+    "today": "Hoy",
+    "week": "Semana",
+    "month": "Mes",
+    "year": "Año escolar"
+  },
+  "overview": {
+    "title": "Resumen general",
+    "hint": "Toca un mes para ver su resumen.",
+    "comingSoon": "Muy pronto · Elige Año escolar para ver tus meses.",
+    "barLabel": "{month}: {percent}% de asistencia",
+    "barTip": "{month}: {percent}%",
+    "barNotYet": "{month}: todavía no"
+  },
+  "summary": {
+    "title": "Resumen del mes",
+    "cameTo": "Viniste a {came} de {total} clases.",
+    "classesWord": "{count, plural, one {clase} other {clases}}",
+    "sliceTitle": "{label}: {count}",
+    "empty": "Todavía no · No hay clases este mes."
+  },
+  "badges": {
+    "star": {
+      "name": "Estrella de asistencia",
+      "msg": "¡Eres una estrella! Casi nunca faltas a clase."
+    },
+    "regular": {
+      "name": "Súper constante",
+      "msg": "¡Muy bien! Sigue así."
+    },
+    "goodEffort": {
+      "name": "Buen esfuerzo",
+      "msg": "¡Intentemos venir a todas las clases!"
+    },
+    "keepGoing": {
+      "name": "Sigue adelante",
+      "msg": "¡Intentemos venir a todas las clases!"
+    }
+  },
+  "status": {
+    "present": "Presente",
+    "late": "Tarde",
+    "absent": "Ausente",
+    "missS": "Faltó el estudiante",
+    "missT": "Faltó el profesor"
+  },
+  "absentLabels": {
+    "absent": "Ausente",
+    "missed_by_student": "Faltó el estudiante",
+    "missed_by_teacher": "Faltó el profesor"
+  },
+  "details": {
+    "title": "Detalles de asistencia",
+    "hint": "Toca un color del gráfico para ver solo esas clases.",
+    "showAll": "Mostrar todo",
+    "showingNone": "Mostrando 0 registros",
+    "dateFilters": {
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "week": "Semana",
+      "month": "Mes",
+      "custom": "Personalizado"
+    },
+    "notAvailable": "{label} (no disponible)",
+    "statusOptions": {
+      "select": "Elige un estado",
+      "all": "Todos",
+      "present": "Presente",
+      "late": "Tarde",
+      "absent": "Ausente"
+    },
+    "lookBack": "Puedes mirar hasta {days, plural, one {# día} other {# días}} atrás. \"Hasta\" es siempre hoy.",
+    "errors": {
+      "unavailable": "El rango personalizado no está disponible ahora.",
+      "invalidDate": "Elige una fecha válida.",
+      "toIsToday": "La fecha \"Hasta\" es siempre hoy.",
+      "noFuture": "No puedes elegir fechas futuras.",
+      "lookBackOnly": "Solo puedes mirar {days, plural, one {# día} other {# días}} atrás."
+    },
+    "loadError": "No se pudieron cargar los detalles de asistencia.",
+    "columns": {
+      "srNo": "N.º",
+      "date": "Fecha",
+      "class": "Clase",
+      "startTime": "Inicio",
+      "endTime": "Fin",
+      "joined": "Entrada",
+      "status": "Estado"
+    },
+    "joinedNotes": {
+      "onTime": "A tiempo",
+      "minLate": "{minutes} min tarde",
+      "teacherAbsent": "El profesor no pudo venir",
+      "didNotJoin": "No entró"
+    },
+    "loading": "Cargando tus clases",
+    "empty": "No hay clases aquí.",
+    "pages": "Páginas"
+  }
+}

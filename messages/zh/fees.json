@@ -1,0 +1,40 @@
+{
+  "title": "费用详情",
+  "empty": "未找到费用详情",
+  "paymentReceived": "已收到付款。",
+  "paymentProcessing": "付款处理中...",
+  "oops": "哎呀！",
+  "paymentIncomplete": "付款未完成",
+  "underReviewTitle": "您的付款正在审核中。",
+  "underReviewText": "收到付款后，您的费用状态将会更新。",
+  "table": {
+    "sNo": "序号",
+    "scheduledDate": "计划日期",
+    "grade": "年级",
+    "paymentName": "付款名称",
+    "paidFee": "已付费用",
+    "paidDate": "付款日期",
+    "status": "状态",
+    "viewReceipt": "查看收据"
+  },
+  "actions": {
+    "viewReceipt": "查看收据",
+    "tryAgain": "重试",
+    "payNow": "立即支付",
+    "changePaymentMethod": "更改支付方式",
+    "paymentInProcess": "付款处理中",
+    "paymentUnderProcess": "付款正在处理"
+  },
+  "statuses": {
+    "success": "成功",
+    "paid": "已支付",
+    "pending": "待处理",
+    "initiated": "已发起",
+    "failure": "失败",
+    "rejected": "已拒绝",
+    "cancelled": "已取消",
+    "expired": "已过期",
+    "refunded": "已退款",
+    "scheduled": "已安排"
+  }
+}

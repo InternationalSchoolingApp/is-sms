@@ -1,0 +1,190 @@
+{
+  "title": "My Inbox",
+  "subtitle": "Emails, notifications, announcements and WhatsApp messages from the school.",
+  "emailSettings": "Email settings",
+  "markAllRead": "Mark all as read",
+  "writeMessage": "Write a message",
+  "message": "Message",
+  "unread": "unread",
+  "star": "Star",
+  "removeStar": "Remove star",
+  "attachments": "Attachments",
+  "to": "To: {names}",
+  "andMore": "{list} and {count} more",
+  "loading": "Loading your inbox",
+  "folders": {
+    "label": "Folders",
+    "all": "All",
+    "email": "Emails",
+    "notification": "Notifications",
+    "announcement": "Announcements",
+    "whatsapp": "WhatsApp",
+    "sent": "Sent"
+  },
+  "channels": {
+    "email": "Email",
+    "notification": "Notification",
+    "announcement": "Announcement",
+    "whatsapp": "WhatsApp",
+    "message": "Message"
+  },
+  "categories": {
+    "fees_and_payments": "Fees and payments",
+    "classes_and_timetable": "Classes and timetable",
+    "progress_and_results": "Results and reports",
+    "enrolment_and_courses": "Enrolment",
+    "account_and_security": "Account and security",
+    "announcements_and_events": "Announcements and events"
+  },
+  "roles": {
+    "teacher": "Teacher",
+    "school_office": "School office",
+    "student": "Student",
+    "parent": "Parent",
+    "admin": "Admin",
+    "school_admin": "School admin"
+  },
+  "filters": {
+    "title": "Filters",
+    "searchPlaceholder": "Name, subject or words",
+    "date": "Date",
+    "dates": {
+      "last7": "Last 7 days",
+      "last30": "Last 30 days",
+      "last90": "Last 3 months",
+      "thisYear": "This year"
+    },
+    "show": "Show",
+    "read": {
+      "all": "Read and unread",
+      "unread": "Unread only",
+      "read": "Read only"
+    },
+    "category": "Email category",
+    "anyCategory": "Any category",
+    "withAttachments": "With attachments",
+    "starred": "Starred"
+  },
+  "row": {
+    "label": "{channel}, {name}, {title}, {time}",
+    "labelUnread": "Unread, {channel}, {name}, {title}, {time}",
+    "undelivered": "Not delivered to your email"
+  },
+  "sent": {
+    "rowLabel": "Sent message, to {to}, {title}, {time}",
+    "nobody": "nobody",
+    "progress": "Sending in the background: {done} of {total} people",
+    "sending": "Sending…",
+    "notSentCount": "Not sent by email to {count} people (it is still in their Inbox)",
+    "notSentTo": "Not sent by email to {names} (it is still in their Inbox)"
+  },
+  "list": {
+    "messageCount": "{count, plural, one {# message} other {# messages}}",
+    "sentCount": "{count, number} sent",
+    "countUnread": "{count} · {unread} unread",
+    "none": "No messages",
+    "range": "{from}–{to} of {total}",
+    "newestNote": "The newest {count} are listed; choose shorter dates or search to find older ones.",
+    "pages": "Pages",
+    "newer": "Newer",
+    "older": "Older"
+  },
+  "reader": {
+    "opening": "Opening the message",
+    "back": "Back to inbox",
+    "whatsappMessage": "WhatsApp message",
+    "toMe": "to me",
+    "personNotSent": "{name} (not sent by email; it is still in their Inbox)",
+    "personSending": "{name} (sending)",
+    "inReplyTo": "In reply to <link>{subject}</link>",
+    "inReplyToEarlier": "In reply to an earlier message",
+    "undelivered": "We couldn't deliver this email to your email address. You can read it here. Please check the email address in your profile, or ask the school office to update it.",
+    "noBody": "The text of this email is not available.",
+    "whatsappUndelivered": "Please check the mobile number in your profile, or ask the school office to update it.",
+    "whatsappNote": "The school sent this through WhatsApp. Only the message's name is kept here, not its text: open WhatsApp on your phone to read it.",
+    "preparing": "Preparing…",
+    "reply": "Reply",
+    "ackThanks": "Thank you. You confirmed you have read this.",
+    "ackDone": "You confirmed you have read this.",
+    "ackAsk": "The school asked you to confirm you have read this.",
+    "ackButton": "I have read this"
+  },
+  "compose": {
+    "newMessage": "New message",
+    "reply": "Reply",
+    "from": "From: {who}",
+    "toLabel": "To",
+    "remove": "Remove {name}",
+    "recipients": "Recipients",
+    "choosePeople": "Choose people, or type",
+    "closeList": "Close the list",
+    "noMatch": "No one matches that name.",
+    "nobody": "Nobody found.",
+    "hint": "Open the list to see everyone you can write to, or type a name to narrow it. Up to {max} people.",
+    "subject": "Subject",
+    "subjectPlaceholder": "Subject: What is it about?",
+    "chooseTemplate": "Choose a template (optional)",
+    "templates": "Templates",
+    "templateHelp": "Words like '<date>' or '<teacher name>' that are left in the text are for you to fill in.",
+    "counter": "{count, number} of 10,000 characters",
+    "addAttachments": "Add attachments",
+    "optional": "optional",
+    "fileHelp": "Up to 3 files, 5 MB each: PDF, Word, Excel, PowerPoint, pictures (JPG, PNG, GIF), text or CSV.",
+    "privacy": "Your name and role are shown to the people you write to. Your email address is not.",
+    "discard": "Discard",
+    "sending": "Sending…"
+  },
+  "settings": {
+    "intro": "Choose which emails reach your inbox. Everything stays here in your Inbox either way.",
+    "loading": "Loading your email settings",
+    "legend": "Emails you can switch off",
+    "always": "Fees and payments, classes and timetable, results, enrolment, account and security, admissions and other essential school emails are always sent.",
+    "rows": {
+      "announcements_and_events": {
+        "label": "Announcements and events",
+        "hint": "School news, events and general announcements."
+      },
+      "school_partnerships": {
+        "label": "School partnerships",
+        "hint": "News about programmes the school runs with partners."
+      },
+      "other": {
+        "label": "Other school emails",
+        "hint": "Anything the school has not put in another group."
+      },
+      "weekly_digest": {
+        "label": "Weekly summary",
+        "hint": "On Sundays, a short list of what you have not read yet."
+      }
+    }
+  },
+  "known": {
+    "noSubject": "(no subject)",
+    "emptyInbox": "Nothing here for these filters.",
+    "emptySent": "You have not sent any messages in these dates.",
+    "sendError": "Your message could not be sent just now. Please try again in a minute; what you wrote is still here.",
+    "sendUnreachable": "Your message could not be sent: the server could not be reached. Check your connection and try again; what you wrote is still here.",
+    "loadError": "Your inbox could not be loaded just now. Please try again in a minute.",
+    "bodyError": "This email could not be shown just now.",
+    "chooseSomeone": "Please choose at least one person to write to.",
+    "addSubject": "Please add a subject.",
+    "writeMessage": "Please write your message.",
+    "maxFiles": "You can attach at most 3 files to one message.",
+    "fileType": "The file \"{name}\" cannot be attached. You can attach PDF, Word, Excel, PowerPoint, picture (JPG, PNG, GIF), text and CSV files.",
+    "fileTooBig": "The file \"{name}\" is larger than 5 MB. Please make it smaller, or share a link to it instead.",
+    "fileEmpty": "The file \"{name}\" is empty. Please choose it again.",
+    "tooManyPeople": "You can write to at most {max} people in one message.",
+    "warnAttachment": "No attachment found: your message mentions an attachment or a file, but nothing is attached.",
+    "warnTemplate": "Something is still to fill in: the subject or message has a word in '<angle>' or [square] brackets from the template.",
+    "unsentReply": "You have an unsent reply. Send it, or choose Discard and start again.",
+    "unsentMessage": "You have an unsent message. Send it, or choose Discard and start again.",
+    "toTeacher": "To a teacher",
+    "toOffice": "To the school office",
+    "toStudent": "To a student",
+    "toParent": "To a parent",
+    "toAdmin": "To a school admin",
+    "toAnyone": "To anyone",
+    "attachment": "Attachment",
+    "school": "School"
+  }
+}

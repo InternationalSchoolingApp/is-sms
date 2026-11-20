@@ -1,0 +1,29 @@
+{
+  "rate": {
+    "class": "Évaluer ce cours",
+    "activity": "Évaluer cette activité"
+  },
+  "modal": {
+    "titleWithTeacher": "{title} <muted>avec</muted> {teacher}",
+    "tagline": "Aidez-nous à améliorer votre expérience d'apprentissage",
+    "confidential": "Nous voulons connaître votre avis sincère. Vos réponses sont confidentielles, n'hésitez donc pas à être honnête.",
+    "classFallback": "Cours"
+  },
+  "pending": {
+    "title": "Avis en attente",
+    "subtitle": "Veuillez envoyer vos avis hebdomadaires en attente.",
+    "total": "Total",
+    "activities": "Activités",
+    "classes": "Cours"
+  },
+  "category": {
+    "class": "COURS",
+    "activity": "ACTIVITÉ",
+    "batch": "GROUPE",
+    "sports": "SPORT",
+    "one_to_one": "INDIVIDUEL",
+    "academic": "ACADÉMIQUE",
+    "student_doubt_session": "SÉANCE DE QUESTIONS",
+    "n_a": "N/D"
+  }
+}

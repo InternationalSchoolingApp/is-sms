@@ -3,12 +3,14 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { AlertCircle, AlertTriangle, Ban, Check, CheckCircle2, Info, Mail, MessageCircle, Pencil, Plus, Smartphone, UserRound } from "lucide-react";
 import countries from "intl-tel-input/data";
+import { useTranslations } from "next-intl";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 import { actionsFor, displayValue, formatWhen, validateTarget } from "@/utils/contactCheckFlow";
-import { contactCheckCopy } from "@/components/contact-check/contactCheckCopy";
+import { contactCheckAlertText, translateContactCheckCopy } from "@/components/contact-check/contactCheckCopy";
+import { useLocaleTag } from "@/i18n/dateLocale";
 import { k5Skin, standardSkin } from "@/components/contact-check/ContactCheckShells";
 
 /**
@@ -29,16 +31,17 @@ const ACTION_ICONS = { CHANGE: Pencil, CONFIRM: Check, ALTERNATE: Plus, NO_WHATS
 // Country codes come from the phone library the profile page already uses (intl-tel-input); the popup shows them
 // in a plain <select>, because that library's own country list is attached to <body>, outside a modal dialog.
 function useCountryOptions() {
+  const tag = useLocaleTag();
   return useMemo(() => {
     let nameOf = (iso) => iso.toUpperCase();
     try {
-      const names = new Intl.DisplayNames(["en"], { type: "region" });
+      const names = new Intl.DisplayNames([tag], { type: "region" });
       nameOf = (iso) => names.of(iso.toUpperCase()) || iso.toUpperCase();
     } catch {}
     return countries
       .map((c) => ({ iso: c.iso2, dial: String(c.dialCode), priority: c.priority || 0, name: nameOf(c.iso2) }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, []);
+  }, [tag]);
 }
 
 // The country a stored ISD code stands for (the main country of a shared code such as +1).
@@ -74,12 +77,13 @@ function useSecondsUntil(at) {
 
 // The error of one field: in the page only while there is one, so aria-describedby never points at hidden text.
 function FieldError({ id, message, skin }) {
+  const t = useTranslations("contactCheck.modal");
   if (!message) return null;
   return (
     <p id={id} className={skin.error}>
       <AlertCircle className="mt-0.5 h-3.5 w-3.5 flex-none" aria-hidden="true" />
       <span>
-        <span className="sr-only">Error: </span>
+        <span className="sr-only">{t("errorPrefix")} </span>
         {message}
       </span>
     </p>
@@ -100,10 +104,11 @@ function Sentence({ parts, skin, className }) {
 }
 
 function StepAlert({ message, skin }) {
+  const t = useTranslations("contactCheck");
   if (!message) return null;
   return (
     <p role="alert" className={skin.alert}>
-      {message}
+      {contactCheckAlertText(message, t)}
     </p>
   );
 }
@@ -120,6 +125,9 @@ function CloseForNow({ item, flow, busy, copy, skin, manual = false }) {
 /* ---------- step 1: what is wrong, and what the student wants to do ---------- */
 
 function ChooseStep({ flow, state, item, copy, skin, band, timezone }) {
+  const t = useTranslations("contactCheck.modal");
+  const tc = useTranslations("common");
+  const tag = useLocaleTag();
   const ref = useRef(null);
   const name = useId();
   const words = copy.channels[item.channel];
@@ -127,7 +135,7 @@ function ChooseStep({ flow, state, item, copy, skin, band, timezone }) {
   // Also after "Later" was refused and the problem became mandatory: the Later button is gone, focus goes back to the options.
   useStepFocus(ref, `${item.id}:${item.mandatory}`);
 
-  const when = !elementary && item.lastFailedAt ? formatWhen(item.lastFailedAt, timezone) : "";
+  const when = !elementary && item.lastFailedAt ? formatWhen(item.lastFailedAt, timezone, tag === "en-US" ? "en-GB" : tag) : "";
   const skipNote = state.manual ? "" : item.mandatory ? copy.mandatory : item.laterLeft > 0 ? copy.skip(item.laterLeft) : "";
 
   return (
@@ -155,8 +163,8 @@ function ChooseStep({ flow, state, item, copy, skin, band, timezone }) {
                 <strong>{copy.reasonLabel}</strong> {item.reason}
               </>
             )}
-            {item.about && <> About: {item.about}.</>}
-            {when && <> Last tried {when}.</>}
+            {item.about && <> {t("about", { about: item.about })}</>}
+            {when && <> {t("lastTried", { when })}</>}
           </p>
         )}
         <fieldset className="m-0 min-w-0 border-none p-0">
@@ -197,7 +205,7 @@ function ChooseStep({ flow, state, item, copy, skin, band, timezone }) {
         {skipNote && <span className={skin.footNote}>{skipNote}</span>}
         {state.manual ? (
           <skin.Btn variant="quiet" onClick={flow.closeManual} disabled={state.busy}>
-            Close
+            {tc("actions.close")}
           </skin.Btn>
         ) : (
           !item.mandatory && (
@@ -218,6 +226,7 @@ function ChooseStep({ flow, state, item, copy, skin, band, timezone }) {
 /* ---------- step 2: the new value (or the stored one), then the code ---------- */
 
 function CodeStep({ flow, state, item, copy, skin }) {
+  const t = useTranslations("contactCheck.modal");
   const ref = useRef(null);
   const ids = useId();
   const id = (part) => `${ids}-${part}`;
@@ -390,7 +399,7 @@ function CodeStep({ flow, state, item, copy, skin }) {
             </label>
             <div className="flex flex-wrap items-center gap-2">
               <skin.Select
-                aria-label="Country code"
+                aria-label={t("countryCode")}
                 autoComplete="tel-country-code"
                 value={iso}
                 onChange={(e) => onIsoChange(e.target.value)}
@@ -398,7 +407,7 @@ function CodeStep({ flow, state, item, copy, skin }) {
                 aria-describedby={describedBy(errors.isd && id("isd-error"))}
                 data-cc-isd=""
               >
-                {!iso && <option value="">Country code</option>}
+                {!iso && <option value="">{t("countryCode")}</option>}
                 {countryOptions.map((c) => (
                   <option key={c.iso} value={c.iso}>
                     +{c.dial} {c.name}
@@ -412,7 +421,7 @@ function CodeStep({ flow, state, item, copy, skin }) {
                 autoComplete="tel-national"
                 maxLength={20}
                 required
-                placeholder="Number without the country code"
+                placeholder={t("numberPlaceholder")}
                 value={value}
                 onChange={(e) => onValueChange(e.target.value)}
                 onBlur={() => value && checkTarget(inputOf())}
@@ -475,7 +484,7 @@ function CodeStep({ flow, state, item, copy, skin }) {
               <skin.Btn variant="link" onClick={send} disabled={busy || wait > 0}>
                 {copy.resendLabel}
               </skin.Btn>
-              {wait > 0 && <span aria-hidden="true">(in {wait}s)</span>}
+              {wait > 0 && <span aria-hidden="true">{t("inSeconds", { wait })}</span>}
             </p>
           </div>
         )}
@@ -595,21 +604,23 @@ export default function ContactCheckModal({ check, band }) {
   const { context } = useDashboardContext();
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
   const titleId = useId();
+  const tCopy = useTranslations("contactCheck.copy");
+  const tc = useTranslations("common");
   const item = state.items[state.index];
   if (!flow || state.phase !== "open" || !item) return null;
 
   const skin = band === "high" ? standardSkin : k5Skin;
-  const copy = contactCheckCopy(band);
+  const copy = translateContactCheckCopy(band, tCopy);
   const firstName = String(context?.userName || "").trim().split(/\s+/)[0] || "";
   const title = state.step === "nowhatsapp" ? copy.noWhatsapp.title : copy.channels[item.channel].title;
   // The header's X is only there where the step has a way out: "Later" on step 1, and the last step's own button.
   const close =
     state.manual && state.step !== "done"
-      ? { onClose: flow.closeManual, closeLabel: "Close" }
+      ? { onClose: flow.closeManual, closeLabel: tc("actions.close") }
       : state.step === "choose" && !item.mandatory
         ? { onClose: flow.later, closeLabel: copy.laterLabel }
         : state.step === "done"
-          ? { onClose: flow.next, closeLabel: "Close" }
+          ? { onClose: flow.next, closeLabel: tc("actions.close") }
           : {};
   const stepKey = `${item.id}:${state.step}`;
   const props = { flow, state, item, copy, skin, band };

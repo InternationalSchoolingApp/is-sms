@@ -1,0 +1,20 @@
+{
+  "title": "Historial de inicio de sesión - {name}",
+  "empty": "No se encontró historial de inicio de sesión",
+  "firstLogin": "Primer inicio de sesión",
+  "lastLogin": "Último inicio de sesión | Duración",
+  "totalLogin": "Total de sesiones | Duración",
+  "tillNow": "Hasta ahora",
+  "sessions": "Sesiones iniciadas",
+  "searchPlaceholder": "Buscar sesiones...",
+  "showingSessions": "Mostrando {start}-{end} de {total} sesiones",
+  "securityNoticeLabel": "Aviso de seguridad:",
+  "securityNotice": "Si notas alguna actividad de inicio de sesión sospechosa o ubicaciones desconocidas, contacta de inmediato con tu administrador. La seguridad de tu cuenta es importante para nosotros.",
+  "table": {
+    "sNo": "N.º",
+    "login": "Fecha | Hora de inicio",
+    "logout": "Fecha | Hora de cierre",
+    "location": "Ubicación",
+    "duration": "Duración"
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "title": "Caixa de entrada",
+  "subtitle": "E-mails, notificações, avisos e mensagens de WhatsApp da escola.",
+  "write": "Escrever mensagem",
+  "markAllRead": "Marcar tudo como lido",
+  "unread": "não lidas",
+  "message": "Mensagem",
+  "messagesLabel": "Mensagens",
+  "noSubject": "(sem assunto)",
+  "school": "Escola",
+  "star": {
+    "add": "Marcar com estrela",
+    "remove": "Remover estrela"
+  },
+  "channels": {
+    "EMAIL": "E-mail",
+    "NOTIFICATION": "Notificação",
+    "ANNOUNCEMENT": "Aviso",
+    "WHATSAPP": "WhatsApp",
+    "MESSAGE": "Mensagem"
+  },
+  "categories": {
+    "fees_and_payments": "Taxas e pagamentos",
+    "classes_and_timetable": "Aulas e horários",
+    "progress_and_results": "Resultados e boletins",
+    "enrolment_and_courses": "Matrícula",
+    "account_and_security": "Conta e segurança",
+    "announcements_and_events": "Avisos e eventos"
+  },
+  "roles": {
+    "teacher": "Professor",
+    "student": "Aluno",
+    "parent": "Responsável",
+    "school_office": "Secretaria",
+    "school_admin": "Administração da escola",
+    "admin": "Administrador"
+  },
+  "folders": {
+    "label": "Pastas",
+    "ALL": "Todas",
+    "EMAIL": "E-mails",
+    "NOTIFICATION": "Notificações",
+    "ANNOUNCEMENT": "Avisos",
+    "WHATSAPP": "WhatsApp",
+    "SENT": "Enviadas"
+  },
+  "filters": {
+    "title": "Filtros",
+    "searchPlaceholder": "Nome, assunto ou palavras",
+    "date": "Data",
+    "dates": {
+      "d7": "Últimos 7 dias",
+      "d30": "Últimos 30 dias",
+      "d90": "Últimos 3 meses",
+      "dYEAR": "Este ano"
+    },
+    "show": "Mostrar",
+    "read": {
+      "ALL": "Lidas e não lidas",
+      "UNREAD": "Somente não lidas",
+      "READ": "Somente lidas"
+    },
+    "category": "Categoria do e-mail",
+    "anyCategory": "Qualquer categoria",
+    "withAttachments": "Com anexos",
+    "starred": "Com estrela"
+  },
+  "reader": {
+    "back": "Voltar à caixa de entrada",
+    "opening": "Abrindo a mensagem…",
+    "whatsappMessage": "Mensagem de WhatsApp",
+    "to": "Para: {people}",
+    "toMore": "Para: {people} e mais {count}",
+    "toMe": "para mim",
+    "personNotSent": "{name} (não enviado por e-mail; continua na caixa de entrada da pessoa)",
+    "personSending": "{name} (enviando)",
+    "inReplyTo": "Em resposta a",
+    "earlierMessage": "uma mensagem anterior",
+    "undeliveredNotice": "Não conseguimos entregar este e-mail no seu endereço. Você pode lê-lo aqui. Confira o e-mail no seu perfil ou peça à secretaria da escola para atualizá-lo.",
+    "noBody": "O texto deste e-mail não está disponível.",
+    "whatsappUndelivered": "Confira o número de celular no seu perfil ou peça à secretaria da escola para atualizá-lo.",
+    "whatsappNote": "A escola enviou isto pelo WhatsApp. Aqui fica apenas o nome da mensagem, não o texto: abra o WhatsApp no seu celular para lê-la.",
+    "attachments": "Anexos",
+    "attachment": "Anexo",
+    "preparing": "Preparando…",
+    "reply": "Responder",
+    "ackThanks": "Obrigado. Você confirmou que leu isto.",
+    "ackDone": "Você confirmou que leu isto.",
+    "ackAsk": "A escola pediu que você confirme que leu isto.",
+    "ackButton": "Eu li isto"
+  },
+  "list": {
+    "count": "{count, plural, one {# mensagem} other {# mensagens}}",
+    "countSent": "{count} enviadas",
+    "countUnread": "{messages} · {count} não lidas",
+    "none": "Nenhuma mensagem",
+    "range": "{start}–{end} de {of}",
+    "newestNote": "As {count} mais recentes estão listadas; escolha um período menor ou pesquise para encontrar as mais antigas.",
+    "loading": "Carregando sua caixa de entrada…",
+    "undelivered": "Não entregue no seu e-mail",
+    "rowLabel": "{channel}, {name}, {title}, {time}",
+    "rowLabelUnread": "Não lida, {channel}, {name}, {title}, {time}",
+    "pages": "Páginas",
+    "newer": "Mais recentes",
+    "older": "Mais antigas"
+  },
+  "sent": {
+    "toMore": "{names} e mais {count}",
+    "nobody": "ninguém",
+    "progress": "Enviando em segundo plano: {done} de {total} pessoas",
+    "sending": "Enviando…",
+    "notSentNames": "Não enviado por e-mail para {names} (continua na caixa de entrada delas)",
+    "notSentCount": "Não enviado por e-mail para {count} pessoas (continua na caixa de entrada delas)"
+  },
+  "messages": {
+    "loadError": "Não foi possível carregar sua caixa de entrada agora. Tente novamente em um minuto.",
+    "attachmentError": "Este anexo não pode ser aberto agora. Tente novamente mais tarde.",
+    "bodyError": "Este e-mail não pode ser exibido agora.",
+    "sendError": "Não foi possível enviar sua mensagem agora. Tente novamente em um minuto; o que você escreveu continua aqui.",
+    "sendUnreachable": "Não foi possível enviar sua mensagem: o servidor não respondeu. Verifique sua conexão e tente novamente; o que você escreveu continua aqui.",
+    "replyError": "Não é possível responder a esta mensagem agora. Tente novamente em um minuto.",
+    "composeClosed": "Não foi possível abrir a escrita de mensagens agora. Tente novamente em um minuto.",
+    "emptyInbox": "Nada encontrado com estes filtros.",
+    "emptySent": "Você não enviou mensagens neste período.",
+    "settingOn": "Ativado.",
+    "settingOff": "Desativado. Eles continuarão aparecendo na sua caixa de entrada."
+  },
+  "compose": {
+    "titleNew": "Nova mensagem",
+    "titleReply": "Responder",
+    "from": "De: {name}",
+    "fromWithRole": "De: {name} · {role}",
+    "to": "Para",
+    "toPlaceholder": "Escolha pessoas ou digite um nome",
+    "recipients": "Destinatários",
+    "removeName": "Remover {name}",
+    "closeList": "Fechar a lista",
+    "choosePeople": "Escolher pessoas",
+    "noMatch": "Ninguém corresponde a esse nome.",
+    "nobodyFound": "Ninguém encontrado.",
+    "hint": "Abra a lista para ver todas as pessoas para quem você pode escrever, ou digite um nome para filtrar. Até {max} pessoas.",
+    "unsentReply": "Você tem uma resposta não enviada. Envie-a ou escolha Descartar para começar de novo.",
+    "unsentMessage": "Você tem uma mensagem não enviada. Envie-a ou escolha Descartar para começar de novo.",
+    "template": "Começar com um modelo",
+    "templateChoose": "Escolha um modelo (opcional)",
+    "templateHelp": "Palavras como '<date>' ou '<teacher name>' que ficarem no texto são para você preencher.",
+    "templateGroups": {
+      "TEACHER": "Para um professor",
+      "OFFICE": "Para a secretaria",
+      "STUDENT": "Para um aluno",
+      "PARENT": "Para um responsável",
+      "ADMIN": "Para um administrador da escola",
+      "ANY": "Para qualquer pessoa"
+    },
+    "replaceWithTemplate": "Substituir o que você escreveu pelo modelo \"{title}\"?",
+    "subject": "Assunto",
+    "subjectPlaceholder": "Sobre o que é?",
+    "message": "Mensagem",
+    "counter": "{count} de {max} caracteres",
+    "addAttachments": "Adicionar anexos",
+    "optional": "opcional",
+    "fileHelp": "Até 3 arquivos de 5 MB cada: PDF, Word, Excel, PowerPoint, imagens (JPG, PNG, GIF), texto ou CSV.",
+    "warnings": {
+      "noAttachment": "Nenhum anexo encontrado: sua mensagem menciona um anexo ou arquivo, mas nada foi anexado.",
+      "placeholder": "Ainda falta preencher algo: o assunto ou a mensagem tem uma palavra entre '<sinais>' ou [colchetes] do modelo."
+    },
+    "privacy": "Seu nome e sua função aparecem para as pessoas a quem você escreve. Seu e-mail não.",
+    "discard": "Descartar",
+    "sending": "Enviando…",
+    "sent": "Mensagem enviada",
+    "problems": {
+      "noPeople": "Escolha pelo menos uma pessoa para quem escrever.",
+      "noSubject": "Adicione um assunto.",
+      "noMessage": "Escreva sua mensagem.",
+      "tooManyPeople": "Você pode escrever para no máximo {max} pessoas em uma mensagem.",
+      "tooManyFiles": "Você pode anexar no máximo {max} arquivos a uma mensagem.",
+      "fileType": "O arquivo \"{name}\" não pode ser anexado. Você pode anexar arquivos PDF, Word, Excel, PowerPoint, imagens (JPG, PNG, GIF), texto e CSV.",
+      "fileTooLarge": "O arquivo \"{name}\" tem mais de 5 MB. Reduza o tamanho ou compartilhe um link para ele.",
+      "fileEmpty": "O arquivo \"{name}\" está vazio. Escolha-o novamente."
+    }
+  },
+  "settings": {
+    "title": "Configurações de e-mail",
+    "intro": "Escolha quais e-mails chegam até você. Tudo continua aqui na sua caixa de entrada de qualquer forma.",
+    "loading": "Carregando suas configurações de e-mail…",
+    "switchOff": "E-mails que você pode desativar",
+    "always": "E-mails sobre taxas e pagamentos, aulas e horários, resultados, matrícula, conta e segurança, admissões e outros e-mails essenciais da escola são sempre enviados.",
+    "rows": {
+      "announcements_and_events": {
+        "label": "Avisos e eventos",
+        "hint": "Notícias da escola, eventos e avisos gerais."
+      },
+      "school_partnerships": {
+        "label": "Parcerias da escola",
+        "hint": "Novidades sobre programas que a escola realiza com parceiros."
+      },
+      "other": {
+        "label": "Outros e-mails da escola",
+        "hint": "Tudo o que a escola não colocou em outro grupo."
+      },
+      "weekly_digest": {
+        "label": "Resumo semanal",
+        "hint": "Aos domingos, uma lista curta do que você ainda não leu."
+      }
+    }
+  }
+}

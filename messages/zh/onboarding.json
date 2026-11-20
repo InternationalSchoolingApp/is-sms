@@ -1,0 +1,93 @@
+{
+  "shell": {
+    "logOff": "退出登录"
+  },
+  "welcome": {
+    "loadFailed": "无法加载你的信息。请重试。"
+  },
+  "timezone": {
+    "saved": "你的时区已保存。",
+    "saveFailed": "无法保存你的时区。",
+    "title": "确认你的时区",
+    "intro": "开始之前，请选择你的国家和时区：",
+    "label": "时区",
+    "loadFailed": "无法加载时区列表",
+    "proceedWith": "确定使用 <b>{zone}</b> 吗？",
+    "classesFollow": "请注意，你的所有课程都将按此时区安排。",
+    "changeLater": "如需稍后更改时区，请前往控制面板的<b>“我的资料”</b>部分。",
+    "saving": "正在保存..."
+  },
+  "overdue": {
+    "paymentReceived": "已收到付款。",
+    "hi": "你好，{name}！",
+    "hiThere": "你好！",
+    "deactivated": "由于自 {date} 起有待缴费用，你的 LMS 已被停用。",
+    "noOverdue": "没有逾期付款。",
+    "pendingFee": "待缴费用",
+    "grade": "年级",
+    "feeDescription": "费用说明",
+    "dueFee": "应缴费用",
+    "dueDate": "截止日期",
+    "status": "状态",
+    "totalDue": "应缴总额",
+    "payNow": "立即付款以继续上课",
+    "whyTimely": "为什么按时付款很重要？",
+    "payInAdvance": "请提前付款以继续上课。",
+    "avoidDeactivation": "请完成付款，以免学校管理系统被停用。",
+    "statusUpdated": "收到付款后，你的费用状态将会更新。"
+  },
+  "feeStatus": {
+    "pending": "待处理",
+    "overdue": "已逾期",
+    "due": "待缴",
+    "unpaid": "未付",
+    "paid": "已付",
+    "partially_paid": "部分已付"
+  },
+  "setup": {
+    "loadFailed": "无法加载你的信息。请重试。",
+    "loading": "正在加载你的信息...",
+    "heading": "你好，{name}，{kind, select, done {做得很好。我们开始吧！} reminder {这是一条重要提醒} other {我们开始吧！}}",
+    "headingNoName": "你好，{kind, select, done {做得很好。我们开始吧！} reminder {这是一条重要提醒} other {我们开始吧！}}"
+  },
+  "training": {
+    "topicsIntro": "在学校系统培训中，你将学习",
+    "topicClasses": "如何预约和参加课程",
+    "topicCourses": "课程、学习进度报告和测评",
+    "booked": "你的学校系统培训已预约。",
+    "bookFailed": "无法预约你的学校系统培训。",
+    "chooseDateToContinue": "选择日期以继续",
+    "title": "预约学校系统培训",
+    "bookOn": "我想预约学校系统培训的日期",
+    "dateLabel": "选择系统培训日期",
+    "selectTime": "选择时间：",
+    "loadingTimes": "正在加载可用时间…",
+    "timesFailed": "无法加载培训时间。",
+    "noSlot": "没有可用时段。请选择其他日期",
+    "timeLabel": "培训时间",
+    "saving": "正在保存..."
+  },
+  "academic": {
+    "saved": "你的学年开始日期已保存。",
+    "saveFailed": "无法保存你的学年开始日期。",
+    "title": "学年开始日期",
+    "titleStep": "第 1 步，共 1 步 - 学年开始日期",
+    "explain": "学年开始日期是你开始上课的日期。",
+    "startOn": "我想在以下日期开始我的学年",
+    "dateLabel": "选择开始日期",
+    "decideLater": "稍后决定",
+    "chooseCarefully": "请谨慎选择学年开始日期。之后将无法修改。",
+    "queries": "如有任何疑问：",
+    "editDate": "修改日期",
+    "mandatory": "必须选择{kind, select, training {系统培训} other {学年}}开始日期才能开始上课。你可以随时重新登录完成此流程。",
+    "queriesTalk": "如有任何疑问，请<link>联系学校管理处</link>",
+    "batchReminder": "UTC+ 时区的小组学习班将于 2024 年 9 月 18 日开始。<br></br>UTC- 时区的小组学习班将于 2024 年 9 月 25 日开始。"
+  },
+  "done": {
+    "title": "一切就绪！",
+    "startDateIs": "你的学年开始日期是 {date}",
+    "trainingConfirmed": "你的学校系统培训已成功确认。",
+    "dateTime": "日期和时间：<b>{value}</b>",
+    "emailSent": "确认信息也已发送到你的注册邮箱。"
+  }
+}

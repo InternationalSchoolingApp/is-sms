@@ -1,0 +1,115 @@
+{
+  "header": {
+    "title": "My Attendance",
+    "subtitle": "See how many classes you came to."
+  },
+  "loading": "Loading your attendance",
+  "sessionExpired": "Your session has expired. Please log in again.",
+  "notFound": "Attendance details not found",
+  "tiles": {
+    "classesToday": "Classes Today",
+    "attendance": "Attendance · {month}",
+    "late": "Late · {month}",
+    "sameAs": "Same as {month}",
+    "changeFrom": "{arrow} {diff}% from {month}"
+  },
+  "views": {
+    "today": "Today",
+    "week": "Week",
+    "month": "Month",
+    "year": "Academic Year"
+  },
+  "overview": {
+    "title": "Performance Overview",
+    "hint": "Tap a month to see its summary.",
+    "comingSoon": "Coming soon · Pick Academic Year to see your months.",
+    "barLabel": "{month}: {percent}% attendance",
+    "barTip": "{month}: {percent}%",
+    "barNotYet": "{month}: Not yet"
+  },
+  "summary": {
+    "title": "Monthly Summary",
+    "cameTo": "You came to {came} of {total} classes.",
+    "classesWord": "{count, plural, one {class} other {classes}}",
+    "sliceTitle": "{label}: {count}",
+    "empty": "Not yet · No classes this month."
+  },
+  "badges": {
+    "star": {
+      "name": "Attendance Star",
+      "msg": "Super star! You almost never miss a class."
+    },
+    "regular": {
+      "name": "Super Regular",
+      "msg": "Great job! Keep it up."
+    },
+    "goodEffort": {
+      "name": "Good Effort",
+      "msg": "Let's try to come to every class!"
+    },
+    "keepGoing": {
+      "name": "Keep Going",
+      "msg": "Let's try to come to every class!"
+    }
+  },
+  "status": {
+    "present": "Present",
+    "late": "Late",
+    "absent": "Absent",
+    "missS": "Missed by Student",
+    "missT": "Missed by Teacher"
+  },
+  "absentLabels": {
+    "absent": "Absent",
+    "missed_by_student": "Missed by Student",
+    "missed_by_teacher": "Missed by Teacher"
+  },
+  "details": {
+    "title": "Attendance Details",
+    "hint": "Tap a colour in the chart to see only those classes.",
+    "showAll": "Show all",
+    "showingNone": "Showing 0 entries",
+    "dateFilters": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "week": "Week",
+      "month": "Month",
+      "custom": "Custom"
+    },
+    "notAvailable": "{label} (not available)",
+    "statusOptions": {
+      "select": "Select Status",
+      "all": "All",
+      "present": "Present",
+      "late": "Late",
+      "absent": "Absent"
+    },
+    "lookBack": "You can look back {days, plural, one {# day} other {# days}}. To is today.",
+    "errors": {
+      "unavailable": "The custom range is not available right now.",
+      "invalidDate": "Please choose a valid date.",
+      "toIsToday": "The To date is always today.",
+      "noFuture": "Future dates cannot be selected.",
+      "lookBackOnly": "You can look back only {days, plural, one {# day} other {# days}}."
+    },
+    "loadError": "The attendance details could not be loaded.",
+    "columns": {
+      "srNo": "S. No.",
+      "date": "Date",
+      "class": "Class",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "joined": "Joined",
+      "status": "Status"
+    },
+    "joinedNotes": {
+      "onTime": "On time",
+      "minLate": "{minutes} min late",
+      "teacherAbsent": "Teacher could not come",
+      "didNotJoin": "Did not join"
+    },
+    "loading": "Loading your classes",
+    "empty": "No classes here.",
+    "pages": "Pages"
+  }
+}

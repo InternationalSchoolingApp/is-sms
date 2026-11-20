@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { Check } from "lucide-react";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { FeeBreakdown } from "@/components/re-enrollment/FeeBreakdown";
@@ -21,8 +22,6 @@ import { expireSession } from "@/utils/logout";
 import { hidesCourseCredits } from "@/utils/studentSignupValidation";
 import { previousStepBefore, reEnrollmentBasePath, reEnrollmentStepPath, STEP_REVIEW } from "@/utils/reEnrollmentSteps";
 
-const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
-
 /**
  * REVIEW step in the legacy layout: "Kindly Review Your Details" bar, the Selected Courses card on the left and the
  * fee card on the right (when a payment is pending). Bottom: Back on the left, "Pay Now" (green) or
@@ -34,6 +33,9 @@ export function ReEnrollmentReview() {
 }
 
 function ReviewScreen() {
+  const t = useTranslations("reEnrollment.review");
+  const tf = useTranslations("reEnrollment.fee");
+  const tc = useTranslations("common");
   const router = useRouter();
   const { school } = useParams();
   const { session, context, option, steps } = useReEnrollmentContext();
@@ -61,7 +63,7 @@ function ReviewScreen() {
       if (response?.status === "3") {
         expireSession(school);
       } else if (response?.status !== STATUS_SUCCESS) {
-        toast.error(response?.message || "Could not complete your re-enrollment. Please try again.");
+        toast.error(response?.message || t("completeFailed"));
       } else {
         setFinishing(true);
         // Full load: the dashboard (menu, grade) has to be read again for the new academic year.
@@ -69,7 +71,7 @@ function ReviewScreen() {
       }
     } catch (err) {
       console.error("ReEnrollmentReview complete failed:", err);
-      toast.error(GENERIC_ERROR);
+      toast.error(t("genericError"));
     }
   }
 
@@ -79,17 +81,17 @@ function ReviewScreen() {
   if (!data) {
     return (
       <>
-        <PageTitle>Kindly Review Your Details</PageTitle>
+        <PageTitle>{t("title")}</PageTitle>
         <Card>
-          <p className="text-sm font-semibold text-red-600">{reviewQuery.data?.message || "Could not load your review details."}</p>
+          <p className="text-sm font-semibold text-red-600">{reviewQuery.data?.message || t("loadFailed")}</p>
           <div className="mt-4 flex gap-3">
             {previous && (
               <Button type="button" className="bg-slate-500 hover:bg-slate-600" onClick={() => router.push(reEnrollmentStepPath(school, previous))}>
-                Back
+                {tc("actions.back")}
               </Button>
             )}
             <Button type="button" onClick={() => reviewQuery.refetch()} disabled={reviewQuery.isFetching}>
-              Try again
+              {tc("actions.tryAgain")}
             </Button>
           </div>
         </Card>
@@ -117,15 +119,16 @@ function ReviewScreen() {
       ? { kind: "registration", mode: "registration" }
       : planOptions.find((o) => o.mode === payMode || o.variants?.some((v) => v.mode === payMode)) ?? planOptions[0];
   // Legacy title (StudentMigrationUtil feeSetionTitile): from the record's PAY_MODE.
-  const feeTitle = `Selected Fee Plan ${
-    payMode === "registration"
-      ? "(Reserve an Enrollment Seat)"
-      : payMode === "annually" || payMode === "a_annually"
-        ? "(One-Time)"
-        : String(payMode || "").startsWith("c_")
-          ? "(Customized)"
-          : "(Pay in easy installments)"
-  }`;
+  const feeTitle = t("feeTitle", {
+    plan:
+      payMode === "registration"
+        ? "seat"
+        : payMode === "annually" || payMode === "a_annually"
+          ? "oneTime"
+          : String(payMode || "").startsWith("c_")
+            ? "custom"
+            : "installments",
+  });
   const hasCourses = (course?.courseDTO || []).length > 0;
   // Legacy review (feePaymentReview1): the fee card is there whenever SHOW_PAYMENT_OPTION is "Y", also when the advance
   // fee already covered everything (payable $0.00); a pending payment always shows it.
@@ -147,15 +150,15 @@ function ReviewScreen() {
 
   return (
     <>
-      <PageTitle>Kindly Review Your Details</PageTitle>
+      <PageTitle>{t("title")}</PageTitle>
       <div className={`grid items-start gap-4 md:gap-8 ${showFeeCard && hasCourses ? "lg:grid-cols-[555fr_723fr]" : ""} ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
         {hasCourses && (
-          <Card header="Selected Courses" headerRight={course?.standardName}>
+          <Card header={t("selectedCourses")} headerRight={course?.standardName}>
             <table className="w-full overflow-hidden rounded-lg border border-slate-200 text-sm">
               <thead className="bg-slate-100">
                 <tr>
-                  <th className="px-3 py-2 text-left font-bold">Course Name</th>
-                  {showCredits && <th className="px-3 py-2 text-left font-bold">Credit</th>}
+                  <th className="px-3 py-2 text-left font-bold">{t("courseName")}</th>
+                  {showCredits && <th className="px-3 py-2 text-left font-bold">{t("credit")}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -169,7 +172,7 @@ function ReviewScreen() {
               {showCredits && (
                 <tfoot className="bg-slate-100">
                   <tr className="border-t border-slate-200">
-                    <th className="px-3 py-2 text-left">Total Credit</th>
+                    <th className="px-3 py-2 text-left">{t("totalCredit")}</th>
                     <th className="px-3 py-2 text-left">{course.totalCredit}</th>
                   </tr>
                 </tfoot>
@@ -181,12 +184,12 @@ function ReviewScreen() {
                   <Check className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h6 className="text-xs font-semibold text-black">Fee Already Paid (Advance Fee)</h6>
-                  <p className="text-xs text-slate-600">Your advance fee has been received successfully</p>
-                  <span className="text-xs font-bold text-black">THANK YOU!</span>
+                  <h6 className="text-xs font-semibold text-black">{t("advancePaid")}</h6>
+                  <p className="text-xs text-slate-600">{t("advanceReceived")}</p>
+                  <span className="text-xs font-bold text-black">{t("thankYou")}</span>
                 </div>
                 <div className="border-l border-dashed border-green-500 px-2 text-black">
-                  <span className="block text-xs font-bold">PAID AMOUNT</span>
+                  <span className="block text-xs font-bold">{t("paidAmount")}</span>
                   <h6 className="text-sm font-bold">{alreadyPaid.totalEntityFeeString}</h6>
                 </div>
               </div>
@@ -194,7 +197,7 @@ function ReviewScreen() {
           </Card>
         )}
         {showFeeCard && customPlan && (
-          <Card header="Selected Fee Plan (Customized)">
+          <Card header={t("feeTitle", { plan: "custom" })}>
             <CustomPlanSummary
               schedule={customSchedule}
               extraFees={customPlanExtraFees(fee)}
@@ -203,15 +206,15 @@ function ReviewScreen() {
               currencySymbol={getCurrencyDisplaySymbol(data.currencyIsoCode)}
             />
             <p className="mt-2 text-center text-xs text-slate-500">
-              <b>Note:</b> All fees mentioned above are in {data.currencyIsoCode || "USD"}
+              {t.rich("currencyNote", { currency: data.currencyIsoCode || "USD", b: (chunks) => <b>{chunks}</b> })}
             </p>
           </Card>
         )}
         {showFeeCard && !customPlan && (
           <Card header={feeTitle}>
-            <FeeBreakdown fee={fee} option={selectedOption} variantMode={fee.paymentMode} gradeName={course?.standardName || data.grade?.name} advance={useAdvanceFee} courseFeeLabel="Course Fee" payableOverride={zeroPayable} />
+            <FeeBreakdown fee={fee} option={selectedOption} variantMode={fee.paymentMode} gradeName={course?.standardName || data.grade?.name} advance={useAdvanceFee} courseFeeLabel={tf("courseFee")} payableOverride={zeroPayable} />
             <p className="mt-2 text-center text-xs text-slate-500">
-              <b>Note:</b> All fees mentioned above are in {data.currencyIsoCode || "USD"}
+              {t.rich("currencyNote", { currency: data.currencyIsoCode || "USD", b: (chunks) => <b>{chunks}</b> })}
             </p>
           </Card>
         )}
@@ -220,7 +223,7 @@ function ReviewScreen() {
       <MobileActionBar context={context} embedded>
         {previous ? (
           <Button type="button" variant="outline" className="px-4" disabled={busy} onClick={() => router.push(reEnrollmentStepPath(school, previous))}>
-            Back
+            {tc("actions.back")}
           </Button>
         ) : (
           <span />
@@ -230,16 +233,16 @@ function ReviewScreen() {
             {/* Legacy "Pay Later": with the advance already paid the student may skip the remaining amount for now. */}
             {data.advanceFeeApplied && (
               <Button type="button" className="px-6" disabled={busy} onClick={proceedToDashboard}>
-                {busy ? "Please wait…" : "Pay Later"}
+                {busy ? tc("status.pleaseWait") : t("payLater")}
               </Button>
             )}
             <Button type="button" className="px-4" disabled={busy} onClick={() => gateway.start(data)}>
-              {busy ? "Please wait…" : "Pay Now"}
+              {busy ? tc("status.pleaseWait") : t("payNow")}
             </Button>
           </div>
         ) : (
           <Button type="button" className="px-6" disabled={busy} onClick={proceedToDashboard}>
-            {busy ? "Please wait…" : "Proceed to Dashboard"}
+            {busy ? tc("status.pleaseWait") : t("proceedToDashboard")}
           </Button>
         )}
       </MobileActionBar>
@@ -260,6 +263,7 @@ function customPlanExtraFees(fee) {
  * still due (legacy getCustomizedPaymentTable(): plan total plus the extra fees).
  */
 function CustomPlanSummary({ schedule, extraFees, totalDue, totalDueString, currencySymbol }) {
+  const t = useTranslations("reEnrollment.fee");
   const extraTotal = extraFees.reduce((sum, f) => sum + Number(f.amount || 0), 0);
   const payable = extraTotal > 0 ? `${currencySymbol}${formatMoneyWithCommas(Number(totalDue || 0) + extraTotal)}` : totalDueString;
   return (
@@ -273,11 +277,11 @@ function CustomPlanSummary({ schedule, extraFees, totalDue, totalDueString, curr
                 <p className="font-semibold text-black">
                   <SupText>{payment.paymentTitle}</SupText>
                 </p>
-                <p className="text-xs text-slate-600">{paid ? `Paid on ${payment.paymentDate}` : `Due on ${payment.schedulePayDate}`}</p>
+                <p className="text-xs text-slate-600">{paid ? t("paidOnDate", { date: payment.paymentDate ?? "" }) : t("dueOnDate", { date: payment.schedulePayDate ?? "" })}</p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${paid ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
-                  {paid ? "Paid" : "Due"}
+                  {paid ? t("paid") : t("due")}
                 </span>
                 <span className="font-bold text-black">{payment.payAmountString}</span>
               </div>
@@ -287,15 +291,15 @@ function CustomPlanSummary({ schedule, extraFees, totalDue, totalDueString, curr
         {extraFees.map((extra, index) => (
           <li key={`extra-${index}`} className="flex items-center justify-between gap-3 px-3 py-2">
             <div className="min-w-0">
-              <p className="font-semibold text-black">{extra.paymentLabel}</p>
-              <p className="text-xs text-slate-600">Scheduled {extra.scheduledDate}</p>
+              <p className="font-semibold text-black">{extra.paymentLabel === "Extra Course Fee" ? t("extraCourseFee") : extra.paymentLabel}</p>
+              <p className="text-xs text-slate-600">{t("scheduledDate", { date: extra.scheduledDate ?? "" })}</p>
             </div>
             <span className="shrink-0 font-bold text-black">{extra.amountString}</span>
           </li>
         ))}
       </ul>
       <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3">
-        <span className="text-base font-bold text-black">Payable Fee</span>
+        <span className="text-base font-bold text-black">{t("payable")}</span>
         <span className="text-lg font-bold text-black">{payable}</span>
       </div>
     </div>

@@ -1,0 +1,43 @@
+{
+  "title": "Noticias",
+  "articleCount": "{count, plural, one {# artículo} other {# artículos}}",
+  "empty": "Aún no hay noticias.",
+  "marking": "Marcando…",
+  "viewAll": "Ver todas las noticias",
+  "latest": "Últimas noticias",
+  "noneAvailable": "No hay noticias disponibles.",
+  "readTime": "Tiempo de lectura {minutes} min",
+  "source": "Fuente",
+  "readFullArticle": "Leer el artículo completo →",
+  "viewOriginalSource": "Ver la fuente original →",
+  "relative": {
+    "yearsMonths": "hace {years, plural, one {# año} other {# años}} y {months, plural, one {# mes} other {# meses}}",
+    "monthsDays": "hace {months, plural, one {# mes} other {# meses}} y {days, plural, one {# día} other {# días}}",
+    "days": "hace {days, plural, one {# día} other {# días}}",
+    "today": "hoy",
+    "daysHours": "hace {days, plural, one {# día} other {# días}} y {hours, plural, one {# hora} other {# horas}}",
+    "hoursMinutes": "hace {hours, plural, one {# hora} other {# horas}} y {minutes, plural, one {# minuto} other {# minutos}}",
+    "minutes": "hace {minutes, plural, one {# minuto} other {# minutos}}"
+  },
+  "announcements": {
+    "title": "Anuncio(s)",
+    "newCount": "{count, plural, one {# nuevo} other {# nuevos}}",
+    "empty": "Aún no hay anuncios.",
+    "new": "Nuevo",
+    "learnMore": "Más información →",
+    "startDate": "Fecha de inicio",
+    "thanks": "Gracias por confirmar",
+    "viewAttachment": "Ver archivo adjunto",
+    "submitting": "Enviando…",
+    "acknowledge": "Confirmar lectura",
+    "timeLabels": {
+      "upcoming": "próximamente",
+      "1_day_ago": "hace 1 día",
+      "last_week": "la semana pasada"
+    }
+  },
+  "preview": {
+    "title": "Vista previa",
+    "imageAlt": "Archivo adjunto del anuncio"
+  }
+}

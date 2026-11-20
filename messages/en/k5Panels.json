@@ -1,0 +1,112 @@
+{
+  "announcements": {
+    "title": "Announcements",
+    "newCount": "{count} new",
+    "allRead": "All read",
+    "empty": "No announcements yet.",
+    "new": "New"
+  },
+  "announcement": {
+    "startDate": "Start Date",
+    "thanks": "Thanks for Acknowledgement",
+    "viewAttachment": "View Attachment",
+    "submitting": "Submitting…",
+    "acknowledge": "Kindly Acknowledge"
+  },
+  "news": {
+    "title": "News",
+    "newCount": "{count} new",
+    "fresh": "Fresh stories",
+    "empty": "No news yet.",
+    "readStory": "Read the story",
+    "pages": "News pages",
+    "opening": "Opening…",
+    "viewAll": "View all news"
+  },
+  "newsAll": {
+    "title": "Latest News",
+    "empty": "No news available.",
+    "loadMore": "Load more news",
+    "readTime": "Read time {minutes} min",
+    "source": "News source",
+    "readFull": "Read full article →"
+  },
+  "diary": {
+    "title": "My School Diary",
+    "subtitle": "Notes from school, every day",
+    "notesFrom": "Notes from {name}",
+    "backToList": "Back to diary list",
+    "schoolDiary": "School diary",
+    "teacherDiary": "Teacher diary",
+    "readOnly": "Only your teacher and school write in this diary.",
+    "loading": "Loading your diary",
+    "loadingMore": "Loading more notes",
+    "loadingNotes": "Loading the notes",
+    "loadingOlder": "Loading older notes",
+    "noNotes": "No notes yet.",
+    "schoolNote": "🏫 School note",
+    "teacherNote": "📝 Teacher's note",
+    "note": "✏️ Note",
+    "salutation": {
+      "mr": "Mr.",
+      "ms": "Ms."
+    }
+  },
+  "password": {
+    "title": "Change Password",
+    "old": "Old Password",
+    "new": "New Password",
+    "confirm": "Confirm Password",
+    "show": "Show password",
+    "hide": "Hide password",
+    "rules": {
+      "length": "8–20 characters",
+      "upper": "At least 1 uppercase letter",
+      "lower": "At least 1 lowercase letter",
+      "number": "At least 1 number",
+      "special": "At least 1 special character (! @ # $ % & *)",
+      "different": "Different from old password"
+    },
+    "mismatch": "Passwords do not match.",
+    "change": "Change",
+    "changing": "Changing…",
+    "note": "<b>Note:</b> The password will be updated for your School Management System (SMS). Your Learning Management System (LMS) password will remain the same.",
+    "sessionExpired": "Session expired. Please log in again.",
+    "failed": "Failed to change password.",
+    "changed": "Password changed successfully!",
+    "changedDummy": "Password changed successfully"
+  },
+  "training": {
+    "title": "School System Training",
+    "intro": "A friendly coordinator will show you around your new dashboard, so you feel confident from day one.",
+    "isOn": "Your School System Training is on",
+    "durationZoom": "30 minutes · Zoom video call",
+    "rescheduledTitle": "Your school System Training has been rescheduled.",
+    "rescheduledText": "Please click below and select another date for the training.",
+    "reschedule": "Reschedule",
+    "join": "Join Training",
+    "firstFreeOnly": "Only the first reschedule is free.",
+    "talkToUs": "Talk to us",
+    "rescheduleTitle": "Reschedule Your School System Training",
+    "scheduleOn": "I want to schedule my school system training on",
+    "minutes30": "30 minutes",
+    "zoomCall": "Zoom video call",
+    "firstFree": "First reschedule free",
+    "pickTime": "Pick a time",
+    "pickDay": "Pick a day on the calendar to see the open times.",
+    "loadingTimes": "Loading the free times",
+    "noSlot": "No slot available.",
+    "pickAnother": "Please pick another date.",
+    "newTime": "New training time",
+    "feeNote": "Please keep in mind, only the first reschedule is free, but after that, the School System Training will be paid.",
+    "confirmText": "You are about to reschedule your school system training. Please keep in mind that if the system training is rescheduled again after this, a fee will be charged.",
+    "newTimeLine": "New training time: <b>{time}</b>",
+    "yesReschedule": "Yes, reschedule",
+    "hello": "Hello, {name}",
+    "isOnLine": "Your School System Training is on <b>{line}</b>.",
+    "usedFree": "You have now used your one-time free reschedule for School System Training.",
+    "essential": "Attending this training is essential to start your schooling. For any queries or rescheduling, please talk to School Administration or write to us at <link>{email}</link>",
+    "okGotIt": "OK, got it",
+    "talkToAdmin": "Talk to School Administration"
+  }
+}

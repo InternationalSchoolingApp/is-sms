@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { CalendarPlus, Info } from "lucide-react";
+import { useLabelTranslator } from "@/i18n/labels";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { getBookAClassStatus, getStudentBookClassDetails } from "@/services/bookClassApi";
@@ -18,10 +20,11 @@ import { K5BookNotice, K5BookView } from "@/components/k5/pages/K5BookView";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 
 function PageTitle() {
+  const t = useTranslations("bookClass");
   return (
     <div className="flex items-center gap-2 px-1 pb-4">
       <CalendarPlus className="h-5 w-5 text-primary" aria-hidden="true" />
-      <h1 className="text-lg font-extrabold text-black sm:text-xl">Book a Class</h1>
+      <h1 className="text-lg font-extrabold text-black sm:text-xl">{t("title")}</h1>
     </div>
   );
 }
@@ -52,6 +55,9 @@ function Count({ label, value, className }) {
  */
 export function BookClasses() {
   const { context, isK5, isMiddle } = useDashboardContext();
+  const t = useTranslations("bookClass");
+  const tc = useTranslations("common");
+  const tl = useLabelTranslator("bookClass.labels");
   const { school } = useParams();
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState(null);
@@ -84,11 +90,11 @@ export function BookClasses() {
 
   function startBooking(target) {
     if (!target.teacherName) {
-      toast.error("You do not have a teacher assigned yet");
+      toast.error(t("noTeacher"));
       return;
     }
     if (target.weekLeftClass < 1) {
-      toast.error("You have booked all your classes for this week");
+      toast.error(t("weekFullyBooked"));
       return;
     }
     if (target.subjectId === 0) setPickAllCourses(true);
@@ -102,25 +108,25 @@ export function BookClasses() {
   }
 
   if (!context || statusQuery.isLoading || (studentStandardId && detailsQuery.isLoading)) {
-    return <Notice loading>Loading…</Notice>;
+    return <Notice loading>{tc("status.loading")}</Notice>;
   }
-  if (!gate) return <Notice>Unable to load your classes right now. Please try again.</Notice>;
+  if (!gate) return <Notice>{t("loadError")}</Notice>;
   if (gate.statusCode === "AY_NOT_STARTED") return <Notice>{gate.message}</Notice>;
   if (gate.statusCode === "BUY_A_CLASS") {
     return (
       <Notice>
-        Oops! Looks like you haven&apos;t purchased a class yet.
+        {t("notPurchased")}
         <br />
         <Link href={studentNavHref(school, "student-addon")} className="mt-3 inline-block rounded-lg bg-primary px-4 py-2 text-base text-white">
-          Go to Buy Extra Classes
+          {t("goToBuyExtra")}
         </Link>
       </Notice>
     );
   }
   if (gate.details?.showAcademicYearValidation === "Y") {
-    return <Notice>Your academic year has not started yet. You will be able to book your classes once your academic year starts</Notice>;
+    return <Notice>{t("yearNotStarted")}</Notice>;
   }
-  if (!details || !course) return <Notice>Unable to load your classes right now. Please try again.</Notice>;
+  if (!details || !course) return <Notice>{t("loadError")}</Notice>;
 
   const modals = (
     <>
@@ -199,15 +205,15 @@ export function BookClasses() {
         <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
           {year.comp > 0 && (
             <div className="rounded-xl bg-primary p-4 text-center text-white">
-              <h2 className="text-lg font-bold">Your Complimentary Classes</h2>
-              <div className="mt-2 flex justify-between"><span>For 42 weeks</span><span className="text-xl font-bold">{details.compClassYear}</span></div>
+              <h2 className="text-lg font-bold">{t("complimentary.title")}</h2>
+              <div className="mt-2 flex justify-between"><span>{t("complimentary.for42Weeks")}</span><span className="text-xl font-bold">{details.compClassYear}</span></div>
               {weekCounts.comp > 0 && (
-                <div className="flex justify-between"><span>per week</span><span className="text-xl font-bold">{details.compClassPerweek}</span></div>
+                <div className="flex justify-between"><span>{t("complimentary.perWeek")}</span><span className="text-xl font-bold">{details.compClassPerweek}</span></div>
               )}
             </div>
           )}
           <h3 className="font-semibold text-black">
-            {subjects.length === 1 ? "Your Selected Course" : allCourses ? `Your ${subjects.length} Selected Courses` : "Your Selected Courses"}
+            {subjects.length === 1 ? t("courses.selectedOne") : allCourses ? t("courses.selectedCount", { count: subjects.length }) : t("courses.selectedMany")}
           </h3>
           <ul className="space-y-2">
             {subjects.map((s) => {
@@ -219,11 +225,11 @@ export function BookClasses() {
                     onClick={() => setSelectedId(s.subjectId)}
                     className={`w-full rounded-lg border p-2 ${active ? "border-primary bg-primary text-white" : "border-slate-200 text-black hover:border-primary/50"}`}
                   >
-                    <span className="mb-2 block text-center text-sm font-semibold">{s.name}</span>
+                    <span className="mb-2 block text-center text-sm font-semibold">{tl(s.name)}</span>
                     <span className="flex flex-wrap items-center justify-between text-xs">
-                      <span>Total: <b className={active ? "" : "text-primary"}>{s.total}</b></span>
-                      <span>Booked: <b className={active ? "" : "text-green-600"}>{s.booked}</b></span>
-                      <span>Expired: <b className={active ? "" : "text-red-600"}>{s.expired}</b></span>
+                      <span>{t("courses.total")} <b className={active ? "" : "text-primary"}>{s.total}</b></span>
+                      <span>{t("courses.booked")} <b className={active ? "" : "text-green-600"}>{s.booked}</b></span>
+                      <span>{t("courses.expired")} <b className={active ? "" : "text-red-600"}>{s.expired}</b></span>
                     </span>
                   </button>
                 </li>
@@ -235,46 +241,47 @@ export function BookClasses() {
         <div className="space-y-4 lg:col-span-2">
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
             <h2 className="flex items-center gap-1 font-semibold text-black">
-              <Info className="h-4 w-4" aria-hidden="true" /> Class Booking Instructions
+              <Info className="h-4 w-4" aria-hidden="true" /> {t("instructions.title")}
             </h2>
             <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-black">
-              <li>Weekly Class Structure: Monday to Friday</li>
+              <li>{t("instructions.weekly")}</li>
               <li>
-                You can book {weekCounts.comp > 0 ? classPlanCount : weekCounts.extra}
-                {classPlanCount > 0 ? " complimentary" : ""} classes in a week.
+                {t(classPlanCount > 0 ? "instructions.canBookComplimentary" : "instructions.canBook", {
+                  count: Number(weekCounts.comp > 0 ? classPlanCount : weekCounts.extra) || 0,
+                })}
               </li>
-              {classPlanCount > 0 && <li>Unbooked complimentary classes will expire at the end of week.</li>}
+              {classPlanCount > 0 && <li>{t("instructions.expire")}</li>}
             </ol>
           </div>
 
-          <h2 className="px-1 font-semibold text-black">Book Classes for this week</h2>
+          <h2 className="px-1 font-semibold text-black">{t("bookThisWeek")}</h2>
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
             {course.img && <OptimizedImage src={course.img} alt="" width={640} height={256} sizes="(max-width: 1024px) 100vw, 640px" className="h-40 w-full rounded-xl object-cover" />}
-            <h3 className="my-3 font-semibold text-black">{course.name}</h3>
+            <h3 className="my-3 font-semibold text-black">{tl(course.name)}</h3>
             <div className="flex flex-wrap gap-3">
-              <Count label="Left" value={course.left} className="bg-amber-500" />
-              <Count label="Missed by You" value={course.missedByYou} className="bg-black" />
-              <Count label="Missed by Teacher" value={course.missedByTeacher} className="bg-pink-600" />
-              <Count label="Rescheduled" value={course.rescheduled} className="bg-orange-500" />
-              <Count label="Completed" value={course.completed} className="bg-violet-600" />
+              <Count label={t("counts.left")} value={course.left} className="bg-amber-500" />
+              <Count label={t("counts.missedByYou")} value={course.missedByYou} className="bg-black" />
+              <Count label={t("counts.missedByTeacher")} value={course.missedByTeacher} className="bg-pink-600" />
+              <Count label={t("counts.rescheduled")} value={course.rescheduled} className="bg-orange-500" />
+              <Count label={t("counts.completed")} value={course.completed} className="bg-violet-600" />
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               <button type="button" onClick={() => setView("booked")} className="flex-1 rounded-lg bg-primary px-4 py-2 font-bold text-white">
-                Booked Classes
+                {t("bookedClasses")}
               </button>
               <button
                 type="button"
                 onClick={() => startBooking(course)}
                 title={
                   course.weekLeftClass < 1
-                    ? "You have booked all your classes for this week"
+                    ? t("weekFullyBooked")
                     : course.assignedTeacherCount === 1 && course.teacherName
-                      ? `Book a class with ${course.teacherName}`
-                      : "Book a class"
+                      ? t("bookWithTeacher", { teacher: course.teacherName })
+                      : t("bookAClass")
                 }
                 className={`flex-1 rounded-lg border px-4 py-2 font-bold ${course.weekLeftClass < 1 ? "border-black text-black" : "border-primary text-primary"}`}
               >
-                Book a Class ({course.weekLeftClass})
+                {t("bookCount", { count: course.weekLeftClass })}
               </button>
             </div>
           </div>

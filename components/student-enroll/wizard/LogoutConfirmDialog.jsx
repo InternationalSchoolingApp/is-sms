@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
@@ -11,6 +12,9 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
  * outside, there is no close button.
  */
 export function LogoutConfirmDialog({ open, busy, onConfirm, onCancel }) {
+  // "shared": this dialog also renders in the enrollment wizard (outside the dashboard), where the root provider keeps
+  // these messages in English; inside the dashboard it follows the student's language.
+  const t = useTranslations("shared.logout");
   return (
     <Dialog open={open} onOpenChange={(next) => !next && !busy && onCancel()}>
       <DialogContent
@@ -26,10 +30,10 @@ export function LogoutConfirmDialog({ open, busy, onConfirm, onCancel }) {
           className="pointer-events-none absolute -top-9 left-1/2 h-[80px] w-auto sm:-top-14 sm:h-[104px] -translate-x-1/2"
         />
         <DialogTitle className="text-base font-extrabold leading-snug text-black sm:text-lg">
-          Are you sure you want to Log off?
+          {t("title")}
         </DialogTitle>
         <DialogDescription className="mx-auto mt-1.5 max-w-[16rem] text-xs leading-relaxed text-black-800 sm:mt-2 sm:max-w-[17rem] sm:text-sm">
-          You will be signed out of your account and redirected to the login page.
+          {t("description")}
         </DialogDescription>
         <div className="mt-4 flex justify-center gap-2.5 sm:mt-5 sm:gap-3">
           <Button
@@ -38,7 +42,7 @@ export function LogoutConfirmDialog({ open, busy, onConfirm, onCancel }) {
             disabled={busy}
             className="h-8 min-w-[64px] cursor-pointer rounded-xl bg-primary px-4 text-sm sm:h-9 sm:min-w-[72px] sm:px-5 font-semibold text-white hover:bg-primary/90"
           >
-            {busy ? "Logging out…" : "Yes"}
+            {busy ? t("loggingOut") : t("yes")}
           </Button>
           <Button
             type="button"
@@ -47,7 +51,7 @@ export function LogoutConfirmDialog({ open, busy, onConfirm, onCancel }) {
             disabled={busy}
             className="h-8 min-w-[64px] cursor-pointer rounded-xl border-slate-200 bg-slate-100 px-4 text-sm sm:h-9 sm:min-w-[72px] sm:px-5 font-semibold text-slate-800 hover:bg-slate-200"
           >
-            No
+            {t("no")}
           </Button>
         </div>
       </DialogContent>

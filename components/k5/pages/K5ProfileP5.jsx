@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronDown, Copy, Eye, EyeOff, KeyRound, Mail } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { activateSchoolEmail, confirmWithdrawal, getWithdrawal, resetSchoolEmailPassword, startWithdrawal, submitWithdrawalBank } from "@/services/profileP5Api";
 import { callServer } from "@/utils/serverCall";
 import { K5Loading, K5ListSkeleton } from "@/components/k5/K5Skeletons";
@@ -30,7 +31,8 @@ const PLAIN_BTN =
 const HR = <hr className="my-1 h-[3px] rounded-[3px] border-none bg-k5-line" />;
 const SUPPORT_EMAIL = "admin.support@internationalschooling.org";
 
-const clean = (error) => String(error?.message || "Something went wrong.").replace(/^[A-Z_0-9]+:\s*/, "");
+// `fallback`: the (translated) text when the error has no message.
+const clean = (error, fallback = "Something went wrong.") => String(error?.message || fallback).replace(/^[A-Z_0-9]+:\s*/, "");
 
 function Note({ tone = "yellow", title, children }) {
   const tones = {
@@ -84,13 +86,14 @@ function Modal({ open, title, onClose, children, footer, labelId }) {
 function CopyValue({ label, value, secret }) {
   const [show, setShow] = useState(!secret);
   const [copied, setCopied] = useState(false);
+  const t = useTranslations("k5Profile");
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      toast.error("Could not copy. Please copy it by hand.");
+      toast.error(t("schoolEmail.copyError"));
     }
   };
   return (
@@ -99,14 +102,14 @@ function CopyValue({ label, value, secret }) {
       <span className={RO}>
         <span className={`min-w-0 flex-1 ${secret ? "font-mono" : ""}`}>{value ? (show ? value : "•".repeat(Math.min(12, value.length))) : "—"}</span>
         {value && secret && (
-          <button type="button" onClick={() => setShow((v) => !v)} aria-label={show ? "Hide password" : "Show password"} className="flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-[10px] border-none bg-transparent text-k5-acx">
+          <button type="button" onClick={() => setShow((v) => !v)} aria-label={show ? t("page.hidePassword") : t("page.showPassword")} className="flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-[10px] border-none bg-transparent text-k5-acx">
             {show ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
           </button>
         )}
         {value && (
-          <button type="button" onClick={copy} aria-label={`Copy ${label.toLowerCase()}`} className="flex h-9 flex-none cursor-pointer items-center gap-1 rounded-[10px] border-none bg-transparent px-1.5 text-sm font-black text-k5-acx">
+          <button type="button" onClick={copy} aria-label={t("schoolEmail.copyNamed", { name: label })} className="flex h-9 flex-none cursor-pointer items-center gap-1 rounded-[10px] border-none bg-transparent px-1.5 text-sm font-black text-k5-acx">
             {copied ? <Check className="h-5 w-5" aria-hidden="true" /> : <Copy className="h-5 w-5" aria-hidden="true" />}
-            {copied ? "Copied!" : null}
+            {copied ? t("schoolEmail.copied") : null}
           </button>
         )}
       </span>
@@ -119,6 +122,8 @@ export function SchoolEmailEditor({ m, refetch }) {
   const e = m.schoolEmail;
   const [ask, setAsk] = useState(false);
   const [busy, setBusy] = useState(null);
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
   const run = async (key, action, done) => {
     setBusy(key);
     try {
@@ -127,7 +132,7 @@ export function SchoolEmailEditor({ m, refetch }) {
       toast.success(result?.message || done);
       return true;
     } catch (error) {
-      toast.error(clean(error));
+      toast.error(clean(error, tc("status.somethingWentWrong")));
       return false;
     } finally {
       setBusy(null);
@@ -136,28 +141,28 @@ export function SchoolEmailEditor({ m, refetch }) {
   if (!e.active) {
     return (
       <>
-        <Note title="Your school user ID is not active yet">Activate it to get your own school email and Microsoft Outlook account.</Note>
+        <Note title={t("schoolEmail.inactiveTitle")}>{t("schoolEmail.inactiveText")}</Note>
         <div>
           <button type="button" onClick={() => setAsk(true)} disabled={Boolean(busy)} className={ACCENT_BTN}>
             <Mail className="h-5 w-5" aria-hidden="true" />
-            {busy ? "Activating…" : "Activate your school user ID"}
+            {busy ? t("schoolEmail.activating") : t("page.activateSchoolId")}
           </button>
         </div>
         <Modal
           open={ask}
           labelId="k5-pf-azure-h"
-          title="Activate your school user ID?"
+          title={t("schoolEmail.activateAsk")}
           onClose={() => !busy && setAsk(false)}
           footer={
             <>
               <button type="button" onClick={() => setAsk(false)} disabled={Boolean(busy)} className={PLAIN_BTN}>
-                Cancel
+                {tc("actions.cancel")}
               </button>
               <button
                 type="button"
                 disabled={Boolean(busy)}
                 onClick={async () => {
-                  const ok = await run("activate", () => activateSchoolEmail(), "Your school user ID is ready!");
+                  const ok = await run("activate", () => activateSchoolEmail(), t("schoolEmail.activated"));
                   if (ok) {
                     setAsk(false);
                     // The existing page opens Outlook right after activating (confirmActivateSchoolUserId).
@@ -166,12 +171,12 @@ export function SchoolEmailEditor({ m, refetch }) {
                 }}
                 className={ACCENT_BTN}
               >
-                {busy ? "Activating…" : "Yes, activate"}
+                {busy ? t("schoolEmail.activating") : t("schoolEmail.yesActivate")}
               </button>
             </>
           }
         >
-          <p className="m-0 text-base font-extrabold leading-[1.45]">We will create your school email and password. You can then sign in to Outlook with them.</p>
+          <p className="m-0 text-base font-extrabold leading-[1.45]">{t("schoolEmail.activateText")}</p>
         </Modal>
       </>
     );
@@ -179,46 +184,46 @@ export function SchoolEmailEditor({ m, refetch }) {
   return (
     <>
       <div className={GRID2}>
-        <CopyValue label="Email" value={e.email} />
-        <CopyValue label="Password" value={e.password} secret />
+        <CopyValue label={t("fields.email")} value={e.email} />
+        <CopyValue label={t("fields.password")} value={e.password} secret />
       </div>
       <div className="flex flex-wrap gap-2.5">
         <a href="https://outlook.office.com" target="_blank" rel="noopener noreferrer" className={ACCENT_BTN}>
           <Mail className="h-5 w-5" aria-hidden="true" />
-          Open Outlook
+          {t("page.openOutlook")}
         </a>
         {e.passwordCreated && (
           <button type="button" onClick={() => setAsk(true)} disabled={Boolean(busy)} className={PLAIN_BTN}>
             <KeyRound className="h-5 w-5" aria-hidden="true" />
-            Reset password
+            {t("schoolEmail.reset")}
           </button>
         )}
       </div>
       <Modal
         open={ask}
         labelId="k5-pf-azure-reset-h"
-        title="Reset your school email password?"
+        title={t("schoolEmail.resetAsk")}
         onClose={() => !busy && setAsk(false)}
         footer={
           <>
             <button type="button" onClick={() => setAsk(false)} disabled={Boolean(busy)} className={PLAIN_BTN}>
-              Cancel
+              {tc("actions.cancel")}
             </button>
             <button
               type="button"
               disabled={Boolean(busy)}
               onClick={async () => {
-                const ok = await run("reset", () => resetSchoolEmailPassword(), "A new password was sent to your primary email.");
+                const ok = await run("reset", () => resetSchoolEmailPassword(), t("schoolEmail.resetDone"));
                 if (ok) setAsk(false);
               }}
               className={ACCENT_BTN}
             >
-              {busy ? "Resetting…" : "Yes, reset"}
+              {busy ? t("schoolEmail.resetting") : t("schoolEmail.yesReset")}
             </button>
           </>
         }
       >
-        <p className="m-0 text-base font-extrabold leading-[1.45]">We will make a new password and send it to your primary email.</p>
+        <p className="m-0 text-base font-extrabold leading-[1.45]">{t("schoolEmail.resetText")}</p>
       </Modal>
     </>
   );
@@ -226,37 +231,40 @@ export function SchoolEmailEditor({ m, refetch }) {
 
 // ---- Section 7 ----
 
+// `label`: the status's message key (k5Profile.withdrawal.status.*); an unknown status shows as it comes.
 const STATUS = {
-  PENDING: { label: "In Review", tone: "yellow", group: "review" },
-  INITIATED: { label: "In Review", tone: "yellow", group: "review" },
-  ACCEPTED: { label: "Approved", tone: "accent", group: "approved" },
-  BANKDETAIL: { label: "Approved · Bank details submitted", tone: "accent", group: "approved" },
-  TRANSFERRED: { label: "Refund Initiated", tone: "accent", group: "refund" },
-  REJECTED: { label: "Denied", tone: "red", group: "denied" },
-  CHALLENGED: { label: "Challenged", tone: "red", group: "challenged" },
-  CANCELLED: { label: "Cancelled", tone: "red", group: "cancelled" },
-  DIRECT_WITHDRAWN: { label: "Withdrawn", tone: "accent", group: "refund" },
+  PENDING: { label: "inReview", tone: "yellow", group: "review" },
+  INITIATED: { label: "inReview", tone: "yellow", group: "review" },
+  ACCEPTED: { label: "approved", tone: "accent", group: "approved" },
+  BANKDETAIL: { label: "bankSubmitted", tone: "accent", group: "approved" },
+  TRANSFERRED: { label: "refundInitiated", tone: "accent", group: "refund" },
+  REJECTED: { label: "denied", tone: "red", group: "denied" },
+  CHALLENGED: { label: "challenged", tone: "red", group: "challenged" },
+  CANCELLED: { label: "cancelled", tone: "red", group: "cancelled" },
+  DIRECT_WITHDRAWN: { label: "withdrawn", tone: "accent", group: "refund" },
 };
-const statusOf = (s) => STATUS[s] || { label: s || "—", tone: "yellow", group: "review" };
+const statusOf = (s) => STATUS[s] || { label: null, raw: s || "—", tone: "yellow", group: "review" };
 const BADGE = { yellow: "border-k5-yb bg-k5-yt text-k5-yx", accent: "border-k5-ac bg-k5-act text-k5-acx", red: "border-k5-ri bg-k5-rt text-k5-ri" };
 
 /** Mockup .pfwdtr: Submitted → In Review → Decision (→ Refund). */
 function Tracker({ status }) {
   const { group } = statusOf(status);
+  const t = useTranslations("k5Profile");
   const review = group === "review";
+  // `label`: the step's message key (k5Profile.withdrawal.steps.*).
   const steps = [
-    { label: "Submitted", state: "done" },
-    { label: "In Review", state: review ? "now" : "done" },
+    { label: "submitted", state: "done" },
+    { label: "inReview", state: review ? "now" : "done" },
   ];
   if (group === "approved" || group === "refund") {
-    steps.push({ label: "Approved", state: "done" }, { label: group === "refund" ? "Refund initiated" : "Refund", state: group === "refund" ? "done" : "now" });
+    steps.push({ label: "approved", state: "done" }, { label: group === "refund" ? "refundInitiated" : "refund", state: group === "refund" ? "done" : "now" });
   } else if (group === "denied" || group === "challenged") {
-    steps.push({ label: "Denied", state: "bad" });
-    if (group === "challenged") steps.push({ label: "Challenged", state: "done" });
+    steps.push({ label: "denied", state: "bad" });
+    if (group === "challenged") steps.push({ label: "challenged", state: "done" });
   } else if (group === "cancelled") {
-    steps.push({ label: "Cancelled", state: "bad" });
+    steps.push({ label: "cancelled", state: "bad" });
   } else {
-    steps.push({ label: "Decision", state: "todo" });
+    steps.push({ label: "decision", state: "todo" });
   }
   return (
     <ol className="m-0 flex list-none items-start gap-2 overflow-x-auto p-0">
@@ -270,8 +278,8 @@ function Tracker({ status }) {
             >
               {s.state === "done" ? <Check className="h-5 w-5" strokeWidth={3.4} aria-hidden="true" /> : s.state === "bad" ? "✕" : i + 1}
             </span>
-            <span className="text-center text-sm font-black">{s.label}</span>
-            <span className="sr-only">{s.state === "done" ? "(done)" : s.state === "now" ? "(now)" : ""}</span>
+            <span className="text-center text-sm font-black">{t(`withdrawal.steps.${s.label}`)}</span>
+            <span className="sr-only">{s.state === "done" ? t("withdrawal.stepDone") : s.state === "now" ? t("withdrawal.stepNow") : ""}</span>
           </span>
           {i < steps.length - 1 && <span aria-hidden="true" className={`mt-5 block h-1 flex-1 rounded ${s.state === "done" ? "bg-k5-ac" : "bg-k5-line"}`} />}
         </li>
@@ -280,77 +288,80 @@ function Tracker({ status }) {
   );
 }
 
+// [field, required]; the labels are k5Profile.withdrawal.bank.<field>.
 const BANK = [
-  ["accountHolder", "Account holder name", true],
-  ["holderAddress", "Account holder address", true],
-  ["postalCode", "Postal code", true],
-  ["phone", "Phone number", true],
-  ["accountNo", "Account number", true],
-  ["bankName", "Bank name", true],
-  ["branchAddress", "Bank branch address", true],
-  ["swiftCode", "Bank SWIFT code", true],
-  ["routingNo", "ABA / Routing number (if applicable)", false],
+  ["accountHolder", true],
+  ["holderAddress", true],
+  ["postalCode", true],
+  ["phone", true],
+  ["accountNo", true],
+  ["bankName", true],
+  ["branchAddress", true],
+  ["swiftCode", true],
+  ["routingNo", false],
 ];
 
 function BankForm({ requestId, onDone }) {
   const [values, setValues] = useState({});
   const [ask, setAsk] = useState(false);
   const [busy, setBusy] = useState(false);
-  const ready = BANK.every(([k, , req]) => !req || String(values[k] || "").trim());
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
+  const ready = BANK.every(([k, req]) => !req || String(values[k] || "").trim());
   const submit = async () => {
     setBusy(true);
     try {
       await callServer(() => submitWithdrawalBank({ requestId, bank: values }));
-      toast.success("Bank details submitted.");
+      toast.success(t("withdrawal.bankSubmittedToast"));
       setAsk(false);
       await onDone();
     } catch (error) {
-      toast.error(clean(error));
+      toast.error(clean(error, tc("status.somethingWentWrong")));
     } finally {
       setBusy(false);
     }
   };
   return (
     <div className="flex flex-col gap-3">
-      <h3 className={H3}>Add your bank details to start the refund</h3>
+      <h3 className={H3}>{t("withdrawal.bankTitle")}</h3>
       <div className={GRID2}>
-        {BANK.map(([k, label, req]) => (
+        {BANK.map(([k, req]) => (
           <label key={k} className={LABEL}>
             <span>
-              {label}
+              {t(`withdrawal.bank.${k}`)}
               {req && <span className="text-k5-ri"> *</span>}
             </span>
             <input value={values[k] || ""} onChange={(e) => setValues((v) => ({ ...v, [k]: e.target.value }))} autoComplete="off" className={INPUT} />
           </label>
         ))}
       </div>
-      <p className="m-0 text-[13px] font-extrabold text-k5-mut">Please double-check these details — wrong information can delay or stop your refund.</p>
-      <Note tone="red" title="Your account will be deactivated">
-        Once the refund is initiated by the school, your account and access to all enrolled platforms will be permanently deactivated.
+      <p className="m-0 text-[13px] font-extrabold text-k5-mut">{t("withdrawal.bankCheck")}</p>
+      <Note tone="red" title={t("withdrawal.deactivatedTitle")}>
+        {t("withdrawal.deactivatedText")}
       </Note>
       <div>
         <button type="button" onClick={() => setAsk(true)} disabled={!ready || busy} className={ACCENT_BTN}>
-          Submit bank details
+          {t("withdrawal.submitBank")}
         </button>
       </div>
       <Modal
         open={ask}
         labelId={`k5-wd-bank-${requestId}`}
-        title="Your account will be deactivated"
+        title={t("withdrawal.deactivatedTitle")}
         onClose={() => !busy && setAsk(false)}
         footer={
           <>
             <button type="button" onClick={() => setAsk(false)} disabled={busy} className={PLAIN_BTN}>
-              Cancel
+              {tc("actions.cancel")}
             </button>
             <button type="button" onClick={submit} disabled={busy} className={ACCENT_BTN}>
-              {busy ? "Submitting…" : "Submit bank details"}
+              {busy ? t("withdrawal.submitting") : t("withdrawal.submitBank")}
             </button>
           </>
         }
       >
         <p className="m-0 text-base font-extrabold leading-[1.45]">
-          Once your refund is started by the school, your account and access to all your learning platforms will be turned off. Do you want to submit the bank details now?
+          {t("withdrawal.bankConfirm")}
         </p>
       </Modal>
     </div>
@@ -358,13 +369,14 @@ function BankForm({ requestId, onDone }) {
 }
 
 function BankSummary({ bank }) {
+  const t = useTranslations("k5Profile");
   return (
     <div className="flex flex-col gap-3">
-      <h3 className={H3}>Bank details submitted</h3>
+      <h3 className={H3}>{t("withdrawal.bankSubmittedTitle")}</h3>
       <div className={GRID2}>
-        {BANK.map(([k, label]) => (
+        {BANK.map(([k]) => (
           <div key={k} className={LABEL}>
-            <span>{label}</span>
+            <span>{t(`withdrawal.bank.${k}`)}</span>
             <span className={RO}>{bank[k] || "—"}</span>
           </div>
         ))}
@@ -375,25 +387,26 @@ function BankSummary({ bank }) {
 
 function RequestCard({ req, onRefresh }) {
   const meta = statusOf(req.status);
+  const t = useTranslations("k5Profile");
   return (
     <div className="k5m-r14 flex flex-col gap-4 rounded-[20px] border-[3px] border-k5-line bg-k5-card px-5 py-[18px]">
       <div className="flex flex-wrap items-start justify-between gap-2.5">
         <div className="flex min-w-0 flex-col gap-1">
           <span className="font-mono text-sm font-black text-k5-mut">{req.requestNo || `WD-${req.requestId}`}</span>
-          <strong className="font-k5-display text-lg font-semibold">{req.reason || "Withdrawal request"}</strong>
-          {req.createdDate && <span className="text-sm font-extrabold text-k5-mut">Submitted {req.createdDate}</span>}
+          <strong className="font-k5-display text-lg font-semibold">{req.reason || t("withdrawal.request")}</strong>
+          {req.createdDate && <span className="text-sm font-extrabold text-k5-mut">{t("withdrawal.submittedOn", { date: req.createdDate })}</span>}
         </div>
-        <span className={`rounded-full border-2 px-3 py-1 text-sm font-black ${BADGE[meta.tone]}`}>{meta.label}</span>
+        <span className={`rounded-full border-2 px-3 py-1 text-sm font-black ${BADGE[meta.tone]}`}>{meta.label ? t(`withdrawal.status.${meta.label}`) : meta.raw}</span>
       </div>
       <Tracker status={req.status} />
       <div className="k5m-r12 rounded-[16px] border-[3px] border-k5-line bg-k5-soft px-4 py-3 text-[15px] font-extrabold">
-        <span className="text-k5-mut">Your request · </span>
+        <span className="text-k5-mut">{t("withdrawal.yourRequest")}</span>
         {req.description || "—"}
       </div>
       {/* withdrawalRequestUser.js getWithdrawalRequestCardHtml: the decision shows the reason in bold, then the remarks. */}
       {["REJECTED", "CHALLENGED", "ACCEPTED"].includes(req.status) && (req.remarks || req.reason) && (
-        <Note tone={meta.tone === "red" ? "red" : "accent"} title="Decision · Student Services">
-          <b>{req.reason || (req.status === "ACCEPTED" ? "Approved" : "")}</b>
+        <Note tone={meta.tone === "red" ? "red" : "accent"} title={t("withdrawal.decisionTitle")}>
+          <b>{req.reason || (req.status === "ACCEPTED" ? t("withdrawal.status.approved") : "")}</b>
           {req.remarks && (
             <>
               <br />
@@ -403,28 +416,30 @@ function RequestCard({ req, onRefresh }) {
         </Note>
       )}
       {req.status === "REJECTED" && (
-        <Note title="Disagree with this decision?">
-          As set out in the Terms &amp; Conditions, you may challenge this decision in a <b>United States</b> or <b>Singapore</b> court. To proceed, contact <b>{SUPPORT_EMAIL}</b> — a school administration representative will be in touch.
+        <Note title={t("withdrawal.disagreeTitle")}>
+          {t.rich("withdrawal.disagreeText", { email: SUPPORT_EMAIL, b: (c) => <b>{c}</b> })}
         </Note>
       )}
       {req.status === "ACCEPTED" && (
-        <Note tone="accent" title="Process for Fee Refund">
-          Please refer to the Fee Refund Policy{" "}
-          <a href="https://internationalschooling.org/fee-refund-policy" target="_blank" rel="noopener noreferrer" className="font-black text-k5-acx underline">
-            here
-          </a>
-          .
+        <Note tone="accent" title={t("withdrawal.refundProcessTitle")}>
+          {t.rich("withdrawal.refundProcessText", {
+            link: (c) => (
+              <a href="https://internationalschooling.org/fee-refund-policy" target="_blank" rel="noopener noreferrer" className="font-black text-k5-acx underline">
+                {c}
+              </a>
+            ),
+          })}
         </Note>
       )}
-      {req.status === "CHALLENGED" && <Note title="This request is marked as Challenged">Your challenge is under review. A school representative will be in touch.</Note>}
+      {req.status === "CHALLENGED" && <Note title={t("withdrawal.challengedTitle")}>{t("withdrawal.challengedText")}</Note>}
       {req.status === "ACCEPTED" && (req.bank ? <BankSummary bank={req.bank} /> : <BankForm requestId={req.requestId} onDone={onRefresh} />)}
       {(req.status === "BANKDETAIL" || req.status === "TRANSFERRED") && (
         <>
-          <Note tone="accent" title={req.status === "TRANSFERRED" ? "Refund started" : "Bank details submitted"}>
+          <Note tone="accent" title={req.status === "TRANSFERRED" ? t("withdrawal.refundStarted") : t("withdrawal.bankSubmittedTitle")}>
             {/* withdrawalRequestUser.js: TRANSFERRED shows the finance remarks (or the default line), BANKDETAIL the wait. */}
             {req.status === "TRANSFERRED"
-              ? req.remarks || "Your refund is being processed and will reach the original payer within 5–10 business working days."
-              : "Your refund will be initiated by the school and processed to the original payer within 5–10 business working days per the Fee Refund Policy."}
+              ? req.remarks || t("withdrawal.refundProcessing")
+              : t("withdrawal.refundWait")}
           </Note>
           {req.bank && <BankSummary bank={req.bank} />}
         </>
@@ -435,6 +450,7 @@ function RequestCard({ req, onRefresh }) {
 
 function Policy({ title, children }) {
   const [open, setOpen] = useState(false);
+  const t = useTranslations("k5Profile");
   return (
     <div className="overflow-hidden rounded-[18px] border-[3px] border-k5-line">
       <button
@@ -444,7 +460,7 @@ function Policy({ title, children }) {
         className="flex min-h-[56px] w-full cursor-pointer items-center gap-2.5 border-none bg-k5-card px-4 py-2 text-start font-k5-body text-[17px] font-black text-k5-ink"
       >
         <span>{title}</span>
-        <span className="rounded-full border-2 border-k5-yb bg-k5-yt px-2.5 py-0.5 text-xs font-black uppercase tracking-[0.04em] text-k5-yx">Please read</span>
+        <span className="rounded-full border-2 border-k5-yb bg-k5-yt px-2.5 py-0.5 text-xs font-black uppercase tracking-[0.04em] text-k5-yx">{t("withdrawal.pleaseRead")}</span>
         <ChevronDown className={`ms-auto h-5 w-5 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
       </button>
       {open && <div className="px-5 pb-4 text-[15px] font-extrabold leading-[1.5]">{children}</div>}
@@ -454,6 +470,7 @@ function Policy({ title, children }) {
 
 function OtpBoxes({ value, onChange, onEnter }) {
   const refs = useRef([]);
+  const t = useTranslations("k5Profile");
   const digits = Array.from({ length: 6 }, (_, i) => value[i] || "");
   const setAt = (i, d) => {
     const next = digits.slice();
@@ -469,7 +486,7 @@ function OtpBoxes({ value, onChange, onEnter }) {
           value={d}
           inputMode="numeric"
           autoComplete={i === 0 ? "one-time-code" : "off"}
-          aria-label={`Digit ${i + 1}`}
+          aria-label={t("withdrawal.digit", { n: i + 1 })}
           maxLength={1}
           onPaste={(e) => {
             const text = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, 6);
@@ -503,6 +520,8 @@ function NewRequest({ reasons, onDone }) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(null); // { requestNo, email }
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
   const ready = reasonId && details.trim() && agree;
 
   const send = async () => {
@@ -512,7 +531,7 @@ function NewRequest({ reasons, onDone }) {
       setCode("");
       setStep(r);
     } catch (error) {
-      toast.error(clean(error));
+      toast.error(clean(error, tc("status.somethingWentWrong")));
     } finally {
       setBusy(false);
     }
@@ -529,7 +548,7 @@ function NewRequest({ reasons, onDone }) {
       setAgree(false);
       await onDone();
     } catch (error) {
-      toast.error(clean(error));
+      toast.error(clean(error, tc("status.somethingWentWrong")));
     } finally {
       setBusy(false);
     }
@@ -537,13 +556,13 @@ function NewRequest({ reasons, onDone }) {
 
   return (
     <>
-      <h3 className={H3}>New Withdrawal Request</h3>
+      <h3 className={H3}>{t("withdrawal.newTitle")}</h3>
       <label className={LABEL}>
         <span>
-          Primary reason<span className="text-k5-ri"> *</span>
+          {t("withdrawal.primaryReason")}<span className="text-k5-ri"> *</span>
         </span>
         <select value={reasonId} onChange={(e) => setReasonId(e.target.value)} className={`${INPUT} cursor-pointer`}>
-          <option value="">Select a reason…</option>
+          <option value="">{t("withdrawal.selectReason")}</option>
           {reasons.map((r) => (
             <option key={r.id} value={r.id}>
               {r.reason}
@@ -553,92 +572,88 @@ function NewRequest({ reasons, onDone }) {
       </label>
       <label className={LABEL}>
         <span>
-          Tell us more<span className="text-k5-ri"> *</span>
+          {t("withdrawal.tellMore")}<span className="text-k5-ri"> *</span>
         </span>
         <textarea
           value={details}
           onChange={(e) => setDetails(e.target.value)}
           rows={4}
           maxLength={2000}
-          placeholder="Briefly explain the reason for this withdrawal request..."
+          placeholder={t("withdrawal.detailsPlaceholder")}
           className={`${INPUT} resize-y py-3 leading-[1.45]`}
         />
       </label>
-      <Policy title="Withdrawal Terms & Conditions">
+      <Policy title={t("withdrawal.termsTitle")}>
         <ul className="m-0 flex flex-col gap-2 ps-5">
-          <li>Once the withdrawal is completed, access to all the platforms you were enrolled in will be turned off.</li>
-          <li>If you wish to join again after the withdrawal is completed, it will be a fresh enrollment.</li>
-          <li>A refund (if any) is made only to the bank account the fee was paid from, without the handling and transaction fees.</li>
-          <li>Requests not in the specified format will not be accepted.</li>
-          <li>If any personal, academic or other detail was hidden or misrepresented, or false documents were submitted, no refund applies.</li>
-          <li>The Enrollment Fee is not refunded under any circumstances.</li>
+          {["access", "rejoin", "refundAccount", "format", "misrepresented", "enrollmentFee"].map((k) => (
+            <li key={k}>{t(`withdrawal.terms.${k}`)}</li>
+          ))}
         </ul>
       </Policy>
-      <Policy title="Fee Refund Policy">
-        <p className="m-0 mb-3">Refunds (if any) follow the school&apos;s official Fee Refund Policy. Please read the full policy before you submit.</p>
+      <Policy title={t("withdrawal.refundPolicyTitle")}>
+        <p className="m-0 mb-3">{t("withdrawal.refundPolicyText")}</p>
         <a href="https://internationalschooling.org/fee-refund-policy" target="_blank" rel="noopener noreferrer" className={ACCENT_BTN}>
-          View the full Fee Refund Policy
+          {t("withdrawal.viewRefundPolicy")}
         </a>
       </Policy>
       <label className="k5m-r12 flex cursor-pointer items-start gap-3 rounded-[16px] border-[3px] border-k5-line bg-k5-soft px-4 py-3.5 text-base font-black leading-[1.4]">
         <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 h-5 w-5 flex-none cursor-pointer accent-[var(--k5-ac)]" />
-        I have read and accept the Withdrawal Terms &amp; Conditions and the Fee Refund Policy.
+        {t("withdrawal.agree")}
       </label>
       <div className="flex flex-wrap items-center gap-3.5 rounded-[18px] border-[3px] border-k5-yb bg-k5-yt px-4 py-3.5">
         <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-1">
-          <strong className="font-k5-display text-lg font-semibold text-k5-yx">Please read before submitting</strong>
+          <strong className="font-k5-display text-lg font-semibold text-k5-yx">{t("withdrawal.beforeSubmitTitle")}</strong>
           <span className="text-[15px] font-extrabold leading-[1.45]">
-            Submitting this request begins the cancellation of your enrollment and tells the school administration. Your enrollment and fees stay active until the withdrawal is
-            approved. You&apos;ll confirm with a one-time code sent to your email first.
+            {t("withdrawal.beforeSubmitText")}
           </span>
         </div>
         <button type="button" onClick={send} disabled={!ready || busy} className={ACCENT_BTN}>
-          {busy && !step ? "Sending code…" : "Verify & submit request"}
+          {busy && !step ? t("withdrawal.sendingCode") : t("withdrawal.verifySubmitRequest")}
         </button>
       </div>
 
       <Modal
         open={Boolean(step)}
         labelId="k5-wd-otp-h"
-        title="Verify it's you"
+        title={t("withdrawal.verifyTitle")}
         onClose={() => !busy && setStep(null)}
         footer={
           <>
             <button type="button" onClick={() => setStep(null)} disabled={busy} className={PLAIN_BTN}>
-              Cancel
+              {tc("actions.cancel")}
             </button>
             <button type="button" onClick={verify} disabled={busy || !/^[0-9]{6}$/.test(code)} className={ACCENT_BTN}>
-              {busy ? "Checking…" : "Verify & submit"}
+              {busy ? t("otp.checking") : t("withdrawal.verifySubmit")}
             </button>
           </>
         }
       >
         <p className="m-0 text-base font-extrabold">
-          We&apos;ve sent a 6-digit code to <b>{step?.email || "your registered email"}</b>.
+          {t.rich("withdrawal.codeSent", { email: step?.email || t("withdrawal.registeredEmail"), b: (c) => <b>{c}</b> })}
         </p>
         <OtpBoxes value={code} onChange={setCode} onEnter={verify} />
-        <Note title="This begins your enrollment cancellation">
-          Once verified, the withdrawal request is submitted and the school administration is told. You can follow its status here afterwards.
+        <Note title={t("withdrawal.beginsTitle")}>
+          {t("withdrawal.beginsText")}
         </Note>
       </Modal>
 
       <Modal
         open={Boolean(done)}
         labelId="k5-wd-done-h"
-        title="Withdrawal request submitted"
+        title={t("withdrawal.submittedTitle")}
         onClose={() => setDone(null)}
         footer={
           <button type="button" onClick={() => setDone(null)} className={ACCENT_BTN}>
-            Done
+            {tc("actions.done")}
           </button>
         }
       >
-        <p className="m-0 text-base font-extrabold">Reference {done?.requestNo || "—"} · Status: In Review</p>
+        <p className="m-0 text-base font-extrabold">{t("withdrawal.reference", { ref: done?.requestNo || "—" })}</p>
         <p className="m-0 text-[15px] font-extrabold leading-[1.45]">
-          A confirmation email has been sent{done?.email ? <> to <b>{done.email}</b></> : null}. A representative from the school administration will be in touch.
+          {done?.email ? t.rich("withdrawal.confirmSentTo", { email: done.email, b: (c) => <b>{c}</b> }) : t("withdrawal.confirmSent")}
         </p>
         <Note>
-          Need help? You can contact us at <b>{SUPPORT_EMAIL}</b>.
+          {t.rich("withdrawal.needHelp", { email: SUPPORT_EMAIL, b: (c) => <b>{c}</b> })}
         </Note>
       </Modal>
     </>
@@ -655,39 +670,41 @@ export function WithdrawalEditor({ m }) {
   });
   const data = query.data;
   const student = data?.student || {};
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
   return (
     <>
-      <h3 className={H3}>Student Details</h3>
+      <h3 className={H3}>{t("page.studentDetails")}</h3>
       <div className={GRID2}>
         {[
-          ["Student ID", student.studentStringId || m.academic.studentId, true],
-          ["Full Name", student.studentName || m.header.name],
-          ["Grade", student.standardName || m.academic.grade],
-          ["Learning Program", m.academic.learningProgram || student.programName],
+          ["studentId", student.studentStringId || m.academic.studentId, true],
+          ["fullName", student.studentName || m.header.name],
+          ["grade", student.standardName || m.academic.grade],
+          ["learningProgram", m.academic.learningProgram || student.programName],
         ].map(([label, value, mono]) => (
           <div key={label} className={LABEL}>
-            <span>{label}</span>
+            <span>{t(`fields.${label}`)}</span>
             <span className={`${RO} ${mono ? "font-mono" : ""}`}>{value || "—"}</span>
           </div>
         ))}
       </div>
       {HR}
       {query.isPending ? (
-        <K5Loading label="Loading your withdrawal requests" className="">
+        <K5Loading label={t("withdrawal.loading")} className="">
           <K5ListSkeleton rows={2} />
         </K5Loading>
       ) : query.error ? (
-        <Note tone="red" title="We couldn't load this">
-          {clean(query.error)}{" "}
+        <Note tone="red" title={t("withdrawal.loadError")}>
+          {clean(query.error, tc("status.somethingWentWrong"))}{" "}
           <button type="button" onClick={() => query.refetch()} className="border-none bg-transparent p-0 font-black text-k5-acx underline">
-            Try again
+            {tc("actions.tryAgain")}
           </button>
         </Note>
       ) : (
         <>
           {data.requests.length > 0 && (
             <>
-              <h3 className={H3}>My Withdrawal Requests</h3>
+              <h3 className={H3}>{t("withdrawal.myRequests")}</h3>
               {data.requests.map((req) => (
                 <RequestCard key={req.requestId} req={req} onRefresh={() => query.refetch()} />
               ))}
@@ -700,10 +717,10 @@ export function WithdrawalEditor({ m }) {
             </>
           ) : data.requests.length ? (
             <Note>
-              You have a withdrawal request in progress (see its status above). You can submit a new request only once the current one is completed. Need help? Contact <b>{SUPPORT_EMAIL}</b> or <b>+1 (585) 4990662</b>.
+              {t.rich("withdrawal.inProgressNote", { email: SUPPORT_EMAIL, phone: "+1 (585) 4990662", b: (c) => <b>{c}</b> })}
             </Note>
           ) : (
-            <p className="m-0 text-base font-extrabold text-k5-mut">No withdrawal request yet.</p>
+            <p className="m-0 text-base font-extrabold text-k5-mut">{t("withdrawal.none")}</p>
           )}
         </>
       )}

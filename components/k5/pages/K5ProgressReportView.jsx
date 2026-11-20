@@ -1,6 +1,8 @@
 "use client";
 
 import { CalendarDays } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useLabelTranslator } from "@/i18n/labels";
 import { DatePicker } from "@/components/ui/date-picker";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
@@ -44,6 +46,19 @@ function scoreColor(item) {
 
 const valueOf = (v) => (v && v !== "null" ? v : "");
 
+// orNA / cwText answer "N/A" for an empty value: shown in the dashboard language.
+function useNA() {
+  const tc = useTranslations("common");
+  return (value) => (value === "N/A" ? tc("status.na") : value);
+}
+
+// Messages (k5Reports.view.errors.*) for the English errors useProgressReport sets.
+const SEARCH_ERRORS = {
+  "Please select report start date and end date": "pickDates",
+  "Please select start date must be less then end date": "startBeforeEnd",
+  "Please open the report again from the list.": "reopen",
+};
+
 /** "Elementary Language Arts Grade 5 v22 (GS) IS-ORG 541 (1.0 Credit)" -> name + "1.0 Credit". */
 function splitTitle(title) {
   const t = valueOf(title);
@@ -52,9 +67,10 @@ function splitTitle(title) {
 }
 
 function Kv({ label, children }) {
+  const t = useTranslations("k5Reports");
   return (
     <div className="flex flex-wrap items-center gap-2 border-t-2 border-k5-line px-3.5 py-[9px] text-[15px] font-extrabold first:border-t-0">
-      <span className="whitespace-nowrap font-black text-k5-mut">{label}:</span>
+      <span className="whitespace-nowrap font-black text-k5-mut">{t("view.labelColon", { label })}</span>
       <b className="min-w-0 font-black [overflow-wrap:anywhere]">{children}</b>
     </div>
   );
@@ -66,17 +82,21 @@ function CourseWareCourse({ course, report, index }) {
   const items = courseWareItems(course);
   const tone = courseTone({ courseName: course.courseName }, index);
   const courseGrade = gradeTone(course.courseGrade);
-  const heads = ["Sr.no", "Type", "Activity Name", layout.showDates && "Target Due Date", layout.showDates && "Submitted Date", "Percentage", "Grade"].filter(Boolean);
+  const t = useTranslations("k5Reports");
+  const tl = useLabelTranslator("k5Reports.types");
+  const na = useNA();
+  // Column message keys (k5Reports.view.columns.*).
+  const heads = ["srNo", "type", "activityName", layout.showDates && "dueDate", layout.showDates && "submittedDate", "percentage", "grade"].filter(Boolean);
   const grid = { gridTemplateColumns: layout.showDates ? "64px .9fr 2.2fr 1.1fr 1.1fr 1fr .8fr" : "64px .9fr 2.6fr 1fr .8fr" };
 
   return (
     <section className={`${K5_CARD} flex flex-col gap-4 px-[22px] py-5`} style={{ borderTop: `8px solid ${tone.col}` }}>
       <div className="flex flex-wrap items-center gap-3.5 rounded-[18px] px-4 py-3.5" style={{ background: tone.lt }}>
         <div className="flex min-w-0 flex-[1_1_220px] flex-col gap-0.5">
-          <span className="text-[13px] font-black uppercase tracking-[.08em] text-k5-mut">Course</span>
-          <b className="font-k5-display text-2xl font-semibold leading-tight text-k5-ink">{cwText(course.courseName)}</b>
+          <span className="text-[13px] font-black uppercase tracking-[.08em] text-k5-mut">{t("view.course")}</span>
+          <b className="font-k5-display text-2xl font-semibold leading-tight text-k5-ink">{na(cwText(course.courseName))}</b>
           <span className="text-[15px] font-extrabold text-k5-mut">
-            Teacher Name: <b className="font-black text-k5-ink">{cwText(course.teacherName)}</b>
+            {t.rich("view.teacherLine", { name: na(cwText(course.teacherName)), b: (c) => <b className="font-black text-k5-ink">{c}</b> })}
           </span>
         </div>
         {valueOf(course.gradeName || report.standardName) && (
@@ -87,9 +107,9 @@ function CourseWareCourse({ course, report, index }) {
       </div>
 
       <div className="flex flex-col gap-0.5 text-center">
-        <h2 className="m-0 font-k5-display text-[26px] font-semibold uppercase tracking-[.02em] text-k5-acx">Detailed Student Grading Report</h2>
+        <h2 className="m-0 font-k5-display text-[26px] font-semibold uppercase tracking-[.02em] text-k5-acx">{t("view.detailedTitle")}</h2>
         <span className="font-k5-display text-lg font-semibold uppercase">
-          Duration: {report.reportStartDate} - {report.reportEndDate}
+          {t("view.duration", { start: report.reportStartDate, end: report.reportEndDate })}
         </span>
       </div>
 
@@ -97,55 +117,55 @@ function CourseWareCourse({ course, report, index }) {
         <div role="table" aria-label={course.courseName} className="k5-bdtbl min-w-[720px] text-[15px] font-extrabold">
           <div role="row" className="k5-bdhead grid text-k5-ink" style={{ ...grid, background: tone.lt }}>
             {heads.map((h) => (
-              <span key={h} role="columnheader" className={HEAD}>{h}</span>
+              <span key={h} role="columnheader" className={HEAD}>{t(`view.columns.${h}`)}</span>
             ))}
           </div>
-          {!items.length && <p className="m-0 p-5 text-center text-k5-mut">No activities in this period.</p>}
+          {!items.length && <p className="m-0 p-5 text-center text-k5-mut">{t("view.noActivities")}</p>}
           {items.map((item, i) => {
             const gt = gradeTone(item.gradeLetter);
             const tt = typeTone(item.type);
             const cells = [
-              ["Sr.no", i + 1],
-              ["Type", <span key="t" className="rounded-full px-2.5 py-0.5 text-xs font-black tracking-[.04em]" style={{ background: tt.bg, color: tt.fg }}>{cwText(item.type)}</span>],
-              ["Activity Name", item.activityName],
-              layout.showDates && ["Target Due Date", cwText(item.dueDate)],
-              layout.showDates && ["Submitted Date", cwText(item.submittedDate)],
-              ["Percentage", cwText(item.percentage)],
+              ["srNo", i + 1],
+              ["type", <span key="t" className="rounded-full px-2.5 py-0.5 text-xs font-black tracking-[.04em]" style={{ background: tt.bg, color: tt.fg }}>{na(tl(cwText(item.type)))}</span>],
+              ["activityName", item.activityName],
+              layout.showDates && ["dueDate", na(cwText(item.dueDate))],
+              layout.showDates && ["submittedDate", na(cwText(item.submittedDate))],
+              ["percentage", na(cwText(item.percentage))],
               [
-                "Grade",
+                "grade",
                 item.gradeLetter ? (
                   <span key="g" className="inline-block rounded-[10px] px-2.5 py-0.5 font-black" style={{ background: gt.bg, color: gt.fg }}>{item.gradeLetter}</span>
                 ) : (
-                  "N/A"
+                  na("N/A")
                 ),
               ],
             ].filter(Boolean);
             return (
               <div key={i} role="row" className="k5-bdrow grid items-center border-t-2 border-k5-line" style={grid}>
                 {cells.map(([label, value]) => (
-                  <span key={label} role="cell" data-l={label} className={`px-3 py-[11px] ${label === "Activity Name" ? "k5-bdwide" : ""}`}>{value}</span>
+                  <span key={label} role="cell" data-l={t(`view.columns.${label}`)} className={`px-3 py-[11px] ${label === "activityName" ? "k5-bdwide" : ""}`}>{value}</span>
                 ))}
               </div>
             );
           })}
         </div>
       </div>
-      <span className="text-[13px] font-black text-k5-mut">*N/A - Not Available</span>
+      <span className="text-[13px] font-black text-k5-mut">{t("view.naNote")}</span>
 
       <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] items-start gap-3.5 max-[760px]:grid-cols-1">
         {layout.showCounters ? (
           <div className="flex flex-col overflow-hidden rounded-2xl border-[3px] border-k5-line text-center">
             {[
-              ["Number of Activities - Submitted & Graded", cwText(course.submitGradedActivityCount)],
-              ["Number of Activities - Waiting for the Grade", cwText(course.waitingforGradeCount)],
-              ["Number of Activities - Not Submitted", cwText(course.notSubmittedActivityCount)],
+              ["submittedGraded", cwText(course.submitGradedActivityCount)],
+              ["waitingGrade", cwText(course.waitingforGradeCount)],
+              ["notSubmitted", cwText(course.notSubmittedActivityCount)],
             ].map(([label, value]) => (
               <div key={label} className="border-t-2 border-k5-line px-3.5 py-[9px] text-[15px] font-extrabold first:border-t-0">
-                {label}: <b className="font-black">{value}</b>
+                {t.rich(`view.counters.${label}`, { value: na(value), b: (c) => <b className="font-black">{c}</b> })}
               </div>
             ))}
             <div className="border-t-2 border-k5-line px-3.5 py-[9px] text-[15px] font-extrabold">
-              Last Submission Date: <b className="font-black">{cwText(course.lastSubmiteDate)}</b> | Activity Name: <b className="font-black">{cwText(course.lastSubmitActivityName)}</b>
+              {t.rich("view.lastSubmission", { date: na(cwText(course.lastSubmiteDate)), activity: na(cwText(course.lastSubmitActivityName)), b: (c) => <b className="font-black">{c}</b> })}
             </div>
           </div>
         ) : (
@@ -153,12 +173,12 @@ function CourseWareCourse({ course, report, index }) {
         )}
         <div className="flex flex-col overflow-hidden rounded-2xl border-[3px] border-k5-line">
           <div className="flex items-center justify-between gap-2 px-3.5 py-[9px] text-[15px] font-extrabold">
-            <span className="font-black text-k5-mut">Course Grade:</span>
-            <b className="k5h-pr-chip rounded-[10px] px-3 font-k5-display text-[22px] font-semibold" style={{ background: courseGrade.bg, color: courseGrade.fg }}>{cwText(course.courseGrade)}</b>
+            <span className="font-black text-k5-mut">{t("view.courseGrade")}</span>
+            <b className="k5h-pr-chip rounded-[10px] px-3 font-k5-display text-[22px] font-semibold" style={{ background: courseGrade.bg, color: courseGrade.fg }}>{na(cwText(course.courseGrade))}</b>
           </div>
           <div className="flex items-center justify-between gap-2 border-t-2 border-k5-line px-3.5 py-[9px] text-[15px] font-extrabold">
-            <span className="font-black text-k5-mut">Current Overall Percentage:</span>
-            <b className="font-black">{cwText(course.currentOverallPercentage)}</b>
+            <span className="font-black text-k5-mut">{t("view.overallPercentage")}</span>
+            <b className="font-black">{na(cwText(course.currentOverallPercentage))}</b>
           </div>
         </div>
       </div>
@@ -177,6 +197,9 @@ function CourseReport({ enrollment, report, index }) {
   const courseTone2 = gradeTone(grades.letter);
   const { isMiddle } = useDashboardContext();
   const teacher = valueOf(enrollment.teacherName);
+  const t = useTranslations("k5Reports");
+  const tl = useLabelTranslator("k5Reports.types");
+  const na = useNA();
 
   return (
     <section className={`${K5_CARD} flex flex-col gap-4 px-[22px] py-5`} style={{ borderTop: `8px solid ${tone.col}` }}>
@@ -188,11 +211,11 @@ function CourseReport({ enrollment, report, index }) {
           </svg>
         </span>
         <div className="flex min-w-0 flex-[1_1_220px] flex-col gap-0.5">
-          <span className="text-[13px] font-black uppercase tracking-[.08em] text-k5-mut">Course</span>
-          <b className="font-k5-display text-2xl font-semibold leading-tight text-k5-ink">{name || "N/A"}</b>
+          <span className="text-[13px] font-black uppercase tracking-[.08em] text-k5-mut">{t("view.course")}</span>
+          <b className="font-k5-display text-2xl font-semibold leading-tight text-k5-ink">{name || na("N/A")}</b>
           {isMiddle && (
             <span className="text-[15px] font-extrabold text-k5-mut">
-              Teacher Name: <b className="font-black text-k5-ink">{orNA(teacher)}</b>
+              {t.rich("view.teacherLine", { name: na(orNA(teacher)), b: (c) => <b className="font-black text-k5-ink">{c}</b> })}
             </span>
           )}
         </div>
@@ -206,41 +229,41 @@ function CourseReport({ enrollment, report, index }) {
       </div>
 
       <div className="flex flex-col gap-0.5 text-center">
-        <h2 className="m-0 font-k5-display text-[26px] font-semibold uppercase tracking-[.02em] text-k5-acx">Detailed Student Grading Report</h2>
+        <h2 className="m-0 font-k5-display text-[26px] font-semibold uppercase tracking-[.02em] text-k5-acx">{t("view.detailedTitle")}</h2>
         <span className="font-k5-display text-lg font-semibold uppercase">
-          Duration: {report.reportStartDate} - {report.reportEndDate}
+          {t("view.duration", { start: report.reportStartDate, end: report.reportEndDate })}
         </span>
       </div>
 
       <div className="k5-bdwrap overflow-x-auto rounded-[18px] border-[3px] border-k5-line bg-k5-card">
         <div role="table" aria-label={name} className="k5-bdtbl min-w-[980px] text-[15px] font-extrabold">
           <div role="row" className="k5-bdhead grid text-k5-ink" style={{ ...grid, background: tone.lt }}>
-            {[showModule && "Module | Activity", "Type", "Activity Name", "Time Spent (hh:mm:ss)", "Target Due Date", "Submitted Date", "Percentage", "Grade"]
+            {[showModule && "module", "type", "activityName", "timeSpent", "dueDate", "submittedDate", "percentage", "grade"]
               .filter(Boolean)
               .map((h) => (
-                <span key={h} role="columnheader" className={HEAD}>{h}</span>
+                <span key={h} role="columnheader" className={HEAD}>{t(`view.columns.${h}`)}</span>
               ))}
           </div>
-          {!items.length && <p className="m-0 p-5 text-center text-k5-mut">No activities in this period.</p>}
+          {!items.length && <p className="m-0 p-5 text-center text-k5-mut">{t("view.noActivities")}</p>}
           {items.map((item, i) => {
             const tt = typeTone(item.unitType);
             const gt = gradeTone(item.letter);
             return (
               <div key={item.itemid || i} role="row" className="k5-bdrow grid items-center border-t-2 border-k5-line" style={grid}>
-                {showModule && <span role="cell" data-l="Module | Activity" className="px-3 py-[11px]">{orNA(item.unit)}</span>}
-                <span role="cell" data-l="Type" className="px-3 py-[11px]">
-                  <span className="rounded-full px-2.5 py-0.5 text-xs font-black tracking-[.04em]" style={{ background: tt.bg, color: tt.fg }}>{orNA(item.unitType)}</span>
+                {showModule && <span role="cell" data-l={t("view.columns.module")} className="px-3 py-[11px]">{na(orNA(item.unit))}</span>}
+                <span role="cell" data-l={t("view.columns.type")} className="px-3 py-[11px]">
+                  <span className="rounded-full px-2.5 py-0.5 text-xs font-black tracking-[.04em]" style={{ background: tt.bg, color: tt.fg }}>{na(tl(orNA(item.unitType)))}</span>
                 </span>
-                <span role="cell" data-l="Activity Name" className="k5-bdwide px-3 py-[11px]">{String(item.unitTitle).trim()}</span>
-                <span role="cell" data-l="Time Spent (hh:mm:ss)" className="px-3 py-[11px] font-mono">{orNA(item.unitTimeSpent)}</span>
-                <span role="cell" data-l="Target Due Date" className="px-3 py-[11px]">{orNA(item.duedate)}</span>
-                <span role="cell" data-l="Submitted Date" className="px-3 py-[11px]">{orNA(item.submitteddate)}</span>
-                <span role="cell" data-l="Percentage" className="px-3 py-[11px] font-black" style={{ color: scoreColor(item) }}>{orNA(item.unitPercent)}</span>
-                <span role="cell" data-l="Grade" className="px-3 py-[11px]">
+                <span role="cell" data-l={t("view.columns.activityName")} className="k5-bdwide px-3 py-[11px]">{String(item.unitTitle).trim()}</span>
+                <span role="cell" data-l={t("view.columns.timeSpent")} className="px-3 py-[11px] font-mono">{na(orNA(item.unitTimeSpent))}</span>
+                <span role="cell" data-l={t("view.columns.dueDate")} className="px-3 py-[11px]">{na(orNA(item.duedate))}</span>
+                <span role="cell" data-l={t("view.columns.submittedDate")} className="px-3 py-[11px]">{na(orNA(item.submitteddate))}</span>
+                <span role="cell" data-l={t("view.columns.percentage")} className="px-3 py-[11px] font-black" style={{ color: scoreColor(item) }}>{na(orNA(item.unitPercent))}</span>
+                <span role="cell" data-l={t("view.columns.grade")} className="px-3 py-[11px]">
                   {item.letter ? (
                     <span className="inline-block rounded-[10px] px-2.5 py-0.5 font-black" style={{ background: gt.bg, color: gt.fg }}>{item.letter}</span>
                   ) : (
-                    "N/A"
+                    na("N/A")
                   )}
                 </span>
               </div>
@@ -248,42 +271,42 @@ function CourseReport({ enrollment, report, index }) {
           })}
         </div>
       </div>
-      <span className="text-[13px] font-black text-k5-mut">*N/A - Not Available</span>
+      <span className="text-[13px] font-black text-k5-mut">{t("view.naNote")}</span>
 
       <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] items-start gap-3.5 max-[760px]:grid-cols-1">
         <div className="flex flex-col overflow-hidden rounded-2xl border-[3px] border-k5-line text-center">
           {[
-            ["Total Activity Time", orNA(grades.totalDays)],
-            ["Number of Activities - Submitted & Graded", orNA(grades.submiteActivityGrade)],
-            ["Number of Activities - Waiting for the Grade", orNA(grades.activityWaitingForGrade)],
-            ["Number of Activities - Not Submitted", orNA(grades.activityNotSubmited)],
+            ["totalTime", orNA(grades.totalDays)],
+            ["submittedGraded", orNA(grades.submiteActivityGrade)],
+            ["waitingGrade", orNA(grades.activityWaitingForGrade)],
+            ["notSubmitted", orNA(grades.activityNotSubmited)],
           ].map(([label, value]) => (
             <div key={label} className="border-t-2 border-k5-line px-3.5 py-[9px] text-[15px] font-extrabold first:border-t-0">
-              {label}: <b className="font-black">{value}</b>
+              {t.rich(`view.counters.${label}`, { value: na(value), b: (c) => <b className="font-black">{c}</b> })}
             </div>
           ))}
           <div className="border-t-2 border-k5-line px-3.5 py-[9px] text-[15px] font-extrabold">
-            Last Submission Date: <b className="font-black">{orNA(grades.lastSubmissionDate)}</b> | Activity Name: <b className="font-black">{orNA(grades.lastsubmissionName)}</b>
+            {t.rich("view.lastSubmission", { date: na(orNA(grades.lastSubmissionDate)), activity: na(orNA(grades.lastsubmissionName)), b: (c) => <b className="font-black">{c}</b> })}
           </div>
         </div>
         <div className="flex flex-col overflow-hidden rounded-2xl border-[3px] border-k5-line">
           <div className="flex items-center justify-between gap-2 px-3.5 py-[9px] text-[15px] font-extrabold">
-            <span className="font-black text-k5-mut">Course Grade:</span>
-            <b className="k5h-pr-chip rounded-[10px] px-3 font-k5-display text-[22px] font-semibold" style={{ background: courseTone2.bg, color: courseTone2.fg }}>{orNA(grades.letter)}</b>
+            <span className="font-black text-k5-mut">{t("view.courseGrade")}</span>
+            <b className="k5h-pr-chip rounded-[10px] px-3 font-k5-display text-[22px] font-semibold" style={{ background: courseTone2.bg, color: courseTone2.fg }}>{na(orNA(grades.letter))}</b>
           </div>
           <div className="flex items-center justify-between gap-2 border-t-2 border-k5-line px-3.5 py-[9px] text-[15px] font-extrabold">
-            <span className="font-black text-k5-mut">Current Overall Percentage:</span>
-            <b className="font-black">{orNA(grades.percentage)}</b>
+            <span className="font-black text-k5-mut">{t("view.overallPercentage")}</span>
+            <b className="font-black">{na(orNA(grades.percentage))}</b>
           </div>
           {report.subReportType === "weekly" && (
             <div className="flex items-center justify-between gap-2 border-t-2 border-k5-line px-3.5 py-[9px] text-[15px] font-extrabold">
-              <span className="font-black text-k5-mut">Current Week Percentage:</span>
-              <b className="font-black">{orNA(grades.percentWeekly)}</b>
+              <span className="font-black text-k5-mut">{t("view.weekPercentage")}</span>
+              <b className="font-black">{na(orNA(grades.percentWeekly))}</b>
             </div>
           )}
           <div className="flex flex-wrap items-center justify-between gap-2 border-t-2 border-k5-line px-3.5 py-[9px] text-[15px] font-extrabold">
-            <span className="font-black text-k5-mut">Course Completion Percentage:</span>
-            <b className="font-black">{orNA(grades.complete)}</b>
+            <span className="font-black text-k5-mut">{t("view.completionPercentage")}</span>
+            <b className="font-black">{na(orNA(grades.complete))}</b>
             <span className="block h-2.5 flex-[1_1_100%] overflow-hidden rounded-full border-2 border-k5-line bg-k5-soft">
               <span className="block h-full rounded-full" style={{ width: `${Math.min(100, Math.max(0, comp))}%`, background: tone.col }} />
             </span>
@@ -296,8 +319,9 @@ function CourseReport({ enrollment, report, index }) {
 
 /** Progress Report while it loads: title bar, date search, student card and one course report (header, table, totals). */
 function ReportSkeleton() {
+  const t = useTranslations("k5Reports");
   return (
-    <K5Loading label="Getting your report ready" className="k5-pr-page flex flex-col gap-[18px]">
+    <K5Loading label={t("view.loading")} className="k5-pr-page flex flex-col gap-[18px]">
       <div className={`${K5_CARD} flex flex-wrap items-center gap-3.5 px-5 py-4`}>
         <K5Sk className="h-12 w-28 rounded-full" />
         <K5Sk className="h-8 w-80 max-w-full" />
@@ -365,6 +389,9 @@ export function K5ProgressReportView({ url, onBack }) {
   // The academic-year facts of the header: the gradebook enrolment, or (Canvas / Courseware) the first course.
   const head = courseWare ? { start: courses[0]?.academicYearStartDate, end: courses[0]?.academicYearEndDate, teacher: courses[0]?.teacherName } : { start: first?.startdate, end: first?.enddate, teacher: valueOf(first?.teacherName) };
   const ready = !isLoading && report?.status === "SUCCESS" && !report.reportMessage;
+  const t = useTranslations("k5Reports");
+  const tc = useTranslations("common");
+  const na = useNA();
 
   if (isLoading) return <ReportSkeleton />;
 
@@ -377,20 +404,20 @@ export function K5ProgressReportView({ url, onBack }) {
           className="flex min-h-[48px] cursor-pointer items-center gap-2 rounded-full border-[3px] border-k5-line bg-k5-card pe-[18px] ps-3 font-k5-display text-[17px] font-semibold text-k5-ink shadow-[0_4px_0_var(--k5-line)]"
         >
           <BackIcon />
-          Back
+          {tc("actions.back")}
         </button>
         <h1 className="m-0 min-w-0 flex-[1_1_260px] font-k5-display text-[28px] font-semibold leading-tight">
-          Grade book summary{report?.studentName ? ` | ${report.studentName}` : ""}
+          {report?.studentName ? t("view.titleWithName", { name: report.studentName }) : t("view.title")}
         </h1>
       </div>
 
       <div className={`${K5_CARD} flex flex-col gap-2 px-[18px] py-3.5`}>
         <div className="flex flex-wrap items-end gap-3">
           <div className={`k5h-at-date max-[760px]:flex-[1_1_100%] ${isHigh ? "flex-[0_1_200px]" : "flex-[0_1_220px]"}`}>
-            <DatePicker icon={CalendarDays} label="Due Start Date" value={startdate} onChange={setStartdate} height={isHigh ? "h-[43px]" : "h-[50px]"} />
+            <DatePicker icon={CalendarDays} label={t("view.dueStartDate")} value={startdate} onChange={setStartdate} height={isHigh ? "h-[43px]" : "h-[50px]"} />
           </div>
           <div className={`k5h-at-date max-[760px]:flex-[1_1_100%] ${isHigh ? "flex-[0_1_200px]" : "flex-[0_1_220px]"}`}>
-            <DatePicker icon={CalendarDays} label="Due End Date" value={enddate} onChange={setEnddate} height={isHigh ? "h-[43px]" : "h-[50px]"} />
+            <DatePicker icon={CalendarDays} label={t("view.dueEndDate")} value={enddate} onChange={setEnddate} height={isHigh ? "h-[43px]" : "h-[50px]"} />
           </div>
           <button
             type="button"
@@ -398,7 +425,7 @@ export function K5ProgressReportView({ url, onBack }) {
             disabled={isLoading}
             className="min-h-[50px] cursor-pointer rounded-full border-none bg-[#13803F] px-[18px] font-k5-display text-base font-semibold text-white shadow-[0_4px_0_#0B5A2B] disabled:cursor-default disabled:opacity-60"
           >
-            Search
+            {tc("actions.search")}
           </button>
           {report?.downloadUrl && (
             <button
@@ -415,42 +442,42 @@ export function K5ProgressReportView({ url, onBack }) {
                   <path d="M12 4v12M7 11l5 5 5-5M5 20h14" />
                 </svg>
               )}
-              {preparing ? "Preparing…" : "Download"}
+              {preparing ? t("view.preparing") : tc("actions.download")}
             </button>
           )}
         </div>
-        {error && <p className="m-0 text-sm font-extrabold text-k5-ri">{error}</p>}
+        {error && <p className="m-0 text-sm font-extrabold text-k5-ri">{SEARCH_ERRORS[error] ? t(`view.errors.${SEARCH_ERRORS[error]}`) : error}</p>}
       </div>
 
       {!ready ? (
         <section className={`${K5_CARD} p-[30px] text-center text-[17px] font-extrabold text-k5-mut`}>
-          {report?.reportMessage || "Unable to load progress report detail."}
+          {report?.reportMessage || t("view.loadError")}
         </section>
       ) : (
         <>
-          <section aria-label="Student" className={`${K5_CARD} flex flex-col gap-4 px-[22px] py-5`}>
+          <section aria-label={t("view.student")} className={`${K5_CARD} flex flex-col gap-4 px-[22px] py-5`}>
             {logoUrl ? (
-              <OptimizedImage src={logoUrl} alt={context?.schoolName || "School logo"} width={260} height={60} className="h-auto w-full max-w-[260px]" />
+              <OptimizedImage src={logoUrl} alt={context?.schoolName || t("view.schoolLogo")} width={260} height={60} className="h-auto w-full max-w-[260px]" />
             ) : (
               context?.schoolName && <b className="font-k5-display text-[22px] font-semibold text-k5-brand">{context.schoolName}</b>
             )}
             <div className="grid grid-cols-2 gap-3.5 max-[760px]:grid-cols-1">
               <div className="flex flex-col overflow-hidden rounded-2xl border-[3px] border-k5-line">
-                <Kv label="Student Name">{orNA(report.studentName)}</Kv>
-                <Kv label="Grade">{orNA(report.standardName)}</Kv>
-                <Kv label="Student ID"><span className="font-mono">{orNA(report.rollNumber)}</span></Kv>
+                <Kv label={t("view.studentName")}>{na(orNA(report.studentName))}</Kv>
+                <Kv label={t("view.grade")}>{na(orNA(report.standardName))}</Kv>
+                <Kv label={t("view.studentId")}><span className="font-mono">{na(orNA(report.rollNumber))}</span></Kv>
               </div>
               <div className="flex flex-col overflow-hidden rounded-2xl border-[3px] border-k5-line">
-                <Kv label="Academic Year Start Date">{orNA(head.start)}</Kv>
-                <Kv label="Academic Year End Date">{orNA(head.end)}</Kv>
-                <Kv label="Country">{orNA(report.country)}</Kv>
-                <Kv label="Teacher Name">{orNA(head.teacher)}</Kv>
+                <Kv label={t("view.yearStart")}>{na(orNA(head.start))}</Kv>
+                <Kv label={t("view.yearEnd")}>{na(orNA(head.end))}</Kv>
+                <Kv label={t("view.country")}>{na(orNA(report.country))}</Kv>
+                <Kv label={t("view.teacherName")}>{na(orNA(head.teacher))}</Kv>
               </div>
             </div>
           </section>
 
           {(courseWare ? !courses.length : !enrollments.length) && (
-            <section className={`${K5_CARD} p-[30px] text-center text-[17px] font-extrabold text-k5-mut`}>No activities in this period.</section>
+            <section className={`${K5_CARD} p-[30px] text-center text-[17px] font-extrabold text-k5-mut`}>{t("view.noActivities")}</section>
           )}
           {courseWare
             ? courses.map((course, i) => <CourseWareCourse key={i} course={course} report={report} index={i} />)
@@ -458,21 +485,21 @@ export function K5ProgressReportView({ url, onBack }) {
 
           <section className={`${K5_CARD} flex flex-wrap items-center justify-between gap-6 px-[22px] py-5`}>
             <div className="flex flex-col items-center gap-1">
-              <span role="img" aria-label="School Official" className="relative block h-40 w-[190px] flex-none rounded-[22px] bg-white">
+              <span role="img" aria-label={t("view.schoolOfficial")} className="relative block h-40 w-[190px] flex-none rounded-[22px] bg-white">
                 <OptimizedImage src={assetUrl("is-stamp.png")} alt="" width={132} height={135} className="absolute left-3 top-3 h-auto w-[132px] -rotate-6 opacity-90" />
                 <OptimizedImage src={assetUrl("signature-report.png")} alt="" width={120} height={117} className="absolute right-1.5 top-[22px] h-auto w-[120px]" />
               </span>
-              <span className="text-sm font-black text-k5-mut">School Official</span>
+              <span className="text-sm font-black text-k5-mut">{t("view.schoolOfficial")}</span>
             </div>
             <div className="flex min-w-0 flex-[1_1_520px] flex-col gap-2">
-              <b className="text-center font-k5-display text-lg font-semibold">Grading System</b>
-              <div role="table" aria-label="Grading System" className="flex flex-col overflow-hidden overflow-x-auto rounded-[14px] border-[3px] border-k5-line">
+              <b className="text-center font-k5-display text-lg font-semibold">{t("view.gradingSystem")}</b>
+              <div role="table" aria-label={t("view.gradingSystem")} className="flex flex-col overflow-hidden overflow-x-auto rounded-[14px] border-[3px] border-k5-line">
                 {[
-                  ["Grade", (g) => g[0]],
-                  ["Percentage", (g) => g[1]],
+                  ["grade", (g) => g[0]],
+                  ["percentage", (g) => (g[1] === "Below 60" ? t("view.below60") : g[1])],
                 ].map(([label, pick], r) => (
                   <div key={label} role="row" className={`grid min-w-[820px] grid-cols-[110px_repeat(13,minmax(54px,1fr))] ${r ? "border-t-2 border-k5-line" : ""}`}>
-                    <span role="rowheader" className="bg-k5-soft px-3 py-2 text-[13px] font-black">{label}</span>
+                    <span role="rowheader" className="bg-k5-soft px-3 py-2 text-[13px] font-black">{t(`view.columns.${label}`)}</span>
                     {GRADING_SYSTEM.map((g) => {
                       const tone = gradeTone(g[0]);
                       const isF = g[0] === "F";

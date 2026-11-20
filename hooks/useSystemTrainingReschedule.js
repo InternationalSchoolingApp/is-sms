@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { getSystemTrainingDetails } from "@/services/systemTrainingApi";
 import { getTrainingSlots, rescheduleSystemTraining } from "@/services/onboardingGateApi";
@@ -36,6 +37,7 @@ function nextDay(ymd) {
 
 export function useSystemTrainingReschedule({ startPicking = false, onSaved } = {}) {
   const { context } = useDashboardContext();
+  const t = useTranslations("home.reschedule");
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ["system-training-details", context?.schoolUUID, context?.userId],
@@ -77,11 +79,11 @@ export function useSystemTrainingReschedule({ startPicking = false, onSaved } = 
 
   async function save() {
     if (!date) {
-      toast.error("Please select your system training date.");
+      toast.error(t("selectDate"));
       return;
     }
     if (!slot) {
-      toast.error("Please select your system training time.");
+      toast.error(t("selectTime"));
       return;
     }
     setSaving(true);
@@ -93,10 +95,10 @@ export function useSystemTrainingReschedule({ startPicking = false, onSaved } = 
       return;
     }
     if (!result?.ok) {
-      toast.error(result?.message || "Your training could not be rescheduled.");
+      toast.error(result?.message || t("failed"));
       return;
     }
-    toast.success(result.data?.message || "Your School System Training has been rescheduled.");
+    toast.success(result.data?.message || t("rescheduled"));
     // Legacy: location.reload() - the page shows the new state (one more reschedule used).
     setDate(null);
     setSlot("");
@@ -108,7 +110,7 @@ export function useSystemTrainingReschedule({ startPicking = false, onSaved } = 
 
   function confirm() {
     if (!slot) {
-      toast.error("Please choose a slot");
+      toast.error(t("chooseSlot"));
       return;
     }
     if (lastFree) setWarnOpen(true);

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Globe2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useLocaleTag } from "@/i18n/dateLocale";
 
 function getTimeOfDay(hour) {
   if (hour >= 5 && hour <= 11) return "Morning";
@@ -24,6 +26,8 @@ const TIME_OF_DAY_STYLE = {
  */
 export function CalendarClockPill({ timezone }) {
   const [now, setNow] = useState(() => new Date());
+  const t = useTranslations("calendar");
+  const localeTag = useLocaleTag();
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -31,7 +35,7 @@ export function CalendarClockPill({ timezone }) {
   }, []);
 
   const hour = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: false, timeZone: timezone }).format(now));
-  const timeLabel = new Intl.DateTimeFormat("en-US", {
+  const timeLabel = new Intl.DateTimeFormat(localeTag, {
     hour: "numeric",
     minute: "2-digit",
     second: "2-digit",
@@ -45,7 +49,7 @@ export function CalendarClockPill({ timezone }) {
       <Globe2 className="h-3.5 w-3.5 text-black/50" aria-hidden="true" />
       <span className="text-[11px] font-semibold text-black/70">{timezone}</span>
       <span className="text-[11px] font-bold text-black">{timeLabel}</span>
-      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${TIME_OF_DAY_STYLE[timeOfDay]}`}>{timeOfDay}</span>
+      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${TIME_OF_DAY_STYLE[timeOfDay]}`}>{t(`timeOfDay.${timeOfDay.toLowerCase()}`)}</span>
     </div>
   );
 }

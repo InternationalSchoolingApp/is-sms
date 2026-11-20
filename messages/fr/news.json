@@ -1,0 +1,43 @@
+{
+  "title": "Actualités",
+  "articleCount": "{count, plural, one {# article} other {# articles}}",
+  "empty": "Aucune actualité pour le moment.",
+  "marking": "Marquage…",
+  "viewAll": "Voir toutes les actualités",
+  "latest": "Dernières actualités",
+  "noneAvailable": "Aucune actualité disponible.",
+  "readTime": "Temps de lecture {minutes} min",
+  "source": "Source",
+  "readFullArticle": "Lire l'article complet →",
+  "viewOriginalSource": "Voir la source originale →",
+  "relative": {
+    "yearsMonths": "il y a {years, plural, one {# an} other {# ans}} et {months, plural, one {# mois} other {# mois}}",
+    "monthsDays": "il y a {months, plural, one {# mois} other {# mois}} et {days, plural, one {# jour} other {# jours}}",
+    "days": "il y a {days, plural, one {# jour} other {# jours}}",
+    "today": "aujourd'hui",
+    "daysHours": "il y a {days, plural, one {# jour} other {# jours}} et {hours, plural, one {# heure} other {# heures}}",
+    "hoursMinutes": "il y a {hours, plural, one {# heure} other {# heures}} et {minutes, plural, one {# minute} other {# minutes}}",
+    "minutes": "il y a {minutes, plural, one {# minute} other {# minutes}}"
+  },
+  "announcements": {
+    "title": "Annonce(s)",
+    "newCount": "{count, plural, one {# nouvelle} other {# nouvelles}}",
+    "empty": "Aucune annonce pour le moment.",
+    "new": "Nouveau",
+    "learnMore": "En savoir plus →",
+    "startDate": "Date de début",
+    "thanks": "Merci pour votre confirmation",
+    "viewAttachment": "Voir la pièce jointe",
+    "submitting": "Envoi…",
+    "acknowledge": "Confirmer la lecture",
+    "timeLabels": {
+      "upcoming": "à venir",
+      "1_day_ago": "il y a 1 jour",
+      "last_week": "la semaine dernière"
+    }
+  },
+  "preview": {
+    "title": "Aperçu",
+    "imageAlt": "Pièce jointe de l'annonce"
+  }
+}

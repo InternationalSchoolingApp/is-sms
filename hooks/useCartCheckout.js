@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { checkCartPayment } from "@/services/cartApi";
 import {
   cancelPaymentAttempt,
@@ -31,7 +32,6 @@ const PAID_STATUS_MAX_CHECKS = 10;
 const STATUS_PAYMENT_IN_PROGRESS = "PAYMENT_IN_PROGRESS";
 const STATUS_ALREADY_PAID = "ALREADY_PAID";
 const STATUS_OLD_FEE = "OLD_FEE";
-const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
 
 /**
  * Pay Now for the cart — commonPaymentGateway.js's checkPayment() ->
@@ -53,6 +53,8 @@ const GENERIC_ERROR = "Something went wrong. Please check your connection and tr
  * (`dummyGateway`, rendered by the cart) instead of calling the backend.
  */
 export function useCartCheckout({ context, onPaid }) {
+  const t = useTranslations("cart.checkout");
+  const GENERIC_ERROR = t("genericError");
   const [picker, setPicker] = useState(null);
   const [preparing, setPreparing] = useState(false);
   const [launching, setLaunching] = useState(false);
@@ -88,11 +90,11 @@ export function useCartCheckout({ context, onPaid }) {
       setPicker({
         details: {
           paymentOptions: [
-            { name: "STRIPE", label: "Option 1: Pay via Stripe", icon: "STRIPE.png" },
-            { name: "Airwallex", label: "Option 2: Pay via Airwallex", icon: "Airwallex.png" },
+            { name: "STRIPE", label: t("dummyOption", { number: 1, gateway: "Stripe" }), icon: "STRIPE.png" },
+            { name: "Airwallex", label: t("dummyOption", { number: 2, gateway: "Airwallex" }), icon: "Airwallex.png" },
           ],
           payAmount: dummy.student.checkoutAmount(),
-          paymentLabel: `${schoolName ? `${schoolName} is` : "We are"} trusted by the safest and most reputed payment gateways, banks and wallets`,
+          paymentLabel: schoolName ? t("trustedSchool", { school: schoolName }) : t("trustedWe"),
         },
         methods: [],
         countryCode: "",
@@ -104,11 +106,11 @@ export function useCartCheckout({ context, onPaid }) {
       const checked = await checkCartPayment({ userPaymentDetailsId });
       if (checked?.statusCode === STATUS_OLD_FEE) {
         // Legacy checkPayment: renderOldFeeCard(response) instead of a toast.
-        setOldFee(checked.message || "This fee can no longer be paid here. Please contact the school.");
+        setOldFee(checked.message || t("oldFee"));
         return;
       }
       if (checked?.status !== STATUS_SUCCESS) {
-        fail(checked, "Could not start the payment. Please try again.");
+        fail(checked, t("startFailed"));
         return;
       }
       const due = checked.details || {};
@@ -125,12 +127,12 @@ export function useCartCheckout({ context, onPaid }) {
         countryCode,
       });
       if (options?.status !== STATUS_SUCCESS) {
-        fail(options, "Could not load payment options. Please try again.");
+        fail(options, t("optionsFailed"));
         return;
       }
       const gateways = options.details?.paymentOptions || [];
       if (gateways.length === 0) {
-        toast.error("No payment method is available right now. Please contact support.");
+        toast.error(t("noMethods"));
         return;
       }
       await callLocationForPaymentPromise();
@@ -225,7 +227,7 @@ export function useCartCheckout({ context, onPaid }) {
       const probe = window.open("", "_blank");
       if (!probe || probe.closed || typeof probe.closed === "undefined") {
         setLaunching(false);
-        toast.error("Popup blocked. Please allow popups and try again.");
+        toast.error(t("popupBlocked"));
         return;
       }
       probe.close();
@@ -236,7 +238,7 @@ export function useCartCheckout({ context, onPaid }) {
       // This browser started that payment (its checkout tab was closed): back to the same checkout when it can be.
       const resumeUrl = inProgress ? resumeUrlForThisBrowser(response.details, gateway.name) : null;
       if (resumeUrl) {
-        toast("Taking you back to the payment you started...");
+        toast(t("resuming"));
         window.location.assign(resumeUrl);
         return;
       }
@@ -247,7 +249,7 @@ export function useCartCheckout({ context, onPaid }) {
           attempt: inProgress ? response.details : null,
           // Same browser, nothing to reopen: close it at the gateway and start again without asking.
           autoCancel: Boolean(inProgress && response.details.sameBrowser),
-          alreadyPaidMessage: inProgress ? "" : response.message || "This fee is already paid. You don't need to pay again.",
+          alreadyPaidMessage: inProgress ? "" : response.message || t("alreadyPaid"),
           openedAt: Date.now(),
           relaunch: { gateway, details },
         });
@@ -256,16 +258,16 @@ export function useCartCheckout({ context, onPaid }) {
       if (response?.statusCode === STATUS_OLD_FEE) {
         setLaunching(false);
         setPicker(null);
-        setOldFee(response.message || "This fee can no longer be paid here. Please contact the school.");
+        setOldFee(response.message || t("oldFee"));
         return;
       }
       if (response?.status !== STATUS_SUCCESS || !response.details?.redirectUrl) {
         setLaunching(false);
         setPicker(null);
-        fail(response, "Could not start the payment. Please try again.");
+        fail(response, t("startFailed"));
         return;
       }
-      toast("Please wait while redirecting to payment gateway...");
+      toast(t("redirecting"));
       if (response.details.openSelf) {
         window.location.replace(response.details.redirectUrl);
       } else {
@@ -285,9 +287,9 @@ export function useCartCheckout({ context, onPaid }) {
     try {
       const response = await uploadPaymentProof(context.schoolUUID, context.uniqueId, { file, ...spec });
       if (!response) return { error: GENERIC_ERROR };
-      if (sessionOut(response)) return { error: response.message || "Your session has timed out." };
+      if (sessionOut(response)) return { error: response.message || t("sessionTimedOut") };
       const fileName = response.uploadFiles?.[0]?.fileName;
-      if (response.status === "0" || !fileName) return { error: response.message || "Upload failed. Please try again." };
+      if (response.status === "0" || !fileName) return { error: response.message || t("uploadFailed") };
       return { fileName };
     } catch (err) {
       console.error("Payment proof upload failed:", err);

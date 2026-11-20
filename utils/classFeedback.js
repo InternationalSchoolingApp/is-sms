@@ -73,10 +73,23 @@ export function purposeLabelOf(info) {
   return dateLabel ? `${className} - ${dateLabel}` : className;
 }
 
-/** "Jun 09, 2026 10:30 AM" - the date and time badge in the header. */
-export function classDateTimeOf(info) {
+// date-fns options for an optional `locale` (month names / AM-PM in the dashboard language).
+const withLocale = (locale) => (locale && typeof locale === "object" ? { locale } : undefined);
+
+/** "Jun 09, 2026 10:30 AM" - the date and time badge in the header. `locale`: optional date-fns locale. */
+export function classDateTimeOf(info, { locale } = {}) {
   const start = dateOf(info.start);
-  return start ? format(start, "MMM dd, yyyy hh:mm a") : "";
+  return start ? format(start, "MMM dd, yyyy hh:mm a", withLocale(locale)) : "";
+}
+
+/** "Jun 09, 2026" of a Pending Feedback card ("N/A" without a date). `locale`: optional date-fns locale. */
+export function feedbackDateText(start, locale) {
+  return start ? format(start, "MMM dd, yyyy", withLocale(locale)) : "N/A";
+}
+
+/** "10:30 AM - 11:15 AM" of a Pending Feedback card ("N/A" without both times). `locale`: optional date-fns locale. */
+export function feedbackTimeText(start, end, locale) {
+  return start && end ? `${format(start, "hh:mm a", withLocale(locale))} - ${format(end, "hh:mm a", withLocale(locale))}` : "N/A";
 }
 
 /** The info object a calendar event is rated with (legacy buildFeedbackInfo); times are wall-clock in the student's zone. */
@@ -241,8 +254,11 @@ export function pendingFeedbackOf(events, { showFromDate, timezone }) {
       courseName,
       category,
       teacher,
-      dateText: event.startZoned ? format(event.startZoned, "MMM dd, yyyy") : "N/A",
-      timeText: event.startZoned && event.endZoned ? `${format(event.startZoned, "hh:mm a")} - ${format(event.endZoned, "hh:mm a")}` : "N/A",
+      dateText: feedbackDateText(event.startZoned),
+      timeText: feedbackTimeText(event.startZoned, event.endZoned),
+      // The zoned times themselves, so the popup can show dateText / timeText in the dashboard language.
+      startZoned: event.startZoned || null,
+      endZoned: event.endZoned || null,
     });
   });
   return { items, total: items.length, activities, classes };

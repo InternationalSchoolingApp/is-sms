@@ -1,6 +1,10 @@
 "use client";
 
 import { BookOpen, CalendarDays, Clock, MessageSquareHeart, User, Users, X } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
+import { useLabelTranslator } from "@/i18n/labels";
+import { feedbackDateText, feedbackTimeText } from "@/utils/classFeedback";
 
 function Stat({ value, label }) {
   return (
@@ -16,12 +20,17 @@ function Stat({ value, label }) {
  * still to rate (Total / Activities / Classes) and one card per session with its "Rate this class / activity" button.
  */
 export function PendingFeedbackPopup({ pending, onRate, onClose }) {
+  const t = useTranslations("feedback");
+  const tc = useTranslations("common");
+  const dateLocale = useDateFnsLocale();
+  // The backend's category ("CLASS", "ACTIVITY", "BATCH"...) in the dashboard language.
+  const tCategory = useLabelTranslator("feedback.category");
   return (
     <div data-blocking-popup="" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Pending Feedback"
+        aria-label={t("pending.title")}
         onClick={(e) => e.stopPropagation()}
         className="flex max-h-[90vh] w-full max-w-[900px] flex-col overflow-hidden rounded-[22px] bg-white shadow-2xl"
       >
@@ -32,23 +41,23 @@ export function PendingFeedbackPopup({ pending, onRate, onClose }) {
                 <MessageSquareHeart className="h-7 w-7" aria-hidden="true" />
               </span>
               <div>
-                <h2 className="m-0 mb-1 text-xl font-bold">Pending Feedback</h2>
-                <p className="m-0 text-[15px]">Please submit your pending weekly feedback.</p>
+                <h2 className="m-0 mb-1 text-xl font-bold">{t("pending.title")}</h2>
+                <p className="m-0 text-[15px]">{t("pending.subtitle")}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close"
+              aria-label={tc("actions.close")}
               className="flex h-8 w-8 flex-none cursor-pointer items-center justify-center rounded-full border-none bg-transparent text-white hover:bg-white/20"
             >
               <X className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
           <div className="mt-3 grid grid-cols-3 gap-2">
-            <Stat value={pending.total} label="Total" />
-            <Stat value={pending.activities} label="Activities" />
-            <Stat value={pending.classes} label="Classes" />
+            <Stat value={pending.total} label={t("pending.total")} />
+            <Stat value={pending.activities} label={t("pending.activities")} />
+            <Stat value={pending.classes} label={t("pending.classes")} />
           </div>
         </div>
         <div className="flex-1 overflow-y-auto bg-slate-50 p-3">
@@ -63,20 +72,20 @@ export function PendingFeedbackPopup({ pending, onRate, onClose }) {
                     <div className="min-w-0">
                       <h3 className="m-0 mb-1 text-base font-bold text-black">{item.courseName}</h3>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] font-semibold text-slate-500">
-                        <span className="rounded-full bg-slate-100 px-3 py-0.5 text-primary">{item.category}</span>
+                        <span className="rounded-full bg-slate-100 px-3 py-0.5 text-primary">{tCategory(item.category)}</span>
                         {item.teacher && (
                           <span className="flex items-center gap-1">
                             <User className="h-3.5 w-3.5" aria-hidden="true" />
-                            {item.teacher}
+                            {item.teacher === "N/A" ? tc("status.na") : item.teacher}
                           </span>
                         )}
                         <span className="flex items-center gap-1">
                           <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
-                          {item.dateText}
+                          {item.startZoned ? feedbackDateText(item.startZoned, dateLocale) : item.dateText === "N/A" ? tc("status.na") : item.dateText}
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-                          {item.timeText}
+                          {item.startZoned && item.endZoned ? feedbackTimeText(item.startZoned, item.endZoned, dateLocale) : item.timeText === "N/A" ? tc("status.na") : item.timeText}
                         </span>
                       </div>
                     </div>
@@ -86,7 +95,7 @@ export function PendingFeedbackPopup({ pending, onRate, onClose }) {
                     onClick={() => onRate(item.info)}
                     className="cursor-pointer whitespace-nowrap rounded-full border-none bg-primary px-4 py-1.5 text-sm font-bold text-white shadow-sm"
                   >
-                    {item.isActivity ? "Rate this activity" : "Rate this class"}
+                    {item.isActivity ? t("rate.activity") : t("rate.class")}
                   </button>
                 </div>
               </li>

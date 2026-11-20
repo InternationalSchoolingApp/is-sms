@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Camera, Check, Eye, EyeOff, FileText, IdCard, Info } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
+import { useLabelTranslator } from "@/i18n/labels";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
-import { ConfirmDialog, EditableParents, EditablePersonal } from "@/components/k5/pages/K5ProfileEditors";
+import { ConfirmDialog, EditableParents, EditablePersonal, useCallingSlotText } from "@/components/k5/pages/K5ProfileEditors";
 import { K5PhotoDialog } from "@/components/k5/pages/K5PhotoDialog";
 import { SchoolEmailEditor, WithdrawalEditor } from "@/components/k5/pages/K5ProfileP5";
 import { CustomFields } from "@/components/k5/pages/K5ProfileCustomFields";
@@ -75,6 +77,7 @@ function ValueWithMarks({ label, value, marks, floating = false }) {
 
 /** Read-only chip (mockup .pfchip): chosen ones in the look's accent. */
 function Chip({ on, children }) {
+  const t = useTranslations("k5Profile");
   return (
     <span
       className={`flex min-h-11 items-center gap-2 rounded-full border-[3px] py-1 pe-4 ps-3 text-[15px] font-black text-k5-ink ${on ? "border-k5-ac bg-k5-act" : "border-k5-line bg-k5-card"}`}
@@ -85,7 +88,7 @@ function Chip({ on, children }) {
       >
         {on && <Check className="h-3.5 w-3.5" strokeWidth={3.6} />}
       </span>
-      <span className="sr-only">{on ? "Yes: " : "No: "}</span>
+      <span className="sr-only">{on ? t("page.chipYes") : t("page.chipNo")}</span>
       {children}
     </span>
   );
@@ -127,21 +130,22 @@ function Ring({ pct }) {
 }
 
 function ParentBlock({ title, p }) {
+  const t = useTranslations("k5Profile");
   return (
     <>
       <h3 className={H3}>{title}</h3>
       <div className={GRID3}>
-        <Field label="First Name" value={p.firstName} floating />
-        <Field label="Middle Name" value={p.middleName} floating />
-        <Field label="Last Name" value={p.lastName} floating />
-        <ValueWithMarks label="Phone Number" value={p.phone} marks={[[p.whatsApp, "WhatsApp"], [p.emergency, "Emergency Contact"]]} floating />
-        <Field label="Email" value={p.email} floating />
-        <Field label="Facebook" value={p.facebook} floating />
-        <Field label="Country" value={p.country} floating />
-        <Field label="State" value={p.state} floating />
-        <Field label="City" value={p.city} floating />
-        <Field label="Occupation" value={p.occupation} floating />
-        <Field label="Date of Birth" value={p.dob} floating />
+        <Field label={t("fields.firstName")} value={p.firstName} floating />
+        <Field label={t("fields.middleName")} value={p.middleName} floating />
+        <Field label={t("fields.lastName")} value={p.lastName} floating />
+        <ValueWithMarks label={t("fields.phoneNumber")} value={p.phone} marks={[[p.whatsApp, t("marks.whatsApp")], [p.emergency, t("marks.emergency")]]} floating />
+        <Field label={t("fields.email")} value={p.email} floating />
+        <Field label={t("fields.facebook")} value={p.facebook} floating />
+        <Field label={t("fields.country")} value={p.country} floating />
+        <Field label={t("fields.state")} value={p.state} floating />
+        <Field label={t("fields.city")} value={p.city} floating />
+        <Field label={t("fields.occupation")} value={p.occupation} floating />
+        <Field label={t("fields.dob")} value={p.dob} floating />
       </div>
     </>
   );
@@ -149,27 +153,29 @@ function ParentBlock({ title, p }) {
 
 function PersonalSection({ m }) {
   const p = m.personal;
+  const t = useTranslations("k5Profile");
+  const tg = useLabelTranslator("k5Profile.genders");
   return (
     <>
       <div className={GRID3}>
-        <Field label="First Name" value={p.firstName} />
-        <Field label="Middle Name" value={p.middleName} />
-        <Field label="Last Name" value={p.lastName} />
-        <Field label="Gender" value={p.gender} />
-        <Field label="Date of Birth" value={p.dob} floating />
-        <ValueWithMarks label="Phone" value={p.phone} marks={[[p.phoneWhatsApp, "WhatsApp"], [p.phoneVerified, "Verified"]]} />
-        <ValueWithMarks label="Alternate Phone" value={p.altPhone} marks={[[p.altPhoneWhatsApp, "WhatsApp"]]} />
-        <ValueWithMarks label="Email" value={p.email} marks={[[p.emailVerified, "Verified"]]} />
-        <ValueWithMarks label="Alternate Email" value={p.altEmail} marks={[[p.altEmailVerified, "Verified"]]} />
-        <Field label="Country" value={p.country} />
-        <Field label="State" value={p.state} />
-        <Field label="City" value={p.city} />
-        <Field label="Timezone" value={p.timezone} />
-        <Field label="Nationality" value={p.nationality} />
+        <Field label={t("fields.firstName")} value={p.firstName} />
+        <Field label={t("fields.middleName")} value={p.middleName} />
+        <Field label={t("fields.lastName")} value={p.lastName} />
+        <Field label={t("fields.gender")} value={tg(p.gender)} />
+        <Field label={t("fields.dob")} value={p.dob} floating />
+        <ValueWithMarks label={t("fields.phone")} value={p.phone} marks={[[p.phoneWhatsApp, t("marks.whatsApp")], [p.phoneVerified, t("marks.verified")]]} />
+        <ValueWithMarks label={t("fields.altPhone")} value={p.altPhone} marks={[[p.altPhoneWhatsApp, t("marks.whatsApp")]]} />
+        <ValueWithMarks label={t("fields.email")} value={p.email} marks={[[p.emailVerified, t("marks.verified")]]} />
+        <ValueWithMarks label={t("fields.altEmail")} value={p.altEmail} marks={[[p.altEmailVerified, t("marks.verified")]]} />
+        <Field label={t("fields.country")} value={p.country} />
+        <Field label={t("fields.state")} value={p.state} />
+        <Field label={t("fields.city")} value={p.city} />
+        <Field label={t("fields.timezone")} value={p.timezone} />
+        <Field label={t("fields.nationality")} value={p.nationality} />
       </div>
-      <Field label="Address" value={p.address} />
+      <Field label={t("fields.address")} value={p.address} />
       {HR}
-      <h3 className={H3}>Hobbies</h3>
+      <h3 className={H3}>{t("page.hobbies")}</h3>
       {p.hobbies.length ? (
         <div className="flex flex-wrap gap-2.5">
           {p.hobbies.map((h) => (
@@ -179,13 +185,13 @@ function PersonalSection({ m }) {
           ))}
         </div>
       ) : (
-        <p className="m-0 text-base font-extrabold text-k5-mut">No hobbies added yet.</p>
+        <p className="m-0 text-base font-extrabold text-k5-mut">{t("page.noHobbies")}</p>
       )}
       {HR}
-      <h3 className={H3}>Social Media Links</h3>
+      <h3 className={H3}>{t("page.socialLinks")}</h3>
       <div className={GRID2}>
         {p.social.map((link) => (
-          <Field key={link.label} label={`${link.label} Profile URL`}>
+          <Field key={link.label} label={t("fields.socialProfileUrl", { name: link.label })}>
             {link.url ? (
               <a href={/^https?:\/\//i.test(link.url) ? link.url : `https://${link.url}`} target="_blank" rel="noopener noreferrer" className="text-k5-acx underline">
                 {link.url}
@@ -200,38 +206,42 @@ function PersonalSection({ m }) {
 
 function ParentsSection({ m }) {
   const g = m.parents;
+  const t = useTranslations("k5Profile");
+  const tr = useLabelTranslator("k5Profile.roles");
+  const tch = useLabelTranslator("k5Profile.channels");
+  const slotText = useCallingSlotText();
   return (
     <>
-      <ParentBlock title="Mother's Detail" p={g.mother} />
+      <ParentBlock title={t("parents.mother")} p={g.mother} />
       {HR}
-      <ParentBlock title="Father's Detail" p={g.father} />
+      <ParentBlock title={t("parents.father")} p={g.father} />
       {HR}
-      <ParentBlock title="Guardian's Details" p={g.guardian} />
+      <ParentBlock title={t("parents.guardian")} p={g.guardian} />
       {HR}
       <div className={GRID3}>
-        <Field label="Type of Relation (Primary Parent)" value={g.relation} floating />
-        <Field label="Wedding Anniversary Date" value={g.anniversary} floating />
+        <Field label={t("fields.relation")} value={tr(g.relation)} floating />
+        <Field label={t("fields.anniversary")} value={g.anniversary} floating />
       </div>
-      <h3 className={H3}>Communication</h3>
+      <h3 className={H3}>{t("page.communication")}</h3>
       <div className="flex flex-wrap gap-2.5">
         {g.channels.map((c) => (
           <Chip key={c.label} on={c.on}>
-            {c.label}
+            {tch(c.label)}
           </Chip>
         ))}
       </div>
       {HR}
-      <h3 className={H3}>Communication Preferred Timing</h3>
+      <h3 className={H3}>{t("page.preferredTiming")}</h3>
       {g.callingTimes.length ? (
         <div className="flex flex-wrap gap-2.5">
           {g.callingTimes.map((slot) => (
             <span key={slot} className="rounded-full border-[3px] border-k5-line bg-k5-soft px-4 py-2 text-[15px] font-black">
-              {slot}
+              {slotText(slot)}
             </span>
           ))}
         </div>
       ) : (
-        <p className="m-0 text-base font-extrabold text-k5-mut">No preferred timing added yet.</p>
+        <p className="m-0 text-base font-extrabold text-k5-mut">{t("page.noTiming")}</p>
       )}
     </>
   );
@@ -239,17 +249,19 @@ function ParentsSection({ m }) {
 
 function AcademicSection({ m, editor, actions }) {
   const a = m.academic;
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
   return (
     <>
       <div className={GRID3}>
-        <Field label="Student ID" value={a.studentId} mono />
-        <Field label="Academic Year Start Date" value={a.academicYearStart} />
-        <Field label="Enrollment Date" value={a.enrollmentDate} />
-        <Field label="Learning Program" value={a.learningProgram} />
-        <Field label="Grade" value={a.grade} />
-        <Field label="LMS Platform" value={a.lms} />
+        <Field label={t("fields.studentId")} value={a.studentId} mono />
+        <Field label={t("fields.yearStart")} value={a.academicYearStart} />
+        <Field label={t("fields.enrollmentDate")} value={a.enrollmentDate} />
+        <Field label={t("fields.learningProgram")} value={a.learningProgram} />
+        <Field label={t("fields.grade")} value={a.grade} />
+        <Field label={t("fields.lms")} value={a.lms} />
       </div>
-      <h3 className={H3}>{a.grade ? `Courses (${a.grade})` : "Courses"}</h3>
+      <h3 className={H3}>{a.grade ? t("page.coursesOf", { grade: a.grade }) : t("page.courses")}</h3>
       <div className="flex flex-wrap gap-2.5">
         {a.courses.map((c) => {
           const s = subjectStyle(c.name);
@@ -267,23 +279,23 @@ function AcademicSection({ m, editor, actions }) {
         <EditablePreviousSchool m={m} editor={editor} />
       ) : (
         <div className={GRID3}>
-          <Field label="Previous/Current School Name" value={a.previousSchool} />
-          <Field label="Previous/Current Grade Name" value={a.previousGrade} />
-          <Field label="Previous/Current School Graduation Year" value={a.graduationYear} />
-          <Field label="Previous/Current School Country" value={a.previousCountry} />
-          <Field label="CTI Taken Recommended Grade" value={a.ctiRecommendedGrade} />
+          <Field label={t("fields.prevSchool")} value={a.previousSchool} />
+          <Field label={t("fields.prevGrade")} value={a.previousGrade} />
+          <Field label={t("fields.gradYear")} value={a.graduationYear} />
+          <Field label={t("fields.prevCountry")} value={a.previousCountry} />
+          <Field label={t("fields.cti")} value={a.ctiRecommendedGrade === "No" ? tc("actions.no") : a.ctiRecommendedGrade} />
         </div>
       )}
       {HR}
-      <h3 className={H3}>Documents</h3>
-      {!a.documents.some((d) => d.url) && <Note>No submitted documents found for verification.</Note>}
+      <h3 className={H3}>{t("page.documents")}</h3>
+      {!a.documents.some((d) => d.url) && <Note>{t("page.noDocuments")}</Note>}
       {actions ? (
         <EditableDocuments m={m} actions={actions} />
       ) : (
       <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-3">
         {a.documents.map((d) => (
           <div key={d.key} className="flex flex-col gap-1.5 text-sm font-black text-k5-mut">
-            <span>{d.label}</span>
+            <span>{t(`docs.${d.key}`)}</span>
             {d.url ? (
               <a
                 href={d.url}
@@ -292,12 +304,12 @@ function AcademicSection({ m, editor, actions }) {
                 className="flex min-h-[50px] items-center justify-center gap-2 rounded-[14px] border-[3px] border-k5-ac bg-k5-act px-3 text-base font-black text-k5-acx no-underline"
               >
                 <FileText className="h-5 w-5 flex-none" aria-hidden="true" />
-                View
-                <span className="sr-only"> {d.label}</span>
+                {tc("actions.view")}
+                <span className="sr-only"> {t(`docs.${d.key}`)}</span>
               </a>
             ) : (
               <span className="flex min-h-[50px] items-center justify-center rounded-[14px] border-[3px] border-dashed border-k5-line bg-k5-soft px-3 text-base font-extrabold text-k5-mut">
-                Not uploaded
+                {t("page.notUploaded")}
               </span>
             )}
           </div>
@@ -305,7 +317,7 @@ function AcademicSection({ m, editor, actions }) {
       </div>
       )}
       {HR}
-      <h3 className={H3}>Document Verification</h3>
+      <h3 className={H3}>{t("page.docVerification")}</h3>
       <DocumentVerification />
       {editor && (
         <>
@@ -318,13 +330,14 @@ function AcademicSection({ m, editor, actions }) {
 }
 
 function TimingSection({ m }) {
-  if (!m.timing.slots.length) return <p className="m-0 text-base font-extrabold text-k5-mut">No preferred class time added yet.</p>;
+  const t = useTranslations("k5Profile");
+  if (!m.timing.slots.length) return <p className="m-0 text-base font-extrabold text-k5-mut">{t("page.noClassTime")}</p>;
   return (
     <div className="flex flex-col gap-3.5">
       {m.timing.slots.map((slot) => (
         <div key={slot.id ?? `${slot.start}-${slot.end}`} className={GRID3}>
-          <Field label="Start time" value={slot.start} />
-          <Field label="End time" value={slot.end} />
+          <Field label={t("fields.startTime")} value={slot.start} />
+          <Field label={t("fields.endTime")} value={slot.end} />
         </div>
       ))}
     </div>
@@ -333,19 +346,21 @@ function TimingSection({ m }) {
 
 function SportsSection({ m }) {
   const s = m.sports;
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
   return (
     <>
-      <p className="m-0 text-[17px] font-extrabold">Do you take part in any sport or extracurricular activities?</p>
+      <p className="m-0 text-[17px] font-extrabold">{t("page.sportsQuestion")}</p>
       <span
         className={`self-start rounded-full border-[3px] px-4 py-1.5 font-k5-display text-[17px] font-semibold ${s.participates ? "border-k5-ac bg-k5-act text-k5-acx" : "border-k5-line bg-k5-soft text-k5-mut"}`}
       >
-        {s.participates ? "Yes" : "No"}
+        {s.participates ? tc("actions.yes") : tc("actions.no")}
       </span>
       {s.joined.length > 0 && (
         <div className="flex flex-col gap-2.5">
           {s.joined.map((row) => (
             <div key={row.id ?? row.title} className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-[18px] border-[3px] border-k5-line bg-k5-card px-4 py-3 text-[15px] font-extrabold">
-              <strong className="font-k5-display text-[17px] font-semibold">{row.title || "Activity"}</strong>
+              <strong className="font-k5-display text-[17px] font-semibold">{row.title || t("page.activity")}</strong>
               {(row.start || row.end) && <span className="text-k5-mut">{[row.start, row.end].filter(Boolean).join(" – ")}</span>}
               {row.place && <span className="text-k5-mut">{row.place}</span>}
             </div>
@@ -353,7 +368,7 @@ function SportsSection({ m }) {
         </div>
       )}
       {HR}
-      <h3 className={H3}>Would you like to join any extracurricular activities?</h3>
+      <h3 className={H3}>{t("page.clubsQuestion")}</h3>
       <div className="flex flex-wrap gap-2.5">
         {s.clubs.map((c) => (
           <Chip key={c.id ?? c.label} on={c.on}>
@@ -368,20 +383,21 @@ function SportsSection({ m }) {
 function SchoolEmailSection({ m }) {
   const e = m.schoolEmail;
   const [show, setShow] = useState(false);
+  const t = useTranslations("k5Profile");
   if (!e.active) {
-    return <Note>Your school user ID is not active yet. You will be able to activate it from here soon.</Note>;
+    return <Note>{t("page.schoolIdInactive")}</Note>;
   }
   return (
     <div className={GRID2}>
-      <Field label="Email" value={e.email} />
-      <Field label="Password">
+      <Field label={t("fields.email")} value={e.email} />
+      <Field label={t("fields.password")}>
         {e.password ? (
           <>
             <span className="min-w-0 flex-1 font-mono">{show ? e.password : "•".repeat(Math.min(12, e.password.length))}</span>
             <button
               type="button"
               onClick={() => setShow((v) => !v)}
-              aria-label={show ? "Hide password" : "Show password"}
+              aria-label={show ? t("page.hidePassword") : t("page.showPassword")}
               className="flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-[10px] border-none bg-transparent text-k5-acx"
             >
               {show ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
@@ -394,19 +410,18 @@ function SchoolEmailSection({ m }) {
 }
 
 function WithdrawalSection({ m }) {
+  const t = useTranslations("k5Profile");
   return (
     <>
-      <h3 className={H3}>Student Details</h3>
+      <h3 className={H3}>{t("page.studentDetails")}</h3>
       <div className={GRID2}>
-        <Field label="Student ID" value={m.academic.studentId} mono />
-        <Field label="Full Name" value={m.header.name} />
-        <Field label="Grade" value={m.academic.grade} />
-        <Field label="Learning Program" value={m.academic.learningProgram} />
+        <Field label={t("fields.studentId")} value={m.academic.studentId} mono />
+        <Field label={t("fields.fullName")} value={m.header.name} />
+        <Field label={t("fields.grade")} value={m.academic.grade} />
+        <Field label={t("fields.learningProgram")} value={m.academic.learningProgram} />
       </div>
       <Note>
-        {m.withdrawal.inProgress
-          ? "You have a withdrawal request in progress. The school will contact you about it."
-          : "Withdrawal requests will open here soon. If you need help now, please contact the school."}
+        {m.withdrawal.inProgress ? t("page.withdrawalInProgress") : t("page.withdrawalSoon")}
       </Note>
     </>
   );
@@ -426,17 +441,18 @@ const SECTION_VIEWS = {
 
 function Avatar({ header, onPick }) {
   const [broken, setBroken] = useState(false);
+  const t = useTranslations("k5Profile");
   const ring = "shadow-[0_0_0_4px_var(--k5-card),0_0_0_7px_var(--k5-yB)]";
   return (
     <span className="relative flex-none">
       {onPick && (
         // Mockup: the round accent camera button on the avatar ("Change profile photo").
         <label
-          title="Change profile photo"
+          title={t("page.changePhoto")}
           className="absolute -bottom-1 -end-1.5 z-[1] flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-card bg-k5-ac text-white focus-within:ring-4 focus-within:ring-k5-acl"
         >
           <Camera className="h-5 w-5" strokeWidth={2.4} aria-hidden="true" />
-          <span className="sr-only">Change profile photo</span>
+          <span className="sr-only">{t("page.changePhoto")}</span>
           <input
             type="file"
             accept="image/jpeg,image/png"
@@ -470,9 +486,11 @@ function Avatar({ header, onPick }) {
 export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownloadIdCard, downloading, downloadProgress, editor, actions }) {
   const [current, setCurrent] = useState(1);
   const [photoFile, setPhotoFile] = useState(null);
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
   const pickPhoto = (file) => {
     // The existing page (cropperImage.js cropImage, docType "Profile Image"): JPG / PNG only, max 5 MB, one message for both.
-    if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type) || file.size > 5 * 1024 * 1024) return toast.error("Please upload files in JPG, PNG, and JPEG with max size of 5MB");
+    if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type) || file.size > 5 * 1024 * 1024) return toast.error(t("page.photoTypeError"));
     setPhotoFile(file);
   };
   const savePhoto = async (blob) => {
@@ -489,10 +507,10 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
   if (error || !model) {
     return (
       <div className={`${K5_CARD} flex flex-col items-center gap-4 px-6 py-10 text-center`} role="alert">
-        <p className="m-0 font-k5-display text-xl font-semibold">We couldn&apos;t load your profile.</p>
-        <p className="m-0 text-base font-extrabold text-k5-mut">{error?.message?.replace(/^[A-Z_0-9]+:\s*/, "") || "Please try again."}</p>
+        <p className="m-0 font-k5-display text-xl font-semibold">{t("page.loadError")}</p>
+        <p className="m-0 text-base font-extrabold text-k5-mut">{error?.message?.replace(/^[A-Z_0-9]+:\s*/, "") || t("page.pleaseTryAgain")}</p>
         <button type="button" onClick={onRetry} className={ACCENT_PILL_BTN}>
-          Try again
+          {tc("actions.tryAgain")}
         </button>
       </div>
     );
@@ -519,9 +537,9 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
       <div className={`${K5_CARD} flex flex-wrap items-center gap-[18px] px-[22px] py-[18px]`}>
         <Avatar header={model.header} onPick={actions ? pickPhoto : null} />
         <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1.5">
-          <h1 className="k5h-pf-h1 m-0 font-k5-display text-[34px] font-semibold leading-[1.05] [overflow-wrap:anywhere] max-[600px]:text-[28px]">{model.header.name || "My Profile"}</h1>
+          <h1 className="k5h-pf-h1 m-0 font-k5-display text-[34px] font-semibold leading-[1.05] [overflow-wrap:anywhere] max-[600px]:text-[28px]">{model.header.name || t("page.title")}</h1>
           <p className="m-0 text-[17px] font-extrabold text-k5-mut">
-            My Profile
+            {t("page.title")}
             {meta.map((item, i) => (
               <span key={item} className={i === meta.length - 1 && model.header.studentId ? "font-mono" : ""}>
                 {" · "}
@@ -532,7 +550,7 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
           <div className="mt-1 flex max-w-[440px] items-center gap-3">
             <span
               role="progressbar"
-              aria-label="Profile complete"
+              aria-label={t("page.profileComplete")}
               aria-valuenow={model.pct}
               aria-valuemin={0}
               aria-valuemax={100}
@@ -540,13 +558,13 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
             >
               <span className="block h-full rounded-full bg-k5-ac transition-[width] duration-400" style={{ width: `${model.pct}%` }} />
             </span>
-            <span className="whitespace-nowrap text-base font-black">{model.pct}% complete</span>
+            <span className="whitespace-nowrap text-base font-black">{t("page.pctComplete", { pct: model.pct })}</span>
           </div>
         </div>
         <div className="flex flex-wrap gap-2.5">
           <button type="button" onClick={onBack} className={`${PILL_BTN} ps-3`}>
             <ArrowLeft className="h-5 w-5" strokeWidth={2.8} aria-hidden="true" />
-            Back
+            {tc("actions.back")}
           </button>
           {editor && (
             <button
@@ -555,7 +573,7 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
               disabled={!editor.dirtyCount || editor.busy}
               className={`${BTN_BASE} border-[#13803F] bg-[#13803F] text-white shadow-[0_4px_0_#0B5A2B]`}
             >
-              {editor.busy ? "Saving…" : editor.dirtyCount ? `Bulk Save (${editor.dirtyCount})` : "Bulk Save"}
+              {editor.busy ? tc("status.saving") : editor.dirtyCount ? t("page.bulkSaveCount", { count: editor.dirtyCount }) : t("page.bulkSave")}
             </button>
           )}
         </div>
@@ -563,7 +581,7 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
 
       <div className="grid grid-cols-[270px_minmax(0,1fr)] items-start gap-[18px] max-[900px]:grid-cols-1">
         <nav
-          aria-label="My Profile"
+          aria-label={t("page.title")}
           className={`${K5_CARD} sticky top-[100px] flex flex-col gap-1 p-2.5 max-[900px]:static max-[900px]:flex-row max-[900px]:overflow-x-auto max-[900px]:rounded-[20px] max-[900px]:p-2`}
         >
           {sections.map((s, i) => {
@@ -581,7 +599,7 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
                 >
                   {i + 1}
                 </span>
-                <span className="min-w-0 flex-[1_1_auto] leading-[1.2]">{s.title}</span>
+                <span className="min-w-0 flex-[1_1_auto] leading-[1.2]">{t(`sections.${s.key}`)}</span>
                 {s.pct !== null && <Ring pct={s.pct} />}
               </button>
             );
@@ -592,19 +610,19 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
           <div className="flex flex-wrap items-center gap-3">
             <span className="flex h-11 w-11 flex-none items-center justify-center rounded-[14px] bg-k5-act font-k5-display text-[22px] font-semibold text-k5-acx">{index + 1}</span>
             <h2 id="k5-profile-h" className="m-0 min-w-0 flex-[1_1_220px] font-k5-display text-[26px] font-semibold leading-[1.15] max-[600px]:text-[22px]">
-              {section.title}
+              {t(`sections.${section.key}`)}
             </h2>
-            {section.key === "academic" && model.academic.systemTrainingSkipped && <span className="text-sm font-black text-k5-mut">System Training Skipped</span>}
+            {section.key === "academic" && model.academic.systemTrainingSkipped && <span className="text-sm font-black text-k5-mut">{t("page.trainingSkipped")}</span>}
             {section.key === "academic" && model.academic.idCardUrl && model.academic.idCardAllowed && (
               <div className="flex min-w-[220px] flex-col gap-1.5">
                 <button type="button" onClick={onDownloadIdCard} disabled={downloading} className={GREEN_BTN}>
                   <IdCard className="h-5 w-5" aria-hidden="true" />
-                  Download Student ID Card
+                  {t("page.downloadIdCard")}
                 </button>
                 {downloading && (
                   <div className="flex flex-col gap-1" role="status" aria-live="polite">
                     <div className="flex items-center justify-between gap-2 text-xs font-black text-k5-mut">
-                      <span>Downloading ID card...</span>
+                      <span>{t("page.downloadingIdCard")}</span>
                       <span>{downloadProgress}%</span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-k5-soft" aria-hidden="true">
@@ -621,15 +639,15 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
               !actions &&
               (model.schoolEmail.active ? (
                 <a href="https://outlook.office.com" target="_blank" rel="noopener noreferrer" className={ACCENT_BTN}>
-                  Open Outlook
+                  {t("page.openOutlook")}
                 </a>
               ) : (
                 <button
                   type="button"
-                  onClick={() => toast("Activating your school user ID — coming soon", { icon: "🚧" })}
+                  onClick={() => toast(t("page.activateSoon"), { icon: "🚧" })}
                   className={ACCENT_BTN}
                 >
-                  Activate your school user ID
+                  {t("page.activateSchoolId")}
                 </button>
               ))}
           </div>
@@ -643,17 +661,17 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
           {!model.rightToEdit && (
             <p className="m-0 flex items-center gap-2 text-sm font-extrabold text-k5-mut">
               <Info className="h-4 w-4 flex-none" aria-hidden="true" />
-              {model.demo ? "Demo mode: this is a sample profile, so nothing here can be changed." : "Only the school can change these details."}
+              {model.demo ? t("page.demoMode") : t("page.schoolOnly")}
             </p>
           )}
 
           <div className="mt-1 flex flex-wrap justify-between gap-2.5 border-t-[3px] border-k5-line pt-4">
             <button type="button" disabled={index === 0} onClick={() => go(sections[index - 1])} className={`${PILL_BTN} ps-3`}>
               <ArrowLeft className="h-5 w-5" strokeWidth={2.8} aria-hidden="true" />
-              Previous
+              {tc("actions.previous")}
             </button>
             <button type="button" disabled={index === sections.length - 1} onClick={() => go(sections[index + 1])} className={`${ACCENT_PILL_BTN} pe-3`}>
-              Next
+              {tc("actions.next")}
               <ArrowRight className="h-5 w-5" strokeWidth={2.8} aria-hidden="true" />
             </button>
           </div>

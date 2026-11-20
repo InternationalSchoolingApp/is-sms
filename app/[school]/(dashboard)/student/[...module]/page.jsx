@@ -1,6 +1,8 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useLabelTranslator } from "@/i18n/labels";
 
 /**
  * Catch-all placeholder for student dashboard modules not yet migrated.
@@ -13,6 +15,8 @@ import { useParams } from "next/navigation";
  */
 export default function StudentModulePlaceholder() {
   const params = useParams();
+  const t = useTranslations("nav.placeholder");
+  const tl = useLabelTranslator("menu");
   const parts = Array.isArray(params?.module) ? params.module : [params?.module].filter(Boolean);
   const label = parts
     .join(" / ")
@@ -22,8 +26,8 @@ export default function StudentModulePlaceholder() {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
-        <h1 className="text-lg font-extrabold text-black sm:text-xl">{label || "Module"}</h1>
-        <p className="mt-2 text-sm text-black/60">This module is being migrated and will be available soon (Phase C).</p>
+        <h1 className="text-lg font-extrabold text-black sm:text-xl">{tl(label) || t("module")}</h1>
+        <p className="mt-2 text-sm text-black/60">{t("comingSoon")}</p>
       </div>
     </div>
   );

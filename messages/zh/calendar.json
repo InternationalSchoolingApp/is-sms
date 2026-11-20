@@ -1,0 +1,173 @@
+{
+  "views": {
+    "today": "今天",
+    "week": "周",
+    "month": "月"
+  },
+  "legend": {
+    "title": "图例：",
+    "assignment": "作业",
+    "class": "课程",
+    "schoolActivity": "学校活动",
+    "holiday": "假日"
+  },
+  "loading": "正在加载你的日历…",
+  "loadError": "无法加载你的日历，请稍后再试。",
+  "backToMonth": "返回月视图",
+  "backToWeek": "返回周视图",
+  "timeOfDay": {
+    "morning": "上午",
+    "afternoon": "下午",
+    "evening": "傍晚",
+    "night": "夜间"
+  },
+  "filters": {
+    "today": "今天",
+    "liveGroup": "正在进行的课程和学校活动",
+    "upcomingGroup": "即将开始的课程和学校活动",
+    "completedGroup": "已结束的课程和学校活动",
+    "noClassOrActivity": "没有课程和学校活动",
+    "myCourses": "我的课程",
+    "hideCourse": "隐藏课程",
+    "showCourse": "显示课程",
+    "changeCourseColor": "更改课程颜色",
+    "pickColor": "选择颜色 {color}",
+    "assignments": "作业",
+    "pending": "待完成",
+    "submitted": "已提交",
+    "upcoming": "即将到来",
+    "classStatus": "课程状态",
+    "live": "直播中",
+    "expired": "已结束",
+    "missedClass": "缺课",
+    "lateJoinClass": "迟到",
+    "events": "活动",
+    "schoolActivities": "学校活动",
+    "schoolEvents": "学校事件",
+    "holidays": "假日",
+    "holidaysAndBreaks": "节假日和假期"
+  },
+  "nothingScheduledOn": "{date}没有安排。",
+  "nothingScheduledDay": "这一天没有安排。",
+  "untitled": "无标题",
+  "moreCount": "另外 {count} 项",
+  "allDay": "全天",
+  "badges": {
+    "live": "直播中",
+    "upcoming": "即将开始",
+    "expired": "已结束",
+    "missed": "缺课",
+    "lateJoin": "迟到"
+  },
+  "assignmentStatus": {
+    "submitted": "已提交",
+    "upcoming": "即将到期",
+    "pending": "待完成"
+  },
+  "assignmentTiming": {
+    "onTime": "按时",
+    "early": "提前（{count, plural, other {# 天}}）",
+    "late": "逾期（{count, plural, other {# 天}}）"
+  },
+  "eventKind": {
+    "holiday": "假日 / 假期",
+    "schoolEvent": "学校事件",
+    "activity": "活动"
+  },
+  "eventDetails": "事件详情",
+  "attempt": "开始作答",
+  "detail": {
+    "date": "日期",
+    "time": "时间",
+    "details": "详情",
+    "teacher": "老师",
+    "status": "状态",
+    "duration": "时长",
+    "late": "迟到",
+    "lateBy": "迟到时长",
+    "with": "授课老师",
+    "batch": "班级",
+    "grade": "年级",
+    "course": "课程",
+    "dueDate": "截止日期",
+    "timing": "提交情况",
+    "submitted": "提交日期"
+  },
+  "status": {
+    "live": "直播中",
+    "upcoming": "即将开始",
+    "missed": "缺课",
+    "lateJoin": "迟到",
+    "expired": "已结束"
+  },
+  "duration": {
+    "minutes": "{count, plural, other {# 分钟}}",
+    "hours": "{count, plural, other {# 小时}}",
+    "mins": "{count, plural, other {# 分钟}}",
+    "secs": "{count, plural, other {# 秒}}"
+  },
+  "activity": {
+    "title": "活动详情",
+    "attachment": "附件",
+    "timeRemaining": "剩余时间",
+    "countdown": {
+      "days": "天",
+      "hours": "小时",
+      "min": "分",
+      "sec": "秒"
+    },
+    "couldNotOpen": "暂时无法打开，请一分钟后再试。",
+    "cannotJoin": "你现在无法加入此活动。",
+    "linkCopied": "课程链接已复制",
+    "copyFailed": "无法复制链接，请从文本框中复制。",
+    "scheduledFor": "课程 {name} 安排在 {date}",
+    "joinClassNow": "立即加入课程",
+    "completed": "你的活动已结束。",
+    "loadingDetails": "正在加载详情…",
+    "joinLinkNotice": "加入链接将在预定时间前 {minutes} 分钟显示。",
+    "viewAttachment": "查看附件",
+    "opening": "正在打开…",
+    "joinEvent": "加入活动"
+  },
+  "join": {
+    "title": "加入课程",
+    "almostThere": "马上就好，请稍候…",
+    "couldNotOpen": "暂时无法打开此课程，请稍后再试。",
+    "trainingScheduled": "{className} | {subjectName} 安排在 {date}。",
+    "trainingJoinOn": "你可以在 {date} 加入培训。",
+    "status": {
+      "live": "正在直播",
+      "upcoming": "即将开始",
+      "ended": "已结束",
+      "unavailable": "不可用"
+    },
+    "joinIssues": "如果无法加入，请复制下面的课程链接，并粘贴到浏览器的新标签页中：",
+    "copied": "已复制！",
+    "copyClassLink": "复制课程链接",
+    "joinClass": "加入课程"
+  },
+  "k5": {
+    "noClass": {
+      "holidayTitle": "假日",
+      "holidayText": "今天是假日，不用上学！",
+      "weekendTitle": "周末啦！",
+      "weekendText": "今天是周末，不用上学！",
+      "studyTitle": "没有直播课",
+      "studyText": "今天继续学习你的课程吧！",
+      "freeTitle": "没有课！",
+      "freeText": "今天没有课，好好享受自由的一天吧！",
+      "freeTextNamed": "今天没有课，{name}，好好享受自由的一天吧！"
+    },
+    "summary": {
+      "holiday": "{name} · 不用上学",
+      "classes": "{count, plural, other {# 节课}}",
+      "classesLive": "{count, plural, other {# 节课}} · {name} 正在直播！",
+      "classesDone": "{count, plural, other {# 节课}} · 全部完成",
+      "assignmentsDue": "{count, plural, other {# 项作业到期}}",
+      "schoolActivity": "学校活动",
+      "weekend": "周末啦！不用上学。",
+      "selfStudy": "没有直播课，今天是学习课程的日子！",
+      "free": "今天没有课，自由的一天！"
+    }
+  }
+}

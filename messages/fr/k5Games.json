@@ -1,0 +1,110 @@
+{
+  "yourGames": "Tes jeux",
+  "pickGame": "Choisis un jeu !",
+  "locked": {
+    "title": "Les jeux sont fermés",
+    "past": "Cette journée est finie. Choisis aujourd'hui ou un jour à venir pour jouer.",
+    "pending": "Tu as un cours aujourd'hui. Les jeux s'ouvrent quand tous les cours du jour sont finis.",
+    "live": "Ton cours est en direct maintenant ! Rejoins-le d'abord. Les jeux rouvrent quand ton cours est fini."
+  },
+  "games": {
+    "balloon": {
+      "name": "Éclate les ballons",
+      "how": "Touche les ballons pour les éclater !"
+    },
+    "memory": {
+      "name": "Jeu de mémoire",
+      "how": "Retourne deux cartes. Trouve les paires !"
+    },
+    "mole": {
+      "name": "Coucou les copains",
+      "how": "Touche le copain avant qu'il se cache !"
+    },
+    "count": {
+      "name": "Compte les étoiles",
+      "how": "Combien d'étoiles vois-tu ?"
+    },
+    "math": {
+      "name": "Calcul rapide",
+      "how": "Choisis la bonne réponse !"
+    },
+    "shape": {
+      "name": "Trouve la forme",
+      "how": "Touche la forme que je demande !"
+    }
+  },
+  "score": "Score {score}",
+  "startOver": "Recommencer",
+  "greatJob": "Bravo !",
+  "tryAgain": "Essaie encore !",
+  "shapes": {
+    "circle": "cercle",
+    "square": "carré",
+    "triangle": "triangle",
+    "star": "étoile",
+    "heart": "cœur"
+  },
+  "tapShape": {
+    "circle": "Touche le cercle !",
+    "square": "Touche le carré !",
+    "triangle": "Touche le triangle !",
+    "star": "Touche l'étoile !",
+    "heart": "Touche le cœur !"
+  },
+  "balloons": {
+    "pink": "Éclate le ballon rose",
+    "yellow": "Éclate le ballon jaune",
+    "blue": "Éclate le ballon bleu",
+    "green": "Éclate le ballon vert",
+    "purple": "Éclate le ballon violet",
+    "orange": "Éclate le ballon orange"
+  },
+  "boards": {
+    "balloonGame": "Jeu des ballons",
+    "pop": "Pop !",
+    "hiddenCard": "Carte cachée",
+    "allPairs": "Tu as trouvé toutes les paires !",
+    "startOver": "Recommencer",
+    "time": "Temps : {seconds}",
+    "hole": "Trou {n}",
+    "timesUp": "C'est fini ! Tu en as attrapé {count} !",
+    "moleHow": "Touche le copain avant qu'il se cache !",
+    "playAgain": "Rejouer",
+    "start": "Commencer"
+  },
+  "high": {
+    "title": "Jeux de réflexion",
+    "subtitle": "De courts casse-têtes pour entraîner la logique, le calcul et la mémoire.",
+    "locked": "Les jeux sont verrouillés",
+    "lockedText": "Les jeux ne se débloquent qu'un jour sans cours, ou une fois tous vos cours et activités du jour terminés.",
+    "lockedPast": "Cette journée est terminée. Choisissez aujourd'hui ou un jour à venir pour jouer.",
+    "games": {
+      "count": {
+        "name": "Suite de nombres",
+        "how": "Trouvez le nombre suivant de la suite."
+      },
+      "math": {
+        "name": "Calcul mental",
+        "how": "Calculez de tête, sans calculatrice."
+      },
+      "shape": {
+        "name": "L'intrus",
+        "how": "Un nombre ne suit pas la règle. Trouvez-le."
+      },
+      "memory": {
+        "name": "Grille de mémoire",
+        "how": "Retournez deux cartes à la fois. Trouvez les 8 paires."
+      }
+    },
+    "whatNext": "Quel est le suivant ?",
+    "solve": "Calculez",
+    "percentOf": "{p} % de {n}",
+    "oddOne": "Quel nombre est l'intrus ?",
+    "hiddenCard": "Carte cachée",
+    "allPairs": "Toutes les paires sont trouvées.",
+    "startOver": "Recommencer",
+    "score": "Score {score}",
+    "correct": "Correct",
+    "notQuite": "Pas tout à fait. Réessayez."
+  }
+}

@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { CalendarDays, Check, Lock, Plus, Siren, Trash2, Undo2, X } from "lucide-react";
 import { IoLogoWhatsapp } from "react-icons/io";
+import { useTranslations } from "next-intl";
+import { useLabelTranslator } from "@/i18n/labels";
 import { DatePicker } from "@/components/ui/date-picker";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -33,6 +35,16 @@ const ICON_BTN = "flex h-[30px] w-[30px] flex-none cursor-pointer items-center j
 
 const req = <span className="text-k5-ri"> *</span>;
 
+// "Mother: 09:00 AM - 10:00 AM" (utils/profileModel.js callingTimes) with the role in the dashboard language.
+export function useCallingSlotText() {
+  const t = useTranslations("k5Profile");
+  const tr = useLabelTranslator("k5Profile.roles");
+  return (slot) => {
+    const m = /^([^:]+): (.+)$/.exec(String(slot));
+    return m ? t("callingSlot", { role: tr(m[1]), range: m[2] }) : slot;
+  };
+}
+
 function border(st) {
   if (st.error) return "border-k5-ri";
   if (st.dirty || st.saved) return "border-k5-ac";
@@ -41,9 +53,10 @@ function border(st) {
 
 /** Tick / cross inside an input (mockup .pffs), or the saved mark (.pffok). */
 function InlineActions({ st, onSave, onUndo, offset = "end-2" }) {
+  const t = useTranslations("k5Profile");
   if (st.saved && !st.dirty) {
     return (
-      <span role="status" aria-label="Saved!" className={`absolute top-1/2 ${offset} flex h-[30px] w-[30px] -translate-y-1/2 items-center justify-center rounded-[9px] bg-k5-act text-k5-acx`}>
+      <span role="status" aria-label={t("editor.saved")} className={`absolute top-1/2 ${offset} flex h-[30px] w-[30px] -translate-y-1/2 items-center justify-center rounded-[9px] bg-k5-act text-k5-acx`}>
         <Check className="h-4 w-4" strokeWidth={3.4} aria-hidden="true" />
       </span>
     );
@@ -51,10 +64,10 @@ function InlineActions({ st, onSave, onUndo, offset = "end-2" }) {
   if (!st.dirty) return null;
   return (
     <span className={`absolute top-1/2 ${offset} flex -translate-y-1/2 items-center gap-[5px]`}>
-      <button type="button" onClick={onSave} disabled={st.saving} aria-label="Save this field" title="Save this field" className={`${ICON_BTN} bg-[#13803F] shadow-[0_2px_0_#0B5A2B]`}>
+      <button type="button" onClick={onSave} disabled={st.saving} aria-label={t("editor.saveField")} title={t("editor.saveField")} className={`${ICON_BTN} bg-[#13803F] shadow-[0_2px_0_#0B5A2B]`}>
         <Check className="h-4 w-4" strokeWidth={3.4} aria-hidden="true" />
       </button>
-      <button type="button" onClick={onUndo} disabled={st.saving} aria-label="Cancel change" title="Cancel change" className={`${ICON_BTN} bg-[#D3373C] shadow-[0_2px_0_#9E2226]`}>
+      <button type="button" onClick={onUndo} disabled={st.saving} aria-label={t("editor.cancelChange")} title={t("editor.cancelChange")} className={`${ICON_BTN} bg-[#D3373C] shadow-[0_2px_0_#9E2226]`}>
         <X className="h-4 w-4" strokeWidth={3.4} aria-hidden="true" />
       </button>
     </span>
@@ -68,6 +81,8 @@ function ErrorText({ st }) {
 /** Save / Undo bar for a group of inputs. */
 export function UnitBar({ editor, unit }) {
   const st = editor.status(unit);
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
   if (!st.dirty && !st.saved && !st.error) return null;
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -80,7 +95,7 @@ export function UnitBar({ editor, unit }) {
             className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border-none bg-[#13803F] px-3.5 font-k5-display text-[15px] font-semibold text-white shadow-[0_3px_0_#0B5A2B] disabled:cursor-wait disabled:opacity-60"
           >
             <Check className="h-4 w-4" strokeWidth={3.2} aria-hidden="true" />
-            {st.saving ? "Saving…" : "Save"}
+            {st.saving ? tc("status.saving") : tc("actions.save")}
           </button>
           <button
             type="button"
@@ -89,13 +104,13 @@ export function UnitBar({ editor, unit }) {
             className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border-[3px] border-k5-line bg-k5-card px-3 font-k5-display text-[15px] font-semibold text-k5-ink"
           >
             <Undo2 className="h-4 w-4" aria-hidden="true" />
-            Undo
+            {t("editor.undo")}
           </button>
         </>
       ) : st.saved ? (
         <span role="status" className="inline-flex items-center gap-1 text-sm font-black text-k5-acx">
           <Check className="h-4 w-4" strokeWidth={3.2} aria-hidden="true" />
-          Saved!
+          {t("editor.saved")}
         </span>
       ) : null}
       <ErrorText st={st} />
@@ -174,6 +189,7 @@ function EditDate({ editor, k, label, maxToday = true }) {
 
 function Locked({ label, value, floating = false }) {
   const valueRef = useRef(null);
+  const t = useTranslations("k5Profile");
   const [valueOverflows, setValueOverflows] = useState(false);
 
   useEffect(() => {
@@ -191,7 +207,7 @@ function Locked({ label, value, floating = false }) {
   return (
     <div className={LABEL}>
       {!floating && <span>{label}</span>}
-      <span title="Only the school can change this" className={`${floating ? "relative" : ""} flex h-[50px] items-center gap-2 rounded-[14px] border-[3px] border-k5-line bg-k5-soft px-3.5 py-2 font-k5-body text-base font-extrabold text-k5-mut`}>
+      <span title={t("editor.schoolOnly")} className={`${floating ? "relative" : ""} flex h-[50px] items-center gap-2 rounded-[14px] border-[3px] border-k5-line bg-k5-soft px-3.5 py-2 font-k5-body text-base font-extrabold text-k5-mut`}>
         {floating && <span className="pointer-events-none absolute start-3 top-0 -translate-y-1/2 bg-k5-soft px-1 text-xs font-black text-k5-ac">{label}</span>}
         <Lock className="h-4 w-4 flex-none" aria-hidden="true" />
         {valueOverflows && value ? (
@@ -228,6 +244,7 @@ function Toggle({ on, onChange, children, icon: Icon }) {
 
 function EditPhone({ editor, label, keys, required, emergencyKey, fieldId }) {
   const { isMiddle } = useDashboardContext();
+  const t = useTranslations("k5Profile");
   const [numKey, isoKey, waKey] = keys;
   const unit = editor.unitOf(numKey);
   const st = editor.status(unit);
@@ -271,7 +288,7 @@ function EditPhone({ editor, label, keys, required, emergencyKey, fieldId }) {
   return (
     <div className={LABEL}>
       <span className="relative block min-w-0">
-        <span className="pointer-events-none absolute left-3 top-0 z-[2] -translate-y-1/2 bg-k5-card px-1 text-xs font-black text-k5-ac">Country Code</span>
+        <span className="pointer-events-none absolute left-3 top-0 z-[2] -translate-y-1/2 bg-k5-card px-1 text-xs font-black text-k5-ac">{t("fields.countryCode")}</span>
         <input
           ref={inputRef}
           type="tel"
@@ -298,11 +315,11 @@ function EditPhone({ editor, label, keys, required, emergencyKey, fieldId }) {
       </span>
       <div className={`flex flex-wrap items-center gap-x-4 gap-y-1.5 ${isMiddle ? "justify-between" : ""}`}>
         <Toggle on={editor.draft[waKey]} onChange={(v) => editor.set(waKey, v)} icon={WhatsAppIcon}>
-          Available on WhatsApp
+          {t("editor.onWhatsApp")}
         </Toggle>
         {emergencyKey && (
           <Toggle on={editor.draft[emergencyKey]} onChange={(v) => editor.set(emergencyKey, v)} icon={Siren}>
-            Emergency Contact
+            {t("marks.emergency")}
           </Toggle>
         )}
         {isMiddle && (
@@ -342,16 +359,17 @@ function EditPlace({ editor, keys, required }) {
   const cities = useProfileMaster("cities", state);
   const toOptions = (list) => (list || []).map((x) => ({ value: x.key, label: x.value }));
   const countries = toOptions(editor.countries);
+  const t = useTranslations("k5Profile");
   return (
     <>
       <label className={LABEL}>
-        <FloatingLabelSelect k5 k5Border={border(st)} label="Country" required={required} value={country ?? ""} onValueChange={(v) => editor.setMany({ [countryKey]: v, [stateKey]: "", [cityKey]: "" })} options={countries} error={st.error} disabled={!countries.length} searchable={countries.length > 5} />
+        <FloatingLabelSelect k5 k5Border={border(st)} label={t("fields.country")} required={required} value={country ?? ""} onValueChange={(v) => editor.setMany({ [countryKey]: v, [stateKey]: "", [cityKey]: "" })} options={countries} error={st.error} disabled={!countries.length} searchable={countries.length > 5} />
       </label>
       <label className={LABEL}>
-        <FloatingLabelSelect k5 k5Border={border(st)} label="State" required={required} value={state ?? ""} onValueChange={(v) => editor.setMany({ [stateKey]: v, [cityKey]: "" })} options={toOptions(states.data)} error={st.error} disabled={!country || states.isFetching} searchable={toOptions(states.data).length > 5} />
+        <FloatingLabelSelect k5 k5Border={border(st)} label={t("fields.state")} required={required} value={state ?? ""} onValueChange={(v) => editor.setMany({ [stateKey]: v, [cityKey]: "" })} options={toOptions(states.data)} error={st.error} disabled={!country || states.isFetching} searchable={toOptions(states.data).length > 5} />
       </label>
       <label className={LABEL}>
-        <FloatingLabelSelect k5 k5Border={border(st)} label="City" required={required} value={editor.draft[cityKey] ?? ""} onValueChange={(v) => editor.set(cityKey, v)} options={toOptions(cities.data)} error={st.error} disabled={!state || cities.isFetching} searchable={toOptions(cities.data).length > 5} />
+        <FloatingLabelSelect k5 k5Border={border(st)} label={t("fields.city")} required={required} value={editor.draft[cityKey] ?? ""} onValueChange={(v) => editor.set(cityKey, v)} options={toOptions(cities.data)} error={st.error} disabled={!state || cities.isFetching} searchable={toOptions(cities.data).length > 5} />
       </label>
       {(st.dirty || st.saved || st.error) && (
         <div className="col-span-full">
@@ -391,6 +409,8 @@ const LINK_BTN = "inline-flex cursor-pointer items-center gap-1.5 self-start bor
 function EditableHobbies({ editor }) {
   const [adding, setAdding] = useState(false);
   const [value, setValue] = useState("");
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
   const chosen = editor.draft.hobbies ? editor.draft.hobbies.split(",").filter(Boolean) : [];
   const known = editor.hobbies.map((h) => h.label);
   const typed = chosen.filter((label) => !known.includes(label));
@@ -398,15 +418,15 @@ function EditableHobbies({ editor }) {
   const toggle = (label) => setChosen(chosen.includes(label) ? chosen.filter((x) => x !== label) : [...chosen, label]);
   const add = () => {
     const label = value.replace(/,/g, " ").replace(/\s+/g, " ").trim();
-    if (label.length <= 2) return toast.error("Invalid hobby. Please type at least 3 letters.");
-    if ([...known, ...typed].some((x) => x.toLowerCase() === label.toLowerCase())) return toast.error("Already added");
+    if (label.length <= 2) return toast.error(t("editor.hobbyTooShort"));
+    if ([...known, ...typed].some((x) => x.toLowerCase() === label.toLowerCase())) return toast.error(t("editor.alreadyAdded"));
     setChosen([...chosen, label.slice(0, 100)]);
     setValue("");
     setAdding(false);
   };
   return (
     <>
-      <h3 className={H3}>Hobbies</h3>
+      <h3 className={H3}>{t("page.hobbies")}</h3>
       <div className="flex flex-wrap gap-2.5">
         {[...known, ...typed].map((label) => (
           <ChipToggle key={label} on={chosen.includes(label)} onClick={() => toggle(label)}>
@@ -423,23 +443,23 @@ function EditableHobbies({ editor }) {
               if (e.key === "Enter") add();
               if (e.key === "Escape") setAdding(false);
             }}
-            aria-label="Other hobby"
-            placeholder="Type a hobby"
+            aria-label={t("editor.otherHobby")}
+            placeholder={t("editor.typeHobby")}
             autoFocus
             maxLength={100}
             className={`${INPUT} border-k5-line !w-auto min-w-[220px] flex-1`}
           />
           <button type="button" onClick={add} className={`${SMALL_BTN} bg-k5-ac text-white`}>
-            Add
+            {t("editor.add")}
           </button>
           <button type="button" onClick={() => setAdding(false)} className={`${SMALL_BTN} bg-k5-soft text-k5-ink`}>
-            Cancel
+            {tc("actions.cancel")}
           </button>
         </div>
       ) : (
         <button type="button" onClick={() => setAdding(true)} className={LINK_BTN}>
           <Plus className="h-4 w-4" aria-hidden="true" />
-          Add other hobbies
+          {t("editor.addHobbies")}
         </button>
       )}
       <UnitBar editor={editor} unit="hobbies" />
@@ -456,6 +476,8 @@ function EditableSocial({ editor, actions }) {
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
   const add = async () => {
     const ok = await actions.addSocialLink(title, url);
     if (ok) {
@@ -464,10 +486,13 @@ function EditableSocial({ editor, actions }) {
       setAdding(false);
     }
   };
-  const labelOf = (s) => `${s.label === "Twitter" ? "X (Twitter)" : s.label} ${s.custom ? "URL" : "Profile URL"}`;
+  const labelOf = (s) => {
+    const name = s.label === "Twitter" ? "X (Twitter)" : s.label;
+    return s.custom ? t("fields.socialUrl", { name }) : t("fields.socialProfileUrl", { name });
+  };
   return (
     <>
-      <h3 className={H3}>Social Media Links</h3>
+      <h3 className={H3}>{t("page.socialLinks")}</h3>
       <div className={GRID2}>
         {editor.social.map((s) => (
           <div key={s.id} className="relative flex min-w-0 items-end gap-2">
@@ -479,8 +504,8 @@ function EditableSocial({ editor, actions }) {
                 type="button"
                 onClick={() => actions.removeSocialLink(s.userSocialMediaId)}
                 disabled={Boolean(actions.busy)}
-                aria-label={`Remove ${s.label}`}
-                title="Remove"
+                aria-label={t("editor.removeNamed", { name: s.label })}
+                title={tc("actions.remove")}
                 className="mb-[7px] inline-flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-[10px] border-[3px] border-k5-ri bg-k5-rt p-0 text-k5-ri disabled:cursor-wait disabled:opacity-50"
               >
                 <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -493,26 +518,26 @@ function EditableSocial({ editor, actions }) {
         (adding ? (
           <div className={`${GRID3} items-end`}>
             <label className={LABEL}>
-              <span>Link Title</span>
+              <span>{t("editor.linkTitle")}</span>
               <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} autoFocus className={`${INPUT} border-k5-line`} />
             </label>
             <label className={LABEL}>
-              <span>URL</span>
+              <span>{t("editor.url")}</span>
               <input value={url} onChange={(e) => setUrl(e.target.value)} type="url" placeholder="https://" className={`${INPUT} border-k5-line`} />
             </label>
             <div className="flex gap-2">
               <button type="button" onClick={add} disabled={actions.busy === "social:add"} className={`${SMALL_BTN} min-h-[50px] bg-k5-ac text-white`}>
-                {actions.busy === "social:add" ? "Adding…" : "Add"}
+                {actions.busy === "social:add" ? t("editor.adding") : t("editor.add")}
               </button>
               <button type="button" onClick={() => setAdding(false)} className={`${SMALL_BTN} min-h-[50px] bg-k5-soft text-k5-ink`}>
-                Cancel
+                {tc("actions.cancel")}
               </button>
             </div>
           </div>
         ) : (
           <button type="button" onClick={() => setAdding(true)} className={LINK_BTN}>
             <Plus className="h-4 w-4" aria-hidden="true" />
-            Add other social media link
+            {t("editor.addSocial")}
           </button>
         ))}
     </>
@@ -524,26 +549,28 @@ export function EditablePersonal({ m, editor, actions }) {
   const p = m.personal;
   const timezones = useProfileMaster("timezones");
   const countries = (editor.countries || []).map((c) => ({ value: c.key, label: c.value }));
+  const t = useTranslations("k5Profile");
+  const genders = GENDERS.map((g) => ({ ...g, label: t(`genders.${g.value.toLowerCase()}`) }));
   return (
     <>
       <div className={GRID3}>
-        <EditText editor={editor} k="firstName" label="First Name" required name />
-        <EditText editor={editor} k="middleName" label="Middle Name" name />
-        <EditText editor={editor} k="lastName" label="Last Name" required name />
-        <EditSelect editor={editor} k="gender" label="Gender" required options={GENDERS} />
-        <Locked label="Date of Birth" value={p.dob} floating />
-        <EditPhone editor={editor} label="Phone" keys={["phone", "phoneIso", "phoneWa"]} required fieldId="phoneNumber" />
-        <EditPhone editor={editor} label="Alternate Phone" keys={["altPhone", "altPhoneIso", "altPhoneWa"]} fieldId="altPhoneNumber" />
+        <EditText editor={editor} k="firstName" label={t("fields.firstName")} required name />
+        <EditText editor={editor} k="middleName" label={t("fields.middleName")} name />
+        <EditText editor={editor} k="lastName" label={t("fields.lastName")} required name />
+        <EditSelect editor={editor} k="gender" label={t("fields.gender")} required options={genders} />
+        <Locked label={t("fields.dob")} value={p.dob} floating />
+        <EditPhone editor={editor} label={t("fields.phone")} keys={["phone", "phoneIso", "phoneWa"]} required fieldId="phoneNumber" />
+        <EditPhone editor={editor} label={t("fields.altPhone")} keys={["altPhone", "altPhoneIso", "altPhoneWa"]} fieldId="altPhoneNumber" />
         <div className="flex min-w-0 flex-col gap-1.5">
-          <Locked label="Email" value={p.email} floating />
-          <OtpControl otp={editor.otp} fieldId="studentEmailId" label="Email" saved={Boolean(p.email)} verified={editor.verified?.studentEmailId} />
+          <Locked label={t("fields.email")} value={p.email} floating />
+          <OtpControl otp={editor.otp} fieldId="studentEmailId" label={t("fields.email")} saved={Boolean(p.email)} verified={editor.verified?.studentEmailId} />
         </div>
         <div className="flex min-w-0 flex-col gap-1.5">
-          <EditText editor={editor} k="altEmail" label="Alternate Email" type="email" />
+          <EditText editor={editor} k="altEmail" label={t("fields.altEmail")} type="email" />
           <OtpControl
             otp={editor.otp}
             fieldId="altEmailId"
-            label="Alternate Email"
+            label={t("fields.altEmail")}
             saved={!editor.status(editor.unitOf("altEmail")).dirty && Boolean(editor.draft.altEmail)}
             verified={editor.verified?.altEmailId}
           />
@@ -552,14 +579,14 @@ export function EditablePersonal({ m, editor, actions }) {
         <EditSelect
           editor={editor}
           k="timezone"
-          label="Timezone"
+          label={t("fields.timezone")}
           required
           loading={timezones.isFetching}
           options={(timezones.data || []).map((t) => ({ value: t.key, label: t.value }))}
         />
-        <EditSelect editor={editor} k="nationality" label="Nationality" required options={countries} loading={!countries.length} />
+        <EditSelect editor={editor} k="nationality" label={t("fields.nationality")} required options={countries} loading={!countries.length} />
       </div>
-      <EditText editor={editor} k="address" label="Address" required />
+      <EditText editor={editor} k="address" label={t("fields.address")} required />
       {HR}
       <EditableHobbies editor={editor} />
       {HR}
@@ -571,22 +598,23 @@ export function EditablePersonal({ m, editor, actions }) {
 // The parents' names are shown, not edited: the existing page disables them for a student.
 function EditableParent({ editor, kind, title, email }) {
   const k = (f) => `${kind}.${f}`;
+  const t = useTranslations("k5Profile");
   return (
     <>
       <h3 className={H3}>{title}</h3>
       <div className={GRID3}>
-        <Locked label="First Name" value={editor.draft[k("first")]} floating />
-        <Locked label="Middle Name" value={editor.draft[k("middle")]} floating />
-        <Locked label="Last Name" value={editor.draft[k("last")]} floating />
-        <EditPhone editor={editor} label="Phone Number" required keys={[k("phone"), k("phoneIso"), k("wa")]} emergencyKey={k("emergency")} fieldId={`${kind}PhoneNumber`} />
+        <Locked label={t("fields.firstName")} value={editor.draft[k("first")]} floating />
+        <Locked label={t("fields.middleName")} value={editor.draft[k("middle")]} floating />
+        <Locked label={t("fields.lastName")} value={editor.draft[k("last")]} floating />
+        <EditPhone editor={editor} label={t("fields.phoneNumber")} required keys={[k("phone"), k("phoneIso"), k("wa")]} emergencyKey={k("emergency")} fieldId={`${kind}PhoneNumber`} />
         <div className="flex min-w-0 flex-col gap-1.5">
-          <Locked label="Email" value={email} floating />
-          <OtpControl otp={editor.otp} fieldId={`${kind}Email`} label={`${title} email`} saved={Boolean(email)} verified={editor.verified?.[`${kind}Email`]} />
+          <Locked label={t("fields.email")} value={email} floating />
+          <OtpControl otp={editor.otp} fieldId={`${kind}Email`} label={t("editor.parentEmail", { title })} saved={Boolean(email)} verified={editor.verified?.[`${kind}Email`]} />
         </div>
-        <EditText editor={editor} k={k("facebook")} label="Facebook" />
+        <EditText editor={editor} k={k("facebook")} label={t("fields.facebook")} />
         <EditPlace editor={editor} keys={[k("country"), k("state"), k("city")]} />
-        <EditText editor={editor} k={k("occupation")} label="Occupation" />
-        <EditDate editor={editor} k={k("dob")} label="Date of Birth" />
+        <EditText editor={editor} k={k("occupation")} label={t("fields.occupation")} />
+        <EditDate editor={editor} k={k("dob")} label={t("fields.dob")} />
       </div>
     </>
   );
@@ -595,47 +623,51 @@ function EditableParent({ editor, kind, title, email }) {
 /** Section 2, editable (e-mails and the primary relation stay with the school). */
 export function EditableParents({ m, editor, actions }) {
   const g = m.parents;
+  const t = useTranslations("k5Profile");
+  const tr = useLabelTranslator("k5Profile.roles");
+  const slotText = useCallingSlotText();
+  // Draft keys of the communication chips; their labels are k5Profile.channels.*.
   const channels = [
-    ["commWa", "WhatsApp"],
-    ["commCall", "Phone"],
-    ["commEmail", "Email"],
+    ["commWa", "whatsapp"],
+    ["commCall", "phone"],
+    ["commEmail", "email"],
   ];
   return (
     <>
       {PARENTS.map((parent, i) => (
         <div key={parent.kind} className="flex flex-col gap-4">
           {i > 0 && HR}
-          <EditableParent editor={editor} kind={parent.kind} title={parent.title} email={g[parent.kind].email} />
+          <EditableParent editor={editor} kind={parent.kind} title={t(`parents.${parent.kind}`)} email={g[parent.kind].email} />
         </div>
       ))}
       {HR}
       <div className={GRID3}>
-        <Locked label="Type of Relation (Primary Parent)" value={g.relation} floating />
-        <EditDate editor={editor} k="anniversary" label="Wedding Anniversary Date" />
+        <Locked label={t("fields.relation")} value={tr(g.relation)} floating />
+        <EditDate editor={editor} k="anniversary" label={t("fields.anniversary")} />
       </div>
-      <h3 className={H3}>Communication</h3>
+      <h3 className={H3}>{t("page.communication")}</h3>
       <div className="flex flex-wrap gap-2.5">
         {channels.map(([key, label]) => (
           <ChipToggle key={key} on={editor.draft[key]} onClick={() => editor.set(key, !editor.draft[key])}>
-            {label}
+            {t(`channels.${label}`)}
           </ChipToggle>
         ))}
       </div>
       <UnitBar editor={editor} unit="communication" />
       {HR}
-      <h3 className={H3}>Communication Preferred Timing</h3>
+      <h3 className={H3}>{t("page.preferredTiming")}</h3>
       {actions ? (
         <EditableCallingTimes m={m} actions={actions} />
       ) : g.callingTimes.length ? (
         <div className="flex flex-wrap gap-2.5">
           {g.callingTimes.map((slot) => (
             <span key={slot} className="rounded-full border-[3px] border-k5-line bg-k5-soft px-4 py-2 text-[15px] font-black">
-              {slot}
+              {slotText(slot)}
             </span>
           ))}
         </div>
       ) : (
-        <p className="m-0 text-base font-extrabold text-k5-mut">No preferred timing added yet.</p>
+        <p className="m-0 text-base font-extrabold text-k5-mut">{t("page.noTiming")}</p>
       )}
     </>
   );
@@ -644,6 +676,8 @@ export function EditableParents({ m, editor, actions }) {
 /** Timezone / nationality warning before saving (the existing page's showWarningMessageShow). */
 export function ConfirmDialog({ confirm }) {
   const okRef = useRef(null);
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
   useEffect(() => {
     if (!confirm) return undefined;
     okRef.current?.focus();
@@ -663,14 +697,14 @@ export function ConfirmDialog({ confirm }) {
         className="flex w-full max-w-[460px] flex-col gap-4 rounded-[26px] border-[3px] border-k5-ink bg-k5-card p-6 shadow-[0_6px_0_var(--k5-ink)]"
       >
         <h2 id="k5-pf-confirm-h" className="m-0 font-k5-display text-2xl font-semibold">
-          Are you sure?
+          {t("editor.areYouSure")}
         </h2>
         <p id="k5-pf-confirm-d" className="m-0 text-base font-extrabold leading-[1.45]">
           {confirm.message}
         </p>
         <div className="flex flex-wrap justify-end gap-2.5">
           <button type="button" onClick={confirm.cancel} className="min-h-12 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-5 font-k5-display text-[17px] font-semibold text-k5-ink">
-            Cancel
+            {tc("actions.cancel")}
           </button>
           <button
             ref={okRef}
@@ -678,7 +712,7 @@ export function ConfirmDialog({ confirm }) {
             onClick={confirm.accept}
             className="min-h-12 cursor-pointer rounded-full border-[3px] border-k5-ac bg-k5-ac px-5 font-k5-display text-[17px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)]"
           >
-            {confirm.okLabel || "Yes, save"}
+            {confirm.okLabel || t("editor.yesSave")}
           </button>
         </div>
       </div>

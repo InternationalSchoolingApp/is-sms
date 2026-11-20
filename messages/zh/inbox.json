@@ -1,0 +1,207 @@
+{
+  "title": "收件箱",
+  "subtitle": "来自学校的邮件、通知、公告和 WhatsApp 消息。",
+  "write": "写消息",
+  "markAllRead": "全部标记为已读",
+  "unread": "未读",
+  "message": "消息",
+  "messagesLabel": "消息列表",
+  "noSubject": "（无主题）",
+  "school": "学校",
+  "star": {
+    "add": "加星标",
+    "remove": "取消星标"
+  },
+  "channels": {
+    "EMAIL": "邮件",
+    "NOTIFICATION": "通知",
+    "ANNOUNCEMENT": "公告",
+    "WHATSAPP": "WhatsApp",
+    "MESSAGE": "消息"
+  },
+  "categories": {
+    "fees_and_payments": "费用与付款",
+    "classes_and_timetable": "课程与课表",
+    "progress_and_results": "成绩与报告",
+    "enrolment_and_courses": "注册",
+    "account_and_security": "账户与安全",
+    "announcements_and_events": "公告与活动"
+  },
+  "roles": {
+    "teacher": "老师",
+    "student": "学生",
+    "parent": "家长",
+    "school_office": "学校办公室",
+    "school_admin": "学校管理员",
+    "admin": "管理员"
+  },
+  "folders": {
+    "label": "文件夹",
+    "ALL": "全部",
+    "EMAIL": "邮件",
+    "NOTIFICATION": "通知",
+    "ANNOUNCEMENT": "公告",
+    "WHATSAPP": "WhatsApp",
+    "SENT": "已发送"
+  },
+  "filters": {
+    "title": "筛选",
+    "searchPlaceholder": "姓名、主题或关键词",
+    "date": "日期",
+    "dates": {
+      "d7": "最近 7 天",
+      "d30": "最近 30 天",
+      "d90": "最近 3 个月",
+      "dYEAR": "今年"
+    },
+    "show": "显示",
+    "read": {
+      "ALL": "已读和未读",
+      "UNREAD": "仅未读",
+      "READ": "仅已读"
+    },
+    "category": "邮件类别",
+    "anyCategory": "所有类别",
+    "withAttachments": "含附件",
+    "starred": "已加星标"
+  },
+  "reader": {
+    "back": "返回收件箱",
+    "opening": "正在打开消息…",
+    "whatsappMessage": "WhatsApp 消息",
+    "to": "收件人：{people}",
+    "toMore": "收件人：{people} 等另外 {count} 人",
+    "toMe": "发给我",
+    "personNotSent": "{name}（未通过邮件发送；仍在其收件箱中）",
+    "personSending": "{name}（发送中）",
+    "inReplyTo": "回复",
+    "earlierMessage": "之前的消息",
+    "undeliveredNotice": "我们无法将此邮件发送到你的邮箱。你可以在这里阅读。请检查个人资料中的邮箱地址，或请学校办公室更新。",
+    "noBody": "此邮件的正文不可用。",
+    "whatsappUndelivered": "请检查个人资料中的手机号码，或请学校办公室更新。",
+    "whatsappNote": "学校通过 WhatsApp 发送了此消息。这里只保留消息名称，不保留正文：请在手机上打开 WhatsApp 阅读。",
+    "attachments": "附件",
+    "attachment": "附件",
+    "preparing": "正在准备…",
+    "reply": "回复",
+    "ackThanks": "谢谢。你已确认阅读此内容。",
+    "ackDone": "你已确认阅读此内容。",
+    "ackAsk": "学校请你确认已阅读此内容。",
+    "ackButton": "我已阅读"
+  },
+  "list": {
+    "count": "{count, plural, other {# 条消息}}",
+    "countSent": "已发送 {count} 条",
+    "countUnread": "{messages} · {count} 条未读",
+    "none": "没有消息",
+    "range": "第 {start}–{end} 条，共 {of} 条",
+    "newestNote": "仅列出最新的 {count} 条；请缩短日期范围或搜索以查找更早的消息。",
+    "loading": "正在加载收件箱…",
+    "undelivered": "未发送到你的邮箱",
+    "rowLabel": "{channel}，{name}，{title}，{time}",
+    "rowLabelUnread": "未读，{channel}，{name}，{title}，{time}",
+    "pages": "分页",
+    "newer": "较新",
+    "older": "较早"
+  },
+  "sent": {
+    "toMore": "{names} 等另外 {count} 人",
+    "nobody": "无人",
+    "progress": "正在后台发送：{done}/{total} 人",
+    "sending": "发送中…",
+    "notSentNames": "未通过邮件发送给 {names}（仍在其收件箱中）",
+    "notSentCount": "未通过邮件发送给 {count} 人（仍在其收件箱中）"
+  },
+  "messages": {
+    "loadError": "暂时无法加载收件箱。请一分钟后重试。",
+    "attachmentError": "暂时无法打开此附件。请稍后重试。",
+    "bodyError": "暂时无法显示此邮件。",
+    "sendError": "暂时无法发送你的消息。请一分钟后重试；你写的内容仍保留在这里。",
+    "sendUnreachable": "无法发送你的消息：无法连接服务器。请检查网络后重试；你写的内容仍保留在这里。",
+    "replyError": "暂时无法回复此消息。请一分钟后重试。",
+    "composeClosed": "暂时无法打开写消息功能。请一分钟后重试。",
+    "emptyInbox": "没有符合这些筛选条件的内容。",
+    "emptySent": "你在这段时间内没有发送消息。",
+    "settingOn": "已开启。",
+    "settingOff": "已关闭。这些邮件仍会显示在你的收件箱中。"
+  },
+  "compose": {
+    "titleNew": "新消息",
+    "titleReply": "回复",
+    "from": "发件人：{name}",
+    "fromWithRole": "发件人：{name} · {role}",
+    "to": "收件人",
+    "toPlaceholder": "选择联系人，或输入姓名",
+    "recipients": "收件人",
+    "removeName": "移除 {name}",
+    "closeList": "关闭列表",
+    "choosePeople": "选择联系人",
+    "noMatch": "没有与该姓名匹配的人。",
+    "nobodyFound": "未找到联系人。",
+    "hint": "打开列表查看所有可联系的人，或输入姓名进行筛选。最多 {max} 人。",
+    "unsentReply": "你有一条未发送的回复。请发送，或选择“放弃”重新开始。",
+    "unsentMessage": "你有一条未发送的消息。请发送，或选择“放弃”重新开始。",
+    "template": "使用模板",
+    "templateChoose": "选择模板（可选）",
+    "templateHelp": "正文中保留的 '<date>' 或 '<teacher name>' 等词语需要你自己填写。",
+    "templateGroups": {
+      "TEACHER": "发给老师",
+      "OFFICE": "发给学校办公室",
+      "STUDENT": "发给学生",
+      "PARENT": "发给家长",
+      "ADMIN": "发给学校管理员",
+      "ANY": "发给任何人"
+    },
+    "replaceWithTemplate": "用模板“{title}”替换你已写的内容吗？",
+    "subject": "主题",
+    "subjectPlaceholder": "关于什么？",
+    "message": "消息",
+    "counter": "{count}/{max} 个字符",
+    "addAttachments": "添加附件",
+    "optional": "可选",
+    "fileHelp": "最多 3 个文件，每个 5 MB：PDF、Word、Excel、PowerPoint、图片（JPG、PNG、GIF）、文本或 CSV。",
+    "warnings": {
+      "noAttachment": "未找到附件：你的消息提到了附件或文件，但没有添加任何附件。",
+      "placeholder": "还有内容需要填写：主题或消息中有来自模板的 '<尖括号>' 或 [方括号] 词语。"
+    },
+    "privacy": "收件人可以看到你的姓名和身份，但看不到你的邮箱地址。",
+    "discard": "放弃",
+    "sending": "发送中…",
+    "sent": "消息已发送",
+    "problems": {
+      "noPeople": "请至少选择一位收件人。",
+      "noSubject": "请添加主题。",
+      "noMessage": "请填写消息内容。",
+      "tooManyPeople": "一条消息最多只能发给 {max} 人。",
+      "tooManyFiles": "一条消息最多只能添加 {max} 个附件。",
+      "fileType": "文件“{name}”无法添加。你可以添加 PDF、Word、Excel、PowerPoint、图片（JPG、PNG、GIF）、文本和 CSV 文件。",
+      "fileTooLarge": "文件“{name}”超过 5 MB。请缩小文件，或改为分享链接。",
+      "fileEmpty": "文件“{name}”是空的。请重新选择。"
+    }
+  },
+  "settings": {
+    "title": "邮件设置",
+    "intro": "选择哪些邮件发送到你的邮箱。无论如何，所有内容都会保留在收件箱中。",
+    "loading": "正在加载邮件设置…",
+    "switchOff": "可以关闭的邮件",
+    "always": "费用与付款、课程与课表、成绩、注册、账户与安全、招生及其他重要学校邮件始终会发送。",
+    "rows": {
+      "announcements_and_events": {
+        "label": "公告与活动",
+        "hint": "学校新闻、活动和一般公告。"
+      },
+      "school_partnerships": {
+        "label": "学校合作",
+        "hint": "学校与合作伙伴开展项目的相关消息。"
+      },
+      "other": {
+        "label": "其他学校邮件",
+        "hint": "学校未归入其他类别的内容。"
+      },
+      "weekly_digest": {
+        "label": "每周摘要",
+        "hint": "每周日发送一份你尚未阅读内容的简短列表。"
+      }
+    }
+  }
+}

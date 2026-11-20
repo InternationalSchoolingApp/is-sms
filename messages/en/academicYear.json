@@ -1,0 +1,50 @@
+{
+  "title": "Academic Year Extension",
+  "schoolFallback": "School",
+  "contactAdmin": "Contact School Administrator",
+  "confirmExtension1": "Are you sure you want to avail Extension-1?",
+  "termsTitle": "Terms and Conditions",
+  "termsIntro": "Please note the important fee refund policy and terms & conditions before extending academic year:",
+  "terms": {
+    "consultAdmin": "We recommend that you consult with the School Admin before opting for Paid Academic Year Extension.",
+    "maxFourWeeks": "Paid academic year extension can be availed for a period of a maximum of 4 weeks.",
+    "noOtherForm": "The school provides no other form of an academic year extension.",
+    "incomplete": "In case you are not able to complete this course even after availing paid extension for 4 weeks, no credit would be provided for this course, and it would be graded as Incomplete \"(I)\" in your annual transcript.",
+    "nonRefundable": "Under any circumstances/conditions, fee paid for Academic Year Extension is non-refundable, non-transferable and non-adjustable.",
+    "checkWebsite": "Students (or their parents/guardians) are responsible for regularly checking the website for any upcoming notifications. {school} will not send notifications or updates separately to students (or their parents/guardians).",
+    "rightToAmend": "{school} reserves the right to amend, limit or revoke any offers or terms at any time prior to purchase and accepts no responsibility for any technical issues resulting in the failure to pay."
+  },
+  "agree": "I confirm that I have read and agree to the above-mentioned fee refund policy and terms & conditions.",
+  "payNow": "Pay Now",
+  "paymentProcessing": "Payment is under process...",
+  "oops": "Oops!",
+  "paymentIncomplete": "Payment Incomplete",
+  "underReviewTitle": "Your payment is under review.",
+  "underReviewText": "Your extension will be applied once the payment is received.",
+  "toast": {
+    "paymentReceived": "Payment received.",
+    "unableToAvail": "Unable to avail extension.",
+    "extension1Availed": "Extension-1 availed successfully."
+  },
+  "notEligible": {
+    "afterYear": "You can opt for an extension for {subject} after the duration of your academic year is complete.",
+    "notEligible": "You are not eligible to opt for an extension for {subject}."
+  },
+  "detail": {
+    "title": "Extend Academic Year for {subject}",
+    "availedOfOne": "You have availed {count} out of 1 extension from Extension-1.",
+    "extension1Info": "By availing Extension-1 you will get an extended period of 2 weeks to complete the credit of the course, without any additional fee.",
+    "availExtension1": "Avail EXTENSION-1",
+    "extension2": "Extension-2",
+    "paidExtension": "Paid Extension",
+    "availedOfFour": "You have availed {count} out of 4 extension from {label}.",
+    "payToAvail": "Pay {cost} to avail {label}.",
+    "extendedOneWeek": "By availing {label} you will get an extended period of 1 week to complete the credit of the course.",
+    "availExtension2": "Avail EXTENSION-2",
+    "availPaidExtension": "Avail Paid Extension",
+    "allAvailed": "You have already availed all Extensions for {subject}"
+  },
+  "messages": {
+    "no_details_found": "No details found."
+  }
+}

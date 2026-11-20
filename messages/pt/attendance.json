@@ -1,0 +1,24 @@
+{
+  "title": "Minha frequência",
+  "notFound": "Dados de frequência não encontrados",
+  "sessionExpired": "Sua sessão expirou. Faça login novamente.",
+  "classesToday": "Aulas hoje",
+  "attendanceMonth": "Frequência ({month} {year})",
+  "lateMonth": "Atrasos ({month} {year})",
+  "byMonth": "Frequência por mês ({year})",
+  "monthlySummary": "Resumo do mês ({month})",
+  "classesHeldThisMonth": "Aulas realizadas neste mês",
+  "states": {
+    "present": "Presente",
+    "late": "Atrasado",
+    "absent": "Ausente"
+  },
+  "delta": {
+    "percent": "{value}% em relação ao mês passado",
+    "classes": "{value} {count, plural, one {aula} other {aulas}} em relação ao mês passado"
+  },
+  "chart": {
+    "series": "Frequência",
+    "classesAttended": "{attended} de {held} aulas assistidas"
+  }
+}

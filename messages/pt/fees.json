@@ -1,0 +1,40 @@
+{
+  "title": "Detalhes das taxas",
+  "empty": "Nenhum detalhe de taxa encontrado",
+  "paymentReceived": "Pagamento recebido.",
+  "paymentProcessing": "Pagamento em processamento...",
+  "oops": "Ops!",
+  "paymentIncomplete": "Pagamento incompleto",
+  "underReviewTitle": "Seu pagamento está em análise.",
+  "underReviewText": "O status da sua taxa será atualizado assim que o pagamento for recebido.",
+  "table": {
+    "sNo": "Nº",
+    "scheduledDate": "Data prevista",
+    "grade": "Série",
+    "paymentName": "Nome do pagamento",
+    "paidFee": "Valor pago",
+    "paidDate": "Data do pagamento",
+    "status": "Status",
+    "viewReceipt": "Ver recibo"
+  },
+  "actions": {
+    "viewReceipt": "Ver recibo",
+    "tryAgain": "Tentar novamente",
+    "payNow": "Pagar agora",
+    "changePaymentMethod": "Alterar forma de pagamento",
+    "paymentInProcess": "Pagamento em andamento",
+    "paymentUnderProcess": "Pagamento em processamento"
+  },
+  "statuses": {
+    "success": "CONCLUÍDO",
+    "paid": "PAGO",
+    "pending": "PENDENTE",
+    "initiated": "INICIADO",
+    "failure": "FALHOU",
+    "rejected": "RECUSADO",
+    "cancelled": "CANCELADO",
+    "expired": "EXPIRADO",
+    "refunded": "REEMBOLSADO",
+    "scheduled": "AGENDADO"
+  }
+}

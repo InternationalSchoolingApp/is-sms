@@ -1,0 +1,18 @@
+{
+  "title": "Student Transcript",
+  "actionsLabel": "Transcript actions",
+  "notPublished": "Your transcript has not been published yet.",
+  "links": {
+    "transcript": "Transcript - {grade}",
+    "transcriptNew": "Transcript - {grade} (New)",
+    "diploma": "Diploma - {grade}"
+  },
+  "table": {
+    "sNo": "S. No.",
+    "studentName": "Student Name",
+    "email": "Email",
+    "grade": "Grade",
+    "studentId": "Student ID",
+    "action": "Action"
+  }
+}

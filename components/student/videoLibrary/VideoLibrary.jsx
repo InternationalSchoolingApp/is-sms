@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import {
   AlertCircle,
   Check,
@@ -32,12 +33,12 @@ import { useCartCheckout } from "@/hooks/useCartCheckout";
 import { isVideoLibrarySuccess, useStudentVideoLibrary } from "@/hooks/useStudentVideoLibrary";
 import { startVideoLibraryTrial } from "@/services/videoLibraryApi";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
+import { useLocaleTag } from "@/i18n/dateLocale";
 import {
-  PLAN_NAMES,
   buildSteps,
   courseAccess,
   courseKey,
-  daysLeft,
+  daysLeftCount,
   fmtDate,
   fmtTime,
   fullCourseRunning,
@@ -58,13 +59,14 @@ const CARD = "rounded-2xl bg-white shadow-[0_6px_20px_rgba(16,42,67,0.06)]";
 const PRIMARY_BTN = "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-bold text-white disabled:opacity-60";
 
 function Thumb({ video, apiBase, className = "", children }) {
+  const t = useTranslations("videoLibrary");
   const src = thumbUrl(video ?? {}, apiBase);
   return (
     <span
       className={`relative flex aspect-video w-24 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-900 bg-cover bg-center ${className}`}
       style={src ? { backgroundImage: `url("${src}")` } : undefined}
     >
-      {!src && <span className="text-[10px] font-bold tracking-wider text-primary">VIDEO</span>}
+      {!src && <span className="text-[10px] font-bold tracking-wider text-primary">{t("thumbPlaceholder")}</span>}
       {children}
     </span>
   );
@@ -81,16 +83,17 @@ function Empty({ title, text, icon: Icon = Film }) {
 }
 
 function UnlockButtons({ access, busy, onTrial, onSubscribe }) {
+  const t = useTranslations("videoLibrary");
   if (fullCourseRunning(access)) return null; // nothing can be bought while the Full course runs
   return (
     <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
       {access?.trialAvailable && access.trialDays > 0 && (
         <button type="button" disabled={busy} onClick={onTrial} className={`${PRIMARY_BTN} bg-emerald-500 hover:bg-emerald-600`}>
-          <Gift className="h-4 w-4" /> Start {access.trialDays}-day free trial
+          <Gift className="h-4 w-4" /> {t("access.startTrial", { days: access.trialDays })}
         </button>
       )}
       <button type="button" disabled={busy} onClick={onSubscribe} className={`${PRIMARY_BTN} bg-primary`}>
-        <LockOpen className="h-4 w-4" /> Subscribe
+        <LockOpen className="h-4 w-4" /> {t("access.subscribe")}
       </button>
     </div>
   );
@@ -98,11 +101,17 @@ function UnlockButtons({ access, busy, onTrial, onSubscribe }) {
 
 /** renderStudentAccessBar(): the student's plan(s) and, while something is locked, the trial / subscribe buttons. */
 function AccessBar({ access, playlists, busy, onTrial, onSubscribe }) {
+  const t = useTranslations("videoLibrary");
+  const localeTag = useLocaleTag();
   if (!access?.paywall) return null;
   const locked = playlists.filter(isLocked).length;
   const subs = access.subscriptions ?? [];
   if (!subs.length && !locked) return null;
-  const line = locked ? (locked === playlists.length ? "Your course videos are locked." : `${locked} of ${playlists.length} courses are locked.`) : "All your courses are open.";
+  const line = locked
+    ? locked === playlists.length
+      ? t("access.allLocked")
+      : t("access.someLocked", { locked, total: playlists.length })
+    : t("access.allOpen");
   const single = (label, Icon) => (
     <button type="button" disabled={busy} onClick={onSubscribe} className={`${PRIMARY_BTN} w-full bg-primary sm:w-auto`}>
       <Icon className="h-4 w-4" /> {label}
@@ -119,9 +128,19 @@ function AccessBar({ access, playlists, busy, onTrial, onSubscribe }) {
           <div className="flex flex-wrap gap-2">
             {subs.map((s, i) => {
               const trial = s.planCode === "TRIAL";
-              let name = PLAN_NAMES[s.planCode] || "Plan";
-              if (s.planCode === "CUSTOM" || s.planCode === "THREE_COURSES") name += ` · ${s.courseCount || 0} course${s.courseCount === 1 ? "" : "s"}`;
-              const ends = s.endDate ? (trial ? daysLeft(s.endDate) : `until ${fmtDate(s.endDate)}`) : s.courseEnds ? `until ${fmtDate(s.courseEnds)}` : "until your course ends";
+              const plan = t.has(`plans.${s.planCode}`) ? t(`plans.${s.planCode}`) : t("plans.fallback");
+              const name =
+                s.planCode === "CUSTOM" || s.planCode === "THREE_COURSES" ? t("access.planWithCourses", { plan, count: Number(s.courseCount) || 0 }) : plan;
+              const days = s.endDate && trial ? daysLeftCount(s.endDate) : 0;
+              const ends = s.endDate
+                ? trial
+                  ? days <= 0
+                    ? t("access.endsToday")
+                    : t("access.daysLeft", { count: days })
+                  : t("access.until", { date: fmtDate(s.endDate, localeTag) })
+                : s.courseEnds
+                  ? t("access.until", { date: fmtDate(s.courseEnds, localeTag) })
+                  : t("access.untilCourseEnds");
               const Icon = trial ? Hourglass : CheckCircle2;
               return (
                 <span
@@ -134,24 +153,25 @@ function AccessBar({ access, playlists, busy, onTrial, onSubscribe }) {
             })}
           </div>
         ) : (
-          <div className="text-[15px] font-extrabold text-slate-800">Videos need a subscription</div>
+          <div className="text-[15px] font-extrabold text-slate-800">{t("access.needSubscription")}</div>
         )}
         <div className="mt-0.5 text-xs text-slate-500">{line}</div>
       </div>
       {locked ? (
         <UnlockButtons access={access} busy={busy} onTrial={onTrial} onSubscribe={onSubscribe} />
       ) : renewDue(access) ? (
-        single("Renew", RefreshCw)
+        single(t("access.renew"), RefreshCw)
       ) : trialOnly(access) ? (
-        single("Subscribe", LockOpen)
+        single(t("access.subscribe"), LockOpen)
       ) : null}
     </div>
   );
 }
 
 function CourseChips({ playlists, activeIndex, onSelect }) {
+  const t = useTranslations("videoLibrary");
   return (
-    <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="Your courses">
+    <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label={t("chips.label")}>
       {playlists.map((detail, i) => {
         const p = detail.playlist ?? {};
         const steps = buildSteps(detail);
@@ -164,7 +184,7 @@ function CourseChips({ playlists, activeIndex, onSelect }) {
             type="button"
             role="tab"
             aria-selected={active}
-            title={`${p.title}${p.locked ? " — locked" : ` — ${done} of ${steps.length} done`}`}
+            title={p.locked ? t("chips.lockedTitle", { title: p.title ?? "" }) : t("chips.doneTitle", { title: p.title ?? "", done, total: steps.length })}
             onClick={() => onSelect(i)}
             className={`inline-flex max-w-full items-center gap-1.5 rounded-full border-[1.5px] py-1.5 pl-4 pr-2 text-xs font-bold transition sm:max-w-[300px] ${
               active
@@ -199,8 +219,8 @@ function ModuleHeading({ children }) {
   return <div className="mx-2 mb-1.5 mt-3 text-[11px] font-extrabold uppercase tracking-wide text-primary">{children}</div>;
 }
 
-/** renderStudentPlaylistItems(): module headers, one row per lesson (its main video), then other videos. */
-function PlaylistItems({ steps, activeStep, apiBase, onPlay }) {
+/** renderStudentPlaylistItems(): module headers, one row per lesson (its main video), then other videos. `t`: the videoLibrary translator. */
+function PlaylistItems({ steps, activeStep, apiBase, onPlay, t }) {
   let lastModule = null;
   let otherHeader = false;
   return steps.map((step, i) => {
@@ -209,14 +229,14 @@ function PlaylistItems({ steps, activeStep, apiBase, onPlay }) {
       lastModule = step.lesson.moduleNo;
       heading.push(
         <ModuleHeading key={`m${i}`}>
-          Module {lastModule}
+          {t("module", { number: lastModule ?? "" })}
           {step.lesson.moduleTitle && <span className="font-semibold normal-case tracking-normal text-slate-400"> — {step.lesson.moduleTitle}</span>}
         </ModuleHeading>,
       );
     }
     if (!step.lesson && !otherHeader) {
       otherHeader = true;
-      heading.push(<ModuleHeading key={`o${i}`}>{steps[0].lesson ? "More videos" : "Videos"}</ModuleHeading>);
+      heading.push(<ModuleHeading key={`o${i}`}>{steps[0].lesson ? t("moreVideos") : t("videos")}</ModuleHeading>);
     }
     const video = step.videos[0];
     const done = stepDone(step);
@@ -230,7 +250,7 @@ function PlaylistItems({ steps, activeStep, apiBase, onPlay }) {
         type="button"
         data-step={i}
         aria-current={active ? "true" : undefined}
-        aria-label={done ? `Watched: ${title}` : undefined}
+        aria-label={done ? t("watchedTitle", { title: title ?? "" }) : undefined}
         onClick={() => onPlay(i, 0)}
         className={`flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition ${active ? "bg-primary/10" : "hover:bg-slate-50"}`}
       >
@@ -241,7 +261,7 @@ function PlaylistItems({ steps, activeStep, apiBase, onPlay }) {
             </span>
           )}
           {done && (
-            <span title="Watched" className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-400 text-white shadow">
+            <span title={t("watched")} className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-400 text-white shadow">
               <Check className="h-3 w-3" />
             </span>
           )}
@@ -254,7 +274,7 @@ function PlaylistItems({ steps, activeStep, apiBase, onPlay }) {
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           {step.lesson && <span className="text-[10.5px] font-extrabold text-primary">L{step.lesson.lessonNo}</span>}
           <span className={`line-clamp-2 text-xs font-bold leading-snug ${active ? "text-primary" : done ? "text-slate-500" : "text-slate-700"}`}>{title}</span>
-          {step.videos.length > 1 && <span className="text-[10.5px] font-bold text-amber-600">+{step.videos.length - 1} more</span>}
+          {step.videos.length > 1 && <span className="text-[10.5px] font-bold text-amber-600">{t("plusMore", { count: step.videos.length - 1 })}</span>}
         </span>
       </button>,
     ];
@@ -263,6 +283,8 @@ function PlaylistItems({ steps, activeStep, apiBase, onPlay }) {
 
 /** renderStudentLockedCourse(): what a locked course holds (titles only) and how to open it. */
 function LockedCourse({ detail, access, apiBase, busy, onTrial, onSubscribe }) {
+  const t = useTranslations("videoLibrary");
+  const localeTag = useLocaleTag();
   const p = detail.playlist ?? {};
   const steps = buildSteps(detail);
   const shown = steps.slice(0, 12);
@@ -270,10 +292,10 @@ function LockedCourse({ detail, access, apiBase, busy, onTrial, onSubscribe }) {
   const course = courseAccess(access, p);
   const text =
     course?.courseEnds && isPast(course.courseEnds)
-      ? `This course ended on ${fmtDate(course.courseEnds)}, so its ${noun}s are closed.`
+      ? t("locked.ended", { date: fmtDate(course.courseEnds, localeTag), noun })
       : fullCourseRunning(access)
-        ? "Your Full course plan does not cover this course."
-        : `Subscribe to watch its ${steps.length} ${noun}${steps.length === 1 ? "" : "s"}${p.standardName ? ` · ${p.standardName}` : ""}.`;
+        ? t("locked.notCovered")
+        : t("locked.subscribeToWatch", { count: steps.length, noun, standard: p.standardName ? ` · ${p.standardName}` : "" });
 
   return (
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -281,7 +303,7 @@ function LockedCourse({ detail, access, apiBase, busy, onTrial, onSubscribe }) {
         <div className="mb-1.5 flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 text-amber-400">
           <Lock className="h-7 w-7" />
         </div>
-        <div className="text-lg font-extrabold text-slate-800">{p.title || "This course"} is locked</div>
+        <div className="text-lg font-extrabold text-slate-800">{p.title ? t("locked.titleLocked", { title: p.title }) : t("locked.thisCourseLocked")}</div>
         <div className="mb-2.5 text-sm text-slate-500">{text}</div>
         <UnlockButtons access={access} busy={busy} onTrial={onTrial} onSubscribe={onSubscribe} />
       </div>
@@ -290,7 +312,7 @@ function LockedCourse({ detail, access, apiBase, busy, onTrial, onSubscribe }) {
           const heading = step.lesson && step.lesson.moduleNo !== shown[i - 1]?.lesson?.moduleNo ? step.lesson.moduleNo : null;
           return (
             <div key={i}>
-              {heading !== null && <ModuleHeading>Module {heading}</ModuleHeading>}
+              {heading !== null && <ModuleHeading>{t("module", { number: heading })}</ModuleHeading>}
               <div className="flex items-center gap-2 border-b border-dashed border-slate-100 py-1.5 text-xs font-semibold text-slate-500 last:border-b-0">
                 <Thumb video={step.videos[0]} apiBase={apiBase}>
                   <span className="absolute inset-0 bg-slate-900/45" />
@@ -304,18 +326,19 @@ function LockedCourse({ detail, access, apiBase, busy, onTrial, onSubscribe }) {
             </div>
           );
         })}
-        {steps.length > shown.length && <div className="pt-2 text-xs font-bold text-slate-400">+ {steps.length - shown.length} more</div>}
+        {steps.length > shown.length && <div className="pt-2 text-xs font-bold text-slate-400">{t("plusMoreSpaced", { count: steps.length - shown.length })}</div>}
       </div>
     </div>
   );
 }
 
 function SearchResults({ hits, query, apiBase, onOpen }) {
-  if (!hits.length) return <Empty title="No videos found" text={`Nothing matches "${query}" in your courses.`} icon={Search} />;
+  const t = useTranslations("videoLibrary");
+  if (!hits.length) return <Empty title={t("search.noneTitle")} text={t("search.noneText", { query })} icon={Search} />;
   return (
     <>
       <div className="mb-2 text-sm font-bold text-slate-500">
-        {hits.length} video{hits.length === 1 ? "" : "s"} for &quot;{query}&quot;
+        {t("search.results", { count: hits.length, query })}
       </div>
       <div className={`${CARD} px-2 pb-2.5 pt-1`}>
         {hits.map((hit, i) => {
@@ -350,6 +373,8 @@ function SearchResults({ hits, query, apiBase, onOpen }) {
  */
 function Library({ title, playlists, access, apiBase, applyProgress, busy, onTrial, onSubscribe }) {
   const { isK5 } = useDashboardContext();
+  const t = useTranslations("videoLibrary");
+  const tc = useTranslations("common");
   const [pos, setPos] = useState(() => restorePosition(playlists, readStore()));
   const [search, setSearch] = useState("");
   const [autoplay, setAutoplay] = useState(() => readStore().autoplay !== false);
@@ -416,7 +441,7 @@ function Library({ title, playlists, access, apiBase, applyProgress, busy, onTri
 
   let main;
   if (!playlists.length) {
-    main = <Empty title="No videos yet" text="Videos for your courses will appear here once your teachers add them." />;
+    main = <Empty title={t("empty.title")} text={t("empty.text")} />;
   } else if (query) {
     main = <SearchResults hits={searchHits(playlists, query)} query={query} apiBase={apiBase} onOpen={openHit} />;
   } else if (locked) {
@@ -436,12 +461,14 @@ function Library({ title, playlists, access, apiBase, applyProgress, busy, onTri
           />
           <div className="px-3.5 pb-4 pt-3 sm:px-4.5">
             <div className="text-xs font-extrabold uppercase tracking-wide text-primary">
-              {step.lesson ? `Module ${step.lesson.moduleNo} · Lesson ${step.lesson.lessonNo} — ${step.lesson.title}` : p.title || ""}
+              {step.lesson
+                ? t("player.lessonHeading", { module: step.lesson.moduleNo ?? "", lesson: step.lesson.lessonNo ?? "", title: step.lesson.title ?? "" })
+                : p.title || ""}
             </div>
-            <h2 className="mb-2 mt-1 text-base font-extrabold leading-snug text-slate-800 sm:text-lg">{video.title || "Video"}</h2>
+            <h2 className="mb-2 mt-1 text-base font-extrabold leading-snug text-slate-800 sm:text-lg">{video.title || t("player.video")}</h2>
             {startAt > 0 && (
               <div className="mb-2.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                <History className="h-4 w-4 text-primary" /> Continuing where you left off ({fmtTime(startAt)}) ·
+                <History className="h-4 w-4 text-primary" /> {t("player.continuing", { time: fmtTime(startAt) })}
                 <button
                   type="button"
                   onClick={() => {
@@ -451,13 +478,13 @@ function Library({ title, playlists, access, apiBase, applyProgress, busy, onTri
                   }}
                   className="font-bold text-primary underline"
                 >
-                  Start over
+                  {t("player.startOver")}
                 </button>
               </div>
             )}
             {step.videos.length > 1 && (
               <div className="mb-2.5 flex flex-wrap items-center gap-1.5">
-                <span className="text-xs font-semibold text-slate-500">Explanations:</span>
+                <span className="text-xs font-semibold text-slate-500">{t("player.explanations")}</span>
                 {step.videos.map((v, i) => (
                   <button
                     key={v.id}
@@ -470,12 +497,12 @@ function Library({ title, playlists, access, apiBase, applyProgress, busy, onTri
                   >
                     {i === 0 ? (
                       <>
-                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> Main
+                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {t("player.main")}
                       </>
                     ) : (
-                      `Video ${i + 1}`
+                      t("player.videoNumber", { number: i + 1 })
                     )}
-                    {v.watchCompleted && <Check className="h-3 w-3 text-emerald-500" aria-label="Watched" />}
+                    {v.watchCompleted && <Check className="h-3 w-3 text-emerald-500" aria-label={t("watched")} />}
                   </button>
                 ))}
               </div>
@@ -487,12 +514,12 @@ function Library({ title, playlists, access, apiBase, applyProgress, busy, onTri
                 onClick={() => playStep(stepIndex - 1, 0)}
                 className="inline-flex items-center gap-1.5 rounded-lg border-[1.5px] border-slate-200 bg-white px-3.5 py-2 text-sm font-bold text-slate-600 hover:border-primary hover:text-primary disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:text-slate-600"
               >
-                <ChevronLeft className="h-4 w-4" /> Previous
+                <ChevronLeft className="h-4 w-4" /> {tc("actions.previous")}
               </button>
-              <label className="order-3 flex w-full cursor-pointer select-none items-center gap-2 text-xs font-semibold text-slate-500 sm:order-none sm:w-auto" title="Play the next lesson when this one ends">
+              <label className="order-3 flex w-full cursor-pointer select-none items-center gap-2 text-xs font-semibold text-slate-500 sm:order-none sm:w-auto" title={t("player.autoplayTitle")}>
                 <input type="checkbox" checked={autoplay} onChange={(e) => toggleAutoplay(e.target.checked)} className="peer sr-only" />
                 <span className="relative h-[19px] w-[34px] shrink-0 rounded-full bg-slate-300 transition after:absolute after:left-0.5 after:top-0.5 after:h-[15px] after:w-[15px] after:rounded-full after:bg-white after:shadow after:transition-all peer-checked:bg-emerald-400 peer-checked:after:left-[17px] peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-primary" />
-                Autoplay next
+                {t("player.autoplay")}
               </label>
               <button
                 type="button"
@@ -500,25 +527,25 @@ function Library({ title, playlists, access, apiBase, applyProgress, busy, onTri
                 onClick={() => playStep(stepIndex + 1, 0)}
                 className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-sm font-bold text-white disabled:opacity-40"
               >
-                Next lesson <ChevronRight className="h-4 w-4" />
+                {t("player.nextLesson")} <ChevronRight className="h-4 w-4" />
               </button>
             </div>
             {video.description && <div className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-500">{video.description}</div>}
           </div>
         </div>
-        <aside className={`${CARD} overflow-hidden lg:sticky lg:top-3`} aria-label="Course playlist">
+        <aside className={`${CARD} overflow-hidden lg:sticky lg:top-3`} aria-label={t("playlist.label")}>
           <div className="border-b border-slate-100 px-4 py-3.5">
             <div className="truncate text-[14.5px] font-extrabold text-slate-800" title={p.title || ""}>
               {p.title}
             </div>
             <div className="mt-0.5 text-xs font-semibold text-slate-500">
-              {step.lesson ? "Lesson" : "Video"} {stepIndex + 1} of {steps.length}
+              {t("playlist.position", { kind: step.lesson ? "lesson" : "video", current: stepIndex + 1, total: steps.length })}
               {p.standardName ? ` · ${p.standardName}` : ""}
             </div>
             <div className="mt-2">
               <div className="mb-1 flex justify-between text-[11.5px] font-bold text-slate-500">
                 <span>
-                  {done} of {steps.length} {noun} watched
+                  {t("playlist.watched", { done, total: steps.length, noun })}
                 </span>
                 <span className={done && done === steps.length ? "text-emerald-600" : ""}>{pct}%</span>
               </div>
@@ -528,7 +555,7 @@ function Library({ title, playlists, access, apiBase, applyProgress, busy, onTri
             </div>
           </div>
           <div ref={sideListRef} className="min-h-[200px] px-2 pb-2.5 pt-1 lg:max-h-[calc(100vh-210px)] lg:overflow-y-auto">
-            <PlaylistItems steps={steps} activeStep={stepIndex} apiBase={apiBase} onPlay={playStep} />
+            <PlaylistItems steps={steps} activeStep={stepIndex} apiBase={apiBase} onPlay={playStep} t={t} />
           </div>
         </aside>
       </div>
@@ -590,7 +617,7 @@ function Library({ title, playlists, access, apiBase, applyProgress, busy, onTri
           </div>
           <div>
             <div className="text-xl font-bold">{title}</div>
-            <div className="mt-0.5 text-sm opacity-90">Your course playlists — watch the lessons in order</div>
+            <div className="mt-0.5 text-sm opacity-90">{t("subtitle")}</div>
           </div>
           <div className="relative w-full sm:ml-auto sm:w-auto sm:min-w-[250px]">
             <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -598,8 +625,8 @@ function Library({ title, playlists, access, apiBase, applyProgress, busy, onTri
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search all your videos..."
-              aria-label="Search videos"
+              placeholder={t("search.placeholder")}
+              aria-label={t("search.label")}
               className="w-full rounded-full border-0 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-md outline-none"
             />
           </div>
@@ -619,8 +646,11 @@ function Library({ title, playlists, access, apiBase, applyProgress, busy, onTri
  * lesson, search across all courses, and — when the school's paywall is on — the free trial and the
  * Subscribe modal, whose checkout runs the shared payment-gateway flow (useCartCheckout).
  */
-export function VideoLibrary({ title = "Video Library" }) {
+export function VideoLibrary({ title: titleProp }) {
   const { context } = useDashboardContext();
+  const t = useTranslations("videoLibrary");
+  const tc = useTranslations("common");
+  const title = titleProp ?? t("title");
   const { userId, schoolUUID } = context ?? {};
   const library = useStudentVideoLibrary(userId);
   const [loadKey, setLoadKey] = useState(0);
@@ -628,7 +658,7 @@ export function VideoLibrary({ title = "Video Library" }) {
   const [trialBusy, setTrialBusy] = useState(false);
   const checkout = useCartCheckout({
     context,
-    onPaid: () => reload("Payment received. Your course videos are open."),
+    onPaid: () => reload(t("toasts.paid")),
   });
   // A locked course's thumbnail is served by the backend; same origin through the local proxy.
   const origin = process.env.NEXT_PUBLIC_USE_LOCAL_PROXY === "true" ? "" : resolveBackendOrigin();
@@ -646,12 +676,12 @@ export function VideoLibrary({ title = "Video Library" }) {
     try {
       const response = await startVideoLibraryTrial();
       if (isVideoLibrarySuccess(response)) {
-        await reload("Your free trial has started — enjoy all your course videos!");
+        await reload(t("toasts.trialStarted"));
       } else {
-        toast.error(response?.message || "The trial could not be started.");
+        toast.error(response?.message || t("toasts.trialFailed"));
       }
     } catch {
-      toast.error("The trial could not be started.");
+      toast.error(t("toasts.trialFailed"));
     } finally {
       setTrialBusy(false);
     }
@@ -660,9 +690,9 @@ export function VideoLibrary({ title = "Video Library" }) {
   const data = library.data;
   let content;
   if (!context || library.isLoading) {
-    content = <p className="py-10 text-center text-lg font-bold text-primary">Loading…</p>;
+    content = <p className="py-10 text-center text-lg font-bold text-primary">{tc("status.loading")}</p>;
   } else if (!data?.ok) {
-    content = <Empty title="Videos could not be loaded" text="Please refresh the page and try again." icon={AlertCircle} />;
+    content = <Empty title={t("loadError.title")} text={t("loadError.text")} icon={AlertCircle} />;
   } else {
     content = (
       <Library
@@ -709,14 +739,14 @@ export function VideoLibrary({ title = "Video Library" }) {
         />
       )}
       {(trialBusy || checkout.preparing || checkout.processing) && (
-        <FullScreenLoader message={checkout.processing ? "Payment is under process..." : undefined} />
+        <FullScreenLoader message={checkout.processing ? t("payment.processing") : undefined} />
       )}
       <Dialog open={checkout.incomplete} onOpenChange={(open) => !open && checkout.dismissIncomplete()}>
         <DialogContent className="text-center">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Oops!</DialogTitle>
+            <DialogTitle className="text-2xl">{t("payment.oops")}</DialogTitle>
           </DialogHeader>
-          <h3 className="text-lg font-semibold text-red-600">Payment Incomplete</h3>
+          <h3 className="text-lg font-semibold text-red-600">{t("payment.incomplete")}</h3>
         </DialogContent>
       </Dialog>
       <Dialog
@@ -729,9 +759,9 @@ export function VideoLibrary({ title = "Video Library" }) {
       >
         <DialogContent className="text-center">
           <DialogHeader>
-            <DialogTitle>Your payment is under review.</DialogTitle>
+            <DialogTitle>{t("payment.underReview")}</DialogTitle>
           </DialogHeader>
-          <p className="text-black/70">Your course videos will open once the payment is received.</p>
+          <p className="text-black/70">{t("payment.underReviewText")}</p>
         </DialogContent>
       </Dialog>
     </div>

@@ -12,6 +12,11 @@
  * is documented in README.md so infra can mirror this exactly.
  */
 
+import createNextIntlPlugin from "next-intl/plugin";
+
+// Student dashboard translations: next-intl reads ./i18n/request.js (locale from the NEXT_LOCALE cookie, no URL prefix).
+const withNextIntl = createNextIntlPlugin("./i18n/request.js");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Next.js dev server only trusts localhost/127.0.0.1 by default; testing
@@ -69,4 +74,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

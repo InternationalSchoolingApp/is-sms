@@ -2,23 +2,26 @@
 
 import { useMemo, useState } from "react";
 import { Award, Download, FileX, Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { K5Loading, K5TableSkeleton } from "@/components/k5/K5Skeletons";
 
 const GRID = "70px minmax(130px,0.9fr) minmax(170px,1.1fr) minmax(145px,1fr) minmax(145px,1fr) minmax(185px,1.2fr)";
-const COLUMNS = ["S. No.", "Grade", "Student ID", "Transcript", "Diploma", "Academic Verification"];
+// Column headings: k5Modules.transcript.columns.<key>.
+const COLUMNS = ["srNo", "grade", "studentId", "transcript", "diploma", "verification"];
 // Phone: every row becomes a card, each value under its label (mockup .bdrow).
 const CELL =
   "px-3.5 py-3 max-[760px]:order-2 max-[760px]:px-3 max-[760px]:py-1.5 max-[760px]:[overflow-wrap:anywhere] max-[760px]:before:mb-0.5 max-[760px]:before:block max-[760px]:before:text-xs max-[760px]:before:font-black max-[760px]:before:text-k5-mut max-[760px]:before:content-[attr(data-l)]";
 
 function DownloadButton({ href, label }) {
+  const t = useTranslations("k5Modules.transcript");
   const className = "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[14px] border-[2px] border-k5-ac bg-k5-card px-3 font-k5-display text-[15px] font-semibold text-k5-acx no-underline shadow-[0_2px_0_var(--k5-acd)]";
   if (!href) return <span className="text-sm font-extrabold text-k5-mut">--</span>;
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`Download ${label}`} className={className}>
-      Download <Download className="h-4 w-4" aria-hidden="true" />
+    <a href={href} target="_blank" rel="noopener noreferrer" aria-label={t("downloadLabel", { label })} className={className}>
+      {t("download")} <Download className="h-4 w-4" aria-hidden="true" />
     </a>
   );
 }
@@ -28,6 +31,8 @@ export function K5Transcript({ isLoading, student, transcripts = [], links }) {
   const [perPage, setPerPage] = useState(10);
   const [page, setPage] = useState(1);
   const { isMiddle } = useDashboardContext();
+  const t = useTranslations("k5Modules.transcript");
+  const tc = useTranslations("common");
   usePicoContentReady(!isLoading);
 
   const rows = useMemo(() => {
@@ -62,8 +67,8 @@ export function K5Transcript({ isLoading, student, transcripts = [], links }) {
             </svg>
           </span>
           <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-            <h1 className="m-0 font-k5-display text-[30px] font-semibold leading-[1.05]">Student Transcript</h1>
-            <p className="m-0 text-base font-extrabold text-k5-mut">Your school record for each grade.</p>
+            <h1 className="m-0 font-k5-display text-[30px] font-semibold leading-[1.05]">{t("title")}</h1>
+            <p className="m-0 text-base font-extrabold text-k5-mut">{t("subtitle")}</p>
           </div>
         </div>
       ) : (
@@ -72,27 +77,27 @@ export function K5Transcript({ isLoading, student, transcripts = [], links }) {
             <Award className="h-12 w-12 text-k5-yi" strokeWidth={2} aria-hidden="true" />
           </span>
           <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-            <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">Student Transcript</h1>
-            <p className="m-0 text-lg font-extrabold text-k5-mut">Your school record for each grade.</p>
+            <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">{t("title")}</h1>
+            <p className="m-0 text-lg font-extrabold text-k5-mut">{t("subtitle")}</p>
           </div>
         </div>
       )}
 
       {isLoading ? (
-        <K5Loading label="Loading your transcript">
+        <K5Loading label={t("loading")}>
           <K5TableSkeleton rows={1} cols={6} />
         </K5Loading>
       ) : !student ? (
         <div className={`${K5_CARD} flex flex-col items-center gap-2 p-8 text-center`}>
           <FileX className="h-10 w-10 text-k5-mut" aria-hidden="true" />
-          <p className="m-0 font-k5-display text-2xl font-semibold text-k5-mut">Your transcript has not been published yet.</p>
+          <p className="m-0 font-k5-display text-2xl font-semibold text-k5-mut">{t("notPublished")}</p>
         </div>
       ) : (
         <section aria-labelledby="k5-tr" className={`${K5_CARD} flex flex-col gap-3.5 px-5 py-4`}>
-          <h2 id="k5-tr" className="sr-only">Student Transcript</h2>
+          <h2 id="k5-tr" className="sr-only">{t("title")}</h2>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <label className="flex items-center gap-2 text-base font-extrabold">
-              Show
+              {t("show")}
               <select
                 value={perPage}
                 onChange={(e) => {
@@ -106,7 +111,7 @@ export function K5Transcript({ isLoading, student, transcripts = [], links }) {
                   <option key={n} value={n}>{n}</option>
                 ))}
               </select>
-              entries
+              {t("entries")}
             </label>
             <label className="flex min-h-[50px] min-w-0 flex-[0_1_320px] items-center gap-2.5 rounded-full border-[3px] border-k5-line bg-k5-soft px-4 max-[760px]:flex-[1_1_100%]">
               <Search className="h-5 w-5 flex-none text-k5-mut" strokeWidth={2.6} aria-hidden="true" />
@@ -117,18 +122,18 @@ export function K5Transcript({ isLoading, student, transcripts = [], links }) {
                   setQuery(e.target.value);
                   setPage(1);
                 }}
-                placeholder="Search..."
-                aria-label="Search..."
+                placeholder={t("search")}
+                aria-label={t("search")}
                 className="min-w-0 flex-1 border-none bg-transparent text-base font-extrabold text-k5-ink outline-none"
               />
             </label>
           </div>
 
           <div className="relative z-[6] overflow-x-auto rounded-[18px] border-[3px] border-k5-line bg-k5-card pb-0.5 max-[760px]:overflow-visible max-[760px]:border-0">
-            <div role="table" aria-label="Student Transcript" className="k5h-tr-table min-w-[900px] text-[15px] font-extrabold max-[760px]:flex max-[760px]:min-w-0 max-[760px]:flex-col max-[760px]:gap-2.5">
+            <div role="table" aria-label={t("title")} className="k5h-tr-table min-w-[900px] text-[15px] font-extrabold max-[760px]:flex max-[760px]:min-w-0 max-[760px]:flex-col max-[760px]:gap-2.5">
               <div role="row" style={{ "--cols": GRID }} className="grid grid-cols-[var(--cols)] rounded-t-[14px] bg-k5-ac font-k5-display text-base font-semibold text-white max-[760px]:hidden">
                 {COLUMNS.map((c) => (
-                  <span key={c} role="columnheader" className="p-3.5">{c}</span>
+                  <span key={c} role="columnheader" className="p-3.5">{t(`columns.${c}`)}</span>
                 ))}
               </div>
               {visible.map((row, i) => (
@@ -139,44 +144,44 @@ export function K5Transcript({ isLoading, student, transcripts = [], links }) {
                   style={isMiddle ? { "--cols": GRID, borderTopWidth: 1.5 } : { "--cols": GRID }}
                 >
                   <span role="cell" className="px-3.5 py-3 max-[760px]:order-1 max-[760px]:px-3 max-[760px]:py-1.5 max-[760px]:font-k5-display max-[760px]:text-lg max-[760px]:font-semibold">{start + i + 1}</span>
-                  <span role="cell" data-l="Grade" className={`${CELL} max-[760px]:col-span-full`}>
+                  <span role="cell" data-l={t("columns.grade")} className={`${CELL} max-[760px]:col-span-full`}>
                     <span className="rounded-full bg-k5-act px-3 py-[3px] font-black text-k5-acx whitespace-nowrap">{row.grade}</span>
                   </span>
-                  <span role="cell" data-l="Student ID" className={`${CELL} max-[760px]:col-span-full`}>
+                  <span role="cell" data-l={t("columns.studentId")} className={`${CELL} max-[760px]:col-span-full`}>
                     <span className="k5h-tr-code rounded-lg bg-k5-soft px-2.5 py-0.5 font-mono text-sm font-extrabold">{row.id}</span>
                   </span>
-                  <span role="cell" data-l="Transcript" className="px-3.5 py-2 max-[760px]:order-2 max-[760px]:px-3 max-[760px]:py-1.5">
-                    <DownloadButton href={row.transcriptLink?.href} label={row.transcriptLink?.label || "transcript"} />
+                  <span role="cell" data-l={t("columns.transcript")} className="px-3.5 py-2 max-[760px]:order-2 max-[760px]:px-3 max-[760px]:py-1.5">
+                    <DownloadButton href={row.transcriptLink?.href} label={row.transcriptLink?.label || t("transcriptWord")} />
                   </span>
-                  <span role="cell" data-l="Diploma" className="px-3.5 py-2 max-[760px]:order-2 max-[760px]:px-3 max-[760px]:py-1.5">
-                    <DownloadButton href={row.diplomaLink?.href} label={row.diplomaLink?.label || "diploma"} />
+                  <span role="cell" data-l={t("columns.diploma")} className="px-3.5 py-2 max-[760px]:order-2 max-[760px]:px-3 max-[760px]:py-1.5">
+                    <DownloadButton href={row.diplomaLink?.href} label={row.diplomaLink?.label || t("diplomaWord")} />
                   </span>
-                  <span role="cell" data-l="Academic Verification" className="px-3.5 py-2 max-[760px]:order-2 max-[760px]:px-3 max-[760px]:py-1.5">
-                    <button type="button" disabled title="Academic verification download is not available yet" className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[14px] border-[2px] border-k5-ac bg-k5-card px-3 font-k5-display text-[15px] font-semibold text-k5-acx shadow-[0_2px_0_var(--k5-acd)]">
-                      Download <Download className="h-4 w-4" aria-hidden="true" />
+                  <span role="cell" data-l={t("columns.verification")} className="px-3.5 py-2 max-[760px]:order-2 max-[760px]:px-3 max-[760px]:py-1.5">
+                    <button type="button" disabled title={t("verificationUnavailable")} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[14px] border-[2px] border-k5-ac bg-k5-card px-3 font-k5-display text-[15px] font-semibold text-k5-acx shadow-[0_2px_0_var(--k5-acd)]">
+                      {t("download")} <Download className="h-4 w-4" aria-hidden="true" />
                     </button>
                   </span>
                 </div>
               ))}
               {visible.length === 0 && (
-                <div className="px-4 py-7 text-center font-k5-display text-[19px] font-semibold text-k5-mut">No matching records found.</div>
+                <div className="px-4 py-7 text-center font-k5-display text-[19px] font-semibold text-k5-mut">{t("noMatches")}</div>
               )}
             </div>
           </div>
 
           <div className={`flex flex-wrap items-center gap-2.5 ${isMiddle ? "justify-between" : "justify-center"}`}>
             <span className="text-[15px] font-extrabold text-k5-mut">
-              {rows.length ? `Showing ${start + 1} to ${Math.min(start + perPage, rows.length)} of ${rows.length} entries` : "Showing 0 to 0 of 0 entries"}
+              {rows.length ? tc("table.showingEntries", { from: start + 1, to: Math.min(start + perPage, rows.length), total: rows.length }) : tc("table.showingEntries", { from: 0, to: 0, total: 0 })}
             </span>
-            <nav aria-label="Pages" className="flex items-center gap-2">
+            <nav aria-label={t("pages")} className="flex items-center gap-2">
               <button type="button" disabled={current === 1} onClick={() => setPage(current - 1)} className="min-h-11 cursor-pointer rounded-[14px] border-[3px] border-k5-line bg-k5-card px-4 font-k5-display text-base font-semibold text-k5-ink disabled:cursor-default disabled:opacity-45">
-                Previous
+                {tc("actions.previous")}
               </button>
               <button type="button" aria-current="page" className="h-11 min-w-11 rounded-[14px] border-[3px] border-k5-ac bg-k5-ac px-1.5 font-k5-display text-[17px] font-semibold text-white">
                 {current}
               </button>
               <button type="button" disabled={current === pages} onClick={() => setPage(current + 1)} className="min-h-11 cursor-pointer rounded-[14px] border-[3px] border-k5-line bg-k5-card px-4 font-k5-display text-base font-semibold text-k5-ink disabled:cursor-default disabled:opacity-45">
-                Next
+                {tc("actions.next")}
               </button>
             </nav>
           </div>

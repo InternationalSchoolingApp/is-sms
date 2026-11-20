@@ -1,0 +1,110 @@
+{
+  "yourGames": "Tus juegos",
+  "pickGame": "¡Elige un juego!",
+  "locked": {
+    "title": "Los juegos están bloqueados",
+    "past": "Este día ya terminó. Elige hoy o un día que venga para jugar.",
+    "pending": "Tienes clase hoy. Los juegos se abren cuando terminen todas las clases de hoy.",
+    "live": "¡Tu clase está en directo ahora! Únete primero. Los juegos se abren otra vez cuando termine tu clase."
+  },
+  "games": {
+    "balloon": {
+      "name": "Revienta globos",
+      "how": "¡Toca los globos para reventarlos!"
+    },
+    "memory": {
+      "name": "Memoria",
+      "how": "Voltea dos cartas. ¡Encuentra las parejas!"
+    },
+    "mole": {
+      "name": "Amigos sorpresa",
+      "how": "¡Toca al amigo antes de que se esconda!"
+    },
+    "count": {
+      "name": "Cuenta las estrellas",
+      "how": "¿Cuántas estrellas ves?"
+    },
+    "math": {
+      "name": "Mates rápidas",
+      "how": "¡Elige la respuesta correcta!"
+    },
+    "shape": {
+      "name": "Encuentra la forma",
+      "how": "¡Toca la forma que te pido!"
+    }
+  },
+  "score": "Puntos {score}",
+  "startOver": "Empezar de nuevo",
+  "greatJob": "¡Muy bien!",
+  "tryAgain": "¡Inténtalo otra vez!",
+  "shapes": {
+    "circle": "círculo",
+    "square": "cuadrado",
+    "triangle": "triángulo",
+    "star": "estrella",
+    "heart": "corazón"
+  },
+  "tapShape": {
+    "circle": "¡Toca el círculo!",
+    "square": "¡Toca el cuadrado!",
+    "triangle": "¡Toca el triángulo!",
+    "star": "¡Toca la estrella!",
+    "heart": "¡Toca el corazón!"
+  },
+  "balloons": {
+    "pink": "Revienta el globo rosa",
+    "yellow": "Revienta el globo amarillo",
+    "blue": "Revienta el globo azul",
+    "green": "Revienta el globo verde",
+    "purple": "Revienta el globo morado",
+    "orange": "Revienta el globo naranja"
+  },
+  "boards": {
+    "balloonGame": "Juego de reventar globos",
+    "pop": "¡Pum!",
+    "hiddenCard": "Carta oculta",
+    "allPairs": "¡Encontraste todas las parejas!",
+    "startOver": "Empezar de nuevo",
+    "time": "Tiempo: {seconds}",
+    "hole": "Agujero {n}",
+    "timesUp": "¡Se acabó el tiempo! ¡Atrapaste {count}!",
+    "moleHow": "¡Toca al amigo antes de que se esconda!",
+    "playAgain": "Jugar otra vez",
+    "start": "Empezar"
+  },
+  "high": {
+    "title": "Juegos mentales",
+    "subtitle": "Retos cortos que entrenan la lógica, los números y la memoria.",
+    "locked": "Los juegos están bloqueados",
+    "lockedText": "Los juegos solo se desbloquean en un día sin clases o después de terminar todas tus clases y actividades del día.",
+    "lockedPast": "Este día ya terminó. Elige hoy o un día futuro para jugar.",
+    "games": {
+      "count": {
+        "name": "Serie numérica",
+        "how": "Encuentra el siguiente número de la serie."
+      },
+      "math": {
+        "name": "Cálculo mental",
+        "how": "Resuélvelo de cabeza, sin calculadora."
+      },
+      "shape": {
+        "name": "El intruso",
+        "how": "Un número rompe la regla. Encuéntralo."
+      },
+      "memory": {
+        "name": "Cuadrícula de memoria",
+        "how": "Voltea dos cartas a la vez. Encuentra las 8 parejas."
+      }
+    },
+    "whatNext": "¿Qué sigue?",
+    "solve": "Resuelve",
+    "percentOf": "{p} % de {n}",
+    "oddOne": "¿Qué número no encaja?",
+    "hiddenCard": "Carta oculta",
+    "allPairs": "Todas las parejas encontradas.",
+    "startOver": "Empezar de nuevo",
+    "score": "Puntos {score}",
+    "correct": "Correcto",
+    "notQuite": "Casi. Inténtalo otra vez."
+  }
+}

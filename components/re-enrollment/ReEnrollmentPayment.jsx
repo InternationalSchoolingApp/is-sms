@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { MobileActionBar } from "@/components/student-enroll/wizard/MobileActionBar";
@@ -28,7 +29,6 @@ import {
   STEP_PAYMENT,
 } from "@/utils/reEnrollmentSteps";
 
-const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
 const FLEX_OR_DUAL = ["ONE_TO_ONE_FLEX", "DUAL_DIPLOMA"];
 
 /**
@@ -45,6 +45,8 @@ export function ReEnrollmentPayment() {
 }
 
 function PaymentScreen() {
+  const t = useTranslations("reEnrollment.payment");
+  const tc = useTranslations("common");
   const router = useRouter();
   const { school } = useParams();
   const { session, context, option, steps, customPlan: customPlanConfirmed } = useReEnrollmentContext();
@@ -96,7 +98,7 @@ function PaymentScreen() {
   const busy = choosePlan.isPending || fetchReview.isPending || gateway.busy;
 
   function handleFailure(response, fallback) {
-    if (!response) toast.error(GENERIC_ERROR);
+    if (!response) toast.error(t("genericError"));
     else if (response.status === "3") expireSession(school);
     else toast.error(response.message || fallback);
   }
@@ -107,7 +109,7 @@ function PaymentScreen() {
       // The custom plan's installments already exist: the review returns the first unpaid one.
       const plan = customPlan ? null : await choosePlan.mutateAsync(isKnownPaymentMode(currentPayMode) ? currentPayMode : "annually");
       if (!customPlan && plan?.status !== STATUS_SUCCESS) {
-        handleFailure(plan, "Could not save your payment plan. Please try again.");
+        handleFailure(plan, t("planSaveFailed"));
         return;
       }
       if (!payNow) {
@@ -117,13 +119,13 @@ function PaymentScreen() {
       // The payment record just created is what the gateway has to be started for; the review API returns it.
       const review = await fetchReview.mutateAsync();
       if (review?.status !== STATUS_SUCCESS || !review.paymentRequired) {
-        handleFailure(review, "Could not find your payment. Please try again.");
+        handleFailure(review, t("paymentNotFound"));
         return;
       }
       await gateway.start(review);
     } catch (err) {
       console.error("ReEnrollmentPayment continue failed:", err);
-      toast.error(GENERIC_ERROR);
+      toast.error(t("genericError"));
     }
   }
 
@@ -135,29 +137,29 @@ function PaymentScreen() {
     <>
       {!data ? (
         <div className="rounded-[15px] bg-white p-6 shadow-lg">
-          <p className="text-sm font-semibold text-red-600">{detailsQuery.data?.message || "Could not load your payment options."}</p>
+          <p className="text-sm font-semibold text-red-600">{detailsQuery.data?.message || t("loadFailed")}</p>
           <div className="mt-4 flex gap-3">
             {previous && (
               <Button type="button" className="bg-slate-500 hover:bg-slate-600" onClick={() => router.push(reEnrollmentStepPath(school, previous))}>
-                Back
+                {tc("actions.back")}
               </Button>
             )}
             <Button type="button" onClick={() => detailsQuery.refetch()} disabled={detailsQuery.isFetching}>
-              Try again
+              {tc("actions.tryAgain")}
             </Button>
           </div>
         </div>
       ) : (
         <div className={`mx-auto max-w-4xl ${busy ? "opacity-60" : ""}`} aria-busy={busy}>
           <h2 className="mb-3 text-center text-base font-semibold text-black md:text-lg">
-            {customPlan ? data.feeSetionTitile || "Fee Payment" : "Select Payment Option"}
+            {customPlan ? data.feeSetionTitile || t("feePayment") : t("selectOption")}
           </h2>
           {customPlan ? (
             customSchedule.length > 0 ? (
               <CustomPlanTable fee={data} />
             ) : (
               <p className="rounded-[15px] bg-white p-6 text-center text-sm font-semibold text-red-600 shadow-lg">
-                Your custom payment plan could not be loaded. Please contact the school administration.
+                {t("customPlanFailed")}
               </p>
             )
           ) : (
@@ -174,17 +176,17 @@ function PaymentScreen() {
               isFlexOrDual={FLEX_OR_DUAL.includes(option.learningProgram)}
             />
           )}
-          {payNow && next === STEP_COURSE_SELECTION && <p className="mt-3 text-center text-sm text-slate-600">You will choose your courses after the payment.</p>}
+          {payNow && next === STEP_COURSE_SELECTION && <p className="mt-3 text-center text-sm text-slate-600">{t("coursesAfterPayment")}</p>}
           <MobileActionBar context={context} embedded>
             {previous ? (
               <Button type="button" variant="outline" className="cursor-pointer" disabled={busy} onClick={() => router.push(reEnrollmentStepPath(school, previous))}>
-                Back
+                {tc("actions.back")}
               </Button>
             ) : (
               <span />
             )}
             <Button type="button" className="px-4" disabled={busy || (customPlan ? customSchedule.length === 0 : !currentOption)} onClick={onContinue}>
-              {busy ? "Please wait…" : payNow ? "Continue to Pay" : "Continue"}
+              {busy ? tc("status.pleaseWait") : payNow ? t("continueToPay") : tc("actions.continue")}
             </Button>
           </MobileActionBar>
         </div>

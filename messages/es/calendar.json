@@ -1,0 +1,173 @@
+{
+  "views": {
+    "today": "Hoy",
+    "week": "Semana",
+    "month": "Mes"
+  },
+  "legend": {
+    "title": "Leyenda:",
+    "assignment": "Tarea",
+    "class": "Clase",
+    "schoolActivity": "Actividad escolar",
+    "holiday": "Festivo"
+  },
+  "loading": "Cargando tu calendario…",
+  "loadError": "No se pudo cargar tu calendario. Inténtalo de nuevo en un momento.",
+  "backToMonth": "Volver al mes",
+  "backToWeek": "Volver a la semana",
+  "timeOfDay": {
+    "morning": "Mañana",
+    "afternoon": "Tarde",
+    "evening": "Atardecer",
+    "night": "Noche"
+  },
+  "filters": {
+    "today": "Hoy",
+    "liveGroup": "Clases y actividades escolares en vivo",
+    "upcomingGroup": "Próximas clases y actividades escolares",
+    "completedGroup": "Clases y actividades escolares finalizadas",
+    "noClassOrActivity": "Sin clases ni actividades escolares",
+    "myCourses": "Mis cursos",
+    "hideCourse": "Ocultar curso",
+    "showCourse": "Mostrar curso",
+    "changeCourseColor": "Cambiar el color del curso",
+    "pickColor": "Elegir el color {color}",
+    "assignments": "Tareas",
+    "pending": "Pendientes",
+    "submitted": "Entregadas",
+    "upcoming": "Próximas",
+    "classStatus": "Estado de las clases",
+    "live": "En vivo",
+    "expired": "Finalizadas",
+    "missedClass": "Clase perdida",
+    "lateJoinClass": "Ingreso tardío",
+    "events": "Eventos",
+    "schoolActivities": "Actividades escolares",
+    "schoolEvents": "Eventos escolares",
+    "holidays": "Festivos",
+    "holidaysAndBreaks": "Festivos y vacaciones"
+  },
+  "nothingScheduledOn": "No hay nada programado para {date}.",
+  "nothingScheduledDay": "No hay nada programado para este día.",
+  "untitled": "Sin título",
+  "moreCount": "+{count} más",
+  "allDay": "Todo el día",
+  "badges": {
+    "live": "EN VIVO",
+    "upcoming": "PRÓXIMA",
+    "expired": "FINALIZADA",
+    "missed": "PERDIDA",
+    "lateJoin": "INGRESO TARDÍO"
+  },
+  "assignmentStatus": {
+    "submitted": "Entregada",
+    "upcoming": "Próxima",
+    "pending": "Pendiente"
+  },
+  "assignmentTiming": {
+    "onTime": "A tiempo",
+    "early": "Anticipada ({count, plural, one {# día} other {# días}})",
+    "late": "Tarde ({count, plural, one {# día} other {# días}})"
+  },
+  "eventKind": {
+    "holiday": "Festivo / Vacaciones",
+    "schoolEvent": "Evento escolar",
+    "activity": "Actividad"
+  },
+  "eventDetails": "Detalles del evento",
+  "attempt": "Realizar",
+  "detail": {
+    "date": "Fecha",
+    "time": "Hora",
+    "details": "Detalles",
+    "teacher": "Profesor",
+    "status": "Estado",
+    "duration": "Duración",
+    "late": "Retraso",
+    "lateBy": "Retraso de",
+    "with": "Con",
+    "batch": "Grupo",
+    "grade": "Grado",
+    "course": "Curso",
+    "dueDate": "Fecha de entrega",
+    "timing": "Entrega",
+    "submitted": "Entregada el"
+  },
+  "status": {
+    "live": "En vivo",
+    "upcoming": "Próxima",
+    "missed": "Perdida",
+    "lateJoin": "Ingreso tardío",
+    "expired": "Finalizada"
+  },
+  "duration": {
+    "minutes": "{count, plural, one {# minuto} other {# minutos}}",
+    "hours": "{count, plural, one {# hora} other {# horas}}",
+    "mins": "{count, plural, one {# min} other {# min}}",
+    "secs": "{count, plural, one {# s} other {# s}}"
+  },
+  "activity": {
+    "title": "Detalles de la actividad",
+    "attachment": "Archivo adjunto",
+    "timeRemaining": "Tiempo restante",
+    "countdown": {
+      "days": "Días",
+      "hours": "Horas",
+      "min": "Min",
+      "sec": "Seg"
+    },
+    "couldNotOpen": "No se pudo abrir en este momento. Inténtalo de nuevo en un minuto.",
+    "cannotJoin": "No puedes unirte a este evento en este momento.",
+    "linkCopied": "Enlace de la clase copiado",
+    "copyFailed": "No se pudo copiar el enlace. Cópialo desde el cuadro.",
+    "scheduledFor": "La clase {name} está programada para el {date}",
+    "joinClassNow": "Unirse a la clase ahora",
+    "completed": "Tu actividad ha finalizado.",
+    "loadingDetails": "Cargando detalles…",
+    "joinLinkNotice": "Tu enlace para unirte aparecerá {minutes} minutos antes de la hora programada.",
+    "viewAttachment": "Ver archivo adjunto",
+    "opening": "Abriendo…",
+    "joinEvent": "Unirse al evento"
+  },
+  "join": {
+    "title": "Unirse a la clase",
+    "almostThere": "Ya casi, espera un momento…",
+    "couldNotOpen": "No se pudo abrir esta clase en este momento. Inténtalo de nuevo en un momento.",
+    "trainingScheduled": "La sesión {className} | {subjectName} está programada para el {date}.",
+    "trainingJoinOn": "Podrás unirte a la capacitación el {date}.",
+    "status": {
+      "live": "En vivo ahora",
+      "upcoming": "Próxima",
+      "ended": "Finalizada",
+      "unavailable": "No disponible"
+    },
+    "joinIssues": "Si tienes problemas para unirte, copia el enlace de la clase de abajo y pégalo en una nueva pestaña de tu navegador:",
+    "copied": "¡Copiado!",
+    "copyClassLink": "Copiar enlace de la clase",
+    "joinClass": "Unirse a la clase"
+  },
+  "k5": {
+    "noClass": {
+      "holidayTitle": "Festivo",
+      "holidayText": "Es un día festivo. ¡Hoy no hay escuela!",
+      "weekendTitle": "¡Fin de semana!",
+      "weekendText": "Es fin de semana. ¡Hoy no hay escuela!",
+      "studyTitle": "Sin clases en vivo",
+      "studyText": "¡Sigue avanzando con tus cursos hoy!",
+      "freeTitle": "¡Sin clases!",
+      "freeText": "Hoy no hay clases. ¡Disfruta tu día libre!",
+      "freeTextNamed": "Hoy no hay clases. ¡Disfruta tu día libre, {name}!"
+    },
+    "summary": {
+      "holiday": "{name} · No hay escuela",
+      "classes": "{count, plural, one {# clase} other {# clases}}",
+      "classesLive": "{count, plural, one {# clase} other {# clases}} · ¡{name} está en vivo!",
+      "classesDone": "{count, plural, one {# clase} other {# clases}} · todo listo",
+      "assignmentsDue": "{count, plural, one {# tarea para entregar} other {# tareas para entregar}}",
+      "schoolActivity": "Actividad escolar",
+      "weekend": "¡Fin de semana! No hay escuela.",
+      "selfStudy": "Sin clases en vivo. ¡Día para avanzar en tus cursos!",
+      "free": "Hoy no hay clases. ¡Día libre!"
+    }
+  }
+}

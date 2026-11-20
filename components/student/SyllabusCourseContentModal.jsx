@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { CalendarModal } from "@/components/dashboard/calendar/CalendarModal";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { getStudentCourseContent } from "@/services/dashboardApi";
@@ -16,6 +17,8 @@ function asArray(value) {
  * module/item list (thin or empty for non-LMS course providers).
  */
 export function SyllabusCourseContentModal({ course, onClose }) {
+  const t = useTranslations("syllabus.content");
+  const tc = useTranslations("common");
   const { context } = useDashboardContext();
   const { schoolUUID, userId } = context ?? {};
   const { data, isLoading } = useQuery({
@@ -29,9 +32,9 @@ export function SyllabusCourseContentModal({ course, onClose }) {
   return (
     <CalendarModal title={course.courseName} onClose={onClose}>
       {isLoading ? (
-        <p className="py-4 text-center text-black/50">Loading…</p>
+        <p className="py-4 text-center text-black/50">{tc("status.loading")}</p>
       ) : modules.length === 0 ? (
-        <p className="py-4 text-center text-black/50">No course content available yet.</p>
+        <p className="py-4 text-center text-black/50">{t("empty")}</p>
       ) : (
         <div className="max-h-[60vh] space-y-3 overflow-y-auto">
           {modules.map((module, index) => (
@@ -41,10 +44,10 @@ export function SyllabusCourseContentModal({ course, onClose }) {
                 {asArray(module.items).map((item, itemIndex) => (
                   <li key={itemIndex} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 px-2 py-1.5">
                     {/* Legacy redirectLmsFromStudentCourse: a lesson opens the LMS (or says why it cannot). */}
-                    <button type="button" onClick={() => openLmsLesson(item)} className="cursor-pointer border-none bg-transparent p-0 text-left text-primary hover:underline">
+                    <button type="button" onClick={() => openLmsLesson(item, { couldNotOpen: tc("lms.couldNotOpen"), notAvailable: tc("lms.notAvailable") })} className="cursor-pointer border-none bg-transparent p-0 text-left text-primary hover:underline">
                       {item.contentName}
                     </button>
-                    {hasDueDate(item.dueDate) && <span className="flex-shrink-0 text-xs text-black/50">Due {item.dueDate}</span>}
+                    {hasDueDate(item.dueDate) && <span className="flex-shrink-0 text-xs text-black/50">{t("due", { date: item.dueDate })}</span>}
                   </li>
                 ))}
               </ul>

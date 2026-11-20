@@ -1,0 +1,17 @@
+{
+  "title": "Assigned Course Teachers",
+  "searchLabel": "Search sessions",
+  "searchPlaceholder": "Search sessions...",
+  "noCourses": "No courses assigned yet.",
+  "noMatches": "No matching records found",
+  "notAssigned": "Not assigned yet",
+  "table": {
+    "sNo": "S.No",
+    "courses": "Selected Courses",
+    "teacher": "Assigned Teacher"
+  },
+  "content": {
+    "empty": "No course content available yet.",
+    "due": "Due {date}"
+  }
+}

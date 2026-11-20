@@ -3,14 +3,13 @@
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
+import { useLabelTranslator } from "@/i18n/labels";
 import { getAssignedTeacherForCourse, getTeacherWeeklySlots, submitBookClassSlot } from "@/services/bookClassApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { getDayHeading, getSlotEnd, getSlotState } from "@/utils/bookClass";
-
-const UNKNOWN_OUTCOME =
-  "We could not confirm whether your class was booked. Please refresh the page and check your booked classes before trying again.";
 
 const LEGACY_CHIP = "w-[116px] rounded-md border px-2 py-1 text-center text-xs font-bold";
 const K5_CHIP = "w-[128px] rounded-full border-[3px] px-2 py-2 text-center text-[15px] font-black";
@@ -26,13 +25,14 @@ const LEGACY_CHIP_STYLES = {
 };
 
 function ModalShell({ title, onClose, children, footer, k5 }) {
+  const tc = useTranslations("common");
   if (k5) {
     return (
       <div className="fixed inset-0 z-[85] flex items-center justify-center bg-[rgba(10,16,34,0.55)] p-4">
         <div role="dialog" aria-modal="true" aria-label={title} className="relative flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border-[3px] border-k5-ink bg-k5-card text-k5-ink shadow-[0_8px_0_var(--k5-ink)]">
           <div className="flex items-center gap-3 bg-k5-ac px-5 py-3.5 text-white">
             <h2 className="m-0 min-w-0 flex-1 font-k5-display text-[22px] font-semibold leading-tight">{title}</h2>
-            <button type="button" onClick={onClose} aria-label="Close" className="flex h-11 w-11 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-white bg-k5-red">
+            <button type="button" onClick={onClose} aria-label={tc("actions.close")} className="flex h-11 w-11 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-white bg-k5-red">
               <X className="h-4 w-4 text-white" strokeWidth={3} />
             </button>
           </div>
@@ -48,7 +48,7 @@ function ModalShell({ title, onClose, children, footer, k5 }) {
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close"
+          aria-label={tc("actions.close")}
           className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700"
         >
           <X className="h-4 w-4" />
@@ -68,6 +68,10 @@ function ModalShell({ title, onClose, children, footer, k5 }) {
  */
 export function BookClassSlotModal({ course, onClose, onBooked }) {
   const { isK5 } = useDashboardContext();
+  const t = useTranslations("bookClass");
+  const tc = useTranslations("common");
+  const tl = useLabelTranslator("bookClass.labels");
+  const UNKNOWN_OUTCOME = t("slots.unknownOutcome");
   const CHIP = isK5 ? K5_CHIP : LEGACY_CHIP;
   const CHIP_STYLES = isK5 ? K5_CHIP_STYLES : LEGACY_CHIP_STYLES;
   const primaryBtn = isK5
@@ -147,26 +151,26 @@ export function BookClassSlotModal({ course, onClose, onBooked }) {
       return;
     }
     if (result.status === "1") {
-      toast.success(result.message || "Your class has been booked.");
+      toast.success(result.message || t("slots.booked"));
       onBooked();
       return;
     }
-    toast.error(result.message || "Unable to book this class. Please try again.");
+    toast.error(result.message || t("slots.bookFailed"));
   }
 
   if (loading) {
     return (
-      <ModalShell k5={isK5} title="Book a Class" onClose={onClose}>
-        <p className="py-10 text-center text-black/60">Loading available slots…</p>
+      <ModalShell k5={isK5} title={t("title")} onClose={onClose}>
+        <p className="py-10 text-center text-black/60">{t("slots.loading")}</p>
       </ModalShell>
     );
   }
 
   if (!teacher || !teacherAssigned) {
     return (
-      <ModalShell k5={isK5} title="Book a Class" onClose={onClose}>
+      <ModalShell k5={isK5} title={t("title")} onClose={onClose}>
         <p className="py-10 text-center text-black/60">
-          {teacher ? "You do not have a teacher assigned yet" : "Unable to load teacher details. Please try again."}
+          {teacher ? t("noTeacher") : t("slots.teacherLoadError")}
         </p>
       </ModalShell>
     );
@@ -174,8 +178,8 @@ export function BookClassSlotModal({ course, onClose, onBooked }) {
 
   if (!week) {
     return (
-      <ModalShell k5={isK5} title={`Book a Class for ${subjectName}`} onClose={onClose}>
-        <p className="py-10 text-center text-black/60">No class slots are available for this week.</p>
+      <ModalShell k5={isK5} title={t("titleForSubject", { subject: subjectName ?? "" })} onClose={onClose}>
+        <p className="py-10 text-center text-black/60">{t("slots.none")}</p>
       </ModalShell>
     );
   }
@@ -183,7 +187,7 @@ export function BookClassSlotModal({ course, onClose, onBooked }) {
   if (step === "confirm" && selected) {
     return (
       <ModalShell k5={isK5}
-        title="Confirm your class"
+        title={t("slots.confirmTitle")}
         onClose={onClose}
         footer={
           <div className="flex justify-end gap-2">
@@ -193,7 +197,7 @@ export function BookClassSlotModal({ course, onClose, onBooked }) {
               disabled={submitting}
               className={backBtn}
             >
-              Back
+              {tc("actions.back")}
             </button>
             <button
               type="button"
@@ -201,18 +205,18 @@ export function BookClassSlotModal({ course, onClose, onBooked }) {
               disabled={submitting || outcomeUnknown}
               className={confirmBtn}
             >
-              {submitting ? "Booking..." : "Confirm"}
+              {submitting ? t("slots.booking") : tc("actions.confirm")}
             </button>
           </div>
         }
       >
         <dl className="mx-auto max-w-md space-y-2">
           {[
-            ["Course", subjectName],
-            ["Teacher", teacherName],
-            ["Date", selected.day.displayStartDateWithoutDay],
-            ["Time", `${selected.slot.displayStartTime} - ${end?.endTime ?? ""}`],
-            ["Timezone", slots.timeZoneName],
+            [t("slots.course"), subjectName],
+            [t("slots.teacher"), teacherName],
+            [t("slots.date"), selected.day.displayStartDateWithoutDay],
+            [t("slots.time"), `${selected.slot.displayStartTime} - ${end?.endTime ?? ""}`],
+            [t("slots.timezone"), slots.timeZoneName],
           ].map(([label, value]) => (
             <div key={label} className="flex justify-between gap-4 border-b border-slate-100 py-1.5">
               <dt className="text-black/60">{label}</dt>
@@ -227,14 +231,14 @@ export function BookClassSlotModal({ course, onClose, onBooked }) {
 
   return (
     <ModalShell k5={isK5}
-      title={`Book a Class for ${subjectName} with ${teacherName}`}
+      title={t("titleForSubjectWithTeacher", { subject: subjectName ?? "", teacher: teacherName })}
       onClose={onClose}
       footer={
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3 text-xs font-bold">
-            <span className="flex items-center gap-1"><span className={`h-5 w-10 rounded border ${CHIP_STYLES.available}`} />Available</span>
-            <span className="flex items-center gap-1"><span className={`h-5 w-10 rounded border ${CHIP_STYLES.booked}`} />Booked</span>
-            <span className="flex items-center gap-1"><span className={`h-5 w-10 rounded border ${CHIP_STYLES.closed}`} />Not Available</span>
+            <span className="flex items-center gap-1"><span className={`h-5 w-10 rounded border ${CHIP_STYLES.available}`} />{t("slots.available")}</span>
+            <span className="flex items-center gap-1"><span className={`h-5 w-10 rounded border ${CHIP_STYLES.booked}`} />{t("slots.bookedLegend")}</span>
+            <span className="flex items-center gap-1"><span className={`h-5 w-10 rounded border ${CHIP_STYLES.closed}`} />{t("slots.notAvailable")}</span>
           </div>
           <button
             type="button"
@@ -242,13 +246,13 @@ export function BookClassSlotModal({ course, onClose, onBooked }) {
             onClick={() => setStep("confirm")}
             className={primaryBtn}
           >
-            Next
+            {tc("actions.next")}
           </button>
         </div>
       }
     >
       <p className="mb-3 font-bold">
-        {teacherName}&apos;s weekly class slots from {week.weeklyStartDateStandardFormat} to {week.weeklyEndDateStandardFormat}**
+        {t("slots.weeklySlots", { teacher: teacherName, from: week.weeklyStartDateStandardFormat ?? "", to: week.weeklyEndDateStandardFormat ?? "" })}
       </p>
       <div className="overflow-x-auto">
         <table className="min-w-[900px] w-full border-separate border-spacing-1">
@@ -259,7 +263,7 @@ export function BookClassSlotModal({ course, onClose, onBooked }) {
                 return (
                   <th key={day.displayStartDateWithoutDay} className="rounded bg-slate-100 px-1 py-2 text-center text-xs">
                     <div className="font-bold">{dateText}</div>
-                    <div className="mt-1 uppercase">{dayName}</div>
+                    <div className="mt-1 uppercase">{tl(dayName)}</div>
                   </th>
                 );
               })}
@@ -308,8 +312,8 @@ export function BookClassSlotModal({ course, onClose, onBooked }) {
         </table>
       </div>
       <div className="mt-3 flex flex-wrap justify-between gap-2 font-bold">
-        <span>**All slots are in the {slots.timeZoneName} timezone</span>
-        <span>**Duration of each class is {slots.classDuration} minutes</span>
+        <span>{t("slots.allInTimezone", { timezone: slots.timeZoneName ?? "" })}</span>
+        <span>{t("slots.duration", { minutes: slots.classDuration ?? "" })}</span>
       </div>
     </ModalShell>
   );

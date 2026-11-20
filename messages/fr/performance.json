@@ -1,0 +1,54 @@
+{
+  "title": "Résultats scolaires",
+  "empty": "Aucun résultat scolaire trouvé",
+  "table": {
+    "courseName": "Nom du cours",
+    "score": "Note",
+    "pace": "Rythme",
+    "teacherName": "Enseignant",
+    "endDate": "Date de fin",
+    "remainingDays": "Jours restants",
+    "pendingAssignment": "Devoirs en attente",
+    "progressGradable": "Progression (notée)",
+    "progressAll": "Progression (toutes les activités)"
+  },
+  "pace": {
+    "Ahead": "En avance",
+    "OnTrack": "Dans les temps",
+    "Behind": "En retard",
+    "GettingStarted": "Pour commencer"
+  },
+  "salutation": {
+    "mr": "M.",
+    "ms": "Mme"
+  },
+  "history": {
+    "title": "Historique des notes",
+    "empty": "Aucune tentative pour l'instant.",
+    "attempt": "Tentative",
+    "score": "Note",
+    "percent": "Pourcentage",
+    "submitted": "Remis"
+  },
+  "progress": {
+    "empty": "Aucun devoir trouvé.",
+    "assignment": "Devoir",
+    "due": "Échéance",
+    "status": "Statut",
+    "score": "Note",
+    "tiles": {
+      "total": "Total",
+      "submitted": "Remis",
+      "pending": "En attente",
+      "upcoming": "À venir",
+      "passed": "Réussis",
+      "failed": "Échoués"
+    },
+    "itemStatuses": {
+      "submitted": "REMIS",
+      "late": "EN RETARD",
+      "before_time": "EN AVANCE",
+      "excused": "DISPENSÉ"
+    }
+  }
+}

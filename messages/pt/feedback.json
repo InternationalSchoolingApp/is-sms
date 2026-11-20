@@ -1,0 +1,29 @@
+{
+  "rate": {
+    "class": "Avaliar esta aula",
+    "activity": "Avaliar esta atividade"
+  },
+  "modal": {
+    "titleWithTeacher": "{title} <muted>com</muted> {teacher}",
+    "tagline": "Ajude-nos a melhorar sua experiência de aprendizagem",
+    "confidential": "Queremos saber o que você realmente pensa. Suas respostas são confidenciais, então fique à vontade para ser sincero.",
+    "classFallback": "Aula"
+  },
+  "pending": {
+    "title": "Avaliações pendentes",
+    "subtitle": "Envie suas avaliações semanais pendentes.",
+    "total": "Total",
+    "activities": "Atividades",
+    "classes": "Aulas"
+  },
+  "category": {
+    "class": "AULA",
+    "activity": "ATIVIDADE",
+    "batch": "TURMA",
+    "sports": "ESPORTES",
+    "one_to_one": "INDIVIDUAL",
+    "academic": "ACADÊMICO",
+    "student_doubt_session": "SESSÃO DE DÚVIDAS",
+    "n_a": "N/D"
+  }
+}

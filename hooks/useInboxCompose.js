@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import {
-  COMPOSE_CLOSED, REPLY_ERROR, SEND_ERROR, charCount, composeProblem, composeWarnings, fileProblem, fillTemplate, isDraftDirty, replaceWithTemplate,
-  templateGroups, templateKind, tooManyPeople,
+  COMPOSE_CLOSED, REPLY_ERROR, SEND_ERROR, charCount, composeProblem, composeWarningCodes, composeWarnings, fileProblem, fileProblemCode, fillTemplate,
+  inboxMessageKey, isDraftDirty, templateGroups, templateKind, tooManyPeople,
 } from "@/utils/inbox";
 import { isSessionExpiredError } from "@/utils/sessionState";
 
@@ -22,10 +23,14 @@ const draftFor = (reply) => (reply ? { ...EMPTY_DRAFT, reply, to: [reply.to], su
  * `mailbox` is the backend's answer about who this user may write to (Book); `source` sends (live or dummy).
  */
 export function useInboxCompose({ source, scope, mailbox, schoolName, reloadMailbox, onSent }) {
+  const t = useTranslations("inbox");
+  // Toasts / the confirm only: a text of utils/inbox.js in the dashboard's language, the backend's own words as they are.
+  const say = (text) => (inboxMessageKey(text) ? t(`messages.${inboxMessageKey(text)}`) : text);
   const [isOpen, setOpen] = useState(false);
   const [draft, setDraft] = useState(EMPTY_DRAFT);
-  const [error, setError] = useState(null); // { field, message }
+  const [error, setError] = useState(null); // { field, message, code?, values? } (code: inbox.compose.problems.*)
   const [note, setNote] = useState("");
+  const [noteKind, setNoteKind] = useState(""); // what `note` says: "reply" / "message" (an unsent one is kept), "" none
   const [isSending, setSending] = useState(false);
   const [isLoadingReply, setLoadingReply] = useState(false);
 
@@ -52,9 +57,11 @@ export function useInboxCompose({ source, scope, mailbox, schoolName, reloadMail
     const same = reply ? draft.reply?.inReplyToId === reply.inReplyToId : !draft.reply;
     if (!same && isDraftDirty(draft)) {
       setNote(`${draft.reply ? "You have an unsent reply." : "You have an unsent message."} Send it, or choose Discard and start again.`);
+      setNoteKind(draft.reply ? "reply" : "message");
     } else {
       if (!same) setDraft(draftFor(reply));
       setNote("");
+      setNoteKind("");
     }
     setError(null);
     setOpen(true);
@@ -68,6 +75,8 @@ export function useInboxCompose({ source, scope, mailbox, schoolName, reloadMail
     isReply,
     title: isReply ? "Reply" : "New message",
     from: mailbox?.writer?.name ? `From: ${mailbox.writer.name}${mailbox.writer.role ? ` · ${mailbox.writer.role}` : ""}` : "",
+    // The writer behind `from` ({ name, role } or null), for a translated line.
+    writer: mailbox?.writer?.name ? mailbox.writer : null,
     initial: (mailbox?.writer?.name || "?").trim().charAt(0).toUpperCase(),
     draft,
     // People still to choose from; the whole list arrives at once for a student, so typing narrows it here.
@@ -76,13 +85,16 @@ export function useInboxCompose({ source, scope, mailbox, schoolName, reloadMail
     hint: `Open the list to see everyone you can write to, or type a name to narrow it. Up to ${max} people.`,
     error,
     note,
+    noteKind,
     warnings: composeWarnings(draft),
+    // The same warnings as codes ("noAttachment", "placeholder"), for translated texts.
+    warningCodes: composeWarningCodes(draft),
     counter: charCount(draft.message),
     templateGroups: isReply ? [] : templateGroups(templatesQuery.data, kind),
     /** Puts a template into the subject and message; asks first when that would replace something written. */
     applyTemplate: (template) => {
       if (!template || isReply) return;
-      if ((draft.subject.trim() || draft.message.trim()) && !window.confirm(replaceWithTemplate(template.title))) return;
+      if ((draft.subject.trim() || draft.message.trim()) && !window.confirm(t("compose.replaceWithTemplate", { title: template.title ?? "" }))) return;
       const names = { people: draft.to, writerName: mailbox?.writer?.name || "", schoolName };
       patch({ subject: fillTemplate(template.subject, names).slice(0, 200), message: fillTemplate(template.body, names).slice(0, 10_000) });
     },
@@ -90,7 +102,7 @@ export function useInboxCompose({ source, scope, mailbox, schoolName, reloadMail
     isLoadingReply,
 
     open: () => {
-      if (mailbox && !mailbox.canCompose) return toast.error(mailbox.reason || COMPOSE_CLOSED);
+      if (mailbox && !mailbox.canCompose) return toast.error(mailbox.reason || say(COMPOSE_CLOSED));
       start(null);
     },
     openReply: async (emailId) => {
@@ -99,7 +111,7 @@ export function useInboxCompose({ source, scope, mailbox, schoolName, reloadMail
       try {
         start(await source.replyDraft(emailId));
       } catch (failure) {
-        if (!isSessionExpiredError(failure)) toast.error(failure?.message || REPLY_ERROR);
+        if (!isSessionExpiredError(failure)) toast.error(say(failure?.message || REPLY_ERROR));
       } finally {
         setLoadingReply(false);
       }
@@ -110,6 +122,7 @@ export function useInboxCompose({ source, scope, mailbox, schoolName, reloadMail
       setDraft(EMPTY_DRAFT);
       setError(null);
       setNote("");
+      setNoteKind("");
       setOpen(false);
     },
 
@@ -117,7 +130,7 @@ export function useInboxCompose({ source, scope, mailbox, schoolName, reloadMail
     setMessage: (message) => patch({ message }),
     addPerson: (person) => {
       if (isReply || picked.has(person.userId)) return;
-      if (draft.to.length >= max) return setError({ field: "to", message: tooManyPeople(max) });
+      if (draft.to.length >= max) return setError({ field: "to", message: tooManyPeople(max), code: "tooManyPeople", values: { max } });
       patch({ to: [...draft.to, person] });
     },
     removePerson: (userId) => !isReply && patch({ to: draft.to.filter((person) => person.userId !== userId) }),
@@ -125,7 +138,10 @@ export function useInboxCompose({ source, scope, mailbox, schoolName, reloadMail
       const files = [...draft.files, ...Array.from(chosen || [])];
       const problem = fileProblem(files);
       // A file that cannot be attached is not added; the reason is shown and what was there stays.
-      if (problem) return setError({ field: "files", message: problem });
+      if (problem) {
+        const { code, values } = fileProblemCode(files);
+        return setError({ field: "files", message: problem, code, values });
+      }
       patch({ files });
     },
     removeFile: (index) => patch({ files: draft.files.filter((_, i) => i !== index) }),
@@ -146,10 +162,11 @@ export function useInboxCompose({ source, scope, mailbox, schoolName, reloadMail
         });
         setDraft(EMPTY_DRAFT);
         setNote("");
+        setNoteKind("");
         setOpen(false);
         // sent === false: the message is in their Inbox, but the email copy could not go out.
-        if (result?.sent) toast.success(result.message || "Message sent");
-        else toast.error(result?.message || SEND_ERROR);
+        if (result?.sent) toast.success(result.message || t("compose.sent"));
+        else toast.error(say(result?.message || SEND_ERROR));
         onSent?.();
       } catch (failure) {
         if (!isSessionExpiredError(failure)) setError({ field: "send", message: failure?.message || SEND_ERROR });

@@ -1,0 +1,110 @@
+{
+  "yourGames": "Seus jogos",
+  "pickGame": "Escolha um jogo!",
+  "locked": {
+    "title": "Os jogos estão bloqueados",
+    "past": "Este dia já acabou. Escolha hoje ou um dia que ainda vai chegar para jogar.",
+    "pending": "Você tem aula hoje. Os jogos abrem quando todas as aulas de hoje acabarem.",
+    "live": "Sua aula está ao vivo agora! Entre nela primeiro. Os jogos abrem de novo quando a aula acabar."
+  },
+  "games": {
+    "balloon": {
+      "name": "Estoura balão",
+      "how": "Toque nos balões para estourar!"
+    },
+    "memory": {
+      "name": "Jogo da memória",
+      "how": "Vire duas cartas. Encontre os pares!"
+    },
+    "mole": {
+      "name": "Amigos escondidos",
+      "how": "Toque no amigo antes que ele se esconda!"
+    },
+    "count": {
+      "name": "Conte as estrelas",
+      "how": "Quantas estrelas você vê?"
+    },
+    "math": {
+      "name": "Conta rápida",
+      "how": "Escolha a resposta certa!"
+    },
+    "shape": {
+      "name": "Ache a forma",
+      "how": "Toque na forma que eu pedir!"
+    }
+  },
+  "score": "Pontos {score}",
+  "startOver": "Recomeçar",
+  "greatJob": "Muito bem!",
+  "tryAgain": "Tente de novo!",
+  "shapes": {
+    "circle": "círculo",
+    "square": "quadrado",
+    "triangle": "triângulo",
+    "star": "estrela",
+    "heart": "coração"
+  },
+  "tapShape": {
+    "circle": "Toque no círculo!",
+    "square": "Toque no quadrado!",
+    "triangle": "Toque no triângulo!",
+    "star": "Toque na estrela!",
+    "heart": "Toque no coração!"
+  },
+  "balloons": {
+    "pink": "Estoure o balão rosa",
+    "yellow": "Estoure o balão amarelo",
+    "blue": "Estoure o balão azul",
+    "green": "Estoure o balão verde",
+    "purple": "Estoure o balão roxo",
+    "orange": "Estoure o balão laranja"
+  },
+  "boards": {
+    "balloonGame": "Jogo de estourar balões",
+    "pop": "Pop!",
+    "hiddenCard": "Carta escondida",
+    "allPairs": "Você achou todos os pares!",
+    "startOver": "Recomeçar",
+    "time": "Tempo: {seconds}",
+    "hole": "Buraco {n}",
+    "timesUp": "Acabou o tempo! Você pegou {count}!",
+    "moleHow": "Toque no amigo antes que ele se esconda!",
+    "playAgain": "Jogar de novo",
+    "start": "Começar"
+  },
+  "high": {
+    "title": "Jogos de raciocínio",
+    "subtitle": "Desafios curtos que treinam lógica, números e memória.",
+    "locked": "Os jogos estão bloqueados",
+    "lockedText": "Os jogos só são liberados em um dia sem aulas, ou depois que você terminar todas as aulas e atividades do dia.",
+    "lockedPast": "Este dia já acabou. Escolha hoje ou um dia futuro para jogar.",
+    "games": {
+      "count": {
+        "name": "Sequência numérica",
+        "how": "Encontre o próximo número da sequência."
+      },
+      "math": {
+        "name": "Cálculo mental",
+        "how": "Resolva de cabeça, sem calculadora."
+      },
+      "shape": {
+        "name": "O intruso",
+        "how": "Um número quebra a regra. Encontre-o."
+      },
+      "memory": {
+        "name": "Grade da memória",
+        "how": "Vire duas cartas por vez. Encontre os 8 pares."
+      }
+    },
+    "whatNext": "Qual é o próximo?",
+    "solve": "Resolva",
+    "percentOf": "{p}% de {n}",
+    "oddOne": "Qual número não pertence ao grupo?",
+    "hiddenCard": "Carta escondida",
+    "allPairs": "Todos os pares encontrados.",
+    "startOver": "Recomeçar",
+    "score": "Pontos {score}",
+    "correct": "Certo",
+    "notQuite": "Quase. Tente de novo."
+  }
+}

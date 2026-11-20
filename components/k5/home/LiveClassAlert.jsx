@@ -1,6 +1,8 @@
 "use client";
 
 import { differenceInMinutes } from "date-fns";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { SubjectIcon } from "@/components/k5/home/k5Bits";
@@ -8,13 +10,14 @@ import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
 import { classTitle, timeRange } from "@/utils/k5Calendar";
 
-function startedAgo(event, now) {
+// t = the k5Home.liveAlert translator.
+function startedAgo(event, now, t) {
   if (!event.startZoned || !now) return "";
   const mins = Math.max(0, differenceInMinutes(now, event.startZoned));
-  if (mins < 1) return "Started just now";
-  if (mins < 60) return `Started ${mins} minute${mins === 1 ? "" : "s"} ago`;
+  if (mins < 1) return t("startedJustNow");
+  if (mins < 60) return t("startedMinutes", { count: mins });
   const hours = Math.floor(mins / 60);
-  return `Started ${hours} hour${hours === 1 ? "" : "s"} ago`;
+  return t("startedHours", { count: hours });
 }
 
 /**
@@ -24,11 +27,13 @@ function startedAgo(event, now) {
  * session. The dialog portals out of K5Shell, so it carries the .theme-k5 look itself.
  */
 export function LiveClassAlert({ event, now, firstName, onJoin, onClose }) {
+  const t = useTranslations("k5Home.liveAlert");
+  const locale = useDateFnsLocale();
   const { preferences } = useAppearance();
   const themeProps = useK5ThemeProps(
     "gap-0 overflow-hidden rounded-[34px] border-[3px] border-k5-ink bg-k5-card p-0 text-k5-ink shadow-[0_8px_0_var(--k5-ink)] ring-0 sm:max-w-[560px]",
   );
-  const hurry = `Hurry${firstName ? `, ${firstName}` : ""}! Your class has started. Your teacher is waiting!`;
+  const hurry = firstName ? t("hurryName", { name: firstName }) : t("hurry");
 
   return (
     <Dialog open={Boolean(event)} onOpenChange={(open) => !open && onClose()}>
@@ -36,7 +41,7 @@ export function LiveClassAlert({ event, now, firstName, onJoin, onClose }) {
         <DialogContent showCloseButton={false} {...themeProps}>
           <div className="k5-status-reveal flex items-center justify-center gap-2.5 bg-k5-grn px-6 py-3 font-k5-display text-xl font-semibold tracking-[0.06em] text-white">
             <span aria-hidden="true" className="block h-3.5 w-3.5 k5-live-dot rounded-full bg-[#FFC531]" />
-            LIVE NOW
+            {t("liveNow")}
           </div>
 
           <div className="flex flex-col gap-5 px-7 pb-7 pt-6 max-[480px]:px-4 max-[480px]:pb-5">
@@ -56,8 +61,8 @@ export function LiveClassAlert({ event, now, firstName, onJoin, onClose }) {
               </span>
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <DialogTitle className="k5-heading-reveal m-0 font-k5-display text-[28px] font-semibold leading-[1.1]">{classTitle(event)}</DialogTitle>
-                <span className="text-lg font-extrabold text-k5-mut">{timeRange(event)}</span>
-                <span className="text-[15px] font-extrabold text-[#8F1F4E] dark:text-[#FFB3D3]">{startedAgo(event, now)}</span>
+                <span className="text-lg font-extrabold text-k5-mut">{timeRange(event, locale)}</span>
+                <span className="text-[15px] font-extrabold text-[#8F1F4E] dark:text-[#FFB3D3]">{startedAgo(event, now, t)}</span>
               </div>
             </div>
 
@@ -69,14 +74,14 @@ export function LiveClassAlert({ event, now, firstName, onJoin, onClose }) {
               <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true">
                 <path d="M8 5v14l11-7z" />
               </svg>
-              Join class now
+              {t("joinNow")}
             </button>
             <button
               type="button"
               onClick={onClose}
               className="min-h-12 cursor-pointer self-center rounded-full border-none bg-transparent px-5 text-base font-extrabold text-k5-mut underline"
             >
-              Not now, show my calendar
+              {t("notNow")}
             </button>
           </div>
         </DialogContent>

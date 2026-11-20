@@ -2,10 +2,14 @@
 
 import { CalendarDays, Clock, Newspaper, X } from "lucide-react";
 import DOMPurify from "dompurify";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { formatNewsDate, formatRelativeAgo } from "@/utils/newsFormat";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 
 function ArticleBlock({ article }) {
+  const t = useTranslations("news");
+  const dateLocale = useDateFnsLocale();
   return (
     <div className="border-b border-slate-100 pb-6 last:border-b-0">
       <div className="flex items-start justify-between gap-2">
@@ -17,12 +21,12 @@ function ArticleBlock({ article }) {
 
       <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-black/60">
         <span className="flex items-center gap-1">
-          <CalendarDays className="h-3.5 w-3.5 text-primary" /> {formatNewsDate(article.publishDate)}
+          <CalendarDays className="h-3.5 w-3.5 text-primary" /> {formatNewsDate(article.publishDate, { locale: dateLocale })}
         </span>
-        <span className="rounded bg-primary/10 px-2 py-0.5 font-semibold text-primary">{formatRelativeAgo(article.publishDate)}</span>
+        <span className="rounded bg-primary/10 px-2 py-0.5 font-semibold text-primary">{formatRelativeAgo(article.publishDate, t)}</span>
         {(article.readingTime || article.readTime) && (
           <span className="ml-auto flex items-center gap-1 font-semibold text-black">
-            <Clock className="h-3.5 w-3.5" /> Read Time {article.readingTime || article.readTime} min
+            <Clock className="h-3.5 w-3.5" /> {t("readTime", { minutes: article.readingTime || article.readTime })}
           </span>
         )}
       </div>
@@ -42,7 +46,7 @@ function ArticleBlock({ article }) {
             </span>
           )}
           <div className="text-xs">
-            <span className="block text-black/50">News Source</span>
+            <span className="block text-black/50">{t("source")}</span>
             <span className="block font-bold text-black">{article.sourceName}</span>
           </div>
         </div>
@@ -53,7 +57,7 @@ function ArticleBlock({ article }) {
             rel="noopener noreferrer"
             className="text-sm font-bold text-primary hover:underline"
           >
-            Read Full Article →
+            {t("readFullArticle")}
           </a>
         )}
       </div>
@@ -67,16 +71,18 @@ function ArticleBlock({ article }) {
  * another in a single scrollable modal (not a separate page/view).
  */
 export function NewsAllModal({ articles, onClose }) {
+  const t = useTranslations("news");
+  const tc = useTranslations("common");
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div className="flex max-h-[85vh] w-full max-w-[850px] flex-col overflow-hidden rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2 bg-primary px-5 py-3">
           <Newspaper className="h-5 w-5 text-white" aria-hidden="true" />
-          <h2 className="text-sm font-extrabold text-white">Latest News</h2>
+          <h2 className="text-sm font-extrabold text-white">{t("latest")}</h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={tc("actions.close")}
             className="ml-auto flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-red-600 text-white hover:bg-red-700"
           >
             <X className="h-4 w-4" />
@@ -85,7 +91,7 @@ export function NewsAllModal({ articles, onClose }) {
 
         <div className="flex-1 space-y-6 overflow-y-auto px-5 py-4">
           {articles.length === 0 ? (
-            <p className="text-sm text-black/50">No news available.</p>
+            <p className="text-sm text-black/50">{t("noneAvailable")}</p>
           ) : (
             articles.map((article) => <ArticleBlock key={article.id} article={article} />)
           )}

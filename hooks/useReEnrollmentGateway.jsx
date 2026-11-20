@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -26,7 +27,6 @@ import {
   loadLocationGlobals,
 } from "@/utils/locationFinder";
 
-const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
 // getPaymentPaidStatus() polling in commonPaymentGateway.js: every 10s, gives up after 10 checks.
 const PAID_STATUS_POLL_MS = 10000;
 const PAID_STATUS_MAX_CHECKS = 10;
@@ -42,6 +42,9 @@ const PAID_STATUS_MAX_CHECKS = 10;
  *   return <>... {gateway.modals}</>;
  */
 export function useReEnrollmentGateway({ context, studentUserId, onPaid, onSessionExpired }) {
+  const t = useTranslations("reEnrollment.gateway");
+  const tc = useTranslations("common");
+  const GENERIC_ERROR = t("genericError");
   const gatewayOptions = usePaymentGatewayOptions({ context });
   const invokeGateway = useInvokePaymentGateway({ context });
   const airwallexMethods = useAirwallexPaymentMethods({ context });
@@ -85,7 +88,7 @@ export function useReEnrollmentGateway({ context, studentUserId, onPaid, onSessi
   /** review: the re-enrollment review response of a payment that is still pending. */
   async function start(review) {
     if (!review?.paymentRequired || !review.userPaymentDetailsId) {
-      toast.error("There is no pending payment.");
+      toast.error(t("noPendingPayment"));
       return;
     }
     try {
@@ -101,12 +104,12 @@ export function useReEnrollmentGateway({ context, studentUserId, onPaid, onSessi
         countryCode,
       });
       if (options?.status !== STATUS_SUCCESS) {
-        handleFailure(options, "Could not load payment options. Please try again.");
+        handleFailure(options, t("optionsFailed"));
         return;
       }
       const gateways = options.details?.paymentOptions || [];
       if (gateways.length === 0) {
-        toast.error("No payment method is available right now. Please contact support.");
+        toast.error(t("noMethod"));
         return;
       }
       await callLocationForPaymentPromise();
@@ -192,7 +195,7 @@ export function useReEnrollmentGateway({ context, studentUserId, onPaid, onSessi
       const response = await invokeGateway.mutateAsync(payload);
       const recovery = getPaymentAttemptRecovery(response, gateway.name);
       if (recovery?.resumeUrl) {
-        toast("Taking you back to the payment you started...");
+        toast(t("resuming"));
         // This tab is paying itself: the re-enrollment chrome must not take the fee turning paid for a payment made elsewhere.
         window.__reEnrollmentGatewayStarted = true;
         window.location.assign(recovery.resumeUrl);
@@ -210,10 +213,10 @@ export function useReEnrollmentGateway({ context, studentUserId, onPaid, onSessi
       if (response?.status !== STATUS_SUCCESS || !response.details?.redirectUrl) {
         setLaunching(false);
         setGatewayPicker(null);
-        handleFailure(response, "Could not start the payment. Please try again.");
+        handleFailure(response, t("startFailed"));
         return;
       }
-      toast("Please wait while redirecting to payment gateway...");
+      toast(t("redirecting"));
       window.__reEnrollmentGatewayStarted = true;
       window.location.assign(response.details.redirectUrl);
       // Still here after a while (the navigation was blocked): free the button instead of spinning forever.
@@ -232,10 +235,10 @@ export function useReEnrollmentGateway({ context, studentUserId, onPaid, onSessi
       if (!response) return { error: GENERIC_ERROR };
       if (response.status === STATUS_SESSION_OUT) {
         onSessionExpired?.();
-        return { error: response.message || "Your session has timed out." };
+        return { error: response.message || t("sessionTimedOut") };
       }
       const fileName = response.uploadFiles?.[0]?.fileName;
-      if (response.status === "0" || !fileName) return { error: response.message || "Upload failed. Please try again." };
+      if (response.status === "0" || !fileName) return { error: response.message || t("uploadFailed") };
       return { fileName };
     } catch (err) {
       console.error("Payment proof upload failed:", err);
@@ -306,24 +309,24 @@ export function useReEnrollmentGateway({ context, studentUserId, onPaid, onSessi
           onSessionExpired={onSessionExpired}
         />
       )}
-      {paymentProcessing && <FullScreenLoader message="Payment is under process..." />}
+      {paymentProcessing && <FullScreenLoader message={t("processing")} />}
       <Dialog open={paymentIncomplete} onOpenChange={(open) => !open && setPaymentIncomplete(false)}>
         <DialogContent className="text-center">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Oops!</DialogTitle>
+            <DialogTitle className="text-2xl">{t("oops")}</DialogTitle>
           </DialogHeader>
-          <h3 className="text-lg font-semibold text-red-600">Payment Incomplete</h3>
+          <h3 className="text-lg font-semibold text-red-600">{t("incomplete")}</h3>
         </DialogContent>
       </Dialog>
       <Dialog open={paymentUnderReview}>
         <DialogContent showCloseButton={false} className="gap-0 overflow-hidden rounded-2xl p-0 text-slate-800 shadow-2xl sm:max-w-xl">
           <div className="space-y-2 px-6 pb-5 pt-1 text-center text-base leading-6 text-slate-600 sm:px-10 sm:text-lg">
-            <h2 className="mt-2 text-lg font-semibold text-slate-800">Your payment is under review.</h2>
-            <p>You will be able to continue once the payment is received.</p>
+            <h2 className="mt-2 text-lg font-semibold text-slate-800">{t("underReview")}</h2>
+            <p>{t("underReviewText")}</p>
           </div>
           <div className="flex justify-center border-t border-slate-200 bg-slate-50 px-5 py-4">
             <Button type="button" onClick={() => onSessionExpired?.()} className="cursor-pointer rounded-md bg-primary px-4 hover:bg-primary/90">
-              Log out
+              {tc("actions.logOut")}
             </Button>
           </div>
         </DialogContent>

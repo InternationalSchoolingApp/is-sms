@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { ReEnrollmentStepTitle } from "./ReEnrollmentFlow";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { Stage3CourseSelection } from "@/components/student-enroll/Stage3CourseSelection";
@@ -16,6 +17,7 @@ import { nextStepAfter, previousStepBefore, reEnrollmentStepPath, STEP_COURSE_SE
  * over the course selection screen, the same screen and API the enrollment uses, in re-enrollment mode.
  */
 export function ReEnrollmentCourseSelection() {
+  const t = useTranslations("reEnrollment.courseSelection");
   const router = useRouter();
   const { school } = useParams();
   const queryClient = useQueryClient();
@@ -33,7 +35,7 @@ export function ReEnrollmentCourseSelection() {
   return (
     <>
       <ReEnrollmentStepTitle subtitle={isFlexy ? undefined : option.learningProgramLabel}>
-        {isFlexy ? option.learningProgramLabel : <>Course Selection for <span className="text-primary">{option.grade?.name}</span></>}
+        {isFlexy ? option.learningProgramLabel : t.rich("titleForGrade", { grade: option.grade?.name ?? "", hl: (chunks) => <span className="text-primary">{chunks}</span> })}
       </ReEnrollmentStepTitle>
       <Stage3CourseSelection
         reEnrollment

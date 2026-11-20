@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { Pencil, ShoppingCart, Trash2 } from "lucide-react";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -30,15 +31,17 @@ import { formatAmount } from "@/utils/cartPlan";
 const DISCOUNT_TOO_LARGE = "Discounted amount is more than the total amount";
 
 function PageTitle({ count }) {
+  const t = useTranslations("cart.cart");
   return (
     <div className="flex items-center gap-2 px-1 pb-4">
       <ShoppingCart className="h-5 w-5 text-primary" aria-hidden="true" />
-      <h1 className="text-lg font-extrabold text-black sm:text-xl">Your Cart ({count} Items)</h1>
+      <h1 className="text-lg font-extrabold text-black sm:text-xl">{t("title", { count: Number(count) || 0 })}</h1>
     </div>
   );
 }
 
 function CartItem({ item, symbol, school, busy, onRemove }) {
+  const t = useTranslations("cart.cart");
   return (
     <li className="flex gap-3 rounded-xl border border-slate-200 p-3">
       {item.imgURl && (
@@ -47,16 +50,16 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
       <div className="min-w-0 flex-1 text-sm text-black">
         <h3 className="mb-1 text-base font-bold">{item.subjectName}</h3>
         <p>
-          No. of Classes: <b>{item.classCount} extra {item.classCount === 1 ? "class" : "classes"}</b>
+          {t("noOfClasses")} <b>{t("extraClasses", { count: Number(item.classCount) || 0 })}</b>
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <span>
-            Plan Fee: <b>{formatAmount(symbol, item.planAmount)}</b>
+            {t("planFee")} <b>{formatAmount(symbol, item.planAmount)}</b>
           </span>
           <div className="ml-auto flex gap-2">
             <button
               type="button"
-              aria-label="Remove from cart"
+              aria-label={t("remove")}
               disabled={busy}
               onClick={() => onRemove(item.cartId)}
               className="rounded-lg bg-red-600 p-2 text-white disabled:opacity-50"
@@ -65,7 +68,7 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
             </button>
             <Link
               href={`${studentNavHref(school, "student-addon")}?subject=${item.subjectId}`}
-              aria-label="Change plan"
+              aria-label={t("changePlan")}
               className="rounded-lg bg-primary p-2 text-white"
             >
               <Pencil className="h-4 w-4" />
@@ -90,6 +93,8 @@ export function Cart() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const dummy = useDummyStudent();
+  const t = useTranslations("cart.cart");
+  const tc = useTranslations("common");
   const [terms, setTerms] = useState(null);
 
   const cartQuery = useCartDetails(context?.userId);
@@ -103,7 +108,7 @@ export function Cart() {
       queryClient.invalidateQueries({ queryKey: CART_KEYS.count(context?.userId) });
       queryClient.invalidateQueries({ queryKey: CART_KEYS.details(context?.userId) });
       queryClient.invalidateQueries({ queryKey: CART_KEYS.plans(context?.userId) });
-      toast.success("Payment received. Your extra classes are ready to book.");
+      toast.success(t("paid"));
       router.push(studentNavHref(school, "student-addon"));
     },
   });
@@ -125,7 +130,7 @@ export function Cart() {
     return (
       <div className="mx-auto w-full">
         <PageTitle count={0} />
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-lg font-bold text-primary">Loading…</div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-lg font-bold text-primary">{tc("status.loading")}</div>
       </div>
     );
   }
@@ -138,26 +143,26 @@ export function Cart() {
 
   async function remove(cartId) {
     const result = await removeItem.mutateAsync(cartId).catch(() => null);
-    if (result?.status !== "1") toast.error(result?.message || "Unable to update cart");
+    if (result?.status !== "1") toast.error(result?.message || t("updateFailed"));
   }
 
   async function confirmAndPay() {
     const result = await createPayment.mutateAsync().catch(() => null);
     // Dummy mode's cart-payment answers userPaymentDetailsId 0, as in legacy.
     if (result?.status !== "1" || result.details?.userPaymentDetailsId == null) {
-      toast.error(result?.message || "Unable to pay cart items");
+      toast.error(result?.message || t("payFailed"));
       return;
     }
     setTerms(result.details);
   }
 
   if (!details) {
-    if (isK5) return <K5CartNotice school={school}>{response?.message || "Unable to load your cart right now. Please try again."}</K5CartNotice>;
+    if (isK5) return <K5CartNotice school={school}>{response?.message || t("loadError")}</K5CartNotice>;
     return (
       <div className="mx-auto w-full">
         <PageTitle count={0} />
         <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-lg font-bold text-primary">
-          {response?.message || "Unable to load your cart right now. Please try again."}
+          {response?.message || t("loadError")}
         </div>
       </div>
     );
@@ -190,7 +195,7 @@ export function Cart() {
         onUploadProof={checkout.uploadProof}
         onSubmitOffline={checkout.submitOffline}
       />
-      {checkout.processing && <FullScreenLoader message="Payment is under process..." />}
+      {checkout.processing && <FullScreenLoader message={t("processing")} />}
       {checkout.dummyGateway && dummy.student && (
         <DummyCheckout
           gateway={checkout.dummyGateway}
@@ -205,9 +210,9 @@ export function Cart() {
       <Dialog open={checkout.incomplete} onOpenChange={(open) => !open && checkout.dismissIncomplete()}>
         <DialogContent className="text-center">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Oops!</DialogTitle>
+            <DialogTitle className="text-2xl">{t("oops")}</DialogTitle>
           </DialogHeader>
-          <h3 className="text-lg font-semibold text-red-600">Payment Incomplete</h3>
+          <h3 className="text-lg font-semibold text-red-600">{t("incomplete")}</h3>
         </DialogContent>
       </Dialog>
       <Dialog
@@ -221,9 +226,9 @@ export function Cart() {
       >
         <DialogContent className="text-center">
           <DialogHeader>
-            <DialogTitle>Your payment is under review.</DialogTitle>
+            <DialogTitle>{t("underReview")}</DialogTitle>
           </DialogHeader>
-          <p className="text-black/70">Your extra classes will be available once the payment is received.</p>
+          <p className="text-black/70">{t("underReviewText")}</p>
         </DialogContent>
       </Dialog>
     </>
@@ -255,12 +260,12 @@ export function Cart() {
         {items.length === 0 ? (
           <div className="py-6 text-center">
             <h2 className="text-2xl font-bold text-primary">
-              Oops!
+              {t("oops")}
               <br />
-              There are no plans added to your cart.
+              {t("empty")}
             </h2>
             <Link href={studentNavHref(school, "student-addon")} className="mt-4 inline-block rounded-lg bg-primary px-5 py-2 font-bold text-white">
-              Browse Plans
+              {t("browsePlans")}
             </Link>
           </div>
         ) : (
@@ -271,14 +276,14 @@ export function Cart() {
               ))}
             </ul>
             <div className="h-fit space-y-3 rounded-xl border border-slate-200 p-4 text-black">
-              <h2 className="text-lg font-bold">Fee Details</h2>
+              <h2 className="text-lg font-bold">{t("feeDetails")}</h2>
               <div className="flex justify-between font-semibold">
-                <span>Cart Total</span>
+                <span>{t("cartTotal")}</span>
                 <span>{formatAmount(symbol, cart.cartTotal)}</span>
               </div>
-              {cart.errorMsg && <p className="text-sm text-red-600">{cart.errorMsg}</p>}
+              {cart.errorMsg && <p className="text-sm text-red-600">{cart.errorMsg === DISCOUNT_TOO_LARGE ? t("discountTooLarge") : cart.errorMsg}</p>}
               <div className="flex justify-between border-t border-slate-200 pt-3 font-semibold">
-                <span>Total</span>
+                <span>{tc("words.total")}</span>
                 <span>{formatAmount(symbol, cart.totalPayAmount)}</span>
               </div>
               <button
@@ -287,7 +292,7 @@ export function Cart() {
                 onClick={confirmAndPay}
                 className="w-full rounded-lg bg-primary p-2 text-lg font-bold text-white disabled:opacity-50"
               >
-                CONFIRM AND PAY
+                {t("confirmAndPay")}
               </button>
             </div>
           </div>

@@ -1,0 +1,28 @@
+{
+  "title": "Diario del estudiante",
+  "titleWithName": "Diario del estudiante - {name}",
+  "backToList": "Volver a la lista del diario",
+  "chatWithLabel": "Chatear con",
+  "chatWith": {
+    "teacher": "Profesor",
+    "school": "Escuela"
+  },
+  "empty": {
+    "teacher": "No hay entradas recientes en el diario con el profesor",
+    "school": "No hay entradas recientes en el diario con la escuela"
+  },
+  "noMessages": "Aún no hay mensajes.",
+  "parent": "Padre/Madre",
+  "letter": {
+    "greetings": "¡Saludos de {school}!",
+    "hopeWell": "Esperamos que estés bien.",
+    "gratitude": "Con gratitud y oraciones,",
+    "family": "Familia {school}"
+  },
+  "loadError": "No se pudo cargar el diario en este momento.",
+  "dates": {
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "todayChip": "Hoy · {date}"
+  }
+}

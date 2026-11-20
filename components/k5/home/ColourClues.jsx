@@ -1,8 +1,10 @@
 "use client";
 
 import { Hand } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { CLUE_COLORS as C } from "@/utils/k5Calendar";
 
+// label: English reference; shown as k5Home.clues.<key>.
 const CLUES = [
   { key: "assignment", label: "Assignment", dot: { background: C.assignment } },
   { key: "done", label: "Done Class", dot: { border: `3px solid ${C.done}`, background: "var(--k5-card)" } },
@@ -20,10 +22,11 @@ const PREK_CLUES = new Set(["done", "live", "upcoming"]);
  * also carries a label or icon.
  */
 export function ColourClues({ clue, onClue, isPreK }) {
+  const t = useTranslations("k5Home.clues");
   const clues = isPreK ? CLUES.filter((c) => PREK_CLUES.has(c.key)) : CLUES;
   return (
-    <div role="group" aria-label="Color clues" data-pin="clues" className="flex flex-wrap items-center justify-center gap-1.5 p-1.5">
-      <span className="flex-none font-k5-display text-base font-semibold text-k5-ink">Color clues:</span>
+    <div role="group" aria-label={t("group")} data-pin="clues" className="flex flex-wrap items-center justify-center gap-1.5 p-1.5">
+      <span className="flex-none font-k5-display text-base font-semibold text-k5-ink">{t("title")}</span>
       {clues.map((c) => {
         const active = clue === c.key;
         return (
@@ -37,13 +40,13 @@ export function ColourClues({ clue, onClue, isPreK }) {
             }`}
           >
             <span aria-hidden="true" className="box-border block h-5 w-5 flex-none rounded-full" style={c.dot} />
-            {c.label}
+            {t(c.key)}
           </button>
         );
       })}
       <span className="flex flex-none items-center gap-1 font-k5-display text-[15px] font-semibold text-k5-ink">
         <Hand className="h-5 w-5" aria-hidden="true" />
-        Tap a clue!
+        {t("tap")}
       </span>
     </div>
   );

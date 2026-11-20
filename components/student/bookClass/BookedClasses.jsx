@@ -2,40 +2,44 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { format, isValid } from "date-fns";
 import { ArrowDown, ArrowLeft, ArrowUp, CalendarDays, Search } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { getStudentBookedClasses } from "@/services/bookClassApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { useLabelTranslator } from "@/i18n/labels";
 import { BOOKED_CLASS_STATUS_STYLES, bookedClassDateRange } from "@/utils/bookClass";
 import { MobileTableCard } from "@/components/student/MobileTableCard";
 import { TableFooter } from "@/components/student/TableFooter";
 import { K5BookedView } from "@/components/k5/pages/K5BookedView";
 
+// `label` is the bookClass.booked.* message key (translated where rendered).
 const DATE_TYPES = [
-  { value: "today", label: "Today" },
-  { value: "yesterday", label: "Yesterday" },
-  { value: "week", label: "Week" },
-  { value: "month", label: "Month" },
-  { value: "custom", label: "Custom" },
+  { value: "today", label: "dateToday" },
+  { value: "yesterday", label: "dateYesterday" },
+  { value: "week", label: "dateWeek" },
+  { value: "month", label: "dateMonth" },
+  { value: "custom", label: "dateCustom" },
 ];
 const STATUSES = [
-  { value: "", label: "Select Status" },
-  { value: "Booked", label: "Booked" },
-  { value: "Completed", label: "Completed" },
-  { value: "Reschedule Session", label: "Reschedule Session" },
-  { value: "Missed by Student", label: "Missed by you" },
+  { value: "", label: "selectStatus" },
+  { value: "Booked", label: "statusBooked" },
+  { value: "Completed", label: "statusCompleted" },
+  { value: "Reschedule Session", label: "statusReschedule" },
+  { value: "Missed by Student", label: "statusMissedByYou" },
 ];
+// [count field, bookClass.booked.counts.* message key]
 const COUNTS = [
-  ["total", "Classes"],
-  ["booked", "Classes Booked"],
-  ["left", "Classes Left"],
-  ["expired", "Classes Expired"],
-  ["missedByYou", "Classes Missed by You"],
-  ["rescheduled", "Classes Rescheduled"],
-  ["completed", "Classes Completed"],
-  ["missedByTeacher", "Classes Missed by Teacher"],
+  ["total", "total"],
+  ["booked", "booked"],
+  ["left", "left"],
+  ["expired", "expired"],
+  ["missedByYou", "missedByYou"],
+  ["rescheduled", "rescheduled"],
+  ["completed", "completed"],
+  ["missedByTeacher", "missedByTeacher"],
 ];
 // Class names that change in the K-5 look; everything else is shared.
 const LOOK = {
@@ -72,15 +76,16 @@ const LOOK = {
 };
 
 // The table's columns (legacy DataTable): header, how a row sorts and what the search looks at.
+// `id` is the bookClass.booked.columns.* message key of the header.
 const PAGE_SIZE = 10;
 const COLUMNS = [
-  { header: "S. No." },
-  { header: "Class Timing | Time zone", value: (r) => `${r.meetingJoinDate} | ${r.startTime} - ${r.endTime} | ${r.timezone}`, sort: (r) => Date.parse(`${r.meetingJoinDate} ${r.startTime}`) },
-  { header: "Course Name", value: (r) => r.subjectName },
-  { header: "Teacher Name", value: (r) => r.name },
-  { header: "Booked Date", value: (r) => r.bookedDate, sort: (r) => Date.parse(r.bookedDate) },
-  { header: "Class Type", value: (r) => r.classTypeExtraOrComp },
-  { header: "Class Status", value: (r) => BOOKED_CLASS_STATUS_STYLES[r.meetingResult]?.label || "N/A" },
+  { id: "sNo", header: "S. No." },
+  { id: "timing", header: "Class Timing | Time zone", value: (r) => `${r.meetingJoinDate} | ${r.startTime} - ${r.endTime} | ${r.timezone}`, sort: (r) => Date.parse(`${r.meetingJoinDate} ${r.startTime}`) },
+  { id: "courseName", header: "Course Name", value: (r) => r.subjectName },
+  { id: "teacherName", header: "Teacher Name", value: (r) => r.name },
+  { id: "bookedDate", header: "Booked Date", value: (r) => r.bookedDate, sort: (r) => Date.parse(r.bookedDate) },
+  { id: "classType", header: "Class Type", value: (r) => r.classTypeExtraOrComp },
+  { id: "classStatus", header: "Class Status", value: (r) => BOOKED_CLASS_STATUS_STYLES[r.meetingResult]?.label || "N/A" },
 ];
 
 function compareRows(a, b, column) {
@@ -106,6 +111,10 @@ export function BookedClasses(props) {
 function LegacyBookedClasses({ course, onBack, onBook }) {
   const isK5 = false;
   const look = LOOK.legacy;
+  const t = useTranslations("bookClass.booked");
+  const tb = useTranslations("bookClass");
+  const tc = useTranslations("common");
+  const tl = useLabelTranslator("bookClass.labels");
   const [draft, setDraft] = useState(DEFAULT_FILTER);
   const [filter, setFilter] = useState(DEFAULT_FILTER);
 
@@ -155,9 +164,9 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
   return (
     <div className="mx-auto w-full">
       <div className="flex items-center justify-between gap-2 px-1 pb-4">
-        <h1 className={look.title}>{isK5 ? "My booked classes" : "Booked Classes"} — {course.name}</h1>
+        <h1 className={look.title}>{t(isK5 ? "titleK5" : "title", { course: tl(course.name) ?? "" })}</h1>
         <button type="button" onClick={onBack} className={look.back}>
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> {tc("actions.back")}
         </button>
       </div>
 
@@ -168,13 +177,13 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
           className={look.select}
         >
           {DATE_TYPES.map((d) => (
-            <option key={d.value} value={d.value}>{d.label}</option>
+            <option key={d.value} value={d.value}>{t(d.label)}</option>
           ))}
         </select>
         <div className="w-full sm:w-44">
           <DatePicker
             icon={CalendarDays}
-            label="Start Date"
+            label={tc("dates.startDate")}
             value={shownFrom}
             disabled={!isCustom}
             onChange={(date) => setDraft({ ...draft, startDate: date ?? null, endDate: null })}
@@ -184,7 +193,7 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
         <div className="w-full sm:w-44">
           <DatePicker
             icon={CalendarDays}
-            label="End Date"
+            label={tc("dates.endDate")}
             value={shownTo}
             fromDate={draft.startDate ?? undefined}
             disabled={!isCustom}
@@ -198,7 +207,7 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
           className={look.select}
         >
           {STATUSES.map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
+            <option key={s.value} value={s.value}>{t(s.label)}</option>
           ))}
         </select>
         <button
@@ -210,21 +219,21 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
           }}
           className={look.reset}
         >
-          Reset
+          {tc("actions.reset")}
         </button>
         <button type="button" onClick={() => {
             setFilter(draft);
             setPage(0);
           }}
           className={look.search}>
-          Search
+          {tc("actions.search")}
         </button>
         <button
           type="button"
           onClick={onBook}
           className={`${look.book} ${course.weekLeftClass > 0 ? look.bookOn : look.bookOff}`}
         >
-          Book a Class ({course.weekLeftClass})
+          {tb("bookCount", { count: course.weekLeftClass ?? "" })}
         </button>
       </div>
 
@@ -233,8 +242,8 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
           {COUNTS.map(([key, label]) => (
             <div key={key} className={look.count}>
               <div className="text-xs leading-tight">
-                <div className="font-bold text-black">Total number of</div>
-                <div className="text-black/70">{label}</div>
+                <div className="font-bold text-black">{t("totalNumberOf")}</div>
+                <div className="text-black/70">{t(`counts.${label}`)}</div>
               </div>
               <div className={look.countNum}>{counts[key] ?? 0}</div>
             </div>
@@ -244,7 +253,7 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
 
       <div className="mt-3 flex justify-end">
         <label className="relative block w-full max-w-[260px]">
-          <span className="sr-only">Search booked classes</span>
+          <span className="sr-only">{t("searchLabel")}</span>
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-black/40" aria-hidden="true" />
           <input
             type="search"
@@ -253,7 +262,7 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
               setSearch(event.target.value);
               setPage(0);
             }}
-            placeholder="Search..."
+            placeholder={t("searchPlaceholder")}
             className="w-full rounded-lg border border-slate-300 py-2 pl-8 pr-3 text-sm text-black"
           />
         </label>
@@ -262,7 +271,7 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
       {/* Mobile: one card per booked class (column title beside each value) instead of a 900px table. */}
       <div className="mt-3 md:hidden">
         {isLoading || rows.length === 0 ? (
-          <p className="rounded-2xl border border-slate-200 bg-white py-6 text-center text-sm font-bold text-black/60">{isLoading ? "Loading…" : "No records found"}</p>
+          <p className="rounded-2xl border border-slate-200 bg-white py-6 text-center text-sm font-bold text-black/60">{isLoading ? tc("status.loading") : tc("status.noRecords")}</p>
         ) : (
           <ul className="space-y-3">
             {rows.map((row, index) => {
@@ -272,15 +281,15 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
                   <MobileTableCard
                     labelClassName={look.thead}
                     rows={[
-                      { label: "S. No.", value: offset + index + 1 },
-                      { label: "Class Timing | Time zone", value: `${row.meetingJoinDate} | ${row.startTime} - ${row.endTime} | ${row.timezone}` },
-                      { label: "Course Name", value: row.subjectName },
-                      { label: "Teacher Name", value: row.name },
-                      { label: "Booked Date", value: row.bookedDate },
-                      { label: "Class Type", value: row.classTypeExtraOrComp },
+                      { label: t("columns.sNo"), value: offset + index + 1 },
+                      { label: t("columns.timing"), value: `${row.meetingJoinDate} | ${row.startTime} - ${row.endTime} | ${row.timezone}` },
+                      { label: t("columns.courseName"), value: row.subjectName },
+                      { label: t("columns.teacherName"), value: row.name },
+                      { label: t("columns.bookedDate"), value: row.bookedDate },
+                      { label: t("columns.classType"), value: tl(row.classTypeExtraOrComp) },
                       {
-                        label: "Class Status",
-                        value: status ? <span className={`rounded px-2 py-0.5 font-bold ${status.className}`}>{status.label}</span> : <span className="font-bold">N/A</span>,
+                        label: t("columns.classStatus"),
+                        value: status ? <span className={`rounded px-2 py-0.5 font-bold ${status.className}`}>{tl(status.label)}</span> : <span className="font-bold">{tc("status.na")}</span>,
                       },
                     ]}
                   />
@@ -296,12 +305,12 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
           <thead className={look.thead}>
             <tr>
               {COLUMNS.map((column, index) => (
-                <th key={column.header} aria-sort={sort.column === index ? (sort.descending ? "descending" : "ascending") : undefined} className="px-3 py-2 font-normal">
+                <th key={column.id} aria-sort={sort.column === index ? (sort.descending ? "descending" : "ascending") : undefined} className="px-3 py-2 font-normal">
                   {index === 0 ? (
-                    column.header
+                    t(`columns.${column.id}`)
                   ) : (
                     <button type="button" onClick={() => sortBy(index)} className="inline-flex cursor-pointer items-center gap-1 border-none bg-transparent p-0 font-normal text-inherit">
-                      {column.header}
+                      {t(`columns.${column.id}`)}
                       {sort.column === index && (sort.descending ? <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" /> : <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />)}
                     </button>
                   )}
@@ -311,9 +320,9 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={7} className="py-6 text-center text-black/60">Loading…</td></tr>
+              <tr><td colSpan={7} className="py-6 text-center text-black/60">{tc("status.loading")}</td></tr>
             ) : rows.length === 0 ? (
-              <tr><td colSpan={7} className="py-6 text-center font-bold text-black">No records found</td></tr>
+              <tr><td colSpan={7} className="py-6 text-center font-bold text-black">{tc("status.noRecords")}</td></tr>
             ) : (
               rows.map((row, index) => {
                 const status = BOOKED_CLASS_STATUS_STYLES[row.meetingResult];
@@ -324,12 +333,12 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
                     <td className="px-3 py-2">{row.subjectName}</td>
                     <td className="px-3 py-2">{row.name}</td>
                     <td className="px-3 py-2">{row.bookedDate}</td>
-                    <td className="px-3 py-2">{row.classTypeExtraOrComp}</td>
+                    <td className="px-3 py-2">{tl(row.classTypeExtraOrComp)}</td>
                     <td className="px-3 py-2">
                       {status ? (
-                        <span className={`rounded px-2 py-0.5 font-bold ${status.className}`}>{status.label}</span>
+                        <span className={`rounded px-2 py-0.5 font-bold ${status.className}`}>{tl(status.label)}</span>
                       ) : (
-                        <span className="font-bold">N/A</span>
+                        <span className="font-bold">{tc("status.na")}</span>
                       )}
                     </td>
                   </tr>

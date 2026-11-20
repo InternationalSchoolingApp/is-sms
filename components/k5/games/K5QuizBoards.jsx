@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { newCount, newMath, newShape } from "@/components/k5/games/gameLogic";
 
 const FRAME = "relative flex min-h-[320px] flex-col overflow-hidden rounded-[26px] border-[3px] border-k5-line";
@@ -39,10 +40,11 @@ function Options({ values, onPick }) {
 }
 
 export function CountBoard(props) {
+  const t = useTranslations("k5Games");
   const [q, answer] = useQuiz(newCount, (cur, n) => n === cur.n, props);
   return (
     <div className={FRAME + " bg-[#1E2F57]"}>
-      <div role="img" aria-label="How many stars do you see?" className="relative h-[200px]">
+      <div role="img" aria-label={t("games.count.how")} className="relative h-[200px]">
         {q.stars.map((s, i) => (
           <svg key={i} width="44" height="44" viewBox="0 0 24 24" aria-hidden="true" className="absolute" style={{ left: s.x, top: s.y }}>
             <path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z" fill="#FFC531" stroke="#FFE38A" strokeWidth="1" />
@@ -68,7 +70,7 @@ export function MathBoard(props) {
   );
 }
 
-const SHAPE_NAMES = { circle: "circle", square: "square", triangle: "triangle", star: "star", heart: "heart" };
+// Shape names: k5Games.shapes.<kind>.
 const SHAPE_PATHS = {
   circle: <circle cx="50" cy="50" r="40" />,
   square: <rect x="12" y="12" width="76" height="76" rx="8" />,
@@ -78,17 +80,18 @@ const SHAPE_PATHS = {
 };
 
 export function ShapeBoard(props) {
+  const t = useTranslations("k5Games");
   const [q, answer] = useQuiz(newShape, (cur, kind) => kind === cur.target, props);
   return (
     <div className={FRAME + " items-center justify-center gap-[18px] bg-k5-vt p-[18px]"}>
-      <div className="text-center font-k5-display text-[34px] font-semibold text-k5-ink">{"Tap the " + SHAPE_NAMES[q.target] + "!"}</div>
+      <div className="text-center font-k5-display text-[34px] font-semibold text-k5-ink">{t(`tapShape.${q.target}`)}</div>
       <div className="flex flex-wrap justify-center gap-3.5">
         {q.items.map((it) => (
           <button
             key={it.kind}
             type="button"
             onClick={() => answer(it.kind)}
-            aria-label={SHAPE_NAMES[it.kind]}
+            aria-label={t(`shapes.${it.kind}`)}
             className="flex h-28 w-28 cursor-pointer items-center justify-center rounded-3xl border-none bg-k5-card shadow-[0_6px_0_var(--k5-line)]"
           >
             <svg width="88" height="88" viewBox="0 0 100 100" aria-hidden="true" fill={it.color}>

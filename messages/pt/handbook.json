@@ -1,0 +1,11 @@
+{
+  "title": "Manual do aluno",
+  "noAccess": "Você não tem acesso a este módulo.",
+  "download": "Baixar manual",
+  "policyNote": "É responsabilidade do aluno e dos pais acompanhar as atualizações dos termos e políticas da escola. <link>Clique aqui</link> para saber mais.",
+  "moduleNames": {
+    "student_handbook": "Manual do aluno",
+    "child_handbook": "Manual da criança",
+    "parent_handbook": "Manual dos pais"
+  }
+}

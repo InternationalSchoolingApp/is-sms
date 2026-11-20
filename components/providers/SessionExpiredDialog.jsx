@@ -2,11 +2,12 @@
 
 import { useState, useSyncExternalStore } from "react";
 import { Eye, EyeOff, Lock, TimerReset } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { resolveBackendNavigationOrigin } from "@/utils/backendOrigin";
 import { expireSession } from "@/utils/logout";
-import { SESSION_EXPIRED_MESSAGE, isSessionExpired, subscribeSessionExpired } from "@/utils/sessionState";
+import { isSessionExpired, subscribeSessionExpired } from "@/utils/sessionState";
 
 // The default card (every non-K–5 student, blue). Grade K–5 / 6–8 / 9–12 students get the dialog inside their own theme
 // (K5Shell mounts it there): the card, field, button and icon use the K–5 tokens, so the student's colour, Day / Night, font
@@ -46,16 +47,12 @@ const LOOKS = {
   },
 };
 
-// Shown in the dialog (with blinking dots) while the password is being checked.
-const VERIFYING_MESSAGE = "Verifying your credentials";
-const WRONG_PASSWORD_MESSAGE = "You entered a wrong password.";
-const UNAVAILABLE_MESSAGE = "Unable to sign in right now. Please try again.";
-const VERIFYING_DETAIL = "Please wait while we securely restore your session.";
-
+// The grade bands with their own wording: nav.sessionExpired.bands.<band>.title / .hint (the default card has the
+// plain title and the hourglass).
 const BAND_COPY = {
-  elementary: { title: "Oops! You were logged out", hint: "Type your password to come back in." },
-  middle: { title: "Your session has been logged out", hint: "Enter your password to log in again and carry on." },
-  high: { title: "Your session has been logged out", hint: "Enter your password to sign in again and continue where you left off." },
+  elementary: { title: "bands.elementary.title", hint: "bands.elementary.hint" },
+  middle: { title: "bands.middle.title", hint: "bands.middle.hint" },
+  high: { title: "bands.high.title", hint: "bands.high.hint" },
 };
 
 // "..." after the verifying text: three dots that keep blinking one after another while the password is checked.
@@ -103,6 +100,8 @@ function Hourglass() {
 export function SessionExpiredDialog({ themed = false }) {
   const open = useSyncExternalStore(subscribeSessionExpired, isSessionExpired, () => false);
   const { session, context, isK5, isMiddle, isHigh } = useDashboardContext();
+  const t = useTranslations("nav.sessionExpired");
+  const tc = useTranslations("common");
   const themeProps = useK5ThemeProps("fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm");
   // A K–5 student's dialog is the one inside their theme (themed); the one outside it stays closed for them.
   const band = !isK5 ? "default" : isHigh ? "high" : isMiddle ? "middle" : "elementary";
@@ -157,12 +156,12 @@ export function SessionExpiredDialog({ themed = false }) {
     if (answer?.wrongPassword || (answer && !answer.ok && answer.message)) {
       setBusy(false);
       setPassword("");
-      setError(answer.wrongPassword ? WRONG_PASSWORD_MESSAGE : answer.message);
+      setError(answer.wrongPassword ? t("wrongPassword") : answer.message);
       return;
     }
     // The check could not be made (or no sign-in link came back): the form again, with the password kept for a retry.
     setBusy(false);
-    setError(UNAVAILABLE_MESSAGE);
+    setError(t("unavailable"));
   }
 
   return (
@@ -185,16 +184,16 @@ export function SessionExpiredDialog({ themed = false }) {
           <>
             <div role="status" aria-live="polite" className="flex flex-col items-center gap-2 py-2">
               <p className="m-0 text-lg font-semibold">
-                {VERIFYING_MESSAGE}
+                {t("verifying")}
                 <BlinkingDots />
               </p>
-              <p className="m-0 text-base font-medium opacity-80">{VERIFYING_DETAIL}</p>
+              <p className="m-0 text-base font-medium opacity-80">{t("verifyingDetail")}</p>
             </div>
           </>
         ) : (
           <>
-            <h2 id="session-expired-title" className={`m-0 ${look.title}`}>{copy?.title ?? SESSION_EXPIRED_MESSAGE}</h2>
-            {copy && <p className="m-0 text-base font-medium opacity-80">{copy.hint}</p>}
+            <h2 id="session-expired-title" className={`m-0 ${look.title}`}>{copy ? t(copy.title) : t("title")}</h2>
+            {copy && <p className="m-0 text-base font-medium opacity-80">{t(copy.hint)}</p>}
             <label className={`relative flex h-[54px] w-full items-center ${look.field}`}>
               <Lock className="ml-4 h-4 w-4 flex-none opacity-70" aria-hidden="true" />
               {/* The signed-in user's e-mail for the browser's password manager: it then offers (and fills) only this user's
@@ -207,13 +206,13 @@ export function SessionExpiredDialog({ themed = false }) {
                   setPassword(e.target.value);
                   if (error) setError("");
                 }}
-                placeholder="Password *"
-                aria-label="Password"
+                placeholder={t("passwordPlaceholder")}
+                aria-label={t("password")}
                 autoComplete="current-password"
                 autoFocus
                 className="h-full min-w-0 flex-1 border-none bg-transparent px-3 text-base outline-none placeholder:opacity-60"
               />
-              <button type="button" onClick={() => setVisible((v) => !v)} aria-label={visible ? "Hide password" : "Show password"} className="mr-3 flex-none cursor-pointer border-none bg-transparent p-1 text-inherit">
+              <button type="button" onClick={() => setVisible((v) => !v)} aria-label={visible ? t("hidePassword") : t("showPassword")} className="mr-3 flex-none cursor-pointer border-none bg-transparent p-1 text-inherit">
                 {visible ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
               </button>
             </label>
@@ -224,14 +223,14 @@ export function SessionExpiredDialog({ themed = false }) {
               </p>
             )}
             <button type="submit" disabled={busy || !password} className={`min-w-[110px] cursor-pointer disabled:cursor-default disabled:opacity-60 ${band === "elementary" ? "" : "border-none"} ${look.button}`}>
-              {busy ? "Please wait…" : "Log in"}
+              {busy ? tc("status.pleaseWait") : t("logIn")}
             </button>
             <div className="text-base leading-snug">
-              {email && <div>Logged in as {email}</div>}
+              {email && <div>{t("loggedInAs", { email })}</div>}
               <div>
-                Not You?{" "}
+                {t("notYou")}{" "}
                 <button type="button" onClick={() => expireSession(schoolUUID)} className={`cursor-pointer border-none bg-transparent p-0 text-base font-semibold hover:underline ${look.link}`}>
-                  Log in as a different user
+                  {t("differentUser")}
                 </button>
               </div>
             </div>

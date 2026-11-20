@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
@@ -8,9 +9,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 const SK = "bg-slate-200/80";
 
 export function DashboardLoadingSkeleton() {
+  const t = useTranslations("nav");
   return (
     <div role="status" aria-live="polite" aria-busy="true" className="flex min-h-screen flex-col bg-slate-50">
-      <span className="sr-only">Loading your dashboard…</span>
+      <span className="sr-only">{t("loadingDashboard")}</span>
 
       <div aria-hidden="true" className="flex h-[72px] flex-none items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 max-[760px]:h-14 max-[760px]:px-3">
         <div className="flex items-center gap-3">

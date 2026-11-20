@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { AlertTriangle, Clock, CreditCard, FileText, Globe, Info } from "lucide-react";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { PaymentName } from "@/components/common/PaymentName";
@@ -19,6 +20,7 @@ import { useSchoolCurrency } from "@/hooks/useStudentCart";
 import { ONBOARDING_STATUS_KEY } from "@/hooks/useOnboardingGate";
 import { getWelcomeDetails, saveTimezone } from "@/services/onboardingGateApi";
 import { callServer } from "@/utils/serverCall";
+import { useLabelTranslator } from "@/i18n/labels";
 
 /**
  * Welcome page (/{school}/student/welcome) - the legacy "additional layer" (AdditionalLayerAtLogin.jsp +
@@ -32,6 +34,8 @@ import { callServer } from "@/utils/serverCall";
 const welcomeKey = (context) => ["onboarding-welcome", context?.schoolUUID, context?.userId];
 
 export function OnboardingWelcome() {
+  const t = useTranslations("onboarding.welcome");
+  const tc = useTranslations("common");
   const { context } = useDashboardContext();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -62,8 +66,8 @@ export function OnboardingWelcome() {
   if (query.isError) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center gap-4 py-16 text-center">
-        <p className="text-sm font-semibold text-red-600">Could not load your details. Please try again.</p>
-        <ActionButton onClick={() => query.refetch()}>Try again</ActionButton>
+        <p className="text-sm font-semibold text-red-600">{t("loadFailed")}</p>
+        <ActionButton onClick={() => query.refetch()}>{tc("actions.tryAgain")}</ActionButton>
       </div>
     );
   }
@@ -91,6 +95,8 @@ export function OnboardingWelcome() {
 const GREEN = "!bg-green-600 hover:!bg-green-700";
 
 function TimezoneStep({ timezone, onSaved }) {
+  const t = useTranslations("onboarding.timezone");
+  const tc = useTranslations("common");
   const options = useMemo(() => timezone?.options ?? [], [timezone]);
   const [selected, setSelected] = useState(timezone?.selected || "");
   const [confirming, setConfirming] = useState(false);
@@ -103,31 +109,31 @@ function TimezoneStep({ timezone, onSaved }) {
     mutationFn: () => callServer(() => saveTimezone(selected)),
     onSuccess: () => {
       setConfirming(false);
-      toast.success("Your time zone is saved.");
+      toast.success(t("saved"));
       onSaved();
     },
-    onError: (error) => toast.error(String(error?.message || "").replace(/^[A-Z0-9_]+: /, "") || "Your time zone could not be saved."),
+    onError: (error) => toast.error(String(error?.message || "").replace(/^[A-Z0-9_]+: /, "") || t("saveFailed")),
   });
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <Card header="Confirm Your Time Zone" className="w-full max-w-[650px]" bodyClassName="px-4 py-6 sm:px-8">
-        <p className="mb-5 text-center text-base font-semibold text-primary">Before we start, please select your Country Name and Time Zone:</p>
+      <Card header={t("title")} className="w-full max-w-[650px]" bodyClassName="px-4 py-6 sm:px-8">
+        <p className="mb-5 text-center text-base font-semibold text-primary">{t("intro")}</p>
         <div className="mx-auto max-w-md">
           <FloatingLabelSelect
             icon={Globe}
-            label="Time Zone"
+            label={t("label")}
             required
             value={selected}
             onValueChange={setSelected}
             options={options}
-            error={options.length === 0 ? "Could not load the time zones" : undefined}
+            error={options.length === 0 ? t("loadFailed") : undefined}
             searchable
           />
         </div>
         <div className="mt-6 flex justify-end border-t border-slate-200 pt-4">
           <ActionButton className={GREEN} disabled={!selected} onClick={() => setConfirming(true)}>
-            Confirm
+            {tc("actions.confirm")}
           </ActionButton>
         </div>
       </Card>
@@ -136,16 +142,16 @@ function TimezoneStep({ timezone, onSaved }) {
         <DialogContent className="border-t-[10px] border-primary text-center sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle className="text-center text-lg font-semibold text-primary">
-              Do you wish to proceed with <b className="font-bold">{zoneName}</b>?
+              {t.rich("proceedWith", { zone: zoneName, b: (chunks) => <b className="font-bold">{chunks}</b> })}
             </DialogTitle>
           </DialogHeader>
-          <p className="text-sm font-semibold text-primary">Please note that all of your classes will follow this time zone.</p>
+          <p className="text-sm font-semibold text-primary">{t("classesFollow")}</p>
           <p className="text-sm font-semibold text-primary">
-            To change your time zone later, go to the <b>&lsquo;My Profile&rsquo;</b> section of your dashboard.
+            {t.rich("changeLater", { b: (chunks) => <b>{chunks}</b> })}
           </p>
           <div className="mt-2 flex justify-center gap-2">
             <ActionButton className={GREEN} disabled={save.isPending} onClick={() => save.mutate()}>
-              {save.isPending ? "Saving..." : "Yes"}
+              {save.isPending ? t("saving") : tc("actions.yes")}
             </ActionButton>
             <button
               type="button"
@@ -153,7 +159,7 @@ function TimezoneStep({ timezone, onSaved }) {
               onClick={() => setConfirming(false)}
               className="cursor-pointer rounded-md border border-primary px-5 py-2 text-sm font-semibold text-primary hover:bg-primary/5 disabled:opacity-60"
             >
-              No
+              {tc("actions.no")}
             </button>
           </div>
         </DialogContent>
@@ -165,12 +171,15 @@ function TimezoneStep({ timezone, onSaved }) {
 // ---- Payment overdue (legacy paymentOverDueCard) ----
 
 function OverdueStep({ context, dueFees, onPaid }) {
+  const t = useTranslations("onboarding.overdue");
+  const tr = useTranslations("reEnrollment.gateway");
+  const tl = useLabelTranslator("onboarding.feeStatus");
   const currencyQuery = useSchoolCurrency(context.schoolNumericId);
   const symbol = currencyQuery.data?.symbol ?? "";
   const checkout = useCartCheckout({
     context,
     onPaid: () => {
-      toast.success("Payment received.");
+      toast.success(t("paymentReceived"));
       onPaid();
     },
   });
@@ -180,45 +189,45 @@ function OverdueStep({ context, dueFees, onPaid }) {
   return (
     <div className="pb-6">
       <h2 className="mb-4 text-center text-xl font-bold text-black">
-        <span className="mr-2" aria-hidden="true">👋</span>Hi {context.userName || "there"}!
+        <span className="mr-2" aria-hidden="true">👋</span>{context.userName ? t("hi", { name: context.userName }) : t("hiThere")}
       </h2>
       <div className="mx-auto mb-6 flex max-w-xl items-center gap-3 rounded-[10px] border border-red-400 bg-red-50 px-3 py-2">
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-500 text-white">
           <AlertTriangle className="h-4 w-4" aria-hidden="true" />
         </span>
-        <p className="text-sm text-red-600 sm:text-base">Your LMS is deactivated due to pending fee since {firstDueDate}.</p>
+        <p className="text-sm text-red-600 sm:text-base">{t("deactivated", { date: firstDueDate })}</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-12">
         <div className="space-y-3 lg:col-span-7">
           {dueFees.length === 0 && (
-            <Card bodyClassName="px-4 py-6 text-center text-sm text-slate-600">No overdue payments found.</Card>
+            <Card bodyClassName="px-4 py-6 text-center text-sm text-slate-600">{t("noOverdue")}</Card>
           )}
           {dueFees.map((fee, index) => (
             <section key={fee.id} className="mx-auto w-full max-w-[420px] overflow-hidden rounded-[10px] border border-slate-200 bg-white shadow-sm">
               <header className="flex items-center gap-2 border-b border-slate-200 px-4 py-2 text-sm font-semibold text-black">
-                <FileText className="h-4 w-4" aria-hidden="true" /> Pending Fee
+                <FileText className="h-4 w-4" aria-hidden="true" /> {t("pendingFee")}
               </header>
               <dl className="space-y-2 px-4 py-3 text-sm">
-                <Row label="Grade" value={fee.standardName || "-"} />
-                <Row label="Fee Description" value={fee.paymentName ? <PaymentName name={fee.paymentName} /> : "-"} />
-                <Row label="Due Fee" value={money(fee.amount)} />
-                <Row label="Due Date" value={fee.dueDate || "-"} danger />
+                <Row label={t("grade")} value={fee.standardName || "-"} />
+                <Row label={t("feeDescription")} value={fee.paymentName ? <PaymentName name={fee.paymentName} /> : "-"} />
+                <Row label={t("dueFee")} value={money(fee.amount)} />
+                <Row label={t("dueDate")} value={fee.dueDate || "-"} danger />
                 <div className="flex items-center justify-between gap-3">
-                  <dt className="font-semibold text-slate-500">Status</dt>
+                  <dt className="font-semibold text-slate-500">{t("status")}</dt>
                   <dd>
-                    <span className="rounded bg-amber-200 px-2 py-0.5 text-xs font-semibold text-amber-800">{fee.status || "-"}</span>
+                    <span className="rounded bg-amber-200 px-2 py-0.5 text-xs font-semibold text-amber-800">{tl(fee.status) || "-"}</span>
                   </dd>
                 </div>
                 <div className="flex items-center justify-between gap-3 border-t border-slate-200 pt-2">
-                  <dt className="font-semibold text-slate-500">Total Fee Due</dt>
+                  <dt className="font-semibold text-slate-500">{t("totalDue")}</dt>
                   <dd className="text-xl font-bold text-black">{money(fee.amount)}</dd>
                 </div>
               </dl>
               <div className="px-4 pb-4 text-center">
                 {/* Like legacy: only the earliest overdue fee can be paid first. */}
                 <ActionButton disabled={index !== 0 || checkout.preparing} onClick={() => checkout.start(fee.id)} className="inline-flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" aria-hidden="true" /> Pay Now to Continue Classes
+                  <CreditCard className="h-4 w-4" aria-hidden="true" /> {t("payNow")}
                 </ActionButton>
               </div>
             </section>
@@ -229,16 +238,16 @@ function OverdueStep({ context, dueFees, onPaid }) {
           <SupportCard uniqueId={context.uniqueId} />
           <div className="rounded-[10px] border border-amber-300 bg-amber-50 p-4 text-amber-700">
             <p className="mb-1 flex items-center gap-2 font-bold">
-              <Clock className="h-4 w-4" aria-hidden="true" /> Why is timely payment important?
+              <Clock className="h-4 w-4" aria-hidden="true" /> {t("whyTimely")}
             </p>
-            <p className="text-sm">Please pay in advance to continue with your classes.</p>
+            <p className="text-sm">{t("payInAdvance")}</p>
           </div>
         </div>
       </div>
 
       <p className="mx-auto mt-6 flex w-fit items-center gap-2 rounded-[10px] bg-blue-50 px-3 py-1 text-sm text-blue-700">
         <Info className="h-4 w-4 shrink-0" aria-hidden="true" />
-        Kindly complete the payment to avoid deactivation of the School Management System.
+        {t("avoidDeactivation")}
       </p>
 
       <CheckoutExtraDialogs checkout={checkout} />
@@ -256,14 +265,14 @@ function OverdueStep({ context, dueFees, onPaid }) {
         onSubmitOffline={checkout.submitOffline}
       />
       {(checkout.preparing || checkout.processing) && (
-        <FullScreenLoader message={checkout.processing ? "Payment is under process..." : undefined} />
+        <FullScreenLoader message={checkout.processing ? tr("processing") : undefined} />
       )}
       <Dialog open={checkout.incomplete} onOpenChange={(open) => !open && checkout.dismissIncomplete()}>
         <DialogContent className="text-center">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Oops!</DialogTitle>
+            <DialogTitle className="text-2xl">{tr("oops")}</DialogTitle>
           </DialogHeader>
-          <h3 className="text-lg font-semibold text-red-600">Payment Incomplete</h3>
+          <h3 className="text-lg font-semibold text-red-600">{tr("incomplete")}</h3>
         </DialogContent>
       </Dialog>
       <Dialog
@@ -276,9 +285,9 @@ function OverdueStep({ context, dueFees, onPaid }) {
       >
         <DialogContent className="text-center">
           <DialogHeader>
-            <DialogTitle>Your payment is under review.</DialogTitle>
+            <DialogTitle>{tr("underReview")}</DialogTitle>
           </DialogHeader>
-          <p className="text-black/70">Your fee status will be updated once the payment is received.</p>
+          <p className="text-black/70">{t("statusUpdated")}</p>
         </DialogContent>
       </Dialog>
     </div>

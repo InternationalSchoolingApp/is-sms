@@ -1,6 +1,8 @@
 "use client";
 
-import { getEventColor, getEventStatus, getTodayGroups } from "@/utils/calendarEvents";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
+import { eventDisplayTime, getEventColor, getEventStatus, getTodayGroups } from "@/utils/calendarEvents";
 import { CalendarDatepicker } from "@/components/dashboard/calendar/CalendarDatepicker";
 import { CourseColorPicker } from "@/components/dashboard/calendar/CourseColorPicker";
 import { FaCheck } from "react-icons/fa";
@@ -28,13 +30,14 @@ function FilterRow({ label, color, checked, onToggle }) {
 // controls, unlike every other FilterRow where the swatch itself is the
 // checkbox.
 function CourseRow({ index, course, checked, onToggleVisibility, onPickColor }) {
+  const t = useTranslations("calendar");
   return (
     <div className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-black/5">
       {/* <span className="w-4 flex-shrink-0 text-xs font-bold text-black/40">{index}.</span> */}
       <button
         type="button"
         onClick={onToggleVisibility}
-        aria-label={checked ? "Hide course" : "Show course"}
+        aria-label={checked ? t("filters.hideCourse") : t("filters.showCourse")}
         className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border-2 border-black/20 ${checked ? "bg-green-600 border-green-600" : "transparent" }` }
         style={{ background: checked ? "#bg-green-600" : "transparent" }}
       >
@@ -55,6 +58,7 @@ function TodaySummaryItem({ event, courseRegistry, onSelectEvent }) {
   const isClass = event.eventKind === "class";
   const isLive = getEventStatus(event) === "live";
   const title = event.title || event.eventTitle;
+  const dateLocale = useDateFnsLocale();
 
   return (
     <button
@@ -64,7 +68,7 @@ function TodaySummaryItem({ event, courseRegistry, onSelectEvent }) {
       style={isLive ? { "--live-color": color } : isClass ? { borderStyle: "dashed", borderColor: color } : { borderColor: color }}
     >
       {title && <span className="block font-bold text-black">{title}</span>}
-      {event.displayTime && <span className="block text-black/60">{event.displayTime}</span>}
+      {event.displayTime && <span className="block text-black/60">{eventDisplayTime(event, dateLocale)}</span>}
     </button>
   );
 }
@@ -73,11 +77,12 @@ function TodaySummaryItem({ event, courseRegistry, onSelectEvent }) {
 // each either listing its items or showing the legacy's "No Class & School
 // Activity" placeholder when empty.
 function TodaySubgroup({ label, items, courseRegistry, onSelectEvent }) {
+  const t = useTranslations("calendar");
   return (
     <div className="mb-3 last:mb-0">
       <h4 className="mb-1 text-xs font-bold text-black">{label}</h4>
       {items.length === 0 ? (
-        <p className="text-xs text-black/50">No Class &amp; School Activity</p>
+        <p className="text-xs text-black/50">{t("filters.noClassOrActivity")}</p>
       ) : (
         <div className="space-y-1.5">
           {items.map((event) => (
@@ -118,18 +123,19 @@ export function CalendarFilters({
 }) {
   const courses = Object.values(courseRegistry);
   const todayGroups = getTodayGroups(events);
+  const t = useTranslations("calendar");
   return (
     <aside className="w-full flex-shrink-0 space-y-4 overflow-y-auto border-slate-200 p-3 lg:sticky lg:top-0 lg:max-h-[calc(100vh-170px-var(--dash-footer-h,0px))] lg:w-72 lg:self-start lg:border-r">
       <CalendarDatepicker selectedDate={selectedDate} onSelectDate={onSelectDate} events={events} />
 
-      <FilterSection title="Today">
-        <TodaySubgroup label="Live Class & School Activity" items={todayGroups.live} courseRegistry={courseRegistry} onSelectEvent={onSelectEvent} />
-        <TodaySubgroup label="Upcoming Class & School Activity" items={todayGroups.upcoming} courseRegistry={courseRegistry} onSelectEvent={onSelectEvent} />
-        <TodaySubgroup label="Completed Class & School Activity" items={todayGroups.completed} courseRegistry={courseRegistry} onSelectEvent={onSelectEvent} />
+      <FilterSection title={t("filters.today")}>
+        <TodaySubgroup label={t("filters.liveGroup")} items={todayGroups.live} courseRegistry={courseRegistry} onSelectEvent={onSelectEvent} />
+        <TodaySubgroup label={t("filters.upcomingGroup")} items={todayGroups.upcoming} courseRegistry={courseRegistry} onSelectEvent={onSelectEvent} />
+        <TodaySubgroup label={t("filters.completedGroup")} items={todayGroups.completed} courseRegistry={courseRegistry} onSelectEvent={onSelectEvent} />
       </FilterSection>
 
       {courses.length > 0 && (
-        <FilterSection title="My Courses">
+        <FilterSection title={t("filters.myCourses")}>
           {courses.map((course, index) => (
             <CourseRow
               key={course.id}
@@ -143,27 +149,27 @@ export function CalendarFilters({
         </FilterSection>
       )}
 
-      <FilterSection title="Assignments">
-        <FilterRow label="Pending" color="#f4b400" checked={filters.pendingAssignments} onToggle={() => toggleFilter("pendingAssignments")} />
-        <FilterRow label="Submitted" color="#1b5e20" checked={filters.submittedAssignments} onToggle={() => toggleFilter("submittedAssignments")} />
-        <FilterRow label="Upcoming" color="#1a73e8" checked={filters.upcomingAssignments} onToggle={() => toggleFilter("upcomingAssignments")} />
+      <FilterSection title={t("filters.assignments")}>
+        <FilterRow label={t("filters.pending")} color="#f4b400" checked={filters.pendingAssignments} onToggle={() => toggleFilter("pendingAssignments")} />
+        <FilterRow label={t("filters.submitted")} color="#1b5e20" checked={filters.submittedAssignments} onToggle={() => toggleFilter("submittedAssignments")} />
+        <FilterRow label={t("filters.upcoming")} color="#1a73e8" checked={filters.upcomingAssignments} onToggle={() => toggleFilter("upcomingAssignments")} />
       </FilterSection>
 
-      <FilterSection title="Class Status">
-        <FilterRow label="Live" color="#e53935" checked={filters.liveActivities} onToggle={() => toggleFilter("liveActivities")} />
-        <FilterRow label="Upcoming" color="#2267f0" checked={filters.upcomingActivities} onToggle={() => toggleFilter("upcomingActivities")} />
-        <FilterRow label="Expired" color="#5f6368" checked={filters.pastActivities} onToggle={() => toggleFilter("pastActivities")} />
-        <FilterRow label="Missed Class" color="#d93025" checked={filters.missedClasses} onToggle={() => toggleFilter("missedClasses")} />
-        <FilterRow label="Late Join Class" color="#ff6d00" checked={filters.lateJoinClasses} onToggle={() => toggleFilter("lateJoinClasses")} />
+      <FilterSection title={t("filters.classStatus")}>
+        <FilterRow label={t("filters.live")} color="#e53935" checked={filters.liveActivities} onToggle={() => toggleFilter("liveActivities")} />
+        <FilterRow label={t("filters.upcoming")} color="#2267f0" checked={filters.upcomingActivities} onToggle={() => toggleFilter("upcomingActivities")} />
+        <FilterRow label={t("filters.expired")} color="#5f6368" checked={filters.pastActivities} onToggle={() => toggleFilter("pastActivities")} />
+        <FilterRow label={t("filters.missedClass")} color="#d93025" checked={filters.missedClasses} onToggle={() => toggleFilter("missedClasses")} />
+        <FilterRow label={t("filters.lateJoinClass")} color="#ff6d00" checked={filters.lateJoinClasses} onToggle={() => toggleFilter("lateJoinClasses")} />
       </FilterSection>
 
-      <FilterSection title="Events">
-        <FilterRow label="School Activities" color="#2267f0" checked={filters.activities} onToggle={() => toggleFilter("activities")} />
-        <FilterRow label="School Events" color="#2267f0" checked={filters.schoolEvents} onToggle={() => toggleFilter("schoolEvents")} />
+      <FilterSection title={t("filters.events")}>
+        <FilterRow label={t("filters.schoolActivities")} color="#2267f0" checked={filters.activities} onToggle={() => toggleFilter("activities")} />
+        <FilterRow label={t("filters.schoolEvents")} color="#2267f0" checked={filters.schoolEvents} onToggle={() => toggleFilter("schoolEvents")} />
       </FilterSection>
 
-      <FilterSection title="Holidays">
-        <FilterRow label="Holidays & Breaks" color="#1b5e20" checked={filters.holidays} onToggle={() => toggleFilter("holidays")} />
+      <FilterSection title={t("filters.holidays")}>
+        <FilterRow label={t("filters.holidaysAndBreaks")} color="#1b5e20" checked={filters.holidays} onToggle={() => toggleFilter("holidays")} />
       </FilterSection>
     </aside>
   );

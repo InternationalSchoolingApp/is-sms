@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { ChevronRight, Volume2, VolumeX, X } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { labelKey } from "@/i18n/labels";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 import { useSpeech } from "@/components/k5/pico/useSpeech";
 import { BUDDIES, voiceOf } from "@/constant/appearance";
 import { PICO_SAY_EVENT, usePicoLive } from "@/components/k5/pico/picoEvents";
-import { HOME_MODULE, NO_MODULE_TEXT, isClubModule, isLanguageClub, picoModuleFor, picoWelcomeText } from "@/constant/picoModules";
+import { HOME_MODULE, isClubModule, isLanguageClub, picoModuleFor, picoWelcomeText } from "@/constant/picoModules";
 import { TOUR_GET_APP_KEY, hasPicoModuleCookie, hasPicoWelcomeCookie, setPicoModuleCookie, setPicoWelcomeCookie } from "@/utils/picoCookies";
 import { preparePicoClips } from "@/utils/picoVoice";
 
@@ -26,29 +28,47 @@ const WELCOME_TOUR_PAGES = new Set(["re-enrollment"]);
 // sibling card, the header buttons on a phone) is skipped.
 // `liveName` is the title of the class that is live right now (real data), when there is one.
 // `welcome`: the very first tour of this student - the buddy also welcomes them to the school (text: constant/picoModules.js).
-function tourSteps(firstName, buddyName, liveName, welcome, schoolName) {
+// t = useTranslations("pico"): the tips are pico.tour.<pin> in the dashboard language.
+function tourSteps(firstName, buddyName, liveName, welcome, schoolName, t) {
   return [
     {
       pin: null,
-      text: welcome ? picoWelcomeText({ firstName, schoolName, buddyName, tour: true }) : `Hi${firstName ? ` ${firstName}` : ""}! I'm ${buddyName}, your school buddy. Tap Next and I'll show you around!`,
+      text: welcome
+        ? picoWelcomeText({ firstName, schoolName, buddyName, tour: true, t })
+        : firstName
+          ? t("tour.hiName", { name: firstName, buddy: buddyName })
+          : t("tour.hi", { buddy: buddyName }),
     },
-    { pin: "calendar", text: `This is your calendar, where all your classes and activities will appear. Click on an item to complete your coursework or join a class.` },
-    { pin: "live", text: `${liveName ? `Your ${liveName} class` : "Your class"} is live right now! Tap the green Join class button to go in.` },
-    { pin: "mini", text: "This little calendar shows the whole month. A dot under a day means something is planned." },
-    { pin: "views", text: "Tap Today, Week or Month to see your plans in different ways." },
-    { pin: "prevnext", text: "Click on the arrows to view your plan for different days." },
-    { pin: "clues", text: "Color clues tell you what each box means. Tap a clue and I'll explain it!" },
-    { pin: "side", text: "Use the side menu to book classes, see your teacher, join clubs and more. Hold and drag a button to move your favorites to the top!" },
-    { pin: "inbox", text: "This is your inbox. Check here regularly for emails and other communications from your school." },
-    { pin: "look", text: "Tap the palette button to pick your favorite color, night mode, letters and text size!" },
-    { pin: "getApp", text: "Download our app for a better experience!" },
-    { pin: "lms", text: "Click here to go to your Learning Management System (LMS). This is where you learn, complete your assignments, take quizzes, and appear for exams." },
-    { pin: "profile", text: "Click here to go to your profile. Keep your personal details up to date, share more about yourself with the school, and change your password whenever needed." },
-    { pin: "msg", text: "Need help? Tap the green Talk to us button to chat with us!" },
-    { pin: "announcements", text: "This is the announcements section. The school shares updates about events, activities, clubs, and holidays here. Don't miss out!" },
-    { pin: "news", text: "Check here for the latest developments and updates in education." },
-    { pin: "diary", text: "This is your School Diary, where you can find important updates about your calendar and coursework from your teachers or the school." },
+    { pin: "calendar", text: t("tour.calendar") },
+    { pin: "live", text: liveName ? t("tour.liveName", { name: liveName }) : t("tour.live") },
+    { pin: "mini", text: t("tour.mini") },
+    { pin: "views", text: t("tour.views") },
+    { pin: "prevnext", text: t("tour.prevnext") },
+    { pin: "clues", text: t("tour.clues") },
+    { pin: "side", text: t("tour.side") },
+    { pin: "inbox", text: t("tour.inbox") },
+    { pin: "look", text: t("tour.look") },
+    { pin: "getApp", text: t("tour.getApp") },
+    { pin: "lms", text: t("tour.lms") },
+    { pin: "profile", text: t("tour.profile") },
+    { pin: "msg", text: t("tour.msg") },
+    { pin: "announcements", text: t("tour.announcements") },
+    { pin: "news", text: t("tour.news") },
+    { pin: "diary", text: t("tour.diary") },
   ];
+}
+
+/**
+ * A module's line (constant/picoModules.js) in the dashboard language: pico.modules.<key> / pico.clubTips.<key> with
+ * key = labelKey(pageLink); a club without its own line gets pico.clubFallback. Anything unknown keeps the English text.
+ */
+function translatedModule(module, segment, home, t) {
+  if (!module) return module;
+  if (home) return { ...module, text: t("modules.home") };
+  const key = labelKey(segment);
+  if (key && t.has(`modules.${key}`)) return { ...module, text: t(`modules.${key}`) };
+  if (isClubModule(segment)) return { ...module, text: key && t.has(`clubTips.${key}`) ? t(`clubTips.${key}`) : t("clubFallback") };
+  return module;
 }
 const MOBILE_QUERY = "(max-width: 760px)";
 const subscribeMobile = (callback) => {
@@ -136,6 +156,7 @@ function SpotHole({ pin, active }) {
  * opens above the buddy on tap.
  */
 export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeEligible = false }) {
+  const t = useTranslations("pico");
   const { preferences, updatePreference, themeProps } = useAppearance();
   const { speak, stop, speaking, supported, word } = useSpeech();
   // The welcome cookie (server snapshot "seen": nothing is decided before the browser is here).
@@ -155,13 +176,13 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   const buddy = BUDDIES[preferences.buddy] || BUDDIES.pico;
   const pageSegment = pathname.split("/").filter(Boolean).pop();
   // A student's first visit to one of these pages is a short tour of its own: the welcome, then what the page is for (2 steps).
-  const tourPage = !home && welcome && WELCOME_TOUR_PAGES.has(pageSegment) ? picoModuleFor(pageSegment) : null;
+  const tourPage = !home && welcome && WELCOME_TOUR_PAGES.has(pageSegment) ? translatedModule(picoModuleFor(pageSegment), pageSegment, false, t) : null;
   const steps = tourPage
     ? [
-        { pin: null, text: picoWelcomeText({ firstName, schoolName, buddyName: buddy.name, tour: false }) },
+        { pin: null, text: picoWelcomeText({ firstName, schoolName, buddyName: buddy.name, tour: false, t }) },
         { pin: null, text: tourPage.text },
       ]
-    : tourSteps(firstName, buddy.name, live.name, welcome, schoolName);
+    : tourSteps(firstName, buddy.name, live.name, welcome, schoolName, t);
   const mobile = useSyncExternalStore(subscribeMobile, isMobileView, () => false);
   // No dialog is open on this page (checked by the effect below, only while the buddy has something to say by itself).
   // Kept as "the page it was seen clear on", so a new page is never taken as clear before it has been looked at.
@@ -180,7 +201,8 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   const reduced = themeProps["data-motion"] === "reduced";
 
   // ---- What the student is looking at, and whether it has finished loading ----
-  const moduleNow = home ? HOME_MODULE : picoModuleFor(pageSegment);
+  const moduleNow = translatedModule(home ? HOME_MODULE : picoModuleFor(pageSegment), pageSegment, home, t);
+  const noModuleText = t("noModule");
   // Real content on screen: the home plan has loaded, or the page said so (usePicoContentReady); the left menu has its items.
   const moduleReady = live.menuReady && (home ? live.ready : live.contentReady);
 
@@ -201,8 +223,8 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     : clubWelcome
       ? isLanguageClub(pageSegment)
         ? moduleNow.text
-        : `Hello${firstName ? ` ${firstName}` : ""}! ${moduleNow.text}`
-      : picoWelcomeText({ firstName, schoolName, buddyName: buddy.name, tour: false });
+        : t("clubHello", { hello: firstName ? t("welcome.helloName", { name: firstName }) : t("welcome.hello"), text: moduleNow.text })
+      : picoWelcomeText({ firstName, schoolName, buddyName: buddy.name, tour: false, t });
   const welcomeReady = welcomeDue && moduleReady && !live.pending && !onBook;
 
   const finishWelcome = () => {
@@ -321,7 +343,25 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   // tips, so the student's tap (Next, Hear it) plays at once. In the voice and speed the student picked.
   const voiceTexts = [pageTip?.text, moduleNow?.text, ...(home || tourPage ? steps.map((t) => t.text) : [])].filter(Boolean).join("|");
   const { voice: voicePick, voiceSpeed } = preferences;
-  useEffect(() => preparePicoClips(voiceTexts.split("|"), voiceOf(voicePick, voiceSpeed)), [voiceTexts, voicePick, voiceSpeed]);
+  const locale = useLocale();
+  useEffect(() => preparePicoClips(voiceTexts.split("|"), voiceOf(voicePick, voiceSpeed, locale)), [voiceTexts, voicePick, voiceSpeed, locale]);
+  // An open bubble's text is a say captured when it opened, so a language switch (cookie + router.refresh, the component
+  // stays mounted) would leave it in the old language - the tour tips (say: null) already re-derive from `t`, but the
+  // welcome and the module/tap explanation do not. Re-translate those persistent ones here; a one-off say (a colour clue,
+  // a plan nudge from picoSay) is closed instead, so the student never sees stale-language text. Adjusted while rendering
+  // (prevLocale makes it run once per switch), the way the other state resets in this file are (see sayPath above).
+  const [prevLocale, setPrevLocale] = useState(locale);
+  if (prevLocale !== locale) {
+    setPrevLocale(locale);
+    setState((s) => {
+      if (!s.say) return s;
+      const id = s.say.id;
+      if (id === "welcome") return { ...s, say: { ...s.say, text: welcomeText } };
+      if (typeof id === "string" && (id.startsWith("page-") || id.startsWith("manual-")))
+        return { ...s, say: { ...s.say, text: moduleNow?.text || noModuleText } };
+      return { ...s, open: false, say: null, pageTip: false };
+    });
+  }
   // The explanation is also said out loud - once per arrival. Its cookie is set only when the voice really starts (or, with
   // the buddy's voice off, when the bubble is on screen); a browser that refuses to speak before any touch is retried at the
   // student's first tap or key press on that same page, and nothing is marked until then.
@@ -433,7 +473,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   // A tap while the page is still loading: the buddy says so, and explains as soon as the page is ready.
   if (manualWait && moduleReady) {
     setManualWait(false);
-    explainNow(moduleNow?.text || NO_MODULE_TEXT, { fromTap: false });
+    explainNow(moduleNow?.text || noModuleText, { fromTap: false });
   }
   useEffect(() => {
     if (!manualSay) return;
@@ -492,11 +532,11 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     if (open && home && !state.say) return hear();
     if (!moduleReady) {
       setManualWait(true);
-      setState((s) => ({ ...s, open: true, index: 0, say: { text: "One moment! I'll tell you about this page as soon as it is ready.", pin: null, id: `wait-${Date.now()}` }, pageTip: true }));
+      setState((s) => ({ ...s, open: true, index: 0, say: { text: t("oneMoment"), pin: null, id: `wait-${Date.now()}` }, pageTip: true }));
       setTipOn(true);
       return;
     }
-    explainNow(moduleNow?.text || NO_MODULE_TEXT, { fromTap: true });
+    explainNow(moduleNow?.text || noModuleText, { fromTap: true });
   };
   const shown = state.pageTip ? [step] : steps.filter((s) => onPage(s.pin) && !(state.skipLive && s.pin === "live"));
   const position = Math.max(1, shown.indexOf(step) + 1);
@@ -512,7 +552,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
       {open && (
         <div
           role="dialog"
-          aria-label={`${buddy.name} says`}
+          aria-label={t("says", { name: buddy.name })}
           className={`k5-bubble k5-zoom-in origin-bottom absolute bottom-0 box-border flex w-[340px] max-w-[calc(100vw-32px)] flex-col gap-2.5 rounded-[26px] border-[3px] border-k5-ink bg-k5-card px-[18px] py-4 shadow-[0_6px_0_var(--k5-ink)] max-[760px]:fixed max-[760px]:inset-x-3 max-[760px]:bottom-[224px] max-[760px]:w-auto max-[760px]:max-w-none ${
             leftHand ? "left-[calc(100%+14px)]" : "right-[calc(100%+14px)]"
           } max-[760px]:left-3 max-[760px]:right-3`}
@@ -524,13 +564,13 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
             }`}
           />
           <div className="relative flex items-center justify-between gap-2">
-            <span className="text-sm font-black uppercase tracking-[0.08em] text-k5-vi">{buddy.name} says</span>
+            <span className="text-sm font-black uppercase tracking-[0.08em] text-k5-vi">{t("says", { name: buddy.name })}</span>
             <div className="flex gap-1.5">
               {supported && (
                 <button
                   type="button"
                   aria-pressed={preferences.speech === "on"}
-                  aria-label={preferences.speech === "on" ? `Turn ${buddy.name}'s voice off` : `Turn ${buddy.name}'s voice on`}
+                  aria-label={preferences.speech === "on" ? t("voiceOff", { name: buddy.name }) : t("voiceOn", { name: buddy.name })}
                   onClick={() => {
                     if (preferences.speech === "on") stop();
                     updatePreference("speech", preferences.speech === "on" ? "off" : "on");
@@ -543,7 +583,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
               <button
                 type="button"
                 onClick={hide}
-                aria-label={`Hide ${buddy.name}`}
+                aria-label={t("hide", { name: buddy.name })}
                 className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border-[3px] border-[#D7263D] bg-[#D7263D] text-white shadow-[0_3px_0_#9E1B2C]"
               >
                 <X className="h-4 w-4" strokeWidth={3.5} aria-hidden="true" />
@@ -574,7 +614,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M8 5v14l11-7z" />
                 </svg>
-                Hear it
+                {t("hearIt")}
               </button>
             ) : (
               <span />
@@ -587,7 +627,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
               onClick={next}
               className="flex min-h-[46px] cursor-pointer items-center gap-1.5 rounded-full border-none bg-[#FFC531] pl-[18px] pr-3.5 font-k5-display text-lg font-semibold text-[#1C2640] shadow-[0_5px_0_#C9930A]"
             >
-              {position >= shown.length ? "All done" : "Next"}
+              {position >= shown.length ? t("allDone") : t("next")}
               <ChevronRight className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
             </button>
           </div>
@@ -596,7 +636,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
       <button
         type="button"
         onClick={tap}
-        aria-label={`${buddy.name}, your calendar buddy. Tap to hear ${buddy.name}.`}
+        aria-label={t("buddyLabel", { name: buddy.name })}
         className="k5-pin-bob flex h-full w-full cursor-pointer items-end justify-center border-none bg-transparent p-0 max-[760px]:[&_svg]:!h-[60px] max-[760px]:[&_svg]:!w-12"
       >
         <PicoMascot buddy={preferences.buddy} width={66} talking={speaking} />

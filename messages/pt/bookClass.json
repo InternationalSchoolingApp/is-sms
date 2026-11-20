@@ -1,0 +1,122 @@
+{
+  "title": "Agendar uma aula",
+  "titleWithTeacher": "Agendar uma aula com {teacher}",
+  "titleForSubject": "Agendar uma aula de {subject}",
+  "titleForSubjectWithTeacher": "Agendar uma aula de {subject} com {teacher}",
+  "noTeacher": "Você ainda não tem um professor atribuído",
+  "weekFullyBooked": "Você já agendou todas as suas aulas desta semana",
+  "loadError": "Não foi possível carregar suas aulas agora. Tente novamente.",
+  "notPurchased": "Ops! Parece que você ainda não comprou nenhuma aula.",
+  "goToBuyExtra": "Ir para Comprar aulas extras",
+  "yearNotStarted": "Seu ano letivo ainda não começou. Você poderá agendar suas aulas assim que o ano letivo começar",
+  "bookThisWeek": "Agendar aulas para esta semana",
+  "bookedClasses": "Aulas agendadas",
+  "bookAClass": "Agendar uma aula",
+  "bookWithTeacher": "Agendar uma aula com {teacher}",
+  "bookCount": "Agendar uma aula ({count})",
+  "picker": {
+    "selectCourse": "Selecione o curso*",
+    "viewSlots": "Ver horários disponíveis"
+  },
+  "complimentary": {
+    "title": "Suas aulas gratuitas",
+    "for42Weeks": "Por 42 semanas",
+    "perWeek": "por semana"
+  },
+  "courses": {
+    "selectedOne": "Seu curso selecionado",
+    "selectedMany": "Seus cursos selecionados",
+    "selectedCount": "Seus {count} cursos selecionados",
+    "total": "Total:",
+    "booked": "Agendadas:",
+    "expired": "Expiradas:"
+  },
+  "instructions": {
+    "title": "Instruções para agendar aulas",
+    "weekly": "Estrutura semanal das aulas: de segunda a sexta",
+    "canBook": "Você pode agendar {count, plural, one {# aula} other {# aulas}} por semana.",
+    "canBookComplimentary": "Você pode agendar {count, plural, one {# aula gratuita} other {# aulas gratuitas}} por semana.",
+    "expire": "As aulas gratuitas não agendadas expiram no fim da semana."
+  },
+  "counts": {
+    "left": "Restantes",
+    "missedByYou": "Perdidas por você",
+    "missedByTeacher": "Perdidas pelo professor",
+    "rescheduled": "Remarcadas",
+    "completed": "Concluídas"
+  },
+  "slots": {
+    "unknownOutcome": "Não conseguimos confirmar se sua aula foi agendada. Atualize a página e confira suas aulas agendadas antes de tentar novamente.",
+    "booked": "Sua aula foi agendada.",
+    "bookFailed": "Não foi possível agendar esta aula. Tente novamente.",
+    "loading": "Carregando horários disponíveis…",
+    "teacherLoadError": "Não foi possível carregar os dados do professor. Tente novamente.",
+    "none": "Não há horários disponíveis nesta semana.",
+    "confirmTitle": "Confirme sua aula",
+    "booking": "Agendando...",
+    "course": "Curso",
+    "teacher": "Professor",
+    "date": "Data",
+    "time": "Horário",
+    "timezone": "Fuso horário",
+    "available": "Disponível",
+    "bookedLegend": "Agendado",
+    "notAvailable": "Indisponível",
+    "weeklySlots": "Horários semanais de {teacher} de {from} a {to}**",
+    "allInTimezone": "**Todos os horários estão no fuso horário {timezone}",
+    "duration": "**Cada aula dura {minutes} minutos"
+  },
+  "booked": {
+    "title": "Aulas agendadas — {course}",
+    "titleK5": "Minhas aulas agendadas — {course}",
+    "dateToday": "Hoje",
+    "dateYesterday": "Ontem",
+    "dateWeek": "Semana",
+    "dateMonth": "Mês",
+    "dateCustom": "Personalizado",
+    "selectStatus": "Selecione o status",
+    "statusBooked": "Agendada",
+    "statusCompleted": "Concluída",
+    "statusReschedule": "Sessão remarcada",
+    "statusMissedByYou": "Perdida por você",
+    "totalNumberOf": "Número total de",
+    "counts": {
+      "total": "Aulas",
+      "booked": "Aulas agendadas",
+      "left": "Aulas restantes",
+      "expired": "Aulas expiradas",
+      "missedByYou": "Aulas perdidas por você",
+      "rescheduled": "Aulas remarcadas",
+      "completed": "Aulas concluídas",
+      "missedByTeacher": "Aulas perdidas pelo professor"
+    },
+    "columns": {
+      "sNo": "Nº",
+      "timing": "Horário da aula | Fuso horário",
+      "courseName": "Nome do curso",
+      "teacherName": "Nome do professor",
+      "bookedDate": "Data do agendamento",
+      "classType": "Tipo de aula",
+      "classStatus": "Status da aula"
+    },
+    "searchLabel": "Pesquisar aulas agendadas",
+    "searchPlaceholder": "Pesquisar..."
+  },
+  "labels": {
+    "all_courses": "Todos os cursos",
+    "rescheduled": "Remarcada",
+    "missed_by_student": "Perdida pelo aluno",
+    "missed_by_teacher": "Perdida pelo professor",
+    "completed": "Concluída",
+    "cancelled": "Cancelada",
+    "complimentary": "Gratuita",
+    "extra": "Extra",
+    "mon": "SEG",
+    "tue": "TER",
+    "wed": "QUA",
+    "thu": "QUI",
+    "fri": "SEX",
+    "sat": "SÁB",
+    "sun": "DOM"
+  }
+}

@@ -13,7 +13,7 @@ export const courseWareLayout = (report) => {
   return { showDates: canvas, showCounters: canvas };
 };
 
-/** The legacy page prints "N/A" for an empty value. */
-export const cwText = (value) => (value === undefined || value === null || String(value).trim() === "" ? "N/A" : String(value));
+/** The legacy page prints "N/A" for an empty value (`na`: the translated "N/A"). */
+export const cwText = (value, na = "N/A") => (value === undefined || value === null || String(value).trim() === "" ? na : String(value));
 
 export const courseWareItems = (course) => (Array.isArray(course?.itemList) ? course.itemList : []);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { RefreshCw } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,15 @@ import { Req } from "@/components/common/Req";
 import { validateAge, getDobPickerBounds } from "@/utils/ageValidation";
 import { FaExchangeAlt } from "react-icons/fa";
 
+// validateAge() (utils/ageValidation.js, shared with the enrollment forms) returns English; translated here at render.
+function ageErrorText(message, tv) {
+  if (message === "Date of birth is required") return tv("dobRequired");
+  const min = /^Student must be at least (\d+) years old$/.exec(message);
+  if (min) return tv("minAge", { min: min[1] });
+  const max = /^Age of student should not be more than (\d+) years$/.exec(message);
+  if (max) return tv("maxAge", { max: max[1] });
+  return message;
+}
 
 /**
  * "Change Grade & Date of Birth" — mirrors changeSelectedGrade() /
@@ -24,6 +34,8 @@ import { FaExchangeAlt } from "react-icons/fa";
  * `onSave(standardId, dob)` is only called once both are valid.
  */
 export function ChangeGradeDialog({ open, onOpenChange, grades, courseProviderId, initialStandardId, initialDob, busy, onSave }) {
+  const t = useTranslations("shared.changeGrade");
+  const tv = useTranslations("shared.signupValidation");
   const [standardId, setStandardId] = useState(initialStandardId || "");
   const [dob, setDob] = useState(initialDob || null);
   const [error, setError] = useState({});
@@ -61,27 +73,27 @@ export function ChangeGradeDialog({ open, onOpenChange, grades, courseProviderId
           <span className="mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white">
             <FaExchangeAlt className="h-6 w-6 stroke-3" />
           </span>
-          <DialogTitle className="text-lg">Change Grade &amp; Date of Birth</DialogTitle>
+          <DialogTitle className="text-lg">{t("title")}</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FloatingLabelSelect
-            label={<Req label="Grade" required />}
+            label={<Req label={t("grade")} required />}
             value={standardId}
             onValueChange={handleGradeChange}
             options={grades || []}
-            error={error.standardId}
+            error={error.standardId ? t("gradeRequired") : error.standardId}
             searchable
           />
           <DatePicker
             height="h-12"
             label={<Req label={
-              <>Date of Birth{" "} <span className="text-black text-[12px]">(Month Day, Year)</span></>
+              <>{t("dob")}{" "} <span className="text-black text-[12px]">{t("dobFormat")}</span></>
             } required />}
             value={dob}
             onChange={(v) => setDob(v)}
             fromDate={dobBounds.fromDate}
             toDate={dobBounds.toDate}
-            error={error.dob}
+            error={error.dob ? ageErrorText(error.dob, tv) : error.dob}
           />
           
         </div>
@@ -89,10 +101,10 @@ export function ChangeGradeDialog({ open, onOpenChange, grades, courseProviderId
         <DialogFooter className="flex flex-row justify-center">
           <div className="inline-flex gap-2 mx-auto">
             <Button type="button" className="w-fit" onClick={handleSave} disabled={busy}>
-              {busy ? "Saving…" : "Save"}
+              {busy ? t("saving") : t("save")}
             </Button>
             <Button type="button" className="w-fit" variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
-              Cancel
+              {t("cancel")}
             </Button>
           </div>
         </DialogFooter>

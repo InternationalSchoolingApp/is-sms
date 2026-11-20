@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import toast from "react-hot-toast";
 import { addMonths, format } from "date-fns";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
@@ -32,14 +34,15 @@ import { K5HomeLeftSkeleton, K5PlanSkeleton } from "@/components/k5/K5Skeletons"
 
 
 // "October 9, 16 and 28" for days of one month (a long list stops at 4 + "N more days").
-function joinDays(keys) {
-  const parts = keys.slice(0, 4).map((k, i) => format(keyToDate(k), i === 0 ? "MMMM d" : "d"));
-  if (keys.length > 4) return `${parts.join(", ")} and ${keys.length - 4} more days`;
-  return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0];
+// t = the k5Home.clue translator, locale = the date-fns locale of the dashboard language.
+function joinDays(keys, t, locale) {
+  const parts = keys.slice(0, 4).map((k, i) => format(keyToDate(k), i === 0 ? "MMMM d" : "d", { locale }));
+  if (keys.length > 4) return t("daysMore", { list: parts.join(", "), count: keys.length - 4 });
+  return parts.length > 1 ? t("daysAnd", { list: parts.slice(0, -1).join(", "), last: parts[parts.length - 1] }) : parts[0];
 }
 
 /** What the buddy says for a tapped colour clue, using this month's real plan (mockup copy). */
-function clueText(key, days, now) {
+function clueText(key, days, now, t, locale) {
   const month = format(now, "yyyy-MM");
   const monthDays = Object.keys(days)
     .filter((k) => k.startsWith(month))
@@ -47,26 +50,26 @@ function clueText(key, days, now) {
   const todays = days[format(now, "yyyy-MM-dd")]?.classes || [];
   if (key === "assignment") {
     const due = monthDays.filter((k) => days[k].assignments.length);
-    return due.length ? `Green dots are assignments. I lit them up for you: ${joinDays(due)}!` : "Green dots are assignments. You have none this month!";
+    return due.length ? t("assignmentSome", { days: joinDays(due, t, locale) }) : t("assignmentNone");
   }
   if (key === "activity") {
     const k = monthDays.find((d) => days[d].activities.length);
     const a = k && days[k].activities[0];
     return a
-      ? `Purple boxes are school activities, like ${a.title || a.eventTitle || "a school activity"} on ${format(keyToDate(k), "MMMM d")}!`
-      : "Purple boxes are school activities. There are none this month!";
+      ? t("activitySome", { title: a.title || a.eventTitle || t("aSchoolActivity"), date: format(keyToDate(k), "MMMM d", { locale }) })
+      : t("activityNone");
   }
   if (key === "holiday") {
     const off = monthDays.filter((k) => days[k].holidays.length);
-    return off.length ? `Red boxes mean a holiday. ${joinDays(off)} ${off.length === 1 ? "is a holiday" : "are holidays"}. No school!` : "Red boxes mean a holiday. No holidays this month!";
+    return off.length ? t("holidaySome", { days: joinDays(off, t, locale), count: off.length }) : t("holidayNone");
   }
-  if (key === "done") return "Gray circle boxes are classes you already finished. Great job!";
+  if (key === "done") return t("done");
   if (key === "live") {
     return todays.some((c) => c.k5Status === "live")
-      ? "Blue dashed boxes are live classes. Your teacher is online right now, so tap Join!"
-      : "Blue dashed boxes are live classes. When one starts, tap Join!";
+      ? t("liveNow")
+      : t("live");
   }
-  return "Yellow boxes are upcoming classes. They will start soon!";
+  return t("next");
 }
 const noSubscribe = () => () => {};
 function readSession(key) {
@@ -92,6 +95,7 @@ export function StudentHomeK5({ holdProfilePopup = false }) {
   const { context } = useDashboardContext();
   const dummy = useDummyStudent();
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
+  const t = useTranslations("k5Home.planner");
 
   // Clock and events use the student's configured timezone (Asia/Singapore when missing or
   // invalid). Dummy data is generated around the viewer's own clock, so dummy mode uses it.
@@ -103,7 +107,7 @@ export function StudentHomeK5({ holdProfilePopup = false }) {
       {ready ? (
         <K5Planner key={timezone} timezone={timezone} />
       ) : (
-        <div className={`${K5_CARD} p-10 text-center text-lg font-extrabold text-k5-mut`}>Getting your plan ready…</div>
+        <div className={`${K5_CARD} p-10 text-center text-lg font-extrabold text-k5-mut`}>{t("gettingReady")}</div>
       )}
       <OnboardingVideoModal videoUrl={dashboardData.videoUrl} />
       {dashboardData.showGraduationCeremonyPopup && (
@@ -120,6 +124,9 @@ export function StudentHomeK5({ holdProfilePopup = false }) {
 function K5Planner({ timezone }) {
   const { context, isPreK, isSelfStudy } = useDashboardContext();
   const model = useK5CalendarModel({ schoolUUID: context?.schoolUUID, userId: context?.userId, timezone });
+  const t = useTranslations("k5Home.planner");
+  const tClue = useTranslations("k5Home.clue");
+  const dateLocale = useDateFnsLocale();
   const [clue, setClue] = useState(null);
   const [calOpen, setCalOpen] = useState(false);
   const [detailEvent, setDetailEvent] = useState(null);
@@ -211,7 +218,7 @@ function K5Planner({ timezone }) {
           if (!key) return;
           // The student stays on the view they picked; matching boxes light up there and the
           // buddy explains the clue with the student's own dates.
-          picoSay(clueText(key, days, now), "clues");
+          picoSay(clueText(key, days, now, tClue, dateLocale), "clues");
         }}
       />
 
@@ -237,13 +244,13 @@ function K5Planner({ timezone }) {
         </div>
 
         {/* Mobile (mockup .duo>[data-pin=plan]{order:-1}): the plan comes before the left column. */}
-        <section ref={planRef} aria-label="My plans" data-pin="calendar" className={`${K5_CARD} scroll-mt-[120px] @container box-border flex min-w-0 flex-[999_1_460px] flex-col gap-[18px] p-[22px] max-[760px]:order-first max-[560px]:p-3.5`}>
+        <section ref={planRef} aria-label={t("myPlans")} data-pin="calendar" className={`${K5_CARD} scroll-mt-[120px] @container box-border flex min-w-0 flex-[999_1_460px] flex-col gap-[18px] p-[22px] max-[760px]:order-first max-[560px]:p-3.5`}>
           {model.isLoading ? (
             <K5PlanSkeleton />
           ) : (
             <ZoomIn index={2} className="flex flex-col gap-[18px]">
           {model.isError ? (
-            <p className="m-0 p-10 text-center text-lg font-extrabold text-k5-mut">Couldn&apos;t load your plan. Please try again shortly.</p>
+            <p className="m-0 p-10 text-center text-lg font-extrabold text-k5-mut">{t("loadError")}</p>
           ) : view === "week" ? (
             <WeekPlan
               keys={weekKeys(selectedDate)}
@@ -307,13 +314,13 @@ function K5Planner({ timezone }) {
         onJoin={(event) => {
           answerAlert();
           // The buddy sends them off to the class they picked (the tour then skips its "class is live" tip).
-          picoSay(`Off you go to ${classTitle(event)} class! Have fun learning${firstName ? `, ${firstName}` : ""}!`, "plan", { intro: true, skipLive: true });
+          picoSay(firstName ? t("picoOffYouGoName", { name: classTitle(event), first: firstName }) : t("picoOffYouGo", { name: classTitle(event) }), "plan", { intro: true, skipLive: true });
           setJoiningEvent(event);
         }}
         onClose={() => {
           const name = alertEvent ? classTitle(alertEvent) : "";
           answerAlert();
-          picoSay(`Okay! Your ${name ? `${name} ` : ""}class is still live. Tap the green Join class button when you are ready.`, "plan", { intro: true });
+          picoSay(name ? t("picoStillLiveName", { name }) : t("picoStillLive"), "plan", { intro: true });
         }}
       />
       {detailEvent && <EventDetailModal event={detailEvent} courseRegistry={model.courseRegistry} onClose={() => setDetailEvent(null)} />}

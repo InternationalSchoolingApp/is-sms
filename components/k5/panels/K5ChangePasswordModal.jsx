@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { Eye, EyeOff, KeyRound, X, Check, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { changePassword } from "@/services/dashboardApi";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 
+// label: English reference; shown as k5Panels.password.rules.<key>.
 const RULES = [
   { key: "length", label: "8–20 characters", test: (v) => v.length >= 8 && v.length <= 20 },
   { key: "upper", label: "At least 1 uppercase letter", test: (v) => /[A-Z]/.test(v) },
@@ -16,6 +18,7 @@ const RULES = [
 ];
 
 function K5PasswordInput({ id, label, value, onChange, show, onToggle, autoComplete }) {
+  const t = useTranslations("k5Panels.password");
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="font-k5-display text-sm font-semibold text-k5-ink">{label}</label>
@@ -33,7 +36,7 @@ function K5PasswordInput({ id, label, value, onChange, show, onToggle, autoCompl
           tabIndex={-1}
           onClick={onToggle}
           className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer border-none bg-transparent p-0 text-k5-mut hover:text-k5-ink"
-          aria-label={show ? "Hide password" : "Show password"}
+          aria-label={show ? t("hide") : t("show")}
         >
           {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
@@ -44,6 +47,8 @@ function K5PasswordInput({ id, label, value, onChange, show, onToggle, autoCompl
 
 /** forced: the dashboard's must-change prompt — no X, no closing by clicking outside; the Cancel button closes it (see ChangePasswordModal). */
 export function K5ChangePasswordModal({ onClose, forced = false }) {
+  const t = useTranslations("k5Panels.password");
+  const tc = useTranslations("common");
   const { context } = useDashboardContext();
   const dummy = useDummyStudent();
   const [oldPw, setOldPw] = useState("");
@@ -65,7 +70,7 @@ export function K5ChangePasswordModal({ onClose, forced = false }) {
     if (!canSubmit) return;
     setBusy(true);
     const result = dummy.enabled
-      ? { status: "1", message: "Password changed successfully" }
+      ? { status: "1", message: t("changedDummy") }
       : await changePassword({
           schoolUUID: context.schoolUUID,
           uniqueId: context.uniqueId,
@@ -75,19 +80,19 @@ export function K5ChangePasswordModal({ onClose, forced = false }) {
         });
     setBusy(false);
     if (!result) {
-      toast.error("Something went wrong. Please try again.");
+      toast.error(tc("status.somethingWentWrong"));
       return;
     }
     if (result.status === "3" || result.status === 3) {
-      toast.error("Session expired. Please log in again.");
+      toast.error(t("sessionExpired"));
       onClose();
       return;
     }
     if (String(result.status) !== "1") {
-      toast.error(result.message || "Failed to change password.");
+      toast.error(result.message || t("failed"));
       return;
     }
-    toast.success(result.message || "Password changed successfully!");
+    toast.success(result.message || t("changed"));
     onClose();
   };
 
@@ -102,11 +107,11 @@ export function K5ChangePasswordModal({ onClose, forced = false }) {
           <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-white/20">
             <KeyRound className="h-6 w-6 text-white" aria-hidden="true" />
           </span>
-          <h2 className="m-0 min-w-0 flex-1 font-k5-display text-lg font-semibold text-white">Change Password</h2>
+          <h2 className="m-0 min-w-0 flex-1 font-k5-display text-lg font-semibold text-white">{t("title")}</h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={tc("actions.close")}
             className="flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-xl border-none bg-k5-red text-white shadow-[0_3px_0_#B91C1C]"
           >
             <X className="h-5 w-5" strokeWidth={3} />
@@ -114,9 +119,9 @@ export function K5ChangePasswordModal({ onClose, forced = false }) {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-5 py-5">
-          <K5PasswordInput id="k5-cp-old" label="Old Password" value={oldPw} onChange={setOldPw} show={showOld} onToggle={() => setShowOld((v) => !v)} autoComplete="current-password" />
-          <K5PasswordInput id="k5-cp-new" label="New Password" value={newPw} onChange={setNewPw} show={showNew} onToggle={() => setShowNew((v) => !v)} autoComplete="new-password" />
-          <K5PasswordInput id="k5-cp-confirm" label="Confirm Password" value={confirmPw} onChange={setConfirmPw} show={showConfirm} onToggle={() => setShowConfirm((v) => !v)} autoComplete="new-password" />
+          <K5PasswordInput id="k5-cp-old" label={t("old")} value={oldPw} onChange={setOldPw} show={showOld} onToggle={() => setShowOld((v) => !v)} autoComplete="current-password" />
+          <K5PasswordInput id="k5-cp-new" label={t("new")} value={newPw} onChange={setNewPw} show={showNew} onToggle={() => setShowNew((v) => !v)} autoComplete="new-password" />
+          <K5PasswordInput id="k5-cp-confirm" label={t("confirm")} value={confirmPw} onChange={setConfirmPw} show={showConfirm} onToggle={() => setShowConfirm((v) => !v)} autoComplete="new-password" />
 
           {/* Validation rules */}
           {newPw.length > 0 && (
@@ -125,19 +130,19 @@ export function K5ChangePasswordModal({ onClose, forced = false }) {
                 {ruleResults.map((r) => (
                   <li key={r.key} className={`flex items-center gap-2 font-k5-display text-xs font-bold ${r.pass ? "text-k5-green" : "text-k5-mut"}`}>
                     {r.pass ? <Check className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
-                    {r.label}
+                    {t(`rules.${r.key}`)}
                   </li>
                 ))}
                 <li className={`flex items-center gap-2 font-k5-display text-xs font-bold ${differentOk ? "text-k5-green" : "text-k5-red"}`}>
                   {differentOk ? <Check className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
-                  Different from old password
+                  {t("rules.different")}
                 </li>
               </ul>
             </div>
           )}
 
           {confirmPw.length > 0 && !matchOk && (
-            <p className="m-0 font-k5-display text-xs font-bold text-k5-red">Passwords do not match.</p>
+            <p className="m-0 font-k5-display text-xs font-bold text-k5-red">{t("mismatch")}</p>
           )}
 
           {/* Legacy changed-password form: Change and Cancel, then the note about the SMS / LMS passwords. */}
@@ -147,18 +152,18 @@ export function K5ChangePasswordModal({ onClose, forced = false }) {
               disabled={!canSubmit}
               className="cursor-pointer rounded-full border-none bg-k5-ac px-5 py-2.5 font-k5-display text-[15px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)] transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {busy ? "Changing…" : "Change"}
+              {busy ? t("changing") : t("change")}
             </button>
             <button
               type="button"
               onClick={onClose}
               className="cursor-pointer rounded-full border-none bg-k5-red px-5 py-2.5 font-k5-display text-[15px] font-semibold text-white shadow-[0_4px_0_#B91C1C]"
             >
-              Cancel
+              {tc("actions.cancel")}
             </button>
           </div>
           <p className="m-0 text-center font-k5-display text-xs font-bold leading-snug text-k5-ink">
-            <b>Note:</b> The password will be updated for your School Management System (SMS). Your Learning Management System (LMS) password will remain the same.
+            {t.rich("note", { b: (chunks) => <b>{chunks}</b> })}
           </p>
         </form>
       </div>

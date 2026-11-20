@@ -1,0 +1,54 @@
+{
+  "sidebar": {
+    "ariaLabel": "Painel do aluno",
+    "menu": "Menu",
+    "closeMenu": "Fechar menu"
+  },
+  "rail": {
+    "talkToUs": "Fale conosco",
+    "k5TalkToUs": "Fale com a gente",
+    "announcement": "Avisos",
+    "news": "Notícias",
+    "studentDiary": "Diário do aluno",
+    "k5Diary": "Meu diário",
+    "withNew": "{label}, {count, plural, one {# novo} other {# novos}}"
+  },
+  "loadingDashboard": "Carregando seu painel…",
+  "pageTitle": {
+    "dashboard": "Painel",
+    "withName": "{name} | Painel"
+  },
+  "placeholder": {
+    "module": "Módulo",
+    "comingSoon": "Este módulo está sendo migrado e estará disponível em breve (Fase C)."
+  },
+  "sessionExpired": {
+    "title": "Sua sessão foi encerrada",
+    "bands": {
+      "elementary": {
+        "title": "Opa! Você saiu da sua conta",
+        "hint": "Digite sua senha para entrar de novo."
+      },
+      "middle": {
+        "title": "Sua sessão foi encerrada",
+        "hint": "Digite sua senha para entrar novamente e continuar."
+      },
+      "high": {
+        "title": "Sua sessão foi encerrada",
+        "hint": "Digite sua senha para entrar novamente e continuar de onde parou."
+      }
+    },
+    "verifying": "Verificando suas credenciais",
+    "verifyingDetail": "Aguarde enquanto restauramos sua sessão com segurança.",
+    "wrongPassword": "A senha digitada está incorreta.",
+    "unavailable": "Não é possível entrar agora. Tente novamente.",
+    "passwordPlaceholder": "Senha *",
+    "password": "Senha",
+    "hidePassword": "Ocultar senha",
+    "showPassword": "Mostrar senha",
+    "logIn": "Entrar",
+    "loggedInAs": "Conectado como {email}",
+    "notYou": "Não é você?",
+    "differentUser": "Entrar com outro usuário"
+  }
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { useTranslations } from "next-intl";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useK5CalendarModel } from "@/hooks/useK5CalendarModel";
@@ -43,6 +44,7 @@ function Watcher({ timezone }) {
   const { context } = useDashboardContext();
   const model = useK5CalendarModel({ schoolUUID: context?.schoolUUID, userId: context?.userId, timezone, prefetchMonth: false });
   const [joiningEvent, setJoiningEvent] = useState(null);
+  const t = useTranslations("k5Home.planner");
   const firstName = String(context?.userName || "").split(" ")[0];
 
   const liveNow = dayAt(model.days, model.todayKey).classes.find((c) => c.k5Status === "live" && c.url);
@@ -74,13 +76,13 @@ function Watcher({ timezone }) {
         firstName={firstName}
         onJoin={(event) => {
           answerAlert();
-          picoSay(`Off you go to ${classTitle(event)} class! Have fun learning${firstName ? `, ${firstName}` : ""}!`);
+          picoSay(firstName ? t("picoOffYouGoName", { name: classTitle(event), first: firstName }) : t("picoOffYouGo", { name: classTitle(event) }));
           setJoiningEvent(event);
         }}
         onClose={() => {
           const name = alertEvent ? classTitle(alertEvent) : "";
           answerAlert();
-          picoSay(`Okay! Your ${name ? `${name} ` : ""}class is still live. You can join it from your dashboard when you are ready.`);
+          picoSay(name ? t("picoStillLiveDashboardName", { name }) : t("picoStillLiveDashboard"));
         }}
       />
       {joiningEvent && (

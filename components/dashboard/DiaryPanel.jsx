@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Bookmark, NotebookText, X } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { markDiaryThreadRead } from "@/utils/diaryClient";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useChatScroll, useDiaryMessages, useDiaryParentName, useDiaryThreads, useFloatingDate, useLoadMoreAtEnd } from "@/hooks/useDiaryPaging";
@@ -27,16 +29,17 @@ export function salutationFor(gender) {
 }
 
 // DISPLAY_DATETIME_FORMATTER ("ddd, DD MMM, YYYY hh:mm A"): the server date is in details.sourceTimezone and is shown in
-// the viewer's zone (utils/diaryDates.js; Asia/Singapore when the source zone is missing).
-export function formatWhen(value, sourceTimezone) {
-  return formatDiaryDate(value, sourceTimezone);
+// the viewer's zone (utils/diaryDates.js; Asia/Singapore when the source zone is missing). `locale`: optional date-fns locale.
+export function formatWhen(value, sourceTimezone, locale) {
+  return formatDiaryDate(value, sourceTimezone, undefined, { locale });
 }
 
 /** A few grey rows while diary data loads (shadcn Skeleton). */
 function DiarySkeleton({ rows = 4 }) {
+  const tc = useTranslations("common");
   return (
     <div role="status" aria-busy="true" className="flex flex-col gap-3 p-3">
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{tc("status.loading")}</span>
       {Array.from({ length: rows }, (_, i) => (
         <div key={i} className="flex flex-col gap-2 rounded-xl border border-slate-100 p-3">
           <Skeleton className="h-4 w-1/3" />
@@ -48,10 +51,12 @@ function DiarySkeleton({ rows = 4 }) {
 }
 
 function ThreadList({ threads, chatWith, onSelect, sourceTimezone, endRef, loadingMore }) {
+  const t = useTranslations("diary");
+  const dateLocale = useDateFnsLocale();
   return (
     <ul className="divide-y divide-slate-100">
       {threads.length === 0 && !loadingMore && (
-        <li className="p-3 text-center text-sm font-semibold text-black/80">{noDiaryEntriesText(chatWith)}</li>
+        <li className="p-3 text-center text-sm font-semibold text-black/80">{noDiaryEntriesText(chatWith, t)}</li>
       )}
       {threads.map((thread) => (
         <li key={thread.threadId} className="p-3 hover:bg-black/5">
@@ -72,7 +77,7 @@ function ThreadList({ threads, chatWith, onSelect, sourceTimezone, endRef, loadi
               </div>
               <p className="mt-0.5 truncate text-xs text-black/60">{thread.latestMessage}</p>
             </div>
-            <span className="flex-shrink-0 text-[10px] text-black/40">{formatWhen(thread.lastMessageAt, sourceTimezone)}</span>
+            <span className="flex-shrink-0 text-[10px] text-black/40">{formatWhen(thread.lastMessageAt, sourceTimezone, dateLocale)}</span>
           </button>
         </li>
       ))}
@@ -98,6 +103,8 @@ function ThreadList({ threads, chatWith, onSelect, sourceTimezone, endRef, loadi
  */
 function DiaryEntryCard({ message, courseName, schoolName, parentName, viewerUserId, viewerName, sourceTimezone }) {
   const isOwn = isOwnDiaryMessage(message, { userId: viewerUserId, role: "STUDENT", userName: viewerName });
+  const t = useTranslations("diary");
+  const dateLocale = useDateFnsLocale();
   const isStaffSender = STAFF_SENDER_ROLES.includes((message.senderRole || "").toUpperCase());
 
   return (
@@ -115,19 +122,20 @@ function DiaryEntryCard({ message, courseName, schoolName, parentName, viewerUse
         )}
         {isStaffSender && (
           <div className="mb-1">
-            <p className="font-caveat text-xl font-bold text-black">{parentName}</p>
-            <p className="font-caveat text-lg font-semibold text-primary">Greetings from {schoolName}!</p>
-            <p className="font-caveat text-lg font-semibold text-black">Hope you are doing well.</p>
+            {/* useDiaryParentName() falls back to the English word "Parent" */}
+            <p className="font-caveat text-xl font-bold text-black">{parentName === "Parent" ? t("parent") : parentName}</p>
+            <p className="font-caveat text-lg font-semibold text-primary">{t("letter.greetings", { school: schoolName })}</p>
+            <p className="font-caveat text-lg font-semibold text-black">{t("letter.hopeWell")}</p>
           </div>
         )}
         <DiaryMessageText text={message.message} mentions={message.mentions} className="font-caveat my-3 whitespace-pre-wrap text-xl text-black" />
         {isStaffSender && (
           <div className="mb-1">
-            <p className="font-caveat text-lg text-black">Gratitude and prayers,</p>
-            <p className="font-caveat text-lg text-black">{schoolName} Family</p>
+            <p className="font-caveat text-lg text-black">{t("letter.gratitude")}</p>
+            <p className="font-caveat text-lg text-black">{t("letter.family", { school: schoolName })}</p>
           </div>
         )}
-        <small className="text-[11px] text-black/80">{formatWhen(message.createdAt, sourceTimezone)}</small>
+        <small className="text-[11px] text-black/80">{formatWhen(message.createdAt, sourceTimezone, dateLocale)}</small>
       </div>
     </div>
   );
@@ -146,6 +154,7 @@ function ThreadView({ threadId, sessionUserId, schoolName }) {
   const { query: messagesQuery, messages, courseName, sourceTimezone } = useDiaryMessages({ sessionUserId, threadId });
   const parentName = useDiaryParentName({ threadId });
   const { context } = useDashboardContext();
+  const t = useTranslations("diary");
   const anchorRef = useRef(null);
   // Opens on the newest message; the older ones load in above when the top is reached (legacy loadOldMessages).
   useChatScroll(anchorRef, {
@@ -197,7 +206,7 @@ function ThreadView({ threadId, sessionUserId, schoolName }) {
           ) : messagesQuery.isError && messages.length === 0 ? (
             <DiaryLoadError onRetry={() => messagesQuery.refetch()} className="text-black/80" buttonClassName="bg-primary text-white" />
           ) : messages.length === 0 ? (
-            <p className="text-sm text-black/80 p-5">No messages yet.</p>
+            <p className="text-sm text-black/80 p-5">{t("noMessages")}</p>
           ) : (
             messages.map((message) => (
               <DiaryEntryCard
@@ -231,6 +240,8 @@ export function DiaryPanel({ sessionUserId, schoolName, onClose }) {
   const shownThreads = filterThreadsByChatWith(threads, chatWith);
   const [selectedThreadId, setSelectedThreadId] = useState(null);
   const selectedThreadName = threads.find((thread) => thread.threadId === selectedThreadId)?.teacherName;
+  const t = useTranslations("diary");
+  const tc = useTranslations("common");
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -239,7 +250,7 @@ export function DiaryPanel({ sessionUserId, schoolName, onClose }) {
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close"
+          aria-label={tc("actions.close")}
           className="absolute -left-4 cursor-pointer top-3 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700"
         >
           <X className="h-4 w-4" />
@@ -250,7 +261,7 @@ export function DiaryPanel({ sessionUserId, schoolName, onClose }) {
             <button
               type="button"
               onClick={() => setSelectedThreadId(null)}
-              aria-label="Back to diary list"
+              aria-label={t("backToList")}
               className="-ml-1 flex h-6 w-6 flex-shrink-0 items-center justify-center text-black hover:text-primary"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -258,8 +269,7 @@ export function DiaryPanel({ sessionUserId, schoolName, onClose }) {
           )}
           <NotebookText className="h-5 w-5 flex-shrink-0 text-primary" aria-hidden="true" />
           <h2 className="truncate text-base font-extrabold text-black">
-            Student Diary
-            {selectedThreadId && selectedThreadName ? ` - ${selectedThreadName}` : ""}
+            {selectedThreadId && selectedThreadName ? t("titleWithName", { name: selectedThreadName }) : t("title")}
           </h2>
         </div>
 
@@ -274,7 +284,7 @@ export function DiaryPanel({ sessionUserId, schoolName, onClose }) {
             <>
               <div className="border-b border-slate-100 px-4 py-3">
                 <label htmlFor="diary-chat-with" className="sr-only">
-                  Chat with
+                  {t("chatWithLabel")}
                 </label>
                 <select
                   id="diary-chat-with"
@@ -284,7 +294,7 @@ export function DiaryPanel({ sessionUserId, schoolName, onClose }) {
                 >
                   {DIARY_CHAT_WITH.map((option) => (
                     <option key={option.value} value={option.value}>
-                      {option.label}
+                      {t(option.messageKey)}
                     </option>
                   ))}
                 </select>

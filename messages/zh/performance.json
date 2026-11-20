@@ -1,0 +1,54 @@
+{
+  "title": "学业表现",
+  "empty": "未找到学业表现",
+  "table": {
+    "courseName": "课程名称",
+    "score": "分数",
+    "pace": "进度",
+    "teacherName": "教师姓名",
+    "endDate": "结束日期",
+    "remainingDays": "剩余天数",
+    "pendingAssignment": "待完成作业",
+    "progressGradable": "进度（计分）",
+    "progressAll": "进度（全部活动）"
+  },
+  "pace": {
+    "Ahead": "超前",
+    "OnTrack": "进度正常",
+    "Behind": "落后",
+    "GettingStarted": "刚开始"
+  },
+  "salutation": {
+    "mr": "先生",
+    "ms": "女士"
+  },
+  "history": {
+    "title": "成绩记录",
+    "empty": "暂无作答记录。",
+    "attempt": "第几次",
+    "score": "分数",
+    "percent": "百分比",
+    "submitted": "提交时间"
+  },
+  "progress": {
+    "empty": "未找到作业。",
+    "assignment": "作业",
+    "due": "截止",
+    "status": "状态",
+    "score": "分数",
+    "tiles": {
+      "total": "总计",
+      "submitted": "已提交",
+      "pending": "待完成",
+      "upcoming": "即将到来",
+      "passed": "通过",
+      "failed": "未通过"
+    },
+    "itemStatuses": {
+      "submitted": "已提交",
+      "late": "迟交",
+      "before_time": "提前提交",
+      "excused": "免交"
+    }
+  }
+}

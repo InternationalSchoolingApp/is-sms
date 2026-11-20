@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CalendarDays, Check, Eye, FileText, Trash2, Upload } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { DatePicker } from "@/components/ui/date-picker";
 import { ConfirmDialog, EditSelect, EditText, UnitBar } from "@/components/k5/pages/K5ProfileEditors";
 import { DocCropDialog, DocPreviewDialog } from "@/components/k5/pages/K5ProfileDocs";
@@ -86,15 +87,17 @@ function DateField({ field, editor }) {
 function FileField({ field, actions, onView, onCrop, onAskRemove }) {
   const busy = actions?.busy === `custom:${field.id}`;
   const inputId = `k5-custom-file-${field.id}`;
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
   const choose = (file) => {
-    if (file.size > MAX_BYTES) return toast.error("Please upload files in PDF, JPG, PNG, and JPEG with max size of 5MB");
+    if (file.size > MAX_BYTES) return toast.error(t("docsUi.tooBig"));
     if (file.type === "application/pdf") return actions.uploadCustomFile(field.id, file);
     if (["image/jpeg", "image/jpg", "image/png"].includes(file.type)) return onCrop(field, file);
-    return toast.error("Please upload files in PDF, JPG, PNG, and JPEG Format");
+    return toast.error(t("docsUi.wrongType"));
   };
   return (
     <div className="relative flex min-w-0 flex-col gap-1.5">
-      <span className="text-sm font-black text-k5-acx">{field.label}:</span>
+      <span className="text-sm font-black text-k5-acx">{t("docsUi.labelColon", { label: field.label })}</span>
       {field.value ? (
         <div className="flex min-w-0 items-center gap-2">
           <div className="flex h-[50px] min-w-0 flex-1 items-center gap-2 rounded-[14px] border-[3px] border-dashed border-k5-ac bg-k5-card px-2.5 py-1.5">
@@ -103,16 +106,16 @@ function FileField({ field, actions, onView, onCrop, onAskRemove }) {
             </span>
             <Tooltip>
               <TooltipTrigger delay={100} render={<span className="min-w-0 flex-1 truncate text-sm font-extrabold text-k5-ink" title={field.value} />}>
-                {busy ? "Working…" : field.value}
+                {busy ? t("custom.working") : field.value}
               </TooltipTrigger>
               <TooltipContent>{field.value}</TooltipContent>
             </Tooltip>
           </div>
-          <button type="button" onClick={() => onView(field)} disabled={!field.url} aria-label={`View ${field.label}`} title="View" className={`${ICON_BTN} bg-[#13803F]`}>
+          <button type="button" onClick={() => onView(field)} disabled={!field.url} aria-label={t("docsUi.viewNamed", { name: field.label })} title={tc("actions.view")} className={`${ICON_BTN} bg-[#13803F]`}>
             <Eye className="h-5 w-5" aria-hidden="true" />
           </button>
           {actions && (
-            <button type="button" onClick={() => onAskRemove(field)} disabled={Boolean(actions.busy)} aria-label={`Delete ${field.label}`} title="Delete" className={`${ICON_BTN} bg-[#DC2F45]`}>
+            <button type="button" onClick={() => onAskRemove(field)} disabled={Boolean(actions.busy)} aria-label={t("docsUi.deleteNamed", { name: field.label })} title={tc("actions.delete")} className={`${ICON_BTN} bg-[#DC2F45]`}>
               <Trash2 className="h-5 w-5" aria-hidden="true" />
             </button>
           )}
@@ -133,11 +136,11 @@ function FileField({ field, actions, onView, onCrop, onAskRemove }) {
           />
           <label htmlFor={inputId} className="flex h-[50px] cursor-pointer items-center justify-center gap-2 rounded-[14px] border-[3px] border-dashed border-k5-ac bg-k5-card px-3 text-sm font-black text-k5-acx hover:bg-k5-act">
             <Upload className="h-4 w-4" aria-hidden="true" />
-            {busy ? "Uploading…" : "Upload"}
+            {busy ? t("custom.uploading") : tc("actions.upload")}
           </label>
         </>
       ) : (
-        <span className="flex h-[50px] items-center justify-center rounded-[14px] border-[3px] border-dashed border-k5-line bg-k5-soft px-3 text-sm font-extrabold text-k5-mut">Not uploaded</span>
+        <span className="flex h-[50px] items-center justify-center rounded-[14px] border-[3px] border-dashed border-k5-line bg-k5-soft px-3 text-sm font-extrabold text-k5-mut">{t("page.notUploaded")}</span>
       )}
       <Purpose text={field.purpose} />
     </div>
@@ -161,13 +164,14 @@ export function CustomFields({ fields, editor, actions }) {
   const [preview, setPreview] = useState(null);
   const [cropFor, setCropFor] = useState(null); // { field, file }
   const [confirm, setConfirm] = useState(null);
+  const t = useTranslations("k5Profile");
   if (!fields?.length) return null;
 
   const view = (field) => setPreview({ url: field.url, name: field.value, pdf: field.attachmentType === "P" || /\.pdf($|\?)/i.test(field.value), label: field.label });
   const askRemove = (field) =>
     setConfirm({
-      message: "Are you sure you want to remove this document?",
-      okLabel: "Yes, remove",
+      message: t("docsUi.removeConfirm"),
+      okLabel: t("docsUi.yesRemove"),
       cancel: () => setConfirm(null),
       accept: () => {
         setConfirm(null);

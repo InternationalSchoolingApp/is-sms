@@ -225,3 +225,108 @@ const ELEMENTARY = {
 export function contactCheckCopy(band) {
   return band === "elementary" ? ELEMENTARY : STANDARD;
 }
+
+// Step alerts / toasts the flow (utils/contactCheckFlow.js) and its hooks write in English -> contactCheck.alerts.<key>.
+const ALERT_KEYS = {
+  "This could not be done just now. Please try again in a minute.": "error",
+  "The school server could not be reached. Check your connection and try again.": "unreachable",
+  "Choose one of the options to continue.": "chooseOption",
+  "Send the code first, then enter it here.": "sendFirst",
+  "Your session has been logged out": "loggedOut",
+};
+
+/**
+ * An alert of the flow in the dashboard's language (`t` = useTranslations("contactCheck")); a message the server
+ * wrote is shown as it is.
+ */
+export function contactCheckAlertText(message, t) {
+  if (!message) return message;
+  const known = ALERT_KEYS[message];
+  if (known) return t(`alerts.${known}`);
+  const wait = /^You can ask for a new code in (\d+) seconds?\.$/.exec(message);
+  return wait ? t("alerts.waitSeconds", { count: Number(wait[1]) }) : message;
+}
+
+/**
+ * The same words in the dashboard's language: the shape of contactCheckCopy(band), read from the
+ * contactCheck.copy messages. `t` is useTranslations("contactCheck.copy") (docs/i18n.md); a key the elementary
+ * words do not have falls back to the standard one, as ELEMENTARY spreads STANDARD above. The [before, value, after]
+ * sentences are cut around the {value} placeholder, so each language keeps its own word order.
+ */
+export function translateContactCheckCopy(band, t) {
+  const english = contactCheckCopy(band);
+  const own = band === "elementary" ? "elementary" : "standard";
+  const key = (k) => (t.has(`${own}.${k}`) ? `${own}.${k}` : `standard.${k}`);
+  const msg = (k, values) => t(key(k), values);
+  const ownOnly = (k) => (t.has(`${own}.${k}`) ? t(`${own}.${k}`) : "");
+  const MARK = "\u0001";
+  const split = (k, value, values) => {
+    const text = msg(k, { ...values, value: MARK });
+    const at = text.indexOf(MARK);
+    return at < 0 ? [text, "", ""] : [text.slice(0, at), value, text.slice(at + MARK.length)];
+  };
+  const kindKey = (kind) => String(kind).replace(":", "_");
+  const channel = (c) => ({
+    title: msg(`channels.${c}.title`),
+    headline: ownOnly(`channels.${c}.headline`),
+    problem: (value) => split(`channels.${c}.problem`, value),
+    options: Object.fromEntries(
+      Object.keys(english.channels[c].options).map((a) => [a, [msg(`channels.${c}.options.${a}.title`), msg(`channels.${c}.options.${a}.text`)]]),
+    ),
+    codeHint: ownOnly(`channels.${c}.codeHint`),
+    valueLabel: Object.fromEntries(Object.keys(english.channels[c].valueLabel).map((a) => [a, msg(`channels.${c}.valueLabel.${a}`)])),
+    sendLabel: msg(`channels.${c}.sendLabel`),
+    codeLabel: msg(`channels.${c}.codeLabel`),
+  });
+  return {
+    ...english,
+    continueLabel: msg("continueLabel"),
+    laterLabel: msg("laterLabel"),
+    backLabel: msg("backLabel"),
+    verifyLabel: msg("verifyLabel"),
+    closeNowLabel: msg("closeNowLabel"),
+    legend: msg("legend"),
+    reasonLabel: msg("reasonLabel"),
+    help: { choose: ownOnly("helpChoose"), code: ownOnly("helpCode") },
+    stepLabel: msg("stepLabel"),
+    resendLabel: msg("resendLabel"),
+    resendLead: ownOnly("resendLead"),
+    codePlaceholder: msg("codePlaceholder"),
+    signIn: msg("signIn"),
+    signInShort: msg("signInShort"),
+    alsoMobile: msg("alsoMobile"),
+    mandatory: msg("mandatory"),
+    skip: (n) => msg("skip", { count: n }),
+    channels: { EMAIL: channel("EMAIL"), MOBILE: channel("MOBILE"), WHATSAPP: channel("WHATSAPP") },
+    confirmLead: (ch, value) => split("confirmLead", value, { channel: ch }),
+    alternateHint: msg("alternateHint"),
+    sent: (ch, sentTo) => msg("sent", { channel: String(ch), sentTo: String(sentTo ?? "") }),
+    noWhatsapp: {
+      title: msg("noWhatsapp.title"),
+      lead: (value) => split("noWhatsapp.lead", value),
+      note: msg("noWhatsapp.note"),
+      confirmLabel: msg("noWhatsapp.confirmLabel"),
+    },
+    done: {
+      heading: (kind, firstName) =>
+        own === "elementary"
+          ? firstName
+            ? msg("done.headingNamed", { name: firstName })
+            : msg("done.headingPlain")
+          : t.has(`standard.done.heading.${kindKey(kind)}`)
+            ? t(`standard.done.heading.${kindKey(kind)}`)
+            : msg("done.headingDefault"),
+      text: (kind, alsoMobile) => {
+        const k = `done.text.${kindKey(kind)}`;
+        if (!t.has(key(k))) return ["", ""];
+        const [before, , after] = split(k, "", { alsoMobile: alsoMobile ? "yes" : "no" });
+        return [before, after];
+      },
+      signIn: msg("done.signIn"),
+      nextNote: (ch) => (t.has(key(`done.nextNote.${ch}`)) ? msg(`done.nextNote.${ch}`) : ""),
+      nextLabel: msg("done.nextLabel"),
+      okLabel: msg("done.okLabel"),
+    },
+    errors: Object.fromEntries(Object.keys(english.errors).map((code) => [code, msg(`errors.${code}`)])),
+  };
+}

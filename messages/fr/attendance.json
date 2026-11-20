@@ -1,0 +1,24 @@
+{
+  "title": "Mon assiduité",
+  "notFound": "Aucune donnée d'assiduité trouvée",
+  "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+  "classesToday": "Cours aujourd'hui",
+  "attendanceMonth": "Assiduité ({month} {year})",
+  "lateMonth": "Retards ({month} {year})",
+  "byMonth": "Assiduité par mois ({year})",
+  "monthlySummary": "Résumé du mois ({month})",
+  "classesHeldThisMonth": "Cours donnés ce mois-ci",
+  "states": {
+    "present": "Présent",
+    "late": "En retard",
+    "absent": "Absent"
+  },
+  "delta": {
+    "percent": "{value} % par rapport au mois dernier",
+    "classes": "{value} {count, plural, one {cours} other {cours}} par rapport au mois dernier"
+  },
+  "chart": {
+    "series": "Assiduité",
+    "classesAttended": "{attended} cours suivis sur {held}"
+  }
+}

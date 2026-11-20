@@ -110,12 +110,16 @@ export function thumbUrl(video, apiBase) {
   return null;
 }
 
-export function fmtDate(ms) {
-  return new Date(Number(ms)).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+/** `locale` (optional): a BCP 47 tag for the month name (useLocaleTag()); the browser's language when left out. */
+export function fmtDate(ms, locale = undefined) {
+  return new Date(Number(ms)).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });
 }
 
+/** Whole days until `ms` (0 or less = ends today) — what daysLeft() words, for a translated label. */
+export const daysLeftCount = (ms) => Math.ceil((Number(ms) - Date.now()) / 86400000);
+
 export function daysLeft(ms) {
-  const days = Math.ceil((Number(ms) - Date.now()) / 86400000);
+  const days = daysLeftCount(ms);
   return days <= 0 ? "ends today" : days === 1 ? "1 day left" : `${days} days left`;
 }
 
@@ -130,8 +134,11 @@ export function fmtTime(seconds) {
 /** epoch millis already past. */
 export const isPast = (ms) => Number(ms) < Date.now();
 
+/** A renewal that starts later than a minute from now (startsLaterText() shows its date). */
+export const startsLater = (ms) => Boolean(ms && Number(ms) > Date.now() + 60000);
+
 /** A renewal that starts later than a minute from now: " · starts {date}", else "". */
-export const startsLaterText = (ms) => (ms && Number(ms) > Date.now() + 60000 ? ` · starts ${fmtDate(ms)}` : "");
+export const startsLaterText = (ms) => (startsLater(ms) ? ` · starts ${fmtDate(ms)}` : "");
 
 export const money = (n) => (Number(n) || 0).toFixed(2);
 

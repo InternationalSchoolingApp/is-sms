@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { splitDiaryMentions, diaryInitials } from "@/utils/diaryChat";
 
 /** A message's text with its @mentions in green (legacy parentSchoolDiaryHighlightMentions). Line breaks are kept by the caller's CSS. */
@@ -54,11 +55,13 @@ export function FloatingDateChip({ label, visible, className = "" }) {
 
 /** The diary could not be loaded (server unreachable or refused) - with a retry, instead of looking like an empty diary. */
 export function DiaryLoadError({ onRetry, className = "", buttonClassName = "" }) {
+  const t = useTranslations("diary");
+  const tc = useTranslations("common");
   return (
     <div role="alert" className={`flex flex-col items-center gap-3 p-5 text-center ${className}`}>
-      <p className="m-0 text-sm font-semibold">The diary could not be loaded right now.</p>
+      <p className="m-0 text-sm font-semibold">{t("loadError")}</p>
       <button type="button" onClick={onRetry} className={`cursor-pointer rounded-full px-5 py-1.5 text-sm font-bold ${buttonClassName}`}>
-        Try again
+        {tc("actions.tryAgain")}
       </button>
     </div>
   );

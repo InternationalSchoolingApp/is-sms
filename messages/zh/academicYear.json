@@ -1,0 +1,50 @@
+{
+  "title": "学年延期",
+  "schoolFallback": "学校",
+  "contactAdmin": "联系学校管理员",
+  "confirmExtension1": "确定要使用延期 1 吗？",
+  "termsTitle": "条款和条件",
+  "termsIntro": "延长学年前，请注意以下重要的退费政策和条款：",
+  "terms": {
+    "consultAdmin": "建议您在选择付费学年延期前先咨询学校管理员。",
+    "maxFourWeeks": "付费学年延期最长可使用 4 周。",
+    "noOtherForm": "学校不提供其他形式的学年延期。",
+    "incomplete": "如果使用 4 周付费延期后仍无法完成本课程，将不授予本课程学分，并在年度成绩单中记为未完成“(I)”。",
+    "nonRefundable": "在任何情况下，学年延期所缴费用均不予退还、不可转让且不可抵扣。",
+    "checkWebsite": "学生（或其家长/监护人）有责任定期查看网站上的最新通知。{school}不会另行向学生（或其家长/监护人）发送通知或更新。",
+    "rightToAmend": "{school}保留在购买前随时修改、限制或撤销任何优惠或条款的权利，并对因技术问题导致的付款失败不承担任何责任。"
+  },
+  "agree": "我确认已阅读并同意上述退费政策及条款和条件。",
+  "payNow": "立即支付",
+  "paymentProcessing": "付款处理中...",
+  "oops": "哎呀！",
+  "paymentIncomplete": "付款未完成",
+  "underReviewTitle": "您的付款正在审核中。",
+  "underReviewText": "收到付款后将为您办理延期。",
+  "toast": {
+    "paymentReceived": "已收到付款。",
+    "unableToAvail": "无法办理延期。",
+    "extension1Availed": "已成功使用延期 1。"
+  },
+  "notEligible": {
+    "afterYear": "学年结束后，您可以为{subject}申请延期。",
+    "notEligible": "您不符合为{subject}申请延期的条件。"
+  },
+  "detail": {
+    "title": "延长{subject}的学年",
+    "availedOfOne": "您已使用延期 1 的 {count}/1 次延期。",
+    "extension1Info": "使用延期 1，您将额外获得 2 周时间完成本课程学分，无需额外付费。",
+    "availExtension1": "使用延期 1",
+    "extension2": "延期 2",
+    "paidExtension": "付费延期",
+    "availedOfFour": "您已使用{label}的 {count}/4 次延期。",
+    "payToAvail": "支付 {cost} 即可使用{label}。",
+    "extendedOneWeek": "使用{label}，您将额外获得 1 周时间完成本课程学分。",
+    "availExtension2": "使用延期 2",
+    "availPaidExtension": "使用付费延期",
+    "allAvailed": "您已用完{subject}的所有延期"
+  },
+  "messages": {
+    "no_details_found": "未找到详情。"
+  }
+}

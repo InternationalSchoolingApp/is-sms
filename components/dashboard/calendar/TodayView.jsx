@@ -1,6 +1,8 @@
 "use client";
 
 import { format } from "date-fns";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { EventCard } from "@/components/dashboard/calendar/EventCard";
 import { groupEventsByLocalDate } from "@/utils/calendarEvents";
 
@@ -10,6 +12,8 @@ import { groupEventsByLocalDate } from "@/utils/calendarEvents";
  * events float to the top, then chronological).
  */
 export function TodayView({ events, selectedDate, courseRegistry, onSelectEvent }) {
+  const t = useTranslations("calendar");
+  const dateLocale = useDateFnsLocale();
   const dayKey = format(selectedDate, "yyyy-MM-dd");
   const dayEvents = events.filter((e) => e.localDateKey === dayKey);
   const groups = groupEventsByLocalDate(dayEvents);
@@ -17,7 +21,7 @@ export function TodayView({ events, selectedDate, courseRegistry, onSelectEvent 
   if (groups.length === 0) {
     return (
       <div className="flex h-full items-center justify-center p-10 text-center text-sm text-black/60">
-        Nothing scheduled for {format(selectedDate, "EEEE, MMMM d")}.
+        {t("nothingScheduledOn", { date: format(selectedDate, "EEEE, MMMM d", { locale: dateLocale }) })}
       </div>
     );
   }
@@ -28,7 +32,7 @@ export function TodayView({ events, selectedDate, courseRegistry, onSelectEvent 
         <div key={group.date.toISOString()}>
           <div className="mb-2 flex items-baseline gap-2">
             <span className="text-lg font-extrabold text-black">{format(group.date, "d")}</span>
-            <span className="text-xs font-bold uppercase tracking-wide text-black/60">{format(group.date, "EEEE, MMMM yyyy")}</span>
+            <span className="text-xs font-bold uppercase tracking-wide text-black/60">{format(group.date, "EEEE, MMMM yyyy", { locale: dateLocale })}</span>
           </div>
           <div className="space-y-2">
             {group.events.map((event) => (

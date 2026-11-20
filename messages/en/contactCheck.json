@@ -1,0 +1,245 @@
+{
+  "modal": {
+    "errorPrefix": "Error:",
+    "about": "About: {about}.",
+    "lastTried": "Last tried {when}.",
+    "countryCode": "Country code",
+    "numberPlaceholder": "Number without the country code",
+    "inSeconds": "(in {wait}s)"
+  },
+  "alerts": {
+    "error": "This could not be done just now. Please try again in a minute.",
+    "unreachable": "The school server could not be reached. Check your connection and try again.",
+    "chooseOption": "Choose one of the options to continue.",
+    "sendFirst": "Send the code first, then enter it here.",
+    "loggedOut": "Your session has been logged out",
+    "waitSeconds": "You can ask for a new code in {count, plural, one {# second} other {# seconds}}."
+  },
+  "summary": {
+    "title": "My contact details",
+    "subtitle": "How the school reaches you",
+    "status": {
+      "VERIFIED": "Verified",
+      "OK": "Working",
+      "INVALID": "Invalid",
+      "NOT_REACHABLE": "Not reachable",
+      "APP_NOT_INSTALLED": "App not installed",
+      "UNKNOWN": "Not checked yet"
+    },
+    "channels": {
+      "EMAIL": "Email",
+      "MOBILE": "Mobile (SMS)",
+      "WHATSAPP": "WhatsApp",
+      "APP": "App notifications"
+    },
+    "labels": {},
+    "noPhone": "No phone signed in",
+    "notGiven": "Not given",
+    "getApp": "Get the app",
+    "fixNow": "Fix now",
+    "fixFailed": "This could not be done just now. Please try again in a minute.",
+    "noLongerNeedsFix": "This contact detail no longer needs fixing."
+  },
+  "copy": {
+    "standard": {
+      "continueLabel": "Continue",
+      "laterLabel": "Later",
+      "backLabel": "Back",
+      "verifyLabel": "Verify and save",
+      "closeNowLabel": "Close for now",
+      "legend": "What would you like to do?",
+      "reasonLabel": "Reason:",
+      "stepLabel": "Step 2 of 2",
+      "resendLabel": "Resend code",
+      "resendLead": "Didn't get it?",
+      "codePlaceholder": "Enter code",
+      "signIn": "Your sign-in email does not change. This address is only used for school emails.",
+      "signInShort": "Your sign-in email does not change.",
+      "alsoMobile": "Also use this as my mobile number",
+      "mandatory": "Please fix this now to keep getting messages from the school. It can no longer be skipped.",
+      "skip": "You can skip this {count, plural, one {# more time} other {# more times}}.",
+      "channels": {
+        "EMAIL": {
+          "title": "Check your email address",
+          "problem": "School emails to {value} are not being delivered.",
+          "options": {
+            "CHANGE": { "title": "Update my email", "text": "Replace it with an address that works" },
+            "CONFIRM": { "title": "It is correct", "text": "Keep this address — we will try again" },
+            "ALTERNATE": { "title": "Add another email", "text": "Keep this one and add a second address" }
+          },
+          "valueLabel": { "CHANGE": "New email", "ALTERNATE": "Second email" },
+          "sendLabel": "Send code",
+          "codeLabel": "Enter the 6-digit code from the email"
+        },
+        "MOBILE": {
+          "title": "Check your mobile number",
+          "problem": "Text messages to your mobile number {value} are not reaching you.",
+          "options": {
+            "CHANGE": { "title": "Change my number", "text": "Enter the correct number. We'll text you a code." },
+            "CONFIRM": { "title": "It is correct", "text": "We'll text a code to this number to confirm it." }
+          },
+          "valueLabel": { "CHANGE": "New mobile number" },
+          "sendLabel": "Send SMS code",
+          "codeLabel": "Enter the 6-digit code from the text message"
+        },
+        "WHATSAPP": {
+          "title": "Check your WhatsApp number",
+          "problem": "We couldn't reach you on WhatsApp at {value}.",
+          "options": {
+            "CHANGE": { "title": "Give my WhatsApp number", "text": "Use a different number for WhatsApp. We'll send a code there." },
+            "CONFIRM": { "title": "It is correct", "text": "This number has WhatsApp. We'll send a code on WhatsApp." },
+            "NO_WHATSAPP": { "title": "I don't use WhatsApp", "text": "Stop WhatsApp messages. You'll still get email and SMS." }
+          },
+          "valueLabel": { "CHANGE": "WhatsApp number" },
+          "sendLabel": "Send WhatsApp code",
+          "codeLabel": "Enter the 6-digit code we sent on WhatsApp"
+        }
+      },
+      "confirmLead": "We'll send a 6-digit code to {value}{channel, select, WHATSAPP { on WhatsApp} MOBILE { by SMS} other {}}. Enter the code here to confirm it is yours.",
+      "alternateHint": "After you enter the code, school emails also go to this address. Your current one is kept.",
+      "sent": "We sent a 6-digit code {channel, select, EMAIL {by email} MOBILE {by SMS} SMS {by SMS} WHATSAPP {on WhatsApp} other {}} to {sentTo}.",
+      "noWhatsapp": {
+        "title": "Stop WhatsApp messages?",
+        "lead": "We'll stop sending WhatsApp messages to {value}.",
+        "note": "You'll still get school messages by email and SMS. You can give a WhatsApp number later from your profile.",
+        "confirmLabel": "Yes, stop WhatsApp messages"
+      },
+      "done": {
+        "heading": {
+          "EMAIL_CHANGE": "Email updated",
+          "EMAIL_CONFIRM": "Email confirmed",
+          "EMAIL_ALTERNATE": "Email added",
+          "MOBILE_CHANGE": "Mobile number updated",
+          "MOBILE_CONFIRM": "Mobile number confirmed",
+          "WHATSAPP_CHANGE": "WhatsApp number saved",
+          "WHATSAPP_CONFIRM": "WhatsApp number confirmed",
+          "WHATSAPP_NO_WHATSAPP": "WhatsApp messages stopped"
+        },
+        "headingDefault": "Done",
+        "text": {
+          "EMAIL_CHANGE": "School emails now go to {value}.",
+          "EMAIL_CONFIRM": "We'll send school emails to {value} again.",
+          "EMAIL_ALTERNATE": "School emails now also go to {value}.",
+          "MOBILE_CHANGE": "Text messages from the school now go to {value}.",
+          "MOBILE_CONFIRM": "We'll keep sending text messages to {value}.",
+          "WHATSAPP_CHANGE": "WhatsApp messages from the school now go to {value}{alsoMobile, select, yes {. It is also your mobile number now.} other {.}}",
+          "WHATSAPP_CONFIRM": "We'll keep sending WhatsApp messages to {value}.",
+          "WHATSAPP_NO_WHATSAPP": "The school will reach you by email and SMS instead."
+        },
+        "signIn": "Your sign-in email did not change.",
+        "nextNote": {
+          "EMAIL": "Next: your email address.",
+          "MOBILE": "Next: your mobile number.",
+          "WHATSAPP": "Next: your WhatsApp number."
+        },
+        "nextLabel": "Next",
+        "okLabel": "OK"
+      },
+      "errors": {
+        "EMAIL_EMPTY": "Enter the email address.",
+        "EMAIL_FORMAT": "Enter an email address in the format name@example.com.",
+        "EMAIL_SAME": "This is the address that is not working. Enter a different one, or go back and choose \"It is correct\".",
+        "EMAIL_SAME_ALTERNATE": "This is your current address. Enter a different one.",
+        "ISD_EMPTY": "Choose the country code.",
+        "NUMBER_EMPTY": "Enter the number.",
+        "NUMBER_FORMAT": "Enter only the digits of the number, without the country code (6 to 15 digits).",
+        "CODE_EMPTY": "Enter the 6-digit code we sent you.",
+        "CODE_FORMAT": "The code has 6 digits. Check it and try again."
+      }
+    },
+    "elementary": {
+      "continueLabel": "Next",
+      "legend": "What do you want to do?",
+      "reasonLabel": "Why?",
+      "resendLabel": "Send the code again",
+      "resendLead": "",
+      "helpChoose": "Not sure? Ask a parent to help.",
+      "helpCode": "Ask a parent to help you find the code.",
+      "signIn": "Your sign-in email does not change. You still sign in the same way.",
+      "mandatory": "Please fix this now. You cannot skip it any more.",
+      "skip": "You can skip this {count, plural, one {# more time} other {# more times}}",
+      "channels": {
+        "EMAIL": {
+          "title": "Let's fix your email!",
+          "headline": "School emails are not reaching you!",
+          "problem": "We sent emails to {value} but they came back.",
+          "options": {
+            "CHANGE": { "title": "Change my email", "text": "I will type a new one" },
+            "CONFIRM": { "title": "It is right", "text": "Keep this email" },
+            "ALTERNATE": { "title": "Add another email", "text": "Use one more email too" }
+          },
+          "valueLabel": { "CHANGE": "Type your new email", "ALTERNATE": "Type one more email" },
+          "sendLabel": "Send code",
+          "codeLabel": "Type the 6 numbers from the email"
+        },
+        "MOBILE": {
+          "title": "Let's fix your phone number!",
+          "headline": "Your phone number looks wrong.",
+          "problem": "We have this number for you: {value}",
+          "options": {
+            "CHANGE": { "title": "Change my number", "text": "I will type the right one" },
+            "CONFIRM": { "title": "It is right", "text": "Keep this number" }
+          },
+          "codeHint": "We will send a code by text message (SMS) to check it.",
+          "valueLabel": { "CHANGE": "Type your phone number" },
+          "sendLabel": "Send code",
+          "codeLabel": "Type the 6 numbers from the text message"
+        },
+        "WHATSAPP": {
+          "title": "Let's fix your WhatsApp!",
+          "headline": "We could not reach you on WhatsApp.",
+          "problem": "We tried this number: {value}",
+          "options": {
+            "CHANGE": { "title": "Give my WhatsApp number", "text": "I will type the right one" },
+            "CONFIRM": { "title": "It is right", "text": "Keep this number" },
+            "NO_WHATSAPP": { "title": "I don't use WhatsApp", "text": "Stop asking me" }
+          },
+          "codeHint": "We will send a code on WhatsApp to check it.",
+          "valueLabel": { "CHANGE": "Type your WhatsApp number" },
+          "sendLabel": "Send code",
+          "codeLabel": "Type the 6 numbers we sent on WhatsApp"
+        }
+      },
+      "confirmLead": "We will send 6 numbers to {value}{channel, select, WHATSAPP { on WhatsApp} MOBILE { by text message (SMS)} other {}}. Type them here to show it is yours.",
+      "alternateHint": "School emails will go to this email too. Your other email stays.",
+      "sent": "{channel, select, EMAIL {Code sent! Look in your email.} WHATSAPP {Code sent! Look in WhatsApp.} other {Code sent! Look in your text messages.}}",
+      "noWhatsapp": {
+        "lead": "We will stop sending WhatsApp messages to {value}.",
+        "note": "The school will still send you emails and text messages.",
+        "confirmLabel": "Yes, stop them"
+      },
+      "done": {
+        "headingNamed": "All done! Thank you, {name}!",
+        "headingPlain": "All done! Thank you!",
+        "text": {
+          "EMAIL_CHANGE": "Your new email is saved: {value}",
+          "EMAIL_CONFIRM": "We will keep using this email: {value}",
+          "EMAIL_ALTERNATE": "Your other email is saved: {value}",
+          "MOBILE_CHANGE": "Your new phone number is saved: {value}",
+          "MOBILE_CONFIRM": "We will keep using this number: {value}",
+          "WHATSAPP_CHANGE": "Your WhatsApp number is saved: {value}",
+          "WHATSAPP_CONFIRM": "We will keep using this WhatsApp number: {value}",
+          "WHATSAPP_NO_WHATSAPP": "We will not send you WhatsApp messages."
+        },
+        "nextNote": {
+          "EMAIL": "Next we will check your email.",
+          "MOBILE": "Next we will check your phone number.",
+          "WHATSAPP": "Next we will check your WhatsApp."
+        },
+        "nextLabel": "Okay!",
+        "okLabel": "Okay!"
+      },
+      "errors": {
+        "EMAIL_EMPTY": "Type the email first.",
+        "EMAIL_FORMAT": "That does not look like an email. It should look like name@example.com.",
+        "EMAIL_SAME": "This is the email that is not working. Type a new one, or go back and pick \"It is right\".",
+        "EMAIL_SAME_ALTERNATE": "You already use this email. Type a different one.",
+        "ISD_EMPTY": "Pick your country code.",
+        "NUMBER_EMPTY": "Type the number first.",
+        "NUMBER_FORMAT": "Type only the numbers, without the country code.",
+        "CODE_EMPTY": "Type the 6 numbers we sent you.",
+        "CODE_FORMAT": "The code has 6 numbers. Check it and try again."
+      }
+    }
+  }
+}

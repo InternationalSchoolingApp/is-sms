@@ -2,12 +2,15 @@
 
 import { format } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { K5_CARD, K5_ROUND_BTN } from "@/components/k5/home/k5Bits";
 import { K5ClockIcon } from "@/components/k5/home/K5ClockIcon";
 import { K5WeatherTile, kindOf } from "@/components/k5/home/K5WeatherTile";
 import { useK5Weather } from "@/hooks/useK5Weather";
 import { weekKeys, keyToDate } from "@/utils/k5Calendar";
 
+// label: English reference; shown as k5Home.toolbar.views.<key>.
 const VIEWS = [
   { key: "today", label: "Today" },
   { key: "week", label: "Week" },
@@ -23,19 +26,27 @@ function greeting(hour) {
   return "Good Evening!";
 }
 
-// "America/New_York" -> "New York time".
-const zoneLabel = (timezone) => `${String(timezone).split("/").pop().replace(/_/g, " ")} time`;
+// The greeting above, shown as k5Home.toolbar.greeting.<key> (greeting() stays English: it is also compared).
+const GREETING_KEYS = { "Good Morning!": "morning", "Good Afternoon!": "afternoon", "Good Evening!": "evening" };
 
-function titles(viewName, selectedDate) {
+// "America/New_York" -> "New York time" (t = the k5Home.toolbar translator).
+const zoneLabel = (timezone, t) => t("zone", { city: String(timezone).split("/").pop().replace(/_/g, " ") });
+
+// t = the k5Home.toolbar translator, locale = the date-fns locale of the dashboard language.
+function titles(viewName, selectedDate, t, locale) {
+  const options = { locale };
   if (viewName === "week") {
     const keys = weekKeys(selectedDate);
     const first = keyToDate(keys[0]);
     const last = keyToDate(keys[6]);
-    const range = first.getMonth() === last.getMonth() ? `${format(first, "MMMM d")} – ${format(last, "d")}` : `${format(first, "MMM d")} – ${format(last, "MMM d")}`;
-    return ["My Week", range];
+    const range =
+      first.getMonth() === last.getMonth()
+        ? `${format(first, "MMMM d", options)} – ${format(last, "d", options)}`
+        : `${format(first, "MMM d", options)} – ${format(last, "MMM d", options)}`;
+    return [t("myWeek"), range];
   }
-  if (viewName === "month") return [format(selectedDate, "MMMM"), format(selectedDate, "yyyy")];
-  return [format(selectedDate, "EEEE"), format(selectedDate, "MMMM d, yyyy")];
+  if (viewName === "month") return [format(selectedDate, "MMMM", options), format(selectedDate, "yyyy", options)];
+  return [format(selectedDate, "EEEE", options), format(selectedDate, "MMMM d, yyyy", options)];
 }
 
 /**
@@ -44,7 +55,9 @@ function titles(viewName, selectedDate) {
  * Month view (plan 12.8). The weather tile shows real weather for the timezone city and is hidden until it arrives.
  */
 export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPrev, onNext, onToday, isPreK }) {
-  const [big, small] = titles(viewName, selectedDate);
+  const t = useTranslations("k5Home.toolbar");
+  const locale = useDateFnsLocale();
+  const [big, small] = titles(viewName, selectedDate, t, locale);
   const views = isPreK ? VIEWS.filter((v) => v.key !== "month") : VIEWS;
   const unit = viewName === "week" ? "week" : viewName === "month" ? "month" : "day";
   const weather = useK5Weather(timezone);
@@ -58,27 +71,27 @@ export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPre
       <div className={`k5h-tbox flex items-center gap-2.5 rounded-[22px] ${goodNight ? "bg-[#e6e3fb]" : "bg-k5-yt"} px-2.5 py-1.5 max-[760px]:box-border max-[760px]:w-full max-[760px]:flex-nowrap max-[760px]:gap-2 max-[760px]:px-2`}>
         <K5ClockIcon kind={weather ? kindOf(weather.code) : "sun"} night={night} className="max-[760px]:!h-11 max-[760px]:!w-11" />
         <div className="flex flex-none flex-col items-start whitespace-nowrap text-start">
-          <span className="font-k5-display text-[26px] font-bold leading-none text-k5-ink max-[760px]:text-[22px]">{format(now, "h:mm a")}</span>
-          <span className="font-k5-display text-base font-semibold leading-[1.2] text-k5-ink">{greeting(now.getHours())}</span>
-          <span className={`k5h-zone text-[13px] font-extrabold ${goodNight ? "text-[#4b3fa6]" : "text-k5-yx"}`}>{zoneLabel(timezone)}</span>
+          <span className="font-k5-display text-[26px] font-bold leading-none text-k5-ink max-[760px]:text-[22px]">{format(now, "h:mm a", { locale })}</span>
+          <span className="font-k5-display text-base font-semibold leading-[1.2] text-k5-ink">{t(`greeting.${GREETING_KEYS[greeting(now.getHours())]}`)}</span>
+          <span className={`k5h-zone text-[13px] font-extrabold ${goodNight ? "text-[#4b3fa6]" : "text-k5-yx"}`}>{zoneLabel(timezone, t)}</span>
         </div>
         <K5WeatherTile weather={weather} />
       </div>
 
       <div data-pin="prevnext" className="flex items-center gap-1.5 max-[760px]:flex-[1_1_100%] max-[760px]:justify-center">
-        <button type="button" aria-label={`Previous ${unit}`} onClick={onPrev} className={K5_ROUND_BTN}>
+        <button type="button" aria-label={t(`previous.${unit}`)} onClick={onPrev} className={K5_ROUND_BTN}>
           <ChevronLeft className="h-[22px] w-[22px]" strokeWidth={3} aria-hidden="true" />
         </button>
         <span className="flex min-w-[150px] flex-col items-center whitespace-nowrap text-center">
           <span className="font-k5-display text-[26px] font-semibold leading-[1.1] text-k5-ink">{big}</span>
           <span className="text-base font-extrabold text-k5-mut">{small}</span>
         </span>
-        <button type="button" aria-label={`Next ${unit}`} onClick={onNext} className={K5_ROUND_BTN}>
+        <button type="button" aria-label={t(`next.${unit}`)} onClick={onNext} className={K5_ROUND_BTN}>
           <ChevronRight className="h-[22px] w-[22px]" strokeWidth={3} aria-hidden="true" />
         </button>
       </div>
 
-      <div role="group" aria-label="Calendar view" data-pin="views" className="ms-auto flex flex-none gap-1 rounded-full bg-k5-act p-[5px] max-[760px]:me-auto">
+      <div role="group" aria-label={t("calendarView")} data-pin="views" className="ms-auto flex flex-none gap-1 rounded-full bg-k5-act p-[5px] max-[760px]:me-auto">
         {views.map((v) => {
           const active = v.key === viewName;
           return (
@@ -94,7 +107,7 @@ export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPre
                 active ? "bg-k5-ac text-white shadow-[0_4px_0_var(--k5-acd)]" : "bg-transparent text-k5-ink"
               }`}
             >
-              {v.label}
+              {t(`views.${v.key}`)}
             </button>
           );
         })}

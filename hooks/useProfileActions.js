@@ -2,11 +2,13 @@
 
 import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { addActivity, addClassTime, removeActivity, removeClassTime, removeCustomFile, removeDocument, removeSocialLink } from "@/services/profileActionsApi";
 import { saveMyProfile } from "@/services/profileSaveApi";
 import { callingPreferences, isValidUrl } from "@/utils/profileEdit";
 import { callServer } from "@/utils/serverCall";
 import { markSessionExpired } from "@/utils/sessionState";
+import { useLabelTranslator } from "@/i18n/labels";
 
 /**
  * My Profile P3 changes that save straight away, like the existing page: live-class times, parent calling times,
@@ -14,7 +16,7 @@ import { markSessionExpired } from "@/utils/sessionState";
  * (e.g. "time:add", "doc:Age Proof"), so a button can show it is working.
  */
 /** Posts { docType, file } pairs to app/api/profile/document (multipart; one save-docs call on the server). */
-async function postDocuments(list, extra = {}) {
+async function postDocuments(list, extra = {}, failMessage = "The document could not be saved.") {
   const form = new FormData();
   for (const { docType, file } of list) {
     form.append("docType", docType);
@@ -24,7 +26,7 @@ async function postDocuments(list, extra = {}) {
   const response = await fetch("/api/profile/document", { method: "POST", body: form });
   const body = await response.json().catch(() => null);
   if (response.status === 401 && body?.sessionExpired) markSessionExpired();
-  if (!response.ok) throw new Error(body?.message || "The document could not be saved.");
+  if (!response.ok) throw new Error(body?.message || failMessage);
 }
 
 // The existing page allows three preferred times per list (profileViewNew.js addClassPreferredTime /
@@ -32,7 +34,11 @@ async function postDocuments(list, extra = {}) {
 const MAX_TIMES = 3;
 
 export function useProfileActions({ studentStandardId, refetch, callingSlots = [], classSlots = [], socialLinks = [] }) {
+  const tt = useTranslations("profile.toast");
+  const tc = useTranslations("common");
+  const field = useLabelTranslator("profile.fields");
   const [busy, setBusy] = useState(null);
+  const saveDocs = (list, extra = {}) => postDocuments(list, extra, tt("documentNotSaved"));
 
   const run = useCallback(
     async (key, action, done) => {
@@ -44,13 +50,13 @@ export function useProfileActions({ studentStandardId, refetch, callingSlots = [
         toast.success(done);
         return true;
       } catch (error) {
-        toast.error(String(error?.message || "Something went wrong.").replace(/^[A-Z_0-9]+:\s*/, ""));
+        toast.error(String(error?.message || tc("status.somethingWentWrong")).replace(/^[A-Z_0-9]+:\s*/, ""));
         return false;
       } finally {
         setBusy(null);
       }
     },
-    [busy, refetch],
+    [busy, refetch, tc],
   );
 
   const saveCalling = (slots, roles) =>
@@ -61,38 +67,38 @@ export function useProfileActions({ studentStandardId, refetch, callingSlots = [
     refetch,
     addClassTime: (start, end) => {
       if (classSlots.length >= MAX_TIMES) {
-        toast.error("A maximum of three preferred live class timings can be added.");
+        toast.error(tt("maxClassTimes"));
         return Promise.resolve(false);
       }
-      return run("time:add", () => callServer(() => addClassTime({ start, end })), "Time saved!");
+      return run("time:add", () => callServer(() => addClassTime({ start, end })), tt("timeSaved"));
     },
-    removeClassTime: (id) => run(`time:${id}`, () => callServer(() => removeClassTime({ timePrefId: id })), "Time removed."),
+    removeClassTime: (id) => run(`time:${id}`, () => callServer(() => removeClassTime({ timePrefId: id })), tt("timeRemoved")),
     addCallingTime: (role, start, end) => {
       if (callingSlots.filter((x) => x.role === role).length >= MAX_TIMES) {
-        toast.error(`A maximum of three preferred communication timings can be added. ${role}`);
+        toast.error(tt("maxCallingTimes", { role: field(role) ?? "" }));
         return Promise.resolve(false);
       }
       if (callingSlots.some((x) => x.role === role && x.start === start && x.end === end)) {
-        toast.error("This time is already added.");
+        toast.error(tt("timeAlreadyAdded"));
         return Promise.resolve(false);
       }
       if (callingSlots.some((x) => x.role === role && start < x.end && end > x.start)) {
-        toast.error("This time overlaps with another time for the same person.");
+        toast.error(tt("timeOverlaps"));
         return Promise.resolve(false);
       }
-      return run("call:add", () => saveCalling([...callingSlots, { role, start, end }], [role]), "Time saved!");
+      return run("call:add", () => saveCalling([...callingSlots, { role, start, end }], [role]), tt("timeSaved"));
     },
     removeCallingTime: (index) => {
       const slot = callingSlots[index];
       if (!slot) return Promise.resolve(false);
-      return run(`call:${index}`, () => saveCalling(callingSlots.filter((_, i) => i !== index), [slot.role]), "Time removed.");
+      return run(`call:${index}`, () => saveCalling(callingSlots.filter((_, i) => i !== index), [slot.role]), tt("timeRemoved"));
     },
-    addActivity: (values) => run("activity:add", () => callServer(() => addActivity(values)), "Activity added!"),
-    removeActivity: (id) => run(`activity:${id}`, () => callServer(() => removeActivity({ id })), "Activity removed."),
+    addActivity: (values) => run("activity:add", () => callServer(() => addActivity(values)), tt("activityAdded")),
+    removeActivity: (id) => run(`activity:${id}`, () => callServer(() => removeActivity({ id })), tt("activityRemoved")),
     uploadDocument: (docType, file) =>
-      run(`doc:${docType}`, () => postDocuments([{ docType, file }]), docType === "Profile Image" ? "Your new photo is saved!" : "Document saved!"),
+      run(`doc:${docType}`, () => saveDocs([{ docType, file }]), docType === "Profile Image" ? tt("photoSaved") : tt("documentSaved")),
     // Documents section "Save Documents": every chosen proof in one save-docs call, like the existing page.
-    uploadDocuments: (list) => run("doc:save", () => postDocuments(list), list.length > 1 ? "Documents saved!" : "Document saved!"),
+    uploadDocuments: (list) => run("doc:save", () => saveDocs(list), list.length > 1 ? tt("documentsSaved") : tt("documentSaved")),
     // "Add other social media link" (profileViewNew.js addOtherSocialLinks): saved as socialMedia "0~url~title".
     addSocialLink: (title, url) => {
       const t = String(title || "").trim();
@@ -101,23 +107,23 @@ export function useProfileActions({ studentStandardId, refetch, callingSlots = [
         toast.error(message);
         return Promise.resolve(false);
       };
-      if (!t) return fail("Link title is required.");
-      if (!isValidUrl(u)) return fail("Invalid URL.");
-      if (socialLinks.some((s) => s.label.toLowerCase() === t.toLowerCase())) return fail("Link title already added.");
-      if (socialLinks.some((s) => s.url && s.url === u)) return fail("URL already added.");
+      if (!t) return fail(tt("linkTitleRequired"));
+      if (!isValidUrl(u)) return fail(tt("invalidUrl"));
+      if (socialLinks.some((s) => s.label.toLowerCase() === t.toLowerCase())) return fail(tt("linkTitleExists"));
+      if (socialLinks.some((s) => s.url && s.url === u)) return fail(tt("urlExists"));
       return run(
         "social:add",
         () => callServer(() => saveMyProfile({ studentStandardId, items: [{ keyId: "socialMedia", fieldValue: `0~${u}~${t.slice(0, 100)}` }] })),
-        "Link added!",
+        tt("linkAdded"),
       );
     },
     // A school-defined file field: saved at once, like the existing page (cropImage -> saveDocs for CUSTOM_FILE).
     uploadCustomFile: (customProfileFieldId, file) =>
-      run(`custom:${customProfileFieldId}`, () => postDocuments([{ docType: "CUSTOM_FILE", file }], { customProfileFieldId }), "Document saved!"),
+      run(`custom:${customProfileFieldId}`, () => saveDocs([{ docType: "CUSTOM_FILE", file }], { customProfileFieldId }), tt("documentSaved")),
     removeCustomFile: (customProfileFieldId) =>
-      run(`custom:${customProfileFieldId}`, () => callServer(() => removeCustomFile({ customProfileFieldId })), "Document removed."),
+      run(`custom:${customProfileFieldId}`, () => callServer(() => removeCustomFile({ customProfileFieldId })), tt("documentRemoved")),
     removeSocialLink: (userSocialMediaId) =>
-      run(`social:${userSocialMediaId}`, () => callServer(() => removeSocialLink({ userSocialMediaId })), "Link removed."),
-    removeDocument: (docType) => run(`doc:${docType}`, () => callServer(() => removeDocument({ docType })), "Document removed."),
+      run(`social:${userSocialMediaId}`, () => callServer(() => removeSocialLink({ userSocialMediaId })), tt("linkRemoved")),
+    removeDocument: (docType) => run(`doc:${docType}`, () => callServer(() => removeDocument({ docType })), tt("documentRemoved")),
   };
 }

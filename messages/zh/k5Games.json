@@ -1,0 +1,110 @@
+{
+  "yourGames": "你的游戏",
+  "pickGame": "选一个游戏吧！",
+  "locked": {
+    "title": "游戏已锁定",
+    "past": "这一天已经过去了。选今天或以后的某一天来玩吧。",
+    "pending": "你今天有课。今天的课全部上完后，游戏就会开放。",
+    "live": "你的课正在直播！先去上课吧。下课后游戏会再次开放。"
+  },
+  "games": {
+    "balloon": {
+      "name": "戳气球",
+      "how": "点气球把它们戳破！"
+    },
+    "memory": {
+      "name": "记忆配对",
+      "how": "翻开两张卡片，找出配对！"
+    },
+    "mole": {
+      "name": "地鼠小伙伴",
+      "how": "在小伙伴躲起来之前点它！"
+    },
+    "count": {
+      "name": "数星星",
+      "how": "你看到几颗星星？"
+    },
+    "math": {
+      "name": "快速算术",
+      "how": "选出正确答案！"
+    },
+    "shape": {
+      "name": "找形状",
+      "how": "点我说的那个形状！"
+    }
+  },
+  "score": "得分 {score}",
+  "startOver": "重新开始",
+  "greatJob": "真棒！",
+  "tryAgain": "再试一次！",
+  "shapes": {
+    "circle": "圆形",
+    "square": "正方形",
+    "triangle": "三角形",
+    "star": "星形",
+    "heart": "心形"
+  },
+  "tapShape": {
+    "circle": "点圆形！",
+    "square": "点正方形！",
+    "triangle": "点三角形！",
+    "star": "点星形！",
+    "heart": "点心形！"
+  },
+  "balloons": {
+    "pink": "戳破粉色气球",
+    "yellow": "戳破黄色气球",
+    "blue": "戳破蓝色气球",
+    "green": "戳破绿色气球",
+    "purple": "戳破紫色气球",
+    "orange": "戳破橙色气球"
+  },
+  "boards": {
+    "balloonGame": "戳气球游戏",
+    "pop": "啪！",
+    "hiddenCard": "未翻开的卡片",
+    "allPairs": "你找到了所有配对！",
+    "startOver": "重新开始",
+    "time": "时间：{seconds}",
+    "hole": "第 {n} 个洞",
+    "timesUp": "时间到！你抓到了 {count} 个！",
+    "moleHow": "在小伙伴躲起来之前点它！",
+    "playAgain": "再玩一次",
+    "start": "开始"
+  },
+  "high": {
+    "title": "益智游戏",
+    "subtitle": "锻炼逻辑、数字和记忆力的小谜题。",
+    "locked": "游戏已锁定",
+    "lockedText": "只有在没有课的日子，或完成当天所有课程和活动后，游戏才会解锁。",
+    "lockedPast": "这一天已经过去了。请选择今天或之后的日子来玩。",
+    "games": {
+      "count": {
+        "name": "数列",
+        "how": "找出规律中的下一个数字。"
+      },
+      "math": {
+        "name": "心算",
+        "how": "用心算解答，不用计算器。"
+      },
+      "shape": {
+        "name": "找不同",
+        "how": "有一个数字不符合规律，找出它。"
+      },
+      "memory": {
+        "name": "记忆方格",
+        "how": "每次翻开两张卡片，配对全部 8 组。"
+      }
+    },
+    "whatNext": "下一个是什么？",
+    "solve": "计算",
+    "percentOf": "{n} 的 {p}%",
+    "oddOne": "哪个数字不属于这一组？",
+    "hiddenCard": "未翻开的卡片",
+    "allPairs": "全部配对完成。",
+    "startOver": "重新开始",
+    "score": "得分 {score}",
+    "correct": "正确",
+    "notQuite": "不太对，再试一次。"
+  }
+}

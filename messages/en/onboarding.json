@@ -1,0 +1,93 @@
+{
+  "shell": {
+    "logOff": "Log Off"
+  },
+  "welcome": {
+    "loadFailed": "Could not load your details. Please try again."
+  },
+  "timezone": {
+    "saved": "Your time zone is saved.",
+    "saveFailed": "Your time zone could not be saved.",
+    "title": "Confirm Your Time Zone",
+    "intro": "Before we start, please select your Country Name and Time Zone:",
+    "label": "Time Zone",
+    "loadFailed": "Could not load the time zones",
+    "proceedWith": "Do you wish to proceed with <b>{zone}</b>?",
+    "classesFollow": "Please note that all of your classes will follow this time zone.",
+    "changeLater": "To change your time zone later, go to the <b>‘My Profile’</b> section of your dashboard.",
+    "saving": "Saving..."
+  },
+  "overdue": {
+    "paymentReceived": "Payment received.",
+    "hi": "Hi {name}!",
+    "hiThere": "Hi there!",
+    "deactivated": "Your LMS is deactivated due to pending fee since {date}.",
+    "noOverdue": "No overdue payments found.",
+    "pendingFee": "Pending Fee",
+    "grade": "Grade",
+    "feeDescription": "Fee Description",
+    "dueFee": "Due Fee",
+    "dueDate": "Due Date",
+    "status": "Status",
+    "totalDue": "Total Fee Due",
+    "payNow": "Pay Now to Continue Classes",
+    "whyTimely": "Why is timely payment important?",
+    "payInAdvance": "Please pay in advance to continue with your classes.",
+    "avoidDeactivation": "Kindly complete the payment to avoid deactivation of the School Management System.",
+    "statusUpdated": "Your fee status will be updated once the payment is received."
+  },
+  "feeStatus": {
+    "pending": "Pending",
+    "overdue": "Overdue",
+    "due": "Due",
+    "unpaid": "Unpaid",
+    "paid": "Paid",
+    "partially_paid": "Partially Paid"
+  },
+  "setup": {
+    "loadFailed": "Could not load your details. Please try again.",
+    "loading": "Loading your details...",
+    "heading": "Hi {name}, {kind, select, done {very well done. Let's get started!} reminder {an important reminder} other {let's get started!}}",
+    "headingNoName": "Hi there, {kind, select, done {very well done. Let's get started!} reminder {an important reminder} other {let's get started!}}"
+  },
+  "training": {
+    "topicsIntro": "In the school system training, you will learn",
+    "topicClasses": "How to Book and Join Classes",
+    "topicCourses": "Courses, Progress Reports & Assessments",
+    "booked": "Your school system training has been booked.",
+    "bookFailed": "Your school system training could not be booked.",
+    "chooseDateToContinue": "Choose date to continue",
+    "title": "Book Your school system training",
+    "bookOn": "I want to book my school system training on",
+    "dateLabel": "Choose system training date",
+    "selectTime": "Select time:",
+    "loadingTimes": "Loading the available times…",
+    "timesFailed": "The training times could not be loaded.",
+    "noSlot": "No slot available. Please pick another date",
+    "timeLabel": "Training time",
+    "saving": "Saving..."
+  },
+  "academic": {
+    "saved": "Your academic year start date is saved.",
+    "saveFailed": "Your academic year start date could not be saved.",
+    "title": "Academic Year Start Date",
+    "titleStep": "Step 1 of 1 - Academic Year Start Date",
+    "explain": "Your academic year start date is when you will start your classes.",
+    "startOn": "I want to start my academic year on",
+    "dateLabel": "Choose start date",
+    "decideLater": "Decide Later",
+    "chooseCarefully": "Please choose your academic year start date carefully. You will not be able to edit this later.",
+    "queries": "For any queries:",
+    "editDate": "Edit Date",
+    "mandatory": "Choosing your {kind, select, training {system training} other {academic year}} start date is mandatory to start your classes. You can always login again to complete the process.",
+    "queriesTalk": "For any queries, please <link>Talk to School Administration</link>",
+    "batchReminder": "The Group Learning Batch for the UTC+ timezone will begin on 18th September 2024.<br></br>and the Group Learning Batch for the UTC- timezone will start on 25th September 2024."
+  },
+  "done": {
+    "title": "You're All Set!",
+    "startDateIs": "Your academic year start date is {date}",
+    "trainingConfirmed": "Your school system training has been successfully confirmed.",
+    "dateTime": "Date & Time: <b>{value}</b>",
+    "emailSent": "A Confirmation has been sent to your registered email address as well."
+  }
+}

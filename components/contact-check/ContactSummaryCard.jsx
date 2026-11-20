@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 import { AppWindow, Mail, MessageCircle, Smartphone, UserRound } from "lucide-react";
 import { AppDownloadDialog } from "@/components/k5/AppDownloadDialog";
 import { useContactSummary } from "@/hooks/useContactSummary";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { displayValue } from "@/utils/contactCheckFlow";
+import { useLabelTranslator } from "@/i18n/labels";
 
 // Only fetched when the student presses "Fix now".
 const ContactCheckModal = dynamic(() => import("@/components/contact-check/ContactCheckModal"), { ssr: false });
@@ -24,7 +26,8 @@ const CHANNELS = {
   APP: { Icon: AppWindow, label: "App notifications" },
 };
 
-// Legacy CC_STATUS: [label, tone].
+// Legacy CC_STATUS: [label, tone]. Shown as contactCheck.summary.status.<STATUS>; the channel labels as
+// contactCheck.summary.channels.<CHANNEL>.
 const STATUS = {
   VERIFIED: ["Verified", "ok"],
   OK: ["Working", "ok"],
@@ -46,6 +49,8 @@ const ACTION_BTN =
   "min-h-10 cursor-pointer whitespace-nowrap rounded-full border-none bg-k5-ac px-4 font-k5-display text-[15px] font-semibold text-white disabled:cursor-default disabled:opacity-60";
 
 export function ContactSummaryCard() {
+  const t = useTranslations("contactCheck.summary");
+  const tl = useLabelTranslator("contactCheck.summary.labels");
   const { isK5, isMiddle, context } = useDashboardContext();
   const summary = useContactSummary();
   const [appOpen, setAppOpen] = useState(false);
@@ -59,16 +64,17 @@ export function ContactSummaryCard() {
           <UserRound className="h-[18px] w-[18px]" />
         </span>
         <h3 id="k5-contact-summary" className="m-0 flex-1 font-k5-display text-xl font-semibold">
-          My contact details
+          {t("title")}
         </h3>
-        <span className="text-sm font-extrabold text-k5-mut">How the school reaches you</span>
+        <span className="text-sm font-extrabold text-k5-mut">{t("subtitle")}</span>
       </div>
       <ul className="m-0 flex list-none flex-col gap-2 p-0">
         {summary.rows.map((contact) => {
           const channel = CHANNELS[contact.channel] || { Icon: UserRound, label: contact.channel };
-          const [statusLabel, tone] = STATUS[contact.status] || STATUS.UNKNOWN;
-          const value = displayValue(contact) || contact.value || (contact.channel === "APP" ? "No phone signed in" : "Not given");
-          const label = contact.label || channel.label;
+          const [, tone] = STATUS[contact.status] || STATUS.UNKNOWN;
+          const statusLabel = t(`status.${STATUS[contact.status] ? contact.status : "UNKNOWN"}`);
+          const value = displayValue(contact) || contact.value || (contact.channel === "APP" ? t("noPhone") : t("notGiven"));
+          const label = contact.label ? tl(contact.label) : CHANNELS[contact.channel] ? t(`channels.${contact.channel}`) : channel.label;
           return (
             <li key={`${contact.channel}-${contact.reviewId ?? ""}-${contact.value ?? ""}`} className="flex flex-wrap items-center gap-3 rounded-2xl bg-k5-soft px-3 py-2.5">
               <channel.Icon className="h-5 w-5 flex-none text-k5-acx" aria-hidden="true" />
@@ -83,11 +89,11 @@ export function ContactSummaryCard() {
               <div className="flex min-w-[96px] justify-end">
                 {contact.status === "APP_NOT_INSTALLED" ? (
                   <button type="button" onClick={() => setAppOpen(true)} className={ACTION_BTN}>
-                    Get the app
+                    {t("getApp")}
                   </button>
                 ) : contact.reviewId && (contact.status === "INVALID" || contact.status === "NOT_REACHABLE") ? (
                   <button type="button" onClick={() => summary.fix(contact.reviewId)} disabled={summary.opening || Boolean(summary.flow)} className={ACTION_BTN}>
-                    Fix now<span className="sr-only"> {label}</span>
+                    {t("fixNow")}<span className="sr-only"> {label}</span>
                   </button>
                 ) : null}
               </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Download } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
@@ -27,6 +28,7 @@ const DOWNLOAD_CLASS =
 export function K5Handbook({ title, schoolName, loading, canView, filePath, policyLink, coverImage }) {
   const { isMiddle } = useDashboardContext();
   usePicoContentReady(!loading);
+  const t = useTranslations("k5Modules.handbook");
 
   return (
     <div className="flex flex-col gap-4">
@@ -41,16 +43,16 @@ export function K5Handbook({ title, schoolName, loading, canView, filePath, poli
         </span>
         <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
           <h1 className={`m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-4xl"}`}>{title}</h1>
-          <p className={`m-0 font-extrabold text-k5-mut ${isMiddle ? "text-base" : "text-lg"}`}>Everything about your school, in one book.</p>
+          <p className={`m-0 font-extrabold text-k5-mut ${isMiddle ? "text-base" : "text-lg"}`}>{t("subtitle")}</p>
         </div>
       </div>
 
       {loading ? (
-        <K5Loading label="Loading the handbook">
+        <K5Loading label={t("loading")}>
           <K5BlockSkeleton height={420} />
         </K5Loading>
       ) : !canView ? (
-        <div className={`${K5_CARD} p-8 text-center font-k5-display text-2xl font-semibold text-k5-mut`}>You do not have access to this module.</div>
+        <div className={`${K5_CARD} p-8 text-center font-k5-display text-2xl font-semibold text-k5-mut`}>{t("noAccess")}</div>
       ) : (
         <section aria-labelledby="k5-hb" className={`${K5_CARD} grid grid-cols-2 items-center gap-[30px] overflow-hidden p-[26px] max-[900px]:grid-cols-1 max-[760px]:gap-[18px] max-[760px]:p-3.5`}>
           <div className="k5h-hb-stage relative box-border flex min-h-[460px] items-center justify-center rounded-3xl bg-[radial-gradient(circle_at_50%_40%,var(--k5-act)_0%,var(--k5-soft)_70%)] px-5 pb-[46px] pt-[30px] max-[760px]:min-h-[360px]">
@@ -66,7 +68,7 @@ export function K5Handbook({ title, schoolName, loading, canView, filePath, poli
                 style={{ background: "repeating-linear-gradient(to bottom, #FFFFFF 0 3px, #E3E8F0 3px 4px)" }}
               />
               <div className="k5-hbcover k5h-hb-cover absolute inset-0 overflow-hidden rounded-l-[4px] rounded-r-xl shadow-[inset_10px_0_12px_-6px_rgba(0,0,0,0.35),0_6px_0_rgba(10,16,34,0.12)] [transform-origin:0%_50%]">
-                <OptimizedImage src={coverImage} alt="Student Handbook cover: A perfect combination of flexibility and accountability" width={560} height={724} sizes="270px" className="block h-full w-full object-cover" />
+                <OptimizedImage src={coverImage} alt={t("coverAlt")} width={560} height={724} sizes="270px" className="block h-full w-full object-cover" />
                 <span aria-hidden="true" className="absolute inset-y-0 left-0 w-3.5" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.28), rgba(255,255,255,0.25) 60%, rgba(0,0,0,0.05))" }} />
                 <span
                   aria-hidden="true"
@@ -81,28 +83,28 @@ export function K5Handbook({ title, schoolName, loading, canView, filePath, poli
           <div className="flex min-w-0 flex-col gap-[18px]">
             {schoolName && <span className="self-start rounded-full bg-k5-vt px-3.5 py-1 text-sm font-black text-k5-vi">{schoolName}</span>}
             <h2 id="k5-hb" className="k5h-hb-h2 m-0 font-k5-display text-[34px] font-semibold leading-[1.1] max-[760px]:text-[28px]">{title}</h2>
-            <p className="m-0 text-lg font-extrabold leading-[1.45] text-k5-mut">Your school&apos;s own book. It tells you how your school works and what to expect.</p>
+            <p className="m-0 text-lg font-extrabold leading-[1.45] text-k5-mut">{t("intro")}</p>
             {filePath ? (
               <a href={filePath} target="_blank" rel="noreferrer" className={DOWNLOAD_CLASS}>
                 <Download className="h-[22px] w-[22px]" strokeWidth={2.8} aria-hidden="true" />
-                Download Handbook
+                {t("download")}
               </a>
             ) : (
               <button type="button" disabled aria-disabled="true" className={`${DOWNLOAD_CLASS} cursor-not-allowed opacity-60`}>
                 <Download className="h-[22px] w-[22px]" strokeWidth={2.8} aria-hidden="true" />
-                Download Handbook
+                {t("download")}
               </button>
             )}
             <div role="note" className="k5h-hb-note flex gap-3 rounded-[18px] border-[3px] border-k5-yb bg-k5-yt px-4 py-3.5">
               <span aria-hidden="true" className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full bg-[#FFC531] font-k5-display text-lg font-bold text-[#3A2A00]">i</span>
               <p className="m-0 text-base font-extrabold leading-[1.45]">
-                It is the responsibility of the student and the parent to keep a check on the updated terms and policies of the school.{" "}
+                {t("note")}{" "}
                 {policyLink ? (
                   <a href={policyLink} target="_blank" rel="noreferrer" className="font-black text-k5-acx underline">
-                    Click Here to know more.
+                    {t("knowMore")}
                   </a>
                 ) : (
-                  <span className="font-black text-k5-acx">Click Here to know more.</span>
+                  <span className="font-black text-k5-acx">{t("knowMore")}</span>
                 )}
               </p>
             </div>

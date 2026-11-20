@@ -1,0 +1,104 @@
+{
+  "shell": {
+    "copyright": "Copyright © {year} - {school} - Todos los derechos reservados.",
+    "copyrightNoSchool": "Copyright © {year} - Todos los derechos reservados."
+  },
+  "header": {
+    "menu": "Menú",
+    "tagline": "Tu lugar. Tu escuela. Tu tiempo.",
+    "schoolWebsite": "Sitio web de {school}",
+    "schoolWebsiteGeneric": "Sitio web de la escuela",
+    "communication": "Mensajes",
+    "appearance": "Apariencia",
+    "needHelp": "¿Necesitas ayuda?",
+    "cart": "Carrito",
+    "cartItems": "Carrito, {count, plural, one {# artículo} other {# artículos}}",
+    "cartCount": "Carrito ({count})",
+    "getApp": "Descarga la app",
+    "picoGetApp": "¡Descarga la app y llévame contigo en tu teléfono!",
+    "welcomeBack": "¡Hola de nuevo,",
+    "nameExclaim": "{name}!",
+    "myProfile": "Mi perfil",
+    "profileComingSoon": "Mi perfil — muy pronto",
+    "changePassword": "Cambiar contraseña",
+    "addSiblings": "Añadir más hermanos",
+    "resumeEnrollment": "Continuar la inscripción de {name}",
+    "moreOptions": "Más opciones",
+    "closeMenu": "Cerrar menú",
+    "themeAndLook": "Tema y aspecto"
+  },
+  "nav": {
+    "mainMenu": "Menú principal",
+    "closeMenu": "Cerrar menú",
+    "loading": "Cargando el menú…",
+    "more": "Más",
+    "groupItem": "{group}: {item}"
+  },
+  "logout": {
+    "say": {
+      "calm": "¿Ya te vas?",
+      "sad": "Ay… ¡no te vayas!",
+      "happy": "¡Bien! ¡Sigamos aprendiendo!"
+    },
+    "title": "¿Seguro que quieres cerrar sesión?",
+    "body": "Saldrás de tu cuenta y volverás a la página de inicio de sesión.",
+    "loggingOut": "Cerrando sesión…"
+  },
+  "quote": {
+    "label": "Frase del momento",
+    "dismiss": "Cerrar la frase"
+  },
+  "skeleton": {
+    "plan": "Cargando tu plan",
+    "day": "Cargando tu día",
+    "courses": "Buscando tus cursos",
+    "profile": "Cargando tu perfil"
+  },
+  "appDownload": {
+    "school": "Escuela",
+    "schoolApp": "App de {school}",
+    "schoolAppGeneric": "App de la escuela",
+    "title": "¡Mantente conectado con nuestra app!",
+    "subtitle": "Todo lo de la escuela, en tu teléfono.",
+    "whatYouGet": "Lo que obtienes",
+    "features": {
+      "updates": "Todas las novedades en un solo lugar",
+      "reminders": "Recordatorios de clase",
+      "calendar": "Calendario de clases",
+      "diary": "Diario del estudiante",
+      "chat": "Chatea con tus profes"
+    },
+    "getItOn": "DISPONIBLE EN",
+    "downloadOnThe": "Descargar en la",
+    "storeLink": {
+      "googlePlay": "Disponible en Google Play",
+      "appStore": "Descargar en la App Store"
+    },
+    "qrFor": "Código QR para {store}",
+    "scanMe": "¡Escanéame!",
+    "easySteps": "Fácil como 1, 2, 3",
+    "steps": {
+      "openCamera": "Abre la cámara de tu teléfono",
+      "scanCode": "Escanea el código",
+      "tapLink": "Toca el enlace e instala"
+    },
+    "demoLabel": "Un teléfono escanea el código, descarga la app y la instala",
+    "demo": {
+      "scanning": "Escaneando…",
+      "downloading": "Descargando…",
+      "installed": "¡Instalada! ¡Bien!"
+    },
+    "closeIn": "Cerrar, disponible en {count, plural, one {# segundo} other {# segundos}}",
+    "closeCountdown": "Cerrar ({count} s)",
+    "allDone": "¡Listo!"
+  },
+  "look": {
+    "title": "¡Hazlo a tu manera!",
+    "subtitle": "Elige tu estilo. ¡Cambia enseguida!",
+    "schoolPicked": "Tu escuela eligió este estilo para ti.",
+    "reset": "Volver al original",
+    "buddyIs": "{name} es tu amigo.",
+    "voiceHello": "¡Hola! ¡Esta es mi voz!",
+    "voiceHelloName": "¡Hola, {name}! ¡Esta es mi voz!"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "title": "Histórico escolar do aluno",
+  "actionsLabel": "Ações do histórico",
+  "notPublished": "Seu histórico escolar ainda não foi publicado.",
+  "links": {
+    "transcript": "Histórico - {grade}",
+    "transcriptNew": "Histórico - {grade} (Novo)",
+    "diploma": "Diploma - {grade}"
+  },
+  "table": {
+    "sNo": "Nº",
+    "studentName": "Nome do aluno",
+    "email": "E-mail",
+    "grade": "Série",
+    "studentId": "ID do aluno",
+    "action": "Ação"
+  }
+}

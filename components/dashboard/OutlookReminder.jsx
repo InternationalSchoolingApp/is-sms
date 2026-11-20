@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { Copy, Eye, EyeOff, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -31,13 +32,14 @@ const WHATSAPP_URL = "https://wa.me/15854990662";
 const BTN = "min-h-11 cursor-pointer rounded-xl border px-5 text-base font-semibold disabled:cursor-default disabled:opacity-60";
 
 function Credential({ label, value, secret = false }) {
+  const t = useTranslations("home.outlook");
   const [shown, setShown] = useState(!secret);
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(value);
-      toast.success("Copied");
+      toast.success(t("copied"));
     } catch {
-      toast.error("Could not copy. Please copy it by hand.");
+      toast.error(t("copyFailed"));
     }
   };
   return (
@@ -47,12 +49,12 @@ function Credential({ label, value, secret = false }) {
         <div className={`break-all ${secret ? "font-mono" : "font-semibold"}`}>{value ? (shown ? value : "•".repeat(15)) : "—"}</div>
       </div>
       {value && secret && (
-        <button type="button" onClick={() => setShown((v) => !v)} aria-label={shown ? "Hide password" : "Show password"} className="cursor-pointer border-none bg-transparent p-2 text-primary">
+        <button type="button" onClick={() => setShown((v) => !v)} aria-label={shown ? t("hidePassword") : t("showPassword")} className="cursor-pointer border-none bg-transparent p-2 text-primary">
           {shown ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
         </button>
       )}
       {value && (
-        <button type="button" onClick={copy} aria-label={`Copy ${label}`} className="cursor-pointer border-none bg-transparent p-2 text-primary">
+        <button type="button" onClick={copy} aria-label={t("copyLabel", { label })} className="cursor-pointer border-none bg-transparent p-2 text-primary">
           <Copy className="h-5 w-5" aria-hidden="true" />
         </button>
       )}
@@ -63,6 +65,8 @@ function Credential({ label, value, secret = false }) {
 /** `hold`: the contact check goes first. */
 export function OutlookReminder({ hold = false }) {
   const { context } = useDashboardContext();
+  const t = useTranslations("home.outlook");
+  const tc = useTranslations("common");
   const dummy = useDummyStudent();
   const classLive = useClassLive();
   const userId = context?.userId;
@@ -135,7 +139,7 @@ export function OutlookReminder({ hold = false }) {
       }
       setTimeout(() => window.open(OUTLOOK_URL, "_blank", "noopener,noreferrer"), 1200);
     } catch (error) {
-      toast.error(String(error?.message || "").replace(/^[A-Z0-9_]+:\s*/, "") || "Unable to proceed");
+      toast.error(String(error?.message || "").replace(/^[A-Z0-9_]+:\s*/, "") || t("unableToProceed"));
     } finally {
       setBusy(false);
     }
@@ -152,29 +156,28 @@ export function OutlookReminder({ hold = false }) {
         <span aria-hidden="true" className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Mail className="h-8 w-8" />
         </span>
-        <DialogTitle className="m-0 text-2xl font-bold">Activate your school email</DialogTitle>
+        <DialogTitle className="m-0 text-2xl font-bold">{t("title")}</DialogTitle>
         <DialogDescription className="m-0 text-black/70">
-          This is your official school email on Outlook. We will send class schedules, payment updates and announcements to this email. Log in and
-          activate it immediately.
+          {t("description")}
         </DialogDescription>
         <div className="divide-y rounded-xl border">
           <div className="px-3 py-2 text-left">
             <div className="font-bold">{context?.userName}</div>
-            <div className="break-all">School Email: {email || "—"}</div>
+            <div className="break-all">{t("schoolEmail", { email: email || "—" })}</div>
           </div>
-          <Credential label="Temporary Password" value={password} secret />
+          <Credential label={t("temporaryPassword")} value={password} secret />
         </div>
-        <p className="m-0 text-black/60">Log in once with these details, then choose your own password.</p>
+        <p className="m-0 text-black/60">{t("loginOnce")}</p>
         <button type="button" onClick={activate} disabled={busy} className={`${BTN} border-primary bg-primary text-white`}>
-          {busy ? "Please wait…" : "Activate your school email"}
+          {busy ? tc("status.pleaseWait") : t("activate")}
         </button>
         <button type="button" onClick={later} disabled={busy} className={`${BTN} border-primary bg-white text-primary`}>
-          Do It Later
+          {t("later")}
         </button>
         <p className="m-0 border-t pt-3 text-black/60">
-          Need help?{" "}
+          {t("needHelp")}{" "}
           <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" className="font-bold text-primary">
-            WhatsApp us
+            {t("whatsapp")}
           </a>
         </p>
       </DialogContent>

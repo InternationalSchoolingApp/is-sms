@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { sendProfileOtp, verifyProfileOtp } from "@/services/profileOtpApi";
 import { callServer } from "@/utils/serverCall";
 
@@ -12,11 +13,13 @@ import { callServer } from "@/utils/serverCall";
  * Returns { state(fieldId, channel) -> { sent, code }, setCode, send(fieldId, channel, resend?), verify(fieldId, channel), busy }.
  */
 export function useProfileOtp({ refetch }) {
+  const tt = useTranslations("profile.toast");
+  const tc = useTranslations("common");
   const [entries, setEntries] = useState({});
   const [busy, setBusy] = useState(null);
   const key = (fieldId, channel) => `${fieldId}:${channel}`;
   const patch = (k, values) => setEntries((prev) => ({ ...prev, [k]: { ...(prev[k] || {}), ...values } }));
-  const clean = (error) => String(error?.message || "Something went wrong.").replace(/^[A-Z_0-9]+:\s*/, "");
+  const clean = useCallback((error) => String(error?.message || tc("status.somethingWentWrong")).replace(/^[A-Z_0-9]+:\s*/, ""), [tc]);
 
   const send = useCallback(
     async (fieldId, channel, resend = false) => {
@@ -27,14 +30,14 @@ export function useProfileOtp({ refetch }) {
         await callServer(() => sendProfileOtp({ fieldId, channel, resend }));
         patch(k, { sent: true, code: "" });
         // Our own words: the backend message is cut short for e-mails ("Verification OTP sent to").
-        toast.success(channel === "EMAIL" ? "We sent a code to this email." : channel === "WHATSAPP" ? "We sent a code on WhatsApp." : "We sent a code to this number.");
+        toast.success(channel === "EMAIL" ? tt("codeSentEmail") : channel === "WHATSAPP" ? tt("codeSentWhatsApp") : tt("codeSentPhone"));
       } catch (error) {
         toast.error(clean(error));
       } finally {
         setBusy(null);
       }
     },
-    [busy],
+    [busy, tt, clean],
   );
 
   const verify = useCallback(
@@ -46,14 +49,14 @@ export function useProfileOtp({ refetch }) {
         await callServer(() => verifyProfileOtp({ fieldId, channel, code: entries[k]?.code }));
         await refetch?.();
         patch(k, { sent: false, code: "" });
-        toast.success("Verified! Great job.");
+        toast.success(tt("verified"));
       } catch (error) {
         toast.error(clean(error));
       } finally {
         setBusy(null);
       }
     },
-    [busy, entries, refetch],
+    [busy, entries, refetch, tt, clean],
   );
 
   return {

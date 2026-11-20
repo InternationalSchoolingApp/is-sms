@@ -3,14 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { Copy, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
+import { eventDisplayTime } from "@/utils/calendarEvents";
 import { CalendarModal, DetailRow } from "@/components/dashboard/calendar/CalendarModal";
 import { getClassJoinDetails } from "@/services/dashboardApi";
 
-function statusLabel(dateStatus) {
-  if (dateStatus === "between") return "Live Now";
-  if (dateStatus === "future") return "Upcoming";
-  if (dateStatus === "past") return "Ended";
-  return "Unavailable";
+// `t`: useTranslations("calendar").
+function statusLabel(dateStatus, t) {
+  if (dateStatus === "between") return t("join.status.live");
+  if (dateStatus === "future") return t("join.status.upcoming");
+  if (dateStatus === "past") return t("join.status.ended");
+  return t("join.status.unavailable");
 }
 
 /**
@@ -28,6 +32,9 @@ export function JoinClassModal({ event, schoolUUID, courseRegistry, onClose }) {
   const [refusal, setRefusal] = useState("");
   const [copied, setCopied] = useState(false);
   const linkRef = useRef(null);
+  const t = useTranslations("calendar");
+  const tc = useTranslations("common");
+  const dateLocale = useDateFnsLocale();
 
   useEffect(() => {
     let cancelled = false;
@@ -49,7 +56,7 @@ export function JoinClassModal({ event, schoolUUID, courseRegistry, onClose }) {
     };
   }, [schoolUUID, event.url]);
 
-  const title = event.title || event.eventTitle || details?.className || "Join class";
+  const title = event.title || event.eventTitle || details?.className || t("join.title");
   // Verified live: the real field is `redirectUrl` — `commonJoinUrlOfSMS`
   // exists on the response too but is empty for joinType "A" (student join).
   const joinUrl = details?.redirectUrl || details?.commonJoinUrlOfSMS;
@@ -78,23 +85,23 @@ export function JoinClassModal({ event, schoolUUID, courseRegistry, onClose }) {
       {!details && !loadFailed && (
         <div className="flex flex-col items-center gap-3 py-6 text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm font-semibold text-black">Almost there, please wait…</p>
+          <p className="text-sm font-semibold text-black">{t("join.almostThere")}</p>
         </div>
       )}
 
-      {loadFailed && <p className="text-sm text-black/70">{refusal || "Couldn\u2019t open this class right now. Please try again shortly."}</p>}
+      {loadFailed && <p className="text-sm text-black/70">{refusal || t("join.couldNotOpen")}</p>}
 
       {details && details.classType === "SYS-TRAINING" && !isLive && (
         // Legacy calendarMeetingLinkValidateStudent: a School System Training that is not live is two lines (no Course /
         // Teacher rows — subjectName there is the participant, not a course).
         <div className="my-4 text-center text-base font-medium text-black">
           <p className="mb-2">
-            The {details.className} | {details.subjectName} is scheduled for {details.classDate}.
+            {t("join.trainingScheduled", { className: details.className, subjectName: details.subjectName, date: details.classDate })}
           </p>
-          <p className="m-0">You can join the training on {details.canJoindateStart}.</p>
+          <p className="m-0">{t("join.trainingJoinOn", { date: details.canJoindateStart })}</p>
           <div className="mt-4 flex justify-end">
             <button type="button" onClick={onClose} className="rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-black hover:bg-black/5">
-              Close
+              {tc("actions.close")}
             </button>
           </div>
         </div>
@@ -102,19 +109,19 @@ export function JoinClassModal({ event, schoolUUID, courseRegistry, onClose }) {
 
       {details && !(details.classType === "SYS-TRAINING" && !isLive) && (
         <>
-          <DetailRow label="Course" value={course} />
+          <DetailRow label={t("detail.course")} value={course} />
           {/* The class's day in the student's own timezone (the calendar's startZoned), like the Time row below. The backend's
               classDate is a moment that new Date() read in the BROWSER's zone, so a 4:00 PM class of a student behind the
               browser (e.g. New York vs an India laptop) showed the next day. */}
-          <DetailRow label="Date" value={event.startZoned ? format(event.startZoned, "MMM d, yyyy") : details.classDate || null} />
-          <DetailRow label="Time" value={event.displayTime} />
-          <DetailRow label="Teacher" value={event.origName} />
-          <DetailRow label="Status" value={statusLabel(details.dateStatus)} />
+          <DetailRow label={t("detail.date")} value={event.startZoned ? format(event.startZoned, "MMM d, yyyy", { locale: dateLocale }) : details.classDate || null} />
+          <DetailRow label={t("detail.time")} value={eventDisplayTime(event, dateLocale)} />
+          <DetailRow label={t("detail.teacher")} value={event.origName} />
+          <DetailRow label={t("detail.status")} value={statusLabel(details.dateStatus, t)} />
 
           {joinUrl && (
             <>
               <p className="mt-3 text-center text-xs text-black/60">
-                If you are facing issues with joining, copy the class link below and paste it into a new tab on your browser:
+                {t("join.joinIssues")}
               </p>
               <textarea
                 ref={linkRef}
@@ -130,18 +137,18 @@ export function JoinClassModal({ event, schoolUUID, courseRegistry, onClose }) {
                 className="mt-2 flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700"
               >
                 <Copy className="h-3.5 w-3.5" />
-                {copied ? "Copied!" : "Copy Class Link"}
+                {copied ? t("join.copied") : t("join.copyClassLink")}
               </button>
             </>
           )}
 
           <div className="mt-4 flex justify-end gap-2">
             <button type="button" onClick={onClose} className="rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-black hover:bg-black/5">
-              Close
+              {tc("actions.close")}
             </button>
             {isLive && joinUrl && (
               <button type="button" onClick={handleJoin} className="rounded-full bg-primary px-4 py-2 text-xs font-bold text-white hover:opacity-90">
-                Join Class
+                {t("join.joinClass")}
               </button>
             )}
           </div>

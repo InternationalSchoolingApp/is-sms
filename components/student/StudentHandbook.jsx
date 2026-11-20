@@ -2,11 +2,13 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useModuleRights } from "@/hooks/useModuleRights";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { K5Handbook } from "@/components/k5/pages/K5Handbook";
+import { useLabelTranslator } from "@/i18n/labels";
 
 // Backend static assets (legacy PATH_FOLDER_IMAGE2).
 const assetUrl = (file) => `/backend-static-assets/images/${file}`;
@@ -19,6 +21,10 @@ const IS_POLICIES_URL = "https://internationalschooling.org/policies-and-code-of
  * (/api/v1/module) gate the page and give its title.
  */
 export function StudentHandbook() {
+  const t = useTranslations("handbook");
+  const tc = useTranslations("common");
+  // The module name comes from the rights call: handbook.moduleNames.<labelKey(name)>, else as sent.
+  const moduleName = useLabelTranslator("handbook.moduleNames");
   const { context, isK5 } = useDashboardContext();
   const schoolNumericId = context?.schoolNumericId;
   const { waiting, rights, canView } = useModuleRights("student-handbook");
@@ -30,7 +36,7 @@ export function StudentHandbook() {
     refetchOnWindowFocus: false,
   });
 
-  const title = rights?.moduleName || "Student Handbook";
+  const title = moduleName(rights?.moduleName) || t("title");
   const filePath = linksQuery.data?.batchStudHBookUrl || "";
   const isMainSchool = schoolNumericId == 1;
   const coverImage = assetUrl(isMainSchool ? "updated_handbook.jpeg" : "student-handbook.jpg");
@@ -59,12 +65,12 @@ export function StudentHandbook() {
 
       <div className="rounded-[10px] border border-slate-200 bg-white px-4 py-6 sm:p-8">
         {waiting || linksQuery.isLoading ? (
-          <p className="py-8 text-center text-black/50">Loading…</p>
+          <p className="py-8 text-center text-black/50">{tc("status.loading")}</p>
         ) : !canView ? (
-          <p className="py-8 text-center text-black/60">You do not have access to this module.</p>
+          <p className="py-8 text-center text-black/60">{t("noAccess")}</p>
         ) : (
           <div className="flex flex-col items-center text-center">
-            <OptimizedImage src={coverImage} alt="Student Handbook" width={250} height={325} sizes="250px" className="h-auto w-full max-w-[250px]" />
+            <OptimizedImage src={coverImage} alt={t("title")} width={250} height={325} sizes="250px" className="h-auto w-full max-w-[250px]" />
             {filePath ? (
               <a
                 href={filePath}
@@ -73,7 +79,7 @@ export function StudentHandbook() {
                 className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-2.5 text-white hover:opacity-90 sm:w-auto"
               >
                 <Download className="h-4 w-4" aria-hidden="true" />
-                Download Handbook
+                {t("download")}
               </a>
             ) : (
               <button
@@ -83,20 +89,20 @@ export function StudentHandbook() {
                 className="mt-8 flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-full bg-primary px-6 py-2.5 text-white opacity-60 sm:w-auto"
               >
                 <Download className="h-4 w-4" aria-hidden="true" />
-                Download Handbook
+                {t("download")}
               </button>
             )}
             <p className="mt-6 max-w-2xl text-sm text-black/80 sm:text-base">
-              It is the responsibility of the student and the parent to keep a check on the updated terms and policies of
-              the school.{" "}
-              {policyLink ? (
-                <a href={policyLink} target="_blank" rel="noreferrer" className="text-primary underline">
-                  Click Here
-                </a>
-              ) : (
-                "Click Here"
-              )}{" "}
-              to know more.
+              {t.rich("policyNote", {
+                link: (chunks) =>
+                  policyLink ? (
+                    <a href={policyLink} target="_blank" rel="noreferrer" className="text-primary underline">
+                      {chunks}
+                    </a>
+                  ) : (
+                    chunks
+                  ),
+              })}
             </p>
           </div>
         )}

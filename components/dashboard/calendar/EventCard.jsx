@@ -1,12 +1,15 @@
 "use client";
 
-import { getAssignmentStatus, getClassCompletionStatus, getEventColor, getEventStatus } from "@/utils/calendarEvents";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
+import { eventDisplayTime, getAssignmentStatus, getClassCompletionStatus, getEventColor, getEventStatus } from "@/utils/calendarEvents";
 import { cleanCourseLabel } from "@/utils/k5Calendar";
 
+// Labels: calendar.badges.<key>.
 const STATUS_BADGE_STYLE = {
-  live: { label: "LIVE", background: "#e53935" },
-  missed: { label: "MISSED", background: "#d93025" },
-  lateJoin: { label: "LATE JOIN", background: "#ff6d00" },
+  live: { background: "#e53935" },
+  missed: { background: "#d93025" },
+  lateJoin: { background: "#ff6d00" },
 };
 
 function Badge({ label, background }) {
@@ -21,35 +24,37 @@ function Badge({ label, background }) {
 }
 
 function ClassOrActivityBadges({ event, color, now }) {
+  const t = useTranslations("calendar");
   const status = getEventStatus(event, now);
-  if (status === "live") return <Badge {...STATUS_BADGE_STYLE.live} />;
-  if (status === "upcoming") return <Badge label="UPCOMING" background={color} />;
+  if (status === "live") return <Badge label={t("badges.live")} {...STATUS_BADGE_STYLE.live} />;
+  if (status === "upcoming") return <Badge label={t("badges.upcoming")} background={color} />;
   const completion = getClassCompletionStatus(event);
   return (
     <span className="flex flex-wrap gap-1">
-      <Badge label="EXPIRED" background={color} />
-      {completion === "missed" && <Badge {...STATUS_BADGE_STYLE.missed} />}
-      {completion === "lateJoin" && <Badge {...STATUS_BADGE_STYLE.lateJoin} />}
+      <Badge label={t("badges.expired")} background={color} />
+      {completion === "missed" && <Badge label={t("badges.missed")} {...STATUS_BADGE_STYLE.missed} />}
+      {completion === "lateJoin" && <Badge label={t("badges.lateJoin")} {...STATUS_BADGE_STYLE.lateJoin} />}
     </span>
   );
 }
 
 function AssignmentBadge({ event, now }) {
+  const t = useTranslations("calendar");
   const aStatus = getAssignmentStatus(event, now);
   const color = aStatus.status === "submitted" ? "#1b5e20" : aStatus.status === "pending" ? "#f4b400" : "#1a73e8";
-  return <Badge label={aStatus.label} background={color} />;
+  return <Badge label={t(`assignmentStatus.${aStatus.status}`)} background={color} />;
 }
 
-function getSubtitle(event, courseRegistry) {
+function getSubtitle(event, courseRegistry, t, dateLocale) {
   const course = courseRegistry[event.courseId];
   const parts = [];
   if (course?.label) parts.push(course.label);
-  else if (event.eventKind === "holiday") parts.push("Holiday / Break");
-  else if (event.eventKind === "schoolEvent") parts.push("School Event");
-  else if (event.eventKind === "activity") parts.push("Activity");
+  else if (event.eventKind === "holiday") parts.push(t("eventKind.holiday"));
+  else if (event.eventKind === "schoolEvent") parts.push(t("eventKind.schoolEvent"));
+  else if (event.eventKind === "activity") parts.push(t("eventKind.activity"));
   else if (event.subjectName) parts.push(cleanCourseLabel(event.subjectName));
 
-  if (event.displayTime) parts.push(event.displayTime);
+  if (event.displayTime) parts.push(eventDisplayTime(event, dateLocale));
   if (event.origName) parts.push(event.origName);
   return parts.join(" · ");
 }
@@ -63,7 +68,9 @@ export function EventCard({ event, courseRegistry, now = new Date(), onSelect })
   const color = getEventColor(event, courseRegistry);
   const isClass = event.eventKind === "class";
   const isLive = getEventStatus(event, now) === "live";
-  const title = event.title || event.eventTitle || getSubtitle(event, courseRegistry).split(" · ")[0];
+  const t = useTranslations("calendar");
+  const dateLocale = useDateFnsLocale();
+  const title = event.title || event.eventTitle || getSubtitle(event, courseRegistry, t, dateLocale).split(" · ")[0];
 
   return (
     <div
@@ -84,9 +91,9 @@ export function EventCard({ event, courseRegistry, now = new Date(), onSelect })
           ) : (
             <ClassOrActivityBadges event={event} color={color} now={now} />
           )}
-          <span className="truncate text-sm font-bold text-black">{title || "Untitled"}</span>
+          <span className="truncate text-sm font-bold text-black">{title || t("untitled")}</span>
         </div>
-        <p className="mt-1 truncate text-xs text-black/60">{getSubtitle(event, courseRegistry)}</p>
+        <p className="mt-1 truncate text-xs text-black/60">{getSubtitle(event, courseRegistry, t, dateLocale)}</p>
       </div>
     </div>
   );

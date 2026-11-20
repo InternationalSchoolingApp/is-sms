@@ -1,0 +1,43 @@
+{
+  "title": "新闻",
+  "articleCount": "{count, plural, other {# 篇文章}}",
+  "empty": "暂无新闻。",
+  "marking": "正在标记…",
+  "viewAll": "查看全部新闻",
+  "latest": "最新新闻",
+  "noneAvailable": "暂无可用新闻。",
+  "readTime": "阅读时长 {minutes} 分钟",
+  "source": "新闻来源",
+  "readFullArticle": "阅读全文 →",
+  "viewOriginalSource": "查看原文 →",
+  "relative": {
+    "yearsMonths": "{years, plural, other {# 年}}{months, plural, other {# 个月}}前",
+    "monthsDays": "{months, plural, other {# 个月}}{days, plural, other {# 天}}前",
+    "days": "{days, plural, other {# 天}}前",
+    "today": "今天",
+    "daysHours": "{days, plural, other {# 天}}{hours, plural, other {# 小时}}前",
+    "hoursMinutes": "{hours, plural, other {# 小时}}{minutes, plural, other {# 分钟}}前",
+    "minutes": "{minutes, plural, other {# 分钟}}前"
+  },
+  "announcements": {
+    "title": "公告",
+    "newCount": "{count} 条新公告",
+    "empty": "暂无公告。",
+    "new": "新",
+    "learnMore": "了解更多 →",
+    "startDate": "开始日期",
+    "thanks": "感谢您的确认",
+    "viewAttachment": "查看附件",
+    "submitting": "正在提交…",
+    "acknowledge": "确认已读",
+    "timeLabels": {
+      "upcoming": "即将到来",
+      "1_day_ago": "1 天前",
+      "last_week": "上周"
+    }
+  },
+  "preview": {
+    "title": "预览",
+    "imageAlt": "公告附件"
+  }
+}

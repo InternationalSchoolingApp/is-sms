@@ -2,12 +2,13 @@
 // Reference", read from the daily cron's tables); this file only formats it.
 
 // Mockup star ladder (Playful.dc.html LV) with its tile colours and the score bubble message (pkM_*).
+// `id` names the level's messages (k5Performance.stars.<id>.*); label / range / msg stay the English originals.
 export const STAR_LEVELS = [
-  { min: 90, stars: 5, label: "Superstar", range: "90–100%", bg: "#FFF1C2", fg: "#7A4E00", acc: "#FFC531", msg: "Amazing work! You are a superstar." },
-  { min: 80, stars: 4, label: "Great", range: "80–89%", bg: "var(--k5-gT)", fg: "var(--k5-gX)", acc: "var(--k5-gI)", msg: "Great job! A little more to become a Superstar." },
-  { min: 70, stars: 3, label: "Good", range: "70–79%", bg: "var(--k5-bT)", fg: "var(--k5-bI)", acc: "var(--k5-bI)", msg: "Good going! Keep practising to earn more stars." },
-  { min: 60, stars: 2, label: "Getting there", range: "60–69%", bg: "var(--k5-vT)", fg: "var(--k5-vX)", acc: "var(--k5-vI)", msg: "You are getting there! Every try makes you better." },
-  { min: 0, stars: 1, label: "Let’s practise", range: "Below 60%", bg: "var(--k5-oT)", fg: "var(--k5-oI)", acc: "var(--k5-oI)", msg: "Let’s practise together. You can do it!" },
+  { id: "superstar", min: 90, stars: 5, label: "Superstar", range: "90–100%", bg: "#FFF1C2", fg: "#7A4E00", acc: "#FFC531", msg: "Amazing work! You are a superstar." },
+  { id: "great", min: 80, stars: 4, label: "Great", range: "80–89%", bg: "var(--k5-gT)", fg: "var(--k5-gX)", acc: "var(--k5-gI)", msg: "Great job! A little more to become a Superstar." },
+  { id: "good", min: 70, stars: 3, label: "Good", range: "70–79%", bg: "var(--k5-bT)", fg: "var(--k5-bI)", acc: "var(--k5-bI)", msg: "Good going! Keep practising to earn more stars." },
+  { id: "gettingThere", min: 60, stars: 2, label: "Getting there", range: "60–69%", bg: "var(--k5-vT)", fg: "var(--k5-vX)", acc: "var(--k5-vI)", msg: "You are getting there! Every try makes you better." },
+  { id: "practise", min: 0, stars: 1, label: "Let’s practise", range: "Below 60%", bg: "var(--k5-oT)", fg: "var(--k5-oI)", acc: "var(--k5-oI)", msg: "Let’s practise together. You can do it!" },
 ];
 export const PERFECT_MSG = "Perfect score! You got every answer right.";
 
@@ -16,12 +17,12 @@ export function starLevel(score) {
   return STAR_LEVELS.find((l) => pct >= l.min) || STAR_LEVELS[STAR_LEVELS.length - 1];
 }
 
-// Mockup streak badges (MS).
+// Mockup streak badges (MS). `id` names the badge's message (k5Performance.streak.badges.<id>).
 export const STREAK_BADGES = [
-  { need: 3, name: "Spark" },
-  { need: 5, name: "Flame" },
-  { need: 10, name: "Blaze" },
-  { need: 20, name: "Fire Star" },
+  { id: "spark", need: 3, name: "Spark" },
+  { id: "flame", need: 5, name: "Flame" },
+  { id: "blaze", need: 10, name: "Blaze" },
+  { id: "fireStar", need: 20, name: "Fire Star" },
 ];
 
 export const courseKey = (course) => course.lmsEnrollmentId || course.courseName;
@@ -59,19 +60,24 @@ export const isoTime = (iso) => (iso ? Date.parse(`${iso}T00:00:00Z`) : NaN);
 export const toIso = (t) => new Date(t).toISOString().slice(0, 10);
 export const addDays = (iso, n) => toIso(isoTime(iso) + n * DAY);
 export const daysBetween = (fromIso, toIsoDate) => Math.round((isoTime(toIsoDate) - isoTime(fromIso)) / DAY);
-export const fmtShort = (iso) =>
-  iso ? new Date(isoTime(iso)).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric", timeZone: "UTC" }) : "N/A";
-export const fmtDay = (iso) => (iso ? new Date(isoTime(iso)).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) : "");
-export const fmtWeekday = (iso) => (iso ? new Date(isoTime(iso)).toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }) : "");
+// `tag` (optional): the dashboard language's BCP 47 tag (useLocaleTag), so month / day names follow the language.
+export const fmtShort = (iso, tag = "en-US") =>
+  iso ? new Date(isoTime(iso)).toLocaleDateString(tag, { month: "short", day: "2-digit", year: "numeric", timeZone: "UTC" }) : "N/A";
+export const fmtDay = (iso, tag = "en-US") => (iso ? new Date(isoTime(iso)).toLocaleDateString(tag, { month: "short", day: "numeric", timeZone: "UTC" }) : "");
+export const fmtWeekday = (iso, tag = "en-US") => (iso ? new Date(isoTime(iso)).toLocaleDateString(tag, { weekday: "short", timeZone: "UTC" }) : "");
 
 // ---- pace (Shared calculations §4) ------------------------------------------------------------------------
+// `id` names the pace's messages (k5Performance.pace.<id>.*).
 const PACE = {
-  ahead: { key: "A", bg: "var(--k5-gT)", fg: "var(--k5-gX)", label: "Ahead" },
-  on_track: { key: "O", bg: "var(--k5-bT)", fg: "var(--k5-bI)", label: "On Track" },
-  behind: { key: "B", bg: "var(--k5-rT)", fg: "var(--k5-red)", label: "Behind" },
+  ahead: { key: "A", id: "ahead", bg: "var(--k5-gT)", fg: "var(--k5-gX)", label: "Ahead" },
+  on_track: { key: "O", id: "onTrack", bg: "var(--k5-bT)", fg: "var(--k5-bI)", label: "On Track" },
+  behind: { key: "B", id: "behind", bg: "var(--k5-rT)", fg: "var(--k5-red)", label: "Behind" },
 };
 
-/** Pace chip + course-page note, e.g. "Ahead — 6.8% ahead of today’s target". */
+/**
+ * Pace chip + course-page note, e.g. "Ahead — 6.8% ahead of today’s target". `label` / `text` are English; a page
+ * translates them from `id` and `gap` (the note's number).
+ */
 export function paceInfo(course) {
   const p = PACE[course.pace] || PACE.on_track;
   const gap = Math.abs(num(course.paceGap) ?? 0).toFixed(1);
@@ -81,7 +87,7 @@ export function paceInfo(course) {
       : course.pace === "behind"
         ? `Behind — ${gap}% behind today’s target`
         : "On Track — right around today’s target";
-  return { ...p, text };
+  return { ...p, text, gap };
 }
 
 /**
@@ -89,6 +95,19 @@ export function paceInfo(course) {
  * course's startDate / endDate). Without a start date the pill shows the end only, as before.
  */
 export function sessionInfo(tiles, courses = []) {
+  const parts = sessionParts(tiles, courses);
+  if (!parts) return null;
+  const { startYear, endYear, startsTx, endsTx } = parts;
+  return {
+    label: `Session ${startYear}–${endYear} · ${startsTx ? `Starts ${startsTx} · ` : ""}Ends ${endsTx}`,
+    startsTx,
+    endsTx,
+    days: tiles.daysLeft ?? 0,
+  };
+}
+
+/** The pieces of the session pill (years as shown, dates formatted with `tag`), for a translated label; null without an end date. */
+export function sessionParts(tiles, courses = [], tag = "en-US") {
   if (!tiles?.endDate) return null;
   const endYear = Number(tiles.endDate.slice(0, 4));
   const startIso = asArray(courses)
@@ -96,14 +115,7 @@ export function sessionInfo(tiles, courses = []) {
     .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date))
     .sort()[0];
   const startYear = startIso ? Number(startIso.slice(0, 4)) : endYear - 1;
-  const endsTx = fmtShort(tiles.endDate);
-  const startsTx = startIso ? fmtShort(startIso) : "";
-  return {
-    label: `Session ${startYear}–${String(endYear).slice(2)} · ${startsTx ? `Starts ${startsTx} · ` : ""}Ends ${endsTx}`,
-    startsTx,
-    endsTx,
-    days: tiles.daysLeft ?? 0,
-  };
+  return { startYear, endYear: String(endYear).slice(2), startsTx: startIso ? fmtShort(startIso, tag) : "", endsTx: fmtShort(tiles.endDate, tag) };
 }
 
 // ---- My Goals ---------------------------------------------------------------------------------------------
@@ -143,7 +155,10 @@ const UNLOCK = {
   HALFWAY: "50% done in any course",
 };
 
-/** Stored badges (earned ones keep their date) with the mockup medal and the unlock / earned line. */
+/**
+ * Stored badges (earned ones keep their date) with the mockup medal and the unlock / earned line (`desc`, English;
+ * a page translates it from id / earned / earnedOn / goalScore).
+ */
 export function badgeView(badges, goalScore) {
   return asArray(badges).map((b) => {
     const how = b.id === "ON_TARGET" ? `${goalScore}% average score` : UNLOCK[b.id] || "";
@@ -151,6 +166,7 @@ export function badgeView(badges, goalScore) {
       ...b,
       medal: MEDALS[b.id] || MEDALS.EARLY_SUBMITTER,
       desc: b.earned ? `Earned ${fmtShort(b.earnedOn)}` : `Locked · ${how}`,
+      goalScore,
     };
   });
 }

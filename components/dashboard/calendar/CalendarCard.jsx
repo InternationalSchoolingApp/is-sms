@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { useStudentCalendar } from "@/hooks/useStudentCalendar";
 import { CalendarFilters } from "@/components/dashboard/calendar/CalendarFilters";
 import { TodayView } from "@/components/dashboard/calendar/TodayView";
@@ -14,15 +16,12 @@ import { JoinClassModal } from "@/components/dashboard/calendar/JoinClassModal";
 import { CalendarClockPill } from "@/components/dashboard/calendar/CalendarClockPill";
 import { getEventStatus } from "@/utils/calendarEvents";
 
-const VIEW_TABS = [
-  { key: "today", label: "Today" },
-  { key: "week", label: "Week" },
-  { key: "month", label: "Month" },
-];
+// Labels: calendar.views.<key>.
+const VIEW_TABS = [{ key: "today" }, { key: "week" }, { key: "month" }];
 
-function titleFor(viewName, selectedDate) {
-  if (viewName === "today") return format(selectedDate, "EEEE, MMMM d, yyyy");
-  return format(selectedDate, "MMMM yyyy");
+function titleFor(viewName, selectedDate, locale) {
+  if (viewName === "today") return format(selectedDate, "EEEE, MMMM d, yyyy", { locale });
+  return format(selectedDate, "MMMM yyyy", { locale });
 }
 
 // A non-completed class with a join link goes straight to the join flow on
@@ -40,6 +39,9 @@ function isJoinableClass(event) {
  */
 export function StudentCalendarCard({ schoolUUID, userId }) {
   const calendar = useStudentCalendar({ schoolUUID, userId });
+  const t = useTranslations("calendar");
+  const tc = useTranslations("common");
+  const dateLocale = useDateFnsLocale();
   const [drilldownDate, setDrilldownDate] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [joiningEvent, setJoiningEvent] = useState(null);
@@ -79,24 +81,24 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
           <button
             type="button"
             onClick={goPrev}
-            aria-label="Previous"
+            aria-label={tc("actions.previous")}
             className="flex h-7 w-7 items-center justify-center rounded-full text-black hover:bg-white"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button type="button" onClick={goToday} className="px-2 text-xs font-bold text-black hover:underline">
-            Today
+            {tc("dates.today")}
           </button>
           <button
             type="button"
             onClick={goNext}
-            aria-label="Next"
+            aria-label={tc("actions.next")}
             className="flex h-7 w-7 items-center justify-center rounded-full text-black hover:bg-white"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
-        <span className="text-sm font-bold text-black">{titleFor(calendar.viewName, calendar.selectedDate)}</span>
+        <span className="text-sm font-bold text-black">{titleFor(calendar.viewName, calendar.selectedDate, dateLocale)}</span>
         <div className="ml-auto flex items-center gap-1 rounded-full bg-black/5 p-1">
           {VIEW_TABS.map((tab) => (
             <button
@@ -107,25 +109,25 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
                 calendar.viewName === tab.key ? "bg-primary text-white" : "text-black hover:bg-white"
               }`}
             >
-              {tab.label}
+              {t(`views.${tab.key}`)}
             </button>
           ))}
         </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-3 border-b border-slate-200 px-4 py-2 text-xs font-bold tracking-wide text-black/60">
-        <span>Legend:</span>
+        <span>{t("legend.title")}</span>
         <span className="flex items-center gap-1">
-          <span className="h-5 w-5 rounded bg-black/60" /> Assignment
+          <span className="h-5 w-5 rounded bg-black/60" /> {t("legend.assignment")}
         </span>
         <span className="flex items-center gap-1">
-          <span className="h-5 w-5 calendar-live-legend " style={{ borderWidth: 2, borderStyle: "dashed", borderColor: "#888" }} /> Class
+          <span className="h-5 w-5 calendar-live-legend " style={{ borderWidth: 2, borderStyle: "dashed", borderColor: "#888" }} /> {t("legend.class")}
         </span>
         <span className="flex items-center gap-1 text-[#2267f0]">
-          <span className="h-5 w-5 rounded bg-[#2267f0] " /> School Activity
+          <span className="h-5 w-5 rounded bg-[#2267f0] " /> {t("legend.schoolActivity")}
         </span>
         <span className="flex items-center gap-1 text-[#1b5e20]">
-          <span className="h-5 w-5 rounded bg-[#1b5e20] " /> Holiday
+          <span className="h-5 w-5 rounded bg-[#1b5e20] " /> {t("legend.holiday")}
         </span>
       </div>
 
@@ -153,10 +155,10 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
           }`}
         >
           {calendar.isLoading ? (
-            <div className="flex h-full items-center justify-center p-10 text-sm text-black/60">Loading your calendar…</div>
+            <div className="flex h-full items-center justify-center p-10 text-sm text-black/60">{t("loading")}</div>
           ) : calendar.isError ? (
             <div className="flex h-full items-center justify-center p-10 text-sm text-black/60">
-              Couldn&apos;t load your calendar. Please try again shortly.
+              {t("loadError")}
             </div>
           ) : drilldownDate ? (
             <WeekDayDrilldown
@@ -164,7 +166,7 @@ export function StudentCalendarCard({ schoolUUID, userId }) {
               events={calendar.filteredEvents}
               courseRegistry={calendar.courseRegistry}
               onBack={() => setDrilldownDate(null)}
-              backLabel={calendar.viewName === "month" ? "Back to month" : "Back to week"}
+              backLabel={calendar.viewName === "month" ? t("backToMonth") : t("backToWeek")}
               onSelectEvent={handleSelectEvent}
             />
           ) : calendar.viewName === "today" ? (

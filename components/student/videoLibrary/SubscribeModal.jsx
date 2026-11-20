@@ -2,26 +2,35 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { ArrowRight, Info, Loader2, Lock, LockOpen } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getVideoSubscriptionOptions, startVideoSubscriptionCheckout } from "@/services/videoLibraryApi";
 import { isVideoLibrarySuccess } from "@/hooks/useStudentVideoLibrary";
-import { choosePlan, fmtDate, money, startsLaterText, pickKey, pickNeed, pickTotal, pickValid, pickedPlan, planCards } from "@/utils/videoLibrary";
+import { useLocaleTag } from "@/i18n/dateLocale";
+import { useLabelTranslator } from "@/i18n/labels";
+import { choosePlan, fmtDate, money, startsLater as startsLaterThan, pickKey, pickNeed, pickTotal, pickValid, pickedPlan, planCards } from "@/utils/videoLibrary";
 
 const EMPTY_PICK = { planCode: "", count: 0, subjectIds: [] };
 
 function PlanCard({ card, options, active, onPick }) {
+  const t = useTranslations("videoLibrary.subscribe");
+  const tl = useLabelTranslator("videoLibrary.planNames");
+  const localeTag = useLocaleTag();
   const plan = card.plan;
   const custom = plan.planCode === "CUSTOM";
   const only = options.courses.length === 1 ? options.courses[0].courseTitle : null;
-  const name = custom ? (card.count === 1 ? "1 course" : `${card.count} courses`) : plan.name;
+  const name = custom ? t("courseCount", { count: Number(card.count) || 0 }) : tl(plan.name);
+  const until = plan.untilDate ? ` (${fmtDate(plan.untilDate, localeTag)})` : "";
   const what = plan.lifetime
-    ? `${only ? `${only}, until your course ends` : "All your courses, until your course ends"}${plan.untilDate ? ` (${fmtDate(plan.untilDate)})` : ""}`
+    ? only
+      ? t("onlyUntilEnd", { course: only, until })
+      : t("allUntilEnd", { until })
     : plan.planCode === "ALL"
-      ? `All ${options.courses.length} of your courses`
+      ? t("allCourses", { count: options.courses.length })
       : plan.planCode === "THREE_COURSES"
-        ? "Choose any 3 of your courses"
-        : only || `Choose ${card.count} of your courses`;
+        ? t("chooseThree")
+        : only || t("chooseCount", { count: Number(card.count) || 0 });
 
   return (
     <label
@@ -34,7 +43,7 @@ function PlanCard({ card, options, active, onPick }) {
       <span className="text-lg font-extrabold text-primary">
         ${custom ? money((Number(plan.fee) || 0) * card.count) : money(plan.fee)}{" "}
         <small className="text-[11px] font-semibold text-slate-400">
-          {custom ? `/ month${card.count > 1 ? ` · $${money(plan.fee)} per course` : ""}` : plan.lifetime ? "one-time" : "/ month"}
+          {custom ? (card.count > 1 ? t("perMonthPerCourse", { fee: `$${money(plan.fee)}` }) : t("perMonth")) : plan.lifetime ? t("oneTime") : t("perMonth")}
         </small>
       </span>
       <span className="text-xs text-slate-500">{what}</span>
@@ -49,6 +58,9 @@ function PlanCard({ card, options, active, onPick }) {
  * Mounted while open.
  */
 export function SubscribeModal({ onClose, onCheckout }) {
+  const t = useTranslations("videoLibrary.subscribe");
+  const tc = useTranslations("common");
+  const localeTag = useLocaleTag();
   const [options, setOptions] = useState(null);
   const [error, setError] = useState("");
   const [pick, setPick] = useState(EMPTY_PICK);
@@ -60,7 +72,7 @@ export function SubscribeModal({ onClose, onCheckout }) {
       .then((response) => {
         if (cancelled) return;
         if (!isVideoLibrarySuccess(response) || !response.details) {
-          setError(response?.message || "Plans could not be loaded.");
+          setError(response?.message || t("loadFailed"));
           return;
         }
         const o = response.details;
@@ -70,11 +82,13 @@ export function SubscribeModal({ onClose, onCheckout }) {
         if (cards.length === 1) setPick(choosePlan(o, EMPTY_PICK, cards[0].key)); // one card only -> pick it
       })
       .catch(() => {
-        if (!cancelled) setError("Plans could not be loaded. Please try again.");
+        if (!cancelled) setError(t("loadFailedRetry"));
       });
     return () => {
       cancelled = true;
     };
+    // loaded once per opening; `t` only words the error
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function toggleCourse(subjectId, on) {
@@ -94,9 +108,9 @@ export function SubscribeModal({ onClose, onCheckout }) {
         onCheckout(upid);
         return;
       }
-      toast.error(response?.message || "The payment could not be started.");
+      toast.error(response?.message || t("paymentFailed"));
     } catch {
-      toast.error("The payment could not be started. Please try again.");
+      toast.error(t("paymentFailedRetry"));
     } finally {
       setBusy(false);
     }
@@ -106,17 +120,17 @@ export function SubscribeModal({ onClose, onCheckout }) {
   const need = canBuy ? pickNeed(options, pick) : 0;
   const plan = canBuy ? pickedPlan(options, pick) : null;
   const valid = canBuy && pickValid(options, pick);
-  const startsLater = startsLaterText(options?.startsAt);
+  const startsLater = startsLaterThan(options?.startsAt) ? t("startsOn", { date: fmtDate(options.startsAt, localeTag) }) : "";
 
   let body;
   if (error) {
     body = <div className="rounded-xl bg-amber-50 px-4 py-3.5 text-sm font-semibold text-amber-800">{error}</div>;
   } else if (!options) {
-    body = <div className="px-1 py-4 text-sm text-slate-500">Loading plans…</div>;
+    body = <div className="px-1 py-4 text-sm text-slate-500">{t("loading")}</div>;
   } else if (!canBuy) {
     body = (
       <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-4 py-3.5 text-sm font-semibold text-amber-800">
-        <Info className="mt-0.5 h-4 w-4 shrink-0" /> {options.blockedReason || "Subscriptions are not available right now."}
+        <Info className="mt-0.5 h-4 w-4 shrink-0" /> {options.blockedReason || t("notAvailable")}
       </div>
     );
   } else {
@@ -124,7 +138,7 @@ export function SubscribeModal({ onClose, onCheckout }) {
     body = (
       <>
         <div className="mb-2.5 flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-slate-500">
-          Choose a plan
+          {t("choosePlan")}
           {options.standardName && <span className="rounded-full bg-slate-100 px-2 py-0.5 normal-case tracking-normal">{options.standardName}</span>}
         </div>
         <div className="mb-4 grid grid-cols-1 gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
@@ -135,9 +149,9 @@ export function SubscribeModal({ onClose, onCheckout }) {
         {need > 0 && need < options.courses.length && (
           <>
             <div className="mb-2.5 flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-slate-500">
-              Choose {need} course{need === 1 ? "" : "s"}
+              {t("chooseCourses", { count: need })}
               <span className={`rounded-full px-2 py-0.5 normal-case tracking-normal ${valid ? "bg-emerald-50 text-emerald-700" : "bg-slate-100"}`}>
-                {pick.subjectIds.length} of {need}
+                {t("pickedOf", { picked: pick.subjectIds.length, need })}
               </span>
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -174,7 +188,7 @@ export function SubscribeModal({ onClose, onCheckout }) {
       <DialogContent className="max-h-[90vh] gap-0 overflow-y-auto p-0 sm:max-w-3xl">
         <DialogHeader className="bg-primary px-5 py-4 text-white">
           <DialogTitle className="flex items-center gap-2 text-white">
-            <LockOpen className="h-5 w-5" /> Subscribe to course videos
+            <LockOpen className="h-5 w-5" /> {t("title")}
           </DialogTitle>
         </DialogHeader>
         <div className="p-5">{body}</div>
@@ -183,19 +197,19 @@ export function SubscribeModal({ onClose, onCheckout }) {
             <>
               {plan ? (
                 <div className="flex flex-wrap items-baseline gap-2 text-sm text-slate-500">
-                  <span>Total</span>
+                  <span>{tc("words.total")}</span>
                   <b className="text-2xl text-slate-800">${money(pickTotal(options, pick))}</b>
                   <small>
-                    {plan.lifetime ? "one-time · until your course ends" : "1 month"}
+                    {plan.lifetime ? t("oneTimeUntilEnd") : t("oneMonth")}
                     {startsLater}
                   </small>
                 </div>
               ) : (
-                <div className="text-sm text-slate-400">Choose a plan</div>
+                <div className="text-sm text-slate-400">{t("choosePlan")}</div>
               )}
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <span className="flex items-center gap-1 text-xs text-slate-400">
-                  <Lock className="h-3.5 w-3.5 text-emerald-500" /> Secure online payment · the payment link is also emailed to you
+                  <Lock className="h-3.5 w-3.5 text-emerald-500" /> {t("secure")}
                 </span>
                 <button
                   type="button"
@@ -205,11 +219,11 @@ export function SubscribeModal({ onClose, onCheckout }) {
                 >
                   {busy ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> Preparing payment…
+                      <Loader2 className="h-4 w-4 animate-spin" /> {t("preparing")}
                     </>
                   ) : (
                     <>
-                      Continue to payment <ArrowRight className="h-4 w-4" />
+                      {t("continue")} <ArrowRight className="h-4 w-4" />
                     </>
                   )}
                 </button>
@@ -217,7 +231,7 @@ export function SubscribeModal({ onClose, onCheckout }) {
             </>
           ) : (
             <button type="button" onClick={onClose} className="self-end rounded-lg border-[1.5px] border-slate-200 px-4 py-2 text-sm font-bold text-slate-600">
-              Close
+              {tc("actions.close")}
             </button>
           )}
         </div>

@@ -1,0 +1,54 @@
+{
+  "title": "Academic Performance",
+  "empty": "No academic performance found",
+  "table": {
+    "courseName": "Course Name",
+    "score": "Score",
+    "pace": "Pace",
+    "teacherName": "Teacher Name",
+    "endDate": "End Date",
+    "remainingDays": "Remaining Days",
+    "pendingAssignment": "Pending Assignment",
+    "progressGradable": "Progress (gradable)",
+    "progressAll": "Progress (all activities)"
+  },
+  "pace": {
+    "Ahead": "Ahead",
+    "OnTrack": "On Track",
+    "Behind": "Behind",
+    "GettingStarted": "Get Started"
+  },
+  "salutation": {
+    "mr": "Mr.",
+    "ms": "Ms."
+  },
+  "history": {
+    "title": "Grade History",
+    "empty": "No attempts yet.",
+    "attempt": "Attempt",
+    "score": "Score",
+    "percent": "Percent",
+    "submitted": "Submitted"
+  },
+  "progress": {
+    "empty": "No assignments found.",
+    "assignment": "Assignment",
+    "due": "Due",
+    "status": "Status",
+    "score": "Score",
+    "tiles": {
+      "total": "Total",
+      "submitted": "Submitted",
+      "pending": "Pending",
+      "upcoming": "Upcoming",
+      "passed": "Passed",
+      "failed": "Failed"
+    },
+    "itemStatuses": {
+      "submitted": "SUBMITTED",
+      "late": "LATE",
+      "before_time": "BEFORE TIME",
+      "excused": "EXCUSED"
+    }
+  }
+}

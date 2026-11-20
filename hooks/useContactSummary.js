@@ -3,6 +3,7 @@
 import { useCallback, useState, useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { createContactCheckFlow, problemsOf } from "@/utils/contactCheckFlow";
@@ -58,6 +59,7 @@ const noSubscribe = () => () => {};
 const idle = Object.freeze({ phase: "idle", items: [], index: 0, step: "", busy: false, alert: "", manual: false });
 
 export function useContactSummary() {
+  const t = useTranslations("contactCheck.summary");
   const { context } = useDashboardContext();
   const dummy = useDummyStudent();
   const userId = context?.userId;
@@ -91,12 +93,12 @@ export function useContactSummary() {
         const pending = await api.pending();
         const item = pending?.ok ? problemsOf({ ...pending.data, enabled: true }).find((i) => String(i.id) === String(reviewId)) : null;
         if (!pending?.ok) {
-          toast.error(pending?.message || "This could not be done just now. Please try again in a minute.");
+          toast.error(pending?.message || t("fixFailed"));
           query.refetch();
           return;
         }
         if (!item) {
-          toast.success("This contact detail no longer needs fixing.");
+          toast.success(t("noLongerNeedsFix"));
           query.refetch();
           return;
         }
@@ -114,7 +116,7 @@ export function useContactSummary() {
         setOpening(false);
       }
     },
-    [opening, flow, query],
+    [opening, flow, query, t],
   );
 
   return {

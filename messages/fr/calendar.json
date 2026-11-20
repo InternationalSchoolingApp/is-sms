@@ -1,0 +1,173 @@
+{
+  "views": {
+    "today": "Aujourd'hui",
+    "week": "Semaine",
+    "month": "Mois"
+  },
+  "legend": {
+    "title": "Légende :",
+    "assignment": "Devoir",
+    "class": "Cours",
+    "schoolActivity": "Activité scolaire",
+    "holiday": "Jour férié"
+  },
+  "loading": "Chargement de votre calendrier…",
+  "loadError": "Impossible de charger votre calendrier. Veuillez réessayer dans un instant.",
+  "backToMonth": "Retour au mois",
+  "backToWeek": "Retour à la semaine",
+  "timeOfDay": {
+    "morning": "Matin",
+    "afternoon": "Après-midi",
+    "evening": "Soir",
+    "night": "Nuit"
+  },
+  "filters": {
+    "today": "Aujourd'hui",
+    "liveGroup": "Cours et activités scolaires en direct",
+    "upcomingGroup": "Cours et activités scolaires à venir",
+    "completedGroup": "Cours et activités scolaires terminés",
+    "noClassOrActivity": "Aucun cours ni activité scolaire",
+    "myCourses": "Mes cours",
+    "hideCourse": "Masquer le cours",
+    "showCourse": "Afficher le cours",
+    "changeCourseColor": "Changer la couleur du cours",
+    "pickColor": "Choisir la couleur {color}",
+    "assignments": "Devoirs",
+    "pending": "En attente",
+    "submitted": "Rendus",
+    "upcoming": "À venir",
+    "classStatus": "Statut des cours",
+    "live": "En direct",
+    "expired": "Terminés",
+    "missedClass": "Cours manqué",
+    "lateJoinClass": "Arrivée en retard",
+    "events": "Événements",
+    "schoolActivities": "Activités scolaires",
+    "schoolEvents": "Événements scolaires",
+    "holidays": "Congés",
+    "holidaysAndBreaks": "Jours fériés et vacances"
+  },
+  "nothingScheduledOn": "Rien de prévu le {date}.",
+  "nothingScheduledDay": "Rien de prévu ce jour-là.",
+  "untitled": "Sans titre",
+  "moreCount": "+{count} de plus",
+  "allDay": "Toute la journée",
+  "badges": {
+    "live": "EN DIRECT",
+    "upcoming": "À VENIR",
+    "expired": "TERMINÉ",
+    "missed": "MANQUÉ",
+    "lateJoin": "EN RETARD"
+  },
+  "assignmentStatus": {
+    "submitted": "Rendu",
+    "upcoming": "À venir",
+    "pending": "En attente"
+  },
+  "assignmentTiming": {
+    "onTime": "À temps",
+    "early": "En avance ({count, plural, one {# jour} other {# jours}})",
+    "late": "En retard ({count, plural, one {# jour} other {# jours}})"
+  },
+  "eventKind": {
+    "holiday": "Jour férié / Vacances",
+    "schoolEvent": "Événement scolaire",
+    "activity": "Activité"
+  },
+  "eventDetails": "Détails de l'événement",
+  "attempt": "Commencer",
+  "detail": {
+    "date": "Date",
+    "time": "Heure",
+    "details": "Détails",
+    "teacher": "Enseignant",
+    "status": "Statut",
+    "duration": "Durée",
+    "late": "Retard",
+    "lateBy": "En retard de",
+    "with": "Avec",
+    "batch": "Groupe",
+    "grade": "Niveau",
+    "course": "Cours",
+    "dueDate": "Date limite",
+    "timing": "Délai",
+    "submitted": "Rendu le"
+  },
+  "status": {
+    "live": "En direct",
+    "upcoming": "À venir",
+    "missed": "Manqué",
+    "lateJoin": "Arrivée en retard",
+    "expired": "Terminé"
+  },
+  "duration": {
+    "minutes": "{count, plural, one {# minute} other {# minutes}}",
+    "hours": "{count, plural, one {# heure} other {# heures}}",
+    "mins": "{count, plural, one {# min} other {# min}}",
+    "secs": "{count, plural, one {# s} other {# s}}"
+  },
+  "activity": {
+    "title": "Détails de l'activité",
+    "attachment": "Pièce jointe",
+    "timeRemaining": "Temps restant",
+    "countdown": {
+      "days": "Jours",
+      "hours": "Heures",
+      "min": "Min",
+      "sec": "Sec"
+    },
+    "couldNotOpen": "Impossible de l'ouvrir pour le moment. Veuillez réessayer dans une minute.",
+    "cannotJoin": "Vous ne pouvez pas rejoindre cet événement pour le moment.",
+    "linkCopied": "Lien du cours copié",
+    "copyFailed": "Impossible de copier le lien. Veuillez le copier depuis la zone de texte.",
+    "scheduledFor": "Le cours {name} est prévu le {date}",
+    "joinClassNow": "Rejoindre le cours maintenant",
+    "completed": "Votre activité est terminée.",
+    "loadingDetails": "Chargement des détails…",
+    "joinLinkNotice": "Votre lien de connexion s'affichera {minutes} minutes avant l'heure prévue.",
+    "viewAttachment": "Voir la pièce jointe",
+    "opening": "Ouverture…",
+    "joinEvent": "Rejoindre l'événement"
+  },
+  "join": {
+    "title": "Rejoindre le cours",
+    "almostThere": "Presque prêt, veuillez patienter…",
+    "couldNotOpen": "Impossible d’ouvrir ce cours pour le moment. Veuillez réessayer dans un instant.",
+    "trainingScheduled": "La session {className} | {subjectName} est prévue le {date}.",
+    "trainingJoinOn": "Vous pourrez rejoindre la formation le {date}.",
+    "status": {
+      "live": "En direct",
+      "upcoming": "À venir",
+      "ended": "Terminé",
+      "unavailable": "Indisponible"
+    },
+    "joinIssues": "Si vous avez du mal à rejoindre le cours, copiez le lien ci-dessous et collez-le dans un nouvel onglet de votre navigateur :",
+    "copied": "Copié !",
+    "copyClassLink": "Copier le lien du cours",
+    "joinClass": "Rejoindre le cours"
+  },
+  "k5": {
+    "noClass": {
+      "holidayTitle": "Jour férié",
+      "holidayText": "C'est un jour férié. Pas d'école aujourd'hui !",
+      "weekendTitle": "C'est le week-end !",
+      "weekendText": "C'est le week-end. Pas d'école aujourd'hui !",
+      "studyTitle": "Pas de cours en direct",
+      "studyText": "Continue tes cours aujourd'hui !",
+      "freeTitle": "Pas de cours !",
+      "freeText": "Il n'y a pas de cours aujourd'hui. Profite de ta journée libre !",
+      "freeTextNamed": "Il n'y a pas de cours aujourd'hui. Profite de ta journée libre, {name} !"
+    },
+    "summary": {
+      "holiday": "{name} · Pas d'école",
+      "classes": "{count, plural, one {# cours} other {# cours}}",
+      "classesLive": "{count, plural, one {# cours} other {# cours}} · {name} est en direct !",
+      "classesDone": "{count, plural, one {# cours} other {# cours}} · tout est fait",
+      "assignmentsDue": "{count, plural, one {# devoir à rendre} other {# devoirs à rendre}}",
+      "schoolActivity": "Activité scolaire",
+      "weekend": "C'est le week-end ! Pas d'école.",
+      "selfStudy": "Pas de cours en direct. Journée de travail sur tes cours !",
+      "free": "Pas de cours aujourd'hui. Journée libre !"
+    }
+  }
+}

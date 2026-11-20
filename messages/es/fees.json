@@ -1,0 +1,40 @@
+{
+  "title": "Detalles de las cuotas",
+  "empty": "No se encontraron detalles de cuotas",
+  "paymentReceived": "Pago recibido.",
+  "paymentProcessing": "Pago en proceso...",
+  "oops": "¡Vaya!",
+  "paymentIncomplete": "Pago incompleto",
+  "underReviewTitle": "Tu pago está en revisión.",
+  "underReviewText": "El estado de tu cuota se actualizará cuando se reciba el pago.",
+  "table": {
+    "sNo": "N.º",
+    "scheduledDate": "Fecha programada",
+    "grade": "Grado",
+    "paymentName": "Nombre del pago",
+    "paidFee": "Importe pagado",
+    "paidDate": "Fecha de pago",
+    "status": "Estado",
+    "viewReceipt": "Ver recibo"
+  },
+  "actions": {
+    "viewReceipt": "Ver recibo",
+    "tryAgain": "Intentar de nuevo",
+    "payNow": "Pagar ahora",
+    "changePaymentMethod": "Cambiar método de pago",
+    "paymentInProcess": "Pago en proceso",
+    "paymentUnderProcess": "Pago en trámite"
+  },
+  "statuses": {
+    "success": "COMPLETADO",
+    "paid": "PAGADO",
+    "pending": "PENDIENTE",
+    "initiated": "INICIADO",
+    "failure": "FALLIDO",
+    "rejected": "RECHAZADO",
+    "cancelled": "CANCELADO",
+    "expired": "VENCIDO",
+    "refunded": "REEMBOLSADO",
+    "scheduled": "PROGRAMADO"
+  }
+}

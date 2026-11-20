@@ -1,6 +1,8 @@
 "use client";
 
 import { format } from "date-fns";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
 import { K5DialogShell, K5RescheduleConfirm, K5RescheduleHeader, K5ReschedulePicker, K5RescheduleUsed } from "@/components/k5/panels/K5TrainingParts";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -16,13 +18,15 @@ import { pickerDateToYmd, ymdToPickerDate } from "@/utils/attendanceDates";
  */
 export function K5SystemTrainingRescheduleDialog({ onClose }) {
   const { context } = useDashboardContext();
+  const t = useTranslations("home.reschedule");
+  const dateLocale = useDateFnsLocale();
   // The student pressed Reschedule: a missed training goes straight to the date / time step too.
   const rs = useSystemTrainingReschedule({ startPicking: true, onSaved: onClose });
 
   if (rs.query.isFetching || !context?.userId) {
     return (
       <K5DialogShell labelledBy="k5-rs-title" width="max-w-[860px]" onClose={onClose} closeBar={onClose} training>
-        <K5Loading label="Loading your School System Training" className="flex flex-col items-center gap-3 px-4 pb-10 pt-2 sm:px-7">
+        <K5Loading label={t("loading")} className="flex flex-col items-center gap-3 px-4 pb-10 pt-2 sm:px-7">
           <K5Sk className="h-8 w-80 max-w-full" />
           <K5Sk className="h-5 w-64 max-w-full" />
           <K5Sk className="h-11 w-72 max-w-full rounded-full" />
@@ -40,7 +44,7 @@ export function K5SystemTrainingRescheduleDialog({ onClose }) {
     return (
       <K5DialogShell labelledBy="k5-rs-title" width="max-w-[600px]" onClose={onClose} closeBar={onClose} training>
         <p id="k5-rs-title" className="m-0 px-5 pb-10 pt-2 text-center sm:px-7 text-lg font-extrabold text-k5-ink">
-          Your School System Training could not be loaded right now. Please try again shortly.
+          {t("loadFailed")}
         </p>
       </K5DialogShell>
     );
@@ -64,7 +68,7 @@ export function K5SystemTrainingRescheduleDialog({ onClose }) {
   if (!rs.showPicker) return null;
 
   const pickedSlot = rs.slots.find((s) => s.stTime === rs.slot);
-  const newTime = rs.date && pickedSlot ? `${format(ymdToPickerDate(rs.date), "MMM d, yyyy")} ${pickedSlot.label}` : "";
+  const newTime = rs.date && pickedSlot ? `${format(ymdToPickerDate(rs.date), "MMM d, yyyy", { locale: dateLocale })} ${pickedSlot.label}` : "";
   return (
     <>
       <K5DialogShell labelledBy="k5-rs-title" width="max-w-[860px]" onClose={rs.warnOpen || rs.saving ? undefined : onClose} closeBar={onClose} training header={<K5RescheduleHeader titleId="k5-rs-title" />}>

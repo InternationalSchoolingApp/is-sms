@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 
 /**
  * Legacy "View Attachment" preview: an image attachment opens in this dialog on the same tab
@@ -9,6 +10,8 @@ import { createPortal } from "react-dom";
  * (see AttachmentButton). `k5` gives it the Grade K–5 look. Shared by both announcement modals.
  */
 export function AttachmentPreviewDialog({ url, onClose, k5 = false }) {
+  const t = useTranslations("news");
+  const tc = useTranslations("common");
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") onClose();
@@ -27,15 +30,15 @@ export function AttachmentPreviewDialog({ url, onClose, k5 = false }) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Preview"
+        aria-label={t("preview.title")}
         onClick={(e) => e.stopPropagation()}
         className={`flex max-h-full w-full max-w-[1000px] flex-col overflow-hidden bg-white shadow-xl ${k5 ? "rounded-[26px] border-[3px] border-k5-ink" : "rounded-md"}`}
       >
-        <div className={`px-4 py-3 text-xl text-white ${k5 ? "bg-k5-ac font-k5-display font-semibold" : "bg-primary"}`}>Preview</div>
+        <div className={`px-4 py-3 text-xl text-white ${k5 ? "bg-k5-ac font-k5-display font-semibold" : "bg-primary"}`}>{t("preview.title")}</div>
         <div className="min-h-0 flex-1 overflow-auto">
           {/* An announcement picture uploaded to S3 (any size, any school): a plain <img>, no remote image config needed. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={url} alt="Announcement attachment" className="mx-auto block h-auto max-w-full" />
+          <img src={url} alt={t("preview.imageAlt")} className="mx-auto block h-auto max-w-full" />
         </div>
         <div className="flex justify-end border-t border-slate-200 bg-slate-50 px-4 py-3">
           <button
@@ -43,7 +46,7 @@ export function AttachmentPreviewDialog({ url, onClose, k5 = false }) {
             onClick={onClose}
             className="cursor-pointer rounded border-none bg-red-600 px-3 py-1.5 text-sm font-bold text-white hover:bg-red-700"
           >
-            Close
+            {tc("actions.close")}
           </button>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { Check, Info, Lock, X, CalendarDays } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
@@ -45,16 +46,18 @@ function helpPicture(standardId) {
   return { src: "/images/reserve-seat/needHelpSlideImgMiddleGirl.png", w: "w-[100px]" };
 }
 
-function sideButtonText(details) {
-  if (details.eligibleFor === "ADV") return details.monthName ? `Enroll for ${details.activeSessionYear} Group Learning` : "Enroll in Next Grade";
-  if (details.eligibleFor === "BAE") return "Reserve Seat";
+// `t`: the home.reserveSeat translator.
+function sideButtonText(details, t) {
+  if (details.eligibleFor === "ADV") return details.monthName ? t("enrollGroupLearning", { year: String(details.activeSessionYear ?? "") }) : t("enrollNextGrade");
+  if (details.eligibleFor === "BAE") return t("reserveSeat");
   return "";
 }
 
-const acceptText = (details) => (details.eligibleFor === "ADV" ? "Re-Enroll Now For The Next Grade" : "Reserve a Seat Now For Next Grade");
+const acceptText = (details, t) => (details.eligibleFor === "ADV" ? t("acceptReEnroll") : t("acceptReserve"));
 
 /** "This offer is valid for a limited time only!" — a countdown of progressionDiscountDueDate days that starts again. */
 function OfferCountdown({ days }) {
+  const t = useTranslations("home.reserveSeat");
   const cycle = Math.max(1, Number.parseInt(days, 10) || 0) * 24 * 60 * 60 * 1000;
   const [start] = useState(() => Date.now());
   const [now, setNow] = useState(start);
@@ -65,10 +68,10 @@ function OfferCountdown({ days }) {
   // Counts down from the popup's opening; when it reaches zero it starts the same span again (legacy).
   const distance = cycle - ((now - start) % cycle);
   const parts = [
-    [Math.floor(distance / 86400000), "Days"],
-    [Math.floor((distance % 86400000) / 3600000), "Hours"],
-    [Math.floor((distance % 3600000) / 60000), "Minutes"],
-    [Math.floor((distance % 60000) / 1000), "Seconds"],
+    [Math.floor(distance / 86400000), "days"],
+    [Math.floor((distance % 86400000) / 3600000), "hours"],
+    [Math.floor((distance % 3600000) / 60000), "minutes"],
+    [Math.floor((distance % 60000) / 1000), "seconds"],
   ];
   return (
     <div className="mb-3 grid overflow-hidden rounded-[10px] border border-amber-400 bg-[#fffaf0] md:grid-cols-2">
@@ -76,14 +79,14 @@ function OfferCountdown({ days }) {
         <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full border border-[#ffd778] bg-[#fff7df] text-amber-500">
           <CalendarDays className="h-4 w-4" aria-hidden="true" />
         </span>
-        <span className="text-left text-sm font-semibold text-black">This offer is valid for a limited time only!</span>
+        <span className="text-left text-sm font-semibold text-black">{t("limitedOffer")}</span>
       </div>
       <div className="flex min-w-0 items-center justify-center px-2 py-2" aria-live="off">
         {parts.map(([value, label], i) => (
           <span key={label} className="inline-flex items-center">
             <span className="inline-flex min-w-[50px] flex-col rounded border bg-white px-1 py-1 font-bold text-black">
               <span className="text-xl leading-5 text-red-600">{pad2(value)}</span>
-              <span className="text-center text-[10px] font-semibold">{label}</span>
+              <span className="text-center text-[10px] font-semibold">{t(`countdown.${label}`)}</span>
             </span>
             {i < parts.length - 1 && <span className="px-1 pb-1 text-base font-bold text-black">:</span>}
           </span>
@@ -95,6 +98,8 @@ function OfferCountdown({ days }) {
 
 /** Legacy enrollReserveModalContent: "Congratulations!" with the offer when there is one, else "Awesome!". */
 function EnrollReserveDialog({ open, onOpenChange, details, nextGrade, studentName, busy, onAccept, onMaybeLater }) {
+  const t = useTranslations("home.reserveSeat");
+  const tc = useTranslations("common");
   const offer = details.eligibleFor === "ADV" && (hasAmount(details.progressionDiscount) || hasAmount(details.planDiscount));
   const offerAmount = hasAmount(details.progressionDiscount) ? details.progressionDiscount : details.planDiscount;
   const accept = (
@@ -104,15 +109,15 @@ function EnrollReserveDialog({ open, onOpenChange, details, nextGrade, studentNa
       onClick={onAccept}
       className="flex-1 animate-[ras-pulse_1.5s_ease-in-out_infinite] group-data-[ending-style]:animate-none group-data-[closed]:animate-none cursor-pointer rounded-[10px] border-none bg-primary px-4 py-2.5 text-lg font-bold text-white shadow-md disabled:cursor-default disabled:opacity-60"
     >
-      {acceptText(details)}
+      {acceptText(details, t)}
     </button>
   );
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className={`group gap-0 overflow-hidden rounded-[15px] border-0 p-0 text-center ${offer ? "sm:max-w-[600px]" : "sm:max-w-[400px]"}`}>
         <div className="relative flex items-center justify-center bg-primary px-4 py-3 text-white">
-          <DialogTitle className="m-0 text-xl font-bold text-white">{offer ? "Congratulations!" : "Awesome!"}</DialogTitle>
-          <button type="button" aria-label="Close" onClick={() => onOpenChange(false)} className="absolute right-3.5 cursor-pointer border-none bg-transparent text-white">
+          <DialogTitle className="m-0 text-xl font-bold text-white">{offer ? t("congratulations") : t("awesome")}</DialogTitle>
+          <button type="button" aria-label={tc("actions.close")} onClick={() => onOpenChange(false)} className="absolute right-3.5 cursor-pointer border-none bg-transparent text-white">
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
@@ -122,8 +127,8 @@ function EnrollReserveDialog({ open, onOpenChange, details, nextGrade, studentNa
               <Check className="h-6 w-6" strokeWidth={3} aria-hidden="true" />
             </span>
           )}
-          <h4 className="m-0 text-2xl font-medium text-black">Hi {studentName}!</h4>
-          <DialogDescription className="mt-2 text-base text-black">Now you are eligible for re-enrollment for the next grade</DialogDescription>
+          <h4 className="m-0 text-2xl font-medium text-black">{t("hi", { name: studentName })}</h4>
+          <DialogDescription className="mt-2 text-base text-black">{t("eligible")}</DialogDescription>
           {offer ? (
             <>
               <div className="mb-4 mt-2 rounded-[10px] bg-primary/10 p-3">
@@ -133,12 +138,12 @@ function EnrollReserveDialog({ open, onOpenChange, details, nextGrade, studentNa
                   </span>
                   <div className="ml-3 grow border-l pl-4 text-center">
                     <span className="mb-2 inline-block rounded bg-[#417ec4] px-3 py-1 text-xs font-bold text-white">
-                      {hasAmount(details.progressionDiscount) ? "EXCLUSIVE RE-ENROLLMENT OFFER" : "EXCLUSIVE ONE-TIME OFFER"}
+                      {hasAmount(details.progressionDiscount) ? t("exclusiveReEnrollment") : t("exclusiveOneTime")}
                     </span>
-                    <p className="m-0 text-sm text-black">You get a special discount of</p>
+                    <p className="m-0 text-sm text-black">{t("specialDiscount")}</p>
                     <div className="text-[44px] font-extrabold text-primary">
                       {String(offerAmount).split(".")[0]}
-                      <span> OFF</span>
+                      <span> {t("off")}</span>
                     </div>
                   </div>
                 </div>
@@ -150,14 +155,14 @@ function EnrollReserveDialog({ open, onOpenChange, details, nextGrade, studentNa
                   onClick={() => { onOpenChange(false); onMaybeLater(); }}
                   className="flex-1 cursor-pointer rounded-[10px] border-none bg-primary/10 px-4 py-2.5 text-base font-bold text-primary"
                 >
-                  Maybe Later
+                  {t("maybeLater")}
                 </button>
                 {accept}
               </div>
             </>
           ) : (
             <>
-              <div className="mx-0 mb-4 mt-2 rounded-[10px] bg-primary/10 p-1 text-lg font-bold text-primary">Ready for {nextGrade}?</div>
+              <div className="mx-0 mb-4 mt-2 rounded-[10px] bg-primary/10 p-1 text-lg font-bold text-primary">{t("readyFor", { grade: nextGrade ?? "" })}</div>
               <div className="flex">{accept}</div>
             </>
           )}
@@ -169,12 +174,14 @@ function EnrollReserveDialog({ open, onOpenChange, details, nextGrade, studentNa
 
 /** Legacy getReserveSeatModal: the fee, the discounts, the payable fee and Proceed to Pay. */
 function ReserveFeeDialog({ open, onOpenChange, details, busy, onPay }) {
+  const t = useTranslations("home.reserveSeat");
+  const tc = useTranslations("common");
   const title =
     details.eligibleFor === "ADV"
       ? details.monthName
-        ? `Enroll for ${details.activeSessionYear} Group Learning Now`
-        : `Pay Course Fee For ${details.grade}`
-      : "Reserve A Seat For Next Grade";
+        ? t("feeTitleGroupLearning", { year: String(details.activeSessionYear ?? "") })
+        : t("feeTitlePayCourseFee", { grade: details.grade })
+      : t("feeTitleReserve");
   const totalFee = details.eligibleFor === "BAE" ? details.payableFee : details.courseFee;
   const line = (label, value) => (
     <div className="flex justify-between rounded-[10px] px-3 py-2 text-base font-semibold text-green-600">
@@ -187,28 +194,30 @@ function ReserveFeeDialog({ open, onOpenChange, details, busy, onPay }) {
       <DialogContent showCloseButton={false} className="gap-0 overflow-hidden rounded-[15px] border-0 p-0 sm:max-w-[500px]">
         <div className="relative flex items-center border-b border-[#eee] bg-white px-4 py-3">
           <DialogTitle className="m-0 max-w-[75%] text-base font-bold text-black">{title}</DialogTitle>
-          <button type="button" aria-label="Close" onClick={() => onOpenChange(false)} className="absolute right-3.5 cursor-pointer border-none bg-transparent text-black/60">
+          <button type="button" aria-label={tc("actions.close")} onClick={() => onOpenChange(false)} className="absolute right-3.5 cursor-pointer border-none bg-transparent text-black/60">
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
         <div className="px-6 py-4">
           <div className="flex justify-between rounded-[10px] px-3 py-2 text-lg font-semibold text-black">
-            <span>Total Fee</span>
+            <span>{t("totalFee")}</span>
             <span className="text-[22px]">{totalFee}</span>
           </div>
-          {details.planDiscount && details.planDiscount !== NOTHING && line("One Time Discount", details.planDiscount)}
-          {details.eligibleForProgressionDiscount === "Y" && details.progressionDiscount && line("Progression Discount", details.progressionDiscount)}
-          {details.addtionalDiscount && details.addtionalDiscount !== NOTHING && line("Additional Discount", details.addtionalDiscount)}
+          {details.planDiscount && details.planDiscount !== NOTHING && line(t("oneTimeDiscount"), details.planDiscount)}
+          {details.eligibleForProgressionDiscount === "Y" && details.progressionDiscount && line(t("progressionDiscount"), details.progressionDiscount)}
+          {details.addtionalDiscount && details.addtionalDiscount !== NOTHING && line(t("additionalDiscount"), details.addtionalDiscount)}
           <div className="my-2 flex items-center justify-between rounded-[10px] bg-primary/10 px-3 py-2">
-            <span className="mb-1 text-left text-sm text-black">Payable Fee (USD)</span>
+            <span className="mb-1 text-left text-sm text-black">{t("payableFee")}</span>
             <span className="text-right text-lg font-bold text-black">{details.payableFee}</span>
           </div>
           <div className="flex items-start gap-1 rounded-[10px] border border-amber-400 bg-amber-50 px-3 py-2 text-left text-xs text-black">
             <Info className="mt-0.5 h-3.5 w-3.5 flex-none" aria-hidden="true" />
             <DialogDescription className="m-0 text-xs text-black">
               {details.eligibleFor === "ADV"
-                ? `*This payable fee is for ${details.grade}${details.learningProgram === "DUAL_DIPLOMA" || details.learningProgram === "ONE_TO_ONE_FLEX" ? "" : ` for ${details.credits} regular credits.`}`
-                : "*This fee will be deducted from your Course Fee at the time of re-enrollment"}
+                ? details.learningProgram === "DUAL_DIPLOMA" || details.learningProgram === "ONE_TO_ONE_FLEX"
+                  ? t("feeNoteGrade", { grade: details.grade })
+                  : t("feeNoteGradeCredits", { grade: details.grade, credits: String(details.credits ?? "") })
+                : t("feeNoteReserve")}
             </DialogDescription>
           </div>
         </div>
@@ -219,7 +228,7 @@ function ReserveFeeDialog({ open, onOpenChange, details, busy, onPay }) {
             onClick={onPay}
             className="flex w-[170px] cursor-pointer items-center justify-center gap-2 rounded-[10px] border-none bg-primary py-2.5 text-base font-bold text-white shadow-md disabled:cursor-default disabled:opacity-60"
           >
-            <Lock className="h-4 w-4" aria-hidden="true" /> Proceed to Pay
+            <Lock className="h-4 w-4" aria-hidden="true" /> {t("proceedToPay")}
           </button>
         </div>
       </DialogContent>
@@ -232,6 +241,7 @@ function ReserveFeeDialog({ open, onOpenChange, details, busy, onPay }) {
  * the page (the string building stops at an `if`), so there are none here either; the panel just slides in and out.
  */
 function NeedHelpPanel({ shown, standardId }) {
+  const t = useTranslations("home.reserveSeat");
   const picture = helpPicture(standardId);
   return (
     <div
@@ -241,7 +251,7 @@ function NeedHelpPanel({ shown, standardId }) {
       <div data-need-help="" className="flex w-full max-w-[350px] items-center">
         <div className="mr-3">
           <div className="max-w-[250px] rounded-[10px] bg-primary p-3 text-white">
-            <h6 className="m-0 text-sm font-semibold">Need Any Help?</h6>
+            <h6 className="m-0 text-sm font-semibold">{t("needHelp")}</h6>
           </div>
           <div className="mt-2 flex text-center" />
         </div>
@@ -253,6 +263,7 @@ function NeedHelpPanel({ shown, standardId }) {
 
 export function ReserveSeatForNextGrade() {
   const { context } = useDashboardContext();
+  const t = useTranslations("home.reserveSeat");
   const dummy = useDummyStudent();
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
   const classLive = useClassLive();
@@ -277,7 +288,7 @@ export function ReserveSeatForNextGrade() {
   const answer = query.data;
   const loggedOut = answer?.status === "3";
   const details = answer && !["0", "2", "3"].includes(String(answer.status)) && answer.statusCode === "S001" ? answer.details : null;
-  const offerReady = Boolean(details && sideButtonText(details));
+  const offerReady = Boolean(details && sideButtonText(details, t));
 
   const [enrollOpen, setEnrollOpen] = useState(false);
   const [showSideButton, setShowSideButton] = useState(false);
@@ -333,7 +344,7 @@ export function ReserveSeatForNextGrade() {
   const checkout = useCartCheckout({
     context,
     onPaid: () => {
-      toast.success("Payment received.");
+      toast.success(t("paymentReceived"));
       setFee(null);
       window.location.reload();
     },
@@ -347,7 +358,7 @@ export function ReserveSeatForNextGrade() {
     setAccepting(false);
     const status = String(result?.status ?? "0");
     if (["0", "2", "3", "E001"].includes(status)) {
-      if (status === "2") toast.error(result?.message || "Something went wrong");
+      if (status === "2") toast.error(result?.message || t("somethingWrong"));
       else window.location.reload();
       return;
     }
@@ -366,7 +377,7 @@ export function ReserveSeatForNextGrade() {
             onClick={() => setEnrollOpen(true)}
             className={`mr-1 cursor-pointer whitespace-nowrap rounded-md border border-white bg-secondary px-3 py-1.5 text-sm font-semibold text-black transition-transform duration-500 ease-in-out ${helpShown ? "translate-x-[400px]" : "translate-x-0"}`}
           >
-            {sideButtonText(details)}
+            {sideButtonText(details, t)}
           </button>
         </div>
       )}
@@ -398,17 +409,17 @@ export function ReserveSeatForNextGrade() {
         onUploadProof={checkout.uploadProof}
         onSubmitOffline={checkout.submitOffline}
       />
-      {(accepting || checkout.preparing || checkout.processing) && <FullScreenLoader message={checkout.processing ? "Payment is under process..." : undefined} />}
+      {(accepting || checkout.preparing || checkout.processing) && <FullScreenLoader message={checkout.processing ? t("paymentProcessing") : undefined} />}
       <Dialog open={checkout.incomplete} onOpenChange={(open) => !open && checkout.dismissIncomplete()}>
         <DialogContent className="text-center">
-          <DialogTitle className="text-2xl">Oops!</DialogTitle>
-          <DialogDescription className="text-lg font-semibold text-red-600">Payment Incomplete</DialogDescription>
+          <DialogTitle className="text-2xl">{t("oops")}</DialogTitle>
+          <DialogDescription className="text-lg font-semibold text-red-600">{t("paymentIncomplete")}</DialogDescription>
         </DialogContent>
       </Dialog>
       <Dialog open={checkout.underReview} onOpenChange={(open) => !open && checkout.dismissUnderReview()}>
         <DialogContent className="text-center">
-          <DialogTitle>Your payment is under review.</DialogTitle>
-          <DialogDescription className="text-black/70">Your fee status will be updated once the payment is received.</DialogDescription>
+          <DialogTitle>{t("underReview")}</DialogTitle>
+          <DialogDescription className="text-black/70">{t("underReviewDetail")}</DialogDescription>
         </DialogContent>
       </Dialog>
     </>

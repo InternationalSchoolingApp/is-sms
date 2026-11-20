@@ -1,0 +1,115 @@
+{
+  "header": {
+    "title": "我的出勤",
+    "subtitle": "看看你上了多少节课。"
+  },
+  "loading": "正在加载你的出勤",
+  "sessionExpired": "登录已过期，请重新登录。",
+  "notFound": "没有找到出勤详情",
+  "tiles": {
+    "classesToday": "今天的课",
+    "attendance": "出勤率 · {month}",
+    "late": "迟到 · {month}",
+    "sameAs": "与{month}相同",
+    "changeFrom": "{arrow} 比{month} {diff}%"
+  },
+  "views": {
+    "today": "今天",
+    "week": "本周",
+    "month": "本月",
+    "year": "学年"
+  },
+  "overview": {
+    "title": "表现概览",
+    "hint": "点一个月份，看看它的总结。",
+    "comingSoon": "即将推出 · 选择“学年”来查看你的每个月。",
+    "barLabel": "{month}：出勤率 {percent}%",
+    "barTip": "{month}：{percent}%",
+    "barNotYet": "{month}：还没有"
+  },
+  "summary": {
+    "title": "每月总结",
+    "cameTo": "{total} 节课里你上了 {came} 节。",
+    "classesWord": "{count, plural, other {节课}}",
+    "sliceTitle": "{label}：{count}",
+    "empty": "还没有 · 这个月没有课。"
+  },
+  "badges": {
+    "star": {
+      "name": "出勤之星",
+      "msg": "超级棒！你几乎从不缺课。"
+    },
+    "regular": {
+      "name": "超级准时",
+      "msg": "做得好！继续加油。"
+    },
+    "goodEffort": {
+      "name": "很努力",
+      "msg": "我们争取每节课都来吧！"
+    },
+    "keepGoing": {
+      "name": "继续加油",
+      "msg": "我们争取每节课都来吧！"
+    }
+  },
+  "status": {
+    "present": "出席",
+    "late": "迟到",
+    "absent": "缺席",
+    "missS": "学生缺课",
+    "missT": "老师缺课"
+  },
+  "absentLabels": {
+    "absent": "缺席",
+    "missed_by_student": "学生缺课",
+    "missed_by_teacher": "老师缺课"
+  },
+  "details": {
+    "title": "出勤详情",
+    "hint": "点图表里的颜色，只看这些课。",
+    "showAll": "显示全部",
+    "showingNone": "显示 0 条",
+    "dateFilters": {
+      "today": "今天",
+      "yesterday": "昨天",
+      "week": "本周",
+      "month": "本月",
+      "custom": "自定义"
+    },
+    "notAvailable": "{label}（不可用）",
+    "statusOptions": {
+      "select": "选择状态",
+      "all": "全部",
+      "present": "出席",
+      "late": "迟到",
+      "absent": "缺席"
+    },
+    "lookBack": "你可以查看过去 {days, plural, other {# 天}}。结束日期总是今天。",
+    "errors": {
+      "unavailable": "自定义日期范围现在不可用。",
+      "invalidDate": "请选择一个有效日期。",
+      "toIsToday": "结束日期总是今天。",
+      "noFuture": "不能选择未来的日期。",
+      "lookBackOnly": "你只能查看过去 {days, plural, other {# 天}}。"
+    },
+    "loadError": "无法加载出勤详情。",
+    "columns": {
+      "srNo": "序号",
+      "date": "日期",
+      "class": "课程",
+      "startTime": "开始时间",
+      "endTime": "结束时间",
+      "joined": "加入时间",
+      "status": "状态"
+    },
+    "joinedNotes": {
+      "onTime": "准时",
+      "minLate": "迟到 {minutes} 分钟",
+      "teacherAbsent": "老师没能来",
+      "didNotJoin": "没有加入"
+    },
+    "loading": "正在加载你的课",
+    "empty": "这里没有课。",
+    "pages": "页码"
+  }
+}

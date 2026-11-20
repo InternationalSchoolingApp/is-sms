@@ -1,0 +1,245 @@
+{
+  "modal": {
+    "errorPrefix": "Erro:",
+    "about": "Sobre: {about}.",
+    "lastTried": "Última tentativa {when}.",
+    "countryCode": "Código do país",
+    "numberPlaceholder": "Número sem o código do país",
+    "inSeconds": "(em {wait}s)"
+  },
+  "alerts": {
+    "error": "Não foi possível fazer isso agora. Tente novamente em um minuto.",
+    "unreachable": "Não foi possível acessar o servidor da escola. Verifique sua conexão e tente novamente.",
+    "chooseOption": "Escolha uma das opções para continuar.",
+    "sendFirst": "Envie o código primeiro e depois digite-o aqui.",
+    "loggedOut": "Sua sessão foi encerrada",
+    "waitSeconds": "Você pode pedir um novo código em {count, plural, one {# segundo} other {# segundos}}."
+  },
+  "summary": {
+    "title": "Meus dados de contato",
+    "subtitle": "Como a escola fala com você",
+    "status": {
+      "VERIFIED": "Verificado",
+      "OK": "Funcionando",
+      "INVALID": "Inválido",
+      "NOT_REACHABLE": "Inacessível",
+      "APP_NOT_INSTALLED": "App não instalado",
+      "UNKNOWN": "Ainda não verificado"
+    },
+    "channels": {
+      "EMAIL": "E-mail",
+      "MOBILE": "Celular (SMS)",
+      "WHATSAPP": "WhatsApp",
+      "APP": "Notificações do app"
+    },
+    "labels": {},
+    "noPhone": "Nenhum telefone conectado",
+    "notGiven": "Não informado",
+    "getApp": "Baixar o app",
+    "fixNow": "Corrigir agora",
+    "fixFailed": "Não foi possível fazer isso agora. Tente novamente em um minuto.",
+    "noLongerNeedsFix": "Este dado de contato não precisa mais ser corrigido."
+  },
+  "copy": {
+    "standard": {
+      "continueLabel": "Continuar",
+      "laterLabel": "Depois",
+      "backLabel": "Voltar",
+      "verifyLabel": "Verificar e salvar",
+      "closeNowLabel": "Fechar por agora",
+      "legend": "O que você gostaria de fazer?",
+      "reasonLabel": "Motivo:",
+      "stepLabel": "Etapa 2 de 2",
+      "resendLabel": "Reenviar código",
+      "resendLead": "Não recebeu?",
+      "codePlaceholder": "Digite o código",
+      "signIn": "Seu e-mail de login não muda. Este endereço é usado apenas para e-mails da escola.",
+      "signInShort": "Seu e-mail de login não muda.",
+      "alsoMobile": "Usar este também como meu número de celular",
+      "mandatory": "Corrija isso agora para continuar recebendo as mensagens da escola. Não é mais possível adiar.",
+      "skip": "Você pode adiar isso {count, plural, one {por mais # vez} other {por mais # vezes}}.",
+      "channels": {
+        "EMAIL": {
+          "title": "Verifique seu endereço de e-mail",
+          "problem": "Os e-mails da escola para {value} não estão sendo entregues.",
+          "options": {
+            "CHANGE": { "title": "Atualizar meu e-mail", "text": "Substitua por um endereço que funcione" },
+            "CONFIRM": { "title": "Está correto", "text": "Manter este endereço — vamos tentar de novo" },
+            "ALTERNATE": { "title": "Adicionar outro e-mail", "text": "Manter este e adicionar um segundo endereço" }
+          },
+          "valueLabel": { "CHANGE": "Novo e-mail", "ALTERNATE": "Segundo e-mail" },
+          "sendLabel": "Enviar código",
+          "codeLabel": "Digite o código de 6 dígitos do e-mail"
+        },
+        "MOBILE": {
+          "title": "Verifique seu número de celular",
+          "problem": "As mensagens de texto para o seu número de celular {value} não estão chegando.",
+          "options": {
+            "CHANGE": { "title": "Mudar meu número", "text": "Digite o número correto. Vamos enviar um código por SMS." },
+            "CONFIRM": { "title": "Está correto", "text": "Vamos enviar um código por SMS para este número para confirmá-lo." }
+          },
+          "valueLabel": { "CHANGE": "Novo número de celular" },
+          "sendLabel": "Enviar código por SMS",
+          "codeLabel": "Digite o código de 6 dígitos da mensagem de texto"
+        },
+        "WHATSAPP": {
+          "title": "Verifique seu número de WhatsApp",
+          "problem": "Não conseguimos falar com você no WhatsApp em {value}.",
+          "options": {
+            "CHANGE": { "title": "Informar meu número de WhatsApp", "text": "Use um número diferente para o WhatsApp. Vamos enviar um código para lá." },
+            "CONFIRM": { "title": "Está correto", "text": "Este número tem WhatsApp. Vamos enviar um código pelo WhatsApp." },
+            "NO_WHATSAPP": { "title": "Não uso WhatsApp", "text": "Parar as mensagens de WhatsApp. Você ainda receberá e-mail e SMS." }
+          },
+          "valueLabel": { "CHANGE": "Número de WhatsApp" },
+          "sendLabel": "Enviar código por WhatsApp",
+          "codeLabel": "Digite o código de 6 dígitos que enviamos pelo WhatsApp"
+        }
+      },
+      "confirmLead": "Vamos enviar um código de 6 dígitos para {value}{channel, select, WHATSAPP { pelo WhatsApp} MOBILE { por SMS} other {}}. Digite o código aqui para confirmar que é seu.",
+      "alternateHint": "Depois de digitar o código, os e-mails da escola também vão para este endereço. O seu atual é mantido.",
+      "sent": "Enviamos um código de 6 dígitos {channel, select, EMAIL {por e-mail} MOBILE {por SMS} SMS {por SMS} WHATSAPP {pelo WhatsApp} other {}} para {sentTo}.",
+      "noWhatsapp": {
+        "title": "Parar as mensagens de WhatsApp?",
+        "lead": "Vamos parar de enviar mensagens de WhatsApp para {value}.",
+        "note": "Você ainda receberá as mensagens da escola por e-mail e SMS. Você pode informar um número de WhatsApp mais tarde no seu perfil.",
+        "confirmLabel": "Sim, parar as mensagens de WhatsApp"
+      },
+      "done": {
+        "heading": {
+          "EMAIL_CHANGE": "E-mail atualizado",
+          "EMAIL_CONFIRM": "E-mail confirmado",
+          "EMAIL_ALTERNATE": "E-mail adicionado",
+          "MOBILE_CHANGE": "Número de celular atualizado",
+          "MOBILE_CONFIRM": "Número de celular confirmado",
+          "WHATSAPP_CHANGE": "Número de WhatsApp salvo",
+          "WHATSAPP_CONFIRM": "Número de WhatsApp confirmado",
+          "WHATSAPP_NO_WHATSAPP": "Mensagens de WhatsApp interrompidas"
+        },
+        "headingDefault": "Concluído",
+        "text": {
+          "EMAIL_CHANGE": "Os e-mails da escola agora vão para {value}.",
+          "EMAIL_CONFIRM": "Vamos enviar os e-mails da escola para {value} novamente.",
+          "EMAIL_ALTERNATE": "Os e-mails da escola agora também vão para {value}.",
+          "MOBILE_CHANGE": "As mensagens de texto da escola agora vão para {value}.",
+          "MOBILE_CONFIRM": "Vamos continuar enviando mensagens de texto para {value}.",
+          "WHATSAPP_CHANGE": "As mensagens de WhatsApp da escola agora vão para {value}{alsoMobile, select, yes {. Agora também é o seu número de celular.} other {.}}",
+          "WHATSAPP_CONFIRM": "Vamos continuar enviando mensagens de WhatsApp para {value}.",
+          "WHATSAPP_NO_WHATSAPP": "A escola falará com você por e-mail e SMS."
+        },
+        "signIn": "Seu e-mail de login não mudou.",
+        "nextNote": {
+          "EMAIL": "A seguir: seu endereço de e-mail.",
+          "MOBILE": "A seguir: seu número de celular.",
+          "WHATSAPP": "A seguir: seu número de WhatsApp."
+        },
+        "nextLabel": "Avançar",
+        "okLabel": "OK"
+      },
+      "errors": {
+        "EMAIL_EMPTY": "Digite o endereço de e-mail.",
+        "EMAIL_FORMAT": "Digite um endereço de e-mail no formato nome@exemplo.com.",
+        "EMAIL_SAME": "Este é o endereço que não está funcionando. Digite outro ou volte e escolha \"Está correto\".",
+        "EMAIL_SAME_ALTERNATE": "Este é o seu endereço atual. Digite outro.",
+        "ISD_EMPTY": "Escolha o código do país.",
+        "NUMBER_EMPTY": "Digite o número.",
+        "NUMBER_FORMAT": "Digite apenas os dígitos do número, sem o código do país (6 a 15 dígitos).",
+        "CODE_EMPTY": "Digite o código de 6 dígitos que enviamos.",
+        "CODE_FORMAT": "O código tem 6 dígitos. Confira e tente novamente."
+      }
+    },
+    "elementary": {
+      "continueLabel": "Avançar",
+      "legend": "O que você quer fazer?",
+      "reasonLabel": "Por quê?",
+      "resendLabel": "Enviar o código de novo",
+      "resendLead": "",
+      "helpChoose": "Não tem certeza? Peça ajuda a um responsável.",
+      "helpCode": "Peça a um responsável para ajudar você a encontrar o código.",
+      "signIn": "Seu e-mail de login não muda. Você entra sempre do mesmo jeito.",
+      "mandatory": "Corrija isso agora. Você não pode mais adiar.",
+      "skip": "Você pode adiar isso {count, plural, one {por mais # vez} other {por mais # vezes}}",
+      "channels": {
+        "EMAIL": {
+          "title": "Vamos arrumar seu e-mail!",
+          "headline": "Os e-mails da escola não estão chegando até você!",
+          "problem": "Enviamos e-mails para {value}, mas eles voltaram.",
+          "options": {
+            "CHANGE": { "title": "Mudar meu e-mail", "text": "Vou digitar um novo" },
+            "CONFIRM": { "title": "Está certo", "text": "Manter este e-mail" },
+            "ALTERNATE": { "title": "Adicionar outro e-mail", "text": "Usar mais um e-mail também" }
+          },
+          "valueLabel": { "CHANGE": "Digite seu novo e-mail", "ALTERNATE": "Digite mais um e-mail" },
+          "sendLabel": "Enviar código",
+          "codeLabel": "Digite os 6 números do e-mail"
+        },
+        "MOBILE": {
+          "title": "Vamos arrumar seu telefone!",
+          "headline": "Seu número de telefone parece errado.",
+          "problem": "Temos este número para você: {value}",
+          "options": {
+            "CHANGE": { "title": "Mudar meu número", "text": "Vou digitar o certo" },
+            "CONFIRM": { "title": "Está certo", "text": "Manter este número" }
+          },
+          "codeHint": "Vamos enviar um código por mensagem de texto (SMS) para verificar.",
+          "valueLabel": { "CHANGE": "Digite seu número de telefone" },
+          "sendLabel": "Enviar código",
+          "codeLabel": "Digite os 6 números da mensagem de texto"
+        },
+        "WHATSAPP": {
+          "title": "Vamos arrumar seu WhatsApp!",
+          "headline": "Não conseguimos falar com você no WhatsApp.",
+          "problem": "Tentamos este número: {value}",
+          "options": {
+            "CHANGE": { "title": "Informar meu número de WhatsApp", "text": "Vou digitar o certo" },
+            "CONFIRM": { "title": "Está certo", "text": "Manter este número" },
+            "NO_WHATSAPP": { "title": "Não uso WhatsApp", "text": "Parar de me perguntar" }
+          },
+          "codeHint": "Vamos enviar um código pelo WhatsApp para verificar.",
+          "valueLabel": { "CHANGE": "Digite seu número de WhatsApp" },
+          "sendLabel": "Enviar código",
+          "codeLabel": "Digite os 6 números que enviamos pelo WhatsApp"
+        }
+      },
+      "confirmLead": "Vamos enviar 6 números para {value}{channel, select, WHATSAPP { pelo WhatsApp} MOBILE { por mensagem de texto (SMS)} other {}}. Digite-os aqui para mostrar que é seu.",
+      "alternateHint": "Os e-mails da escola irão para este e-mail também. Seu outro e-mail continua.",
+      "sent": "{channel, select, EMAIL {Código enviado! Olhe no seu e-mail.} WHATSAPP {Código enviado! Olhe no WhatsApp.} other {Código enviado! Olhe nas suas mensagens de texto.}}",
+      "noWhatsapp": {
+        "lead": "Vamos parar de enviar mensagens de WhatsApp para {value}.",
+        "note": "A escola ainda vai enviar e-mails e mensagens de texto para você.",
+        "confirmLabel": "Sim, pode parar"
+      },
+      "done": {
+        "headingNamed": "Tudo pronto! Obrigado, {name}!",
+        "headingPlain": "Tudo pronto! Obrigado!",
+        "text": {
+          "EMAIL_CHANGE": "Seu novo e-mail está salvo: {value}",
+          "EMAIL_CONFIRM": "Vamos continuar usando este e-mail: {value}",
+          "EMAIL_ALTERNATE": "Seu outro e-mail está salvo: {value}",
+          "MOBILE_CHANGE": "Seu novo número de telefone está salvo: {value}",
+          "MOBILE_CONFIRM": "Vamos continuar usando este número: {value}",
+          "WHATSAPP_CHANGE": "Seu número de WhatsApp está salvo: {value}",
+          "WHATSAPP_CONFIRM": "Vamos continuar usando este número de WhatsApp: {value}",
+          "WHATSAPP_NO_WHATSAPP": "Não vamos enviar mensagens de WhatsApp para você."
+        },
+        "nextNote": {
+          "EMAIL": "Agora vamos verificar seu e-mail.",
+          "MOBILE": "Agora vamos verificar seu número de telefone.",
+          "WHATSAPP": "Agora vamos verificar seu WhatsApp."
+        },
+        "nextLabel": "Beleza!",
+        "okLabel": "Beleza!"
+      },
+      "errors": {
+        "EMAIL_EMPTY": "Digite o e-mail primeiro.",
+        "EMAIL_FORMAT": "Isso não parece um e-mail. Deve ser parecido com nome@exemplo.com.",
+        "EMAIL_SAME": "Este é o e-mail que não está funcionando. Digite um novo ou volte e escolha \"Está certo\".",
+        "EMAIL_SAME_ALTERNATE": "Você já usa este e-mail. Digite outro.",
+        "ISD_EMPTY": "Escolha o código do seu país.",
+        "NUMBER_EMPTY": "Digite o número primeiro.",
+        "NUMBER_FORMAT": "Digite só os números, sem o código do país.",
+        "CODE_EMPTY": "Digite os 6 números que enviamos.",
+        "CODE_FORMAT": "O código tem 6 números. Confira e tente de novo."
+      }
+    }
+  }
+}

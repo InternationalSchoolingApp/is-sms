@@ -1,0 +1,28 @@
+{
+  "title": "学生日记",
+  "titleWithName": "学生日记 - {name}",
+  "backToList": "返回日记列表",
+  "chatWithLabel": "聊天对象",
+  "chatWith": {
+    "teacher": "老师",
+    "school": "学校"
+  },
+  "empty": {
+    "teacher": "最近没有与老师的日记记录",
+    "school": "最近没有与学校的日记记录"
+  },
+  "noMessages": "暂无消息。",
+  "parent": "家长",
+  "letter": {
+    "greetings": "来自{school}的问候！",
+    "hopeWell": "希望您一切安好。",
+    "gratitude": "怀着感恩与祝福，",
+    "family": "{school}全体同仁"
+  },
+  "loadError": "暂时无法加载日记。",
+  "dates": {
+    "today": "今天",
+    "yesterday": "昨天",
+    "todayChip": "今天 · {date}"
+  }
+}

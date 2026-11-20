@@ -1,0 +1,93 @@
+{
+  "shell": {
+    "logOff": "Cerrar sesión"
+  },
+  "welcome": {
+    "loadFailed": "No se pudieron cargar tus datos. Inténtalo de nuevo."
+  },
+  "timezone": {
+    "saved": "Tu zona horaria se ha guardado.",
+    "saveFailed": "No se pudo guardar tu zona horaria.",
+    "title": "Confirma tu zona horaria",
+    "intro": "Antes de empezar, selecciona tu país y tu zona horaria:",
+    "label": "Zona horaria",
+    "loadFailed": "No se pudieron cargar las zonas horarias",
+    "proceedWith": "¿Quieres continuar con <b>{zone}</b>?",
+    "classesFollow": "Ten en cuenta que todas tus clases seguirán esta zona horaria.",
+    "changeLater": "Para cambiar tu zona horaria más adelante, ve a la sección <b>‘Mi perfil’</b> de tu panel.",
+    "saving": "Guardando..."
+  },
+  "overdue": {
+    "paymentReceived": "Pago recibido.",
+    "hi": "¡Hola, {name}!",
+    "hiThere": "¡Hola!",
+    "deactivated": "Tu LMS está desactivado por una tarifa pendiente desde el {date}.",
+    "noOverdue": "No se encontraron pagos vencidos.",
+    "pendingFee": "Tarifa pendiente",
+    "grade": "Grado",
+    "feeDescription": "Descripción de la tarifa",
+    "dueFee": "Importe adeudado",
+    "dueDate": "Fecha de vencimiento",
+    "status": "Estado",
+    "totalDue": "Total adeudado",
+    "payNow": "Paga ahora para continuar con las clases",
+    "whyTimely": "¿Por qué es importante pagar a tiempo?",
+    "payInAdvance": "Paga por adelantado para continuar con tus clases.",
+    "avoidDeactivation": "Completa el pago para evitar la desactivación del Sistema de Gestión Escolar.",
+    "statusUpdated": "El estado de tu tarifa se actualizará cuando se reciba el pago."
+  },
+  "feeStatus": {
+    "pending": "Pendiente",
+    "overdue": "Vencido",
+    "due": "Por pagar",
+    "unpaid": "No pagado",
+    "paid": "Pagado",
+    "partially_paid": "Pagado parcialmente"
+  },
+  "setup": {
+    "loadFailed": "No se pudieron cargar tus datos. Inténtalo de nuevo.",
+    "loading": "Cargando tus datos...",
+    "heading": "Hola, {name}: {kind, select, done {¡muy bien hecho! ¡Empecemos!} reminder {un recordatorio importante} other {¡empecemos!}}",
+    "headingNoName": "Hola: {kind, select, done {¡muy bien hecho! ¡Empecemos!} reminder {un recordatorio importante} other {¡empecemos!}}"
+  },
+  "training": {
+    "topicsIntro": "En la capacitación del sistema escolar aprenderás",
+    "topicClasses": "Cómo reservar y unirte a clases",
+    "topicCourses": "Cursos, informes de progreso y evaluaciones",
+    "booked": "Tu capacitación del sistema escolar ha sido reservada.",
+    "bookFailed": "No se pudo reservar tu capacitación del sistema escolar.",
+    "chooseDateToContinue": "Elige una fecha para continuar",
+    "title": "Reserva tu capacitación del sistema escolar",
+    "bookOn": "Quiero reservar mi capacitación del sistema escolar para el",
+    "dateLabel": "Elige la fecha de la capacitación",
+    "selectTime": "Selecciona la hora:",
+    "loadingTimes": "Cargando los horarios disponibles…",
+    "timesFailed": "No se pudieron cargar los horarios de la capacitación.",
+    "noSlot": "No hay horarios disponibles. Elige otra fecha",
+    "timeLabel": "Horario de la capacitación",
+    "saving": "Guardando..."
+  },
+  "academic": {
+    "saved": "Se guardó la fecha de inicio de tu año académico.",
+    "saveFailed": "No se pudo guardar la fecha de inicio de tu año académico.",
+    "title": "Fecha de inicio del año académico",
+    "titleStep": "Paso 1 de 1 - Fecha de inicio del año académico",
+    "explain": "La fecha de inicio de tu año académico es cuando empezarás tus clases.",
+    "startOn": "Quiero empezar mi año académico el",
+    "dateLabel": "Elige la fecha de inicio",
+    "decideLater": "Decidir después",
+    "chooseCarefully": "Elige con cuidado la fecha de inicio de tu año académico. No podrás cambiarla después.",
+    "queries": "Si tienes alguna pregunta:",
+    "editDate": "Editar fecha",
+    "mandatory": "Elegir la fecha de inicio de tu {kind, select, training {capacitación del sistema} other {año académico}} es obligatorio para empezar tus clases. Siempre puedes volver a iniciar sesión para completar el proceso.",
+    "queriesTalk": "Si tienes alguna pregunta, <link>habla con la administración escolar</link>",
+    "batchReminder": "El grupo de aprendizaje para la zona horaria UTC+ comenzará el 18 de septiembre de 2024.<br></br>y el grupo de aprendizaje para la zona horaria UTC- comenzará el 25 de septiembre de 2024."
+  },
+  "done": {
+    "title": "¡Todo listo!",
+    "startDateIs": "La fecha de inicio de tu año académico es {date}",
+    "trainingConfirmed": "Tu capacitación del sistema escolar se ha confirmado correctamente.",
+    "dateTime": "Fecha y hora: <b>{value}</b>",
+    "emailSent": "También se ha enviado una confirmación a tu correo electrónico registrado."
+  }
+}

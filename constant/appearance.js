@@ -122,10 +122,24 @@ export const VOICE_SPEEDS = {
   fast: { name: "Fast", value: 1.2 },
 };
 
-/** The voice a request sends: {id, language, speed} for these preferences (unknown keys take the defaults). */
-export function voiceOf(voice, speed) {
+// The buddy's voice when the dashboard is in another language (docs/i18n.md): the picked voice's gender in that
+// language, so French lines are not read with an English accent. The backend allows these too (PicoVoiceController).
+export const LOCALE_VOICES = {
+  fr: { girl: { id: "ff_siwis", language: "fr" }, boy: { id: "ff_siwis", language: "fr" } },
+  es: { girl: { id: "ef_dora", language: "es" }, boy: { id: "em_alex", language: "es" } },
+  pt: { girl: { id: "pf_dora", language: "pt-br" }, boy: { id: "pm_alex", language: "pt-br" } },
+  zh: { girl: { id: "zf_xiaoxiao", language: "zh" }, boy: { id: "zm_yunxi", language: "zh" } },
+};
+
+/**
+ * The voice a request sends: {id, language, speed} for these preferences (unknown keys take the defaults). `locale`: the
+ * dashboard language; outside English the same-gender voice of that language is used.
+ */
+export function voiceOf(voice, speed, locale) {
   const v = VOICES[voice] || VOICES.heart;
-  return { id: v.id, language: v.language, speed: (VOICE_SPEEDS[speed] || VOICE_SPEEDS.normal).value };
+  const local = LOCALE_VOICES[locale]?.[v.gender];
+  const chosen = local || v;
+  return { id: chosen.id, language: chosen.language, speed: (VOICE_SPEEDS[speed] || VOICE_SPEEDS.normal).value };
 }
 
 /** Only allowlisted values survive; everything else takes the default. */

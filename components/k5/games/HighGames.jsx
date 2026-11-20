@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { HIGH_GAMES, MEMORY_PAIRS, newHighMemory, newMental, newOddOne, newSeries } from "@/components/k5/games/highGameLogic";
 
 /**
@@ -11,8 +12,7 @@ import { HIGH_GAMES, MEMORY_PAIRS, newHighMemory, newMental, newOddOne, newSerie
  * Sizes are rem values on purpose: the Mature type scale (app/k5-mature.css) remaps px sizes, and these are the mockup's own.
  */
 
-const LOCK_MESSAGE = "Games unlock only on a day with no classes, or after you finish all your classes and activities for the day.";
-const PAST_MESSAGE = "This day is over. Pick today or a day to come to play.";
+// Game names / hints and the lock notes: k5Games.high.*.
 
 const PILL = "flex cursor-pointer items-center rounded-full border-[1.5px] border-k5-line bg-k5-card text-k5-ink";
 const BOARD = "relative flex min-h-[17.5rem] flex-col items-center justify-center gap-[1.125rem] rounded-[0.625rem] border border-k5-line bg-k5-card p-5";
@@ -51,6 +51,7 @@ const ICONS = {
 };
 
 function GameTile({ game, locked, onPlay }) {
+  const t = useTranslations("k5Games.high");
   return (
     <button
       type="button"
@@ -62,8 +63,8 @@ function GameTile({ game, locked, onPlay }) {
         {ICONS[game.id]}
       </span>
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-[0.9375rem] font-[500] leading-[1.2]">{game.name}</span>
-        <span className="text-[0.8125rem] font-[400] leading-[1.35] text-k5-mut">{game.how}</span>
+        <span className="text-[0.9375rem] font-[500] leading-[1.2]">{t(`games.${game.id}.name`)}</span>
+        <span className="text-[0.8125rem] font-[400] leading-[1.35] text-k5-mut">{t(`games.${game.id}.how`)}</span>
       </span>
     </button>
   );
@@ -86,10 +87,11 @@ function useQuiz(makeQuestion, { onScore, onFeedback }) {
 }
 
 function SeriesBoard(props) {
+  const t = useTranslations("k5Games.high");
   const [q, answer] = useQuiz(newSeries, props);
   return (
     <div className={BOARD}>
-      <div className={ASK}>What comes next?</div>
+      <div className={ASK}>{t("whatNext")}</div>
       <div dir="ltr" className="text-center text-[1.75rem] font-[400] leading-[1.25] tabular-nums text-k5-ink">{q.q}</div>
       <div dir="ltr" className="flex flex-wrap justify-center gap-2.5">
         {q.opts.map((n) => (
@@ -101,11 +103,12 @@ function SeriesBoard(props) {
 }
 
 function MentalBoard(props) {
+  const t = useTranslations("k5Games.high");
   const [q, answer] = useQuiz(newMental, props);
   return (
     <div className={BOARD}>
-      <div className={ASK}>Solve</div>
-      <div dir="ltr" className="text-center text-[1.75rem] font-[400] leading-[1.25] tabular-nums text-k5-ink">{q.q}</div>
+      <div className={ASK}>{t("solve")}</div>
+      <div dir="ltr" className="text-center text-[1.75rem] font-[400] leading-[1.25] tabular-nums text-k5-ink">{q.pct ? t("percentOf", { p: q.pct[0], n: q.pct[1] }) : q.q}</div>
       <div dir="ltr" className="flex flex-wrap justify-center gap-2.5">
         {q.opts.map((n) => (
           <button key={n} type="button" onClick={() => answer(n)} className={OPTION}>{n}</button>
@@ -116,10 +119,11 @@ function MentalBoard(props) {
 }
 
 function OddOneBoard(props) {
+  const t = useTranslations("k5Games.high");
   const [q, answer] = useQuiz(newOddOne, props);
   return (
     <div className={BOARD}>
-      <div className={ASK}>Which number doesn&apos;t belong?</div>
+      <div className={ASK}>{t("oddOne")}</div>
       <div dir="ltr" className="flex flex-wrap justify-center gap-2.5">
         {q.items.map((n) => (
           <button key={n} type="button" onClick={() => answer(n)} className={OPTION + " !min-h-14 !text-[1.25rem]"}>{n}</button>
@@ -130,6 +134,7 @@ function OddOneBoard(props) {
 }
 
 function MemoryGridBoard({ onScore, onFeedback, onRestart }) {
+  const t = useTranslations("k5Games.high");
   const [mem, setMem] = useState(newHighMemory);
   const timer = useRef(null);
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -166,7 +171,7 @@ function MemoryGridBoard({ onScore, onFeedback, onRestart }) {
             key={i}
             type="button"
             onClick={() => flip(i)}
-            aria-label={up ? face : "Hidden card"}
+            aria-label={up ? face : t("hiddenCard")}
             className={"flex aspect-square min-h-14 cursor-pointer items-center justify-center rounded-lg border text-[1.5rem] font-[400] leading-none " + look}
           >
             {up ? face : ""}
@@ -175,9 +180,9 @@ function MemoryGridBoard({ onScore, onFeedback, onRestart }) {
       })}
       {won && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-[0.625rem] bg-[#FFFFFF]/95 p-4 text-center text-[1.125rem] font-[500] text-[#1B2130]">
-          All pairs matched.
+          {t("allPairs")}
           <button type="button" onClick={onRestart} className="min-h-[2.625rem] cursor-pointer rounded-lg border-none bg-k5-ac px-5 text-[0.875rem] font-[500] text-white">
-            Start over
+            {t("startOver")}
           </button>
         </div>
       )}
@@ -186,6 +191,8 @@ function MemoryGridBoard({ onScore, onFeedback, onRestart }) {
 }
 
 export function HighGames({ locked = false, past = false }) {
+  const t = useTranslations("k5Games.high");
+  const tc = useTranslations("common");
   const [gameId, setGameId] = useState(null);
   const [score, setScore] = useState(0);
   const [round, setRound] = useState(0);
@@ -211,8 +218,8 @@ export function HighGames({ locked = false, past = false }) {
     return (
       <section aria-labelledby="high-games-title" className="flex flex-col gap-3">
         <div className="flex flex-col">
-          <h3 id="high-games-title" className="m-0 text-[1.25rem] font-[500]">Brain Games</h3>
-          <p className="m-0 text-[0.8125rem] font-[500] text-k5-mut">Short puzzles that train logic, numbers and memory.</p>
+          <h3 id="high-games-title" className="m-0 text-[1.25rem] font-[500]">{t("title")}</h3>
+          <p className="m-0 text-[0.8125rem] font-[500] text-k5-mut">{t("subtitle")}</p>
         </div>
         {locked && (
           <div role="note" className="flex items-start gap-2.5 rounded-[0.625rem] border-[1.5px] border-k5-yb bg-k5-yt px-3.5 py-3 text-k5-ink">
@@ -221,8 +228,8 @@ export function HighGames({ locked = false, past = false }) {
               <path d="M8 11V8a4 4 0 0 1 8 0v3" />
             </svg>
             <span className="flex flex-col gap-0.5">
-              <span className="text-[0.875rem] font-[500]">Games are locked</span>
-              <span className="text-[0.8125rem] font-[400] leading-[1.4]">{past ? PAST_MESSAGE : LOCK_MESSAGE}</span>
+              <span className="text-[0.875rem] font-[500]">{t("locked")}</span>
+              <span className="text-[0.8125rem] font-[400] leading-[1.4]">{past ? t("lockedPast") : t("lockedText")}</span>
             </span>
           </div>
         )}
@@ -236,24 +243,24 @@ export function HighGames({ locked = false, past = false }) {
   }
 
   return (
-    <section aria-label={game.name} className="flex flex-col gap-3">
+    <section aria-label={t(`games.${game.id}.name`)} className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex min-w-0 items-center gap-3">
           <button type="button" onClick={() => setGameId(null)} className={PILL + " min-h-[2.5625rem] flex-none gap-1.5 pl-2.5 pr-4 text-[0.875rem] font-[500]"}>
             <ChevronLeft className="h-5 w-5 text-k5-acx" strokeWidth={3} aria-hidden="true" />
-            Back
+            {tc("actions.back")}
           </button>
           <div className="flex min-w-0 flex-col">
-            <h3 className="m-0 text-[1.25rem] font-[500]">{game.name}</h3>
-            <p className="m-0 text-[0.8125rem] font-[500] text-k5-mut">{game.how}</p>
+            <h3 className="m-0 text-[1.25rem] font-[500]">{t(`games.${game.id}.name`)}</h3>
+            <p className="m-0 text-[0.8125rem] font-[500] text-k5-mut">{t(`games.${game.id}.how`)}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <span aria-live="polite" className="flex items-center gap-1.5 rounded-full bg-k5-act px-3 py-[0.4375rem] text-[0.8125rem] font-[500] tabular-nums text-k5-ink">
-            {"Score " + score}
+            {t("score", { score })}
           </span>
           <button type="button" onClick={() => play(game.id)} className={PILL + " min-h-10 px-4 text-[0.8125rem] font-[700]"}>
-            Start over
+            {t("startOver")}
           </button>
         </div>
       </div>
@@ -265,7 +272,7 @@ export function HighGames({ locked = false, past = false }) {
 
       {fb !== null && (
         <div aria-live="assertive" className={"self-center rounded-full px-4 py-1.5 text-[0.8125rem] font-[500] text-white " + (fb ? "bg-k5-grn" : "bg-k5-red")}>
-          {fb ? "Correct" : "Not quite. Try again."}
+          {fb ? t("correct") : t("notQuite")}
         </div>
       )}
     </section>

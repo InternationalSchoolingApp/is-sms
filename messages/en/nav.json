@@ -1,0 +1,54 @@
+{
+  "sidebar": {
+    "ariaLabel": "Student dashboard",
+    "menu": "Menu",
+    "closeMenu": "Close menu"
+  },
+  "rail": {
+    "talkToUs": "Talk to Us",
+    "k5TalkToUs": "Talk to us",
+    "announcement": "Announcement",
+    "news": "News",
+    "studentDiary": "Student Diary",
+    "k5Diary": "Student's Diary",
+    "withNew": "{label}, {count} new"
+  },
+  "loadingDashboard": "Loading your dashboard…",
+  "pageTitle": {
+    "dashboard": "Dashboard",
+    "withName": "{name} | Dashboard"
+  },
+  "placeholder": {
+    "module": "Module",
+    "comingSoon": "This module is being migrated and will be available soon (Phase C)."
+  },
+  "sessionExpired": {
+    "title": "Your session has been logged out",
+    "bands": {
+      "elementary": {
+        "title": "Oops! You were logged out",
+        "hint": "Type your password to come back in."
+      },
+      "middle": {
+        "title": "Your session has been logged out",
+        "hint": "Enter your password to log in again and carry on."
+      },
+      "high": {
+        "title": "Your session has been logged out",
+        "hint": "Enter your password to sign in again and continue where you left off."
+      }
+    },
+    "verifying": "Verifying your credentials",
+    "verifyingDetail": "Please wait while we securely restore your session.",
+    "wrongPassword": "You entered a wrong password.",
+    "unavailable": "Unable to sign in right now. Please try again.",
+    "passwordPlaceholder": "Password *",
+    "password": "Password",
+    "hidePassword": "Hide password",
+    "showPassword": "Show password",
+    "logIn": "Log in",
+    "loggedInAs": "Logged in as {email}",
+    "notYou": "Not You?",
+    "differentUser": "Log in as a different user"
+  }
+}

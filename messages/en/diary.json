@@ -1,0 +1,28 @@
+{
+  "title": "Student Diary",
+  "titleWithName": "Student Diary - {name}",
+  "backToList": "Back to diary list",
+  "chatWithLabel": "Chat with",
+  "chatWith": {
+    "teacher": "Teacher",
+    "school": "School"
+  },
+  "empty": {
+    "teacher": "No recent diary entries available with teacher",
+    "school": "No recent diary entries available with school"
+  },
+  "noMessages": "No messages yet.",
+  "parent": "Parent",
+  "letter": {
+    "greetings": "Greetings from {school}!",
+    "hopeWell": "Hope you are doing well.",
+    "gratitude": "Gratitude and prayers,",
+    "family": "{school} Family"
+  },
+  "loadError": "The diary could not be loaded right now.",
+  "dates": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "todayChip": "Today · {date}"
+  }
+}

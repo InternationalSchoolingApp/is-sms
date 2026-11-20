@@ -1,0 +1,24 @@
+{
+  "title": "我的出勤",
+  "notFound": "未找到出勤详情",
+  "sessionExpired": "您的会话已过期，请重新登录。",
+  "classesToday": "今日课程",
+  "attendanceMonth": "出勤率（{year}年{month}）",
+  "lateMonth": "迟到（{year}年{month}）",
+  "byMonth": "每月出勤（{year}年）",
+  "monthlySummary": "月度汇总（{month}）",
+  "classesHeldThisMonth": "本月已上课程",
+  "states": {
+    "present": "出席",
+    "late": "迟到",
+    "absent": "缺席"
+  },
+  "delta": {
+    "percent": "较上月 {value}%",
+    "classes": "较上月 {value} {count, plural, other {节课}}"
+  },
+  "chart": {
+    "series": "出勤",
+    "classesAttended": "已出席 {attended}/{held} 节课"
+  }
+}

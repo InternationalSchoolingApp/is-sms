@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
@@ -14,9 +15,12 @@ import { useModuleRights } from "@/hooks/useModuleRights";
 import { useSchoolCurrency } from "@/hooks/useStudentCart";
 import { K5FeeDetails } from "@/components/k5/pages/K5FeeDetails";
 import { useStudentFeeDetails } from "@/hooks/useStudentFeeDetails";
+import { useLabelTranslator } from "@/i18n/labels";
 
 const PAGE_SIZE = 10;
 const HEADERS = ["S.No", "Scheduled Date", "Grade", "Payment Name", "Paid Fee", "Paid Date", "Status", "View Receipt"];
+// fees.table.* — the shown column titles (HEADERS stay the React keys).
+const HEADER_KEYS = ["sNo", "scheduledDate", "grade", "paymentName", "paidFee", "paidDate", "status", "viewReceipt"];
 const RETRY_STATUSES = ["PENDING", "FAILURE", "REJECTED"];
 
 // Installment names carry ordinal suffixes as markup ("1<sup>st</sup> of 3"), which legacy injected
@@ -34,7 +38,7 @@ function paymentName(name) {
  * The last column's action — legacy getStudentFeeDetailsRowsHtml, branch for branch. The row
  * that is next due (nextUserPaymentDetailsId) gets the full set (Pay Now / Change Payment
  * Method); every other unpaid row can only be retried.
- * Returns { kind: "receipt" | "pay", label?, note? } or null.
+ * Returns { kind: "receipt" | "pay", label?, note? } or null; label / note are fees.actions.* keys.
  */
 function feeAction(row, nextId, schoolNumericId, canView) {
   const { status, paymentTitle: title, pgName, paymentTransferType: transferType } = row;
@@ -43,24 +47,24 @@ function feeAction(row, nextId, schoolNumericId, canView) {
 
   if (row.id === nextId) {
     if (RETRY_STATUSES.includes(status) && title !== "EXTENSION_FEE" && title !== "BOOKSESSION_FEE") {
-      return { kind: "pay", label: "Try Again" };
+      return { kind: "pay", label: "tryAgain" };
     }
     if (status === "INITIATED" && (transferType == 3 || transferType == 0) && title !== "EXTENSION_FEE") {
-      return { kind: "pay", label: "Try Again" };
+      return { kind: "pay", label: "tryAgain" };
     }
     if (status === "INITIATED" && transferType != 3) {
-      if (pgName === "CONVERA") return { kind: "pay", label: "Change Payment Method", note: "Payment in Process" };
-      if (schoolNumericId == 5 && pgName === "WireTransfer") return { note: "Payment Under Process" };
+      if (pgName === "CONVERA") return { kind: "pay", label: "changePaymentMethod", note: "paymentInProcess" };
+      if (schoolNumericId == 5 && pgName === "WireTransfer") return { note: "paymentUnderProcess" };
       return null;
     }
     if (title === "BOOKSESSION_FEE" || title === "EXTENSION_FEE") return null;
-    return { kind: "pay", label: "Pay Now" };
+    return { kind: "pay", label: "payNow" };
   }
 
   if (RETRY_STATUSES.includes(status) && title !== "TEACHER REQUEST FEE" && title !== "BOOKSESSION_FEE") {
-    return { kind: "pay", label: "Try Again" };
+    return { kind: "pay", label: "tryAgain" };
   }
-  if (status === "INITIATED" && (transferType == 3 || transferType == 0)) return { kind: "pay", label: "Try Again" };
+  if (status === "INITIATED" && (transferType == 3 || transferType == 0)) return { kind: "pay", label: "tryAgain" };
   return null;
 }
 
@@ -71,6 +75,10 @@ function feeAction(row, nextId, schoolNumericId, canView) {
  * module's viewed right like legacy roleAndModule.viewed.
  */
 export function FeeDetails() {
+  const t = useTranslations("fees");
+  const tc = useTranslations("common");
+  const statusLabel = useLabelTranslator("fees.statuses");
+  const headers = HEADER_KEYS.map((key) => t(`table.${key}`));
   const { context, isK5 } = useDashboardContext();
   const { schoolUUID, userId, schoolNumericId } = context ?? {};
   const { isLoading, payments, nextUserPaymentDetailsId, refetch } = useStudentFeeDetails({ schoolUUID, userId });
@@ -82,7 +90,7 @@ export function FeeDetails() {
     context,
     onPaid: () => {
       refetch();
-      toast.success("Payment received.");
+      toast.success(t("paymentReceived"));
     },
   });
 
@@ -100,7 +108,7 @@ export function FeeDetails() {
     if (!action) return null;
     return (
       <div className="flex flex-wrap items-center gap-2">
-        {action.note && <span>{action.note}</span>}
+        {action.note && <span>{t(`actions.${action.note}`)}</span>}
         {action.kind === "receipt" && (
           <a
             href={payment.recieptLink}
@@ -108,7 +116,7 @@ export function FeeDetails() {
             rel="noreferrer"
             className="rounded border border-primary px-2 py-1 text-primary hover:bg-primary hover:text-white"
           >
-            View Receipt
+            {t("actions.viewReceipt")}
           </a>
         )}
         {action.kind === "pay" && (
@@ -118,7 +126,7 @@ export function FeeDetails() {
             disabled={checkout.preparing}
             className="rounded bg-primary px-3 py-1 text-white disabled:opacity-60"
           >
-            {action.label}
+            {t(`actions.${action.label}`)}
           </button>
         )}
       </div>
@@ -137,7 +145,7 @@ export function FeeDetails() {
       payment.payDate || "--",
       <span key="status" className={success ? "font-bold text-[#58D68D]" : ""}>
         {/* Legacy shows the dummy row's own label ("PAID") in dummy mode; real rows never carry it. */}
-        {payment.dummyStatusLabel || payment.status}
+        {statusLabel(payment.dummyStatusLabel || payment.status)}
       </span>,
       actionCell(row),
     ];
@@ -171,14 +179,14 @@ export function FeeDetails() {
           />
         )}
         {(checkout.preparing || checkout.processing) && (
-          <FullScreenLoader message={checkout.processing ? "Payment is under process..." : undefined} />
+          <FullScreenLoader message={checkout.processing ? t("paymentProcessing") : undefined} />
         )}
         <Dialog open={checkout.incomplete} onOpenChange={(open) => !open && checkout.dismissIncomplete()}>
           <DialogContent className="text-center">
             <DialogHeader>
-              <DialogTitle className="text-2xl">Oops!</DialogTitle>
+              <DialogTitle className="text-2xl">{t("oops")}</DialogTitle>
             </DialogHeader>
-            <h3 className="text-lg font-semibold text-red-600">Payment Incomplete</h3>
+            <h3 className="text-lg font-semibold text-red-600">{t("paymentIncomplete")}</h3>
           </DialogContent>
         </Dialog>
         <Dialog
@@ -191,22 +199,22 @@ export function FeeDetails() {
         >
           <DialogContent className="text-center">
             <DialogHeader>
-              <DialogTitle>Your payment is under review.</DialogTitle>
+              <DialogTitle>{t("underReviewTitle")}</DialogTitle>
             </DialogHeader>
-            <p className="text-black/70">Your fee status will be updated once the payment is received.</p>
+            <p className="text-black/70">{t("underReviewText")}</p>
           </DialogContent>
         </Dialog>
       </>
     );
   }
 
-  const status = !context || isLoading ? "Loading…" : payments.length === 0 ? "No fee details found" : null;
+  const status = !context || isLoading ? tc("status.loading") : payments.length === 0 ? t("empty") : null;
 
   return (
     <div className="w-full">
       <div className="rounded-[15px] border border-slate-200 bg-white p-3 sm:p-5">
         <div className="rounded-t-[10px] border border-slate-200 px-4 py-2">
-          <h4 className="text-lg font-semibold text-black">Fee Details</h4>
+          <h4 className="text-lg font-semibold text-black">{t("title")}</h4>
         </div>
 
         {/* Mobile: one card per payment (column title beside each value) instead of an 8-column table. */}
@@ -219,7 +227,7 @@ export function FeeDetails() {
                 <li key={row.payment.id}>
                   <MobileTableCard
                     rows={cells(row)
-                      .map((value, index) => ({ label: HEADERS[index], value }))
+                      .map((value, index) => ({ label: headers[index], value }))
                       .filter(({ value }) => value !== null && value !== "")}
                   />
                 </li>
@@ -234,7 +242,7 @@ export function FeeDetails() {
               <tr>
                 {HEADERS.map((header, index) => (
                   <th key={header} className={`py-3 pr-3 font-normal ${index === 0 ? "pl-4" : "pl-3"}`}>
-                    {header}
+                    {headers[index]}
                   </th>
                 ))}
               </tr>
@@ -281,14 +289,14 @@ export function FeeDetails() {
         />
       )}
       {(checkout.preparing || checkout.processing) && (
-        <FullScreenLoader message={checkout.processing ? "Payment is under process..." : undefined} />
+        <FullScreenLoader message={checkout.processing ? t("paymentProcessing") : undefined} />
       )}
       <Dialog open={checkout.incomplete} onOpenChange={(open) => !open && checkout.dismissIncomplete()}>
         <DialogContent className="text-center">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Oops!</DialogTitle>
+            <DialogTitle className="text-2xl">{t("oops")}</DialogTitle>
           </DialogHeader>
-          <h3 className="text-lg font-semibold text-red-600">Payment Incomplete</h3>
+          <h3 className="text-lg font-semibold text-red-600">{t("paymentIncomplete")}</h3>
         </DialogContent>
       </Dialog>
       <Dialog
@@ -301,9 +309,9 @@ export function FeeDetails() {
       >
         <DialogContent className="text-center">
           <DialogHeader>
-            <DialogTitle>Your payment is under review.</DialogTitle>
+            <DialogTitle>{t("underReviewTitle")}</DialogTitle>
           </DialogHeader>
-          <p className="text-black/70">Your fee status will be updated once the payment is received.</p>
+          <p className="text-black/70">{t("underReviewText")}</p>
         </DialogContent>
       </Dialog>
     </div>

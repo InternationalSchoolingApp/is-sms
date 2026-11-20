@@ -1,0 +1,17 @@
+{
+  "title": "课程任课教师",
+  "searchLabel": "搜索",
+  "searchPlaceholder": "搜索...",
+  "noCourses": "尚未分配课程。",
+  "noMatches": "未找到匹配的记录",
+  "notAssigned": "尚未分配",
+  "table": {
+    "sNo": "序号",
+    "courses": "已选课程",
+    "teacher": "任课教师"
+  },
+  "content": {
+    "empty": "暂无课程内容。",
+    "due": "截止 {date}"
+  }
+}

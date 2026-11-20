@@ -51,15 +51,25 @@ export function countStatuses(classes) {
   };
 }
 
+// date-fns options for an optional `locale` argument (ignored unless it is a date-fns locale object).
+const withLocale = (locale) => (locale && typeof locale === "object" ? { locale } : undefined);
+
 /**
  * Why a day has no classes, for the "No classes" card. Self-Study students (SCHOLARSHIP /
  * SSP) rarely have live classes, so a plain weekday is a course-work day for them, never
  * "game day" (plan section 6.1).
+ * Pass `t` = useTranslations("calendar") for the dashboard language (calendar.k5.noClass.*); without it the text is English.
  */
-export function noClassReason(key, day, { isSelfStudy, firstName }) {
-  if (day.holidays.length) return { kind: "holiday", title: day.holidays[0].title || day.holidays[0].eventTitle || "Holiday", text: "It's a holiday. No school today!" };
-  if (isWeekendKey(key)) return { kind: "weekend", title: "Weekend!", text: "It's the weekend. No school today!" };
-  if (isSelfStudy) return { kind: "study", title: "No live classes", text: "Keep going with your courses today!" };
+export function noClassReason(key, day, { isSelfStudy, firstName, t }) {
+  if (day.holidays.length)
+    return {
+      kind: "holiday",
+      title: day.holidays[0].title || day.holidays[0].eventTitle || (t ? t("k5.noClass.holidayTitle") : "Holiday"),
+      text: t ? t("k5.noClass.holidayText") : "It's a holiday. No school today!",
+    };
+  if (isWeekendKey(key)) return { kind: "weekend", title: t ? t("k5.noClass.weekendTitle") : "Weekend!", text: t ? t("k5.noClass.weekendText") : "It's the weekend. No school today!" };
+  if (isSelfStudy) return { kind: "study", title: t ? t("k5.noClass.studyTitle") : "No live classes", text: t ? t("k5.noClass.studyText") : "Keep going with your courses today!" };
+  if (t) return { kind: "free", title: t("k5.noClass.freeTitle"), text: firstName ? t("k5.noClass.freeTextNamed", { name: firstName }) : t("k5.noClass.freeText") };
   return { kind: "free", title: "No classes!", text: `There are no classes today. Enjoy your free day${firstName ? `, ${firstName}` : ""}!` };
 }
 
@@ -87,8 +97,12 @@ export function gameAccess(days, dateKey, todayKey) {
   return { locked: false, reason: null };
 }
 
-/** Short summary for a day (month summary bar, tomorrow card). */
-export function daySummary(key, day, todayKey, { isSelfStudy }) {
+/**
+ * Short summary for a day (month summary bar, tomorrow card).
+ * Pass `t` = useTranslations("calendar") for the dashboard language (calendar.k5.summary.*); without it the text is English.
+ */
+export function daySummary(key, day, todayKey, { isSelfStudy, t }) {
+  if (t) return daySummaryTranslated(key, day, todayKey, { isSelfStudy, t });
   const parts = [];
   if (day.holidays.length) parts.push(`${day.holidays[0].title || day.holidays[0].eventTitle || "Holiday"} · No school`);
   if (day.classes.length) {
@@ -104,6 +118,23 @@ export function daySummary(key, day, todayKey, { isSelfStudy }) {
   return parts.join(" · ");
 }
 
+// daySummary() with the dashboard language's messages: same parts, same order.
+function daySummaryTranslated(key, day, todayKey, { isSelfStudy, t }) {
+  const parts = [];
+  if (day.holidays.length) parts.push(t("k5.summary.holiday", { name: day.holidays[0].title || day.holidays[0].eventTitle || t("k5.noClass.holidayTitle") }));
+  if (day.classes.length) {
+    const { done, live } = countStatuses(day.classes);
+    const count = day.classes.length;
+    if (live) parts.push(t("k5.summary.classesLive", { count, name: classTitle(day.classes.find((c) => c.k5Status === "live")) }));
+    else if (done === day.classes.length && key <= todayKey) parts.push(t("k5.summary.classesDone", { count }));
+    else parts.push(t("k5.summary.classes", { count }));
+  }
+  if (day.assignments.length) parts.push(t("k5.summary.assignmentsDue", { count: day.assignments.length }));
+  if (day.activities.length) parts.push(day.activities[0].title || day.activities[0].eventTitle || t("k5.summary.schoolActivity"));
+  if (!parts.length) parts.push(isWeekendKey(key) ? t("k5.summary.weekend") : isSelfStudy ? t("k5.summary.selfStudy") : t("k5.summary.free"));
+  return parts.join(" · ");
+}
+
 /** The Monday-to-Sunday week containing `date` (mockup: 5 school days + Sat · Sun), as day keys. */
 export function weekKeys(date) {
   const start = addDays(date, -((getDay(date) + 6) % 7));
@@ -115,9 +146,10 @@ export const cleanCourseLabel = (name) => String(name || "").replace(/\s+v\d+\b.
 
 export const classTitle =(event) => event.courseName || event.subjectName || event.eventTitle || event.title || "Class";
 export const activityTitle = (event) => event.title || event.eventTitle || "School activity";
-export const timeLabel = (event) => (event.startZoned && !event.allDay ? format(event.startZoned, "h:mm a") : "");
-export const timeRange = (event) =>
-  event.startZoned && event.endZoned && !event.allDay ? `${format(event.startZoned, "h:mm")} – ${format(event.endZoned, "h:mm a")}` : "";
+// `locale` (optional, a date-fns locale such as useDateFnsLocale()) only changes the AM/PM words.
+export const timeLabel = (event, locale) => (event.startZoned && !event.allDay ? format(event.startZoned, "h:mm a", withLocale(locale)) : "");
+export const timeRange = (event, locale) =>
+  event.startZoned && event.endZoned && !event.allDay ? `${format(event.startZoned, "h:mm")} – ${format(event.endZoned, "h:mm a", withLocale(locale))}` : "";
 
 /** "Ms. Lily Morgan" -> "LM" for the teacher bubble. */
 export function initials(name) {

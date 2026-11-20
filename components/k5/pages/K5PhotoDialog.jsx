@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Minus, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 /**
  * Change profile photo (mockup camera button on the avatar; the existing page crops with cropper.js). A small crop
@@ -21,6 +22,8 @@ export function K5PhotoDialog({ file, onCancel, onSave, saving }) {
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const drag = useRef(null);
   const saveRef = useRef(null);
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
 
   useEffect(() => {
     if (!file) return undefined;
@@ -85,13 +88,13 @@ export function K5PhotoDialog({ file, onCancel, onSave, saving }) {
         className="flex w-full max-w-[420px] flex-col items-center gap-4 rounded-[26px] border-[3px] border-k5-ink bg-k5-card p-6 shadow-[0_6px_0_var(--k5-ink)]"
       >
         <h2 id="k5-photo-h" className="m-0 self-start font-k5-display text-2xl font-semibold">
-          Change profile photo
+          {t("page.changePhoto")}
         </h2>
-        <p className="m-0 self-start text-[15px] font-extrabold text-k5-mut">Drag the picture to move it. Use the slider to zoom.</p>
+        <p className="m-0 self-start text-[15px] font-extrabold text-k5-mut">{t("photo.hint")}</p>
         <div
           tabIndex={0}
           role="img"
-          aria-label="Photo preview. Use the arrow keys to move it."
+          aria-label={t("photo.preview")}
           onKeyDown={(e) => {
             const step = 10;
             const moves = { ArrowLeft: [step, 0], ArrowRight: [-step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] };
@@ -127,7 +130,7 @@ export function K5PhotoDialog({ file, onCancel, onSave, saving }) {
           )}
         </div>
         <div className="flex w-full items-center gap-3">
-          <button type="button" onClick={() => setZoomClamped(zoom - 0.2)} aria-label="Zoom out" className="flex h-10 w-10 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card text-k5-ink">
+          <button type="button" onClick={() => setZoomClamped(zoom - 0.2)} aria-label={t("photo.zoomOut")} className="flex h-10 w-10 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card text-k5-ink">
             <Minus className="h-5 w-5" aria-hidden="true" />
           </button>
           <input
@@ -137,16 +140,16 @@ export function K5PhotoDialog({ file, onCancel, onSave, saving }) {
             step={0.01}
             value={zoom}
             onChange={(e) => setZoomClamped(Number(e.target.value))}
-            aria-label="Zoom"
+            aria-label={t("photo.zoom")}
             className="min-w-0 flex-1 cursor-pointer accent-[var(--k5-ac)]"
           />
-          <button type="button" onClick={() => setZoomClamped(zoom + 0.2)} aria-label="Zoom in" className="flex h-10 w-10 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card text-k5-ink">
+          <button type="button" onClick={() => setZoomClamped(zoom + 0.2)} aria-label={t("photo.zoomIn")} className="flex h-10 w-10 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card text-k5-ink">
             <Plus className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
         <div className="flex w-full flex-wrap justify-end gap-2.5">
           <button type="button" onClick={onCancel} disabled={saving} className="min-h-12 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-5 font-k5-display text-[17px] font-semibold text-k5-ink disabled:opacity-50">
-            Cancel
+            {tc("actions.cancel")}
           </button>
           <button
             ref={saveRef}
@@ -155,7 +158,7 @@ export function K5PhotoDialog({ file, onCancel, onSave, saving }) {
             disabled={!img || saving}
             className="min-h-12 cursor-pointer rounded-full border-[3px] border-k5-ac bg-k5-ac px-5 font-k5-display text-[17px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)] disabled:cursor-wait disabled:opacity-60"
           >
-            {saving ? "Saving…" : "Save photo"}
+            {saving ? tc("status.saving") : t("photo.save")}
           </button>
         </div>
       </div>

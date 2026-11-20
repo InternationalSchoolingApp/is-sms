@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Info } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ export function ConfirmDialog({ request: incoming, onResolve }) {
   // keeps animating closed for a moment — keep rendering the last request so
   // the message/buttons don't vanish and the default "I understand and agree"
   // label doesn't flash during that close animation.
+  const t = useTranslations("shared.confirmDialog");
   const [request, setRequest] = useState(incoming);
   if (incoming && incoming !== request) setRequest(incoming);
 
@@ -29,16 +31,16 @@ export function ConfirmDialog({ request: incoming, onResolve }) {
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-white">
             <Info className="h-3.5 w-3.5" />
           </span>
-          <DialogTitle className="text-lg">Information</DialogTitle>
+          <DialogTitle className="text-lg">{t("title")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-2 text-center text-sm text-slate-700">{request?.message}</div>
         <DialogFooter className="sm:justify-center">
             <div className="flex justify-center gap-3">
               <Button type="button" onClick={() => {onResolve(true)}} className="rounded-md bg-primary hover:bg-primary/90">
-                {request?.confirmLabel || "I understand and agree"}
+                {request?.confirmLabel || t("confirm")}
               </Button>
               <Button type="button" variant="outline" onClick={() => onResolve(false)}>
-                {request?.cancelLabel || "No"}
+                {request?.cancelLabel || t("cancel")}
               </Button>
             </div>
         </DialogFooter>

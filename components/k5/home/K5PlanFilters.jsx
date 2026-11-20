@@ -2,14 +2,17 @@
 
 import { useId, useState } from "react";
 import { Check, SlidersHorizontal } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 /**
  * "What to show" - the legacy calendar's filters (renderCalendarFilters) for the grade looks: which kinds of items,
  * assignments and classes appear on the plan. The course on/off toggles stay in My Courses. The choices are the same
  * ones (and the same saved preference) as the standard calendar, so they follow the student between looks.
+ * Shown as k5Home.filters.groups.<id> / filters.items.<key> (the English text here is for reference).
  */
 const GROUPS = [
   {
+    id: "plan",
     title: "On my plan",
     items: [
       ["classes", "Classes"],
@@ -19,6 +22,7 @@ const GROUPS = [
     ],
   },
   {
+    id: "assignments",
     title: "Assignments",
     items: [
       ["pendingAssignments", "Pending"],
@@ -27,6 +31,7 @@ const GROUPS = [
     ],
   },
   {
+    id: "classes",
     title: "Classes",
     items: [
       ["liveActivities", "Live"],
@@ -39,6 +44,7 @@ const GROUPS = [
 ];
 
 export function K5PlanFilters({ filters, onToggle }) {
+  const t = useTranslations("k5Home.filters");
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const hidden = GROUPS.flatMap((g) => g.items).filter(([key]) => filters[key] === false).length;
@@ -55,11 +61,11 @@ export function K5PlanFilters({ filters, onToggle }) {
         What to show{hidden > 0 ? ` (${hidden} hidden)` : ""}
       </button> */}
       {open && (
-        <div id={panelId} role="group" aria-label="What to show on my plan" className="flex w-full flex-col gap-3 rounded-[18px] border-[3px] border-k5-line bg-k5-card p-3.5">
+        <div id={panelId} role="group" aria-label={t("label")} className="flex w-full flex-col gap-3 rounded-[18px] border-[3px] border-k5-line bg-k5-card p-3.5">
           {GROUPS.map((group) => (
             <div key={group.title} className="flex flex-wrap items-center gap-2">
-              <span className="min-w-28 font-k5-display text-base font-semibold text-k5-ink">{group.title}</span>
-              {group.items.map(([key, label]) => {
+              <span className="min-w-28 font-k5-display text-base font-semibold text-k5-ink">{t(`groups.${group.id}`)}</span>
+              {group.items.map(([key]) => {
                 const on = filters[key] !== false;
                 return (
                   <button
@@ -74,7 +80,7 @@ export function K5PlanFilters({ filters, onToggle }) {
                     <span aria-hidden="true" className={`flex h-5 w-5 items-center justify-center rounded-full ${on ? "bg-k5-ac text-white" : "border-2 border-k5-line"}`}>
                       {on && <Check className="h-3.5 w-3.5" strokeWidth={3.5} />}
                     </span>
-                    {label}
+                    {t(`items.${key}`)}
                   </button>
                 );
               })}

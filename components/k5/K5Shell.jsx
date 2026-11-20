@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { copyrightLine } from "@/utils/schoolBrand";
+import { useTranslations } from "next-intl";
 import { useParams, usePathname } from "next/navigation";
 import { RightActionRail } from "@/components/dashboard/RightActionRail";
 import { AppearanceProvider } from "@/components/appearance/AppearanceProvider";
@@ -59,6 +59,7 @@ function K5LookScope({ children }) {
 
 function K5Frame({ children }) {
   const { context, menu, menuLoading, logoUrl, schoolWebsite, session, isPreK, isMiddle, isHigh, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
+  const t = useTranslations("k5.shell");
   
   const pathname = usePathname();
   const dummy = useDummyStudent();
@@ -174,7 +175,10 @@ function K5Frame({ children }) {
 
       {/* Below 760px the action rail is a fixed bottom tab bar — keep the footer clear of it. */}
       <footer className="relative px-4 pb-6 pt-2 text-center text-[13px] font-bold text-k5-mut max-[760px]:pb-[110px]">
-        {copyrightLine(context.schoolName)}
+        {/* Same line as copyrightLine() (utils/schoolBrand.js), in the student's language. */}
+        {context.schoolName
+          ? t("copyright", { year: new Date().getFullYear(), school: context.schoolName })
+          : t("copyrightNoSchool", { year: new Date().getFullYear() })}
       </footer>
 
       {/* The home planner shows the live-class dialog itself; on every other page this does. */}

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import {
   ArrowDown,
   ArrowUp,
@@ -55,10 +56,11 @@ import { getCourseAddCheck, hidesCourseCredits, validateCourseCredits } from "@/
 import { getLearningProgramBackendValue } from "@/utils/learningProgramTheme";
 import { saveWizardStudentFields } from "@/utils/wizardStorage";
 import { legacyEnrollmentProcessUrl } from "@/utils/backendOrigin";
+import { labelKey } from "@/i18n/labels";
 import { FaAngleRight, FaArrowDown, FaExchangeAlt, FaRegEyeSlash } from "react-icons/fa";
 import { TfiAngleDown, TfiAngleUp } from "react-icons/tfi";
 
-const GENERIC_ERROR = "Something went wrong. Please check your connection and try again.";
+// Texts: shared.courseSelection (also rendered by the enrollment wizard, where the root provider gives English).
 
 // Mobile category-sheet (CourseCategoryDialog) behavior after a successful
 // "Add": true closes the dialog and returns to the category list (one course
@@ -77,18 +79,19 @@ function isNoLiveClasses(subject, registrationType) {
 }
 
 // Header over the selected list, as in getCourseSelectionContent() (signupStudentContent.js).
-function selectedSummary(data) {
+function selectedSummary(data, t) {
   const count = data.selectedSubjects?.length || 0;
-  if (count === 0) return "Select Courses from below";
+  if (count === 0) return t("selectFromBelow");
   if (data.registrationType === "BATCH" || Number(data.courseProviderId) === 39) {
-    return `${count} fixed ${count > 1 ? "courses" : "course"}`;
+    return t("fixedCourses", { count });
   }
+  const credit = String(data.totalCredit ?? "");
   if (hidesCourseCredits(data.standardId)) {
-    return count > 1 ? `${count} courses selected` : `${count} course worth ${data.totalCredit} credit`;
+    return count > 1 ? t("coursesSelectedCount", { count }) : t("oneCourseWorth", { count, credit });
   }
   return count > 1
-    ? `You have ${count} courses worth ${data.totalCredit} credits`
-    : `You have ${count} course worth ${data.totalCredit} credit`;
+    ? t("youHaveCourses", { count, credit })
+    : t("youHaveOneCourse", { count, credit });
 }
 
 // Header over the available list, same source.
@@ -103,25 +106,25 @@ function availableSummary(data) {
   return `Please select ${what} worth ${total === 0 ? min : max - total} ${single ? "credit" : "credits"}`;
 }
 
-function subjectNotes(subject, data, showPaymentOption) {
+function subjectNotes(subject, data, showPaymentOption, t) {
   const notes = [];
-  if (isNoLiveClasses(subject, data.registrationType)) notes.push("This course does not offer live classes");
+  if (isNoLiveClasses(subject, data.registrationType)) notes.push(t("noteNoLiveClasses"));
   if (showPaymentOption === "Y") {
-    if (subject.materialFee > 0) notes.push(`${subject.materialFeeString} extra for external materials`);
+    if (subject.materialFee > 0) notes.push(t("noteMaterialFee", { fee: String(subject.materialFeeString ?? "") }));
     if (data.registrationType !== "ONE_TO_ONE_FLEX" && subject.additionalFee > 0) {
       const overMax = Number(data.totalCredit) > Number(data.maxCourseLimit);
-      notes.push(`${overMax ? subject.subjectPriceString : subject.additionalFeeString} extra for ${subject.courseType} courses`);
+      notes.push(t("noteAdditionalFee", { fee: String((overMax ? subject.subjectPriceString : subject.additionalFeeString) ?? ""), courseType: String(subject.courseType ?? "") }));
     }
   }
   return notes;
 }
 
-function upgradeHint(courseType) {
+function upgradeHint(courseType, t) {
   if (courseType === "ADV") {
-    return "Advance courses have more assessments & assignments as compared to regular courses and contribute to a higher GPA.";
+    return t("hintAdvance");
   }
   if (courseType === "HON") {
-    return "Honors courses have more assessments & assignments as compared to regular courses and contribute to a higher GPA.";
+    return t("hintHonors");
   }
   return undefined;
 }
@@ -138,9 +141,9 @@ function stripVariantSuffix(name) {
 // A category whose courses are ALL already selected has an addable count of zero
 // (counts stay addable-only by design), and "0 courses available" reads as if the
 // category were empty when it's really full. Name that state instead.
-function addableCountLabel(count) {
-  if (count === 0) return "All selected";
-  return `${count} course${count === 1 ? "" : "s"} available`;
+function addableCountLabel(count, t) {
+  if (count === 0) return t("allSelected");
+  return t("coursesAvailable", { count });
 }
 
 // A ticked row in the "choose courses" pane can be removed from there as well as
@@ -151,10 +154,11 @@ function canRemoveSelected(subject) {
   return Boolean(subject.selectedCourse) && subject.courseMandatory === 0;
 }
 function CourseSummaryLink({ url }) {
+  const t = useTranslations("shared.courseSelection");
   if (!url) return null;
   return (
     <a href={url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">
-      Course summary
+      {t("courseSummary")}
     </a>
   );
 }
@@ -226,8 +230,15 @@ function summarizeSelection(selectedCourses, gradeBand) {
   return buckets;
 }
 
+// Flexy grade names (constant/FlexyGrades.js keeps them in English): shared.courseSelection.flexyGrades.<labelKey>.
+function flexyGradeLabel(label, t) {
+  const key = `flexyGrades.${labelKey(label)}`;
+  return label && t.has(key) ? t(key) : label;
+}
+
 // CSS conic-gradient ring, no chart library needed.
 function CreditProgressRing({ value, max, unit = "credits", size = 12 }) {
+  const t = useTranslations("shared.courseSelection");
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   const innerSize = size - 3;
   return (
@@ -235,7 +246,7 @@ function CreditProgressRing({ value, max, unit = "credits", size = 12 }) {
       className="relative flex shrink-0 items-center justify-center rounded-full"
       style={{ height: `${size * 0.25}rem`, width: `${size * 0.25}rem`, background: `conic-gradient(var(--primary) ${pct * 3.6}deg, #dbeafe ${pct * 3.6}deg)` }}
       role="img"
-      aria-label={`${value} of ${max} ${unit} selected`}
+      aria-label={t("progressRing", { value, max, unit })}
     >
       <div className="rounded-full bg-white" style={{ height: `${innerSize * 0.25}rem`, width: `${innerSize * 0.25}rem` }} />
     </div>
@@ -248,18 +259,19 @@ function CreditProgressRing({ value, max, unit = "credits", size = 12 }) {
 // confirmation gate (extra fee, warning message) still lives inside
 // upgrade() itself and still runs before anything changes.
 function VariantToggle({ course, target, onToggle, disabled }) {
+  const t = useTranslations("shared.courseSelection");
   const isTarget = course.courseTypeOriginal !== "Regular";
   // Off: label names the variant you'd switch TO (target); on: names the
   // variant the course currently is. Width follows the label, so "Honors" and
   // "Advanced" both fit with the knob on the opposite side.
-  const label = /adv/i.test(isTarget ? course.courseTypeOriginal : target.courseType) ? "Advance" : "Honors";
-  const hint = upgradeHint(target.courseType);
+  const label = /adv/i.test(isTarget ? course.courseTypeOriginal : target.courseType) ? t("advance") : t("honors");
+  const hint = upgradeHint(target.courseType, t);
   const toggleButton = (
     <button
       type="button"
       role="switch"
       aria-checked={isTarget}
-      aria-label={target.buttonLabel || "Switch course variant"}
+      aria-label={target.buttonLabel || t("switchVariant")}
       onClick={() => onToggle(course, target)}
       disabled={disabled}
       className={`inline-flex cursor-pointer h-6 shrink-0 items-center gap-1 rounded-full px-1 transition-colors disabled:opacity-50 ${
@@ -312,6 +324,7 @@ function useIsMobile(breakpointPx = 768) {
 // gates, same request per subject, just triggered per-row instead of via a
 // checkbox + batch "Add" button.
 function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentOption, busy, onAddSubject, onRemoveSubject, closeOnAdd }) {
+  const t = useTranslations("shared.courseSelection");
   const [addingId, setAddingId] = useState(null);
   const [removingId, setRemovingId] = useState(null);
 
@@ -356,14 +369,14 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
         <DialogHeader className="flex-row items-center gap-2 space-y-0  px-4 py-3">
           <div className="min-w-0 flex-1">
             <DialogTitle className="text-base font-semibold text-black">{course.courseName}</DialogTitle>
-            <p className="text-xs text-black">{addableCountLabel(course.subjects.length)}</p>
+            <p className="text-xs text-black">{addableCountLabel(course.subjects.length, t)}</p>
           </div>
         </DialogHeader>
         <div className="max-h-[60vh] divide-y divide-slate-100 overflow-y-auto">
           {(course.displaySubjects || course.subjects).map((subject) => {
             const id = String(subject.subjectId);
             const alreadySelected = subject.alreadySelected || selectedIds.includes(id);
-            const notes = subjectNotes(subject, data, showPaymentOption);
+            const notes = subjectNotes(subject, data, showPaymentOption, t);
             return (
               <div key={id} className="flex items-center gap-3 px-4 py-3">
                 {/* <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg  text-black">
@@ -383,17 +396,17 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
                 </div>
                 {alreadySelected ? (
                   <span className="flex shrink-0 items-center gap-3">
-                    <span title="Already selected" className="flex items-center text-emerald-600">
+                    <span title={t("alreadySelected")} className="flex items-center text-emerald-600">
                       <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
-                      <span className="sr-only">Already selected</span>
+                      <span className="sr-only">{t("alreadySelected")}</span>
                     </span>
                     {canRemoveSelected(subject) && (
                       <button
                         type="button"
                         onClick={() => handleRemove(subject)}
                         disabled={busy || Boolean(addingId) || Boolean(removingId)}
-                        title="Remove course"
-                        aria-label={`Remove ${subject.subjectName}`}
+                        title={t("removeCourse")}
+                        aria-label={t("removeNamed", { name: subject.subjectName ?? "" })}
                         className="inline-flex cursor-pointer items-center text-red-600 hover:text-red-700 disabled:opacity-50"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -408,7 +421,7 @@ function CourseCategoryDialog({ course, onClose, selectedIds, data, showPaymentO
                     disabled={busy || Boolean(addingId) || Boolean(removingId)}
                     className="shrink-0 rounded-md bg-primary hover:bg-primary/90"
                   >
-                    <Plus className="h-4 w-4" /> {addingId === id ? "Adding…" : "Add"}
+                    <Plus className="h-4 w-4" /> {addingId === id ? t("adding") : t("add")}
                   </Button>
                 )}
               </div>
@@ -467,6 +480,8 @@ function Stage3Skeleton({ header }) {
 // (legacy "Course Selection For [Flexy - High School]"); `reEnrollmentGradeLocked` disables it (Take Individual Course);
 // `onReEnrollmentGradeChange(id)` tells the page the backend record now has that grade.
 export function Stage3CourseSelection({ context, userId, standardId: initialStandardId, onNext, onBack, onSessionExpired, inReview = false, reEnrollment = false, reEnrollmentGrades, reEnrollmentGradeLocked = false, onReEnrollmentGradeChange }) {
+  const t = useTranslations("shared.courseSelection");
+  const tv = useTranslations("shared.signupValidation");
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   // Starts from the prop (Stage 1's saved grade at mount — see the doc
@@ -599,13 +614,13 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     if (showExtraCoursesToggle && !minCreditsReachedRef.current) {
       toast.success(
         <div>
-          <p className="text-lg font-bold text-black">You are all set!</p>
+          <p className="text-lg font-bold text-black">{t("allSet")}</p>
         </div>,
         { duration: 4000 }
       );
     }
     minCreditsReachedRef.current = showExtraCoursesToggle;
-  }, [data, showExtraCoursesToggle]);
+  }, [data, showExtraCoursesToggle, t]);
 
   // Flagged-seats notice: from the first load (derived here, no setState in an effect) or from a
   // later call (flaggedModal state, set in handleFailure). Closing it dismisses both.
@@ -631,9 +646,18 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     setConfirmRequest(null);
   }
 
+  // The course-count checks (utils/studentSignupValidation.js, shared with enrollment) return English: shown translated.
+  function creditMessage(message) {
+    const min = /^Please select a minimum of (.+) courses\.$/.exec(message || "");
+    if (min) return tv("minCourses", { count: min[1] });
+    const max = /^You can select a maximum of (.+) courses\.$/.exec(message || "");
+    if (max) return tv("maxCourses", { count: max[1] });
+    return message;
+  }
+
   function handleFailure(response, fallback) {
     if (!response) {
-      toast.error(GENERIC_ERROR);
+      toast.error(t("genericError"));
       return;
     }
     if (response.status === STATUS_SESSION_OUT) {
@@ -651,7 +675,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     try {
       const response = await update.mutateAsync({ standardId: data.standardId, ...change });
       if (!isSuccessResponse(response)) {
-        handleFailure(response, "Could not update your courses. Please try again.");
+        handleFailure(response, t("updateFailed"));
         return false;
       }
       // The backend's own "Course added"/"Course removed" message used to also render as an
@@ -660,7 +684,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       return true;
     } catch (err) {
       console.error("Stage3CourseSelection update failed:", err);
-      toast.error(GENERIC_ERROR);
+      toast.error(t("genericError"));
       return false;
     }
   }
@@ -673,23 +697,23 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     if (busy) return false;
     const check = getCourseAddCheck(data);
     if (check.blockedMessage) {
-      toast.error(check.blockedMessage);
+      toast.error(creditMessage(check.blockedMessage));
       return false;
     }
   if (check.extraFee && showPaymentOption === "Y") {
     const selectedCount = data.selectedSubjects?.length || 0;
     const confirmed = await ask({
-      title: "Extra fee",
+      title: t("extraFeeTitle"),
       message: (
         <>
           {!extraFeeNoticeShownRef.current && (
-            <p>Any course you add after the first {selectedCount} course{selectedCount === 1 ? "" : "s"} will have an extra fee.</p>
+            <p>{t("extraFeeNotice", { count: selectedCount })}</p>
           )}
-          <p>{subject.subjectName} has an extra fee of {subject.courseFeeString}. Would you like to add it?</p>
+          <p>{t("extraFeeQuestion", { name: String(subject.subjectName ?? ""), fee: String(subject.courseFeeString ?? "") })}</p>
         </>
       ),
-      confirmLabel: "Confirm & add",
-      cancelLabel: "Close",
+      confirmLabel: t("confirmAndAdd"),
+      cancelLabel: t("close"),
     });
       if (!confirmed) return false;
       extraFeeNoticeShownRef.current = true;
@@ -697,14 +721,17 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     if (Number(context.schoolNumericId) === 1 && subject.courseType === "Advanced Placement" && !apAcknowledgedRef.current) {
       
       const confirmed = await ask({
-        title: "AP course",
+        title: t("apTitle"),
         message: (
           <p>
-            {context.schoolName} is approved by College Board to offer AP courses. Kindly{" "}
-            <a href="https://about.collegeboard.org/contact-us" target="_blank" rel="noreferrer" className="text-primary underline">
-              contact
-            </a>{" "}
-            an authorized test centre for AP exams. AP courses are college level and approved by the College Board.
+            {t.rich("apMessage", {
+              school: String(context.schoolName ?? ""),
+              link: (chunks) => (
+                <a href="https://about.collegeboard.org/contact-us" target="_blank" rel="noreferrer" className="text-primary underline">
+                  {chunks}
+                </a>
+              ),
+            })}
           </p>
         ),
       });
@@ -713,8 +740,8 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     }
     if (isNoLiveClasses(subject, data.registrationType)) {
       const confirmed = await ask({
-        title: "No live classes",
-        message: <p>This course does not offer live classes. Would you like to add this course?</p>,
+        title: t("noLiveTitle"),
+        message: <p>{t("noLiveMessage")}</p>,
       });
       if (!confirmed) return false;
     }
@@ -724,7 +751,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       controlType: "add",
       courseId: course.courseId,
     });
-    if (added) toast.success(`${subject.subjectName} Added`);
+    if (added) toast.success(t("subjectAdded", { name: String(subject.subjectName ?? "") }));
     return added;
   }
 
@@ -735,20 +762,20 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       controlType: "remove",
       courseId: course.categoryId,
     });
-    if (removed) toast.success(`${course.courseName} Removed`);
+    if (removed) toast.success(t("subjectRemoved", { name: String(course.courseName ?? "") }));
   }
 
   async function removeAll() {
     if (busy) return;
     const confirmed = await ask({
-      title: "Remove all courses",
-      message: <p>Are you sure you want to remove all selected courses?</p>,
-      confirmLabel: "Yes",
+      title: t("removeAllTitle"),
+      message: <p>{t("removeAllMessage")}</p>,
+      confirmLabel: t("yes"),
     });
     if (!confirmed) return;
     apAcknowledgedRef.current = false;
     const removed = await applyChange({ selectedSubjects: "", controlType: "remove" });
-    if (removed) toast.success("All Courses Removed");
+    if (removed) toast.success(t("allRemoved"));
   }
 
   async function upgrade(course, target) {
@@ -760,11 +787,11 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     const targetName = target.courseName || `${stripVariantSuffix(course.courseName)}${backToRegular ? "" : ` ${variantLabel}`}`;
     if (target.warningMessage && showPaymentOption === "Y") {
       const fee = target.additionalFeeString || target.courseFeeString || target.subjectPriceString ||
-        target.warningMessage.match(/\$[\d,.]+/)?.[0] || "an additional fee";
+        target.warningMessage.match(/\$[\d,.]+/)?.[0] || t("anAdditionalFee");
       const confirmed = await ask({
-        title: target.buttonLabel || "Change course",
-        message: <p>{targetName} has an extra fee of {fee}. Would you like to switch to this course?</p>,
-        confirmLabel: "Yes",
+        title: target.buttonLabel || t("changeCourse"),
+        message: <p>{t("switchFeeQuestion", { name: String(targetName ?? ""), fee: String(fee) })}</p>,
+        confirmLabel: t("yes"),
       });
       if (!confirmed) return;
     }
@@ -794,12 +821,12 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       // upgrade is switching TO the alternate (Honors/Advanced) variant named by target.courseType.
       const subjectName = stripVariantSuffix(course.courseName);
       if (backToRegular) {
-        toast.success(`Switched back to ${subjectName}`);
+        toast.success(t("switchedBack", { name: subjectName }));
       } else {
         // Named from the TARGET alone. Keying this off the course's current type
         // left several branches with no return — Honors -> Advanced among them —
         // and the undefined reached the toast as "<course> undefined Added".
-        toast.success(`${subjectName} ${variantLabel} Added`);
+        toast.success(t("subjectAdded", { name: `${subjectName} ${variantLabel}` }));
       }
     }
   }
@@ -809,7 +836,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       const fields = { ...(studentPrefill.data || {}), standardId: newStandardId, dob: newDob };
       const saveResponse = await changeGrade.mutateAsync(fields);
       if (!isSuccessResponse(saveResponse)) {
-        handleFailure(saveResponse, "Could not save the new grade. Please try again.");
+        handleFailure(saveResponse, t("gradeSaveFailed"));
         return;
       }
       // Keep the prefill cache in sync with what was just saved — otherwise
@@ -836,11 +863,11 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         controlType: "remove",
       });
       if (!isSuccessResponse(courseResponse)) {
-        handleFailure(courseResponse, "Grade saved, but could not refresh courses for it. Please try again.");
+        handleFailure(courseResponse, t("gradeRefreshFailed"));
       }
     } catch (err) {
       console.error("Stage3CourseSelection change-grade failed:", err);
-      toast.error(GENERIC_ERROR);
+      toast.error(t("genericError"));
     }
   }
 
@@ -853,10 +880,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     if (selectedIds.length > 0) {
       const target = reEnrollmentGrades?.find((grade) => grade.id === newStandardId);
       const confirmed = await ask({
-        title: "Change grade",
-        message: <p>You are about to switch to {target?.short || target?.label} courses. Please note that your course selection will be lost. Do you wish to proceed?</p>,
-        confirmLabel: "Yes",
-        cancelLabel: "No",
+        title: t("changeGradeTitle"),
+        message: <p>{t("changeGradeMessage", { grade: String(flexyGradeLabel(target?.short || target?.label, t) ?? "") })}</p>,
+        confirmLabel: t("yes"),
+        cancelLabel: t("no"),
       });
       if (!confirmed) return;
     }
@@ -870,7 +897,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       });
       if (!isSuccessResponse(response)) {
         setStandardId(previousStandardId);
-        handleFailure(response, "Could not switch the grade. Please try again.");
+        handleFailure(response, t("gradeSwitchFailed"));
         return;
       }
       apAcknowledgedRef.current = false;
@@ -878,7 +905,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     } catch (err) {
       console.error("Stage3CourseSelection re-enrollment grade change failed:", err);
       setStandardId(previousStandardId);
-      toast.error(GENERIC_ERROR);
+      toast.error(t("genericError"));
     }
   }
 
@@ -887,13 +914,13 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     try {
       const response = await recommended.mutateAsync();
       if (!isSuccessResponse(response)) {
-        handleFailure(response, "Could not load recommended courses.");
+        handleFailure(response, t("recommendedFailed"));
         return;
       }
       setRecommendedData(response);
     } catch (err) {
       console.error("Stage3CourseSelection recommended-courses failed:", err);
-      toast.error(GENERIC_ERROR);
+      toast.error(t("genericError"));
     }
   }
 
@@ -902,7 +929,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     const saved = await applyChange({ selectedSubjects: ids.join(","), controlType: "add" });
     if (saved) {
       setRecommendedData(null);
-      toast.success("Recommended courses added");
+      toast.success(t("recommendedAdded"));
     }
   }
 
@@ -927,7 +954,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     if (busy) return;
     const creditError = validateCourseCredits(data);
     if (creditError) {
-      toast.error(creditError);
+      toast.error(creditMessage(creditError));
       return;
     }
     if (reEnrollment) {
@@ -937,13 +964,13 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
     try {
       const { ok, response } = await proceed.mutateAsync({ courseData: data, showPaymentOption });
       if (!ok) {
-        handleFailure(response, "Could not continue. Please try again.");
+        handleFailure(response, t("continueFailed"));
         return;
       }
       onNext?.();
     } catch (err) {
       console.error("Stage3CourseSelection proceed failed:", err);
-      toast.error(GENERIC_ERROR);
+      toast.error(t("genericError"));
     }
   }
 
@@ -951,7 +978,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
   const gradeSelect =
     reEnrollment && reEnrollmentGrades?.length > 0 ? (
       <select
-        aria-label="Course Selection For"
+        aria-label={t("gradeSelectLabel")}
         value={String(data?.standardId ?? "")}
         onChange={(event) => handleReEnrollmentGradeChange(event.target.value)}
         disabled={busy || reEnrollmentGradeLocked}
@@ -959,7 +986,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       >
         {reEnrollmentGrades.map((grade) => (
           <option key={grade.id} value={String(grade.id)}>
-            {grade.label}
+            {flexyGradeLabel(grade.label, t)}
           </option>
         ))}
       </select>
@@ -971,7 +998,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       {/* Program name is now shown by EnrollmentWizardShell's own hero above this card. */}
       <h2 className={`flex items-center justify-center gap-2 text-center text-xl font-bold md:text-2xl ${showExtraCoursesToggle ? "text-[#3fa43c]" : "text-black"}`}>
         {showExtraCoursesToggle && <CheckCircle2 className="h-5 w-5 shrink-0 md:h-6 md:w-6 stroke-3" aria-hidden="true" />}
-        <span className="inline">{showExtraCoursesToggle ? "Course Selection Completed" : "Course Selection"}</span>
+        <span className="inline">{showExtraCoursesToggle ? t("titleCompleted") : t("title")}</span>
       </h2>
     </>
   );
@@ -984,16 +1011,16 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       <div>
         {header}
         <p className="mt-8 text-sm font-semibold text-red-600">
-          {initialFailure?.message || "Could not load your courses."}
+          {initialFailure?.message || t("loadFailed")}
         </p>
         <div className="mt-6 flex gap-3">
           {onBack && (
             <Button type="button" variant="outline" onClick={onBack} disabled={busy}>
-              Back
+              {t("back")}
             </Button>
           )}
           <Button type="button" onClick={() => courseQuery.refetch()} disabled={courseQuery.isFetching}>
-            Try again
+            {t("tryAgain")}
           </Button>
         </div>
         <FlaggedSeatsModal
@@ -1127,7 +1154,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             disabled={busy}
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
           >
-            Change <FaExchangeAlt className="h-3.5 w-3.5 stroke-3" />
+            {t("change")} <FaExchangeAlt className="h-3.5 w-3.5 stroke-3" />
           </button>
           )}
         </div>
@@ -1137,7 +1164,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       {reEnrollment && (showExtraCoursesToggle || reEnrollmentGrades?.length > 0) && (
         <h2 className={`mb-1 flex items-center justify-center gap-2 text-center text-xl font-bold md:text-2xl ${showExtraCoursesToggle ? "text-[#3fa43c]" : "text-black"}`}>
           {showExtraCoursesToggle && <CheckCircle2 className="h-5 w-5 shrink-0 md:h-6 md:w-6 stroke-3" aria-hidden="true" />}
-          <span className="inline">{showExtraCoursesToggle ? "Course Selection Completed" : "Course Selection"}</span>
+          <span className="inline">{showExtraCoursesToggle ? t("titleCompleted") : t("title")}</span>
         </h2>
       )}
 
@@ -1159,7 +1186,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               disabled={busy}
               className="inline-flex items-center gap-1.5 ml-auto rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
             >
-              Change Grade <FaExchangeAlt className="h-3 w-3 stroke-3" />
+              {t("changeGrade")} <FaExchangeAlt className="h-3 w-3 stroke-3" />
             </button>
             )}
           </div>
@@ -1169,10 +1196,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
           <div className="flex items-center gap-2 justify-center border-slate-300 sm:border-l sm:pl-4">
             <div>
               <div className="flex">
-                <p className="text-xs text-black">You need to select</p>
+                <p className="text-xs text-black">{t("youNeedToSelect")}</p>
               </div>
               <p className="text-xs font-bold text-black">
-                at least {data.minCourseLimit} course{data.minCourseLimit == 1 ? "" : "s"}
+                {t("atLeastCourses", { count: Number(data.minCourseLimit) })}
               </p>
             </div>
           </div>
@@ -1183,7 +1210,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             <CreditProgressRing value={selectedCourseCount} max={displayCourseCountTarget} unit="courses" size={10} />
             <div>
               <p className="text-base font-bold text-primary">{selectedCourseCount}/{displayCourseCountTarget}</p>
-              <p className="text-xs font-bold text-black">Courses Selected</p>
+              <p className="text-xs font-bold text-black">{t("coursesSelected")}</p>
             </div>
           </div>
         )}
@@ -1203,7 +1230,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               <p className="text-base font-bold text-primary">
                 {selectedCourseCount}/{Math.max(Number(data.minCourseLimit) || 0, selectedCourseCount)}
               </p>
-              <p className="text-xs font-bold text-black">Courses Selected</p>
+              <p className="text-xs font-bold text-black">{t("coursesSelected")}</p>
             </div>
           </div>
         )}
@@ -1225,7 +1252,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
       {showMinBanner && !showCreditSummary && gradeBand === "high" && (
           <div className="md:last:w-full rounded-lg py-1 text-center mt-4 tracking-wide bg-amber-100 text-dark-900">
           <span className="  px-3 py-1 text-md font-semibold uppercas">
-            You need a minimum of {data.minCourseLimit} credits
+            {t("minimumCredits", { count: String(data.minCourseLimit ?? "") })}
           </span>
           </div>
         )}
@@ -1242,9 +1269,9 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                 <>
                   {/* <span className="md:hidden">Selected Courses: <span className="text-primary">{selectedCourseCount}/{displayCourseCountTarget} courses</span></span>
                   <span className="hidden md:inline">Selected Courses</span> */}
-                  <div className="text-center md:text-center w-full">Your <span className="text-primary">{selectedCourseCount}</span> Selected Courses</div>
+                  <div className="text-center md:text-center w-full">{t.rich("yourSelectedCourses", { count: selectedCourseCount, hl: (chunks) => <span className="text-primary">{chunks}</span> })}</div>
                 </>
-              ) : <><div className="text-center md:text-center w-full">Your <span className="text-primary">{selectedCourseCount}</span> Selected Courses</div></>}
+              ) : <><div className="text-center md:text-center w-full">{t.rich("yourSelectedCourses", { count: selectedCourseCount, hl: (chunks) => <span className="text-primary">{chunks}</span> })}</div></>}
             </h2>
             
               {canRemoveAll && (
@@ -1258,13 +1285,13 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                           onClick={removeAll}
                           disabled={busy}
                           className="inline-flex items-center gap-1 cursor-pointer text-xs font-semibold rounded-xl px-4 py-1 border border-red-600 text-red-600 hover:text-red-700"
-                          aria-label="Remove all courses"
+                          aria-label={t("removeAllCourses")}
                         />
                       }
                     >
-                      All <Trash2 className="h-4 w-4" />
+                      {t("all")} <Trash2 className="h-4 w-4" />
                     </TooltipTrigger>
-                    <TooltipContent>Remove all course</TooltipContent>
+                    <TooltipContent>{t("removeAllTooltip")}</TooltipContent>
                   </Tooltip>
                 </div>
               )}
@@ -1282,10 +1309,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white">
                         <Check className="h-3 w-3 text-[#3fa43c]" strokeWidth={5} />
                       </span>
-                      {selectedCourseCount} Course{selectedCourseCount === 1 ? "" : "s"} selected
+                      {t("nCoursesSelected", { count: selectedCourseCount })}
                     </span>
                   ) : (
-                    <span className="inline-flex flex-1 ml-4 justify-center items-center gap-2 text-sm font-bold">Select at least {minCourseCount} course{minCourseCount === 1 ? "" : "s"}</span>
+                    <span className="inline-flex flex-1 ml-4 justify-center items-center gap-2 text-sm font-bold">{t("selectAtLeast", { count: minCourseCount })}</span>
                   )}
                   {canRemoveAll && (
                     <button
@@ -1295,8 +1322,8 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                       className={`inline-flex shrink-0 ml-auto items-center gap-1.5 rounded-full bg-white/20 text-white hover:bg-white/30 disabled:opacity-60 ${
                         courseMinMet ? "px-3 py-0.5" : "px-3 py-1.5 text-xs font-semibold"
                       }`}
-                      aria-label="Remove all courses"
-                    > All
+                      aria-label={t("removeAllCourses")}
+                    > {t("all")}
                       <Trash2 className="h-4 w-4" />
                       
                       {/* {!courseMinMet && "Clear all"} */}
@@ -1323,15 +1350,15 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
                 {!courseMinMet ? (
                   <div className="mt-2.5 flex items-center justify-center gap-3">
-                    <span className="text-xs font-bold  text-white/90">{selectedCourseCount} Selected</span>
-                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-primary">{remainingCourses} More needed</span>
+                    <span className="text-xs font-bold  text-white/90">{t("nSelected", { count: selectedCourseCount })}</span>
+                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-primary">{t("moreNeeded", { count: remainingCourses })}</span>
                   </div>
                 ) : extraCourseCount > 0 ? (
                   // <p className="mt-2 text-xs text-white/90 text-center font-bold">
                   //   <span className="inline-flex bg-white px-2 pt-0.5 pb-0.75 rounded-lg text-black items-center"><label className="text-[#3fa43c] mr-0.5">{data.minCourseLimit} selected</label> | <label className="text-orange-400">{extraCourseCount} extra course{extraCourseCount === 1 ? "" : "s"} added</label></span> 
                   // </p>
                   <p className="mt-2 flex justify-center flex-1 text-xs text-white/90 text-center font-bold">
-                    {data.minCourseLimit} Selected <RxDividerVertical className="w-4 h-4 stroke-1" /> {extraCourseCount} Extra course{extraCourseCount === 1 ? "" : "s"} added
+                    {t("nSelected", { count: String(data.minCourseLimit ?? "") })} <RxDividerVertical className="w-4 h-4 stroke-1" /> {t("extraCoursesAdded", { count: extraCourseCount })}
                   </p>  
                 ) : null}
               </div>
@@ -1343,7 +1370,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               </span>
             )} */}
           </div>
-          {selectedCourses.length === 0 && (<p className={`px-4 py-6 text-sm text-black flex items-center ${selectedCourses.length === 0 ? `justify-center` : ``}`}>{selectedCourses.length === 0 ?  <><span className="hidden md:flex">No Course Selected</span><span className="md:hidden flex-1 text-center inline-flex items-center justify-center">{selectedSummary(data)} <FaArrowDown className="ml-2" /></span></> : <>{selectedSummary(data)} <FaArrowDown className="ml-2" /></>} </p>)}
+          {selectedCourses.length === 0 && (<p className={`px-4 py-6 text-sm text-black flex items-center ${selectedCourses.length === 0 ? `justify-center` : ``}`}>{selectedCourses.length === 0 ?  <><span className="hidden md:flex">{t("noCourseSelected")}</span><span className="md:hidden flex-1 text-center inline-flex items-center justify-center">{selectedSummary(data, t)} <FaArrowDown className="ml-2" /></span></> : <>{selectedSummary(data, t)} <FaArrowDown className="ml-2" /></>} </p>)}
           {selectedCourses.length > 0 && (
             <>
               {/* Mobile-only (<768px): compact list matching the reference
@@ -1353,13 +1380,13 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                   keeps the existing card-style rows below, untouched. */}
               {!fixed && (selectedCourses.some((course) => course.courseMandatory === 1) || selectedCourses.some((course) => (course.upgradeCourses || []).length > 0)) && (
                 <p className="p-1 bg-blue-50 text-center text-[10px] leading-relaxed sm:text-xs text-black md:hidden">
-                  Tap &quot;<b className="font-bold">{gradeBand === "high" ? "Honors" : "Advance"}</b>&quot; to upgrade
+                  {t.rich("tapToUpgrade", { variant: gradeBand === "high" ? t("honors") : t("advance"), b: (chunks) => <b className="font-bold">{chunks}</b> })}
                   {data.registrationType !== "BATCH" && gradeBand !== "elementary" && (
                     <>
                       {" "}|{" "}
                       <span className="inline-flex items-center gap-1.5  font-medium text-black">
-                        <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded bg-[#3fa43c] text-[10px] font-bold text-white">F</span>
-                        Fixed
+                        <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded bg-[#3fa43c] text-[10px] font-bold text-white">{t("fixedShort")}</span>
+                        {t("fixed")}
                       </span>
                     </>
                   )}
@@ -1383,7 +1410,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                             {hasVariantControl ? stripVariantSuffix(course.courseName) : course.courseName}
                           </p>
                           {aiLanded.has(String(course.courseId)) && (
-                            <span className="ai-rise rounded bg-[#3fa43c] px-1.5 py-0.5 text-[10px] font-semibold text-white whitespace-nowrap">AI pick</span>
+                            <span className="ai-rise rounded bg-[#3fa43c] px-1.5 py-0.5 text-[10px] font-semibold text-white whitespace-nowrap">{t("aiPick")}</span>
                           )}
                           {singleUpgradeTarget ? (
                             <VariantToggle course={course} target={singleUpgradeTarget} onToggle={upgrade} disabled={busy} />
@@ -1394,7 +1421,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                                 type="button"
                                 size="sm"
                                 variant="outline"
-                                title={upgradeHint(target.courseType)}
+                                title={upgradeHint(target.courseType, t)}
                                 onClick={() => upgrade(course, target)}
                                 disabled={busy}
                               >
@@ -1409,7 +1436,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                       <div className="flex shrink-0 items-center">
                         {!fixed && course.courseMandatory === 1 && data.registrationType !== "BATCH" && gradeBand !== "elementary" && (
                           <span className="flex h-5 w-5 items-center justify-center rounded bg-[#3fa43c] text-[11px] font-bold text-white">
-                            F
+                            {t("fixedShort")}
                           </span>
                         )}
                         {!fixed && course.courseMandatory === 0 && (
@@ -1418,7 +1445,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                             onClick={() => removeSubject(course)}
                             disabled={busy}
                             className="inline-flex items-center cursor-pointer text-red-600 hover:text-red-700"
-                            aria-label="Remove course"
+                            aria-label={t("removeCourse")}
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -1447,7 +1474,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                         <div className="text-sm inline-flex font-medium text-black items-center">
                           <span> {hasVariantControl ? stripVariantSuffix(course.courseName) : course.courseName}</span>
                           {aiLanded.has(String(course.courseId)) && (
-                            <span className="ai-rise ml-2 rounded bg-[#3fa43c] px-1.5 py-0.5 text-[10px] font-semibold text-white whitespace-nowrap">AI pick</span>
+                            <span className="ai-rise ml-2 rounded bg-[#3fa43c] px-1.5 py-0.5 text-[10px] font-semibold text-white whitespace-nowrap">{t("aiPick")}</span>
                           )}
                           <div className="flex shrink-0 ml-2 flex-1 items-center mr-auto gap-2">
                             {singleUpgradeTarget ? (
@@ -1459,7 +1486,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                                   type="button"
                                   size="sm"
                                   variant="outline"
-                                  title={upgradeHint(target.courseType)}
+                                  title={upgradeHint(target.courseType, t)}
                                   onClick={() => upgrade(course, target)}
                                   disabled={busy}
                                 >
@@ -1488,13 +1515,13 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                                 onClick={() => removeSubject(course)}
                                 disabled={busy}
                                 className="inline-flex sm:hidden items-center cursor-pointer gap-1 text-xs font-semibold text-red-600 hover:text-red-700"
-                                aria-label={`Remove ${course.courseName}`}
+                                aria-label={t("removeNamed", { name: String(course.courseName ?? "") })}
                               />
                             }
                           >
                             <Trash2 className="h-4 w-4" />
                           </TooltipTrigger>
-                          <TooltipContent>Remove {course.courseName}</TooltipContent>
+                          <TooltipContent>{t("removeNamed", { name: String(course.courseName ?? "") })}</TooltipContent>
                         </Tooltip>
                       )}
                     </div>
@@ -1509,7 +1536,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                               type="button"
                               size="sm"
                               variant="outline"
-                              title={upgradeHint(target.courseType)}
+                              title={upgradeHint(target.courseType, t)}
                               onClick={() => upgrade(course, target)}
                               disabled={busy}
                             >
@@ -1521,7 +1548,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                       </div> */}
                       {!fixed && course.courseMandatory === 1 && !batchOrProvider39 && (
                         <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-100 px-2 py-1 text-xs font-semibold text-emerald">
-                          <Lock className="h-3 w-3" /> Fixed
+                          <Lock className="h-3 w-3" /> {t("fixed")}
                         </span>
                       )}
                       {!fixed && course.courseMandatory === 0 && (
@@ -1534,13 +1561,13 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                                 onClick={() => removeSubject(course)}
                                 disabled={busy}
                                 className="hidden sm:inline-flex items-center cursor-pointer gap-1 text-xs font-semibold text-red-600 hover:text-red-700"
-                                aria-label={`Remove ${course.courseName}`}
+                                aria-label={t("removeNamed", { name: String(course.courseName ?? "") })}
                               />
                             }
                           >
                             <Trash2 className="h-4 w-4" />
                           </TooltipTrigger>
-                          <TooltipContent>Remove {course.courseName}</TooltipContent>
+                          <TooltipContent>{t("removeNamed", { name: String(course.courseName ?? "") })}</TooltipContent>
                         </Tooltip>
                       )}
                     </div>
@@ -1563,10 +1590,10 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               <div>
                 <h2 className="text-sm font-bold text-black">
                   {data.totalCredit >= data.minCourseLimit
-                    ? "Add Extra Courses"
-                    : "Select Your Courses Below"}
+                    ? t("addExtraCourses")
+                    : t("selectYourCoursesBelow")}
 
-                  <span className="text-primary">{data.totalCredit >= data.minCourseLimit ? ``: ` · ${remainingCourses} More needed`}</span>
+                  <span className="text-primary">{data.totalCredit >= data.minCourseLimit ? ``: ` · ${t("moreNeeded", { count: remainingCourses })}`}</span>
                 </h2>
                 {(showCreditSummary || showCourseCountSummary) && remainingCourses > 0 && (
                   <p className="text-xs font-medium text-primary"></p>
@@ -1581,7 +1608,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                       value={search}
                       onClick={(e) => e.stopPropagation()}
                       onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search for courses..."
+                      placeholder={t("searchPlaceholder")}
                       className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-primary"
                     />
                   </div>
@@ -1610,7 +1637,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               role={minCreditsReached ? "button" : undefined}
               aria-expanded={minCreditsReached ? extraCoursesOpen : undefined}
             >
-              <h2 className="text-sm font-bold text-white text-center">{data.totalCredit >= data.minCourseLimit ? 'Add Extra Courses':'Select Your Courses Below'}</h2>
+              <h2 className="text-sm font-bold text-white text-center">{data.totalCredit >= data.minCourseLimit ? t("addExtraCourses") : t("selectYourCoursesBelow")}</h2>
               {minCreditsReached && (
                 extraCoursesOpen ? (
                   <TfiAngleUp className="h-4 w-4 shrink-0 text-white stroke-2" aria-hidden="true" />
@@ -1620,7 +1647,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
               )}
             </div>
             {minCreditsReached && !extraCoursesOpen && (
-              <p className="px-4 py-1.5 text-center text-xs font-medium text-slate-500 md:text-left">(Optional)</p>
+              <p className="px-4 py-1.5 text-center text-xs font-medium text-slate-500 md:text-left">{t("optional")}</p>
             )}
             {(!minCreditsReached || extraCoursesOpen) && (
               <>
@@ -1644,15 +1671,15 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                   disabled={busy}
                   className="h-auto w-full whitespace-normal rounded-md bg-primary py-2 text-center leading-snug hover:bg-primary/90"
                 >
-                  Add Recommended Courses
+                  {t("addRecommended")}
                 </Button>
               </div>
             )}
             {data.registrationType === "SCHOLARSHIP" && (
-              <p className="px-4 py-2 text-[11px] text-primary font-bold"><span className="text-black">Note:</span> Live classes are not offered in this program.</p>
+              <p className="px-4 py-2 text-[11px] text-primary font-bold">{t.rich("scholarshipNote", { note: (chunks) => <span className="text-black">{chunks}</span> })}</p>
             )}
             {visibleCourses.length === 0 ? (
-              <p className="px-4 py-6 text-sm text-black">No courses match your search.</p>
+              <p className="px-4 py-6 text-sm text-black">{t("noMatch")}</p>
             ) : (
               <>
                 {/* Desktop/tablet: category sidebar + inline detail pane. */}
@@ -1682,7 +1709,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                                 delay={100}
                                 render={
                                   <span
-                                    aria-label={addableCountLabel(course.subjects.length)}
+                                    aria-label={addableCountLabel(course.subjects.length, t)}
                                     className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
                                       active ? "bg-primary text-white" : "bg-slate-100 text-black"
                                     }`}
@@ -1692,7 +1719,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                                 {course.subjects.length === 0 ? <Check className="h-3 w-3" aria-hidden="true" /> : course.subjects.length}
                               </TooltipTrigger>
                               <TooltipContent>
-                                {addableCountLabel(course.subjects.length)}
+                                {addableCountLabel(course.subjects.length, t)}
                               </TooltipContent>
                             </Tooltip>
                           </button>
@@ -1708,7 +1735,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                       <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
                         <span className="text-sm font-semibold text-primary">{activeCourse.courseName}</span>
                         <span className="flex items-center gap-1 text-xs text-black">
-                          {addableCountLabel(activeCourse.subjects.length)} <ChevronDown className="h-3.5 w-3.5" />
+                          {addableCountLabel(activeCourse.subjects.length, t)} <ChevronDown className="h-3.5 w-3.5" />
                         </span>
                       </div>
                       {/* `relative` is load-bearing: without a positioned ancestor here, this pane's
@@ -1724,7 +1751,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                         {activeCourse.displaySubjects
                           .filter((subject) => !query || subject.subjectName?.toLowerCase().includes(query) || activeCourse.courseName?.toLowerCase().includes(query))
                           .map((subject) => {
-                            const notes = subjectNotes(subject, data, showPaymentOption);
+                            const notes = subjectNotes(subject, data, showPaymentOption, t);
                             return (
                               <div key={subject.subjectId} className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2">
                                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e6f3ff] text-primary">
@@ -1751,17 +1778,17 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                                 )}
                                 {subject.alreadySelected ? (
                                   <span className="flex shrink-0 items-center gap-2">
-                                    <span title="Already selected" className="flex items-center text-emerald-600">
+                                    <span title={t("alreadySelected")} className="flex items-center text-emerald-600">
                                       <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
-                                      <span className="sr-only">Already selected</span>
+                                      <span className="sr-only">{t("alreadySelected")}</span>
                                     </span>
                                     {canRemoveSelected(subject) && (
                                       <button
                                         type="button"
                                         onClick={() => removeSubject(subject.selectedCourse)}
                                         disabled={busy}
-                                        title="Remove course"
-                                        aria-label={`Remove ${subject.subjectName}`}
+                                        title={t("removeCourse")}
+                                        aria-label={t("removeNamed", { name: String(subject.subjectName ?? "") })}
                                         className="inline-flex cursor-pointer items-center text-red-600 hover:text-red-700 disabled:opacity-50"
                                       >
                                         <Trash2 className="h-4 w-4" />
@@ -1770,7 +1797,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                                   </span>
                                 ) : (
                                   <Button type="button" size="sm" onClick={() => addSubject(activeCourse, subject)} disabled={busy} className="rounded-md bg-primary hover:bg-primary/90">
-                                    <Plus className="h-4 w-4" /> Add
+                                    <Plus className="h-4 w-4" /> {t("add")}
                                   </Button>
                                 )}
                               </div>
@@ -1800,12 +1827,12 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
                               <span className="min-w-0 flex-1 truncate text-black">{course.courseName}</span>
                               <span className="px-2 w-fit shrink-0 items-center justify-center rounded-full border border-black-300 bg-white text-[11px] font-semibold text-black mt-2">
                                 {course.subjects.length === 0
-                                  ? "All selected"
-                                  : `${course.subjects.length} ${course.subjects.length > 1 ? "Courses" : "Course"} available`}
+                                  ? t("allSelected")
+                                  : t("coursesAvailableTitle", { count: course.subjects.length })}
                               </span>
                             </div>
                           </div>
-                          <span className="inline-flex px-2 cursor py-1 ml-auto rounded-md bg-primary text-white text-xs"><Plus className="h-4 w-4" /> Add</span>
+                          <span className="inline-flex px-2 cursor py-1 ml-auto rounded-md bg-primary text-white text-xs"><Plus className="h-4 w-4" /> {t("add")}</span>
                         </button>
                       </li>
                     );
@@ -1835,9 +1862,9 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
 
       {paymentOption.isError && (
         <p className="mt-4 text-sm text-red-600">
-          Could not load payment settings.{" "}
+          {t("paymentSettingsFailed")}{" "}
           <button type="button" className="font-semibold underline" onClick={() => paymentOption.refetch()}>
-            Try again
+            {t("tryAgain")}
           </button>
         </p>
       )}
@@ -1847,7 +1874,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
         <MobileActionBar context={context} embedded={reEnrollment}>
           {onBack && (
             <Button type="button" variant="outline" className="cursor-pointer" onClick={onBack} disabled={busy}>
-              {inReview ? "Cancel" : "Back"}
+              {inReview ? t("cancel") : t("back")}
             </Button>
           )}
           <Button
@@ -1856,7 +1883,7 @@ export function Stage3CourseSelection({ context, userId, standardId: initialStan
             disabled={busy || !showPaymentOption}
             className={`rounded-md cursor-pointer bg-primary px-4 hover:bg-primary/90 ${creditRequirementMet ? "" : "opacity-50"}`}
           >
-            {proceed.isPending ? "Please wait…" : inReview ? "Save" : "Next"}
+            {proceed.isPending ? t("pleaseWait") : inReview ? t("save") : t("next")}
           </Button>
         </MobileActionBar>
       </div>

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 // import { useQueries } from "@tanstack/react-query"; // course-wise table (commented out below)
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { addDays, format, isValid, startOfDay, startOfWeek } from "date-fns";
 import { Check, ChevronDown, ChevronLeft, Info, Volume2 } from "lucide-react";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
@@ -21,68 +22,40 @@ import { getAssignedTeacherForCourse, getAssignedTeachersForAllCourses, getClass
 import { getSlotEnd, getSlotState } from "@/utils/bookClass";
 import { courseTint, subjectStyle } from "@/utils/k5Calendar";
 import { K5Loading, K5CardsSkeleton, K5Sk } from "@/components/k5/K5Skeletons";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 
 const MAX_TICKETS = 10;
-const BOOK_SAY = "This is where you book classes! Each ticket is one class with a teacher.";
-// Wording per look: the Grade 6–8 mockup talks about "classes" and "select", the K–5 one about tickets and "pick".
-const COPY = {
-  k5: {
-    sub: "Pick a course, a day and a time. That's it!",
-    tickets: "My class tickets",
-    steps: ["Pick a course", "Pick a day", "Pick a time"],
-    any: "Every course is open. Pick any one you like!",
-    pickMe: "Pick me!",
-    say: BOOK_SAY,
-    say2: "Great choice! Now pick a day.",
-    say3: (name) => "Now pick a time when " + name + " is free.",
-    sayAll: "Wow, you used all your tickets this week!",
-    allTitle: "All your tickets are used!",
-    allSub: "Super job! New tickets come on Monday.",
-    noLeft: "No tickets left",
-  },
-  // Grade 9–12 (High.dc.html): classes are bought, so there are no weekly free classes and nothing expires on Friday.
-  high: {
-    sub: "Select a course, a day and a time. That's it!",
-    tickets: "My classes",
-    steps: ["Select a course", "Select a day", "Select a time"],
-    any: "Only the courses you bought classes for are shown.",
-    pickMe: "Book a class",
-    say: "This is where you book classes! Each class is with your teacher.",
-    say2: "Great choice! Now select a day.",
-    say3: () => "Now select a time.",
-    sayAll: "You booked all the classes you bought!",
-    allTitle: "All your classes are booked!",
-    allSub: "Buy extra classes to book more.",
-    noLeft: "No classes left",
-    fly: "Unused classes carry forward.",
-    bookedN: (n) => n + " booked",
-  },
-  middle: {
-    sub: "Select a course, a day and a time. That's it!",
-    tickets: "My classes",
-    steps: ["Select a course", "Select a day", "Select a time"],
-    any: "Every course is open. Select any one you like!",
-    pickMe: "Book a class",
-    say: "This is where you book classes! Each class is with your teacher.",
-    say2: "Great choice! Now select a day.",
-    say3: () => "Now select a time.",
-    sayAll: "Wow, you booked all your classes this week!",
-    allTitle: "All your classes are booked!",
-    allSub: "Super job! New classes come on Monday.",
-    noLeft: "No classes left",
-  },
-};
+// Wording per look (k5Booking.book.copy.<look>): the Grade 6–8 mockup talks about "classes" and "select", the K–5 one about
+// tickets and "pick". Grade 9–12 (High.dc.html): classes are bought, so there are no weekly free classes and nothing expires on Friday.
 function useCopy() {
   const { isMiddle, isHigh } = useDashboardContext();
-  return { middle: Boolean(isMiddle), high: Boolean(isHigh), copy: isHigh ? COPY.high : isMiddle ? COPY.middle : COPY.k5 };
+  const t = useTranslations("k5Booking.book");
+  const look = isHigh ? "high" : isMiddle ? "middle" : "k5";
+  const c = (key, values) => t(`copy.${look}.${key}`, values);
+  const copy = {
+    sub: c("sub"),
+    tickets: c("tickets"),
+    steps: [c("step1"), c("step2"), c("step3")],
+    any: c("any"),
+    pickMe: c("pickMe"),
+    say: c("say"),
+    say2: c("say2"),
+    say3: (name) => c("say3", { name }),
+    sayAll: c("sayAll"),
+    allTitle: c("allTitle"),
+    allSub: c("allSub"),
+    noLeft: c("noLeft"),
+    ...(isHigh ? { fly: c("fly"), bookedN: (n) => c("bookedN", { count: n }) } : null),
+  };
+  return { middle: Boolean(isMiddle), high: Boolean(isHigh), copy };
 }
-const UNKNOWN_OUTCOME =
-  "We could not confirm whether your class was booked. Please refresh the page and check your booked classes before trying again.";
+// dayModel's tags (also used in logic) -> k5Booking.book.dayTags.<key>.
+const DAY_TAG_KEYS = { "This week": "thisWeek", Over: "over", "No classes": "noClasses", Busy: "busy", Today: "today", Tomorrow: "tomorrow" };
 const TICKET_PATH = "M8 3h48a5 5 0 0 1 5 5v7a5 5 0 0 0 0 10v7a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5v-7a5 5 0 0 0 0-10V8a5 5 0 0 1 5-5z";
 const STAR_PATH = "M10 1l2.6 5.4 5.9.8-4.3 4.1 1 5.9L10 14.4 4.8 17.2l1-5.9L1.5 7.2l5.9-.8z";
 const CHECK_PATH = "M5 12l5 5 9-10";
 
-const firstName = (name) => String(name || "").replace(/^(mr|ms|mrs|dr)\.?\s+/i, "").split(/\s+/)[0] || "your teacher";
+const firstName = (name, fallback = "your teacher") => String(name || "").replace(/^(mr|ms|mrs|dr)\.?\s+/i, "").split(/\s+/)[0] || fallback;
 const initialsOf = (name) =>
   String(name || "?")
     .replace(/^(mr|ms|mrs|dr)\.?\s+/i, "")
@@ -95,12 +68,13 @@ const initialsOf = (name) =>
 const niceTime = (value) => String(value || "").replace(/^0/, "");
 
 function TeacherChip({ name }) {
+  const t = useTranslations("k5Booking.book");
   return (
     <span className="mt-1.5 flex items-center gap-2.5 self-start rounded-full bg-k5-vt py-1 pl-1 pr-3.5">
       <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-k5-vi font-k5-display text-[15px] font-semibold text-white">{name ? initialsOf(name) : "?"}</span>
       <span className="flex flex-col leading-[1.15]">
-        <span className="text-xs font-black text-[var(--k5-vX)]">Your teacher</span>
-        <span className="font-k5-display text-[17px] font-semibold">{name || "Not picked yet"}</span>
+        <span className="text-xs font-black text-[var(--k5-vX)]">{t("yourTeacher")}</span>
+        <span className="font-k5-display text-[17px] font-semibold">{name || t("notPicked")}</span>
       </span>
     </span>
   );
@@ -127,6 +101,7 @@ function BookArt({ tall = false }) {
 
 function BookHeader({ teacherName, onStart, startLabel, startLoading = false }) {
   const { middle, high, copy } = useCopy();
+  const t = useTranslations("k5Booking.book");
   return (
     <div className={`${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
       {high ? (
@@ -143,7 +118,7 @@ function BookHeader({ teacherName, onStart, startLabel, startLoading = false }) 
         </span>
       )}
       <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-        <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">Book a Class</h1>
+        <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">{t("title")}</h1>
         <p className="k5h-b-sub m-0 text-lg font-extrabold text-k5-mut">{copy.sub}</p>
         {/* Grade 6–8: no teacher chip here (each course card names its teacher); a "Book a Class (n)" button instead. */}
         {!middle && teacherName !== undefined && <TeacherChip name={teacherName} />}
@@ -186,8 +161,9 @@ export function K5BookNotice({ loading = false, children }) {
  */
 function BookPageSkeleton() {
   const { middle, high } = useCopy();
+  const t = useTranslations("k5Booking.book");
   return (
-    <K5Loading label="Loading your classes" className="flex flex-col gap-4">
+    <K5Loading label={t("loading")} className="flex flex-col gap-4">
       <div className="flex flex-wrap items-stretch gap-4">
         <div className="flex-[1_1_340px]">
           <BookHeader startLoading />
@@ -278,6 +254,7 @@ function BuddyStrip({ say }) {
   const { preferences } = useAppearance();
   const { speak } = useSpeech();
   const buddy = BUDDIES[preferences.buddy] || BUDDIES.pico;
+  const t = useTranslations("k5Booking.book");
   useEffect(() => {
     if (say) picoSay(say);
   }, [say]);
@@ -291,7 +268,7 @@ function BuddyStrip({ say }) {
       <button
         type="button"
         onClick={() => speak(say, { force: true })}
-        aria-label="Hear it"
+        aria-label={t("hearIt")}
         className="k5h-b-bud-btn flex h-11 w-11 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card text-k5-acx"
       >
         <Volume2 className="h-5 w-5" aria-hidden="true" />
@@ -333,11 +310,13 @@ function CapTile({ used }) {
 /** "My class tickets" (mockup): this week's tickets, used ones are filled with a tick. */
 function Tickets({ perWeek, left, color }) {
   const { middle, high, copy } = useCopy();
+  const t = useTranslations("k5Booking.book");
+  const locale = useDateFnsLocale();
   const total = Math.max(perWeek, left, 0);
   const shown = Math.min(total, MAX_TICKETS);
   const used = Math.max(total - left, 0);
   const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
-  const range = format(monday, "MMM d") + " – " + format(addDays(monday, 4), "d");
+  const range = format(monday, "MMM d", { locale }) + " – " + format(addDays(monday, 4), "d", { locale });
   return (
     <section
       aria-labelledby="k5-tix"
@@ -347,19 +326,19 @@ function Tickets({ perWeek, left, color }) {
       <h2 id="k5-tix" className="m-0 font-k5-display text-[22px] font-semibold">{copy.tickets}</h2>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[18px] bg-white/45 px-2.5 py-2">
         <span className="flex min-w-[104px] flex-col leading-[1.15]">
-          <span className="font-k5-display text-lg font-semibold">This week</span>
+          <span className="font-k5-display text-lg font-semibold">{t("thisWeek")}</span>
           <span className={`text-[13px] font-extrabold ${middle ? "text-k5-acx" : "text-k5-yx"}`}>{range}</span>
         </span>
-        <span role="img" aria-label={used + " of " + total + " used"} className={middle ? "flex flex-wrap gap-2" : "flex gap-2"}>
+        <span role="img" aria-label={t("usedOf", { used, total })} className={middle ? "flex flex-wrap gap-2" : "flex gap-2"}>
           {Array.from({ length: shown }, (_, i) => (middle ? <CapTile key={i} used={i < used} /> : <TicketSvg key={i} used={i < used} color={color} />))}
         </span>
-        <span className="ms-auto whitespace-nowrap rounded-full bg-k5-card px-3 py-1 font-k5-display text-[17px] font-semibold">{left} left</span>
+        <span className="ms-auto whitespace-nowrap rounded-full bg-k5-card px-3 py-1 font-k5-display text-[17px] font-semibold">{t("left", { count: left })}</span>
       </div>
       <p className={`m-0 flex items-center gap-1.5 text-[15px] font-black ${middle ? "text-k5-acx" : "text-k5-yx"}`}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: middle ? "var(--k5-acx)" : "var(--k5-yX)" }}>
           <path d="M6 3h12M6 21h12M7 3c0 5 10 6 10 9s-10 4-10 9M17 3c0 5-10 6-10 9s10 4 10 9" />
         </svg>
-        {high ? copy.fly : "Use them by Friday!"}
+        {high ? copy.fly : t("useByFriday")}
       </p>
     </section>
   );
@@ -414,9 +393,10 @@ function useBookSlots(picked) {
 
 function StepPills({ step }) {
   const { copy } = useCopy();
+  const t = useTranslations("k5Booking.book");
   const STEP_LABELS = copy.steps;
   return (
-    <ol aria-label="Steps" className="m-0 flex list-none flex-wrap items-center gap-x-2.5 gap-y-2 p-0">
+    <ol aria-label={t("steps")} className="m-0 flex list-none flex-wrap items-center gap-x-2.5 gap-y-2 p-0">
       {STEP_LABELS.map((label, i) => {
         const n = i + 1;
         const done = step > n;
@@ -458,14 +438,15 @@ function SubjectChip({ name, color }) {
 
 function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, threePerRow = false }) {
   const { middle, high, copy } = useCopy();
+  const t = useTranslations("k5Booking.book");
   if (loading) {
     return (
-      <K5Loading label="Loading your courses" className="">
+      <K5Loading label={t("loadingCourses")} className="">
         <K5CardsSkeleton count={threePerRow ? 6 : 5} cols={threePerRow ? 3 : undefined} min={160} />
       </K5Loading>
     );
   }
-  if (options.length === 0) return <p className="m-0 py-6 text-center font-k5-display text-xl font-semibold text-k5-mut">You do not have a teacher assigned yet</p>;
+  if (options.length === 0) return <p className="m-0 py-6 text-center font-k5-display text-xl font-semibold text-k5-mut">{t("noTeacher")}</p>;
   const none = left < 1;
   return (
     // In the Grade 6–8 "Book a Class" dialog: three courses in a row, the rest on the next row (two on a small screen).
@@ -499,7 +480,7 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: "currentColor" }}>
                   <path d={CHECK_PATH} />
                 </svg>
-                {high ? copy.bookedN(s.booked) : s.booked + " booked"}
+                {high ? copy.bookedN(s.booked) : t("bookedCount", { count: s.booked })}
               </span>
             )}
             {!none && (
@@ -522,10 +503,10 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
             <button
               type="button"
               onClick={() => onDetails(s.subjectId)}
-              aria-label={"Booked class details: " + s.name}
+              aria-label={t("bookedDetailsFor", { course: s.name })}
               className="k5h-b-details flex min-h-10 cursor-pointer items-center justify-center gap-1 rounded-full border-[3px] border-k5-ac bg-k5-card px-3 py-1 text-center font-k5-display text-sm font-semibold leading-[1.15] text-k5-acx"
             >
-              Booked class details
+              {t("bookedDetails")}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="flex-none">
                 <path d="M9 6l6 6-6 6" />
               </svg>
@@ -565,8 +546,8 @@ function AllUsed() {
   );
 }
 
-/** The days of this week the teacher teaches, with how many free times each has. */
-function dayModel(days, slots, skipDates, left) {
+/** The days of this week the teacher teaches, with how many free times each has (weekday names in `locale`, a date-fns locale). */
+function dayModel(days, slots, skipDates, left, locale) {
   const today = startOfDay(new Date());
   return days.map((day) => {
     const date = new Date(day.displayStartDateWithoutDay);
@@ -584,12 +565,13 @@ function dayModel(days, slots, skipDates, left) {
     else if (diff === 0) tag = "Today";
     else if (diff === 1) tag = "Tomorrow";
     const can = free > 0 && left > 0 && valid && diff >= 0 && !skipped;
-    return { day, entries, free, can, tag, isToday: valid && diff === 0, weekday: valid ? format(date, "EEEE") : "", num: valid ? date.getDate() : "", key: day.displayStartDateWithoutDay };
+    return { day, entries, free, can, tag, isToday: valid && diff === 0, weekday: valid ? format(date, "EEEE", { locale }) : "", num: valid ? date.getDate() : "", key: day.displayStartDateWithoutDay };
   });
 }
 
 function DayStep({ model, onPick }) {
   const { middle, high, copy } = useCopy();
+  const t = useTranslations("k5Booking.book");
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(118px,1fr))] gap-2.5">
       {model.map((d) => (
@@ -606,8 +588,8 @@ function DayStep({ model, onPick }) {
         >
           <span className="text-[15px] font-black text-k5-mut">{d.weekday}</span>
           <span className="k5h-b-dnum font-k5-display text-[44px] font-semibold leading-none">{d.num}</span>
-          <span className={"rounded-full px-3 py-[3px] text-sm font-black " + (!d.can ? "bg-k5-line text-k5-mut" : d.isToday ? "bg-k5-ac text-white" : "bg-k5-yt text-k5-yx")}>{d.tag === "No tickets left" ? copy.noLeft : d.tag}</span>
-          {d.can && <span className="mt-auto text-[13px] font-extrabold text-k5-mut">Free times: {d.free}</span>}
+          <span className={"rounded-full px-3 py-[3px] text-sm font-black " + (!d.can ? "bg-k5-line text-k5-mut" : d.isToday ? "bg-k5-ac text-white" : "bg-k5-yt text-k5-yx")}>{d.tag === "No tickets left" ? copy.noLeft : DAY_TAG_KEYS[d.tag] ? t(`dayTags.${DAY_TAG_KEYS[d.tag]}`) : d.tag}</span>
+          {d.can && <span className="mt-auto text-[13px] font-extrabold text-k5-mut">{t("freeTimes", { count: d.free })}</span>}
         </button>
       ))}
     </div>
@@ -616,6 +598,7 @@ function DayStep({ model, onPick }) {
 
 function TimeStep({ dayItem, selected, onSelect }) {
   const { middle, high } = useCopy();
+  const t = useTranslations("k5Booking.book");
   const list = dayItem.entries.slice().sort((a, b) => String(a.slot.bookedStartDate).localeCompare(String(b.slot.bookedStartDate)));
   return (
     <div className="k5h-b-slots grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
@@ -624,7 +607,7 @@ function TimeStep({ dayItem, selected, onSelect }) {
         const open = state === "available";
         const sel = selected === slot;
         const am = String(slot.displayStartTime).toUpperCase().includes("AM");
-        const chip = open ? "Free" : state === "booked" ? "Busy" : "Closed";
+        const chip = open ? t("slot.free") : state === "booked" ? t("slot.busy") : t("slot.closed");
         return (
           <button
             key={slot.bookedStartDate + "-" + i}
@@ -650,7 +633,7 @@ function TimeStep({ dayItem, selected, onSelect }) {
               </svg>
             )}
             <span className="k5h-b-time font-k5-display text-2xl font-semibold leading-none">{niceTime(slot.displayStartTime)}</span>
-            <span className="text-[13px] font-black text-k5-mut">{am ? "Morning" : "Afternoon"}</span>
+            <span className="text-[13px] font-black text-k5-mut">{am ? t("slot.morning") : t("slot.afternoon")}</span>
             <span className={"mt-auto rounded-full px-3 py-[3px] text-center text-sm font-black " + (open ? "bg-k5-gt text-k5-gx" : "bg-k5-card text-k5-mut")}>{chip}</span>
             {sel && (
               <span className="absolute -top-3 -end-2.5 flex h-9 w-9 items-center justify-center rounded-full bg-k5-ac text-white shadow-[0_3px_0_var(--k5-acd)]">
@@ -666,6 +649,7 @@ function TimeStep({ dayItem, selected, onSelect }) {
   );
 }
 
+// [English name (React key), count key, dot colour, chip tone]; the heading is k5Booking.book.table.<count key>.
 const TABLE_COLS = [
   ["Booked", "booked", "var(--k5-bI)", "bg-k5-bt text-k5-bi"],
   ["Left", "unused", "#FFC531", "bg-k5-yt text-k5-yx"],
@@ -698,6 +682,7 @@ function StatTile({ label, value, sub }) {
 /** Grade 6–8 "Good to know": the three class rules, always visible between the tickets and the steps. */
 function MiddleRules({ perWeek, comp }) {
   const { high } = useCopy();
+  const t = useTranslations("k5Booking.book");
   const tile = "flex items-center gap-3 rounded-[14px] border-[3px] border-k5-yb bg-k5-yt px-3 py-2.5";
   const box = "flex h-[52px] w-[52px] flex-none items-center justify-center bg-k5-card";
   const text = "k5h-b-rule text-[17px] font-extrabold leading-[1.3]";
@@ -712,7 +697,7 @@ function MiddleRules({ perWeek, comp }) {
             <circle cx="12" cy="12" r="9.5" />
             <path d="M12 11v5.5M12 7.6v.01" />
           </svg>
-          Good to know
+          {t("goodToKnow")}
         </h3>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
           <div className={tile} style={{ borderRadius: tr }}>
@@ -722,7 +707,7 @@ function MiddleRules({ perWeek, comp }) {
                 <path d="M3 10h18M8 3v4M16 3v4M7 14h2M11 14h2M15 14h2M7 17h2M11 17h2" />
               </svg>
             </span>
-            <span className={text}>Classes are Monday to Friday</span>
+            <span className={text}>{t("rules.monFri")}</span>
           </div>
           <div className={tile} style={{ borderRadius: tr }}>
             <span className={box} style={{ borderRadius: 12 }}>
@@ -733,7 +718,7 @@ function MiddleRules({ perWeek, comp }) {
                 <path d="M20 20.5V16h-4.5" />
               </svg>
             </span>
-            <span className={text}>There are no free classes in Self Study</span>
+            <span className={text}>{t("rules.noFreeSelfStudy")}</span>
           </div>
           <div className={tile} style={{ borderRadius: tr }}>
             <span className={box} style={{ borderRadius: 12 }}>
@@ -742,7 +727,7 @@ function MiddleRules({ perWeek, comp }) {
                 <path d="M7 3c0 5 10 6 10 9s-10 4-10 9M17 3c0 5-10 6-10 9s10 4 10 9" />
               </svg>
             </span>
-            <span className={text}>You can book only the classes you buy</span>
+            <span className={text}>{t("rules.onlyBought")}</span>
           </div>
         </div>
       </div>
@@ -755,7 +740,7 @@ function MiddleRules({ perWeek, comp }) {
           <circle cx="12" cy="12" r="10" fill="#FFC531" />
           <path d="M12 11v6M12 7.5v.01" stroke="#3A2A00" strokeWidth="2.8" strokeLinecap="round" />
         </svg>
-        Good to know
+        {t("goodToKnow")}
       </h3>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
         <div className={tile} style={{ borderRadius: 14 }}>
@@ -765,7 +750,7 @@ function MiddleRules({ perWeek, comp }) {
               <path d="M3 10h18M8 3v4M16 3v4M7 14h2M11 14h2M15 14h2M7 17h2M11 17h2" />
             </svg>
           </span>
-          <span className={text}>Classes are Monday to Friday</span>
+          <span className={text}>{t("rules.monFri")}</span>
         </div>
         <div className={tile} style={{ borderRadius: 14 }}>
           <span className={box} style={{ borderRadius: 12 }}>
@@ -774,7 +759,7 @@ function MiddleRules({ perWeek, comp }) {
               <text x="38" y="27" textAnchor="middle" fontWeight="700" fontSize="18" fill="#171B2E">{perWeek}</text>
             </svg>
           </span>
-          <span className={text}>You get {perWeek} {comp ? "free " : ""}classes every week</span>
+          <span className={text}>{comp ? t("rules.freeClassesWeek", { count: perWeek }) : t("rules.classesWeek", { count: perWeek })}</span>
         </div>
         {comp && (
           <div className={tile} style={{ borderRadius: 14 }}>
@@ -787,7 +772,7 @@ function MiddleRules({ perWeek, comp }) {
                 <path d="M58 14q8-10 16-2q-8 2-10 10z" style={{ fill: "var(--k5-pI)" }} />
               </svg>
             </span>
-            <span className={text}>Classes you don&apos;t book expire after Friday</span>
+            <span className={text}>{t("rules.expireFriday")}</span>
           </div>
         )}
       </div>
@@ -798,6 +783,7 @@ function MiddleRules({ perWeek, comp }) {
 /** "For grown-ups" (mockup): the class numbers in one place, closed until a grown-up opens it. */
 function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
   const { middle, high } = useCopy();
+  const t = useTranslations("k5Booking.book");
   const comp = details.compClassPerweek > 0;
   const n = (v) => Number(v) || 0;
   const sum = calc?.summary;
@@ -823,11 +809,11 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
           </svg>
         </span>
         <span className="flex flex-1 flex-col">
-          <span id="k5-grown" className="font-k5-display text-[22px] font-semibold">{middle ? "Class Breakdown" : "For grown-ups"}</span>
-          <span className="text-sm font-extrabold text-k5-mut">All the class numbers in one place</span>
+          <span id="k5-grown" className="font-k5-display text-[22px] font-semibold">{middle ? t("grownUps.breakdown") : t("grownUps.title")}</span>
+          <span className="text-sm font-extrabold text-k5-mut">{t("grownUps.subtitle")}</span>
         </span>
         <span className={`flex items-center gap-1.5 rounded-full border-[3px] border-k5-line px-3.5 py-1.5 text-[15px] font-black ${open ? "k5-zoom-in" : "k5-zoom-toggle-out"}`}>
-          {open ? "Hide" : "Show"}
+          {open ? t("grownUps.hide") : t("grownUps.show")}
           <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`} strokeWidth={3} aria-hidden="true" />
         </span>
       </button>
@@ -836,7 +822,7 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
           {!middle && (
             <div role="group" aria-labelledby="k5-rules" className="flex flex-col gap-2.5">
               <h3 id="k5-rules" className="m-0 flex items-center gap-2 font-k5-display text-[22px] font-semibold">
-                <Info className="h-[26px] w-[26px] fill-k5-ac text-white" aria-hidden="true" /> Good to know
+                <Info className="h-[26px] w-[26px] fill-k5-ac text-white" aria-hidden="true" /> {t("goodToKnow")}
               </h3>
               <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
                 <RuleTile
@@ -848,7 +834,7 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
                     </svg>
                   }
                 >
-                  Classes are Monday to Friday
+                  {t("rules.monFri")}
                 </RuleTile>
                 <RuleTile
                   tone="bg-k5-yt"
@@ -859,7 +845,7 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
                     </svg>
                   }
                 >
-                  You get {perWeek} {comp ? "free " : ""}class tickets every week
+                  {comp ? t("rules.freeTicketsWeek", { count: perWeek }) : t("rules.ticketsWeek", { count: perWeek })}
                 </RuleTile>
                 {comp && (
                   <RuleTile
@@ -873,7 +859,7 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
                       </svg>
                     }
                   >
-                    Tickets you don&apos;t use fly away after Friday
+                    {t("rules.flyAway")}
                   </RuleTile>
                 )}
               </div>
@@ -883,36 +869,36 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
           <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2.5">
             {high ? (
               <>
-                <StatTile label="Purchased classes" sub="Extra classes you bought" value={card(n(extra?.total))} />
-                <StatTile label="Booked" value={card(colSum("booked"))} />
-                <StatTile label="Unused" value={card(n(free?.unused) + n(extra?.unused))} />
-                <StatTile label="Expired" value={card(colSum("expired"))} />
+                <StatTile label={t("stats.purchased")} sub={t("stats.purchasedSub")} value={card(n(extra?.total))} />
+                <StatTile label={t("table.booked")} value={card(colSum("booked"))} />
+                <StatTile label={t("stats.unused")} value={card(n(free?.unused) + n(extra?.unused))} />
+                <StatTile label={t("table.expired")} value={card(colSum("expired"))} />
               </>
             ) : (
               <>
-                <StatTile label="Total" value={card(n(free?.total) + n(extra?.total))} />
-                <StatTile label="Complimentary classes" value={card(n(free?.total))} />
-                <StatTile label="Extra classes" value={card(n(extra?.total))} />
-                <StatTile label="Per week" value={card(perWeekAll)} />
-                <StatTile label="Unused this week" value={card(n(free?.unused) + n(extra?.unused))} />
+                <StatTile label={t("stats.total")} value={card(n(free?.total) + n(extra?.total))} />
+                <StatTile label={t("stats.complimentary")} value={card(n(free?.total))} />
+                <StatTile label={t("stats.extra")} value={card(n(extra?.total))} />
+                <StatTile label={t("stats.perWeek")} value={card(perWeekAll)} />
+                <StatTile label={t("stats.unusedThisWeek")} value={card(n(free?.unused) + n(extra?.unused))} />
               </>
             )}
           </div>
 
           <div className="overflow-x-auto rounded-[22px] border-[3px] border-k5-line">
-            <div role="table" aria-label="Class numbers" className="text-[15px] font-extrabold">
+            <div role="table" aria-label={t("table.label")} className="text-[15px] font-extrabold">
               <div role="row" className={`k5h-b-thead grid items-center bg-k5-act text-[17px] font-black ${high ? "min-w-[800px] grid-cols-[minmax(200px,1.8fr)_repeat(6,minmax(92px,1fr))]" : "min-w-[900px] grid-cols-[minmax(200px,1.8fr)_repeat(7,minmax(92px,1fr))]"}`}>
-                <span role="columnheader" className="px-4 py-3.5 text-start">Course</span>
-                {cols.map(([label, , dot]) => (
+                <span role="columnheader" className="px-4 py-3.5 text-start">{t("table.course")}</span>
+                {cols.map(([label, key, dot]) => (
                   <span key={label} role="columnheader" className="px-3 py-3.5 text-center leading-[1.25]">
                     <span aria-hidden="true" className="me-1.5 inline-block h-3 w-3 rounded-full align-[-1px]" style={{ background: dot }} />
-                    {label}
+                    {t(`table.${key}`)}
                   </span>
                 ))}
               </div>
               {rows.map((s) => (
                 <div key={s.subjectId} role="row" className={`grid items-center border-t-2 border-k5-line ${high ? "min-w-[800px] grid-cols-[minmax(200px,1.8fr)_repeat(6,minmax(92px,1fr))]" : "min-w-[900px] grid-cols-[minmax(200px,1.8fr)_repeat(7,minmax(92px,1fr))]"}`}>
-                  <span role="cell" className="px-4 py-3 font-k5-display font-semibold">{s.subjectName}</span>
+                  <span role="cell" className="px-4 py-3 font-k5-display font-semibold">{s.placeholder ? t("table.allCourses") : s.subjectName}</span>
                   {cols.map(([label, key, , tone]) => (
                     <span key={label} role="cell" className="px-3 py-2 text-center">
                       <span className={"k5h-b-count inline-block min-w-9 rounded-full px-2.5 py-0.5 font-black " + tone}>{busy ? spinner("h-5 w-5") : s.placeholder ? "–" : n(s.complimentary?.[key]) + n(s.customPlan?.[key])}</span>
@@ -934,6 +920,8 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
  */
 function BookPopup({ onClose, children }) {
   const { high } = useCopy();
+  const t = useTranslations("k5Booking.book");
+  const tc = useTranslations("common");
   const themeProps = useK5ThemeProps(
     "flex max-h-[min(100%,calc(100vh-32px))] flex-col gap-[18px] overflow-y-auto rounded-[18px] border-[3px] border-k5-ink bg-k5-card p-[22px] text-k5-ink shadow-[0_8px_0_var(--k5-ink)] ring-0 sm:max-w-[940px]",
   );
@@ -941,9 +929,9 @@ function BookPopup({ onClose, children }) {
     <Dialog open onOpenChange={(next) => !next && onClose()}>
       <DialogContent showCloseButton={false} {...themeProps} style={{ borderRadius: high ? 12 : 20 }}>
         <div className="flex items-center gap-3">
-          <DialogTitle className="m-0 flex-1 font-k5-display text-[28px] font-semibold leading-[1.15]">Book a Class</DialogTitle>
-          <DialogDescription className="sr-only">Select a course, a day and a time to book a class.</DialogDescription>
-          <button type="button" onClick={onClose} aria-label="Close" className="flex h-11 w-11 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-red bg-k5-red">
+          <DialogTitle className="m-0 flex-1 font-k5-display text-[28px] font-semibold leading-[1.15]">{t("title")}</DialogTitle>
+          <DialogDescription className="sr-only">{t("popupDescription")}</DialogDescription>
+          <button type="button" onClick={onClose} aria-label={tc("actions.close")} className="flex h-11 w-11 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-red bg-k5-red">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" strokeWidth="3" strokeLinecap="round" aria-hidden="true" style={{ stroke: "#FFFFFF" }}>
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
@@ -964,13 +952,15 @@ function ConfirmBooking({ open, when, course, color, teacher, busy, onBack, onCo
     "flex max-h-[min(100%,calc(100vh-32px))] flex-col gap-[18px] overflow-y-auto rounded-[16px] border border-k5-line bg-k5-card px-[22px] pb-5 pt-6 text-k5-ink shadow-[0_20px_48px_rgba(16,24,40,0.22)] ring-0 sm:max-w-[460px]",
   );
   const icon = { fill: "none", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 1.9, style: { stroke: "var(--k5-ac)" }, "aria-hidden": true };
+  const t = useTranslations("k5Booking.book");
+  const tc = useTranslations("common");
   const tile = "flex h-10 w-10 flex-none items-center justify-center bg-k5-act";
   const label = "k5h-b-cfl text-[13px] font-medium text-k5-mut";
   const value = "k5h-b-cfv text-[17px] font-semibold text-k5-ink";
   return (
     <Dialog open={open} onOpenChange={(next) => !next && !busy && onBack()}>
       <DialogContent showCloseButton={false} {...themeProps} style={{ borderRadius: 16 }}>
-        <button type="button" onClick={onBack} disabled={busy} aria-label="Close" className="absolute end-[14px] top-[14px] flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-k5-line bg-k5-card">
+        <button type="button" onClick={onBack} disabled={busy} aria-label={tc("actions.close")} className="absolute end-[14px] top-[14px] flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-k5-line bg-k5-card">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true" style={{ stroke: "var(--k5-mut)" }}>
             <path d="M6 6l12 12M18 6L6 18" />
           </svg>
@@ -983,8 +973,8 @@ function ConfirmBooking({ open, when, course, color, teacher, busy, onBack, onCo
               <path d="M9 15.5l2 2 4-4" />
             </svg>
           </span>
-          <DialogTitle className="k5h-b-cft m-0 font-k5-display text-2xl font-semibold leading-[1.2]">Confirm your class</DialogTitle>
-          <DialogDescription className="m-0 text-[15px] text-k5-mut">Please check the details before you book.</DialogDescription>
+          <DialogTitle className="k5h-b-cft m-0 font-k5-display text-2xl font-semibold leading-[1.2]">{t("confirm.title")}</DialogTitle>
+          <DialogDescription className="m-0 text-[15px] text-k5-mut">{t("confirm.description")}</DialogDescription>
         </div>
         <div className="flex flex-col border border-k5-line bg-k5-soft" style={{ borderRadius: 12 }}>
           <div className="flex items-center gap-3 px-3.5 py-3">
@@ -996,7 +986,7 @@ function ConfirmBooking({ open, when, course, color, teacher, busy, onBack, onCo
               </svg>
             </span>
             <span className="flex min-w-0 flex-col gap-0.5">
-              <span className={label}>Date &amp; time</span>
+              <span className={label}>{t("confirm.dateTime")}</span>
               <span className={value}>{when}</span>
             </span>
           </div>
@@ -1009,7 +999,7 @@ function ConfirmBooking({ open, when, course, color, teacher, busy, onBack, onCo
               </svg>
             </span>
             <span className="flex min-w-0 flex-col gap-0.5">
-              <span className={label}>Course Name</span>
+              <span className={label}>{t("confirm.course")}</span>
               <span className={value + " inline-flex items-center gap-2"}>
                 <span aria-hidden="true" className="h-2.5 w-2.5 flex-none rounded-full" style={{ background: color }} />
                 {course}
@@ -1022,20 +1012,20 @@ function ConfirmBooking({ open, when, course, color, teacher, busy, onBack, onCo
               {initialsOf(teacher)}
             </span>
             <span className="flex min-w-0 flex-col gap-0.5">
-              <span className={label}>Teacher Name</span>
+              <span className={label}>{t("confirm.teacher")}</span>
               <span className={value}>{teacher}</span>
             </span>
           </div>
         </div>
         <div className="grid grid-cols-[1fr_1.4fr] gap-2.5">
           <button type="button" onClick={onBack} disabled={busy} className="k5h-b-cfbtn min-h-[46px] cursor-pointer border border-k5-line bg-k5-card px-4 font-k5-display text-[17px] font-semibold text-k5-ink disabled:opacity-60" style={{ borderRadius: 10 }}>
-            Back
+            {tc("actions.back")}
           </button>
           <button type="button" onClick={onConfirm} disabled={busy} className="k5h-b-cfbtn flex min-h-[46px] cursor-pointer items-center justify-center gap-2 border-none bg-k5-ac px-4 font-k5-display text-[17px] font-semibold text-white disabled:opacity-60" style={{ borderRadius: 10 }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: "#FFFFFF" }}>
               <path d="M5 12l5 5 9-10" />
             </svg>
-            {busy ? "Booking…" : "Confirm"}
+            {busy ? t("booking") : tc("actions.confirm")}
           </button>
         </div>
       </DialogContent>
@@ -1051,6 +1041,9 @@ function ConfirmBooking({ open, when, course, color, teacher, busy, onBack, onCo
  */
 export function K5BookView({ details, subjects, course, onShowBooked, onBooked, popup = false, onClose }) {
   const { middle, high, copy } = useCopy();
+  const t = useTranslations("k5Booking.book");
+  const tc = useTranslations("common");
+  const dateLocale = useDateFnsLocale();
   const colorFor = useK5CourseColors();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
@@ -1113,21 +1106,21 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   const teacherName = (picked && (book.slots?.teacherName || book.teacher?.teacherName || picked.teacherName)) || course.teacherName;
   const color = picked ? colorFor({ id: picked.subjectId, name: picked.name }) || subjectStyle(picked.name).color : "var(--k5-ac)";
   // Mockup: only today and the days after it are offered.
-  const model = dayModel(book.days, book.slots, book.skipDates, left).filter((d) => d.tag !== "Over");
+  const model = dayModel(book.days, book.slots, book.skipDates, left, dateLocale).filter((d) => d.tag !== "Over");
   const dayItem = model.find((m) => m.key === dayKey) || null;
   const end = selected ? getSlotEnd(selected.bookedStartDate, book.slots?.classDuration) : null;
 
   const say =
     step === 4
-      ? "Yay! Your class is booked. See you there!"
+      ? t("sayBooked")
       : step === 3
-        ? copy.say3(firstName(teacherName))
+        ? copy.say3(firstName(teacherName, t("yourTeacherLower")))
         : step === 2
           ? copy.say2
           : left < 1
             ? copy.sayAll
             : copy.say;
-  const title = step === 4 ? "Yay! Class booked!" : step === 1 && left < 1 ? copy.allTitle : copy.steps[step - 1];
+  const title = step === 4 ? t("booked") : step === 1 && left < 1 ? copy.allTitle : copy.steps[step - 1];
 
   function goTo(nextStep) {
     if (nextStep < 3) setSelected(null);
@@ -1141,11 +1134,11 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   function pickSubject(option) {
     if (left < 1) return;
     if (!allMode && !option.teacherName) {
-      toast.error("You do not have a teacher assigned yet");
+      toast.error(t("noTeacher"));
       return;
     }
     if (leftOf(option) < 1) {
-      toast.error("You have booked all your classes for this week");
+      toast.error(t("allBookedThisWeek"));
       return;
     }
     setPicked(option);
@@ -1173,12 +1166,12 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
       // The request may have reached the server: keep Book it locked so a retry can not double-book.
       setUnknown(true);
       setConfirming(false);
-      toast.error(UNKNOWN_OUTCOME);
+      toast.error(t("unknownOutcome"));
       return;
     }
     if (result.status === "1") {
       setConfirming(false);
-      toast.success(result.message || "Your class has been booked.");
+      toast.success(result.message || t("bookedToast"));
       setDone({ name: picked.name, weekday: dayItem.weekday, num: dayItem.num, time: niceTime(selected.displayStartTime) });
       setStep(4);
       queryClient.invalidateQueries({ queryKey: ["book-class-slots"] });
@@ -1187,7 +1180,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
       return;
     }
     setConfirming(false);
-    toast.error(result.message || "Unable to book this class. Please try again.");
+    toast.error(result.message || t("bookError"));
   }
 
   // "Book a Class (n)" in the header: back to the first step, scrolled to it.
@@ -1218,17 +1211,17 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                 onClick={() => goTo(step - 1)}
                 className="flex min-h-12 cursor-pointer items-center gap-1.5 rounded-full border-[3px] border-k5-line bg-k5-card py-0 pl-3 pr-[18px] font-k5-display text-[17px] font-semibold text-k5-ink"
               >
-                <ChevronLeft className="h-5 w-5 text-k5-acx" strokeWidth={3} aria-hidden="true" /> Back
+                <ChevronLeft className="h-5 w-5 text-k5-acx" strokeWidth={3} aria-hidden="true" /> {tc("actions.back")}
               </button>
             )}
             <div className="flex flex-col">
-              {step < 4 && <span className="text-sm font-black text-k5-mut">Step {step} of 3</span>}
+              {step < 4 && <span className="text-sm font-black text-k5-mut">{t("stepOf", { step, total: 3 })}</span>}
               <h2 id="k5-step" className="m-0 font-k5-display text-[30px] font-semibold leading-[1.1]">{title}</h2>
               {step === 1 && <span className="mt-0.5 text-[15px] font-black text-k5-gx">{copy.any}</span>}
               {step === 3 && (
                 <span className="mt-0.5 flex items-center gap-1.5 text-[15px] font-black text-[var(--k5-vX)]">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-k5-vi text-[10px] text-white">{initialsOf(teacherName)}</span>
-                  {firstName(teacherName)} is free at these times
+                  {t("freeAtTimes", { name: firstName(teacherName, t("yourTeacherLower")) })}
                 </span>
               )}
             </div>
@@ -1239,7 +1232,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                 onClick={() => onShowBooked(picked?.subjectId)}
                 className="ms-auto min-h-12 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-5 font-k5-display text-[17px] font-semibold text-k5-ink"
               >
-                My booked classes
+                {t("myBookedClasses")}
               </button>
             )}
           </div>
@@ -1254,16 +1247,16 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
           {step === 2 &&
             (book.loading
               ? (
-                <K5Loading label="Loading available days" className="grid grid-cols-[repeat(auto-fit,minmax(118px,1fr))] gap-2.5">
+                <K5Loading label={t("loadingDays")} className="grid grid-cols-[repeat(auto-fit,minmax(118px,1fr))] gap-2.5">
                   {Array.from({ length: 5 }, (_, i) => (
                     <K5Sk key={i} className="k5h-b-day-sk h-[150px] rounded-3xl" />
                   ))}
                 </K5Loading>
               )
               : !book.teacher || !book.teacherAssigned
-                ? notice(book.teacher ? "You do not have a teacher assigned yet" : "Unable to load teacher details. Please try again.")
+                ? notice(book.teacher ? t("noTeacher") : t("teacherError"))
                 : !book.week
-                  ? notice("No class slots are available for this week.")
+                  ? notice(t("noSlots"))
                   : (
                     <DayStep
                       model={model}
@@ -1286,7 +1279,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                 }}
               />
               <p className="m-0 text-sm font-extrabold text-k5-mut">
-                Times are in {book.slots?.timeZoneName}. Each class is {book.slots?.classDuration} minutes.
+                {t("timesIn", { zone: book.slots?.timeZoneName ?? "", minutes: book.slots?.classDuration ?? "" })}
               </p>
               {selected && !middle && (
                 <div className="flex flex-wrap items-center gap-3.5 rounded-3xl bg-k5-yt px-4 py-3.5">
@@ -1294,11 +1287,11 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                     <SubjectIcon name={picked.name} className="h-[26px] w-[26px]" />
                   </span>
                   <div className="flex min-w-0 flex-[1_1_240px] flex-col gap-0.5">
-                    <span className="text-sm font-black text-k5-yx">You picked</span>
+                    <span className="text-sm font-black text-k5-yx">{t("youPicked")}</span>
                     <span className="font-k5-display text-[22px] font-semibold leading-[1.2]">
                       {picked.name} · {dayItem.weekday} {dayItem.num} · {niceTime(selected.displayStartTime)}
                     </span>
-                    <span className="text-sm font-extrabold text-k5-mut">with {teacherName}</span>
+                    <span className="text-sm font-extrabold text-k5-mut">{t("withTeacher", { name: teacherName })}</span>
                   </div>
                   <button
                     type="button"
@@ -1309,11 +1302,11 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                     <svg width="30" height="20" viewBox="0 0 64 40" aria-hidden="true">
                       <path d={TICKET_PATH} fill="#FFC531" />
                     </svg>
-                    {submitting ? "Booking…" : "Book it!"}
+                    {submitting ? t("booking") : t("bookIt")}
                   </button>
                 </div>
               )}
-              {unknown && <p className="m-0 text-center font-extrabold text-k5-ri">{UNKNOWN_OUTCOME}</p>}
+              {unknown && <p className="m-0 text-center font-extrabold text-k5-ri">{t("unknownOutcome")}</p>}
             </>
           )}
 
@@ -1339,21 +1332,21 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                 <p className="m-0 font-k5-display text-[22px] font-semibold leading-[1.25]">
                   {done.name} · {done.weekday} {done.num} · {done.time}
                 </p>
-                <span className={`text-[15px] font-extrabold ${high ? "text-k5-ink" : "text-k5-gx"}`}>with {teacherName}</span>
+                <span className={`text-[15px] font-extrabold ${high ? "text-k5-ink" : "text-k5-gx"}`}>{t("withTeacher", { name: teacherName })}</span>
                 <div className="mt-2 flex flex-wrap gap-2.5">
                   <button
                     type="button"
                     onClick={another}
                     className="k5h-b-another min-h-[54px] cursor-pointer rounded-full border-none bg-[#FFC531] px-6 font-k5-display text-[19px] font-semibold text-[#1C2640] shadow-[0_5px_0_#C9930A]"
                   >
-                    Book another class
+                    {t("bookAnother")}
                   </button>
                   <button
                     type="button"
                     onClick={() => onShowBooked(picked?.subjectId)}
                     className="min-h-[54px] cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-6 font-k5-display text-[19px] font-semibold text-k5-ink"
                   >
-                    See my classes
+                    {t("seeMyClasses")}
                   </button>
                 </div>
               </div>
@@ -1365,7 +1358,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
     middle && confirming && picked && selected && dayItem ? (
         <ConfirmBooking
           open
-          when={format(new Date(dayItem.day.displayStartDateWithoutDay), "MMM dd, yyyy") + " · " + niceTime(selected.displayStartTime) + (end?.endTime ? " – " + end.endTime : "")}
+          when={format(new Date(dayItem.day.displayStartDateWithoutDay), "MMM dd, yyyy", { locale: dateLocale }) + " · " + niceTime(selected.displayStartTime) + (end?.endTime ? " – " + end.endTime : "")}
           course={picked.name}
           color={color}
           teacher={teacherName}
@@ -1391,7 +1384,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-stretch gap-4">
         <div className="flex-[1_1_340px]">
-          <BookHeader teacherName={teacherName} onStart={startOver} startLabel={"Book a Class (" + left + ")"} />
+          <BookHeader teacherName={teacherName} onStart={startOver} startLabel={t("bookClassCount", { count: left })} />
         </div>
         <Tickets perWeek={perWeek} left={left} color={color} />
       </div>

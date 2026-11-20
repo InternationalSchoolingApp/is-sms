@@ -4,16 +4,18 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { Newspaper, X } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { NewsDetailModal } from "@/components/dashboard/NewsDetailModal";
 import { NewsAllModal } from "@/components/dashboard/NewsAllModal";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { getArticlesByIds } from "@/services/newsApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 
-function formatNewsDate(value) {
+function formatNewsDate(value, locale) {
   if (!value) return "";
   const parsed = parseISO(String(value));
-  return Number.isNaN(parsed.getTime()) ? "" : format(parsed, "MMM d, yyyy");
+  return Number.isNaN(parsed.getTime()) ? "" : format(parsed, "MMM d, yyyy", { locale });
 }
 
 /**
@@ -27,6 +29,9 @@ export function NewsPanel({ articles, totalNews, userId, onClose }) {
   const dummy = useDummyStudent();
   const [markingAll, setMarkingAll] = useState(false);
   const queryClient = useQueryClient();
+  const t = useTranslations("news");
+  const tc = useTranslations("common");
+  const dateLocale = useDateFnsLocale();
 
   // Legacy's "View All News" (showNewsDataByIds): fetches the full detail
   // of every currently-listed article (get-article-by-ids also bulk-
@@ -51,7 +56,7 @@ export function NewsPanel({ articles, totalNews, userId, onClose }) {
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close"
+          aria-label={tc("actions.close")}
           className="absolute -left-4 cursor-pointer top-3 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700"
         >
           <X className="h-4 w-4" />
@@ -59,13 +64,13 @@ export function NewsPanel({ articles, totalNews, userId, onClose }) {
 
         <div className="flex items-center gap-2 border-b border-slate-200 px-5 py-4">
           <Newspaper className="h-5 w-5 text-primary" aria-hidden="true" />
-          <h2 className="text-base font-extrabold text-black">News</h2>
-          {totalNews > 0 && <span className="ml-auto text-sm font-bold text-black/50">{totalNews} articles</span>}
+          <h2 className="text-base font-extrabold text-black">{t("title")}</h2>
+          {totalNews > 0 && <span className="ml-auto text-sm font-bold text-black/50">{t("articleCount", { count: totalNews })}</span>}
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {articles.length === 0 ? (
-            <p className="text-sm text-black/50">No news yet.</p>
+            <p className="text-sm text-black/50">{t("empty")}</p>
           ) : (
             <ul className="space-y-3">
               {articles.map((item) => (
@@ -79,7 +84,7 @@ export function NewsPanel({ articles, totalNews, userId, onClose }) {
                     <div className="min-w-0">
                       <span className="block text-sm font-bold text-black">{item.title}</span>
                       <span className="mt-1 block text-xs text-black/50">
-                        {item.sourceName} · {formatNewsDate(item.publishDate)}
+                        {item.sourceName} · {formatNewsDate(item.publishDate, dateLocale)}
                       </span>
                     </div>
                   </button>
@@ -97,7 +102,7 @@ export function NewsPanel({ articles, totalNews, userId, onClose }) {
               disabled={markingAll}
               className="w-full rounded-full bg-primary py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60"
             >
-              {markingAll ? "Marking…" : "View All News"}
+              {markingAll ? t("marking") : t("viewAll")}
             </button>
           </div>
         )}

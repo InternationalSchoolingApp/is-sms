@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   LayoutDashboard, CalendarDays, GraduationCap, CalendarCheck, ShoppingCart,
   ClipboardCheck, BarChart3, FileText, Globe, Handshake, Gamepad2, Wallet,
@@ -10,6 +11,7 @@ import {
 } from "lucide-react";
 import { InboxBadge, isInboxMenuItem } from "@/components/student/inbox/InboxBadge";
 import { studentNavHref } from "@/utils/dashboardNav";
+import { useLabelTranslator } from "@/i18n/labels";
 
 // String-key -> lucide component (keys come from utils/dashboardNav.js; all verified present).
 const ICONS = {
@@ -37,6 +39,9 @@ function iconFor(key) {
 export function Sidebar({ menu, open = false, onClose, collapsed = false, onExpand }) {
   const pathname = usePathname();
   const { school } = useParams();
+  const t = useTranslations("nav.sidebar");
+  // Module names come from the DB menu: translated for display only, the raw label stays in the item.
+  const tl = useLabelTranslator("menu");
 
   const isActive = (segment) => {
     const href = studentNavHref(school, segment);
@@ -48,14 +53,14 @@ export function Sidebar({ menu, open = false, onClose, collapsed = false, onExpa
       {open && <div className="fixed inset-0 z-30 bg-black/40 md:hidden" aria-hidden="true" onClick={onClose} />}
 
       <nav
-        aria-label="Student dashboard"
+        aria-label={t("ariaLabel")}
         className={`fixed left-0 top-[var(--dash-header-h,56px)] z-40 h-[calc(100vh-var(--dash-header-h,56px))] overflow-y-auto overflow-x-hidden border-r border-slate-200 bg-white py-3 transition-all duration-200 md:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         } ${collapsed ? "w-16 px-2" : "w-64 px-3"}`}
       >
         <div className="mb-2 flex items-center justify-between px-2 md:hidden">
-          <span className="text-sm font-bold text-black">Menu</span>
-          <button type="button" aria-label="Close menu" onClick={onClose} className="rounded-md p-1 text-black hover:bg-slate-100">
+          <span className="text-sm font-bold text-black">{t("menu")}</span>
+          <button type="button" aria-label={t("closeMenu")} onClick={onClose} className="rounded-md p-1 text-black hover:bg-slate-100">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -71,12 +76,13 @@ export function Sidebar({ menu, open = false, onClose, collapsed = false, onExpa
                 onExpand={onExpand}
                 onNavigate={onClose}
                 isActive={isActive}
+                tl={tl}
               />
             ) : (
               <LinkItem
                 key={item.key}
                 href={studentNavHref(school, item.segment)}
-                label={item.label}
+                label={tl(item.label)}
                 Icon={iconFor(item.icon)}
                 active={isActive(item.segment)}
                 collapsed={collapsed}
@@ -111,7 +117,7 @@ function LinkItem({ href, label, Icon, active, collapsed, onNavigate, badge = fa
   );
 }
 
-function GroupItem({ item, school, collapsed, onExpand, onNavigate, isActive }) {
+function GroupItem({ item, school, collapsed, onExpand, onNavigate, isActive, tl }) {
   const Icon = iconFor(item.icon);
   const childActive = item.children.some((c) => isActive(c.segment));
   const [openGroup, setOpenGroup] = useState(childActive);
@@ -122,7 +128,7 @@ function GroupItem({ item, school, collapsed, onExpand, onNavigate, isActive }) 
       <li>
         <button
           type="button"
-          title={item.label}
+          title={tl(item.label)}
           onClick={() => onExpand && onExpand()}
           className={`flex w-full items-center justify-center rounded-lg py-2 text-sm transition-colors ${
             childActive ? "bg-primary/10 text-primary" : "text-black hover:bg-slate-100"
@@ -145,7 +151,7 @@ function GroupItem({ item, school, collapsed, onExpand, onNavigate, isActive }) 
         }`}
       >
         <Icon className={`h-[18px] w-[18px] shrink-0 ${childActive ? "text-primary" : "text-black"}`} aria-hidden="true" />
-        <span className="flex-1 truncate text-left">{item.label}</span>
+        <span className="flex-1 truncate text-left">{tl(item.label)}</span>
         {isInboxMenuItem(item) && <InboxBadge />}
         <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${openGroup ? "rotate-180" : ""}`} aria-hidden="true" />
       </button>
@@ -163,7 +169,7 @@ function GroupItem({ item, school, collapsed, onExpand, onNavigate, isActive }) 
                     active ? "bg-primary/10 text-primary" : "text-black hover:bg-slate-100"
                   }`}
                 >
-                  {child.label}
+                  {tl(child.label)}
                 </Link>
               </li>
             );

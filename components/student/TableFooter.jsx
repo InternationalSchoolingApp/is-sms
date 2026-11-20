@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 // DataTables "simple_numbers" window: up to 7 slots, ellipsis around the current page.
 function pageSlots(page, pageCount) {
   if (pageCount <= 7) return Array.from({ length: pageCount }, (_, index) => index);
@@ -15,13 +17,14 @@ function pageSlots(page, pageCount) {
  * differently (legacy language.info).
  */
 export function TableFooter({ page, pageSize, total, onPageChange, info }) {
+  const tc = useTranslations("common");
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const start = total ? page * pageSize + 1 : 0;
   const end = Math.min(total, (page + 1) * pageSize);
 
   return (
     <div className="flex flex-col items-center gap-3 px-4 pt-5 text-sm text-black sm:flex-row sm:flex-wrap sm:justify-between sm:px-5 sm:text-base">
-      <span>{info ? info(start, end, total) : `Showing ${start} to ${end} of ${total} entries`}</span>
+      <span>{info ? info(start, end, total) : tc("table.showingEntries", { from: start, to: end, total })}</span>
       <div className="flex overflow-hidden rounded border border-slate-200">
         <button
           type="button"
@@ -29,7 +32,7 @@ export function TableFooter({ page, pageSize, total, onPageChange, info }) {
           disabled={page === 0}
           className="px-3 py-2 text-black/70 disabled:text-black/40 sm:px-4"
         >
-          Previous
+          {tc("actions.previous")}
         </button>
         {/* Phones: the numbered window doesn't fit, show the current page instead. */}
         <span className="border-l border-slate-200 bg-primary px-3 py-2 text-white sm:hidden">
@@ -57,7 +60,7 @@ export function TableFooter({ page, pageSize, total, onPageChange, info }) {
           disabled={page >= pageCount - 1}
           className="border-l border-slate-200 px-3 py-2 text-black/70 disabled:text-black/40 sm:px-4"
         >
-          Next
+          {tc("actions.next")}
         </button>
       </div>
     </div>

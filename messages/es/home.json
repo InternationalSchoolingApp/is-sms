@@ -1,0 +1,116 @@
+{
+  "reEnrollmentLoadFailed": "No se pudieron cargar los datos de tu reinscripción.",
+  "completeProfile": {
+    "title": "Completa tu perfil",
+    "required": "Obligatorio",
+    "unknownField": "Campo desconocido",
+    "fieldsNeedAttention": "{count, plural, one {# campo requiere tu atención} other {# campos requieren tu atención}}",
+    "mandatoryNote": "Algunos campos son obligatorios. Complétalos para continuar.",
+    "later": "Más tarde",
+    "goToProfile": "Ir a mi perfil"
+  },
+  "graduation": {
+    "title": "¡Estás invitado a la ceremonia de graduación! 🎓",
+    "registerBy": "Inscríbete antes del {date} para acompañarnos.",
+    "attendAs": "Asistirás como",
+    "options": {
+      "graduate": "Graduado",
+      "attendee": "Asistente",
+      "performer": "Artista"
+    },
+    "continue": "Continuar a la inscripción"
+  },
+  "onboardingVideo": {
+    "welcome": "¡Bienvenido! {name}",
+    "talkToAdmin": "Hablar con la administración escolar",
+    "watchAgain": "Ver de nuevo",
+    "bookTraining": "Reservar la capacitación del sistema"
+  },
+  "outlook": {
+    "copied": "Copiado",
+    "copyFailed": "No se pudo copiar. Cópialo manualmente.",
+    "hidePassword": "Ocultar contraseña",
+    "showPassword": "Mostrar contraseña",
+    "copyLabel": "Copiar {label}",
+    "title": "Activa tu correo escolar",
+    "description": "Este es tu correo escolar oficial en Outlook. Enviaremos a este correo los horarios de clase, las novedades de pagos y los anuncios. Inicia sesión y actívalo de inmediato.",
+    "schoolEmail": "Correo escolar: {email}",
+    "temporaryPassword": "Contraseña temporal",
+    "loginOnce": "Inicia sesión una vez con estos datos y luego elige tu propia contraseña.",
+    "activate": "Activa tu correo escolar",
+    "later": "Hacerlo más tarde",
+    "needHelp": "¿Necesitas ayuda?",
+    "whatsapp": "Escríbenos por WhatsApp",
+    "unableToProceed": "No es posible continuar"
+  },
+  "reserveSeat": {
+    "enrollGroupLearning": "Inscribirse en el aprendizaje grupal {year}",
+    "enrollNextGrade": "Inscribirse en el siguiente grado",
+    "reserveSeat": "Reservar plaza",
+    "acceptReEnroll": "Reinscribirse ahora en el siguiente grado",
+    "acceptReserve": "Reservar una plaza ahora para el siguiente grado",
+    "limitedOffer": "¡Esta oferta es válida solo por tiempo limitado!",
+    "countdown": {
+      "days": "Días",
+      "hours": "Horas",
+      "minutes": "Minutos",
+      "seconds": "Segundos"
+    },
+    "congratulations": "¡Felicidades!",
+    "awesome": "¡Genial!",
+    "hi": "¡Hola, {name}!",
+    "eligible": "Ya puedes reinscribirte en el siguiente grado",
+    "exclusiveReEnrollment": "OFERTA EXCLUSIVA DE REINSCRIPCIÓN",
+    "exclusiveOneTime": "OFERTA EXCLUSIVA ÚNICA",
+    "specialDiscount": "Obtienes un descuento especial de",
+    "off": "DE DESCUENTO",
+    "maybeLater": "Quizás más tarde",
+    "readyFor": "¿Listo para {grade}?",
+    "feeTitleGroupLearning": "Inscríbete ahora en el aprendizaje grupal {year}",
+    "feeTitlePayCourseFee": "Pagar la cuota del curso de {grade}",
+    "feeTitleReserve": "Reservar una plaza para el siguiente grado",
+    "totalFee": "Cuota total",
+    "oneTimeDiscount": "Descuento único",
+    "progressionDiscount": "Descuento por promoción",
+    "additionalDiscount": "Descuento adicional",
+    "payableFee": "Importe a pagar (USD)",
+    "feeNoteGrade": "*Este importe a pagar corresponde a {grade}",
+    "feeNoteGradeCredits": "*Este importe a pagar corresponde a {grade} por {credits} créditos regulares.",
+    "feeNoteReserve": "*Esta cuota se descontará de la cuota del curso al momento de la reinscripción",
+    "proceedToPay": "Ir al pago",
+    "needHelp": "¿Necesitas ayuda?",
+    "paymentReceived": "Pago recibido.",
+    "somethingWrong": "Algo salió mal",
+    "paymentProcessing": "El pago se está procesando...",
+    "oops": "¡Uy!",
+    "paymentIncomplete": "Pago incompleto",
+    "underReview": "Tu pago está en revisión.",
+    "underReviewDetail": "El estado de tu cuota se actualizará cuando se reciba el pago."
+  },
+  "systemTraining": {
+    "hello": "¡Hola, {name}!",
+    "welcomeAlt": "Bienvenida",
+    "welcomeLine1": "¡Bienvenido a la",
+    "welcomeLine2": "familia International Schooling!",
+    "title": "Capacitación del sistema escolar",
+    "liveChat": "Chat en vivo con la administración escolar",
+    "rescheduledLine1": "Tu capacitación del sistema escolar fue reprogramada.",
+    "rescheduledLine2": "Haz clic abajo y elige otra fecha para la capacitación.",
+    "reschedule": "Reprogramar",
+    "isOn": "Tu capacitación del sistema escolar es el {dateTime}.",
+    "wishReschedule": "Si quieres reprogramarla, <link>haz clic aquí</link>"
+  },
+  "reschedule": {
+    "loading": "Cargando tu capacitación del sistema escolar",
+    "loadFailed": "No se pudo cargar tu capacitación del sistema escolar. Inténtalo de nuevo en un momento.",
+    "selectDate": "Selecciona la fecha de tu capacitación del sistema.",
+    "selectTime": "Selecciona la hora de tu capacitación del sistema.",
+    "failed": "No se pudo reprogramar la capacitación.",
+    "rescheduled": "Tu capacitación del sistema escolar fue reprogramada.",
+    "chooseSlot": "Elige un horario"
+  },
+  "checkout": {
+    "oldFeeTitle": "Actualización de pagos de la escuela",
+    "importantNotice": "Aviso importante"
+  }
+}

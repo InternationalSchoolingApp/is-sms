@@ -7,6 +7,9 @@ import { CLUBS } from "@/constant/Clubs";
  *
  * Key = the last part of the page address (the module's pageLink); the home page is HOME_MODULE. A module that has no
  * entry gets NO_MODULE_TEXT when the student taps the buddy.
+ *
+ * The texts here are the English originals. The dashboard shows them in the student's language from the pico namespace
+ * (pico.modules.<labelKey(pageLink)>, pico.clubTips.<labelKey(pageLink)>, pico.clubFallback, pico.noModule; see PicoGuide).
  */
 
 export const HOME_MODULE = {
@@ -103,7 +106,13 @@ export function picoModuleFor(segment) {
  * The first welcome. On the home page it opens the tour (so it ends by inviting the student to tap Next); anywhere else
  * it is a plain welcome. Never mentions anything that is not on every student's dashboard.
  */
-export function picoWelcomeText({ firstName, schoolName, buddyName, tour }) {
+export function picoWelcomeText({ firstName, schoolName, buddyName, tour, t }) {
+  // t = useTranslations("pico"): the same welcome in the dashboard language (pico.welcome.*).
+  if (t) {
+    const helloT = firstName ? t("welcome.helloName", { name: firstName }) : t("welcome.hello");
+    const schoolT = schoolName ? t("welcome.school", { school: schoolName }) : t("welcome.schoolGeneric");
+    return t(tour ? "welcome.tour" : "welcome.plain", { hello: helloT, school: schoolT, buddy: buddyName });
+  }
   const hello = `Hello${firstName ? ` ${firstName}` : ""}!`;
   const school = schoolName ? `Welcome to the ${schoolName} Family!` : "Welcome!";
   return tour

@@ -1,0 +1,50 @@
+{
+  "title": "Prolongation de l'année scolaire",
+  "schoolFallback": "L'école",
+  "contactAdmin": "Contacter l'administration de l'école",
+  "confirmExtension1": "Voulez-vous vraiment utiliser l'Extension-1 ?",
+  "termsTitle": "Conditions générales",
+  "termsIntro": "Veuillez prendre connaissance de la politique de remboursement et des conditions générales avant de prolonger l'année scolaire :",
+  "terms": {
+    "consultAdmin": "Nous vous recommandons de consulter l'administration de l'école avant de choisir une prolongation payante de l'année scolaire.",
+    "maxFourWeeks": "La prolongation payante de l'année scolaire peut être utilisée pour une durée maximale de 4 semaines.",
+    "noOtherForm": "L'école ne propose aucune autre forme de prolongation de l'année scolaire.",
+    "incomplete": "Si vous ne pouvez pas terminer ce cours même après une prolongation payante de 4 semaines, aucun crédit ne sera accordé pour ce cours et il sera noté Incomplet « (I) » sur votre relevé de notes annuel.",
+    "nonRefundable": "En aucun cas, les frais payés pour la prolongation de l'année scolaire ne sont remboursables, transférables ou ajustables.",
+    "checkWebsite": "Les élèves (ou leurs parents/tuteurs) doivent consulter régulièrement le site web pour les prochaines notifications. {school} n'enverra pas de notifications ou de mises à jour séparément aux élèves (ou à leurs parents/tuteurs).",
+    "rightToAmend": "{school} se réserve le droit de modifier, limiter ou révoquer toute offre ou condition à tout moment avant l'achat et décline toute responsabilité en cas de problème technique empêchant le paiement."
+  },
+  "agree": "Je confirme avoir lu et accepté la politique de remboursement et les conditions générales ci-dessus.",
+  "payNow": "Payer maintenant",
+  "paymentProcessing": "Paiement en cours...",
+  "oops": "Oups !",
+  "paymentIncomplete": "Paiement incomplet",
+  "underReviewTitle": "Votre paiement est en cours de vérification.",
+  "underReviewText": "Votre prolongation sera appliquée dès réception du paiement.",
+  "toast": {
+    "paymentReceived": "Paiement reçu.",
+    "unableToAvail": "Impossible d'utiliser la prolongation.",
+    "extension1Availed": "Extension-1 utilisée avec succès."
+  },
+  "notEligible": {
+    "afterYear": "Vous pourrez demander une prolongation pour {subject} une fois votre année scolaire terminée.",
+    "notEligible": "Vous n'êtes pas éligible à une prolongation pour {subject}."
+  },
+  "detail": {
+    "title": "Prolonger l'année scolaire pour {subject}",
+    "availedOfOne": "Vous avez utilisé {count} prolongation sur 1 de l'Extension-1.",
+    "extension1Info": "Avec l'Extension-1, vous disposez de 2 semaines supplémentaires pour valider le cours, sans frais supplémentaires.",
+    "availExtension1": "Utiliser l'EXTENSION-1",
+    "extension2": "Extension-2",
+    "paidExtension": "prolongation payante",
+    "availedOfFour": "Vous avez utilisé {count} prolongation(s) sur 4 de : {label}.",
+    "payToAvail": "Payez {cost} pour utiliser : {label}.",
+    "extendedOneWeek": "Avec cette option ({label}), vous disposez d'une semaine supplémentaire pour valider le cours.",
+    "availExtension2": "Utiliser l'EXTENSION-2",
+    "availPaidExtension": "Utiliser la prolongation payante",
+    "allAvailed": "Vous avez déjà utilisé toutes les prolongations pour {subject}"
+  },
+  "messages": {
+    "no_details_found": "Aucun détail trouvé."
+  }
+}

@@ -1,0 +1,354 @@
+{
+  "title": "My Performance",
+  "breadcrumbDashboard": "Dashboard",
+  "loading": "Loading your performance",
+  "noScoreYet": "No score yet",
+  "starsLabel": "{n} of 5 stars",
+  "session": {
+    "withStart": "Session {start}–{end} · Starts {starts} · Ends {ends}",
+    "endOnly": "Session {start}–{end} · Ends {ends}"
+  },
+  "tabs": {
+    "perf": "Performance",
+    "goals": "My Goals",
+    "class": "Class Comparison"
+  },
+  "hero": {
+    "greeting": "Hey {name}, nice momentum.",
+    "greetingPlain": "Hi {name}, here’s how you’re doing.",
+    "there": "there",
+    "pillLabel": "{n} / 3: {label}",
+    "pills": {
+      "progress": "Progress",
+      "streak": "Streak",
+      "scores": "Scores"
+    },
+    "quiet": {
+      "progress": "Keep going — your progress shows here after the next daily update.",
+      "streak": "Submit your next activity on time to start a streak.",
+      "scores": "Your scores will show here once your work is graded."
+    }
+  },
+  "behindBanner": "You’re behind today’s target in {names}. A little work today gets you back on track!",
+  "stars": {
+    "superstar": {
+      "label": "Superstar",
+      "range": "90–100%",
+      "msg": "Amazing work! You are a superstar."
+    },
+    "great": {
+      "label": "Great",
+      "range": "80–89%",
+      "msg": "Great job! A little more to become a Superstar."
+    },
+    "good": {
+      "label": "Good",
+      "range": "70–79%",
+      "msg": "Good going! Keep practising to earn more stars."
+    },
+    "gettingThere": {
+      "label": "Getting there",
+      "range": "60–69%",
+      "msg": "You are getting there! Every try makes you better."
+    },
+    "practise": {
+      "label": "Let’s practise",
+      "range": "Below 60%",
+      "msg": "Let’s practise together. You can do it!"
+    },
+    "perfect": "Perfect score! You got every answer right."
+  },
+  "pace": {
+    "ahead": {
+      "label": "Ahead",
+      "note": "Ahead — {gap}% ahead of today’s target"
+    },
+    "onTrack": {
+      "label": "On Track",
+      "note": "On Track — right around today’s target"
+    },
+    "behind": {
+      "label": "Behind",
+      "note": "Behind — {gap}% behind today’s target"
+    }
+  },
+  "teacher": {
+    "mr": "Mr.",
+    "ms": "Ms."
+  },
+  "achievements": {
+    "title": "Achievements",
+    "names": {
+      "EARLY_SUBMITTER": "Early Submitter",
+      "CLEAN_SWEEP": "Clean Sweep",
+      "PERFECT_SCORE": "Perfect Score",
+      "HALFWAY": "Halfway",
+      "ON_TARGET": "On Target"
+    },
+    "earned": "Earned {date}",
+    "locked": "Locked · {how}",
+    "unlock": {
+      "EARLY_SUBMITTER": "5 assignments before the due date",
+      "CLEAN_SWEEP": "100% three times in a row",
+      "PERFECT_SCORE": "100% in two courses",
+      "HALFWAY": "50% done in any course",
+      "ON_TARGET": "{score}% average score"
+    }
+  },
+  "score": {
+    "title": "My Score",
+    "subtitle": "Stars show how well you are doing.",
+    "empty": "Your stars will show here once your work is graded.",
+    "levelExclaim": "{label}!",
+    "average": "Your average score is {avg}%",
+    "levels": "Star levels",
+    "youAreHere": "You are here",
+    "next": "Score {min}% or more to become a {label}. Only {more}% more!",
+    "top": "You are at the top. Keep shining!"
+  },
+  "streak": {
+    "title": "My Streak",
+    "subtitle": "Hand in your work on time and your streak grows.",
+    "none": "No streak yet",
+    "one": "1 on time!",
+    "many": "<n></n> on time in a row!",
+    "bestIn": "Your best is in {course}",
+    "startHint": "Submit your next activity on time to start one.",
+    "next": "Just {count} more on time to earn the {badge} badge!",
+    "allEarned": "You earned every streak badge!",
+    "badges": {
+      "spark": "Spark",
+      "flame": "Flame",
+      "blaze": "Blaze",
+      "fireStar": "Fire Star"
+    }
+  },
+  "stats": {
+    "avgScore": "Average score",
+    "nothingGraded": "nothing graded yet",
+    "acrossCourses": "across {count, plural, one {# course} other {# courses}}",
+    "submitted": "Assignments submitted",
+    "toGo": "{count} still to go",
+    "coursesAhead": "Courses ahead",
+    "aheadOf": "<n></n> of {total}",
+    "onTrack": "{count} on track",
+    "behind": "{count} behind",
+    "daysLeft": "Days left",
+    "ends": "Ends {date}"
+  },
+  "courseList": {
+    "title": "My courses",
+    "clickHint": "Click a course to see its assignments",
+    "empty": "No academic performance found",
+    "emptyHint": "Your courses will appear here after the next daily update.",
+    "perfect100": "Perfect 100!",
+    "superstar": "Superstar!",
+    "score": "Score",
+    "scoreGrade": "Score · Grade {grade}",
+    "scoreLine": "score <u>{score}%</u>",
+    "scoreNone": "score —",
+    "onTime": "{count} on time",
+    "viewAssignments": "View assignments"
+  },
+  "courseView": {
+    "facts": {
+      "course": "Course:",
+      "teacher": "Teacher:",
+      "score": "Current Overall Score:",
+      "grade": "Current Overall Grade:",
+      "daysLeft": "Remaining Days:",
+      "duration": "Duration:"
+    },
+    "gradableDone": "{pct}% of gradable activities completed ({done} of {total})",
+    "allDone": "{pct}% of all activities completed ({done} of {total})",
+    "nothingToComplete": "No assignments to complete",
+    "streakRun": "{count, plural, one {# on-time submission in a row} other {# on-time submissions in a row}}",
+    "noStreak": "<b>No streak yet</b> — submit your next activity on time to start one.",
+    "countsLabel": "Assignment counts",
+    "stats": {
+      "total": "Total Assignments",
+      "excused": "Excused",
+      "submitted": "Submitted",
+      "upcoming": "Upcoming",
+      "missed": "Missed",
+      "passed": "Passed",
+      "failed": "Failed",
+      "before": "Submitted BEFORE TIME",
+      "onTime": "Submitted ON TIME",
+      "late": "Submitted LATE"
+    },
+    "noAssignments": "Assignments will appear after the next daily update.",
+    "assignments": "Assignments",
+    "columns": {
+      "activityName": "Activity Name",
+      "dueDate": "Due Date",
+      "submittedDate": "Submitted Date",
+      "timeSpent": "Time Spent (hh:mm:ss)",
+      "submittedStatus": "Submitted Status",
+      "score": "Score",
+      "grade": "Grade",
+      "detailedStatus": "Detailed Assignment Status",
+      "status": "Status"
+    },
+    "status": {
+      "beforeTime": "Before time",
+      "onTime": "On time",
+      "late": "Late",
+      "missed": "Missed",
+      "upcoming": "Upcoming",
+      "excused": "Excused"
+    },
+    "lateBy": "Late by {count, plural, one {# day} other {# days}}",
+    "history": {
+      "title": "Grade History",
+      "loading": "Loading the attempts",
+      "empty": "No attempts yet.",
+      "latest": "Latest",
+      "columns": {
+        "date": "Date",
+        "visits": "Visits",
+        "time": "Time",
+        "score": "Score",
+        "by": "By"
+      }
+    }
+  },
+  "goals": {
+    "saved": "Goals saved — aiming for {score}% by {date}",
+    "saveError": "Your goals could not be saved.",
+    "title": "My goals",
+    "setGoals": "Set my goals",
+    "aim": "Aim for <chip>{score}% average</chip> and finish by <chip>{date}</chip>",
+    "avgPending": "Your average will show here once your work is graded.",
+    "away": "You’re {gap}% away from your score goal.",
+    "reachedFull": "Goal reached — keep it there.",
+    "reached": "Goal reached — keep it there",
+    "pastFinishNew": "Past your finish date — set a new one.",
+    "aboutPerWeek": "About <b>{count, plural, one {# assignment a week} other {# assignments a week}}</b> across your courses gets you there on time.",
+    "scoreGoal": "Score goal",
+    "ofScore": "of {score}%",
+    "gapToGo": "{gap}% to go",
+    "completion": "Completion",
+    "done": "done",
+    "roadLabel": "You are {ov}% of the way. Today’s target is {exp}%.",
+    "today": "Today",
+    "targetToday": "Today’s target is {exp}%",
+    "pastFinish": "Past your finish date",
+    "daysToFinish": "{count, plural, one {# day} other {# days}} to your finish date",
+    "due": "Due {date}",
+    "week": {
+      "title": "This week’s goals",
+      "doneOf": "{done} of {total} done",
+      "updated": "Updated daily from your submissions",
+      "empty": "Nothing due this week.",
+      "catchUp": "{course} · Catch-up",
+      "done": "Done",
+      "overdue": "Overdue",
+      "cleared": "Week cleared — you’re staying ahead of target."
+    },
+    "byCourse": {
+      "title": "Goals by course",
+      "legend": "Black line = your goal score, and today’s target",
+      "score": "Score",
+      "finalGoal": "· Final Goal: {score}%",
+      "goalMet": "Goal met",
+      "toGoal": "{gap}% to goal",
+      "progress": "Progress",
+      "pctDone": "{pct}% done",
+      "targetToday": "· Target today: {pct}%",
+      "targetMet": "Target met · {gap}% ahead",
+      "toTarget": "{gap}% to today’s target",
+      "left": "{count, plural, one {assignment left} other {assignments left}}",
+      "perWeek": "per week to finish by {date}",
+      "daysToFinish": "{count, plural, one {day to your finish date} other {days to your finish date}}",
+      "nextUp": "Next up"
+    },
+    "dialog": {
+      "intro": "Choose what you’re aiming for this session. You can change it any time.",
+      "targetScore": "Target average score",
+      "belowSchool": "Below school target",
+      "letterSchool": "{letter} · School target",
+      "alreadyThere": "You’re at {avg}% — already there. Aim higher if you like!",
+      "toGo": "You’re at {avg}% — {gap}% to go.",
+      "finishBy": "Finish all my courses by",
+      "recommended": "Recommended · 2 weeks early",
+      "courseEnd": "Course end date",
+      "pickDate": "Pick a date",
+      "pickDateBy": "Pick a date (by {date})",
+      "ownPlan": "Finish on your own plan",
+      "perWeekAll": "That’s about {count, plural, one {# assignment a week} other {# assignments a week}} across all your courses.",
+      "reminders": "Reminders & comparisons",
+      "compareTitle": "Show how I compare with my class",
+      "compareHelp": "Names and scores of others are never shown.",
+      "save": "Save goals"
+    }
+  },
+  "compare": {
+    "title": "How you compare",
+    "private": "Private to you · other students’ names and scores are never shown",
+    "summary": "You’re scoring above the class average in <g>{above} of {total}</g> courses, and on a better pace than most classmates in <g>{ahead} of {total}</g>.",
+    "course": "Course",
+    "off": "Class comparison is turned off",
+    "offHint": "Turn it on to see how your score and progress compare with others in your courses.",
+    "turnOn": "Turn on comparison",
+    "turningOn": "Turning on…",
+    "notEnough": "Not enough classmates to compare yet",
+    "notEnoughHint": "We only compare when there’s enough data. Names and scores of others are never shown.",
+    "comparedWith": "Compared with {count} students this session",
+    "standing": "Your overall standing",
+    "ofClass": "of the class",
+    "top": "Top {pct}%",
+    "bottom": "Bottom {pct}%",
+    "you": "You",
+    "class": "Class",
+    "classAverage": "Class average",
+    "scale": {
+      "behind": "Further behind",
+      "middle": "Class middle",
+      "leading": "Leading the class"
+    },
+    "cards": {
+      "score": "Score",
+      "progress": "Progress",
+      "onTime": "On-time submissions"
+    },
+    "verdicts": {
+      "scoreHigh": "Higher than {pct}% of the class",
+      "scoreMid": "Right around the class middle ({pct}%)",
+      "scoreLow": "Below {pct}% of the class — room to climb",
+      "paceHigh": "Better pace than {pct}% of the class",
+      "paceMid": "Pacing with the class middle ({pct}%)",
+      "paceLow": "{pct}% of the class have a better pace",
+      "timeHigh": "More punctual than {pct}% of the class",
+      "timeMid": "About as punctual as most ({pct}%)",
+      "timeLow": "Most classmates submit on time more often"
+    },
+    "dist": {
+      "title": "Where the class is",
+      "hint": "students per pace band",
+      "label": "{count} students · you are {band}"
+    },
+    "bands": {
+      "wellBehind": "Well behind",
+      "behind": "Behind",
+      "onSchedule": "On schedule",
+      "ahead": "Ahead",
+      "wellAhead": "Well ahead"
+    },
+    "tip": {
+      "ahead": "Finish by {date} to stay ahead of {pct}% of students in this course.",
+      "perWeek": "Completing {count, plural, one {# assignment a week} other {# assignments a week}} would move you past the class average within a few weeks.",
+      "general": "A few more assignments each week would move you past the class average within a few weeks."
+    },
+    "glance": {
+      "title": "All courses at a glance",
+      "columns": {
+        "course": "Course",
+        "yourScore": "Your score",
+        "classAvg": "Class average",
+        "yourProgress": "Your progress",
+        "standing": "Your standing"
+      }
+    }
+  }
+}

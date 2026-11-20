@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 
 /**
@@ -13,6 +14,7 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
  */
 export function CalendarModal({ title, onClose, wide = false, children }) {
   const { isK5 } = useDashboardContext();
+  const tc = useTranslations("common");
   if (isK5) {
     return (
       <div data-blocking-popup="" className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(10,16,34,0.55)] p-4" onClick={onClose}>
@@ -26,7 +28,7 @@ export function CalendarModal({ title, onClose, wide = false, children }) {
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={tc("actions.close")}
             className="absolute right-3.5 top-3.5 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border-[3px] border-white bg-[#E5243B] p-0 shadow-[0_4px_0_#B3172B]"
           >
             <X className="h-[18px] w-[18px] text-white" strokeWidth={3.4} aria-hidden="true" />
@@ -43,7 +45,7 @@ export function CalendarModal({ title, onClose, wide = false, children }) {
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close"
+          aria-label={tc("actions.close")}
           className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700"
         >
           <X className="h-4 w-4" />

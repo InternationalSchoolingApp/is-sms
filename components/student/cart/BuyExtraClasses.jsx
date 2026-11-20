@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { ShoppingBag } from "lucide-react";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useAddPlanToCart, useBuyExtraClass, useSchoolCurrency } from "@/hooks/useStudentCart";
@@ -15,10 +16,11 @@ import { PurchasedPlans } from "@/components/student/cart/PurchasedPlans";
 export const CUSTOM_PLAN_NAME = "plan-custom";
 
 function PageTitle() {
+  const t = useTranslations("cart.buyExtra");
   return (
     <div className="flex items-center gap-2 px-1 pb-4">
       <ShoppingBag className="h-5 w-5 text-primary" aria-hidden="true" />
-      <h1 className="text-lg font-extrabold text-black sm:text-xl">Buy Extra Classes</h1>
+      <h1 className="text-lg font-extrabold text-black sm:text-xl">{t("title")}</h1>
     </div>
   );
 }
@@ -35,28 +37,28 @@ function Notice({ children, isK5, loading = false }) {
 
 function PlanCard({ plan, weeks, symbol, busy, onAdd }) {
   // The plan's validity is capped by the weeks left in the course's enrollment.
+  const t = useTranslations("cart.buyExtra");
   const validWeeks = Math.min(plan.validity, weeks);
   const expired = validWeeks < 1;
   return (
     <div className="relative flex flex-col rounded-xl border border-slate-200 bg-white pt-6 hover:border-primary">
       <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-primary px-3 py-1 text-sm font-semibold text-white">
-        {plan.classCount} Classes
+        {t("planClasses", { count: plan.classCount ?? "" })}
       </span>
       {Number(plan.saving) > 0 && (
         <span className="absolute -right-2 -top-3 rotate-12 rounded-full bg-green-600 px-2 py-1 text-center text-[11px] font-bold leading-tight text-white">
-          Saving
+          {t("saving")}
           <br />
-          {symbol}
-          {plan.saving}!
+          {t("savingAmount", { amount: `${symbol}${plan.saving}` })}
         </span>
       )}
       <div className="bg-primary/10 py-2 text-center text-xl font-bold text-primary">{formatAmount(symbol, plan.amount)}</div>
       <ul className="flex-1 list-disc space-y-1 px-8 py-3 text-sm text-black">
-        <li>You will receive {plan.classCount} classes.</li>
+        <li>{t("planReceive", { count: plan.classCount ?? "" })}</li>
         <li>
-          {plan.classCount} classes should be completed with {validWeeks} weeks.
+          {t("planComplete", { count: plan.classCount ?? "", weeks: validWeeks })}
         </li>
-        <li>After {validWeeks} weeks all unused classes will expire.</li>
+        <li>{t("planExpire", { weeks: validWeeks })}</li>
       </ul>
       <div className="flex flex-wrap gap-2 px-3 pb-3">
         <button
@@ -65,7 +67,7 @@ function PlanCard({ plan, weeks, symbol, busy, onAdd }) {
           onClick={() => onAdd(plan, validWeeks, false)}
           className="flex-1 rounded-lg bg-primary px-3 py-2 text-sm font-bold text-white disabled:opacity-50"
         >
-          Add to cart
+          {t("addToCart")}
         </button>
         <button
           type="button"
@@ -73,10 +75,10 @@ function PlanCard({ plan, weeks, symbol, busy, onAdd }) {
           onClick={() => onAdd(plan, validWeeks, true)}
           className="flex-1 rounded-lg border border-primary px-3 py-2 text-sm font-bold text-primary disabled:opacity-50"
         >
-          Buy
+          {t("buy")}
         </button>
       </div>
-      {expired && <p className="px-3 pb-3 text-center text-xs text-red-600">Enrollment for this course ends too soon for this plan.</p>}
+      {expired && <p className="px-3 pb-3 text-center text-xs text-red-600">{t("endsTooSoon")}</p>}
     </div>
   );
 }
@@ -90,6 +92,8 @@ function PlanCard({ plan, weeks, symbol, busy, onAdd }) {
  */
 export function BuyExtraClasses({ initialSubjectId = null }) {
   const { context, isK5 } = useDashboardContext();
+  const t = useTranslations("cart.buyExtra");
+  const tc = useTranslations("common");
   const { school } = useParams();
   const router = useRouter();
   const [selectedId, setSelectedId] = useState(initialSubjectId);
@@ -100,10 +104,10 @@ export function BuyExtraClasses({ initialSubjectId = null }) {
   const addToCart = useAddPlanToCart(context?.userId);
   const symbol = currencyQuery.data?.symbol ?? "";
 
-  if (!context || plansQuery.isLoading) return <Notice isK5={isK5} loading>Loading…</Notice>;
+  if (!context || plansQuery.isLoading) return <Notice isK5={isK5} loading>{tc("status.loading")}</Notice>;
   const response = plansQuery.data;
   if (!response || response.status !== "1") {
-    return <Notice isK5={isK5}>{response?.message || "Unable to load plans right now. Please try again."}</Notice>;
+    return <Notice isK5={isK5}>{response?.message || t("loadError")}</Notice>;
   }
   if (response.statusCode === "AY_NOT_STARTED") return <Notice isK5={isK5}>{response.message}</Notice>;
 
@@ -129,15 +133,15 @@ export function BuyExtraClasses({ initialSubjectId = null }) {
         planEndDate: isoAfterDays(validWeeks * 7),
       });
       if (result?.status !== "1") {
-        toast.error(result?.message || "Unable to add into cart");
+        toast.error(result?.message || t("addFailed"));
         return false;
       }
-      toast.success("Item added to your cart");
+      toast.success(t("added"));
       if (buyNow) router.push(studentNavHref(school, "cart"));
       return true;
     } catch (err) {
       console.error("add-to-cart failed:", err);
-      toast.error("Unable to add into cart");
+      toast.error(t("addFailed"));
       return false;
     }
   }
@@ -191,16 +195,16 @@ export function BuyExtraClasses({ initialSubjectId = null }) {
       <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
         <div className="flex flex-wrap items-center gap-3">
           {singleCourse ? (
-            <p className="flex-1 text-center text-lg font-semibold text-primary">Please Select a Plan</p>
+            <p className="flex-1 text-center text-lg font-semibold text-primary">{t("selectPlan")}</p>
           ) : (
             <p className="flex-1 text-base font-semibold text-black">
-              <span className="border-b-2 border-primary text-primary">Step 1:</span> Please select a course
-              <span className="ml-4 border-b-2 border-primary text-primary">Step 2:</span> Select Plan
+              <span className="border-b-2 border-primary text-primary">{t("step1")}</span> {t("step1Text")}
+              <span className="ml-4 border-b-2 border-primary text-primary">{t("step2")}</span> {t("step2Text")}
             </p>
           )}
           {customPlan && subject && (
             <button type="button" onClick={() => setCustomising(true)} className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white">
-              Customise your plan
+              {t("customise")}
             </button>
           )}
         </div>
@@ -226,7 +230,7 @@ export function BuyExtraClasses({ initialSubjectId = null }) {
             {fixedPlans.map((plan) => (
               <PlanCard key={plan.planId} plan={plan} weeks={weeks} symbol={symbol} busy={addToCart.isPending} onAdd={add} />
             ))}
-            {fixedPlans.length === 0 && <p className="text-sm text-black/60">No plans are available for this course.</p>}
+            {fixedPlans.length === 0 && <p className="text-sm text-black/60">{t("noPlans")}</p>}
           </div>
         </div>
 

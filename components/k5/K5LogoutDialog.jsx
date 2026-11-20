@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 /**
  * "Are you sure you want to log out?" in the Playful mockup (Playful.dc.html lgDlg): a 500px card with a thick ink border and
@@ -12,10 +13,11 @@ import { useEffect, useRef, useState } from "react";
 const GHOST_BODY =
   "M40 182 V108 C40 68 68 40 100 40 C132 40 160 68 160 108 V182 q-7.5 16 -15 0 q-7.5 -12 -15 0 q-7.5 16 -15 0 q-7.5 -12 -15 0 q-7.5 16 -15 0 q-7.5 -12 -15 0 q-7.5 16 -15 0 q-7.5 -12 -15 0 Z";
 
+// The bubble's words are k5.logout.say.<mood>.
 const SAY = {
-  calm: { text: "Leaving so soon?", bg: "var(--k5-card)", fg: "var(--k5-ink)" },
-  sad: { text: "Aww… please don’t go!", bg: "#E8F1FF", fg: "#1F5FBF" },
-  happy: { text: "Yay! Let’s keep learning!", bg: "#E4F4EA", fg: "#12703A" },
+  calm: { bg: "var(--k5-card)", fg: "var(--k5-ink)" },
+  sad: { bg: "#E8F1FF", fg: "#1F5FBF" },
+  happy: { bg: "#E4F4EA", fg: "#12703A" },
 };
 
 function Ghost({ mood }) {
@@ -85,6 +87,8 @@ export function K5LogoutDialog({ open, ...props }) {
 }
 
 function LogoutCard({ busy = false, onConfirm, onCancel }) {
+  const t = useTranslations("k5.logout");
+  const tc = useTranslations("common");
   const [mood, setMood] = useState("calm");
   const noRef = useRef(null);
 
@@ -109,7 +113,7 @@ function LogoutCard({ busy = false, onConfirm, onCancel }) {
     <div data-blocking-popup="" className="fixed inset-0 z-[88] flex items-center justify-center p-4">
       <button
         type="button"
-        aria-label="No"
+        aria-label={tc("actions.no")}
         tabIndex={-1}
         disabled={busy}
         onClick={onCancel}
@@ -126,7 +130,7 @@ function LogoutCard({ busy = false, onConfirm, onCancel }) {
           className="relative -mb-1.5 self-center rounded-[18px] border-[3px] px-4 py-2 text-center font-k5-display text-lg font-semibold"
           style={{ background: say.bg, color: say.fg, borderColor: say.fg }}
         >
-          {say.text}
+          {t(`say.${mood}`)}
           <span
             aria-hidden="true"
             className="absolute -bottom-2.5 left-1/2 -ml-[7px] h-3.5 w-3.5 rotate-45 border-b-[3px] border-r-[3px]"
@@ -135,10 +139,10 @@ function LogoutCard({ busy = false, onConfirm, onCancel }) {
         </p>
         <Ghost mood={mood} />
         <h2 id="k5-logout-title" className="m-0 text-center font-k5-display text-[28px] font-semibold leading-[1.2]">
-          Are you sure you want to log out?
+          {t("title")}
         </h2>
         <p className="mx-auto my-0 max-w-[380px] text-center text-[17px] font-extrabold leading-normal text-k5-mut">
-          You will be signed out of your account and taken to the login page.
+          {t("body")}
         </p>
         <div className="flex flex-wrap justify-center gap-3.5 pt-1.5">
           <button
@@ -150,7 +154,7 @@ function LogoutCard({ busy = false, onConfirm, onCancel }) {
             onPointerLeave={calm}
             className={`${BTN} border-k5-line bg-k5-card text-k5-ink shadow-[0_4px_0_var(--k5-line)]`}
           >
-            No
+            {tc("actions.no")}
           </button>
           <button
             type="button"
@@ -160,7 +164,7 @@ function LogoutCard({ busy = false, onConfirm, onCancel }) {
             onPointerLeave={calm}
             className={`${BTN} border-k5-ac bg-k5-ac text-white shadow-[0_4px_0_var(--k5-acd)]`}
           >
-            {busy ? "Logging out…" : "Yes"}
+            {busy ? t("loggingOut") : tc("actions.yes")}
           </button>
         </div>
       </div>

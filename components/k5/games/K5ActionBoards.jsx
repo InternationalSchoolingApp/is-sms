@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 import { newMemory, playPop } from "@/components/k5/games/gameLogic";
 
 const FRAME = "relative min-h-[320px] overflow-hidden rounded-[26px] border-[3px] border-k5-line";
+// [colour, colour name]: the name is the React key and k5Games.balloons.<name>.
 const BALLOONS = [
   ["#FF5A7A", "pink"],
   ["#FFC531", "yellow"],
@@ -33,6 +35,8 @@ function useTimers() {
 }
 
 export function BalloonBoard({ onScore }) {
+  const t = useTranslations("k5Games.boards");
+  const tb = useTranslations("k5Games.balloons");
   const { preferences } = useAppearance();
   const later = useTimers();
   const [xs, setXs] = useState(START_X);
@@ -59,7 +63,7 @@ export function BalloonBoard({ onScore }) {
   };
 
   return (
-    <div role="group" aria-label="Balloon Pop game" className={FRAME + " h-80 bg-k5-bt"}>
+    <div role="group" aria-label={t("balloonGame")} className={FRAME + " h-80 bg-k5-bt"}>
       <div className="absolute inset-x-0 bottom-0 h-7 bg-[#8FD47A]" />
       {BALLOONS.map(([color, name], i) =>
         popped[i] ? null : (
@@ -67,7 +71,7 @@ export function BalloonBoard({ onScore }) {
             key={name}
             type="button"
             onClick={() => pop(i)}
-            aria-label={"Pop the " + name + " balloon"}
+            aria-label={tb(name)}
             className="k5-balloon absolute -ml-8 h-24 w-16 cursor-pointer border-none bg-transparent p-0"
             style={{ left: xs[i] + "%", bottom: 30, animationDuration: 6 + (i % 3) * 1.3 + "s", animationDelay: i * 0.9 + "s" }}
           >
@@ -82,7 +86,7 @@ export function BalloonBoard({ onScore }) {
       )}
       {fx !== null && (
         <div aria-hidden="true" className="pointer-events-none absolute top-[40%] -ml-[45px] w-[90px] text-center font-k5-display text-[30px] font-bold text-[#C2410C]" style={{ left: fx + "%" }}>
-          Pop!
+          {t("pop")}
         </div>
       )}
     </div>
@@ -90,6 +94,7 @@ export function BalloonBoard({ onScore }) {
 }
 
 export function MemoryBoard({ onScore, onFeedback, onRestart }) {
+  const t = useTranslations("k5Games.boards");
   const later = useTimers();
   const [mem, setMem] = useState(newMemory);
   const won = Object.keys(mem.done).length === 6;
@@ -124,7 +129,7 @@ export function MemoryBoard({ onScore, onFeedback, onRestart }) {
             key={i}
             type="button"
             onClick={() => flip(i)}
-            aria-label={up ? face : "Hidden card"}
+            aria-label={up ? face : t("hiddenCard")}
             className={"flex min-h-[82px] cursor-pointer items-center justify-center rounded-[18px] border-[3px] font-k5-display text-[40px] font-semibold leading-none " + look}
           >
             {up ? face : "?"}
@@ -133,9 +138,9 @@ export function MemoryBoard({ onScore, onFeedback, onRestart }) {
       })}
       {won && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 bg-white/90 p-4 text-center font-k5-display text-[28px] font-semibold text-[#1C2640]">
-          {"\u{1F389} You found all the pairs!"}
+          {"\u{1F389} " + t("allPairs")}
           <button type="button" onClick={onRestart} className="min-h-[54px] cursor-pointer rounded-full border-none bg-[#FFC531] px-[26px] font-k5-display text-xl font-semibold text-[#1C2640] shadow-[0_5px_0_#C9930A]">
-            Start over
+            {t("startOver")}
           </button>
         </div>
       )}
@@ -146,6 +151,7 @@ export function MemoryBoard({ onScore, onFeedback, onRestart }) {
 const MOLE_SECONDS = 20;
 
 export function MoleBoard({ onScore, onResetScore, caught }) {
+  const t = useTranslations("k5Games.boards");
   const { preferences } = useAppearance();
   const [mole, setMole] = useState({ on: false, hole: -1, left: MOLE_SECONDS, end: false });
   const hop = useRef(null);
@@ -189,10 +195,10 @@ export function MoleBoard({ onScore, onResetScore, caught }) {
 
   return (
     <div className={FRAME + " flex flex-col gap-2.5 bg-[#BFE6A8] p-3.5"}>
-      <div className="flex items-center justify-center gap-2.5 font-k5-display text-xl font-semibold text-[#1C2640]">{"\u23F1 Time: " + mole.left}</div>
+      <div className="flex items-center justify-center gap-2.5 font-k5-display text-xl font-semibold text-[#1C2640]">{"\u23F1 " + t("time", { seconds: mole.left })}</div>
       <div className="grid flex-1 grid-cols-3 gap-2.5">
         {Array.from({ length: 9 }, (_, i) => (
-          <button key={i} type="button" onClick={() => whack(i)} aria-label={"Hole " + (i + 1)} className="relative min-h-[74px] cursor-pointer overflow-hidden border-none bg-transparent p-0">
+          <button key={i} type="button" onClick={() => whack(i)} aria-label={t("hole", { n: i + 1 })} className="relative min-h-[74px] cursor-pointer overflow-hidden border-none bg-transparent p-0">
             <span className="absolute inset-x-[10%] bottom-1 block h-[26px] rounded-full bg-[#6B4423]" />
             {mole.on && mole.hole === i && (
               <span aria-hidden="true" className="absolute bottom-2.5 left-1/2 -ml-[30px]">
@@ -204,9 +210,9 @@ export function MoleBoard({ onScore, onResetScore, caught }) {
       </div>
       {!mole.on && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 bg-white/75 p-4 text-center">
-          <span className="font-k5-display text-2xl font-semibold text-[#1C2640]">{mole.end ? "Time\u2019s up! You caught " + caught + "!" : "Tap the friend before it hides!"}</span>
+          <span className="font-k5-display text-2xl font-semibold text-[#1C2640]">{mole.end ? t("timesUp", { count: caught }) : t("moleHow")}</span>
           <button type="button" onClick={start} className="min-h-[58px] cursor-pointer rounded-full border-none bg-k5-grn px-[30px] font-k5-display text-[22px] font-semibold text-white shadow-[0_5px_0_var(--k5-grnD)]">
-            {mole.end ? "Play again" : "Start"}
+            {mole.end ? t("playAgain") : t("start")}
           </button>
         </div>
       )}

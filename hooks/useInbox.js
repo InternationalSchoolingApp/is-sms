@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
@@ -14,8 +15,8 @@ import {
 import { resolveTimeZone } from "@/utils/attendanceDates";
 import { getDummyInbox } from "@/utils/dummyInbox";
 import {
-  DEFAULT_INBOX_FILTERS, EMPTY_INBOX, EMPTY_SENT, INBOX_FOLDERS, SEND_ERROR, SEND_UNREACHABLE, SENT_FOLDER, SETTING_OFF, SETTING_ON, emailSettingRows,
-  inboxListRequest, listSummary, shownFileName,
+  ATTACHMENT_ERROR, BODY_ERROR, DEFAULT_INBOX_FILTERS, EMPTY_INBOX, EMPTY_SENT, INBOX_FOLDERS, LOAD_ERROR, SEND_ERROR, SEND_UNREACHABLE, SENT_FOLDER, SETTING_OFF,
+  SETTING_ON, emailSettingRows, inboxListRequest, inboxMessageKey, listSummary, listSummaryParts, shownFileName,
 } from "@/utils/inbox";
 import { DUMMY_STUDENT_TIMEZONE } from "@/utils/calendarEvents";
 import { SessionExpiredError, isSessionExpired, isSessionExpiredError, markSessionExpired } from "@/utils/sessionState";
@@ -31,9 +32,6 @@ import { SessionExpiredError, isSessionExpired, isSessionExpiredError, markSessi
  * once from page 1, opening an item marks it read, and the unread count follows after open / mark all as read.
  */
 
-const ATTACHMENT_ERROR = "This attachment cannot be opened just now. Please try again later.";
-const BODY_ERROR = "This email could not be shown just now.";
-
 /** A Server Action answer -> its data, or an Error carrying the server's own message. */
 async function ask(action) {
   if (isSessionExpired()) throw new SessionExpiredError();
@@ -43,7 +41,7 @@ async function ask(action) {
     markSessionExpired();
     throw new SessionExpiredError();
   }
-  throw new Error(result?.message || "Your inbox could not be loaded just now. Please try again in a minute.");
+  throw new Error(result?.message || LOAD_ERROR);
 }
 
 /** A route under /api/inbox (a page fetch, so the tab's account header goes with it). */
@@ -122,9 +120,25 @@ function saveBlob(blob, name) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-const say = (error) => {
-  if (!isSessionExpiredError(error)) toast.error(error?.message || "Your inbox could not be loaded just now. Please try again in a minute.");
-};
+/**
+ * For display: a text this hook or utils/inbox.js hands out (errors, empty states) in the dashboard's language; anything
+ * else (the backend's own words) unchanged.
+ */
+export function useInboxMessage() {
+  const t = useTranslations("inbox.messages");
+  return (text) => {
+    const key = inboxMessageKey(text);
+    return key ? t(key) : text;
+  };
+}
+
+/** Toasts a failure (nothing when the session has ended). */
+function useSay() {
+  const message = useInboxMessage();
+  return (error) => {
+    if (!isSessionExpiredError(error)) toast.error(message(error?.message || LOAD_ERROR));
+  };
+}
 
 /** The inbox source for this student (live or dummy), the key that scopes its cached answers, and the time zone. */
 function useInboxSource() {
@@ -163,6 +177,8 @@ export function useInboxUnread({ enabled = true } = {}) {
 export function useInbox() {
   const { source, ready, timeZone, schoolName, scope } = useInboxSource();
   const queryClient = useQueryClient();
+  const say = useSay();
+  const message = useInboxMessage();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [folder, setFolderState] = useState("ALL");
   const [filters, setFilters] = useState(DEFAULT_INBOX_FILTERS);
@@ -254,7 +270,7 @@ export function useInbox() {
     mutationFn: ({ key, on }) => source.saveEmailSetting(key, on),
     onSuccess: (settings, { on }) => {
       queryClient.setQueryData(settingsKey, settings);
-      toast.success(on ? SETTING_ON : SETTING_OFF);
+      toast.success(message(on ? SETTING_ON : SETTING_OFF));
     },
     onError: say,
   });
@@ -270,7 +286,8 @@ export function useInbox() {
 
   const data = listQuery.data;
   const items = data?.items ?? [];
-  const summary = listSummary({ total: data?.total ?? 0, page: data?.page ?? page, pageSize: data?.pageSize ?? request.pageSize, lastPage: data?.lastPage ?? 1, shown: items.length });
+  const summaryInput = { total: data?.total ?? 0, page: data?.page ?? page, pageSize: data?.pageSize ?? request.pageSize, lastPage: data?.lastPage ?? 1, shown: items.length };
+  const summary = listSummary(summaryInput);
   return {
     ready,
     timeZone,
@@ -314,6 +331,8 @@ export function useInbox() {
       page: data?.page ?? page,
       lastPage: data?.lastPage ?? 1,
       summary: isSent && summary.count ? { ...summary, count: `${(data?.total ?? 0).toLocaleString()} sent` } : summary,
+      // The numbers of `summary` (listSummaryParts), for a translated line; null when the list is empty.
+      summaryParts: listSummaryParts(summaryInput),
       emptyText: isSent ? EMPTY_SENT : EMPTY_INBOX,
       retry: () => listQuery.refetch(),
     },

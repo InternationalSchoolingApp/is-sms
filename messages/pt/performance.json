@@ -1,0 +1,54 @@
+{
+  "title": "Desempenho acadêmico",
+  "empty": "Nenhum desempenho acadêmico encontrado",
+  "table": {
+    "courseName": "Nome do curso",
+    "score": "Nota",
+    "pace": "Ritmo",
+    "teacherName": "Professor",
+    "endDate": "Data de término",
+    "remainingDays": "Dias restantes",
+    "pendingAssignment": "Tarefas pendentes",
+    "progressGradable": "Progresso (avaliativo)",
+    "progressAll": "Progresso (todas as atividades)"
+  },
+  "pace": {
+    "Ahead": "Adiantado",
+    "OnTrack": "No ritmo",
+    "Behind": "Atrasado",
+    "GettingStarted": "Começando"
+  },
+  "salutation": {
+    "mr": "Sr.",
+    "ms": "Sra."
+  },
+  "history": {
+    "title": "Histórico de notas",
+    "empty": "Nenhuma tentativa ainda.",
+    "attempt": "Tentativa",
+    "score": "Nota",
+    "percent": "Percentual",
+    "submitted": "Enviado"
+  },
+  "progress": {
+    "empty": "Nenhuma tarefa encontrada.",
+    "assignment": "Tarefa",
+    "due": "Prazo",
+    "status": "Status",
+    "score": "Nota",
+    "tiles": {
+      "total": "Total",
+      "submitted": "Enviadas",
+      "pending": "Pendentes",
+      "upcoming": "Próximas",
+      "passed": "Aprovadas",
+      "failed": "Reprovadas"
+    },
+    "itemStatuses": {
+      "submitted": "ENVIADO",
+      "late": "ATRASADO",
+      "before_time": "ANTES DO PRAZO",
+      "excused": "DISPENSADO"
+    }
+  }
+}

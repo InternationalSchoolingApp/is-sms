@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { CalendarDays } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useLocaleTag } from "@/i18n/dateLocale";
 import { DatePicker } from "@/components/ui/date-picker";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
-import { GOAL_SCORES, addDays, asArray, courseKey, courseTone, daysTo, fmtDay, fmtShort, fmtWeekday, num, paceInfo, perWeek, perWeekText } from "@/components/k5/pages/k5PerformanceData";
+import { GOAL_SCORES, addDays, asArray, courseKey, courseTone, daysTo, fmtDay, fmtShort, fmtWeekday, num, paceInfo, perWeek } from "@/components/k5/pages/k5PerformanceData";
 import { ArrowRightIcon, PaceIcon, ProgressRing, TickIcon } from "@/components/k5/pages/K5PerformanceIcons";
 
 const BTN = "flex min-h-[46px] cursor-pointer items-center gap-2 rounded-full border-[3px] px-[18px] font-k5-display text-[17px] font-semibold disabled:cursor-default disabled:opacity-50";
@@ -100,6 +102,9 @@ function GoalsDialog({ goals, avg, today, totalLeft, canCompare, onClose, onSave
   const [saving, setSaving] = useState(false);
   const finishBy = choice === "rec" ? rec : choice === "end" ? end : custom;
   const schoolDefault = goals.schoolDefault || 85;
+  const t = useTranslations("k5Performance");
+  const tc = useTranslations("common");
+  const tag = useLocaleTag();
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && !saving && onClose();
@@ -117,14 +122,14 @@ function GoalsDialog({ goals, avg, today, totalLeft, canCompare, onClose, onSave
 
   const choiceStyle = (on) => ({ borderColor: on ? "var(--k5-ac)" : "var(--k5-line)", background: on ? "var(--k5-act)" : "var(--k5-card)" });
   const dateChoices = [
-    rec && tomorrow && rec >= tomorrow && { id: "rec", label: fmtShort(rec), sub: "Recommended · 2 weeks early" },
-    end && { id: "end", label: fmtShort(end), sub: "Course end date" },
-    { id: "custom", label: "Pick a date", sub: "Finish on your own plan" },
+    rec && tomorrow && rec >= tomorrow && { id: "rec", label: fmtShort(rec, tag), sub: t("goals.dialog.recommended") },
+    end && { id: "end", label: fmtShort(end, tag), sub: t("goals.dialog.courseEnd") },
+    { id: "custom", label: t("goals.dialog.pickDate"), sub: t("goals.dialog.ownPlan") },
   ].filter(Boolean);
 
   return (
     <div className="fixed inset-0 z-[88] box-border flex items-center justify-center p-4">
-      <button type="button" aria-label="Cancel" onClick={() => !saving && onClose()} className="absolute inset-0 cursor-pointer border-none bg-[rgba(10,16,34,0.55)] p-0" />
+      <button type="button" aria-label={tc("actions.cancel")} onClick={() => !saving && onClose()} className="absolute inset-0 cursor-pointer border-none bg-[rgba(10,16,34,0.55)] p-0" />
       <div
         role="dialog"
         aria-modal="true"
@@ -132,12 +137,12 @@ function GoalsDialog({ goals, avg, today, totalLeft, canCompare, onClose, onSave
         className="relative box-border flex max-h-full w-[640px] max-w-full flex-col gap-4 overflow-y-auto rounded-[28px] border-[3px] border-k5-ink bg-k5-card p-[22px] text-k5-ink shadow-[0_8px_0_var(--k5-ink)]"
       >
         <div>
-          <h2 id="k5-goals-title" className="m-0 font-k5-display text-[26px] font-semibold">Set my goals</h2>
-          <p className="m-0 mt-1.5 text-base font-extrabold text-k5-mut">Choose what you’re aiming for this session. You can change it any time.</p>
+          <h2 id="k5-goals-title" className="m-0 font-k5-display text-[26px] font-semibold">{t("goals.setGoals")}</h2>
+          <p className="m-0 mt-1.5 text-base font-extrabold text-k5-mut">{t("goals.dialog.intro")}</p>
         </div>
 
         <div className="flex flex-col gap-2.5 border-t-[3px] border-k5-line pt-4">
-          <div className="font-k5-display text-lg font-semibold">Target average score</div>
+          <div className="font-k5-display text-lg font-semibold">{t("goals.dialog.targetScore")}</div>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-2.5">
             {GOAL_SCORES.map(([v, letter]) => {
               const below = v < schoolDefault;
@@ -153,22 +158,22 @@ function GoalsDialog({ goals, avg, today, totalLeft, canCompare, onClose, onSave
                   style={{ ...choiceStyle(on), opacity: below ? 0.45 : 1 }}
                 >
                   <b className="font-k5-display text-xl font-semibold">{v}%</b>
-                  <small className="text-[13px] font-extrabold text-k5-mut">{below ? "Below school target" : `${letter}${v === schoolDefault ? " · School target" : ""}`}</small>
+                  <small className="text-[13px] font-extrabold text-k5-mut">{below ? t("goals.dialog.belowSchool") : v === schoolDefault ? t("goals.dialog.letterSchool", { letter }) : letter}</small>
                 </button>
               );
             })}
           </div>
           <p className="m-0 text-[15px] font-extrabold text-k5-mut">
             {avg == null
-              ? "Your average will show here once your work is graded."
+              ? t("goals.avgPending")
               : avg >= score
-                ? `You’re at ${Number(avg).toFixed(1)}% — already there. Aim higher if you like!`
-                : `You’re at ${Number(avg).toFixed(1)}% — ${(score - avg).toFixed(1)}% to go.`}
+                ? t("goals.dialog.alreadyThere", { avg: Number(avg).toFixed(1) })
+                : t("goals.dialog.toGo", { avg: Number(avg).toFixed(1), gap: (score - avg).toFixed(1) })}
           </p>
         </div>
 
         <div className="flex flex-col gap-2.5 border-t-[3px] border-k5-line pt-4">
-          <div className="font-k5-display text-lg font-semibold">Finish all my courses by</div>
+          <div className="font-k5-display text-lg font-semibold">{t("goals.dialog.finishBy")}</div>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-2.5">
             {dateChoices.map((d) => (
               <button
@@ -187,7 +192,7 @@ function GoalsDialog({ goals, avg, today, totalLeft, canCompare, onClose, onSave
           {choice === "custom" && (
             <div className="max-w-[300px]">
               <DatePicker
-                label={end ? `Pick a date (by ${fmtShort(end)})` : "Pick a date"}
+                label={end ? t("goals.dialog.pickDateBy", { date: fmtShort(end, tag) }) : t("goals.dialog.pickDate")}
                 icon={CalendarDays}
                 height="h-[50px]"
                 layerClassName="z-[95]"
@@ -204,21 +209,21 @@ function GoalsDialog({ goals, avg, today, totalLeft, canCompare, onClose, onSave
             </div>
           )}
           {finishBy && today && (
-            <p className="m-0 text-[15px] font-extrabold text-k5-mut">That’s about {perWeekText(totalLeft, finishBy, today)} across all your courses.</p>
+            <p className="m-0 text-[15px] font-extrabold text-k5-mut">{t("goals.dialog.perWeekAll", { count: perWeek(totalLeft, finishBy, today) })}</p>
           )}
         </div>
 
         <div className="flex flex-col gap-2.5 border-t-[3px] border-k5-line pt-4">
-          <div className="font-k5-display text-lg font-semibold">Reminders &amp; comparisons</div>
+          <div className="font-k5-display text-lg font-semibold">{t("goals.dialog.reminders")}</div>
           {/* <Toggle checked={remind} onChange={setRemind} title="Remind me when I fall behind today’s target" help="Shown on this page — no extra emails." /> */}
           {canCompare && (
-            <Toggle checked={compare} onChange={setCompare} title="Show how I compare with my class" help="Names and scores of others are never shown." />
+            <Toggle checked={compare} onChange={setCompare} title={t("goals.dialog.compareTitle")} help={t("goals.dialog.compareHelp")} />
           )}
         </div>
 
         <div className="flex flex-wrap justify-end gap-2.5 border-t-[3px] border-k5-line pt-4">
-          <button type="button" onClick={onClose} disabled={saving} className={BTN_GHOST}>Cancel</button>
-          <button type="button" onClick={save} disabled={saving || !finishBy} className={BTN_PRIMARY}>{saving ? "Saving…" : "Save goals"}</button>
+          <button type="button" onClick={onClose} disabled={saving} className={BTN_GHOST}>{tc("actions.cancel")}</button>
+          <button type="button" onClick={save} disabled={saving || !finishBy} className={BTN_PRIMARY}>{saving ? tc("status.saving") : t("goals.dialog.save")}</button>
         </div>
       </div>
     </div>
@@ -246,15 +251,18 @@ export function K5PerformanceGoals({ goals, avg, courses, week, today, initial, 
   const cleared = lines.length > 0 && doneLines === lines.length;
   const pastFinish = Boolean(today && goals.finishBy && goals.finishBy < today);
   const days = today ? daysTo(goals.finishBy, today) : null;
+  const t = useTranslations("k5Performance");
+  const tag = useLocaleTag();
+  const chip = (c) => <span className="inline-block rounded-full border-2 border-k5-ac bg-k5-card px-2.5 text-k5-acx">{c}</span>;
 
   return (
     <div className="k5-pmpanel flex flex-col gap-[18px]">
       <section className={`${K5_CARD} flex flex-col gap-3.5 px-[22px] py-5`}>
         <div className="flex flex-wrap items-center gap-3">
-          <h2 className="m-0 font-k5-display text-2xl font-semibold leading-tight">My goals</h2>
+          <h2 className="m-0 font-k5-display text-2xl font-semibold leading-tight">{t("goals.title")}</h2>
           <button type="button" onClick={() => setOpen(true)} className={`${BTN_PRIMARY} ms-auto`}>
             <PenIcon />
-            Set my goals
+            {t("goals.setGoals")}
           </button>
         </div>
         <div className="relative flex items-center gap-[18px] overflow-hidden rounded-[22px] bg-k5-act px-5 py-[18px] max-[760px]:items-start">
@@ -264,19 +272,15 @@ export function K5PerformanceGoals({ goals, avg, courses, week, today, initial, 
           {!plain && <Dart />}
           <div className="flex min-w-0 flex-1 flex-col gap-1.5">
             <div className="font-k5-display text-2xl font-semibold leading-[1.35]">
-              Aim for{" "}
-              <span className="inline-block rounded-full border-2 border-k5-ac bg-k5-card px-2.5 text-k5-acx">{goals.score}% average</span> and finish by{" "}
-              <span className="inline-block rounded-full border-2 border-k5-ac bg-k5-card px-2.5 text-k5-acx">{fmtShort(goals.finishBy)}</span>
+              {t.rich("goals.aim", { score: goals.score, date: fmtShort(goals.finishBy, tag), chip })}
             </div>
             <p className="m-0 text-base font-extrabold leading-normal text-k5-ink">
-              {gap == null ? "Your average will show here once your work is graded." : gap > 0 ? `You’re ${gap.toFixed(1)}% away from your score goal.` : "Goal reached — keep it there."}{" "}
+              {gap == null ? t("goals.avgPending") : gap > 0 ? t("goals.away", { gap: gap.toFixed(1) }) : t("goals.reachedFull")}{" "}
               {pastFinish ? (
-                <b className="font-black" style={{ color: "var(--k5-rI)" }}>Past your finish date — set a new one.</b>
+                <b className="font-black" style={{ color: "var(--k5-rI)" }}>{t("goals.pastFinishNew")}</b>
               ) : (
                 today && (
-                  <>
-                    About <b className="font-black text-k5-acx">{perWeekText(totalLeft, goals.finishBy, today)}</b> across your courses gets you there on time.
-                  </>
+                  t.rich("goals.aboutPerWeek", { count: perWeek(totalLeft, goals.finishBy, today), b: (c) => <b className="font-black text-k5-acx">{c}</b> })
                 )
               )}
             </p>
@@ -290,33 +294,33 @@ export function K5PerformanceGoals({ goals, avg, courses, week, today, initial, 
               <StarJar fill={avg == null ? 0 : avg / goals.score} />
             )}
             <span className="flex min-w-0 flex-col gap-1">
-              <b className="font-k5-display text-lg font-semibold">Score goal</b>
+              <b className="font-k5-display text-lg font-semibold">{t("goals.scoreGoal")}</b>
               <span className="flex flex-wrap items-baseline gap-1.5">
                 <b className="font-k5-display text-[32px] font-semibold leading-none">{avg == null ? "—" : `${Number(avg).toFixed(1)}%`}</b>
-                <span className="text-[15px] font-black text-k5-mut">of {goals.score}%</span>
+                <span className="text-[15px] font-black text-k5-mut">{t("goals.ofScore", { score: goals.score })}</span>
               </span>
               <span className="self-start rounded-full bg-[#FFF1C2] px-3 py-[3px] text-sm font-black text-[#7A4E00]">
-                {gap == null ? "No score yet" : gap > 0 ? `${gap.toFixed(1)}% to go` : "Goal reached — keep it there"}
+                {gap == null ? t("noScoreYet") : gap > 0 ? t("goals.gapToGo", { gap: gap.toFixed(1) }) : t("goals.reached")}
               </span>
             </span>
           </div>
           <div className="flex flex-col gap-2.5 rounded-[22px] border-[3px] border-k5-line bg-k5-card px-[18px] py-4">
             <span className="flex flex-wrap items-baseline justify-between gap-2.5">
-              <b className="font-k5-display text-lg font-semibold">Completion</b>
+              <b className="font-k5-display text-lg font-semibold">{t("goals.completion")}</b>
               <span>
-                <b className="font-k5-display text-[32px] font-semibold leading-none">{Math.round(ov)}%</b> <span className="text-[15px] font-black text-k5-mut">done</span>
+                <b className="font-k5-display text-[32px] font-semibold leading-none">{Math.round(ov)}%</b> <span className="text-[15px] font-black text-k5-mut">{t("goals.done")}</span>
               </span>
             </span>
             {plain ? (
               <Bar pct={ov} col="var(--k5-grn)" mark={exp} />
             ) : (
-            <div role="img" aria-label={`You are ${Math.round(ov)}% of the way. Today’s target is ${Math.round(exp)}%.`} className="relative me-3.5 ms-1.5 h-[70px]">
+            <div role="img" aria-label={t("goals.roadLabel", { ov: Math.round(ov), exp: Math.round(exp) })} className="relative me-3.5 ms-1.5 h-[70px]">
               <span aria-hidden="true" className="absolute inset-x-0 top-[34px] h-[22px] rounded-full bg-[#5B6478] shadow-[inset_0_-3px_0_rgba(0,0,0,.18)]" />
               <span aria-hidden="true" className="absolute inset-x-2.5 top-[44px] h-0 border-t-[3px] border-dashed border-white/85" />
               <span aria-hidden="true" className="absolute start-0 top-[34px] h-[22px] rounded-full bg-k5-grn shadow-[inset_0_-3px_0_rgba(0,0,0,.18)]" style={{ width: `${Math.min(100, Math.round(ov))}%` }} />
               <span aria-hidden="true" className="absolute top-[26px] -ms-0.5 h-[38px] w-1 rounded-sm bg-[#2A2F4A]" style={{ insetInlineStart: `${Math.min(100, Math.round(exp))}%` }} />
               <span aria-hidden="true" className="absolute top-1 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#2A2F4A] px-2 py-px text-[11px] font-black text-white" style={{ insetInlineStart: `${Math.min(100, Math.round(exp))}%` }}>
-                Today
+                {t("goals.today")}
               </span>
               <span
                 aria-hidden="true"
@@ -332,7 +336,7 @@ export function K5PerformanceGoals({ goals, avg, courses, week, today, initial, 
             </div>
             )}
             <small className="text-sm font-extrabold leading-snug text-k5-mut">
-              Today’s target is {Math.round(exp)}% · {pastFinish ? "Past your finish date" : `${days} days to your finish date`}
+              {t("goals.targetToday", { exp: Math.round(exp) })} · {pastFinish ? t("goals.pastFinish") : t("goals.daysToFinish", { count: days })}
             </small>
           </div>
         </div>
@@ -340,10 +344,10 @@ export function K5PerformanceGoals({ goals, avg, courses, week, today, initial, 
 
       <section className={`${K5_CARD} flex flex-col gap-3.5 px-[22px] py-5`}>
         <div className="flex flex-wrap items-center gap-3">
-          <h2 className="m-0 font-k5-display text-2xl font-semibold leading-tight">This week’s goals</h2>
+          <h2 className="m-0 font-k5-display text-2xl font-semibold leading-tight">{t("goals.week.title")}</h2>
           {lines.length > 0 && (
             <span aria-live="polite" className="rounded-full px-3 py-[3px] text-sm font-black" style={cleared ? { background: "var(--k5-grn)", color: "#FFFFFF" } : { background: "var(--k5-act)", color: "var(--k5-acx)" }}>
-              {doneLines} of {lines.length} done
+              {t("goals.week.doneOf", { done: doneLines, total: lines.length })}
             </span>
           )}
           <span className="k5-pmaside ms-auto inline-flex items-center gap-1.5 text-sm font-extrabold text-k5-mut">
@@ -351,11 +355,11 @@ export function K5PerformanceGoals({ goals, avg, courses, week, today, initial, 
               <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
               <path d="M21 3v5h-5" />
             </svg>
-            Updated daily from your submissions
+            {t("goals.week.updated")}
           </span>
         </div>
         {!lines.length ? (
-          <p className="m-0 py-3 text-center text-[15px] font-extrabold text-k5-mut">Nothing due this week.</p>
+          <p className="m-0 py-3 text-center text-[15px] font-extrabold text-k5-mut">{t("goals.week.empty")}</p>
         ) : (
           <div className="flex flex-col gap-2.5">
             {lines.map((ln) => {
@@ -368,18 +372,17 @@ export function K5PerformanceGoals({ goals, avg, courses, week, today, initial, 
                   <span className="flex min-w-0 flex-[1_1_auto] flex-col text-base font-black" style={{ color: done ? "var(--k5-mut)" : "var(--k5-ink)" }}>
                     {ln.title}
                     <span className="text-[13px] font-extrabold text-k5-mut">
-                      {ln.course}
-                      {ln.catchUp ? " · Catch-up" : ""}
+                      {ln.catchUp ? t("goals.week.catchUp", { course: ln.course }) : ln.course}
                     </span>
                   </span>
                   {done ? (
-                    <span role="img" aria-label="Done" className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-k5-grn text-white">
+                    <span role="img" aria-label={t("goals.week.done")} className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-k5-grn text-white">
                       <TickIcon />
                     </span>
                   ) : ln.state === "overdue" ? (
-                    <span className="whitespace-nowrap rounded-full px-2.5 py-0.5 text-sm font-black" style={{ background: "var(--k5-rT)", color: "var(--k5-rI)" }}>Overdue</span>
+                    <span className="whitespace-nowrap rounded-full px-2.5 py-0.5 text-sm font-black" style={{ background: "var(--k5-rT)", color: "var(--k5-rI)" }}>{t("goals.week.overdue")}</span>
                   ) : (
-                    <span className="whitespace-nowrap text-sm font-black" style={{ color: "var(--k5-oI)" }}>{!ln.due ? "" : week?.end && ln.due > week.end ? `Due ${fmtDay(ln.due)}` : `Due ${fmtWeekday(ln.due)}`}</span>
+                    <span className="whitespace-nowrap text-sm font-black" style={{ color: "var(--k5-oI)" }}>{!ln.due ? "" : week?.end && ln.due > week.end ? t("goals.due", { date: fmtDay(ln.due, tag) }) : t("goals.due", { date: fmtWeekday(ln.due, tag) })}</span>
                   )}
                 </div>
               );
@@ -392,15 +395,15 @@ export function K5PerformanceGoals({ goals, avg, courses, week, today, initial, 
               <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z" />
               <path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3" />
             </svg>
-            Week cleared — you’re staying ahead of target.
+            {t("goals.week.cleared")}
           </div>
         )}
       </section>
 
       <section className={`${K5_CARD} flex flex-col gap-3.5 px-[22px] py-5`}>
         <div className="flex flex-wrap items-center gap-3">
-          <h2 className="m-0 font-k5-display text-2xl font-semibold leading-tight">Goals by course</h2>
-          <span className="k5-pmaside ms-auto text-sm font-extrabold text-k5-mut">Black line = your goal score, and today’s target</span>
+          <h2 className="m-0 font-k5-display text-2xl font-semibold leading-tight">{t("goals.byCourse.title")}</h2>
+          <span className="k5-pmaside ms-auto text-sm font-extrabold text-k5-mut">{t("goals.byCourse.legend")}</span>
         </div>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-3.5 max-[760px]:grid-cols-1">
           {courses.map((course, index) => {
@@ -420,55 +423,55 @@ export function K5PerformanceGoals({ goals, avg, courses, week, today, initial, 
                   <b className="font-k5-display text-[19px] font-semibold">{course.courseName}</b>
                   <span className="inline-flex items-center gap-[5px] whitespace-nowrap rounded-full py-[3px] pe-3 ps-2 text-[13px] font-black" style={{ background: pace.bg, color: pace.fg }}>
                     <PaceIcon pace={pace.key} />
-                    {pace.label}
+                    {t(`pace.${pace.id}.label`)}
                   </span>
                 </div>
                 <div>
                   <div className="mb-2 flex flex-wrap justify-between gap-2 text-[15px] font-black">
-                    <span>Score</span>
+                    <span>{t("goals.byCourse.score")}</span>
                     <span>
-                      {scored ? `${score.toFixed(2)}%` : "—"} <em className="font-extrabold not-italic text-k5-mut">· Final Goal: {goals.score}%</em>
+                      {scored ? `${score.toFixed(2)}%` : "—"} <em className="font-extrabold not-italic text-k5-mut">{t("goals.byCourse.finalGoal", { score: goals.score })}</em>
                     </span>
                   </div>
                   {scored && <Bar pct={score} col={tone.col} mark={goals.score} />}
                   <div className="mt-1.5 text-sm font-black" style={{ color: !scored ? "var(--k5-mut)" : met ? "var(--k5-gX)" : "var(--k5-oI)" }}>
-                    {!scored ? "No score yet" : met ? "Goal met" : `${(goals.score - score).toFixed(1)}% to goal`}
+                    {!scored ? t("noScoreYet") : met ? t("goals.byCourse.goalMet") : t("goals.byCourse.toGoal", { gap: (goals.score - score).toFixed(1) })}
                   </div>
                 </div>
                 <div>
                   <div className="mb-2 flex flex-wrap justify-between gap-2 text-[15px] font-black">
-                    <span>Progress</span>
+                    <span>{t("goals.byCourse.progress")}</span>
                     <span>
-                      {Math.round(progress)}% done <em className="font-extrabold not-italic text-k5-mut">· Target today: {Math.round(target)}%</em>
+                      {t("goals.byCourse.pctDone", { pct: Math.round(progress) })} <em className="font-extrabold not-italic text-k5-mut">{t("goals.byCourse.targetToday", { pct: Math.round(target) })}</em>
                     </span>
                   </div>
                   <Bar pct={progress} col={tone.col} mark={target} />
                   <div className="mt-1.5 text-sm font-black" style={{ color: targetGap <= 0 ? "var(--k5-gX)" : "var(--k5-oI)" }}>
-                    {targetGap <= 0 ? `Target met · ${(-targetGap).toFixed(1)}% ahead` : `${targetGap.toFixed(1)}% to today’s target`}
+                    {targetGap <= 0 ? t("goals.byCourse.targetMet", { gap: (-targetGap).toFixed(1) }) : t("goals.byCourse.toTarget", { gap: targetGap.toFixed(1) })}
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2 max-[760px]:grid-cols-2">
                   <div className="rounded-[14px] bg-k5-soft px-3 py-2.5">
                     <b className="block font-k5-display text-xl font-semibold">{left}</b>
-                    <small className="text-xs font-extrabold text-k5-mut">assignments left</small>
+                    <small className="text-xs font-extrabold text-k5-mut">{t("goals.byCourse.left", { count: left })}</small>
                   </div>
                   <div className="rounded-[14px] bg-k5-soft px-3 py-2.5">
                     <b className="block font-k5-display text-xl font-semibold">{today ? perWeek(left, goals.finishBy, today) : "—"}</b>
-                    <small className="text-xs font-extrabold text-k5-mut">per week to finish by {fmtDay(goals.finishBy)}</small>
+                    <small className="text-xs font-extrabold text-k5-mut">{t("goals.byCourse.perWeek", { date: fmtDay(goals.finishBy, tag) })}</small>
                   </div>
                   <div className="rounded-[14px] bg-k5-soft px-3 py-2.5">
                     <b className="block font-k5-display text-xl font-semibold">{pastFinish ? "—" : days ?? "—"}</b>
-                    <small className="text-xs font-extrabold text-k5-mut">{pastFinish ? "Past your finish date" : "days to your finish date"}</small>
+                    <small className="text-xs font-extrabold text-k5-mut">{pastFinish ? t("goals.pastFinish") : t("goals.byCourse.daysToFinish", { count: days ?? 0 })}</small>
                   </div>
                 </div>
                 {next.length > 0 && (
                   <div className="flex flex-col gap-1.5">
-                    <b className="font-black">Next up</b>
+                    <b className="font-black">{t("goals.byCourse.nextUp")}</b>
                     {next.map((x) => (
                       <div key={`${x.title}-${x.due}`} className="flex items-center gap-2.5 rounded-[14px] bg-k5-soft px-3 py-2.5 text-[15px] font-extrabold">
                         <ArrowRightIcon />
                         <span className="flex-1">{x.title}</span>
-                        <span className="whitespace-nowrap text-[13px] font-black" style={{ color: "var(--k5-oI)" }}>Due {fmtDay(x.due)}</span>
+                        <span className="whitespace-nowrap text-[13px] font-black" style={{ color: "var(--k5-oI)" }}>{t("goals.due", { date: fmtDay(x.due, tag) })}</span>
                       </div>
                     ))}
                   </div>

@@ -1,0 +1,54 @@
+{
+  "title": "Rendimiento académico",
+  "empty": "No se encontró rendimiento académico",
+  "table": {
+    "courseName": "Nombre del curso",
+    "score": "Puntuación",
+    "pace": "Ritmo",
+    "teacherName": "Profesor",
+    "endDate": "Fecha de finalización",
+    "remainingDays": "Días restantes",
+    "pendingAssignment": "Tareas pendientes",
+    "progressGradable": "Progreso (calificable)",
+    "progressAll": "Progreso (todas las actividades)"
+  },
+  "pace": {
+    "Ahead": "Adelantado",
+    "OnTrack": "Al día",
+    "Behind": "Atrasado",
+    "GettingStarted": "Empezando"
+  },
+  "salutation": {
+    "mr": "Sr.",
+    "ms": "Sra."
+  },
+  "history": {
+    "title": "Historial de calificaciones",
+    "empty": "Aún no hay intentos.",
+    "attempt": "Intento",
+    "score": "Puntuación",
+    "percent": "Porcentaje",
+    "submitted": "Entregado"
+  },
+  "progress": {
+    "empty": "No se encontraron tareas.",
+    "assignment": "Tarea",
+    "due": "Entrega",
+    "status": "Estado",
+    "score": "Puntuación",
+    "tiles": {
+      "total": "Total",
+      "submitted": "Entregadas",
+      "pending": "Pendientes",
+      "upcoming": "Próximas",
+      "passed": "Aprobadas",
+      "failed": "Reprobadas"
+    },
+    "itemStatuses": {
+      "submitted": "ENTREGADO",
+      "late": "TARDE",
+      "before_time": "ANTES DE TIEMPO",
+      "excused": "EXENTO"
+    }
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "shell": {
+    "logOff": "Sair"
+  },
+  "welcome": {
+    "loadFailed": "Não foi possível carregar seus dados. Tente novamente."
+  },
+  "timezone": {
+    "saved": "Seu fuso horário foi salvo.",
+    "saveFailed": "Não foi possível salvar seu fuso horário.",
+    "title": "Confirme seu fuso horário",
+    "intro": "Antes de começar, selecione seu país e fuso horário:",
+    "label": "Fuso horário",
+    "loadFailed": "Não foi possível carregar os fusos horários",
+    "proceedWith": "Deseja continuar com <b>{zone}</b>?",
+    "classesFollow": "Observe que todas as suas aulas seguirão este fuso horário.",
+    "changeLater": "Para alterar seu fuso horário depois, acesse a seção <b>‘Meu perfil’</b> do seu painel.",
+    "saving": "Salvando..."
+  },
+  "overdue": {
+    "paymentReceived": "Pagamento recebido.",
+    "hi": "Olá, {name}!",
+    "hiThere": "Olá!",
+    "deactivated": "Seu LMS foi desativado devido a uma taxa pendente desde {date}.",
+    "noOverdue": "Nenhum pagamento em atraso encontrado.",
+    "pendingFee": "Taxa pendente",
+    "grade": "Série",
+    "feeDescription": "Descrição da taxa",
+    "dueFee": "Valor devido",
+    "dueDate": "Data de vencimento",
+    "status": "Status",
+    "totalDue": "Total devido",
+    "payNow": "Pague agora para continuar as aulas",
+    "whyTimely": "Por que pagar em dia é importante?",
+    "payInAdvance": "Pague antecipadamente para continuar suas aulas.",
+    "avoidDeactivation": "Conclua o pagamento para evitar a desativação do Sistema de Gestão Escolar.",
+    "statusUpdated": "O status da sua taxa será atualizado assim que o pagamento for recebido."
+  },
+  "feeStatus": {
+    "pending": "Pendente",
+    "overdue": "Em atraso",
+    "due": "A pagar",
+    "unpaid": "Não pago",
+    "paid": "Pago",
+    "partially_paid": "Parcialmente pago"
+  },
+  "setup": {
+    "loadFailed": "Não foi possível carregar seus dados. Tente novamente.",
+    "loading": "Carregando seus dados...",
+    "heading": "Olá, {name}, {kind, select, done {muito bem. Vamos começar!} reminder {um lembrete importante} other {vamos começar!}}",
+    "headingNoName": "Olá, {kind, select, done {muito bem. Vamos começar!} reminder {um lembrete importante} other {vamos começar!}}"
+  },
+  "training": {
+    "topicsIntro": "No treinamento do sistema escolar, você vai aprender",
+    "topicClasses": "Como agendar e entrar nas aulas",
+    "topicCourses": "Cursos, relatórios de progresso e avaliações",
+    "booked": "Seu treinamento do sistema escolar foi agendado.",
+    "bookFailed": "Não foi possível agendar seu treinamento do sistema escolar.",
+    "chooseDateToContinue": "Escolha uma data para continuar",
+    "title": "Agende seu treinamento do sistema escolar",
+    "bookOn": "Quero agendar meu treinamento do sistema escolar para",
+    "dateLabel": "Escolha a data do treinamento",
+    "selectTime": "Selecione o horário:",
+    "loadingTimes": "Carregando os horários disponíveis…",
+    "timesFailed": "Não foi possível carregar os horários do treinamento.",
+    "noSlot": "Nenhum horário disponível. Escolha outra data",
+    "timeLabel": "Horário do treinamento",
+    "saving": "Salvando..."
+  },
+  "academic": {
+    "saved": "A data de início do seu ano letivo foi salva.",
+    "saveFailed": "Não foi possível salvar a data de início do seu ano letivo.",
+    "title": "Data de início do ano letivo",
+    "titleStep": "Etapa 1 de 1 - Data de início do ano letivo",
+    "explain": "A data de início do seu ano letivo é quando você começará suas aulas.",
+    "startOn": "Quero começar meu ano letivo em",
+    "dateLabel": "Escolha a data de início",
+    "decideLater": "Decidir depois",
+    "chooseCarefully": "Escolha a data de início do seu ano letivo com cuidado. Você não poderá alterá-la depois.",
+    "queries": "Em caso de dúvidas:",
+    "editDate": "Editar data",
+    "mandatory": "Escolher a data de início do seu {kind, select, training {treinamento do sistema} other {ano letivo}} é obrigatório para começar suas aulas. Você pode entrar novamente a qualquer momento para concluir o processo.",
+    "queriesTalk": "Em caso de dúvidas, <link>fale com a administração da escola</link>",
+    "batchReminder": "A turma de aprendizagem em grupo do fuso UTC+ começará em 18 de setembro de 2024.<br></br>e a turma de aprendizagem em grupo do fuso UTC- começará em 25 de setembro de 2024."
+  },
+  "done": {
+    "title": "Tudo pronto!",
+    "startDateIs": "A data de início do seu ano letivo é {date}",
+    "trainingConfirmed": "Seu treinamento do sistema escolar foi confirmado com sucesso.",
+    "dateTime": "Data e hora: <b>{value}</b>",
+    "emailSent": "Uma confirmação também foi enviada para o seu e-mail cadastrado."
+  }
+}

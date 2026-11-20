@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Palette, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useAppearance, AppearanceContext } from "@/components/appearance/AppearanceProvider";
 import { sanitizeAppearance } from "@/constant/appearance";
@@ -15,6 +16,8 @@ import { BUDDIES } from "@/constant/appearance";
  * Changes are collected in a local draft; nothing applies until the user clicks Save.
  */
 export function AppearanceDialog({ open, onClose, firstName = "" }) {
+  const t = useTranslations("k5.look");
+  const tc = useTranslations("common");
   const appearance = useAppearance();
   const { preferences, updatePreferences, canCustomize } = appearance;
   const { speak } = useSpeech();
@@ -60,8 +63,8 @@ export function AppearanceDialog({ open, onClose, firstName = "" }) {
   const hearVoice = useCallback((patch) => {
     const next = sanitizeAppearance({ ...draft, ...patch });
     setDraft(next);
-    speak(`Hi${firstName ? ` ${firstName}` : ""}! This is my voice!`, { force: true, voice: next.voice, voiceSpeed: next.voiceSpeed, wait: 25000 });
-  }, [speak, firstName, draft]);
+    speak(firstName ? t("voiceHelloName", { name: firstName }) : t("voiceHello"), { force: true, voice: next.voice, voiceSpeed: next.voiceSpeed, wait: 25000 });
+  }, [speak, firstName, draft, t]);
 
   const buddyName = BUDDIES[draft.buddy]?.name || "Pico";
 
@@ -74,15 +77,15 @@ export function AppearanceDialog({ open, onClose, firstName = "" }) {
             <Palette className="h-9 w-9 text-k5-yi" aria-hidden="true" />
           </span>
           <div className="flex flex-col gap-0.5">
-            <DialogTitle className="m-0 font-k5-display text-[30px] font-semibold leading-[1.1]">Make it yours!</DialogTitle>
+            <DialogTitle className="m-0 font-k5-display text-[30px] font-semibold leading-[1.1]">{t("title")}</DialogTitle>
             <DialogDescription className="m-0 text-base font-bold text-k5-mut">
-              {canCustomize ? "Pick your look. It changes right away!" : "Your school picked this look for you."}
+              {canCustomize ? t("subtitle") : t("schoolPicked")}
             </DialogDescription>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={tc("actions.close")}
             className="absolute right-4 top-4 flex h-[46px] w-[46px] cursor-pointer items-center justify-center rounded-full border-[3px] border-[#D7263D] bg-[#D7263D] text-white shadow-[0_3px_0_#9E1B2C]"
           >
             <X className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
@@ -104,7 +107,7 @@ export function AppearanceDialog({ open, onClose, firstName = "" }) {
             onClick={() => setDraft(sanitizeAppearance({}))}
             className="min-h-12 cursor-pointer rounded-full border-none bg-transparent px-4 text-base font-extrabold text-k5-mut underline disabled:hidden"
           >
-            Reset to default
+            {t("reset")}
           </button>
           <button
             type="button"
@@ -112,10 +115,10 @@ export function AppearanceDialog({ open, onClose, firstName = "" }) {
             onClick={handleSave}
             className="min-h-[54px] cursor-pointer rounded-full border-none bg-[#13802B] px-8 font-k5-display text-[21px] font-semibold text-white shadow-[0_5px_0_#0E5C1F] disabled:cursor-default disabled:opacity-40 disabled:shadow-none"
           >
-            Save
+            {tc("actions.save")}
           </button>
         </div>
-        <span className="sr-only">{buddyName} is your buddy.</span>
+        <span className="sr-only">{t("buddyIs", { name: buddyName })}</span>
       </DialogContent>
     </Dialog>
   );

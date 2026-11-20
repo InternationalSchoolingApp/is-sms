@@ -1,0 +1,78 @@
+{
+  "list": {
+    "title": "Progress Report",
+    "subtitle": "Your weekly reports, one for every week of school",
+    "loading": "Loading your progress reports",
+    "empty": "No progress report found",
+    "columns": {
+      "srNo": "S. No.",
+      "type": "Report Type",
+      "frequency": "Report Frequency",
+      "published": "Report Published Date",
+      "view": "View"
+    }
+  },
+  "types": {
+    "weekly_progress_report": "Weekly Progress Report",
+    "biweekly_progress_report": "Biweekly Progress Report",
+    "monthly_progress_report": "Monthly Progress Report",
+    "quiz": "QUIZ",
+    "assignment": "ASSIGNMENT",
+    "lesson": "LESSON"
+  },
+  "view": {
+    "loading": "Getting your report ready",
+    "title": "Grade book summary",
+    "titleWithName": "Grade book summary | {name}",
+    "dueStartDate": "Due Start Date",
+    "dueEndDate": "Due End Date",
+    "preparing": "Preparing…",
+    "errors": {
+      "pickDates": "Please select report start date and end date",
+      "startBeforeEnd": "Please select start date must be less then end date",
+      "reopen": "Please open the report again from the list."
+    },
+    "loadError": "Unable to load progress report detail.",
+    "student": "Student",
+    "schoolLogo": "School logo",
+    "labelColon": "{label}:",
+    "studentName": "Student Name",
+    "grade": "Grade",
+    "studentId": "Student ID",
+    "yearStart": "Academic Year Start Date",
+    "yearEnd": "Academic Year End Date",
+    "country": "Country",
+    "teacherName": "Teacher Name",
+    "course": "Course",
+    "teacherLine": "Teacher Name: <b>{name}</b>",
+    "detailedTitle": "Detailed Student Grading Report",
+    "duration": "Duration: {start} - {end}",
+    "noActivities": "No activities in this period.",
+    "columns": {
+      "srNo": "Sr.no",
+      "module": "Module | Activity",
+      "type": "Type",
+      "activityName": "Activity Name",
+      "timeSpent": "Time Spent (hh:mm:ss)",
+      "dueDate": "Target Due Date",
+      "submittedDate": "Submitted Date",
+      "percentage": "Percentage",
+      "grade": "Grade"
+    },
+    "naNote": "*N/A - Not Available",
+    "counters": {
+      "totalTime": "Total Activity Time: <b>{value}</b>",
+      "submittedGraded": "Number of Activities - Submitted & Graded: <b>{value}</b>",
+      "waitingGrade": "Number of Activities - Waiting for the Grade: <b>{value}</b>",
+      "notSubmitted": "Number of Activities - Not Submitted: <b>{value}</b>"
+    },
+    "lastSubmission": "Last Submission Date: <b>{date}</b> | Activity Name: <b>{activity}</b>",
+    "courseGrade": "Course Grade:",
+    "overallPercentage": "Current Overall Percentage:",
+    "weekPercentage": "Current Week Percentage:",
+    "completionPercentage": "Course Completion Percentage:",
+    "schoolOfficial": "School Official",
+    "gradingSystem": "Grading System",
+    "below60": "Below 60"
+  }
+}

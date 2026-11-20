@@ -1,24 +1,28 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { format } from "date-fns";
+import { useTranslations } from "next-intl";
 import { CalendarCheck, Clock, PieChart, Presentation, TrendingDown, TrendingUp } from "lucide-react";
 import { K5Attendance } from "@/components/k5/pages/K5Attendance";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useStudentAttendance } from "@/hooks/useStudentAttendance";
+import { useDateFnsLocale, useLocaleTag } from "@/i18n/dateLocale";
 
 // ApexCharts touches `window` on import, so it only loads in the browser.
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
+// Matches the backend monthLabel ("Jan"...); the chart shows the month names in the dashboard language.
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const PRESENT = "#16a34a";
 const NO_CLASSES = "#e3e8e6";
 // Present / Late / Absent — validated together (dataviz validator, light surface). Late and Present sit in
 // the CVD floor band, so every slice is also labelled with its name and count.
 const SUMMARY = [
-  { key: "classesAttended", label: "Present", color: PRESENT, textColor: "text-red-600" },
-  { key: "late", label: "Late", color: "#d97706" },
+  { key: "classesAttended", label: "Present", labelKey: "present", color: PRESENT, textColor: "text-red-600" },
+  { key: "late", label: "Late", labelKey: "late", color: "#d97706" },
   // Early Leave stays hidden, as in the legacy widget (product decision).
-  { key: "absent", label: "Absent", color: "#e11d48" },
+  { key: "absent", label: "Absent", labelKey: "absent", color: "#e11d48" },
 ];
 
 function StatCard({ label, icon: Icon, iconClass, children }) {
@@ -37,6 +41,7 @@ function StatCard({ label, icon: Icon, iconClass, children }) {
 
 // A change vs last month: `goodWhenUp` decides whether a rise is shown as good (green) or bad (red).
 function Delta({ value, unit, goodWhenUp }) {
+  const t = useTranslations("attendance");
   const delta = Number(value) || 0;
   const good = goodWhenUp ? delta > 0 : delta < 0;
   const Arrow = delta < 0 ? TrendingDown : TrendingUp;
@@ -44,14 +49,16 @@ function Delta({ value, unit, goodWhenUp }) {
   return (
     <span className={`inline-flex items-center gap-1 text-sm ${tone}`}>
       {delta !== 0 && <Arrow className="h-4 w-4" aria-hidden="true" />}
-      {delta > 0 ? "+" : ""}
-      {delta}
-      {unit} vs last month
+      {unit === "%"
+        ? t("delta.percent", { value: `${delta > 0 ? "+" : ""}${delta}` })
+        : t("delta.classes", { value: `${delta > 0 ? "+" : ""}${delta}`, count: Math.abs(delta) })}
     </span>
   );
 }
 
 function MonthlyChart({ months }) {
+  const t = useTranslations("attendance");
+  const dateLocale = useDateFnsLocale();
   const year = new Date().getFullYear();
   const byLabel = Object.fromEntries(
     months.filter((m) => m.monthKey?.startsWith(String(year))).map((m) => [m.monthLabel, m])
@@ -61,6 +68,7 @@ function MonthlyChart({ months }) {
     const month = byLabel[label];
     return month && month.totalClassesHeld > 0 ? month.attendancePercent : null;
   });
+  const monthNames = MONTHS.map((_, i) => format(new Date(year, i, 1), "MMM", { locale: dateLocale }));
 
   const options = {
     chart: { type: "bar", toolbar: { show: false }, fontFamily: "inherit" },
@@ -68,7 +76,7 @@ function MonthlyChart({ months }) {
     colors: values.map((v) => (v === null ? NO_CLASSES : PRESENT)),
     legend: { show: false },
     dataLabels: { enabled: false },
-    xaxis: { categories: MONTHS, axisBorder: { show: false }, axisTicks: { show: false } },
+    xaxis: { categories: monthNames, axisBorder: { show: false }, axisTicks: { show: false } },
     yaxis: { min: 0, max: 100, tickAmount: 4, labels: { formatter: (v) => `${v}%` } },
     grid: { borderColor: "#e5e7eb", strokeDashArray: 4 },
     states: { hover: { filter: { type: "darken", value: 0.9 } } },
@@ -79,14 +87,14 @@ function MonthlyChart({ months }) {
         const month = byLabel[MONTHS[dataPointIndex]];
         return `<div style="padding:8px 12px;text-align:center;min-width:140px">
           <div style="font-size:18px;font-weight:700;color:#111">${value}%</div>
-          <div style="font-size:12px;color:#444">${month.attendedClasses} of ${month.totalClassesHeld} classes attended</div>
-          <div style="font-size:12px;color:#666">${MONTHS[dataPointIndex]} ${year}</div>
+          <div style="font-size:12px;color:#444">${t("chart.classesAttended", { attended: month.attendedClasses, held: month.totalClassesHeld })}</div>
+          <div style="font-size:12px;color:#666">${monthNames[dataPointIndex]} ${year}</div>
         </div>`;
       },
     },
   };
 
-  return <Chart type="bar" height={320} options={options} series={[{ name: "Attendance", data: values }]} />;
+  return <Chart type="bar" height={320} options={options} series={[{ name: t("chart.series"), data: values }]} />;
 }
 
 // function SummaryChart({ summary }) {
@@ -138,6 +146,7 @@ function MonthlyChart({ months }) {
 // }
 
 function SummaryChart({ summary }) {
+  const t = useTranslations("attendance");
   const held = Number(summary.totalClassesHeldThisMonth) || 0;
   const counts = SUMMARY.map((s) => Number(summary[s.key]) || 0);
   const percents = counts.map((count) =>
@@ -163,7 +172,7 @@ function SummaryChart({ summary }) {
       },
     },
     colors: SUMMARY.map((s) => s.color),
-    labels: SUMMARY.map((s) => s.label),
+    labels: SUMMARY.map((s) => t(`states.${s.labelKey}`)),
     tooltip: { enabled: false },
   };
 
@@ -186,7 +195,7 @@ function SummaryChart({ summary }) {
               style={{ background: s.color }}
               aria-hidden="true"
             />
-            <span className="flex-1">{s.label}</span>
+            <span className="flex-1">{t(`states.${s.labelKey}`)}</span>
             <span className="font-semibold">{counts[i]}</span>
             <span className="w-14 text-right text-black/60">
               {percents[i]}%
@@ -194,7 +203,7 @@ function SummaryChart({ summary }) {
           </li>
         ))}
         <li className="flex justify-between border-t border-slate-200 pt-1 text-black/60">
-          <span>Classes held this month</span>
+          <span>{t("classesHeldThisMonth")}</span>
           <span className="font-semibold text-black">{held}</span>
         </li>
       </ul>
@@ -209,37 +218,40 @@ function SummaryChart({ summary }) {
  * Present / Late / Absent breakdown.
  */
 export function Attendance() {
+  const t = useTranslations("attendance");
+  const tc = useTranslations("common");
+  const localeTag = useLocaleTag();
   const { context, isK5 } = useDashboardContext();
   const { schoolUUID, userId } = context ?? {};
   const { isLoading, sessionOut, summary, months } = useStudentAttendance({ schoolUUID, userId });
   if (isK5) return <K5Attendance isLoading={isLoading} sessionOut={sessionOut} summary={summary} months={months} />;
   const now = new Date();
-  const monthName = now.toLocaleString("en-US", { month: "long" });
+  const monthName = now.toLocaleString(localeTag, { month: "long" });
 
   return (
     <div className="mx-auto w-full">
       <div className="flex items-center gap-2 px-1 pb-4">
         <CalendarCheck className="h-5 w-5 text-primary" aria-hidden="true" />
-        <h1 className="text-lg font-extrabold text-black sm:text-xl">My Attendance</h1>
+        <h1 className="text-lg font-extrabold text-black sm:text-xl">{t("title")}</h1>
       </div>
 
       {isLoading ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-black/50">Loading…</div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-black/50">{tc("status.loading")}</div>
       ) : !summary ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-black/60">
-          {sessionOut ? "Your session has expired. Please log in again." : "Attendance details not found"}
+          {sessionOut ? t("sessionExpired") : t("notFound")}
         </div>
       ) : (
         <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <StatCard label="Classes Today" icon={Presentation} iconClass="bg-indigo-50 text-indigo-800">
+            <StatCard label={t("classesToday")} icon={Presentation} iconClass="bg-indigo-50 text-indigo-800">
               <span className="text-2xl font-bold text-black">{summary.classesToday ?? 0}</span>
             </StatCard>
-            <StatCard label={`Attendance (${monthName} ${now.getFullYear()})`} icon={PieChart} iconClass="bg-green-50 text-green-700">
+            <StatCard label={t("attendanceMonth", { month: monthName, year: String(now.getFullYear()) })} icon={PieChart} iconClass="bg-green-50 text-green-700">
               <span className="text-2xl font-bold text-black">{summary.attendancePercentThisMonth ?? 0}%</span>
               <Delta value={summary.attendanceDeltaFromLastMonth} unit="%" goodWhenUp />
             </StatCard>
-            <StatCard label={`Late (${monthName} ${now.getFullYear()})`} icon={Clock} iconClass="bg-amber-50 text-amber-700">
+            <StatCard label={t("lateMonth", { month: monthName, year: String(now.getFullYear()) })} icon={Clock} iconClass="bg-amber-50 text-amber-700">
               <span className="text-2xl font-bold text-black">{summary.latePercentThisMonth ?? 0}%</span>
               <Delta value={summary.lateDeltaFromLastMonth} unit=" classes" goodWhenUp={false} />
             </StatCard>
@@ -247,11 +259,11 @@ export function Attendance() {
 
           <div className="grid gap-4 lg:grid-cols-3">
             <section className="rounded-2xl border border-slate-200 bg-white p-4 lg:col-span-2">
-              <h2 className="font-semibold text-black">Attendance by month ({now.getFullYear()})</h2>
+              <h2 className="font-semibold text-black">{t("byMonth", { year: String(now.getFullYear()) })}</h2>
               <MonthlyChart months={months} />
             </section>
             <section className="rounded-2xl border border-slate-200 bg-white p-4">
-              <h2 className="font-semibold text-black">Monthly Summary ({monthName})</h2>
+              <h2 className="font-semibold text-black">{t("monthlySummary", { month: monthName })}</h2>
               <SummaryChart summary={summary} />
             </section>
           </div>

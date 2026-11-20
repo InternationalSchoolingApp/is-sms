@@ -1,0 +1,122 @@
+{
+  "title": "Réserver un cours",
+  "titleWithTeacher": "Réserver un cours avec {teacher}",
+  "titleForSubject": "Réserver un cours de {subject}",
+  "titleForSubjectWithTeacher": "Réserver un cours de {subject} avec {teacher}",
+  "noTeacher": "Aucun enseignant ne vous a encore été attribué",
+  "weekFullyBooked": "Vous avez réservé tous vos cours de cette semaine",
+  "loadError": "Impossible de charger vos cours pour le moment. Veuillez réessayer.",
+  "notPurchased": "Oups ! Il semble que vous n'ayez pas encore acheté de cours.",
+  "goToBuyExtra": "Acheter des cours supplémentaires",
+  "yearNotStarted": "Votre année scolaire n'a pas encore commencé. Vous pourrez réserver vos cours dès le début de votre année scolaire",
+  "bookThisWeek": "Réserver des cours pour cette semaine",
+  "bookedClasses": "Cours réservés",
+  "bookAClass": "Réserver un cours",
+  "bookWithTeacher": "Réserver un cours avec {teacher}",
+  "bookCount": "Réserver un cours ({count})",
+  "picker": {
+    "selectCourse": "Choisir un cours*",
+    "viewSlots": "Voir les créneaux disponibles"
+  },
+  "complimentary": {
+    "title": "Vos cours offerts",
+    "for42Weeks": "Sur 42 semaines",
+    "perWeek": "par semaine"
+  },
+  "courses": {
+    "selectedOne": "Votre cours choisi",
+    "selectedMany": "Vos cours choisis",
+    "selectedCount": "Vos {count} cours choisis",
+    "total": "Total :",
+    "booked": "Réservés :",
+    "expired": "Expirés :"
+  },
+  "instructions": {
+    "title": "Instructions de réservation",
+    "weekly": "Organisation hebdomadaire des cours : du lundi au vendredi",
+    "canBook": "Vous pouvez réserver {count, plural, one {# cours} other {# cours}} par semaine.",
+    "canBookComplimentary": "Vous pouvez réserver {count, plural, one {# cours offert} other {# cours offerts}} par semaine.",
+    "expire": "Les cours offerts non réservés expirent à la fin de la semaine."
+  },
+  "counts": {
+    "left": "Restants",
+    "missedByYou": "Manqués par vous",
+    "missedByTeacher": "Manqués par l'enseignant",
+    "rescheduled": "Reprogrammés",
+    "completed": "Terminés"
+  },
+  "slots": {
+    "unknownOutcome": "Nous n'avons pas pu confirmer la réservation de votre cours. Veuillez actualiser la page et vérifier vos cours réservés avant de réessayer.",
+    "booked": "Votre cours est réservé.",
+    "bookFailed": "Impossible de réserver ce cours. Veuillez réessayer.",
+    "loading": "Chargement des créneaux disponibles…",
+    "teacherLoadError": "Impossible de charger les informations de l'enseignant. Veuillez réessayer.",
+    "none": "Aucun créneau n'est disponible cette semaine.",
+    "confirmTitle": "Confirmer votre cours",
+    "booking": "Réservation...",
+    "course": "Cours",
+    "teacher": "Enseignant",
+    "date": "Date",
+    "time": "Heure",
+    "timezone": "Fuseau horaire",
+    "available": "Disponible",
+    "bookedLegend": "Réservé",
+    "notAvailable": "Indisponible",
+    "weeklySlots": "Créneaux hebdomadaires de {teacher} du {from} au {to}**",
+    "allInTimezone": "**Tous les créneaux sont dans le fuseau horaire {timezone}",
+    "duration": "**Chaque cours dure {minutes} minutes"
+  },
+  "booked": {
+    "title": "Cours réservés — {course}",
+    "titleK5": "Mes cours réservés — {course}",
+    "dateToday": "Aujourd'hui",
+    "dateYesterday": "Hier",
+    "dateWeek": "Semaine",
+    "dateMonth": "Mois",
+    "dateCustom": "Personnalisé",
+    "selectStatus": "Choisir un statut",
+    "statusBooked": "Réservé",
+    "statusCompleted": "Terminé",
+    "statusReschedule": "Séance reprogrammée",
+    "statusMissedByYou": "Manqué par vous",
+    "totalNumberOf": "Nombre total de",
+    "counts": {
+      "total": "Cours",
+      "booked": "Cours réservés",
+      "left": "Cours restants",
+      "expired": "Cours expirés",
+      "missedByYou": "Cours manqués par vous",
+      "rescheduled": "Cours reprogrammés",
+      "completed": "Cours terminés",
+      "missedByTeacher": "Cours manqués par l'enseignant"
+    },
+    "columns": {
+      "sNo": "N°",
+      "timing": "Horaire du cours | Fuseau horaire",
+      "courseName": "Nom du cours",
+      "teacherName": "Nom de l'enseignant",
+      "bookedDate": "Date de réservation",
+      "classType": "Type de cours",
+      "classStatus": "Statut du cours"
+    },
+    "searchLabel": "Rechercher dans les cours réservés",
+    "searchPlaceholder": "Rechercher..."
+  },
+  "labels": {
+    "all_courses": "Tous les cours",
+    "rescheduled": "Reprogrammé",
+    "missed_by_student": "Manqué par l'élève",
+    "missed_by_teacher": "Manqué par l'enseignant",
+    "completed": "Terminé",
+    "cancelled": "Annulé",
+    "complimentary": "Offert",
+    "extra": "Supplémentaire",
+    "mon": "LUN",
+    "tue": "MAR",
+    "wed": "MER",
+    "thu": "JEU",
+    "fri": "VEN",
+    "sat": "SAM",
+    "sun": "DIM"
+  }
+}

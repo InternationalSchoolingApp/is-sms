@@ -1,0 +1,112 @@
+{
+  "announcements": {
+    "title": "公告",
+    "newCount": "{count} 条新公告",
+    "allRead": "全部已读",
+    "empty": "还没有公告。",
+    "new": "新"
+  },
+  "announcement": {
+    "startDate": "开始日期",
+    "thanks": "感谢你的确认",
+    "viewAttachment": "查看附件",
+    "submitting": "正在提交…",
+    "acknowledge": "请确认已读"
+  },
+  "news": {
+    "title": "新闻",
+    "newCount": "{count} 条新闻",
+    "fresh": "新鲜故事",
+    "empty": "还没有新闻。",
+    "readStory": "阅读故事",
+    "pages": "新闻页面",
+    "opening": "正在打开…",
+    "viewAll": "查看全部新闻"
+  },
+  "newsAll": {
+    "title": "最新新闻",
+    "empty": "暂无新闻。",
+    "loadMore": "加载更多新闻",
+    "readTime": "阅读时间 {minutes} 分钟",
+    "source": "新闻来源",
+    "readFull": "阅读全文 →"
+  },
+  "diary": {
+    "title": "我的学校日记",
+    "subtitle": "每天来自学校的留言",
+    "notesFrom": "来自 {name} 的留言",
+    "backToList": "返回日记列表",
+    "schoolDiary": "学校日记",
+    "teacherDiary": "老师日记",
+    "readOnly": "只有你的老师和学校会在这本日记里写字。",
+    "loading": "正在加载你的日记",
+    "loadingMore": "正在加载更多留言",
+    "loadingNotes": "正在加载留言",
+    "loadingOlder": "正在加载更早的留言",
+    "noNotes": "还没有留言。",
+    "schoolNote": "🏫 学校留言",
+    "teacherNote": "📝 老师留言",
+    "note": "✏️ 留言",
+    "salutation": {
+      "mr": "先生",
+      "ms": "女士"
+    }
+  },
+  "password": {
+    "title": "修改密码",
+    "old": "旧密码",
+    "new": "新密码",
+    "confirm": "确认密码",
+    "show": "显示密码",
+    "hide": "隐藏密码",
+    "rules": {
+      "length": "8–20 个字符",
+      "upper": "至少 1 个大写字母",
+      "lower": "至少 1 个小写字母",
+      "number": "至少 1 个数字",
+      "special": "至少 1 个特殊字符（! @ # $ % & *）",
+      "different": "与旧密码不同"
+    },
+    "mismatch": "两次输入的密码不一致。",
+    "change": "修改",
+    "changing": "正在修改…",
+    "note": "<b>注意：</b>此密码将用于你的学校管理系统（SMS）。你的学习管理系统（LMS）密码保持不变。",
+    "sessionExpired": "登录已过期，请重新登录。",
+    "failed": "修改密码失败。",
+    "changed": "密码修改成功！",
+    "changedDummy": "密码修改成功"
+  },
+  "training": {
+    "title": "学校系统培训",
+    "intro": "一位友好的协调员会带你熟悉新的主页，让你从第一天起就充满信心。",
+    "isOn": "你的学校系统培训时间是",
+    "durationZoom": "30 分钟 · Zoom 视频通话",
+    "rescheduledTitle": "你的学校系统培训已改期。",
+    "rescheduledText": "请点击下方，为培训选择另一个日期。",
+    "reschedule": "改期",
+    "join": "参加培训",
+    "firstFreeOnly": "只有第一次改期是免费的。",
+    "talkToUs": "联系我们",
+    "rescheduleTitle": "为你的学校系统培训改期",
+    "scheduleOn": "我想把学校系统培训安排在",
+    "minutes30": "30 分钟",
+    "zoomCall": "Zoom 视频通话",
+    "firstFree": "首次改期免费",
+    "pickTime": "选择时间",
+    "pickDay": "在日历上选一天，查看可选时间。",
+    "loadingTimes": "正在加载可选时间",
+    "noSlot": "没有可用的时间段。",
+    "pickAnother": "请选择其他日期。",
+    "newTime": "新的培训时间",
+    "feeNote": "请注意，只有第一次改期是免费的，之后学校系统培训将需要付费。",
+    "confirmText": "你即将为学校系统培训改期。请注意，如果之后再次改期，将会收取费用。",
+    "newTimeLine": "新的培训时间：<b>{time}</b>",
+    "yesReschedule": "是的，改期",
+    "hello": "你好，{name}",
+    "isOnLine": "你的学校系统培训时间是<b>{line}</b>。",
+    "usedFree": "你已经用掉了学校系统培训唯一一次免费改期。",
+    "essential": "参加这次培训是开始上学的必要步骤。如有疑问或需要改期，请联系学校管理处，或发邮件至 <link>{email}</link>",
+    "okGotIt": "好的，知道了",
+    "talkToAdmin": "联系学校管理处"
+  }
+}

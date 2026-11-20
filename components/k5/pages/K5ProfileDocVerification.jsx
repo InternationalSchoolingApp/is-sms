@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Check, X, Eye, AlertCircle, ShieldCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { loadDocumentVerification } from "@/services/profileActionsApi";
 import { callServer } from "@/utils/serverCall";
 import { K5Loading, K5ListSkeleton } from "@/components/k5/K5Skeletons";
@@ -18,6 +19,7 @@ function Badge({ ok, children }) {
 }
 
 function StatusBar({ status }) {
+  const t = useTranslations("k5Profile");
   if (!status) return null;
   const { submittedCount = 0, verifiedCount = 0, skippedCount = 0, unverifiedRequiredCount = 0 } = status;
   if (!submittedCount) return null;
@@ -32,9 +34,9 @@ function StatusBar({ status }) {
         <AlertCircle className="h-5 w-5 flex-none" />
       )}
       <span>
-        {verifiedCount} of {submittedCount} document{submittedCount !== 1 ? "s" : ""} verified
-        {skippedCount > 0 && <span className="text-k5-mut"> ({skippedCount} skipped)</span>}
-        {unverifiedRequiredCount > 0 && <span className="text-k5-ri"> &middot; {unverifiedRequiredCount} pending</span>}
+        {t("verification.verifiedOf", { verified: verifiedCount, count: submittedCount })}
+        {skippedCount > 0 && <span className="text-k5-mut"> {t("verification.skippedCount", { count: skippedCount })}</span>}
+        {unverifiedRequiredCount > 0 && <span className="text-k5-ri"> &middot; {t("verification.pending", { count: unverifiedRequiredCount })}</span>}
       </span>
     </div>
   );
@@ -44,6 +46,8 @@ export function DocumentVerification() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
 
   useEffect(() => {
     let cancelled = false;
@@ -52,7 +56,7 @@ export function DocumentVerification() {
         if (!cancelled) setData(result);
       })
       .catch((err) => {
-        if (!cancelled) setError(err?.message || "Could not load document verification.");
+        if (!cancelled) setError(err?.message || t("verification.loadError"));
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
@@ -60,7 +64,7 @@ export function DocumentVerification() {
 
   if (loading) {
     return (
-      <K5Loading label="Loading verification status" className="py-2">
+      <K5Loading label={t("verification.loading")} className="py-2">
         <K5ListSkeleton rows={3} />
       </K5Loading>
     );
@@ -71,7 +75,7 @@ export function DocumentVerification() {
   }
 
   if (!data?.documents?.length) {
-    return <p className="m-0 text-base font-extrabold text-k5-mut">No enrollment documents found.</p>;
+    return <p className="m-0 text-base font-extrabold text-k5-mut">{t("verification.empty")}</p>;
   }
 
   const { documents, status } = data;
@@ -84,12 +88,12 @@ export function DocumentVerification() {
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b-[3px] border-k5-line bg-k5-soft text-left font-black text-k5-mut">
-              <th className="px-4 py-3">Document</th>
-              <th className="px-4 py-3">Grade</th>
-              <th className="px-4 py-3">Submitted</th>
-              <th className="px-4 py-3">Verified</th>
-              <th className="px-4 py-3">Remark</th>
-              <th className="px-4 py-3 text-center">View</th>
+              <th className="px-4 py-3">{t("verification.columns.document")}</th>
+              <th className="px-4 py-3">{t("verification.columns.grade")}</th>
+              <th className="px-4 py-3">{t("verification.columns.submitted")}</th>
+              <th className="px-4 py-3">{t("verification.columns.verified")}</th>
+              <th className="px-4 py-3">{t("verification.columns.remark")}</th>
+              <th className="px-4 py-3 text-center">{tc("actions.view")}</th>
             </tr>
           </thead>
           <tbody>
@@ -103,9 +107,9 @@ export function DocumentVerification() {
                   <td className="px-4 py-3 text-k5-ink">{doc.submittedDate || "—"}</td>
                   <td className="px-4 py-3">
                     {skipped ? (
-                      <span className="text-k5-mut font-black text-xs">Skipped</span>
+                      <span className="text-k5-mut font-black text-xs">{t("verification.skipped")}</span>
                     ) : (
-                      <Badge ok={verified}>{verified ? "Yes" : "No"}</Badge>
+                      <Badge ok={verified}>{verified ? tc("actions.yes") : tc("actions.no")}</Badge>
                     )}
                   </td>
                   <td className="max-w-[220px] truncate px-4 py-3 text-k5-ink" title={doc.verificationRemark || ""}>
@@ -120,7 +124,7 @@ export function DocumentVerification() {
                         className="inline-flex items-center gap-1 rounded-full border-2 border-k5-ac bg-k5-act px-3 py-1 text-[13px] font-black text-k5-acx no-underline"
                       >
                         <Eye className="h-3.5 w-3.5" />
-                        View
+                        {tc("actions.view")}
                       </a>
                     ) : (
                       <span className="text-k5-mut">{"—"}</span>
@@ -142,19 +146,19 @@ export function DocumentVerification() {
               <div className="flex items-start justify-between gap-2">
                 <span className="text-base font-extrabold text-k5-ink">{doc.fileOriginalName || doc.documentName || "—"}</span>
                 {skipped ? (
-                  <span className="text-k5-mut font-black text-xs">Skipped</span>
+                  <span className="text-k5-mut font-black text-xs">{t("verification.skipped")}</span>
                 ) : (
-                  <Badge ok={verified}>{verified ? "Yes" : "No"}</Badge>
+                  <Badge ok={verified}>{verified ? tc("actions.yes") : tc("actions.no")}</Badge>
                 )}
               </div>
               {doc.standardName && (
-                <div className="text-sm text-k5-mut"><span className="font-black">Grade:</span> {doc.standardName}</div>
+                <div className="text-sm text-k5-mut"><span className="font-black">{t("verification.gradeColon")}</span> {doc.standardName}</div>
               )}
               {doc.submittedDate && (
-                <div className="text-sm text-k5-mut"><span className="font-black">Submitted:</span> {doc.submittedDate}</div>
+                <div className="text-sm text-k5-mut"><span className="font-black">{t("verification.submittedColon")}</span> {doc.submittedDate}</div>
               )}
               {doc.verificationRemark && (
-                <div className="text-sm text-k5-mut"><span className="font-black">Remark:</span> {doc.verificationRemark}</div>
+                <div className="text-sm text-k5-mut"><span className="font-black">{t("verification.remarkColon")}</span> {doc.verificationRemark}</div>
               )}
               {doc.fileUrl && (
                 <a
@@ -164,7 +168,7 @@ export function DocumentVerification() {
                   className="mt-1 inline-flex w-fit items-center gap-1 rounded-full border-2 border-k5-ac bg-k5-act px-3 py-1 text-[13px] font-black text-k5-acx no-underline"
                 >
                   <Eye className="h-3.5 w-3.5" />
-                  View Document
+                  {t("verification.viewDocument")}
                 </a>
               )}
             </div>

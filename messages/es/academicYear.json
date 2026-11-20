@@ -1,0 +1,50 @@
+{
+  "title": "Extensión del año académico",
+  "schoolFallback": "La escuela",
+  "contactAdmin": "Contactar con la administración escolar",
+  "confirmExtension1": "¿Seguro que quieres usar la Extensión-1?",
+  "termsTitle": "Términos y condiciones",
+  "termsIntro": "Lee la política de reembolso y los términos y condiciones antes de extender el año académico:",
+  "terms": {
+    "consultAdmin": "Te recomendamos consultar con la administración escolar antes de optar por la extensión de pago del año académico.",
+    "maxFourWeeks": "La extensión de pago del año académico puede usarse durante un máximo de 4 semanas.",
+    "noOtherForm": "La escuela no ofrece ninguna otra forma de extensión del año académico.",
+    "incomplete": "Si no puedes completar este curso incluso después de usar la extensión de pago de 4 semanas, no se otorgará crédito por este curso y se calificará como Incompleto \"(I)\" en tu expediente anual.",
+    "nonRefundable": "En ningún caso la tarifa pagada por la extensión del año académico es reembolsable, transferible ni ajustable.",
+    "checkWebsite": "Los estudiantes (o sus padres/tutores) son responsables de revisar el sitio web con regularidad para ver las próximas notificaciones. {school} no enviará notificaciones ni actualizaciones por separado a los estudiantes (ni a sus padres/tutores).",
+    "rightToAmend": "{school} se reserva el derecho de modificar, limitar o revocar cualquier oferta o condición en cualquier momento antes de la compra y no se responsabiliza de problemas técnicos que impidan el pago."
+  },
+  "agree": "Confirmo que he leído y acepto la política de reembolso y los términos y condiciones anteriores.",
+  "payNow": "Pagar ahora",
+  "paymentProcessing": "Pago en proceso...",
+  "oops": "¡Vaya!",
+  "paymentIncomplete": "Pago incompleto",
+  "underReviewTitle": "Tu pago está en revisión.",
+  "underReviewText": "Tu extensión se aplicará cuando se reciba el pago.",
+  "toast": {
+    "paymentReceived": "Pago recibido.",
+    "unableToAvail": "No se pudo usar la extensión.",
+    "extension1Availed": "Extensión-1 usada correctamente."
+  },
+  "notEligible": {
+    "afterYear": "Podrás optar por una extensión para {subject} cuando termine tu año académico.",
+    "notEligible": "No cumples los requisitos para una extensión de {subject}."
+  },
+  "detail": {
+    "title": "Extender el año académico de {subject}",
+    "availedOfOne": "Has usado {count} de 1 extensión de la Extensión-1.",
+    "extension1Info": "Con la Extensión-1 tendrás 2 semanas más para completar los créditos del curso, sin ningún costo adicional.",
+    "availExtension1": "Usar la EXTENSIÓN-1",
+    "extension2": "Extensión-2",
+    "paidExtension": "Extensión de pago",
+    "availedOfFour": "Has usado {count} de 4 extensiones de {label}.",
+    "payToAvail": "Paga {cost} para usar {label}.",
+    "extendedOneWeek": "Con {label} tendrás 1 semana más para completar los créditos del curso.",
+    "availExtension2": "Usar la EXTENSIÓN-2",
+    "availPaidExtension": "Usar la extensión de pago",
+    "allAvailed": "Ya has usado todas las extensiones de {subject}"
+  },
+  "messages": {
+    "no_details_found": "No se encontraron detalles."
+  }
+}

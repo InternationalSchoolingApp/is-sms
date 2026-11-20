@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useParams, useRouter, useSelectedLayoutSegment } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { FullScreenLoader } from "@/components/common/Loader";
 import { SchoolThemeStyle } from "@/components/common/SchoolThemeStyle";
 import { ReEnrollmentProvider, useReEnrollmentContext } from "@/hooks/useReEnrollment";
@@ -48,6 +49,8 @@ function useCustomPlanWatch() {
 function Frame({ children }) {
   const { school } = useParams();
   const { status, rootcss, ready, leavingForDashboard, loadFailed, retryLoading } = useReEnrollmentContext();
+  const t = useTranslations("home");
+  const tc = useTranslations("common");
   useCustomPlanWatch();
 
   useEffect(() => {
@@ -66,9 +69,9 @@ function Frame({ children }) {
   if (loadFailed) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 px-4 py-16 text-center">
-        <p className="text-sm font-semibold text-red-600">Could not load your re-enrollment details.</p>
+        <p className="text-sm font-semibold text-red-600">{t("reEnrollmentLoadFailed")}</p>
         <button type="button" onClick={() => retryLoading()} className="cursor-pointer rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90">
-          Try again
+          {tc("actions.tryAgain")}
         </button>
       </div>
     );

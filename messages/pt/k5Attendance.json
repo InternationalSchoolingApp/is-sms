@@ -1,0 +1,115 @@
+{
+  "header": {
+    "title": "Minha presença",
+    "subtitle": "Veja a quantas aulas você foi."
+  },
+  "loading": "Carregando sua presença",
+  "sessionExpired": "Sua sessão expirou. Entre de novo, por favor.",
+  "notFound": "Nenhum detalhe de presença encontrado",
+  "tiles": {
+    "classesToday": "Aulas de hoje",
+    "attendance": "Presença · {month}",
+    "late": "Atrasos · {month}",
+    "sameAs": "Igual a {month}",
+    "changeFrom": "{arrow} {diff}% em relação a {month}"
+  },
+  "views": {
+    "today": "Hoje",
+    "week": "Semana",
+    "month": "Mês",
+    "year": "Ano letivo"
+  },
+  "overview": {
+    "title": "Visão geral",
+    "hint": "Toque em um mês para ver o resumo.",
+    "comingSoon": "Em breve · Escolha Ano letivo para ver seus meses.",
+    "barLabel": "{month}: {percent}% de presença",
+    "barTip": "{month}: {percent}%",
+    "barNotYet": "{month}: ainda não"
+  },
+  "summary": {
+    "title": "Resumo do mês",
+    "cameTo": "Você foi a {came} de {total} aulas.",
+    "classesWord": "{count, plural, one {aula} other {aulas}}",
+    "sliceTitle": "{label}: {count}",
+    "empty": "Ainda não · Nenhuma aula neste mês."
+  },
+  "badges": {
+    "star": {
+      "name": "Estrela da presença",
+      "msg": "Você é uma estrela! Quase nunca perde uma aula."
+    },
+    "regular": {
+      "name": "Super presente",
+      "msg": "Muito bem! Continue assim."
+    },
+    "goodEffort": {
+      "name": "Bom esforço",
+      "msg": "Vamos tentar vir a todas as aulas!"
+    },
+    "keepGoing": {
+      "name": "Continue tentando",
+      "msg": "Vamos tentar vir a todas as aulas!"
+    }
+  },
+  "status": {
+    "present": "Presente",
+    "late": "Atrasado",
+    "absent": "Ausente",
+    "missS": "Faltou (aluno)",
+    "missT": "Faltou (professor)"
+  },
+  "absentLabels": {
+    "absent": "Ausente",
+    "missed_by_student": "Faltou (aluno)",
+    "missed_by_teacher": "Faltou (professor)"
+  },
+  "details": {
+    "title": "Detalhes da presença",
+    "hint": "Toque em uma cor do gráfico para ver só essas aulas.",
+    "showAll": "Mostrar tudo",
+    "showingNone": "Mostrando 0 registros",
+    "dateFilters": {
+      "today": "Hoje",
+      "yesterday": "Ontem",
+      "week": "Semana",
+      "month": "Mês",
+      "custom": "Personalizado"
+    },
+    "notAvailable": "{label} (indisponível)",
+    "statusOptions": {
+      "select": "Escolha o status",
+      "all": "Todos",
+      "present": "Presente",
+      "late": "Atrasado",
+      "absent": "Ausente"
+    },
+    "lookBack": "Você pode voltar até {days, plural, one {# dia} other {# dias}}. \"Até\" é sempre hoje.",
+    "errors": {
+      "unavailable": "O período personalizado não está disponível agora.",
+      "invalidDate": "Escolha uma data válida.",
+      "toIsToday": "A data \"Até\" é sempre hoje.",
+      "noFuture": "Não dá para escolher datas futuras.",
+      "lookBackOnly": "Você só pode voltar até {days, plural, one {# dia} other {# dias}}."
+    },
+    "loadError": "Não foi possível carregar os detalhes da presença.",
+    "columns": {
+      "srNo": "Nº",
+      "date": "Data",
+      "class": "Aula",
+      "startTime": "Início",
+      "endTime": "Fim",
+      "joined": "Entrada",
+      "status": "Status"
+    },
+    "joinedNotes": {
+      "onTime": "No horário",
+      "minLate": "{minutes} min de atraso",
+      "teacherAbsent": "O professor não pôde vir",
+      "didNotJoin": "Não entrou"
+    },
+    "loading": "Carregando suas aulas",
+    "empty": "Nenhuma aula aqui.",
+    "pages": "Páginas"
+  }
+}

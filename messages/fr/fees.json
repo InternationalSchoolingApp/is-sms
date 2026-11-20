@@ -1,0 +1,40 @@
+{
+  "title": "Détails des frais",
+  "empty": "Aucun détail de frais trouvé",
+  "paymentReceived": "Paiement reçu.",
+  "paymentProcessing": "Paiement en cours...",
+  "oops": "Oups !",
+  "paymentIncomplete": "Paiement incomplet",
+  "underReviewTitle": "Votre paiement est en cours de vérification.",
+  "underReviewText": "Le statut de vos frais sera mis à jour dès réception du paiement.",
+  "table": {
+    "sNo": "N°",
+    "scheduledDate": "Date prévue",
+    "grade": "Niveau",
+    "paymentName": "Nom du paiement",
+    "paidFee": "Montant payé",
+    "paidDate": "Date de paiement",
+    "status": "Statut",
+    "viewReceipt": "Voir le reçu"
+  },
+  "actions": {
+    "viewReceipt": "Voir le reçu",
+    "tryAgain": "Réessayer",
+    "payNow": "Payer maintenant",
+    "changePaymentMethod": "Changer de moyen de paiement",
+    "paymentInProcess": "Paiement en cours",
+    "paymentUnderProcess": "Paiement en cours de traitement"
+  },
+  "statuses": {
+    "success": "RÉUSSI",
+    "paid": "PAYÉ",
+    "pending": "EN ATTENTE",
+    "initiated": "INITIÉ",
+    "failure": "ÉCHEC",
+    "rejected": "REFUSÉ",
+    "cancelled": "ANNULÉ",
+    "expired": "EXPIRÉ",
+    "refunded": "REMBOURSÉ",
+    "scheduled": "PROGRAMMÉ"
+  }
+}

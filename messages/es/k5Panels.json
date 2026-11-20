@@ -1,0 +1,112 @@
+{
+  "announcements": {
+    "title": "Anuncios",
+    "newCount": "{count, plural, one {# nuevo} other {# nuevos}}",
+    "allRead": "Todo leído",
+    "empty": "Aún no hay anuncios.",
+    "new": "Nuevo"
+  },
+  "announcement": {
+    "startDate": "Fecha de inicio",
+    "thanks": "Gracias por confirmar",
+    "viewAttachment": "Ver adjunto",
+    "submitting": "Enviando…",
+    "acknowledge": "Confirma que lo leíste"
+  },
+  "news": {
+    "title": "Noticias",
+    "newCount": "{count, plural, one {# nueva} other {# nuevas}}",
+    "fresh": "Historias nuevas",
+    "empty": "Aún no hay noticias.",
+    "readStory": "Leer la historia",
+    "pages": "Páginas de noticias",
+    "opening": "Abriendo…",
+    "viewAll": "Ver todas las noticias"
+  },
+  "newsAll": {
+    "title": "Últimas noticias",
+    "empty": "No hay noticias disponibles.",
+    "loadMore": "Cargar más noticias",
+    "readTime": "Lectura: {minutes} min",
+    "source": "Fuente",
+    "readFull": "Leer el artículo completo →"
+  },
+  "diary": {
+    "title": "Mi diario escolar",
+    "subtitle": "Notas de la escuela, cada día",
+    "notesFrom": "Notas de {name}",
+    "backToList": "Volver a la lista",
+    "schoolDiary": "Diario de la escuela",
+    "teacherDiary": "Diario del profe",
+    "readOnly": "Solo tu profe y tu escuela escriben en este diario.",
+    "loading": "Cargando tu diario",
+    "loadingMore": "Cargando más notas",
+    "loadingNotes": "Cargando las notas",
+    "loadingOlder": "Cargando notas anteriores",
+    "noNotes": "Aún no hay notas.",
+    "schoolNote": "🏫 Nota de la escuela",
+    "teacherNote": "📝 Nota del profe",
+    "note": "✏️ Nota",
+    "salutation": {
+      "mr": "Sr.",
+      "ms": "Sra."
+    }
+  },
+  "password": {
+    "title": "Cambiar contraseña",
+    "old": "Contraseña actual",
+    "new": "Nueva contraseña",
+    "confirm": "Confirma la contraseña",
+    "show": "Mostrar contraseña",
+    "hide": "Ocultar contraseña",
+    "rules": {
+      "length": "8 a 20 caracteres",
+      "upper": "Al menos 1 letra mayúscula",
+      "lower": "Al menos 1 letra minúscula",
+      "number": "Al menos 1 número",
+      "special": "Al menos 1 carácter especial (! @ # $ % & *)",
+      "different": "Distinta de la contraseña actual"
+    },
+    "mismatch": "Las contraseñas no coinciden.",
+    "change": "Cambiar",
+    "changing": "Cambiando…",
+    "note": "<b>Nota:</b> la contraseña se cambiará en tu Sistema de Gestión Escolar (SMS). Tu contraseña del Sistema de Gestión del Aprendizaje (LMS) seguirá igual.",
+    "sessionExpired": "Tu sesión expiró. Vuelve a iniciar sesión.",
+    "failed": "No se pudo cambiar la contraseña.",
+    "changed": "¡Contraseña cambiada!",
+    "changedDummy": "Contraseña cambiada"
+  },
+  "training": {
+    "title": "Formación sobre el sistema escolar",
+    "intro": "Un coordinador amable te enseñará tu nuevo panel, para que te sientas seguro desde el primer día.",
+    "isOn": "Tu formación sobre el sistema escolar es el",
+    "durationZoom": "30 minutos · videollamada de Zoom",
+    "rescheduledTitle": "Tu formación sobre el sistema escolar se ha reprogramado.",
+    "rescheduledText": "Haz clic abajo y elige otra fecha para la formación.",
+    "reschedule": "Cambiar la fecha",
+    "join": "Unirse a la formación",
+    "firstFreeOnly": "Solo el primer cambio de fecha es gratis.",
+    "talkToUs": "Habla con nosotros",
+    "rescheduleTitle": "Cambia la fecha de tu formación sobre el sistema escolar",
+    "scheduleOn": "Quiero programar mi formación sobre el sistema escolar el",
+    "minutes30": "30 minutos",
+    "zoomCall": "Videollamada de Zoom",
+    "firstFree": "Primer cambio gratis",
+    "pickTime": "Elige una hora",
+    "pickDay": "Elige un día en el calendario para ver las horas libres.",
+    "loadingTimes": "Cargando las horas libres",
+    "noSlot": "No hay horarios disponibles.",
+    "pickAnother": "Elige otra fecha.",
+    "newTime": "Nueva hora de la formación",
+    "feeNote": "Recuerda: solo el primer cambio de fecha es gratis. Después, la formación sobre el sistema escolar será de pago.",
+    "confirmText": "Vas a cambiar la fecha de tu formación sobre el sistema escolar. Recuerda: si la formación se reprograma otra vez después de esto, se cobrará una tarifa.",
+    "newTimeLine": "Nueva hora de la formación: <b>{time}</b>",
+    "yesReschedule": "Sí, cambiar la fecha",
+    "hello": "Hola, {name}",
+    "isOnLine": "Tu formación sobre el sistema escolar es el <b>{line}</b>.",
+    "usedFree": "Ya usaste tu único cambio de fecha gratis de la formación sobre el sistema escolar.",
+    "essential": "Asistir a esta formación es esencial para empezar tus estudios. Para cualquier duda o cambio de fecha, habla con la Administración de la escuela o escríbenos a <link>{email}</link>",
+    "okGotIt": "Vale, entendido",
+    "talkToAdmin": "Hablar con la Administración de la escuela"
+  }
+}

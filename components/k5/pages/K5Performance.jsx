@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
+import { useLocaleTag } from "@/i18n/dateLocale";
 import { saveMyGoals } from "@/services/profileSaveApi";
 import { callServer } from "@/utils/serverCall";
 import { K5PerformanceGoals } from "@/components/k5/pages/K5PerformanceGoals";
@@ -21,18 +23,19 @@ import { K5PerformanceScoreCard } from "@/components/k5/pages/K5PerformanceScore
 import { K5PerformanceStreak } from "@/components/k5/pages/K5PerformanceStreak";
 import { K5PerformanceAchievements } from "@/components/k5/pages/K5PerformanceAchievements";
 import { ChartIcon, HeroScene, PeopleIcon, TargetIcon } from "@/components/k5/pages/K5PerformanceIcons";
-import { asArray, badgeView, courseKey, fmtShort, sessionInfo } from "@/components/k5/pages/k5PerformanceData";
+import { asArray, badgeView, courseKey, fmtShort, sessionInfo, sessionParts } from "@/components/k5/pages/k5PerformanceData";
 import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
 
+// Tab labels are k5Performance.tabs.<id>.
 const TABS = [
-  { id: "perf", label: "Performance", Icon: ChartIcon },
-  { id: "goals", label: "My Goals", Icon: TargetIcon },
-  { id: "class", label: "Class Comparison", Icon: PeopleIcon },
+  { id: "perf", Icon: ChartIcon },
+  { id: "goals", Icon: TargetIcon },
+  { id: "class", Icon: PeopleIcon },
 ];
 
-const PILLS = ["Progress", "Streak", "Scores"];
-// Shown when the day's insight for a slot has no data (the reference skips such a slot).
-const QUIET = ["Keep going — your progress shows here after the next daily update.", "Submit your next activity on time to start a streak.", "Your scores will show here once your work is graded."];
+// Pill ids: their labels are k5Performance.hero.pills.<id>; k5Performance.hero.quiet.<id> is shown when the day's
+// insight for a slot has no data (the reference skips such a slot).
+const PILLS = ["progress", "streak", "scores"];
 
 /** Auto-rotate the pill every INTERVAL ms; pauses while the user hovers or focuses the hero. */
 function useAutoRotate(count, onPill, active) {
@@ -51,6 +54,7 @@ function useAutoRotate(count, onPill, active) {
 
 function Hero({ name, tips, pill, onPill, plain, hoverProps }) {
   const { isMiddle } = useDashboardContext();
+  const t = useTranslations("k5Performance");
   return (
     <section
       className={`k5h-r12 relative flex flex-col gap-3 overflow-hidden border-[3px] border-k5-ac px-[26px] py-6 ${
@@ -61,20 +65,21 @@ function Hero({ name, tips, pill, onPill, plain, hoverProps }) {
       {...hoverProps}
     >
       {!plain && !isMiddle && <HeroScene />}
-      <h2 className="relative m-0 font-k5-display text-[30px] font-semibold text-k5-ink">{plain ? `Hi ${name}, here’s how you’re doing.` : `Hey ${name}, nice momentum.`}</h2>
+      <h2 className="relative m-0 font-k5-display text-[30px] font-semibold text-k5-ink">{plain ? t("hero.greetingPlain", { name }) : t("hero.greeting", { name })}</h2>
       <p key={pill} aria-live="polite" className="k5-pmpanel relative m-0 min-h-[52px] text-lg font-extrabold leading-normal text-k5-ink">
-        {tips[pill] || QUIET[pill]}
+        {tips[pill] || t(`hero.quiet.${PILLS[pill]}`)}
       </p>
-      <div role="tablist" aria-label="My Performance" className="relative flex flex-wrap gap-2.5">
-        {PILLS.map((label, i) => {
+      <div role="tablist" aria-label={t("title")} className="relative flex flex-wrap gap-2.5">
+        {PILLS.map((id, i) => {
+          const label = t(`hero.pills.${id}`);
           const sel = i === pill;
           return (
             <button
-              key={label}
+              key={id}
               type="button"
               role="tab"
               aria-selected={sel}
-              aria-label={`${i + 1} / 3: ${label}`}
+              aria-label={t("hero.pillLabel", { n: i + 1, label })}
               onClick={() => onPill(i)}
               className="k5-pmpill relative inline-flex min-h-11 min-w-[130px] cursor-pointer items-center justify-center overflow-hidden rounded-full border-[3px] px-4 font-k5-body text-[15px] font-black"
               style={{ background: sel ? "var(--k5-ac)" : "var(--k5-card)", borderColor: sel ? "var(--k5-ac)" : "var(--k5-line)", color: sel ? "#FFFFFF" : "var(--k5-ink)" }}
@@ -102,6 +107,7 @@ function Hero({ name, tips, pill, onPill, plain, hoverProps }) {
 function Header({ session }) {
   const { school } = useParams();
   const { isMiddle } = useDashboardContext();
+  const t = useTranslations("k5Performance");
   return (
     <div className={isMiddle ? "flex flex-wrap items-center gap-4" : `${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
       <span
@@ -113,11 +119,11 @@ function Header({ session }) {
       <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
         <span className="text-[15px] font-extrabold text-k5-mut">
           <Link href={studentNavHref(school, "")} className="font-black text-k5-acx no-underline">
-            Dashboard
+            {t("breadcrumbDashboard")}
           </Link>{" "}
-          / My Performance
+          / {t("title")}
         </span>
-        <h1 className={`m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-4xl"}`}>My Performance</h1>
+        <h1 className={`m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-4xl"}`}>{t("title")}</h1>
       </div>
       {session && <span className="rounded-full border-2 border-k5-line bg-k5-soft px-3.5 py-1.5 text-[15px] font-black text-k5-mut">{session.label}</span>}
     </div>
@@ -125,12 +131,13 @@ function Header({ session }) {
 }
 
 function BehindBanner({ names }) {
+  const t = useTranslations("k5Performance");
   return (
     <div role="status" className="flex items-center gap-3 rounded-[20px] border-[3px] px-4 py-3 text-base font-black" style={{ background: "var(--k5-oT)", borderColor: "var(--k5-oI)", color: "var(--k5-oI)" }}>
       <span aria-hidden="true" className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-k5-card">
         <TargetIcon size={20} />
       </span>
-      <span>You’re behind today’s target in {names.join(" & ")}. A little work today gets you back on track!</span>
+      <span>{t("behindBanner", { names: names.join(" & ") })}</span>
     </div>
   );
 }
@@ -141,8 +148,9 @@ function BehindBanner({ names }) {
  */
 function PerformanceSkeleton() {
   const { isMiddle, isHigh } = useDashboardContext();
+  const t = useTranslations("k5Performance");
   return (
-    <K5Loading label="Loading your performance" className="flex flex-col gap-[18px]">
+    <K5Loading label={t("loading")} className="flex flex-col gap-[18px]">
       <Header session={null} />
       <div className="flex flex-wrap gap-2.5">
         {Array.from({ length: 3 }, (_, i) => (
@@ -215,6 +223,8 @@ export function K5Performance({ isLoading, performance, courseProviderId, plain 
   const [savingGoals, setSavingGoals] = useState(false);
   // Demo / ?dummyStudent=Y: goals live on the page only, nothing is written to the backend.
   const [dummyGoals, setDummyGoals] = useState(null);
+  const t = useTranslations("k5Performance");
+  const tag = useLocaleTag();
   usePicoContentReady(!isLoading);
 
   const courses = asArray(performance?.courses);
@@ -224,27 +234,40 @@ export function K5Performance({ isLoading, performance, courseProviderId, plain 
   const goals = { ...(performance?.goals || {}), ...(dummy.enabled && dummyGoals ? dummyGoals : {}) };
   goals.remind = goals.remind !== "N";
   goals.compare = goals.compare !== "N";
-  const session = sessionInfo(tiles, courses);
+  const sessionEn = sessionInfo(tiles, courses);
+  // The pill and "Ends …" in the dashboard language (sessionInfo keeps its English label for other callers).
+  const parts = sessionParts(tiles, courses, tag);
+  const session =
+    sessionEn && parts
+      ? {
+          ...sessionEn,
+          startsTx: parts.startsTx,
+          endsTx: parts.endsTx,
+          label: parts.startsTx
+            ? t("session.withStart", { start: parts.startYear, end: parts.endYear, starts: parts.startsTx, ends: parts.endsTx })
+            : t("session.endOnly", { start: parts.startYear, end: parts.endYear, ends: parts.endsTx }),
+        }
+      : sessionEn;
   const badges = badgeView(performance?.badges, goals.score);
   const tips = asArray(performance?.insights);
-  const studentName = String(context?.userName || "").split(" ")[0] || "there";
+  const studentName = String(context?.userName || "").split(" ")[0] || t("hero.there");
   const behindNames = goals.remind ? courses.filter((c) => c.pace === "behind").map((c) => c.courseName) : [];
 
   const saveGoals = async (next) => {
     if (dummy.enabled) {
       setDummyGoals({ ...next, saved: true });
-      toast.success(`Goals saved — aiming for ${next.score}% by ${fmtShort(next.finishBy)}`);
+      toast.success(t("goals.saved", { score: next.score, date: fmtShort(next.finishBy, tag) }));
       return true;
     }
     setSavingGoals(true);
     try {
       await callServer(() => saveMyGoals(next));
-      toast.success(`Goals saved — aiming for ${next.score}% by ${fmtShort(next.finishBy)}`);
+      toast.success(t("goals.saved", { score: next.score, date: fmtShort(next.finishBy, tag) }));
       // The dialog closes now and the page recalculates behind it.
       queryClient.invalidateQueries({ queryKey: ["student-academic-performance"] });
       return true;
     } catch (error) {
-      toast.error(String(error?.message || "Your goals could not be saved.").replace(/^[A-Z0-9_]+: /, ""));
+      toast.error(String(error?.message || t("goals.saveError")).replace(/^[A-Z0-9_]+: /, ""));
       return false;
     } finally {
       setSavingGoals(false);
@@ -273,16 +296,16 @@ export function K5Performance({ isLoading, performance, courseProviderId, plain 
     <div className="k5-perf-page flex flex-col gap-[18px]">
       <Header session={session} />
 
-      <div role="tablist" aria-label="My Performance" className="flex flex-wrap gap-2.5">
-        {TABS.filter((t) => t.id !== "class" || compareAvailable).map((t) => {
-          const sel = tab === t.id;
+      <div role="tablist" aria-label={t("title")} className="flex flex-wrap gap-2.5">
+        {TABS.filter((tb) => tb.id !== "class" || compareAvailable).map((tb) => {
+          const sel = tab === tb.id;
           return (
             <button
-              key={t.id}
+              key={tb.id}
               type="button"
               role="tab"
               aria-selected={sel}
-              onClick={() => setTab(t.id)}
+              onClick={() => setTab(tb.id)}
               className="k5-pmtab flex min-h-[50px] cursor-pointer items-center gap-2 rounded-full border-[3px] px-5 font-k5-display text-lg font-semibold"
               style={{
                 background: sel ? "var(--k5-ac)" : "var(--k5-card)",
@@ -291,8 +314,8 @@ export function K5Performance({ isLoading, performance, courseProviderId, plain 
                 boxShadow: `0 4px 0 ${sel ? "var(--k5-acd)" : "var(--k5-line)"}`,
               }}
             >
-              <t.Icon />
-              {t.label}
+              <tb.Icon />
+              {t(`tabs.${tb.id}`)}
             </button>
           );
         })}

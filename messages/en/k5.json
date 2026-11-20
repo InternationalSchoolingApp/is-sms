@@ -1,0 +1,104 @@
+{
+  "shell": {
+    "copyright": "Copyright © {year} - {school} - All Rights Reserved.",
+    "copyrightNoSchool": "Copyright © {year} - All Rights Reserved."
+  },
+  "header": {
+    "menu": "Menu",
+    "tagline": "Your Location. Your School. Your Time.",
+    "schoolWebsite": "{school} website",
+    "schoolWebsiteGeneric": "School website",
+    "communication": "Communication",
+    "appearance": "Appearance",
+    "needHelp": "Need help?",
+    "cart": "Cart",
+    "cartItems": "Cart, {count, plural, one {# item} other {# items}}",
+    "cartCount": "Cart ({count})",
+    "getApp": "Get the App",
+    "picoGetApp": "Get the app and take me with you on your phone!",
+    "welcomeBack": "Welcome back,",
+    "nameExclaim": "{name}!",
+    "myProfile": "My Profile",
+    "profileComingSoon": "My Profile — coming soon",
+    "changePassword": "Change Password",
+    "addSiblings": "Add More Siblings",
+    "resumeEnrollment": "Resume {name}'s Enrollment",
+    "moreOptions": "More options",
+    "closeMenu": "Close menu",
+    "themeAndLook": "Theme & look"
+  },
+  "nav": {
+    "mainMenu": "Main menu",
+    "closeMenu": "Close menu",
+    "loading": "Loading the menu…",
+    "more": "More",
+    "groupItem": "{group}: {item}"
+  },
+  "logout": {
+    "say": {
+      "calm": "Leaving so soon?",
+      "sad": "Aww… please don’t go!",
+      "happy": "Yay! Let’s keep learning!"
+    },
+    "title": "Are you sure you want to log out?",
+    "body": "You will be signed out of your account and taken to the login page.",
+    "loggingOut": "Logging out…"
+  },
+  "quote": {
+    "label": "Quote of the moment",
+    "dismiss": "Dismiss quote"
+  },
+  "skeleton": {
+    "plan": "Loading your plan",
+    "day": "Loading your day",
+    "courses": "Getting your courses",
+    "profile": "Loading your profile"
+  },
+  "appDownload": {
+    "school": "School",
+    "schoolApp": "{school} app",
+    "schoolAppGeneric": "School app",
+    "title": "Stay connected with our app!",
+    "subtitle": "Everything for school, right on your phone.",
+    "whatYouGet": "What you get",
+    "features": {
+      "updates": "All updates in one place",
+      "reminders": "Class reminders",
+      "calendar": "Class calendar",
+      "diary": "Student’s Diary",
+      "chat": "Chat with teachers"
+    },
+    "getItOn": "GET IT ON",
+    "downloadOnThe": "Download on the",
+    "storeLink": {
+      "googlePlay": "Get it on Google Play",
+      "appStore": "Download on the App Store"
+    },
+    "qrFor": "QR code for {store}",
+    "scanMe": "Scan me!",
+    "easySteps": "Easy as 1, 2, 3",
+    "steps": {
+      "openCamera": "Open your phone camera",
+      "scanCode": "Scan the code",
+      "tapLink": "Tap the link and install"
+    },
+    "demoLabel": "A phone scans the code, downloads the app and installs it",
+    "demo": {
+      "scanning": "Scanning…",
+      "downloading": "Downloading…",
+      "installed": "Installed! Yay!"
+    },
+    "closeIn": "Close, available in {count, plural, one {# second} other {# seconds}}",
+    "closeCountdown": "Close ({count}s)",
+    "allDone": "All done"
+  },
+  "look": {
+    "title": "Make it yours!",
+    "subtitle": "Pick your look. It changes right away!",
+    "schoolPicked": "Your school picked this look for you.",
+    "reset": "Reset to default",
+    "buddyIs": "{name} is your buddy.",
+    "voiceHello": "Hi! This is my voice!",
+    "voiceHelloName": "Hi {name}! This is my voice!"
+  }
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { DEFAULT_COURSE_PALETTE } from "@/utils/calendarEvents";
 
 /**
@@ -11,6 +12,7 @@ import { DEFAULT_COURSE_PALETTE } from "@/utils/calendarEvents";
 export function CourseColorPicker({ color, onPick }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const t = useTranslations("calendar");
 
   useEffect(() => {
     if (!open) return;
@@ -29,7 +31,7 @@ export function CourseColorPicker({ color, onPick }) {
           e.stopPropagation();
           setOpen((v) => !v);
         }}
-        aria-label="Change course color"
+        aria-label={t("filters.changeCourseColor")}
         className="h-4 w-4 flex-shrink-0 rounded-full border border-black/10"
         style={{ background: color }}
       />
@@ -44,7 +46,7 @@ export function CourseColorPicker({ color, onPick }) {
                 onPick(swatch);
                 setOpen(false);
               }}
-              aria-label={`Pick color ${swatch}`}
+              aria-label={t("filters.pickColor", { color: swatch })}
               className={`h-5 w-5 rounded-full border-2 ${swatch === color ? "border-black" : "border-transparent"}`}
               style={{ background: swatch }}
             />

@@ -1,0 +1,245 @@
+{
+  "modal": {
+    "errorPrefix": "错误：",
+    "about": "关于：{about}。",
+    "lastTried": "上次尝试 {when}。",
+    "countryCode": "国家/地区代码",
+    "numberPlaceholder": "不含国家/地区代码的号码",
+    "inSeconds": "（{wait} 秒后）"
+  },
+  "alerts": {
+    "error": "暂时无法完成此操作。请一分钟后重试。",
+    "unreachable": "无法连接到学校服务器。请检查你的网络连接后重试。",
+    "chooseOption": "请选择其中一个选项以继续。",
+    "sendFirst": "请先发送验证码，然后在此处输入。",
+    "loggedOut": "你的登录会话已退出",
+    "waitSeconds": "你可以在 {count, plural, other {# 秒}}后重新获取验证码。"
+  },
+  "summary": {
+    "title": "我的联系方式",
+    "subtitle": "学校如何联系你",
+    "status": {
+      "VERIFIED": "已验证",
+      "OK": "正常",
+      "INVALID": "无效",
+      "NOT_REACHABLE": "无法联系",
+      "APP_NOT_INSTALLED": "未安装应用",
+      "UNKNOWN": "尚未验证"
+    },
+    "channels": {
+      "EMAIL": "电子邮件",
+      "MOBILE": "手机（短信）",
+      "WHATSAPP": "WhatsApp",
+      "APP": "应用通知"
+    },
+    "labels": {},
+    "noPhone": "没有已登录的手机",
+    "notGiven": "未提供",
+    "getApp": "获取应用",
+    "fixNow": "立即修正",
+    "fixFailed": "暂时无法完成此操作。请一分钟后重试。",
+    "noLongerNeedsFix": "此联系方式不再需要修正。"
+  },
+  "copy": {
+    "standard": {
+      "continueLabel": "继续",
+      "laterLabel": "稍后",
+      "backLabel": "返回",
+      "verifyLabel": "验证并保存",
+      "closeNowLabel": "暂时关闭",
+      "legend": "你想做什么？",
+      "reasonLabel": "原因：",
+      "stepLabel": "第 2 步，共 2 步",
+      "resendLabel": "重新发送验证码",
+      "resendLead": "没有收到？",
+      "codePlaceholder": "输入验证码",
+      "signIn": "你的登录邮箱不会更改。此地址仅用于接收学校邮件。",
+      "signInShort": "你的登录邮箱不会更改。",
+      "alsoMobile": "同时将此号码用作我的手机号码",
+      "mandatory": "请立即修正，以便继续接收学校的消息。此项无法再跳过。",
+      "skip": "你还可以跳过此项 {count, plural, other {# 次}}。",
+      "channels": {
+        "EMAIL": {
+          "title": "检查你的电子邮件地址",
+          "problem": "发往 {value} 的学校邮件无法送达。",
+          "options": {
+            "CHANGE": { "title": "更新我的邮箱", "text": "换成一个可用的地址" },
+            "CONFIRM": { "title": "地址正确", "text": "保留此地址——我们会再试一次" },
+            "ALTERNATE": { "title": "添加另一个邮箱", "text": "保留此地址并添加第二个地址" }
+          },
+          "valueLabel": { "CHANGE": "新邮箱", "ALTERNATE": "第二个邮箱" },
+          "sendLabel": "发送验证码",
+          "codeLabel": "输入邮件中的 6 位验证码"
+        },
+        "MOBILE": {
+          "title": "检查你的手机号码",
+          "problem": "发往你手机号码 {value} 的短信无法送达。",
+          "options": {
+            "CHANGE": { "title": "更改我的号码", "text": "输入正确的号码。我们会向你发送短信验证码。" },
+            "CONFIRM": { "title": "号码正确", "text": "我们会向此号码发送短信验证码以确认。" }
+          },
+          "valueLabel": { "CHANGE": "新手机号码" },
+          "sendLabel": "发送短信验证码",
+          "codeLabel": "输入短信中的 6 位验证码"
+        },
+        "WHATSAPP": {
+          "title": "检查你的 WhatsApp 号码",
+          "problem": "我们无法通过 WhatsApp 在 {value} 联系到你。",
+          "options": {
+            "CHANGE": { "title": "提供我的 WhatsApp 号码", "text": "为 WhatsApp 使用其他号码。我们会向该号码发送验证码。" },
+            "CONFIRM": { "title": "号码正确", "text": "此号码有 WhatsApp。我们会通过 WhatsApp 发送验证码。" },
+            "NO_WHATSAPP": { "title": "我不使用 WhatsApp", "text": "停止 WhatsApp 消息。你仍会收到电子邮件和短信。" }
+          },
+          "valueLabel": { "CHANGE": "WhatsApp 号码" },
+          "sendLabel": "发送 WhatsApp 验证码",
+          "codeLabel": "输入我们通过 WhatsApp 发送的 6 位验证码"
+        }
+      },
+      "confirmLead": "我们会向 {value} 发送一个 6 位验证码{channel, select, WHATSAPP {（通过 WhatsApp）} MOBILE {（通过短信）} other {}}。在此输入验证码以确认是你本人。",
+      "alternateHint": "输入验证码后，学校邮件也会发送到此地址。你当前的地址会保留。",
+      "sent": "我们已{channel, select, EMAIL {通过电子邮件} MOBILE {通过短信} SMS {通过短信} WHATSAPP {通过 WhatsApp} other {}}向 {sentTo} 发送了一个 6 位验证码。",
+      "noWhatsapp": {
+        "title": "停止 WhatsApp 消息？",
+        "lead": "我们将停止向 {value} 发送 WhatsApp 消息。",
+        "note": "你仍会通过电子邮件和短信收到学校消息。你以后可以在个人资料中提供 WhatsApp 号码。",
+        "confirmLabel": "是的，停止 WhatsApp 消息"
+      },
+      "done": {
+        "heading": {
+          "EMAIL_CHANGE": "邮箱已更新",
+          "EMAIL_CONFIRM": "邮箱已确认",
+          "EMAIL_ALTERNATE": "邮箱已添加",
+          "MOBILE_CHANGE": "手机号码已更新",
+          "MOBILE_CONFIRM": "手机号码已确认",
+          "WHATSAPP_CHANGE": "WhatsApp 号码已保存",
+          "WHATSAPP_CONFIRM": "WhatsApp 号码已确认",
+          "WHATSAPP_NO_WHATSAPP": "已停止 WhatsApp 消息"
+        },
+        "headingDefault": "完成",
+        "text": {
+          "EMAIL_CHANGE": "学校邮件现在会发送到 {value}。",
+          "EMAIL_CONFIRM": "我们会再次向 {value} 发送学校邮件。",
+          "EMAIL_ALTERNATE": "学校邮件现在也会发送到 {value}。",
+          "MOBILE_CHANGE": "学校的短信现在会发送到 {value}。",
+          "MOBILE_CONFIRM": "我们会继续向 {value} 发送短信。",
+          "WHATSAPP_CHANGE": "学校的 WhatsApp 消息现在会发送到 {value}{alsoMobile, select, yes {。现在它也是你的手机号码。} other {。}}",
+          "WHATSAPP_CONFIRM": "我们会继续向 {value} 发送 WhatsApp 消息。",
+          "WHATSAPP_NO_WHATSAPP": "学校将改为通过电子邮件和短信联系你。"
+        },
+        "signIn": "你的登录邮箱没有更改。",
+        "nextNote": {
+          "EMAIL": "接下来：你的电子邮件地址。",
+          "MOBILE": "接下来：你的手机号码。",
+          "WHATSAPP": "接下来：你的 WhatsApp 号码。"
+        },
+        "nextLabel": "下一步",
+        "okLabel": "确定"
+      },
+      "errors": {
+        "EMAIL_EMPTY": "请输入电子邮件地址。",
+        "EMAIL_FORMAT": "请输入格式为 name@example.com 的电子邮件地址。",
+        "EMAIL_SAME": "这就是无法使用的地址。请输入其他地址，或返回并选择“地址正确”。",
+        "EMAIL_SAME_ALTERNATE": "这是你当前的地址。请输入其他地址。",
+        "ISD_EMPTY": "请选择国家/地区代码。",
+        "NUMBER_EMPTY": "请输入号码。",
+        "NUMBER_FORMAT": "请只输入号码的数字，不含国家/地区代码（6 至 15 位数字）。",
+        "CODE_EMPTY": "请输入我们发送给你的 6 位验证码。",
+        "CODE_FORMAT": "验证码为 6 位数字。请核对后重试。"
+      }
+    },
+    "elementary": {
+      "continueLabel": "下一步",
+      "legend": "你想做什么？",
+      "reasonLabel": "为什么？",
+      "resendLabel": "再次发送验证码",
+      "resendLead": "",
+      "helpChoose": "不确定？请让家长帮忙。",
+      "helpCode": "请让家长帮你找到验证码。",
+      "signIn": "你的登录邮箱不会更改。你仍然用同样的方式登录。",
+      "mandatory": "请现在修正。你不能再跳过了。",
+      "skip": "你还可以跳过此项 {count, plural, other {# 次}}",
+      "channels": {
+        "EMAIL": {
+          "title": "我们来修好你的邮箱吧！",
+          "headline": "学校邮件没有发到你这里！",
+          "problem": "我们给 {value} 发了邮件，但都被退回了。",
+          "options": {
+            "CHANGE": { "title": "更改我的邮箱", "text": "我来输入一个新的" },
+            "CONFIRM": { "title": "没错", "text": "保留这个邮箱" },
+            "ALTERNATE": { "title": "添加另一个邮箱", "text": "再用一个邮箱" }
+          },
+          "valueLabel": { "CHANGE": "输入你的新邮箱", "ALTERNATE": "再输入一个邮箱" },
+          "sendLabel": "发送验证码",
+          "codeLabel": "输入邮件里的 6 个数字"
+        },
+        "MOBILE": {
+          "title": "我们来修好你的电话号码吧！",
+          "headline": "你的电话号码好像不对。",
+          "problem": "我们有你的这个号码：{value}",
+          "options": {
+            "CHANGE": { "title": "更改我的号码", "text": "我来输入正确的" },
+            "CONFIRM": { "title": "没错", "text": "保留这个号码" }
+          },
+          "codeHint": "我们会用短信发送验证码来核对。",
+          "valueLabel": { "CHANGE": "输入你的电话号码" },
+          "sendLabel": "发送验证码",
+          "codeLabel": "输入短信里的 6 个数字"
+        },
+        "WHATSAPP": {
+          "title": "我们来修好你的 WhatsApp 吧！",
+          "headline": "我们没能在 WhatsApp 上联系到你。",
+          "problem": "我们试过这个号码：{value}",
+          "options": {
+            "CHANGE": { "title": "提供我的 WhatsApp 号码", "text": "我来输入正确的" },
+            "CONFIRM": { "title": "没错", "text": "保留这个号码" },
+            "NO_WHATSAPP": { "title": "我不用 WhatsApp", "text": "别再问我了" }
+          },
+          "codeHint": "我们会在 WhatsApp 上发送验证码来核对。",
+          "valueLabel": { "CHANGE": "输入你的 WhatsApp 号码" },
+          "sendLabel": "发送验证码",
+          "codeLabel": "输入我们在 WhatsApp 上发送的 6 个数字"
+        }
+      },
+      "confirmLead": "我们会向 {value} 发送 6 个数字{channel, select, WHATSAPP {（通过 WhatsApp）} MOBILE {（通过短信）} other {}}。在这里输入，证明这是你的。",
+      "alternateHint": "学校邮件也会发到这个邮箱。你的另一个邮箱会保留。",
+      "sent": "{channel, select, EMAIL {验证码已发送！去你的邮箱里看看。} WHATSAPP {验证码已发送！去 WhatsApp 里看看。} other {验证码已发送！去你的短信里看看。}}",
+      "noWhatsapp": {
+        "lead": "我们会停止向 {value} 发送 WhatsApp 消息。",
+        "note": "学校仍然会给你发电子邮件和短信。",
+        "confirmLabel": "好的，停止吧"
+      },
+      "done": {
+        "headingNamed": "全部完成！谢谢你，{name}！",
+        "headingPlain": "全部完成！谢谢你！",
+        "text": {
+          "EMAIL_CHANGE": "你的新邮箱已保存：{value}",
+          "EMAIL_CONFIRM": "我们会继续使用这个邮箱：{value}",
+          "EMAIL_ALTERNATE": "你的另一个邮箱已保存：{value}",
+          "MOBILE_CHANGE": "你的新电话号码已保存：{value}",
+          "MOBILE_CONFIRM": "我们会继续使用这个号码：{value}",
+          "WHATSAPP_CHANGE": "你的 WhatsApp 号码已保存：{value}",
+          "WHATSAPP_CONFIRM": "我们会继续使用这个 WhatsApp 号码：{value}",
+          "WHATSAPP_NO_WHATSAPP": "我们不会给你发 WhatsApp 消息。"
+        },
+        "nextNote": {
+          "EMAIL": "接下来我们会检查你的邮箱。",
+          "MOBILE": "接下来我们会检查你的电话号码。",
+          "WHATSAPP": "接下来我们会检查你的 WhatsApp。"
+        },
+        "nextLabel": "好的！",
+        "okLabel": "好的！"
+      },
+      "errors": {
+        "EMAIL_EMPTY": "请先输入邮箱。",
+        "EMAIL_FORMAT": "这看起来不像邮箱。它应该像 name@example.com 这样。",
+        "EMAIL_SAME": "这就是无法使用的邮箱。输入一个新的，或者返回并选择“没错”。",
+        "EMAIL_SAME_ALTERNATE": "你已经在用这个邮箱了。输入另一个吧。",
+        "ISD_EMPTY": "选择你的国家/地区代码。",
+        "NUMBER_EMPTY": "请先输入号码。",
+        "NUMBER_FORMAT": "只输入数字，不要国家/地区代码。",
+        "CODE_EMPTY": "输入我们发给你的 6 个数字。",
+        "CODE_FORMAT": "验证码有 6 个数字。核对一下再试。"
+      }
+    }
+  }
+}

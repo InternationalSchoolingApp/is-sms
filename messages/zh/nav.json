@@ -1,0 +1,54 @@
+{
+  "sidebar": {
+    "ariaLabel": "学生仪表板",
+    "menu": "菜单",
+    "closeMenu": "关闭菜单"
+  },
+  "rail": {
+    "talkToUs": "联系我们",
+    "k5TalkToUs": "和我们聊聊",
+    "announcement": "公告",
+    "news": "新闻",
+    "studentDiary": "学生日志",
+    "k5Diary": "我的日志",
+    "withNew": "{label}，{count} 条新内容"
+  },
+  "loadingDashboard": "正在加载您的仪表板…",
+  "pageTitle": {
+    "dashboard": "仪表板",
+    "withName": "{name} | 仪表板"
+  },
+  "placeholder": {
+    "module": "模块",
+    "comingSoon": "该模块正在迁移中，即将上线（C 阶段）。"
+  },
+  "sessionExpired": {
+    "title": "您的会话已退出登录",
+    "bands": {
+      "elementary": {
+        "title": "哎呀！你已经退出登录了",
+        "hint": "输入你的密码就能回来啦。"
+      },
+      "middle": {
+        "title": "您的会话已退出登录",
+        "hint": "输入密码重新登录，然后继续。"
+      },
+      "high": {
+        "title": "您的会话已退出登录",
+        "hint": "输入密码重新登录，从上次离开的地方继续。"
+      }
+    },
+    "verifying": "正在验证您的登录信息",
+    "verifyingDetail": "请稍候，我们正在安全地恢复您的会话。",
+    "wrongPassword": "您输入的密码不正确。",
+    "unavailable": "目前无法登录，请重试。",
+    "passwordPlaceholder": "密码 *",
+    "password": "密码",
+    "hidePassword": "隐藏密码",
+    "showPassword": "显示密码",
+    "logIn": "登录",
+    "loggedInAs": "当前登录账号：{email}",
+    "notYou": "不是您？",
+    "differentUser": "以其他用户身份登录"
+  }
+}

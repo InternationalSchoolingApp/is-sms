@@ -1,0 +1,54 @@
+{
+  "sidebar": {
+    "ariaLabel": "Tableau de bord de l'élève",
+    "menu": "Menu",
+    "closeMenu": "Fermer le menu"
+  },
+  "rail": {
+    "talkToUs": "Nous contacter",
+    "k5TalkToUs": "Parle-nous",
+    "announcement": "Annonces",
+    "news": "Actualités",
+    "studentDiary": "Carnet de l'élève",
+    "k5Diary": "Mon carnet",
+    "withNew": "{label}, {count, plural, one {# nouveau} other {# nouveaux}}"
+  },
+  "loadingDashboard": "Chargement de votre tableau de bord…",
+  "pageTitle": {
+    "dashboard": "Tableau de bord",
+    "withName": "{name} | Tableau de bord"
+  },
+  "placeholder": {
+    "module": "Module",
+    "comingSoon": "Ce module est en cours de migration et sera bientôt disponible (phase C)."
+  },
+  "sessionExpired": {
+    "title": "Votre session a été déconnectée",
+    "bands": {
+      "elementary": {
+        "title": "Oups ! Tu as été déconnecté",
+        "hint": "Tape ton mot de passe pour revenir."
+      },
+      "middle": {
+        "title": "Votre session a été déconnectée",
+        "hint": "Saisissez votre mot de passe pour vous reconnecter et continuer."
+      },
+      "high": {
+        "title": "Votre session a été déconnectée",
+        "hint": "Saisissez votre mot de passe pour vous reconnecter et reprendre là où vous vous étiez arrêté."
+      }
+    },
+    "verifying": "Vérification de vos identifiants",
+    "verifyingDetail": "Veuillez patienter pendant que nous rétablissons votre session en toute sécurité.",
+    "wrongPassword": "Le mot de passe saisi est incorrect.",
+    "unavailable": "Connexion impossible pour le moment. Veuillez réessayer.",
+    "passwordPlaceholder": "Mot de passe *",
+    "password": "Mot de passe",
+    "hidePassword": "Masquer le mot de passe",
+    "showPassword": "Afficher le mot de passe",
+    "logIn": "Se connecter",
+    "loggedInAs": "Connecté en tant que {email}",
+    "notYou": "Ce n'est pas vous ?",
+    "differentUser": "Se connecter avec un autre compte"
+  }
+}

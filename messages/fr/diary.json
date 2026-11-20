@@ -1,0 +1,28 @@
+{
+  "title": "Carnet de l'élève",
+  "titleWithName": "Carnet de l'élève - {name}",
+  "backToList": "Retour à la liste du carnet",
+  "chatWithLabel": "Discuter avec",
+  "chatWith": {
+    "teacher": "Enseignant",
+    "school": "École"
+  },
+  "empty": {
+    "teacher": "Aucune entrée récente dans le carnet avec l'enseignant",
+    "school": "Aucune entrée récente dans le carnet avec l'école"
+  },
+  "noMessages": "Aucun message pour le moment.",
+  "parent": "Parent",
+  "letter": {
+    "greetings": "Salutations de {school} !",
+    "hopeWell": "Nous espérons que vous allez bien.",
+    "gratitude": "Avec gratitude et nos prières,",
+    "family": "La famille {school}"
+  },
+  "loadError": "Le carnet n'a pas pu être chargé pour le moment.",
+  "dates": {
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "todayChip": "Aujourd'hui · {date}"
+  }
+}

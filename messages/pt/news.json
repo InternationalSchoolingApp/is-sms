@@ -1,0 +1,43 @@
+{
+  "title": "Notícias",
+  "articleCount": "{count, plural, one {# artigo} other {# artigos}}",
+  "empty": "Nenhuma notícia ainda.",
+  "marking": "Marcando…",
+  "viewAll": "Ver todas as notícias",
+  "latest": "Últimas notícias",
+  "noneAvailable": "Nenhuma notícia disponível.",
+  "readTime": "Tempo de leitura {minutes} min",
+  "source": "Fonte",
+  "readFullArticle": "Ler a matéria completa →",
+  "viewOriginalSource": "Ver fonte original →",
+  "relative": {
+    "yearsMonths": "há {years, plural, one {# ano} other {# anos}} e {months, plural, one {# mês} other {# meses}}",
+    "monthsDays": "há {months, plural, one {# mês} other {# meses}} e {days, plural, one {# dia} other {# dias}}",
+    "days": "há {days, plural, one {# dia} other {# dias}}",
+    "today": "hoje",
+    "daysHours": "há {days, plural, one {# dia} other {# dias}} e {hours, plural, one {# hora} other {# horas}}",
+    "hoursMinutes": "há {hours, plural, one {# hora} other {# horas}} e {minutes, plural, one {# minuto} other {# minutos}}",
+    "minutes": "há {minutes, plural, one {# minuto} other {# minutos}}"
+  },
+  "announcements": {
+    "title": "Comunicado(s)",
+    "newCount": "{count, plural, one {# novo} other {# novos}}",
+    "empty": "Nenhum comunicado ainda.",
+    "new": "Novo",
+    "learnMore": "Saiba mais →",
+    "startDate": "Data de início",
+    "thanks": "Obrigado pela confirmação",
+    "viewAttachment": "Ver anexo",
+    "submitting": "Enviando…",
+    "acknowledge": "Confirmar leitura",
+    "timeLabels": {
+      "upcoming": "em breve",
+      "1_day_ago": "há 1 dia",
+      "last_week": "semana passada"
+    }
+  },
+  "preview": {
+    "title": "Pré-visualização",
+    "imageAlt": "Anexo do comunicado"
+  }
+}

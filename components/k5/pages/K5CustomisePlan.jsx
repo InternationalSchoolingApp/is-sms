@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -18,6 +19,7 @@ export function K5CustomiseDialog({ subjectName, count, minDisabled, maxDisabled
   );
   // Grade 6–8 (Middle.dc.html excust): #027FFE blue with a 2px #0057B8 edge, a #F4F8FF panel, 8–10px corners, 20px dialog.
   const { isMiddle } = useDashboardContext();
+  const t = useTranslations("k5Booking.customise");
   const blue = isMiddle ? "#027FFE" : BLUE;
   const deep = isMiddle ? "#0057B8" : BLUE_DEEP;
   const m = (k5, middle) => (isMiddle ? middle : k5);
@@ -28,9 +30,9 @@ export function K5CustomiseDialog({ subjectName, count, minDisabled, maxDisabled
       <DialogContent showCloseButton={false} {...themeProps} style={m(undefined, { borderRadius: 20 })}>
         <div className="flex items-center gap-3">
           <span aria-hidden="true" className="flex h-14 w-14 flex-none items-center justify-center rounded-[18px] bg-k5-bt text-[30px]">🧮</span>
-          <DialogTitle className="m-0 flex-1 font-k5-display text-[26px] font-semibold leading-[1.15]">Customise your plan</DialogTitle>
-          <DialogDescription className="sr-only">Pick how many extra classes and for how many weeks</DialogDescription>
-          <button type="button" onClick={onClose} aria-label="Close" className="flex h-11 w-11 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-[#D7263D] bg-[#D7263D] text-white">
+          <DialogTitle className="m-0 flex-1 font-k5-display text-[26px] font-semibold leading-[1.15]">{t("title")}</DialogTitle>
+          <DialogDescription className="sr-only">{t("description")}</DialogDescription>
+          <button type="button" onClick={onClose} aria-label={t("close")} className="flex h-11 w-11 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-[#D7263D] bg-[#D7263D] text-white">
             <X className="h-4 w-4" strokeWidth={3.5} aria-hidden="true" />
           </button>
         </div>
@@ -39,11 +41,11 @@ export function K5CustomiseDialog({ subjectName, count, minDisabled, maxDisabled
           <h3 className="m-0 text-center font-k5-display text-[26px] font-semibold">{subjectName}</h3>
           <div className="grid grid-cols-3 gap-3.5 rounded-[20px] bg-[#EAF2FF] p-4 max-[560px]:grid-cols-1" style={m(undefined, { background: "#F4F8FF", borderRadius: 14 })}>
             <div className="flex flex-col items-center gap-2">
-              <span id="k5-cust-n" className={heading} style={{ color: blue }}>No. of classes</span>
+              <span id="k5-cust-n" className={heading} style={{ color: blue }}>{t("classCount")}</span>
               <div role="group" aria-labelledby="k5-cust-n" className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  aria-label="Fewer classes"
+                  aria-label={t("fewer")}
                   disabled={minDisabled}
                   onClick={() => onChange(count - 1)}
                   className="h-11 w-11 cursor-pointer rounded-xl border-[3px] border-k5-line bg-white text-2xl font-black disabled:cursor-default disabled:opacity-45"
@@ -56,7 +58,7 @@ export function K5CustomiseDialog({ subjectName, count, minDisabled, maxDisabled
                 </span>
                 <button
                   type="button"
-                  aria-label="More classes"
+                  aria-label={t("more")}
                   disabled={maxDisabled}
                   onClick={() => onChange(count + 1)}
                   className="h-11 w-11 cursor-pointer rounded-xl border-none text-2xl font-black text-white disabled:cursor-default disabled:opacity-45"
@@ -68,14 +70,14 @@ export function K5CustomiseDialog({ subjectName, count, minDisabled, maxDisabled
             </div>
 
             <div className="flex flex-col items-center gap-2">
-              <span className={heading} style={{ color: blue }}>Amount</span>
+              <span className={heading} style={{ color: blue }}>{t("amount")}</span>
               <span aria-live="polite" className="box-border flex min-h-[52px] min-w-[120px] items-center justify-center rounded-[14px] border-[3px] border-k5-line bg-white px-3.5 font-k5-display text-2xl font-bold" style={{ color: blue }}>
                 {amountText}
               </span>
             </div>
 
             <div className="flex flex-col items-center gap-2">
-              <label htmlFor="k5-cust-w" className={heading} style={{ color: blue }}>Number of Weeks</label>
+              <label htmlFor="k5-cust-w" className={heading} style={{ color: blue }}>{t("weeks")}</label>
               <select
                 id="k5-cust-w"
                 value={weeks}
@@ -83,9 +85,9 @@ export function K5CustomiseDialog({ subjectName, count, minDisabled, maxDisabled
                 className="box-border min-h-[52px] w-full max-w-[200px] cursor-pointer rounded-[14px] border-[3px] bg-white px-3 font-k5-body text-[17px] font-extrabold text-[#1E2242]"
                 style={{ borderColor: weeks ? "var(--k5-line)" : "#E5243B" }}
               >
-                <option value="">Select weeks</option>
+                <option value="">{t("selectWeeks")}</option>
                 {options.map((w) => (
-                  <option key={w} value={w}>{w === 1 ? "1 week" : `${w} weeks`}</option>
+                  <option key={w} value={w}>{t("weekCount", { count: w })}</option>
                 ))}
               </select>
             </div>
@@ -99,7 +101,7 @@ export function K5CustomiseDialog({ subjectName, count, minDisabled, maxDisabled
               className="min-h-12 flex-[0_1_200px] cursor-pointer rounded-[14px] border-none text-base font-black text-white disabled:cursor-default disabled:opacity-50"
               style={{ background: blue, boxShadow: `${m("0 4px 0", "0 2px 0")} ${deep}` }}
             >
-              Add to cart
+              {t("addToCart")}
             </button>
             <button
               type="button"
@@ -108,7 +110,7 @@ export function K5CustomiseDialog({ subjectName, count, minDisabled, maxDisabled
               className="min-h-12 flex-[0_1_200px] cursor-pointer rounded-[14px] border-2 bg-k5-card text-base font-black disabled:cursor-default disabled:opacity-50"
               style={{ borderColor: blue, color: blue, ...m({}, { borderWidth: 1.5 }) }}
             >
-              Buy
+              {t("buy")}
             </button>
           </div>
         </div>

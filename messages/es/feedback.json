@@ -1,0 +1,29 @@
+{
+  "rate": {
+    "class": "Valorar esta clase",
+    "activity": "Valorar esta actividad"
+  },
+  "modal": {
+    "titleWithTeacher": "{title} <muted>con</muted> {teacher}",
+    "tagline": "Ayúdanos a mejorar tu experiencia de aprendizaje",
+    "confidential": "Queremos saber lo que realmente piensas. Tus respuestas son confidenciales, así que siéntete libre de ser sincero.",
+    "classFallback": "Clase"
+  },
+  "pending": {
+    "title": "Opiniones pendientes",
+    "subtitle": "Envía tus opiniones semanales pendientes.",
+    "total": "Total",
+    "activities": "Actividades",
+    "classes": "Clases"
+  },
+  "category": {
+    "class": "CLASE",
+    "activity": "ACTIVIDAD",
+    "batch": "GRUPO",
+    "sports": "DEPORTES",
+    "one_to_one": "INDIVIDUAL",
+    "academic": "ACADÉMICO",
+    "student_doubt_session": "SESIÓN DE DUDAS",
+    "n_a": "N/D"
+  }
+}

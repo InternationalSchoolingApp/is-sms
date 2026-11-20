@@ -1,0 +1,78 @@
+{
+  "list": {
+    "title": "Relatório de progresso",
+    "subtitle": "Seus relatórios semanais, um para cada semana de aula",
+    "loading": "Carregando seus relatórios",
+    "empty": "Nenhum relatório encontrado",
+    "columns": {
+      "srNo": "Nº",
+      "type": "Tipo de relatório",
+      "frequency": "Período",
+      "published": "Data de publicação",
+      "view": "Ver"
+    }
+  },
+  "types": {
+    "weekly_progress_report": "Relatório semanal",
+    "biweekly_progress_report": "Relatório quinzenal",
+    "monthly_progress_report": "Relatório mensal",
+    "quiz": "QUIZ",
+    "assignment": "TAREFA",
+    "lesson": "LIÇÃO"
+  },
+  "view": {
+    "loading": "Preparando seu relatório",
+    "title": "Resumo de notas",
+    "titleWithName": "Resumo de notas | {name}",
+    "dueStartDate": "Data de início",
+    "dueEndDate": "Data de término",
+    "preparing": "Preparando…",
+    "errors": {
+      "pickDates": "Escolha a data de início e a data de término do relatório.",
+      "startBeforeEnd": "A data de início precisa ser antes da data de término.",
+      "reopen": "Abra o relatório de novo pela lista."
+    },
+    "loadError": "Não foi possível carregar o relatório.",
+    "student": "Aluno",
+    "schoolLogo": "Logo da escola",
+    "labelColon": "{label}:",
+    "studentName": "Nome do aluno",
+    "grade": "Série",
+    "studentId": "ID do aluno",
+    "yearStart": "Início do ano letivo",
+    "yearEnd": "Fim do ano letivo",
+    "country": "País",
+    "teacherName": "Nome do professor",
+    "course": "Curso",
+    "teacherLine": "Professor: <b>{name}</b>",
+    "detailedTitle": "Relatório detalhado de notas do aluno",
+    "duration": "Período: {start} - {end}",
+    "noActivities": "Nenhuma atividade neste período.",
+    "columns": {
+      "srNo": "Nº",
+      "module": "Módulo | Atividade",
+      "type": "Tipo",
+      "activityName": "Nome da atividade",
+      "timeSpent": "Tempo gasto (hh:mm:ss)",
+      "dueDate": "Prazo",
+      "submittedDate": "Data de entrega",
+      "percentage": "Porcentagem",
+      "grade": "Nota"
+    },
+    "naNote": "*N/D - Não disponível",
+    "counters": {
+      "totalTime": "Tempo total de atividades: <b>{value}</b>",
+      "submittedGraded": "Atividades entregues e corrigidas: <b>{value}</b>",
+      "waitingGrade": "Atividades aguardando nota: <b>{value}</b>",
+      "notSubmitted": "Atividades não entregues: <b>{value}</b>"
+    },
+    "lastSubmission": "Última entrega: <b>{date}</b> | Atividade: <b>{activity}</b>",
+    "courseGrade": "Nota do curso:",
+    "overallPercentage": "Porcentagem geral atual:",
+    "weekPercentage": "Porcentagem da semana:",
+    "completionPercentage": "Conclusão do curso:",
+    "schoolOfficial": "Responsável da escola",
+    "gradingSystem": "Sistema de notas",
+    "below60": "Abaixo de 60"
+  }
+}

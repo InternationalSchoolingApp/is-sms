@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { CalendarDays, CheckCircle2, Info, LoaderCircle, MessageCircle } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -83,6 +84,8 @@ function planFor(setup) {
 }
 
 export function OnboardingSetup() {
+  const t = useTranslations("onboarding.setup");
+  const tc = useTranslations("common");
   const { context, session } = useDashboardContext();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -116,8 +119,8 @@ export function OnboardingSetup() {
   if (query.isError) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center gap-4 py-16 text-center">
-        <p className="text-sm font-semibold text-red-600">Could not load your details. Please try again.</p>
-        <ActionButton onClick={() => query.refetch()}>Try again</ActionButton>
+        <p className="text-sm font-semibold text-red-600">{t("loadFailed")}</p>
+        <ActionButton onClick={() => query.refetch()}>{tc("actions.tryAgain")}</ActionButton>
       </div>
     );
   }
@@ -126,18 +129,18 @@ export function OnboardingSetup() {
     return (
       <div role="status" aria-live="polite" className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-primary">
         <LoaderCircle className="size-10 animate-spin" aria-hidden="true" />
-        <p className="text-sm font-semibold">Loading your details...</p>
+        <p className="text-sm font-semibold">{t("loading")}</p>
       </div>
     );
   }
 
-  const firstName = String(context.userName || "").split(" ")[0] || "there";
-  const heading = plan.step === "done" ? "very well done. Let's get started!" : plan.step === "reminder" ? "an important reminder" : "let's get started!";
+  const firstName = String(context.userName || "").split(" ")[0];
+  const heading = plan.step === "done" ? "done" : plan.step === "reminder" ? "reminder" : "start";
 
   return (
     <div className="mx-auto w-full max-w-[1310px] px-4 py-3 sm:px-6">
       <h2 className="mb-5 text-center text-xl font-bold text-black">
-        Hi {firstName}, {heading}
+        {firstName ? t("heading", { name: firstName, kind: heading }) : t("headingNoName", { kind: heading })}
       </h2>
       <div className="grid gap-4 lg:grid-cols-12">
         <div className="lg:col-span-8">
@@ -161,15 +164,16 @@ export function OnboardingSetup() {
 // ---- Book Your school system training ----
 
 function TrainingTopics() {
+  const t = useTranslations("onboarding.training");
   return (
     <div className="mb-5 rounded-lg bg-primary/10 p-3 text-left text-sm font-semibold text-primary">
-      In the school system training, you will learn
+      {t("topicsIntro")}
       <ol className="mt-2 space-y-1 text-black">
         <li>
-          <span className="text-primary">1.</span> How to Book and Join Classes
+          <span className="text-primary">1.</span> {t("topicClasses")}
         </li>
         <li>
-          <span className="text-primary">2.</span> Courses, Progress Reports &amp; Assessments
+          <span className="text-primary">2.</span> {t("topicCourses")}
         </li>
       </ol>
     </div>
@@ -177,6 +181,8 @@ function TrainingTopics() {
 }
 
 function TrainingStep({ picker, onBooked }) {
+  const t = useTranslations("onboarding.training");
+  const tc = useTranslations("common");
   const [date, setDate] = useState(null);
   const [stTime, setStTime] = useState("");
   const iso = date ? toIso(date) : "";
@@ -192,27 +198,27 @@ function TrainingStep({ picker, onBooked }) {
   const book = useMutation({
     mutationFn: () => callServer(() => bookSystemTraining({ date: iso, stTime })),
     onSuccess: (data) => {
-      toast.success(data?.message || "Your school system training has been booked.");
+      toast.success(data?.message || t("booked"));
       onBooked(data?.dateTime || "");
     },
     onError: (error) => {
-      toast.error(errorText(error, "Your school system training could not be booked."));
+      toast.error(errorText(error, t("bookFailed")));
       slots.refetch();
       setStTime("");
     },
   });
 
   const list = slots.data?.slots ?? [];
-  const label = !date ? "Choose date to continue" : stTime ? "Submit" : "Continue";
+  const label = !date ? t("chooseDateToContinue") : stTime ? tc("actions.submit") : tc("actions.continue");
 
   return (
-    <Card header="Book Your school system training" bodyClassName="px-4 py-5 sm:px-6">
+    <Card header={t("title")} bodyClassName="px-4 py-5 sm:px-6">
       <TrainingTopics />
-      <h3 className="mb-3 text-center text-base font-semibold text-black">I want to book my school system training on</h3>
+      <h3 className="mb-3 text-center text-base font-semibold text-black">{t("bookOn")}</h3>
       <div className="mx-auto max-w-sm">
         <DatePicker
           icon={CalendarDays}
-          label="Choose system training date"
+          label={t("dateLabel")}
           value={date}
           onChange={(d) => {
             setDate(d);
@@ -228,15 +234,15 @@ function TrainingStep({ picker, onBooked }) {
       {date && (
         <div className="mt-5">
           <h3 className="mb-3 text-center text-base font-semibold text-black">
-            Select time: {slots.data?.timeZone && <span className="text-sm font-normal text-slate-600">({slots.data.timeZone})</span>}
+            {t("selectTime")} {slots.data?.timeZone && <span className="text-sm font-normal text-slate-600">({slots.data.timeZone})</span>}
           </h3>
-          {slots.isFetching && <p className="text-center text-sm text-slate-500">Loading the available times…</p>}
-          {slots.isError && <p className="text-center text-sm text-red-600">{errorText(slots.error, "The training times could not be loaded.")}</p>}
+          {slots.isFetching && <p className="text-center text-sm text-slate-500">{t("loadingTimes")}</p>}
+          {slots.isError && <p className="text-center text-sm text-red-600">{errorText(slots.error, t("timesFailed"))}</p>}
           {!slots.isFetching && !slots.isError && list.length === 0 && (
-            <p className="text-center text-sm text-slate-600">No slot available. Please pick another date</p>
+            <p className="text-center text-sm text-slate-600">{t("noSlot")}</p>
           )}
           {!slots.isFetching && list.length > 0 && (
-            <div role="radiogroup" aria-label="Training time" className="grid grid-cols-2 gap-2 sm:grid-cols-3 max-h-[150px] overflow-y-auto">
+            <div role="radiogroup" aria-label={t("timeLabel")} className="grid grid-cols-2 gap-2 sm:grid-cols-3 max-h-[150px] overflow-y-auto">
               {list.map((slot) => {
                 const active = slot.stTime === stTime;
                 return (
@@ -259,7 +265,7 @@ function TrainingStep({ picker, onBooked }) {
 
       <div className="mt-6 flex justify-end border-t border-slate-200 pt-4">
         <ActionButton className={stTime ? GREEN : ""} disabled={!stTime || book.isPending} onClick={() => book.mutate()}>
-          {book.isPending ? "Saving..." : label}
+          {book.isPending ? t("saving") : label}
         </ActionButton>
       </div>
     </Card>
@@ -269,6 +275,10 @@ function TrainingStep({ picker, onBooked }) {
 // ---- Academic Year Start Date ----
 
 function AcademicStep({ picker, fresh, chatUrl, uniqueId, session, onSaved }) {
+  const t = useTranslations("onboarding.academic");
+  const tt = useTranslations("onboarding.training");
+  const ts = useTranslations("reEnrollment.support");
+  const tc = useTranslations("common");
   const [date, setDate] = useState(null);
   const [confirming, setConfirming] = useState(false);
   const [decideLater, setDecideLater] = useState(false);
@@ -276,21 +286,21 @@ function AcademicStep({ picker, fresh, chatUrl, uniqueId, session, onSaved }) {
     mutationFn: () => callServer(() => saveAcademicYearStart({ date: toIso(date) })),
     onSuccess: (data) => {
       setConfirming(false);
-      toast.success(data?.message || "Your academic year start date is saved.");
+      toast.success(data?.message || t("saved"));
       onSaved();
     },
-    onError: (error) => toast.error(errorText(error, "Your academic year start date could not be saved.")),
+    onError: (error) => toast.error(errorText(error, t("saveFailed"))),
   });
   const chatLink = chatUrl ? `${chatUrl}/onboarding-support?uuid=${encodeURIComponent(uniqueId || "")}` : "";
 
   return (
-    <Card header={`${fresh ? "Step 1 of 1 - " : ""}Academic Year Start Date`} bodyClassName="px-4 py-5 sm:px-6">
-      <p className="mb-2 px-3 py-3 text-center text-md font-bold bg-primary/10 text-primary">Your academic year start date is when you will start your classes.</p>
-      <h3 className="mb-3 text-center text-base font-bold text-primary">I want to start my academic year on</h3>
+    <Card header={fresh ? t("titleStep") : t("title")} bodyClassName="px-4 py-5 sm:px-6">
+      <p className="mb-2 px-3 py-3 text-center text-md font-bold bg-primary/10 text-primary">{t("explain")}</p>
+      <h3 className="mb-3 text-center text-base font-bold text-primary">{t("startOn")}</h3>
       <div className="mx-auto max-w-sm">
         <DatePicker
           icon={CalendarDays}
-          label="Choose start date"
+          label={t("dateLabel")}
           value={date}
           onChange={setDate}
           fromDate={picker.from}
@@ -301,22 +311,22 @@ function AcademicStep({ picker, fresh, chatUrl, uniqueId, session, onSaved }) {
       </div>
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
         <button type="button" onClick={() => setDecideLater(true)} className="cursor-pointer rounded-md border border-red-600 px-5 py-2 text-sm font-semibold text-red-600 hover:bg-red-50">
-          Decide Later
+          {t("decideLater")}
         </button>
         <ActionButton className={date ? GREEN : ""} disabled={!date} onClick={() => setConfirming(true)}>
-          {date ? "Continue" : "Choose date to continue"}
+          {date ? tc("actions.continue") : tt("chooseDateToContinue")}
         </ActionButton>
       </div>
 
       <Dialog open={confirming} onOpenChange={(open) => !save.isPending && setConfirming(open)}>
         <DialogContent className="text-center sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle className="text-center text-lg font-semibold text-red-600">Academic Year Start Date</DialogTitle>
+            <DialogTitle className="text-center text-lg font-semibold text-red-600">{t("title")}</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-black">Please choose your academic year start date carefully. You will not be able to edit this later.</p>
+          <p className="text-sm text-black">{t("chooseCarefully")}</p>
           {chatLink && (
             <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
-              <p>For any queries:</p>
+              <p>{t("queries")}</p>
               <a
                 href={chatLink}
                 target="_blank"
@@ -324,16 +334,16 @@ function AcademicStep({ picker, fresh, chatUrl, uniqueId, session, onSaved }) {
                 className="flex w-fit items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white transition-transform hover:scale-[1.02] hover:bg-green-700"
               >
                 <MessageCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
-                Live Chat with School Administration
+                {ts("liveChat")}
               </a>
             </div>
           )}
           <div className="mt-2 flex justify-center gap-2">
             <button type="button" disabled={save.isPending} onClick={() => setConfirming(false)} className="cursor-pointer rounded-md border border-primary px-5 py-2 text-sm font-semibold text-primary hover:bg-primary/5 disabled:opacity-60">
-              Edit Date
+              {t("editDate")}
             </button>
             <ActionButton className={GREEN} disabled={save.isPending} onClick={() => save.mutate()}>
-              {save.isPending ? "Saving..." : "Confirm"}
+              {save.isPending ? tt("saving") : tc("actions.confirm")}
             </ActionButton>
           </div>
         </DialogContent>
@@ -342,24 +352,27 @@ function AcademicStep({ picker, fresh, chatUrl, uniqueId, session, onSaved }) {
       <Dialog open={decideLater} onOpenChange={setDecideLater}>
         <DialogContent className="text-center sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle className="text-center text-lg font-semibold text-red-600">Decide Later</DialogTitle>
+            <DialogTitle className="text-center text-lg font-semibold text-red-600">{t("decideLater")}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-black">
-            Choosing your {fresh ? "system training" : "academic year"} start date is mandatory to start your classes. You can always login again to complete the process.
+            {t("mandatory", { kind: fresh ? "training" : "academic" })}
           </p>
           {chatLink && (
             <p className="text-sm">
-              For any queries, please{" "}
-              <a href={chatLink} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary underline">
-                Talk to School Administration
-              </a>
+              {t.rich("queriesTalk", {
+                link: (chunks) => (
+                  <a href={chatLink} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary underline">
+                    {chunks}
+                  </a>
+                ),
+              })}
             </p>
           )}
           <div className="mt-2 flex justify-center gap-2">
             <button type="button" onClick={() => setDecideLater(false)} className="cursor-pointer rounded-md border border-primary px-5 py-2 text-sm font-semibold text-primary hover:bg-primary/5">
-              Cancel
+              {tc("actions.cancel")}
             </button>
-            <ActionButton onClick={() => logoutEverywhere(session)}>Log out</ActionButton>
+            <ActionButton onClick={() => logoutEverywhere(session)}>{tc("actions.logOut")}</ActionButton>
           </div>
         </DialogContent>
       </Dialog>
@@ -370,20 +383,22 @@ function AcademicStep({ picker, fresh, chatUrl, uniqueId, session, onSaved }) {
 // ---- You're All Set! / BATCH reminder ----
 
 function DoneStep({ dateTime, migrated, startDate, onContinue }) {
+  const t = useTranslations("onboarding.done");
+  const tc = useTranslations("common");
   return (
-    <Card header={<span className="inline-flex items-center gap-2">You&apos;re All Set! <CheckCircle2 className="h-4 w-4" aria-hidden="true" /></span>} bodyClassName="px-4 py-6 text-center sm:px-6">
+    <Card header={<span className="inline-flex items-center gap-2">{t("title")} <CheckCircle2 className="h-4 w-4" aria-hidden="true" /></span>} bodyClassName="px-4 py-6 text-center sm:px-6">
       <p className="text-base font-semibold text-black">
-        {migrated && startDate ? `Your academic year start date is ${startDate}` : "Your school system training has been successfully confirmed."}
+        {migrated && startDate ? t("startDateIs", { date: startDate }) : t("trainingConfirmed")}
       </p>
       {dateTime && (
         <p className="mt-2 text-sm text-slate-700">
-          Date &amp; Time: <span className="font-semibold text-black">{dateTime}</span>
+          {t.rich("dateTime", { value: dateTime, b: (chunks) => <span className="font-semibold text-black">{chunks}</span> })}
         </p>
       )}
-      <p className="mt-2 text-sm text-slate-600">A Confirmation has been sent to your registered email address as well.</p>
+      <p className="mt-2 text-sm text-slate-600">{t("emailSent")}</p>
       <div className="mt-6 flex justify-center">
         <ActionButton className={GREEN} onClick={onContinue}>
-          Go to Dashboard
+          {tc("actions.goToDashboard")}
         </ActionButton>
       </div>
     </Card>
@@ -391,19 +406,19 @@ function DoneStep({ dateTime, migrated, startDate, onContinue }) {
 }
 
 function BatchReminder({ onContinue }) {
+  const t = useTranslations("onboarding.academic");
+  const tc = useTranslations("common");
   return (
-    <Card header="Academic Year Start Date" bodyClassName="px-4 py-6 text-center sm:px-6">
+    <Card header={t("title")} bodyClassName="px-4 py-6 text-center sm:px-6">
       <p className="flex items-start justify-center gap-2 text-sm text-black">
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
         <span>
-          The Group Learning Batch for the UTC+ timezone will begin on 18th September 2024.
-          <br />
-          and the Group Learning Batch for the UTC- timezone will start on 25th September 2024.
+          {t.rich("batchReminder", { br: () => <br /> })}
         </span>
       </p>
       <div className="mt-6 flex justify-center">
         <ActionButton className={GREEN} onClick={onContinue}>
-          Go to Dashboard
+          {tc("actions.goToDashboard")}
         </ActionButton>
       </div>
     </Card>

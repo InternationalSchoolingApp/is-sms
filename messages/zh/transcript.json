@@ -1,0 +1,18 @@
+{
+  "title": "学生成绩单",
+  "actionsLabel": "成绩单操作",
+  "notPublished": "您的成绩单尚未发布。",
+  "links": {
+    "transcript": "成绩单 - {grade}",
+    "transcriptNew": "成绩单 - {grade}（新）",
+    "diploma": "毕业证书 - {grade}"
+  },
+  "table": {
+    "sNo": "序号",
+    "studentName": "学生姓名",
+    "email": "电子邮箱",
+    "grade": "年级",
+    "studentId": "学号",
+    "action": "操作"
+  }
+}

@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { CalendarDays, Clock, Plus, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useLabelTranslator } from "@/i18n/labels";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { DatePicker } from "@/components/ui/date-picker";
 import { EditSelect, EditText, UnitBar } from "@/components/k5/pages/K5ProfileEditors";
 import { useProfileMaster } from "@/hooks/useProfileEditor";
@@ -43,11 +46,12 @@ const startOfToday = () => {
 };
 
 function TimeSelect({ label, value, onChange }) {
+  const tc = useTranslations("common");
   return (
     <label className={LABEL}>
       <span>{label}</span>
       <select value={value} onChange={(e) => onChange(e.target.value)} className={`${INPUT} cursor-pointer`}>
-        <option value="">Select</option>
+        <option value="">{tc("actions.select")}</option>
         {TIME_OPTIONS.map((t) => (
           <option key={t.value} value={t.value}>
             {t.label}
@@ -63,6 +67,9 @@ function TimeRangeAdd({ onAdd, busy, roles }) {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [role, setRole] = useState("");
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
+  const tr = useLabelTranslator("k5Profile.roles");
   const wrong = start && end && end <= start;
   const ready = start && end && !wrong && (!roles || role);
   const add = async () => {
@@ -78,37 +85,38 @@ function TimeRangeAdd({ onAdd, busy, roles }) {
       <div className={`${GRID3} items-end`}>
         {roles && (
           <label className={LABEL}>
-            <span>Who</span>
+            <span>{t("p3.who")}</span>
             <select value={role} onChange={(e) => setRole(e.target.value)} className={`${INPUT} cursor-pointer`}>
-              <option value="">Select</option>
+              <option value="">{tc("actions.select")}</option>
               {roles.map((r) => (
                 <option key={r} value={r}>
-                  {r}
+                  {tr(r)}
                 </option>
               ))}
             </select>
           </label>
         )}
-        <TimeSelect label="Start time" value={start} onChange={setStart} />
-        <TimeSelect label="End time" value={end} onChange={setEnd} />
+        <TimeSelect label={t("fields.startTime")} value={start} onChange={setStart} />
+        <TimeSelect label={t("fields.endTime")} value={end} onChange={setEnd} />
         <div>
           <button type="button" onClick={add} disabled={!ready || busy} className={ADD_BTN}>
             <Plus className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
-            {busy ? "Saving…" : "Add time"}
+            {busy ? tc("status.saving") : t("p3.addTime")}
           </button>
         </div>
       </div>
-      {wrong && <span className="text-[13px] font-black text-k5-ri">The end time must be after the start time.</span>}
+      {wrong && <span className="text-[13px] font-black text-k5-ri">{t("p3.endAfterStart")}</span>}
     </div>
   );
 }
 
 function SlotChip({ children, onRemove, busy, label }) {
+  const t = useTranslations("k5Profile");
   return (
     <span className="inline-flex items-center gap-2 rounded-full border-[3px] border-k5-ac bg-k5-act py-1 pe-1 ps-3.5 text-[15px] font-black text-k5-ink">
       <Clock className="h-4 w-4 flex-none text-k5-acx" aria-hidden="true" />
       {children}
-      <button type="button" onClick={onRemove} disabled={busy} aria-label={`Remove ${label}`} className={REMOVE_BTN}>
+      <button type="button" onClick={onRemove} disabled={busy} aria-label={t("editor.removeNamed", { name: label })} className={REMOVE_BTN}>
         <Trash2 className="h-4 w-4" aria-hidden="true" />
       </button>
     </span>
@@ -118,6 +126,7 @@ function SlotChip({ children, onRemove, busy, label }) {
 /** Section 4: live-class preferred times. */
 export function EditableTiming({ m, actions }) {
   const slots = m.timing.slots;
+  const t = useTranslations("k5Profile");
   return (
     <>
       {slots.length ? (
@@ -129,7 +138,7 @@ export function EditableTiming({ m, actions }) {
           ))}
         </div>
       ) : (
-        <p className="m-0 text-base font-extrabold text-k5-mut">No preferred class time added yet. When are you free for live classes?</p>
+        <p className="m-0 text-base font-extrabold text-k5-mut">{t("p3.noClassTime")}</p>
       )}
       <TimeRangeAdd busy={actions.busy === "time:add"} onAdd={({ start, end }) => actions.addClassTime(start, end)} />
     </>
@@ -139,18 +148,20 @@ export function EditableTiming({ m, actions }) {
 /** Section 2 (end): who may be called when. */
 export function EditableCallingTimes({ m, actions }) {
   const slots = m.parents.callingSlots;
+  const t = useTranslations("k5Profile");
+  const tr = useLabelTranslator("k5Profile.roles");
   return (
     <>
       {slots.length ? (
         <div className="flex flex-wrap gap-2.5">
           {slots.map((slot, i) => (
-            <SlotChip key={`${slot.role}-${slot.start}-${slot.end}`} label={`${slot.role} ${timeLabel(slot.start)}`} busy={Boolean(actions.busy)} onRemove={() => actions.removeCallingTime(i)}>
-              {slot.role}: {timeLabel(slot.start)} – {timeLabel(slot.end)}
+            <SlotChip key={`${slot.role}-${slot.start}-${slot.end}`} label={`${tr(slot.role)} ${timeLabel(slot.start)}`} busy={Boolean(actions.busy)} onRemove={() => actions.removeCallingTime(i)}>
+              {t("callingSlot", { role: tr(slot.role), range: `${timeLabel(slot.start)} – ${timeLabel(slot.end)}` })}
             </SlotChip>
           ))}
         </div>
       ) : (
-        <p className="m-0 text-base font-extrabold text-k5-mut">No preferred timing added yet.</p>
+        <p className="m-0 text-base font-extrabold text-k5-mut">{t("page.noTiming")}</p>
       )}
       <TimeRangeAdd roles={["Student", "Mother", "Father", "Guardian"]} busy={actions.busy === "call:add"} onAdd={({ role, start, end }) => actions.addCallingTime(role, start, end)} />
     </>
@@ -164,15 +175,17 @@ export function EditablePreviousSchool({ m, editor }) {
   // The existing page lists the current year back (profileViewNew.js, previousCurrentSchoolGraduationYear).
   const years = Array.from({ length: 22 }, (_, i) => String(year - i)).map((y) => ({ value: y, label: y }));
   const countries = (editor.countries || []).map((c) => ({ value: c.key, label: c.value }));
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
   return (
     <div className={GRID3}>
-      <EditText editor={editor} k="prevSchool" label="Previous/Current School Name" />
-      <EditSelect editor={editor} k="prevGrade" label="Previous/Current Grade Name" options={(grades.data || []).map((g) => ({ value: g.key, label: g.value }))} loading={grades.isFetching} />
-      <EditSelect editor={editor} k="gradYear" label="Previous/Current School Graduation Year" options={years} />
-      <EditSelect editor={editor} k="prevCountry" label="Previous/Current School Country" options={countries} loading={!countries.length} />
+      <EditText editor={editor} k="prevSchool" label={t("fields.prevSchool")} />
+      <EditSelect editor={editor} k="prevGrade" label={t("fields.prevGrade")} options={(grades.data || []).map((g) => ({ value: g.key, label: g.value }))} loading={grades.isFetching} />
+      <EditSelect editor={editor} k="gradYear" label={t("fields.gradYear")} options={years} />
+      <EditSelect editor={editor} k="prevCountry" label={t("fields.prevCountry")} options={countries} loading={!countries.length} />
       <div className={LABEL}>
-        <span>CTI Taken Recommended Grade</span>
-        <span className="flex min-h-[50px] items-center rounded-[14px] border-[3px] border-k5-line bg-k5-soft px-3.5 font-k5-body text-base font-extrabold text-k5-ink">{m.academic.ctiRecommendedGrade}</span>
+        <span>{t("fields.cti")}</span>
+        <span className="flex min-h-[50px] items-center rounded-[14px] border-[3px] border-k5-line bg-k5-soft px-3.5 font-k5-body text-base font-extrabold text-k5-ink">{m.academic.ctiRecommendedGrade === "No" ? tc("actions.no") : m.academic.ctiRecommendedGrade}</span>
       </div>
     </div>
   );
@@ -181,13 +194,15 @@ export function EditablePreviousSchool({ m, editor }) {
 /** Section 3: Set Progress Report (mockup .pfrep radio cards). */
 export function ProgressReportPicker({ editor }) {
   const days = reportDays(editor.draft.reportType);
+  const t = useTranslations("k5Profile");
+  const dateLocale = useDateFnsLocale();
   return (
     <>
       <div className="flex flex-wrap items-center gap-3">
-        <h3 className={H3}>Set Progress Report</h3>
-        <span className="rounded-full border-2 border-k5-line bg-k5-soft px-3 py-1 text-sm font-black text-k5-ink">{reportRange(days)}</span>
+        <h3 className={H3}>{t("p3.setReport")}</h3>
+        <span className="rounded-full border-2 border-k5-line bg-k5-soft px-3 py-1 text-sm font-black text-k5-ink">{reportRange(days, new Date(), dateLocale)}</span>
       </div>
-      <div role="radiogroup" aria-label="Set Progress Report" className={GRID3}>
+      <div role="radiogroup" aria-label={t("p3.setReport")} className={GRID3}>
         {REPORT_TYPES.map((r) => {
           const on = r.days === days;
           return (
@@ -203,8 +218,8 @@ export function ProgressReportPicker({ editor }) {
                 <CalendarDays className="h-6 w-6" />
               </span>
               <span className="flex min-w-0 flex-1 flex-col">
-                <span className="font-k5-display text-lg font-semibold">{r.name}</span>
-                <span className="text-sm font-extrabold text-k5-mut">{r.every}</span>
+                <span className="font-k5-display text-lg font-semibold">{t(`p3.reportTypes.${r.days}`)}</span>
+                <span className="text-sm font-extrabold text-k5-mut">{t("p3.everyDays", { days: r.days })}</span>
               </span>
               <span aria-hidden="true" className={`flex h-6 w-6 flex-none items-center justify-center rounded-full border-[3px] ${on ? "border-k5-ac" : "border-k5-line"}`}>
                 {on && <span className="h-2.5 w-2.5 rounded-full bg-k5-ac" />}
@@ -244,6 +259,8 @@ export function EditableSports({ m, editor, actions }) {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [place, setPlace] = useState("");
+  const t = useTranslations("k5Profile");
+  const tc = useTranslations("common");
   const chosen = new Set(editor.draft.clubs ? editor.draft.clubs.split(",") : []);
   const toggleClub = (clubId) => {
     const next = new Set(chosen);
@@ -263,7 +280,7 @@ export function EditableSports({ m, editor, actions }) {
   const ready = title.trim() && start && end && place.trim();
   return (
     <>
-      <p className="m-0 text-[17px] font-extrabold">Please click &apos;Yes&apos; if you take part in any sport or extracurricular activities.</p>
+      <p className="m-0 text-[17px] font-extrabold">{t("p3.sportsPrompt")}</p>
       <button
         type="button"
         role="switch"
@@ -275,16 +292,16 @@ export function EditableSports({ m, editor, actions }) {
         <span className={`relative block h-8 w-14 rounded-full transition-colors ${showForm ? "bg-k5-ac" : "bg-k5-line"}`}>
           <span className={`absolute top-1 block h-6 w-6 rounded-full bg-white shadow transition-[inset-inline-start] ${showForm ? "start-[28px]" : "start-1"}`} />
         </span>
-        {showForm ? "Yes" : "No"}
+        {showForm ? tc("actions.yes") : tc("actions.no")}
       </button>
       {joined.length > 0 && (
         <div className="flex flex-col gap-2.5">
           {joined.map((row) => (
             <div key={row.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-[18px] border-[3px] border-k5-line bg-k5-card py-2.5 pe-2.5 ps-4 text-[15px] font-extrabold">
-              <strong className="font-k5-display text-[17px] font-semibold">{row.title || "Activity"}</strong>
+              <strong className="font-k5-display text-[17px] font-semibold">{row.title || t("page.activity")}</strong>
               {(row.start || row.end) && <span className="text-k5-mut">{[row.start, row.end].filter(Boolean).join(" – ")}</span>}
               {row.place && <span className="min-w-0 flex-1 text-k5-mut [overflow-wrap:anywhere]">{row.place}</span>}
-              <button type="button" onClick={() => actions.removeActivity(row.id)} disabled={Boolean(actions.busy)} aria-label={`Remove ${row.title || "activity"}`} className={`${REMOVE_BTN} ms-auto`}>
+              <button type="button" onClick={() => actions.removeActivity(row.id)} disabled={Boolean(actions.busy)} aria-label={t("editor.removeNamed", { name: row.title || t("page.activity") })} className={`${REMOVE_BTN} ms-auto`}>
                 <Trash2 className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
@@ -295,11 +312,11 @@ export function EditableSports({ m, editor, actions }) {
         <div className="flex flex-col gap-3 rounded-[18px] border-[3px] border-dashed border-k5-line p-3.5">
           <div className={GRID3}>
             <label className={LABEL}>
-              <span>Sport or activity</span>
+              <span>{t("p3.sportOrActivity")}</span>
               <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} className={INPUT} />
             </label>
             <div className={LABEL}>
-              <span>Start date</span>
+              <span>{t("p3.startDate")}</span>
               {/* The existing page: the start is today or later, and a new start clears an earlier end. */}
               <DatePicker
                 icon={CalendarDays}
@@ -315,24 +332,24 @@ export function EditableSports({ m, editor, actions }) {
               />
             </div>
             <div className={LABEL}>
-              <span>End date</span>
+              <span>{t("p3.endDate")}</span>
               <DatePicker icon={CalendarDays} height="h-[50px]" value={parseProfileDate(end)} fromDate={parseProfileDate(start) || startOfToday()} toDate={new Date(new Date().getFullYear() + 1, 11, 31)} onChange={(d) => setEnd(formatProfileDate(d))} />
             </div>
             <label className={`${LABEL} col-span-2 max-[600px]:col-span-1`}>
-              <span>Where</span>
+              <span>{t("p3.where")}</span>
               <input value={place} onChange={(e) => setPlace(e.target.value)} maxLength={300} className={INPUT} />
             </label>
             <div className="flex items-end">
               <button type="button" onClick={add} disabled={!ready || Boolean(actions.busy)} className={ADD_BTN}>
                 <Plus className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
-                {actions.busy === "activity:add" ? "Saving…" : "Add activity"}
+                {actions.busy === "activity:add" ? tc("status.saving") : t("p3.addActivity")}
               </button>
             </div>
           </div>
         </div>
       )}
       <hr className="my-1 h-[3px] rounded-[3px] border-none bg-k5-line" />
-      <h3 className={H3}>Would you like to join any extracurricular activities?</h3>
+      <h3 className={H3}>{t("page.clubsQuestion")}</h3>
       <div className="flex flex-wrap gap-2.5">
         {editor.clubs.map((c) => (
           <ClubChip key={c.id} on={chosen.has(c.id)} onClick={() => toggleClub(c.id)}>

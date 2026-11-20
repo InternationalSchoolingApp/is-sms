@@ -57,7 +57,10 @@ export function newSeries() {
   return { q: t.slice(0, 5).join(",  ") + ",  ?", ans, opts: opts4(ans) };
 }
 
-/** Mental Math: a short expression, or "p% of n" (pct), with four answers. */
+/**
+ * Mental Math: a short expression, or "p% of n" (pct), with four answers. `pct` ([p, n] or null) lets a screen show the
+ * "p% of n" question in its own language; `q` stays the English text.
+ */
 export function newMental() {
   const k = rnd(0, 4);
   let q = "";
@@ -92,7 +95,7 @@ export function newMental() {
     q = d * x + " ÷ " + d + " + " + c;
     ans = x + c;
   }
-  return { q: pct ? pct[0] + "% of " + pct[1] : q, ans, opts: opts4(ans) };
+  return { q: pct ? pct[0] + "% of " + pct[1] : q, ans, opts: opts4(ans), pct };
 }
 
 /** Odd One Out: four numbers that follow a rule (primes, squares, multiples, cubes) and one that does not. */

@@ -1,0 +1,20 @@
+{
+  "title": "Historique de connexion - {name}",
+  "empty": "Aucun historique de connexion trouvé",
+  "firstLogin": "Première connexion",
+  "lastLogin": "Dernière connexion | Durée",
+  "totalLogin": "Total des connexions | Durée",
+  "tillNow": "Jusqu'à présent",
+  "sessions": "Sessions de connexion",
+  "searchPlaceholder": "Rechercher des sessions...",
+  "showingSessions": "Sessions {start} à {end} sur {total}",
+  "securityNoticeLabel": "Avis de sécurité :",
+  "securityNotice": "Si vous remarquez une activité de connexion suspecte ou des lieux inconnus, contactez immédiatement votre administrateur. La sécurité de votre compte est importante pour nous.",
+  "table": {
+    "sNo": "N°",
+    "login": "Date | Heure de connexion",
+    "logout": "Date | Heure de déconnexion",
+    "location": "Lieu",
+    "duration": "Durée"
+  }
+}

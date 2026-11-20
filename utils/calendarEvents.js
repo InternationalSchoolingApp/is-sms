@@ -175,6 +175,15 @@ export function normalizeCalendarEvent(rawEvent, { timezone, courseDetails = [] 
   };
 }
 
+/**
+ * `event.displayTime` with a date-fns `locale` (so AM/PM follows the dashboard language): the same "hh:mm a - hh:mm a"
+ * range of the same zoned times. Without a locale it is `event.displayTime` itself.
+ */
+export function eventDisplayTime(event, locale) {
+  if (!event?.displayTime || !locale || typeof locale !== "object") return event?.displayTime || "";
+  return `${format(event.startZoned, "hh:mm a", { locale })} - ${format(event.endZoned, "hh:mm a", { locale })}`;
+}
+
 function addMinutesOrEndOfDay(startZoned, allDay) {
   if (allDay) {
     const end = new Date(startZoned);
@@ -235,39 +244,44 @@ export function getEventDisplayStatus(event, now = new Date()) {
 
 // ── Assignment status (submitted / pending / upcoming) ──────────────────────
 
-export function getAssignmentStatus(event, now = new Date()) {
+// `label` / `timingLabel` are English (other callers compare them); a translated screen uses `status` and
+// `timing` ({ kind: "onTime" | "early" | "late", days }) instead. `locale` (date-fns) only localizes `dateDisplay`.
+export function getAssignmentStatus(event, now = new Date(), { locale } = {}) {
   const todayKey = format(now, "yyyy-MM-dd");
   const dueDate = event.dueDate || event.paceDate || "";
   const isSubmitted = String(event.assignmentType || "").toLowerCase() === "submitted";
 
   if (isSubmitted) {
     const submittedDate = event.submittedDate || "";
-    const result = { status: "submitted", label: "Submitted", timingLabel: "On Time", dateDisplay: "" };
+    const result = { status: "submitted", label: "Submitted", timingLabel: "On Time", timing: { kind: "onTime", days: 0 }, dateDisplay: "" };
     if (submittedDate) {
-      result.dateDisplay = formatDateOnly(submittedDate);
+      result.dateDisplay = formatDateOnly(submittedDate, locale);
       if (dueDate) {
         const diffDays = diffDaysDateOnly(dueDate, submittedDate);
-        if (diffDays > 0) result.timingLabel = `Early (${diffDays} Day${diffDays === 1 ? "" : "s"})`;
-        else if (diffDays < 0) {
+        if (diffDays > 0) {
+          result.timingLabel = `Early (${diffDays} Day${diffDays === 1 ? "" : "s"})`;
+          result.timing = { kind: "early", days: diffDays };
+        } else if (diffDays < 0) {
           const late = Math.abs(diffDays);
           result.timingLabel = `Late (${late} Day${late === 1 ? "" : "s"})`;
+          result.timing = { kind: "late", days: late };
         }
       }
     } else if (dueDate) {
-      result.dateDisplay = formatDateOnly(dueDate);
+      result.dateDisplay = formatDateOnly(dueDate, locale);
     }
     return result;
   }
 
   if (dueDate && dueDate.slice(0, 10) > todayKey) {
-    return { status: "upcoming", label: "Upcoming", timingLabel: null, dateDisplay: formatDateOnly(dueDate) };
+    return { status: "upcoming", label: "Upcoming", timingLabel: null, timing: null, dateDisplay: formatDateOnly(dueDate, locale) };
   }
-  return { status: "pending", label: "Pending", timingLabel: null, dateDisplay: "" };
+  return { status: "pending", label: "Pending", timingLabel: null, timing: null, dateDisplay: "" };
 }
 
-function formatDateOnly(value) {
+function formatDateOnly(value, locale) {
   const d = parseISO(String(value).slice(0, 10));
-  return isValid(d) ? format(d, "MMM d, yyyy") : "";
+  return isValid(d) ? format(d, "MMM d, yyyy", locale && typeof locale === "object" ? { locale } : undefined) : "";
 }
 
 function diffDaysDateOnly(dueDate, submittedDate) {

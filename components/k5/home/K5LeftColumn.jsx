@@ -2,6 +2,8 @@
 
 import { format, isSameMonth } from "date-fns";
 import { Check, ChevronLeft, ChevronRight, Star, X } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -9,6 +11,7 @@ import { K5_CARD, K5_ROUND_BTN, SubjectIcon } from "@/components/k5/home/k5Bits"
 import { getEventColor, getMonthGridDays } from "@/utils/calendarEvents";
 import { CLUE_COLORS, WEEKDAY_TEXT, classTitle, courseTint, dayAt, dayKey, safeCourseColor, subjectStyle, timeLabel, timeRange } from "@/utils/k5Calendar";
 
+// React keys; the letters shown come from the dashboard language's date-fns locale (short day names).
 const WEEK_LETTERS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 // Mockup dot priority: holiday, then assignment, then activity, then classes.
@@ -23,6 +26,8 @@ function dotColor(day) {
 /** Mini month calendar: picking a day opens it in the Day plan. */
 export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, onClose }) {
   const { isMiddle } = useDashboardContext();
+  const t = useTranslations("k5Home.calendar");
+  const locale = useDateFnsLocale();
   const cells = getMonthGridDays(selectedDate);
   const inPopup = Boolean(onClose);
   const titleId = inPopup ? "k5-calpop-title" : "k5-mini-title";
@@ -37,19 +42,19 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
       className={inPopup ? "flex flex-col gap-2.5" : `${K5_CARD} flex flex-col gap-2.5 p-4 max-[760px]:hidden`}
     >
       <div className="flex items-center justify-between gap-2">
-        <button type="button" aria-label="Previous month" onClick={() => onMonth(-1)} className={`${K5_ROUND_BTN} !shadow-none`}>
+        <button type="button" aria-label={t("previousMonth")} onClick={() => onMonth(-1)} className={`${K5_ROUND_BTN} !shadow-none`}>
           <ChevronLeft className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
         </button>
         <Title id={titleId} className="m-0 flex-1 text-center font-k5-display text-[22px] font-semibold leading-tight">
-          {format(selectedDate, "MMMM yyyy")}
+          {format(selectedDate, "MMMM yyyy", { locale })}
         </Title>
-        <button type="button" aria-label="Next month" onClick={() => onMonth(1)} className={`${K5_ROUND_BTN} !shadow-none`}>
+        <button type="button" aria-label={t("nextMonth")} onClick={() => onMonth(1)} className={`${K5_ROUND_BTN} !shadow-none`}>
           <ChevronRight className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
         </button>
         {inPopup && (
           <button
             type="button"
-            aria-label="Close calendar"
+            aria-label={t("closeCalendar")}
             onClick={onClose}
             className="flex h-11 w-11 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-red bg-k5-red text-white"
           >
@@ -60,7 +65,7 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
       <div className="grid grid-cols-7 gap-1 text-center font-k5-display text-[15px] font-semibold">
         {WEEK_LETTERS.map((l, i) => (
           <span key={l} className={WEEKDAY_TEXT[i]}>
-            {l}
+            {locale.localize.day(i, { width: "short" })}
           </span>
         ))}
       </div>
@@ -84,7 +89,7 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
                 type="button"
                 aria-current={isToday ? "date" : undefined}
                 aria-pressed={isToday ? undefined : isSel}
-                aria-label={format(date, "EEEE, MMMM d")}
+                aria-label={format(date, "EEEE, MMMM d", { locale })}
                 onClick={() => onPick(date)}
                 className={`relative flex cursor-pointer items-center justify-center rounded-full border-none font-black ${
                   isToday ? "h-10 w-10 bg-k5-ac text-[17px] text-white shadow-[0_3px_0_var(--k5-acd)]" : isSel
@@ -108,6 +113,7 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
 
 /** Mobile calendar popup (mockup calOpen): the mini calendar in a dialog; picking a day opens it. */
 export function CalendarPopup({ open, onClose, onPick, ...calendar }) {
+  const t = useTranslations("k5Home.calendar");
   const themeProps = useK5ThemeProps(
     "w-[380px] max-w-[calc(100%-2rem)] gap-3 rounded-[28px] border-[3px] border-k5-ink bg-k5-card p-4 text-k5-ink shadow-[0_8px_0_var(--k5-ink)] ring-0 sm:max-w-[380px]",
   );
@@ -125,7 +131,7 @@ export function CalendarPopup({ open, onClose, onPick, ...calendar }) {
           />
           <DialogDescription className="m-0 flex items-center justify-center gap-2 text-sm font-extrabold text-k5-mut">
             <span aria-hidden="true" className="block h-2 w-2 rounded-full bg-k5-ac" />
-            Dot = something planned
+            {t("dotLegend")}
           </DialogDescription>
         </DialogContent>
       )}
@@ -135,9 +141,10 @@ export function CalendarPopup({ open, onClose, onPick, ...calendar }) {
 
 /** One event of the Today card: a quiet pill; a class is dashed; a live one blinks like the mockup (a fading dot and a pulsing ring). */
 function TodayItem({ event, color, live, onOpen }) {
+  const locale = useDateFnsLocale();
   const isClass = event.eventKind === "class";
   const title = isClass ? classTitle(event) : event.title || event.eventTitle;
-  const time = event.displayTime || timeRange(event);
+  const time = event.displayTime || timeRange(event, locale);
   return (
     <button
       type="button"
@@ -157,11 +164,12 @@ function TodayItem({ event, color, live, onOpen }) {
 }
 
 function TodayGroup({ label, items, courseRegistry, live = false, onOpen }) {
+  const t = useTranslations("k5Home.today");
   return (
     <div className="flex flex-col gap-1.5">
       <h3 className="m-0 text-base font-black">{label}</h3>
       {items.length === 0 ? (
-        <p className="m-0 text-[15px] font-bold text-k5-mut">No Class &amp; School Activity</p>
+        <p className="m-0 text-[15px] font-bold text-k5-mut">{t("none")}</p>
       ) : (
         items.map((event) => <TodayItem key={event.id} event={event} color={event.eventKind === "class" ? getEventColor(event, courseRegistry) : CLUE_COLORS.activity} live={live} onOpen={onOpen} />)
       )}
@@ -177,26 +185,29 @@ export function TodayCard({ todayKey, days, courseRegistry, onOpen }) {
   const day = dayAt(days, todayKey);
   const timed = [...day.classes, ...day.activities].filter((event) => !event.allDay && event.startZoned).sort((x, y) => x.startZoned.getTime() - y.startZoned.getTime());
   const group = (status) => timed.filter((event) => event.k5Status === status);
+  const t = useTranslations("k5Home.today");
+  const tc = useTranslations("common");
   return (
     <section aria-labelledby="k5-today-title" className={`${K5_CARD} flex flex-col gap-3 p-4`}>
       <h2 id="k5-today-title" className="m-0 font-k5-display text-[22px] font-semibold">
-        Today
+        {tc("dates.today")}
       </h2>
-      <TodayGroup label="Live Class & School Activity" items={group("live")} courseRegistry={courseRegistry} live onOpen={onOpen} />
-      <TodayGroup label="Upcoming Class & School Activity" items={group("next")} courseRegistry={courseRegistry} onOpen={onOpen} />
-      <TodayGroup label="Completed Class & School Activity" items={group("done")} courseRegistry={courseRegistry} onOpen={onOpen} />
+      <TodayGroup label={t("live")} items={group("live")} courseRegistry={courseRegistry} live onOpen={onOpen} />
+      <TodayGroup label={t("upcoming")} items={group("next")} courseRegistry={courseRegistry} onOpen={onOpen} />
+      <TodayGroup label={t("completed")} items={group("done")} courseRegistry={courseRegistry} onOpen={onOpen} />
     </section>
   );
 }
 
 /** My Courses: every enrolled course, tap to show / hide its classes in the planner. */
 export function MyCourses({ courseRegistry, courseVisibility, onToggle }) {
+  const t = useTranslations("k5Home.courses");
   const courses = Object.values(courseRegistry || {});
   if (!courses.length) return null;
   return (
     <section aria-labelledby="k5-courses-title" className={`${K5_CARD} flex flex-col gap-2 p-4`}>
       <h2 id="k5-courses-title" className="m-0 mb-1 font-k5-display text-[22px] font-semibold">
-        My Courses
+        {t("title")}
       </h2>
       {courses.map((course) => {
         const shown = courseVisibility[course.id] !== false;
@@ -210,7 +221,7 @@ export function MyCourses({ courseRegistry, courseVisibility, onToggle }) {
             type="button"
             aria-pressed={shown}
             onClick={() => onToggle(course.id)}
-            title={shown ? "Hide this course in my plan" : "Show this course in my plan"}
+            title={shown ? t("hide") : t("show")}
             className={`k5-lift flex min-h-[52px] cursor-pointer items-center gap-2.5 rounded-[14px] border-none px-2 py-1 text-left ${shown ? (apiColor ? "" : tile) : "bg-k5-soft"}`}
             style={shown && apiColor ? { background: courseTint(apiColor) } : undefined}
           >

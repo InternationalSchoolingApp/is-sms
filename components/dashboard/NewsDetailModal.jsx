@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { LucideCalendarDays, Newspaper, X } from "lucide-react";
 import DOMPurify from "dompurify";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { getArticleById } from "@/services/newsApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { formatNewsDate, formatRelativeAgo } from "@/utils/newsFormat";
@@ -17,6 +19,9 @@ import { OptimizedImage } from "@/components/common/OptimizedImage";
 export function NewsDetailModal({ article, userId, onClose }) {
   const [full, setFull] = useState(null);
   const dummy = useDummyStudent();
+  const t = useTranslations("news");
+  const tc = useTranslations("common");
+  const dateLocale = useDateFnsLocale();
 
   useEffect(() => {
     let cancelled = false;
@@ -43,7 +48,7 @@ export function NewsDetailModal({ article, userId, onClose }) {
             >
               <X className="h-4 w-4" />
             </button> */}
-            <button type="button" onClick={onClose} aria-label="Close" className="mb-2 flex h-9 w-9 flex-none cursor-pointer items-center justify-center ml-auto rounded-full border-[3px] border-white bg-k5-red">
+            <button type="button" onClick={onClose} aria-label={tc("actions.close")} className="mb-2 flex h-9 w-9 flex-none cursor-pointer items-center justify-center ml-auto rounded-full border-[3px] border-white bg-k5-red">
               <X className="h-4 w-4 text-white" strokeWidth={3} />
             </button>
 
@@ -52,9 +57,9 @@ export function NewsDetailModal({ article, userId, onClose }) {
           <div className="px-5 py-4">
             <div className="flex flex-wrap items-center gap-2 text-xs text-black/50">
               <LucideCalendarDays className="text-primary w-4 h-4" />
-              {formatNewsDate(data.publishDate) && <span>{formatNewsDate(data.publishDate)}</span>}
+              {formatNewsDate(data.publishDate) && <span>{formatNewsDate(data.publishDate, { locale: dateLocale })}</span>}
               {formatRelativeAgo(data.publishDate) && (
-                <span className="rounded bg-primary/10 px-2 py-0.5 font-semibold text-primary">{formatRelativeAgo(data.publishDate)}</span>
+                <span className="rounded bg-primary/10 px-2 py-0.5 font-semibold text-primary">{formatRelativeAgo(data.publishDate, t)}</span>
               )}
               {/* {(data.readingTime || data.readTime) && <span>{data.readingTime || data.readTime} min read</span>} */}
             </div>
@@ -71,7 +76,7 @@ export function NewsDetailModal({ article, userId, onClose }) {
                 rel="noopener noreferrer"
                 className="mt-3 inline-block text-lg font-bold text-primary hover:underline"
               >
-                View original source →
+                {t("viewOriginalSource")}
               </a>
             )}
           </div>

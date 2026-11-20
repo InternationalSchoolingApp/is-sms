@@ -1,0 +1,126 @@
+{
+  "title": "Video Library",
+  "subtitle": "Your course playlists — watch the lessons in order",
+  "thumbPlaceholder": "VIDEO",
+  "plans": {
+    "TRIAL": "Free trial",
+    "THREE_COURSES": "3-course plan",
+    "CUSTOM": "Custom plan",
+    "ALL": "All-courses plan",
+    "LIFETIME": "Full course plan",
+    "fallback": "Plan"
+  },
+  "planNames": {
+    "free_trial": "Free trial",
+    "3_courses": "3 courses",
+    "custom": "Custom",
+    "all_courses": "All courses",
+    "full_course": "Full course"
+  },
+  "access": {
+    "startTrial": "Start {days}-day free trial",
+    "subscribe": "Subscribe",
+    "renew": "Renew",
+    "allLocked": "Your course videos are locked.",
+    "someLocked": "{locked} of {total} courses are locked.",
+    "allOpen": "All your courses are open.",
+    "planWithCourses": "{plan} · {count, plural, one {# course} other {# courses}}",
+    "endsToday": "ends today",
+    "daysLeft": "{count, plural, one {# day left} other {# days left}}",
+    "until": "until {date}",
+    "untilCourseEnds": "until your course ends",
+    "needSubscription": "Videos need a subscription"
+  },
+  "chips": {
+    "label": "Your courses",
+    "lockedTitle": "{title} — locked",
+    "doneTitle": "{title} — {done} of {total} done"
+  },
+  "module": "Module {number}",
+  "moreVideos": "More videos",
+  "videos": "Videos",
+  "watched": "Watched",
+  "watchedTitle": "Watched: {title}",
+  "plusMore": "+{count} more",
+  "plusMoreSpaced": "+ {count} more",
+  "locked": {
+    "ended": "This course ended on {date}, so its {noun, select, lesson {lessons} other {videos}} are closed.",
+    "notCovered": "Your Full course plan does not cover this course.",
+    "subscribeToWatch": "Subscribe to watch its {noun, select, lesson {{count, plural, one {# lesson} other {# lessons}}} other {{count, plural, one {# video} other {# videos}}}}{standard}.",
+    "titleLocked": "{title} is locked",
+    "thisCourseLocked": "This course is locked"
+  },
+  "search": {
+    "noneTitle": "No videos found",
+    "noneText": "Nothing matches \"{query}\" in your courses.",
+    "results": "{count, plural, one {# video} other {# videos}} for \"{query}\"",
+    "placeholder": "Search all your videos...",
+    "label": "Search videos"
+  },
+  "empty": {
+    "title": "No videos yet",
+    "text": "Videos for your courses will appear here once your teachers add them."
+  },
+  "player": {
+    "lessonHeading": "Module {module} · Lesson {lesson} — {title}",
+    "video": "Video",
+    "continuing": "Continuing where you left off ({time}) ·",
+    "startOver": "Start over",
+    "explanations": "Explanations:",
+    "main": "Main",
+    "videoNumber": "Video {number}",
+    "autoplayTitle": "Play the next lesson when this one ends",
+    "autoplay": "Autoplay next",
+    "nextLesson": "Next lesson",
+    "unableToLoad": "Unable to load this video.",
+    "frameTitle": "Video player"
+  },
+  "playlist": {
+    "label": "Course playlist",
+    "position": "{kind, select, lesson {Lesson} other {Video}} {current} of {total}",
+    "watched": "{done} of {total} {noun, select, lessons {lessons} other {videos}} watched"
+  },
+  "toasts": {
+    "paid": "Payment received. Your course videos are open.",
+    "trialStarted": "Your free trial has started — enjoy all your course videos!",
+    "trialFailed": "The trial could not be started."
+  },
+  "loadError": {
+    "title": "Videos could not be loaded",
+    "text": "Please refresh the page and try again."
+  },
+  "payment": {
+    "processing": "Payment is under process...",
+    "oops": "Oops!",
+    "incomplete": "Payment Incomplete",
+    "underReview": "Your payment is under review.",
+    "underReviewText": "Your course videos will open once the payment is received."
+  },
+  "subscribe": {
+    "title": "Subscribe to course videos",
+    "courseCount": "{count, plural, one {# course} other {# courses}}",
+    "onlyUntilEnd": "{course}, until your course ends{until}",
+    "allUntilEnd": "All your courses, until your course ends{until}",
+    "allCourses": "All {count} of your courses",
+    "chooseThree": "Choose any 3 of your courses",
+    "chooseCount": "Choose {count} of your courses",
+    "perMonth": "/ month",
+    "perMonthPerCourse": "/ month · {fee} per course",
+    "oneTime": "one-time",
+    "loadFailed": "Plans could not be loaded.",
+    "loadFailedRetry": "Plans could not be loaded. Please try again.",
+    "paymentFailed": "The payment could not be started.",
+    "paymentFailedRetry": "The payment could not be started. Please try again.",
+    "startsOn": " · starts {date}",
+    "loading": "Loading plans…",
+    "notAvailable": "Subscriptions are not available right now.",
+    "choosePlan": "Choose a plan",
+    "chooseCourses": "Choose {count, plural, one {# course} other {# courses}}",
+    "pickedOf": "{picked} of {need}",
+    "oneTimeUntilEnd": "one-time · until your course ends",
+    "oneMonth": "1 month",
+    "secure": "Secure online payment · the payment link is also emailed to you",
+    "preparing": "Preparing payment…",
+    "continue": "Continue to payment"
+  }
+}

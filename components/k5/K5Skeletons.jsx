@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 
@@ -13,10 +14,12 @@ export function K5Sk({ className = "", style }) {
 }
 
 /** Announces "loading" to screen readers and marks the region busy; the blocks inside are hidden from them. */
-export function K5Loading({ label = "Loading", className = "flex flex-col gap-4", children }) {
+export function K5Loading({ label, className = "flex flex-col gap-4", children }) {
+  // common only: K5SystemTrainingReschedule (components/dashboard) renders this too.
+  const tc = useTranslations("common");
   return (
     <div role="status" aria-live="polite" aria-busy="true" className={className}>
-      <span className="sr-only">{label}…</span>
+      <span className="sr-only">{label ? `${label}…` : tc("status.loading")}</span>
       {children}
     </div>
   );
@@ -131,8 +134,9 @@ export function K5BlockSkeleton({ height = 320, card = true }) {
  * the left) three times. The k5h-* classes are the same ones the real plan has, so Grade 9–12 sizes them like it.
  */
 export function K5PlanSkeleton({ items = 3 }) {
+  const t = useTranslations("k5.skeleton");
   return (
-    <K5Loading label="Loading your plan" className="flex flex-col gap-4">
+    <K5Loading label={t("plan")} className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-4">
         <K5Sk className="k5h-ptile h-[78px] w-[78px] flex-none rounded-[24px]" />
         <div className="flex flex-[1_1_200px] flex-col gap-2">
@@ -171,8 +175,9 @@ export function K5PlanSkeleton({ items = 3 }) {
 
 /** The two left-column cards of the home page (Today, My Courses) while the plan loads. */
 export function K5HomeLeftSkeleton() {
+  const t = useTranslations("k5.skeleton");
   return (
-    <K5Loading label="Loading your day" className="flex flex-col gap-4">
+    <K5Loading label={t("day")} className="flex flex-col gap-4">
       <div className={`${K5_CARD} flex flex-col gap-3 p-4`}>
         <K5Sk className="h-6 w-20" />
         <div className="flex items-center gap-3">
@@ -199,8 +204,9 @@ export function K5HomeLeftSkeleton() {
 
 /** My Assigned Teacher's course cards while they load: icon tile and name, the teacher chip, the calendar button. */
 export function K5TeacherSkeleton({ count = 6 }) {
+  const t = useTranslations("k5.skeleton");
   return (
-    <K5Loading label="Getting your courses" className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
+    <K5Loading label={t("courses")} className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
       {Array.from({ length: count }, (_, i) => (
         <div key={i} className={`${K5_CARD} flex flex-col gap-3.5 p-4`}>
           <div className="flex items-center gap-3">
@@ -226,8 +232,9 @@ export function K5TeacherSkeleton({ count = 6 }) {
 
 /** My Profile: the hero card, the section list and a grid of fields. */
 export function K5ProfileSkeleton() {
+  const t = useTranslations("k5.skeleton");
   return (
-    <K5Loading label="Loading your profile" className="flex flex-col gap-[18px]">
+    <K5Loading label={t("profile")} className="flex flex-col gap-[18px]">
       <div className={`${K5_CARD} flex flex-wrap items-center gap-[18px] px-[22px] py-[18px]`}>
         <K5Sk className="h-[88px] w-[88px] flex-none rounded-full" />
         <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-2.5">

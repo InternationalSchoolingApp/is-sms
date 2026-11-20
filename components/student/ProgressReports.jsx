@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Eye } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useStudentProgressReports } from "@/hooks/useStudentProgressReports";
 import { TableFooter } from "@/components/student/TableFooter";
@@ -11,17 +12,17 @@ import { K5ProgressReports } from "@/components/k5/pages/K5ProgressReports";
 
 const PAGE_SIZE = 10;
 
-// Legacy studentProgressDetailMapRows: daysType -> report type label.
+// Legacy studentProgressDetailMapRows: daysType -> report type (progressReport.types.<key>).
 function reportType(daysType) {
   const days = Number(daysType);
-  if (days === 14 || days === 15) return "Biweekly Progress Report";
-  if (days === 28 || days === 30) return "Monthly Progress Report";
-  return "Weekly Progress Report";
+  if (days === 14 || days === 15) return "biweekly";
+  if (days === 28 || days === 30) return "monthly";
+  return "weekly";
 }
 
-function dateRange(startDate, endDate) {
-  if (!startDate && !endDate) return "N/A";
-  return `${startDate || "N/A"} - ${endDate || "N/A"}`;
+function dateRange(startDate, endDate, na) {
+  if (!startDate && !endDate) return na;
+  return `${startDate || na} - ${endDate || na}`;
 }
 
 // Legacy studentProgressDetailNormalizeUrl: the backend joins base URL + school UUID with a doubled slash.
@@ -36,6 +37,9 @@ function normalizeUrl(url) {
  * legacy swaps the dashboard content.
  */
 export function ProgressReports() {
+  const t = useTranslations("progressReport");
+  const tc = useTranslations("common");
+  const na = tc("status.na");
   const { context, isK5 } = useDashboardContext();
   const { schoolUUID, userId } = context ?? {};
   const { isLoading, reports } = useStudentProgressReports({ schoolUUID, userId });
@@ -46,13 +50,15 @@ export function ProgressReports() {
 
   if (isK5) {
     const k5Rows = reports.map((report, index) => {
-      const range = dateRange(report.reportStartDate, report.reportEndDate);
+      const range = dateRange(report.reportStartDate, report.reportEndDate, na);
+      const typeKey = reportType(report.daysType);
       return {
         key: report.weeklyReportId || `${range}-${index}`,
         serial: index + 1,
-        type: reportType(report.daysType),
+        type: t(`types.${typeKey}`),
+        typeKey,
         range,
-        published: report.createdDate || "N/A",
+        published: report.createdDate || na,
         url: normalizeUrl(report.playloadUrl),
       };
     });
@@ -63,15 +69,15 @@ export function ProgressReports() {
     return <ProgressReportView url={selected} onBack={() => setSelected(null)} />;
   }
 
-  const headers = ["S. No.", "Report Type", "Report Frequency", "Report Published Date", "View"];
+  const headers = [t("table.sNo"), t("table.type"), t("table.frequency"), t("table.published"), t("table.view")];
   const rows = pageRows.map((report, index) => {
-    const range = dateRange(report.reportStartDate, report.reportEndDate);
+    const range = dateRange(report.reportStartDate, report.reportEndDate, na);
     return {
       key: report.weeklyReportId || `${range}-${index}`,
       serial: page * PAGE_SIZE + index + 1,
-      type: reportType(report.daysType),
+      type: t(`types.${reportType(report.daysType)}`),
       range,
-      published: report.createdDate || "N/A",
+      published: report.createdDate || na,
       url: normalizeUrl(report.playloadUrl),
     };
   });
@@ -82,16 +88,16 @@ export function ProgressReports() {
       disabled={!row.url}
       className="flex shrink-0 items-center gap-1 rounded bg-primary px-2 py-1 text-xs text-white disabled:opacity-60"
     >
-      View
+      {tc("actions.view")}
       <Eye className="h-3.5 w-3.5" aria-hidden="true" />
     </button>
   );
-  const status = isLoading ? "Loading…" : reports.length === 0 ? "No progress report found" : null;
+  const status = isLoading ? tc("status.loading") : reports.length === 0 ? t("empty") : null;
 
   return (
     <div className="w-full">
       <div className="rounded-[10px] border border-slate-200 bg-white py-4">
-        <h4 className="mb-3 ml-4 text-lg font-bold text-black sm:ml-5 sm:text-xl">Progress Report</h4>
+        <h4 className="mb-3 ml-4 text-lg font-bold text-black sm:ml-5 sm:text-xl">{t("title")}</h4>
 
         {/* Mobile: one card per report (column title beside each value) instead of a 5-column table. */}
         <div className="md:hidden">

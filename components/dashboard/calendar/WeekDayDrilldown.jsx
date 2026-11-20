@@ -2,6 +2,8 @@
 
 import { ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { EventCard } from "@/components/dashboard/calendar/EventCard";
 import { getTodayGroups } from "@/utils/calendarEvents";
 
@@ -10,8 +12,10 @@ import { getTodayGroups } from "@/utils/calendarEvents";
  * more" overflow chip (legacy renderWeekDayListView). Reuses EventCard the
  * same way the Today view does.
  */
-export function WeekDayDrilldown({ date, events, courseRegistry, onBack, backLabel = "Back", onSelectEvent }) {
-  
+export function WeekDayDrilldown({ date, events, courseRegistry, onBack, backLabel, onSelectEvent }) {
+  const t = useTranslations("calendar");
+  const tc = useTranslations("common");
+  const dateLocale = useDateFnsLocale();
   const dayKey = format(date, "yyyy-MM-dd");
   const dayEvents = events.filter((e) => e.localDateKey === dayKey);
   // getTodayGroups is keyed on "now" being the viewed day so live/upcoming/completed
@@ -26,11 +30,11 @@ export function WeekDayDrilldown({ date, events, courseRegistry, onBack, backLab
         onClick={onBack}
         className="mb-4 flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-bold text-primary hover:bg-primary/20"
       >
-        <ArrowLeft className="h-3.5 w-3.5" /> {backLabel}
+        <ArrowLeft className="h-3.5 w-3.5" /> {backLabel ?? tc("actions.back")}
       </button>
-      <h3 className="mb-3 text-sm font-extrabold text-black">{format(date, "EEEE, MMMM d, yyyy")}</h3>
+      <h3 className="mb-3 text-sm font-extrabold text-black">{format(date, "EEEE, MMMM d, yyyy", { locale: dateLocale })}</h3>
       {sorted.length === 0 ? (
-        <p className="text-sm text-black/60">Nothing scheduled for this day.</p>
+        <p className="text-sm text-black/60">{t("nothingScheduledDay")}</p>
       ) : (
         <div className="space-y-2">
           {sorted.map((event) => (

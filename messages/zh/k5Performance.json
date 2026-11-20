@@ -1,0 +1,354 @@
+{
+  "title": "我的表现",
+  "breadcrumbDashboard": "主页",
+  "loading": "正在加载你的表现",
+  "noScoreYet": "还没有分数",
+  "starsLabel": "5 颗星中的 {n} 颗",
+  "session": {
+    "withStart": "{start}–{end} 学期 · {starts} 开始 · {ends} 结束",
+    "endOnly": "{start}–{end} 学期 · {ends} 结束"
+  },
+  "tabs": {
+    "perf": "表现",
+    "goals": "我的目标",
+    "class": "班级对比"
+  },
+  "hero": {
+    "greeting": "嗨，{name}，你的势头很好！",
+    "greetingPlain": "你好，{name}，来看看你的情况。",
+    "there": "同学",
+    "pillLabel": "{n} / 3：{label}",
+    "pills": {
+      "progress": "进度",
+      "streak": "连续",
+      "scores": "分数"
+    },
+    "quiet": {
+      "progress": "继续加油——下次每日更新后，你的进度会显示在这里。",
+      "streak": "按时提交下一个活动，就能开始连续记录。",
+      "scores": "作业批改后，你的分数会显示在这里。"
+    }
+  },
+  "behindBanner": "你在 {names} 落后于今天的目标。今天多做一点，就能赶上来！",
+  "stars": {
+    "superstar": {
+      "label": "超级明星",
+      "range": "90–100%",
+      "msg": "太棒了！你是超级明星。"
+    },
+    "great": {
+      "label": "很棒",
+      "range": "80–89%",
+      "msg": "做得好！再努力一点就能成为超级明星。"
+    },
+    "good": {
+      "label": "不错",
+      "range": "70–79%",
+      "msg": "做得不错！继续练习，赢得更多星星。"
+    },
+    "gettingThere": {
+      "label": "快到了",
+      "range": "60–69%",
+      "msg": "你快做到了！每一次尝试都会让你更棒。"
+    },
+    "practise": {
+      "label": "一起练习",
+      "range": "60% 以下",
+      "msg": "我们一起练习吧。你一定可以！"
+    },
+    "perfect": "满分！你全部答对了。"
+  },
+  "pace": {
+    "ahead": {
+      "label": "领先",
+      "note": "领先——比今天的目标快 {gap}%"
+    },
+    "onTrack": {
+      "label": "进度正常",
+      "note": "进度正常——和今天的目标差不多"
+    },
+    "behind": {
+      "label": "落后",
+      "note": "落后——比今天的目标慢 {gap}%"
+    }
+  },
+  "teacher": {
+    "mr": "",
+    "ms": ""
+  },
+  "achievements": {
+    "title": "成就",
+    "names": {
+      "EARLY_SUBMITTER": "提前提交",
+      "CLEAN_SWEEP": "全对达人",
+      "PERFECT_SCORE": "满分",
+      "HALFWAY": "完成一半",
+      "ON_TARGET": "达成目标"
+    },
+    "earned": "{date} 获得",
+    "locked": "未解锁 · {how}",
+    "unlock": {
+      "EARLY_SUBMITTER": "在截止日期前完成 5 个作业",
+      "CLEAN_SWEEP": "连续三次 100%",
+      "PERFECT_SCORE": "两门课程得到 100%",
+      "HALFWAY": "任一课程完成 50%",
+      "ON_TARGET": "平均分达到 {score}%"
+    }
+  },
+  "score": {
+    "title": "我的分数",
+    "subtitle": "星星显示你做得怎么样。",
+    "empty": "作业批改后，你的星星会显示在这里。",
+    "levelExclaim": "{label}！",
+    "average": "你的平均分是 {avg}%",
+    "levels": "星级",
+    "youAreHere": "你在这里",
+    "next": "得到 {min}% 或更高就能成为“{label}”。只差 {more}%！",
+    "top": "你已经在最高级了。继续闪耀吧！"
+  },
+  "streak": {
+    "title": "我的连续记录",
+    "subtitle": "按时交作业，你的连续记录就会增长。",
+    "none": "还没有连续记录",
+    "one": "1 次按时！",
+    "many": "连续 <n></n> 次按时！",
+    "bestIn": "你最好的记录在 {course}",
+    "startHint": "按时提交下一个活动，就能开始连续记录。",
+    "next": "再按时 {count} 次就能获得“{badge}”徽章！",
+    "allEarned": "你获得了所有连续徽章！",
+    "badges": {
+      "spark": "火花",
+      "flame": "火焰",
+      "blaze": "烈焰",
+      "fireStar": "火焰之星"
+    }
+  },
+  "stats": {
+    "avgScore": "平均分",
+    "nothingGraded": "还没有批改的作业",
+    "acrossCourses": "{count, plural, other {共 # 门课程}}",
+    "submitted": "已提交的作业",
+    "toGo": "还剩 {count} 个",
+    "coursesAhead": "领先的课程",
+    "aheadOf": "<n></n> / {total}",
+    "onTrack": "{count} 门进度正常",
+    "behind": "{count} 门落后",
+    "daysLeft": "剩余天数",
+    "ends": "{date} 结束"
+  },
+  "courseList": {
+    "title": "我的课程",
+    "clickHint": "点一门课程查看它的作业",
+    "empty": "没有找到学习表现",
+    "emptyHint": "下次每日更新后，你的课程会显示在这里。",
+    "perfect100": "满分 100！",
+    "superstar": "超级明星！",
+    "score": "分数",
+    "scoreGrade": "分数 · 等级 {grade}",
+    "scoreLine": "分数 <u>{score}%</u>",
+    "scoreNone": "分数 —",
+    "onTime": "{count} 次按时",
+    "viewAssignments": "查看作业"
+  },
+  "courseView": {
+    "facts": {
+      "course": "课程：",
+      "teacher": "老师：",
+      "score": "当前总分：",
+      "grade": "当前总等级：",
+      "daysLeft": "剩余天数：",
+      "duration": "时间段："
+    },
+    "gradableDone": "已完成 {pct}% 的计分活动（{total} 个中的 {done} 个）",
+    "allDone": "已完成 {pct}% 的全部活动（{total} 个中的 {done} 个）",
+    "nothingToComplete": "没有要完成的作业",
+    "streakRun": "{count, plural, other {连续 # 次按时提交}}",
+    "noStreak": "<b>还没有连续记录</b>——按时提交下一个活动就能开始。",
+    "countsLabel": "作业数量",
+    "stats": {
+      "total": "作业总数",
+      "excused": "免做",
+      "submitted": "已提交",
+      "upcoming": "即将到来",
+      "missed": "错过",
+      "passed": "通过",
+      "failed": "未通过",
+      "before": "提前提交",
+      "onTime": "按时提交",
+      "late": "迟交"
+    },
+    "noAssignments": "下次每日更新后会显示作业。",
+    "assignments": "作业",
+    "columns": {
+      "activityName": "活动名称",
+      "dueDate": "截止日期",
+      "submittedDate": "提交日期",
+      "timeSpent": "用时 (hh:mm:ss)",
+      "submittedStatus": "提交状态",
+      "score": "分数",
+      "grade": "等级",
+      "detailedStatus": "作业详情",
+      "status": "状态"
+    },
+    "status": {
+      "beforeTime": "提前",
+      "onTime": "按时",
+      "late": "迟交",
+      "missed": "错过",
+      "upcoming": "即将到来",
+      "excused": "免做"
+    },
+    "lateBy": "{count, plural, other {迟交 # 天}}",
+    "history": {
+      "title": "成绩历史",
+      "loading": "正在加载尝试记录",
+      "empty": "还没有尝试记录。",
+      "latest": "最新",
+      "columns": {
+        "date": "日期",
+        "visits": "访问次数",
+        "time": "时间",
+        "score": "分数",
+        "by": "评分人"
+      }
+    }
+  },
+  "goals": {
+    "saved": "目标已保存——目标是 {date} 前达到 {score}%",
+    "saveError": "无法保存你的目标。",
+    "title": "我的目标",
+    "setGoals": "设定我的目标",
+    "aim": "目标是<chip>平均分 {score}%</chip>，并在 <chip>{date}</chip> 前完成",
+    "avgPending": "作业批改后，你的平均分会显示在这里。",
+    "away": "离你的分数目标还差 {gap}%。",
+    "reachedFull": "目标已达成——继续保持。",
+    "reached": "目标已达成——继续保持",
+    "pastFinishNew": "已经过了完成日期——请设定新的日期。",
+    "aboutPerWeek": "每周在所有课程中完成大约 <b>{count, plural, other {# 个作业}}</b>，就能按时完成。",
+    "scoreGoal": "分数目标",
+    "ofScore": "/ {score}%",
+    "gapToGo": "还差 {gap}%",
+    "completion": "完成度",
+    "done": "已完成",
+    "roadLabel": "你已经完成了 {ov}%。今天的目标是 {exp}%。",
+    "today": "今天",
+    "targetToday": "今天的目标是 {exp}%",
+    "pastFinish": "已过完成日期",
+    "daysToFinish": "{count, plural, other {距离完成日期还有 # 天}}",
+    "due": "截止 {date}",
+    "week": {
+      "title": "本周目标",
+      "doneOf": "已完成 {done} / {total}",
+      "updated": "根据你的提交每天更新",
+      "empty": "本周没有要交的作业。",
+      "catchUp": "{course} · 补做",
+      "done": "已完成",
+      "overdue": "已逾期",
+      "cleared": "本周全部完成——你一直领先于目标。"
+    },
+    "byCourse": {
+      "title": "各课程目标",
+      "legend": "黑线 = 你的目标分数和今天的目标",
+      "score": "分数",
+      "finalGoal": "· 最终目标：{score}%",
+      "goalMet": "已达成目标",
+      "toGoal": "离目标还差 {gap}%",
+      "progress": "进度",
+      "pctDone": "已完成 {pct}%",
+      "targetToday": "· 今天的目标：{pct}%",
+      "targetMet": "已达成目标 · 领先 {gap}%",
+      "toTarget": "离今天的目标还差 {gap}%",
+      "left": "{count, plural, other {剩余作业}}",
+      "perWeek": "每周要完成的数量（{date} 前完成）",
+      "daysToFinish": "{count, plural, other {距离完成日期的天数}}",
+      "nextUp": "接下来"
+    },
+    "dialog": {
+      "intro": "选择你这个学期的目标。你随时可以修改。",
+      "targetScore": "目标平均分",
+      "belowSchool": "低于学校目标",
+      "letterSchool": "{letter} · 学校目标",
+      "alreadyThere": "你现在是 {avg}%——已经达到了。想的话可以定得更高！",
+      "toGo": "你现在是 {avg}%——还差 {gap}%。",
+      "finishBy": "完成所有课程的日期",
+      "recommended": "推荐 · 提前 2 周",
+      "courseEnd": "课程结束日期",
+      "pickDate": "选择日期",
+      "pickDateBy": "选择日期（{date} 前）",
+      "ownPlan": "按自己的计划完成",
+      "perWeekAll": "也就是在所有课程中每周大约完成 {count, plural, other {# 个作业}}。",
+      "reminders": "提醒和对比",
+      "compareTitle": "显示我和班级的对比",
+      "compareHelp": "绝不会显示其他人的名字和分数。",
+      "save": "保存目标"
+    }
+  },
+  "compare": {
+    "title": "你和班级的对比",
+    "private": "只有你能看到 · 绝不会显示其他同学的名字和分数",
+    "summary": "你在 <g>{total} 门课程中的 {above} 门</g>分数高于班级平均，并在 <g>{total} 门中的 {ahead} 门</g>进度比大多数同学快。",
+    "course": "课程",
+    "off": "班级对比已关闭",
+    "offHint": "打开后，可以看看你的分数和进度与课程里其他同学相比如何。",
+    "turnOn": "打开对比",
+    "turningOn": "正在打开…",
+    "notEnough": "同学还不够多，暂时无法对比",
+    "notEnoughHint": "只有数据足够时我们才会对比。绝不会显示其他人的名字和分数。",
+    "comparedWith": "与本学期 {count} 名同学对比",
+    "standing": "你的总体排名",
+    "ofClass": "（全班）",
+    "top": "前 {pct}%",
+    "bottom": "后 {pct}%",
+    "you": "你",
+    "class": "班级",
+    "classAverage": "班级平均",
+    "scale": {
+      "behind": "较落后",
+      "middle": "班级中间",
+      "leading": "班级领先"
+    },
+    "cards": {
+      "score": "分数",
+      "progress": "进度",
+      "onTime": "按时提交"
+    },
+    "verdicts": {
+      "scoreHigh": "高于班上 {pct}% 的同学",
+      "scoreMid": "在班级中间水平（{pct}%）",
+      "scoreLow": "低于班上 {pct}% 的同学——还有进步空间",
+      "paceHigh": "进度快于班上 {pct}% 的同学",
+      "paceMid": "和班级中间的进度一样（{pct}%）",
+      "paceLow": "班上 {pct}% 的同学进度更快",
+      "timeHigh": "比班上 {pct}% 的同学更准时",
+      "timeMid": "和大多数同学一样准时（{pct}%）",
+      "timeLow": "大多数同学更常按时提交"
+    },
+    "dist": {
+      "title": "班级分布",
+      "hint": "每个进度段的人数",
+      "label": "{count} 名同学 · 你在：{band}"
+    },
+    "bands": {
+      "wellBehind": "落后很多",
+      "behind": "落后",
+      "onSchedule": "按计划",
+      "ahead": "领先",
+      "wellAhead": "领先很多"
+    },
+    "tip": {
+      "ahead": "在 {date} 前完成，就能继续领先本课程 {pct}% 的同学。",
+      "perWeek": "每周完成 {count, plural, other {# 个作业}}，几周内你就能超过班级平均。",
+      "general": "每周多完成几个作业，几周内你就能超过班级平均。"
+    },
+    "glance": {
+      "title": "所有课程一览",
+      "columns": {
+        "course": "课程",
+        "yourScore": "你的分数",
+        "classAvg": "班级平均",
+        "yourProgress": "你的进度",
+        "standing": "你的排名"
+      }
+    }
+  }
+}

@@ -1,0 +1,173 @@
+{
+  "views": {
+    "today": "Today",
+    "week": "Week",
+    "month": "Month"
+  },
+  "legend": {
+    "title": "Legend:",
+    "assignment": "Assignment",
+    "class": "Class",
+    "schoolActivity": "School Activity",
+    "holiday": "Holiday"
+  },
+  "loading": "Loading your calendar…",
+  "loadError": "Couldn't load your calendar. Please try again shortly.",
+  "backToMonth": "Back to month",
+  "backToWeek": "Back to week",
+  "timeOfDay": {
+    "morning": "Morning",
+    "afternoon": "Afternoon",
+    "evening": "Evening",
+    "night": "Night"
+  },
+  "filters": {
+    "today": "Today",
+    "liveGroup": "Live Class & School Activity",
+    "upcomingGroup": "Upcoming Class & School Activity",
+    "completedGroup": "Completed Class & School Activity",
+    "noClassOrActivity": "No Class & School Activity",
+    "myCourses": "My Courses",
+    "hideCourse": "Hide course",
+    "showCourse": "Show course",
+    "changeCourseColor": "Change course color",
+    "pickColor": "Pick color {color}",
+    "assignments": "Assignments",
+    "pending": "Pending",
+    "submitted": "Submitted",
+    "upcoming": "Upcoming",
+    "classStatus": "Class Status",
+    "live": "Live",
+    "expired": "Expired",
+    "missedClass": "Missed Class",
+    "lateJoinClass": "Late Join Class",
+    "events": "Events",
+    "schoolActivities": "School Activities",
+    "schoolEvents": "School Events",
+    "holidays": "Holidays",
+    "holidaysAndBreaks": "Holidays & Breaks"
+  },
+  "nothingScheduledOn": "Nothing scheduled for {date}.",
+  "nothingScheduledDay": "Nothing scheduled for this day.",
+  "untitled": "Untitled",
+  "moreCount": "+{count} more",
+  "allDay": "All day",
+  "badges": {
+    "live": "LIVE",
+    "upcoming": "UPCOMING",
+    "expired": "EXPIRED",
+    "missed": "MISSED",
+    "lateJoin": "LATE JOIN"
+  },
+  "assignmentStatus": {
+    "submitted": "Submitted",
+    "upcoming": "Upcoming",
+    "pending": "Pending"
+  },
+  "assignmentTiming": {
+    "onTime": "On Time",
+    "early": "Early ({count, plural, one {# Day} other {# Days}})",
+    "late": "Late ({count, plural, one {# Day} other {# Days}})"
+  },
+  "eventKind": {
+    "holiday": "Holiday / Break",
+    "schoolEvent": "School Event",
+    "activity": "Activity"
+  },
+  "eventDetails": "Event details",
+  "attempt": "Attempt",
+  "detail": {
+    "date": "Date",
+    "time": "Time",
+    "details": "Details",
+    "teacher": "Teacher",
+    "status": "Status",
+    "duration": "Duration",
+    "late": "Late",
+    "lateBy": "Late by",
+    "with": "With",
+    "batch": "Batch",
+    "grade": "Grade",
+    "course": "Course",
+    "dueDate": "Due Date",
+    "timing": "Timing",
+    "submitted": "Submitted"
+  },
+  "status": {
+    "live": "Live",
+    "upcoming": "Upcoming",
+    "missed": "Missed",
+    "lateJoin": "Late Join",
+    "expired": "Expired"
+  },
+  "duration": {
+    "minutes": "{count, plural, one {# minute} other {# minutes}}",
+    "hours": "{count, plural, one {# hour} other {# hours}}",
+    "mins": "{count, plural, one {# min} other {# mins}}",
+    "secs": "{count, plural, one {# sec} other {# secs}}"
+  },
+  "activity": {
+    "title": "Activity details",
+    "attachment": "Attachment",
+    "timeRemaining": "Time Remaining",
+    "countdown": {
+      "days": "Days",
+      "hours": "Hours",
+      "min": "Min",
+      "sec": "Sec"
+    },
+    "couldNotOpen": "This could not be opened just now. Please try again in a minute.",
+    "cannotJoin": "You cannot join this event right now.",
+    "linkCopied": "Class link copied",
+    "copyFailed": "Could not copy the link. Please copy it from the box.",
+    "scheduledFor": "The class {name} is scheduled for {date}",
+    "joinClassNow": "Join Class Now",
+    "completed": "Your activity has been completed.",
+    "loadingDetails": "Loading details…",
+    "joinLinkNotice": "Your joining link will be displayed {minutes} minutes before the scheduled time.",
+    "viewAttachment": "View Attachment",
+    "opening": "Opening…",
+    "joinEvent": "Join Event"
+  },
+  "join": {
+    "title": "Join class",
+    "almostThere": "Almost there, please wait…",
+    "couldNotOpen": "Couldn’t open this class right now. Please try again shortly.",
+    "trainingScheduled": "The {className} | {subjectName} is scheduled for {date}.",
+    "trainingJoinOn": "You can join the training on {date}.",
+    "status": {
+      "live": "Live Now",
+      "upcoming": "Upcoming",
+      "ended": "Ended",
+      "unavailable": "Unavailable"
+    },
+    "joinIssues": "If you are facing issues with joining, copy the class link below and paste it into a new tab on your browser:",
+    "copied": "Copied!",
+    "copyClassLink": "Copy Class Link",
+    "joinClass": "Join Class"
+  },
+  "k5": {
+    "noClass": {
+      "holidayTitle": "Holiday",
+      "holidayText": "It's a holiday. No school today!",
+      "weekendTitle": "Weekend!",
+      "weekendText": "It's the weekend. No school today!",
+      "studyTitle": "No live classes",
+      "studyText": "Keep going with your courses today!",
+      "freeTitle": "No classes!",
+      "freeText": "There are no classes today. Enjoy your free day!",
+      "freeTextNamed": "There are no classes today. Enjoy your free day, {name}!"
+    },
+    "summary": {
+      "holiday": "{name} · No school",
+      "classes": "{count, plural, one {# class} other {# classes}}",
+      "classesLive": "{count, plural, one {# class} other {# classes}} · {name} is live now!",
+      "classesDone": "{count, plural, one {# class} other {# classes}} · all done",
+      "assignmentsDue": "{count, plural, one {# assignment} other {# assignments}} due",
+      "schoolActivity": "School activity",
+      "weekend": "Weekend! No school.",
+      "selfStudy": "No live classes. Course work day!",
+      "free": "No classes today. Free day!"
+    }
+  }
+}

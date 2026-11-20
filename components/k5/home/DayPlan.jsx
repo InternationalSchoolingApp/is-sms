@@ -4,6 +4,8 @@ import { HighGames } from "@/components/k5/games/HighGames";
 import { K5Games } from "@/components/k5/games/K5Games";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { addDays, format } from "date-fns";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { CalendarDays, Check, ChevronRight, Clock, Flag, PartyPopper, Smile, Star, Video } from "lucide-react";
 import { CLUE_RING, K5_PRIMARY_BTN, PlanHeader, PlanTile, StatusPills, SubjectTile } from "@/components/k5/home/k5Bits";
 import {
@@ -45,6 +47,8 @@ function Teacher({ event }) {
 
 /** One class in the Day plan: Done sticker / LIVE NOW + Join / Starts at. */
 export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
+  const t = useTranslations("k5Home.day");
+  const locale = useDateFnsLocale();
   const status = event.k5Status;
   const joinable = status !== "done" && Boolean(event.url);
   return (
@@ -59,24 +63,24 @@ export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
       <button type="button" onClick={() => onOpen(event)} className="flex flex-[1_1_220px] cursor-pointer flex-col gap-[3px] border-none bg-transparent p-0 text-left">
         <span className="flex items-center gap-1.5 self-start rounded-full bg-k5-card px-2.5 py-[3px] text-[13px] font-black text-k5-ink">
           <Video className="h-3.5 w-3.5" aria-hidden="true" />
-          {status === "live" ? "Live Class" : "Class"}
+          {status === "live" ? t("liveClass") : t("class")}
         </span>
         <h3 className="k5h-ctitle m-0 font-k5-display text-[26px] font-semibold leading-[1.1]">{classTitle(event)}</h3>
-        <p className="m-0 text-[17px] font-extrabold text-k5-mut">{timeRange(event)}</p>
+        <p className="m-0 text-[17px] font-extrabold text-k5-mut">{timeRange(event, locale)}</p>
         <Teacher event={event} />
       </button>
 
       {status === "done" && (
         <span className="flex flex-none -rotate-[5deg] items-center gap-2 rounded-[18px] bg-k5-ac px-4 py-2 font-k5-display text-[22px] font-semibold text-white shadow-[0_5px_0_var(--k5-acd)]">
           <Check className="h-[22px] w-[22px]" strokeWidth={3} aria-hidden="true" />
-          Done!
+          {t("done")}
         </span>
       )}
       {status === "live" && (
         <div className="flex flex-none flex-col items-center gap-2">
           <span className="flex items-center gap-1.5 text-sm font-black text-k5-gx">
             <span className="block h-2.5 w-2.5 k5-live-dot rounded-full bg-k5-gi" />
-            LIVE NOW
+            {t("liveNow")}
           </span>
           {joinable && (
             <button
@@ -87,7 +91,7 @@ export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
               }`}
             >
               <Video className="h-6 w-6" aria-hidden="true" />
-              Join class
+              {t("joinClass")}
             </button>
           )}
         </div>
@@ -95,7 +99,7 @@ export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
       {status === "next" && (
         <span className="flex flex-none items-center gap-1.5 rounded-full border-[3px] border-k5-yb bg-k5-card px-3.5 py-2 text-[15px] font-black text-k5-yx">
           <Clock className="h-4 w-4" aria-hidden="true" />
-          Starts {timeLabel(event)}
+          {t("starts", { time: timeLabel(event, locale) })}
         </span>
       )}
     </article>
@@ -103,6 +107,8 @@ export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
 }
 
 function ActivityCard({ event, clue, onOpen }) {
+  const t = useTranslations("k5Home.day");
+  const locale = useDateFnsLocale();
   return (
     <button
       type="button"
@@ -115,16 +121,16 @@ function ActivityCard({ event, clue, onOpen }) {
       </span>
       <span className="flex flex-[1_1_220px] flex-col gap-[3px]">
         <span className="self-start rounded-full px-2.5 py-[3px] text-[13px] font-black text-white" style={{ background: C.activityText }}>
-          School Activity
+          {t("schoolActivity")}
         </span>
-        <span className="font-k5-display text-[24px] font-semibold leading-[1.1] text-k5-ink">{activityTitle(event)}</span>
-        <span className="text-[17px] font-extrabold text-k5-mut">{timeRange(event)}</span>
+        <span className="font-k5-display text-[24px] font-semibold leading-[1.1] text-k5-ink">{event.title || event.eventTitle ? activityTitle(event) : t("schoolActivityUntitled")}</span>
+        <span className="text-[17px] font-extrabold text-k5-mut">{timeRange(event, locale)}</span>
         <Teacher event={event} />
       </span>
       {event.k5Status === "live" && (
         <span className="flex flex-none items-center gap-1.5 text-sm font-black text-k5-gx">
           <span className="block h-2.5 w-2.5 k5-live-dot rounded-full bg-k5-gi" />
-          LIVE NOW
+          {t("liveNow")}
         </span>
       )}
     </button>
@@ -138,12 +144,13 @@ const ASSIGNMENT_PILL = {
 };
 
 function Assignments({ items, clue, onOpen }) {
+  const t = useTranslations("k5Home.day");
   if (!items.length) return null;
   return (
     <div className={`flex flex-col gap-2 rounded-[24px] bg-k5-soft p-3.5 ${clue === "assignment" ? CLUE_RING : ""}`}>
       <h3 className="m-0 flex items-center gap-2 font-k5-display text-xl font-semibold">
         <span aria-hidden="true" className="block h-4 w-4 rounded-full" style={{ background: C.assignment }} />
-        Assignments
+        {t("assignments")}
       </h3>
       {items.map((a) => (
         <button
@@ -153,10 +160,10 @@ function Assignments({ items, clue, onOpen }) {
           className="flex min-h-11 cursor-pointer flex-wrap items-center gap-3 rounded-2xl border-none bg-k5-card px-3 py-2 text-left"
         >
           <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-base font-black text-k5-ink">{a.title || a.eventTitle || "Assignment"}</span>
+            <span className="text-base font-black text-k5-ink">{a.title || a.eventTitle || t("assignment")}</span>
             {a.subjectName && <span className="text-sm font-bold text-k5-mut">{cleanCourseLabel(a.subjectName)}</span>}
           </span>
-          <span className={`flex-none rounded-full px-3 py-1 text-[13px] font-black ${ASSIGNMENT_PILL[a.k5Assignment.status]}`}>{a.k5Assignment.label}</span>
+          <span className={`flex-none rounded-full px-3 py-1 text-[13px] font-black ${ASSIGNMENT_PILL[a.k5Assignment.status]}`}>{t(`assignmentStatus.${a.k5Assignment.status}`)}</span>
         </button>
       ))}
     </div>
@@ -165,6 +172,7 @@ function Assignments({ items, clue, onOpen }) {
 
 /** Reason card for a day without classes (holiday / weekend / free day / self-study day). */
 export function NoClassDay({ reason, isToday, onOpen }) {
+  const t = useTranslations("k5Home.day");
   const Icon = reason.kind === "holiday" ? Flag : reason.kind === "study" ? Star : Smile;
   const Wrap = onOpen ? "button" : "div";
   // A holiday card is red like the Holiday colour clue; the other reasons keep the green card.
@@ -182,7 +190,7 @@ export function NoClassDay({ reason, isToday, onOpen }) {
       </span>
       <div className="flex flex-[1_1_220px] flex-col">
         <span className="font-k5-display text-[28px] font-semibold text-k5-ink">
-          {reason.kind === "holiday" ? reason.title : isToday ? (reason.kind === "study" ? "No live classes today" : "No classes today!") : reason.title}
+          {reason.kind === "holiday" ? reason.title : isToday ? (reason.kind === "study" ? t("noLiveClassesToday") : t("noClassesToday")) : reason.title}
         </span>
         {/* <span className={`text-[17px] font-extrabold ${holiday ? "text-k5-ri" : "text-k5-gx"}`}>{reason.text}</span> */}
       </div>
@@ -191,24 +199,26 @@ export function NoClassDay({ reason, isToday, onOpen }) {
 }
 
 function TomorrowCard({ dateKey, days, isSelfStudy, onPeek }) {
+  const t = useTranslations("k5Home.day");
+  const locale = useDateFnsLocale();
   const tomorrow = addDays(keyToDate(dateKey), 1);
   const day = dayAt(days, dayKey(tomorrow));
   const n = day.classes.length;
   const free = !n && !day.holidays.length && !isWeekendKey(dayKey(tomorrow));
-  const title = n ? `Tomorrow: ${n} class${n === 1 ? "" : "es"}` : free && !isSelfStudy ? "Tomorrow: no classes! Free day!" : "Tomorrow: no classes";
+  const title = n ? t("tomorrowClasses", { count: n }) : free && !isSelfStudy ? t("tomorrowFree") : t("tomorrowNone");
   return (
     <div className="grid grid-cols-[84px_minmax(0,1fr)] items-start gap-3.5 max-[560px]:grid-cols-1">
-      <div className="pt-[22px] text-right text-base font-black text-k5-mut max-[560px]:hidden">{format(tomorrow, "EEEE")}</div>
+      <div className="pt-[22px] text-right text-base font-black text-k5-mut max-[560px]:hidden">{format(tomorrow, "EEEE", { locale })}</div>
       <div className="flex flex-wrap items-center gap-3.5 rounded-[24px] border-[3px] border-k5-yb bg-k5-yt px-[18px] py-4">
         <span className="flex h-14 w-14 flex-none items-center justify-center rounded-[18px] bg-k5-ac">
           <CalendarDays className="h-7 w-7 text-white" aria-hidden="true" />
         </span>
         <div className="flex flex-[1_1_200px] flex-col">
           <span className="font-k5-display text-[22px] font-semibold">{title}</span>
-          <span className="text-[15px] font-extrabold text-k5-yx">{format(tomorrow, "EEEE, MMMM d")}</span>
+          <span className="text-[15px] font-extrabold text-k5-yx">{format(tomorrow, "EEEE, MMMM d", { locale })}</span>
         </div>
         <button type="button" onClick={() => onPeek(tomorrow)} className={K5_PRIMARY_BTN}>
-          Peek
+          {t("peek")}
           <ChevronRight className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
         </button>
       </div>
@@ -225,6 +235,9 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
   // isMiddle follows the picked look (true for Mature too): no "today" star in either. The brain games follow the grade.
   const { isMiddle, isHigh: lookIsHigh, gradeIsHigh } = useDashboardContext();
   const isHigh = gradeIsHigh ?? lookIsHigh;
+  const t = useTranslations("k5Home.day");
+  const tCalendar = useTranslations("calendar");
+  const locale = useDateFnsLocale();
   const day = dayAt(days, dateKey);
   const date = keyToDate(dateKey);
   const isToday = dateKey === todayKey;
@@ -239,18 +252,18 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
   // already over never opens them; see gameAccess (utils/k5Calendar.js) for the full order.
   const dayOver = dateKey < todayKey;
   const access = gameAccess(days, dateKey, todayKey);
-  const subtitle = nClasses ? `${nClasses} class${nClasses === 1 ? "" : "es"}${isToday ? " today" : ""}` : "No classes";
+  const subtitle = nClasses ? (isToday ? t("classesToday", { count: nClasses }) : t("classes", { count: nClasses })) : t("noClasses");
   // The dotted "now" line separates what is over (and live) from what is still to come: right before the first upcoming item.
   const nowIndex = isToday ? items.findIndex((it) => groupOf(it.e) === 2) : -1;
   return (
     <div className="flex flex-col gap-4">
       <PlanHeader
         tile={
-          <PlanTile top={format(date, "EEE").toUpperCase()} big={format(date, "d")}>
+          <PlanTile top={format(date, "EEE", { locale }).toUpperCase()} big={format(date, "d", { locale })}>
             {isToday && !isMiddle && <Star className="absolute -right-3 -top-3 h-[30px] w-[30px] fill-[#FFC531] text-[#C9930A]" aria-hidden="true" />}
           </PlanTile>
         }
-        title={isToday ? "Today's Plan" : `${format(date, "EEEE")}'s Plan`}
+        title={isToday ? t("todaysPlan") : t("dayPlan", { day: format(date, "EEEE", { locale }) })}
         subtitle={subtitle}
       >
         {/* Mobile only (mockup .calbtn): the mini calendar is hidden there, this opens it. */}
@@ -258,8 +271,8 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
           <button
             type="button"
             onClick={onShowCalendar}
-            aria-label="Show calendar"
-            title="Show calendar"
+            aria-label={t("showCalendar")}
+            title={t("showCalendar")}
             className="hidden h-[52px] w-[52px] flex-none cursor-pointer items-center justify-center rounded-2xl border-[3px] border-k5-line bg-k5-card text-k5-acx shadow-k5-btn max-[760px]:flex"
           >
             <CalendarDays className="h-6 w-6" strokeWidth={2.4} aria-hidden="true" />
@@ -280,7 +293,7 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
             style={{ background: C.holiday }}
           >
             <Flag className="h-4 w-4" aria-hidden="true" />
-            {h.title || h.eventTitle || "Holiday"}
+            {h.title || h.eventTitle || t("holiday")}
           </button>
         ))}
 
@@ -290,12 +303,12 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
             <div key={it.e.id} className="flex flex-col gap-3.5">
               {i === nowIndex && (
                 <div className="grid grid-cols-[84px_minmax(0,1fr)] items-center gap-3.5 max-[560px]:grid-cols-1">
-                  <div className="text-right text-base font-black text-[#9A3412] max-[560px]:text-left">{format(now, "h:mm a")}</div>
+                  <div className="text-right text-base font-black text-[#9A3412] max-[560px]:text-left">{format(now, "h:mm a", { locale })}</div>
                   <span aria-hidden="true" className="block h-0 flex-1 border-t-4 border-dotted border-[#E8875A]" />
                 </div>
               )}
               <div className="grid grid-cols-[84px_minmax(0,1fr)] items-start gap-3.5 max-[560px]:grid-cols-1">
-                <div className="pt-[22px] text-right text-base font-black text-k5-mut max-[560px]:pt-0 max-[560px]:text-left">{timeLabel(it.e)}</div>
+                <div className="pt-[22px] text-right text-base font-black text-k5-mut max-[560px]:pt-0 max-[560px]:text-left">{timeLabel(it.e, locale)}</div>
                 {it.kind === "class" ? (
                   <ClassCard event={it.e} clue={clue} isPreK={isPreK} onJoin={onJoin} onOpen={onOpen} />
                 ) : (
@@ -307,7 +320,7 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
         </div>
       ) : (
         <>
-          <NoClassDay reason={noClassReason(dateKey, day, { isSelfStudy, firstName })} isToday={isToday} onOpen={day.holidays.length ? () => onOpen(day.holidays[0]) : undefined} />
+          <NoClassDay reason={noClassReason(dateKey, day, { isSelfStudy, firstName, t: tCalendar })} isToday={isToday} onOpen={day.holidays.length ? () => onOpen(day.holidays[0]) : undefined} />
           {/* Grade 9–12 has its own "Brain Games" (High.dc.html); the other looks share the K–5 games. */}
           {isHigh ? <HighGames locked={access.locked} past={dayOver} /> : <K5Games locked={access.locked} past={dayOver} pending={access.reason === "pending"} />}
         </>

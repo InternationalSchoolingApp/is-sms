@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MessagesSquare } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { buildChatSignInUrl } from "@/utils/chatLink";
@@ -52,6 +53,7 @@ const BTN = "min-h-11 cursor-pointer rounded-xl border px-5 text-base font-semib
  */
 export function OnboardingVideoModal({ videoUrl }) {
   const { context } = useDashboardContext();
+  const t = useTranslations("home.onboardingVideo");
   const [closed, setClosed] = useState(false);
   const [ended, setEnded] = useState(false);
   const hostRef = useRef(null);
@@ -101,14 +103,14 @@ export function OnboardingVideoModal({ videoUrl }) {
     <Dialog open disablePointerDismissal>
       <DialogContent showCloseButton={false} data-blocking-popup="" className="gap-0 overflow-hidden p-0 text-center sm:max-w-3xl">
         <div className="bg-primary px-4 py-2 text-white">
-          <DialogTitle className="m-0 text-lg font-semibold">Welcome! {context?.userName}</DialogTitle>
+          <DialogTitle className="m-0 text-lg font-semibold">{t("welcome", { name: context?.userName ?? "" })}</DialogTitle>
         </div>
         <div className="flex flex-col gap-2 p-2">
           {chatHref && (
             <div className="flex justify-end">
               <a href={chatHref} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-semibold text-primary no-underline">
                 <MessagesSquare className="h-4 w-4" aria-hidden="true" />
-                Talk to School Administration
+                {t("talkToAdmin")}
               </a>
             </div>
           )}
@@ -126,10 +128,10 @@ export function OnboardingVideoModal({ videoUrl }) {
             }}
             className={`${BTN} ${ended ? "border-primary bg-white text-primary" : "border-slate-300 bg-white text-slate-500"}`}
           >
-            Watch Again
+            {t("watchAgain")}
           </button>
           <button type="button" disabled={!ended} onClick={() => setClosed(true)} className={`${BTN} ${ended ? "border-primary bg-primary text-white" : "border-slate-300 bg-slate-200 text-slate-500"}`}>
-            Book System Training
+            {t("bookTraining")}
           </button>
         </div>
       </DialogContent>

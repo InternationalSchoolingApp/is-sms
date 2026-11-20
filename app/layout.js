@@ -13,6 +13,14 @@ import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import CampaignCookieInitializer from "@/components/CampaignCookieInitializer";
 import ConsentBanner from "@/components/ConsentBanner";
 import { TabAccount } from "@/components/auth/TabAccount";
+import { IntlClientProvider } from "@/components/i18n/IntlClientProvider";
+import { loadMessages } from "@/i18n/loadMessages";
+import { DEFAULT_LOCALE, INTL_TIME_ZONE } from "@/i18n/config";
+
+// Outside the student dashboard everything stays English: the few components the dashboard shares with the
+// enrollment pages (dialogs, payment modals) translate through the "common"/"shared"/"sharedCommon" namespaces, so those are all
+// the root provides. The dashboard layout nests its own provider with the student's language.
+const ROOT_NAMESPACES = ["common", "shared", "sharedCommon"];
 
 
 const openSans = Open_Sans({
@@ -39,6 +47,7 @@ export const viewport = {
 
 export default async function RootLayout({ children }) {
   const session = publicSession(await getAccountSession());
+  const rootMessages = await loadMessages(DEFAULT_LOCALE, ROOT_NAMESPACES);
   return (
     <html lang="en" className={`${openSans.variable} ${caveat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
@@ -50,15 +59,17 @@ export default async function RootLayout({ children }) {
         <AnalyticsScripts />
         <DisableZoom />
         <AuthSessionProvider session={session}>
-          <QueryProvider>
-            <PageTitle />
-            <MaintenanceBanner />
-            <CampaignCookieInitializer/>
-            <ConsentBanner />
-            {children}
-          </QueryProvider>
-          <GlobalLoader />
-          <AppToaster />
+          <IntlClientProvider locale={DEFAULT_LOCALE} messages={rootMessages} timeZone={INTL_TIME_ZONE}>
+            <QueryProvider>
+              <PageTitle />
+              <MaintenanceBanner />
+              <CampaignCookieInitializer/>
+              <ConsentBanner />
+              {children}
+            </QueryProvider>
+            <GlobalLoader />
+            <AppToaster />
+          </IntlClientProvider>
         </AuthSessionProvider>
         <BackendSwitcher />
       </body>

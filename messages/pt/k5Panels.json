@@ -1,0 +1,112 @@
+{
+  "announcements": {
+    "title": "Avisos",
+    "newCount": "{count, plural, one {# novo} other {# novos}}",
+    "allRead": "Tudo lido",
+    "empty": "Nenhum aviso ainda.",
+    "new": "Novo"
+  },
+  "announcement": {
+    "startDate": "Data de início",
+    "thanks": "Obrigado por confirmar",
+    "viewAttachment": "Ver anexo",
+    "submitting": "Enviando…",
+    "acknowledge": "Confirme a leitura"
+  },
+  "news": {
+    "title": "Notícias",
+    "newCount": "{count, plural, one {# nova} other {# novas}}",
+    "fresh": "Histórias fresquinhas",
+    "empty": "Nenhuma notícia ainda.",
+    "readStory": "Ler a história",
+    "pages": "Páginas de notícias",
+    "opening": "Abrindo…",
+    "viewAll": "Ver todas as notícias"
+  },
+  "newsAll": {
+    "title": "Últimas notícias",
+    "empty": "Nenhuma notícia disponível.",
+    "loadMore": "Carregar mais notícias",
+    "readTime": "Tempo de leitura: {minutes} min",
+    "source": "Fonte",
+    "readFull": "Ler a matéria completa →"
+  },
+  "diary": {
+    "title": "Meu diário da escola",
+    "subtitle": "Recados da escola, todos os dias",
+    "notesFrom": "Recados de {name}",
+    "backToList": "Voltar para a lista",
+    "schoolDiary": "Diário da escola",
+    "teacherDiary": "Diário do professor",
+    "readOnly": "Só seu professor e sua escola escrevem neste diário.",
+    "loading": "Carregando seu diário",
+    "loadingMore": "Carregando mais recados",
+    "loadingNotes": "Carregando os recados",
+    "loadingOlder": "Carregando recados antigos",
+    "noNotes": "Nenhum recado ainda.",
+    "schoolNote": "🏫 Recado da escola",
+    "teacherNote": "📝 Recado do professor",
+    "note": "✏️ Recado",
+    "salutation": {
+      "mr": "Sr.",
+      "ms": "Sra."
+    }
+  },
+  "password": {
+    "title": "Alterar senha",
+    "old": "Senha atual",
+    "new": "Nova senha",
+    "confirm": "Confirme a senha",
+    "show": "Mostrar senha",
+    "hide": "Esconder senha",
+    "rules": {
+      "length": "8 a 20 caracteres",
+      "upper": "Pelo menos 1 letra maiúscula",
+      "lower": "Pelo menos 1 letra minúscula",
+      "number": "Pelo menos 1 número",
+      "special": "Pelo menos 1 caractere especial (! @ # $ % & *)",
+      "different": "Diferente da senha atual"
+    },
+    "mismatch": "As senhas não são iguais.",
+    "change": "Alterar",
+    "changing": "Alterando…",
+    "note": "<b>Observação:</b> a senha será alterada no seu Sistema de Gestão Escolar (SMS). A senha do seu Sistema de Gestão de Aprendizagem (LMS) continuará a mesma.",
+    "sessionExpired": "Sua sessão expirou. Entre novamente.",
+    "failed": "Não foi possível alterar a senha.",
+    "changed": "Senha alterada com sucesso!",
+    "changedDummy": "Senha alterada com sucesso"
+  },
+  "training": {
+    "title": "Treinamento do sistema da escola",
+    "intro": "Um coordenador simpático vai mostrar seu novo painel, para você se sentir confiante desde o primeiro dia.",
+    "isOn": "Seu treinamento do sistema da escola será em",
+    "durationZoom": "30 minutos · videochamada no Zoom",
+    "rescheduledTitle": "Seu treinamento do sistema da escola foi remarcado.",
+    "rescheduledText": "Clique abaixo e escolha outra data para o treinamento.",
+    "reschedule": "Remarcar",
+    "join": "Entrar no treinamento",
+    "firstFreeOnly": "Só a primeira remarcação é gratuita.",
+    "talkToUs": "Fale com a gente",
+    "rescheduleTitle": "Remarque seu treinamento do sistema da escola",
+    "scheduleOn": "Quero marcar meu treinamento do sistema da escola para",
+    "minutes30": "30 minutos",
+    "zoomCall": "Videochamada no Zoom",
+    "firstFree": "Primeira remarcação grátis",
+    "pickTime": "Escolha um horário",
+    "pickDay": "Escolha um dia no calendário para ver os horários livres.",
+    "loadingTimes": "Carregando os horários livres",
+    "noSlot": "Nenhum horário disponível.",
+    "pickAnother": "Escolha outra data.",
+    "newTime": "Novo horário do treinamento",
+    "feeNote": "Lembre-se: só a primeira remarcação é gratuita. Depois disso, o treinamento do sistema da escola será pago.",
+    "confirmText": "Você vai remarcar seu treinamento do sistema da escola. Lembre-se: se o treinamento for remarcado de novo depois disso, será cobrada uma taxa.",
+    "newTimeLine": "Novo horário do treinamento: <b>{time}</b>",
+    "yesReschedule": "Sim, remarcar",
+    "hello": "Olá, {name}",
+    "isOnLine": "Seu treinamento do sistema da escola será em <b>{line}</b>.",
+    "usedFree": "Você já usou sua única remarcação gratuita do treinamento do sistema da escola.",
+    "essential": "Participar deste treinamento é essencial para começar seus estudos. Para dúvidas ou remarcações, fale com a Administração da Escola ou escreva para <link>{email}</link>",
+    "okGotIt": "OK, entendi",
+    "talkToAdmin": "Falar com a Administração da Escola"
+  }
+}

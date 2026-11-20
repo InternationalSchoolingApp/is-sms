@@ -1,0 +1,116 @@
+{
+  "reEnrollmentLoadFailed": "Could not load your re-enrollment details.",
+  "completeProfile": {
+    "title": "Complete Your Profile",
+    "required": "Required",
+    "unknownField": "Unknown field",
+    "fieldsNeedAttention": "{count, plural, one {# field needs your attention} other {# fields need your attention}}",
+    "mandatoryNote": "Some fields are required. Please complete them to continue.",
+    "later": "Later",
+    "goToProfile": "Go to My Profile"
+  },
+  "graduation": {
+    "title": "You're invited to the Graduation Ceremony! 🎓",
+    "registerBy": "Register by {date} to join us.",
+    "attendAs": "Will you attend as",
+    "options": {
+      "graduate": "Graduate",
+      "attendee": "Attendee",
+      "performer": "Performer"
+    },
+    "continue": "Continue to registration"
+  },
+  "onboardingVideo": {
+    "welcome": "Welcome! {name}",
+    "talkToAdmin": "Talk to School Administration",
+    "watchAgain": "Watch Again",
+    "bookTraining": "Book System Training"
+  },
+  "outlook": {
+    "copied": "Copied",
+    "copyFailed": "Could not copy. Please copy it by hand.",
+    "hidePassword": "Hide password",
+    "showPassword": "Show password",
+    "copyLabel": "Copy {label}",
+    "title": "Activate your school email",
+    "description": "This is your official school email on Outlook. We will send class schedules, payment updates and announcements to this email. Log in and activate it immediately.",
+    "schoolEmail": "School Email: {email}",
+    "temporaryPassword": "Temporary Password",
+    "loginOnce": "Log in once with these details, then choose your own password.",
+    "activate": "Activate your school email",
+    "later": "Do It Later",
+    "needHelp": "Need help?",
+    "whatsapp": "WhatsApp us",
+    "unableToProceed": "Unable to proceed"
+  },
+  "reserveSeat": {
+    "enrollGroupLearning": "Enroll for {year} Group Learning",
+    "enrollNextGrade": "Enroll in Next Grade",
+    "reserveSeat": "Reserve Seat",
+    "acceptReEnroll": "Re-Enroll Now For The Next Grade",
+    "acceptReserve": "Reserve a Seat Now For Next Grade",
+    "limitedOffer": "This offer is valid for a limited time only!",
+    "countdown": {
+      "days": "Days",
+      "hours": "Hours",
+      "minutes": "Minutes",
+      "seconds": "Seconds"
+    },
+    "congratulations": "Congratulations!",
+    "awesome": "Awesome!",
+    "hi": "Hi {name}!",
+    "eligible": "Now you are eligible for re-enrollment for the next grade",
+    "exclusiveReEnrollment": "EXCLUSIVE RE-ENROLLMENT OFFER",
+    "exclusiveOneTime": "EXCLUSIVE ONE-TIME OFFER",
+    "specialDiscount": "You get a special discount of",
+    "off": "OFF",
+    "maybeLater": "Maybe Later",
+    "readyFor": "Ready for {grade}?",
+    "feeTitleGroupLearning": "Enroll for {year} Group Learning Now",
+    "feeTitlePayCourseFee": "Pay Course Fee For {grade}",
+    "feeTitleReserve": "Reserve A Seat For Next Grade",
+    "totalFee": "Total Fee",
+    "oneTimeDiscount": "One Time Discount",
+    "progressionDiscount": "Progression Discount",
+    "additionalDiscount": "Additional Discount",
+    "payableFee": "Payable Fee (USD)",
+    "feeNoteGrade": "*This payable fee is for {grade}",
+    "feeNoteGradeCredits": "*This payable fee is for {grade} for {credits} regular credits.",
+    "feeNoteReserve": "*This fee will be deducted from your Course Fee at the time of re-enrollment",
+    "proceedToPay": "Proceed to Pay",
+    "needHelp": "Need Any Help?",
+    "paymentReceived": "Payment received.",
+    "somethingWrong": "Something went wrong",
+    "paymentProcessing": "Payment is under process...",
+    "oops": "Oops!",
+    "paymentIncomplete": "Payment Incomplete",
+    "underReview": "Your payment is under review.",
+    "underReviewDetail": "Your fee status will be updated once the payment is received."
+  },
+  "systemTraining": {
+    "hello": "Hello {name}!",
+    "welcomeAlt": "Welcome",
+    "welcomeLine1": "Welcome to the",
+    "welcomeLine2": "International Schooling Family!",
+    "title": "School System Training",
+    "liveChat": "Live Chat with School Administration",
+    "rescheduledLine1": "Your school System Training has been rescheduled.",
+    "rescheduledLine2": "Please click below and select another date for the training.",
+    "reschedule": "Reschedule",
+    "isOn": "Your School System Training is on {dateTime}.",
+    "wishReschedule": "If you wish to reschedule, please <link>click here</link>"
+  },
+  "reschedule": {
+    "loading": "Loading your School System Training",
+    "loadFailed": "Your School System Training could not be loaded right now. Please try again shortly.",
+    "selectDate": "Please select your system training date.",
+    "selectTime": "Please select your system training time.",
+    "failed": "Your training could not be rescheduled.",
+    "rescheduled": "Your School System Training has been rescheduled.",
+    "chooseSlot": "Please choose a slot"
+  },
+  "checkout": {
+    "oldFeeTitle": "School Payment Update",
+    "importantNotice": "Important Notice"
+  }
+}

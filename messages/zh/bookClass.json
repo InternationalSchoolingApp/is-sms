@@ -1,0 +1,122 @@
+{
+  "title": "预约课程",
+  "titleWithTeacher": "预约{teacher}的课程",
+  "titleForSubject": "预约{subject}课程",
+  "titleForSubjectWithTeacher": "预约{teacher}的{subject}课程",
+  "noTeacher": "你还没有分配老师",
+  "weekFullyBooked": "你已预约本周所有课程",
+  "loadError": "暂时无法加载你的课程，请重试。",
+  "notPurchased": "哎呀！你似乎还没有购买课程。",
+  "goToBuyExtra": "前往购买额外课程",
+  "yearNotStarted": "你的学年尚未开始。学年开始后即可预约课程",
+  "bookThisWeek": "预约本周课程",
+  "bookedClasses": "已预约课程",
+  "bookAClass": "预约课程",
+  "bookWithTeacher": "预约{teacher}的课程",
+  "bookCount": "预约课程（{count}）",
+  "picker": {
+    "selectCourse": "选择课程*",
+    "viewSlots": "查看可用时段"
+  },
+  "complimentary": {
+    "title": "你的免费课程",
+    "for42Weeks": "42 周内",
+    "perWeek": "每周"
+  },
+  "courses": {
+    "selectedOne": "你选择的课程",
+    "selectedMany": "你选择的课程",
+    "selectedCount": "你选择的 {count} 门课程",
+    "total": "总数：",
+    "booked": "已预约：",
+    "expired": "已过期："
+  },
+  "instructions": {
+    "title": "课程预约说明",
+    "weekly": "每周课程安排：周一至周五",
+    "canBook": "你每周可以预约 {count, plural, other {# 节课}}。",
+    "canBookComplimentary": "你每周可以预约 {count, plural, other {# 节免费课}}。",
+    "expire": "未预约的免费课程将在周末失效。"
+  },
+  "counts": {
+    "left": "剩余",
+    "missedByYou": "你缺席",
+    "missedByTeacher": "老师缺席",
+    "rescheduled": "已改期",
+    "completed": "已完成"
+  },
+  "slots": {
+    "unknownOutcome": "我们无法确认你的课程是否预约成功。请刷新页面并查看已预约课程后再重试。",
+    "booked": "课程预约成功。",
+    "bookFailed": "无法预约此课程，请重试。",
+    "loading": "正在加载可用时段…",
+    "teacherLoadError": "无法加载老师信息，请重试。",
+    "none": "本周没有可预约的时段。",
+    "confirmTitle": "确认你的课程",
+    "booking": "正在预约...",
+    "course": "课程",
+    "teacher": "老师",
+    "date": "日期",
+    "time": "时间",
+    "timezone": "时区",
+    "available": "可预约",
+    "bookedLegend": "已预约",
+    "notAvailable": "不可预约",
+    "weeklySlots": "{teacher}的每周课程时段：{from} 至 {to}**",
+    "allInTimezone": "**所有时段均为 {timezone} 时区",
+    "duration": "**每节课时长为 {minutes} 分钟"
+  },
+  "booked": {
+    "title": "已预约课程 — {course}",
+    "titleK5": "我预约的课程 — {course}",
+    "dateToday": "今天",
+    "dateYesterday": "昨天",
+    "dateWeek": "本周",
+    "dateMonth": "本月",
+    "dateCustom": "自定义",
+    "selectStatus": "选择状态",
+    "statusBooked": "已预约",
+    "statusCompleted": "已完成",
+    "statusReschedule": "已改期",
+    "statusMissedByYou": "你缺席",
+    "totalNumberOf": "总数",
+    "counts": {
+      "total": "课程",
+      "booked": "已预约课程",
+      "left": "剩余课程",
+      "expired": "已过期课程",
+      "missedByYou": "你缺席的课程",
+      "rescheduled": "已改期课程",
+      "completed": "已完成课程",
+      "missedByTeacher": "老师缺席的课程"
+    },
+    "columns": {
+      "sNo": "序号",
+      "timing": "上课时间 | 时区",
+      "courseName": "课程名称",
+      "teacherName": "老师姓名",
+      "bookedDate": "预约日期",
+      "classType": "课程类型",
+      "classStatus": "课程状态"
+    },
+    "searchLabel": "搜索已预约课程",
+    "searchPlaceholder": "搜索..."
+  },
+  "labels": {
+    "all_courses": "所有课程",
+    "rescheduled": "已改期",
+    "missed_by_student": "学生缺席",
+    "missed_by_teacher": "老师缺席",
+    "completed": "已完成",
+    "cancelled": "已取消",
+    "complimentary": "免费",
+    "extra": "额外",
+    "mon": "周一",
+    "tue": "周二",
+    "wed": "周三",
+    "thu": "周四",
+    "fri": "周五",
+    "sat": "周六",
+    "sun": "周日"
+  }
+}

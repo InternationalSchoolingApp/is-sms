@@ -1,0 +1,210 @@
+{
+  "planner": {
+    "gettingReady": "Getting your plan ready…",
+    "myPlans": "My plans",
+    "loadError": "Couldn't load your plan. Please try again shortly.",
+    "picoOffYouGo": "Off you go to {name} class! Have fun learning!",
+    "picoOffYouGoName": "Off you go to {name} class! Have fun learning, {first}!",
+    "picoStillLive": "Okay! Your class is still live. Tap the green Join class button when you are ready.",
+    "picoStillLiveName": "Okay! Your {name} class is still live. Tap the green Join class button when you are ready.",
+    "picoStillLiveDashboard": "Okay! Your class is still live. You can join it from your dashboard when you are ready.",
+    "picoStillLiveDashboardName": "Okay! Your {name} class is still live. You can join it from your dashboard when you are ready."
+  },
+  "clue": {
+    "daysMore": "{list} and {count, plural, one {# more day} other {# more days}}",
+    "daysAnd": "{list} and {last}",
+    "assignmentSome": "Green dots are assignments. I lit them up for you: {days}!",
+    "assignmentNone": "Green dots are assignments. You have none this month!",
+    "activitySome": "Purple boxes are school activities, like {title} on {date}!",
+    "aSchoolActivity": "a school activity",
+    "activityNone": "Purple boxes are school activities. There are none this month!",
+    "holidaySome": "Red boxes mean a holiday. {days} {count, plural, one {is a holiday} other {are holidays}}. No school!",
+    "holidayNone": "Red boxes mean a holiday. No holidays this month!",
+    "done": "Gray circle boxes are classes you already finished. Great job!",
+    "liveNow": "Blue dashed boxes are live classes. Your teacher is online right now, so tap Join!",
+    "live": "Blue dashed boxes are live classes. When one starts, tap Join!",
+    "next": "Yellow boxes are upcoming classes. They will start soon!"
+  },
+  "calendar": {
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "closeCalendar": "Close calendar",
+    "dotLegend": "Dot = something planned"
+  },
+  "today": {
+    "none": "No Class & School Activity",
+    "live": "Live Class & School Activity",
+    "upcoming": "Upcoming Class & School Activity",
+    "completed": "Completed Class & School Activity"
+  },
+  "courses": {
+    "title": "My Courses",
+    "hide": "Hide this course in my plan",
+    "show": "Show this course in my plan"
+  },
+  "pills": {
+    "done": "done",
+    "live": "live",
+    "toGo": "to go"
+  },
+  "clues": {
+    "group": "Color clues",
+    "title": "Color clues:",
+    "tap": "Tap a clue!",
+    "assignment": "Assignment",
+    "done": "Done Class",
+    "live": "Live Class",
+    "upcoming": "Upcoming Class",
+    "activity": "School Activity",
+    "holiday": "Holiday"
+  },
+  "filters": {
+    "label": "What to show on my plan",
+    "groups": {
+      "plan": "On my plan",
+      "assignments": "Assignments",
+      "classes": "Classes"
+    },
+    "items": {
+      "classes": "Classes",
+      "activities": "Activities",
+      "schoolEvents": "School events",
+      "holidays": "Holidays",
+      "pendingAssignments": "Pending",
+      "submittedAssignments": "Submitted",
+      "upcomingAssignments": "Upcoming",
+      "liveActivities": "Live",
+      "upcomingActivities": "Upcoming",
+      "pastActivities": "Past",
+      "missedClasses": "Missed",
+      "lateJoinClasses": "Late join"
+    }
+  },
+  "toolbar": {
+    "zone": "{city} time",
+    "myWeek": "My Week",
+    "greeting": {
+      "morning": "Good Morning!",
+      "afternoon": "Good Afternoon!",
+      "evening": "Good Evening!"
+    },
+    "previous": {
+      "day": "Previous day",
+      "week": "Previous week",
+      "month": "Previous month"
+    },
+    "next": {
+      "day": "Next day",
+      "week": "Next week",
+      "month": "Next month"
+    },
+    "calendarView": "Calendar view",
+    "views": {
+      "today": "Today",
+      "week": "Week",
+      "month": "Month"
+    }
+  },
+  "weather": {
+    "labels": {
+      "clear": "Clear sky",
+      "sunny": "Sunny",
+      "partly": "Partly cloudy",
+      "cloudy": "Cloudy",
+      "foggy": "Foggy",
+      "rainy": "Rainy",
+      "snowy": "Snowy",
+      "stormy": "Stormy"
+    },
+    "tips": {
+      "stars": "Look at the stars!",
+      "hat": "Wear a hat!",
+      "cozy": "Stay cozy tonight!",
+      "learn": "Great day to learn!",
+      "grownUp": "Stay close to a grown-up!",
+      "umbrella": "Bring an umbrella!",
+      "mittens": "Wear your mittens!",
+      "inside": "Stay inside today!"
+    },
+    "aria": "Weather: {c} degrees Celsius, {f} degrees Fahrenheit, {label}. {tip}"
+  },
+  "day": {
+    "liveClass": "Live Class",
+    "class": "Class",
+    "done": "Done!",
+    "liveNow": "LIVE NOW",
+    "joinClass": "Join class",
+    "starts": "Starts {time}",
+    "schoolActivity": "School Activity",
+    "schoolActivityUntitled": "School activity",
+    "assignments": "Assignments",
+    "assignment": "Assignment",
+    "assignmentStatus": {
+      "submitted": "Submitted",
+      "pending": "Pending",
+      "upcoming": "Upcoming"
+    },
+    "noLiveClassesToday": "No live classes today",
+    "noClassesToday": "No classes today!",
+    "tomorrowClasses": "Tomorrow: {count, plural, one {# class} other {# classes}}",
+    "tomorrowFree": "Tomorrow: no classes! Free day!",
+    "tomorrowNone": "Tomorrow: no classes",
+    "peek": "Peek",
+    "classesToday": "{count, plural, one {# class today} other {# classes today}}",
+    "classes": "{count, plural, one {# class} other {# classes}}",
+    "noClasses": "No classes",
+    "todaysPlan": "Today's Plan",
+    "dayPlan": "{day}'s Plan",
+    "showCalendar": "Show calendar",
+    "holiday": "Holiday"
+  },
+  "plans": {
+    "chip": "{name}, {time}",
+    "chipLive": "{name}, {time}, live now — join class",
+    "done": "Done",
+    "live": "LIVE",
+    "schoolActivityUntitled": "School activity",
+    "holiday": "Holiday",
+    "activityLabel": "School activity: {title}",
+    "assignment": "Assignment",
+    "assignmentLabel": "Assignment: {title}",
+    "assignments": "{count, plural, one {# assignment} other {# assignments}}",
+    "assignmentsOpenDay": "{count, plural, one {# assignment} other {# assignments}} — open this day",
+    "weekTile": "WEEK",
+    "myWeek": "My Week",
+    "weekSubtitle": "{range} · tap a day to open it",
+    "noClasses": "No classes!",
+    "courseWorkDay": "Course work day",
+    "openBrainGames": "Open brain games",
+    "tapToPlay": "Tap to play a game",
+    "legend": "= your {count, plural, one {# class} other {# classes}}",
+    "join": "Join {name}",
+    "openThisDay": "Open this day",
+    "eventsOnDay": "Events on this day",
+    "myMonth": "My Month",
+    "monthSubtitle": "Tap any day to see what's planned",
+    "dayAria": "{date}: {summary}",
+    "allDone": "All done",
+    "classes": "{count, plural, one {# class} other {# classes}}",
+    "freeDay": "Free day"
+  },
+  "liveAlert": {
+    "liveNow": "LIVE NOW",
+    "hurry": "Hurry! Your class has started. Your teacher is waiting!",
+    "hurryName": "Hurry, {name}! Your class has started. Your teacher is waiting!",
+    "startedJustNow": "Started just now",
+    "startedMinutes": "Started {count, plural, one {# minute} other {# minutes}} ago",
+    "startedHours": "Started {count, plural, one {# hour} other {# hours}} ago",
+    "joinNow": "Join class now",
+    "notNow": "Not now, show my calendar"
+  },
+  "completeProfile": {
+    "title": "Complete Your Profile",
+    "unknownField": "Unknown field",
+    "required": "Required",
+    "fieldsNeedAttention": "{count, plural, one {# field needs your attention} other {# fields need your attention}}",
+    "requiredNote": "Some fields are required. Please complete them to continue.",
+    "later": "Later",
+    "goToProfile": "Go to My Profile"
+  }
+}

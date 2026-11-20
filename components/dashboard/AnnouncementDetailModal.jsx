@@ -5,17 +5,20 @@ import { useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { CalendarDays, CheckCircle2, Eye, Megaphone, X } from "lucide-react";
 import DOMPurify from "dompurify";
+import { useTranslations } from "next-intl";
+import { useDateFnsLocale } from "@/i18n/dateLocale";
 import { submitAnnouncementAcknowledge } from "@/services/dashboardApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { getAttachmentUrl, isImageAttachment } from "@/utils/announcementAttachment";
 import { AttachmentPreviewDialog } from "@/components/dashboard/AttachmentPreviewDialog";
 
-export function formatAnnouncementDate(value) {
+// `locale` (optional): a date-fns locale (useDateFnsLocale()) for the month name.
+export function formatAnnouncementDate(value, { locale } = {}) {
   if (!value) return "";
   // Backend sends "yyyy-MM-dd HH:mm:ss.S" — swap the space for "T" so it parses.
   const iso = String(value).replace(" ", "T");
   const parsed = parseISO(iso);
-  return Number.isNaN(parsed.getTime()) ? "" : format(parsed, "MMM d, yyyy");
+  return Number.isNaN(parsed.getTime()) ? "" : format(parsed, "MMM d, yyyy", locale && typeof locale === "object" ? { locale } : undefined);
 }
 
 /**
@@ -32,6 +35,9 @@ export function formatAnnouncementDate(value) {
 export function AnnouncementDetailModal({ announcement, schoolUUID, userId, onClose }) {
   const queryClient = useQueryClient();
   const dummy = useDummyStudent();
+  const t = useTranslations("news");
+  const tc = useTranslations("common");
+  const dateLocale = useDateFnsLocale();
   const [acknowledged, setAcknowledged] = useState(announcement.replyStatus === "Y");
   const [acknowledging, setAcknowledging] = useState(false);
   // "Thanks for Acknowledgement" stays on screen for 5 seconds after an acknowledge goes through.
@@ -78,7 +84,7 @@ export function AnnouncementDetailModal({ announcement, schoolUUID, userId, onCl
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={tc("actions.close")}
             className="ml-auto flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-red-600 text-white hover:bg-red-700"
           >
             <X className="h-4 w-4" />
@@ -87,8 +93,8 @@ export function AnnouncementDetailModal({ announcement, schoolUUID, userId, onCl
 
         <div className="flex items-center gap-2 bg-primary/90 px-4 py-2 text-white">
           <CalendarDays className="h-4 w-4" aria-hidden="true" />
-          <span className="text-xs">Start Date</span>
-          <span className="ml-auto text-sm font-bold">{formatAnnouncementDate(announcement.createdDate)}</span>
+          <span className="text-xs">{t("announcements.startDate")}</span>
+          <span className="ml-auto text-sm font-bold">{formatAnnouncementDate(announcement.createdDate, { locale: dateLocale })}</span>
         </div>
 
         <div
@@ -99,7 +105,7 @@ export function AnnouncementDetailModal({ announcement, schoolUUID, userId, onCl
         {thanks && (
           <div role="status" aria-live="polite" className="flex items-center justify-center gap-2 border-t border-emerald-100 bg-emerald-50 px-5 py-2.5 text-sm font-bold text-emerald-700">
             <CheckCircle2 className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
-            Thanks for Acknowledgement
+            {t("announcements.thanks")}
           </div>
         )}
 
@@ -118,7 +124,7 @@ export function AnnouncementDetailModal({ announcement, schoolUUID, userId, onCl
                   : { target: "_blank", rel: "noopener noreferrer" })}
                 className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:opacity-90"
               >
-                <Eye className="h-4 w-4" /> View Attachment
+                <Eye className="h-4 w-4" /> {t("announcements.viewAttachment")}
               </a>
             )}
             {!acknowledged && (
@@ -128,7 +134,7 @@ export function AnnouncementDetailModal({ announcement, schoolUUID, userId, onCl
                 disabled={acknowledging}
                 className="flex-1 rounded-lg border-2 border-emerald-600 px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
               >
-                {acknowledging ? "Submitting…" : "Kindly Acknowledge"}
+                {acknowledging ? t("announcements.submitting") : t("announcements.acknowledge")}
               </button>
             )}
           </div>

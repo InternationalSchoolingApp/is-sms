@@ -1,5 +1,7 @@
 // SVG pieces of the mockup My Performance page (Playful.dc.html pgPerf), kept as drawn there.
 
+import { useTranslations } from "next-intl";
+
 const STROKE = { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true };
 
 export function ChartIcon({ size = 20, width = 2.4 }) {
@@ -132,8 +134,9 @@ export function Star({ on, size }) {
 }
 
 export function Stars({ n, size, gap = 2, className = "" }) {
+  const t = useTranslations("k5Performance");
   return (
-    <span role="img" aria-label={`${n} of 5 stars`} className={className} style={{ display: "inline-flex", alignItems: "center", gap }}>
+    <span role="img" aria-label={t("starsLabel", { n })} className={className} style={{ display: "inline-flex", alignItems: "center", gap }}>
       {[1, 2, 3, 4, 5].map((i) => (
         <Star key={i} on={i <= n} size={size} />
       ))}

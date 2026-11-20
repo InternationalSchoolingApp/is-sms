@@ -1,0 +1,11 @@
+{
+  "title": "学生手册",
+  "noAccess": "您无权访问此模块。",
+  "download": "下载手册",
+  "policyNote": "学生和家长有责任随时关注学校条款和政策的更新。<link>点击此处</link>了解更多。",
+  "moduleNames": {
+    "student_handbook": "学生手册",
+    "child_handbook": "儿童手册",
+    "parent_handbook": "家长手册"
+  }
+}

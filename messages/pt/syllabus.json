@@ -1,0 +1,17 @@
+{
+  "title": "Professores designados",
+  "searchLabel": "Pesquisar",
+  "searchPlaceholder": "Pesquisar...",
+  "noCourses": "Nenhum curso atribuído ainda.",
+  "noMatches": "Nenhum registro correspondente encontrado",
+  "notAssigned": "Ainda não atribuído",
+  "table": {
+    "sNo": "Nº",
+    "courses": "Cursos selecionados",
+    "teacher": "Professor designado"
+  },
+  "content": {
+    "empty": "Ainda não há conteúdo do curso disponível.",
+    "due": "Prazo: {date}"
+  }
+}

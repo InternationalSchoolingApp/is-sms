@@ -1,0 +1,24 @@
+{
+  "title": "My Attendance",
+  "notFound": "Attendance details not found",
+  "sessionExpired": "Your session has expired. Please log in again.",
+  "classesToday": "Classes Today",
+  "attendanceMonth": "Attendance ({month} {year})",
+  "lateMonth": "Late ({month} {year})",
+  "byMonth": "Attendance by month ({year})",
+  "monthlySummary": "Monthly Summary ({month})",
+  "classesHeldThisMonth": "Classes held this month",
+  "states": {
+    "present": "Present",
+    "late": "Late",
+    "absent": "Absent"
+  },
+  "delta": {
+    "percent": "{value}% vs last month",
+    "classes": "{value} {count, plural, one {class} other {classes}} vs last month"
+  },
+  "chart": {
+    "series": "Attendance",
+    "classesAttended": "{attended} of {held} classes attended"
+  }
+}

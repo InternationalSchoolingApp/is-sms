@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { saveVideoWatchProgress } from "@/services/videoLibraryApi";
 import { isVideoLibrarySuccess } from "@/hooks/useStudentVideoLibrary";
 import { parseYoutubeId } from "@/utils/videoLibrary";
@@ -54,6 +55,7 @@ function loadYtApi() {
  * `ref.startOver()` seeks to 0 and plays.
  */
 export function VideoPlayer({ ref, video, autoplay, startAt, onEnded, onProgress }) {
+  const t = useTranslations("videoLibrary.player");
   const ytId = video.videoType === "FILE" ? null : video.youtubeId || parseYoutubeId(video.videoUrl);
   const start = Math.max(0, Math.floor(startAt || 0));
   const [embedFallback, setEmbedFallback] = useState(false);
@@ -234,14 +236,14 @@ export function VideoPlayer({ ref, video, autoplay, startAt, onEnded, onProgress
       />
     );
   } else if (!ytId) {
-    content = <div className="absolute inset-0 flex items-center justify-center p-4 text-center text-white">Unable to load this video.</div>;
+    content = <div className="absolute inset-0 flex items-center justify-center p-4 text-center text-white">{t("unableToLoad")}</div>;
   } else if (embedFallback) {
     content = (
       <iframe
         src={`https://www.youtube-nocookie.com/embed/${ytId}?rel=0${autoplay ? "&autoplay=1" : ""}${start ? `&start=${start}` : ""}`}
         allow="autoplay; fullscreen; encrypted-media"
         allowFullScreen
-        title="Video player"
+        title={t("frameTitle")}
         className="absolute inset-0 h-full w-full border-0"
       />
     );

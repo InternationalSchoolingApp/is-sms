@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 /**
  * Slide-over drawer shell for the K–5 side panels (mockup .sldraw): dimmed backdrop, rounded
@@ -9,6 +10,7 @@ import { X } from "lucide-react";
  * `accent` is the rim colour, `pastel` the header fill, `bg` the drawer fill.
  */
 export function K5Drawer({ title, subtitle, icon, accent, pastel, bg, width = 480, onClose, leading, footer, belowHeader, bodyClassName = "", children }) {
+  const tc = useTranslations("common");
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") onClose();
@@ -24,7 +26,7 @@ export function K5Drawer({ title, subtitle, icon, accent, pastel, bg, width = 48
 
   return (
     <div className="fixed inset-0 z-[85] box-border flex items-stretch justify-end p-4">
-      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 cursor-default border-none bg-[rgba(10,16,34,0.55)] p-0" />
+      <button type="button" aria-label={tc("actions.close")} onClick={onClose} className="absolute inset-0 cursor-default border-none bg-[rgba(10,16,34,0.55)] p-0" />
       <div
         role="dialog"
         aria-modal="true"
@@ -44,7 +46,7 @@ export function K5Drawer({ title, subtitle, icon, accent, pastel, bg, width = 48
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={tc("actions.close")}
             className="flex h-11 w-11 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-white bg-k5-red"
           >
             <X className="h-4 w-4 text-white" strokeWidth={3} aria-hidden="true" />

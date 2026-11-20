@@ -1,0 +1,122 @@
+{
+  "title": "Reservar una clase",
+  "titleWithTeacher": "Reservar una clase con {teacher}",
+  "titleForSubject": "Reservar una clase de {subject}",
+  "titleForSubjectWithTeacher": "Reservar una clase de {subject} con {teacher}",
+  "noTeacher": "Todavía no tienes un profesor asignado",
+  "weekFullyBooked": "Ya reservaste todas tus clases de esta semana",
+  "loadError": "No se pudieron cargar tus clases en este momento. Inténtalo de nuevo.",
+  "notPurchased": "¡Vaya! Parece que todavía no has comprado ninguna clase.",
+  "goToBuyExtra": "Ir a Comprar clases extra",
+  "yearNotStarted": "Tu año académico aún no ha comenzado. Podrás reservar tus clases cuando comience",
+  "bookThisWeek": "Reservar clases para esta semana",
+  "bookedClasses": "Clases reservadas",
+  "bookAClass": "Reservar una clase",
+  "bookWithTeacher": "Reservar una clase con {teacher}",
+  "bookCount": "Reservar una clase ({count})",
+  "picker": {
+    "selectCourse": "Selecciona un curso*",
+    "viewSlots": "Ver horarios disponibles"
+  },
+  "complimentary": {
+    "title": "Tus clases gratuitas",
+    "for42Weeks": "Durante 42 semanas",
+    "perWeek": "por semana"
+  },
+  "courses": {
+    "selectedOne": "Tu curso seleccionado",
+    "selectedMany": "Tus cursos seleccionados",
+    "selectedCount": "Tus {count} cursos seleccionados",
+    "total": "Total:",
+    "booked": "Reservadas:",
+    "expired": "Vencidas:"
+  },
+  "instructions": {
+    "title": "Instrucciones para reservar clases",
+    "weekly": "Estructura semanal de clases: de lunes a viernes",
+    "canBook": "Puedes reservar {count, plural, one {# clase} other {# clases}} por semana.",
+    "canBookComplimentary": "Puedes reservar {count, plural, one {# clase gratuita} other {# clases gratuitas}} por semana.",
+    "expire": "Las clases gratuitas no reservadas vencen al final de la semana."
+  },
+  "counts": {
+    "left": "Restantes",
+    "missedByYou": "Perdidas por ti",
+    "missedByTeacher": "Perdidas por el profesor",
+    "rescheduled": "Reprogramadas",
+    "completed": "Completadas"
+  },
+  "slots": {
+    "unknownOutcome": "No pudimos confirmar si tu clase se reservó. Actualiza la página y revisa tus clases reservadas antes de volver a intentarlo.",
+    "booked": "Tu clase ha sido reservada.",
+    "bookFailed": "No se pudo reservar esta clase. Inténtalo de nuevo.",
+    "loading": "Cargando horarios disponibles…",
+    "teacherLoadError": "No se pudieron cargar los datos del profesor. Inténtalo de nuevo.",
+    "none": "No hay horarios disponibles esta semana.",
+    "confirmTitle": "Confirma tu clase",
+    "booking": "Reservando...",
+    "course": "Curso",
+    "teacher": "Profesor",
+    "date": "Fecha",
+    "time": "Hora",
+    "timezone": "Zona horaria",
+    "available": "Disponible",
+    "bookedLegend": "Reservado",
+    "notAvailable": "No disponible",
+    "weeklySlots": "Horarios semanales de {teacher} del {from} al {to}**",
+    "allInTimezone": "**Todos los horarios están en la zona horaria {timezone}",
+    "duration": "**Cada clase dura {minutes} minutos"
+  },
+  "booked": {
+    "title": "Clases reservadas — {course}",
+    "titleK5": "Mis clases reservadas — {course}",
+    "dateToday": "Hoy",
+    "dateYesterday": "Ayer",
+    "dateWeek": "Semana",
+    "dateMonth": "Mes",
+    "dateCustom": "Personalizado",
+    "selectStatus": "Selecciona un estado",
+    "statusBooked": "Reservada",
+    "statusCompleted": "Completada",
+    "statusReschedule": "Sesión reprogramada",
+    "statusMissedByYou": "Perdida por ti",
+    "totalNumberOf": "Número total de",
+    "counts": {
+      "total": "Clases",
+      "booked": "Clases reservadas",
+      "left": "Clases restantes",
+      "expired": "Clases vencidas",
+      "missedByYou": "Clases perdidas por ti",
+      "rescheduled": "Clases reprogramadas",
+      "completed": "Clases completadas",
+      "missedByTeacher": "Clases perdidas por el profesor"
+    },
+    "columns": {
+      "sNo": "N.º",
+      "timing": "Horario de la clase | Zona horaria",
+      "courseName": "Nombre del curso",
+      "teacherName": "Nombre del profesor",
+      "bookedDate": "Fecha de reserva",
+      "classType": "Tipo de clase",
+      "classStatus": "Estado de la clase"
+    },
+    "searchLabel": "Buscar clases reservadas",
+    "searchPlaceholder": "Buscar..."
+  },
+  "labels": {
+    "all_courses": "Todos los cursos",
+    "rescheduled": "Reprogramada",
+    "missed_by_student": "Perdida por el estudiante",
+    "missed_by_teacher": "Perdida por el profesor",
+    "completed": "Completada",
+    "cancelled": "Cancelada",
+    "complimentary": "Gratuita",
+    "extra": "Extra",
+    "mon": "LUN",
+    "tue": "MAR",
+    "wed": "MIÉ",
+    "thu": "JUE",
+    "fri": "VIE",
+    "sat": "SÁB",
+    "sun": "DOM"
+  }
+}

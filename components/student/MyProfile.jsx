@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { K5Profile } from "@/components/k5/pages/K5Profile";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useProfileActions } from "@/hooks/useProfileActions";
@@ -20,6 +21,7 @@ import { useStudentProfile } from "@/hooks/useStudentProfile";
  * page the regular dashboard colours and sizes.
  */
 export function MyProfile() {
+  const t = useTranslations("profile");
   const router = useRouter();
   const { context, isK5 } = useDashboardContext();
   const { model, profile, studentStandardId, isLoading, error, refetch } = useStudentProfile({ schoolUUID: context?.schoolUUID, userId: context?.userId });
@@ -58,7 +60,7 @@ export function MyProfile() {
       const response = await fetch(`/api/profile/id-card${search}`, { cache: "no-store" });
       if (!response.ok) {
         const body = await response.json().catch(() => null);
-        throw new Error(body?.message || "The ID card could not be downloaded.");
+        throw new Error(body?.message || t("idCardError"));
       }
       const contentLength = Number(response.headers.get("content-length"));
       if (Number.isFinite(contentLength) && contentLength > 0) {
@@ -94,7 +96,7 @@ export function MyProfile() {
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 10_000);
     } catch (e) {
-      toast.error(e?.message || "The ID card could not be downloaded.");
+      toast.error(e?.message || t("idCardError"));
     } finally {
       if (progressTimer) window.clearInterval(progressTimer);
       setDownloading(false);
