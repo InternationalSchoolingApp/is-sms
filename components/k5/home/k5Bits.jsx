@@ -4,6 +4,7 @@ import { BookOpen, Calculator, Dumbbell, FlaskConical, Landmark, Monitor, Palett
 import { subjectStyle } from "@/utils/k5Calendar";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { CountUp } from "@/components/motion/CountUp";
+import { PlanDateLine, PlanNavPair, PlanViewSwitch, usePlanChrome } from "@/components/k5/home/planChrome";
 
 // Shared building blocks of the Grade K–5 home (Playful.dc.html card / pill / button values).
 
@@ -115,6 +116,28 @@ export function SubjectTile({ name, size = "lg" }) {
 
 /** "1 done · 1 live · 3 to go" pills. */
 export function StatusPills({ counts }) {
+  const chrome = usePlanChrome();
+  // Playful "My Classes and Activities": one centred row under the header, "5 All" first, each chip with a thin border in a
+  // deeper shade of its own colour (mockup .pchips).
+  if (chrome) {
+    const total = counts.done + counts.live + counts.next;
+    const chips = [
+      [total, "All", "bg-[#DDEBFF] border-[#A9C8F5] text-[#1C2640]"],
+      counts.done ? [counts.done, "done", "bg-[#ECEEF2] border-[#C9CED8] text-[#1C2640]"] : null,
+      counts.live ? [counts.live, "live", "bg-k5-gt border-[#9ED3B2] text-k5-ink"] : null,
+      counts.next ? [counts.next, "to go", "bg-k5-yt border-[#F2CF73] text-k5-ink"] : null,
+    ].filter(Boolean);
+    if (!total) return null;
+    return (
+      <div className="flex basis-full flex-wrap justify-center gap-2">
+        {chips.map(([n, label, cls]) => (
+          <span key={label} className={`rounded-full border-2 px-3.5 py-2 text-[15px] font-black ${cls}`}>
+            <CountUp value={n} /> {label}
+          </span>
+        ))}
+      </div>
+    );
+  }
   const pills = [
     counts.done ? ["done", counts.done, "bg-k5-act text-k5-acx"] : null,
     counts.live ? ["live", counts.live, "bg-k5-gt text-k5-gx"] : null,
@@ -144,6 +167,28 @@ export function PlanTile({ top, big, className = "bg-k5-ac shadow-[0_5px_0_var(-
 }
 
 export function PlanHeader({ tile, title, subtitle, children }) {
+  const chrome = usePlanChrome();
+  // Playful: the title block also holds the date line (Day view), then the Today / Week / Month switch on the right, and for
+  // Week / Month the bigger previous / next pair on its own row (Playful.dc.html "My plans").
+  if (chrome) {
+    return (
+      <div className="flex flex-wrap items-center gap-4">
+        {tile}
+        <div className="flex min-w-0 flex-[1_1_140px] flex-col gap-0.5">
+          <h2 className="k5h-ptitle m-0 font-k5-display text-[32px] font-semibold leading-[1.05]">{title}</h2>
+          {chrome.viewName === "today" && <PlanDateLine chrome={chrome} />}
+        </div>
+        <PlanViewSwitch chrome={chrome} isPreK={chrome.isPreK} />
+        {chrome.viewName !== "today" && (
+          <>
+            <span aria-hidden="true" className="h-0 basis-full" />
+            <PlanNavPair chrome={chrome} />
+          </>
+        )}
+        {children}
+      </div>
+    );
+  }
   return (
     <div className="flex flex-wrap items-center gap-4">
       {tile}

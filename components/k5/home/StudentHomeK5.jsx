@@ -11,11 +11,14 @@ import { OnboardingVideoModal } from "@/components/dashboard/OnboardingVideoModa
 import { GraduationCeremonyModal } from "@/components/dashboard/GraduationCeremonyModal";
 import { EventDetailModal } from "@/components/dashboard/calendar/EventDetailModal";
 import { JoinClassModal } from "@/components/dashboard/calendar/JoinClassModal";
-import { K5Toolbar } from "@/components/k5/home/K5Toolbar";
+import { K5Toolbar, titles } from "@/components/k5/home/K5Toolbar";
+import { K5ClassesHeader } from "@/components/k5/home/K5ClassesHeader";
+import { PlanChromeContext } from "@/components/k5/home/planChrome";
 import { K5PlanFilters } from "@/components/k5/home/K5PlanFilters";
 import { ColourClues } from "@/components/k5/home/ColourClues";
 import { CalendarPopup, MiniCalendar, MyCourses, TodayCard } from "@/components/k5/home/K5LeftColumn";
 import { DayPlan } from "@/components/k5/home/DayPlan";
+import { K5Dashboard } from "@/components/k5/home/K5Dashboard";
 import { MonthPlan, WeekPlan } from "@/components/k5/home/WeekMonthPlans";
 import { LiveClassAlert } from "@/components/k5/home/LiveClassAlert";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
@@ -88,7 +91,7 @@ const isJoinable = (event) => event.eventKind === "class" && Boolean(event.url) 
  * The onboarding video and graduation popups behave exactly as on the existing home.
  * holdProfilePopup: the "Complete Your Profile" popup waits (the contact check comes first, StudentHomeForGrade.jsx).
  */
-export function StudentHomeK5({ holdProfilePopup = false }) {
+export function StudentHomeK5({ holdProfilePopup = false, dashboard = false }) {
   const { context } = useDashboardContext();
   const dummy = useDummyStudent();
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
@@ -101,7 +104,7 @@ export function StudentHomeK5({ holdProfilePopup = false }) {
   return (
     <>
       {ready ? (
-        <K5Planner key={timezone} timezone={timezone} />
+        <K5Planner key={timezone} timezone={timezone} dashboard={dashboard} />
       ) : (
         <div className={`${K5_CARD} p-10 text-center text-lg font-extrabold text-k5-mut`}>Getting your plan ready…</div>
       )}
@@ -117,8 +120,8 @@ export function StudentHomeK5({ holdProfilePopup = false }) {
   );
 }
 
-function K5Planner({ timezone }) {
-  const { context, isPreK, isSelfStudy } = useDashboardContext();
+function K5Planner({ timezone, dashboard = false }) {
+  const { context, isPreK, isSelfStudy, isMiddle } = useDashboardContext();
   const model = useK5CalendarModel({ schoolUUID: context?.schoolUUID, userId: context?.userId, timezone });
   const [clue, setClue] = useState(null);
   const [calOpen, setCalOpen] = useState(false);
@@ -128,6 +131,27 @@ function K5Planner({ timezone }) {
 
   const { viewName, setViewName, selectedDate, selectedKey, todayKey, now, days } = model;
   const view = isPreK && viewName === "month" ? "today" : viewName;
+
+  // Playful look (Playful.dc.html "My Classes and Activities"): a header card on top, and the Today / Week / Month switch and the
+  // previous / next arrows inside the plan card (planChrome.jsx). The Balanced / Mature looks keep the old toolbar.
+  const playful = !isMiddle;
+  const [titleBig, titleSmall] = titles(view, selectedDate);
+  const unit = view === "week" ? "week" : view === "month" ? "month" : "day";
+  const chrome = playful
+    ? {
+        viewName: view,
+        onView: setViewName,
+        onToday: model.goToday,
+        onPrev: model.goPrev,
+        onNext: model.goNext,
+        prevLabel: `Previous ${unit}`,
+        nextLabel: `Next ${unit}`,
+        // Week: the range is the big text and the year the small one (the heading already says "My Week").
+        titleBig: view === "week" ? titleSmall : titleBig,
+        titleSmall: view === "week" ? format(selectedDate, "yyyy") : titleSmall,
+        isPreK,
+      }
+    : null;
 
   // Opening a day (from the week, the month or the mini calendar) switches to its Day plan: bring it
   // into view when it is off-screen, but never move a page that already shows it.
@@ -191,21 +215,31 @@ function K5Planner({ timezone }) {
   }, [dayComplete, userKey, todayKey]);
 
   return (
+    <PlanChromeContext.Provider value={chrome}>
     <div className="flex flex-col gap-4">
-      <K5Toolbar
-        now={now}
-        timezone={timezone}
-        viewName={view}
-        onView={setViewName}
-        selectedDate={selectedDate}
-        onPrev={model.goPrev}
-        onNext={model.goNext}
-        onToday={model.goToday}
-        isPreK={isPreK}
-      />
+      {dashboard ? (
+        <K5Dashboard now={now} timezone={timezone} days={days} todayKey={todayKey} isLoading={model.isLoading} firstName={firstName} onJoin={setJoiningEvent} />
+      ) : (
+        <>
+      {playful ? (
+        <K5ClassesHeader now={now} timezone={timezone} />
+      ) : (
+        <K5Toolbar
+          now={now}
+          timezone={timezone}
+          viewName={view}
+          onView={setViewName}
+          selectedDate={selectedDate}
+          onPrev={model.goPrev}
+          onNext={model.goNext}
+          onToday={model.goToday}
+          isPreK={isPreK}
+        />
+      )}
       <ColourClues
         clue={clue}
         isPreK={isPreK}
+        showHint={!playful}
         onClue={(key) => {
           setClue(key);
           if (!key) return;
@@ -290,6 +324,8 @@ function K5Planner({ timezone }) {
           )}
         </section>
       </div>
+        </>
+      )}
 
       <CalendarPopup
         open={calOpen}
@@ -321,5 +357,6 @@ function K5Planner({ timezone }) {
         <JoinClassModal event={joiningEvent} schoolUUID={context?.schoolUUID} courseRegistry={model.courseRegistry} onClose={() => setJoiningEvent(null)} />
       )}
     </div>
+    </PlanChromeContext.Provider>
   );
 }

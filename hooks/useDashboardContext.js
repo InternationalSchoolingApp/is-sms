@@ -233,6 +233,8 @@ function useResolveDashboardContext({ role = "student" } = {}) {
   const menu = menuQuery.data ?? [];
   // True while the menu request is running: the K–5 / Grade 6–8 left rail shows skeleton tiles instead of an empty box.
   const menuLoading = menuQuery.isLoading;
+  // True once the menu request has answered (or failed): only then is "this role has no such module" a fact (a menu still on its way is empty too).
+  const menuSettled = menuQuery.isSuccess || menuQuery.isError;
 
   // Header "Welcome back, {name}" — the same full name Login History shows (legacy USER_FULL_NAME).
   const studentName = useStudentName({ schoolUUID: session?.schoolUUID, userId: session?.userId, enabled: authenticated && role === "student" });
@@ -289,7 +291,7 @@ function useResolveDashboardContext({ role = "student" } = {}) {
       }
     : null;
 
-  return { status, session, context, menu, menuLoading, logoUrl, logoSettled, schoolWebsite, ready, ...grade };
+  return { status, session, context, menu, menuLoading, menuSettled, logoUrl, logoSettled, schoolWebsite, ready, ...grade };
 }
 
 export function DashboardProvider({ role = "student", children }) {

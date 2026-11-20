@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { format, isSameMonth } from "date-fns";
-import { Check, ChevronLeft, ChevronRight, Star, X } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Star, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -25,6 +26,26 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
   const { isMiddle } = useDashboardContext();
   const cells = getMonthGridDays(selectedDate);
   const inPopup = Boolean(onClose);
+  // Playful (mockup .caltgl): a round chevron on the bottom edge folds the calendar down to its month bar; it is remembered on
+  // this device (is-k5-calmin). Not in the popup, and not in the Balanced / Mature looks.
+  const collapsible = !inPopup && !isMiddle;
+  const [minimized, setMinimized] = useState(() => {
+    try {
+      return typeof window !== "undefined" && window.localStorage.getItem("is-k5-calmin") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const folded = collapsible && minimized;
+  const toggleFold = () => {
+    const next = !minimized;
+    setMinimized(next);
+    try {
+      window.localStorage.setItem("is-k5-calmin", next ? "1" : "");
+    } catch {
+      // storage unavailable: it just stays folded / open for this visit
+    }
+  };
   const titleId = inPopup ? "k5-calpop-title" : "k5-mini-title";
   const Title = inPopup ? DialogTitle : "h2";
   return (
@@ -34,7 +55,7 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
       id={inPopup ? undefined : "k5-minical"}
       aria-labelledby={titleId}
       data-pin={inPopup ? undefined : "mini"}
-      className={inPopup ? "flex flex-col gap-2.5" : `${K5_CARD} flex flex-col gap-2.5 p-4 max-[760px]:hidden`}
+      className={inPopup ? "flex flex-col gap-2.5" : `${K5_CARD} flex flex-col gap-2.5 max-[760px]:hidden ${collapsible ? "relative px-4 pb-5 pt-4" : "p-4"}`}
     >
       <div className="flex items-center justify-between gap-2">
         <button type="button" aria-label="Previous month" onClick={() => onMonth(-1)} className={`${K5_ROUND_BTN} !shadow-none`}>
@@ -57,6 +78,8 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
           </button>
         )}
       </div>
+      {!folded && (
+      <div id="k5-mini-grid" className="flex flex-col gap-2.5">
       <div className="grid grid-cols-7 gap-1 text-center font-k5-display text-[15px] font-semibold">
         {WEEK_LETTERS.map((l, i) => (
           <span key={l} className={WEEKDAY_TEXT[i]}>
@@ -102,6 +125,21 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
           );
         })}
       </div>
+      </div>
+      )}
+      {collapsible && (
+        <button
+          type="button"
+          onClick={toggleFold}
+          aria-expanded={!folded}
+          aria-controls="k5-mini-grid"
+          aria-label={folded ? "Expand calendar" : "Minimize calendar"}
+          title={folded ? "Expand calendar" : "Minimize calendar"}
+          className="absolute -bottom-4 left-1/2 z-[2] flex h-[30px] w-[52px] -translate-x-1/2 cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-card bg-k5-ac shadow-[0_3px_0_var(--k5-acd)]"
+        >
+          {folded ? <ChevronDown className="h-4 w-4 text-white" strokeWidth={3.2} aria-hidden="true" /> : <ChevronUp className="h-4 w-4 text-white" strokeWidth={3.2} aria-hidden="true" />}
+        </button>
+      )}
     </section>
   );
 }

@@ -5,7 +5,7 @@ import { K5Games } from "@/components/k5/games/K5Games";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { addDays, format } from "date-fns";
 import { CalendarDays, Check, ChevronRight, Clock, Flag, PartyPopper, Smile, Star, Video } from "lucide-react";
-import { CLUE_RING, K5_PRIMARY_BTN, PlanHeader, PlanTile, StatusPills, SubjectTile } from "@/components/k5/home/k5Bits";
+import { CLUE_RING, K5_PRIMARY_BTN, PlanHeader, PlanTile, StatusPills, SubjectIcon, SubjectTile } from "@/components/k5/home/k5Bits";
 import {
   CLUE_COLORS as C,
   activityTitle,
@@ -19,6 +19,7 @@ import {
   isWeekendKey,
   keyToDate,
   noClassReason,
+  subjectStyle,
   teacherName,
   timeLabel,
   timeRange,
@@ -45,6 +46,8 @@ function Teacher({ event }) {
 
 /** One class in the Day plan: Done sticker / LIVE NOW + Join / Starts at. */
 export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
+  const { isMiddle } = useDashboardContext();
+  const playful = !isMiddle;
   const status = event.k5Status;
   const joinable = status !== "done" && Boolean(event.url);
   return (
@@ -55,12 +58,20 @@ export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
       }`}
       style={CARD_STATE[status]}
     >
-      <SubjectTile name={classTitle(event)} />
-      <button type="button" onClick={() => onOpen(event)} className="motion-none flex flex-[1_1_220px] cursor-pointer flex-col gap-[3px] border-none bg-transparent p-0 text-left">
-        <span className="flex items-center gap-1.5 self-start rounded-full bg-k5-card px-2.5 py-[3px] text-[13px] font-black text-k5-ink">
-          <Video className="h-3.5 w-3.5" aria-hidden="true" />
-          {status === "live" ? "Live Class" : "Class"}
+      {playful ? (
+        <span aria-hidden="true" className="flex h-[66px] w-[66px] flex-none items-center justify-center rounded-[20px] bg-k5-card">
+          <SubjectIcon name={classTitle(event)} className={`h-9 w-9 ${subjectStyle(classTitle(event)).ink}`} />
         </span>
+      ) : (
+        <SubjectTile name={classTitle(event)} />
+      )}
+      <button type="button" onClick={() => onOpen(event)} className="motion-none flex flex-[1_1_220px] cursor-pointer flex-col gap-[3px] border-none bg-transparent p-0 text-left">
+        {!playful && (
+          <span className="flex items-center gap-1.5 self-start rounded-full bg-k5-card px-2.5 py-[3px] text-[13px] font-black text-k5-ink">
+            <Video className="h-3.5 w-3.5" aria-hidden="true" />
+            {status === "live" ? "Live Class" : "Class"}
+          </span>
+        )}
         <h3 className="k5h-ctitle m-0 font-k5-display text-[26px] font-semibold leading-[1.1]">{classTitle(event)}</h3>
         <p className="m-0 text-[17px] font-extrabold text-k5-mut">{timeRange(event)}</p>
         <Teacher event={event} />
@@ -86,13 +97,19 @@ export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
                 isPreK ? "min-h-[76px] text-[26px]" : "min-h-[54px] text-[21px]"
               }`}
             >
-              <Video className="h-6 w-6" aria-hidden="true" />
+              {playful ? (
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
+                  <path d="M8 5v14l11-7z" fill="currentColor" />
+                </svg>
+              ) : (
+                <Video className="h-6 w-6" aria-hidden="true" />
+              )}
               Join class
             </button>
           )}
         </div>
       )}
-      {status === "next" && (
+      {status === "next" && !playful && (
         <span className="flex flex-none items-center gap-1.5 rounded-full border-[3px] border-k5-yb bg-k5-card px-3.5 py-2 text-[15px] font-black text-k5-yx">
           <Clock className="h-4 w-4" aria-hidden="true" />
           Starts {timeLabel(event)}

@@ -9,6 +9,7 @@ import { GAMES } from "@/components/k5/games/gameLogic";
 import { MIDDLE_ICONS, OddBoard, PatternBoard, WordBoard } from "@/components/k5/games/MiddleGameBoards";
 import { MIDDLE_GAMES } from "@/components/k5/games/middleGameLogic";
 import { GameSectionToggle } from "@/components/k5/games/GameSectionToggle";
+import { useAutoOpenGames } from "@/components/k5/games/useAutoOpenGames";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 
 const PILL = "min-h-12 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-4 font-k5-display text-base font-semibold text-k5-ink";
@@ -45,6 +46,8 @@ export function K5Games({ locked = false, past = false, pending = false, middle 
   const [round, setRound] = useState(0);
   const [fb, setFb] = useState(null);
   const [gamesOpen, setGamesOpen] = useState(false);
+  const sectionRef = useRef(null);
+  useAutoOpenGames(sectionRef, setGamesOpen);
   const fbTimer = useRef(null);
   useEffect(() => () => clearTimeout(fbTimer.current), []);
 
@@ -64,7 +67,7 @@ export function K5Games({ locked = false, past = false, pending = false, middle 
 
   if (!game) {
     return (
-      <section aria-labelledby="k5-games-title" className="flex flex-col rounded-3xl bg-blue-100 p-4 dark:bg-blue-900">
+      <section ref={sectionRef} aria-labelledby="k5-games-title" className="flex flex-col rounded-3xl bg-blue-100 p-4 dark:bg-blue-900">
         <GameSectionToggle
           open={gamesOpen}
           onToggle={() => setGamesOpen((open) => !open)}

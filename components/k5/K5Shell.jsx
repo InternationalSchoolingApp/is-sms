@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { copyrightLine } from "@/utils/schoolBrand";
 import { useParams, usePathname } from "next/navigation";
 import { RightActionRail } from "@/components/dashboard/RightActionRail";
@@ -76,6 +76,10 @@ function K5Frame({ children }) {
     return () => setPicoLive({ menuReady: false });
   }, [menuCount]);
   const isHome = pathname === studentNavHref(school, "");
+  // "My Classes" (the Today / Week / Month planner, Playful.dc.html navClasses) comes from the database menu: it shows when
+  // the student's role has the My Classes module (MODULES / USER_RIGHTS). Only the Playful look has that page in its nav,
+  // so the Balanced / Mature looks leave it out.
+  const navMenu = useMemo(() => (isMiddle && menu?.length ? menu.filter((item) => item.segment !== "my-classes") : menu), [menu, isMiddle]);
   // Pico's first welcome is only for a student who completed enrollment: the dashboard is reached only by one (the backend sends
   // a student still enrolling to the wizard), the grade band and details have loaded (context exists), and it is a real student,
   // not a counselor's dummy/demo view.
@@ -149,7 +153,7 @@ function K5Frame({ children }) {
 
       <div className="k5-layout relative mx-auto box-border flex w-full max-w-[100%] flex-1 items-start gap-3 px-5 pb-[20px] pt-5 max-[760px]:flex-wrap">
         <div aria-hidden="true" className="w-[76px] flex-none max-[760px]:hidden" />
-        <K5NavRail menu={menu} loading={menuLoading} open={navOpen} onOpen={() => setNavOpen(true)} onClose={closeNav} isPreK={isPreK} userId={context.userId} />
+        <K5NavRail menu={navMenu} loading={menuLoading} open={navOpen} onOpen={() => setNavOpen(true)} onClose={closeNav} isPreK={isPreK} userId={context.userId} />
 
         <PageReveal className="flex min-w-0 flex-[1_1_auto] flex-col gap-4 max-[760px]:basis-full">
           <K5QuoteOfMoment />

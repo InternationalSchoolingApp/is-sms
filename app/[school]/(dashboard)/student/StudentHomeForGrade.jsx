@@ -27,7 +27,7 @@ const ContactCheckModal = dynamic(() => import("@/components/contact-check/Conta
 //
 // A graduated student who has to re-enroll is sent to the re-enrollment pages instead (useReEnrollmentEntry): the home
 // (and with it the contact check popup) is not shown while that is being decided or the redirect is under way.
-export function StudentHomeForGrade() {
+export function StudentHomeForGrade({ classes = false }) {
   const { school } = useParams();
   const { isK5, isMiddle, context } = useDashboardContext();
   const contactCheck = useContactCheck();
@@ -45,7 +45,7 @@ export function StudentHomeForGrade() {
   if (checking) return <FullScreenLoader />;
   return (
     <>
-      {isK5 ? <StudentHomeK5 holdProfilePopup={!contactCheck.finished} /> : <StudentHome holdProfilePopup={!contactCheck.finished} />}
+      {isK5 ? <StudentHomeK5 holdProfilePopup={!contactCheck.finished} dashboard={!classes && !isMiddle} /> : <StudentHome holdProfilePopup={!contactCheck.finished} />}
       {/* Next-grade re-enrollment / reserve a seat (legacy getReserveASeatForNextGrade), every grade band. */}
       <ReserveSeatForNextGrade />
       {/* School System Training popup + one-time welcome (legacy getStudentTimePreference), every grade band. */}
