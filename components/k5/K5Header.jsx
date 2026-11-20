@@ -102,7 +102,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
 
   return (
     <header className="sticky top-[var(--maintenance-banner-h,0px)] z-30 border-b-4 border-k5-line bg-k5-card">
-      <div className="mx-auto flex max-w-[100%] flex-wrap items-center gap-3 px-5 py-2.5 max-[760px]:flex-nowrap max-[760px]:px-3">
+      <div className="mx-auto flex max-w-[100%] flex-wrap items-center gap-3 px-5 py-2.5 max-[760px]:flex-nowrap max-[760px]:px-3 in-data-[hand=left]:flex-row-reverse">
         <button
           type="button"
           aria-label="Menu"
@@ -113,6 +113,9 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
         >
           <Menu className="h-6 w-6" strokeWidth={2.8} aria-hidden="true" />
         </button>
+
+        {/* Mobile: a spacer on each side of the logo (the other one is below) puts it in the middle of the header. */}
+        <div className="hidden flex-[1_1_20px] max-[760px]:block" aria-hidden="true" />
 
         {/* Legacy header: the logo opens the school's website in a new tab (schoolSettingsLinks.schoolWebsite). */}
         {(() => {
@@ -253,7 +256,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-40" aria-hidden="true" onClick={() => setMenuOpen(false)} />
-              <div role="menu" className="k5-zoom-in origin-top-right absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-[22px] border-[3px] border-k5-line bg-k5-card shadow-k5-chunky">
+              <div role="menu" className="k5-zoom-in origin-top-right in-data-[hand=left]:origin-top-left absolute right-0 in-data-[hand=left]:right-auto in-data-[hand=left]:left-0 z-50 mt-2 w-60 overflow-hidden rounded-[22px] border-[3px] border-k5-line bg-k5-card shadow-k5-chunky">
                 <div className="flex items-center gap-2 bg-k5-ac px-4 py-3 text-white">
                   <User className="h-5 w-5" aria-hidden="true" />
                   <span className="font-k5-display text-base font-semibold">{displayName}</span>
@@ -317,7 +320,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
               <button type="button" aria-label="Close menu" onClick={() => setMoreOpen(false)} className="fixed inset-0 z-[54] cursor-pointer border-none bg-[rgba(10,16,34,0.25)] p-0" />
               <div
                 role="menu"
-                className="k5-zoom-in origin-top-right absolute end-0 top-[60px] z-[55] flex w-[250px] flex-col gap-0.5 rounded-[22px] border-[3px] border-k5-ink bg-k5-card p-2 shadow-[0_6px_0_var(--k5-ink)]"
+                className="k5-zoom-in origin-top-right in-data-[hand=left]:origin-top-left absolute end-0 in-data-[hand=left]:end-auto in-data-[hand=left]:start-0 top-[60px] z-[55] flex w-[250px] flex-col gap-0.5 rounded-[22px] border-[3px] border-k5-ink bg-k5-card p-2 shadow-[0_6px_0_var(--k5-ink)]"
               >
                 <MoreItem
                   icon={<HeaderAvatar key={photo} photo={photo} initial={firstName.charAt(0).toUpperCase()} className="block h-10 w-10 flex-none rounded-full" textClass="bg-[#FFC531] font-k5-display text-xl font-bold text-[#1C2640]" />}

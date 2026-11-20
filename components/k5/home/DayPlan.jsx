@@ -223,7 +223,7 @@ function TomorrowCard({ dateKey, days, isSelfStudy, onPeek }) {
  */
 export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStudy, firstName, onJoin, onOpen, onPeek, onShowCalendar }) {
   // isMiddle follows the picked look (true for Mature too): no "today" star in either. The brain games follow the grade.
-  const { isMiddle, isHigh: lookIsHigh, gradeIsHigh } = useDashboardContext();
+  const { isMiddle, isHigh: lookIsHigh, gradeIsHigh, gradeBand } = useDashboardContext();
   const isHigh = gradeIsHigh ?? lookIsHigh;
   const day = dayAt(days, dateKey);
   const date = keyToDate(dateKey);
@@ -245,7 +245,7 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
   // Today with classes or activities: once every class is over (nothing live, nothing still to come) the games open under
   // the timeline too, not only on a day without classes.
   const gamesAfterPlan = isToday && items.length > 0 && !access.locked;
-  const games = isHigh ? <HighGames locked={access.locked} past={dayOver} /> : <K5Games locked={access.locked} past={dayOver} pending={access.reason === "pending"} />;
+  const games = isHigh ? <HighGames locked={access.locked} past={dayOver} /> : <K5Games locked={access.locked} past={dayOver} pending={access.reason === "pending"} middle={gradeBand === "MIDDLE"} />;
   return (
     <div className="flex flex-col gap-4">
       <PlanHeader

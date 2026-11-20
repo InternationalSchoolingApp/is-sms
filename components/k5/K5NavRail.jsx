@@ -238,7 +238,7 @@ function NavLink({ item, href, active, onNavigate, drag }) {
       onClick={(e) => (drag.consumeClick() ? e.preventDefault() : onNavigate())}
       {...drag.handlers(item.key)}
       style={drag.style(item.key)}
-      className={`${ITEM_CLASS} ${active ? "text-white delay-100" : "text-k5-ink hover:bg-k5-soft"}`}
+      className={`k5-button-motion ${ITEM_CLASS} ${active ? "text-white delay-100" : "text-k5-ink hover:bg-k5-soft"}`}
     >
       {active && <NavPill />}
       <NavTile item={item} icon={item.icon} active={active} picture={navPictureFor(item)} />

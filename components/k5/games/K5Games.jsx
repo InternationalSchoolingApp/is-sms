@@ -6,12 +6,14 @@ import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { BalloonBoard, MemoryBoard, MoleBoard } from "@/components/k5/games/K5ActionBoards";
 import { CountBoard, MathBoard, ShapeBoard } from "@/components/k5/games/K5QuizBoards";
 import { GAMES } from "@/components/k5/games/gameLogic";
+import { MIDDLE_ICONS, OddBoard, PatternBoard, WordBoard } from "@/components/k5/games/MiddleGameBoards";
+import { MIDDLE_GAMES } from "@/components/k5/games/middleGameLogic";
 import { GameSectionToggle } from "@/components/k5/games/GameSectionToggle";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 
 const PILL = "min-h-12 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-4 font-k5-display text-base font-semibold text-k5-ink";
 
-function GameTile({ game, onPlay, locked }) {
+function GameTile({ game, onPlay, locked, middle = false }) {
   const { preferences } = useAppearance();
   return (
     <button
@@ -21,7 +23,7 @@ function GameTile({ game, onPlay, locked }) {
       className={"flex min-h-[170px] flex-col items-center gap-2 rounded-3xl border-[3px] px-2.5 py-3.5 text-center text-k5-ink " + (locked ? "cursor-not-allowed opacity-50 " : "cursor-pointer ") + game.border + " " + game.bg + " " + game.rim}
     >
       <span aria-hidden="true" className="flex h-[72px] w-[72px] flex-none items-center justify-center rounded-[22px] bg-k5-card text-[44px] leading-none">
-        {game.emoji || <PicoMascot buddy={preferences.buddy} width={48} full={false} />}
+        {middle ? MIDDLE_ICONS[game.id] : game.emoji || <PicoMascot buddy={preferences.buddy} width={48} full={false} />}
       </span>
       <span className="font-k5-display text-xl font-semibold leading-tight">{game.name}</span>
       {/* <span className="text-sm font-extrabold text-k5-mut">{game.how}</span> */}
@@ -36,7 +38,8 @@ function GameTile({ game, onPlay, locked }) {
  * running game goes back to the picker (the live-class dialog opens over it, see StudentHomeK5).
  * `past`: the day is already over - the games are locked for it too, with its own note.
  */
-export function K5Games({ locked = false, past = false, pending = false }) {
+export function K5Games({ locked = false, past = false, pending = false, middle = false }) {
+  const list = middle ? MIDDLE_GAMES : GAMES;
   const [gameId, setGameId] = useState(null);
   const [score, setScore] = useState(0);
   const [round, setRound] = useState(0);
@@ -45,7 +48,7 @@ export function K5Games({ locked = false, past = false, pending = false }) {
   const fbTimer = useRef(null);
   useEffect(() => () => clearTimeout(fbTimer.current), []);
 
-  const game = locked ? null : GAMES.find((g) => g.id === gameId);
+  const game = locked ? null : list.find((g) => g.id === gameId);
   const play = (id) => {
     setGameId(id);
     setScore(0);
@@ -88,8 +91,8 @@ export function K5Games({ locked = false, past = false, pending = false }) {
             </div>
           )}
           <div className="grid grid-cols-3 gap-3 p-3 max-[560px]:grid-cols-2">
-            {GAMES.map((g) => (
-              <GameTile key={g.id} game={g} locked={locked} onPlay={() => play(g.id)} />
+            {list.map((g) => (
+              <GameTile key={g.id} game={g} locked={locked} middle={middle} onPlay={() => play(g.id)} />
             ))}
           </div>
         </GameSectionToggle>
@@ -121,12 +124,13 @@ export function K5Games({ locked = false, past = false, pending = false }) {
         </div>
       </div>
 
-      {game.id === "balloon" && <BalloonBoard key={round} onScore={shared.onScore} />}
+      {game.id === "balloon" && !middle &&<BalloonBoard key={round} onScore={shared.onScore} />}
       {game.id === "memory" && <MemoryBoard key={round} {...shared} onRestart={() => play("memory")} />}
       {game.id === "mole" && <MoleBoard key={round} onScore={shared.onScore} onResetScore={() => setScore(0)} caught={score} />}
-      {game.id === "count" && <CountBoard key={round} {...shared} />}
+      {game.id === "word" && <WordBoard key={round} {...shared} />}
+      {game.id === "count" && (middle ? <PatternBoard key={round} {...shared} /> : <CountBoard key={round} {...shared} />)}
       {game.id === "math" && <MathBoard key={round} {...shared} />}
-      {game.id === "shape" && <ShapeBoard key={round} {...shared} />}
+      {game.id === "shape" && (middle ? <OddBoard key={round} {...shared} /> : <ShapeBoard key={round} {...shared} />)}
 
       {fb !== null && (
         <div aria-live="assertive" className={"self-center rounded-full px-[22px] py-2 font-k5-display text-[22px] font-semibold text-white " + (fb ? "bg-k5-grn" : "bg-[#C2410C]")}>

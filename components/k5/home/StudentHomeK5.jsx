@@ -217,7 +217,7 @@ function K5Planner({ timezone }) {
 
       {!isPreK && <K5PlanFilters filters={model.filters} onToggle={model.toggleFilter} />}
 
-      <div className="flex flex-wrap items-start gap-5">
+      <div className="flex flex-wrap items-start gap-5 in-data-[hand=left]:flex-row-reverse">
         <div className="sticky top-[calc(var(--maintenance-banner-h,0px)+100px)] box-border flex max-h-[calc(100vh-120px)] min-w-0 flex-[1_1_300px] flex-col gap-4 overflow-y-auto pb-3 pr-1 [scrollbar-width:thin] max-[1100px]:static max-[1100px]:max-h-none max-[1100px]:overflow-visible">
           <MiniCalendar
             selectedDate={selectedDate}

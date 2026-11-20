@@ -21,7 +21,7 @@ const CONDITIONS = [
 
 const CHIP = "cursor-pointer rounded-full border-[3px] px-4 py-2 text-[15px] font-black text-k5-ink";
 const chipState = (on) => (on ? "border-k5-ac bg-k5-act" : "border-k5-line bg-k5-card");
-const BUTTON = "min-h-[52px] cursor-pointer rounded-full border-none px-7 font-k5-display text-xl font-semibold disabled:cursor-default disabled:opacity-60";
+const BUTTON = "min-h-[52px] cursor-pointer rounded-full border-none px-7 font-k5-display text-lg font-semibold disabled:cursor-default disabled:opacity-60";
 
 export function SpecialHelpLock({ state, requestedAt, onAsk }) {
   const requested = state === "R";
