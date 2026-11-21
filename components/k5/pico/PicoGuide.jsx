@@ -50,6 +50,19 @@ function tourSteps(firstName, buddyName, liveName, welcome, schoolName) {
     { pin: "diary", text: "This is your School Diary, where you can find important updates about your calendar and coursework from your teachers or the school." },
   ];
 }
+// My Classes and Activities: once the page has loaded the buddy walks through it - the plan, the class that is live (only when there
+// is one: a tip whose element is not on the page is skipped), the month calendar, the courses, the Today / Week / Month switch and the
+// colour clues. The same tour plays on a tap on the buddy.
+function classesTourSteps(liveName) {
+  return [
+    { pin: "calendar", text: "This is Today's Plan. All your classes and activities for the day are here. Tap one to see more about it." },
+    { pin: "live", text: `${liveName ? `Your ${liveName} class` : "Your class"} is live right now! Tap the green Join class button to go in.` },
+    { pin: "mini", text: "This little calendar shows the whole month. A dot under a day means something is planned. Tap a day to open it." },
+    { pin: "courses", text: "These are your courses. Tap a course to show or hide its classes in your plan." },
+    { pin: "views", text: "Tap Today, Week or Month to see your plans in different ways." },
+    { pin: "clues", text: "Color clues tell you what each box means. Tap a clue and I'll explain it!" },
+  ];
+}
 const MOBILE_QUERY = "(max-width: 760px)";
 const subscribeMobile = (callback) => {
   const mql = window.matchMedia(MOBILE_QUERY);
@@ -59,7 +72,7 @@ const subscribeMobile = (callback) => {
 const isMobileView = () => window.matchMedia(MOBILE_QUERY).matches;
 const pinEl = (pin) => (pin && typeof document !== "undefined" ? document.querySelector(`[data-pin="${pin}"]`) : null);
 // The header buttons move into the "More" menu on a phone (display: none there): a tip about one is skipped, not shown without its spotlight.
-const SKIP_WHEN_HIDDEN = new Set(["lms", "inbox", "profile", "getApp"]);
+const SKIP_WHEN_HIDDEN = new Set(["lms", "inbox", "profile", "getApp", "mini"]);
 const onPage = (pin) => {
   if (!pin) return true;
   const el = pinEl(pin);
@@ -156,12 +169,15 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   const pageSegment = pathname.split("/").filter(Boolean).pop();
   // A student's first visit to one of these pages is a short tour of its own: the welcome, then what the page is for (2 steps).
   const tourPage = !home && welcome && WELCOME_TOUR_PAGES.has(pageSegment) ? picoModuleFor(pageSegment) : null;
+  const classesTour = !home && pageSegment === "my-classes";
   const steps = tourPage
     ? [
         { pin: null, text: picoWelcomeText({ firstName, schoolName, buddyName: buddy.name, tour: false }) },
         { pin: null, text: tourPage.text },
       ]
-    : tourSteps(firstName, buddy.name, live.name, welcome, schoolName);
+    : classesTour
+      ? classesTourSteps(live.name)
+      : tourSteps(firstName, buddy.name, live.name, welcome, schoolName);
   const mobile = useSyncExternalStore(subscribeMobile, isMobileView, () => false);
   // No dialog is open on this page (checked by the effect below, only while the buddy has something to say by itself).
   // Kept as "the page it was seen clear on", so a new page is never taken as clear before it has been looked at.
@@ -182,7 +198,8 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   // ---- What the student is looking at, and whether it has finished loading ----
   const moduleNow = home ? HOME_MODULE : picoModuleFor(pageSegment);
   // Real content on screen: the home plan has loaded, or the page said so (usePicoContentReady); the left menu has its items.
-  const moduleReady = live.menuReady && (home ? live.ready : live.contentReady);
+  // My Classes is the planner itself: its plan has loaded when the planner says so (live.ready), like the home page used to.
+  const moduleReady = live.menuReady && (home || classesTour ? live.ready : live.contentReady);
 
   // ---- 1. The first welcome ----
   const [welcomeSkip, setWelcomeSkip] = useState(null);
@@ -273,7 +290,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
 
   // ---- 2. A module explains itself - the FIRST time this user opens it in this browser - once its page has loaded ----
   const pageModule = home ? null : moduleNow;
-  const pageTip = pageModule ? { text: pageModule.text, pin: null } : null;
+  const pageTip = classesTour ? { text: steps[0].text, pin: steps[0].pin } : pageModule ? { text: pageModule.text, pin: null } : null;
   const [tipFor, setTipFor] = useState(null);
   // Every module has its own cookie (utils/picoCookies.js): a module that was explained by itself before - on this visit
   // (doneModules) or an earlier one - never explains itself again. The page showing its explanation right now keeps it
@@ -311,7 +328,8 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     // Adjusted while rendering (React's way to reset state when an input changes), not in an effect.
     setTipFor(tipKey);
     if (tipKey && pageTip) {
-      setState((s) => ({ ...s, open: true, index: 0, say: { text: pageTip.text, pin: pageTip.pin, id: `page-${pageSegment}` }, skipLive: false, pageTip: true }));
+      if (classesTour) setState((s) => ({ ...s, open: true, index: 0, say: null, skipLive: false, pageTip: false, pageTour: true }));
+      else setState((s) => ({ ...s, open: true, index: 0, say: { text: pageTip.text, pin: pageTip.pin, id: `page-${pageSegment}` }, skipLive: false, pageTip: true }));
       setTipOn(true);
     } else {
       setState((s) => (s.pageTip ? { ...s, open: false, say: null, pageTip: false } : s));
@@ -320,7 +338,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   }
   // The buddy's voice for this page is got ready once the page is idle: the page's text, and on the home page the tour
   // tips, so the student's tap (Next, Hear it) plays at once. In the voice and speed the student picked.
-  const voiceTexts = [pageTip?.text, moduleNow?.text, ...(home || tourPage ? steps.map((t) => t.text) : [])].filter(Boolean).join("|");
+  const voiceTexts = [pageTip?.text, moduleNow?.text, ...(home || tourPage || classesTour ? steps.map((t) => t.text) : [])].filter(Boolean).join("|");
   const { voice: voicePick, voiceSpeed } = preferences;
   useEffect(() => preparePicoClips(voiceTexts.split("|"), voiceOf(voicePick, voiceSpeed)), [voiceTexts, voicePick, voiceSpeed]);
   // The explanation is also said out loud - once per arrival. Its cookie is set only when the voice really starts (or, with
@@ -431,10 +449,22 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
       setManualSay({ text });
     }
   };
+  // My Classes: an explanation is its tour, from the first tip.
+  const startClassesTour = ({ fromTap }) => {
+    setState((s) => ({ ...s, open: true, index: 0, say: null, skipLive: false, pageTip: false, pageTour: true }));
+    setTipOn(true);
+    if (fromTap) {
+      if (preferences.speech !== "on") updatePreference("speech", "on");
+      speak(steps[0].text, { force: true });
+    } else {
+      setManualSay({ text: steps[0].text });
+    }
+  };
   // A tap while the page is still loading: the buddy says so, and explains as soon as the page is ready.
   if (manualWait && moduleReady) {
     setManualWait(false);
-    explainNow(moduleNow?.text || NO_MODULE_TEXT, { fromTap: false });
+    if (classesTour) startClassesTour({ fromTap: false });
+    else explainNow(moduleNow?.text || NO_MODULE_TEXT, { fromTap: false });
   }
   useEffect(() => {
     if (!manualSay) return;
@@ -500,13 +530,14 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
       stop();
       return;
     }
-    if (open && home && !state.say) return hear();
+    if (open && (home || (classesTour && state.pageTour)) && !state.say) return hear();
     if (!moduleReady) {
       setManualWait(true);
       setState((s) => ({ ...s, open: true, index: 0, say: { text: "One moment! I'll tell you about this page as soon as it is ready.", pin: null, id: `wait-${Date.now()}` }, pageTip: true }));
       setTipOn(true);
       return;
     }
+    if (classesTour) return startClassesTour({ fromTap: true });
     explainNow(moduleNow?.text || NO_MODULE_TEXT, { fromTap: true });
   };
   const shown = state.pageTip ? [step] : steps.filter((s) => onPage(s.pin) && !(state.skipLive && s.pin === "live"));

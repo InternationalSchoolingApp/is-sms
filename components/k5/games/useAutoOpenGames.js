@@ -32,3 +32,16 @@ export function useAutoOpenGames(sectionRef, setOpen) {
     return () => timers.forEach(clearTimeout);
   }, [sectionRef, setOpen]);
 }
+
+/**
+ * Today with every class over (or no class at all): the Your Games section slides open by itself a moment after the plan shows,
+ * so the free time invites a game. It only reacts when `defaultOpen` turns true (once per such change): the student can close it
+ * again and it stays closed, and on a day with a live or still-to-come class it never opens on its own.
+ */
+export function useDefaultOpenGames(defaultOpen, setOpen) {
+  useEffect(() => {
+    if (!defaultOpen) return undefined;
+    const timer = setTimeout(() => setOpen(true), 450);
+    return () => clearTimeout(timer);
+  }, [defaultOpen, setOpen]);
+}

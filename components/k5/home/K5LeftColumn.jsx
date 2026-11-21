@@ -27,8 +27,8 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
   const cells = getMonthGridDays(selectedDate);
   const inPopup = Boolean(onClose);
   // Playful (mockup .caltgl): a round chevron on the bottom edge folds the calendar down to its month bar; it is remembered on
-  // this device (is-k5-calmin). Not in the popup, and not in the Balanced / Mature looks.
-  const collapsible = !inPopup && !isMiddle;
+  // this device (is-k5-calmin). Not in the popup.
+  const collapsible = !inPopup;
   const [minimized, setMinimized] = useState(() => {
     try {
       return typeof window !== "undefined" && window.localStorage.getItem("is-k5-calmin") === "1";
@@ -55,7 +55,7 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
       id={inPopup ? undefined : "k5-minical"}
       aria-labelledby={titleId}
       data-pin={inPopup ? undefined : "mini"}
-      className={inPopup ? "flex flex-col gap-2.5" : `${K5_CARD} flex flex-col gap-2.5 max-[760px]:hidden ${collapsible ? "relative px-4 pb-5 pt-4" : "p-4"}`}
+      className={inPopup ? "flex flex-col gap-2.5" : `${K5_CARD} k5h-pcard flex flex-col gap-2.5 max-[760px]:hidden ${collapsible ? "relative px-4 pb-5 pt-4" : "p-4"}`}
     >
       <div className="flex items-center justify-between gap-2">
         <button type="button" aria-label="Previous month" onClick={() => onMonth(-1)} className={`${K5_ROUND_BTN} !shadow-none`}>
@@ -82,7 +82,7 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
       <div id="k5-mini-grid" className="flex flex-col gap-2.5">
       <div className="grid grid-cols-7 gap-1 text-center font-k5-display text-[15px] font-semibold">
         {WEEK_LETTERS.map((l, i) => (
-          <span key={l} className={WEEKDAY_TEXT[i]}>
+          <span key={l} className={isMiddle ? "text-k5-acx" : WEEKDAY_TEXT[i]}>
             {l}
           </span>
         ))}
@@ -229,18 +229,24 @@ export function TodayCard({ todayKey, days, courseRegistry, onOpen }) {
 
 /** My Courses: every enrolled course, tap to show / hide its classes in the planner. */
 export function MyCourses({ courseRegistry, courseVisibility, onToggle }) {
+  // Balanced / Mature (Middle.dc.html, High.dc.html): every course is the same light blue with a blue icon and tick (--sScT / --sScI),
+  // not the subject or school colours of Playful.
+  const { isMiddle } = useDashboardContext();
   const courses = Object.values(courseRegistry || {});
   if (!courses.length) return null;
   return (
-    <section aria-labelledby="k5-courses-title" className={`${K5_CARD} flex flex-col gap-2 p-4`}>
+    <section aria-labelledby="k5-courses-title" data-pin="courses" className={`${K5_CARD} k5h-pcard flex flex-col gap-2 p-4`}>
       <h2 id="k5-courses-title" className="m-0 mb-1 font-k5-display text-[22px] font-semibold">
         My Courses
       </h2>
       {courses.map((course) => {
         const shown = courseVisibility[course.id] !== false;
-        const { tile, ink, color: styleColor } = subjectStyle(course.label);
-        // The course colour from the school calendar wins; the subject palette is only the fallback.
-        const apiColor = safeCourseColor(course.color);
+        const subject = subjectStyle(course.label);
+        const tile = isMiddle ? "bg-k5-act" : subject.tile;
+        const ink = isMiddle ? "text-k5-ac" : subject.ink;
+        const styleColor = isMiddle ? "var(--k5-ac)" : subject.color;
+        // The course colour from the school calendar wins (Playful); the subject palette is only the fallback.
+        const apiColor = isMiddle ? null : safeCourseColor(course.color);
         const color = apiColor || styleColor;
         return (
           <button
@@ -249,7 +255,7 @@ export function MyCourses({ courseRegistry, courseVisibility, onToggle }) {
             aria-pressed={shown}
             onClick={() => onToggle(course.id)}
             title={shown ? "Hide this course in my plan" : "Show this course in my plan"}
-            className={`k5-lift flex min-h-[52px] cursor-pointer items-center gap-2.5 rounded-[14px] border-none px-2 py-1 text-left ${shown ? (apiColor ? "" : tile) : "bg-k5-soft"}`}
+            className={`k5-lift k5h-r14 flex min-h-[52px] cursor-pointer items-center gap-2.5 rounded-[14px] border-none px-2 py-1 text-left ${shown ? (apiColor ? "" : tile) : "bg-k5-soft"}`}
             style={shown && apiColor ? { background: courseTint(apiColor) } : undefined}
           >
             <span className="k5h-ctile flex h-[38px] w-[38px] flex-none items-center justify-center rounded-xl bg-k5-card" style={apiColor ? { color: apiColor } : undefined}>

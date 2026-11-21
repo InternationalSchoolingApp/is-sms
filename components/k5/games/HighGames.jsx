@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { HIGH_GAMES, MEMORY_PAIRS, newHighMemory, newMental, newOddOne, newSeries } from "@/components/k5/games/highGameLogic";
 import { GameSectionToggle } from "@/components/k5/games/GameSectionToggle";
-import { useAutoOpenGames } from "@/components/k5/games/useAutoOpenGames";
+import { useAutoOpenGames, useDefaultOpenGames } from "@/components/k5/games/useAutoOpenGames";
 
 /**
  * Grade 9–12 "Brain Games" (High.dc.html, the gamesTitle block): four short puzzles for a free day - Number Series,
@@ -187,11 +187,12 @@ function MemoryGridBoard({ onScore, onFeedback, onRestart }) {
   );
 }
 
-export function HighGames({ locked = false, past = false }) {
+export function HighGames({ locked = false, past = false, defaultOpen = false }) {
   const [gameId, setGameId] = useState(null);
   const [gamesOpen, setGamesOpen] = useState(false);
   const sectionRef = useRef(null);
   useAutoOpenGames(sectionRef, setGamesOpen);
+  useDefaultOpenGames(defaultOpen, setGamesOpen);
   const [score, setScore] = useState(0);
   const [round, setRound] = useState(0);
   const [fb, setFb] = useState(null);

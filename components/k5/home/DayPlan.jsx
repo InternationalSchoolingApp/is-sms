@@ -3,9 +3,11 @@
 import { HighGames } from "@/components/k5/games/HighGames";
 import { K5Games } from "@/components/k5/games/K5Games";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
-import { addDays, format } from "date-fns";
-import { CalendarDays, Check, ChevronRight, Clock, Flag, PartyPopper, Smile, Star, Video } from "lucide-react";
-import { CLUE_RING, K5_PRIMARY_BTN, PlanHeader, PlanTile, StatusPills, SubjectIcon, SubjectTile } from "@/components/k5/home/k5Bits";
+import { useAppearance } from "@/components/appearance/AppearanceProvider";
+import { BUDDIES } from "@/constant/appearance";
+import { format } from "date-fns";
+import { CalendarDays, Check, Flag, PartyPopper, Star } from "lucide-react";
+import { CLUE_RING, PlanHeader, PlanTile, StatusPills, SubjectIcon } from "@/components/k5/home/k5Bits";
 import {
   CLUE_COLORS as C,
   activityTitle,
@@ -13,10 +15,8 @@ import {
   countStatuses,
   cleanCourseLabel,
   dayAt,
-  dayKey,
   gameAccess,
   initials,
-  isWeekendKey,
   keyToDate,
   noClassReason,
   subjectStyle,
@@ -46,40 +46,34 @@ function Teacher({ event }) {
 
 /** One class in the Day plan: Done sticker / LIVE NOW + Join / Starts at. */
 export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
+  // isMiddle is true for the Balanced and the Mature look: their Done sticker is flat with a star (mockup k.isDone).
   const { isMiddle } = useDashboardContext();
-  const playful = !isMiddle;
   const status = event.k5Status;
   const joinable = status !== "done" && Boolean(event.url);
   return (
     <article
       data-pin={status === "live" ? "live" : undefined}
-      className={`flex flex-wrap items-center gap-4 rounded-[24px] px-[18px] py-3.5 k5-button-motion ${status === "live" ? "k5-live-pill" : ""} ${
+      className={`k5h-art flex flex-wrap items-center gap-4 rounded-[24px] px-[18px] py-3.5 k5-button-motion ${status === "live" ? "k5-live-pill" : ""} ${
         clue === CLUE_FOR_STATUS[status] ? CLUE_RING : ""
       }`}
       style={CARD_STATE[status]}
     >
-      {playful ? (
-        <span aria-hidden="true" className="flex h-[66px] w-[66px] flex-none items-center justify-center rounded-[20px] bg-k5-card">
-          <SubjectIcon name={classTitle(event)} className={`h-9 w-9 ${subjectStyle(classTitle(event)).ink}`} />
-        </span>
-      ) : (
-        <SubjectTile name={classTitle(event)} />
-      )}
+      <span aria-hidden="true" className="k5h-stile flex h-[66px] w-[66px] flex-none items-center justify-center rounded-[20px] bg-k5-card">
+        <SubjectIcon name={classTitle(event)} className={`k5h-sicon h-9 w-9 ${isMiddle ? "text-k5-ac" : subjectStyle(classTitle(event)).ink}`} />
+      </span>
       <button type="button" onClick={() => onOpen(event)} className="motion-none flex flex-[1_1_220px] cursor-pointer flex-col gap-[3px] border-none bg-transparent p-0 text-left">
-        {!playful && (
-          <span className="flex items-center gap-1.5 self-start rounded-full bg-k5-card px-2.5 py-[3px] text-[13px] font-black text-k5-ink">
-            <Video className="h-3.5 w-3.5" aria-hidden="true" />
-            {status === "live" ? "Live Class" : "Class"}
-          </span>
-        )}
         <h3 className="k5h-ctitle m-0 font-k5-display text-[26px] font-semibold leading-[1.1]">{classTitle(event)}</h3>
         <p className="m-0 text-[17px] font-extrabold text-k5-mut">{timeRange(event)}</p>
         <Teacher event={event} />
       </button>
 
       {status === "done" && (
-        <span className="flex flex-none -rotate-[5deg] items-center gap-2 rounded-[18px] bg-k5-ac px-4 py-2 font-k5-display text-[22px] font-semibold text-white shadow-[0_5px_0_var(--k5-acd)]">
-          <Check className="h-[22px] w-[22px]" strokeWidth={3} aria-hidden="true" />
+        <span
+          className={`flex flex-none items-center gap-2 bg-k5-ac px-4 py-2 font-k5-display text-[22px] font-semibold text-white ${
+            isMiddle ? "k5h-done rounded-[12px] shadow-[0_2px_0_var(--k5-acd)]" : "-rotate-[5deg] rounded-[18px] shadow-[0_5px_0_var(--k5-acd)]"
+          }`}
+        >
+          {isMiddle ? <Star className="h-[22px] w-[22px] fill-[#FFC531] text-[#FFC531]" aria-hidden="true" /> : <Check className="h-[22px] w-[22px]" strokeWidth={3} aria-hidden="true" />}
           Done!
         </span>
       )}
@@ -97,23 +91,13 @@ export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
                 isPreK ? "min-h-[76px] text-[26px]" : "min-h-[54px] text-[21px]"
               }`}
             >
-              {playful ? (
-                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
-                  <path d="M8 5v14l11-7z" fill="currentColor" />
-                </svg>
-              ) : (
-                <Video className="h-6 w-6" aria-hidden="true" />
-              )}
+              <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
+                <path d="M8 5v14l11-7z" fill="currentColor" />
+              </svg>
               Join class
             </button>
           )}
         </div>
-      )}
-      {status === "next" && !playful && (
-        <span className="flex flex-none items-center gap-1.5 rounded-full border-[3px] border-k5-yb bg-k5-card px-3.5 py-2 text-[15px] font-black text-k5-yx">
-          <Clock className="h-4 w-4" aria-hidden="true" />
-          Starts {timeLabel(event)}
-        </span>
       )}
     </article>
   );
@@ -180,65 +164,66 @@ function Assignments({ items, clue, onOpen }) {
   );
 }
 
+/**
+ * The student's buddy as a 72px smiling face (the "No classes" card of Playful.dc.html, Middle.dc.html, High.dc.html): the buddy's colour
+ * behind a white face with happy closed eyes. Grade 6–12 draw Pico a lighter blue (#3B9BFF) and a slightly darker ink than Playful.
+ */
+function NoClassFace() {
+  const { isMiddle } = useDashboardContext();
+  const { preferences } = useAppearance();
+  const buddy = BUDDIES[preferences.buddy] ? preferences.buddy : "pico";
+  const color = buddy === "pico" && isMiddle ? "#3B9BFF" : BUDDIES[buddy].color;
+  const ink = isMiddle ? "#171B2E" : "#1C2640";
+  return (
+    <svg width="72" height="72" viewBox="0 0 200 200" aria-hidden="true" className="flex-none">
+      <circle cx="100" cy="100" r="96" fill={color} />
+      <circle cx="100" cy="108" r="62" fill="#FFFFFF" />
+      <path d="M68 98 Q80 86 92 98M108 98 Q120 86 132 98" fill="none" stroke={ink} strokeWidth="7" strokeLinecap="round" />
+      <circle cx="66" cy="122" r="8" fill="#FF9EB5" />
+      <circle cx="134" cy="122" r="8" fill="#FF9EB5" />
+      <path d="M80 120 Q100 150 120 120 Z" fill={ink} />
+    </svg>
+  );
+}
+
 /** Reason card for a day without classes (holiday / weekend / free day / self-study day). */
 export function NoClassDay({ reason, isToday, onOpen }) {
-  const Icon = reason.kind === "holiday" ? Flag : reason.kind === "study" ? Star : Smile;
+  // console.log("NoClassDay reason:", reason, "isToday:", isToday, "onOpen:", onOpen);
   const Wrap = onOpen ? "button" : "div";
-  // A holiday card is red like the Holiday colour clue; the other reasons keep the green card.
+  // A holiday card is red like the Holiday colour clue (flag in a red circle); the other reasons are the mockup's green card with the
+  // buddy's face, a title and a line under it.
   const holiday = reason.kind === "holiday";
   return (
     <Wrap
       {...(onOpen ? { type: "button", onClick: onOpen } : {})}
-      className={`flex w-full flex-wrap items-center gap-4 rounded-[24px] px-5 py-[18px] text-left ${
+      className={`k5h-nocls flex w-full flex-wrap items-center gap-4 rounded-[24px] px-5 py-[18px] text-left ${
         holiday ? "border-[3px] border-solid border-[var(--k5-holiday)] bg-k5-rt" : "border-none bg-k5-gt"
       } ${onOpen ? "cursor-pointer" : ""}`}
       style={holiday ? { "--k5-holiday": C.holiday } : undefined}
     >
-      <span className={`flex h-[72px] w-[72px] flex-none items-center justify-center rounded-full ${holiday ? "bg-[var(--k5-holiday)]" : "bg-k5-ac"}`}>
-        <Icon className="h-10 w-10 text-white" aria-hidden="true" />
-      </span>
-      <div className="flex flex-[1_1_220px] flex-col">
-        <span className="font-k5-display text-[28px] font-semibold text-k5-ink">
-          {reason.kind === "holiday" ? reason.title : isToday ? (reason.kind === "study" ? "No live classes today" : "No classes today!") : reason.title}
+      {holiday ? (
+        <span className="flex h-[72px] w-[72px] flex-none items-center justify-center rounded-full bg-[var(--k5-holiday)]">
+          <Flag className="h-10 w-10 text-white" aria-hidden="true" />
         </span>
-        {/* <span className={`text-[17px] font-extrabold ${holiday ? "text-k5-ri" : "text-k5-gx"}`}>{reason.text}</span> */}
+      ) : (
+        <NoClassFace />
+      )}
+      <div className="flex min-w-0 flex-[1_1_240px] flex-col gap-1">
+        <h3 className="m-0 font-k5-display text-[30px] font-semibold leading-[1.1] text-k5-ink">
+          {reason.kind === "holiday" ? reason.title : isToday ? (reason.kind === "study" ? reason.title : reason.title) : reason.title}
+        </h3>
+        {!holiday && <p className="m-0 text-[17px] font-extrabold text-k5-ink">{reason.text}</p>}
       </div>
     </Wrap>
-  );
-}
-
-function TomorrowCard({ dateKey, days, isSelfStudy, onPeek }) {
-  const tomorrow = addDays(keyToDate(dateKey), 1);
-  const day = dayAt(days, dayKey(tomorrow));
-  const n = day.classes.length;
-  const free = !n && !day.holidays.length && !isWeekendKey(dayKey(tomorrow));
-  const title = n ? `Tomorrow: ${n} class${n === 1 ? "" : "es"}` : free && !isSelfStudy ? "Tomorrow: no classes! Free day!" : "Tomorrow: no classes";
-  return (
-    <div className="grid grid-cols-[84px_minmax(0,1fr)] items-start gap-3.5 max-[560px]:grid-cols-1">
-      <div className="pt-[22px] text-right text-base font-black text-k5-mut max-[560px]:hidden">{format(tomorrow, "EEEE")}</div>
-      <div className="flex flex-wrap items-center gap-3.5 rounded-[24px] border-[3px] border-k5-yb bg-k5-yt px-[18px] py-4">
-        <span className="flex h-14 w-14 flex-none items-center justify-center rounded-[18px] bg-k5-ac">
-          <CalendarDays className="h-7 w-7 text-white" aria-hidden="true" />
-        </span>
-        <div className="flex flex-[1_1_200px] flex-col">
-          <span className="font-k5-display text-[22px] font-semibold">{title}</span>
-          <span className="text-[15px] font-extrabold text-k5-yx">{format(tomorrow, "EEEE, MMMM d")}</span>
-        </div>
-        <button type="button" onClick={() => onPeek(tomorrow)} className={K5_PRIMARY_BTN}>
-          Peek
-          <ChevronRight className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
-        </button>
-      </div>
-    </div>
   );
 }
 
 /**
  * Day plan: date tile + "{Day}'s Plan", status pills, a timeline of classes and school
  * activities (with a "now" line on today), the day's assignments, a reason card when there
- * are no classes, and a "Tomorrow" card that peeks at the next day.
+ * are no classes.
  */
-export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStudy, firstName, onJoin, onOpen, onPeek, onShowCalendar }) {
+export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStudy, firstName, onJoin, onOpen, onShowCalendar }) {
   // isMiddle follows the picked look (true for Mature too): no "today" star in either. The brain games follow the grade.
   const { isMiddle, isHigh: lookIsHigh, gradeIsHigh, gradeBand } = useDashboardContext();
   const isHigh = gradeIsHigh ?? lookIsHigh;
@@ -262,7 +247,15 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
   // Today with classes or activities: once every class is over (nothing live, nothing still to come) the games open under
   // the timeline too, not only on a day without classes.
   const gamesAfterPlan = isToday && items.length > 0 && !access.locked;
-  const games = isHigh ? <HighGames locked={access.locked} past={dayOver} /> : <K5Games locked={access.locked} past={dayOver} pending={access.reason === "pending"} middle={gradeBand === "MIDDLE"} />;
+  // Your Games slides open by itself on today once every class is over (or there are none), and on a future day without any class
+  // or activity; a live / upcoming class (locked) or a past day keeps it closed.
+  const statusCounts = countStatuses([...day.classes, ...day.activities]);
+  const openGames = !access.locked && (isToday ? statusCounts.live === 0 && statusCounts.next === 0 : dateKey > todayKey && items.length === 0);
+  const games = isHigh ? (
+    <HighGames locked={access.locked} past={dayOver} defaultOpen={openGames} />
+  ) : (
+    <K5Games locked={access.locked} past={dayOver} pending={access.reason === "pending"} middle={gradeBand === "MIDDLE"} defaultOpen={openGames} />
+  );
   return (
     <div className="flex flex-col gap-4">
       <PlanHeader
@@ -337,7 +330,6 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
 
       <Assignments items={day.assignments} clue={clue} onOpen={onOpen} />
 
-      {isToday && <TomorrowCard dateKey={dateKey} days={days} isSelfStudy={isSelfStudy} onPeek={onPeek} />}
     </div>
   );
 }

@@ -55,7 +55,8 @@ export function PlanDateLine({ chrome }) {
         <ChevronLeft className="h-4 w-4" strokeWidth={3} aria-hidden="true" />
       </button>
       <span className="whitespace-nowrap text-base font-extrabold text-k5-mut max-[760px]:text-sm">
-        {chrome.titleBig}, {chrome.titleSmall}
+        {/* {chrome.titleBig},  */}
+        {chrome.titleSmall}
       </span>
       <button type="button" aria-label={chrome.nextLabel} onClick={chrome.onNext} className={btn}>
         <ChevronRight className="h-4 w-4" strokeWidth={3} aria-hidden="true" />

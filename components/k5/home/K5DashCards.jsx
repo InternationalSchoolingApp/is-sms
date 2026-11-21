@@ -19,12 +19,12 @@ import { cleanCourseLabel, keyToDate } from "@/utils/k5Calendar";
  */
 
 const CARD = `${K5_CARD} box-border flex flex-col rounded-[30px]`;
-const LINK = "text-sm font-semibold text-k5-acx no-underline py-2";
+const LINK = "dash-viewAll text-sm font-semibold text-k5-acx no-underline py-2";
 
 function Heading({ icon, tint, children }) {
   return (
-    <h2 className="m-0 flex items-center gap-2 text-[21px] font-semibold">
-      <span className={`flex h-8 w-8 items-center justify-center rounded-full ${tint}`}>{icon}</span>
+    <h2 className="dash-h2 m-0 flex items-center gap-2 text-[21px] font-semibold">
+      <span className={`dash-ico flex h-8 w-8 items-center justify-center rounded-full ${tint}`}>{icon}</span>
       <span>{children}</span>
     </h2>
   );
@@ -37,8 +37,8 @@ function GoalBox({ tone, icon, label, value }) {
         {icon}
       </span>
       <span className="flex min-w-0 flex-col">
-        <span className="text-[13px] font-bold uppercase tracking-[0.05em] text-[#1C2640]">{label}</span>
-        <b className="font-k5-display text-[26px] font-semibold text-[#1C2640]">{value}</b>
+        <span className="dash-pLabel text-[13px] font-bold uppercase tracking-[0.05em] text-[#1C2640]">{label}</span>
+        <b className="dash-pValue font-k5-display text-[26px] font-semibold text-[#1C2640]">{value}</b>
       </span>
     </div>
   );
@@ -82,7 +82,7 @@ export function MyPerformanceCard({ firstInitial }) {
         <div className="ms-auto flex items-center gap-4">
           <Link
             href={perfHref}
-            className="flex min-h-10 items-center gap-2 rounded-full border-[3px] border-k5-ac bg-k5-ac px-4 font-k5-display text-[15px] font-semibold text-white no-underline shadow-[0_4px_0_var(--k5-acd)]"
+            className="dash-setGoals flex min-h-10 items-center gap-2 rounded-full border-[3px] border-k5-ac bg-k5-ac px-4 font-k5-display text-[15px] font-semibold text-white no-underline shadow-[0_4px_0_var(--k5-acd)]"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M12 20h9" />
@@ -136,9 +136,9 @@ export function MyPerformanceCard({ firstInitial }) {
           </div>
           <div className="flex flex-col gap-2.5 rounded-[22px] border-[3px] border-k5-line bg-k5-card px-[18px] py-4">
             <span className="flex flex-wrap items-baseline justify-between gap-2.5">
-              <b className="font-k5-display text-lg font-semibold">Completion</b>
+              <b className="dash-compT font-k5-display text-lg font-semibold">Completion</b>
               <span>
-                <b className="font-k5-display text-[32px] font-semibold leading-none">{done}%</b> <span className="text-[15px] font-black text-k5-mut">done</span>
+                <b className="dash-compPct font-k5-display text-[32px] font-semibold leading-none">{done}%</b> <span className="dash-compDone text-[15px] font-black text-k5-mut">done</span>
               </span>
             </span>
             <div role="img" aria-label={`You are ${done}% of the way. Today’s target is ${target}%.`} className="relative me-3.5 ms-1.5 h-[70px]">
@@ -162,12 +162,12 @@ export function MyPerformanceCard({ firstInitial }) {
               </svg>
             </div>
             <div className="flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-k5-line bg-k5-soft px-3 py-1 text-[13px] font-semibold text-k5-ink">
+              <span className="inline-flex items-center gap-1.5 dash-chip rounded-full border-2 border-k5-line bg-k5-soft px-3 py-1 text-[13px] font-semibold text-k5-ink">
                 <span aria-hidden="true" className="block h-3.5 w-1 rounded-sm bg-[#2A2F4A]" />
                 Today’s target {target}%
               </span>
               {days != null && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-k5-line bg-k5-soft px-3 py-1 text-[13px] font-semibold text-k5-ink">
+                <span className="inline-flex items-center gap-1.5 dash-chip rounded-full border-2 border-k5-line bg-k5-soft px-3 py-1 text-[13px] font-semibold text-k5-ink">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <rect x="3.5" y="5" width="17" height="15.5" rx="3.5" />
                     <path d="M8 3v4M16 3v4M3.5 10h17" />
@@ -240,14 +240,14 @@ export function MyAssignmentsCard({ days, todayKey, isLoading }) {
             <div key={`${a.id}-${i}`} className="box-border flex min-h-[62px] items-center gap-3.5 rounded-[20px] border-2 border-k5-line bg-k5-soft py-2 pl-2 pr-2.5">
               <SubjectTile name={a.subjectName || a.title || ""} size="sm" />
               <div className="min-w-0 flex-1">
-                <p className="m-0 text-sm font-semibold">{a.title || a.eventTitle || "Assignment"}</p>
+                <p className="dash-asgTitle m-0 text-sm font-semibold">{a.title || a.eventTitle || "Assignment"}</p>
                 
                 {a.subjectName && <p className="m-0 mt-px text-xs font-semibold text-k5-mut">{cleanCourseLabel(a.subjectName)}</p>}
                 <p className="m-0 mt-0.5 text-xs font-semibold" style={{ color: urgent ? "#D7263D" : "var(--k5-mut)" }}>
                   {due}
                 </p>
               </div>
-              <button type="button" onClick={start} className="h-8 flex-none cursor-pointer rounded-2xl border-none bg-k5-ac px-3.5 font-k5-display text-[13px] font-semibold text-white shadow-[0_3px_0_var(--k5-acd)]">
+              <button type="button" onClick={start} className="dash-start h-8 flex-none cursor-pointer rounded-2xl border-none bg-k5-ac px-3.5 font-k5-display text-[13px] font-semibold text-white shadow-[0_3px_0_var(--k5-acd)]">
                 Start
               </button>
             </div>

@@ -174,7 +174,8 @@ export function PlanHeader({ tile, title, subtitle, children }) {
     return (
       <div className="flex flex-wrap items-center gap-4">
         {tile}
-        <div className="flex min-w-0 flex-[1_1_140px] flex-col gap-0.5">
+        {/* min-w-[230px]: the date line (arrows + date) never slides under the Today / Week / Month switch; the switch wraps below instead. */}
+        <div className="flex min-w-[230px] flex-[1_1_140px] flex-col gap-0.5 max-[560px]:min-w-0">
           <h2 className="k5h-ptitle m-0 font-k5-display text-[32px] font-semibold leading-[1.05]">{title}</h2>
           {chrome.viewName === "today" && <PlanDateLine chrome={chrome} />}
         </div>

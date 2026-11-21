@@ -26,6 +26,7 @@ import { effectiveGradeLook } from "@/constant/appearance";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { K5LiveClassWatcher } from "@/components/k5/home/K5LiveClassWatcher";
 import { studentNavHref } from "@/utils/dashboardNav";
+import { DashboardLoadingSkeleton } from "@/components/dashboard/DashboardLoadingSkeleton";
 
 /**
  * Grade K–5 dashboard chrome (docs/migration/grade_k5_dashboard_plan.html, Phases 1 + 3) —
@@ -76,10 +77,9 @@ function K5Frame({ children }) {
     return () => setPicoLive({ menuReady: false });
   }, [menuCount]);
   const isHome = pathname === studentNavHref(school, "");
-  // "My Classes" (the Today / Week / Month planner, Playful.dc.html navClasses) comes from the database menu: it shows when
-  // the student's role has the My Classes module (MODULES / USER_RIGHTS). Only the Playful look has that page in its nav,
-  // so the Balanced / Mature looks leave it out.
-  const navMenu = useMemo(() => (isMiddle && menu?.length ? menu.filter((item) => item.segment !== "my-classes") : menu), [menu, isMiddle]);
+  // "My Classes" (the Today / Week / Month planner, navClasses in the Playful / Middle / High mockups) comes from the database
+  // menu: it shows when the student's role has the My Classes module (MODULES / USER_RIGHTS), in every look.
+  const navMenu = menu;
   // Pico's first welcome is only for a student who completed enrollment: the dashboard is reached only by one (the backend sends
   // a student still enrolling to the wizard), the grade band and details have loaded (context exists), and it is a real student,
   // not a counselor's dummy/demo view.
@@ -132,6 +132,14 @@ function K5Frame({ children }) {
     setNavOpen(false);
   }
   return (
+    <>
+    {/* While the student's look is still coming from the server (no copy saved in this browser yet) the shell stays hidden so it
+        never flashes in the wrong colours; the same loading skeleton as before stays on top meanwhile, so the page is never blank. */}
+    {appearanceLoading && (
+      <div className="fixed inset-0 z-[150] overflow-hidden">
+        <DashboardLoadingSkeleton />
+      </div>
+    )}
     <div {...themeProps} data-k5-prek={isPreK ? "true" : undefined} data-motion-band={motionBand} style={appearanceLoading ? { opacity: 0 } : undefined}>
       <CanvasBackground themeKey={`${themeProps["data-k5-theme"]}|${themeProps.className}`} />
       <CelebrationHost />
@@ -190,5 +198,6 @@ function K5Frame({ children }) {
       <SessionExpiredDialog themed />
       <AppearanceDialog open={lookOpen} onClose={() => setLookOpen(false)} firstName={String(context.userName || "").split(" ")[0]} />
     </div>
+    </>
   );
 }

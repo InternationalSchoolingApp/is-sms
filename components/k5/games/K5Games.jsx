@@ -9,7 +9,7 @@ import { GAMES } from "@/components/k5/games/gameLogic";
 import { MIDDLE_ICONS, OddBoard, PatternBoard, WordBoard } from "@/components/k5/games/MiddleGameBoards";
 import { MIDDLE_GAMES } from "@/components/k5/games/middleGameLogic";
 import { GameSectionToggle } from "@/components/k5/games/GameSectionToggle";
-import { useAutoOpenGames } from "@/components/k5/games/useAutoOpenGames";
+import { useAutoOpenGames, useDefaultOpenGames } from "@/components/k5/games/useAutoOpenGames";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 
 const PILL = "min-h-12 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-4 font-k5-display text-base font-semibold text-k5-ink";
@@ -39,7 +39,7 @@ function GameTile({ game, onPlay, locked, middle = false }) {
  * running game goes back to the picker (the live-class dialog opens over it, see StudentHomeK5).
  * `past`: the day is already over - the games are locked for it too, with its own note.
  */
-export function K5Games({ locked = false, past = false, pending = false, middle = false }) {
+export function K5Games({ locked = false, past = false, pending = false, middle = false, defaultOpen = false }) {
   const list = middle ? MIDDLE_GAMES : GAMES;
   const [gameId, setGameId] = useState(null);
   const [score, setScore] = useState(0);
@@ -48,6 +48,7 @@ export function K5Games({ locked = false, past = false, pending = false, middle 
   const [gamesOpen, setGamesOpen] = useState(false);
   const sectionRef = useRef(null);
   useAutoOpenGames(sectionRef, setGamesOpen);
+  useDefaultOpenGames(defaultOpen, setGamesOpen);
   const fbTimer = useRef(null);
   useEffect(() => () => clearTimeout(fbTimer.current), []);
 

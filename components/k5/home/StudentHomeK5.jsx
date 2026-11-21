@@ -11,7 +11,7 @@ import { OnboardingVideoModal } from "@/components/dashboard/OnboardingVideoModa
 import { GraduationCeremonyModal } from "@/components/dashboard/GraduationCeremonyModal";
 import { EventDetailModal } from "@/components/dashboard/calendar/EventDetailModal";
 import { JoinClassModal } from "@/components/dashboard/calendar/JoinClassModal";
-import { K5Toolbar, titles } from "@/components/k5/home/K5Toolbar";
+import { titles } from "@/components/k5/home/K5Toolbar";
 import { K5ClassesHeader } from "@/components/k5/home/K5ClassesHeader";
 import { PlanChromeContext } from "@/components/k5/home/planChrome";
 import { K5PlanFilters } from "@/components/k5/home/K5PlanFilters";
@@ -121,7 +121,7 @@ export function StudentHomeK5({ holdProfilePopup = false, dashboard = false }) {
 }
 
 function K5Planner({ timezone, dashboard = false }) {
-  const { context, isPreK, isSelfStudy, isMiddle } = useDashboardContext();
+  const { context, isPreK, isSelfStudy } = useDashboardContext();
   const model = useK5CalendarModel({ schoolUUID: context?.schoolUUID, userId: context?.userId, timezone });
   const [clue, setClue] = useState(null);
   const [calOpen, setCalOpen] = useState(false);
@@ -132,26 +132,23 @@ function K5Planner({ timezone, dashboard = false }) {
   const { viewName, setViewName, selectedDate, selectedKey, todayKey, now, days } = model;
   const view = isPreK && viewName === "month" ? "today" : viewName;
 
-  // Playful look (Playful.dc.html "My Classes and Activities"): a header card on top, and the Today / Week / Month switch and the
-  // previous / next arrows inside the plan card (planChrome.jsx). The Balanced / Mature looks keep the old toolbar.
-  const playful = !isMiddle;
+  // "My Classes and Activities" (Playful.dc.html, Middle.dc.html, High.dc.html): a header card on top, and the Today / Week / Month
+  // switch and the previous / next arrows inside the plan card (planChrome.jsx), in every look.
   const [titleBig, titleSmall] = titles(view, selectedDate);
   const unit = view === "week" ? "week" : view === "month" ? "month" : "day";
-  const chrome = playful
-    ? {
-        viewName: view,
-        onView: setViewName,
-        onToday: model.goToday,
-        onPrev: model.goPrev,
-        onNext: model.goNext,
-        prevLabel: `Previous ${unit}`,
-        nextLabel: `Next ${unit}`,
-        // Week: the range is the big text and the year the small one (the heading already says "My Week").
-        titleBig: view === "week" ? titleSmall : titleBig,
-        titleSmall: view === "week" ? format(selectedDate, "yyyy") : titleSmall,
-        isPreK,
-      }
-    : null;
+  const chrome = {
+    viewName: view,
+    onView: setViewName,
+    onToday: model.goToday,
+    onPrev: model.goPrev,
+    onNext: model.goNext,
+    prevLabel: `Previous ${unit}`,
+    nextLabel: `Next ${unit}`,
+    // Week: the range is the big text and the year the small one (the heading already says "My Week").
+    titleBig: view === "week" ? titleSmall : titleBig,
+    titleSmall: view === "week" ? format(selectedDate, "yyyy") : titleSmall,
+    isPreK,
+  };
 
   // Opening a day (from the week, the month or the mini calendar) switches to its Day plan: bring it
   // into view when it is off-screen, but never move a page that already shows it.
@@ -221,25 +218,11 @@ function K5Planner({ timezone, dashboard = false }) {
         <K5Dashboard now={now} timezone={timezone} days={days} todayKey={todayKey} isLoading={model.isLoading} firstName={firstName} onJoin={setJoiningEvent} />
       ) : (
         <>
-      {playful ? (
-        <K5ClassesHeader now={now} timezone={timezone} />
-      ) : (
-        <K5Toolbar
-          now={now}
-          timezone={timezone}
-          viewName={view}
-          onView={setViewName}
-          selectedDate={selectedDate}
-          onPrev={model.goPrev}
-          onNext={model.goNext}
-          onToday={model.goToday}
-          isPreK={isPreK}
-        />
-      )}
+      <K5ClassesHeader now={now} timezone={timezone} />
       <ColourClues
         clue={clue}
         isPreK={isPreK}
-        showHint={!playful}
+        showHint={false}
         onClue={(key) => {
           setClue(key);
           if (!key) return;
@@ -271,7 +254,7 @@ function K5Planner({ timezone, dashboard = false }) {
         </div>
 
         {/* Mobile (mockup .duo>[data-pin=plan]{order:-1}): the plan comes before the left column. */}
-        <section ref={planRef} aria-label="My plans" data-pin="calendar" className={`${K5_CARD} scroll-mt-[120px] @container box-border flex min-w-0 flex-[999_1_460px] flex-col gap-[18px] p-[22px] max-[760px]:order-first max-[560px]:p-3.5`}>
+        <section ref={planRef} aria-label="My plans" data-pin="calendar" className={`${K5_CARD} k5h-pcard scroll-mt-[120px] @container box-border flex min-w-0 flex-[999_1_460px] flex-col gap-[18px] p-[22px] max-[760px]:order-first max-[560px]:p-3.5`}>
           {model.isLoading ? (
             <K5PlanSkeleton />
           ) : (
@@ -316,7 +299,6 @@ function K5Planner({ timezone, dashboard = false }) {
               firstName={firstName}
               onJoin={setJoiningEvent}
               onOpen={open}
-              onPeek={model.setSelectedDate}
               onShowCalendar={() => setCalOpen(true)}
             />
           )}

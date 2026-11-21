@@ -167,7 +167,7 @@ function ClassCard({ live, next, doneAll, hasClasses, onJoin, classesHref }) {
   const event = live || next;
   if (!event) {
     return (
-      <div className="relative flex min-w-[210px] flex-[0_2_340px] flex-col gap-3 rounded-3xl bg-k5-card p-4 pb-4 text-k5-ink shadow-[0_5px_0_rgba(0,40,140,0.35)] max-[760px]:min-w-0 max-[760px]:flex-[1_1_100%] @max-[640px]/hero:min-w-0 @max-[640px]/hero:flex-[1_1_100%]">
+      <div className="dash-cont relative flex min-w-[210px] flex-[0_2_340px] flex-col gap-3 rounded-3xl bg-k5-card p-4 pb-4 text-k5-ink shadow-[0_5px_0_rgba(0,40,140,0.35)] max-[760px]:min-w-0 max-[760px]:flex-[1_1_100%] @max-[640px]/hero:min-w-0 @max-[640px]/hero:flex-[1_1_100%]">
         <p className="m-0 font-k5-display text-[19px] font-semibold leading-tight">
           {!hasClasses ? "No classes today!" : doneAll ? "All your classes are done!" : "Nothing live right now"}
         </p>
@@ -180,12 +180,12 @@ function ClassCard({ live, next, doneAll, hasClasses, onJoin, classesHref }) {
   }
   const teacher = teacherName(event);
   return (
-    <div className="relative flex min-w-[210px] flex-[0_2_340px] flex-col gap-3 rounded-3xl bg-k5-card p-4 pb-4 text-k5-ink shadow-[0_5px_0_rgba(0,40,140,0.35)] max-[760px]:min-w-0 max-[760px]:flex-[1_1_100%] @max-[640px]/hero:min-w-0 @max-[640px]/hero:flex-[1_1_100%]">
+    <div className="dash-cont relative flex min-w-[210px] flex-[0_2_340px] flex-col gap-3 rounded-3xl bg-k5-card p-4 pb-4 text-k5-ink shadow-[0_5px_0_rgba(0,40,140,0.35)] max-[760px]:min-w-0 max-[760px]:flex-[1_1_100%] @max-[640px]/hero:min-w-0 @max-[640px]/hero:flex-[1_1_100%]">
       <div className="flex items-center gap-3">
         <ClassTile name={classTitle(event)} />
         <div className="min-w-0">
-          <p className="m-0 text-[17px] font-semibold leading-[1.2]">{classTitle(event)}</p>
-          <p className="m-0 mt-[3px] flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs font-semibold tracking-[0.05em] text-k5-gx">
+          <p className="dash-liveName m-0 text-[17px] font-semibold leading-[1.2]">{classTitle(event)}</p>
+          <p className="dash-liveLine m-0 mt-[3px] flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs font-semibold tracking-[0.05em] text-k5-gx">
             {live ? (
               <>
                 <span aria-hidden="true" className="k5-live-dot block h-[9px] w-[9px] flex-none rounded-full bg-k5-gi" />
@@ -194,7 +194,7 @@ function ClassCard({ live, next, doneAll, hasClasses, onJoin, classesHref }) {
             ) : (
               <span className="whitespace-nowrap">UP NEXT · {timeRange(event) || timeLabel(event)}</span>
             )}
-            {teacher && <span className="whitespace-nowrap text-[13px] tracking-normal text-k5-ink">with {teacher}</span>}
+            {teacher && <span className="dash-liveWith whitespace-nowrap text-[13px] tracking-normal text-k5-ink">with {teacher}</span>}
           </p>
         </div>
       </div>
@@ -241,14 +241,14 @@ function Bird({ body, wing, cls }) {
   );
 }
 
-function Hero({ now, timezone, firstName, live, next, doneAll, hasClasses, onJoin, classesHref }) {
+function Hero({ now, timezone, firstName, live, next, doneAll, hasClasses, onJoin, classesHref, look }) {
   const weather = useK5Weather(timezone);
   const night = weather ? !weather.isDay : now.getHours() < 6 || now.getHours() >= 18;
   const scene = sceneOf(weather);
   return (
     <section
       aria-label="My Dashboard"
-      className="relative box-border flex min-h-[262px] min-w-[520px] flex-[2_1_0] flex-col justify-center gap-[18px] overflow-hidden rounded-[30px] border-[3px] border-[#00398F] bg-[linear-gradient(100deg,#0166FE_0%,#288AFE_45%,#7DDAE3_85%,#8BE6D8_100%)] p-6 text-white shadow-[0_6px_0_#00398F] [container-name:hero] [container-type:inline-size] max-[760px]:min-w-0 max-[760px]:basis-full max-[760px]:p-4"
+      className="dash-hero relative box-border flex min-h-[262px] min-w-[520px] flex-[2_1_0] flex-col justify-center gap-[18px] overflow-hidden rounded-[30px] border-[3px] border-[#00398F] bg-[linear-gradient(100deg,#0166FE_0%,#288AFE_45%,#7DDAE3_85%,#8BE6D8_100%)] p-6 text-white shadow-[0_6px_0_#00398F] [container-name:hero] [container-type:inline-size] max-[760px]:min-w-0 max-[760px]:basis-full max-[760px]:p-4"
     >
       <WeatherScene scene={scene} />
       <span className="hb-sky" aria-hidden="true">
@@ -258,11 +258,11 @@ function Hero({ now, timezone, firstName, live, next, doneAll, hasClasses, onJoi
       </span>
       <span aria-hidden="true" className="k5-float pointer-events-none absolute -right-[46px] -top-[58px] block h-[190px] w-[190px] rounded-full bg-white/[0.13]" />
       <span aria-hidden="true" className="k5-float pointer-events-none absolute -bottom-16 -left-9 block h-[150px] w-[150px] rounded-full bg-white/10 [animation-delay:-2s]" />
-      <svg aria-hidden="true" viewBox="0 0 800 60" preserveAspectRatio="none" className="pointer-events-none absolute bottom-0 left-0 h-[58px] w-full">
+      <svg aria-hidden="true" viewBox="0 0 800 60" preserveAspectRatio="none" className="dash-bottomWaves pointer-events-none absolute bottom-0 left-0 h-[58px] w-full">
         <path d="M0 34C90 10 180 52 290 30S500 8 610 30S740 50 800 24V60H0Z" fill="rgba(255, 255, 255, 0.10)" />
         <path d="M0 46C120 30 230 58 360 42S580 28 690 44S770 52 800 40V60H0Z" fill="rgba(255, 255, 255, 0.14)" />
       </svg>
-      <svg aria-hidden="true" viewBox="0 0 74 48" width="74" height="48" className="k5-drift pointer-events-none absolute right-[26px] top-1.5">
+      <svg aria-hidden="true" viewBox="0 0 74 48" width="74" height="48" className="dash-faceCloud k5-drift pointer-events-none absolute right-[26px] top-1.5">
         <path d="M18 44C8 44 2 37 2 29c0-8 6-14 14-14 2-8 9-13 18-13 9 0 16 6 18 13 1 0 2 0 3 0 9 0 17 7 17 15s-7 14-16 14Z" fill="#FFFFFF" />
         <ellipse cx="29" cy="27" rx="2.6" ry="3.2" fill="#1E2242" />
         <ellipse cx="45" cy="27" rx="2.6" ry="3.2" fill="#1E2242" />
@@ -270,19 +270,36 @@ function Hero({ now, timezone, firstName, live, next, doneAll, hasClasses, onJoi
         <circle cx="51" cy="33" r="3.4" fill="#FF9EB5" opacity="0.85" />
         <path d="M33.5 33q3.5 3.5 7 0" stroke="#1E2242" strokeWidth="2" fill="none" strokeLinecap="round" />
       </svg>
-      <svg aria-hidden="true" viewBox="0 0 74 44" width="40" height="24" className="k5-drift pointer-events-none absolute bottom-2.5 right-16 opacity-75 [animation-delay:-3s] [animation-direction:reverse]">
+      <svg aria-hidden="true" viewBox="0 0 74 44" width="40" height="24" className="dash-smallCloud k5-drift pointer-events-none absolute bottom-2.5 right-16 opacity-75 [animation-delay:-3s] [animation-direction:reverse]">
         <path d="M18 42C8 42 2 35 2 27c0-8 6-14 14-14 2-8 9-12 18-12 9 0 16 5 18 12h3c9 0 17 7 17 15s-7 14-16 14Z" fill="#FFFFFF" />
       </svg>
-      <span aria-hidden="true" className="k5-bob2 pointer-events-none absolute left-[56%] top-[72px] block h-3 w-3 rounded-full bg-[#FFD6E8]" />
-      <span aria-hidden="true" className="k5-bob2 pointer-events-none absolute left-[43%] top-[92px] block h-[9px] w-[9px] rounded-full bg-[#FFF1A8] [animation-delay:-1s]" />
-      <span aria-hidden="true" className="k5-bob2 pointer-events-none absolute bottom-[58px] left-[52%] block h-2.5 w-2.5 rounded-full bg-[#B9F5E1] [animation-delay:-2s]" />
+      <span aria-hidden="true" className="dash-bob k5-bob2 pointer-events-none absolute left-[56%] top-[72px] block h-3 w-3 rounded-full bg-[#FFD6E8]" />
+      <span aria-hidden="true" className="dash-bob k5-bob2 pointer-events-none absolute left-[43%] top-[92px] block h-[9px] w-[9px] rounded-full bg-[#FFF1A8] [animation-delay:-1s]" />
+      <span aria-hidden="true" className="dash-bob k5-bob2 pointer-events-none absolute bottom-[58px] left-[52%] block h-2.5 w-2.5 rounded-full bg-[#B9F5E1] [animation-delay:-2s]" />
 
       <DateStrip now={now} timezone={timezone} weather={weather} night={night} scene={scene} />
 
       <div className="hero-row relative flex flex-nowrap items-center gap-5 max-[760px]:flex-wrap @max-[640px]/hero:flex-wrap">
         <div className="hero-greet relative flex min-w-0 flex-[1_1_auto] items-center gap-3.5">
-          {night ? <HeroMoon /> : <K5ClockIcon kind="sun" night={false} className="hero-sun !-m-4 !-mr-3 !h-[72px] !w-[72px]" />}
-          <h1 className="m-0 text-[32px] font-semibold leading-[38px]">
+          {look === "high" ? (
+            night ? (
+              <svg width="42" height="42" viewBox="0 0 48 48" aria-hidden="true" className="flex-none self-center">
+                <path d="M30 6a18 18 0 1 0 12 30A15 15 0 0 1 30 6z" fill="#FFE08A" />
+              </svg>
+            ) : (
+              <svg width="46" height="46" viewBox="0 0 48 48" aria-hidden="true" className="flex-none self-center">
+                <g stroke="#FFD25A" strokeWidth="3" strokeLinecap="round">
+                  <path d="M24 4v6M24 38v6M4 24h6M38 24h6M9.9 9.9l4.2 4.2M33.9 33.9l4.2 4.2M9.9 38.1l4.2-4.2M33.9 14.1l4.2-4.2" />
+                </g>
+                <circle cx="24" cy="24" r="9.5" fill="#FFC531" />
+              </svg>
+            )
+          ) : night ? (
+            <HeroMoon />
+          ) : (
+            <K5ClockIcon kind="sun" night={false} className="hero-sun !-m-4 !-mr-3 !h-[72px] !w-[72px]" />
+          )}
+          <h1 className="dash-greet m-0 text-[32px] font-semibold leading-[38px]">
             <span className="whitespace-nowrap">{greeting(now.getHours())},</span>
             <br />
             {firstName}
@@ -305,8 +322,8 @@ function TodayGoal({ classes, classesHref, playGames = false, gamesHref }) {
   const shown = todo.slice(0, 5);
   return (
     <section aria-label="Today's Goal" className={`${SECTION_CARD} min-h-[262px] min-w-[300px] flex-[1_1_0] gap-4 rounded-[30px] py-[18px] pl-[22px] pr-4 max-[420px]:pl-4 max-[760px]:min-w-0 max-[760px]:basis-full`}>
-      <h2 className="m-0 flex items-center gap-2 text-[21px] font-semibold max-[420px]:justify-center">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FFF1C7] text-[#C27C00]">
+      <h2 className="dash-h2 m-0 flex items-center gap-2 text-[21px] font-semibold max-[420px]:justify-center">
+        <span className="dash-ico flex h-8 w-8 items-center justify-center rounded-full bg-[#FFF1C7] text-[#C27C00]">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden="true">
             <circle cx="12" cy="12" r="8" />
             <circle cx="12" cy="12" r="3.5" />
@@ -321,7 +338,7 @@ function TodayGoal({ classes, classesHref, playGames = false, gamesHref }) {
             <circle cx="60" cy="60" r="54" fill="none" stroke="#00CD89" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${(RING * done / Math.max(1, total)).toFixed(1)} ${RING}`} transform="rotate(-90 60 60)" />
           </svg>
           <div className="absolute left-0 top-0 flex h-[120px] w-[120px] flex-col items-center justify-center">
-            <span className="text-[26px] font-bold leading-none">{done}/{total}</span>
+            <span className="dash-ringN text-[26px] font-bold leading-none">{done}/{total}</span>
             <span className="mt-0.5 text-xs font-medium text-k5-mut">Done</span>
           </div>
         </div>
@@ -334,11 +351,11 @@ function TodayGoal({ classes, classesHref, playGames = false, gamesHref }) {
                     <span aria-hidden="true" className="k5-live-dot block h-2.5 w-2.5 rounded-full bg-k5-gi" />
                   </span>
                 ) : (
-                  <span aria-hidden="true" className="box-border h-[22px] w-[22px] flex-none rounded-full border-2 border-k5-line" />
+                  <span aria-hidden="true" className="dash-liCircle box-border h-[22px] w-[22px] flex-none rounded-full border-2 border-k5-line" />
                 )}
                 <span className="flex min-w-0 flex-col">
-                  <span className="text-[15px] font-semibold leading-[1.2] text-k5-ink">{g.name}</span>
-                  <span className="font-k5-body text-xs font-bold leading-[1.2] text-k5-mut">{g.sub}</span>
+                  <span className="dash-liName text-[15px] font-semibold leading-[1.2] text-k5-ink">{g.name}</span>
+                  <span className="dash-liSub font-k5-body text-xs font-bold leading-[1.2] text-k5-mut">{g.sub}</span>
                 </span>
               </li>
             ))}
@@ -368,7 +385,7 @@ function TodayGoal({ classes, classesHref, playGames = false, gamesHref }) {
           <p className="m-0 flex-1 text-[15px] font-semibold text-k5-mut">{total ? "Everything for today is done. Great job!" : "Nothing planned for today."}</p>
         )}
       </div>
-      <ClassesLink href={classesHref} className="mt-auto flex min-h-11 items-center justify-center gap-2 rounded-[22px] bg-k5-ac font-k5-display text-base font-semibold text-white no-underline shadow-[0_4px_0_var(--k5-acd)]">
+      <ClassesLink href={classesHref} className="dash-btn mt-auto flex min-h-11 items-center justify-center gap-2 rounded-[22px] bg-k5-ac font-k5-display text-base font-semibold text-white no-underline shadow-[0_4px_0_var(--k5-acd)]">
         <CalendarDays className="h-[18px] w-[18px]" strokeWidth={2.4} aria-hidden="true" />
         Go to my classes
       </ClassesLink>
@@ -376,21 +393,94 @@ function TodayGoal({ classes, classesHref, playGames = false, gamesHref }) {
   );
 }
 
-function DashboardSkeleton() {
+// The skeleton draws the dashboard's own shapes (hero with its date strip, greeting and class card; Today's Goal; My Performance;
+// My Assignments) in the same sizes, rows and cards, so nothing jumps when the real page replaces it. The cards are built from the
+// same classes as the real ones, so each look's skin (Playful / Balanced / Mature) shapes them the same way; the rows flip for a
+// left-handed student exactly like the real rows (data-hand).
+const ROW = "flex flex-wrap gap-6 in-data-[hand=left]:flex-row-reverse";
+const SK_CARD = `${K5_CARD} box-border flex flex-col rounded-[30px]`;
+
+function DashboardSkeleton({ look }) {
   return (
-    <div className="flex flex-wrap gap-6" aria-busy="true" aria-label="Loading your dashboard">
-      <Skeleton className="min-h-[262px] min-w-[520px] flex-[2_1_0] rounded-[30px] max-[760px]:min-w-0 max-[760px]:basis-full" />
-      <Skeleton className="min-h-[262px] min-w-[300px] flex-[1_1_0] rounded-[30px] max-[760px]:min-w-0 max-[760px]:basis-full" />
+    <div data-dash={look} className="flex flex-col gap-6" aria-busy="true" aria-label="Loading your dashboard">
+      <div className={ROW}>
+        {/* Hero: date / clock / weather strip, the greeting, and the class card */}
+        <Skeleton className="dash-skHero box-border flex min-h-[262px] min-w-[520px] flex-[2_1_0] flex-col justify-center gap-[18px] rounded-[30px] p-[18px] max-[760px]:min-w-0 max-[760px]:basis-full">
+          <span className="block h-[72px] w-full rounded-[20px] bg-white/45" />
+          <span className="flex flex-wrap items-center gap-4">
+            <span className="flex min-w-[200px] flex-[1_1_240px] items-center gap-3">
+              <span className="block h-14 w-14 flex-none rounded-full bg-white/45" />
+              <span className="flex flex-col gap-2">
+                <span className="block h-6 w-44 rounded-lg bg-white/45" />
+                <span className="block h-6 w-28 rounded-lg bg-white/45" />
+              </span>
+            </span>
+            <span className="block h-[118px] min-w-[210px] flex-[0_2_340px] rounded-[24px] bg-white/60 max-[760px]:min-w-0 max-[760px]:flex-[1_1_100%]" />
+          </span>
+        </Skeleton>
+        {/* Today's Goal */}
+        <div className={`${SK_CARD} min-h-[262px] min-w-[300px] flex-[1_1_0] gap-4 py-[18px] pl-[22px] pr-4 max-[420px]:pl-4 max-[760px]:min-w-0 max-[760px]:basis-full`}>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <Skeleton className="h-6 w-32 rounded-lg" />
+          </div>
+          <div className="flex flex-1 items-center gap-4">
+            <Skeleton className="h-[100px] w-[100px] flex-none rounded-full" />
+            <div className="flex flex-1 flex-col gap-3">
+              <Skeleton className="h-4 w-full rounded-md" />
+              <Skeleton className="h-4 w-4/5 rounded-md" />
+              <Skeleton className="h-4 w-3/5 rounded-md" />
+            </div>
+          </div>
+          <Skeleton className="mt-auto h-11 w-full rounded-[22px]" />
+        </div>
+      </div>
+      <div className={ROW}>
+        {/* My Performance */}
+        <div className={`${SK_CARD} min-w-[520px] flex-[2_1_0] gap-3.5 px-[22px] pb-[22px] pt-5 max-[760px]:min-w-0 max-[760px]:basis-full`}>
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-6 w-40 rounded-lg" />
+            </div>
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-10 w-32 rounded-full" />
+              <Skeleton className="h-5 w-14 rounded-md" />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3.5">
+            <Skeleton className="h-[68px] min-w-[190px] flex-[1_1_190px] rounded-[20px]" />
+            <Skeleton className="h-[68px] min-w-[190px] flex-[1_1_190px] rounded-[20px]" />
+          </div>
+          <Skeleton className="h-[128px] w-full rounded-[20px]" />
+        </div>
+        {/* My Assignments */}
+        <div className={`${SK_CARD} min-w-[300px] flex-[1_1_0] gap-[11px] px-[18px] py-5 max-[760px]:min-w-0 max-[760px]:basis-full`}>
+          <div className="mb-0.5 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-6 w-36 rounded-lg" />
+            </div>
+            <Skeleton className="h-5 w-14 rounded-md" />
+          </div>
+          {Array.from({ length: 3 }, (_, i) => (
+            <Skeleton key={i} className="h-[62px] rounded-[20px]" />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
 export function K5Dashboard({ now, timezone, days, todayKey, isLoading, firstName, onJoin }) {
   const { school } = useParams();
-  const { menu } = useDashboardContext();
+  const { menu, isMiddle, isHigh } = useDashboardContext();
+  // Which mockup the page follows: Playful (K-5), Balanced (Middle.dc.html) or Mature (High.dc.html); app/k5-theme.css restyles
+  // the dash-* hooks for the last two.
+  const look = isHigh ? "high" : isMiddle ? "mid" : "play";
   // My Classes is a database module: the links to it show only when the student's role has it (left menu item present).
   const classesHref = menu.some((item) => item.segment === "my-classes") ? `/${school}/student/my-classes` : null;
-  if (isLoading) return <DashboardSkeleton />;
+  if (isLoading) return <DashboardSkeleton look={look} />;
   const today = dayAt(days, todayKey);
   const classes = today.classes;
   // The class that is live now (Join shows when it has a join link, like the planner: see isJoinable in StudentHomeK5).
@@ -402,12 +492,12 @@ export function K5Dashboard({ now, timezone, days, todayKey, isLoading, firstNam
   const gamesHref = classesHref ? `${classesHref}?games=open` : null;
   // The mockup's dashboard (.lmd) is set in the display font (Fredoka) all the way down; only small captions use the body font.
   return (
-    <div className="k5-dash-rise flex flex-col gap-6 font-k5-display">
-      <div className="flex flex-wrap gap-6">
-        <Hero now={now} timezone={timezone} firstName={firstName} live={live} next={next} doneAll={doneAll} hasClasses={classes.length > 0} onJoin={onJoin} classesHref={classesHref} />
+    <div data-dash={look} className="k5-dash-rise flex flex-col gap-6 font-k5-display">
+      <div className={ROW}>
+        <Hero look={look} now={now} timezone={timezone} firstName={firstName} live={live} next={next} doneAll={doneAll} hasClasses={classes.length > 0} onJoin={onJoin} classesHref={classesHref} />
         <TodayGoal classes={classes} classesHref={classesHref} playGames={playGames} gamesHref={gamesHref} />
       </div>
-      <div className="flex flex-wrap gap-6">
+      <div className={ROW}>
         <MyPerformanceCard firstInitial={firstName.charAt(0).toUpperCase()} />
         <MyAssignmentsCard days={days} todayKey={todayKey} isLoading={false} />
       </div>
