@@ -30,7 +30,7 @@ import { useStudentName } from "@/hooks/useStudentName";
  * its empty value would wrongly bounce every student to the legacy dashboard.
  * It is added together with the backend toggle + redirect branch.
  */
-const DashboardContext = createContext(null);
+export const DashboardContext = createContext(null);
 
 // The page's query string after hydration (null on the server) — same reader as useDummyStudent.
 const subscribe = () => () => {};

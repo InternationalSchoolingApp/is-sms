@@ -15,6 +15,7 @@ import { useAutoOpenGames, useDefaultOpenGames } from "@/components/k5/games/use
 
 const LOCK_MESSAGE = "Games unlock only on a day with no classes, or after you finish all your classes and activities for the day.";
 const PAST_MESSAGE = "This day is over. Pick today or a day to come to play.";
+const HOMEWORK_MESSAGE = "You have an assignment to hand in today. The games open when today's assignments are handed in.";
 
 const PILL = "flex cursor-pointer items-center rounded-full border-[1.5px] border-k5-line bg-k5-card text-k5-ink";
 const BOARD = "relative flex min-h-[17.5rem] flex-col items-center justify-center gap-[1.125rem] rounded-[0.625rem] border border-k5-line bg-k5-card p-5";
@@ -187,7 +188,7 @@ function MemoryGridBoard({ onScore, onFeedback, onRestart }) {
   );
 }
 
-export function HighGames({ locked = false, past = false, defaultOpen = false }) {
+export function HighGames({ locked = false, past = false, homework = false, defaultOpen = false }) {
   const [gameId, setGameId] = useState(null);
   const [gamesOpen, setGamesOpen] = useState(false);
   const sectionRef = useRef(null);
@@ -235,7 +236,7 @@ export function HighGames({ locked = false, past = false, defaultOpen = false })
               </svg>
               <span className="flex flex-col gap-0.5">
                 <span className="text-[0.875rem] font-[500]">Games are locked</span>
-                <span className="text-[0.8125rem] font-[400] leading-[1.4]">{past ? PAST_MESSAGE : LOCK_MESSAGE}</span>
+                <span className="text-[0.8125rem] font-[400] leading-[1.4]">{past ? PAST_MESSAGE : homework ? HOMEWORK_MESSAGE : LOCK_MESSAGE}</span>
               </span>
             </div>
           )}

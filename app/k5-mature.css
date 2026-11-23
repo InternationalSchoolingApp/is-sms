@@ -603,3 +603,21 @@
 [data-k5-high] .k5h-nocls {
   border-radius: 20px;
 }
+
+/* Right action rail: High draws it exactly like Middle (Middle.dc.html .rail): a soft blue circle on a 2px rim (the rim colour is the
+   button's --rim), 900-weight labels, and on desktop the count badge in the display font 15px / 700 with its soft shadow. The skin
+   above flattens every "shadow-[0_2px_0_..." and maps font-black / the badge's 13px, so those values are put back here. */
+.theme-k5[data-k5-high] .k5-rail > button {
+  font-weight: 900;
+}
+.theme-k5[data-k5-high] .k5-rail > button > span:first-child {
+  box-shadow: 0 2px 0 var(--rim);
+}
+@media (min-width: 761px) {
+  .theme-k5[data-k5-high] .k5-rail .k5-rail-badge {
+    font-family: var(--k5-fd);
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(11, 36, 71, 0.18);
+  }
+}

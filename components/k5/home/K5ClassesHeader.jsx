@@ -5,6 +5,8 @@ import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { useChristmas } from "@/components/k5/christmas/ChristmasProvider";
+import { ChristmasLights, ChristmasTreeIcon } from "@/components/k5/christmas/ChristmasArt";
 
 /*
  * "My Classes and Activities" page header (Playful.dc.html, Middle.dc.html, High.dc.html): the card on top with the calendar-play
@@ -58,14 +60,23 @@ function LineCalendar() {
 export function K5ClassesHeader({ now, timezone }) {
   const { isMiddle, isHigh } = useDashboardContext();
   const clock = useSecondClock(timezone, now);
+  // Looking at 25 December in My Classes: a string of bulbs along the top and a little tree (mockup).
+  const { festive, plannerXmas } = useChristmas();
+  const xmas = festive && plannerXmas;
   return (
-    <div className={`${K5_CARD} k5h-pcard flex flex-wrap items-center gap-3 px-4 pb-3 pt-3.5`}>
+    <div className={`${K5_CARD} k5h-pcard relative flex flex-wrap items-center gap-3 px-4 pb-3 pt-3.5`}>
+      {xmas && <ChristmasLights />}
       <h1 className="m-0 flex min-w-0 flex-[1_1_auto] items-center gap-3 font-k5-display text-[26px] font-semibold leading-[1.15] text-k5-ink">
         <span aria-hidden="true" className="k5h-r12 flex h-11 w-11 flex-none items-center justify-center rounded-[14px] bg-k5-act">
           {isHigh ? <LineCalendar /> : <ColourPicture />}
         </span>
         <span>My Classes and Activities</span>
       </h1>
+      {xmas && (
+        <span aria-hidden="true" className="order-8 mx-auto flex-none opacity-85 max-[560px]:hidden">
+          <ChristmasTreeIcon size={56} label="Christmas tree" />
+        </span>
+      )}
       <div className={`order-last ms-auto flex flex-none items-center gap-2 rounded-full py-1.5 pl-2.5 pr-3.5 ${isMiddle ? "bg-k5-act" : "bg-k5-yt"}`}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={isMiddle ? "#0057B8" : "#5B3FD4"} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="flex-none">
           <circle cx="12" cy="12" r="9" />

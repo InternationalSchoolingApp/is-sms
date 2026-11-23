@@ -322,6 +322,13 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear, firstName =
               </div>
             </Section>
 
+            <Section id="lk-christmas" title="🎄 Christmas theme" subtitle="Snow, music and decorations on Christmas Day.">
+              <div className="grid grid-cols-2 gap-3">
+                <Choice name="christmas" value="on" label="On" />
+                <Choice name="christmas" value="off" label="Off" />
+              </div>
+            </Section>
+
             <Section id="lk-game-sound" title="Game sounds" subtitle="The pop and other sounds in the games. This does not change the buddy's voice.">
               <div className="flex items-center gap-3">
                 <button

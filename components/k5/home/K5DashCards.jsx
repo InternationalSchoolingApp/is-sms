@@ -70,7 +70,7 @@ export function MyPerformanceCard({ firstInitial }) {
   const target = Math.min(100, Math.round(exp));
 
   return (
-    <section aria-label="My Performance" className={`${CARD} min-w-[520px] flex-[2_1_0] gap-3.5 px-[22px] pb-[22px] pt-5 max-[760px]:min-w-0 max-[760px]:basis-full`}>
+    <section aria-label="My Performance" className={`${CARD} min-w-[520px] flex-[2_1_0] gap-3.5 px-[22px] pb-[22px] pt-5 max-[760px]:min-w-0 max-[760px]:basis-full @min-[844px]:overflow-y-auto`}>
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <Heading
           tint="bg-[#FFE0EC] text-[#C2408A]"
@@ -225,7 +225,7 @@ export function MyAssignmentsCard({ days, todayKey, isLoading }) {
   const start = () => openLmsLesson({ isPayLmsPaymentPending, lmsProviderUrl: lmsProviderURL });
 
   return (
-    <section aria-label="My Assignments" className={`${CARD} min-w-[300px] flex-[1_1_0] gap-[11px] px-[18px] py-5 max-[760px]:min-w-0 max-[760px]:basis-full`}>
+    <section aria-label="My Assignments" className={`${CARD} min-w-[300px] flex-[1_1_0] gap-[11px] px-[18px] py-5 max-[760px]:min-w-0 max-[760px]:basis-full @min-[844px]:[contain:size]`}>
       <div className="mb-0.5 flex items-center justify-between gap-2">
         <Heading
           tint="bg-[#D9F5E8] text-[#0B7A52]"
@@ -242,6 +242,8 @@ export function MyAssignmentsCard({ days, todayKey, isLoading }) {
           View all
         </Link>
       </div>
+      {/* Side by side with My Performance (desktop) the card keeps that card's height and the list scrolls; stacked (tablet, phone) it just grows. */}
+      <div className="flex flex-col gap-[11px] @min-[844px]:min-h-0 @min-[844px]:flex-1 @min-[844px]:overflow-y-auto">
       {!isLoading && pending.isLoading && <Skeleton aria-label="Loading overdue assignments" className="h-[62px] rounded-[20px]" />}
       {!isLoading && overdue > 0 && (
         <div className="box-border flex min-h-[62px] items-center gap-3.5 rounded-[20px] border-2 border-[#F5B8C1] bg-k5-rt py-2 pl-2 pr-2.5">
@@ -288,6 +290,7 @@ export function MyAssignmentsCard({ days, todayKey, isLoading }) {
           );
         })
       )}
+      </div>
     </section>
   );
 }

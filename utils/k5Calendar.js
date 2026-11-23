@@ -67,10 +67,11 @@ export function noClassReason(key, day, { isSelfStudy, firstName }) {
 export const isGameClass = (event) => event?.eventType === "STUDENT_DOUBT_SESSION" || event?.eventType === "BATCH";
 
 /**
- * May the games be opened for `dateKey`? { locked, reason } with reason "live" | "pending" | "past" | "classes" | null.
+ * May the games be opened for `dateKey`? { locked, reason } with reason "live" | "pending" | "assignments" | "past" | "classes" | null.
  * Applied in this order (only isGameClass events count as classes):
  *   1. a class is live right now (today)             -> locked on every date
  *   2. a class today has not finished yet            -> locked on every date
+ *   2b. an assignment due today is not handed in yet -> locked on every date
  *   3. the selected day is already over              -> locked (past days never open)
  *   4. the selected day is a holiday                 -> open (each day of a holiday period has its own holiday entry)
  *   5. the selected day is today                     -> open (rules 1-2 passed: every class today is over)
@@ -81,6 +82,8 @@ export function gameAccess(days, dateKey, todayKey) {
   const todays = dayAt(days, todayKey).classes.filter(isGameClass);
   if (todays.some((c) => c.k5Status === "live")) return { locked: true, reason: "live" };
   if (todays.some((c) => c.k5Status !== "done")) return { locked: true, reason: "pending" };
+  // Today's assignments count like classes: while one is still to hand in, no games.
+  if (dayAt(days, todayKey).assignments.some((a) => a.k5Assignment?.status !== "submitted")) return { locked: true, reason: "assignments" };
   if (dateKey < todayKey) return { locked: true, reason: "past" };
   const day = dayAt(days, dateKey);
   if (day.holidays.length) return { locked: false, reason: null };

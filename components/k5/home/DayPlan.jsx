@@ -5,6 +5,8 @@ import { K5Games } from "@/components/k5/games/K5Games";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { BUDDIES } from "@/constant/appearance";
+import { SantaBuddy } from "@/components/k5/christmas/ChristmasArt";
+import { isChristmasKey } from "@/components/k5/christmas/christmasStore";
 import { format } from "date-fns";
 import { CalendarDays, Check, Flag, PartyPopper, Star } from "lucide-react";
 import { CLUE_RING, PlanHeader, PlanTile, StatusPills, SubjectIcon } from "@/components/k5/home/k5Bits";
@@ -193,6 +195,8 @@ export function NoClassDay({ reason, isToday, onOpen }) {
   // A holiday card is red like the Holiday colour clue (flag in a red circle); the other reasons are the mockup's green card with the
   // buddy's face, a title and a line under it.
   const holiday = reason.kind === "holiday";
+  // 25 December (mockup): the buddy dressed as Santa, "Merry Christmas!" and a line, on the usual green card.
+  const christmas = reason.kind === "christmas";
   return (
     <Wrap
       {...(onOpen ? { type: "button", onClick: onOpen } : {})}
@@ -205,6 +209,8 @@ export function NoClassDay({ reason, isToday, onOpen }) {
         <span className="flex h-[72px] w-[72px] flex-none items-center justify-center rounded-full bg-[var(--k5-holiday)]">
           <Flag className="h-10 w-10 text-white" aria-hidden="true" />
         </span>
+      ) : christmas ? (
+        <SantaBuddy />
       ) : (
         <NoClassFace />
       )}
@@ -252,9 +258,9 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
   const statusCounts = countStatuses([...day.classes, ...day.activities]);
   const openGames = !access.locked && (isToday ? statusCounts.live === 0 && statusCounts.next === 0 : dateKey > todayKey && items.length === 0);
   const games = isHigh ? (
-    <HighGames locked={access.locked} past={dayOver} defaultOpen={openGames} />
+    <HighGames locked={access.locked} past={dayOver} homework={access.reason === "assignments"} defaultOpen={openGames} />
   ) : (
-    <K5Games locked={access.locked} past={dayOver} pending={access.reason === "pending"} middle={gradeBand === "MIDDLE"} defaultOpen={openGames} />
+    <K5Games locked={access.locked} past={dayOver} pending={access.reason === "pending"} homework={access.reason === "assignments"} middle={gradeBand === "MIDDLE"} defaultOpen={openGames} />
   );
   return (
     <div className="flex flex-col gap-4">
@@ -264,7 +270,7 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
             {isToday && !isMiddle && <Star className="absolute -right-3 -top-3 h-[30px] w-[30px] fill-[#FFC531] text-[#C9930A]" aria-hidden="true" />}
           </PlanTile>
         }
-        title={isToday ? "Today's Plan" : `${format(date, "EEEE")}'s Plan`}
+        title={isToday ? "Today's Plan" : isChristmasKey(dateKey) ? "Christmas Day" : `${format(date, "EEEE")}'s Plan`}
         subtitle={subtitle}
       >
         {/* Mobile only (mockup .calbtn): the mini calendar is hidden there, this opens it. */}
@@ -321,7 +327,7 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
         </div>
       ) : (
         <>
-          <NoClassDay reason={noClassReason(dateKey, day, { isSelfStudy, firstName })} isToday={isToday} onOpen={day.holidays.length ? () => onOpen(day.holidays[0]) : undefined} />
+          <NoClassDay reason={isChristmasKey(dateKey) ? { kind: "christmas", title: "Merry Christmas!", text: `It's Christmas Day! No school. Have a magical day${firstName ? `, ${firstName}` : ""}!` } : noClassReason(dateKey, day, { isSelfStudy, firstName })} isToday={isToday} onOpen={day.holidays.length ? () => onOpen(day.holidays[0]) : undefined} />
           {/* Grade 9–12 has its own "Brain Games" (High.dc.html); the other looks share the K–5 games. */}
           {games}
         </>

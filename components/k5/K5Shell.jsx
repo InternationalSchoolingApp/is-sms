@@ -19,6 +19,8 @@ import { SessionExpiredDialog } from "@/components/providers/SessionExpiredDialo
 import { PicoGuide } from "@/components/k5/pico/PicoGuide";
 import { setPicoLive } from "@/components/k5/pico/picoEvents";
 import { K5BrainBreak } from "@/components/k5/break/K5BrainBreak";
+import { ChristmasProvider, useChristmas } from "@/components/k5/christmas/ChristmasProvider";
+import { ChristmasBanner, ChristmasSky, ChristmasToast } from "@/components/k5/christmas/ChristmasLayer";
 import { SelectToSpeak } from "@/components/k5/pico/SelectToSpeak";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
@@ -43,7 +45,9 @@ export function K5Shell({ children }) {
     <AppearanceProvider scope="k5" userId={context.userId} schoolUUID={context.schoolUUID}>
       <K5LookScope>
         <MotionProvider>
-          <K5Frame>{children}</K5Frame>
+          <ChristmasProvider>
+            <K5Frame>{children}</K5Frame>
+          </ChristmasProvider>
         </MotionProvider>
       </K5LookScope>
     </AppearanceProvider>
@@ -68,6 +72,8 @@ function K5Frame({ children }) {
   const { isLoading: appearanceLoading, preferences } = useAppearance();
   const { band: motionBand, reduced: motionReduced } = useMotion();
     const themeProps = useK5ThemeProps("relative flex min-h-screen flex-col overflow-x-clip bg-k5-page");
+  // 25 December: the winter sky, snow, banner and music (components/k5/christmas).
+  const { festive } = useChristmas();
   const [navOpen, setNavOpen] = useState(false);
   const [lookOpen, setLookOpen] = useState(false);
   const closeNav = useCallback(() => setNavOpen(false), []);
@@ -138,11 +144,12 @@ function K5Frame({ children }) {
         never flashes in the wrong colours; the same loading skeleton as before stays on top meanwhile, so the page is never blank. */}
     {appearanceLoading && (
       <div className="fixed inset-0 z-[150] overflow-hidden">
-        <DashboardLoadingSkeleton />
+        <DashboardLoadingSkeleton hand={preferences.hand} />
       </div>
     )}
-    <div {...themeProps} data-k5-prek={isPreK ? "true" : undefined} data-motion-band={motionBand} style={appearanceLoading ? { opacity: 0 } : undefined}>
+    <div {...themeProps} data-k5-prek={isPreK ? "true" : undefined} data-motion-band={motionBand} data-xmas={festive ? "on" : undefined} style={appearanceLoading ? { opacity: 0 } : undefined}>
       <CanvasBackground themeKey={`${themeProps["data-k5-theme"]}|${themeProps.className}`} />
+      <ChristmasSky />
       <CelebrationHost />
       <K5Header
         userId={context.userId}
@@ -165,6 +172,7 @@ function K5Frame({ children }) {
         <K5NavRail menu={navMenu} loading={menuLoading} open={navOpen} onOpen={() => setNavOpen(true)} onClose={closeNav} isPreK={isPreK} userId={context.userId} />
 
         <PageReveal className="flex min-w-0 flex-[1_1_auto] flex-col gap-4 max-[760px]:basis-full">
+          <ChristmasBanner firstName={String(context.userName || "").split(" ")[0]} />
           <K5QuoteOfMoment />
           {children}
         </PageReveal>
@@ -193,6 +201,7 @@ function K5Frame({ children }) {
       {/* The home planner shows the live-class dialog itself; on every other page this does. */}
       {!isHome && <K5LiveClassWatcher />}
       <PicoGuide userId={context.userId} firstName={String(context.userName || "").split(" ")[0]} schoolName={context.schoolName} home={isHome} welcomeEligible={welcomeEligible} />
+      <ChristmasToast />
       <K5BrainBreak firstName={String(context.userName || "").split(" ")[0]} />
       <SelectToSpeak />
       <ReadingRuler />

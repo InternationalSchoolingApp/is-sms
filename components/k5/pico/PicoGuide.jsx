@@ -7,6 +7,7 @@ import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 import { useSpeech } from "@/components/k5/pico/useSpeech";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { useChristmas } from "@/components/k5/christmas/ChristmasProvider";
 import { BUDDIES, voiceOf } from "@/constant/appearance";
 import { PICO_SAY_EVENT, usePicoLive } from "@/components/k5/pico/picoEvents";
 import { HOME_MODULE, NO_MODULE_TEXT, isClubModule, isLanguageClub, picoModuleFor, picoWelcomeText } from "@/constant/picoModules";
@@ -169,6 +170,8 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   if (welcomeDue && !welcome) setWelcome(true);
   const [state, setState] = useState({ open: null, index: 0, say: null, skipLive: false, pageTip: false });
   const live = usePicoLive();
+  // 25 December: Pico wears a Santa hat.
+  const { festive } = useChristmas();
   // The student's look (the one picked in the Look dialog, else their grade's): Middle = Balanced, High = Mature.
   const { isMiddle, isHigh } = useDashboardContext();
   const pathname = usePathname();
@@ -670,7 +673,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
         aria-label={`${buddy.name}, your calendar buddy. Tap to hear ${buddy.name}.`}
         className="k5-lift k5-pin-bob flex h-full w-full cursor-pointer items-end justify-center border-none bg-transparent p-0 max-[760px]:[&_svg]:!h-[60px] max-[760px]:[&_svg]:!w-12"
       >
-        <PicoMascot buddy={preferences.buddy} width={66} talking={speaking} />
+        <PicoMascot buddy={preferences.buddy} width={66} talking={speaking} santa={festive} />
       </button>
     </div>
     </>

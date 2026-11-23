@@ -29,6 +29,7 @@ import { classTitle, countStatuses, dayAt, dayKey, keyToDate, weekKeys } from "@
 import { celebrate } from "@/components/motion/canvas/celebrationEvents";
 import { revealPlanTop } from "@/utils/k5Scroll";
 import { picoSay, setPicoLive } from "@/components/k5/pico/picoEvents";
+import { isChristmasKey, setChristmasPlanner } from "@/components/k5/christmas/christmasStore";
 import { LIVE_ALERT_KEY } from "@/utils/liveAlertMemory";
 import { K5HomeLeftSkeleton, K5PlanSkeleton } from "@/components/k5/K5Skeletons";
 
@@ -193,6 +194,13 @@ function K5Planner({ timezone, dashboard = false }) {
     setPicoLive({ ready: !model.isLoading, pending: alertPending, name: liveName, dayEmpty: dayIsEmpty, holidayName });
   }, [model.isLoading, alertPending, liveName, dayIsEmpty, holidayName]);
   useEffect(() => () => setPicoLive({ ready: false, pending: false, name: "", dayEmpty: false, holidayName: "" }), []);
+
+  // My Classes tells the Christmas theme which screen is open: 25 December in the Day view, or in the Month view with it selected.
+  useEffect(() => {
+    if (dashboard) return;
+    setChristmasPlanner({ onXmasDay: (view === "today" || view === "month") && isChristmasKey(selectedKey), viewKey: `${view}:${selectedKey}` });
+  }, [dashboard, view, selectedKey]);
+  useEffect(() => () => setChristmasPlanner({ onXmasDay: false, viewKey: "" }), []);
 
   // Celebration: every class and activity of today is done. Once per student per day (remembered on this device; if the
   // device cannot remember, nothing is played rather than risking a repeat on every visit). It waits a moment so it does

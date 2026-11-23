@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { useChristmas } from "@/components/k5/christmas/ChristmasProvider";
 import { useParams } from "next/navigation";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { format } from "date-fns";
@@ -47,7 +49,7 @@ function DateStrip({ now, timezone, weather, night, scene }) {
   const clock = useSecondClock(timezone, now);
   const label = weather ? (night && scene === "sun" ? "Clear sky" : SCENE_LABEL[scene]) : "";
   return (
-    <div className="hstrip backdrop-blur-[10px] backdrop-saturate-[1.4]" role="group" aria-label="Today">
+    <div className="hstrip backdrop-blur-[10px] backdrop-saturate-[1.4]" data-scene={scene} role="group" aria-label="Today">
       <span className="hs-wave" aria-hidden="true">
         <svg className="hs-wv1" viewBox="0 0 2400 40" preserveAspectRatio="none">
           <path d="M0 18Q30 6 60 18T120 18T180 18T240 18T300 18T360 18T420 18T480 18T540 18T600 18T660 18T720 18T780 18T840 18T900 18T960 18T1020 18T1080 18T1140 18T1200 18T1260 18T1320 18T1380 18T1440 18T1500 18T1560 18T1620 18T1680 18T1740 18T1800 18T1860 18T1920 18T1980 18T2040 18T2100 18T2160 18T2220 18T2280 18T2340 18T2400 18V40H0Z" fill="#FFFFFF" fillOpacity=".32" />
@@ -242,6 +244,8 @@ function Bird({ body, wing, cls }) {
 }
 
 function Hero({ now, timezone, firstName, live, next, doneAll, hasClasses, onJoin, classesHref, look }) {
+  // 25 December: Santa flies across the blue hero and the greeting is "Merry Christmas" (mockups).
+  const { festive } = useChristmas();
   const weather = useK5Weather(timezone);
   const night = weather ? !weather.isDay : now.getHours() < 6 || now.getHours() >= 18;
   const scene = sceneOf(weather);
@@ -251,6 +255,11 @@ function Hero({ now, timezone, firstName, live, next, doneAll, hasClasses, onJoi
       className="dash-hero relative box-border flex min-h-[262px] min-w-[520px] flex-[2_1_0] flex-col justify-center gap-[18px] overflow-hidden rounded-[30px] border-[3px] border-[#00398F] bg-[linear-gradient(100deg,#0166FE_0%,#288AFE_45%,#7DDAE3_85%,#8BE6D8_100%)] p-6 text-white shadow-[0_6px_0_#00398F] [container-name:hero] [container-type:inline-size] max-[760px]:min-w-0 max-[760px]:basis-full max-[760px]:p-4"
     >
       <WeatherScene scene={scene} />
+      {festive && (
+        <span aria-hidden="true" className="k5-xm-santa">
+          <Image src="/christmas/santa-flying.png" alt="" width={240} height={72} priority={false} />
+        </span>
+      )}
       <span className="hb-sky" aria-hidden="true">
         <Bird body="#FFFFFF" wing="#DCE6F5" cls="f1" />
         <Bird body="#FFD23F" wing="#F5B400" cls="f2" />
@@ -300,7 +309,7 @@ function Hero({ now, timezone, firstName, live, next, doneAll, hasClasses, onJoi
             <K5ClockIcon kind="sun" night={false} className="hero-sun !-m-4 !-mr-3 !h-[72px] !w-[72px]" />
           )}
           <h1 className="dash-greet m-0 text-[32px] font-semibold leading-[38px]">
-            <span className="whitespace-nowrap">{greeting(now.getHours())},</span>
+            <span className="whitespace-nowrap">{festive ? "Merry Christmas" : greeting(now.getHours())},</span>
             <br />
             {firstName}
           </h1>
@@ -335,12 +344,12 @@ function TodayGoal({ classes, activities = [], assignments = [], classesHref, pl
   const total = items.length;
   const done = items.filter((g) => g.done).length;
   const todo = items.filter((g) => !g.done);
-  // All of today's items stay in the list (the ones that are over get a tick), so the student sees the whole day.
-  const shown = items.slice(0, 8);
-  // Classes and activities only: the games card says "Classes done" once those are over, whatever assignments are left.
+  // All of today's items stay in the list (the ones that are over get a tick), so the student sees the whole day; the part scrolls.
+  const shown = items;
+  // Classes and activities only (the empty-day line); the games card itself waits for today's assignments too (gameAccess).
   const planCount = classes.length + activities.length;
   return (
-    <section aria-label="Today's Goal" className={`${SECTION_CARD} min-h-[262px] min-w-[300px] flex-[1_1_0] gap-4 rounded-[30px] py-[18px] pl-[22px] pr-4 max-[420px]:pl-4 max-[760px]:min-w-0 max-[760px]:basis-full`}>
+    <section aria-label="Today's Goal" className={`${SECTION_CARD} min-h-[262px] min-w-[300px] flex-[1_1_0] gap-4 rounded-[30px] py-[18px] pl-[22px] pr-4 max-[420px]:pl-4 max-[760px]:min-w-0 max-[760px]:basis-full @min-[844px]:[contain:size]`}>
       <h2 className="dash-h2 m-0 flex items-center gap-2 text-[21px] font-semibold max-[420px]:justify-center">
         <span className="dash-ico flex h-8 w-8 items-center justify-center rounded-full bg-[#FFF1C7] text-[#C27C00]">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden="true">
@@ -350,8 +359,9 @@ function TodayGoal({ classes, activities = [], assignments = [], classesHref, pl
         </span>
         <span className="flex-1 font-semibold max-[420px]:flex-none">Today&apos;s Goal</span>
       </h2>
-      <div className="flex items-center gap-5 pl-0.5 max-[420px]:flex-col max-[420px]:items-center max-[420px]:pl-0">
-        <div className="relative h-[120px] w-[120px] flex-none">
+      {/* Side by side with the hero (desktop) the card keeps the hero's height: the ring stays, the list beside it scrolls; stacked it just grows. */}
+      <div className="flex items-center gap-5 pl-0.5 max-[420px]:flex-col max-[420px]:items-center max-[420px]:pl-0 @min-[844px]:min-h-0 @min-[844px]:flex-1 @min-[844px]:items-stretch">
+        <div className="relative h-[120px] w-[120px] flex-none @min-[844px]:self-center">
           <svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label={`${done} of ${total} done today`} className="absolute left-0 top-0">
             <circle cx="60" cy="60" r="54" strokeWidth="12" className="fill-k5-card stroke-k5-soft" />
             <circle cx="60" cy="60" r="54" fill="none" stroke="#00CD89" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${(RING * done / Math.max(1, total)).toFixed(1)} ${RING}`} transform="rotate(-90 60 60)" />
@@ -361,7 +371,7 @@ function TodayGoal({ classes, activities = [], assignments = [], classesHref, pl
             <span className="mt-0.5 text-xs font-medium text-k5-mut">Done</span>
           </div>
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-3 max-[420px]:w-full">
+        <div className="flex min-w-0 flex-1 flex-col gap-3 max-[420px]:w-full @min-[844px]:min-h-0 @min-[844px]:overflow-y-auto @min-[844px]:[justify-content:safe_center]">
         {shown.length ? (
           <ul aria-label="Today's Goal" className="m-0 flex min-w-0 flex-1 list-none flex-col gap-2.5 p-0 max-[420px]:w-full">
             {shown.map((g, i) => (
@@ -383,7 +393,6 @@ function TodayGoal({ classes, activities = [], assignments = [], classesHref, pl
                 </span>
               </li>
             ))}
-            {items.length > shown.length && <li className="text-xs font-semibold text-k5-mut">+{items.length - shown.length} more</li>}
           </ul>
         ) : null}
         {playGames ? (
@@ -428,7 +437,7 @@ const SK_CARD = `${K5_CARD} box-border flex flex-col rounded-[30px]`;
 
 function DashboardSkeleton({ look }) {
   return (
-    <div data-dash={look} className="flex flex-col gap-6" aria-busy="true" aria-label="Loading your dashboard">
+    <div data-dash={look} className="@container flex flex-col gap-6" aria-busy="true" aria-label="Loading your dashboard">
       <div className={ROW}>
         {/* Hero: date / clock / weather strip, the greeting, and the class card */}
         <Skeleton className="dash-skHero box-border flex min-h-[262px] min-w-[520px] flex-[2_1_0] flex-col justify-center gap-[18px] rounded-[30px] p-[18px] max-[760px]:min-w-0 max-[760px]:basis-full">
@@ -513,7 +522,7 @@ export function K5Dashboard({ now, timezone, days, todayKey, isLoading, firstNam
   const live = classes.find((c) => c.k5Status === "live" && c.url) || classes.find((c) => c.k5Status === "live") || null;
   const next = live ? null : classes.find((c) => c.k5Status === "next") || null;
   const doneAll = classes.length > 0 && classes.every((c) => c.k5Status === "done");
-  // Games open when every class of today is over (same rule as the planner: gameAccess in utils/k5Calendar.js).
+  // Games open when every class, activity and assignment of today is done (same rule as the planner: gameAccess in utils/k5Calendar.js).
   // "Time to play a game" (Today's Goal, every look): every class and school activity of today is over, or there are none (a free day).
   const activitiesDone = today.activities.every((a) => a.k5Status === "done");
   const playGames = Boolean(classesHref) && classes.every((c) => c.k5Status === "done") && activitiesDone && !gameAccess(days, todayKey, todayKey).locked;
@@ -523,7 +532,7 @@ export function K5Dashboard({ now, timezone, days, todayKey, isLoading, firstNam
   const gamesHref = classesHref ? `${classesHref}?games=open` : null;
   // The mockup's dashboard (.lmd) is set in the display font (Fredoka) all the way down; only small captions use the body font.
   return (
-    <div data-dash={look} className="k5-dash-rise flex flex-col gap-6 font-k5-display">
+    <div data-dash={look} className="k5-dash-rise @container flex flex-col gap-6 font-k5-display">
       <div className={ROW}>
         <Hero look={look} now={now} timezone={timezone} firstName={firstName} live={live} next={next} doneAll={doneAll} hasClasses={classes.length > 0} onJoin={onJoin} classesHref={classesHref} />
         <TodayGoal classes={classes} activities={today.activities} assignments={today.assignments} classesHref={classesHref} playGames={playGames} gamesHref={gamesHref} holidayName={holidayName} />

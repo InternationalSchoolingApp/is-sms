@@ -1564,6 +1564,19 @@
   }
 }
 
+/* Cloudy (or foggy): white clouds drift behind the strip, so the white date would vanish - the date goes dark like the clock and the weather. */
+.hstrip[data-scene="cloud"] .hs-date .hs-d1,
+.hstrip[data-scene="cloud"] .hs-date .hs-d2 {
+  color: #1e2242;
+  text-shadow: none;
+}
+.hstrip[data-scene="cloud"] .hs-date .hs-cal {
+  stroke: #1e2242;
+}
+.hstrip[data-scene="cloud"] .hs-date .hs-cal g {
+  fill: #1e2242;
+}
+
 /* Phone: the date is black and a little smaller (desktop keeps the mockup white). */
 @media (max-width: 760px) {
   .hs-date .hs-d1,

@@ -8,6 +8,8 @@ import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { K5_CARD, K5_ROUND_BTN, SubjectIcon } from "@/components/k5/home/k5Bits";
 import { getEventColor, getMonthGridDays } from "@/utils/calendarEvents";
+import { ChristmasTreeIcon } from "@/components/k5/christmas/ChristmasArt";
+import { isChristmasKey } from "@/components/k5/christmas/christmasStore";
 import { CLUE_COLORS, WEEKDAY_TEXT, classTitle, courseTint, dayAt, dayKey, safeCourseColor, subjectStyle, timeLabel, timeRange } from "@/utils/k5Calendar";
 
 const WEEK_LETTERS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -115,7 +117,8 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
                       : "h-[38px] w-[38px] bg-transparent text-base text-k5-ink hover:bg-k5-soft"
                 }`}
               >
-                {date.getDate()}
+                {/* 25 December shows a Christmas tree instead of the number (mockup). */}
+                {isChristmasKey(key) ? <ChristmasTreeIcon size={34} label={`${format(date, "MMMM d")}, Christmas`} /> : date.getDate()}
                 {isToday && !isMiddle && <Star className="absolute -right-1.5 -top-1.5 h-4 w-4 fill-[#FFC531] text-[#C9930A]" aria-hidden="true" />}
                 {color && !isToday && (
                   <span aria-hidden="true" className="absolute bottom-0.5 left-1/2 -ml-1 block h-2 w-2 rounded-full" style={{ background: color }} />

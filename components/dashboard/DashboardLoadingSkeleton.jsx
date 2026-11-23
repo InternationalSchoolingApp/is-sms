@@ -1,7 +1,10 @@
 "use client";
 
+import { useContext, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardContext } from "@/hooks/useDashboardContext";
+import { HAND_HINT_KEY } from "@/components/appearance/AppearanceProvider";
 
 /**
  * Shown while the dashboard context (student, grade band, look) is still loading, in place of the old grey
@@ -10,14 +13,33 @@ import { Skeleton } from "@/components/ui/skeleton";
  * On the dashboard home page the middle is shaped like that page (hero, Today's Goal, My Performance, My Assignments) - the
  * same blocks as DashboardSkeleton in components/k5/home/K5Dashboard.jsx - so a refresh or a login shows the page it will become;
  * every other page keeps the planner-shaped middle.
+ * Left hand ("Menu goes on the right"): the skeleton is mirrored like the page will be (header, menu / rail, dashboard rows) - from
+ * the `hand` prop (the shell knows it) or, before that, the student's saved look on this device.
  */
 const SK = "bg-slate-200/80";
+// Same variant the real shell uses: the root carries data-hand, and rows flip with it (K5Header, K5Dashboard ROW, .k5-layout).
+const FLIP = "in-data-[hand=left]:flex-row-reverse";
+
+const noSubscribe = () => () => {};
+// The saved look is stored per student ("is-k5-look:{userId}", components/appearance/AppearanceProvider.jsx); before the student is
+// known (the very first loader) the device-level hand hint it also writes is used. Only "left" is trusted.
+function readSavedHand(userId) {
+  try {
+    if (userId) {
+      const saved = JSON.parse(window.localStorage.getItem(`is-k5-look:${userId}`) || "null");
+      if (saved) return saved.hand === "left" ? "left" : "right";
+    }
+    return window.localStorage.getItem(HAND_HINT_KEY) === "left" ? "left" : "right";
+  } catch {
+    return "right";
+  }
+}
 const CARD = "box-border flex flex-col rounded-3xl bg-white";
 
 function HomeBody() {
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-6">
-      <div className="flex flex-wrap gap-6">
+    <div className="@container flex min-w-0 flex-1 flex-col gap-6">
+      <div className={`flex flex-wrap gap-6 ${FLIP}`}>
         <Skeleton className={`box-border flex min-h-[262px] min-w-[520px] flex-[2_1_0] flex-col justify-center gap-[18px] rounded-3xl p-[18px] max-[760px]:min-w-0 max-[760px]:basis-full ${SK}`}>
           <span className="block h-[72px] w-full rounded-[20px] bg-white/45" />
           <span className="flex flex-wrap items-center gap-4">
@@ -47,7 +69,7 @@ function HomeBody() {
           <Skeleton className={`mt-auto h-11 w-full rounded-[22px] ${SK}`} />
         </div>
       </div>
-      <div className="flex flex-wrap gap-6">
+      <div className={`flex flex-wrap gap-6 ${FLIP}`}>
         <div className={`${CARD} min-w-[520px] flex-[2_1_0] gap-3.5 px-[22px] pb-[22px] pt-5 max-[760px]:min-w-0 max-[760px]:basis-full`}>
           <div className="flex flex-wrap items-center justify-between gap-2.5">
             <div className="flex items-center gap-2">
@@ -97,15 +119,20 @@ function PlannerBody() {
   );
 }
 
-export function DashboardLoadingSkeleton() {
+export function DashboardLoadingSkeleton({ hand }) {
   const pathname = usePathname() || "";
+  // Rendered inside the dashboard provider; the signed-in student is known once the session has loaded.
+  const dashboard = useContext(DashboardContext);
+  const userId = dashboard?.session?.userId ?? dashboard?.context?.userId;
+  const saved = useSyncExternalStore(noSubscribe, () => readSavedHand(userId), () => "right");
+  const side = hand === "left" || hand === "right" ? hand : saved;
   // /{school}/student is the dashboard home page; My Classes and every module are one segment deeper.
   const isHome = /\/student\/?$/.test(pathname);
   return (
-    <div role="status" aria-live="polite" aria-busy="true" className="flex min-h-screen flex-col bg-slate-50">
+    <div role="status" aria-live="polite" aria-busy="true" data-hand={side} className="flex min-h-screen flex-col bg-slate-50">
       <span className="sr-only">Loading your dashboard…</span>
 
-      <div aria-hidden="true" className="flex h-[72px] flex-none items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 max-[760px]:h-14 max-[760px]:px-3">
+      <div aria-hidden="true" className={`flex h-[72px] flex-none items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 max-[760px]:h-14 max-[760px]:px-3 ${FLIP}`}>
         <div className="flex items-center gap-3">
           <Skeleton className={`h-11 w-11 rounded-xl ${SK}`} />
           <Skeleton className={`h-8 w-44 rounded-lg max-[760px]:w-28 ${SK}`} />
@@ -117,7 +144,7 @@ export function DashboardLoadingSkeleton() {
         </div>
       </div>
 
-      <div aria-hidden="true" className="mx-auto flex w-full flex-1 items-start gap-3 px-5 pb-5 pt-5 max-[760px]:px-3">
+      <div aria-hidden="true" className="mx-auto flex w-full flex-1 items-start gap-3 px-5 pb-5 pt-5 max-[760px]:px-3 in-data-[hand=left]:min-[761px]:flex-row-reverse">
         <div className="flex w-[76px] flex-none flex-col items-center gap-4 rounded-3xl bg-white p-3 max-[760px]:hidden">
           {Array.from({ length: 8 }, (_, i) => (
             <Skeleton key={i} className={`h-11 w-11 rounded-2xl ${SK}`} />
