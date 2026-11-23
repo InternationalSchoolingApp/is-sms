@@ -8,7 +8,7 @@ import { useQuoteOfMoment } from "@/hooks/useQuoteOfMoment";
 let dismissed = false;
 
 /** "**phrase**" in the quote text is highlighted (legacy mqHighlightHtml); everything else stays plain text. */
-function highlighted(text) {
+export function highlighted(text) {
   return String(text)
     .split("**")
     .map((part, index) =>

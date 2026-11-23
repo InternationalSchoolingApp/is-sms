@@ -41,6 +41,10 @@ function tourSteps(firstName, buddyName, liveName, welcome, schoolName, balanced
     { pin: "prevnext", text: "Click on the arrows to view your plan for different days." },
     { pin: "clues", text: "Color clues tell you what each box means. Tap a clue and I'll explain it!" },
     { pin: "side", text: "Use the side menu to book classes, see your teacher, join clubs and more. Hold and drag a button to move your favorites to the top!" },
+    { pin: "hero", text: "This is your dashboard. It shows today's date, the time and the weather, and your next class. When a class is live, tap Join class to go in!" },
+    { pin: "goal", text: "This is Today's Goal. Your classes, activities and assignments for today are listed here, and the ring fills up as you finish them!" },
+    { pin: "performance", text: "This is My Performance. See your average, the date you want to finish by and how far along you are. Tap Set my goals to choose your own goals!" },
+    { pin: "assignments", text: "This is My Assignments. The assignments due today and tomorrow are here, and a red card tells you if any are overdue. Tap Start to begin one!" },
     { pin: "inbox", text: "This is your inbox. Check here regularly for emails and other communications from your school." },
     { pin: "look", text: "Tap the palette button to pick your favorite color, night mode, letters and text size!" },
     { pin: "getApp", text: "Download our app for a better experience!" },
@@ -80,8 +84,8 @@ const subscribeMobile = (callback) => {
 };
 const isMobileView = () => window.matchMedia(MOBILE_QUERY).matches;
 const pinEl = (pin) => (pin && typeof document !== "undefined" ? document.querySelector(`[data-pin="${pin}"]`) : null);
-// The header buttons move into the "More" menu on a phone (display: none there): a tip about one is skipped, not shown without its spotlight.
-const SKIP_WHEN_HIDDEN = new Set(["lms", "inbox", "profile", "getApp", "mini"]);
+// The header buttons and the side menu are not on screen on a phone (the buttons move into the "More" menu, the menu is a drawer): a tip about one is skipped, not shown without its spotlight.
+const SKIP_WHEN_HIDDEN = new Set(["lms", "inbox", "profile", "getApp", "mini", "look", "side"]);
 const onPage = (pin) => {
   if (!pin) return true;
   const el = pinEl(pin);
@@ -434,7 +438,10 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
           }
         }
       }
-      if (r.top < 150 || r.top > window.innerHeight * 0.55 || (lifted && Math.abs(r.top - want) > 24)) {
+      // On a phone the bubble sits over the lower part of the screen: an element whose top would be behind it is scrolled up.
+      const phoneBubble = mobile ? document.querySelector(".k5-bubble") : null;
+      const lowest = phoneBubble ? Math.min(window.innerHeight * 0.55, phoneBubble.getBoundingClientRect().top - 60) : window.innerHeight * 0.55;
+      if (r.top < 150 || r.top > lowest || (lifted && Math.abs(r.top - want) > 24)) {
         window.scrollTo({ top: Math.max(0, window.scrollY + r.top - want), behavior: reduced ? "auto" : "smooth" });
       }
     }

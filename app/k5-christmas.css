@@ -240,6 +240,21 @@ body.xm-snow-on .k5-xm-sky i {
     padding: 0 12px 0 10px;
   }
 }
+/* Phone and tablet (the page column is narrow beside the rails): the tree and the words share the first row, the two buttons
+   sit together under them instead of squeezing the words into a thin column. */
+@media (max-width: 900px) {
+  .k5-xm-banner {
+    gap: 10px 12px;
+    padding: 12px 14px;
+  }
+  .k5-xm-banner > div {
+    flex: 1 1 calc(100% - 72px);
+  }
+  .k5-xm-banner .k5-xm-offbtn {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+}
 
 /* The record beside "Music on". */
 .k5-xm-disc {

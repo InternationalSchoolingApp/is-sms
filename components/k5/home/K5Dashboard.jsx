@@ -8,13 +8,15 @@ import { useParams } from "next/navigation";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
-import { CalendarDays, Check, Gamepad2 } from "lucide-react";
+import { CalendarDays, Check, Gamepad2, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { K5_CARD, SubjectIcon } from "@/components/k5/home/k5Bits";
 import { MyAssignmentsCard, MyPerformanceCard } from "@/components/k5/home/K5DashCards";
 import { K5ClockIcon } from "@/components/k5/home/K5ClockIcon";
 import { HeroMoon, SCENE_LABEL, Umbrella, WeatherIcon, WeatherScene, sceneOf } from "@/components/k5/home/K5HeroWeather";
 import { useK5Weather } from "@/hooks/useK5Weather";
+import { useQuoteState } from "@/hooks/useQuoteOfMoment";
+import { highlighted } from "@/components/k5/K5QuoteOfMoment";
 import { activityTitle, classTitle, cleanCourseLabel, dayAt, gameAccess, subjectStyle, teacherName, timeRange, timeLabel } from "@/utils/k5Calendar";
 
 /*
@@ -165,21 +167,39 @@ function JoinDoor() {
 }
 
 /** The card on the right of the hero: the class that is live now (Join), else the next one, else a friendly note. */
-function ClassCard({ live, next, doneAll, hasClasses, onJoin, classesHref }) {
-  const event = live || next;
-  if (!event) {
-    return (
-      <div className="dash-cont relative flex min-w-[210px] flex-[0_2_340px] flex-col gap-3 rounded-3xl bg-k5-card p-4 pb-4 text-k5-ink shadow-[0_5px_0_rgba(0,40,140,0.35)] max-[760px]:min-w-0 max-[760px]:flex-[1_1_100%] @max-[640px]/hero:min-w-0 @max-[640px]/hero:flex-[1_1_100%]">
-        <p className="m-0 font-k5-display text-[19px] font-semibold leading-tight">
-          {!hasClasses ? "No classes today!" : doneAll ? "All your classes are done!" : "Nothing live right now"}
-        </p>
-        <p className="m-0 text-sm font-bold text-k5-mut">{!hasClasses ? "A free day. Time to play a game or read a book." : doneAll ? "Great job today! Time to play." : "Check your classes for what is next."}</p>
-        <ClassesLink href={classesHref} className="flex h-[46px] items-center justify-center rounded-[23px] bg-[#FDDC75] font-k5-display text-[17px] font-semibold text-[#1E2242] no-underline shadow-[0_4px_0_#D9A21E]">
-          Go to my classes
-        </ClassesLink>
+/** Nothing live and nothing coming up: the "Thought for today" of the login page (the same quote service) instead of a message. */
+function ThoughtCard() {
+  const { quote, loading } = useQuoteState();
+  // No quote (service off, demo mode): the thought the login page falls back to.
+  const text = quote?.quoteText || "Every expert was once a beginner. Keep pushing forward.";
+  return (
+    <div className="dash-cont relative flex min-w-[210px] flex-[0_2_340px] flex-col gap-3 rounded-3xl bg-k5-card p-4 pb-4 text-k5-ink shadow-[0_5px_0_rgba(0,40,140,0.35)] max-[760px]:min-w-0 max-[760px]:flex-[1_1_100%] @max-[640px]/hero:min-w-0 @max-[640px]/hero:flex-[1_1_100%]">
+      <div className="flex items-center gap-2.5">
+        <span aria-hidden="true" className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-k5-act text-k5-acx">
+          <Sparkles className="h-[18px] w-[18px]" strokeWidth={2.4} />
+        </span>
+        <span className="rounded-full bg-k5-act px-3 py-1 font-k5-display text-xs font-semibold uppercase tracking-[0.12em] text-k5-acx">Thought for today</span>
       </div>
-    );
-  }
+      {loading ? (
+        <div aria-busy="true" aria-label="Loading the thought for today" className="flex flex-col gap-2">
+          <Skeleton className="h-5 w-full rounded-lg" />
+          <Skeleton className="h-5 w-4/5 rounded-lg" />
+        </div>
+      ) : (
+        <figure className="m-0 flex flex-col gap-1">
+          <blockquote className="m-0 font-k5-display text-[18px] font-semibold leading-snug [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:4] overflow-hidden">
+            “{highlighted(text)}”
+          </blockquote>
+          {quote?.author && <figcaption className="text-[13px] font-extrabold text-k5-mut">— {quote.author}</figcaption>}
+        </figure>
+      )}
+    </div>
+  );
+}
+
+function ClassCard({ live, next, onJoin, classesHref }) {
+  const event = live || next;
+  if (!event) return <ThoughtCard />;
   const teacher = teacherName(event);
   return (
     <div className="dash-cont relative flex min-w-[210px] flex-[0_2_340px] flex-col gap-3 rounded-3xl bg-k5-card p-4 pb-4 text-k5-ink shadow-[0_5px_0_rgba(0,40,140,0.35)] max-[760px]:min-w-0 max-[760px]:flex-[1_1_100%] @max-[640px]/hero:min-w-0 @max-[640px]/hero:flex-[1_1_100%]">
@@ -243,7 +263,7 @@ function Bird({ body, wing, cls }) {
   );
 }
 
-function Hero({ now, timezone, firstName, live, next, doneAll, hasClasses, onJoin, classesHref, look }) {
+function Hero({ now, timezone, firstName, live, next, onJoin, classesHref, look }) {
   // 25 December: Santa flies across the blue hero and the greeting is "Merry Christmas" (mockups).
   const { festive } = useChristmas();
   const weather = useK5Weather(timezone);
@@ -252,6 +272,7 @@ function Hero({ now, timezone, firstName, live, next, doneAll, hasClasses, onJoi
   return (
     <section
       aria-label="My Dashboard"
+      data-pin="hero"
       className="dash-hero relative box-border flex min-h-[262px] min-w-[520px] flex-[2_1_0] flex-col justify-center gap-[18px] overflow-hidden rounded-[30px] border-[3px] border-[#00398F] bg-[linear-gradient(100deg,#0166FE_0%,#288AFE_45%,#7DDAE3_85%,#8BE6D8_100%)] p-6 text-white shadow-[0_6px_0_#00398F] [container-name:hero] [container-type:inline-size] max-[760px]:min-w-0 max-[760px]:basis-full max-[760px]:p-4"
     >
       <WeatherScene scene={scene} />
@@ -314,7 +335,7 @@ function Hero({ now, timezone, firstName, live, next, doneAll, hasClasses, onJoi
             {firstName}
           </h1>
         </div>
-        <ClassCard live={live} next={next} doneAll={doneAll} hasClasses={hasClasses} onJoin={onJoin} classesHref={classesHref} />
+        <ClassCard live={live} next={next} onJoin={onJoin} classesHref={classesHref} />
       </div>
     </section>
   );
@@ -349,7 +370,7 @@ function TodayGoal({ classes, activities = [], assignments = [], classesHref, pl
   // Classes and activities only (the empty-day line); the games card itself waits for today's assignments too (gameAccess).
   const planCount = classes.length + activities.length;
   return (
-    <section aria-label="Today's Goal" className={`${SECTION_CARD} min-h-[262px] min-w-[300px] flex-[1_1_0] gap-4 rounded-[30px] py-[18px] pl-[22px] pr-4 max-[420px]:pl-4 max-[760px]:min-w-0 max-[760px]:basis-full @min-[844px]:[contain:size]`}>
+    <section aria-label="Today's Goal" data-pin="goal" className={`${SECTION_CARD} min-h-[262px] min-w-[300px] flex-[1_1_0] gap-4 rounded-[30px] py-[18px] pl-[22px] pr-4 max-[420px]:pl-4 max-[760px]:min-w-0 max-[760px]:basis-full @min-[844px]:[contain:size]`}>
       <h2 className="dash-h2 m-0 flex items-center gap-2 text-[21px] font-semibold max-[420px]:justify-center">
         <span className="dash-ico flex h-8 w-8 items-center justify-center rounded-full bg-[#FFF1C7] text-[#C27C00]">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden="true">
@@ -521,7 +542,6 @@ export function K5Dashboard({ now, timezone, days, todayKey, isLoading, firstNam
   // The class that is live now (Join shows when it has a join link, like the planner: see isJoinable in StudentHomeK5).
   const live = classes.find((c) => c.k5Status === "live" && c.url) || classes.find((c) => c.k5Status === "live") || null;
   const next = live ? null : classes.find((c) => c.k5Status === "next") || null;
-  const doneAll = classes.length > 0 && classes.every((c) => c.k5Status === "done");
   // Games open when every class, activity and assignment of today is done (same rule as the planner: gameAccess in utils/k5Calendar.js).
   // "Time to play a game" (Today's Goal, every look): every class and school activity of today is over, or there are none (a free day).
   const activitiesDone = today.activities.every((a) => a.k5Status === "done");
@@ -534,7 +554,7 @@ export function K5Dashboard({ now, timezone, days, todayKey, isLoading, firstNam
   return (
     <div data-dash={look} className="k5-dash-rise @container flex flex-col gap-6 font-k5-display">
       <div className={ROW}>
-        <Hero look={look} now={now} timezone={timezone} firstName={firstName} live={live} next={next} doneAll={doneAll} hasClasses={classes.length > 0} onJoin={onJoin} classesHref={classesHref} />
+        <Hero look={look} now={now} timezone={timezone} firstName={firstName} live={live} next={next} onJoin={onJoin} classesHref={classesHref} />
         <TodayGoal classes={classes} activities={today.activities} assignments={today.assignments} classesHref={classesHref} playGames={playGames} gamesHref={gamesHref} holidayName={holidayName} />
       </div>
       <div className={ROW}>

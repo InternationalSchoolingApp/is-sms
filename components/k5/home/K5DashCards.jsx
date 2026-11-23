@@ -70,7 +70,7 @@ export function MyPerformanceCard({ firstInitial }) {
   const target = Math.min(100, Math.round(exp));
 
   return (
-    <section aria-label="My Performance" className={`${CARD} min-w-[520px] flex-[2_1_0] gap-3.5 px-[22px] pb-[22px] pt-5 max-[760px]:min-w-0 max-[760px]:basis-full @min-[844px]:overflow-y-auto`}>
+    <section aria-label="My Performance" data-pin="performance" className={`${CARD} min-w-[520px] flex-[2_1_0] gap-3.5 px-[22px] pb-[22px] pt-5 max-[760px]:min-w-0 max-[760px]:basis-full @min-[844px]:overflow-y-auto`}>
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <Heading
           tint="bg-[#FFE0EC] text-[#C2408A]"
@@ -225,7 +225,7 @@ export function MyAssignmentsCard({ days, todayKey, isLoading }) {
   const start = () => openLmsLesson({ isPayLmsPaymentPending, lmsProviderUrl: lmsProviderURL });
 
   return (
-    <section aria-label="My Assignments" className={`${CARD} min-w-[300px] flex-[1_1_0] gap-[11px] px-[18px] py-5 max-[760px]:min-w-0 max-[760px]:basis-full @min-[844px]:[contain:size]`}>
+    <section aria-label="My Assignments" data-pin="assignments" className={`${CARD} min-w-[300px] flex-[1_1_0] gap-[11px] px-[18px] py-5 max-[760px]:min-w-0 max-[760px]:basis-full @min-[844px]:[contain:size]`}>
       <div className="mb-0.5 flex items-center justify-between gap-2">
         <Heading
           tint="bg-[#D9F5E8] text-[#0B7A52]"
@@ -246,7 +246,7 @@ export function MyAssignmentsCard({ days, todayKey, isLoading }) {
       <div className="flex flex-col gap-[11px] @min-[844px]:min-h-0 @min-[844px]:flex-1 @min-[844px]:overflow-y-auto">
       {!isLoading && pending.isLoading && <Skeleton aria-label="Loading overdue assignments" className="h-[62px] rounded-[20px]" />}
       {!isLoading && overdue > 0 && (
-        <div className="box-border flex min-h-[62px] items-center gap-3.5 rounded-[20px] border-2 border-[#F5B8C1] bg-k5-rt py-2 pl-2 pr-2.5">
+        <div className="box-border flex min-h-[62px] shrink-0 items-center gap-3.5 rounded-[20px] border-2 border-[#F5B8C1] bg-k5-rt py-2 pl-2 pr-2.5 dark:border-k5-line dark:bg-k5-soft">
           <span aria-hidden="true" className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[14px] bg-white text-[#D7263D]">
             <CircleAlert className="h-6 w-6" strokeWidth={2.4} />
           </span>
@@ -254,7 +254,9 @@ export function MyAssignmentsCard({ days, todayKey, isLoading }) {
             <p className="dash-asgTitle m-0 text-sm font-semibold">
               {overdue} assignment{overdue === 1 ? "" : "s"} overdue
             </p>
-            <p className="m-0 mt-0.5 text-xs font-semibold text-[#D7263D]">Finish them soon</p>
+            <p className="m-0 mt-0.5 text-xs font-semibold" style={{ color: "#D7263D" }}>
+              Finish them soon
+            </p>
           </div>
           <Link href={allHref} className="dash-start flex h-8 flex-none items-center rounded-2xl bg-k5-ac px-3.5 font-k5-display text-[13px] font-semibold text-white no-underline shadow-[0_3px_0_var(--k5-acd)]">
             View
@@ -273,7 +275,7 @@ export function MyAssignmentsCard({ days, todayKey, isLoading }) {
         next.map(({ a, key }, i) => {
           const [due, urgent] = dueText(key, todayKey);
           return (
-            <div key={`${a.id}-${i}`} className="box-border flex min-h-[62px] items-center gap-3.5 rounded-[20px] border-2 border-k5-line bg-k5-soft py-2 pl-2 pr-2.5">
+            <div key={`${a.id}-${i}`} className="box-border flex min-h-[62px] shrink-0 items-center gap-3.5 rounded-[20px] border-2 border-k5-line bg-k5-soft py-2 pl-2 pr-2.5">
               <SubjectTile name={a.subjectName || a.title || ""} size="sm" />
               <div className="min-w-0 flex-1">
                 <p className="dash-asgTitle m-0 text-sm font-semibold">{a.title || a.eventTitle || "Assignment"}</p>
