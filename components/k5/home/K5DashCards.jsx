@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { CircleAlert } from "lucide-react";
 import { useParams } from "next/navigation";
 import { addDays, format } from "date-fns";
 import { openLmsLesson } from "@/utils/lmsCourseLink";
@@ -10,10 +12,12 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useStudentAcademicPerformance } from "@/hooks/useStudentAcademicPerformance";
 import { asArray, daysTo, fmtShort, num } from "@/components/k5/pages/k5PerformanceData";
 import { cleanCourseLabel, keyToDate } from "@/utils/k5Calendar";
+import { getPendingAssignmentCount } from "@/services/dashboardApi";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
 
 /*
  * Step 3 of the Playful "My Dashboard" (Playful.dc.html pgLms): the My Performance card (goal, finish date, how far the
- * student is against today's target) and the My Assignments card (assignments due 2 days ago, yesterday and tomorrow, not handed in yet, each with Start).
+ * student is against today's target) and the My Assignments card (one red row for the work still owed, then what is due today and tomorrow, each with Start).
  * My Performance is worked out by the same backend call as the Academic Performance page (useStudentAcademicPerformance),
  * so its numbers match that page; My Assignments come from the planner's own calendar days. Nothing new is fetched.
  */
@@ -189,21 +193,34 @@ function dueText(dateKey, todayKey) {
   const diff = Math.round((day.getTime() - keyToDate(todayKey).getTime()) / 86_400_000);
   const date = format(day, "MMM d, yyyy");
   if (diff < 0) return [`Overdue · ${date}`, true];
-  if (diff === 0) return [`Due today · ${date}`, true];
-  if (diff === 1) return [`Due tomorrow · ${date}`, true];
+  if (diff === 0) return ["Due today", true];
+  if (diff === 1) return ["Due tomorrow", true];
   return [`Due ${date}`, false];
 }
 
 export function MyAssignmentsCard({ days, todayKey, isLoading }) {
   const { school } = useParams();
-  const { lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
+  const { context, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
+  const dummy = useDummyStudent();
   // "View all" goes to My Performance and glides down to the My courses card (K5Performance reads ?go=courses).
   const allHref = `/${school}/student/student-progress-report?go=courses`;
-  // What was due 2 days ago, yesterday and tomorrow (not today: Today's Goal has those) and is not handed in yet.
-  const keyAt = (offset) => format(addDays(keyToDate(todayKey), offset), "yyyy-MM-dd");
-  const next = [keyAt(-2), keyAt(-1), keyAt(1)]
+  // What is due today and tomorrow and not handed in yet (today's are in Today's Goal as well).
+  const tomorrowKey = format(addDays(keyToDate(todayKey), 1), "yyyy-MM-dd");
+  const next = [todayKey, tomorrowKey]
     .flatMap((key) => (days[key]?.assignments || []).map((a) => ({ a, key })))
     .filter(({ a }) => a.k5Assignment?.status !== "submitted");
+  // Everything still owed since the academic year start, as one red row: the backend counts it (dashboard/pending-assignment-count,
+  // only the number). Not in the counselor's dummy view.
+  const schoolUUID = context?.schoolUUID;
+  const userId = context?.userId;
+  const pending = useQuery({
+    queryKey: ["student-pending-assignment-count", schoolUUID, userId, todayKey],
+    queryFn: () => getPendingAssignmentCount({ schoolUUID, userId }),
+    enabled: Boolean(schoolUUID && userId && dummy.settled && !dummy.enabled) && !isLoading,
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+  });
+  const overdue = Number(pending.data?.details?.pendingAssignmentCount) || 0;
   // Start behaves like the header's LMS switch: the LMS opens in a new tab (or the pending-payment message shows).
   const start = () => openLmsLesson({ isPayLmsPaymentPending, lmsProviderUrl: lmsProviderURL });
 
@@ -225,6 +242,23 @@ export function MyAssignmentsCard({ days, todayKey, isLoading }) {
           View all
         </Link>
       </div>
+      {!isLoading && pending.isLoading && <Skeleton aria-label="Loading overdue assignments" className="h-[62px] rounded-[20px]" />}
+      {!isLoading && overdue > 0 && (
+        <div className="box-border flex min-h-[62px] items-center gap-3.5 rounded-[20px] border-2 border-[#F5B8C1] bg-k5-rt py-2 pl-2 pr-2.5">
+          <span aria-hidden="true" className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[14px] bg-white text-[#D7263D]">
+            <CircleAlert className="h-6 w-6" strokeWidth={2.4} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="dash-asgTitle m-0 text-sm font-semibold">
+              {overdue} assignment{overdue === 1 ? "" : "s"} overdue
+            </p>
+            <p className="m-0 mt-0.5 text-xs font-semibold text-[#D7263D]">Finish them soon</p>
+          </div>
+          <Link href={allHref} className="dash-start flex h-8 flex-none items-center rounded-2xl bg-k5-ac px-3.5 font-k5-display text-[13px] font-semibold text-white no-underline shadow-[0_3px_0_var(--k5-acd)]">
+            View
+          </Link>
+        </div>
+      )}
       {isLoading ? (
         <div aria-busy="true" aria-label="Loading your assignments" className="flex flex-col gap-[11px]">
           {Array.from({ length: 3 }, (_, i) => (
@@ -232,7 +266,7 @@ export function MyAssignmentsCard({ days, todayKey, isLoading }) {
           ))}
         </div>
       ) : next.length === 0 ? (
-        <p className="m-0 rounded-[20px] bg-k5-soft px-4 py-6 text-center text-[15px] font-extrabold text-k5-mut">Nothing to show for the last two days or tomorrow. Great job!</p>
+        overdue > 0 ? null : <p className="m-0 rounded-[20px] bg-k5-soft px-4 py-6 text-center text-[15px] font-extrabold text-k5-mut">Nothing due today or tomorrow. Great job!</p>
       ) : (
         next.map(({ a, key }, i) => {
           const [due, urgent] = dueText(key, todayKey);

@@ -192,7 +192,7 @@ function ClassCard({ live, next, doneAll, hasClasses, onJoin, classesHref }) {
                 <span className="whitespace-nowrap">LIVE NOW · {timeRange(event)}</span>
               </>
             ) : (
-              <span className="whitespace-nowrap">UP NEXT · {timeRange(event) || timeLabel(event)}</span>
+              <span className="whitespace-nowrap text-[0.9375rem] font-[700]">UP NEXT · {timeRange(event) || timeLabel(event)}</span>
             )}
             {teacher && <span className="dash-liveWith whitespace-nowrap text-[13px] tracking-normal text-k5-ink">with {teacher}</span>}
           </p>
