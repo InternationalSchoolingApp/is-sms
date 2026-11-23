@@ -393,6 +393,27 @@ function TodayGoal({ classes, activities = [], assignments = [], classesHref, pl
           </div>
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-3 max-[420px]:w-full @min-[844px]:min-h-0 @min-[844px]:overflow-y-auto @min-[844px]:[justify-content:safe_center]">
+        {playGames ? (
+          // Every class, activity and assignment of the day is over (or there are none): the games card moves to the top and the list of the day sits below it. Tapping goes to My Classes, where Your Games slides open.
+          <Link
+            href={gamesHref}
+            className="group flex min-w-0 flex-1 flex-col items-start gap-2 max-[420px]:w-full rounded-[20px] border-[3px] border-[#3FB76D] bg-gradient-to-br from-[#E6F8EC] to-[#BDEBCD] px-4 py-3 text-k5-ink no-underline shadow-[0_5px_0_#249A50] transition-transform hover:-translate-y-0.5"
+          >
+            <span className="flex items-center gap-2.5">
+              <span aria-hidden="true" className="lmgi flex h-10 w-10 flex-none items-center justify-center rounded-full border-[3px] border-[#3FB76D] bg-white text-[#1F7A3A]">
+                <Gamepad2 className="h-5 w-5" strokeWidth={2.4} />
+              </span>
+              <span className="flex flex-col leading-[1.15]">
+                <span className="text-base font-semibold">{planCount ? "Classes done. Great job!" : holidayName || "No classes today!"}</span>
+                <span className="font-k5-body text-xs font-bold text-k5-mut">Time to play a game</span>
+              </span>
+            </span>
+            <span className="flex min-h-9 items-center gap-1.5 rounded-full bg-[#1F9D55] px-4 text-[15px] font-semibold text-white shadow-[0_3px_0_#145A29]">
+              <Gamepad2 className="h-4 w-4" strokeWidth={2.4} aria-hidden="true" />
+              Play games
+            </span>
+          </Link>
+        ) : null}
         {shown.length ? (
           <ul aria-label="Today's Goal" className="m-0 flex min-w-0 flex-1 list-none flex-col gap-2.5 p-0 max-[420px]:w-full">
             {shown.map((g, i) => (
@@ -415,27 +436,6 @@ function TodayGoal({ classes, activities = [], assignments = [], classesHref, pl
               </li>
             ))}
           </ul>
-        ) : null}
-        {playGames ? (
-          // Every class and activity of the day is over (or there are none): the games are open. Tapping goes to My Classes, where Your Games slides open.
-          <Link
-            href={gamesHref}
-            className="group flex min-w-0 flex-1 flex-col items-start gap-2 max-[420px]:w-full rounded-[20px] border-[3px] border-[#3FB76D] bg-gradient-to-br from-[#E6F8EC] to-[#BDEBCD] px-4 py-3 text-k5-ink no-underline shadow-[0_5px_0_#249A50] transition-transform hover:-translate-y-0.5"
-          >
-            <span className="flex items-center gap-2.5">
-              <span aria-hidden="true" className="lmgi flex h-10 w-10 flex-none items-center justify-center rounded-full border-[3px] border-[#3FB76D] bg-white text-[#1F7A3A]">
-                <Gamepad2 className="h-5 w-5" strokeWidth={2.4} />
-              </span>
-              <span className="flex flex-col leading-[1.15]">
-                <span className="text-base font-semibold">{planCount ? "Classes done. Great job!" : holidayName || "No classes today!"}</span>
-                <span className="font-k5-body text-xs font-bold text-k5-mut">Time to play a game</span>
-              </span>
-            </span>
-            <span className="flex min-h-9 items-center gap-1.5 rounded-full bg-[#1F9D55] px-4 text-[15px] font-semibold text-white shadow-[0_3px_0_#145A29]">
-              <Gamepad2 className="h-4 w-4" strokeWidth={2.4} aria-hidden="true" />
-              Play games
-            </span>
-          </Link>
         ) : null}
         {total > 0 && !todo.length && !playGames && <p className="m-0 text-[15px] font-semibold text-k5-mut">Everything for today is done. Great job!</p>}
         {!total && !playGames && <p className="m-0 flex-1 text-[15px] font-semibold text-k5-mut">Nothing planned for today.</p>}
