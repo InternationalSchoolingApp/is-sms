@@ -542,10 +542,12 @@ export function K5Dashboard({ now, timezone, days, todayKey, isLoading, firstNam
   // The class that is live now (Join shows when it has a join link, like the planner: see isJoinable in StudentHomeK5).
   const live = classes.find((c) => c.k5Status === "live" && c.url) || classes.find((c) => c.k5Status === "live") || null;
   const next = live ? null : classes.find((c) => c.k5Status === "next") || null;
-  // Games open when every class, activity and assignment of today is done (same rule as the planner: gameAccess in utils/k5Calendar.js).
+  // The "play" button of Today's Goal needs every class, activity and assignment of today done. My Classes opens the games once the
+  // classes are over, assignments or not (gameAccess in utils/k5Calendar.js).
   // "Time to play a game" (Today's Goal, every look): every class and school activity of today is over, or there are none (a free day).
   const activitiesDone = today.activities.every((a) => a.k5Status === "done");
-  const playGames = Boolean(classesHref) && classes.every((c) => c.k5Status === "done") && activitiesDone && !gameAccess(days, todayKey, todayKey).locked;
+  const assignmentsDone = today.assignments.every((a) => a.k5Assignment?.status === "submitted");
+  const playGames = Boolean(classesHref) && classes.every((c) => c.k5Status === "done") && activitiesDone && assignmentsDone && !gameAccess(days, todayKey, todayKey).locked;
   // A holiday today: the free-day card names it (like the planner and the month summary do).
   const holiday = today.holidays[0];
   const holidayName = holiday ? holiday.title || holiday.eventTitle || "Holiday" : "";

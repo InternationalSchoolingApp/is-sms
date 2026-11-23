@@ -258,9 +258,9 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
   const statusCounts = countStatuses([...day.classes, ...day.activities]);
   const openGames = !access.locked && (isToday ? statusCounts.live === 0 && statusCounts.next === 0 : dateKey > todayKey && items.length === 0);
   const games = isHigh ? (
-    <HighGames locked={access.locked} past={dayOver} homework={access.reason === "assignments"} defaultOpen={openGames} />
+    <HighGames locked={access.locked} past={dayOver} defaultOpen={openGames} />
   ) : (
-    <K5Games locked={access.locked} past={dayOver} pending={access.reason === "pending"} homework={access.reason === "assignments"} middle={gradeBand === "MIDDLE"} defaultOpen={openGames} />
+    <K5Games locked={access.locked} past={dayOver} pending={access.reason === "pending"} middle={gradeBand === "MIDDLE"} defaultOpen={openGames} />
   );
   return (
     <div className="flex flex-col gap-4">
@@ -328,14 +328,12 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
       ) : (
         <>
           <NoClassDay reason={isChristmasKey(dateKey) ? { kind: "christmas", title: "Merry Christmas!", text: `It's Christmas Day! No school. Have a magical day${firstName ? `, ${firstName}` : ""}!` } : noClassReason(dateKey, day, { isSelfStudy, firstName })} isToday={isToday} onOpen={day.holidays.length ? () => onOpen(day.holidays[0]) : undefined} />
-          {/* Grade 9–12 has its own "Brain Games" (High.dc.html); the other looks share the K–5 games. */}
-          {games}
         </>
       )}
-      {gamesAfterPlan && games}
 
+      {/* The assignments come first, "Your Games" last. Grade 9–12 has its own "Brain Games" (High.dc.html); the other looks share the K–5 games. */}
       <Assignments items={day.assignments} clue={clue} onOpen={onOpen} />
-
+      {items.length === 0 ? games : gamesAfterPlan && games}
     </div>
   );
 }
