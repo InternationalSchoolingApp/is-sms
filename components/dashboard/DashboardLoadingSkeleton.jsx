@@ -104,6 +104,52 @@ function HomeBody() {
   );
 }
 
+// My Classes and Activities: the title card, the colour clues, the mini calendar on one side and the day's plan on the other (same
+// blocks and order as components/k5/home/StudentHomeK5.jsx; the Today card and My Courses are switched off there).
+function MyClassesBody() {
+  return (
+    <div className="flex min-w-0 flex-1 flex-col gap-4">
+      <div className={`${CARD} h-[86px] flex-row items-center gap-3 px-4 ${FLIP}`}>
+        <Skeleton className={`h-12 w-12 flex-none rounded-2xl ${SK}`} />
+        <Skeleton className={`h-7 w-64 max-w-full rounded-lg ${SK}`} />
+        <Skeleton className={`ms-auto h-11 w-36 rounded-full max-[560px]:hidden ${SK}`} />
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-2.5">
+        {Array.from({ length: 6 }, (_, i) => (
+          <Skeleton key={i} className={`h-10 w-[118px] rounded-full ${SK}`} />
+        ))}
+      </div>
+      <div className={`flex flex-wrap items-start gap-5 ${FLIP}`}>
+        {/* The mini calendar is not on a phone (a button opens it), so neither is its skeleton. */}
+        <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-4 max-[760px]:hidden">
+          <div className={`${CARD} gap-4 p-4`}>
+            <div className="flex items-center justify-between">
+              <Skeleton className={`h-10 w-10 rounded-full ${SK}`} />
+              <Skeleton className={`h-8 w-36 rounded-lg ${SK}`} />
+              <Skeleton className={`h-10 w-10 rounded-full ${SK}`} />
+            </div>
+            <Skeleton className={`h-[300px] w-full rounded-2xl ${SK}`} />
+          </div>
+        </div>
+        <div className={`${CARD} min-w-0 flex-[999_1_460px] gap-[18px] p-[22px] max-[760px]:order-first max-[560px]:p-3.5`}>
+          <div className="flex items-center gap-3">
+            <Skeleton className={`h-[88px] w-[88px] flex-none rounded-3xl ${SK}`} />
+            <div className="flex flex-1 flex-col gap-2">
+              <Skeleton className={`h-8 w-48 max-w-full rounded-lg ${SK}`} />
+              <Skeleton className={`h-5 w-56 max-w-full rounded-md ${SK}`} />
+            </div>
+            <Skeleton className={`h-[52px] w-60 rounded-full max-[760px]:hidden ${SK}`} />
+          </div>
+          <Skeleton className={`mx-auto h-11 w-56 rounded-full ${SK}`} />
+          {Array.from({ length: 2 }, (_, i) => (
+            <Skeleton key={i} className={`h-[120px] w-full rounded-3xl ${SK}`} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PlannerBody() {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-4">
@@ -128,6 +174,7 @@ export function DashboardLoadingSkeleton({ hand }) {
   const side = hand === "left" || hand === "right" ? hand : saved;
   // /{school}/student is the dashboard home page; My Classes and every module are one segment deeper.
   const isHome = /\/student\/?$/.test(pathname);
+  const isClasses = /\/student\/my-classes\/?$/.test(pathname);
   return (
     <div role="status" aria-live="polite" aria-busy="true" data-hand={side} className="flex min-h-screen flex-col bg-slate-50">
       <span className="sr-only">Loading your dashboard…</span>
@@ -151,7 +198,7 @@ export function DashboardLoadingSkeleton({ hand }) {
           ))}
         </div>
 
-        {isHome ? <HomeBody /> : <PlannerBody />}
+        {isHome ? <HomeBody /> : isClasses ? <MyClassesBody /> : <PlannerBody />}
 
         <div className="flex w-20 flex-none flex-col items-center gap-5 max-[760px]:hidden">
           {Array.from({ length: 4 }, (_, i) => (

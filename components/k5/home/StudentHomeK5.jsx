@@ -248,7 +248,7 @@ function K5Planner({ timezone, dashboard = false }) {
       {!isPreK && <K5PlanFilters filters={model.filters} onToggle={model.toggleFilter} />}
 
       <div className="flex flex-wrap items-start gap-5 in-data-[hand=left]:flex-row-reverse">
-        <div className="sticky top-[calc(var(--maintenance-banner-h,0px)+100px)] box-border flex max-h-[calc(100vh-120px)] min-w-0 flex-[1_1_300px] flex-col gap-4 overflow-y-auto pb-3 pr-1 [scrollbar-width:thin] max-[1100px]:static max-[1100px]:max-h-none max-[1100px]:overflow-visible">
+        <div className="sticky top-[calc(var(--maintenance-banner-h,0px)+100px)] box-border flex min-w-0 flex-[1_1_300px] flex-col gap-4 pb-3 max-[1100px]:static">
           <MiniCalendar
             selectedDate={selectedDate}
             todayKey={todayKey}
@@ -256,14 +256,17 @@ function K5Planner({ timezone, dashboard = false }) {
             onPick={openDayAndShow}
             onMonth={(dir) => model.setSelectedDate((d) => addMonths(d, dir))}
           />
+          {/* The Today card and My Courses are switched off for now, so the left column is only the mini calendar and there is nothing
+              to show a skeleton for (K5HomeLeftSkeleton draws exactly these two cards; bring it back together with them).
           {model.isLoading ? (
             <K5HomeLeftSkeleton />
           ) : (
             <>
-              {/* <ZoomIn index={0}><TodayCard todayKey={todayKey} days={days} courseRegistry={model.courseRegistry} onOpen={open} /></ZoomIn> */}
+              <ZoomIn index={0}><TodayCard todayKey={todayKey} days={days} courseRegistry={model.courseRegistry} onOpen={open} /></ZoomIn>
               <ZoomIn index={1}><MyCourses courseRegistry={model.courseRegistry} courseVisibility={model.courseVisibility} onToggle={model.toggleCourseVisibility} /></ZoomIn>
             </>
           )}
+          */}
         </div>
 
         {/* Mobile (mockup .duo>[data-pin=plan]{order:-1}): the plan comes before the left column. */}
