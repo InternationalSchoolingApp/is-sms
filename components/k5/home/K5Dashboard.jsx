@@ -6,14 +6,14 @@ import { useParams } from "next/navigation";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
-import { CalendarDays, Gamepad2 } from "lucide-react";
+import { CalendarDays, Check, Gamepad2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { K5_CARD, SubjectIcon } from "@/components/k5/home/k5Bits";
 import { MyAssignmentsCard, MyPerformanceCard } from "@/components/k5/home/K5DashCards";
 import { K5ClockIcon } from "@/components/k5/home/K5ClockIcon";
 import { HeroMoon, SCENE_LABEL, Umbrella, WeatherIcon, WeatherScene, sceneOf } from "@/components/k5/home/K5HeroWeather";
 import { useK5Weather } from "@/hooks/useK5Weather";
-import { classTitle, dayAt, gameAccess, subjectStyle, teacherName, timeRange, timeLabel } from "@/utils/k5Calendar";
+import { activityTitle, classTitle, cleanCourseLabel, dayAt, gameAccess, subjectStyle, teacherName, timeRange, timeLabel } from "@/utils/k5Calendar";
 
 /*
  * Playful "My Dashboard" (Playful.dc.html pgLms, the home of a K–5 / Playful-look student). This file is Step 2: the hero
@@ -311,15 +311,34 @@ function Hero({ now, timezone, firstName, live, next, doneAll, hasClasses, onJoi
   );
 }
 
-/** Today's Goal: done / total ring, what is still to do (live class first), and a button to My Classes. */
-function TodayGoal({ classes, classesHref, playGames = false, gamesHref }) {
-  // Classes only (assignments have their own card): the ring counts today's classes, the list shows the ones not done yet.
-  const total = classes.length;
-  const done = classes.filter((c) => c.k5Status === "done").length;
-  const todo = classes
-    .filter((c) => c.k5Status !== "done")
-    .map((c) => ({ id: c.id, name: classTitle(c), sub: c.k5Status === "live" ? `Live now · ${timeRange(c)}` : timeRange(c) || timeLabel(c), live: c.k5Status === "live" }));
-  const shown = todo.slice(0, 5);
+/** The small line under an item of Today's Goal: "Live now · time", "Done · time" or the time. */
+const itemSub = (event) => {
+  const time = timeRange(event) || timeLabel(event);
+  if (event.k5Status === "live") return `Live now · ${time}`;
+  return event.k5Status === "done" ? `Done · ${time}` : time;
+};
+
+/** Today's Goal: done / total ring over today's classes, activities and assignments due today, what is still to do (live class first), and a button to My Classes. */
+function TodayGoal({ classes, activities = [], assignments = [], classesHref, playGames = false, gamesHref, holidayName = "" }) {
+  // Everything of today: classes, school activities and the assignments due today (an assignment is done once it is handed in).
+  const items = [
+    ...classes.map((c) => ({ id: c.id, name: classTitle(c), sub: itemSub(c), live: c.k5Status === "live", done: c.k5Status === "done" })),
+    ...activities.map((a) => ({ id: a.id, name: activityTitle(a), sub: itemSub(a), live: a.k5Status === "live", done: a.k5Status === "done" })),
+    ...assignments.map((a) => ({
+      id: a.id,
+      name: a.title || a.eventTitle || "Assignment",
+      sub: [a.subjectName ? cleanCourseLabel(a.subjectName) : "", a.k5Assignment?.status === "submitted" ? "Handed in" : "Due today"].filter(Boolean).join(" · "),
+      live: false,
+      done: a.k5Assignment?.status === "submitted",
+    })),
+  ];
+  const total = items.length;
+  const done = items.filter((g) => g.done).length;
+  const todo = items.filter((g) => !g.done);
+  // All of today's items stay in the list (the ones that are over get a tick), so the student sees the whole day.
+  const shown = items.slice(0, 8);
+  // Classes and activities only: the games card says "Classes done" once those are over, whatever assignments are left.
+  const planCount = classes.length + activities.length;
   return (
     <section aria-label="Today's Goal" className={`${SECTION_CARD} min-h-[262px] min-w-[300px] flex-[1_1_0] gap-4 rounded-[30px] py-[18px] pl-[22px] pr-4 max-[420px]:pl-4 max-[760px]:min-w-0 max-[760px]:basis-full`}>
       <h2 className="dash-h2 m-0 flex items-center gap-2 text-[21px] font-semibold max-[420px]:justify-center">
@@ -342,11 +361,16 @@ function TodayGoal({ classes, classesHref, playGames = false, gamesHref }) {
             <span className="mt-0.5 text-xs font-medium text-k5-mut">Done</span>
           </div>
         </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-3 max-[420px]:w-full">
         {shown.length ? (
           <ul aria-label="Today's Goal" className="m-0 flex min-w-0 flex-1 list-none flex-col gap-2.5 p-0 max-[420px]:w-full">
             {shown.map((g, i) => (
               <li key={`${g.id}-${i}`} className="flex min-w-0 items-center gap-2.5">
-                {g.live ? (
+                {g.done ? (
+                  <span aria-hidden="true" className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-[#00CD89] text-white">
+                    <Check className="h-3.5 w-3.5" strokeWidth={3.4} />
+                  </span>
+                ) : g.live ? (
                   <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-k5-gt">
                     <span aria-hidden="true" className="k5-live-dot block h-2.5 w-2.5 rounded-full bg-k5-gi" />
                   </span>
@@ -354,15 +378,16 @@ function TodayGoal({ classes, classesHref, playGames = false, gamesHref }) {
                   <span aria-hidden="true" className="dash-liCircle box-border h-[22px] w-[22px] flex-none rounded-full border-2 border-k5-line" />
                 )}
                 <span className="flex min-w-0 flex-col">
-                  <span className="dash-liName text-[15px] font-semibold leading-[1.2] text-k5-ink">{g.name}</span>
+                  <span className={`dash-liName text-[15px] font-semibold leading-[1.2] ${g.done ? "text-k5-mut" : "text-k5-ink"}`}>{g.name}</span>
                   <span className="dash-liSub font-k5-body text-xs font-bold leading-[1.2] text-k5-mut">{g.sub}</span>
                 </span>
               </li>
             ))}
-            {todo.length > shown.length && <li className="text-xs font-semibold text-k5-mut">+{todo.length - shown.length} more</li>}
+            {items.length > shown.length && <li className="text-xs font-semibold text-k5-mut">+{items.length - shown.length} more</li>}
           </ul>
-        ) : playGames ? (
-          // Every class of the day is over: the games are open. Tapping goes to My Classes, where Your Games slides open.
+        ) : null}
+        {playGames ? (
+          // Every class and activity of the day is over (or there are none): the games are open. Tapping goes to My Classes, where Your Games slides open.
           <Link
             href={gamesHref}
             className="group flex min-w-0 flex-1 flex-col items-start gap-2 max-[420px]:w-full rounded-[20px] border-[3px] border-[#3FB76D] bg-gradient-to-br from-[#E6F8EC] to-[#BDEBCD] px-4 py-3 text-k5-ink no-underline shadow-[0_5px_0_#249A50] transition-transform hover:-translate-y-0.5"
@@ -372,7 +397,7 @@ function TodayGoal({ classes, classesHref, playGames = false, gamesHref }) {
                 <Gamepad2 className="h-5 w-5" strokeWidth={2.4} />
               </span>
               <span className="flex flex-col leading-[1.15]">
-                <span className="text-base font-semibold">Classes done. Great job!</span>
+                <span className="text-base font-semibold">{planCount ? "Classes done. Great job!" : holidayName || "No classes today!"}</span>
                 <span className="font-k5-body text-xs font-bold text-k5-mut">Time to play a game</span>
               </span>
             </span>
@@ -381,9 +406,10 @@ function TodayGoal({ classes, classesHref, playGames = false, gamesHref }) {
               Play games
             </span>
           </Link>
-        ) : (
-          <p className="m-0 flex-1 text-[15px] font-semibold text-k5-mut">{total ? "Everything for today is done. Great job!" : "Nothing planned for today."}</p>
-        )}
+        ) : null}
+        {total > 0 && !todo.length && !playGames && <p className="m-0 text-[15px] font-semibold text-k5-mut">Everything for today is done. Great job!</p>}
+        {!total && !playGames && <p className="m-0 flex-1 text-[15px] font-semibold text-k5-mut">Nothing planned for today.</p>}
+        </div>
       </div>
       <ClassesLink href={classesHref} className="dash-btn mt-auto flex min-h-11 items-center justify-center gap-2 rounded-[22px] bg-k5-ac font-k5-display text-base font-semibold text-white no-underline shadow-[0_4px_0_var(--k5-acd)]">
         <CalendarDays className="h-[18px] w-[18px]" strokeWidth={2.4} aria-hidden="true" />
@@ -488,14 +514,19 @@ export function K5Dashboard({ now, timezone, days, todayKey, isLoading, firstNam
   const next = live ? null : classes.find((c) => c.k5Status === "next") || null;
   const doneAll = classes.length > 0 && classes.every((c) => c.k5Status === "done");
   // Games open when every class of today is over (same rule as the planner: gameAccess in utils/k5Calendar.js).
-  const playGames = Boolean(classesHref) && doneAll && !gameAccess(days, todayKey, todayKey).locked;
+  // "Time to play a game" (Today's Goal, every look): every class and school activity of today is over, or there are none (a free day).
+  const activitiesDone = today.activities.every((a) => a.k5Status === "done");
+  const playGames = Boolean(classesHref) && classes.every((c) => c.k5Status === "done") && activitiesDone && !gameAccess(days, todayKey, todayKey).locked;
+  // A holiday today: the free-day card names it (like the planner and the month summary do).
+  const holiday = today.holidays[0];
+  const holidayName = holiday ? holiday.title || holiday.eventTitle || "Holiday" : "";
   const gamesHref = classesHref ? `${classesHref}?games=open` : null;
   // The mockup's dashboard (.lmd) is set in the display font (Fredoka) all the way down; only small captions use the body font.
   return (
     <div data-dash={look} className="k5-dash-rise flex flex-col gap-6 font-k5-display">
       <div className={ROW}>
         <Hero look={look} now={now} timezone={timezone} firstName={firstName} live={live} next={next} doneAll={doneAll} hasClasses={classes.length > 0} onJoin={onJoin} classesHref={classesHref} />
-        <TodayGoal classes={classes} classesHref={classesHref} playGames={playGames} gamesHref={gamesHref} />
+        <TodayGoal classes={classes} activities={today.activities} assignments={today.assignments} classesHref={classesHref} playGames={playGames} gamesHref={gamesHref} holidayName={holidayName} />
       </div>
       <div className={ROW}>
         <MyPerformanceCard firstInitial={firstName.charAt(0).toUpperCase()} />

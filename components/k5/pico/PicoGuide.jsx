@@ -6,6 +6,7 @@ import { ChevronRight, Volume2, VolumeX, X } from "lucide-react";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 import { useSpeech } from "@/components/k5/pico/useSpeech";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { BUDDIES, voiceOf } from "@/constant/appearance";
 import { PICO_SAY_EVENT, usePicoLive } from "@/components/k5/pico/picoEvents";
 import { HOME_MODULE, NO_MODULE_TEXT, isClubModule, isLanguageClub, picoModuleFor, picoWelcomeText } from "@/constant/picoModules";
@@ -26,7 +27,7 @@ const WELCOME_TOUR_PAGES = new Set(["re-enrollment"]);
 // sibling card, the header buttons on a phone) is skipped.
 // `liveName` is the title of the class that is live right now (real data), when there is one.
 // `welcome`: the very first tour of this student - the buddy also welcomes them to the school (text: constant/picoModules.js).
-function tourSteps(firstName, buddyName, liveName, welcome, schoolName) {
+function tourSteps(firstName, buddyName, liveName, welcome, schoolName, balanced = false) {
   return [
     {
       pin: null,
@@ -44,7 +45,8 @@ function tourSteps(firstName, buddyName, liveName, welcome, schoolName) {
     { pin: "getApp", text: "Download our app for a better experience!" },
     { pin: "lms", text: "Click here to go to your Learning Management System (LMS). This is where you learn, complete your assignments, take quizzes, and appear for exams." },
     { pin: "profile", text: "Click here to go to your profile. Keep your personal details up to date, share more about yourself with the school, and change your password whenever needed." },
-    { pin: "msg", text: "Need help? Tap the green Talk to us button to chat with us!" },
+    // The Balanced (Middle) look draws every rail button in the same soft blue, so only Playful and Mature call it green.
+    { pin: "msg", text: balanced ? "Need help? Tap the Talk to us button to chat with us!" : "Need help? Tap the green Talk to us button to chat with us!" },
     { pin: "announcements", text: "This is the announcements section. The school shares updates about events, activities, clubs, and holidays here. Don't miss out!" },
     { pin: "news", text: "Check here for the latest developments and updates in education." },
     { pin: "diary", text: "This is your School Diary, where you can find important updates about your calendar and coursework from your teachers or the school." },
@@ -53,9 +55,15 @@ function tourSteps(firstName, buddyName, liveName, welcome, schoolName) {
 // My Classes and Activities: once the page has loaded the buddy walks through it - the plan, the class that is live (only when there
 // is one: a tip whose element is not on the page is skipped), the month calendar, the courses, the Today / Week / Month switch and the
 // colour clues. The same tour plays on a tap on the buddy.
-function classesTourSteps(liveName) {
+function classesTourSteps(liveName, dayEmpty = false, holidayName = "") {
+  // The plan tip must not promise classes on a day that has none (a free day or a holiday).
+  const planText = dayEmpty
+    ? holidayName
+      ? `This is Today's Plan. Today is a holiday, ${holidayName}, so there are no classes or activities. Enjoy your day! Your classes and activities show up here on the days you have them.`
+      : "This is Today's Plan. There are no classes or activities today, so enjoy your free day! Your classes and activities show up here on the days you have them."
+    : "This is Today's Plan. All your classes and activities for the day are here. Tap one to see more about it.";
   return [
-    { pin: "calendar", text: "This is Today's Plan. All your classes and activities for the day are here. Tap one to see more about it." },
+    { pin: "calendar", text: planText },
     { pin: "live", text: `${liveName ? `Your ${liveName} class` : "Your class"} is live right now! Tap the green Join class button to go in.` },
     { pin: "mini", text: "This little calendar shows the whole month. A dot under a day means something is planned. Tap a day to open it." },
     { pin: "courses", text: "These are your courses. Tap a course to show or hide its classes in your plan." },
@@ -161,6 +169,8 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   if (welcomeDue && !welcome) setWelcome(true);
   const [state, setState] = useState({ open: null, index: 0, say: null, skipLive: false, pageTip: false });
   const live = usePicoLive();
+  // The student's look (the one picked in the Look dialog, else their grade's): Middle = Balanced, High = Mature.
+  const { isMiddle, isHigh } = useDashboardContext();
   const pathname = usePathname();
   // The Book a Class page has its own buddy guide: here the buddy stays, its bubble never opens.
   const onBook = pathname.includes("book-a-session");
@@ -176,8 +186,8 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
         { pin: null, text: tourPage.text },
       ]
     : classesTour
-      ? classesTourSteps(live.name)
-      : tourSteps(firstName, buddy.name, live.name, welcome, schoolName);
+      ? classesTourSteps(live.name, live.dayEmpty, live.holidayName)
+      : tourSteps(firstName, buddy.name, live.name, welcome, schoolName, isMiddle && !isHigh);
   const mobile = useSyncExternalStore(subscribeMobile, isMobileView, () => false);
   // No dialog is open on this page (checked by the effect below, only while the buddy has something to say by itself).
   // Kept as "the page it was seen clear on", so a new page is never taken as clear before it has been looked at.
@@ -401,12 +411,31 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     if (!el) return;
     if (!FIXED_PINS.has(pin)) {
       const r = el.getBoundingClientRect();
-      if (r.top < 150 || r.top > window.innerHeight * 0.55) {
-        // On a phone the bubble covers the lower half, so the element is lifted close to the header.
-        window.scrollTo({ top: Math.max(0, window.scrollY + r.top - (mobile ? 120 : 260)), behavior: reduced ? "auto" : "smooth" });
+      // On a phone the bubble covers the lower half, so the element is lifted close to the header.
+      let want = mobile ? 120 : 260;
+      let lifted = false;
+      // A tall element on a short screen (the mini calendar on a tablet) would end up behind the bubble: when it sits where the bubble
+      // is, lift it higher so its bottom stays above the bubble (never above the sticky header).
+      const bubble = !mobile ? document.querySelector(".k5-bubble") : null;
+      if (bubble?.parentElement) {
+        const wrap = bubble.parentElement.getBoundingClientRect();
+        const bubbleW = Math.min(340, window.innerWidth - 32);
+        const bubbleLeft = leftHand ? wrap.right + 14 : wrap.left - 14 - bubbleW;
+        const bubbleTop = wrap.bottom - bubble.offsetHeight;
+        if (r.left < bubbleLeft + bubbleW && r.right > bubbleLeft) {
+          const headerBottom = document.querySelector("header")?.getBoundingClientRect().bottom ?? 104;
+          const fit = Math.max(headerBottom + 12, bubbleTop - 16 - r.height);
+          if (fit < want) {
+            want = fit;
+            lifted = true;
+          }
+        }
+      }
+      if (r.top < 150 || r.top > window.innerHeight * 0.55 || (lifted && Math.abs(r.top - want) > 24)) {
+        window.scrollTo({ top: Math.max(0, window.scrollY + r.top - want), behavior: reduced ? "auto" : "smooth" });
       }
     }
-  }, [open, pin, state.say?.id, reduced, mobile]);
+  }, [open, pin, state.say?.id, reduced, mobile, leftHand]);
 
   // Is the tour itself on screen right now? A say that arrives while it is (a colour clue) belongs to the tour; one that
   // arrives when it is not (Get the App, a joined club) is a message of its own: "1 / 1" and "All done", not "1 / 10".

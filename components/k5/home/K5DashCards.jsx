@@ -13,7 +13,7 @@ import { cleanCourseLabel, keyToDate } from "@/utils/k5Calendar";
 
 /*
  * Step 3 of the Playful "My Dashboard" (Playful.dc.html pgLms): the My Performance card (goal, finish date, how far the
- * student is against today's target) and the My Assignments card (the three assignments due next, each with Start).
+ * student is against today's target) and the My Assignments card (assignments due 2 days ago, yesterday and tomorrow, not handed in yet, each with Start).
  * My Performance is worked out by the same backend call as the Academic Performance page (useStudentAcademicPerformance),
  * so its numbers match that page; My Assignments come from the planner's own calendar days. Nothing new is fetched.
  */
@@ -199,9 +199,9 @@ export function MyAssignmentsCard({ days, todayKey, isLoading }) {
   const { lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
   // "View all" goes to My Performance and glides down to the My courses card (K5Performance reads ?go=courses).
   const allHref = `/${school}/student/student-progress-report?go=courses`;
-  // Only what is due today or tomorrow and not handed in yet.
-  const tomorrowKey = format(addDays(keyToDate(todayKey), 1), "yyyy-MM-dd");
-  const next = [todayKey, tomorrowKey]
+  // What was due 2 days ago, yesterday and tomorrow (not today: Today's Goal has those) and is not handed in yet.
+  const keyAt = (offset) => format(addDays(keyToDate(todayKey), offset), "yyyy-MM-dd");
+  const next = [keyAt(-2), keyAt(-1), keyAt(1)]
     .flatMap((key) => (days[key]?.assignments || []).map((a) => ({ a, key })))
     .filter(({ a }) => a.k5Assignment?.status !== "submitted");
   // Start behaves like the header's LMS switch: the LMS opens in a new tab (or the pending-payment message shows).
@@ -232,7 +232,7 @@ export function MyAssignmentsCard({ days, todayKey, isLoading }) {
           ))}
         </div>
       ) : next.length === 0 ? (
-        <p className="m-0 rounded-[20px] bg-k5-soft px-4 py-6 text-center text-[15px] font-extrabold text-k5-mut">Nothing due today or tomorrow. Great job!</p>
+        <p className="m-0 rounded-[20px] bg-k5-soft px-4 py-6 text-center text-[15px] font-extrabold text-k5-mut">Nothing to show for the last two days or tomorrow. Great job!</p>
       ) : (
         next.map(({ a, key }, i) => {
           const [due, urgent] = dueText(key, todayKey);

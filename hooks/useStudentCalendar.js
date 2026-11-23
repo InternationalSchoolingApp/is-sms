@@ -123,8 +123,9 @@ export function useStudentCalendar({ schoolUUID, userId, timezone: timezoneOptio
   const lazy = monthFetch;
 
   // The windows that have been requested for so far (lazy mode): the first render's, then whatever the student opened.
-  // Like legacy: yesterday, today and tomorrow (see lazyNeed - a just-after-midnight class is on the backend's day before).
-  const base = useMemo(() => rangeOf(addDays(anchor, -1), addDays(anchor, 1)), [anchor]);
+  // Like legacy: yesterday, today and tomorrow (see lazyNeed - a just-after-midnight class is on the backend's day before), plus the day
+  // before yesterday: the dashboard's My Assignments card lists what was due 2 days ago through tomorrow.
+  const base = useMemo(() => rangeOf(addDays(anchor, -2), addDays(anchor, 1)), [anchor]);
   const [extras, setExtras] = useState([]);
   const addExtra = useCallback((range) => setExtras((prev) => (prev.some((r) => rangeKey(r) === rangeKey(range)) ? prev : [...prev, range])), []);
 

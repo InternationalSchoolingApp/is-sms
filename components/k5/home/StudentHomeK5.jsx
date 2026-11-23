@@ -183,11 +183,16 @@ function K5Planner({ timezone, dashboard = false }) {
 
   // Tell the buddy about the live class: the plan is ready, the popup waits for an answer, and the real class title.
   const liveName = liveNow ? classTitle(liveNow) : "";
+  // Nothing planned today (no class, no activity), and the holiday's name when it is one: the buddy's plan tip says so.
+  const todayPlan = dayAt(days, todayKey);
+  const dayIsEmpty = todayPlan.classes.length === 0 && todayPlan.activities.length === 0;
+  const todayHoliday = todayPlan.holidays[0];
+  const holidayName = todayHoliday ? todayHoliday.title || todayHoliday.eventTitle || "Holiday" : "";
   const alertPending = Boolean(alertEvent);
   useEffect(() => {
-    setPicoLive({ ready: !model.isLoading, pending: alertPending, name: liveName });
-  }, [model.isLoading, alertPending, liveName]);
-  useEffect(() => () => setPicoLive({ ready: false, pending: false, name: "" }), []);
+    setPicoLive({ ready: !model.isLoading, pending: alertPending, name: liveName, dayEmpty: dayIsEmpty, holidayName });
+  }, [model.isLoading, alertPending, liveName, dayIsEmpty, holidayName]);
+  useEffect(() => () => setPicoLive({ ready: false, pending: false, name: "", dayEmpty: false, holidayName: "" }), []);
 
   // Celebration: every class and activity of today is done. Once per student per day (remembered on this device; if the
   // device cannot remember, nothing is played rather than risking a repeat on every visit). It waits a moment so it does

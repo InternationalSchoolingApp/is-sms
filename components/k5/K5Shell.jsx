@@ -18,6 +18,7 @@ import { AppearanceDialog } from "@/components/k5/look/AppearanceDialog";
 import { SessionExpiredDialog } from "@/components/providers/SessionExpiredDialog";
 import { PicoGuide } from "@/components/k5/pico/PicoGuide";
 import { setPicoLive } from "@/components/k5/pico/picoEvents";
+import { K5BrainBreak } from "@/components/k5/break/K5BrainBreak";
 import { SelectToSpeak } from "@/components/k5/pico/SelectToSpeak";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
@@ -192,6 +193,7 @@ function K5Frame({ children }) {
       {/* The home planner shows the live-class dialog itself; on every other page this does. */}
       {!isHome && <K5LiveClassWatcher />}
       <PicoGuide userId={context.userId} firstName={String(context.userName || "").split(" ")[0]} schoolName={context.schoolName} home={isHome} welcomeEligible={welcomeEligible} />
+      <K5BrainBreak firstName={String(context.userName || "").split(" ")[0]} />
       <SelectToSpeak />
       <ReadingRuler />
       {/* The "session logged out" dialog, inside the student's own theme (colour, Day / Night, grade look). */}

@@ -1849,3 +1849,47 @@
 [data-dash="high"] .dash-skHero {
   border-radius: 20px !important;
 }
+
+/* Brain break dialog (Break time: walk + water) - the mockups' brk-* animations (components/k5/break). */
+@keyframes k5ShoeHop {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(-8deg); }
+}
+@keyframes k5FpStep {
+  0%, 100% { opacity: 0.15; }
+  30%, 60% { opacity: 1; }
+}
+@keyframes k5BubbleUp {
+  0% { transform: translateY(0); opacity: 0; }
+  20% { opacity: 0.9; }
+  100% { transform: translateY(-60px); opacity: 0; }
+}
+@keyframes k5CloudDrift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(18px); }
+}
+@keyframes k5ClockShake {
+  0%, 80%, 100% { transform: rotate(0deg); }
+  84% { transform: rotate(-14deg); }
+  88% { transform: rotate(14deg); }
+  92% { transform: rotate(-10deg); }
+  96% { transform: rotate(8deg); }
+}
+@keyframes k5StarPop {
+  0% { transform: scale(0) rotate(0deg); opacity: 0; }
+  60% { transform: scale(1.2) rotate(20deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.k5-brk-shoe { animation: k5ShoeHop 0.7s ease-in-out infinite; transform-origin: 50% 90%; }
+.k5-brk-fp { animation: k5FpStep 2.4s ease-in-out infinite; }
+.k5-brk-bub { animation: k5BubbleUp 2.2s ease-in infinite; }
+.k5-brk-cloud { animation: k5CloudDrift 6s ease-in-out infinite; }
+.k5-brk-clock { animation: k5ClockShake 2.4s ease-in-out infinite; transform-origin: 50% 55%; }
+.k5-brk-star { animation: k5StarPop 0.6s ease-out both; }
+.k5-brk-water { transition: height 1.4s cubic-bezier(0.3, 1.4, 0.5, 1); }
+.k5-brk-ring { transition: stroke-dashoffset 1s linear; }
+@media (prefers-reduced-motion: reduce) {
+  .k5-brk-shoe, .k5-brk-fp, .k5-brk-bub, .k5-brk-cloud, .k5-brk-clock, .k5-brk-star { animation: none; }
+  .k5-brk-fp { opacity: 1; }
+  .k5-brk-water, .k5-brk-ring { transition: none; }
+}
