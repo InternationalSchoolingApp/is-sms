@@ -314,12 +314,12 @@ function K5RailButton({ index = 0, label, onClick, badge, tint, rim, ink, pin, h
       data-pin={pin}
       onClick={onClick}
       aria-label={badge ? `${label}, ${badge} new` : label}
-      className="relative flex w-20 cursor-pointer flex-col items-center gap-2 rounded-[18px] border-none bg-transparent py-1 text-center text-xs font-black leading-[1.15] text-k5-ink max-[760px]:w-1/4 max-[760px]:gap-1.5 max-[760px]:p-0"
+      className="relative flex w-20 cursor-pointer flex-col items-center gap-1.5 rounded-[18px] border-none bg-transparent py-0.5 text-center text-[11px] font-black leading-[1.15] text-k5-ink max-[760px]:w-1/4 max-[760px]:gap-1.5 max-[760px]:p-0"
     >
       {/* Playful's rim is written "0px_6px" (not "0_6px") so app/k5-middle.css, which thins every "shadow-[0_6px_0_...]" in the
           Balanced look, leaves it alone; Balanced has its own 2px rim. */}
       <span
-        className={`flex h-[62px] w-[62px] items-center justify-center rounded-full max-[760px]:h-[46px] max-[760px]:w-[46px] max-[760px]:[&>svg]:h-6 max-[760px]:[&>svg]:w-6 ${balanced ? "shadow-[0_2px_0_var(--rim)]" : high ? "shadow-none" : "shadow-[0px_6px_0_var(--rim)] max-[760px]:shadow-[0px_4px_0_var(--rim)]"}`}
+        className={`flex h-[48px] w-[48px] items-center justify-center rounded-full [&>svg]:h-6 [&>svg]:w-6 max-[760px]:h-[46px] max-[760px]:w-[46px] max-[760px]:[&>svg]:h-6 max-[760px]:[&>svg]:w-6 ${balanced ? "shadow-[0_2px_0_var(--rim)]" : high ? "shadow-none" : "shadow-[0px_4px_0_var(--rim)] max-[760px]:shadow-[0px_4px_0_var(--rim)]"}`}
         style={{ background: tint, color: ink, "--rim": rim }}
       >
         {children}
@@ -332,7 +332,7 @@ function K5RailButton({ index = 0, label, onClick, badge, tint, rim, ink, pin, h
           animate={{ scale: 1 }}
           transition={{ duration: DUR.card, ease: EASE_OUT }}
           aria-hidden="true"
-          className={`k5-rail-badge absolute -right-0.5 -top-1 flex h-[30px] min-w-[30px] items-center justify-center rounded-full border-[3px] border-k5-card bg-k5-red px-1.5 text-[13px] font-black text-white ${balanced ? "min-[761px]:border-[1.5px] min-[761px]:border-white" : ""} max-[760px]:-top-1.5 max-[760px]:right-[calc(50%-36px)] max-[760px]:h-6 max-[760px]:min-w-6 max-[760px]:border-2 max-[760px]:px-[5px] max-[760px]:text-xs`}
+          className={`k5-rail-badge absolute right-1.5 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full border-[2.5px] border-k5-card bg-k5-red px-1 text-xs font-black text-white ${balanced ? "min-[761px]:border-[1.5px] min-[761px]:border-white" : ""} max-[760px]:-top-1.5 max-[760px]:right-[calc(50%-36px)] max-[760px]:h-6 max-[760px]:min-w-6 max-[760px]:border-2 max-[760px]:px-[5px] max-[760px]:text-xs`}
         >
           {badge}
         </motion.span>
