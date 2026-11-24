@@ -8,7 +8,7 @@ import { useParams } from "next/navigation";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
-import { CalendarDays, Check, Gamepad2, Sparkles } from "lucide-react";
+import { CalendarDays, Check, Gamepad2, PartyPopper, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { K5_CARD, SubjectIcon } from "@/components/k5/home/k5Bits";
 import { MyAssignmentsCard, MyPerformanceCard } from "@/components/k5/home/K5DashCards";
@@ -197,18 +197,27 @@ function ThoughtCard() {
   );
 }
 
-function ClassCard({ live, next, onJoin, classesHref }) {
-  const event = live || next;
+function ClassCard({ live, next, liveActivity, onJoin, onOpenActivity, classesHref }) {
+  // A live class wins; else the activity that is live now (opens its popup with the timed Join Event, like the planner); else the next class.
+  const isActivity = !live && Boolean(liveActivity);
+  const event = live || liveActivity || next;
   if (!event) return <ThoughtCard />;
   const teacher = teacherName(event);
+  const title = isActivity ? activityTitle(event) : classTitle(event);
   return (
     <div className="dash-cont relative flex min-w-[210px] flex-[0_2_340px] flex-col gap-3 rounded-3xl bg-k5-card p-4 pb-4 text-k5-ink shadow-[0_5px_0_rgba(0,40,140,0.35)] max-[760px]:min-w-0 max-[760px]:flex-[1_1_100%] @max-[640px]/hero:min-w-0 @max-[640px]/hero:flex-[1_1_100%]">
       <div className="flex items-center gap-3">
-        <ClassTile name={classTitle(event)} />
+        {isActivity ? (
+          <span aria-hidden="true" className="flex h-12 w-12 flex-none items-center justify-center rounded-[14px] bg-k5-act text-k5-acx">
+            <PartyPopper className="h-6 w-6" />
+          </span>
+        ) : (
+          <ClassTile name={title} />
+        )}
         <div className="min-w-0">
-          <p className="dash-liveName m-0 text-[17px] font-semibold leading-[1.2]">{classTitle(event)}</p>
+          <p className="dash-liveName m-0 text-[17px] font-semibold leading-[1.2]">{title}</p>
           <p className="dash-liveLine m-0 mt-[3px] flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs font-semibold tracking-[0.05em] text-k5-gx">
-            {live ? (
+            {live || isActivity ? (
               <>
                 <span aria-hidden="true" className="k5-live-dot block h-[9px] w-[9px] flex-none rounded-full bg-k5-gi" />
                 <span className="whitespace-nowrap">LIVE NOW · {timeRange(event)}</span>
@@ -220,7 +229,17 @@ function ClassCard({ live, next, onJoin, classesHref }) {
           </p>
         </div>
       </div>
-      {live?.url ? (
+      {isActivity ? (
+        <button
+          type="button"
+          onClick={() => onOpenActivity?.(event)}
+          className="lmjoin relative flex h-[46px] cursor-pointer items-center justify-center gap-2.5 overflow-hidden rounded-[23px] border-none bg-[#FDDC75] font-k5-display text-[17px] font-semibold text-[#1E2242] shadow-[0_4px_0_#D9A21E]"
+        >
+          <span className="k5-shine" aria-hidden="true" />
+          Join activity
+          <JoinDoor />
+        </button>
+      ) : live?.url ? (
         <button
           type="button"
           onClick={() => onJoin(live)}
@@ -263,7 +282,7 @@ function Bird({ body, wing, cls }) {
   );
 }
 
-function Hero({ now, timezone, firstName, live, next, onJoin, classesHref, look }) {
+function Hero({ now, timezone, firstName, live, next, liveActivity, onJoin, onOpenActivity, classesHref, look }) {
   // 25 December: Santa flies across the blue hero and the greeting is "Merry Christmas" (mockups).
   const { festive } = useChristmas();
   const weather = useK5Weather(timezone);
@@ -335,7 +354,7 @@ function Hero({ now, timezone, firstName, live, next, onJoin, classesHref, look 
             {firstName}
           </h1>
         </div>
-        <ClassCard live={live} next={next} onJoin={onJoin} classesHref={classesHref} />
+        <ClassCard live={live} next={next} liveActivity={liveActivity} onJoin={onJoin} onOpenActivity={onOpenActivity} classesHref={classesHref} />
       </div>
     </section>
   );
@@ -528,7 +547,7 @@ function DashboardSkeleton({ look }) {
   );
 }
 
-export function K5Dashboard({ now, timezone, days, todayKey, isLoading, firstName, onJoin }) {
+export function K5Dashboard({ now, timezone, days, todayKey, isLoading, firstName, onJoin, onOpenActivity }) {
   const { school } = useParams();
   const { menu, isMiddle, isHigh } = useDashboardContext();
   // Which mockup the page follows: Playful (K-5), Balanced (Middle.dc.html) or Mature (High.dc.html); app/k5-theme.css restyles
@@ -541,7 +560,8 @@ export function K5Dashboard({ now, timezone, days, todayKey, isLoading, firstNam
   const classes = today.classes;
   // The class that is live now (Join shows when it has a join link, like the planner: see isJoinable in StudentHomeK5).
   const live = classes.find((c) => c.k5Status === "live" && c.url) || classes.find((c) => c.k5Status === "live") || null;
-  const next = live ? null : classes.find((c) => c.k5Status === "next") || null;
+  const liveActivity = live ? null : today.activities.find((a) => a.eventKind === "activity" && a.k5Status === "live") || null;
+  const next = live || liveActivity ? null : classes.find((c) => c.k5Status === "next") || null;
   // The "play" button of Today's Goal needs every class, activity and assignment of today done. My Classes opens the games once the
   // classes are over, assignments or not (gameAccess in utils/k5Calendar.js).
   // "Time to play a game" (Today's Goal, every look): every class and school activity of today is over, or there are none (a free day).
@@ -556,7 +576,7 @@ export function K5Dashboard({ now, timezone, days, todayKey, isLoading, firstNam
   return (
     <div data-dash={look} className="k5-dash-rise @container flex flex-col gap-6 font-k5-display">
       <div className={ROW}>
-        <Hero look={look} now={now} timezone={timezone} firstName={firstName} live={live} next={next} onJoin={onJoin} classesHref={classesHref} />
+        <Hero look={look} now={now} timezone={timezone} firstName={firstName} live={live} next={next} liveActivity={liveActivity} onJoin={onJoin} onOpenActivity={onOpenActivity} classesHref={classesHref} />
         <TodayGoal classes={classes} activities={today.activities} assignments={today.assignments} classesHref={classesHref} playGames={playGames} gamesHref={gamesHref} holidayName={holidayName} />
       </div>
       <div className={ROW}>

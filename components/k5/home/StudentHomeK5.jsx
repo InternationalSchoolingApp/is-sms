@@ -228,7 +228,7 @@ function K5Planner({ timezone, dashboard = false }) {
     <PlanChromeContext.Provider value={chrome}>
     <div className="flex flex-col gap-4">
       {dashboard ? (
-        <K5Dashboard now={now} timezone={timezone} days={days} todayKey={todayKey} isLoading={model.isLoading} firstName={firstName} onJoin={setJoiningEvent} />
+        <K5Dashboard now={now} timezone={timezone} days={days} todayKey={todayKey} isLoading={model.isLoading} firstName={firstName} onJoin={setJoiningEvent} onOpenActivity={setDetailEvent} />
       ) : (
         <>
       <K5ClassesHeader now={now} timezone={timezone} />

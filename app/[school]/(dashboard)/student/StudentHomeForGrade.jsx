@@ -48,8 +48,8 @@ export function StudentHomeForGrade({ classes = false }) {
       {isK5 ? <StudentHomeK5 holdProfilePopup={!contactCheck.finished} dashboard={!classes} /> : <StudentHome holdProfilePopup={!contactCheck.finished} />}
       {/* Next-grade re-enrollment / reserve a seat (legacy getReserveASeatForNextGrade), every grade band. */}
       <ReserveSeatForNextGrade />
-      {/* School System Training popup + one-time welcome (legacy getStudentTimePreference), every grade band. */}
-      <SystemTrainingPopup />
+      {/* School System Training popup + one-time welcome (legacy getStudentTimePreference), every grade band. Dashboard home only, not My Classes. */}
+      {!classes && <SystemTrainingPopup />}
       {/* Password due / sibling still on the temporary password: the must-change Change Password popup. */}
       {/* Only on the dashboard home page, not on My Classes (and once a day: see the component). */}
       {!classes && <ForcedPasswordChange />}
