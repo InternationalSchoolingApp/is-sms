@@ -1,81 +1,72 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Award, FileX, GraduationCap, MoreVertical, Search } from "lucide-react";
+import { Award, Download, FileX, Loader2, Search } from "lucide-react";
+import toast from "react-hot-toast";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { downloadTranscriptDocument, isDownloadableTranscriptLink } from "@/utils/transcriptDownload";
 import { K5Loading, K5TableSkeleton } from "@/components/k5/K5Skeletons";
 
-const GRID = "70px minmax(220px,1.4fr) minmax(220px,1.6fr) 110px minmax(170px,1fr) 90px";
-const COLUMNS = ["S. No.", "Student Name", "Email", "Grade", "Student ID", "Action"];
+const GRID = "70px minmax(130px,0.9fr) minmax(170px,1.1fr) minmax(145px,1fr) minmax(145px,1fr) minmax(185px,1.2fr)";
+const COLUMNS = ["S. No.", "Grade", "Student ID", "Transcript", "Diploma", "Academic Verification"];
 // Phone: every row becomes a card, each value under its label (mockup .bdrow).
 const CELL =
   "px-3.5 py-3 max-[760px]:order-2 max-[760px]:px-3 max-[760px]:py-1.5 max-[760px]:[overflow-wrap:anywhere] max-[760px]:before:mb-0.5 max-[760px]:before:block max-[760px]:before:text-xs max-[760px]:before:font-black max-[760px]:before:text-k5-mut max-[760px]:before:content-[attr(data-l)]";
 
-const initialsOf = (name) =>
-  String(name || "?")
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0].toUpperCase())
-    .join("");
-
-/** The ⋮ button of a row: opens a small menu with one item per published transcript. */
-function ActionMenu({ links, open, onToggle, onClose, middle }) {
-  if (!links.length) return <span className="text-sm font-extrabold text-k5-mut">--</span>;
+function DownloadButton({ href, label }) {
+  const className = "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[14px] border-[2px] border-k5-ac bg-k5-card px-3 font-k5-display text-[15px] font-semibold text-k5-acx no-underline shadow-[0_2px_0_var(--k5-acd)]";
+  const [busy, setBusy] = useState(false);
+  if (!href) return <span className="text-sm font-extrabold text-k5-mut">--</span>;
+  // The demo page of dummy mode is only a page to look at; the real documents are saved as files, not opened in a tab.
+  if (!isDownloadableTranscriptLink(href)) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`Download ${label}`} className={className}>
+        Download <Download className="h-4 w-4" aria-hidden="true" />
+      </a>
+    );
+  }
+  const save = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await downloadTranscriptDocument({ href, name: label });
+    } catch (error) {
+      toast.error(String(error?.message || "The document could not be downloaded right now. Please try again."));
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
-    <>
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-label="Action"
-        className={`inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-[14px] border-[3px] border-k5-ac ${open ? "bg-k5-ac text-white" : "bg-k5-card text-k5-acx"}`}
-      >
-        <MoreVertical className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
-      </button>
-      {open && (
-        <span role="menu" className="absolute end-2.5 top-[calc(100%-4px)] z-20 flex min-w-[230px] flex-col rounded-[18px] border-[3px] border-k5-ink bg-k5-card p-2 shadow-[0_6px_0_var(--k5-ink)]" style={middle ? { boxShadow: "0 2px 0 var(--k5-ink)" } : undefined}>
-          {links.map((link) => (
-            <a
-              key={link.key}
-              role="menuitem"
-              href={link.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={onClose}
-              className="flex min-h-12 items-center gap-2.5 rounded-xl px-3 font-k5-display text-base font-semibold text-k5-ink no-underline hover:bg-k5-soft"
-              style={middle ? { borderRadius: 8 } : undefined}
-            >
-              <span aria-hidden="true" className="flex h-8 w-8 flex-none items-center justify-center rounded-[10px] bg-k5-yt">
-                {link.kind === "diploma" ? <GraduationCap className={`h-[18px] w-[18px] ${middle ? "text-k5-yx" : "text-k5-yi"}`} strokeWidth={2.4} /> : <Award className={`h-[18px] w-[18px] ${middle ? "text-k5-yx" : "text-k5-yi"}`} strokeWidth={2.4} />}
-              </span>
-              {link.label}
-            </a>
-          ))}
-        </span>
-      )}
-    </>
+    <button type="button" onClick={save} disabled={busy} aria-busy={busy} aria-label={`Download ${label}`} className={`${className} cursor-pointer disabled:cursor-default disabled:opacity-70`}>
+      {busy ? "Downloading" : "Download"} {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />}
+    </button>
   );
 }
-
 /** K–5 look of Student Transcript (mockup Student Transcript): the same record and links as the existing page. */
-export function K5Transcript({ isLoading, student, links }) {
+export function K5Transcript({ isLoading, student, transcripts = [], links }) {
   const [query, setQuery] = useState("");
   const [perPage, setPerPage] = useState(10);
   const [page, setPage] = useState(1);
-  const [menuOpen, setMenuOpen] = useState(false);
   const { isMiddle } = useDashboardContext();
   usePicoContentReady(!isLoading);
 
   const rows = useMemo(() => {
     if (!student) return [];
-    const row = { name: student.name, email: student.email, grade: student.grade, id: student.rollNumber };
+    const records = transcripts.length
+      ? transcripts.map((transcript, index) => ({
+          key: `transcript-${index}`,
+          grade: transcript.gradeName || student.grade,
+          id: student.rollNumber,
+          transcriptLink: links.find((link) => link.key === `t${index}`),
+          diplomaLink: links.find((link) => link.key === `d${index}`),
+          verificationLink: links.find((link) => link.key === `v${index}`),
+        }))
+      : [{ key: "current", grade: student.grade, id: student.rollNumber }];
     const q = query.trim().toLowerCase();
-    return !q || Object.values(row).some((v) => String(v ?? "").toLowerCase().includes(q)) ? [row] : [];
-  }, [student, query]);
+    return records.filter((row) => !q || [row.grade, row.id].some((value) => String(value ?? "").toLowerCase().includes(q)));
+  }, [student, transcripts, links, query]);
   const pages = Math.max(1, Math.ceil(rows.length / perPage));
   const current = Math.min(page, pages);
   const start = (current - 1) * perPage;
@@ -156,7 +147,7 @@ export function K5Transcript({ isLoading, student, links }) {
             </label>
           </div>
 
-          <div className={`relative z-[6] rounded-[18px] border-[3px] border-k5-line bg-k5-card pb-0.5 max-[760px]:border-0 ${menuOpen ? "overflow-visible" : "overflow-x-auto max-[760px]:overflow-visible"}`}>
+          <div className="relative z-[6] overflow-x-auto rounded-[18px] border-[3px] border-k5-line bg-k5-card pb-0.5 max-[760px]:overflow-visible max-[760px]:border-0">
             <div role="table" aria-label="Student Transcript" className="k5h-tr-table min-w-[900px] text-[15px] font-extrabold max-[760px]:flex max-[760px]:min-w-0 max-[760px]:flex-col max-[760px]:gap-2.5">
               <div role="row" style={{ "--cols": GRID }} className="grid grid-cols-[var(--cols)] rounded-t-[14px] bg-k5-ac font-k5-display text-base font-semibold text-white max-[760px]:hidden">
                 {COLUMNS.map((c) => (
@@ -165,27 +156,26 @@ export function K5Transcript({ isLoading, student, links }) {
               </div>
               {visible.map((row, i) => (
                 <div
-                  key={row.id ?? i}
+                  key={row.key}
                   role="row"
                   className="relative grid grid-cols-[var(--cols)] items-center border-t-2 border-k5-line bg-k5-card max-[760px]:grid-cols-2 max-[760px]:rounded-[18px] max-[760px]:border-[3px] max-[760px]:py-1.5"
                   style={isMiddle ? { "--cols": GRID, borderTopWidth: 1.5 } : { "--cols": GRID }}
                 >
                   <span role="cell" className="px-3.5 py-3 max-[760px]:order-1 max-[760px]:px-3 max-[760px]:py-1.5 max-[760px]:font-k5-display max-[760px]:text-lg max-[760px]:font-semibold">{start + i + 1}</span>
-                  <span role="cell" data-l="Student Name" className={`${CELL} max-[760px]:col-span-full`}>
-                    <span className="flex items-center gap-2.5">
-                      <span aria-hidden="true" className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-k5-vt font-k5-display text-sm font-semibold text-[var(--k5-vX)] max-[760px]:hidden">{initialsOf(row.name)}</span>
-                      <span className="min-w-0">{row.name}</span>
-                    </span>
-                  </span>
-                  <span role="cell" data-l="Email" className={`${CELL} [overflow-wrap:anywhere] max-[760px]:col-span-full`}>{row.email}</span>
                   <span role="cell" data-l="Grade" className={`${CELL} max-[760px]:col-span-full`}>
                     <span className="rounded-full bg-k5-act px-3 py-[3px] font-black text-k5-acx whitespace-nowrap">{row.grade}</span>
                   </span>
                   <span role="cell" data-l="Student ID" className={`${CELL} max-[760px]:col-span-full`}>
                     <span className="k5h-tr-code rounded-lg bg-k5-soft px-2.5 py-0.5 font-mono text-sm font-extrabold">{row.id}</span>
                   </span>
-                  <span role="cell" className="relative px-3.5 py-2 max-[760px]:order-1 max-[760px]:px-3 max-[760px]:py-1.5 max-[760px]:text-end">
-                    <ActionMenu middle={isMiddle} links={links} open={menuOpen} onToggle={() => setMenuOpen((v) => !v)} onClose={() => setMenuOpen(false)} />
+                  <span role="cell" data-l="Transcript" className={CELL}>
+                    <DownloadButton href={row.transcriptLink?.href} label={row.transcriptLink?.label || "transcript"} />
+                  </span>
+                  <span role="cell" data-l="Diploma" className={CELL}>
+                    <DownloadButton href={row.diplomaLink?.href} label={row.diplomaLink?.label || "diploma"} />
+                  </span>
+                  <span role="cell" data-l="Academic Verification" className={CELL}>
+                    <DownloadButton href={row.verificationLink?.href} label={row.verificationLink?.label || "academic verification"} />
                   </span>
                 </div>
               ))}
@@ -214,8 +204,6 @@ export function K5Transcript({ isLoading, student, links }) {
         </section>
       )}
 
-      {/* A tap anywhere else closes the open menu (mockup trMenuClose). */}
-      {menuOpen && <button type="button" aria-label="Close" onClick={() => setMenuOpen(false)} className="fixed inset-0 z-[4] cursor-default border-none bg-transparent p-0" />}
     </div>
   );
 }

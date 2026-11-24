@@ -132,7 +132,7 @@ export function K5PerformanceCompare({ goals, courses, today, onTurnOn, saving }
   const aheadProgress = ready.filter((x) => (x.cc.progressPct ?? 0) >= 50).length;
 
   return (
-    <div className="k5-pmpanel flex flex-col gap-[18px]">
+    <div className="k5-pmpanel flex flex-col gap-[18px] safd">
       <section className={`${K5_CARD} flex flex-col gap-3.5 px-[22px] py-5`}>
         <div className="flex flex-wrap items-center gap-3">
           <h2 className="m-0 font-k5-display text-2xl font-semibold leading-tight">How you compare</h2>

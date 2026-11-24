@@ -1,6 +1,9 @@
 "use client";
 
-import { BookOpen, Check, Hand, HeartPulse, Moon, ScanLine, Sun, Volume2 } from "lucide-react";
+import { useState } from "react";
+import { BookOpen, Check, Hand, HeartPulse, ScanLine, Volume2 } from "lucide-react";
+import { SpecialHelpBanner, SpecialHelpLock, SpecialHelpRequestForm, SpecialHelpSent } from "@/components/appearance/SpecialHelpGate";
+import { useSpecialHelp } from "@/hooks/useSpecialHelp";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { BUDDIES, DYSLEXIA_OFF, DYSLEXIA_ON, GRADE_LOOKS, PAGE_COLORS, THEME_SWATCHES, VOICE_SPEEDS, VOICES, effectiveGradeLook, gradeLookOf } from "@/constant/appearance";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -93,14 +96,109 @@ function GradeLookSection() {
   );
 }
 
+function DayNightSwitch() {
+  const { isDark, updatePreference, canCustomize } = useAppearance();
+  return (
+    <div className="flex items-center gap-4">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={isDark}
+        aria-label="Day or night"
+        disabled={!canCustomize}
+        onClick={() => updatePreference("mode", isDark ? "light" : "dark")}
+        className="flex-none cursor-pointer rounded-full border-0 bg-transparent p-0 shadow-[0_2px_8px_rgba(16,24,40,0.15)] outline-none focus-visible:ring-3 focus-visible:ring-k5-ac/50 disabled:cursor-default"
+      >
+        <svg width="132" height="58" viewBox="0 0 220 96" aria-hidden="true" className="block">
+          <defs>
+            <clipPath id="day-night-switch-clip"><rect width="220" height="96" rx="48" /></clipPath>
+            <filter id="day-night-switch-shadow" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#000000" floodOpacity="0.35" />
+            </filter>
+          </defs>
+          <g clipPath="url(#day-night-switch-clip)">
+            <rect width="220" height="96" fill={isDark ? "#03051A" : "#2F74B0"} />
+            {isDark ? (
+              <>
+                <circle cx="172" cy="48" r="140" fill="#161A31" />
+                <circle cx="172" cy="48" r="108" fill="#272B43" />
+                <circle cx="172" cy="48" r="78" fill="#3C4058" />
+                <g fill="#FFFFFF">
+                  <path d="M30 24l1.68 4.32 4.32 1.68-4.32 1.68L30 36l-1.68-4.32L24 30l4.32-1.68z" />
+                  <path d="M58 18l1.12 2.88 2.88 1.12-2.88 1.12L58 26l-1.12-2.88L54 22l2.88-1.12z" />
+                  <path d="M44 48l1.12 2.88 2.88 1.12-2.88 1.12L44 56l-1.12-2.88L40 52l2.88-1.12z" />
+                  <path d="M24 60l1.68 4.32L30 66l-4.32 1.68L24 72l-1.68-4.32L18 66l4.32-1.68z" />
+                  <path d="M70 45l.84 2.16L73 48l-2.16.84L70 51l-.84-2.16L67 48l2.16-.84z" />
+                  <path d="M84 36l1.12 2.88L88 40l-2.88 1.12L84 44l-1.12-2.88L80 40l2.88-1.12z" />
+                  <path d="M64 65l1.4 3.6L69 70l-3.6 1.4L64 75l-1.4-3.6L59 70l3.6-1.4z" />
+                  <path d="M98 22l.56 1.44L100 24l-1.44.56L98 26l-.56-1.44L96 24l1.44-.56z" />
+                </g>
+              </>
+            ) : (
+              <>
+                <circle cx="48" cy="48" r="150" fill="#3B7FB8" />
+                <circle cx="48" cy="48" r="122" fill="#4A8BC1" />
+                <circle cx="48" cy="48" r="96" fill="#5B97C9" />
+                <circle cx="48" cy="48" r="70" fill="#6CA3D0" />
+                <g fill="#B4D3EA">
+                  <circle cx="204" cy="28" r="24" /><circle cx="178" cy="62" r="20" /><circle cx="142" cy="78" r="20" />
+                  <circle cx="104" cy="88" r="18" /><circle cx="62" cy="94" r="18" /><circle cx="22" cy="92" r="18" />
+                </g>
+                <g fill="#EEF9FC">
+                  <circle cx="214" cy="36" r="22" /><circle cx="186" cy="70" r="20" /><circle cx="150" cy="86" r="20" />
+                  <circle cx="112" cy="96" r="18" /><circle cx="70" cy="102" r="18" /><circle cx="28" cy="100" r="18" />
+                  <rect y="92" width="220" height="10" />
+                </g>
+              </>
+            )}
+            <g style={{ transform: `translateX(${isDark ? 124 : 0}px)`, transition: "transform 350ms ease" }}>
+              {isDark ? (
+                <>
+                  <circle cx="48" cy="48" r="36" fill="#C4C8D1" filter="url(#day-night-switch-shadow)" />
+                  <circle cx="60" cy="40" r="30" fill="#3C4058" />
+                  <circle cx="25" cy="56" r="4" fill="#969DB1" />
+                  <circle cx="45" cy="70" r="3" fill="#969DB1" />
+                </>
+              ) : (
+                <circle cx="48" cy="48" r="36" fill="#F2C12E" filter="url(#day-night-switch-shadow)" />
+              )}
+            </g>
+          </g>
+          <rect x="1.5" y="1.5" width="217" height="93" rx="46.5" fill="none" stroke="#D5DCE6" strokeWidth="3" />
+        </svg>
+      </button>
+      <span className="font-k5-display text-[17px] font-semibold">{isDark ? "Night" : "Day"}</span>
+    </div>
+  );
+}
+
 /**
  * The appearance settings, laid out like the mockup look dialog: favourite colour, day or night,
  * text size, letters, hand, buddy and voice on the left; the "Special help" panel (colour vision,
  * reading help, dyslexia tools) on the right. Every change applies instantly and is saved on its own.
  * Buddy + voice only show where a buddy exists (`withBuddy`, K–5).
  */
-export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
+export function AppearanceSettingsPanel({ withBuddy = false, onHear, firstName = "" }) {
   const { preferences, updatePreference: _panelUpdate } = useAppearance();
+  const specialHelp = useSpecialHelp();
+  const [view, setView] = useState("settings");
+  const [routedTo, setRoutedTo] = useState("");
+  if (view === "request") {
+    return (
+      <SpecialHelpRequestForm
+        onBack={() => setView("settings")}
+        onSend={async (form) => {
+          const result = await specialHelp.send(form);
+          if (result.ok) {
+            setRoutedTo(result.routedTo);
+            setView("sent");
+          }
+          return result;
+        }}
+      />
+    );
+  }
+  if (view === "sent") return <SpecialHelpSent firstName={firstName} routedTo={routedTo} onDone={() => setView("settings")} />;
   return (
     <div className="grid items-start gap-[22px] min-[921px]:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
       <div className="flex min-w-0 flex-col gap-5">
@@ -118,14 +216,7 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
         </Section>
 
         <Section id="lk-mode" title="Day or night?">
-          <div className="grid grid-cols-2 gap-3">
-            <Choice name="mode" value="light" label="Day" className="font-k5-display text-xl font-semibold !text-[#1C2640]" style={{ background: "#FFF0CC" }}>
-              <Sun className="h-7 w-7 text-[#FFC531]" aria-hidden="true" />
-            </Choice>
-            <Choice name="mode" value="dark" label="Night" className="font-k5-display text-xl font-semibold !text-white" style={{ background: "#1B2547" }}>
-              <Moon className="h-7 w-7 text-[#FFC531]" aria-hidden="true" />
-            </Choice>
-          </div>
+          <DayNightSwitch />
         </Section>
 
         <Section id="lk-size" title="Text size">
@@ -231,6 +322,13 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
               </div>
             </Section>
 
+            <Section id="lk-christmas" title="🎄 Christmas theme" subtitle="Snow, music and decorations on Christmas Day.">
+              <div className="grid grid-cols-2 gap-3">
+                <Choice name="christmas" value="on" label="On" />
+                <Choice name="christmas" value="off" label="Off" />
+              </div>
+            </Section>
+
             <Section id="lk-game-sound" title="Game sounds" subtitle="The pop and other sounds in the games. This does not change the buddy's voice.">
               <div className="flex items-center gap-3">
                 <button
@@ -250,7 +348,7 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
         )}
       </div>
 
-      <div className="flex min-w-0 flex-col gap-5 rounded-[26px] border-[3px] border-dashed border-k5-line bg-k5-soft p-4">
+      <div className="relative flex min-w-0 flex-col gap-5 rounded-[26px] border-[3px] border-dashed border-k5-line bg-k5-soft p-4">
         <div className="flex items-center gap-2.5">
           <span className="flex h-10 w-10 flex-none items-center justify-center rounded-[14px] bg-k5-vt">
             <HeartPulse className="h-6 w-6 text-k5-vi" aria-hidden="true" />
@@ -261,6 +359,12 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
           </div>
         </div>
 
+        {specialHelp.justEnabled && specialHelp.state === "Y" && <SpecialHelpBanner />}
+        <div
+          inert={specialHelp.locked || specialHelp.loading}
+          aria-hidden={specialHelp.locked || undefined}
+          className={`flex flex-col gap-5 transition-[filter,opacity] ${specialHelp.locked || specialHelp.loading ? "pointer-events-none select-none opacity-35 grayscale" : ""}`}
+        >
         <Section id="lk-cv" title="Color vision" subtitle="Pick colors that are easy for your eyes to tell apart.">
           <div className="grid grid-cols-2 gap-3">
             <Choice name="colorVision" value="standard" label="Standard">
@@ -284,6 +388,8 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear }) {
         </Section>
 
         <DyslexiaSection />
+        </div>
+        {specialHelp.locked && <SpecialHelpLock state={specialHelp.state} requestedAt={specialHelp.requestedAt} onAsk={() => setView("request")} />}
       </div>
     </div>
   );

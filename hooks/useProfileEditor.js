@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { getProfileMaster, saveMyProfile } from "@/services/profileSaveApi";
 import { getSettingsByTypeAndKey } from "@/services/settingsApi";
@@ -32,6 +32,7 @@ export function useProfileMaster(kind, id, enabled = true) {
  *           undo(unitId), saveAll(), dirtyCount, busy, confirm: { message, accept, cancel } | null, countries }.
  */
 export function useProfileEditor({ profile, studentStandardId, refetch, enabled = true }) {
+  const queryClient = useQueryClient();
   const base = useMemo(() => (profile ? buildDraft(profile) : {}), [profile]);
   const ctx = useMemo(() => buildEditContext(profile), [profile]);
   const units = useMemo(() => buildUnits(ctx), [ctx]);
@@ -122,6 +123,12 @@ export function useProfileEditor({ profile, studentStandardId, refetch, enabled 
         const sent = Object.fromEntries(list.flatMap((u) => u.keys.map((k) => [k, draft[k]])));
         const result = await callServer(() => saveMyProfile({ studentStandardId, items }));
         await refetch?.();
+        // A new time zone: the dashboard's cached details (StudentDetailsDTO.userTimezone - clock, calendar, class times)
+        // still have the old one for up to 5 minutes; drop them so every page reads the new zone.
+        if (list.some((u) => u.keys.includes("timezone"))) {
+          queryClient.invalidateQueries({ queryKey: ["student-dashboard-details"] });
+          queryClient.invalidateQueries({ queryKey: ["student-dashboard-data"] });
+        }
         dropEdits(list, sent);
         setSaved(new Set(ids));
         clearTimeout(savedTimer.current);
@@ -139,7 +146,7 @@ export function useProfileEditor({ profile, studentStandardId, refetch, enabled 
         });
       }
     },
-    [draft, ctx, countries, studentStandardId, refetch],
+    [draft, ctx, countries, studentStandardId, refetch, queryClient],
   );
 
   const save = useCallback(

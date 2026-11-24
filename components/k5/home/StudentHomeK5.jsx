@@ -2,29 +2,34 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import toast from "react-hot-toast";
-import { addMonths, format, isSameMonth, isSameWeek, isSameDay } from "date-fns";
+import { addMonths, format } from "date-fns";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
-import { useAddSiblings } from "@/hooks/useAddSiblings";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
 import { useK5CalendarModel } from "@/hooks/useK5CalendarModel";
 import { OnboardingVideoModal } from "@/components/dashboard/OnboardingVideoModal";
 import { GraduationCeremonyModal } from "@/components/dashboard/GraduationCeremonyModal";
 import { EventDetailModal } from "@/components/dashboard/calendar/EventDetailModal";
 import { JoinClassModal } from "@/components/dashboard/calendar/JoinClassModal";
-import { K5Toolbar } from "@/components/k5/home/K5Toolbar";
+import { titles } from "@/components/k5/home/K5Toolbar";
+import { K5ClassesHeader } from "@/components/k5/home/K5ClassesHeader";
+import { PlanChromeContext } from "@/components/k5/home/planChrome";
 import { K5PlanFilters } from "@/components/k5/home/K5PlanFilters";
 import { ColourClues } from "@/components/k5/home/ColourClues";
 import { CalendarPopup, MiniCalendar, MyCourses, TodayCard } from "@/components/k5/home/K5LeftColumn";
 import { DayPlan } from "@/components/k5/home/DayPlan";
+import { K5Dashboard } from "@/components/k5/home/K5Dashboard";
 import { MonthPlan, WeekPlan } from "@/components/k5/home/WeekMonthPlans";
 import { LiveClassAlert } from "@/components/k5/home/LiveClassAlert";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
+import { ZoomIn } from "@/components/motion/ZoomIn";
 import { K5CompleteProfileModal } from "@/components/k5/home/K5CompleteProfileModal";
 import { DUMMY_STUDENT_TIMEZONE, resolveTimezone } from "@/utils/calendarEvents";
-import { classTitle, dayAt, dayKey, keyToDate, weekKeys } from "@/utils/k5Calendar";
+import { classTitle, countStatuses, dayAt, dayKey, keyToDate, weekKeys } from "@/utils/k5Calendar";
+import { celebrate } from "@/components/motion/canvas/celebrationEvents";
 import { revealPlanTop } from "@/utils/k5Scroll";
 import { picoSay, setPicoLive } from "@/components/k5/pico/picoEvents";
+import { isChristmasKey, setChristmasPlanner } from "@/components/k5/christmas/christmasStore";
 import { LIVE_ALERT_KEY } from "@/utils/liveAlertMemory";
 import { K5HomeLeftSkeleton, K5PlanSkeleton } from "@/components/k5/K5Skeletons";
 
@@ -87,7 +92,7 @@ const isJoinable = (event) => event.eventKind === "class" && Boolean(event.url) 
  * The onboarding video and graduation popups behave exactly as on the existing home.
  * holdProfilePopup: the "Complete Your Profile" popup waits (the contact check comes first, StudentHomeForGrade.jsx).
  */
-export function StudentHomeK5({ holdProfilePopup = false }) {
+export function StudentHomeK5({ holdProfilePopup = false, dashboard = false }) {
   const { context } = useDashboardContext();
   const dummy = useDummyStudent();
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
@@ -100,7 +105,7 @@ export function StudentHomeK5({ holdProfilePopup = false }) {
   return (
     <>
       {ready ? (
-        <K5Planner key={timezone} timezone={timezone} />
+        <K5Planner key={timezone} timezone={timezone} dashboard={dashboard} />
       ) : (
         <div className={`${K5_CARD} p-10 text-center text-lg font-extrabold text-k5-mut`}>Getting your plan ready…</div>
       )}
@@ -116,7 +121,7 @@ export function StudentHomeK5({ holdProfilePopup = false }) {
   );
 }
 
-function K5Planner({ timezone }) {
+function K5Planner({ timezone, dashboard = false }) {
   const { context, isPreK, isSelfStudy } = useDashboardContext();
   const model = useK5CalendarModel({ schoolUUID: context?.schoolUUID, userId: context?.userId, timezone });
   const [clue, setClue] = useState(null);
@@ -127,6 +132,24 @@ function K5Planner({ timezone }) {
 
   const { viewName, setViewName, selectedDate, selectedKey, todayKey, now, days } = model;
   const view = isPreK && viewName === "month" ? "today" : viewName;
+
+  // "My Classes and Activities" (Playful.dc.html, Middle.dc.html, High.dc.html): a header card on top, and the Today / Week / Month
+  // switch and the previous / next arrows inside the plan card (planChrome.jsx), in every look.
+  const [titleBig, titleSmall] = titles(view, selectedDate);
+  const unit = view === "week" ? "week" : view === "month" ? "month" : "day";
+  const chrome = {
+    viewName: view,
+    onView: setViewName,
+    onToday: model.goToday,
+    onPrev: model.goPrev,
+    onNext: model.goNext,
+    prevLabel: `Previous ${unit}`,
+    nextLabel: `Next ${unit}`,
+    // Week: the range is the big text and the year the small one (the heading already says "My Week").
+    titleBig: view === "week" ? titleSmall : titleBig,
+    titleSmall: view === "week" ? format(selectedDate, "yyyy") : titleSmall,
+    isPreK,
+  };
 
   // Opening a day (from the week, the month or the mini calendar) switches to its Day plan: bring it
   // into view when it is off-screen, but never move a page that already shows it.
@@ -161,33 +184,58 @@ function K5Planner({ timezone }) {
 
   // Tell the buddy about the live class: the plan is ready, the popup waits for an answer, and the real class title.
   const liveName = liveNow ? classTitle(liveNow) : "";
+  // Nothing planned today (no class, no activity), and the holiday's name when it is one: the buddy's plan tip says so.
+  const todayPlan = dayAt(days, todayKey);
+  const dayIsEmpty = todayPlan.classes.length === 0 && todayPlan.activities.length === 0;
+  const todayHoliday = todayPlan.holidays[0];
+  const holidayName = todayHoliday ? todayHoliday.title || todayHoliday.eventTitle || "Holiday" : "";
   const alertPending = Boolean(alertEvent);
   useEffect(() => {
-    setPicoLive({ ready: !model.isLoading, pending: alertPending, name: liveName });
-  }, [model.isLoading, alertPending, liveName]);
-  useEffect(() => () => setPicoLive({ ready: false, pending: false, name: "" }), []);
+    setPicoLive({ ready: !model.isLoading, pending: alertPending, name: liveName, dayEmpty: dayIsEmpty, holidayName });
+  }, [model.isLoading, alertPending, liveName, dayIsEmpty, holidayName]);
+  useEffect(() => () => setPicoLive({ ready: false, pending: false, name: "", dayEmpty: false, holidayName: "" }), []);
 
-  const isCurrent =
-    view === "week" ? isSameWeek(selectedDate, now, { weekStartsOn: 1 }) : view === "month" ? isSameMonth(selectedDate, now) : isSameDay(selectedDate, now);
+  // My Classes tells the Christmas theme which screen is open: 25 December in the Day view, or in the Month view with it selected.
+  useEffect(() => {
+    if (dashboard) return;
+    setChristmasPlanner({ onXmasDay: (view === "today" || view === "month") && isChristmasKey(selectedKey), viewKey: `${view}:${selectedKey}` });
+  }, [dashboard, view, selectedKey]);
+  useEffect(() => () => setChristmasPlanner({ onXmasDay: false, viewKey: "" }), []);
+
+  // Celebration: every class and activity of today is done. Once per student per day (remembered on this device; if the
+  // device cannot remember, nothing is played rather than risking a repeat on every visit). It waits a moment so it does
+  // not collide with the page zooming in, and it only plays on the home page where the day plan lives.
+  const todayDay = dayAt(days, todayKey);
+  const todayCounts = countStatuses([...todayDay.classes, ...todayDay.activities]);
+  const dayComplete = !model.isLoading && todayCounts.done > 0 && todayCounts.live === 0 && todayCounts.next === 0;
+  const userKey = context?.userId;
+  useEffect(() => {
+    if (!dayComplete || !userKey) return undefined;
+    const timer = setTimeout(() => {
+      const key = `is-day-celebrated:${userKey}:${todayKey}`;
+      try {
+        if (window.localStorage.getItem(key)) return;
+        window.localStorage.setItem(key, "1");
+      } catch {
+        return;
+      }
+      celebrate({ kind: "day-complete" });
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [dayComplete, userKey, todayKey]);
 
   return (
+    <PlanChromeContext.Provider value={chrome}>
     <div className="flex flex-col gap-4">
-      <AddSiblingsCard />
-      <K5Toolbar
-        now={now}
-        timezone={timezone}
-        viewName={view}
-        onView={setViewName}
-        selectedDate={selectedDate}
-        onPrev={model.goPrev}
-        onNext={model.goNext}
-        onToday={model.goToday}
-        isCurrent={isCurrent}
-        isPreK={isPreK}
-      />
+      {dashboard ? (
+        <K5Dashboard now={now} timezone={timezone} days={days} todayKey={todayKey} isLoading={model.isLoading} firstName={firstName} onJoin={setJoiningEvent} />
+      ) : (
+        <>
+      <K5ClassesHeader now={now} timezone={timezone} />
       <ColourClues
         clue={clue}
         isPreK={isPreK}
+        showHint={false}
         onClue={(key) => {
           setClue(key);
           if (!key) return;
@@ -199,8 +247,8 @@ function K5Planner({ timezone }) {
 
       {!isPreK && <K5PlanFilters filters={model.filters} onToggle={model.toggleFilter} />}
 
-      <div className="flex flex-wrap items-start gap-5">
-        <div className="sticky top-[calc(var(--maintenance-banner-h,0px)+100px)] box-border flex max-h-[calc(100vh-120px)] min-w-0 flex-[1_1_300px] flex-col gap-4 overflow-y-auto pb-3 pr-1 [scrollbar-width:thin] max-[1100px]:static max-[1100px]:max-h-none max-[1100px]:overflow-visible">
+      <div className="flex flex-wrap items-start gap-5 in-data-[hand=left]:flex-row-reverse">
+        <div className="sticky top-[calc(var(--maintenance-banner-h,0px)+100px)] box-border flex min-w-0 flex-[1_1_300px] flex-col gap-4 pb-3 max-[1100px]:static">
           <MiniCalendar
             selectedDate={selectedDate}
             todayKey={todayKey}
@@ -208,21 +256,26 @@ function K5Planner({ timezone }) {
             onPick={openDayAndShow}
             onMonth={(dir) => model.setSelectedDate((d) => addMonths(d, dir))}
           />
+          {/* The Today card and My Courses are switched off for now, so the left column is only the mini calendar and there is nothing
+              to show a skeleton for (K5HomeLeftSkeleton draws exactly these two cards; bring it back together with them).
           {model.isLoading ? (
             <K5HomeLeftSkeleton />
           ) : (
             <>
-              <TodayCard todayKey={todayKey} days={days} courseRegistry={model.courseRegistry} onOpen={open} />
-              <MyCourses courseRegistry={model.courseRegistry} courseVisibility={model.courseVisibility} onToggle={model.toggleCourseVisibility} />
+              <ZoomIn index={0}><TodayCard todayKey={todayKey} days={days} courseRegistry={model.courseRegistry} onOpen={open} /></ZoomIn>
+              <ZoomIn index={1}><MyCourses courseRegistry={model.courseRegistry} courseVisibility={model.courseVisibility} onToggle={model.toggleCourseVisibility} /></ZoomIn>
             </>
           )}
+          */}
         </div>
 
         {/* Mobile (mockup .duo>[data-pin=plan]{order:-1}): the plan comes before the left column. */}
-        <section ref={planRef} aria-label="My plans" data-pin="calendar" className={`${K5_CARD} scroll-mt-[120px] @container box-border flex min-w-0 flex-[999_1_460px] flex-col gap-[18px] p-[22px] max-[760px]:order-first max-[560px]:p-3.5`}>
+        <section ref={planRef} aria-label="My plans" data-pin="calendar" className={`${K5_CARD} k5h-pcard scroll-mt-[120px] @container box-border flex min-w-0 flex-[999_1_460px] flex-col gap-[18px] p-[22px] max-[760px]:order-first max-[560px]:p-3.5`}>
           {model.isLoading ? (
             <K5PlanSkeleton />
-          ) : model.isError ? (
+          ) : (
+            <ZoomIn index={2} className="flex flex-col gap-[18px]">
+          {model.isError ? (
             <p className="m-0 p-10 text-center text-lg font-extrabold text-k5-mut">Couldn&apos;t load your plan. Please try again shortly.</p>
           ) : view === "week" ? (
             <WeekPlan
@@ -262,12 +315,15 @@ function K5Planner({ timezone }) {
               firstName={firstName}
               onJoin={setJoiningEvent}
               onOpen={open}
-              onPeek={model.setSelectedDate}
               onShowCalendar={() => setCalOpen(true)}
             />
           )}
+            </ZoomIn>
+          )}
         </section>
       </div>
+        </>
+      )}
 
       <CalendarPopup
         open={calOpen}
@@ -299,43 +355,6 @@ function K5Planner({ timezone }) {
         <JoinClassModal event={joiningEvent} schoolUUID={context?.schoolUUID} courseRegistry={model.courseRegistry} onClose={() => setJoiningEvent(null)} />
       )}
     </div>
-  );
-}
-
-function AddSiblingsCard() {
-  const siblings = useAddSiblings();
-  if (!siblings.visible) return null;
-  return (
-    <section aria-label="Have another child to enroll?" data-pin="sibling" className={`${K5_CARD} flex flex-wrap items-center gap-3.5 px-5 py-3.5`}>
-      <span aria-hidden="true" className="flex h-14 w-14 flex-none items-center justify-center rounded-[18px] bg-k5-act text-k5-acx">
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="9" cy="8" r="3.6" />
-          <path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" />
-          <path d="M19 7v6M16 10h6" />
-        </svg>
-      </span>
-      <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-0.5">
-        <h2 className="m-0 font-k5-display text-[22px] font-semibold leading-[1.2]">Have another child to enroll?</h2>
-        <p className="m-0 text-base font-extrabold leading-[1.4] text-k5-mut">Your details are already saved, so you only need to fill in your child&apos;s details.</p>
-      </div>
-      <button
-        type="button"
-        onClick={siblings.handleClick}
-        disabled={siblings.busy}
-        className="flex min-h-12 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border-[3px] border-k5-ac bg-k5-ac px-[18px] font-k5-display text-[17px] font-semibold text-white shadow-[0_4px_0_var(--k5-acd)] disabled:opacity-60 max-[760px]:flex-[1_1_100%] max-[760px]:justify-center"
-      >
-        {siblings.busy ? (
-          <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
-            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-          </svg>
-        ) : (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-        )}
-        {siblings.label}
-      </button>
-    </section>
+    </PlanChromeContext.Provider>
   );
 }
