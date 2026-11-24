@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-// import { useQueries } from "@tanstack/react-query"; // course-wise table (commented out below)
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useTranslations } from "next-intl";
 import { addDays, format, isValid, startOfDay, startOfWeek } from "date-fns";
@@ -20,6 +19,7 @@ import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { getAssignedTeacherForCourse, getAssignedTeachersForAllCourses, getClassCalculationForGrownUps, getStudentBookedClasses, getTeacherWeeklySlots, submitBookClassSlot } from "@/services/bookClassApi";
 import { getSlotEnd, getSlotState } from "@/utils/bookClass";
+import { getCourseSlots } from "@/utils/bookClassClient";
 import { courseTint, subjectStyle } from "@/utils/k5Calendar";
 import { K5Loading, K5CardsSkeleton, K5Sk } from "@/components/k5/K5Skeletons";
 import { useDateFnsLocale } from "@/i18n/dateLocale";
@@ -45,7 +45,10 @@ function useCopy() {
     allTitle: c("allTitle"),
     allSub: c("allSub"),
     noLeft: c("noLeft"),
-    ...(isHigh ? { fly: c("fly"), bookedN: (n) => c("bookedN", { count: n }) } : null),
+    // Day-first (Elementary) only — the course looks and high look render nothing here.
+    ...(!isHigh && !isMiddle ? { anyDay: c("anyDay"), anyCourse: c("anyCourse") } : null),
+    ...(isHigh ? { fly: c("fly") } : null),
+    ...(isHigh || isMiddle ? { bookedN: (n) => c("bookedN", { count: n }) } : null),
   };
   return { middle: Boolean(isMiddle), high: Boolean(isHigh), copy };
 }
@@ -250,14 +253,20 @@ function BookPageSkeleton() {
  * every step (picoSay: the buddy voice, only when the student has its voice on), and the speaker button says it again. The
  * corner bubble stays closed on this page (PicoGuide), this strip is the buddy here.
  */
-function BuddyStrip({ say }) {
+function BuddyStrip({ say, skipInitial = false }) {
   const { preferences } = useAppearance();
   const { speak } = useSpeech();
   const buddy = BUDDIES[preferences.buddy] || BUDDIES.pico;
   const t = useTranslations("k5Booking.book");
+  const firstMessage = useRef(true);
   useEffect(() => {
-    if (say) picoSay(say);
-  }, [say]);
+    if (!say) return;
+    if (firstMessage.current) {
+      firstMessage.current = false;
+      if (skipInitial) return;
+    }
+    picoSay(say);
+  }, [say, skipInitial]);
   return (
     <div role="status" className="flex items-center gap-3 rounded-[22px] bg-k5-vt py-2 pl-2 pr-2.5">
       <PicoMascot buddy={preferences.buddy} width={48} full={false} />
@@ -390,6 +399,97 @@ function useBookSlots(picked) {
   };
 }
 
+/**
+ * Elementary books day first, so it needs this week's slots of every course at once. One request per course to this app's
+ * /api/book-class route (utils/bookClassClient.js), which makes the same two backend calls useBookSlots makes - the course's
+ * assigned teacher, then that teacher's weekly slots. A route request, not a Server Action: actions are sent one at a time,
+ * so with several courses the days took over a minute; these run side by side.
+ */
+function useAllCourseSlots(options, enabled) {
+  const dummy = useDummyStudent();
+  const { context } = useDashboardContext();
+  const account = context?.uniqueId;
+  const [startDate] = useState(() => new Date().toISOString());
+  const queries = useQueries({
+    queries: options.map((o) => ({
+      queryKey: ["book-class-course-slots", o.subjectId, o.studentStandardId, startDate, dummy.key],
+      queryFn: async () => {
+        if (dummy.enabled) {
+          const teacher = await dummy.student.assignedTeacher(o.subjectId);
+          const slots = teacher?.teacherAssigned === "YES" ? await dummy.student.teacherWeeklyCalendar(teacher.assignedTeacherUserId, o.subjectId, new Date(startDate)) : null;
+          return { teacher, slots };
+        }
+        return getCourseSlots({ account, subjectId: o.subjectId, studentStandardId: o.studentStandardId, startDate });
+      },
+      enabled: enabled && dummy.settled,
+      // Fresh for a minute and not again on every tab focus: several slow backend calls per course. Booking a class
+      // invalidates these, so a booked time is never offered again.
+      staleTime: 60_000,
+      refetchOnWindowFocus: false,
+    })),
+  });
+  const courses = options.map((option, i) => {
+    const data = queries[i]?.data;
+    const slots = data?.slots ?? null;
+    return { option, teacher: data?.teacher ?? null, slots, week: slots?.teacherWeeklyTimeCurrLiveClass?.teacherAssignTimeWeekList?.[0] };
+  });
+  const loading = enabled && (!dummy.settled || queries.some((q) => q.isLoading));
+  return { loading, courses };
+}
+
+/**
+ * The days of this week across every course (day-first booking). A time is free when at least one course with tickets left
+ * has it free; each free time keeps its choices (the course, its own slot and its teacher's calendar) for the course step.
+ * Same day tags and rules as dayModel; past days are left out.
+ */
+function mergedDayModel(courses, leftOf, left, locale) {
+  const today = startOfDay(new Date());
+  const byKey = new Map();
+  for (const course of courses) {
+    if (!course.week) continue;
+    const skipDates = new Set(course.slots?.skipDateList ?? []);
+    const hasTickets = leftOf(course.option) > 0;
+    for (const day of course.week.teacherAllDataInOneList ?? []) {
+      const key = day.displayStartDateWithoutDay;
+      if (!byKey.has(key)) byKey.set(key, { key, day, times: new Map() });
+      const merged = byKey.get(key);
+      const list = day.dayWiseAllData ?? [];
+      if (list.length > 0 && skipDates.has(list[0].bookedDate)) continue;
+      for (const slot of list) {
+        const state = getSlotState(slot, day, course.slots);
+        const time = merged.times.get(slot.bookedStartDate) || { slot, state: "closed", choices: [] };
+        if (state === "available" && hasTickets) {
+          if (time.state !== "available") time.slot = slot;
+          time.state = "available";
+          time.choices.push({ course, slot });
+        } else if (state === "booked" && time.state !== "available") {
+          time.state = "booked";
+        }
+        merged.times.set(slot.bookedStartDate, time);
+      }
+    }
+  }
+  return [...byKey.values()]
+    .map(({ key, day, times }) => {
+      const date = new Date(key);
+      const valid = isValid(date);
+      const entries = [...times.values()];
+      const free = entries.filter((e) => e.state === "available").length;
+      const diff = valid ? Math.round((startOfDay(date) - today) / 86400000) : 0;
+      let tag = "This week";
+      if (valid && diff < 0) tag = "Over";
+      else if (entries.length === 0) tag = "No classes";
+      else if (left < 1) tag = "No tickets left";
+      else if (free === 0) tag = "Busy";
+      else if (diff === 0) tag = "Today";
+      else if (diff === 1) tag = "Tomorrow";
+      const can = free > 0 && left > 0 && valid && diff >= 0;
+      return { day, entries, free, can, tag, isToday: valid && diff === 0, weekday: valid ? format(date, "EEEE", { locale }) : "", num: valid ? date.getDate() : "", key, time: valid ? date.getTime() : 0 };
+    })
+    .filter((d) => d.tag !== "Over")
+    .sort((a, b) => a.time - b.time);
+}
+
 
 function StepPills({ step }) {
   const { copy } = useCopy();
@@ -450,9 +550,11 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
   const none = left < 1;
   return (
     // In the Grade 6–8 "Book a Class" dialog: three courses in a row, the rest on the next row (two on a small screen).
-    <div className={threePerRow ? "grid grid-cols-3 gap-3 max-[640px]:grid-cols-2" : "grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3"}>
+    <div className={threePerRow ? " grid grid-cols-3 gap-3 max-[640px]:grid-cols-2" : "grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3"}>
       {options.map((s) => {
-        const color = colorFor({ id: s.subjectId, name: s.name }) || subjectStyle(s.name).color;
+        // Grade 6–8: every course card uses the theme accent (blue) and one card holds the course and its details button.
+        const soft = middle && !high;
+        const color = soft ? "var(--k5-ac)" : colorFor({ id: s.subjectId, name: s.name }) || subjectStyle(s.name).color;
         const card = (
           <button
             key={middle ? undefined : s.subjectId}
@@ -460,31 +562,33 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
             aria-disabled={none}
             onClick={() => onPick(s)}
             className={
-              high
-                ? "k5h-b-scard-btn flex flex-[1_1_auto] flex-col items-center justify-start gap-1.5 border-none bg-transparent text-center text-k5-ink"
+              high || soft
+                ? "k5h-b-scard-btn flex motion-none flex-[1_1_auto] flex-col items-center justify-start gap-2 border-none bg-transparent text-center text-k5-ink"
                 : `flex min-h-[200px] flex-col items-center justify-start gap-2 rounded-3xl border-[3px] px-3 pb-3.5 pt-4 text-center text-k5-ink ${middle ? "flex-[1_1_auto]" : ""}`
             }
             style={
               high
                 ? { padding: "4px 4px 2px", borderRadius: 12, cursor: none ? "default" : "pointer" }
-                : { borderColor: color, background: courseTint(color), boxShadow: "0 5px 0 " + color, opacity: none ? 0.6 : 1, cursor: none ? "default" : "pointer", ...(middle ? { borderRadius: 16 } : {}) }
+                : soft
+                  ? { padding: "6px 2px 2px", cursor: none ? "default" : "pointer" }
+                  : { borderColor: color, background: courseTint(color), boxShadow: "0 5px 0 " + color, opacity: none ? 0.6 : 1, cursor: none ? "default" : "pointer", ...(middle ? { borderRadius: 16 } : {}) }
             }
           >
-            <span className="k5h-b-stile flex h-[72px] w-[72px] flex-none items-center justify-center rounded-[22px] bg-k5-card" style={{ color }}>
+            <span className={"k5h-b-stile flex h-[72px] w-[72px] flex-none items-center justify-center bg-k5-card " + (soft ? "rounded-2xl" : "rounded-[22px]")} style={{ color }}>
               <SubjectIcon name={s.name} className="k5h-b-sicon h-10 w-10" />
             </span>
-            <span className="k5h-b-sname font-k5-display text-[20px] font-semibold leading-[1.1]">{s.name}</span>
+            <span className={"k5h-b-sname font-k5-display font-semibold leading-[1.1] " + (soft ? "text-[22px]" : "text-[20px]")}>{s.name}</span>
             {middle && s.teacherName && <span className="text-sm font-extrabold leading-[1.2] text-k5-mut">{s.teacherName}</span>}
             {s.booked > 0 && (
-              <span className="k5h-b-booked flex items-center gap-1 whitespace-nowrap rounded-full border-[3px] border-k5-grn bg-k5-card px-2.5 py-1 text-[13px] font-black" style={middle ? { borderColor: "var(--k5-c-done)" } : undefined}>
+              <span className={"k5h-b-booked  flex items-center gap-1 rounded-full border-k5-grn bg-k5-card px-2.5 py-1 text-[13px] font-black " + (soft ? "max-w-full border-[1.5px]" : "whitespace-nowrap border-[3px]")} style={middle ? { borderColor: "var(--k5-c-done)" } : undefined}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: "currentColor" }}>
                   <path d={CHECK_PATH} />
                 </svg>
-                {high ? copy.bookedN(s.booked) : t("bookedCount", { count: s.booked })}
+                {high || soft ? copy.bookedN(s.booked) : t("bookedCount", { count: s.booked })}
               </span>
             )}
             {!none && (
-              <span className={`k5h-b-pick mt-auto rounded-full px-[18px] py-1.5 font-k5-display text-[17px] font-semibold ${middle ? "text-k5-card" : "text-white"}`} style={{ background: color }}>
+              <span className={`k5h-b-pick mt-auto k5-button-motion rounded-full px-[18px] py-1.5 font-k5-display text-[17px] font-semibold ${middle ? "text-k5-card" : "text-white"}`} style={{ background: color }}>
                 {copy.pickMe}
               </span>
             )}
@@ -496,8 +600,12 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
         return (
           <div
             key={s.subjectId}
-            className={high ? "k5h-b-scard flex min-w-0 flex-col" : "flex min-w-0 flex-col gap-2"}
-            style={high ? { gap: 6, padding: 10, border: "1.5px solid " + color, borderRadius: 12, background: courseTint(color), boxShadow: "0 4px 0 " + color, opacity: none ? 0.6 : 1 } : undefined}
+            className={high ? "k5h-b-scard flex min-w-0 flex-col k5-button-motion " : " k5-button-motion flex min-w-0 flex-col gap-2"}
+            style={
+              high
+                ? { gap: 6, padding: 10, border: "1.5px solid " + color, borderRadius: 12, background: courseTint(color), boxShadow: "0 4px 0 " + color, opacity: none ? 0.6 : 1 }
+                : { gap: 8, padding: 12, border: "1.5px solid var(--k5-ac)", borderRadius: 16, background: "var(--k5-act)", boxShadow: "0 5px 0 var(--k5-ac)", opacity: none ? 0.6 : 1 }
+            }
           >
             {card}
             <button
@@ -1039,7 +1147,7 @@ function ConfirmBooking({ open, when, course, color, teacher, busy, onBack, onCo
  * real booking request: the teacher, this week's slots, the free/busy/closed rules (getSlotState) and
  * the submit (submitBookClassSlot) are the ones the weekly slot picker used; only the flow is steps.
  */
-export function K5BookView({ details, subjects, course, onShowBooked, onBooked, popup = false, onClose }) {
+export function K5BookView({ details, subjects, course, onShowBooked, onBooked, popup = false, onClose, skipInitialBuddy = false }) {
   const { middle, high, copy } = useCopy();
   const t = useTranslations("k5Booking.book");
   const tc = useTranslations("common");
@@ -1055,8 +1163,11 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   const [unknown, setUnknown] = useState(false);
   const [grownOpen, setGrownOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  // Day-first booking (Elementary): the course picked last, with its own slot and teacher calendar.
+  const [choice, setChoice] = useState(null);
   const inFlight = useRef(false);
   const book = useBookSlots(picked);
+  const dayFirst = !middle;
 
   const allMode = subjects.length === 1 && subjects[0].subjectId === 0;
   const allQuery = useQuery({
@@ -1069,7 +1180,12 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
     ? (allQuery.data?.studentSubjectList ?? []).map((s) => ({ subjectId: s.subjectId, name: s.subjectName, studentStandardId: course.studentStandardId, teacherName: s.teacherName }))
     : subjects.filter((s) => s.subjectId !== 0).map((s) => ({ subjectId: s.subjectId, name: s.name, studentStandardId: s.studentStandardId, teacherName: s.teacherName, booked: s.booked }));
   const leftOf = (opt) => (allMode ? course.weekLeftClass : subjects.find((s) => s.subjectId === opt.subjectId)?.weekLeftClass ?? 0);
-  const left = Math.max(picked ? leftOf(picked) : allMode ? course.weekLeftClass || 0 : Math.max(0, ...options.map(leftOf)), 0);
+  // The course the booking is for: picked first (Grade 6–12), or picked last at the course step (Elementary).
+  const activeOpt = dayFirst ? choice?.course.option ?? null : picked;
+  const left = Math.max(activeOpt ? leftOf(activeOpt) : allMode ? course.weekLeftClass || 0 : Math.max(0, ...options.map(leftOf)), 0);
+  // Elementary: every course with a teacher, for the merged days and times.
+  const bookable = options.filter((o) => allMode || o.teacherName);
+  const all = useAllCourseSlots(bookable, dayFirst && !(allMode && allQuery.isLoading));
   // For grown-ups: cards + the "All Courses" table both come from one API, asked only once the section is opened.
   const calcQuery = useQuery({
     queryKey: ["book-class-grown-ups", course.studentStandardId, book.dummy.key],
@@ -1103,12 +1219,21 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   const perWeek = (weekCounts.comp > 0 ? details.compClassPerweek : weekCounts.extra) || 0;
 
   // One name everywhere: the teacher whose slots are shown, else the course teacher.
-  const teacherName = (picked && (book.slots?.teacherName || book.teacher?.teacherName || picked.teacherName)) || course.teacherName;
-  const color = picked ? colorFor({ id: picked.subjectId, name: picked.name }) || subjectStyle(picked.name).color : "var(--k5-ac)";
+  const teacherName = dayFirst
+    ? (choice && (choice.course.slots?.teacherName || choice.course.teacher?.teacherName || choice.course.option.teacherName)) || course.teacherName
+    : (picked && (book.slots?.teacherName || book.teacher?.teacherName || picked.teacherName)) || course.teacherName;
+  const color = activeOpt ? colorFor({ id: activeOpt.subjectId, name: activeOpt.name }) || subjectStyle(activeOpt.name).color : "var(--k5-ac)";
   // Mockup: only today and the days after it are offered.
-  const model = dayModel(book.days, book.slots, book.skipDates, left, dateLocale).filter((d) => d.tag !== "Over");
+  const model = dayFirst ? mergedDayModel(all.courses, leftOf, left, dateLocale) : dayModel(book.days, book.slots, book.skipDates, left, dateLocale).filter((d) => d.tag !== "Over");
   const dayItem = model.find((m) => m.key === dayKey) || null;
-  const end = selected ? getSlotEnd(selected.bookedStartDate, book.slots?.classDuration) : null;
+  // Elementary: the picked time, with the courses that are free at it.
+  const timeEntry = dayFirst && dayItem && selected ? dayItem.entries.find((e) => e.slot === selected) || null : null;
+  const zoneSlots = dayFirst ? all.courses.find((c) => c.slots)?.slots : book.slots;
+  // What "Book it" sends: the course, its slot and its teacher's calendar.
+  const target = dayFirst
+    ? choice && { option: choice.course.option, slot: choice.slot, teacher: choice.course.teacher, slots: choice.course.slots }
+    : picked && selected ? { option: picked, slot: selected, teacher: book.teacher, slots: book.slots } : null;
+  const end = target ? getSlotEnd(target.slot.bookedStartDate, target.slots?.classDuration) : null;
 
   const say =
     step === 4
@@ -1123,6 +1248,14 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   const title = step === 4 ? t("booked") : step === 1 && left < 1 ? copy.allTitle : copy.steps[step - 1];
 
   function goTo(nextStep) {
+    setChoice(null);
+    if (dayFirst) {
+      // Day, time, course: going back to a step clears what was picked on it and after it.
+      if (nextStep < 3) setSelected(null);
+      if (nextStep < 2) setDayKey(null);
+      setStep(nextStep);
+      return;
+    }
     if (nextStep < 3) setSelected(null);
     if (nextStep < 2) {
       setPicked(null);
@@ -1147,18 +1280,29 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
     setStep(2);
   }
 
+  // Elementary, course step: the course card picked for the chosen time.
+  function pickChoice(option) {
+    const found = timeEntry?.choices.find((c) => c.course.option.subjectId === option.subjectId);
+    if (!found) return;
+    if (leftOf(option) < 1) {
+      toast.error(t("allBookedWeek"));
+      return;
+    }
+    setChoice(found);
+  }
+
   async function bookIt() {
-    if (inFlight.current || unknown || !selected || !dayItem) return;
+    if (inFlight.current || unknown || !target || !dayItem) return;
     inFlight.current = true;
     setSubmitting(true);
     const result = book.dummy.enabled
       ? book.dummy.student.bookClassSubmit()
       : await submitBookClassSlot({
-          meetingDate: selected.bookedStartDate,
+          meetingDate: target.slot.bookedStartDate,
           meetingEndDate: end?.endDateTime,
-          subjectId: picked.subjectId,
-          studentStandardId: book.teacher?.studentStandardId ?? picked.studentStandardId,
-          teacherUserId: book.slots.teacherUserId,
+          subjectId: target.option.subjectId,
+          studentStandardId: target.teacher?.studentStandardId ?? target.option.studentStandardId,
+          teacherUserId: target.slots.teacherUserId,
         });
     inFlight.current = false;
     setSubmitting(false);
@@ -1172,9 +1316,10 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
     if (result.status === "1") {
       setConfirming(false);
       toast.success(result.message || t("bookedToast"));
-      setDone({ name: picked.name, weekday: dayItem.weekday, num: dayItem.num, time: niceTime(selected.displayStartTime) });
+      setDone({ name: target.option.name, weekday: dayItem.weekday, num: dayItem.num, time: niceTime(target.slot.displayStartTime) });
       setStep(4);
       queryClient.invalidateQueries({ queryKey: ["book-class-slots"] });
+      queryClient.invalidateQueries({ queryKey: ["book-class-course-slots"] });
       queryClient.invalidateQueries({ queryKey: ["book-class-grown-ups"] });
       onBooked();
       return;
@@ -1198,11 +1343,50 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   }
 
   const notice = (text) => <p className="m-0 py-6 text-center font-k5-display text-xl font-semibold text-k5-mut">{text}</p>;
+  const daysSkeleton = (
+    <K5Loading label={t("loadingDays")} className="grid grid-cols-[repeat(auto-fit,minmax(118px,1fr))] gap-2.5">
+      {Array.from({ length: 5 }, (_, i) => (
+        <K5Sk key={i} className="k5h-b-day-sk h-[150px] rounded-3xl" />
+      ))}
+    </K5Loading>
+  );
+  const zoneNote = (
+    <p className="m-0 text-sm font-extrabold text-k5-mut">
+      {t("timesIn", { zone: zoneSlots?.timeZoneName ?? "", minutes: zoneSlots?.classDuration ?? "" })}
+    </p>
+  );
+  // "You picked …  Book it!" (K–5): the course, day and time, then the booking.
+  const pickedBar =
+    target && dayItem ? (
+      <div className="flex flex-wrap items-center gap-3.5 rounded-3xl bg-k5-yt px-4 py-3.5">
+        <span className="flex h-14 w-14 flex-none items-center justify-center rounded-[18px] bg-k5-card" style={{ color }}>
+          <SubjectIcon name={target.option.name} className="h-[26px] w-[26px]" />
+        </span>
+        <div className="flex min-w-0 flex-[1_1_240px] flex-col gap-0.5">
+          <span className="text-sm font-black text-k5-yx">{t("youPicked")}</span>
+          <span className="font-k5-display text-[22px] font-semibold leading-[1.2]">
+            {target.option.name} · {dayItem.weekday} {dayItem.num} · {niceTime(target.slot.displayStartTime)}
+          </span>
+          <span className="text-sm font-extrabold text-k5-mut">{t("withTeacher", { name: teacherName })}</span>
+        </div>
+        <button
+          type="button"
+          onClick={bookIt}
+          disabled={submitting || unknown}
+          className="flex min-h-16 cursor-pointer items-center gap-2.5 rounded-full border-none bg-k5-grn px-[30px] font-k5-display text-2xl font-semibold text-white shadow-[0_6px_0_var(--k5-grnD)] disabled:opacity-60"
+        >
+          <svg width="30" height="20" viewBox="0 0 64 40" aria-hidden="true">
+            <path d={TICKET_PATH} fill="#FFC531" />
+          </svg>
+          {submitting ? t("booking") : t("bookIt")}
+        </button>
+      </div>
+    ) : null;
 
   // The three steps: the section of the page, and the whole body of the Grade 6–8 "Book a Class" dialog.
   const flow = (
     <>
-          <BuddyStrip say={say} />
+          <BuddyStrip say={say} skipInitial={skipInitialBuddy} />
           <StepPills step={step} />
           <div className="flex flex-wrap items-center gap-3">
             {(step === 2 || step === 3) && (
@@ -1217,19 +1401,20 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
             <div className="flex flex-col">
               {step < 4 && <span className="text-sm font-black text-k5-mut">{t("stepOf", { step, total: 3 })}</span>}
               <h2 id="k5-step" className="m-0 font-k5-display text-[30px] font-semibold leading-[1.1]">{title}</h2>
-              {step === 1 && <span className="mt-0.5 text-[15px] font-black text-k5-gx">{copy.any}</span>}
-              {step === 3 && (
+              {step === 1 && <span className="mt-0.5 text-[15px] font-black text-k5-gx">{dayFirst ? copy.anyDay : copy.any}</span>}
+              {dayFirst && step === 3 && <span className="mt-0.5 text-[15px] font-black text-k5-gx">{copy.anyCourse}</span>}
+              {!dayFirst && step === 3 && (
                 <span className="mt-0.5 flex items-center gap-1.5 text-[15px] font-black text-[var(--k5-vX)]">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-k5-vi text-[10px] text-white">{initialsOf(teacherName)}</span>
                   {t("freeAtTimes", { name: firstName(teacherName, t("yourTeacherLower")) })}
                 </span>
               )}
             </div>
-            {(step === 2 || step === 3) && picked && <SubjectChip name={picked.name} color={color} />}
+            {!dayFirst && (step === 2 || step === 3) && picked && <SubjectChip name={picked.name} color={color} />}
             {step === 1 && !middle && (
               <button
                 type="button"
-                onClick={() => onShowBooked(picked?.subjectId)}
+                onClick={() => onShowBooked(activeOpt?.subjectId)}
                 className="ms-auto min-h-12 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-5 font-k5-display text-[17px] font-semibold text-k5-ink"
               >
                 {t("myBookedClasses")}
@@ -1237,22 +1422,61 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
             )}
           </div>
 
-          {step === 1 && (
+          {dayFirst && step === 1 &&
+            (all.loading || (allMode && allQuery.isLoading)
+              ? daysSkeleton
+              : bookable.length === 0
+                ? notice("You do not have a teacher assigned yet")
+                : model.length === 0
+                  ? notice("No class slots are available for this week.")
+                  : (
+                    <>
+                      <DayStep
+                        model={model}
+                        onPick={(d) => {
+                          setDayKey(d.key);
+                          setSelected(null);
+                          setChoice(null);
+                          setStep(2);
+                        }}
+                      />
+                      {left < 1 && <AllUsed />}
+                    </>
+                  ))}
+
+          {dayFirst && step === 2 && dayItem && (
+            <>
+              <TimeStep
+                dayItem={dayItem}
+                selected={selected}
+                onSelect={(slot) => {
+                  setSelected(slot);
+                  setChoice(null);
+                  setStep(3);
+                }}
+              />
+              {zoneNote}
+            </>
+          )}
+
+          {dayFirst && step === 3 && timeEntry && (
+            <>
+              <SubjectStep options={timeEntry.choices.map((c) => c.course.option)} loading={false} left={left} colorFor={colorFor} onPick={pickChoice} onDetails={onShowBooked} />
+              {pickedBar}
+              {unknown && <p className="m-0 text-center font-extrabold text-k5-ri">{t("unknownOutcome")}</p>}
+            </>
+          )}
+
+          {!dayFirst && step === 1 && (
             <>
               <SubjectStep options={options} loading={allMode && allQuery.isLoading} left={left} colorFor={colorFor} onPick={pickSubject} onDetails={onShowBooked} threePerRow={popup} />
               {left < 1 && <AllUsed />}
             </>
           )}
 
-          {step === 2 &&
+          {!dayFirst && step === 2 &&
             (book.loading
-              ? (
-                <K5Loading label={t("loadingDays")} className="grid grid-cols-[repeat(auto-fit,minmax(118px,1fr))] gap-2.5">
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <K5Sk key={i} className="k5h-b-day-sk h-[150px] rounded-3xl" />
-                  ))}
-                </K5Loading>
-              )
+              ? daysSkeleton
               : !book.teacher || !book.teacherAssigned
                 ? notice(book.teacher ? t("noTeacher") : t("teacherError"))
                 : !book.week
@@ -1268,7 +1492,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                     />
                   ))}
 
-          {step === 3 && dayItem && (
+          {!dayFirst && step === 3 && dayItem && (
             <>
               <TimeStep
                 dayItem={dayItem}
@@ -1278,34 +1502,8 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                   if (middle) setConfirming(true);
                 }}
               />
-              <p className="m-0 text-sm font-extrabold text-k5-mut">
-                {t("timesIn", { zone: book.slots?.timeZoneName ?? "", minutes: book.slots?.classDuration ?? "" })}
-              </p>
-              {selected && !middle && (
-                <div className="flex flex-wrap items-center gap-3.5 rounded-3xl bg-k5-yt px-4 py-3.5">
-                  <span className="flex h-14 w-14 flex-none items-center justify-center rounded-[18px] bg-k5-card" style={{ color }}>
-                    <SubjectIcon name={picked.name} className="h-[26px] w-[26px]" />
-                  </span>
-                  <div className="flex min-w-0 flex-[1_1_240px] flex-col gap-0.5">
-                    <span className="text-sm font-black text-k5-yx">{t("youPicked")}</span>
-                    <span className="font-k5-display text-[22px] font-semibold leading-[1.2]">
-                      {picked.name} · {dayItem.weekday} {dayItem.num} · {niceTime(selected.displayStartTime)}
-                    </span>
-                    <span className="text-sm font-extrabold text-k5-mut">{t("withTeacher", { name: teacherName })}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={bookIt}
-                    disabled={submitting || unknown}
-                    className="flex min-h-16 cursor-pointer items-center gap-2.5 rounded-full border-none bg-k5-grn px-[30px] font-k5-display text-2xl font-semibold text-white shadow-[0_6px_0_var(--k5-grnD)] disabled:opacity-60"
-                  >
-                    <svg width="30" height="20" viewBox="0 0 64 40" aria-hidden="true">
-                      <path d={TICKET_PATH} fill="#FFC531" />
-                    </svg>
-                    {submitting ? t("booking") : t("bookIt")}
-                  </button>
-                </div>
-              )}
+              {zoneNote}
+              {selected && !middle && pickedBar}
               {unknown && <p className="m-0 text-center font-extrabold text-k5-ri">{t("unknownOutcome")}</p>}
             </>
           )}
@@ -1343,7 +1541,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                   </button>
                   <button
                     type="button"
-                    onClick={() => onShowBooked(picked?.subjectId)}
+                    onClick={() => onShowBooked(activeOpt?.subjectId)}
                     className="min-h-[54px] cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-6 font-k5-display text-[19px] font-semibold text-k5-ink"
                   >
                     {t("seeMyClasses")}

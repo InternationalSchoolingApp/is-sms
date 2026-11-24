@@ -125,6 +125,10 @@
     "readingRuler": "阅读标尺",
     "readingRulerSub": "一条亮条会跟着你的手指或鼠标移动",
     "plainLetters": "简单字母",
-    "plainLettersSub": "不用全大写，也不用斜体"
+    "plainLettersSub": "不用全大写，也不用斜体",
+    "christmasTheme": "🎄 圣诞主题",
+    "christmasThemeSub": "圣诞节当天有雪花、音乐和装饰。",
+    "on": "开",
+    "off": "关"
   }
 }

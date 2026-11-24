@@ -106,5 +106,19 @@
     "score": "Score {score}",
     "correct": "Correct",
     "notQuite": "Pas tout à fait. Réessayez."
+  },
+  "middleGames": {
+    "word": {
+      "name": "Mots mélangés",
+      "how": "Remets dans l'ordre le mot de sciences ou de maths."
+    },
+    "count": {
+      "name": "Suites de nombres",
+      "how": "Trouve la règle. Quel nombre vient ensuite ?"
+    },
+    "shape": {
+      "name": "L'intrus",
+      "how": "Un nombre ne suit pas la règle. Trouve-le !"
+    }
   }
 }

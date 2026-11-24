@@ -106,5 +106,19 @@
     "score": "Puntos {score}",
     "correct": "Correcto",
     "notQuite": "Casi. Inténtalo otra vez."
+  },
+  "middleGames": {
+    "word": {
+      "name": "Palabra desordenada",
+      "how": "Ordena la palabra de ciencias o matemáticas."
+    },
+    "count": {
+      "name": "Patrones numéricos",
+      "how": "Descubre la regla. ¿Qué número sigue?"
+    },
+    "shape": {
+      "name": "El intruso",
+      "how": "Un número no sigue la regla. ¡Encuéntralo!"
+    }
   }
 }

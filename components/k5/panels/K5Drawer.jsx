@@ -25,7 +25,7 @@ export function K5Drawer({ title, subtitle, icon, accent, pastel, bg, width = 48
 
 
   return (
-    <div className="fixed inset-0 z-[85] box-border flex items-stretch justify-end p-4">
+    <div className="fixed inset-0 z-[85] box-border flex items-stretch justify-end p-4 in-data-[hand=left]:justify-start">
       <button type="button" aria-label={tc("actions.close")} onClick={onClose} className="absolute inset-0 cursor-default border-none bg-[rgba(10,16,34,0.55)] p-0" />
       <div
         role="dialog"

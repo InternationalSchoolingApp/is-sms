@@ -33,7 +33,7 @@ const GREETING_KEYS = { "Good Morning!": "morning", "Good Afternoon!": "afternoo
 const zoneLabel = (timezone, t) => t("zone", { city: String(timezone).split("/").pop().replace(/_/g, " ") });
 
 // t = the k5Home.toolbar translator, locale = the date-fns locale of the dashboard language.
-function titles(viewName, selectedDate, t, locale) {
+export function titles(viewName, selectedDate, t, locale) {
   const options = { locale };
   if (viewName === "week") {
     const keys = weekKeys(selectedDate);
@@ -67,8 +67,8 @@ export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPre
   const goodNight = greeting(now.getHours()) === "Good Evening!";
 
   return (
-    <div className={`${K5_CARD} flex flex-wrap items-center gap-3 px-4 pb-3 pt-3.5`}>
-      <div className={`k5h-tbox flex items-center gap-2.5 rounded-[22px] ${goodNight ? "bg-[#e6e3fb]" : "bg-k5-yt"} px-2.5 py-1.5 max-[760px]:box-border max-[760px]:w-full max-[760px]:flex-nowrap max-[760px]:gap-2 max-[760px]:px-2`}>
+    <div className={`${K5_CARD} flex flex-wrap items-center gap-3 px-4 pb-3 pt-3.5 in-data-[hand=left]:flex-row-reverse in-data-[hand=left]:justify-end min-[1101px]:in-data-[hand=left]:grid min-[1101px]:in-data-[hand=left]:grid-cols-[1fr_auto_1fr]`}>
+      <div className={`k5h-tbox in-data-[hand=left]:ms-auto min-[1101px]:in-data-[hand=left]:order-3 min-[1101px]:in-data-[hand=left]:justify-self-end flex items-center gap-2.5 rounded-[22px] ${goodNight ? "bg-[#e6e3fb]" : "bg-k5-yt"} px-2.5 py-1.5 max-[760px]:box-border max-[760px]:w-full max-[760px]:flex-nowrap max-[760px]:gap-2 max-[760px]:px-2`}>
         <K5ClockIcon kind={weather ? kindOf(weather.code) : "sun"} night={night} className="max-[760px]:!h-11 max-[760px]:!w-11" />
         <div className="flex flex-none flex-col items-start whitespace-nowrap text-start">
           <span className="font-k5-display text-[26px] font-bold leading-none text-k5-ink max-[760px]:text-[22px]">{format(now, "h:mm a", { locale })}</span>
@@ -78,7 +78,7 @@ export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPre
         <K5WeatherTile weather={weather} />
       </div>
 
-      <div data-pin="prevnext" className="flex items-center gap-1.5 max-[760px]:flex-[1_1_100%] max-[760px]:justify-center">
+      <div data-pin="prevnext" className="min-[1101px]:in-data-[hand=left]:order-2 min-[1101px]:in-data-[hand=left]:justify-self-center flex items-center gap-1.5 max-[760px]:flex-[1_1_100%] max-[760px]:justify-center">
         <button type="button" aria-label={t(`previous.${unit}`)} onClick={onPrev} className={K5_ROUND_BTN}>
           <ChevronLeft className="h-[22px] w-[22px]" strokeWidth={3} aria-hidden="true" />
         </button>
@@ -91,7 +91,7 @@ export function K5Toolbar({ now, timezone, viewName, onView, selectedDate, onPre
         </button>
       </div>
 
-      <div role="group" aria-label={t("calendarView")} data-pin="views" className="ms-auto flex flex-none gap-1 rounded-full bg-k5-act p-[5px] max-[760px]:me-auto">
+      <div role="group" aria-label={t("calendarView")} data-pin="views" className="ms-auto in-data-[hand=left]:ms-0! min-[1101px]:in-data-[hand=left]:order-1 min-[1101px]:in-data-[hand=left]:justify-self-start flex flex-none gap-1 rounded-full bg-k5-act p-[5px] max-[760px]:me-auto">
         {views.map((v) => {
           const active = v.key === viewName;
           return (

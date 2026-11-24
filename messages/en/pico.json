@@ -39,7 +39,12 @@
     "msg": "Need help? Tap the green Talk to us button to chat with us!",
     "announcements": "This is the announcements section. The school shares updates about events, activities, clubs, and holidays here. Don't miss out!",
     "news": "Check here for the latest developments and updates in education.",
-    "diary": "This is your School Diary, where you can find important updates about your calendar and coursework from your teachers or the school."
+    "diary": "This is your School Diary, where you can find important updates about your calendar and coursework from your teachers or the school.",
+    "hero": "This is your dashboard. It shows today's date, the time and the weather, and your next class. When a class is live, tap Join class to go in!",
+    "goal": "This is Today's Goal. Your classes, activities and assignments for today are listed here, and the ring fills up as you finish them!",
+    "performance": "This is My Performance. See your average, the date you want to finish by and how far along you are. Tap Set my goals to choose your own goals!",
+    "assignments": "This is My Assignments. The assignments due today and tomorrow are here, and a red card tells you if any are overdue. Tap Start to begin one!",
+    "msgBalanced": "Need help? Tap the Talk to us button to chat with us!"
   },
   "modules": {
     "home": "This is your dashboard. Here you can see today's classes, your calendar and everything planned for you. Tap a day to see its plan!",
@@ -94,5 +99,12 @@
     "competitive_gaming": "The Competitive Gaming Club is for playing as a team and getting ready for matches. Tap Register Now to join!",
     "global_competitions_club": "The Global Competitions Club lets you take part in gaming contests with students worldwide. Tap Register Now to join!",
     "game_strategy_analysis_club": "In the Game Strategy and Analysis Club you study games and learn why moves win. Tap Register Now to join!"
+  },
+  "classesTour": {
+    "plan": "This is Today's Plan. All your classes and activities for the day are here. Tap one to see more about it.",
+    "planFree": "This is Today's Plan. There are no classes or activities today, so enjoy your free day! Your classes and activities show up here on the days you have them.",
+    "planHoliday": "This is Today's Plan. Today is a holiday, {name}, so there are no classes or activities. Enjoy your day! Your classes and activities show up here on the days you have them.",
+    "mini": "This little calendar shows the whole month. A dot under a day means something is planned. Tap a day to open it.",
+    "courses": "These are your courses. Tap a course to show or hide its classes in your plan."
   }
 }

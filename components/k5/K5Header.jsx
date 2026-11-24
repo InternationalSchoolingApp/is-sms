@@ -10,6 +10,7 @@ import { ChevronDown, KeyRound, Loader2, LogOut, Menu, MessageCircle, MoreVertic
 import toast from "react-hot-toast";
 import { AppDownloadDialog } from "@/components/k5/AppDownloadDialog";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useCartCount } from "@/hooks/useStudentCart";
 import { useNeedHelp } from "@/hooks/useNeedHelp";
 import { useAddSiblings } from "@/hooks/useAddSiblings";
@@ -49,6 +50,11 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
   const tc = useTranslations("common");
   const { model: profileModel } = useStudentProfile({ schoolUUID, userId });
   const photo = profileModel?.header?.photo || "";
+  // Grade 9–12 (Mature) look: the "Welcome back" chip of High.dc.html (blue rim on the soft accent, blue avatar, 12 / 17px 500).
+  // Sizes in rem so the Mature type map (app/k5-mature.css) leaves them as the mockup has them.
+  // Grade 6–8 (Balanced) has the same blue chip (Middle.dc.html: 1.5px accent rim on the soft accent, blue avatar with a white 22 / 700
+  // initial, 13 / 800 and 20 / 600 ink text); only Playful keeps the yellow one. isMiddle is true for Mature too, so isHigh is checked first.
+  const { isHigh, isMiddle } = useDashboardContext();
   // Legacy cartCountContent(): the cart button shows only while the cart has items, with the count as a badge.
   const { school } = useParams();
   const { data: cartCount = 0 } = useCartCount(userId);
@@ -105,7 +111,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
 
   return (
     <header className="sticky top-[var(--maintenance-banner-h,0px)] z-30 border-b-4 border-k5-line bg-k5-card">
-      <div className="mx-auto flex max-w-[100%] flex-wrap items-center gap-3 px-5 py-2.5 max-[760px]:flex-nowrap max-[760px]:px-3">
+      <div className="mx-auto flex max-w-[100%] flex-wrap items-center gap-3 px-5 py-2.5 max-[760px]:flex-nowrap max-[760px]:px-3 in-data-[hand=left]:flex-row-reverse">
         <button
           type="button"
           aria-label={t("menu")}
@@ -116,6 +122,9 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
         >
           <Menu className="h-6 w-6" strokeWidth={2.8} aria-hidden="true" />
         </button>
+
+        {/* Mobile: a spacer on each side of the logo (the other one is below) puts it in the middle of the header. */}
+        <div className="hidden flex-[1_1_20px] max-[760px]:block" aria-hidden="true" />
 
         {/* Legacy header: the logo opens the school's website in a new tab (schoolSettingsLinks.schoolWebsite). */}
         {(() => {
@@ -235,20 +244,38 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             data-pin="profile"
-            className="flex min-h-14 items-center gap-2.5 rounded-full border-[3px] border-k5-yb bg-k5-yt py-1 pl-1 pr-4 text-left"
+            className={
+              isHigh
+                ? "flex min-h-[3rem] items-center gap-2.5 rounded-full border-[0.09375rem] border-k5-ac bg-k5-act py-1 pl-1 pr-4 text-left"
+                : isMiddle
+                  ? "flex min-h-14 items-center gap-2.5 rounded-full border-[3px] border-k5-ac bg-k5-act py-1 pl-1 pr-4 text-left"
+                  : "flex min-h-14 items-center gap-2.5 rounded-full border-[3px] border-k5-yb bg-k5-yt py-1 pl-1 pr-4 text-left"
+            }
           >
-            <HeaderAvatar key={photo} photo={photo} initial={firstName.charAt(0).toUpperCase()} className="block h-[46px] w-[46px] flex-none rounded-full" textClass="bg-k5-hi font-k5-display text-[22px] font-bold text-[#1C2640]" />
+            <HeaderAvatar
+              key={photo}
+              photo={photo}
+              initial={firstName.charAt(0).toUpperCase()}
+              className="block h-[46px] w-[46px] flex-none rounded-full"
+              textClass={
+                isHigh
+                  ? "bg-k5-ac font-k5-display text-[1.125rem] font-medium text-white"
+                  : isMiddle
+                    ? "bg-k5-ac font-k5-display text-[22px] font-bold text-white"
+                    : "bg-k5-hi font-k5-display text-[22px] font-bold text-[#1C2640]"
+              }
+            />
             <span className="hidden flex-col sm:flex">
-              <span className="text-[13px] font-extrabold text-k5-yx">{t("welcomeBack")}</span>
-              <span className="font-k5-display text-xl font-semibold leading-none text-k5-ink">{t("nameExclaim", { name: firstName })}</span>
+              <span className={isHigh ? "text-[0.75rem] font-medium text-k5-ink" : isMiddle ? "text-[13px] font-extrabold text-k5-ink" : "text-[13px] font-extrabold text-k5-yx"}>{t("welcomeBack")}</span>
+              <span className={isHigh ? "font-k5-display text-[1.0625rem] font-medium leading-none text-k5-ink" : "font-k5-display text-xl font-semibold leading-none text-k5-ink"}>{t("nameExclaim", { name: firstName })}</span>
             </span>
-            <ChevronDown className="h-[18px] w-[18px] text-k5-ink" strokeWidth={2.6} aria-hidden="true" />
+            <ChevronDown className={`h-[18px] w-[18px] text-k5-ink ${isHigh ? `transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}` : ""}`} strokeWidth={2.6} aria-hidden="true" />
           </button>
 
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-40" aria-hidden="true" onClick={() => setMenuOpen(false)} />
-              <div role="menu" className="k5-zoom-in origin-top-right absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-[22px] border-[3px] border-k5-line bg-k5-card shadow-k5-chunky">
+              <div role="menu" className="k5-zoom-in origin-top-right in-data-[hand=left]:origin-top-left absolute right-0 in-data-[hand=left]:right-auto in-data-[hand=left]:left-0 z-50 mt-2 w-60 overflow-hidden rounded-[22px] border-[3px] border-k5-line bg-k5-card shadow-k5-chunky">
                 <div className="flex items-center gap-2 bg-k5-ac px-4 py-3 text-white">
                   <User className="h-5 w-5" aria-hidden="true" />
                   <span className="font-k5-display text-base font-semibold">{displayName}</span>
@@ -312,7 +339,7 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
               <button type="button" aria-label={t("closeMenu")} onClick={() => setMoreOpen(false)} className="fixed inset-0 z-[54] cursor-pointer border-none bg-[rgba(10,16,34,0.25)] p-0" />
               <div
                 role="menu"
-                className="k5-zoom-in origin-top-right absolute end-0 top-[60px] z-[55] flex w-[250px] flex-col gap-0.5 rounded-[22px] border-[3px] border-k5-ink bg-k5-card p-2 shadow-[0_6px_0_var(--k5-ink)]"
+                className="k5-zoom-in origin-top-right in-data-[hand=left]:origin-top-left absolute end-0 in-data-[hand=left]:end-auto in-data-[hand=left]:start-0 top-[60px] z-[55] flex w-[250px] flex-col gap-0.5 rounded-[22px] border-[3px] border-k5-ink bg-k5-card p-2 shadow-[0_6px_0_var(--k5-ink)]"
               >
                 <MoreItem
                   icon={<HeaderAvatar key={photo} photo={photo} initial={firstName.charAt(0).toUpperCase()} className="block h-10 w-10 flex-none rounded-full" textClass="bg-[#FFC531] font-k5-display text-xl font-bold text-[#1C2640]" />}

@@ -5,7 +5,8 @@
   "links": {
     "transcript": "Histórico - {grade}",
     "transcriptNew": "Histórico - {grade} (Novo)",
-    "diploma": "Diploma - {grade}"
+    "diploma": "Diploma - {grade}",
+    "verification": "Verificação acadêmica - {grade}"
   },
   "table": {
     "sNo": "Nº",

@@ -1,17 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronLeft, Lock, Star } from "lucide-react";
+import { ChevronLeft, Lock, Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { BalloonBoard, MemoryBoard, MoleBoard } from "@/components/k5/games/K5ActionBoards";
 import { CountBoard, MathBoard, ShapeBoard } from "@/components/k5/games/K5QuizBoards";
 import { GAMES } from "@/components/k5/games/gameLogic";
+import { MIDDLE_ICONS, OddBoard, PatternBoard, WordBoard } from "@/components/k5/games/MiddleGameBoards";
+import { MIDDLE_GAMES } from "@/components/k5/games/middleGameLogic";
+import { GameSectionToggle } from "@/components/k5/games/GameSectionToggle";
+import { useAutoOpenGames, useDefaultOpenGames } from "@/components/k5/games/useAutoOpenGames";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 
 const PILL = "min-h-12 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-4 font-k5-display text-base font-semibold text-k5-ink";
 
-function GameTile({ game, onPlay, locked }) {
+function GameTile({ game, onPlay, locked, middle = false }) {
   const t = useTranslations("k5Games");
   const { preferences } = useAppearance();
   return (
@@ -22,9 +26,9 @@ function GameTile({ game, onPlay, locked }) {
       className={"flex min-h-[170px] flex-col items-center gap-2 rounded-3xl border-[3px] px-2.5 py-3.5 text-center text-k5-ink " + (locked ? "cursor-not-allowed opacity-50 " : "cursor-pointer ") + game.border + " " + game.bg + " " + game.rim}
     >
       <span aria-hidden="true" className="flex h-[72px] w-[72px] flex-none items-center justify-center rounded-[22px] bg-k5-card text-[44px] leading-none">
-        {game.emoji || <PicoMascot buddy={preferences.buddy} width={48} full={false} />}
+        {middle ? MIDDLE_ICONS[game.id] : game.emoji || <PicoMascot buddy={preferences.buddy} width={48} full={false} />}
       </span>
-      <span className="font-k5-display text-xl font-semibold leading-tight">{t(`games.${game.id}.name`)}</span>
+      <span className="font-k5-display text-xl font-semibold leading-tight">{t(middle ? `middleGames.${game.id}.name` : `games.${game.id}.name`)}</span>
       {/* <span className="text-sm font-extrabold text-k5-mut">{game.how}</span> */}
     </button>
   );
@@ -37,18 +41,22 @@ function GameTile({ game, onPlay, locked }) {
  * running game goes back to the picker (the live-class dialog opens over it, see StudentHomeK5).
  * `past`: the day is already over - the games are locked for it too, with its own note.
  */
-export function K5Games({ locked = false, past = false, pending = false }) {
+export function K5Games({ locked = false, past = false, pending = false, middle = false, defaultOpen = false }) {
   const t = useTranslations("k5Games");
   const tc = useTranslations("common");
+  const list = middle ? MIDDLE_GAMES : GAMES;
   const [gameId, setGameId] = useState(null);
   const [score, setScore] = useState(0);
   const [round, setRound] = useState(0);
   const [fb, setFb] = useState(null);
   const [gamesOpen, setGamesOpen] = useState(false);
+  const sectionRef = useRef(null);
+  useAutoOpenGames(sectionRef, setGamesOpen);
+  useDefaultOpenGames(defaultOpen, setGamesOpen);
   const fbTimer = useRef(null);
   useEffect(() => () => clearTimeout(fbTimer.current), []);
 
-  const game = locked ? null : GAMES.find((g) => g.id === gameId);
+  const game = locked ? null : list.find((g) => g.id === gameId);
   const play = (id) => {
     setGameId(id);
     setScore(0);
@@ -64,52 +72,40 @@ export function K5Games({ locked = false, past = false, pending = false }) {
 
   if (!game) {
     return (
-      <section aria-labelledby="k5-games-title" className="flex flex-col bg-blue-100 dark:bg-blue-900 p-4 rounded-3xl">
-        <span
-          type="button"
-          aria-expanded={gamesOpen}
-          aria-controls="k5-games-list"
-          onClick={() => setGamesOpen((open) => !open)}
-          className="flex min-h-12 w-full cursor-pointer items-center justify-between rounded-xl border-0 bg-transparent p-0 text-left text-k5-ink"
+      <section ref={sectionRef} aria-labelledby="k5-games-title" className="flex flex-col rounded-3xl bg-blue-100 p-4 dark:bg-blue-900">
+        <GameSectionToggle
+          open={gamesOpen}
+          onToggle={() => setGamesOpen((open) => !open)}
+          titleId="k5-games-title"
+          panelId="k5-games-list"
+          titleClassName="font-k5-display text-2xl font-semibold"
         >
-          <span id="k5-games-title" className="font-k5-display text-2xl font-semibold">{t("yourGames")}</span>
-          <ChevronDown className={`h-5 w-5 transition-transform duration-200 ${gamesOpen ? "rotate-180" : ""}`} aria-hidden="true" />
-        </span>
-        <div
-          id="k5-games-list"
-          aria-hidden={!gamesOpen}
-          inert={!gamesOpen || undefined}
-          data-collapsed={!gamesOpen || undefined}
-          className="k5-games-slide"
-        >
-          <div className="flex min-h-0 flex-col gap-3 overflow-hidden">
-            <h3 className="m-0 font-k5-display text-lg font-semibold">{t("pickGame")}</h3>
-            {locked && (
-              <div role="note" className="flex items-center gap-3 rounded-[18px] border-[3px] border-k5-yb bg-k5-yt px-4 py-3 text-k5-yx">
-                <span aria-hidden="true" className="flex h-10 w-10 flex-none items-center justify-center rounded-[18px] bg-k5-card">
-                  <Lock className="h-[22px] w-[22px]" strokeWidth={2.2} />
+          <h3 className="m-0 font-k5-display text-lg font-semibold">{t("pickGame")}</h3>
+          {locked && (
+            <div role="note" className="flex items-center gap-3 rounded-[18px] border-[3px] border-k5-yb bg-k5-yt px-4 py-3 text-k5-yx">
+              <span aria-hidden="true" className="flex h-10 w-10 flex-none items-center justify-center rounded-[18px] bg-k5-card">
+                <Lock className="h-[22px] w-[22px]" strokeWidth={2.2} />
+              </span>
+              <span className="flex flex-col gap-0.5">
+                <span className="font-k5-display text-lg font-semibold">{t("locked.title")}</span>
+                <span className="text-[15px] font-bold leading-snug">
+                  {past ? t("locked.past") : pending ? t("locked.pending") : t("locked.live")}
                 </span>
-                <span className="flex flex-col gap-0.5">
-                  <span className="font-k5-display text-lg font-semibold">{t("locked.title")}</span>
-                  <span className="text-[15px] font-bold leading-snug">
-                    {past ? t("locked.past") : pending ? t("locked.pending") : t("locked.live")}
-                  </span>
-                </span>
-              </div>
-            )}
-            <div className="grid grid-cols-3 gap-3 max-[560px]:grid-cols-2 p-3">
-              {GAMES.map((g) => (
-                <GameTile key={g.id} game={g} locked={locked} onPlay={() => play(g.id)} />
-              ))}
+              </span>
             </div>
+          )}
+          <div className="grid grid-cols-3 gap-3 p-3 max-[560px]:grid-cols-2">
+            {list.map((g) => (
+              <GameTile key={g.id} game={g} locked={locked} middle={middle} onPlay={() => play(g.id)} />
+            ))}
           </div>
-        </div>
+        </GameSectionToggle>
       </section>
     );
   }
 
   return (
-    <section aria-label={t(`games.${game.id}.name`)} className="flex flex-col gap-3">
+    <section aria-label={t(middle ? `middleGames.${game.id}.name` : `games.${game.id}.name`)} className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex min-w-0 items-center gap-3">
           <button type="button" onClick={() => setGameId(null)} className={PILL + " flex flex-none items-center gap-1.5 pl-2.5"}>
@@ -117,8 +113,8 @@ export function K5Games({ locked = false, past = false, pending = false }) {
             {tc("actions.back")}
           </button>
           <div className="flex min-w-0 flex-col">
-            <h3 className="m-0 font-k5-display text-2xl font-semibold">{t(`games.${game.id}.name`)}</h3>
-            <p className="m-0 text-[15px] font-extrabold text-k5-mut">{t(`games.${game.id}.how`)}</p>
+            <h3 className="m-0 font-k5-display text-2xl font-semibold">{t(middle ? `middleGames.${game.id}.name` : `games.${game.id}.name`)}</h3>
+            <p className="m-0 text-[15px] font-extrabold text-k5-mut">{t(middle ? `middleGames.${game.id}.how` : `games.${game.id}.how`)}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -132,12 +128,13 @@ export function K5Games({ locked = false, past = false, pending = false }) {
         </div>
       </div>
 
-      {game.id === "balloon" && <BalloonBoard key={round} onScore={shared.onScore} />}
+      {game.id === "balloon" && !middle &&<BalloonBoard key={round} onScore={shared.onScore} />}
       {game.id === "memory" && <MemoryBoard key={round} {...shared} onRestart={() => play("memory")} />}
       {game.id === "mole" && <MoleBoard key={round} onScore={shared.onScore} onResetScore={() => setScore(0)} caught={score} />}
-      {game.id === "count" && <CountBoard key={round} {...shared} />}
+      {game.id === "word" && <WordBoard key={round} {...shared} />}
+      {game.id === "count" && (middle ? <PatternBoard key={round} {...shared} /> : <CountBoard key={round} {...shared} />)}
       {game.id === "math" && <MathBoard key={round} {...shared} />}
-      {game.id === "shape" && <ShapeBoard key={round} {...shared} />}
+      {game.id === "shape" && (middle ? <OddBoard key={round} {...shared} /> : <ShapeBoard key={round} {...shared} />)}
 
       {fb !== null && (
         <div aria-live="assertive" className={"self-center rounded-full px-[22px] py-2 font-k5-display text-[22px] font-semibold text-white " + (fb ? "bg-k5-grn" : "bg-[#C2410C]")}>

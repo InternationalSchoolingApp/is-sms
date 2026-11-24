@@ -133,7 +133,9 @@
         "sayAll": "Wow, you used all your tickets this week!",
         "allTitle": "All your tickets are used!",
         "allSub": "Super job! New tickets come on Monday.",
-        "noLeft": "No tickets left"
+        "noLeft": "No tickets left",
+        "anyDay": "Pick a day with free times.",
+        "anyCourse": "These courses are free at this time."
       },
       "middle": {
         "sub": "Select a course, a day and a time. That's it!",
@@ -149,7 +151,8 @@
         "sayAll": "Wow, you booked all your classes this week!",
         "allTitle": "All your classes are booked!",
         "allSub": "Super job! New classes come on Monday.",
-        "noLeft": "No classes left"
+        "noLeft": "No classes left",
+        "bookedN": "{count} booked this week"
       },
       "high": {
         "sub": "Select a course, a day and a time. That's it!",
@@ -270,7 +273,8 @@
     "bookIt": "Book it!",
     "bookAnother": "Book another class",
     "seeMyClasses": "See my classes",
-    "bookClassCount": "Book a Class ({count})"
+    "bookClassCount": "Book a Class ({count})",
+    "allBookedWeek": "You have booked all your classes for this week"
   },
   "cart": {
     "title": "Your Cart",

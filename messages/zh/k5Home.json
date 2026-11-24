@@ -29,7 +29,9 @@
     "previousMonth": "上个月",
     "nextMonth": "下个月",
     "closeCalendar": "关闭日历",
-    "dotLegend": "圆点 = 有安排"
+    "dotLegend": "圆点 = 有安排",
+    "expandCalendar": "展开日历",
+    "minimizeCalendar": "收起日历"
   },
   "today": {
     "none": "没有课程和学校活动",
@@ -45,7 +47,8 @@
   "pills": {
     "done": "已完成",
     "live": "直播中",
-    "toGo": "待上"
+    "toGo": "待上",
+    "allLabel": "全部"
   },
   "clues": {
     "group": "颜色提示",
@@ -156,7 +159,11 @@
     "todaysPlan": "今天的计划",
     "dayPlan": "{day}的计划",
     "showCalendar": "显示日历",
-    "holiday": "假期"
+    "holiday": "假期",
+    "christmasDay": "圣诞节",
+    "merryChristmas": "圣诞快乐！",
+    "christmasText": "今天是圣诞节！不上学。祝你度过神奇的一天！",
+    "christmasTextNamed": "今天是圣诞节！不上学。祝你度过神奇的一天，{name}！"
   },
   "plans": {
     "chip": "{name}，{time}",

@@ -110,8 +110,8 @@ function Ring({ pct }) {
   const C = 2 * Math.PI * 15;
   const color = pct >= 70 ? "var(--k5-ac)" : pct > 0 ? "#E8A200" : "var(--k5-line)";
   return (
-    <span className="relative block h-10 w-10 flex-none" aria-hidden="true">
-      <svg width="40" height="40" viewBox="0 0 40 40" className="block -rotate-90">
+    <span className="relative block h-[3.25rem] w-[3.25rem] flex-none" aria-hidden="true">
+      <svg viewBox="0 0 40 40" className="block h-full w-full -rotate-90">
         <circle cx="20" cy="20" r="15" fill="none" strokeWidth="5" style={{ stroke: "var(--k5-line)" }} />
         <circle
           cx="20"
@@ -554,9 +554,9 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
               aria-valuenow={model.pct}
               aria-valuemin={0}
               aria-valuemax={100}
-              className="block h-4 flex-[1_1_auto] overflow-hidden rounded-full border-2 border-k5-line bg-k5-soft"
+              className="k5h-pbar block h-4 flex-[1_1_auto] overflow-hidden rounded-full border-2 border-k5-line bg-k5-soft"
             >
-              <span className="block h-full rounded-full bg-k5-ac transition-[width] duration-400" style={{ width: `${model.pct}%` }} />
+              <span className="block h-full rounded-full bg-k5-grn transition-[width] duration-400" style={{ width: `${model.pct}%` }} />
             </span>
             <span className="whitespace-nowrap text-base font-black">{t("page.pctComplete", { pct: model.pct })}</span>
           </div>
@@ -592,14 +592,15 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
                 type="button"
                 onClick={() => go(s)}
                 aria-current={on ? "step" : undefined}
-                className={`k5m-r12 flex min-h-[56px] w-full cursor-pointer items-center gap-2.5 rounded-2xl border-[3px] px-2.5 py-1.5 text-start font-k5-body text-[15px] font-black text-k5-ink max-[900px]:w-auto max-[900px]:max-w-[220px] max-[900px]:flex-none ${on ? "border-k5-ac bg-k5-act" : "border-transparent bg-k5-card"}`}
+                className={`k5m-r12 flex min-h-[56px] w-full cursor-pointer items-center gap-2.5 rounded-2xl border-[3px] px-2.5 py-1.5 text-start font-k5-body text-[15px] font-black text-k5-ink max-[900px]:w-auto max-[900px]:max-w-[260px] max-[900px]:flex-none ${on ? "border-k5-ac bg-k5-act" : "border-transparent bg-k5-card"}`}
               >
                 <span
                   className={`flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full font-k5-display text-[15px] font-semibold ${on ? "bg-k5-ac text-white" : "bg-k5-soft text-k5-ink"}`}
                 >
                   {i + 1}
                 </span>
-                <span className="min-w-0 flex-[1_1_auto] leading-[1.2]">{t(`sections.${s.key}`)}</span>
+                {/* min-w on the phone strip: the longest word ("Parent/Guardian") keeps its room, so the title never runs under the ring. */}
+                <span className="min-w-0 flex-[1_1_auto] leading-[1.2] max-[900px]:min-w-[8.5rem]">{t(`sections.${s.key}`)}</span>
                 {s.pct !== null && <Ring pct={s.pct} />}
               </button>
             );

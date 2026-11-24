@@ -29,7 +29,9 @@
     "previousMonth": "Mes anterior",
     "nextMonth": "Mes siguiente",
     "closeCalendar": "Cerrar calendario",
-    "dotLegend": "Punto = algo planeado"
+    "dotLegend": "Punto = algo planeado",
+    "expandCalendar": "Expandir calendario",
+    "minimizeCalendar": "Minimizar calendario"
   },
   "today": {
     "none": "Sin clases ni actividades",
@@ -45,7 +47,8 @@
   "pills": {
     "done": "hecho",
     "live": "en directo",
-    "toGo": "por hacer"
+    "toGo": "por hacer",
+    "allLabel": "Todas"
   },
   "clues": {
     "group": "Pistas de colores",
@@ -156,7 +159,11 @@
     "todaysPlan": "Plan de hoy",
     "dayPlan": "Plan del {day}",
     "showCalendar": "Mostrar calendario",
-    "holiday": "Festivo"
+    "holiday": "Festivo",
+    "christmasDay": "Día de Navidad",
+    "merryChristmas": "¡Feliz Navidad!",
+    "christmasText": "¡Es Navidad! No hay clases. ¡Que tengas un día mágico!",
+    "christmasTextNamed": "¡Es Navidad! No hay clases. ¡Que tengas un día mágico, {name}!"
   },
   "plans": {
     "chip": "{name}, {time}",

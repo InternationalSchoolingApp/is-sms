@@ -5,7 +5,8 @@
   "links": {
     "transcript": "成绩单 - {grade}",
     "transcriptNew": "成绩单 - {grade}（新）",
-    "diploma": "毕业证书 - {grade}"
+    "diploma": "毕业证书 - {grade}",
+    "verification": "学业验证 - {grade}"
   },
   "table": {
     "sNo": "序号",

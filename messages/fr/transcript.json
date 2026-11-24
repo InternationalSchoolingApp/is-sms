@@ -5,7 +5,8 @@
   "links": {
     "transcript": "Relevé de notes - {grade}",
     "transcriptNew": "Relevé de notes - {grade} (Nouveau)",
-    "diploma": "Diplôme - {grade}"
+    "diploma": "Diplôme - {grade}",
+    "verification": "Vérification académique - {grade}"
   },
   "table": {
     "sNo": "N°",

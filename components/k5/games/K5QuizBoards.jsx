@@ -4,15 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { newCount, newMath, newShape } from "@/components/k5/games/gameLogic";
 
-const FRAME = "relative flex min-h-[320px] flex-col overflow-hidden rounded-[26px] border-[3px] border-k5-line";
-const ANSWER = "min-h-[76px] min-w-[92px] cursor-pointer rounded-[22px] border-none bg-k5-card px-[18px] font-k5-display text-[38px] font-semibold text-k5-ink shadow-[0_6px_0_var(--k5-line)]";
+export const FRAME = "relative flex min-h-[320px] flex-col overflow-hidden rounded-[26px] border-[3px] border-k5-line";
+export const ANSWER = "min-h-[76px] min-w-[92px] cursor-pointer rounded-[22px] border-none bg-k5-card px-[18px] font-k5-display text-[38px] font-semibold text-k5-ink shadow-[0_6px_0_var(--k5-line)]";
 
 /**
  * One question at a time: a right answer scores, shows "Great job!" and moves to a new question
  * after a moment; a wrong one only shows "Try again!". The pending next question is cleared when
  * the board goes away.
  */
-function useQuiz(makeQuestion, isRight, { onScore, onFeedback }) {
+export function useQuiz(makeQuestion, isRight, { onScore, onFeedback }) {
   const [question, setQuestion] = useState(makeQuestion);
   const timer = useRef(null);
   useEffect(() => () => clearTimeout(timer.current), []);

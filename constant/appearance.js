@@ -27,6 +27,8 @@ export const APPEARANCE_OPTIONS = {
   gameSound: ["on", "off"],
   // The dashboard look (mockup "Theme"): auto = the student's own grade look.
   gradeLook: ["auto", "playful", "balanced", "mature"],
+  // The Christmas (25 December) theme: snow, music and decorations (components/k5/christmas).
+  christmas: ["on", "off"],
 };
 
 // Decision 08: Light by default (System stays available in the dialog).
@@ -51,6 +53,7 @@ export const DEFAULT_APPEARANCE = {
   buddyEnabled: "on",
   gameSound: "on",
   gradeLook: "auto",
+  christmas: "on",
 };
 
 // School policy (admin CONFIGURATION keys arrive in Phase 4). Customization off = defaults

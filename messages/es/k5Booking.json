@@ -133,7 +133,9 @@
         "sayAll": "¡Guau, usaste todos tus boletos esta semana!",
         "allTitle": "¡Usaste todos tus boletos!",
         "allSub": "¡Muy bien! Los nuevos boletos llegan el lunes.",
-        "noLeft": "No quedan boletos"
+        "noLeft": "No quedan boletos",
+        "anyDay": "Elige un día con horarios libres.",
+        "anyCourse": "Estos cursos están libres a esta hora."
       },
       "middle": {
         "sub": "Selecciona un curso, un día y una hora. ¡Y listo!",
@@ -149,7 +151,8 @@
         "sayAll": "¡Guau, reservaste todas tus clases de esta semana!",
         "allTitle": "¡Todas tus clases están reservadas!",
         "allSub": "¡Muy bien! Las nuevas clases llegan el lunes.",
-        "noLeft": "No quedan clases"
+        "noLeft": "No quedan clases",
+        "bookedN": "{count} reservada(s) esta semana"
       },
       "high": {
         "sub": "Selecciona un curso, un día y una hora. ¡Y listo!",
@@ -270,7 +273,8 @@
     "bookIt": "¡Reservar!",
     "bookAnother": "Reservar otra clase",
     "seeMyClasses": "Ver mis clases",
-    "bookClassCount": "Reservar una clase ({count})"
+    "bookClassCount": "Reservar una clase ({count})",
+    "allBookedWeek": "Has reservado todas tus clases de esta semana"
   },
   "cart": {
     "title": "Tu carrito",

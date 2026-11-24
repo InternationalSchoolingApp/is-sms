@@ -122,7 +122,8 @@ function CourseRow({ course, index, canOpen, onOpen, plain }) {
 export function K5PerformanceCourseList({ courses, detailed, onOpen, plain = false }) {
   const t = useTranslations("k5Performance");
   return (
-    <section className={`${K5_CARD} flex flex-col gap-3.5 px-[22px] py-5`}>
+    // scroll-mt: when the dashboard's "View all" brings the student here, the card stops right under the sticky header.
+    <section id="k5-my-courses" className={`${K5_CARD} flex scroll-mt-[104px] flex-col gap-3.5 px-[22px] py-5`}>
       <div className="flex flex-wrap items-center gap-3">
         <h2 className="m-0 font-k5-display text-2xl font-semibold leading-tight">{t("courseList.title")}</h2>
         {courses.length > 0 && detailed && (

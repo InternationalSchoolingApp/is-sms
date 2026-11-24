@@ -1,0 +1,412 @@
+/*
+ * Christmas (25 December) theme of the three dashboards. Source: the "Christmas" blocks of D:\Workspace\K-5 dashboard\Playful.dc.html,
+ * D:\Workspace\Grade 6–8 Dashboard\Middle.dc.html and D:\Workspace\Grade 9-12 Dashboard\High.dc.html (.xmas-*, .xm-*, .ho, .bulb).
+ * The shell puts data-xmas="on" on the themed root while the theme is on (components/k5/christmas/ChristmasProvider.jsx); Playful is
+ * the default look, Middle is data-k5-band="middle" without data-k5-high, High is data-k5-high.
+ */
+
+/* ── Winter sky: the page background (Day / Night, one per look) ─────────────────────────────────── */
+.theme-k5[data-xmas="on"] {
+  background: linear-gradient(180deg, #86ace4 0%, #a9bcea 34%, #d2cae8 66%, #ebdcd6 100%) fixed !important;
+}
+.theme-k5.dark[data-xmas="on"] {
+  background: linear-gradient(180deg, #13204a 0%, #283062 40%, #41355f 72%, #55405e 100%) fixed !important;
+}
+.theme-k5[data-xmas="on"][data-k5-band="middle"]:not([data-k5-high]) {
+  background: linear-gradient(180deg, #8db8f0 0%, #b3cdf3 36%, #d8e5f8 70%, #eef3fb 100%) fixed !important;
+}
+.theme-k5.dark[data-xmas="on"][data-k5-band="middle"]:not([data-k5-high]) {
+  background: linear-gradient(180deg, #0e1f45 0%, #1b3366 45%, #27467f 100%) fixed !important;
+}
+.theme-k5[data-xmas="on"][data-k5-high] {
+  background: linear-gradient(180deg, #a9bcd6 0%, #c7d3e4 45%, #e6ebf2 100%) fixed !important;
+}
+.theme-k5.dark[data-xmas="on"][data-k5-high] {
+  background: linear-gradient(180deg, #121b2e 0%, #1c2a44 50%, #26385a 100%) fixed !important;
+}
+/* The sky replaces the Playful dot grid; the page sits above the sky. */
+.theme-k5[data-xmas="on"] [data-motion-canvas="background"] {
+  display: none;
+}
+.theme-k5[data-xmas="on"] .k5-layout {
+  position: relative;
+  z-index: 1;
+}
+
+.k5-xm-sky {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.k5-xm-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.55;
+}
+.dark .k5-xm-glow {
+  opacity: 0.18;
+}
+.k5-xm-glow.g1 {
+  width: 340px;
+  height: 340px;
+  left: -80px;
+  top: 8%;
+  background: #ffffff;
+}
+.k5-xm-glow.g2 {
+  width: 280px;
+  height: 280px;
+  right: -60px;
+  top: 40%;
+  background: #ffe3d6;
+}
+.k5-xm-glow.g3 {
+  width: 420px;
+  height: 200px;
+  left: 30%;
+  bottom: -60px;
+  background: #ffffff;
+}
+.k5-xm-sky i {
+  position: absolute;
+  top: -30px;
+  left: var(--x);
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 1) 0, rgba(255, 255, 255, 0.85) 40%, rgba(255, 255, 255, 0) 72%);
+  opacity: var(--o);
+  filter: blur(var(--b));
+  animation: k5XmFall var(--d) linear var(--l) infinite;
+  will-change: transform;
+}
+@keyframes k5XmFall {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(calc(var(--dx) * -0.5), 55vh, 0);
+  }
+  100% {
+    transform: translate3d(var(--dx), 110vh, 0);
+  }
+}
+/* The snow canvas (components/k5/christmas/snowEngine.js) draws the flakes itself. */
+.xm-snowcv {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 28;
+}
+body.xm-snow-on .k5-xm-sky i {
+  display: none;
+}
+
+/* ── Banner: tree, greeting, Music on / off, Turn off theme ──────────────────────────────────────── */
+.k5-xm-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+  padding: 14px 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 3px solid #ffffff;
+  box-shadow: 0 6px 0 rgba(255, 255, 255, 0.55);
+  color: #1e2242;
+}
+.k5-xm-banner > div {
+  flex: 1;
+  min-width: 0;
+}
+.k5-xm-banner b {
+  display: block;
+  font-family: var(--k5-fd);
+  font-weight: 700;
+  font-size: 20px;
+  color: #1e2242;
+}
+.k5-xm-banner span {
+  font-family: var(--k5-fb);
+  font-weight: 600;
+  font-size: 14px;
+  color: #3b4663;
+}
+.k5-xm-banner .k5-xm-tree {
+  font-size: 40px;
+  line-height: 1;
+  animation: k5XmBob 2.6s ease-in-out infinite;
+}
+@keyframes k5XmBob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(3deg);
+  }
+}
+.dark .k5-xm-banner {
+  background: rgba(26, 37, 71, 0.72);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.25);
+}
+.dark .k5-xm-banner b {
+  color: #f1f4ff;
+}
+.dark .k5-xm-banner span {
+  color: #c9d2ea;
+}
+/* Middle and High: thinner border, soft corners, no hard shadow. */
+[data-k5-band="middle"] .k5-xm-banner {
+  border-radius: 14px;
+  border-width: 1.5px;
+  box-shadow: none;
+}
+[data-k5-high] .k5-xm-banner {
+  border-width: 1px;
+}
+[data-k5-high] .k5-xm-banner b {
+  font-weight: 500;
+  font-size: 17px;
+}
+[data-k5-high] .k5-xm-banner span {
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.k5-xm-offbtn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px 0 12px;
+  border: 2.5px solid #ffffff;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 3px 0 rgba(30, 34, 66, 0.18);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.k5-xm-offbtn,
+.k5-xm-offbtn * {
+  color: #1e2242 !important;
+  font-family: var(--k5-fd) !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+}
+[data-k5-band="middle"] .k5-xm-offbtn {
+  box-shadow: none;
+}
+[data-k5-high] .k5-xm-offbtn,
+[data-k5-high] .k5-xm-offbtn * {
+  font-weight: 500 !important;
+  font-size: 13px !important;
+}
+.k5-xm-offbtn:hover {
+  transform: translateY(-1px);
+}
+.k5-xm-offbtn:active {
+  transform: translateY(2px);
+}
+.k5-xm-offbtn:focus-visible {
+  outline: 3px solid var(--k5-ac);
+  outline-offset: 2px;
+}
+.k5-xm-banner .k5-xm-offbtn {
+  gap: 8px;
+}
+.k5-xm-onrow {
+  display: flex;
+  justify-content: center;
+}
+.k5-xm-onbtn {
+  border-color: #f2c4c4;
+  box-shadow: 0 3px 0 #f2c4c4;
+}
+[data-k5-band="middle"] .k5-xm-onbtn {
+  box-shadow: none;
+}
+@media (max-width: 640px) {
+  .k5-xm-offbtn {
+    min-height: 40px;
+    padding: 0 12px 0 10px;
+  }
+}
+/* Phone and tablet (the page column is narrow beside the rails): the tree and the words share the first row, the two buttons
+   sit together under them instead of squeezing the words into a thin column. */
+@media (max-width: 900px) {
+  .k5-xm-banner {
+    gap: 10px 12px;
+    padding: 12px 14px;
+  }
+  .k5-xm-banner > div {
+    flex: 1 1 calc(100% - 72px);
+  }
+  .k5-xm-banner .k5-xm-offbtn {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+}
+
+/* The record beside "Music on". */
+.k5-xm-disc {
+  display: block;
+  flex: none;
+}
+.k5-xm-disc.is-spin {
+  animation: k5XmSpin 1.8s linear infinite;
+}
+.k5-xm-disc.is-stop {
+  opacity: 0.6;
+  filter: grayscale(0.5);
+}
+@keyframes k5XmSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Toast after "Turn off theme". */
+.k5-xm-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  z-index: 90;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: #1e2242;
+  box-shadow: 0 6px 16px rgba(16, 26, 58, 0.3);
+  font-family: var(--k5-fd);
+  font-weight: 600;
+  font-size: 15px;
+  text-align: center;
+  color: #ffffff;
+  animation: k5XmToastIn 0.25s ease-out;
+}
+.dark .k5-xm-toast {
+  background: #ffffff;
+  color: #1e2242;
+}
+@keyframes k5XmToastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* "Ho Ho Ho!" floating up from Santa Pico, and the string of bulbs on the My Classes heading. */
+.k5-xm-ho {
+  position: absolute;
+  left: 50px;
+  top: 52px;
+  z-index: 2;
+  pointer-events: none;
+  white-space: nowrap;
+  font-family: var(--k5-fd);
+  font-weight: 700;
+  font-size: 19px;
+  color: #e5484d;
+  text-shadow: 0 2px 0 #ffffff, 0 -1px 0 #ffffff;
+  opacity: 0;
+  animation: k5XmHo 2.4s ease-out infinite;
+}
+@keyframes k5XmHo {
+  0% {
+    transform: translate(0, 0) scale(0.5) rotate(-6deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(26px, -64px) scale(1.15) rotate(8deg);
+    opacity: 0;
+  }
+}
+.k5-xm-bulb {
+  display: block;
+  width: 9px;
+  height: 12px;
+  margin-top: 2px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  animation: k5XmTwinkle 1.6s ease-in-out infinite;
+}
+@keyframes k5XmTwinkle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Santa flying across the dashboard hero on 25 December (mockup .lm-santa). */
+.k5-xm-santa {
+  position: absolute;
+  left: 0;
+  top: 44%;
+  z-index: 6;
+  width: 240px;
+  height: 72px;
+  pointer-events: none;
+  animation: k5XmSanta 16s linear infinite;
+  will-change: transform;
+  filter: drop-shadow(0 3px 3px rgba(0, 30, 90, 0.25));
+}
+.k5-xm-santa img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 50%;
+  animation: k5XmSantaBob 1.6s ease-in-out infinite alternate;
+}
+@keyframes k5XmSanta {
+  from {
+    transform: translateX(calc(100cqw + 110px));
+  }
+  to {
+    transform: translateX(-300px);
+  }
+}
+@keyframes k5XmSantaBob {
+  from {
+    transform: translateY(-4px) rotate(1.5deg);
+  }
+  to {
+    transform: translateY(4px) rotate(-1.5deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .k5-xm-sky i {
+    animation: none;
+    top: var(--y);
+  }
+  .k5-xm-banner .k5-xm-tree,
+  .k5-xm-disc.is-spin,
+  .k5-xm-ho,
+  .k5-xm-bulb,
+  .k5-xm-santa,
+  .k5-xm-santa img {
+    animation: none;
+  }
+  .k5-xm-ho {
+    opacity: 1;
+  }
+}

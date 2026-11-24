@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { HIGH_GAMES, MEMORY_PAIRS, newHighMemory, newMental, newOddOne, newSeries } from "@/components/k5/games/highGameLogic";
+import { GameSectionToggle } from "@/components/k5/games/GameSectionToggle";
+import { useAutoOpenGames, useDefaultOpenGames } from "@/components/k5/games/useAutoOpenGames";
 
 /**
  * Grade 9–12 "Brain Games" (High.dc.html, the gamesTitle block): four short puzzles for a free day - Number Series,
@@ -190,10 +192,14 @@ function MemoryGridBoard({ onScore, onFeedback, onRestart }) {
   );
 }
 
-export function HighGames({ locked = false, past = false }) {
+export function HighGames({ locked = false, past = false, defaultOpen = false }) {
   const t = useTranslations("k5Games.high");
   const tc = useTranslations("common");
   const [gameId, setGameId] = useState(null);
+  const [gamesOpen, setGamesOpen] = useState(false);
+  const sectionRef = useRef(null);
+  useAutoOpenGames(sectionRef, setGamesOpen);
+  useDefaultOpenGames(defaultOpen, setGamesOpen);
   const [score, setScore] = useState(0);
   const [round, setRound] = useState(0);
   const [fb, setFb] = useState(null);
@@ -216,28 +222,36 @@ export function HighGames({ locked = false, past = false }) {
 
   if (!game) {
     return (
-      <section aria-labelledby="high-games-title" className="flex flex-col gap-3">
-        <div className="flex flex-col">
-          <h3 id="high-games-title" className="m-0 text-[1.25rem] font-[500]">{t("title")}</h3>
-          <p className="m-0 text-[0.8125rem] font-[500] text-k5-mut">{t("subtitle")}</p>
-        </div>
-        {locked && (
-          <div role="note" className="flex items-start gap-2.5 rounded-[0.625rem] border-[1.5px] border-k5-yb bg-k5-yt px-3.5 py-3 text-k5-ink">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mt-px flex-none stroke-k5-yx">
-              <rect x="5" y="11" width="14" height="10" rx="2" />
-              <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-            </svg>
-            <span className="flex flex-col gap-0.5">
-              <span className="text-[0.875rem] font-[500]">{t("locked")}</span>
-              <span className="text-[0.8125rem] font-[400] leading-[1.4]">{past ? t("lockedPast") : t("lockedText")}</span>
-            </span>
+      <section ref={sectionRef} aria-labelledby="high-games-title" className="flex flex-col rounded-3xl bg-blue-100 p-4 dark:bg-blue-900">
+        <GameSectionToggle
+          open={gamesOpen}
+          onToggle={() => setGamesOpen((open) => !open)}
+          titleId="high-games-title"
+          panelId="high-games-list"
+          titleClassName="text-[1.25rem] font-[500]"
+        >
+          <div className="flex flex-col">
+            <h3 className="m-0 text-[1.25rem] font-[500]">{t("title")}</h3>
+            <p className="m-0 text-[0.8125rem] font-[500] text-k5-mut">{t("subtitle")}</p>
           </div>
-        )}
-        <div className="grid grid-cols-2 gap-2.5 max-[560px]:grid-cols-1">
-          {HIGH_GAMES.map((g) => (
-            <GameTile key={g.id} game={g} locked={locked} onPlay={() => play(g.id)} />
-          ))}
-        </div>
+          {locked && (
+            <div role="note" className="flex items-start gap-2.5 rounded-[0.625rem] border-[1.5px] border-k5-yb bg-k5-yt px-3.5 py-3 text-k5-ink">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mt-px flex-none stroke-k5-yx">
+                <rect x="5" y="11" width="14" height="10" rx="2" />
+                <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+              </svg>
+              <span className="flex flex-col gap-0.5">
+                <span className="text-[0.875rem] font-[500]">{t("locked")}</span>
+                <span className="text-[0.8125rem] font-[400] leading-[1.4]">{past ? t("lockedPast") : t("lockedText")}</span>
+              </span>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-2.5 max-[560px]:grid-cols-1">
+            {HIGH_GAMES.map((g) => (
+              <GameTile key={g.id} game={g} locked={locked} onPlay={() => play(g.id)} />
+            ))}
+          </div>
+        </GameSectionToggle>
       </section>
     );
   }

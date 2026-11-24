@@ -402,7 +402,7 @@
   transform: scale(0.97);
 }
 .theme-k5 button.motion-none,
-.theme-k5 [data-slot="button"].motion-none {
+.theme-k5 [data-slot="button"].motion-none,  .motion-none{
   animation: none !important;
   transition: none !important;
   transform: none !important;

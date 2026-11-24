@@ -39,7 +39,12 @@
     "msg": "Precisa de ajuda? Toque no botão verde Fale com a gente para conversar com a gente!",
     "announcements": "Esta é a seção de avisos. A escola compartilha aqui novidades sobre eventos, atividades, clubes e feriados. Não perca!",
     "news": "Confira aqui as últimas novidades sobre educação.",
-    "diary": "Este é o seu Diário da Escola, onde você encontra recados importantes dos professores ou da escola sobre seu calendário e suas tarefas."
+    "diary": "Este é o seu Diário da Escola, onde você encontra recados importantes dos professores ou da escola sobre seu calendário e suas tarefas.",
+    "hero": "Este é o seu painel. Ele mostra a data de hoje, a hora e o tempo, além da sua próxima aula. Quando uma aula estiver ao vivo, toque em Entrar na aula para participar!",
+    "goal": "Esta é a Meta de Hoje. Suas aulas, atividades e tarefas de hoje estão listadas aqui, e o anel se preenche conforme você as conclui!",
+    "performance": "Este é o Meu Desempenho. Veja a sua média, a data em que quer terminar e o seu progresso. Toque em Definir minhas metas para escolher as suas próprias metas!",
+    "assignments": "Estas são as Minhas Tarefas. As tarefas para hoje e amanhã estão aqui, e um cartão vermelho avisa se alguma está atrasada. Toque em Começar para iniciar uma!",
+    "msgBalanced": "Precisa de ajuda? Toque no botão Fale com a gente para conversar com a gente!"
   },
   "modules": {
     "home": "Este é o seu painel. Aqui você vê as aulas de hoje, seu calendário e tudo o que foi planejado para você. Toque em um dia para ver o plano!",
@@ -94,5 +99,12 @@
     "competitive_gaming": "O Clube de Games Competitivos é para jogar em equipe e se preparar para partidas. Toque em Inscrever-se agora para participar!",
     "global_competitions_club": "O Clube de Competições Globais deixa você participar de competições de games com alunos do mundo todo. Toque em Inscrever-se agora para participar!",
     "game_strategy_analysis_club": "No Clube de Estratégia e Análise de Jogos você estuda jogos e aprende por que certas jogadas vencem. Toque em Inscrever-se agora para participar!"
+  },
+  "classesTour": {
+    "plan": "Este é o Plano de Hoje. Todas as suas aulas e atividades do dia estão aqui. Toque em uma para saber mais.",
+    "planFree": "Este é o Plano de Hoje. Não há aulas nem atividades hoje, então aproveite o seu dia livre! Suas aulas e atividades aparecem aqui nos dias em que você as tem.",
+    "planHoliday": "Este é o Plano de Hoje. Hoje é feriado, {name}, então não há aulas nem atividades. Aproveite o seu dia! Suas aulas e atividades aparecem aqui nos dias em que você as tem.",
+    "mini": "Este calendário pequeno mostra o mês inteiro. Um ponto embaixo de um dia quer dizer que tem algo planejado. Toque em um dia para abri-lo.",
+    "courses": "Estes são os seus cursos. Toque em um curso para mostrar ou ocultar as suas aulas no seu plano."
   }
 }

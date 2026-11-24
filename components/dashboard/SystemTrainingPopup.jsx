@@ -15,7 +15,9 @@ import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
 import { getSystemTrainingPopup } from "@/services/systemTrainingApi";
 
-const salsa = Salsa({ weight: "400", subsets: ["latin"], display: "swap" });
+// preload: false — this font is only used inside the popup below, which most visits never open; without it Next adds a <link rel="preload">
+// for the font on every dashboard page and the browser warns that it was preloaded but not used.
+const salsa = Salsa({ weight: "400", subsets: ["latin"], display: "swap", preload: false });
 
 /**
  * School System Training popup on the dashboard — legacy studentTimePreference.js (getStudentTimePreference ->

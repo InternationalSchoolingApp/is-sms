@@ -258,7 +258,10 @@
     "diplomaWord": "毕业证书",
     "verificationUnavailable": "学业证明暂时还不能下载",
     "noMatches": "没有找到匹配的记录。",
-    "pages": "页码"
+    "pages": "页码",
+    "downloading": "下载中",
+    "downloadError": "目前无法下载该文档。请重试。",
+    "verificationWord": "学业验证"
   },
   "videoLibrary": {
     "title": "视频",

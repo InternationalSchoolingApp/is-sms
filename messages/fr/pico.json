@@ -39,7 +39,12 @@
     "msg": "Besoin d'aide ? Touche le bouton vert Parle-nous pour discuter avec nous !",
     "announcements": "Voici les annonces. L'école y partage les nouvelles sur les événements, les activités, les clubs et les vacances. Ne rate rien !",
     "news": "Regarde ici les dernières nouvelles du monde de l'éducation.",
-    "diary": "Voici ton carnet de l'école : tu y trouves les infos importantes de tes profs ou de l'école sur ton calendrier et ton travail."
+    "diary": "Voici ton carnet de l'école : tu y trouves les infos importantes de tes profs ou de l'école sur ton calendrier et ton travail.",
+    "hero": "Voici ton tableau de bord. Il affiche la date du jour, l'heure et la météo, ainsi que ton prochain cours. Quand un cours est en direct, touche Rejoindre le cours pour entrer !",
+    "goal": "Voici l'Objectif du jour. Tes cours, activités et devoirs d'aujourd'hui sont listés ici, et l'anneau se remplit à mesure que tu les termines !",
+    "performance": "Voici Mes résultats. Vois ta moyenne, la date à laquelle tu veux finir et où tu en es. Touche Définir mes objectifs pour choisir tes propres objectifs !",
+    "assignments": "Voici Mes devoirs. Les devoirs à rendre aujourd'hui et demain sont ici, et une carte rouge t'indique si l'un d'eux est en retard. Touche Commencer pour en démarrer un !",
+    "msgBalanced": "Besoin d'aide ? Touche le bouton Parle-nous pour discuter avec nous !"
   },
   "modules": {
     "home": "Voici ton tableau de bord. Tu y vois les cours du jour, ton calendrier et tout ce qui est prévu pour toi. Touche un jour pour voir son planning !",
@@ -94,5 +99,12 @@
     "competitive_gaming": "Le club de jeu compétitif, c'est pour jouer en équipe et se préparer aux matchs. Touche S'inscrire maintenant pour participer !",
     "global_competitions_club": "Le club de compétitions internationales te fait participer à des concours de jeux avec des élèves du monde entier. Touche S'inscrire maintenant pour participer !",
     "game_strategy_analysis_club": "Au club de stratégie et d'analyse, tu étudies les jeux et tu comprends pourquoi certains coups gagnent. Touche S'inscrire maintenant pour participer !"
+  },
+  "classesTour": {
+    "plan": "Voici le Plan du jour. Tous tes cours et activités de la journée sont ici. Touche-en un pour en savoir plus.",
+    "planFree": "Voici le Plan du jour. Il n'y a ni cours ni activités aujourd'hui, alors profite de ta journée libre ! Tes cours et activités apparaissent ici les jours où tu en as.",
+    "planHoliday": "Voici le Plan du jour. Aujourd'hui, c'est un jour férié, {name}, il n'y a donc ni cours ni activités. Profite de ta journée ! Tes cours et activités apparaissent ici les jours où tu en as.",
+    "mini": "Ce petit calendrier montre tout le mois. Un point sous un jour veut dire que quelque chose est prévu. Touche un jour pour l'ouvrir.",
+    "courses": "Ce sont tes cours. Touche un cours pour afficher ou masquer ses séances dans ton plan."
   }
 }

@@ -106,5 +106,19 @@
     "score": "Score {score}",
     "correct": "Correct",
     "notQuite": "Not quite. Try again."
+  },
+  "middleGames": {
+    "word": {
+      "name": "Word Unscramble",
+      "how": "Unscramble the science or maths word."
+    },
+    "count": {
+      "name": "Number Patterns",
+      "how": "Spot the rule. What number comes next?"
+    },
+    "shape": {
+      "name": "Odd One Out",
+      "how": "One number doesn't follow the rule. Find it!"
+    }
   }
 }

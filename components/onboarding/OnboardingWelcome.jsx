@@ -79,7 +79,12 @@ export function OnboardingWelcome() {
       {step === "timezone" && (
         <TimezoneStep
           timezone={data.timezone}
-          onSaved={() => {
+          onSaved={async () => {
+            // The dashboard details (StudentDetailsDTO.userTimezone: the clock, the calendar, class times) were loaded before
+            // this save, with the old zone, and are cached for 5 minutes; the home reads them with ensureQueryData, which
+            // keeps cached data. Load them again before leaving, so the dashboard opens in the zone just saved.
+            await queryClient.invalidateQueries({ queryKey: ["student-dashboard-details"] });
+            queryClient.removeQueries({ queryKey: ["student-dashboard-data"] });
             queryClient.removeQueries({ queryKey: [ONBOARDING_STATUS_KEY] });
             query.refetch();
           }}

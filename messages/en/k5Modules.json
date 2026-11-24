@@ -258,7 +258,10 @@
     "diplomaWord": "diploma",
     "verificationUnavailable": "Academic verification download is not available yet",
     "noMatches": "No matching records found.",
-    "pages": "Pages"
+    "pages": "Pages",
+    "downloading": "Downloading",
+    "downloadError": "The document could not be downloaded right now. Please try again.",
+    "verificationWord": "academic verification"
   },
   "videoLibrary": {
     "title": "Videos",

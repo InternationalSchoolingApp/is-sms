@@ -258,7 +258,10 @@
     "diplomaWord": "diplôme",
     "verificationUnavailable": "Le téléchargement de l'attestation de scolarité n'est pas encore disponible",
     "noMatches": "Aucun résultat trouvé.",
-    "pages": "Pages"
+    "pages": "Pages",
+    "downloading": "Téléchargement",
+    "downloadError": "Le document n'a pas pu être téléchargé pour le moment. Veuillez réessayer.",
+    "verificationWord": "vérification académique"
   },
   "videoLibrary": {
     "title": "Vidéos",

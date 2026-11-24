@@ -125,6 +125,10 @@
     "readingRuler": "Regla de lectura",
     "readingRulerSub": "Una franja brillante sigue tu dedo o tu ratón",
     "plainLetters": "Letras simples",
-    "plainLettersSub": "Sin MAYÚSCULAS ni texto inclinado"
+    "plainLettersSub": "Sin MAYÚSCULAS ni texto inclinado",
+    "christmasTheme": "🎄 Tema navideño",
+    "christmasThemeSub": "Nieve, música y decoraciones el día de Navidad.",
+    "on": "Activado",
+    "off": "Desactivado"
   }
 }

@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Award, Download, FileX, Search } from "lucide-react";
+import { Award, Download, FileX, Loader2, Search } from "lucide-react";
+import toast from "react-hot-toast";
 import { useTranslations } from "next-intl";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { downloadTranscriptDocument, isDownloadableTranscriptLink } from "@/utils/transcriptDownload";
 import { K5Loading, K5TableSkeleton } from "@/components/k5/K5Skeletons";
 
 const GRID = "70px minmax(130px,0.9fr) minmax(170px,1.1fr) minmax(145px,1fr) minmax(145px,1fr) minmax(185px,1.2fr)";
@@ -18,11 +20,31 @@ const CELL =
 function DownloadButton({ href, label }) {
   const t = useTranslations("k5Modules.transcript");
   const className = "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[14px] border-[2px] border-k5-ac bg-k5-card px-3 font-k5-display text-[15px] font-semibold text-k5-acx no-underline shadow-[0_2px_0_var(--k5-acd)]";
+  const [busy, setBusy] = useState(false);
   if (!href) return <span className="text-sm font-extrabold text-k5-mut">--</span>;
+  // The demo page of dummy mode is only a page to look at; the real documents are saved as files, not opened in a tab.
+  if (!isDownloadableTranscriptLink(href)) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" aria-label={t("downloadLabel", { label })} className={className}>
+        {t("download")} <Download className="h-4 w-4" aria-hidden="true" />
+      </a>
+    );
+  }
+  const save = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await downloadTranscriptDocument({ href, name: label });
+    } catch (error) {
+      toast.error(String(error?.message || t("downloadError")));
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" aria-label={t("downloadLabel", { label })} className={className}>
-      {t("download")} <Download className="h-4 w-4" aria-hidden="true" />
-    </a>
+    <button type="button" onClick={save} disabled={busy} aria-busy={busy} aria-label={t("downloadLabel", { label })} className={`${className} cursor-pointer disabled:cursor-default disabled:opacity-70`}>
+      {busy ? t("downloading") : t("download")} {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />}
+    </button>
   );
 }
 /** K–5 look of Student Transcript (mockup Student Transcript): the same record and links as the existing page. */
@@ -44,6 +66,7 @@ export function K5Transcript({ isLoading, student, transcripts = [], links }) {
           id: student.rollNumber,
           transcriptLink: links.find((link) => link.key === `t${index}`),
           diplomaLink: links.find((link) => link.key === `d${index}`),
+          verificationLink: links.find((link) => link.key === `v${index}`),
         }))
       : [{ key: "current", grade: student.grade, id: student.rollNumber }];
     const q = query.trim().toLowerCase();
@@ -150,16 +173,14 @@ export function K5Transcript({ isLoading, student, transcripts = [], links }) {
                   <span role="cell" data-l={t("columns.studentId")} className={`${CELL} max-[760px]:col-span-full`}>
                     <span className="k5h-tr-code rounded-lg bg-k5-soft px-2.5 py-0.5 font-mono text-sm font-extrabold">{row.id}</span>
                   </span>
-                  <span role="cell" data-l={t("columns.transcript")} className="px-3.5 py-2 max-[760px]:order-2 max-[760px]:px-3 max-[760px]:py-1.5">
+                  <span role="cell" data-l={t("columns.transcript")} className={CELL}>
                     <DownloadButton href={row.transcriptLink?.href} label={row.transcriptLink?.label || t("transcriptWord")} />
                   </span>
-                  <span role="cell" data-l={t("columns.diploma")} className="px-3.5 py-2 max-[760px]:order-2 max-[760px]:px-3 max-[760px]:py-1.5">
+                  <span role="cell" data-l={t("columns.diploma")} className={CELL}>
                     <DownloadButton href={row.diplomaLink?.href} label={row.diplomaLink?.label || t("diplomaWord")} />
                   </span>
-                  <span role="cell" data-l={t("columns.verification")} className="px-3.5 py-2 max-[760px]:order-2 max-[760px]:px-3 max-[760px]:py-1.5">
-                    <button type="button" disabled title={t("verificationUnavailable")} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[14px] border-[2px] border-k5-ac bg-k5-card px-3 font-k5-display text-[15px] font-semibold text-k5-acx shadow-[0_2px_0_var(--k5-acd)]">
-                      {t("download")} <Download className="h-4 w-4" aria-hidden="true" />
-                    </button>
+                  <span role="cell" data-l={t("columns.verification")} className={CELL}>
+                    <DownloadButton href={row.verificationLink?.href} label={row.verificationLink?.label || t("verificationWord")} />
                   </span>
                 </div>
               ))}

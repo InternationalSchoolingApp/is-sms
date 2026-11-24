@@ -125,6 +125,10 @@
     "readingRuler": "Règle de lecture",
     "readingRulerSub": "Une bande lumineuse suit ton doigt ou ta souris",
     "plainLetters": "Lettres simples",
-    "plainLettersSub": "Pas de MAJUSCULES ni d'italique"
+    "plainLettersSub": "Pas de MAJUSCULES ni d'italique",
+    "christmasTheme": "🎄 Thème de Noël",
+    "christmasThemeSub": "De la neige, de la musique et des décorations le jour de Noël.",
+    "on": "Activé",
+    "off": "Désactivé"
   }
 }

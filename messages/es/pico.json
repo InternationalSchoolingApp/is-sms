@@ -39,7 +39,12 @@
     "msg": "¿Necesitas ayuda? ¡Toca el botón verde Habla con nosotros para chatear!",
     "announcements": "Esta es la sección de anuncios. La escuela comparte aquí novedades sobre eventos, actividades, clubes y vacaciones. ¡No te lo pierdas!",
     "news": "Mira aquí las últimas novedades sobre educación.",
-    "diary": "Este es tu Diario escolar, donde encuentras avisos importantes de tus profes o de la escuela sobre tu calendario y tus tareas."
+    "diary": "Este es tu Diario escolar, donde encuentras avisos importantes de tus profes o de la escuela sobre tu calendario y tus tareas.",
+    "hero": "Este es tu panel. Muestra la fecha de hoy, la hora y el clima, y tu próxima clase. Cuando una clase esté en directo, ¡toca Unirse a la clase para entrar!",
+    "goal": "Esta es la Meta de Hoy. Aquí se listan tus clases, actividades y tareas de hoy, ¡y el anillo se llena a medida que las completas!",
+    "performance": "Este es Mi Rendimiento. Consulta tu promedio, la fecha en la que quieres terminar y tu progreso. ¡Toca Definir mis metas para elegir tus propias metas!",
+    "assignments": "Estas son Mis Tareas. Las tareas para hoy y mañana están aquí, y una tarjeta roja te avisa si alguna está atrasada. ¡Toca Comenzar para empezar una!",
+    "msgBalanced": "¿Necesitas ayuda? ¡Toca el botón Habla con nosotros para chatear!"
   },
   "modules": {
     "home": "Este es tu panel. Aquí ves las clases de hoy, tu calendario y todo lo que tienes planeado. ¡Toca un día para ver su plan!",
@@ -94,5 +99,12 @@
     "competitive_gaming": "El Club de Juego Competitivo es para jugar en equipo y prepararse para las partidas. ¡Toca Inscribirse ahora para unirte!",
     "global_competitions_club": "El Club de Competiciones Globales te deja participar en concursos de juegos con estudiantes de todo el mundo. ¡Toca Inscribirse ahora para unirte!",
     "game_strategy_analysis_club": "En el Club de Estrategia y Análisis de Juegos estudias juegos y aprendes por qué ganan ciertas jugadas. ¡Toca Inscribirse ahora para unirte!"
+  },
+  "classesTour": {
+    "plan": "Este es el Plan de Hoy. Todas tus clases y actividades del día están aquí. Toca una para ver más.",
+    "planFree": "Este es el Plan de Hoy. Hoy no hay clases ni actividades, ¡así que disfruta tu día libre! Tus clases y actividades aparecen aquí los días que las tengas.",
+    "planHoliday": "Este es el Plan de Hoy. Hoy es un día festivo, {name}, así que no hay clases ni actividades. ¡Disfruta tu día! Tus clases y actividades aparecen aquí los días que las tengas.",
+    "mini": "Este pequeño calendario muestra todo el mes. Un punto debajo de un día significa que hay algo planeado. Toca un día para abrirlo.",
+    "courses": "Estos son tus cursos. Toca un curso para mostrar u ocultar sus clases en tu plan."
   }
 }

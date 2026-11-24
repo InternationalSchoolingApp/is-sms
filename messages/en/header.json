@@ -125,6 +125,10 @@
     "readingRuler": "Reading ruler",
     "readingRulerSub": "A bright strip follows your finger or mouse",
     "plainLetters": "Plain letters",
-    "plainLettersSub": "No ALL CAPS or slanted text"
+    "plainLettersSub": "No ALL CAPS or slanted text",
+    "christmasTheme": "🎄 Christmas theme",
+    "christmasThemeSub": "Snow, music and decorations on Christmas Day.",
+    "on": "On",
+    "off": "Off"
   }
 }

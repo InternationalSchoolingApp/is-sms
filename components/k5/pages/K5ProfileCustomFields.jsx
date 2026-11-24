@@ -76,7 +76,7 @@ function DateField({ field, editor }) {
   const key = `custom.${field.id}`;
   return (
     <div className={LABEL}>
-      <DatePicker label={field.label} icon={CalendarDays} height="h-[50px]" value={parseProfileDate(editor.draft[key])} fromDate={new Date(1930, 0, 1)} onChange={(date) => editor.set(key, formatProfileDate(date))} />
+      <DatePicker label={field.label} icon={CalendarDays} height="h-[50px]" triggerClassName="motion-none" value={parseProfileDate(editor.draft[key])} fromDate={new Date(1930, 0, 1)} onChange={(date) => editor.set(key, formatProfileDate(date))} />
       <UnitBar editor={editor} unit={editor.unitOf(key)} />
       <Purpose text={field.purpose} />
     </div>

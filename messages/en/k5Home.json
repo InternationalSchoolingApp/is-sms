@@ -29,7 +29,9 @@
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
     "closeCalendar": "Close calendar",
-    "dotLegend": "Dot = something planned"
+    "dotLegend": "Dot = something planned",
+    "expandCalendar": "Expand calendar",
+    "minimizeCalendar": "Minimize calendar"
   },
   "today": {
     "none": "No Class & School Activity",
@@ -45,7 +47,8 @@
   "pills": {
     "done": "done",
     "live": "live",
-    "toGo": "to go"
+    "toGo": "to go",
+    "allLabel": "All"
   },
   "clues": {
     "group": "Color clues",
@@ -156,7 +159,11 @@
     "todaysPlan": "Today's Plan",
     "dayPlan": "{day}'s Plan",
     "showCalendar": "Show calendar",
-    "holiday": "Holiday"
+    "holiday": "Holiday",
+    "christmasDay": "Christmas Day",
+    "merryChristmas": "Merry Christmas!",
+    "christmasText": "It's Christmas Day! No school. Have a magical day!",
+    "christmasTextNamed": "It's Christmas Day! No school. Have a magical day, {name}!"
   },
   "plans": {
     "chip": "{name}, {time}",

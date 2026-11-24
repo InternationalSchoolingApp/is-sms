@@ -106,5 +106,19 @@
     "score": "Pontos {score}",
     "correct": "Certo",
     "notQuite": "Quase. Tente de novo."
+  },
+  "middleGames": {
+    "word": {
+      "name": "Palavra embaralhada",
+      "how": "Desembaralhe a palavra de ciências ou matemática."
+    },
+    "count": {
+      "name": "Padrões numéricos",
+      "how": "Descubra a regra. Qual número vem a seguir?"
+    },
+    "shape": {
+      "name": "O diferente",
+      "how": "Um número não segue a regra. Encontre-o!"
+    }
   }
 }

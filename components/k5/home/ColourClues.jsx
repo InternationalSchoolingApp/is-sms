@@ -21,7 +21,7 @@ const PREK_CLUES = new Set(["done", "live", "upcoming"]);
  * items in the planner, tapping again clears it. Status is never colour-only: every item
  * also carries a label or icon.
  */
-export function ColourClues({ clue, onClue, isPreK }) {
+export function ColourClues({ clue, onClue, isPreK, showHint = true }) {
   const t = useTranslations("k5Home.clues");
   const clues = isPreK ? CLUES.filter((c) => PREK_CLUES.has(c.key)) : CLUES;
   return (
@@ -44,10 +44,12 @@ export function ColourClues({ clue, onClue, isPreK }) {
           </button>
         );
       })}
-      <span className="flex flex-none items-center gap-1 font-k5-display text-[15px] font-semibold text-k5-ink">
-        <Hand className="h-5 w-5" aria-hidden="true" />
-        {t("tap")}
-      </span>
+      {showHint && (
+        <span className="flex flex-none items-center gap-1 font-k5-display text-[15px] font-semibold text-k5-ink">
+          <Hand className="h-5 w-5" aria-hidden="true" />
+          {t("tap")}
+        </span>
+      )}
     </div>
   );
 }

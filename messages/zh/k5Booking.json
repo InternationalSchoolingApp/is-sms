@@ -133,7 +133,9 @@
         "sayAll": "哇，你这周的票都用完了！",
         "allTitle": "你的票都用完了！",
         "allSub": "真棒！周一会有新的票。",
-        "noLeft": "没有票了"
+        "noLeft": "没有票了",
+        "anyDay": "选一个有空闲时间的日子。",
+        "anyCourse": "这些课程在这个时间是空的。"
       },
       "middle": {
         "sub": "选择课程、日期和时间，就这么简单！",
@@ -149,7 +151,8 @@
         "sayAll": "哇，你这周的课都预约好了！",
         "allTitle": "你的课都预约好了！",
         "allSub": "真棒！周一会有新的课程。",
-        "noLeft": "没有剩余课程"
+        "noLeft": "没有剩余课程",
+        "bookedN": "本周已预约 {count} 节"
       },
       "high": {
         "sub": "选择课程、日期和时间，就这么简单！",
@@ -270,7 +273,8 @@
     "bookIt": "预约！",
     "bookAnother": "再约一节课",
     "seeMyClasses": "查看我的课程",
-    "bookClassCount": "预约课程（{count}）"
+    "bookClassCount": "预约课程（{count}）",
+    "allBookedWeek": "你已经预约了本周的所有课程"
   },
   "cart": {
     "title": "你的购物车",
