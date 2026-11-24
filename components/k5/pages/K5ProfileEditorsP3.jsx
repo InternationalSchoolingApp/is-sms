@@ -46,7 +46,7 @@ function TimeSelect({ label, value, onChange }) {
   return (
     <label className={LABEL}>
       <span>{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className={`${INPUT} cursor-pointer`}>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className={`${INPUT} motion-none cursor-pointer`}>
         <option value="">Select</option>
         {TIME_OPTIONS.map((t) => (
           <option key={t.value} value={t.value}>
@@ -79,7 +79,7 @@ function TimeRangeAdd({ onAdd, busy, roles }) {
         {roles && (
           <label className={LABEL}>
             <span>Who</span>
-            <select value={role} onChange={(e) => setRole(e.target.value)} className={`${INPUT} cursor-pointer`}>
+            <select value={role} onChange={(e) => setRole(e.target.value)} className={`${INPUT} motion-none cursor-pointer`}>
               <option value="">Select</option>
               {roles.map((r) => (
                 <option key={r} value={r}>
@@ -304,6 +304,7 @@ export function EditableSports({ m, editor, actions }) {
               <DatePicker
                 icon={CalendarDays}
                 height="h-[50px]"
+                triggerClassName="motion-none"
                 value={parseProfileDate(start)}
                 fromDate={startOfToday()}
                 toDate={new Date(new Date().getFullYear() + 1, 11, 31)}
@@ -316,7 +317,7 @@ export function EditableSports({ m, editor, actions }) {
             </div>
             <div className={LABEL}>
               <span>End date</span>
-              <DatePicker icon={CalendarDays} height="h-[50px]" value={parseProfileDate(end)} fromDate={parseProfileDate(start) || startOfToday()} toDate={new Date(new Date().getFullYear() + 1, 11, 31)} onChange={(d) => setEnd(formatProfileDate(d))} />
+              <DatePicker icon={CalendarDays} height="h-[50px]" triggerClassName="motion-none" value={parseProfileDate(end)} fromDate={parseProfileDate(start) || startOfToday()} toDate={new Date(new Date().getFullYear() + 1, 11, 31)} onChange={(d) => setEnd(formatProfileDate(d))} />
             </div>
             <label className={`${LABEL} col-span-2 max-[600px]:col-span-1`}>
               <span>Where</span>

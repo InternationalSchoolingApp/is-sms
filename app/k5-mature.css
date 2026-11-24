@@ -270,7 +270,7 @@
 [data-k5-high] .k5h-ptile {
   width: 58px;
   height: 58px;
-  border-radius: 10px;
+  border-radius: 14px;
 }
 [data-k5-high] .k5h-ptile-top {
   font-size: 11px;
@@ -287,11 +287,11 @@
 [data-k5-high] .k5h-stile {
   width: 50px;
   height: 50px;
-  border-radius: 12px;
+  border-radius: 20px;
 }
 [data-k5-high] .k5h-sicon {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
 }
 [data-k5-high] .k5h-ctitle {
   font-size: 18px;
@@ -302,10 +302,16 @@
 [data-k5-high] .k5h-pill {
   color: var(--k5-ink);
 }
-/* My Courses rows: 8px corners on the 38px icon tile and the 26px tick. */
+/* My Courses rows: 12px corners on the 38px icon tile and the 26px tick. */
 [data-k5-high] .k5h-ctile,
 [data-k5-high] .k5h-cchk {
-  border-radius: 8px;
+  border-radius: 12px;
+}
+/* My Classes and Activities: the cards (header, calendar, courses, plan) and the class cards have 20px corners, the Done sticker too. */
+[data-k5-high] .k5h-pcard,
+[data-k5-high] .k5h-art,
+[data-k5-high] .k5h-done {
+  border-radius: 20px;
 }
 
 /* ── Book a Class (High.dc.html bk*) ────────────────────────────────────────────────────────────────── */
@@ -591,4 +597,27 @@
 }
 [data-k5-high] .k5h-tr-code {
   padding: 2px 6px !important;
+}
+
+/* "No classes" card (High.dc.html): 20px corners; the 30px title / 17px line already become 25px / 14px / 500 by the type map. */
+[data-k5-high] .k5h-nocls {
+  border-radius: 20px;
+}
+
+/* Right action rail: High draws it exactly like Middle (Middle.dc.html .rail): a soft blue circle on a 2px rim (the rim colour is the
+   button's --rim), 900-weight labels, and on desktop the count badge in the display font 15px / 700 with its soft shadow. The skin
+   above flattens every "shadow-[0_2px_0_..." and maps font-black / the badge's 13px, so those values are put back here. */
+.theme-k5[data-k5-high] .k5-rail > button {
+  font-weight: 900;
+}
+.theme-k5[data-k5-high] .k5-rail > button > span:first-child {
+  box-shadow: 0 2px 0 var(--rim);
+}
+@media (min-width: 761px) {
+  .theme-k5[data-k5-high] .k5-rail .k5-rail-badge {
+    font-family: var(--k5-fd);
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(11, 36, 71, 0.18);
+  }
 }

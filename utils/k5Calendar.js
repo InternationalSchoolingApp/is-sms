@@ -58,9 +58,9 @@ export function countStatuses(classes) {
  */
 export function noClassReason(key, day, { isSelfStudy, firstName }) {
   if (day.holidays.length) return { kind: "holiday", title: day.holidays[0].title || day.holidays[0].eventTitle || "Holiday", text: "It's a holiday. No school today!" };
-  if (isWeekendKey(key)) return { kind: "weekend", title: "Weekend!", text: "It's the weekend. No school today!" };
-  if (isSelfStudy) return { kind: "study", title: "No live classes", text: "Keep going with your courses today!" };
-  return { kind: "free", title: "No classes!", text: `There are no classes today. Enjoy your free day${firstName ? `, ${firstName}` : ""}!` };
+  if (isWeekendKey(key)) return { kind: "weekend",  title: `There are no classes today. Enjoy your free day${firstName ? `, ${firstName}` : ""}!` };
+  if (isSelfStudy) return { kind: "study", title: `There are no classes today. Enjoy your free day${firstName ? `, ${firstName}` : ""}!` };
+  return { kind: "free", title: `There are no classes today. Enjoy your free day${firstName ? `, ${firstName}` : ""}!` };
 }
 
 /** The two event types that count as a class for the games: 1:1 / doubt sessions and batch classes. Nothing else does. */

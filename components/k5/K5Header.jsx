@@ -48,7 +48,9 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
   const photo = profileModel?.header?.photo || "";
   // Grade 9–12 (Mature) look: the "Welcome back" chip of High.dc.html (blue rim on the soft accent, blue avatar, 12 / 17px 500).
   // Sizes in rem so the Mature type map (app/k5-mature.css) leaves them as the mockup has them.
-  const { isHigh } = useDashboardContext();
+  // Grade 6–8 (Balanced) has the same blue chip (Middle.dc.html: 1.5px accent rim on the soft accent, blue avatar with a white 22 / 700
+  // initial, 13 / 800 and 20 / 600 ink text); only Playful keeps the yellow one. isMiddle is true for Mature too, so isHigh is checked first.
+  const { isHigh, isMiddle } = useDashboardContext();
   // Legacy cartCountContent(): the cart button shows only while the cart has items, with the count as a badge.
   const { school } = useParams();
   const { data: cartCount = 0 } = useCartCount(userId);
@@ -236,7 +238,9 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
             className={
               isHigh
                 ? "flex min-h-[3rem] items-center gap-2.5 rounded-full border-[0.09375rem] border-k5-ac bg-k5-act py-1 pl-1 pr-4 text-left"
-                : "flex min-h-14 items-center gap-2.5 rounded-full border-[3px] border-k5-yb bg-k5-yt py-1 pl-1 pr-4 text-left"
+                : isMiddle
+                  ? "flex min-h-14 items-center gap-2.5 rounded-full border-[3px] border-k5-ac bg-k5-act py-1 pl-1 pr-4 text-left"
+                  : "flex min-h-14 items-center gap-2.5 rounded-full border-[3px] border-k5-yb bg-k5-yt py-1 pl-1 pr-4 text-left"
             }
           >
             <HeaderAvatar
@@ -244,10 +248,16 @@ export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsit
               photo={photo}
               initial={firstName.charAt(0).toUpperCase()}
               className="block h-[46px] w-[46px] flex-none rounded-full"
-              textClass={isHigh ? "bg-k5-ac font-k5-display text-[1.125rem] font-medium text-white" : "bg-k5-hi font-k5-display text-[22px] font-bold text-[#1C2640]"}
+              textClass={
+                isHigh
+                  ? "bg-k5-ac font-k5-display text-[1.125rem] font-medium text-white"
+                  : isMiddle
+                    ? "bg-k5-ac font-k5-display text-[22px] font-bold text-white"
+                    : "bg-k5-hi font-k5-display text-[22px] font-bold text-[#1C2640]"
+              }
             />
             <span className="hidden flex-col sm:flex">
-              <span className={isHigh ? "text-[0.75rem] font-medium text-k5-ink" : "text-[13px] font-extrabold text-k5-yx"}>Welcome back,</span>
+              <span className={isHigh ? "text-[0.75rem] font-medium text-k5-ink" : isMiddle ? "text-[13px] font-extrabold text-k5-ink" : "text-[13px] font-extrabold text-k5-yx"}>Welcome back,</span>
               <span className={isHigh ? "font-k5-display text-[1.0625rem] font-medium leading-none text-k5-ink" : "font-k5-display text-xl font-semibold leading-none text-k5-ink"}>{firstName}!</span>
             </span>
             <ChevronDown className={`h-[18px] w-[18px] text-k5-ink ${isHigh ? `transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}` : ""}`} strokeWidth={2.6} aria-hidden="true" />

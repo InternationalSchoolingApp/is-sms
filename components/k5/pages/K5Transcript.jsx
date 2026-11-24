@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Award, Download, FileX, Search } from "lucide-react";
+import { Award, Download, FileX, Loader2, Search } from "lucide-react";
+import toast from "react-hot-toast";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { downloadTranscriptDocument, isDownloadableTranscriptLink } from "@/utils/transcriptDownload";
 import { K5Loading, K5TableSkeleton } from "@/components/k5/K5Skeletons";
 
 const GRID = "70px minmax(130px,0.9fr) minmax(170px,1.1fr) minmax(145px,1fr) minmax(145px,1fr) minmax(185px,1.2fr)";
@@ -15,11 +17,31 @@ const CELL =
 
 function DownloadButton({ href, label }) {
   const className = "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[14px] border-[2px] border-k5-ac bg-k5-card px-3 font-k5-display text-[15px] font-semibold text-k5-acx no-underline shadow-[0_2px_0_var(--k5-acd)]";
+  const [busy, setBusy] = useState(false);
   if (!href) return <span className="text-sm font-extrabold text-k5-mut">--</span>;
+  // The demo page of dummy mode is only a page to look at; the real documents are saved as files, not opened in a tab.
+  if (!isDownloadableTranscriptLink(href)) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`Download ${label}`} className={className}>
+        Download <Download className="h-4 w-4" aria-hidden="true" />
+      </a>
+    );
+  }
+  const save = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await downloadTranscriptDocument({ href, name: label });
+    } catch (error) {
+      toast.error(String(error?.message || "The document could not be downloaded right now. Please try again."));
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`Download ${label}`} className={className}>
-      Download <Download className="h-4 w-4" aria-hidden="true" />
-    </a>
+    <button type="button" onClick={save} disabled={busy} aria-busy={busy} aria-label={`Download ${label}`} className={`${className} cursor-pointer disabled:cursor-default disabled:opacity-70`}>
+      {busy ? "Downloading" : "Download"} {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />}
+    </button>
   );
 }
 /** K–5 look of Student Transcript (mockup Student Transcript): the same record and links as the existing page. */

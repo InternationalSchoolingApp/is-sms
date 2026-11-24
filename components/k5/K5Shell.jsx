@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { copyrightLine } from "@/utils/schoolBrand";
 import { useParams, usePathname } from "next/navigation";
 import { RightActionRail } from "@/components/dashboard/RightActionRail";
@@ -18,6 +18,9 @@ import { AppearanceDialog } from "@/components/k5/look/AppearanceDialog";
 import { SessionExpiredDialog } from "@/components/providers/SessionExpiredDialog";
 import { PicoGuide } from "@/components/k5/pico/PicoGuide";
 import { setPicoLive } from "@/components/k5/pico/picoEvents";
+import { K5BrainBreak } from "@/components/k5/break/K5BrainBreak";
+import { ChristmasProvider, useChristmas } from "@/components/k5/christmas/ChristmasProvider";
+import { ChristmasBanner, ChristmasSky, ChristmasToast } from "@/components/k5/christmas/ChristmasLayer";
 import { SelectToSpeak } from "@/components/k5/pico/SelectToSpeak";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
@@ -26,6 +29,7 @@ import { effectiveGradeLook } from "@/constant/appearance";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { K5LiveClassWatcher } from "@/components/k5/home/K5LiveClassWatcher";
 import { studentNavHref } from "@/utils/dashboardNav";
+import { DashboardLoadingSkeleton } from "@/components/dashboard/DashboardLoadingSkeleton";
 
 /**
  * Grade K–5 dashboard chrome (docs/migration/grade_k5_dashboard_plan.html, Phases 1 + 3) —
@@ -41,7 +45,9 @@ export function K5Shell({ children }) {
     <AppearanceProvider scope="k5" userId={context.userId} schoolUUID={context.schoolUUID}>
       <K5LookScope>
         <MotionProvider>
-          <K5Frame>{children}</K5Frame>
+          <ChristmasProvider>
+            <K5Frame>{children}</K5Frame>
+          </ChristmasProvider>
         </MotionProvider>
       </K5LookScope>
     </AppearanceProvider>
@@ -66,6 +72,8 @@ function K5Frame({ children }) {
   const { isLoading: appearanceLoading, preferences } = useAppearance();
   const { band: motionBand, reduced: motionReduced } = useMotion();
     const themeProps = useK5ThemeProps("relative flex min-h-screen flex-col overflow-x-clip bg-k5-page");
+  // 25 December: the winter sky, snow, banner and music (components/k5/christmas).
+  const { festive } = useChristmas();
   const [navOpen, setNavOpen] = useState(false);
   const [lookOpen, setLookOpen] = useState(false);
   const closeNav = useCallback(() => setNavOpen(false), []);
@@ -76,6 +84,9 @@ function K5Frame({ children }) {
     return () => setPicoLive({ menuReady: false });
   }, [menuCount]);
   const isHome = pathname === studentNavHref(school, "");
+  // "My Classes" (the Today / Week / Month planner, navClasses in the Playful / Middle / High mockups) comes from the database
+  // menu: it shows when the student's role has the My Classes module (MODULES / USER_RIGHTS), in every look.
+  const navMenu = menu;
   // Pico's first welcome is only for a student who completed enrollment: the dashboard is reached only by one (the backend sends
   // a student still enrolling to the wizard), the grade band and details have loaded (context exists), and it is a real student,
   // not a counselor's dummy/demo view.
@@ -128,8 +139,17 @@ function K5Frame({ children }) {
     setNavOpen(false);
   }
   return (
-    <div {...themeProps} data-k5-prek={isPreK ? "true" : undefined} data-motion-band={motionBand} style={appearanceLoading ? { opacity: 0 } : undefined}>
+    <>
+    {/* While the student's look is still coming from the server (no copy saved in this browser yet) the shell stays hidden so it
+        never flashes in the wrong colours; the same loading skeleton as before stays on top meanwhile, so the page is never blank. */}
+    {appearanceLoading && (
+      <div className="fixed inset-0 z-[150] overflow-hidden">
+        <DashboardLoadingSkeleton hand={preferences.hand} />
+      </div>
+    )}
+    <div {...themeProps} data-k5-prek={isPreK ? "true" : undefined} data-motion-band={motionBand} data-xmas={festive ? "on" : undefined} style={appearanceLoading ? { opacity: 0 } : undefined}>
       <CanvasBackground themeKey={`${themeProps["data-k5-theme"]}|${themeProps.className}`} />
+      <ChristmasSky />
       <CelebrationHost />
       <K5Header
         userId={context.userId}
@@ -149,9 +169,10 @@ function K5Frame({ children }) {
 
       <div className="k5-layout relative mx-auto box-border flex w-full max-w-[100%] flex-1 items-start gap-3 px-5 pb-[20px] pt-5 max-[760px]:flex-wrap">
         <div aria-hidden="true" className="w-[76px] flex-none max-[760px]:hidden" />
-        <K5NavRail menu={menu} loading={menuLoading} open={navOpen} onOpen={() => setNavOpen(true)} onClose={closeNav} isPreK={isPreK} userId={context.userId} />
+        <K5NavRail menu={navMenu} loading={menuLoading} open={navOpen} onOpen={() => setNavOpen(true)} onClose={closeNav} isPreK={isPreK} userId={context.userId} />
 
         <PageReveal className="flex min-w-0 flex-[1_1_auto] flex-col gap-4 max-[760px]:basis-full">
+          <ChristmasBanner firstName={String(context.userName || "").split(" ")[0]} />
           <K5QuoteOfMoment />
           {children}
         </PageReveal>
@@ -180,11 +201,14 @@ function K5Frame({ children }) {
       {/* The home planner shows the live-class dialog itself; on every other page this does. */}
       {!isHome && <K5LiveClassWatcher />}
       <PicoGuide userId={context.userId} firstName={String(context.userName || "").split(" ")[0]} schoolName={context.schoolName} home={isHome} welcomeEligible={welcomeEligible} />
+      <ChristmasToast />
+      <K5BrainBreak firstName={String(context.userName || "").split(" ")[0]} />
       <SelectToSpeak />
       <ReadingRuler />
       {/* The "session logged out" dialog, inside the student's own theme (colour, Day / Night, grade look). */}
       <SessionExpiredDialog themed />
       <AppearanceDialog open={lookOpen} onClose={() => setLookOpen(false)} firstName={String(context.userName || "").split(" ")[0]} />
     </div>
+    </>
   );
 }

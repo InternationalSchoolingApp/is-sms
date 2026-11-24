@@ -35,6 +35,47 @@ export function navPictureFor(item) {
   return match ? `/backend-static-assets/images/sidebar-icon/${match[1]}.png` : "";
 }
 
+/*
+ * The mockup's "My Classes" picture (Playful.dc.html navClasses): a calendar with a green play badge. Drawn once in a 36 x 36 box
+ * with its own colours (every stroke is spelled out, so it also works inside the 24px stroke-only NAV_ART svg, scaled).
+ */
+const MY_CLASSES_SHAPES = (
+  <>
+    <defs>
+      <linearGradient id="nvcB" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#6AA8FF" />
+        <stop offset="1" stopColor="#2F6BEA" />
+      </linearGradient>
+      <linearGradient id="nvcG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#5DD682" />
+        <stop offset="1" stopColor="#1F9D55" />
+      </linearGradient>
+    </defs>
+    <rect x="3" y="6" width="27" height="25" rx="6" fill="#EEF4FF" stroke="#BCD0F7" strokeWidth="1" />
+    <path d="M3 13v-1a6 6 0 0 1 6-6h15a6 6 0 0 1 6 6v1z" fill="url(#nvcB)" stroke="none" />
+    <rect x="9" y="2.5" width="3.4" height="7" rx="1.7" fill="#FFFFFF" stroke="#9DB7EE" strokeWidth="1" />
+    <rect x="20.6" y="2.5" width="3.4" height="7" rx="1.7" fill="#FFFFFF" stroke="#9DB7EE" strokeWidth="1" />
+    <g fill="#A9C4F7" stroke="none">
+      <rect x="7" y="16" width="5" height="4" rx="1.3" />
+      <rect x="14" y="16" width="5" height="4" rx="1.3" />
+      <rect x="21" y="16" width="5" height="4" rx="1.3" />
+      <rect x="7" y="22.5" width="5" height="4" rx="1.3" />
+      <rect x="14" y="22.5" width="5" height="4" rx="1.3" />
+    </g>
+    <circle cx="27" cy="27" r="7.5" fill="url(#nvcG)" stroke="#FFFFFF" strokeWidth="1.6" />
+    <path d="M25.2 23.6v6.8l5.4-3.4z" fill="#FFFFFF" stroke="none" />
+  </>
+);
+
+/** The "My Classes" nav picture at its own size (36px, on a transparent tile). */
+export function MyClassesArt() {
+  return (
+    <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true" className="block">
+      {MY_CLASSES_SHAPES}
+    </svg>
+  );
+}
+
 // Drawn fallback icons (24px, stroke-only, colour from the tile) for an item without a picture.
 // Key = the icon key of utils/dashboardNav.js.
 export const NAV_ART = {
@@ -43,6 +84,7 @@ export const NAV_ART = {
       <rect x="3" y="3" width="7" height="7" rx="2" /><rect x="14" y="3" width="7" height="7" rx="2" /><rect x="3" y="14" width="7" height="7" rx="2" /><path d="M17.5 14v7M14 17.5h7" />
     </>
   ),
+  "my-classes": <g transform="scale(0.6667)">{MY_CLASSES_SHAPES}</g>,
   "calendar": (
     <>
       <rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4" /><path d="M9 15.5l2 2 4-4" />

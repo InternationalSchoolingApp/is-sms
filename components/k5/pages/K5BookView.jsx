@@ -73,6 +73,7 @@ const COPY = {
     allTitle: "All your classes are booked!",
     allSub: "Super job! New classes come on Monday.",
     noLeft: "No classes left",
+    bookedN: (n) => n + " booked this week",
   },
 };
 function useCopy() {
@@ -569,9 +570,11 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
   const none = left < 1;
   return (
     // In the Grade 6–8 "Book a Class" dialog: three courses in a row, the rest on the next row (two on a small screen).
-    <div className={threePerRow ? "grid grid-cols-3 gap-3 max-[640px]:grid-cols-2" : "grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3"}>
+    <div className={threePerRow ? " grid grid-cols-3 gap-3 max-[640px]:grid-cols-2" : "grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3"}>
       {options.map((s) => {
-        const color = colorFor({ id: s.subjectId, name: s.name }) || subjectStyle(s.name).color;
+        // Grade 6–8: every course card uses the theme accent (blue) and one card holds the course and its details button.
+        const soft = middle && !high;
+        const color = soft ? "var(--k5-ac)" : colorFor({ id: s.subjectId, name: s.name }) || subjectStyle(s.name).color;
         const card = (
           <button
             key={middle ? undefined : s.subjectId}
@@ -579,31 +582,33 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
             aria-disabled={none}
             onClick={() => onPick(s)}
             className={
-              high
-                ? "k5h-b-scard-btn flex flex-[1_1_auto] flex-col items-center justify-start gap-1.5 border-none bg-transparent text-center text-k5-ink"
+              high || soft
+                ? "k5h-b-scard-btn flex motion-none flex-[1_1_auto] flex-col items-center justify-start gap-2 border-none bg-transparent text-center text-k5-ink"
                 : `flex min-h-[200px] flex-col items-center justify-start gap-2 rounded-3xl border-[3px] px-3 pb-3.5 pt-4 text-center text-k5-ink ${middle ? "flex-[1_1_auto]" : ""}`
             }
             style={
               high
                 ? { padding: "4px 4px 2px", borderRadius: 12, cursor: none ? "default" : "pointer" }
-                : { borderColor: color, background: courseTint(color), boxShadow: "0 5px 0 " + color, opacity: none ? 0.6 : 1, cursor: none ? "default" : "pointer", ...(middle ? { borderRadius: 16 } : {}) }
+                : soft
+                  ? { padding: "6px 2px 2px", cursor: none ? "default" : "pointer" }
+                  : { borderColor: color, background: courseTint(color), boxShadow: "0 5px 0 " + color, opacity: none ? 0.6 : 1, cursor: none ? "default" : "pointer", ...(middle ? { borderRadius: 16 } : {}) }
             }
           >
-            <span className="k5h-b-stile flex h-[72px] w-[72px] flex-none items-center justify-center rounded-[22px] bg-k5-card" style={{ color }}>
+            <span className={"k5h-b-stile flex h-[72px] w-[72px] flex-none items-center justify-center bg-k5-card " + (soft ? "rounded-2xl" : "rounded-[22px]")} style={{ color }}>
               <SubjectIcon name={s.name} className="k5h-b-sicon h-10 w-10" />
             </span>
-            <span className="k5h-b-sname font-k5-display text-[20px] font-semibold leading-[1.1]">{s.name}</span>
+            <span className={"k5h-b-sname font-k5-display font-semibold leading-[1.1] " + (soft ? "text-[22px]" : "text-[20px]")}>{s.name}</span>
             {middle && s.teacherName && <span className="text-sm font-extrabold leading-[1.2] text-k5-mut">{s.teacherName}</span>}
             {s.booked > 0 && (
-              <span className="k5h-b-booked flex items-center gap-1 whitespace-nowrap rounded-full border-[3px] border-k5-grn bg-k5-card px-2.5 py-1 text-[13px] font-black" style={middle ? { borderColor: "var(--k5-c-done)" } : undefined}>
+              <span className={"k5h-b-booked  flex items-center gap-1 rounded-full border-k5-grn bg-k5-card px-2.5 py-1 text-[13px] font-black " + (soft ? "max-w-full border-[1.5px]" : "whitespace-nowrap border-[3px]")} style={middle ? { borderColor: "var(--k5-c-done)" } : undefined}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: "currentColor" }}>
                   <path d={CHECK_PATH} />
                 </svg>
-                {high ? copy.bookedN(s.booked) : s.booked + " booked"}
+                {high || soft ? copy.bookedN(s.booked) : s.booked + " booked"}
               </span>
             )}
             {!none && (
-              <span className={`k5h-b-pick mt-auto rounded-full px-[18px] py-1.5 font-k5-display text-[17px] font-semibold ${middle ? "text-k5-card" : "text-white"}`} style={{ background: color }}>
+              <span className={`k5h-b-pick mt-auto k5-button-motion rounded-full px-[18px] py-1.5 font-k5-display text-[17px] font-semibold ${middle ? "text-k5-card" : "text-white"}`} style={{ background: color }}>
                 {copy.pickMe}
               </span>
             )}
@@ -615,8 +620,12 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
         return (
           <div
             key={s.subjectId}
-            className={high ? "k5h-b-scard flex min-w-0 flex-col" : "flex min-w-0 flex-col gap-2"}
-            style={high ? { gap: 6, padding: 10, border: "1.5px solid " + color, borderRadius: 12, background: courseTint(color), boxShadow: "0 4px 0 " + color, opacity: none ? 0.6 : 1 } : undefined}
+            className={high ? "k5h-b-scard flex min-w-0 flex-col k5-button-motion " : " k5-button-motion flex min-w-0 flex-col gap-2"}
+            style={
+              high
+                ? { gap: 6, padding: 10, border: "1.5px solid " + color, borderRadius: 12, background: courseTint(color), boxShadow: "0 4px 0 " + color, opacity: none ? 0.6 : 1 }
+                : { gap: 8, padding: 12, border: "1.5px solid var(--k5-ac)", borderRadius: 16, background: "var(--k5-act)", boxShadow: "0 5px 0 var(--k5-ac)", opacity: none ? 0.6 : 1 }
+            }
           >
             {card}
             <button

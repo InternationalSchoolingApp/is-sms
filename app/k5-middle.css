@@ -286,6 +286,50 @@
 }
 
 /* ── Home, My Courses (Middle.dc.html): the 38px course icon tile has 8px corners (rounded-xl would give 14px). */
-[data-k5-band="middle"] .k5h-ctile {
+[data-k5-band="middle"] .k5h-ctile,
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-cchk {
   border-radius: 8px;
+}
+
+/* ── Home, My Classes and Activities (Middle.dc.html): a 58px date tile with 13px corners (11px day, 25px date) and a 28px title, class
+   cards with 16px corners, a 50px white subject tile (12px corners, 26px icon) and a 22px class title. High has its own copy in
+   k5-mature.css, so these skip it. */
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-ptile {
+  width: 58px;
+  height: 58px;
+  border-radius: 13px;
+}
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-ptile-top {
+  font-size: 11px;
+}
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-ptile-big {
+  font-size: 25px;
+}
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-ptitle {
+  font-size: 28px;
+}
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-art {
+  border-radius: 16px;
+}
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-stile {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+}
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-sicon {
+  width: 26px;
+  height: 26px;
+}
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-ctitle {
+  font-size: 22px;
+}
+
+/* My Profile (Middle.dc.html / High.dc.html): the "% complete" bar has a 1.5px rim (Playful: 2px); its fill is the green of the Join button. */
+[data-k5-band="middle"] .k5h-pbar {
+  border-width: 1.5px;
+}
+
+/* "No classes" card (Middle.dc.html): 16px corners (the skin's 24 → 18 is a little more). High overrides it in k5-mature.css. */
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-nocls {
+  border-radius: 16px;
 }

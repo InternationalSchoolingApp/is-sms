@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { InboxBadge, isInboxMenuItem } from "@/components/student/inbox/InboxBadge";
 import { CLUB_ART } from "@/components/k5/clubMarks";
-import { NAV_ART, highNavIconFor, navPictureFor } from "@/components/k5/navIcons";
+import { MyClassesArt, NAV_ART, highNavIconFor, navPictureFor } from "@/components/k5/navIcons";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { K5Sk } from "@/components/k5/K5Skeletons";
@@ -22,6 +22,7 @@ import { useMotionBand } from "@/components/motion/useMotionBand";
 const ICONS = {
   dashboard: [LayoutDashboard, "bg-k5-bt", "text-k5-bi"],
   calendar: [CalendarDays, "bg-k5-ot", "text-k5-oi"],
+  "my-classes": [CalendarDays, "bg-k5-bt", "text-k5-bi"],
   teacher: [GraduationCap, "bg-k5-vt", "text-k5-vi"],
   "book-class": [CalendarCheck, "bg-k5-ot", "text-k5-oi"],
   cart: [ShoppingCart, "bg-k5-bt", "text-k5-bi"],
@@ -184,6 +185,13 @@ function NavTile({ item, icon, active, picture }) {
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`transition-[stroke] duration-150 ${active ? "stroke-white delay-100" : high.tone}`}>
           {high.art}
         </svg>
+      </span>
+    );
+  }
+  if (icon === "my-classes") {
+    return (
+      <span className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[15px] bg-transparent">
+        <MyClassesArt />
       </span>
     );
   }

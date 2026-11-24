@@ -27,8 +27,8 @@ import { K5DiaryPanel } from "@/components/k5/panels/K5DiaryPanel";
  * real backend data and open their own slide-in panel. Talk to Us opens a
  * signed sign-in link into the chat app directly instead of a panel.
  * variant="k5": the Grade K–5 look (Messages / News / Notices / Teacher), same data and panels.
- * middle (with variant="k5"): the Balanced look - the same pastel buttons on their coloured rims as Playful. high: the
- * Mature look - the same pastel buttons, flat (no rim).
+ * middle (with variant="k5"): the Balanced look - one soft blue circle on a 2px blue rim for all four buttons. high: the
+ * Mature look - drawn exactly like Balanced (middle is true for it too).
  */
 // Legacy parity: the re-enrollment screen (studentGraduate == 'Y' -> renderMigrationDetailsOptionContent) never called
 // getAnnouncementAndNewsContent(), so none of the four rail buttons (Talk to Us, Announcement, News, Diary) existed there.
@@ -183,8 +183,8 @@ function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
   }, [diaryUrl, userId]);
 
   // Balanced look (Middle.dc.html .rail): every button is the same soft blue circle on a 2px #027FFE rim, its icon cut-outs #DCEEFF.
-  // Playful and Mature keep each button's own pastel (the icon cut-outs take it too).
-  const balanced = middle && !high;
+  // Playful keeps each button's own pastel (the icon cut-outs take it too). The Mature (High) rail is drawn exactly like this one.
+  const balanced = middle;
   const cut = (k5Colour) => (balanced ? "#DCEEFF" : k5Colour);
   // Same data and props either way; the k5 variant swaps in the K–5 drawer look.
   const AnnouncementsView = variant === "k5" ? K5AnnouncementsPanel : AnnouncementsPanel;
@@ -298,7 +298,7 @@ function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
 // Grade K–5 rail button (Playful.dc.html .rail): 62px pastel circle on a coloured rim, label
 // under it, red count badge. In the mobile tab bar: a quarter of the width, 46px circle.
 // Every look keeps each button's own pastel (green / blue / yellow / purple). Playful and Balanced sit it on its coloured
-// rim; Mature (`high`) is the flat pastel circle with no rim.
+// rim; Mature (`high`) is drawn exactly like Balanced (the same soft blue circle on a 2px rim).
 function K5RailButton({ index = 0, label, onClick, badge, tint, rim, ink, pin, high, balanced, children }) {
   // Balanced (Middle.dc.html .rail): one soft blue circle with a 2px blue rim for all four buttons.
   if (balanced) {
@@ -319,7 +319,7 @@ function K5RailButton({ index = 0, label, onClick, badge, tint, rim, ink, pin, h
       {/* Playful's rim is written "0px_6px" (not "0_6px") so app/k5-middle.css, which thins every "shadow-[0_6px_0_...]" in the
           Balanced look, leaves it alone; Balanced has its own 2px rim. */}
       <span
-        className={`flex h-[62px] w-[62px] items-center justify-center rounded-full max-[760px]:h-[46px] max-[760px]:w-[46px] max-[760px]:[&>svg]:h-6 max-[760px]:[&>svg]:w-6 ${high ? "shadow-none" : balanced ? "shadow-[0_2px_0_var(--rim)]" : "shadow-[0px_6px_0_var(--rim)] max-[760px]:shadow-[0px_4px_0_var(--rim)]"}`}
+        className={`flex h-[62px] w-[62px] items-center justify-center rounded-full max-[760px]:h-[46px] max-[760px]:w-[46px] max-[760px]:[&>svg]:h-6 max-[760px]:[&>svg]:w-6 ${balanced ? "shadow-[0_2px_0_var(--rim)]" : high ? "shadow-none" : "shadow-[0px_6px_0_var(--rim)] max-[760px]:shadow-[0px_4px_0_var(--rim)]"}`}
         style={{ background: tint, color: ink, "--rim": rim }}
       >
         {children}

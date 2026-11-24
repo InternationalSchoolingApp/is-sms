@@ -542,7 +542,7 @@ function NewRequest({ reasons, onDone }) {
         <span>
           Primary reason<span className="text-k5-ri"> *</span>
         </span>
-        <select value={reasonId} onChange={(e) => setReasonId(e.target.value)} className={`${INPUT} cursor-pointer`}>
+        <select value={reasonId} onChange={(e) => setReasonId(e.target.value)} className={`${INPUT} motion-none cursor-pointer`}>
           <option value="">Select a reason…</option>
           {reasons.map((r) => (
             <option key={r.id} value={r.id}>

@@ -1,12 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { format, isSameMonth } from "date-fns";
-import { Check, ChevronLeft, ChevronRight, Star, X } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Star, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { K5_CARD, K5_ROUND_BTN, SubjectIcon } from "@/components/k5/home/k5Bits";
 import { getEventColor, getMonthGridDays } from "@/utils/calendarEvents";
+import { ChristmasTreeIcon } from "@/components/k5/christmas/ChristmasArt";
+import { isChristmasKey } from "@/components/k5/christmas/christmasStore";
 import { CLUE_COLORS, WEEKDAY_TEXT, classTitle, courseTint, dayAt, dayKey, safeCourseColor, subjectStyle, timeLabel, timeRange } from "@/utils/k5Calendar";
 
 const WEEK_LETTERS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -25,6 +28,26 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
   const { isMiddle } = useDashboardContext();
   const cells = getMonthGridDays(selectedDate);
   const inPopup = Boolean(onClose);
+  // Playful (mockup .caltgl): a round chevron on the bottom edge folds the calendar down to its month bar; it is remembered on
+  // this device (is-k5-calmin). Not in the popup.
+  const collapsible = !inPopup;
+  const [minimized, setMinimized] = useState(() => {
+    try {
+      return typeof window !== "undefined" && window.localStorage.getItem("is-k5-calmin") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const folded = collapsible && minimized;
+  const toggleFold = () => {
+    const next = !minimized;
+    setMinimized(next);
+    try {
+      window.localStorage.setItem("is-k5-calmin", next ? "1" : "");
+    } catch {
+      // storage unavailable: it just stays folded / open for this visit
+    }
+  };
   const titleId = inPopup ? "k5-calpop-title" : "k5-mini-title";
   const Title = inPopup ? DialogTitle : "h2";
   return (
@@ -34,7 +57,7 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
       id={inPopup ? undefined : "k5-minical"}
       aria-labelledby={titleId}
       data-pin={inPopup ? undefined : "mini"}
-      className={inPopup ? "flex flex-col gap-2.5" : `${K5_CARD} flex flex-col gap-2.5 p-4 max-[760px]:hidden`}
+      className={inPopup ? "flex flex-col gap-2.5" : `${K5_CARD} k5h-pcard flex flex-col gap-2.5 max-[760px]:hidden ${collapsible ? "relative px-4 pb-5 pt-4" : "p-4"}`}
     >
       <div className="flex items-center justify-between gap-2">
         <button type="button" aria-label="Previous month" onClick={() => onMonth(-1)} className={`${K5_ROUND_BTN} !shadow-none`}>
@@ -57,9 +80,11 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
           </button>
         )}
       </div>
+      {!folded && (
+      <div id="k5-mini-grid" className="flex flex-col gap-2.5">
       <div className="grid grid-cols-7 gap-1 text-center font-k5-display text-[15px] font-semibold">
         {WEEK_LETTERS.map((l, i) => (
-          <span key={l} className={WEEKDAY_TEXT[i]}>
+          <span key={l} className={isMiddle ? "text-k5-acx" : WEEKDAY_TEXT[i]}>
             {l}
           </span>
         ))}
@@ -92,7 +117,8 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
                       : "h-[38px] w-[38px] bg-transparent text-base text-k5-ink hover:bg-k5-soft"
                 }`}
               >
-                {date.getDate()}
+                {/* 25 December shows a Christmas tree instead of the number (mockup). */}
+                {isChristmasKey(key) ? <ChristmasTreeIcon size={34} label={`${format(date, "MMMM d")}, Christmas`} /> : date.getDate()}
                 {isToday && !isMiddle && <Star className="absolute -right-1.5 -top-1.5 h-4 w-4 fill-[#FFC531] text-[#C9930A]" aria-hidden="true" />}
                 {color && !isToday && (
                   <span aria-hidden="true" className="absolute bottom-0.5 left-1/2 -ml-1 block h-2 w-2 rounded-full" style={{ background: color }} />
@@ -102,6 +128,21 @@ export function MiniCalendar({ selectedDate, todayKey, days, onPick, onMonth, on
           );
         })}
       </div>
+      </div>
+      )}
+      {collapsible && (
+        <button
+          type="button"
+          onClick={toggleFold}
+          aria-expanded={!folded}
+          aria-controls="k5-mini-grid"
+          aria-label={folded ? "Expand calendar" : "Minimize calendar"}
+          title={folded ? "Expand calendar" : "Minimize calendar"}
+          className="absolute -bottom-4 left-1/2 z-[2] flex h-[30px] w-[52px] -translate-x-1/2 cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-card bg-k5-ac shadow-[0_3px_0_var(--k5-acd)]"
+        >
+          {folded ? <ChevronDown className="h-4 w-4 text-white" strokeWidth={3.2} aria-hidden="true" /> : <ChevronUp className="h-4 w-4 text-white" strokeWidth={3.2} aria-hidden="true" />}
+        </button>
+      )}
     </section>
   );
 }
@@ -191,18 +232,24 @@ export function TodayCard({ todayKey, days, courseRegistry, onOpen }) {
 
 /** My Courses: every enrolled course, tap to show / hide its classes in the planner. */
 export function MyCourses({ courseRegistry, courseVisibility, onToggle }) {
+  // Balanced / Mature (Middle.dc.html, High.dc.html): every course is the same light blue with a blue icon and tick (--sScT / --sScI),
+  // not the subject or school colours of Playful.
+  const { isMiddle } = useDashboardContext();
   const courses = Object.values(courseRegistry || {});
   if (!courses.length) return null;
   return (
-    <section aria-labelledby="k5-courses-title" className={`${K5_CARD} flex flex-col gap-2 p-4`}>
+    <section aria-labelledby="k5-courses-title" data-pin="courses" className={`${K5_CARD} k5h-pcard flex flex-col gap-2 p-4`}>
       <h2 id="k5-courses-title" className="m-0 mb-1 font-k5-display text-[22px] font-semibold">
         My Courses
       </h2>
       {courses.map((course) => {
         const shown = courseVisibility[course.id] !== false;
-        const { tile, ink, color: styleColor } = subjectStyle(course.label);
-        // The course colour from the school calendar wins; the subject palette is only the fallback.
-        const apiColor = safeCourseColor(course.color);
+        const subject = subjectStyle(course.label);
+        const tile = isMiddle ? "bg-k5-act" : subject.tile;
+        const ink = isMiddle ? "text-k5-ac" : subject.ink;
+        const styleColor = isMiddle ? "var(--k5-ac)" : subject.color;
+        // The course colour from the school calendar wins (Playful); the subject palette is only the fallback.
+        const apiColor = isMiddle ? null : safeCourseColor(course.color);
         const color = apiColor || styleColor;
         return (
           <button
@@ -211,7 +258,7 @@ export function MyCourses({ courseRegistry, courseVisibility, onToggle }) {
             aria-pressed={shown}
             onClick={() => onToggle(course.id)}
             title={shown ? "Hide this course in my plan" : "Show this course in my plan"}
-            className={`k5-lift flex min-h-[52px] cursor-pointer items-center gap-2.5 rounded-[14px] border-none px-2 py-1 text-left ${shown ? (apiColor ? "" : tile) : "bg-k5-soft"}`}
+            className={`k5-lift k5h-r14 flex min-h-[52px] cursor-pointer items-center gap-2.5 rounded-[14px] border-none px-2 py-1 text-left ${shown ? (apiColor ? "" : tile) : "bg-k5-soft"}`}
             style={shown && apiColor ? { background: courseTint(apiColor) } : undefined}
           >
             <span className="k5h-ctile flex h-[38px] w-[38px] flex-none items-center justify-center rounded-xl bg-k5-card" style={apiColor ? { color: apiColor } : undefined}>

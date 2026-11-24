@@ -28,7 +28,7 @@ import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
  * K5 look (`k5` prop, used by the K–5 My Profile page): same box as the profile inputs — 50px tall,
  * 14px radius, 3px border (`k5Border` = the field status colour class, accent while open), K5 card colours.
  */
-const K5_TRIGGER = "!h-[50px] rounded-[14px] border-[3px] pt-1 font-k5-body text-base font-extrabold text-k5-ink";
+const K5_TRIGGER = "motion-none !h-[50px] rounded-[14px] border-[3px] pt-1 font-k5-body text-base font-extrabold text-k5-ink";
 function k5Trigger({ disabled, open, error, k5Border }) {
   if (disabled) return `${K5_TRIGGER} border-k5-line bg-k5-soft cursor-not-allowed`;
   return `${K5_TRIGGER} bg-k5-card ${error ? "border-k5-ri" : open ? "border-k5-ac" : k5Border || "border-k5-line"} focus:!border-k5-ac focus-visible:!border-k5-ac`;
