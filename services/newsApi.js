@@ -2,6 +2,12 @@
 
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { getSessionIdentity } from "@/utils/backendRequest";
+
+/** The reader is the signed-in user, never an id the browser sends (these exports are server actions). */
+async function ownUserId() {
+  return (await getSessionIdentity())?.userId;
+}
 
 /**
  * Website news articles — DataFetchController (@RequestMapping("/api/v1/website/")),
@@ -53,8 +59,9 @@ export async function getAllArticles({ page = 1, size = 10 } = {}) {
  * server-side (even though, per the doc above, nothing reads that back out
  * as a badge count).
  */
-export async function getArticleById({ id, userId }) {
+export async function getArticleById({ id }) {
   if (!hasBackendOrigin() || !id) return null;
+  const userId = await ownUserId();
   try {
     const baseUrl = await resolveServerBackendOrigin();
     const response = await fetch(`${baseUrl}/api/v1/website/get-article-by-id?id=${id}&userId=${userId ?? ""}`, { method: "GET" });
@@ -73,9 +80,9 @@ export async function getArticleById({ id, userId }) {
  * plaintext body the legacy JS itself sends — same mismatch pattern already
  * confirmed for the dashboard-family endpoints.
  */
-export async function getArticlesByIds({ ids, userId }) {
-  console.log("news id", ids)
+export async function getArticlesByIds({ ids }) {
   if (!hasBackendOrigin() || !ids?.length) return null;
+  const userId = await ownUserId();
   try {
     const baseUrl = await resolveServerBackendOrigin();
     const response = await fetch(`${baseUrl}/api/v1/website/get-article-by-ids`, {

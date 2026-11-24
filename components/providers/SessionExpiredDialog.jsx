@@ -50,6 +50,12 @@ const LOOKS = {
 const VERIFYING_MESSAGE = "Verifying your credentials";
 const WRONG_PASSWORD_MESSAGE = "You entered a wrong password.";
 const UNAVAILABLE_MESSAGE = "Unable to sign in right now. Please try again.";
+const BLOCKED_MESSAGE = "Maximum attempts reached. Please try again later, or contact the school administrator.";
+// "You entered a wrong password." plus, while the address still has tries left, how many (the 5-in-a-row block).
+const wrongPasswordMessage = (attemptsLeft) =>
+  Number.isInteger(attemptsLeft) && attemptsLeft > 0
+    ? `${WRONG_PASSWORD_MESSAGE} ${attemptsLeft} attempt${attemptsLeft === 1 ? "" : "s"} left.`
+    : WRONG_PASSWORD_MESSAGE;
 const VERIFYING_DETAIL = "Please wait while we securely restore your session.";
 
 const BAND_COPY = {
@@ -111,6 +117,9 @@ export function SessionExpiredDialog({ themed = false }) {
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  // Too many wrong passwords from this address (app/api/session/verify-password): the field and Log in stay off; the
+  // student can still use "Log in as a different user" (the login page).
+  const [blocked, setBlocked] = useState(false);
   const email = session?.email || "";
   const schoolUUID = context?.schoolUUID || session?.schoolUUID;
 
@@ -122,7 +131,7 @@ export function SessionExpiredDialog({ themed = false }) {
 
   async function login(event) {
     event.preventDefault();
-    if (busy || !password) return;
+    if (busy || blocked || !password) return;
     if (!email) {
       setBusy(true);
       expireSession(schoolUUID);
@@ -154,10 +163,17 @@ export function SessionExpiredDialog({ themed = false }) {
       window.location.assign(url.toString());
       return;
     }
+    if (answer?.blocked) {
+      setBusy(false);
+      setPassword("");
+      setBlocked(true);
+      setError(answer.message || BLOCKED_MESSAGE);
+      return;
+    }
     if (answer?.wrongPassword || (answer && !answer.ok && answer.message)) {
       setBusy(false);
       setPassword("");
-      setError(answer.wrongPassword ? WRONG_PASSWORD_MESSAGE : answer.message);
+      setError(answer.wrongPassword ? wrongPasswordMessage(answer.attemptsLeft) : answer.message);
       return;
     }
     // The check could not be made (or no sign-in link came back): the form again, with the password kept for a retry.
@@ -205,8 +221,9 @@ export function SessionExpiredDialog({ themed = false }) {
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
-                  if (error) setError("");
+                  if (error && !blocked) setError("");
                 }}
+                disabled={blocked}
                 placeholder="Password *"
                 aria-label="Password"
                 autoComplete="current-password"
@@ -223,7 +240,7 @@ export function SessionExpiredDialog({ themed = false }) {
                 {error}
               </p>
             )}
-            <button type="submit" disabled={busy || !password} className={`min-w-[110px] cursor-pointer disabled:cursor-default disabled:opacity-60 ${band === "elementary" ? "" : "border-none"} ${look.button}`}>
+            <button type="submit" disabled={busy || blocked || !password} className={`min-w-[110px] cursor-pointer disabled:cursor-default disabled:opacity-60 ${band === "elementary" ? "" : "border-none"} ${look.button}`}>
               {busy ? "Please wait…" : "Log in"}
             </button>
             <div className="text-base leading-snug">

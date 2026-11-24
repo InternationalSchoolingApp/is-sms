@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import DOMPurify from "dompurify";
 import { ArrowLeft, ArrowRight, ArrowRightLeft, ChevronRight, CircleCheckBig, Info, ShieldCheck, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -340,7 +341,9 @@ function GatewayActions({ option, details, busy, onPay, onClose }) {
 function GatewayPanel({ option, details, airwallexMethods, busy, onPay, onClose, onUploadProof, onSubmitOffline }) {
   const pay = () => onPay(option);
   const hasBanner = ["STRIPE", "Airwallex", "YOCO", "WIRETRANSFER", "CONVERA", "AFS", "CASH"].includes(option.name);
-  const instructions = option.additionalDetails ?? option.addtionalDetails; // backend spells it both ways
+  // Admin-entered HTML from the backend: sanitized before it is rendered (an <img onerror> or <script> there would run on
+  // the payment page). Without a DOM (server render) DOMPurify cannot sanitize, so nothing is rendered rather than raw HTML.
+  const instructions = sanitizeInstructions(option.additionalDetails ?? option.addtionalDetails); // backend spells it both ways
 
   return (
     <div className="min-w-0">
@@ -549,4 +552,9 @@ export function PaymentGatewayPickerModal({
       </DialogContent>
     </Dialog>
   );
+}
+
+function sanitizeInstructions(html) {
+  if (!html || typeof html !== "string" || !DOMPurify.isSupported) return "";
+  return DOMPurify.sanitize(html);
 }

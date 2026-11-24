@@ -1,5 +1,5 @@
 import { encodePayload, encodeRawString } from "@/utils/payloadEncoding";
-import { isBackendOverrideAllowed, resolveBackendNavigationOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { allowedBackendOverride, resolveBackendNavigationOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { getHash, getSystemTimezone } from "@/utils/common";
 import { withServiceKey } from "@/lib/auth/serviceKey";
 
@@ -42,7 +42,8 @@ import { withServiceKey } from "@/lib/auth/serviceKey";
  *   UUID string.
  */
 export async function exchangeSsoToken(schoolUUID, ssoToken, backendOverride) {
-  const baseUrl = (isBackendOverrideAllowed() && backendOverride) || (await resolveServerBackendOrigin());
+  // The service key goes with this call: only a backend this deployment may use (callers already check; this holds anyway).
+  const baseUrl = allowedBackendOverride(backendOverride) || (await resolveServerBackendOrigin());
   if (!baseUrl || !schoolUUID || !ssoToken) {
     console.error("exchangeSsoToken: missing baseUrl, schoolUUID or ssoToken", {
       baseUrl,

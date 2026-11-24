@@ -7,8 +7,9 @@ import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOri
 /**
  * Server Actions for the AI Course Advisor on Step 3 (backend:
  * ClientCourseAdvisorController in is-rest-api). Identity is established via
- * the Bearer token in withSmsAuth — the backend reads it through AuthContext
- * and does not require userId/loginHash in the payload body.
+ * the Bearer token in withSmsAuth plus the session's own userId in the payload
+ * (CourseAdvisorAccess.check answers session-out without it and compares it with
+ * the token's user). No loginHash is sent.
  *
  * All endpoints answer 200 with { status, statusCode, message, ... };
  * status "3" means session out. Every call here is user-initiated — nothing
@@ -38,7 +39,10 @@ async function postAdvisor(schoolUUID, path, data) {
     withSmsAuth({
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ payload: encodePayload(data) }),
+      // CourseAdvisorAccess.check needs the caller's userId in the payload (null = session out) and compares it with
+      // the token's user, then checks studentUserId is in the same family. Always the session's own id, last, so a
+      // value sent by the browser can never replace it.
+      body: JSON.stringify({ payload: encodePayload({ ...data, userId: Number(session.userId) }) }),
     })
   );
   if (!response.ok) return null;
