@@ -29,7 +29,7 @@ const COPY = {
   k5: {
     // Elementary books day first: a day, a time, then a course that is free at that time.
     sub: "Pick a day, a time and a course. That's it!",
-    tickets: "My class tickets",
+    tickets: "My classes",
     steps: ["Pick a day", "Pick a time", "Pick a course"],
     any: "Every course is open. Pick any one you like!",
     anyDay: "Pick a day with free times.",
@@ -38,10 +38,10 @@ const COPY = {
     say: BOOK_SAY + " First, pick a day.",
     say2: "Great choice! Now pick a time.",
     say3: () => "Now pick a course for this time.",
-    sayAll: "Wow, you used all your tickets this week!",
-    allTitle: "All your tickets are used!",
-    allSub: "Super job! New tickets come on Monday.",
-    noLeft: "No tickets left",
+    sayAll: "Wow, you used all your Classes this week!",
+    allTitle: "All your Classes are used!",
+    allSub: "Super job! New Classes come on Monday.",
+    noLeft: "No Classes left",
   },
   // Grade 9–12 (High.dc.html): classes are bought, so there are no weekly free classes and nothing expires on Friday.
   high: {
@@ -340,7 +340,7 @@ function CapTile({ used }) {
   );
 }
 
-/** "My class tickets" (mockup): this week's tickets, used ones are filled with a tick. */
+/** "My class" (mockup): this week's, used ones are filled with a tick. */
 function Tickets({ perWeek, left, color }) {
   const { middle, high, copy } = useCopy();
   const total = Math.max(perWeek, left, 0);
@@ -501,7 +501,7 @@ function mergedDayModel(courses, leftOf, left) {
       let tag = "This week";
       if (valid && diff < 0) tag = "Over";
       else if (entries.length === 0) tag = "No classes";
-      else if (left < 1) tag = "No tickets left";
+      else if (left < 1) tag = "No Class left";
       else if (free === 0) tag = "Busy";
       else if (diff === 0) tag = "Today";
       else if (diff === 1) tag = "Tomorrow";
@@ -968,7 +968,7 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
                     </svg>
                   }
                 >
-                  You get {perWeek} {comp ? "free " : ""}class tickets every week
+                  You get {perWeek} {comp ? "free " : ""}classes  every week
                 </RuleTile>
                 {comp && (
                   <RuleTile
