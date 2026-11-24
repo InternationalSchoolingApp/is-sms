@@ -12,6 +12,7 @@ import { reEnrollmentStepPath } from "@/utils/reEnrollmentSteps";
 
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { K5PassedOptions } from "./K5PassedOptions";
+import { TranscriptDownloadCard } from "./TranscriptDownloadCard";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 
 const pad = (n) => String(n);
@@ -309,6 +310,8 @@ export function ReEnrollmentOptions() {
         {passed && !completedGrade && <StepList grade={grade} hasDiscount={hasDiscount} discountText={discountText} />}
 
         <div className="py-2">{optionButtons}</div>
+
+        <TranscriptDownloadCard look="classic" />
       </div>
       <HelpCard uniqueId={session.uniqueId} />
     </div>

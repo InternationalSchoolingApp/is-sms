@@ -8,6 +8,7 @@ import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { downloadTranscriptDocument, isDownloadableTranscriptLink } from "@/utils/transcriptDownload";
 import { K5Loading, K5TableSkeleton } from "@/components/k5/K5Skeletons";
+import { TranscriptBlockedNotice } from "@/components/student/TranscriptBlockedNotice";
 
 const GRID = "70px minmax(130px,0.9fr) minmax(170px,1.1fr) minmax(145px,1fr) minmax(145px,1fr) minmax(185px,1.2fr)";
 const COLUMNS = ["S. No.", "Grade", "Student ID", "Transcript", "Diploma", "Academic Verification"];
@@ -45,7 +46,7 @@ function DownloadButton({ href, label }) {
   );
 }
 /** K–5 look of Student Transcript (mockup Student Transcript): the same record and links as the existing page. */
-export function K5Transcript({ isLoading, student, transcripts = [], links }) {
+export function K5Transcript({ isLoading, student, transcripts = [], links, blocked = [], fixHref = null }) {
   const [query, setQuery] = useState("");
   const [perPage, setPerPage] = useState(10);
   const [page, setPage] = useState(1);
@@ -201,6 +202,8 @@ export function K5Transcript({ isLoading, student, transcripts = [], links }) {
               </button>
             </nav>
           </div>
+          {/* Phase 4: a blocked grade's reasons, instead of its links (menu above lists only the open ones). */}
+          <TranscriptBlockedNotice blocked={blocked} fixHref={fixHref} look="k5" />
         </section>
       )}
 

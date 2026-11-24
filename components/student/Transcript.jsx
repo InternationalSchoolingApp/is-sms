@@ -7,7 +7,11 @@ import { MobileTableCard } from "@/components/student/MobileTableCard";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useModuleRights } from "@/hooks/useModuleRights";
 import { useStudentTranscriptStatus } from "@/hooks/useStudentTranscriptStatus";
-import { transcriptLinks } from "@/utils/transcriptLinks";
+import { blockedTranscripts, transcriptLinks } from "@/utils/transcriptLinks";
+import { TranscriptBlockedNotice } from "@/components/student/TranscriptBlockedNotice";
+import { useReEnrollmentEligible } from "@/hooks/useReEnrollmentEntry";
+import { reEnrollmentBasePath } from "@/utils/reEnrollmentSteps";
+import { useParams } from "next/navigation";
 
 function ActionDropdown({ links }) {
   const [open, setOpen] = useState(false);
@@ -71,8 +75,15 @@ export function Transcript() {
   // Legacy: the transcript links are only listed when the module's viewed right is "Y" (roleAndModule.viewed).
   const { waiting, canView } = useModuleRights("student-transcript");
   const links = waiting || canView ? transcriptLinks(transcripts) : [];
+  // Phase 4: a blocked grade (backend transcriptBlocked) shows its reasons instead of links, under the same right.
+  const blocked = waiting || canView ? blockedTranscripts(transcripts) : [];
+  const { school } = useParams();
+  const eligible = useReEnrollmentEligible({ schoolUUID: context?.schoolUUID, userId: context?.userId, enabled: blocked.length > 0 });
+  const fixHref = eligible && school ? reEnrollmentBasePath(school) : null;
 
-  if (isK5) return <K5Transcript isLoading={isLoading} student={student} transcripts={transcripts} links={links} />;
+  if (isK5) {
+    return <K5Transcript isLoading={isLoading} student={student} transcripts={transcripts} links={links} blocked={blocked} fixHref={fixHref} />;
+  }
 
   return (
     <div className="mx-auto w-full max-w-5xl">
@@ -126,6 +137,11 @@ export function Transcript() {
               </table>
             </div>
             <div className="px-4 py-2 text-xs text-black/50">Showing 1 to 1 of 1 entries</div>
+            {blocked.length > 0 && (
+              <div className="px-4 pb-4">
+                <TranscriptBlockedNotice blocked={blocked} fixHref={fixHref} />
+              </div>
+            )}
           </>
         ) : (
           <div className="flex h-[200px] flex-col items-center justify-center gap-2 text-center">

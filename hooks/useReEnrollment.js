@@ -10,6 +10,7 @@ import { getPublicSchoolInfo, isEnrollmentViaNextjs } from "@/services/studentSi
 import {
   chooseReEnrollmentPaymentPlan,
   completeReEnrollment,
+  getReEnrollmentDocuments,
   getReEnrollmentEligibility,
   getReEnrollmentPaymentDetails,
   getReEnrollmentReview,
@@ -18,6 +19,7 @@ import {
 import { dashboardBasePath } from "@/utils/dashboardNav";
 import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
 import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
+import { mockReEnrollmentDocumentsResponse } from "@/utils/reEnrollmentDocuments";
 
 // SeriConstant: "1" success, "0" failed, "2" exception.
 export const STATUS_SUCCESS = "1";
@@ -260,5 +262,31 @@ export function useFetchReEnrollmentReview({ context, userId }) {
 export function useCompleteReEnrollment({ context, userId }) {
   return useMutation({
     mutationFn: () => completeReEnrollment(context.schoolUUID, { userId }),
+  });
+}
+
+export const reEnrollmentDocumentsKey = (userId) => ["re-enrollment-documents", userId];
+
+/**
+ * Option screen "Download your transcript" card: the re-enrollment/documents answer (raw; utils/reEnrollmentDocuments.js
+ * maps it). Read fresh on every mount and when the student comes back to the tab (after a payment / an upload elsewhere);
+ * never polled. A failed call is not retried: the card just hides, the re-enrollment carries on.
+ * TEMP: while the dev mock is switched on (see utils/reEnrollmentDocuments.js) the mock answers instead of the backend.
+ */
+export function useReEnrollmentDocuments({ schoolUUID, userId, enabled = true }) {
+  return useQuery({
+    queryKey: reEnrollmentDocumentsKey(userId),
+    queryFn: async () => {
+      const mock = await mockReEnrollmentDocumentsResponse();
+      if (mock) return mock;
+      const response = await getReEnrollmentDocuments(schoolUUID, { userId });
+      if (!response) throw new Error("re-enrollment documents returned no response");
+      return response;
+    },
+    enabled: Boolean(enabled && schoolUUID && userId),
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    retry: false,
   });
 }

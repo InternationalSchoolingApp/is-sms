@@ -323,3 +323,59 @@
 :global([data-k5-high]) .countdown{flex:1 1 100%}
 :global([data-k5-high]) .timer>div{flex:1;min-width:0}
 }
+
+/* ── Re-enrollment "Download your transcript" card (TranscriptDownloadCard.jsx, plan v3). New classes only; works inside the
+   K5 / middle / high option list (with .option / .tile / .next) and in the classic option screen (the *Classic classes). ── */
+.trRow{--tr-ac:var(--k5-ac,var(--primary,#1f6fe5));--tr-green:#1f9d57;--tr-greenbg:#ecf9f1;--tr-amber:#b5821a;--tr-amberbg:#fff6e2;--tr-red:#d61f36;--tr-redbg:#fdecee;--tr-mut:var(--k5-mut,#5b6678)}
+.trRow h3{margin:0}
+.option.trRow.trReady{border-color:#9fd8b6}
+.option.trRow.trBlocked{border-color:#f0cf8a}
+.option.trRow.trReady .tile.trTile{background:var(--tr-greenbg);color:var(--tr-green);box-shadow:none}
+.option.trRow.trBlocked .tile.trTile{background:var(--tr-amberbg);color:var(--tr-amber);box-shadow:none}
+.trNew{display:inline-block;border-radius:999px;padding:2px 8px;background:#ffe7ef;color:#c2185b;font:700 11px/1.4 var(--k5-fb,inherit);letter-spacing:.3px}
+.option.trBlocked .next.trDisabled,.trNextClassic.trDisabled{border-color:#c8d0de;background:#c8d0de;color:#5f6b80;box-shadow:none;cursor:not-allowed;transform:none}
+.trReasons{flex-basis:100%;margin:2px 0 0;padding:8px 14px;border:1px solid #f3dca0;border-radius:12px;background:var(--tr-amberbg);list-style:none;color:#5b4410;font:500 14px/1.45 var(--k5-fb,inherit)}
+.trReasons li{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:8px 0;border-bottom:1px dashed #f0d79c}
+.trReasons li:last-child{border-bottom:0}
+.trIcon{display:grid;place-items:center;flex:0 0 26px;width:26px;height:26px;border-radius:8px;background:#fff;color:var(--tr-amber)}
+.trText{flex:1 1 220px;min-width:0}
+.trText b{font-weight:700;color:#3d2d07}
+.trLine{display:block;margin-top:2px}
+.trMuted{color:var(--tr-mut);font-size:12.5px;font-weight:500}
+.trCta{display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:5px 14px;border:1px solid var(--tr-ac);border-radius:999px;background:var(--tr-ac);color:#fff;font:600 13px var(--k5-fb,inherit);text-decoration:none;white-space:nowrap;cursor:pointer}
+.trCta:hover{color:#fff;filter:brightness(1.05)}
+.trCta:disabled{opacity:.55;cursor:wait}
+.trCtaGhost{background:#fff;color:var(--tr-ac)}
+.trCtaGhost:hover{color:var(--tr-ac);background:var(--k5-act,#e8effd)}
+.trCta:focus-visible,.trDisabled:focus-visible{outline:2px solid var(--tr-ac);outline-offset:2px}
+.trChip{display:inline-block;border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.trChipMissing{background:var(--tr-redbg);color:var(--tr-red)}
+.trChipUploaded{background:var(--tr-greenbg);color:var(--tr-green)}
+.trUpload{flex-basis:100%;margin-top:4px;padding:10px 12px;border:1px solid #f0d79c;border-radius:10px;background:#fff;color:var(--k5-ink,#17202e)}
+.trUploadHead{margin-bottom:4px;font-size:13px;font-weight:700}
+.trUploadHead small{font-weight:400;color:var(--tr-mut)}
+.trDoc{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:8px 0;border-top:1px dashed #dfe5ef}
+.trDocName{flex:1 1 160px;min-width:0}
+.trDocError{display:block;color:var(--tr-red);font-size:12px;font-weight:500}
+.trDocActions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.trFileInput{display:none}
+.trFileName{display:inline-flex;align-items:center;gap:4px;max-width:220px;overflow:hidden;color:var(--tr-mut);font-size:12.5px;font-weight:500;text-overflow:ellipsis;white-space:nowrap}
+.trNote{margin:8px 0 0;color:var(--tr-mut);font-size:12px;font-weight:400}
+.trSkeleton{height:84px;border-radius:16px;background:linear-gradient(90deg,#eef2f8 25%,#f7f9fc 50%,#eef2f8 75%);background-size:200% 100%;animation:trShimmer 1.1s infinite}
+@keyframes trShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+/* Classic option screen (ReEnrollmentOptions.jsx, Tailwind page): the row look of the prototype. */
+.trClassic{display:flex;flex-wrap:wrap;align-items:center;gap:16px;width:100%;padding:16px 20px;border:2px solid #b9cdf6;border-radius:16px;background:#fff;text-align:left}
+.trClassic.trReady{border-color:#9fd8b6}
+.trClassic.trBlocked{border-color:#f0cf8a}
+.trTileClassic{display:grid;place-items:center;flex:0 0 50px;width:50px;height:50px;border-radius:12px}
+.trClassic.trReady .trTileClassic{background:var(--tr-greenbg);color:var(--tr-green)}
+.trClassic.trBlocked .trTileClassic{background:var(--tr-amberbg);color:var(--tr-amber)}
+.trCopyClassic{flex:1 1 220px;min-width:0}
+.trCopyClassic p{margin:2px 0 0;color:var(--tr-mut)}
+.trTitleClassic{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.trTitleClassic h3{font-size:18px;font-weight:700;color:#0f172a}
+.trNextClassic{display:inline-flex;align-items:center;justify-content:center;gap:8px;flex:0 0 auto;min-height:48px;padding:10px 32px;border:0;border-radius:999px;background:var(--tr-ac);color:#fff;font-size:16px;font-weight:600;text-decoration:none;white-space:nowrap;cursor:pointer}
+.trNextClassic:hover{color:#fff;filter:brightness(1.05)}
+.trButtons{display:flex;flex-wrap:wrap;align-items:center;gap:10px;flex:0 0 auto}
+@media(max-width:600px){.trButtons{width:100%}.trButtons>*{flex:1 1 100%;width:100%}.trRow>.next,.trRow>.trNextClassic{width:100%}.trReasons{padding:6px 10px}.trFileName{max-width:150px}}
+@media(prefers-reduced-motion:reduce){.trSkeleton{animation:none}}

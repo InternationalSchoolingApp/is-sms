@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Transcript Download Prototype</title>
+<style>
+  :root{--bg:#eef2f8;--card:#fff;--ink:#17202e;--mut:#5b6678;--line:#dfe5ef;--pri:#1f6fe5;--pri-d:#0b3a8f;--soft:#e8effd;
+    --green:#1f9d57;--greenbg:#ecf9f1;--amber:#b5821a;--amberbg:#fff6e2;--red:#d61f36;--redbg:#fdecee;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  button{font:inherit;cursor:pointer}
+  svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+
+  /* ---- prototype toolbar (not part of the real UI) ---- */
+  .proto{position:sticky;top:0;z-index:50;background:#151c2c;color:#e8edf6;padding:10px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+  .proto b{font-size:13px;margin-right:6px;color:#9fb0c9}
+  .proto button{border:1px solid #2a364d;background:#1b2436;color:#e8edf6;border-radius:99px;padding:5px 12px;font-size:12.5px}
+  .proto button.on{background:#5b9dff;border-color:#5b9dff;color:#fff}
+  .proto .reset{margin-left:auto;background:transparent}
+
+  /* ---- app chrome ---- */
+  .topbar{display:flex;align-items:center;gap:14px;background:#fff;padding:12px 20px;border-bottom:1px solid var(--line)}
+  .burger{width:44px;height:44px;border:1px solid var(--line);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--pri);background:#fff}
+  .logo{font-weight:800;color:var(--pri);font-size:19px;line-height:1.1}.logo small{display:block;font-size:10px;color:#2a7a2a;font-weight:600}
+  .topbar .sp{flex:1}
+  .welcome{display:flex;align-items:center;gap:10px;border:2px solid #f3dca0;background:#fffaf0;border-radius:99px;padding:5px 16px 5px 6px;font-size:12px}
+  .welcome .av{width:34px;height:34px;border-radius:50%;background:#cfd6e2}
+  .welcome b{display:block;font-size:15px}
+  .shell{display:flex;gap:18px;padding:18px;max-width:1500px;margin:0 auto}
+  .rail{flex:0 0 64px;background:#fff;border-radius:16px;padding:14px 10px;display:flex;flex-direction:column;gap:14px;align-items:center;align-self:flex-start}
+  .rail span{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#4b8cf5,#7bc6ff)}
+  .rail span:nth-child(3n){background:linear-gradient(135deg,#f5a623,#ffd36b)}
+  .rail span:nth-child(4n){background:linear-gradient(135deg,#2fbf71,#8de0b0)}
+  .page{flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+  @media (max-width:1100px){.page{grid-template-columns:minmax(0,1fr)}.rail{display:none}}
+  @media (max-width:640px){.shell{padding:10px}.topbar .welcome{display:none}.offer{padding:18px}.count{width:100%}.count .t div{min-width:0;flex:1}.opts{padding:16px}.row{padding:14px}}
+
+  /* ---- hero ---- */
+  .hero{position:relative;overflow:hidden;border-radius:18px;color:#fff;padding:30px 36px;min-height:220px;display:flex;align-items:center;gap:20px;
+    background:radial-gradient(circle at 80% 50%,rgba(255,255,255,.08) 0 120px,transparent 121px),linear-gradient(120deg,#0b2a6b,#0d47a1 60%,#1258c7)}
+  .hero.fail{background:linear-gradient(120deg,#23314f,#34507f)}
+  .hero::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:44px 44px;pointer-events:none}
+  .hero .copy{flex:1;position:relative;z-index:1}
+  .badge{display:inline-block;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);border-radius:99px;padding:6px 16px;font-size:14px;font-weight:600}
+  .hero h1{margin:16px 0 14px;font-size:34px;line-height:1.15}
+  .hero p.d{margin:0;color:rgba(255,255,255,.85)}
+  .path{display:flex;flex-wrap:wrap;align-items:center;gap:14px;font-size:14px}
+  .path .g{border:1px solid rgba(255,255,255,.4);border-radius:99px;padding:6px 14px;display:inline-flex;gap:6px;align-items:center}
+  .path .g.n{background:#fff;color:var(--pri-d);font-weight:700}
+  .path .dash{width:46px;border-top:2px dashed rgba(255,255,255,.5)}
+  .path .m{border-left:1px solid rgba(255,255,255,.25);padding-left:14px}
+  .path .m span{display:block;font-size:11px;letter-spacing:.08em;color:rgba(255,255,255,.7)}
+  .path .m b{font-size:15px}
+  .mascot{position:relative;z-index:1;width:150px;height:150px;border-radius:50%;background:#fff;box-shadow:0 0 0 14px rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .mascot svg{width:96px;height:120px}
+  @media (max-width:760px){.mascot{display:none}.hero{padding:22px}.hero h1{font-size:26px}}
+
+  /* ---- options card ---- */
+  .card{background:var(--card);border-radius:18px;border:1px solid var(--line);margin-top:20px;overflow:hidden}
+  .offer{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center;padding:24px 28px;border-bottom:1px solid var(--line)}
+  .offer .tag{display:inline-flex;gap:6px;align-items:center;background:var(--greenbg);color:#24543a;border-radius:99px;padding:5px 12px;font-size:14px}
+  .offer h2{margin:10px 0 4px;font-size:30px}.offer h2 span{color:var(--green)}
+  .offer p{margin:0;color:var(--mut)}
+  .count{border:1px solid #bfe7cf;background:#f3fbf6;border-radius:16px;padding:14px 18px}
+  .count .ends{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+  .count .t{display:flex;gap:8px}.count .t div{background:#fff;border:1px solid #bfe7cf;border-radius:12px;min-width:66px;text-align:center;padding:6px 0}
+  .count .t b{display:block;font-size:22px}.count .t span{font-size:12px;color:var(--mut)}
+  .opts{padding:22px 24px 26px}
+  .opts h3{margin:0 0 14px;font-size:14px;letter-spacing:.08em;color:#3b4658;font-weight:600}
+  .row{display:flex;align-items:center;gap:16px;border:2px solid #b9cdf6;border-radius:16px;padding:16px 22px;margin-bottom:14px;background:#fff;transition:border-color .2s,box-shadow .2s}
+  .row:hover{box-shadow:0 4px 18px rgba(31,111,229,.08)}
+  .tile{width:50px;height:50px;border-radius:12px;background:var(--soft);color:var(--pri);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .row .c{flex:1;min-width:0}
+  .row h4{margin:0;font-size:19px;font-weight:600;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .row p{margin:2px 0 0;color:var(--mut)}
+  .save{font-size:13px;background:var(--greenbg);color:#24543a;border-radius:99px;padding:2px 10px;font-weight:600}
+  .next{display:inline-flex;align-items:center;gap:8px;background:var(--pri);color:#fff;border:0;border-radius:99px;padding:13px 40px;font-weight:600;font-size:17px;white-space:nowrap}
+  .next:disabled{background:#c8d0de;color:#717c90;cursor:not-allowed}
+  .next.sec{background:#fff;color:var(--pri);border:2px solid var(--pri);padding:11px 30px}
+  .sub{display:inline-flex;gap:6px;align-items:center;margin-top:6px;font-weight:600;color:var(--pri);background:none;border:0;padding:0;font-size:14px}
+  /* new card states */
+  .row.tr.ready{border-color:#9fd8b6}
+  .row.tr.ready .tile{background:var(--greenbg);color:var(--green)}
+  .row.tr.blocked{border-color:#f0cf8a;flex-wrap:wrap}
+  .row.tr.blocked .tile{background:var(--amberbg);color:var(--amber)}
+  .newpill{font-size:11px;font-weight:700;background:#ffe7ef;color:#c2185b;border-radius:99px;padding:2px 8px}
+  .reasons{flex-basis:100%;margin:6px 0 0 66px;background:var(--amberbg);border:1px solid #f3dca0;border-radius:12px;padding:10px 14px;list-style:none}
+  .reasons li{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed #f0d79c;font-size:14px;color:#5b4410}
+  .reasons li:last-child{border-bottom:0}
+  .reasons li .tx{flex:1;min-width:200px}
+  .reasons .cta{border:0;background:var(--pri);color:#fff;border-radius:99px;padding:5px 14px;font-weight:600;font-size:13px;display:inline-flex;gap:4px;align-items:center}
+  .reasons .cta.ghost{background:#fff;color:var(--pri);border:1px solid var(--pri)}
+  @media (max-width:640px){.row{flex-wrap:wrap}.row .next{width:100%;justify-content:center}.reasons{margin-left:0}}
+
+  /* inline upload + pay pages */
+  .up{flex-basis:100%;margin-top:8px;background:#fff;border:1px solid #f0d79c;border-radius:10px;padding:10px 12px;color:#17202e}
+  .uph{font-weight:700;font-size:13px;margin-bottom:6px}.uph small{font-weight:400;color:var(--mut)}
+  .ud{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 0;border-top:1px dashed var(--line)}
+  .ud .un{flex:1 1 180px;min-width:0}.ud .rm{display:block;color:var(--red);font-size:12px}
+  .ud .ua{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .chip{font-size:11.5px;font-weight:700;border-radius:99px;padding:2px 9px;white-space:nowrap}
+  .chip.missing{background:var(--redbg);color:var(--red)}.chip.uploaded{background:var(--greenbg);color:var(--green)}
+  .hold{display:block;margin-top:2px}.hold b{color:#3d2d07}
+  .sub:disabled{color:#8a94a6;cursor:not-allowed}
+  .btns{display:flex;flex-wrap:wrap;gap:10px;flex:0 0 auto}.subs{display:flex;flex-wrap:wrap;gap:6px 16px}
+  .next.sec:disabled{background:#fff;border-color:#c8d0de;color:#8a94a6}
+  svg.spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+  @media (max-width:640px){.btns{width:100%}.btns .next{flex:1 1 0;padding-left:12px;padding-right:12px}}
+  .fn,.mutt{font-size:12.5px;color:var(--mut)}
+  .upn{margin:8px 0 0;font-size:12px;color:var(--mut)}
+  .screen.center{max-width:560px;margin:0 auto;text-align:center}
+  .bigicon{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:6px auto 12px;font-size:36px;font-weight:800}
+  .gwbox{border:1px solid var(--line);border-radius:12px;padding:14px;margin:14px 0;background:#fbfcfe}
+  .gwrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+  label.gw{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px;cursor:pointer;text-align:left}
+  label.gw:has(input:checked){border-color:var(--pri);background:var(--soft)}
+
+  /* skeleton */
+  .sk{height:84px;border-radius:16px;background:linear-gradient(90deg,#eef2f8 25%,#f7f9fc 50%,#eef2f8 75%);background-size:200% 100%;animation:sh 1s infinite;margin-bottom:14px}
+  @keyframes sh{to{background-position:-200% 0}}
+
+  /* ---- help aside ---- */
+  .help{background:#fff;border-radius:18px;border:1px solid var(--line);padding:24px}
+  .help h2{margin:0 0 18px;display:flex;gap:10px;align-items:center;font-size:21px}
+  .talk{display:flex;justify-content:center;align-items:center;gap:8px;background:var(--pri);color:#fff;border:0;width:100%;border-radius:99px;padding:13px;font-weight:600;font-size:16px}
+  .ct{display:flex;gap:14px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:14px}
+  .ct .tile{width:52px;height:52px}
+  .ct b{display:block}.ct span{color:var(--mut);font-size:14px;word-break:break-word}
+
+  /* ---- behind the scenes ---- */
+  .log{background:#fff;border-radius:18px;border:1px solid var(--line);padding:18px;margin-top:20px}
+  .log h3{margin:0 0 4px;font-size:15px}.log small{color:var(--mut)}
+  .log ol{margin:10px 0 0;padding-left:20px;font-size:12.5px;max-height:320px;overflow:auto}
+  .log li{margin-bottom:6px}
+  .log code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;background:#eef2f8;border-radius:4px;padding:1px 4px}
+  .log .sim{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+  .log .sim button{border:1px dashed #9aa6ba;background:#f7f9fc;border-radius:8px;padding:5px 9px;font-size:12px}
+
+  /* ---- sub screens ---- */
+  .screen{background:#fff;border-radius:18px;border:1px solid var(--line);padding:24px}
+  .screen h2{margin:0 0 4px}.screen .crumb{color:var(--mut);font-size:13px;margin-bottom:16px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left}
+  th{background:var(--pri);color:#fff;font-weight:600}
+  .st{font-weight:700;font-size:12px;border-radius:99px;padding:2px 10px}
+  .st.ok{background:var(--greenbg);color:var(--green)}.st.due{background:var(--redbg);color:var(--red)}
+  .back{border:0;background:none;color:var(--pri);font-weight:600;display:inline-flex;gap:6px;align-items:center;padding:0;margin-bottom:12px}
+  .drop{border:2px dashed #b9cdf6;border-radius:14px;padding:22px;text-align:center;color:var(--mut);margin:10px 0}
+
+  /* ---- modal / toast ---- */
+  .ov{position:fixed;inset:0;background:rgba(15,20,32,.55);display:none;align-items:center;justify-content:center;z-index:80;padding:16px}
+  .ov.on{display:flex}
+  .modal{background:#fff;border-radius:18px;max-width:560px;width:100%;padding:22px;max-height:90vh;overflow:auto}
+  .modal h3{margin:0 0 12px;display:flex;justify-content:space-between;align-items:center}
+  .sheet{border:1px solid var(--line);border-radius:10px;padding:18px;font-size:13px;background:#fbfcfe}
+  .sheet .hd{text-align:center;border-bottom:2px solid var(--pri);padding-bottom:8px;margin-bottom:10px}
+  .sheet .hd b{color:var(--pri);font-size:16px}
+  .sheet table th{background:#eef2f8;color:var(--ink)}
+  .bar{height:6px;border-radius:9px;background:#eef2f8;overflow:hidden;margin:14px 0}.bar i{display:block;height:100%;width:0;background:var(--green);transition:width 1.2s}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120px);background:#17202e;color:#fff;border-radius:12px;padding:12px 18px;z-index:90;transition:transform .25s;max-width:92vw;font-size:14px}
+  .toast.on{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="proto" role="toolbar" aria-label="Prototype scenarios">
+  <b title="Matches implementation plan v3 (final)">FINAL · plan v3 —</b>
+  <b>Scenario:</b>
+  <span id="scn"></span>
+  <button class="reset" id="reset">↺ Reset</button>
+</div>
+
+<div class="topbar">
+  <div class="burger"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></div>
+  <div class="logo">International Schooling<small>Your Location. Your School. Your Time.</small></div>
+  <div class="sp"></div>
+  <div class="welcome"><span class="av"></span><div>Welcome back,<b id="wname">Yusef!</b></div></div>
+</div>
+
+<div class="shell">
+  <nav class="rail" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></nav>
+  <div class="page">
+    <div id="main"></div>
+    <div>
+      <aside class="help">
+        <h2><svg class="i" viewBox="0 0 24 24" style="color:var(--pri)"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>Need Help?</h2>
+        <button class="talk" data-act="help"><svg class="i" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>Talk to us</button>
+        <div class="ct"><span class="tile"><svg class="i" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></span><div><b>Phone Support</b><span>+15854990662</span></div></div>
+        <div class="ct"><span class="tile"><svg class="i" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></span><div><b>Email Support</b><span>admin.support@<wbr>internationalschooling.org</span></div></div>
+      </aside>
+      <div class="log">
+        <h3>⚙ Behind the scenes</h3>
+        <small>Har click pe kya API / state change hota hai (prototype only).</small>
+        <ol id="log"></ol>
+        <div class="sim" id="sim"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ov"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const I = {
+  next:'<svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>',
+  refresh:'<svg class="i" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg>',
+  cap:'<svg class="i" viewBox="0 0 24 24"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>',
+  book:'<svg class="i" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+  file:'<svg class="i" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>',
+  lock:'<svg class="i" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+  dl:'<svg class="i" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>',
+  award:'<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.5 12.9 17 22l-5-3-5 3 1.5-9.1"/></svg>',
+  check:'<svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M20 6 9 17l-5-5"/></svg>',
+  gift:'<svg class="i" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>',
+  cal:'<svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+  back:'<svg class="i" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>',
+  up:'<svg class="i" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>',
+  x:'<svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+  eye:'<svg class="i" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
+  spin:'<svg class="i spin" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.2-8.55"/></svg>',
+};
+
+const MASCOT = '<svg viewBox="-12 0 224 260" aria-hidden="true"><ellipse cx="76" cy="240" rx="20" ry="11" fill="#0d47a1"/><ellipse cx="124" cy="240" rx="20" ry="11" fill="#0d47a1"/><path d="M30 130Q8 106 14 76" fill="none" stroke="#1f6fe5" stroke-width="13" stroke-linecap="round"/><circle cx="14" cy="70" r="12" fill="#1f6fe5"/><path d="M170 130Q192 106 186 76" fill="none" stroke="#1f6fe5" stroke-width="13" stroke-linecap="round"/><circle cx="186" cy="70" r="12" fill="#1f6fe5"/><path d="M100 30C52 30 18 66 18 112c0 58 82 124 82 124s82-66 82-124c0-46-34-82-82-82z" fill="#1f6fe5"/><circle cx="100" cy="112" r="56" fill="#fff"/><ellipse cx="80" cy="104" rx="9" ry="12" fill="#171B2E"/><circle cx="83" cy="99" r="3.5" fill="#fff"/><ellipse cx="120" cy="104" rx="9" ry="12" fill="#171B2E"/><circle cx="123" cy="99" r="3.5" fill="#fff"/><circle cx="66" cy="126" r="8" fill="#FF9EB5"/><circle cx="134" cy="126" r="8" fill="#FF9EB5"/><path d="M84 128Q100 146 116 128Z" fill="#171B2E"/><path d="M70 36v14q30 12 60 0V36z" fill="#171B2E"/><path d="m100 8 56 20-56 20-56-20z" fill="#171B2E"/><path d="M156 28v26" stroke="#FFC531" stroke-width="4" stroke-linecap="round"/><circle cx="156" cy="58" r="6" fill="#FFC531"/></svg>';
+
+// Display order = plan v3 section 5: school hold on top, then documents. (Fee/payment is not on the card: plan D21.)
+const ORDER = ['TRANSCRIPT_ON_HOLD','DOCUMENTS_PENDING'];
+// Document status = plan v3: admin's 3 academic docs; uploaded = done (school verification comes later).
+const DOC_LABEL = {MISSING:'Not uploaded', UPLOADED:'Uploaded'};
+const DOC_TYPE = {'Age Proof':'Age Proof', 'Parent Passport':'Signature', 'Last academic proof':'Last Academic Proof'};
+const docs = (a,p,l) => [{name:'Age Proof',status:a}, {name:'Parent Passport',status:p}, {name:'Last academic proof',status:l}];
+
+const SCENARIOS = {
+  ready:{label:'1. Promoted · available', name:'Yusef Lee Montoya Refaat', hero:'promoted', cur:'Grade 10', nxt:'Grade 11', prog:'Group Learning', offer:true, diploma:false},
+  docs:{label:'2. Documents only', name:'Lina Haddad', hero:'promoted', cur:'Grade 5', nxt:'Grade 6', prog:'Self Study', offer:false, diploma:false,
+    docs:docs('UPLOADED','MISSING','UPLOADED')},
+  multi:{label:'3. Two documents missing', name:'Xiomara Martinez', hero:'promoted', cur:'Grade 7', nxt:'Grade 8', prog:'1:1 Learning', offer:false, diploma:false, docs:docs('MISSING','MISSING','UPLOADED')},
+  g12:{label:'4. Grade 12 completed', name:'Kenza El Alami Trebki', hero:'g12', cur:'Grade 12', prog:'1:1 Learning', offer:false, diploma:true},
+  fail:{label:'5. Fail (comeback)', name:'Arjun Mehta', hero:'fail', cur:'Grade 9', prog:'1:1 Learning', offer:false, diploma:false},
+  hold:{label:'6. On hold by school', name:'Omar Siddiqui', hero:'promoted', cur:'Grade 8', nxt:'Grade 9', prog:'Group Learning', offer:true, diploma:false,
+    hold:{reason:'Pending fee clearance', remark:'Please contact the accounts team before 30 Nov to clear the old balance.'}},
+  all:{label:'7. Grade 12 · hold + docs', name:'Sara Okafor', hero:'g12', cur:'Grade 12', prog:'1:1 Learning', offer:false, diploma:true,
+    hold:{reason:'Disciplinary review', remark:''},
+    docs:docs('UPLOADED','MISSING','UPLOADED')},
+};
+
+function holdText(h){
+  // Plan v3: reason + remark from the admin's "Publish without Show"; blank remark → no line; blank reason → generic.
+  if(!h.reason) return `<b>Your transcript has been published, but it is on hold.</b> Please contact the school.`;
+  return `<b>Your transcript has been published, but it is on hold.</b>`+
+    `<span class="hold"><b>Reason:</b> ${h.reason}</span>`+
+    (h.remark?`<span class="hold"><b>Remark:</b> ${h.remark}</span>`:'')+
+    `<span class="mutt">Please contact the school to release it.</span>`;
+}
+
+// Blocker catalogue — same codes as the plan (backend documents.blockers[]).
+const B = {
+  TRANSCRIPT_ON_HOLD:{icon:'⏸', text:s=>holdText(s.hold), cta:()=>'Talk to us', act:'help', ghost:true},
+  DOCUMENTS_PENDING:{icon:'📎', text:s=>`Mandatory documents missing:<br>`+s.docs.filter(d=>d.status==='MISSING').map(d=>`• <b>${d.name}</b> <span class="chip missing">${DOC_LABEL.MISSING}</span>`).join('<br>')+`<br><span class="mutt">Upload them here to unlock your transcript.</span>`,
+    cta:s=>s.upOpen?'Hide':'Upload', act:'docs', plain:true},
+};
+
+let key='ready', S, screen='main', loading=false, timer=null;
+const $=id=>document.getElementById(id);
+const clone=o=>JSON.parse(JSON.stringify(o));
+
+function activeBlockers(){
+  const b=[];
+  if(S.hold) b.push('TRANSCRIPT_ON_HOLD');
+  if(S.docs && S.docs.some(d=>d.status==='MISSING')) b.push('DOCUMENTS_PENDING');
+  return b;
+}
+function log(html){const li=document.createElement('li');li.innerHTML=html;$('log').appendChild(li);$('log').scrollTop=1e9;}
+function toast(t){const el=$('toast');el.innerHTML=t;el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),2800);}
+function closeOv(){$('ov').classList.remove('on');}
+
+function load(k){
+  clearInterval(timer);closeOv();
+  key=k;S=clone(SCENARIOS[k]);screen='main';S.upOpen=false;$('log').innerHTML='';
+  $('wname').textContent=S.name.split(' ')[0]+'!';
+  log(`Page open → <code>POST re-enrollment/eligibility</code> → <code>RE_ENROLLMENT</code>`);
+  log(`Option screen → <code>POST re-enrollment/documents</code> → <code>blockers=[${activeBlockers().join(', ')}]</code>${S.diploma?', Grade 12 PASS → diploma':''}${activeBlockers().length?' · links <code>null</code> (blocked)':''}`);
+  if(S.hold) log(`<code>MARKS_PUBLISHED = Y</code> + <code>SHOW_TRANSCRIPT_TO_STUDENT = N</code> (admin "Publish without Show") → reason <code>TRANSCRIPT_HIDE_REASON_TEXT</code>, remark <code>TRANSCRIPT_HIDE_NOTE</code>`);
+  if(S.docs) log(`Docs = admin's 3 academic docs (<code>AcademicDocs</code>): `+S.docs.map(d=>`${d.name} <code>${d.status}</code>`).join(', '));
+  refetch(true);
+}
+function refetch(first,why){
+  loading=true;render();
+  if(!first) log(`${why||'Back on page'} → <code>documents</code> refetch (<code>refetchOnMount: "always"</code>) → blockers=[${activeBlockers().join(', ')}]`);
+  setTimeout(()=>{loading=false;render();},first?350:700);
+}
+
+function renderScn(){
+  $('scn').innerHTML=Object.entries(SCENARIOS).map(([k,v])=>`<button class="${k===key?'on':''}" data-scn="${k}">${v.label}</button>`).join(' ');
+  const sim=[];
+  if(S.hold) sim.push(`<button data-act="releaseHold">🛠 Simulate: admin shows the transcript (hold released)</button>`);
+  $('sim').innerHTML=sim.join('');
+}
+
+function heroHTML(){
+  if(S.hero==='g12') return `<section class="hero"><div class="copy"><span class="badge">Welcome back, ${S.name}!</span><h1>Congratulations on completing Grade 12</h1><p class="d">Choose how you would like to continue your learning journey.</p></div><div class="mascot">${MASCOT}</div></section>`;
+  if(S.hero==='fail') return `<section class="hero fail"><div class="copy"><span class="badge">Dear ${S.name}, we believe in you!</span><h1>Every comeback starts with one step</h1><p class="d">A setback is not the end of the story. Repeat ${S.cur} and finish stronger this time.</p><div class="path" style="margin-top:14px"><span class="g">${I.refresh.replace('class="i"','class="i" style="width:15px;height:15px"')} Repeat ${S.cur}</span></div></div><div class="mascot">${MASCOT}</div></section>`;
+  return `<section class="hero"><div class="copy"><span class="badge">Congratulations, Dear ${S.name}!</span><h1>You've been promoted to ${S.nxt}</h1>
+    <div class="path"><span class="g">${I.check} ${S.cur}</span><span class="dash"></span><span class="g n">${S.nxt}</span>
+    <span class="m"><span>ACADEMIC YEAR</span><b>2027–28</b></span><span class="m"><span>PROGRAM</span><b>${S.prog}</b></span></div></div><div class="mascot">${MASCOT}</div></section>`;
+}
+function offerHTML(){
+  if(!S.offer) return '';
+  return `<div class="offer"><div><span class="tag">${I.gift} Early re-enrollment offer</span><h2>Save <span>USD 350</span></h2><p>when you re-enroll before the offer ends</p></div>
+    <div class="count"><div class="ends">${I.cal}<span>Offer Ends on: <b>18 Jan 2027</b></span></div><div class="t"><div><b>60</b><span>Days</span></div><div><b>06</b><span>Hrs</span></div><div><b>53</b><span>Min</span></div><div><b>06</b><span>Sec</span></div></div></div></div>`;
+}
+function optionRows(){
+  if(S.hero==='g12') return row(I.cap,'Enroll in a single course program - Flexy','Pick the courses you want and learn at your own pace.');
+  if(S.hero==='fail') return row(I.refresh,'Repeat the entire grade',`Repeat ${S.cur} and finish stronger this time.`)+row(I.cap,'Take an Individual Course','Retake only the subject you did not pass.');
+  return row(I.refresh,`Re-Enroll Today for ${S.nxt}`,`Continue with your ${S.prog} program in ${S.nxt}`, S.offer?'<span class="save">Saves USD 350</span>':'');
+}
+function row(icon,title,text,extra=''){
+  return `<div class="row"><span class="tile">${icon}</span><div class="c"><h4>${title} ${extra}</h4><p>${text}</p></div><button class="next" data-act="next">Next ${I.next}</button></div>`;
+}
+
+// Inline upload panel — same page, no redirect. Reuses the profile document upload API.
+function uploadPanel(){
+  return `<div class="up"><div class="uph">Upload documents <small>— same upload as My Profile → Documents, done here</small></div>`+
+  S.docs.map((d,i)=>{
+    let act='';
+    if(d.status==='UPLOADED') act='';
+    else if(d.busy) act='<span class="mutt">Uploading…</span>';
+    else if(d.file) act=`<span class="fn">📎 ${d.file}</span><button class="cta" data-act="doUpload" data-i="${i}">Upload</button>`;
+    else act=`<button class="cta ghost" data-act="pick" data-i="${i}">Choose file</button>`;
+    return `<div class="ud"><div class="un"><b>${d.name}</b></div><span class="chip ${d.status.toLowerCase()}">${DOC_LABEL[d.status]}</span><div class="ua">${act}</div></div>`;
+  }).join('')+
+  `<p class="upn">PDF, JPG or PNG up to 5 MB. The transcript unlocks as soon as all mandatory documents are uploaded.</p></div>`;
+}
+
+function transcriptRow(){
+  if(loading) return '<div class="sk"></div>';
+  const bl=ORDER.filter(c=>activeBlockers().includes(c));
+  if(!bl.length){
+    // One Download button; Grade 12 PASS: Download Transcript + Download Diploma. Each opens the page in a new tab.
+    const two = Boolean(S.diploma);
+    const btns = two
+      ? (S.preparing
+          ? `<div class="btns"><button class="next" disabled>Download Transcript ${I.spin}</button><button class="next" disabled>Download Diploma ${I.spin}</button></div>`
+          : `<div class="btns"><button class="next" data-act="download">Download Transcript ${I.dl}</button><button class="next" data-act="diploma">Download Diploma ${I.dl}</button></div>`)
+      : (S.preparing
+          ? `<button class="next" disabled>Preparing… ${I.spin}</button>`
+          : `<button class="next" data-act="download">Download ${I.dl}</button>`);
+    return `<div class="row tr ready"><span class="tile">${I.file}</span><div class="c"><h4>Download your transcript <span class="newpill">NEW</span></h4><p>Your ${S.cur} transcript is ready to download.</p></div>${btns}</div>`;
+  }
+  const head = bl.length>1?`Complete these steps to download your ${S.cur} transcript.`:`Your ${S.cur} transcript is not available yet.`;
+  return `<div class="row tr blocked"><span class="tile">${I.lock}</span><div class="c"><h4>Download your transcript <span class="newpill">NEW</span></h4><p>${head}</p>
+      </div>
+    ${S.diploma?`<div class="btns"><button class="next" disabled title="Complete the steps below first">Download Transcript ${I.dl}</button><button class="next" disabled title="Complete the steps below first">Download Diploma ${I.dl}</button></div>`:`<button class="next" disabled title="Complete the steps below first">Download ${I.dl}</button>`}
+    <ul class="reasons">${bl.map(c=>`<li><span>${B[c].icon}</span><span class="tx">${B[c].text(S)}</span><button class="cta ${B[c].ghost?'ghost':''}" data-act="${B[c].act}">${B[c].cta(S)}</button>${c==='DOCUMENTS_PENDING'&&S.upOpen?uploadPanel():''}</li>`).join('')}</ul></div>`;
+}
+
+function render(){
+  renderScn();
+  const m=$('main');
+  m.innerHTML=heroHTML()+`<section class="card">${offerHTML()}<div class="opts"><h3>${S.hero==='promoted'?'CONTINUE WITH':'CHOOSE HOW YOU WANT TO CONTINUE'}</h3>${optionRows()}${transcriptRow()}</div></section>`;
+}
+
+
+function openDoc(kind){
+  const isD=kind==='diploma', view=true; // the document page opens in a new tab
+  log(`Click <b>${view?(isD?'View diploma':'View'):(isD?'Download diploma':'Download')}</b> → <code>${isD?'/dashboard/view-diploma/…':'/dashboard/student-transcript-view-after-publish/…?payload=…|true'}</code> (backend re-checks blockers)`);
+  $('modal').innerHTML=`<h3>${isD?'Diploma':'Transcript'} – ${S.cur}<button class="back" style="margin:0" data-act="close">${I.x}</button></h3>
+    <div class="sheet"><div class="hd"><b>INTERNATIONAL SCHOOLING</b><div>${isD?'High School Diploma':'Official Transcript'} · ${S.cur} · 2026–27</div></div>
+    <div><b>Student:</b> ${S.name}</div>
+    ${isD?`<p style="text-align:center;margin:18px 0">This is to certify that <b>${S.name}</b> has completed the requirements of Grade 12.</p>`:
+    `<table style="margin-top:8px"><tr><th>Course</th><th>Grade</th><th>Credits</th></tr><tr><td>English</td><td>A</td><td>1.0</td></tr><tr><td>Mathematics</td><td>B+</td><td>1.0</td></tr><tr><td>Science</td><td>A-</td><td>1.0</td></tr></table>`}</div>
+    <div class="bar"><i id="bar"></i></div><div id="dlmsg" style="font-size:13px;color:var(--mut)">Preparing PDF…</div>`;
+  $('ov').classList.add('on');
+  requestAnimationFrame(()=>{$('bar').style.width='100%';});
+  setTimeout(()=>{const f=`${isD?'diploma':'transcript'}_${S.cur.replace(' ','_').toLowerCase()}.pdf`;const el=$('dlmsg');if(el){el.innerHTML=view?`✓ <b>${f}</b> opened in a new tab (demo)`:`✓ <b>${f}</b> downloaded (demo)`;log(view?`View opens the document in a new tab`:`Download saves the file (same helper as My Transcript) → <code>${f}</code>`);}},1300);
+}
+
+document.addEventListener('click',e=>{
+  if(e.target===$('ov')){closeOv();return;}
+  const s=e.target.closest('[data-scn]'); if(s){load(s.dataset.scn);return;}
+  const b=e.target.closest('[data-act]'); if(!b) return;
+  const a=b.dataset.act, i=Number(b.dataset.i);
+  if(a==='next'){toast('Next → existing re-enrollment steps (payment / courses). Not changed by this feature.');log('Click <b>Next</b> → existing <code>select-option</code> flow (unchanged)');}
+  if(a==='help'){toast('Opens support chat (onboarding-support) in a new tab.');log('Click <b>Talk to us</b> → support chat');}
+  if(a==='download') openDoc('transcript');
+  if(a==='diploma') openDoc('diploma');
+  if(a==='close') closeOv();
+  // ---- documents: inline upload on the same page ----
+  if(a==='docs'){S.upOpen=!S.upOpen;log(S.upOpen?'Click <b>Upload</b> → inline upload panel opens on the same page (no redirect to profile)':'Upload panel closed');render();}
+  if(a==='pick'){const d=S.docs[i];d.file=d.name.toLowerCase().replace(/[^a-z0-9]+/g,'_')+'.jpg';render();}
+  if(a==='doUpload'){const d=S.docs[i];d.busy=true;render();
+    log(`Upload <b>${d.name}</b> → existing profile upload <code>POST /api/profile/document</code> → <code>dashboard/save-docs {docType: "${DOC_TYPE[d.name]}"}</code> → new ATTACHMENTS row`);
+    setTimeout(()=>{d.busy=false;d.status='UPLOADED';delete d.file;
+      const left=S.docs.filter(x=>x.status==='MISSING').length;
+      if(!left) S.upOpen=false;
+      toast(left?`Document uploaded — ${left} more to go`:'All mandatory documents uploaded');
+      // Instant: the row flips to "Uploaded" on the card at once (no wait for the API); the documents API refreshes in the background.
+      log(`Upload success → <b>${d.name}</b> turns <b>Uploaded</b> on the card at once (cache updated), documents API refreshed in the background`);
+      const unlocked=!activeBlockers().length;
+      if(unlocked){S.preparing=true;log('Last document done → card is ready: <b>Preparing…</b> at once (the links only come from the backend when nothing blocks)');}
+      render();
+      setTimeout(()=>{if(S.preparing){S.preparing=false;log('Background <code>documents</code> refetch → <code>available: true</code> + links → the single <b>Download</b> button is enabled');render();}},unlocked?500:0);},900);}
+  if(a==='releaseHold'){delete S.hold;
+    log('Admin turns <b>Show</b> on (<code>admin-transcript-toggle-visibility</code>) → <code>SHOW_TRANSCRIPT_TO_STUDENT = Y</code>, hide reason cleared');refetch(false,'Window focus');}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOv();});
+$('reset').onclick=()=>load(key);
+load('ready');
+
+</script>
+</body>
+</html>

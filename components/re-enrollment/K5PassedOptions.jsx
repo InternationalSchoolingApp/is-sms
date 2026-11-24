@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { ArrowRight, BookOpen, CalendarDays, Check, Crown, GraduationCap, Gift, Headphones, Mail, MessageCircle, Phone, RefreshCw, Sparkles, Star } from "lucide-react";
 import { CHAT_BASE_URL, SUPPORT_EMAIL, SUPPORT_PHONE } from "./ReEnrollmentParts";
+import { TranscriptDownloadCard } from "./TranscriptDownloadCard";
 import styles from "./K5PassedOptions.module.css";
 
 function Offer({ discount }) {
@@ -105,6 +106,8 @@ export function K5PassedOptions({ passed, isMiddle, isHigh, studentName, grade, 
             </div>;
           })}
           {options.length === 0 && <p>Your next enrollment options are not available yet. Please contact the school for help.</p>}
+          {/* Every hero branch (promoted / comeback / completed Grade 12): the just-completed grade's transcript. */}
+          <TranscriptDownloadCard look="k5" />
         </div>
       </section>
     </div>

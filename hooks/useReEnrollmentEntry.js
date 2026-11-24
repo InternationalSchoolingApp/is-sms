@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getReEnrollmentEligibility } from "@/services/reEnrollmentBackendApi";
+import { isEnrollmentViaNextjs } from "@/services/studentSignupApi";
 import { STATUS_SUCCESS } from "@/hooks/useReEnrollment";
 import { reEnrollmentBasePath } from "@/utils/reEnrollmentSteps";
 
@@ -41,4 +42,32 @@ export function useReEnrollmentEntry({ school, schoolUUID, userId, studentGradua
   }, [target, router]);
 
   return { checking: Boolean(dashboardLoading || (enabled && query.isFetching) || target) };
+}
+
+/**
+ * My Transcript (Phase 4): whether this student can open the re-enrollment pages (ENROLLMENT_VIA_NEXTJS not off and the
+ * eligibility says RE_ENROLLMENT) — then a blocked transcript row links to them to fix it. Only asked when `enabled`
+ * (a blocked row is on show); same queries / keys as the re-enrollment provider and the home entry.
+ */
+export function useReEnrollmentEligible({ schoolUUID, userId, enabled }) {
+  const on = Boolean(enabled && schoolUUID && userId);
+  const viaNextjs = useQuery({
+    queryKey: ["enrollment-via-nextjs", schoolUUID],
+    queryFn: () => isEnrollmentViaNextjs(schoolUUID),
+    enabled: on,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+  const query = useQuery({
+    queryKey: ["re-enrollment-entry", schoolUUID, userId],
+    queryFn: async () => (await getReEnrollmentEligibility(schoolUUID, { userId })) ?? null,
+    enabled: on && viaNextjs.isFetched && viaNextjs.data !== false,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+  return on && viaNextjs.data !== false && query.data?.status === STATUS_SUCCESS && query.data.nextAction === "RE_ENROLLMENT";
 }

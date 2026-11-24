@@ -7,7 +7,7 @@ import { withSmsAuth } from "@/lib/auth/session";
 /**
  * Re-enrollment endpoints (ClientReEnrollmentController.java, is-rest-api):
  *   POST {school}/api/v1/student/re-enrollment/{eligibility,select-option,payment-details,
- *                                                 choose-payment-plan,review,complete}
+ *                                                 choose-payment-plan,review,complete,documents}
  * Same envelope as studentSignupBackendApi.js: {payload: base64(JSON)}. The payload's `userId` selects the
  * student; the signed-in bearer token authenticates the caller. No browser session cookie is forwarded.
  * Business failures are HTTP 200 with their own status/statusCode, so a non-ok response or empty body means
@@ -79,4 +79,13 @@ export async function completeReEnrollment(schoolUUID, request) {
 /** {userId} -> the latest successful grade-fee payment of the next record (payment success page of a payment made elsewhere). */
 export async function getReEnrollmentThankYou(schoolUUID, request) {
   return postPayload(schoolUUID, "thank-you", request);
+}
+
+/**
+ * {userId} -> the "Download your transcript" card of the option screen: available, gradeName, result, transcript /
+ * diploma links (only when available) and blockers[] (TRANSCRIPT_ON_HOLD, DOCUMENTS_PENDING, FEE_PENDING, NOT_AVAILABLE).
+ * Called only on the option screen, never polled; an old backend without the endpoint answers 404 -> null (card hidden).
+ */
+export async function getReEnrollmentDocuments(schoolUUID, request) {
+  return postPayload(schoolUUID, "documents", request);
 }

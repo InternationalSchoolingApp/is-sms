@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Transcript Download Implementation</title>
+<style>
+  :root{--bg:#0f1420;--panel:#151c2c;--panel2:#1b2436;--ink:#e8edf6;--mut:#9fb0c9;--line:#2a364d;--acc:#5b9dff;
+    --ok:#2fbf71;--bad:#ff4d5e;--warn:#e0a52b;--warnbg:rgba(224,165,43,.12);--okbg:rgba(47,191,113,.12);--badbg:rgba(255,77,94,.10);}
+  @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f5f7fb;--panel:#fff;--panel2:#eef2f8;--ink:#17202e;--mut:#536079;--line:#d7deea;--acc:#1f5fd6;--ok:#1f9d57;--bad:#d61f36;--warn:#b5821a;--warnbg:#fff6e2;--okbg:#e8f8ef;--badbg:#fdecee;}}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--acc);text-decoration:none}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.85em;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:.03em .4em;word-break:break-word}
+  pre{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow:auto;font-size:12.5px;line-height:1.5}
+  pre code{background:none;border:0;padding:0;word-break:normal}
+  .wrap{display:flex;max-width:1280px;margin:0 auto}
+  aside{position:sticky;top:0;align-self:flex-start;height:100vh;overflow:auto;width:260px;flex:0 0 260px;background:var(--panel);border-right:1px solid var(--line);padding:16px 12px}
+  aside .brand{font-weight:800;font-size:15px;padding:4px 6px 10px;line-height:1.3}
+  aside ol{list-style:none;margin:0;padding:0;counter-reset:s}
+  aside ol li a{display:block;padding:4px 8px;border-radius:7px;color:var(--mut);font-size:13.5px}
+  aside ol li a::before{counter-increment:s;content:counter(s) ". ";color:var(--acc)}
+  aside ol li a:hover{background:var(--panel2);color:var(--ink)}
+  main{flex:1 1 auto;min-width:0;padding:24px 32px 120px}
+  header.top{border:1px solid var(--line);background:linear-gradient(135deg,var(--panel),var(--panel2));border-radius:16px;padding:22px 24px;margin-bottom:20px}
+  header.top h1{margin:0 0 6px;font-size:24px}
+  header.top .sub{color:var(--mut);font-size:14px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-size:12.5px;color:var(--mut)}
+  .meta b{color:var(--ink)}
+  section{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:18px 22px;margin-bottom:18px}
+  section h2{margin:0 0 10px;font-size:19px}
+  section h3{margin:18px 0 8px;font-size:15.5px}
+  .mut{color:var(--mut)}
+  .tw{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:8px 0}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:var(--panel2)}
+  .pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:99px;border:1px solid var(--line);background:var(--panel2);white-space:nowrap}
+  .pill.ok{color:var(--ok);border-color:var(--ok)}.pill.bad{color:var(--bad);border-color:var(--bad)}.pill.warn{color:var(--warn);border-color:var(--warn)}.pill.acc{color:var(--acc);border-color:var(--acc)}
+  .callout{border-left:4px solid var(--warn);background:var(--warnbg);padding:10px 14px;border-radius:8px;margin:10px 0}
+  .callout.ok{border-color:var(--ok);background:var(--okbg)}
+  .callout.bad{border-color:var(--bad);background:var(--badbg)}
+  .mermaid{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;overflow:auto;text-align:center}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+  .box{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--panel2)}
+  .box h4{margin:0 0 6px;font-size:14px}
+  .phase{border-left:4px solid var(--acc)}
+  .done{margin:8px 0 0;padding-left:18px}
+  .done li::marker{content:"☐  "}
+  .copy{border:1px dashed var(--line);border-radius:10px;padding:10px 14px;background:var(--panel2);font-size:14px}
+  @media (max-width:900px){aside{display:none}main{padding:16px}section{padding:14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<aside>
+  <div class="brand">Transcript Download<br><span class="mut" style="font-weight:500;font-size:12px">Implementation plan v3 · FINAL</span></div>
+  <ol>
+    <li><a href="#summary">Summary &amp; decisions</a></li>
+    <li><a href="#changed">v2 se kya badla</a></li>
+    <li><a href="#source">Admin logic reuse</a></li>
+    <li><a href="#arch">Architecture</a></li>
+    <li><a href="#logic">Card states &amp; blocker logic</a></li>
+    <li><a href="#api">API contract</a></li>
+    <li><a href="#p1">Phase 1 — Endpoint + read-only card</a></li>
+    <li><a href="#p2">Phase 2 — Documents inline upload</a></li>
+    <li><a href="#p3">Phase 3 — Removed (fee)</a></li>
+    <li><a href="#p4">Phase 4 — Enforcement (flag)</a></li>
+    <li><a href="#release">Release, settings, kill switch</a></li>
+    <li><a href="#impact">Impact on modules</a></li>
+    <li><a href="#test">Testing</a></li>
+    <li><a href="#risks">Risks &amp; open items</a></li>
+  </ol>
+</aside>
+<main>
+
+<header class="top">
+  <h1>Re-enrollment "Download your transcript" — Implementation Plan (v3 · Final)</h1>
+  <div class="sub">Frontend (is-sms) + backend (is-rest-api). v3: logic <b>admin Student Transcript screen</b> (<code>/admin-transcript-data</code>) ke saath align — same hold / hide reason, same 3 academic documents. Kaam <b>4 phases</b> mein, lekin <b>release ek saath</b>. Prototype: <code>docs/migration/re-enrollment-transcript-download-prototype.html</code> (UI usi jaisa).</div>
+  <div class="meta">
+    <span>Status: <b>FINAL — ready for Phase 1 (not implemented yet)</b></span>
+    <span>Updated: <b>20 Nov 2026</b></span>
+    <span>FE: <b>is-sms</b> · <code>feature/version_1_2_0_STUDENT_REENROLLMENT_PHASE3_A</code></span>
+    <span>BE: <b>is-rest-api</b> · <code>feature/63_0_0_STUDENT_REENROLLMENT_NEXTJS_PHASE3_A</code></span>
+  </div>
+</header>
+
+<section id="summary">
+  <h2>1. Summary &amp; decisions</h2>
+  <p>Re-enrollment option screen pe har eligible student ke liye (saare grades, pass + fail) option rows ke neeche <b>"Download your transcript"</b> card. Grade 12 pass pe diploma bhi. Download blocked ho toh button disabled + saare reasons + har reason ka fix <b>isi page pe</b> (school hold ko chhod ke — wo sirf school hata sakta hai).</p>
+  <div class="tw"><table>
+    <tr><th>#</th><th>Decision</th><th>Status</th></tr>
+    <tr><td>D1</td><td>Card har re-enrollment eligible student ko (<code>nextAction = RE_ENROLLMENT</code>), all grades, pass + fail</td><td><span class="pill ok">Decided</span></td></tr>
+    <tr><td>D2</td><td>Unpublished / admin "On hold" (not published) student re-enrollment tak aata hi nahi — card mein us case ki zaroorat nahi</td><td><span class="pill ok">Decided</span></td></tr>
+    <tr><td>D3</td><td>Document upload isi page pe (inline panel), profile redirect nahi</td><td><span class="pill ok">Decided</span></td></tr>
+    <tr><td>D4</td><td>Fee payment isi page se: Pay now → existing payment modal → gateway → success → dashboard → wapas re-enrollment</td><td><span class="pill bad">Removed — D21</span></td></tr>
+    <tr><td>D5</td><td>Naya student endpoint <code>re-enrollment/documents</code>; andar <b>admin wali logic reuse</b> (admin API student call nahi kar sakta — admin-only + paginated)</td><td><span class="pill ok">Decided</span></td></tr>
+    <tr><td>D6</td><td><b>Published but hidden</b> ("Publish without Show", <code>SHOW_TRANSCRIPT_TO_STUDENT = N</code>): card dikhega, Download disabled, admin ka <b>reason + remark</b> dikhega</td><td><span class="pill ok">Decided</span></td></tr>
+    <tr><td>D7</td><td>Mandatory documents = admin wale <b>3 academic docs</b> (Age Proof, Parent Passport, Last academic proof). <b>Upload = done</b> (abhi verified maana jaayega). Ek bhi missing → Upload option; saare uploaded → option nahi. School verification <b>baad mein</b> (section 11)</td><td><span class="pill ok">Decided</span></td></tr>
+    <tr><td>D8</td><td>Missing doc pe block <b>prototype jaisa</b>; setting <code>TRANSCRIPT_DOCUMENT_BLOCK</code> default <b>Y</b></td><td><span class="pill ok">Decided</span></td></tr>
+    <tr><td>D9</td><td>Fee blocker: apni nayi query (koi existing <code>paymentDue</code> calculation nahi hai), sirf current grade ki grade-fee, mode <b>ANY_UNPAID</b> (changed from OVERDUE, D20)</td><td><span class="pill bad">Removed — D21</span></td></tr>
+    <tr><td>D10</td><td>Phone / email verified aur App installed <b>blocker nahi</b> (admin <code>TranscriptHoldResolver</code> ka rule)</td><td><span class="pill ok">Decided</span></td></tr>
+    <tr><td>D11</td><td>Card sirf <b>abhi complete hue grade</b> ka transcript; purane grades My Transcript pe</td><td><span class="pill ok">Decided</span></td></tr>
+    <tr><td>D12</td><td>Hidden + docs — <b>saare reasons ek saath</b>, hidden sabse upar (koi fix button nahi)</td><td><span class="pill ok">Decided</span></td></tr>
+    <tr><td>D13</td><td>Diploma (Grade 12 PASS only) ka state transcript jaisa — blocked toh diploma bhi disabled</td><td><span class="pill ok">Decided</span></td></tr>
+    <tr><td>D14</td><td>4 phases = <b>dev milestones</b>; production release <b>ek saath</b> (Phase 4 enforcement bhi, flag OFF ke saath)</td><td><span class="pill ok">Decided</span></td></tr>
+    <tr><td>D15</td><td>Settings defaults: <code>TRANSCRIPT_DOCUMENT_BLOCK=Y</code>, <code>TRANSCRIPT_BLOCK_ENFORCE_ALL=N</code>. Hidden block kisi flag ke peeche nahi</td><td><span class="pill ok">Decided</span></td></tr>
+    <tr><td>D16</td><td>Inline upload = <b>existing profile upload reuse</b>: <code>/api/profile/document</code> → BE <code>dashboard/save-docs</code> (types 14 / 16 / 17, ATTACHMENTS). Naya backend endpoint nahi; wahi table jo admin "missing" ke liye padhta hai, file profile pe bhi dikhegi</td><td><span class="pill ok">Decided</span></td></tr>
+    <tr><td>D18</td><td>Hidden = <code>SHOW_TRANSCRIPT_TO_STUDENT</code> <b>'Y' nahi</b> ('N' ya NULL). Admin ka Show/Hide toggle column ko NULL karta hai; sirf 'N' check karne se toggle-hidden transcript card se download ho jaata</td><td><span class="pill ok">Decided</span></td></tr>
+    <tr><td>D19</td><td>Fee blocker mein <code>*_ADV</code> titles <b>nahi</b> (agle grade ki Advance Payment / Reserve a Seat); sirf current grade ki grade fee. Eligibility <code>isGradeFeePaid</code> jaisa</td><td><span class="pill bad">Removed — D21</span></td></tr>
+    <tr><td>D20</td><td>Fee mode default <b>ANY_UNPAID</b> (was OVERDUE). Kyun: jis student ki installment overdue hai use app ka onboarding overdue-fee gate (<code>useOnboardingGate</code> → <code>/student/welcome</code>) re-enrollment page se pehle hi rok deta hai, isliye OVERDUE mode mein card ka fee reason lagbhag kabhi nahi dikhta. ANY_UNPAID mein aage ki date wali unpaid installment bhi transcript block karti hai (installment-plan student ka transcript poori payment tak locked). Kill switch: <code>OFF</code>; purana behaviour: <code>OVERDUE</code></td><td><span class="pill bad">Removed — D21</span></td></tr>
+    <tr><td>D21</td><td><b>Payment / fee card se hata diya.</b> Pending payment ka kaam app ka onboarding overdue-fee gate (<code>useOnboardingGate</code> → <code>/student/welcome</code>, 7 din se zyada overdue) pehle se sambhalta hai, aur additional-layer API (<code>additinal-layer-details</code>) card ke baaki students ke liye fee data deti hi nahi. Card mein sirf school hold + documents. FEE_PENDING blocker, Pay now, checkout, <code>TRANSCRIPT_FEE_BLOCK_MODE</code> sab nikaal diye</td><td><span class="pill ok">Decided</span></td></tr>
+    <tr><td>D17</td><td><code>student/enrollment/verify-documents</code> ka role-check security gap <b>alag fix</b> mein, abhi (is feature ke bahar)</td><td><span class="pill ok">Decided</span></td></tr>
+  </table></div>
+</section>
+
+<section id="changed">
+  <h2>2. v2 se kya badla (admin-transcript-data dekh ke)</h2>
+  <div class="tw"><table>
+    <tr><th>Topic</th><th>v2</th><th>v3</th><th>Kyun</th></tr>
+    <tr><td>Hidden transcript</td><td><code>SHOW_TRANSCRIPT_TO_STUDENT</code> ignore, download milta</td><td>Disabled + admin reason + remark</td><td>Admin ka "Publish without Show" bypass ho jaata</td></tr>
+    <tr><td>Documents list</td><td><code>STUDENT_ENROLLMENT_DOCUMENTS</code> ke saare required docs</td><td>Admin ke 3 academic docs (<code>AcademicDocs</code>)</td><td>Admin aur student ek hi list dekhein</td></tr>
+    <tr><td>Doc unlock</td><td>School verify kare tab</td><td><b>Upload hote hi</b> (verification later)</td><td>User decision; verification baad ka kaam</td></tr>
+    <tr><td>Upload API</td><td><code>save-documents</code> (assumed)</td><td>Profile upload <code>dashboard/save-docs</code> reuse</td><td>ATTACHMENTS hi admin ka source hai; naya endpoint nahi chahiye</td></tr>
+    <tr><td>Phases</td><td>Layer-wise (BE → FE)</td><td>Vertical slices, ek release</td><td>Har phase end-to-end test ho sake</td></tr>
+    <tr><td>Doc block flag</td><td>Default N</td><td>Default Y</td><td>Prototype behaviour</td></tr>
+  </table></div>
+</section>
+
+<section id="source">
+  <h2>3. Admin logic jo reuse hogi</h2>
+  <p><code>POST {schoolId}/dashboard/admin-transcript-data</code> (<code>AdminTranscriptController</code> → <code>AdminTranscriptService.list</code>) har row mein ye deta hai. Student card inhi sources se same cheez nikalega:</p>
+  <div class="tw"><table>
+    <tr><th>Admin row field</th><th>Source (is-rest-api)</th><th>Card mein use</th></tr>
+    <tr><td><code>transcript.status</code> PUBLISHED / ON_HOLD / NOT_PUBLISHED, <code>shown</code>, <code>hideReason</code></td><td><code>STUDENT_STANDARD.MARKS_PUBLISHED</code>, <code>SHOW_TRANSCRIPT_TO_STUDENT</code>, <code>TRANSCRIPT_HIDE_REASON_TEXT</code>, <code>TRANSCRIPT_HIDE_NOTE</code>; status cell <code>v1/reenrollmentinfo/service/TranscriptHoldResolver.java</code> (<code>PUBLISHED_HIDDEN</code>)</td><td><code>TRANSCRIPT_ON_HOLD</code> blocker: reason + remark</td></tr>
+    <tr><td><code>docsMissingList</code></td><td><code>ReEnrollmentInfoDao.getMissingAcademicDocsByUser</code> + <code>v1/reenrollmentinfo/dao/AcademicDocs.java</code> (ATTACHMENTS types)</td><td>MISSING / UPLOADED — <b>same method, as is</b></td></tr>
+    <tr><td><code>checklistMissing</code> (phone/email, app)</td><td><code>getVerifiedUserIds</code>, <code>getUserIdsWithDevice</code></td><td><b>Use nahi</b> (D10)</td></tr>
+    <tr><td><code>docs[].transcriptUrl / diplomaUrl</code></td><td>Admin viewer ke liye links</td><td><b>Use nahi</b> — student ke links <code>studentTranscriptStatus</code> wale (<code>TranscriptLinkUtil</code>)</td></tr>
+  </table></div>
+  <div class="callout"><b>Shared code:</b> 3 docs ka "missing" rule <code>AcademicDocs</code> + <code>ReEnrollmentInfoDao</code> se hi aayega (copy nahi). Hidden status ke liye <code>TranscriptHoldResolver.resolve(...)</code> reuse; remark (<code>TRANSCRIPT_HIDE_NOTE</code>) alag padha jaayega kyunki resolver note nahi deta.</div>
+  <h3>Naya endpoint, eligibility mein nahi (v2 se same)</h3>
+  <ul>
+    <li>Eligibility dashboard home pe har load + payment/review pe har 3s poll hoti hai — extra queries wahan nahi.</li>
+    <li>Naya endpoint sirf option screen pe ek baar; fail hua toh sirf card hide, re-enrollment chalta rahe.</li>
+  </ul>
+</section>
+
+<section id="arch">
+  <h2>4. Architecture</h2>
+  <pre class="mermaid">
+flowchart LR
+  subgraph FE["is-sms (Next.js)"]
+    RO["ReEnrollmentOptions.jsx / K5PassedOptions.jsx"] --> CARD["TranscriptDownloadCard.jsx (NEW, P1)"]
+    CARD --> HK["useReEnrollmentDocuments (NEW, P1)"]
+    CARD --> MAP["utils/reEnrollmentDocuments.js (NEW, P1)"]
+    CARD --> UP["DocumentUploadPanel.jsx (NEW, P2)"]
+    UP --> SD["profile upload: /api/profile/document (EXISTING, P2)"]
+    HK --> SVC["reEnrollmentBackendApi.getReEnrollmentDocuments (NEW, P1)"]
+  end
+  subgraph BE["is-rest-api"]
+    C["ClientReEnrollmentController<br/>POST .../re-enrollment/documents (NEW)"] --> S["ReEnrollmentDocumentsService (NEW)"]
+    S --> R["TranscriptHoldResolver (EXISTING)"]
+    S --> AD["AcademicDocs + ReEnrollmentInfoDao.getMissingAcademicDocsByUser (EXISTING)"]
+    S --> L["TranscriptLinkUtil (NEW, extracted)"]
+    MC["studentTranscriptStatus (refactor only)"] --> L
+    SDC["dashboard/save-docs (EXISTING, unchanged)"]
+  end
+  SVC --> C
+  SD --> SDC
+  CARD -->|download| V["student-transcript-view-after-publish / view-diploma (EXISTING)"]
+  </pre>
+</section>
+
+<section id="logic">
+  <h2>5. Card states &amp; blocker logic</h2>
+  <pre class="mermaid">
+flowchart TD
+  A([POST re-enrollment/documents]) --> S{Session user valid<br/>and userId allowed?}
+  S -->|no| X1[status 3 / E002]
+  S -->|yes| C{Current standard,<br/>MARKS_PUBLISHED = Y,<br/>supported program?}
+  C -->|no| X2[E004 → FE hides card]
+  C -->|yes| H{SHOW_TRANSCRIPT_TO_STUDENT not Y?}
+  H -->|yes| H1[+ TRANSCRIPT_ON_HOLD<br/>reason = HIDE_REASON_TEXT<br/>remark = HIDE_NOTE]
+  H -->|no| DD
+  H1 --> DD{TRANSCRIPT_DOCUMENT_BLOCK = Y?}
+  DD -->|yes| D1[3 academic docs → MISSING / UPLOADED<br/>any MISSING → + DOCUMENTS_PENDING]
+  DD -->|no| R
+  D1 --> R[available = blockers empty<br/>links only if available]
+  </pre>
+
+  <h3>Blockers (order = card mein display order)</h3>
+  <div class="tw"><table>
+    <tr><th>Code</th><th>Condition</th><th>Items</th><th>Student fix</th><th>Phase</th></tr>
+    <tr><td><code>TRANSCRIPT_ON_HOLD</code></td><td><code>MARKS_PUBLISHED='Y' AND IFNULL(SHOW_TRANSCRIPT_TO_STUDENT,'') &lt;&gt; 'Y'</code> (D18)</td><td><code>reason</code> (<code>TRANSCRIPT_HIDE_REASON_TEXT</code>), <code>remark</code> (<code>TRANSCRIPT_HIDE_NOTE</code>)</td><td>None — "contact school"</td><td>P1</td></tr>
+    <tr><td><code>DOCUMENTS_PENDING</code></td><td>Flag Y and 3 academic docs mein se koi MISSING</td><td>Har doc: <code>label, docType, status</code></td><td>Upload</td><td>P1 show, P2 fix</td></tr>
+    <tr><td><code>NOT_AVAILABLE</code></td><td>Docs query exception (fail-closed)</td><td>—</td><td>"Try again later"</td><td>P1</td></tr>
+    <tr><td><code>ACCESS_DISABLED</code></td><td>FE only: <code>useModuleRights("student-transcript").canView === false</code></td><td>—</td><td>Card hide</td><td>P1</td></tr>
+  </table></div>
+
+  <h3>Hidden ("on hold") copy</h3>
+  <div class="copy">
+    <b>Your transcript has been published, but it is on hold.</b><br>
+    <b>Reason:</b> &lt;admin ka reason — <code>TRANSCRIPT_HIDE_REASON_TEXT</code>&gt;<br>
+    <b>Remark:</b> &lt;admin ka note — <code>TRANSCRIPT_HIDE_NOTE</code>&gt;<br>
+    <span class="mut">Please contact the school to release it.</span>
+  </div>
+  <ul>
+    <li>Remark khaali → Remark line nahi dikhegi. Reason bhi khaali (admin ne sirf visibility toggle ki) → "Your transcript has been published, but it is on hold. Please contact the school."</li>
+    <li>Ye blocker sabse upar; iske neeche docs blocker apne upload ke saath (D12).</li>
+  </ul>
+
+  <h3>Document status (har ek of 3 docs)</h3>
+  <div class="tw"><table>
+    <tr><th>Status</th><th>Rule</th><th>Card</th></tr>
+    <tr><td><code>MISSING</code></td><td>Koi active ATTACHMENTS row nahi (<code>AcademicDocs</code> types) — admin ka same rule (<code>getMissingAcademicDocsByUser</code>)</td><td>"Not uploaded" + Upload</td></tr>
+    <tr><td><code>UPLOADED</code></td><td>Active ATTACHMENTS row hai (profile ya wizard, koi bhi accepted type)</td><td>Tick, blocker nahi</td></tr>
+  </table></div>
+  <p class="mut">Label → profile upload <code>docType</code>: Age Proof → <b>"Age Proof"</b> (type 14), Parent Passport → <b>"Signature"</b> (type 16, profile isi naam se bhejta hai), Last academic proof → <b>"Last Academic Proof"</b> (type 17). UNDER_VERIFICATION / REUPLOAD states verification wale later kaam mein aayenge (section 11). Timezone: student <code>COUNTRY_TIMEZONE</code>, fallback <b>Asia/Singapore</b>.</p>
+</section>
+
+<section id="api">
+  <h2>6. API contract</h2>
+  <p><code>POST {schoolUUID}/api/v1/student/re-enrollment/documents</code> — body: encrypted <code>Payload</code>, plain <code>{"userId": 123}</code>.</p>
+<pre><code>// blocked — links null jab tak koi blocker hai
+{ "status": "1", "available": false, "gradeName": "Grade 7", "result": "PASS",
+  "transcript": null, "diploma": null,
+  "blockers": [
+    { "code": "TRANSCRIPT_ON_HOLD",
+      "reason": "Pending fee clearance", "remark": "Contact accounts team before 30 Nov" },
+    { "code": "DOCUMENTS_PENDING",
+      "items": [
+        { "label": "Age Proof", "docType": "Age Proof", "status": "UPLOADED" },
+        { "label": "Parent Passport", "docType": "Signature", "status": "MISSING" },
+        { "label": "Last academic proof", "docType": "Last Academic Proof", "status": "MISSING" } ] }
+  ] }
+
+// available
+{ "status": "1", "available": true, "gradeName": "Grade 12", "result": "PASS",
+  "transcript": { "viewPath": "...", "downloadPath": "..." },
+  "diploma":    { "viewPath": "...", "downloadPath": "..." },   // Grade 12 PASS only
+  "blockers": [] }
+
+// errors: "3" session out | "0"/E003 invalid | "0"/E004 not eligible → hide | "2"/EX01 → hide</code></pre>
+  <div class="callout"><b>Security:</b> blocked hone pe links bheje hi nahi jaate (encrypted payload student khud nahi bana sakta). userId sirf session user (ya mapped parent) ka — eligibility wala helper reuse.</div>
+</section>
+
+<section id="p1" class="phase">
+  <h2>7. Phase 1 — Endpoint + read-only card</h2>
+  <p><b>Goal:</b> card dikhe; available pe Download (+ diploma); blocked pe saare reasons (on hold / docs status / not available). Inline upload Phase 2 mein — yahan docs rows sirf status dikhayenge.</p>
+  <h3>Backend</h3>
+  <div class="tw"><table>
+    <tr><th>File</th><th>Type</th><th>Change</th></tr>
+    <tr><td><code>client/controller/ClientReEnrollmentController.java</code></td><td>edit</td><td><code>@PostMapping(BASE + "documents")</code></td></tr>
+    <tr><td><code>v1/reenrollment/ReEnrollmentDocumentsService.java</code></td><td><span class="pill ok">NEW</span></td><td>Decode, session check, gate (current standard, published, program), on-hold blocker, docs blocker, links</td></tr>
+    <tr><td><code>v1/reenrollment/ReEnrollmentDocumentsResponse.java</code></td><td><span class="pill ok">NEW</span></td><td>Lombok <code>@Builder</code> DTO</td></tr>
+    <tr><td><code>ReEnrollmentInfoDao</code></td><td>reuse</td><td><code>getMissingAcademicDocsByUser(Set.of(userId))</code> as is → MISSING / UPLOADED; koi edit nahi</td></tr>
+    <tr><td><code>v1/util/TranscriptLinkUtil.java</code></td><td><span class="pill ok">NEW</span></td><td>Link building extracted from <code>ClientDashoboardMarksController.studentTranscriptStatus</code> (~651); output same</td></tr>
+    <tr><td><code>ReEnrollmentEligibilityService</code></td><td>small edit</td><td>PASS/FAIL helper package-visible</td></tr>
+    <tr><td><code>external-resource/*_TRANSCRIPT_BLOCK_SETTINGS.sql</code></td><td><span class="pill ok">NEW</span></td><td>3 settings rows (D15)</td></tr>
+    <tr><td><code>ReEnrollmentDocumentsServiceTest</code></td><td><span class="pill ok">NEW</span></td><td>Gate, on-hold copy cases, MISSING / UPLOADED mapping, links null when blocked</td></tr>
+  </table></div>
+  <h3>Frontend</h3>
+  <div class="tw"><table>
+    <tr><th>File</th><th>Type</th><th>Change</th></tr>
+    <tr><td><code>services/reEnrollmentBackendApi.js</code></td><td>edit</td><td><code>getReEnrollmentDocuments(schoolUUID, {userId})</code></td></tr>
+    <tr><td><code>hooks/useReEnrollment.js</code></td><td>edit</td><td><code>useReEnrollmentDocuments</code>: key <code>["re-enrollment-documents", userId]</code>, <code>staleTime 0</code>, <code>refetchOnMount "always"</code>, <code>refetchOnWindowFocus true</code>, <code>retry false</code></td></tr>
+    <tr><td><code>utils/reEnrollmentDocuments.js</code></td><td><span class="pill ok">NEW</span></td><td>Pure mapper + saari copy (on-hold text section 5)</td></tr>
+    <tr><td><code>components/re-enrollment/TranscriptDownloadCard.jsx</code></td><td><span class="pill ok">NEW</span></td><td>States: loading / ready / blocked / hidden(card hide). Prototype UI. lucide icons only</td></tr>
+    <tr><td><code>K5PassedOptions.jsx</code>, <code>ReEnrollmentOptions.jsx</code> (+ <code>.module.css</code> new classes)</td><td>edit</td><td>Card mount after option rows, every hero branch</td></tr>
+  </table></div>
+  <ul class="done">
+    <li>Pass / fail / Grade 12 / hidden / docs-pending students pe card sahi state dikhaye (K5 + classic)</li>
+    <li>Download new tab mein khule (<code>forDownload=true</code> verify, warna <code>viewPath</code>)</li>
+    <li>E004 / 500 / old backend / <code>showTranscriptMenu=false</code> / no module right → card hide; session out → <code>expireSession</code></li>
+    <li><code>mvn test</code>, <code>npm run lint</code>, <code>npm run build</code> green</li>
+  </ul>
+</section>
+
+<section id="p2" class="phase">
+  <h2>8. Phase 2 — Documents inline upload</h2>
+  <p><b>Goal:</b> koi MISSING doc ho toh card ke andar hi upload; upload hote hi doc done (D7) aur saare 3 uploaded hone pe docs blocker hat jaaye. Profile pe redirect nahi.</p>
+  <h3>Existing profile upload reuse (naya backend nahi)</h3>
+  <ul>
+    <li>FE chain: <code>hooks/useProfileActions.js</code> → multipart <code>POST /api/profile/document</code> → <code>app/api/profile/document/route.js</code> (file → data URL) → BE <code>dashboard/save-docs</code>.</li>
+    <li>BE body: <code>{ userId, studentStandardId, documentUploads: [{ filePath: "data:…;base64,…", fileName, docType, imgID: "" }] }</code>.</li>
+    <li>BE <code>ClientDashboardCommonController</code> ~2503 → <code>UploadDocsUtil.uploadProfileDocs</code>: naya ATTACHMENTS row (ACTIVE=Y), purana same-type row deactivate. Yahi table admin <code>getMissingAcademicDocsByUser</code> padhta hai → doc turant UPLOADED.</li>
+    <li><code>docType</code>: Age Proof → <code>"Age Proof"</code>, Parent Passport → <code>"Signature"</code>, Last academic proof → <code>"Last Academic Proof"</code> (<code>services/profileFacts.js</code>, <code>components/k5/pages/K5ProfileDocs.jsx</code> jaisa).</li>
+  </ul>
+  <h3>Frontend</h3>
+  <div class="tw"><table>
+    <tr><th>File</th><th>Type</th><th>Change</th></tr>
+    <tr><td><code>components/re-enrollment/DocumentUploadPanel.jsx</code></td><td><span class="pill ok">NEW</span></td><td>Sirf MISSING docs: choose file → Upload (profile wala hook / API reuse). Size / type validation profile jaisi. Success → toast + documents refetch</td></tr>
+    <tr><td><code>TranscriptDownloadCard.jsx</code></td><td>edit</td><td>DOCUMENTS_PENDING row mein Upload button → panel. Saare uploaded → button nahi</td></tr>
+  </table></div>
+  <ul class="done">
+    <li>Har ek doc (Age Proof / Parent Passport / Last academic proof) card se upload → profile "Documents" mein dikhe aur admin screen pe "missing" se hat jaaye</li>
+    <li>Aakhri missing doc upload → refetch → docs blocker gone (baaki blockers ho toh wo rahein)</li>
+    <li>Upload fail / bad file → error message, blocker same</li>
+    <li>Re-enrollment flow, profile upload page, admin screen ka behaviour unchanged</li>
+  </ul>
+</section>
+
+<section id="p3" class="phase">
+  <h2>9. Phase 3 — Removed (fee / Pay now)</h2>
+  <p><b>D21:</b> payment card se hata di gayi. Kyun: jis student ki fee 7 din se zyada overdue hai use app ka onboarding gate (<code>useOnboardingGate</code>) <code>/student/welcome</code> pe rok leta hai, jahan "Pending Fee … Pay Now" modal pehle se hai (wahi <code>useCartCheckout</code>). Additional-layer API (<code>dashboard/additinal-layer-details</code>) fee rows sirf us 7+ din wale case mein deti hai, baaki students ke liye kuch nahi. Isliye card mein fee blocker / Pay now / checkout nahi hai; card sirf school hold + documents dikhata hai.</p>
+</section>
+
+<section id="p4" class="phase">
+  <h2>10. Phase 4 — Enforcement (flag ke peeche, same release)</h2>
+  <ul>
+    <li><code>TRANSCRIPT_BLOCK_ENFORCE_ALL=Y</code> hone pe hi: <code>studentTranscriptStatus</code> (My Transcript), parent <code>student-academic-details</code> (<code>DashboardParentUtil</code> ~925-975), mobile — current grade ke transcript pe same rule (shared service method). Purane grades block nahi. Admin / teacher kabhi block nahi.</li>
+    <li>FE: <code>Transcript.jsx</code> / <code>K5Transcript.jsx</code> link ki jagah reason text (same mapper).</li>
+    <li><b>Public routes</b> (<code>PublicRoutes.java</code>: transcript-oddy, view-diploma, verification, QR) block <b>nahi</b> — PDF generator / QR ke liye.</li>
+    <li>Release mein flag <b>N</b>; ON karne se pehle mobile team ko batana.</li>
+  </ul>
+</section>
+
+<section id="release">
+  <h2>11. Release, settings, kill switch</h2>
+  <pre class="mermaid">
+flowchart LR
+  P1["Phase 1<br/>Endpoint + read-only card"] --> P2["Phase 2<br/>Docs inline upload<br/>(profile upload reuse)"]
+  P2 --> P4["Phase 4<br/>Enforcement (flag N)"]
+  P4 --> REL(["Single release<br/>BE first, then FE"])
+  </pre>
+  <ul>
+    <li>Har phase ke baad dev pe UAT; production mein <b>ek saath</b> (D14).</li>
+    <li>Deploy order: SQL (settings) → backend → frontend. Old backend pe card hide (404), isliye order safe.</li>
+    <li>Kill switch (bina deploy): <code>TRANSCRIPT_DOCUMENT_BLOCK=N</code>. On-hold block admin ke "Show" toggle se hi hatega.</li>
+    <li>Code change ke baad <code>graphify update .</code>; <code>npm run lint</code> + <code>npm run build</code>; <code>mvn test</code>. Commit / push user khud karega.</li>
+  </ul>
+  <h3>Later — not in this release (user: "ye kaam baad krenge")</h3>
+  <div class="callout">Abhi <b>upload = done</b>. School verification baad mein. Ye list memory mein saved hai; "re-enrollment ka konsa kaam bacha hai" poochne pe yahi batana:
+    <ul>
+      <li>Uploaded docs school verify kare tab unlock (UNDER_VERIFICATION / REUPLOAD with remark).</li>
+      <li>Profile <code>save-docs</code> sirf ATTACHMENTS likhta hai → verify nahi ho sakta; ek <b>shared util</b> se pending <code>STUDENT_ENROLLMENT_DOCUMENTS</code> row (profile upload + card upload dono) — decided "same shared util".</li>
+      <li>Purane uploads ke liye SED backfill (pending vs verified decide karna).</li>
+      <li>School ko pata chale: admin Student Transcript docs rail mein "Under verification" state + filter.</li>
+      <li>SED row ka STANDARD_ID scoping taaki signup docs gate (<code>SignupStudentUtil</code> ~1476) affect na ho.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="impact">
+  <h2>12. Impact on other modules</h2>
+  <div class="tw"><table>
+    <tr><th>Module</th><th>Impact</th><th>Note</th></tr>
+    <tr><td>Eligibility API, polling, re-enrollment steps</td><td><span class="pill ok">None</span></td><td>Unchanged</td></tr>
+    <tr><td>Admin Student Transcript screen</td><td><span class="pill ok">None</span></td><td>Read-only reuse; card se upload hone pe "missing" wahan bhi hat jaayega (expected)</td></tr>
+    <tr><td>Profile upload (<code>/api/profile/document</code>, <code>dashboard/save-docs</code>)</td><td><span class="pill ok">None</span></td><td>Naya caller; code edit nahi. File profile "Documents" mein bhi dikhegi</td></tr>
+    <tr><td>Signup <code>save-documents</code> / verify flow / onboarding docs gate</td><td><span class="pill ok">None</span></td><td>Touch nahi kiya (SED rows nahi bante)</td></tr>
+    <tr><td>Pico guide, K5 CSS</td><td><span class="pill warn">Small</span></td><td>Naye classes only; tour layout shift check</td></tr>
+    <tr><td>My Transcript / parent / mobile</td><td>Flag N → none</td><td>Phase 4 flag ON pe behaviour change</td></tr>
+    <tr><td>Public PDF / QR routes</td><td><span class="pill ok">None</span></td><td>Untouched</td></tr>
+    <tr><td>DB</td><td><span class="pill ok">Low</span></td><td>3 small queries per option-screen visit; index check <code>USER_PAYMENT_DETAILS.STUDENT_STANDARD_ID</code>, <code>ATTACHMENTS.LOGIN_ID</code></td></tr>
+  </table></div>
+</section>
+
+<section id="test">
+  <h2>13. Testing</h2>
+  <div class="tw"><table>
+    <tr><th>Phase</th><th>Case</th><th>Expected</th></tr>
+    <tr><td>P1</td><td>Published + shown, no blockers (pass / fail, K5 / classic)</td><td>Download enabled; Grade 12 PASS pe diploma</td></tr>
+    <tr><td>P1</td><td>Publish without Show, reason + note</td><td>Disabled; "published, but on hold" + Reason + Remark</td></tr>
+    <tr><td>P1</td><td>Hidden via toggle only (no reason)</td><td>Generic on-hold line</td></tr>
+    <tr><td>P1</td><td>Hidden + docs missing</td><td>Dono blockers, hidden upar; Grade 12 pe diploma bhi disabled</td></tr>
+    <tr><td>P1</td><td>Docs: none / some / all uploaded (profile ya wizard types)</td><td>MISSING list sahi; all uploaded → docs blocker nahi; admin screen se match</td></tr>
+    <tr><td>P1</td><td>Doc flag N</td><td>Docs blocker nahi</td></tr>
+    <tr><td>P1</td><td>E004 / 500 / 404 / session out / no right / 375px / dummy mode</td><td>Hide / hide / hide / expireSession / hide / layout ok / demo card</td></tr>
+    <tr><td>P2</td><td>Upload each missing doc from the card</td><td>UPLOADED; profile + admin screen pe dikhe; last one → unlock</td></tr>
+    <tr><td>P2</td><td>Wrong type / too big / API error</td><td>Error, blocker same</td></tr>
+    <tr><td>P4</td><td>Flag N vs Y on My Transcript / parent</td><td>N: same as today; Y: current grade blocked, purane open</td></tr>
+  </table></div>
+</section>
+
+<section id="risks">
+  <h2>14. Risks &amp; open items</h2>
+  <div class="tw"><table>
+    <tr><th>Item</th><th>Plan</th></tr>
+    <tr><td>Upload = done → koi bhi file upload karke unlock ho sakta hai (verification nahi)</td><td>Accepted for now; verification "Later" list mein (section 11)</td></tr>
+    <tr><td><span class="pill bad">Security</span> <code>verify-documents</code> role check nahi</td><td>Alag fix, abhi (D17) — separate session</td></tr>
+    <tr><td><code>forDownload=true</code> JSP support</td><td>Phase 1 verify, fallback <code>viewPath</code></td></tr>
+    <tr><td>Hide note internal ho sakta hai</td><td>Decided: dikhana hai (D6)</td></tr>
+    <tr><td>Flag N tak My Transcript / mobile se bypass</td><td>Business ko batana; Phase 4 flag</td></tr>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+  const dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  mermaid.initialize({ startOnLoad: true, theme: dark ? "dark" : "default", securityLevel: "loose", flowchart: { htmlLabels: true, curve: "basis" } });
+</script>
+</body>
+</html>
