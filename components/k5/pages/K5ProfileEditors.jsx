@@ -162,6 +162,7 @@ function EditDate({ editor, k, label, maxToday = true }) {
         icon={CalendarDays}
         label={label}
         height="h-[50px]"
+        triggerClassName="motion-none"
         value={parseProfileDate(editor.draft[k])}
         fromDate={new Date(1930, 0, 1)}
         toDate={maxToday ? new Date() : undefined}
@@ -369,7 +370,7 @@ function ChipToggle({ on, onClick, children }) {
       role="checkbox"
       aria-checked={Boolean(on)}
       onClick={onClick}
-      className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-full border-[3px] py-1 pe-4 ps-3 font-k5-body text-[15px] font-black text-k5-ink transition-colors ${on ? "border-k5-ac bg-k5-act" : "border-k5-line bg-k5-card"}`}
+      className={`motion-none flex min-h-11 cursor-pointer items-center gap-2 rounded-full border-[3px] py-1 pe-4 ps-3 font-k5-body text-[15px] font-black text-k5-ink transition-colors ${on ? "border-k5-ac bg-k5-act" : "border-k5-line bg-k5-card"}`}
     >
       <span aria-hidden="true" className={`flex h-5 w-5 flex-none items-center justify-center rounded-md border-2 ${on ? "border-k5-ac bg-k5-ac text-white" : "border-k5-line bg-k5-card"}`}>
         {on && <Check className="h-3.5 w-3.5" strokeWidth={3.6} />}

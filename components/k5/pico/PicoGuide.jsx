@@ -6,6 +6,8 @@ import { ChevronRight, Volume2, VolumeX, X } from "lucide-react";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 import { useSpeech } from "@/components/k5/pico/useSpeech";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { useChristmas } from "@/components/k5/christmas/ChristmasProvider";
 import { BUDDIES, voiceOf } from "@/constant/appearance";
 import { PICO_SAY_EVENT, usePicoLive } from "@/components/k5/pico/picoEvents";
 import { HOME_MODULE, NO_MODULE_TEXT, isClubModule, isLanguageClub, picoModuleFor, picoWelcomeText } from "@/constant/picoModules";
@@ -26,7 +28,7 @@ const WELCOME_TOUR_PAGES = new Set(["re-enrollment"]);
 // sibling card, the header buttons on a phone) is skipped.
 // `liveName` is the title of the class that is live right now (real data), when there is one.
 // `welcome`: the very first tour of this student - the buddy also welcomes them to the school (text: constant/picoModules.js).
-function tourSteps(firstName, buddyName, liveName, welcome, schoolName) {
+function tourSteps(firstName, buddyName, liveName, welcome, schoolName, balanced = false) {
   return [
     {
       pin: null,
@@ -39,16 +41,39 @@ function tourSteps(firstName, buddyName, liveName, welcome, schoolName) {
     { pin: "prevnext", text: "Click on the arrows to view your plan for different days." },
     { pin: "clues", text: "Color clues tell you what each box means. Tap a clue and I'll explain it!" },
     { pin: "side", text: "Use the side menu to book classes, see your teacher, join clubs and more. Hold and drag a button to move your favorites to the top!" },
+    { pin: "hero", text: "This is your dashboard. It shows today's date, the time and the weather, and your next class. When a class is live, tap Join class to go in!" },
+    { pin: "goal", text: "This is Today's Goal. Your classes, activities and assignments for today are listed here, and the ring fills up as you finish them!" },
+    { pin: "performance", text: "This is My Performance. See your average, the date you want to finish by and how far along you are. Tap Set my goals to choose your own goals!" },
+    { pin: "assignments", text: "This is My Assignments. The assignments due today and tomorrow are here, and a red card tells you if any are overdue. Tap Start to begin one!" },
     { pin: "inbox", text: "This is your inbox. Check here regularly for emails and other communications from your school." },
     { pin: "look", text: "Tap the palette button to pick your favorite color, night mode, letters and text size!" },
     { pin: "getApp", text: "Download our app for a better experience!" },
     { pin: "lms", text: "Click here to go to your Learning Management System (LMS). This is where you learn, complete your assignments, take quizzes, and appear for exams." },
     { pin: "profile", text: "Click here to go to your profile. Keep your personal details up to date, share more about yourself with the school, and change your password whenever needed." },
-    { pin: "sibling", text: "Have another sibling to enroll? Click here to get started!" },
-    { pin: "msg", text: "Need help? Tap the green Talk to us button to chat with us!" },
+    // The Balanced (Middle) look draws every rail button in the same soft blue, so only Playful and Mature call it green.
+    { pin: "msg", text: balanced ? "Need help? Tap the Talk to us button to chat with us!" : "Need help? Tap the green Talk to us button to chat with us!" },
     { pin: "announcements", text: "This is the announcements section. The school shares updates about events, activities, clubs, and holidays here. Don't miss out!" },
     { pin: "news", text: "Check here for the latest developments and updates in education." },
     { pin: "diary", text: "This is your School Diary, where you can find important updates about your calendar and coursework from your teachers or the school." },
+  ];
+}
+// My Classes and Activities: once the page has loaded the buddy walks through it - the plan, the class that is live (only when there
+// is one: a tip whose element is not on the page is skipped), the month calendar, the courses, the Today / Week / Month switch and the
+// colour clues. The same tour plays on a tap on the buddy.
+function classesTourSteps(liveName, dayEmpty = false, holidayName = "") {
+  // The plan tip must not promise classes on a day that has none (a free day or a holiday).
+  const planText = dayEmpty
+    ? holidayName
+      ? `This is Today's Plan. Today is a holiday, ${holidayName}, so there are no classes or activities. Enjoy your day! Your classes and activities show up here on the days you have them.`
+      : "This is Today's Plan. There are no classes or activities today, so enjoy your free day! Your classes and activities show up here on the days you have them."
+    : "This is Today's Plan. All your classes and activities for the day are here. Tap one to see more about it.";
+  return [
+    { pin: "calendar", text: planText },
+    { pin: "live", text: `${liveName ? `Your ${liveName} class` : "Your class"} is live right now! Tap the green Join class button to go in.` },
+    { pin: "mini", text: "This little calendar shows the whole month. A dot under a day means something is planned. Tap a day to open it." },
+    { pin: "courses", text: "These are your courses. Tap a course to show or hide its classes in your plan." },
+    { pin: "views", text: "Tap Today, Week or Month to see your plans in different ways." },
+    { pin: "clues", text: "Color clues tell you what each box means. Tap a clue and I'll explain it!" },
   ];
 }
 const MOBILE_QUERY = "(max-width: 760px)";
@@ -59,8 +84,8 @@ const subscribeMobile = (callback) => {
 };
 const isMobileView = () => window.matchMedia(MOBILE_QUERY).matches;
 const pinEl = (pin) => (pin && typeof document !== "undefined" ? document.querySelector(`[data-pin="${pin}"]`) : null);
-// The header buttons move into the "More" menu on a phone (display: none there): a tip about one is skipped, not shown without its spotlight.
-const SKIP_WHEN_HIDDEN = new Set(["lms", "inbox", "profile", "getApp"]);
+// The header buttons and the side menu are not on screen on a phone (the buttons move into the "More" menu, the menu is a drawer): a tip about one is skipped, not shown without its spotlight.
+const SKIP_WHEN_HIDDEN = new Set(["lms", "inbox", "profile", "getApp", "mini", "look", "side"]);
 const onPage = (pin) => {
   if (!pin) return true;
   const el = pinEl(pin);
@@ -149,6 +174,10 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   if (welcomeDue && !welcome) setWelcome(true);
   const [state, setState] = useState({ open: null, index: 0, say: null, skipLive: false, pageTip: false });
   const live = usePicoLive();
+  // 25 December: Pico wears a Santa hat.
+  const { festive } = useChristmas();
+  // The student's look (the one picked in the Look dialog, else their grade's): Middle = Balanced, High = Mature.
+  const { isMiddle, isHigh } = useDashboardContext();
   const pathname = usePathname();
   // The Book a Class page has its own buddy guide: here the buddy stays, its bubble never opens.
   const onBook = pathname.includes("book-a-session");
@@ -157,12 +186,15 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   const pageSegment = pathname.split("/").filter(Boolean).pop();
   // A student's first visit to one of these pages is a short tour of its own: the welcome, then what the page is for (2 steps).
   const tourPage = !home && welcome && WELCOME_TOUR_PAGES.has(pageSegment) ? picoModuleFor(pageSegment) : null;
+  const classesTour = !home && pageSegment === "my-classes";
   const steps = tourPage
     ? [
         { pin: null, text: picoWelcomeText({ firstName, schoolName, buddyName: buddy.name, tour: false }) },
         { pin: null, text: tourPage.text },
       ]
-    : tourSteps(firstName, buddy.name, live.name, welcome, schoolName);
+    : classesTour
+      ? classesTourSteps(live.name, live.dayEmpty, live.holidayName)
+      : tourSteps(firstName, buddy.name, live.name, welcome, schoolName, isMiddle && !isHigh);
   const mobile = useSyncExternalStore(subscribeMobile, isMobileView, () => false);
   // No dialog is open on this page (checked by the effect below, only while the buddy has something to say by itself).
   // Kept as "the page it was seen clear on", so a new page is never taken as clear before it has been looked at.
@@ -183,7 +215,8 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   // ---- What the student is looking at, and whether it has finished loading ----
   const moduleNow = home ? HOME_MODULE : picoModuleFor(pageSegment);
   // Real content on screen: the home plan has loaded, or the page said so (usePicoContentReady); the left menu has its items.
-  const moduleReady = live.menuReady && (home ? live.ready : live.contentReady);
+  // My Classes is the planner itself: its plan has loaded when the planner says so (live.ready), like the home page used to.
+  const moduleReady = live.menuReady && (home || classesTour ? live.ready : live.contentReady);
 
   // ---- 1. The first welcome ----
   const [welcomeSkip, setWelcomeSkip] = useState(null);
@@ -242,7 +275,8 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
           retryOff.current?.();
           if (userActed.current) return;
           speak(text, { force: true, clipOnly: true }).then((again) => {
-            if (again === "started") finishWelcome();
+            // "cancelled": the student's own tap (Next, Hear it, X) took the voice over - they have the welcome, so it is done.
+            if (again === "started" || again === "cancelled") finishWelcome();
           });
         };
         const events = ["pointerdown", "keydown"];
@@ -273,7 +307,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
 
   // ---- 2. A module explains itself - the FIRST time this user opens it in this browser - once its page has loaded ----
   const pageModule = home ? null : moduleNow;
-  const pageTip = pageModule ? { text: pageModule.text, pin: null } : null;
+  const pageTip = classesTour ? { text: steps[0].text, pin: steps[0].pin } : pageModule ? { text: pageModule.text, pin: null } : null;
   const [tipFor, setTipFor] = useState(null);
   // Every module has its own cookie (utils/picoCookies.js): a module that was explained by itself before - on this visit
   // (doneModules) or an earlier one - never explains itself again. The page showing its explanation right now keeps it
@@ -311,7 +345,8 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     // Adjusted while rendering (React's way to reset state when an input changes), not in an effect.
     setTipFor(tipKey);
     if (tipKey && pageTip) {
-      setState((s) => ({ ...s, open: true, index: 0, say: { text: pageTip.text, pin: pageTip.pin, id: `page-${pageSegment}` }, skipLive: false, pageTip: true }));
+      if (classesTour) setState((s) => ({ ...s, open: true, index: 0, say: null, skipLive: false, pageTip: false, pageTour: true }));
+      else setState((s) => ({ ...s, open: true, index: 0, say: { text: pageTip.text, pin: pageTip.pin, id: `page-${pageSegment}` }, skipLive: false, pageTip: true }));
       setTipOn(true);
     } else {
       setState((s) => (s.pageTip ? { ...s, open: false, say: null, pageTip: false } : s));
@@ -320,7 +355,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   }
   // The buddy's voice for this page is got ready once the page is idle: the page's text, and on the home page the tour
   // tips, so the student's tap (Next, Hear it) plays at once. In the voice and speed the student picked.
-  const voiceTexts = [pageTip?.text, moduleNow?.text, ...(home || tourPage ? steps.map((t) => t.text) : [])].filter(Boolean).join("|");
+  const voiceTexts = [pageTip?.text, moduleNow?.text, ...(home || tourPage || classesTour ? steps.map((t) => t.text) : [])].filter(Boolean).join("|");
   const { voice: voicePick, voiceSpeed } = preferences;
   useEffect(() => preparePicoClips(voiceTexts.split("|"), voiceOf(voicePick, voiceSpeed)), [voiceTexts, voicePick, voiceSpeed]);
   // The explanation is also said out loud - once per arrival. Its cookie is set only when the voice really starts (or, with
@@ -383,12 +418,34 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     if (!el) return;
     if (!FIXED_PINS.has(pin)) {
       const r = el.getBoundingClientRect();
-      if (r.top < 150 || r.top > window.innerHeight * 0.55) {
-        // On a phone the bubble covers the lower half, so the element is lifted close to the header.
-        window.scrollTo({ top: Math.max(0, window.scrollY + r.top - (mobile ? 120 : 260)), behavior: reduced ? "auto" : "smooth" });
+      // On a phone the bubble covers the lower half, so the element is lifted close to the header.
+      let want = mobile ? 120 : 260;
+      let lifted = false;
+      // A tall element on a short screen (the mini calendar on a tablet) would end up behind the bubble: when it sits where the bubble
+      // is, lift it higher so its bottom stays above the bubble (never above the sticky header).
+      const bubble = !mobile ? document.querySelector(".k5-bubble") : null;
+      if (bubble?.parentElement) {
+        const wrap = bubble.parentElement.getBoundingClientRect();
+        const bubbleW = Math.min(340, window.innerWidth - 32);
+        const bubbleLeft = leftHand ? wrap.right + 14 : wrap.left - 14 - bubbleW;
+        const bubbleTop = wrap.bottom - bubble.offsetHeight;
+        if (r.left < bubbleLeft + bubbleW && r.right > bubbleLeft) {
+          const headerBottom = document.querySelector("header")?.getBoundingClientRect().bottom ?? 104;
+          const fit = Math.max(headerBottom + 12, bubbleTop - 16 - r.height);
+          if (fit < want) {
+            want = fit;
+            lifted = true;
+          }
+        }
+      }
+      // On a phone the bubble sits over the lower part of the screen: an element whose top would be behind it is scrolled up.
+      const phoneBubble = mobile ? document.querySelector(".k5-bubble") : null;
+      const lowest = phoneBubble ? Math.min(window.innerHeight * 0.55, phoneBubble.getBoundingClientRect().top - 60) : window.innerHeight * 0.55;
+      if (r.top < 150 || r.top > lowest || (lifted && Math.abs(r.top - want) > 24)) {
+        window.scrollTo({ top: Math.max(0, window.scrollY + r.top - want), behavior: reduced ? "auto" : "smooth" });
       }
     }
-  }, [open, pin, state.say?.id, reduced, mobile]);
+  }, [open, pin, state.say?.id, reduced, mobile, leftHand]);
 
   // Is the tour itself on screen right now? A say that arrives while it is (a colour clue) belongs to the tour; one that
   // arrives when it is not (Get the App, a joined club) is a message of its own: "1 / 1" and "All done", not "1 / 10".
@@ -431,10 +488,22 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
       setManualSay({ text });
     }
   };
+  // My Classes: an explanation is its tour, from the first tip.
+  const startClassesTour = ({ fromTap }) => {
+    setState((s) => ({ ...s, open: true, index: 0, say: null, skipLive: false, pageTip: false, pageTour: true }));
+    setTipOn(true);
+    if (fromTap) {
+      if (preferences.speech !== "on") updatePreference("speech", "on");
+      speak(steps[0].text, { force: true });
+    } else {
+      setManualSay({ text: steps[0].text });
+    }
+  };
   // A tap while the page is still loading: the buddy says so, and explains as soon as the page is ready.
   if (manualWait && moduleReady) {
     setManualWait(false);
-    explainNow(moduleNow?.text || NO_MODULE_TEXT, { fromTap: false });
+    if (classesTour) startClassesTour({ fromTap: false });
+    else explainNow(moduleNow?.text || NO_MODULE_TEXT, { fromTap: false });
   }
   useEffect(() => {
     if (!manualSay) return;
@@ -445,8 +514,14 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
 
   if (preferences.buddyEnabled === "off") return null;
 
+  // The student answered the welcome bubble (Next, Hear it, X, a tap on the buddy) while its voice was still owed (e.g. the
+  // browser blocked it after login): the welcome has been delivered, so it is marked now and not said again on the next visit.
+  const welcomeAnswered = () => {
+    if (welcomeRun.current && welcomeDue) finishWelcome();
+  };
   // Red X: closes the bubble only. The buddy stays; a tap brings the same tip back.
   const hide = () => {
+    welcomeAnswered();
     userActed.current = true;
     retryOff.current?.();
     stop();
@@ -455,6 +530,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     setState((s) => ({ ...s, open: false }));
   };
   const finish = () => {
+    welcomeAnswered();
     userActed.current = true;
     retryOff.current?.();
     stop();
@@ -463,6 +539,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     setState({ open: false, index: 0, say: null, skipLive: false, pageTip: false });
   };
   const next = () => {
+    welcomeAnswered();
     userActed.current = true;
     if (state.pageTip) return finish();
     let i = state.index + 1;
@@ -476,6 +553,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   };
   // Mockup hear / pinTap: asking the buddy to talk also turns its voice back on.
   const hear = () => {
+    welcomeAnswered();
     userActed.current = true;
     if (preferences.speech !== "on") updatePreference("speech", "on");
     speak(tip.text, { force: true });
@@ -483,6 +561,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   // A tap explains the page the student is on (the dashboard on the home page). The home tour that is already open
   // keeps speaking its tip. A page still loading is waited for. A page Pico has no text for gets a short fallback.
   const tap = () => {
+    welcomeAnswered();
     userActed.current = true;
     if (onBook) return;
     if (mobile && tipOn) {
@@ -490,13 +569,14 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
       stop();
       return;
     }
-    if (open && home && !state.say) return hear();
+    if (open && (home || (classesTour && state.pageTour)) && !state.say) return hear();
     if (!moduleReady) {
       setManualWait(true);
       setState((s) => ({ ...s, open: true, index: 0, say: { text: "One moment! I'll tell you about this page as soon as it is ready.", pin: null, id: `wait-${Date.now()}` }, pageTip: true }));
       setTipOn(true);
       return;
     }
+    if (classesTour) return startClassesTour({ fromTap: true });
     explainNow(moduleNow?.text || NO_MODULE_TEXT, { fromTap: true });
   };
   const shown = state.pageTip ? [step] : steps.filter((s) => onPage(s.pin) && !(state.skipLive && s.pin === "live"));
@@ -514,7 +594,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
         <div
           role="dialog"
           aria-label={`${buddy.name} says`}
-          className={`k5-bubble absolute bottom-0 box-border flex w-[340px] max-w-[calc(100vw-32px)] flex-col gap-2.5 rounded-[26px] border-[3px] border-k5-ink bg-k5-card px-[18px] py-4 shadow-[0_6px_0_var(--k5-ink)] max-[760px]:fixed max-[760px]:inset-x-3 max-[760px]:bottom-[224px] max-[760px]:w-auto max-[760px]:max-w-none ${
+          className={`k5-bubble k5-zoom-in origin-bottom absolute bottom-0 box-border flex w-[340px] max-w-[calc(100vw-32px)] flex-col gap-2.5 rounded-[26px] border-[3px] border-k5-ink bg-k5-card px-[18px] py-4 shadow-[0_6px_0_var(--k5-ink)] max-[760px]:fixed max-[760px]:inset-x-3 max-[760px]:bottom-[224px] max-[760px]:w-auto max-[760px]:max-w-none ${
             leftHand ? "left-[calc(100%+14px)]" : "right-[calc(100%+14px)]"
           } max-[760px]:left-3 max-[760px]:right-3`}
         >
@@ -598,9 +678,9 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
         type="button"
         onClick={tap}
         aria-label={`${buddy.name}, your calendar buddy. Tap to hear ${buddy.name}.`}
-        className="k5-pin-bob flex h-full w-full cursor-pointer items-end justify-center border-none bg-transparent p-0 max-[760px]:[&_svg]:!h-[60px] max-[760px]:[&_svg]:!w-12"
+        className="k5-lift k5-pin-bob flex h-full w-full cursor-pointer items-end justify-center border-none bg-transparent p-0 max-[760px]:[&_svg]:!h-[60px] max-[760px]:[&_svg]:!w-12"
       >
-        <PicoMascot buddy={preferences.buddy} width={66} talking={speaking} />
+        <PicoMascot buddy={preferences.buddy} width={66} talking={speaking} santa={festive} />
       </button>
     </div>
     </>

@@ -268,6 +268,26 @@ export async function getSchoolCalendar({ schoolUUID, userId, startDate, endDate
  * an AttendanceStatusDTO-shaped object: { attended, onTime, lateSeconds }.
  * Same session-cookie requirement as getSchoolCalendar.
  */
+/**
+ * Student dashboard "N assignments overdue": the number of the student's assignments still owed (not submitted, not excused) from
+ * the academic year start until now. Answer: { status: "SUCCESS", details: { pendingAssignmentCount } }.
+ */
+export async function getPendingAssignmentCount({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    const baseUrl = await resolveServerBackendOrigin();
+    const body = { payload: encodePayload({ userId }) };
+    const response = await fetch(`${baseUrl}/${schoolUUID}/dashboard/pending-assignment-count`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify(body),
+    });
+    return parseJsonResponse(response);
+  } catch {
+    return null;
+  }
+}
+
 export async function getLiveClassAttendanceStatus({ schoolUUID, entityId, entityType, classDate, classStartTime }) {
   if (!hasBackendOrigin() || !schoolUUID || !entityId) return null;
   try {
@@ -828,6 +848,33 @@ export async function saveUserTheme({ schoolUUID, userId, appearance }) {
       userId,
       colorObj: { appearance },
     });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Special help status for the signed-in student - POST /{schoolUUID}/dashboard/student/special-help/status
+ * { userId } -> details { specialHelp: "N" | "R" | "Y", requestedAt, enabledAt }. null on any error (the panel then stays open).
+ */
+export async function getSpecialHelpStatus({ schoolUUID, userId }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/student/special-help/status", { userId });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The student asks for Special help - POST /{schoolUUID}/dashboard/student/special-help/request
+ * { userId, tools: string[], reason, condition } -> details { specialHelp: "R", requestedAt, routedTo }.
+ * Returns the backend's answer ({ status, message, details }), or null when it could not be reached.
+ */
+export async function requestSpecialHelp({ schoolUUID, userId, tools, reason, condition }) {
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    return await postDashboardPayload(schoolUUID, "/dashboard/student/special-help/request", { userId, tools, reason, condition });
   } catch {
     return null;
   }

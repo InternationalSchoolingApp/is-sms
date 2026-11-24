@@ -14,6 +14,7 @@ import { getUserShortProfile, saveUserTheme } from "@/services/dashboardApi";
  */
 const AppearanceContext = createContext(null);
 const CHANGE_EVENT = "is-appearance-change";
+export const HAND_HINT_KEY = "is-k5-hand-hint";
 
 function subscribeStorage(callback) {
   window.addEventListener("storage", callback);
@@ -90,6 +91,17 @@ export function AppearanceProvider({ scope = "k5", userId, schoolUUID, policy = 
     return sanitizeAppearance({ ...defaults, ...(unsaved || parseSaved(raw) || {}) }, defaults);
   }, [allow, defaults, unsaved, raw]);
 
+  // Which hand, as a device-level hint ("left" | "right", nothing else): the loading skeleton is drawn before the student is known, and
+  // this lets it come mirrored like the page will be (components/dashboard/DashboardLoadingSkeleton.jsx). Not the look itself.
+  useEffect(() => {
+    if (!key || serverReady === false) return;
+    try {
+      window.localStorage.setItem(HAND_HINT_KEY, preferences.hand === "left" ? "left" : "right");
+    } catch {
+      // storage unavailable: the skeleton stays right-handed
+    }
+  }, [key, serverReady, preferences.hand]);
+
   const save = useCallback(
     (next) => {
       setStatus((s) => ({ ...s, isSaving: true }));
@@ -144,6 +156,7 @@ export function AppearanceProvider({ scope = "k5", userId, schoolUUID, policy = 
         "data-tint": preferences.pageColor !== "none" ? preferences.pageColor : undefined,
         "data-plain": preferences.plainText === "on" ? "true" : undefined,
         "data-font": preferences.font,
+        "data-dyslexia": preferences.dyslexia === "on" ? "on" : undefined,
         "data-hand": preferences.hand,
         "data-motion": reduced ? "reduced" : "full",
         "data-buddy-enabled": preferences.buddyEnabled,

@@ -7,7 +7,7 @@ import { useDashboardSessionExpiry } from "@/hooks/useDashboardSessionExpiry";
 import { useNavigationSessionGuard } from "@/hooks/useNavigationSessionGuard";
 import { useOnboardingGate } from "@/hooks/useOnboardingGate";
 import { OnboardingFrame } from "@/components/onboarding/OnboardingFrame";
-import { FullScreenLoader } from "@/components/common/Loader";
+import { DashboardLoadingSkeleton } from "@/components/dashboard/DashboardLoadingSkeleton";
 import { SessionExpiredDialog } from "@/components/providers/SessionExpiredDialog";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { K5Shell } from "@/components/k5/K5Shell";
@@ -40,7 +40,7 @@ function DashboardTitle() {
 // the existing shell. Holds the loader until the grade band is known, so neither shell flashes.
 function ShellForGrade({ children }) {
   const { ready, gradeResolved, isK5 } = useDashboardContext();
-  if (!ready || !gradeResolved) return <FullScreenLoader />;
+  if (!ready || !gradeResolved) return <DashboardLoadingSkeleton />;
   return isK5 ? <K5Shell>{children}</K5Shell> : <DashboardShell>{children}</DashboardShell>;
 }
 
@@ -49,7 +49,7 @@ function ShellForGrade({ children }) {
 function OnboardingGate({ role, children }) {
   const { context } = useDashboardContext();
   const { checking, redirecting } = useOnboardingGate({ context, enabled: role === "student" });
-  if (checking || redirecting) return <FullScreenLoader />;
+  if (checking || redirecting) return <DashboardLoadingSkeleton />;
   return children;
 }
 

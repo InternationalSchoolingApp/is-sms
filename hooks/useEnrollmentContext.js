@@ -76,15 +76,15 @@ function useResolveEnrollmentContext() {
   const viaLegacyFlow = enrollmentViaNextjs.data === false;
 
   const enrollmentProcess = useQuery({
-    queryKey: ["enrollment-process", session?.schoolUUID, session?.studentUserId],
+    queryKey: ["enrollment-process", session?.schoolUUID, session?.userId],
     queryFn: () => {
       recordApiAttempt(
         "getEnrollmentProcess",
-        `${session.schoolUUID}/api/v1/student/enrollment/process/${session.studentUserId}`
+        `${session.schoolUUID}/api/v1/student/enrollment/process/${session.userId}`
       );
-      return getEnrollmentProcess(session.schoolUUID, session.studentUserId);
+      return getEnrollmentProcess(session.schoolUUID, session.userId);
     },
-    enabled: Boolean(authenticated && session?.studentUserId && !viaLegacyFlow),
+    enabled: Boolean(authenticated && session?.userId && !viaLegacyFlow),
     staleTime: Infinity,
     gcTime: Infinity,
     refetchOnWindowFocus: false,
@@ -100,9 +100,9 @@ function useResolveEnrollmentContext() {
   // Back doesn't bounce them straight into this page again.
   useEffect(() => {
     if (!viaLegacyFlow) return;
-    const legacyUrl = legacyEnrollmentProcessUrl(session?.schoolUUID, session?.studentUserId);
+    const legacyUrl = legacyEnrollmentProcessUrl(session?.schoolUUID, session?.uniqueId);
     if (legacyUrl) window.location.replace(legacyUrl);
-  }, [viaLegacyFlow, session?.schoolUUID, session?.studentUserId]);
+  }, [viaLegacyFlow, session?.schoolUUID, session?.uniqueId]);
 
   // enrollment/process answers {status:"REDIRECT"} once the student is past the wizard — e.g.
   // paid from the invoice link in another tab and then refreshed this page. "dashboard" carries
@@ -163,7 +163,7 @@ function useResolveEnrollmentContext() {
     };
   }, [session?.schoolUUID]);
 
-  const processReady = !session?.studentUserId || enrollmentProcess.isFetched;
+  const processReady = !session?.userId || enrollmentProcess.isFetched;
   // Never report ready while the legacy redirect above is in flight — the wizard
   // would otherwise flash a step before the browser leaves the page.
   // Same for the post-enrollment redirect, so the step never fires its own calls
@@ -210,7 +210,7 @@ function useResolveEnrollmentContext() {
   // was centralized here).
   const stageStatus = useSignupStageStatusPoll({
     context,
-    studentUserId: session?.studentUserId,
+    studentUserId: session?.userId,
     enabled: ready && !context?.customPaymentEnabled,
   });
   const stageStatusData = stageStatus.data;

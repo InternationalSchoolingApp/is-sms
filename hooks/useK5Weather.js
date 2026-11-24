@@ -53,7 +53,7 @@ async function getJson(url, signal) {
   return response.json();
 }
 
-/** { celsius, code, isDay } for the student timezone city, or null while loading / when unavailable. */
+/** { celsius, code, isDay, windKmh } for the student timezone city, or null while loading / when unavailable. */
 export function useK5Weather(timezone) {
   // debugger
   const [state, setState] = useState({ timezone: null, weather: null });
@@ -84,13 +84,13 @@ export function useK5Weather(timezone) {
           writeCache("is-k5-wx-place2:" + timezone, place);
         }
         const data = await getJson(
-          WEATHER_URL + "?current=temperature_2m,weather_code,is_day&timezone=auto&latitude=" + place.latitude + "&longitude=" + place.longitude,
+          WEATHER_URL + "?current=temperature_2m,weather_code,is_day,wind_speed_10m&timezone=auto&latitude=" + place.latitude + "&longitude=" + place.longitude,
           controller.signal,
         );
         console.log("useK5Weather", { timezone, city, place, data });
         const current = data && data.current;
         if (!current || typeof current.temperature_2m !== "number") return;
-        const weather = { celsius: current.temperature_2m, code: current.weather_code, isDay: current.is_day !== 0 };
+        const weather = { celsius: current.temperature_2m, code: current.weather_code, isDay: current.is_day !== 0, windKmh: typeof current.wind_speed_10m === "number" ? current.wind_speed_10m : 0 };
         writeCache("is-k5-wx:" + timezone, { at: Date.now(), weather });
         finish(weather);
       } catch {

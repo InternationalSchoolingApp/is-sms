@@ -28,7 +28,7 @@ function InboxHeader({ inbox, filtersOpen, onFilters }) {
         <InboxIcon className={isMiddle ? "h-[34px] w-[34px] text-k5-bi" : "h-12 w-12 text-k5-bi"} strokeWidth={2.2} aria-hidden="true" />
       </span>
       <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-        <h1 className={`k5-cm-h1 m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-[34px]"}`}>Inbox</h1>
+        <h1 className={`k5-cm-h1 m-0 font-k5-display font-semibold leading-[1.05] ${isMiddle ? "text-[30px]" : "text-[34px]"}`}>My Inbox</h1>
         <p className={`k5-cm-sub m-0 font-extrabold text-k5-mut ${isMiddle ? "text-[16px]" : "text-[18px]"}`}>{INBOX_SUBTITLE}</p>
       </div>
       <div className="flex flex-wrap gap-2.5 max-[760px]:w-full max-[760px]:[&>button]:flex-1 max-[760px]:[&>button]:justify-center">

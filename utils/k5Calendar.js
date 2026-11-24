@@ -58,9 +58,9 @@ export function countStatuses(classes) {
  */
 export function noClassReason(key, day, { isSelfStudy, firstName }) {
   if (day.holidays.length) return { kind: "holiday", title: day.holidays[0].title || day.holidays[0].eventTitle || "Holiday", text: "It's a holiday. No school today!" };
-  if (isWeekendKey(key)) return { kind: "weekend", title: "Weekend!", text: "It's the weekend. No school today!" };
-  if (isSelfStudy) return { kind: "study", title: "No live classes", text: "Keep going with your courses today!" };
-  return { kind: "free", title: "No classes!", text: `There are no classes today. Enjoy your free day${firstName ? `, ${firstName}` : ""}!` };
+  if (isWeekendKey(key)) return { kind: "weekend",  title: `There are no classes today. Enjoy your free day${firstName ? `, ${firstName}` : ""}!` };
+  if (isSelfStudy) return { kind: "study", title: `There are no classes today. Enjoy your free day${firstName ? `, ${firstName}` : ""}!` };
+  return { kind: "free", title: `There are no classes today. Enjoy your free day${firstName ? `, ${firstName}` : ""}!` };
 }
 
 /** The two event types that count as a class for the games: 1:1 / doubt sessions and batch classes. Nothing else does. */
@@ -73,8 +73,9 @@ export const isGameClass = (event) => event?.eventType === "STUDENT_DOUBT_SESSIO
  *   2. a class today has not finished yet            -> locked on every date
  *   3. the selected day is already over              -> locked (past days never open)
  *   4. the selected day is a holiday                 -> open (each day of a holiday period has its own holiday entry)
- *   5. the selected day has a class                  -> locked (open only for a day without a class)
- *   6. otherwise (no class on the selected day)      -> open for that day only
+ *   5. the selected day is today                     -> open (rules 1-2 passed: every class today is over)
+ *   6. the selected day has a class                  -> locked (open only for a day without a class)
+ *   7. otherwise (no class on the selected day)      -> open for that day only
  */
 export function gameAccess(days, dateKey, todayKey) {
   const todays = dayAt(days, todayKey).classes.filter(isGameClass);
@@ -83,6 +84,8 @@ export function gameAccess(days, dateKey, todayKey) {
   if (dateKey < todayKey) return { locked: true, reason: "past" };
   const day = dayAt(days, dateKey);
   if (day.holidays.length) return { locked: false, reason: null };
+  // Today's classes are all over (nothing live, nothing still to come): play time.
+  if (dateKey === todayKey) return { locked: false, reason: null };
   if (day.classes.some(isGameClass)) return { locked: true, reason: "classes" };
   return { locked: false, reason: null };
 }

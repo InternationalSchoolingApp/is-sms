@@ -34,7 +34,7 @@ export function LiveClassAlert({ event, now, firstName, onJoin, onClose }) {
     <Dialog open={Boolean(event)} onOpenChange={(open) => !open && onClose()}>
       {event && (
         <DialogContent showCloseButton={false} {...themeProps}>
-          <div className="flex items-center justify-center gap-2.5 bg-k5-grn px-6 py-3 font-k5-display text-xl font-semibold tracking-[0.06em] text-white">
+          <div className="k5-status-reveal flex items-center justify-center gap-2.5 bg-k5-grn px-6 py-3 font-k5-display text-xl font-semibold tracking-[0.06em] text-white">
             <span aria-hidden="true" className="block h-3.5 w-3.5 k5-live-dot rounded-full bg-[#FFC531]" />
             LIVE NOW
           </div>
@@ -46,7 +46,7 @@ export function LiveClassAlert({ event, now, firstName, onJoin, onClose }) {
               </span>
               <div className="relative flex-1 rounded-[20px] bg-k5-vt px-4 py-3">
                 <span aria-hidden="true" className="absolute -left-2 top-1/2 -mt-2 block h-4 w-4 rotate-45 bg-k5-vt" />
-                <DialogDescription className="relative m-0 font-k5-display text-xl font-medium leading-[1.3] text-k5-ink">{hurry}</DialogDescription>
+                <DialogDescription className="k5-paragraph-reveal relative m-0 font-k5-display text-xl font-medium leading-[1.3] text-k5-ink">{hurry}</DialogDescription>
               </div>
             </div>
 
@@ -55,7 +55,7 @@ export function LiveClassAlert({ event, now, firstName, onJoin, onClose }) {
                 <SubjectIcon name={classTitle(event)} className="h-10 w-10 text-k5-pi" />
               </span>
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <DialogTitle className="m-0 font-k5-display text-[28px] font-semibold leading-[1.1]">{classTitle(event)}</DialogTitle>
+                <DialogTitle className="k5-heading-reveal m-0 font-k5-display text-[28px] font-semibold leading-[1.1]">{classTitle(event)}</DialogTitle>
                 <span className="text-lg font-extrabold text-k5-mut">{timeRange(event)}</span>
                 <span className="text-[15px] font-extrabold text-[#8F1F4E] dark:text-[#FFB3D3]">{startedAgo(event, now)}</span>
               </div>

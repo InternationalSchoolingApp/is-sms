@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { X, Loader2, UserCircle, CheckCircle2, AlertCircle } from "lucide-react";
 import { loadProfileCompletingProcess } from "@/services/profileActionsApi";
 import { callServer } from "@/utils/serverCall";
@@ -131,8 +132,8 @@ export function K5CompleteProfileModal() {
   const profileUrl = studentNavHref(school, "my-profile");
 
   return (
-    <div data-blocking-popup="" className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4">
-      <div className="relative flex max-h-[90vh] w-full max-w-[520px] flex-col overflow-hidden rounded-3xl border-[3px] border-k5-line bg-k5-card shadow-xl">
+    <div data-blocking-popup="" className="k5-fade-in fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4">
+      <div className="k5-zoom-in relative flex max-h-[90vh] w-full max-w-[520px] flex-col overflow-hidden rounded-3xl border-[3px] border-k5-line bg-k5-card shadow-xl">
         {/* Header */}
         <div className="flex items-center gap-3 border-b-[3px] border-k5-line bg-k5-ac px-5 py-4">
           <UserCircle className="h-7 w-7 flex-none text-white" />
@@ -178,13 +179,13 @@ export function K5CompleteProfileModal() {
               Later
             </button>
           )}
-          <a
+          <Link
             href={profileUrl}
             className="flex min-h-11 items-center gap-2 rounded-full border-[3px] border-k5-ac bg-k5-ac px-5 font-k5-display text-[15px] font-semibold text-white no-underline shadow-[0_3px_0_var(--k5-acd)] hover:brightness-105"
           >
             <CheckCircle2 className="h-4.5 w-4.5" />
             Go to My Profile
-          </a>
+          </Link>
         </div>
       </div>
     </div>
