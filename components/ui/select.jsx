@@ -73,7 +73,7 @@ function SelectContent({
   // `container`: where the list is rendered. A native <dialog> opened with showModal() sits in the top layer, so a list portalled to
   // <body> would be behind it: a Select inside such a dialog passes the dialog element here.
   return (
-    <SelectPrimitive.Portal container={container}>
+    <SelectPrimitive.Portal container={container ?? undefined}>
       <SelectPrimitive.Positioner
         side={side}
         sideOffset={sideOffset}

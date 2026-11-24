@@ -135,7 +135,7 @@ export function K5CompleteProfileModal() {
         </div>
 
         {/* Body */}
-        <div className="flex flex-col gap-4 overflow-y-auto p-5 [scrollbar-width:thin]">
+        <div className="flex flex-col gap-4 overflow-y-auto p-5">
           <div className="flex items-center gap-2 rounded-2xl border-[3px] border-amber-400 bg-amber-50 px-4 py-3 text-sm font-black text-amber-700">
             <AlertCircle className="h-5 w-5 flex-none" />
             <span>{totalMissing} field{totalMissing !== 1 ? "s" : ""} need{totalMissing === 1 ? "s" : ""} your attention</span>

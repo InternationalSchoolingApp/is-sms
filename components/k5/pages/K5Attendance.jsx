@@ -349,7 +349,7 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                             }}
                             aria-pressed={isSel}
                             aria-label={d ? `${long}: ${d.percent}% attendance` : `${long}: Not yet`}
-                            className="group relative flex h-full min-w-0 flex-1 cursor-pointer flex-col items-center justify-end gap-1 border-none bg-transparent p-0"
+                            className="motion-none group relative flex h-full min-w-0 flex-1 cursor-pointer flex-col items-center justify-end gap-1 border-none bg-transparent p-0"
                           >
                             <span className="k5h-r10 pointer-events-none absolute bottom-[calc(100%+6px)] left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap rounded-[10px] bg-k5-ink px-2.5 py-1 text-[13px] font-black text-k5-card opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100">
                               {long}: {d ? `${d.percent}%` : "Not yet"}
@@ -375,13 +375,13 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
             </section>
 
             <section aria-labelledby="k5-at-sum" className={`${K5_CARD} flex flex-col gap-3.5 px-5 py-[18px]`}>
-              <div className="flex flex-col gap-0.5">
+              <div className="flex flex-col gap-0.5 max-[760px]:items-center max-[760px]:text-center">
                 <h2 id="k5-at-sum" className="m-0 font-k5-display text-2xl font-semibold">Monthly Summary</h2>
                 <span className="text-[15px] font-black text-k5-acx">{monthLong}</span>
               </div>
               {cur ? (
                 <>
-                  <div className="flex flex-wrap items-center gap-[18px]">
+                  <div className="flex flex-wrap items-center gap-[18px] max-[760px]:justify-center">
                     <div className="relative h-[160px] w-[160px] flex-none"><ProgressSparkle />
                       <svg width="160" height="160" viewBox="0 0 160 160" role="img" aria-label={`You came to ${cur.total - cur.absent} of ${cur.total} classes.`}>
                         <circle cx="80" cy="80" r={R} fill="none" strokeWidth="20" style={{ stroke: "var(--k5-soft)" }} />

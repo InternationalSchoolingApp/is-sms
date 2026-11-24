@@ -18,9 +18,11 @@ import { Calendar } from "@/components/ui/calendar";
  * passes a higher z class (e.g. "z-[95]") so the calendar is not hidden behind it.
  * Optional `todayClassName`: replaces the calendar's (faint) style for today's date, so a picker can make today stand out.
  * Optional `triggerClassName`: extra classes for the trigger button (the K5 My Profile passes "motion-none").
+ * Optional `k5`: the text of the trigger and of its label match a K5 field (FloatingLabelInput k5): font-k5-body, 16px, extra-bold,
+ * the label in the K5 muted / accent colours, and the box like one (14px radius, 3px border, K5 card colour; accent border while open).
  * Optional `placeholder`: grey text in the trigger while nothing is picked (for pickers without a floating `label`).
  */
-export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDate, error, disabled = false, height = "h-12", autoOpen = false, disabledDates, defaultMonth, placeholder, layerClassName, todayClassName, triggerClassName = "" }) {
+export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDate, error, disabled = false, height = "h-12", autoOpen = false, disabledDates, defaultMonth, placeholder, layerClassName, todayClassName, triggerClassName = "", k5 = false }) {
   const [open, setOpen] = useState(autoOpen);
   // Opens when autoOpen turns on later (state adjusted while rendering, not in an effect).
   const [seenAutoOpen, setSeenAutoOpen] = useState(autoOpen);
@@ -36,14 +38,16 @@ export function DatePicker({ icon: Icon, label, value, onChange, fromDate, toDat
         <PopoverTrigger
           type="button"
           disabled={disabled}
-          className={`relative flex ${height} w-full items-center rounded-md border ${disabled ? "cursor-not-allowed bg-slate-100 text-black" : "bg-white"} ${height ? "pb-1.5" : ""} ${Icon ? "pl-10" : "pl-3.5"} pr-3.5 pt-1  text-left text-[17px] ${triggerClassName} ${
-            error ? "border-2 border-red-500" : open ? "border-2 border-primary" : value && !disabled ? "border-2 border-emerald-500" : "border-slate-300"
+          className={`relative flex ${height} w-full items-center ${k5 ? "rounded-[14px]" : "rounded-md border"} ${disabled ? "cursor-not-allowed bg-slate-100 text-black" : k5 ? "bg-k5-card" : "bg-white"} ${height ? "pb-1.5" : ""} ${Icon ? "pl-10" : "pl-3.5"} pr-3.5 pt-1  text-left text-[17px] ${k5 ? "!text-base font-k5-body font-extrabold text-k5-ink" : ""} ${triggerClassName} ${
+            k5
+              ? `border-[3px] ${error ? "border-k5-ri" : open ? "border-k5-ac" : "border-k5-line"} focus-visible:!border-k5-ac`
+              : error ? "border-2 border-red-500" : open ? "border-2 border-primary" : value && !disabled ? "border-2 border-emerald-500" : "border-slate-300"
           }`}
         >
           {Icon && <Icon className="pointer-events-none absolute left-3.5 top-1/2 z-1 h-4 w-4 -translate-y-1/2 text-slate-500" />}
           {label && (
             <span
-              className={`pointer-events-none absolute z-1 bg-white px-1 transition-all ${
+              className={`pointer-events-none absolute z-1 bg-white px-1 transition-all ${k5 ? `!bg-k5-card font-k5-body font-black ${floated ? "!text-k5-ac" : "!text-base !text-k5-mut"}` : ""} ${
                 floated
                   ? `left-3 top-0 -translate-y-1/2 text-xs max-[319px]:text-[10px] ${error ? "text-red-500" : "text-primary"}`
                   // Unfocused + empty, an invalid field's label would otherwise sit
