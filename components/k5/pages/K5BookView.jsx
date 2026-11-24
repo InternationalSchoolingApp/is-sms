@@ -982,7 +982,7 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
                       </svg>
                     }
                   >
-                    Tickets you don&apos;t use fly away after Friday
+                    Classes you don&apos;t use fly away after Friday
                   </RuleTile>
                 )}
               </div>
