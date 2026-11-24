@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardContext } from "@/hooks/useDashboardContext";
 import { HAND_HINT_KEY } from "@/components/appearance/AppearanceProvider";
+import { useNightHint } from "@/hooks/useNightHint";
 
 /**
  * Shown while the dashboard context (student, grade band, look) is still loading, in place of the old grey
@@ -16,7 +17,8 @@ import { HAND_HINT_KEY } from "@/components/appearance/AppearanceProvider";
  * Left hand ("Menu goes on the right"): the skeleton is mirrored like the page will be (header, menu / rail, dashboard rows) - from
  * the `hand` prop (the shell knows it) or, before that, the student's saved look on this device.
  */
-const SK = "bg-slate-200/80";
+// Night mode (the root carries `dark`): the same pastel blocks on the dashboard's night colours (appearance.css: page #0e1530, card #1a2547).
+const SK = "bg-slate-200/80 dark:bg-white/10";
 // Same variant the real shell uses: the root carries data-hand, and rows flip with it (K5Header, K5Dashboard ROW, .k5-layout).
 const FLIP = "in-data-[hand=left]:flex-row-reverse";
 
@@ -34,23 +36,23 @@ function readSavedHand(userId) {
     return "right";
   }
 }
-const CARD = "box-border flex flex-col rounded-3xl bg-white";
+const CARD = "box-border flex flex-col rounded-3xl bg-white dark:bg-[#1a2547]";
 
 function HomeBody() {
   return (
     <div className="@container flex min-w-0 flex-1 flex-col gap-6">
       <div className={`flex flex-wrap gap-6 ${FLIP}`}>
         <Skeleton className={`box-border flex min-h-[262px] min-w-[520px] flex-[2_1_0] flex-col justify-center gap-[18px] rounded-3xl p-[18px] max-[760px]:min-w-0 max-[760px]:basis-full ${SK}`}>
-          <span className="block h-[72px] w-full rounded-[20px] bg-white/45" />
+          <span className="block h-[72px] w-full rounded-[20px] bg-white/45 dark:bg-white/10" />
           <span className="flex flex-wrap items-center gap-4">
             <span className="flex min-w-[200px] flex-[1_1_240px] items-center gap-3">
-              <span className="block h-14 w-14 flex-none rounded-full bg-white/45" />
+              <span className="block h-14 w-14 flex-none rounded-full bg-white/45 dark:bg-white/10" />
               <span className="flex flex-col gap-2">
-                <span className="block h-6 w-44 rounded-lg bg-white/45" />
-                <span className="block h-6 w-28 rounded-lg bg-white/45" />
+                <span className="block h-6 w-44 rounded-lg bg-white/45 dark:bg-white/10" />
+                <span className="block h-6 w-28 rounded-lg bg-white/45 dark:bg-white/10" />
               </span>
             </span>
-            <span className="block h-[118px] min-w-[210px] flex-[0_2_340px] rounded-3xl bg-white/60 max-[760px]:min-w-0 max-[760px]:flex-[1_1_100%]" />
+            <span className="block h-[118px] min-w-[210px] flex-[0_2_340px] rounded-3xl bg-white/60 dark:bg-white/15 max-[760px]:min-w-0 max-[760px]:flex-[1_1_100%]" />
           </span>
         </Skeleton>
         <div className={`${CARD} min-h-[262px] min-w-[300px] flex-[1_1_0] gap-4 py-[18px] pl-[22px] pr-4 max-[760px]:min-w-0 max-[760px]:basis-full`}>
@@ -175,11 +177,13 @@ export function DashboardLoadingSkeleton({ hand }) {
   // /{school}/student is the dashboard home page; My Classes and every module are one segment deeper.
   const isHome = /\/student\/?$/.test(pathname);
   const isClasses = /\/student\/my-classes\/?$/.test(pathname);
+  // The student's night mode (device hint, hooks/useNightHint.js): the loader is dark too, not a white flash before the dark page.
+  const night = useNightHint();
   return (
-    <div role="status" aria-live="polite" aria-busy="true" data-hand={side} className="flex min-h-screen flex-col bg-slate-50">
+    <div role="status" aria-live="polite" aria-busy="true" data-hand={side} className={`flex min-h-screen flex-col ${night ? "dark bg-[#0e1530]" : "bg-slate-50"}`}>
       <span className="sr-only">Loading your dashboard…</span>
 
-      <div aria-hidden="true" className={`flex h-[72px] flex-none items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 max-[760px]:h-14 max-[760px]:px-3 ${FLIP}`}>
+      <div aria-hidden="true" className={`flex h-[72px] flex-none items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 dark:border-[#33416b] dark:bg-[#1a2547] max-[760px]:h-14 max-[760px]:px-3 ${FLIP}`}>
         <div className="flex items-center gap-3">
           <Skeleton className={`h-11 w-11 rounded-xl ${SK}`} />
           <Skeleton className={`h-8 w-44 rounded-lg max-[760px]:w-28 ${SK}`} />
@@ -192,7 +196,7 @@ export function DashboardLoadingSkeleton({ hand }) {
       </div>
 
       <div aria-hidden="true" className="mx-auto flex w-full flex-1 items-start gap-3 px-5 pb-5 pt-5 max-[760px]:px-3 in-data-[hand=left]:min-[761px]:flex-row-reverse">
-        <div className="flex w-[76px] flex-none flex-col items-center gap-4 rounded-3xl bg-white p-3 max-[760px]:hidden">
+        <div className="flex w-[76px] flex-none flex-col items-center gap-4 rounded-3xl bg-white p-3 dark:bg-[#1a2547] max-[760px]:hidden">
           {Array.from({ length: 8 }, (_, i) => (
             <Skeleton key={i} className={`h-11 w-11 rounded-2xl ${SK}`} />
           ))}

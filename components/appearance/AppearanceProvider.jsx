@@ -17,6 +17,8 @@ import { viaTier1 } from "@/utils/dashboardBootstrap";
 const AppearanceContext = createContext(null);
 const CHANGE_EVENT = "is-appearance-change";
 export const HAND_HINT_KEY = "is-k5-hand-hint";
+// Device-level "is night mode on" hint for the screens that load before / outside the shell (hooks/useNightHint.js).
+export const NIGHT_HINT_KEY = "is-k5-night-hint";
 
 function subscribeStorage(callback) {
   window.addEventListener("storage", callback);
@@ -171,6 +173,16 @@ export function AppearanceProvider({ scope = "k5", userId, schoolUUID, policy = 
       },
     };
   }, [preferences, allow, key, status, systemDark, systemReduced, save, defaults, unsaved, serverReady]);
+
+  const isDark = value.isDark;
+  useEffect(() => {
+    if (!key || serverReady === false) return;
+    try {
+      window.localStorage.setItem(NIGHT_HINT_KEY, isDark ? "dark" : "light");
+    } catch {
+      // storage unavailable: those screens stay light
+    }
+  }, [key, serverReady, isDark]);
 
   return <AppearanceContext.Provider value={value}>{children}</AppearanceContext.Provider>;
 }

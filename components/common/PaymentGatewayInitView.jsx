@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, LoaderCircle, RefreshCw, ShieldCheck } from "lucide-react";
 import { getStripePaymentInit } from "@/services/paymentInitApi";
 import { fetchWithVisitor } from "@/utils/visitorFetch";
+import { useNightHint } from "@/hooks/useNightHint";
 
 const GATEWAY_CONFIG = {
   stripe: {
@@ -154,6 +155,8 @@ export function PaymentGatewayInitView({ gateway, schoolUUID: schoolUUIDFromRout
   const schoolUUID = schoolUUIDFromRoute || params?.school || process.env.NEXT_PUBLIC_SCHOOL_ID;
   const [state, setState] = useState("loading");
   const [errorMessage, setErrorMessage] = useState("");
+  // The student's night mode (device hint): this page is outside the dashboard, so it reads the hint instead of the appearance.
+  const night = useNightHint();
 
   const startPayment = useCallback(async () => {
     try {
@@ -193,33 +196,33 @@ export function PaymentGatewayInitView({ gateway, schoolUUID: schoolUUIDFromRout
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-50 via-white to-indigo-50 px-5 py-12 text-black">
-      <section className="w-full max-w-lg rounded-3xl border border-slate-200/80 bg-white p-8 text-center shadow-[0_24px_80px_-32px_rgba(15,23,42,0.28)] sm:p-10">
-        <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-2xl bg-sky-50 text-sky-700 ring-1 ring-sky-100">
+    <main className={`flex min-h-screen items-center justify-center px-5 py-12 ${night ? "dark bg-[#0e1530] text-[#f1f4ff]" : "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-50 via-white to-indigo-50 text-black"}`}>
+      <section className="w-full max-w-lg rounded-3xl border border-slate-200/80 bg-white p-8 text-center shadow-[0_24px_80px_-32px_rgba(15,23,42,0.28)] sm:p-10 dark:border-[#33416b] dark:bg-[#1a2547]">
+        <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-2xl bg-sky-50 text-sky-700 ring-1 ring-sky-100 dark:bg-[#222e55] dark:text-[#9ec2ff] dark:ring-[#33416b]">
           {state === "loading" ? <LoaderCircle className="size-8 animate-spin" aria-hidden="true" /> : state === "error" ? <RefreshCw className="size-7" aria-hidden="true" /> : <ShieldCheck className="size-8" aria-hidden="true" />}
         </div>
 
         {state === "loading" ? (
           <>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">Secure checkout</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-sky-700 dark:text-[#9ec2ff]">Secure checkout</p>
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Connecting to {config.name}</h1>
-            <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-600">Please wait while we prepare your secure payment. This should only take a moment.</p>
-            <div className="mt-8 flex items-center justify-center gap-2 text-xs font-medium text-slate-500"><ShieldCheck className="size-4 text-emerald-600" aria-hidden="true" /> Your payment details stay protected</div>
+            <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-600 dark:text-[#d4dbee]">Please wait while we prepare your secure payment. This should only take a moment.</p>
+            <div className="mt-8 flex items-center justify-center gap-2 text-xs font-medium text-slate-500 dark:text-[#b9c3dd]"><ShieldCheck className="size-4 text-emerald-600" aria-hidden="true" /> Your payment details stay protected</div>
           </>
         ) : (
           <>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-rose-600">Payment setup interrupted</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-rose-600 dark:text-rose-300">Payment setup interrupted</p>
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">We couldn’t connect to {config.name}</h1>
-            <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-600">{errorMessage}</p>
+            <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-600 dark:text-[#d4dbee]">{errorMessage}</p>
             <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-              <button type="button" onClick={() => router.back()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
+              <button type="button" onClick={() => router.back()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 dark:border-[#33416b] dark:bg-[#222e55] dark:text-[#f1f4ff] dark:hover:bg-[#2a3768]">
                 <ArrowLeft className="size-4" aria-hidden="true" /> Back
               </button>
-              <button type="button" onClick={retryPayment} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
+              <button type="button" onClick={retryPayment} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 dark:bg-[#027ffe] dark:hover:bg-[#0a6fe0]">
                 Try again <ArrowRight className="size-4" aria-hidden="true" />
               </button>
             </div>
-            <p className="mt-5 text-xs leading-5 text-slate-500">If the issue continues, go back to the previous page or contact support.</p>
+            <p className="mt-5 text-xs leading-5 text-slate-500 dark:text-[#b9c3dd]">If the issue continues, go back to the previous page or contact support.</p>
           </>
         )}
       </section>

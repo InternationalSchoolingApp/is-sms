@@ -67,10 +67,13 @@ function SelectContent({
   align = "center",
   alignOffset = 0,
   alignItemWithTrigger = true,
+  container,
   ...props
 }) {
+  // `container`: where the list is rendered. A native <dialog> opened with showModal() sits in the top layer, so a list portalled to
+  // <body> would be behind it: a Select inside such a dialog passes the dialog element here.
   return (
-    <SelectPrimitive.Portal>
+    <SelectPrimitive.Portal container={container}>
       <SelectPrimitive.Positioner
         side={side}
         sideOffset={sideOffset}

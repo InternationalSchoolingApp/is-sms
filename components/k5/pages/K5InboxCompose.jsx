@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, FileText, Lock, Paperclip, Send, Settings, X } from "lucide-react";
+import { K5Select } from "@/components/k5/K5Select";
 import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
 import { CM_BTN, CM_BTN_PRIMARY } from "@/components/k5/pages/K5InboxReader";
 import {
@@ -153,23 +154,19 @@ export function K5InboxCompose({ compose }) {
               />
               {/* Start from a template: the choice fills the subject and message and the picker goes back to its name. */}
               {compose.templateGroups.length > 0 && (
-                <select
+                <K5Select
+                  variant="inline"
                   value=""
                   aria-label="Choose a template (optional)"
-                  onChange={(e) => compose.applyTemplate(compose.templateGroups.flatMap((g) => g.templates).find((t) => String(t.id) === e.target.value))}
-                  className="min-h-[32px] max-w-[150px] flex-none cursor-pointer border-y-0 border-l-[3px] border-r-0 border-k5-line bg-transparent px-2 text-[14px] font-black text-k5-ink outline-none"
-                >
-                  <option value="">Templates</option>
-                  {compose.templateGroups.map((group) =>
-                    group.label ? (
-                      <optgroup key={group.label} label={group.label}>
-                        {group.templates.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
-                      </optgroup>
-                    ) : (
-                      group.templates.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)
-                    ),
-                  )}
-                </select>
+                  placeholder="Templates"
+                  onValueChange={(value) => compose.applyTemplate(compose.templateGroups.flatMap((g) => g.templates).find((t) => String(t.id) === value))}
+                  options={compose.templateGroups
+                    .map((group) => {
+                      const items = group.templates.map((t) => ({ value: String(t.id), label: t.title }));
+                      return group.label ? { groupLabel: group.label, options: items } : items;
+                    })
+                    .flat()}
+                />
               )}
             </div>
             {compose.templateGroups.length > 0 && <span className={HELP}>{TEMPLATE_HELP}</span>}
