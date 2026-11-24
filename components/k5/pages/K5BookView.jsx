@@ -20,6 +20,7 @@ import { getAssignedTeacherForCourse, getAssignedTeachersForAllCourses, getClass
 import { getSlotEnd, getSlotState } from "@/utils/bookClass";
 import { getCourseSlots } from "@/utils/bookClassClient";
 import { courseTint, subjectStyle } from "@/utils/k5Calendar";
+import { useTeacherLabel } from "@/hooks/useTeacherLabel";
 import { K5Loading, K5CardsSkeleton, K5Sk } from "@/components/k5/K5Skeletons";
 
 const MAX_TICKETS = 10;
@@ -99,12 +100,12 @@ const initialsOf = (name) =>
 const niceTime = (value) => String(value || "").replace(/^0/, "");
 
 function TeacherChip({ name }) {
+  const teacherLabel = useTeacherLabel();
   return (
     <span className="mt-1.5 flex items-center gap-2.5 self-start rounded-full bg-k5-vt py-1 pl-1 pr-3.5">
       <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-k5-vi font-k5-display text-[15px] font-semibold text-white">{name ? initialsOf(name) : "?"}</span>
       <span className="flex flex-col leading-[1.15]">
-        <span className="text-xs font-black text-[var(--k5-vX)]">Your teacher</span>
-        <span className="font-k5-display text-[17px] font-semibold">{name || "Not picked yet"}</span>
+        <span className="font-k5-display text-[17px] font-semibold">{name ? teacherLabel(name) : "Not picked yet"}</span>
       </span>
     </span>
   );
@@ -151,6 +152,12 @@ function BookHeader({ teacherName, onStart, startLabel, startLoading = false }) 
         <p className="k5h-b-sub m-0 text-lg font-extrabold text-k5-mut">{copy.sub}</p>
         {/* Grade 6–8: no teacher chip here (each course card names its teacher); a "Book a Class (n)" button instead. */}
         {!middle && teacherName !== undefined && <TeacherChip name={teacherName} />}
+        {!middle && startLoading && (
+          <span className="mt-1.5 flex items-center gap-2.5 self-start rounded-full bg-k5-vt py-1 pl-1 pr-3.5">
+            <K5Sk className="h-[38px] w-[38px] flex-none rounded-full" />
+            <K5Sk className="h-5 w-28" />
+          </span>
+        )}
         {middle && startLoading && (
           <div className="mt-1.5">
             <K5Sk className="h-[46px] w-44 rounded-full" />
@@ -200,7 +207,7 @@ function BookPageSkeleton() {
           className="flex flex-[1_1_400px] flex-col gap-2.5 rounded-[26px] bg-k5-yt px-5 py-4"
           style={high ? { background: "var(--k5-act)", border: "none", borderRadius: 12 } : middle ? { background: "color-mix(in srgb, var(--k5-ac) 13%, var(--k5-card))", border: "1.5px solid color-mix(in srgb, var(--k5-ac) 28%, var(--k5-card))", borderRadius: 18 } : undefined}
         >
-          <K5Sk className="h-7 w-36" />
+          <K5Sk className="h-7 w-36 self-center" />
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[18px] bg-white/45 px-2.5 py-2">
             <span className="flex min-w-[104px] flex-col gap-1.5">
               <K5Sk className="h-4 w-20" />
@@ -213,7 +220,10 @@ function BookPageSkeleton() {
             </span>
             <K5Sk className="ms-auto h-8 w-20 rounded-full" />
           </div>
-          <K5Sk className="h-5 w-44" />
+          <span className="flex items-center justify-center gap-1.5">
+            <K5Sk className="h-[18px] w-[18px] rounded-md" />
+            <K5Sk className="h-5 w-36" />
+          </span>
         </section>
       </div>
 
@@ -354,7 +364,7 @@ function Tickets({ perWeek, left, color }) {
       className="flex flex-[1_1_400px] flex-col gap-2.5 rounded-[26px] bg-k5-yt px-5 py-4"
       style={high ? { background: "var(--k5-act)", border: "none", borderRadius: 12 } : middle ? { background: "color-mix(in srgb, var(--k5-ac) 13%, var(--k5-card))", border: "1.5px solid color-mix(in srgb, var(--k5-ac) 28%, var(--k5-card))", borderRadius: 18 } : undefined}
     >
-      <h2 id="k5-tix" className="m-0 font-k5-display text-[22px] font-semibold">{copy.tickets}</h2>
+      <h2 id="k5-tix" className="m-0 font-k5-display text-[22px] font-semibold text-center">{copy.tickets}</h2>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[18px] bg-white/45 px-2.5 py-2">
         <span className="flex min-w-[104px] flex-col leading-[1.15]">
           <span className="font-k5-display text-lg font-semibold">This week</span>
@@ -365,7 +375,7 @@ function Tickets({ perWeek, left, color }) {
         </span>
         <span className="ms-auto whitespace-nowrap rounded-full bg-k5-card px-3 py-1 font-k5-display text-[17px] font-semibold">{left} left</span>
       </div>
-      <p className={`m-0 flex items-center gap-1.5 text-[15px] font-black ${middle ? "text-k5-acx" : "text-k5-yx"}`}>
+      <p className={`m-0 flex items-center gap-1.5 text-[15px] font-black justify-center ${middle ? "text-k5-acx" : "text-k5-yx"}`}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: middle ? "var(--k5-acx)" : "var(--k5-yX)" }}>
           <path d="M6 3h12M6 21h12M7 3c0 5 10 6 10 9s-10 4-10 9M17 3c0 5-10 6-10 9s10 4 10 9" />
         </svg>
@@ -558,6 +568,7 @@ function SubjectChip({ name, color }) {
 }
 
 function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, threePerRow = false }) {
+  const teacherLabel = useTeacherLabel();
   const { middle, high, copy } = useCopy();
   if (loading) {
     return (
@@ -598,7 +609,7 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
               <SubjectIcon name={s.name} className="k5h-b-sicon h-10 w-10" />
             </span>
             <span className={"k5h-b-sname font-k5-display font-semibold leading-[1.1] " + (soft ? "text-[22px]" : "text-[20px]")}>{s.name}</span>
-            {middle && s.teacherName && <span className="text-sm font-extrabold leading-[1.2] text-k5-mut">{s.teacherName}</span>}
+            {middle && s.teacherName && <span className="text-sm font-extrabold leading-[1.2] text-k5-mut">{teacherLabel(s.teacherName)}</span>}
             {s.booked > 0 && (
               <span className={"k5h-b-booked  flex items-center gap-1 rounded-full border-k5-grn bg-k5-card px-2.5 py-1 text-[13px] font-black " + (soft ? "max-w-full border-[1.5px]" : "whitespace-nowrap border-[3px]")} style={middle ? { borderColor: "var(--k5-c-done)" } : undefined}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: "currentColor" }}>
@@ -1069,6 +1080,7 @@ function BookPopup({ onClose, children }) {
  * badge, the date and time, the course and the teacher in one list, then Back / Confirm.
  */
 function ConfirmBooking({ open, when, course, color, teacher, busy, onBack, onConfirm }) {
+  const teacherLabel = useTeacherLabel();
   const themeProps = useK5ThemeProps(
     "flex max-h-[min(100%,calc(100vh-32px))] flex-col gap-[18px] overflow-y-auto rounded-[16px] border border-k5-line bg-k5-card px-[22px] pb-5 pt-6 text-k5-ink shadow-[0_20px_48px_rgba(16,24,40,0.22)] ring-0 sm:max-w-[460px]",
   );
@@ -1132,7 +1144,7 @@ function ConfirmBooking({ open, when, course, color, teacher, busy, onBack, onCo
             </span>
             <span className="flex min-w-0 flex-col gap-0.5">
               <span className={label}>Teacher Name</span>
-              <span className={value}>{teacher}</span>
+              <span className={value}>{teacherLabel(teacher)}</span>
             </span>
           </div>
         </div>
@@ -1159,6 +1171,7 @@ function ConfirmBooking({ open, when, course, color, teacher, busy, onBack, onCo
  * the submit (submitBookClassSlot) are the ones the weekly slot picker used; only the flow is steps.
  */
 export function K5BookView({ details, subjects, course, onShowBooked, onBooked, popup = false, onClose, skipInitialBuddy = false }) {
+  const teacherLabel = useTeacherLabel();
   const { middle, high, copy } = useCopy();
   const colorFor = useK5CourseColors();
   const queryClient = useQueryClient();
@@ -1375,7 +1388,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
           <span className="font-k5-display text-[22px] font-semibold leading-[1.2]">
             {target.option.name} · {dayItem.weekday} {dayItem.num} · {niceTime(target.slot.displayStartTime)}
           </span>
-          <span className="text-sm font-extrabold text-k5-mut">with {teacherName}</span>
+          <span className="text-sm font-extrabold text-k5-mut">with {teacherLabel(teacherName)}</span>
         </div>
         <button
           type="button"
@@ -1414,7 +1427,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
               {!dayFirst && step === 3 && (
                 <span className="mt-0.5 flex items-center gap-1.5 text-[15px] font-black text-[var(--k5-vX)]">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-k5-vi text-[10px] text-white">{initialsOf(teacherName)}</span>
-                  {firstName(teacherName)} is free at these times
+                  {teacherLabel(teacherName)} is free at these times
                 </span>
               )}
             </div>
@@ -1538,7 +1551,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                 <p className="m-0 font-k5-display text-[22px] font-semibold leading-[1.25]">
                   {done.name} · {done.weekday} {done.num} · {done.time}
                 </p>
-                <span className={`text-[15px] font-extrabold ${high ? "text-k5-ink" : "text-k5-gx"}`}>with {teacherName}</span>
+                <span className={`text-[15px] font-extrabold ${high ? "text-k5-ink" : "text-k5-gx"}`}>with {teacherLabel(teacherName)}</span>
                 <div className="mt-2 flex flex-wrap gap-2.5">
                   <button
                     type="button"

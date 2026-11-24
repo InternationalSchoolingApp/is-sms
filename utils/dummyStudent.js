@@ -1584,6 +1584,7 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
             subjectName: courseName,
             teacherAssignedForTeacherSupport: teacher(subject, index),
             teacherName: teacher(subject, index),
+            teacherGender: index % 2 === 0 ? "female" : "male",
           };
         }),
       },

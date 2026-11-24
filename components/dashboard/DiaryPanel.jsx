@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { diaryInstant, formatDiaryDate } from "@/utils/diaryDates";
 import { isOwnDiaryMessage } from "@/utils/diaryChat";
 import { DEFAULT_DIARY_CHAT_WITH, DIARY_CHAT_WITH, filterThreadsByChatWith, noDiaryEntriesText } from "@/utils/diaryFilter";
+import { salutationFor } from "@/utils/salutation";
 
 // Roles that trigger the "Greetings from {school}!" letter template in
 // getParentSchoolDiaryTeacherCard/-ReplyCard (PARENT_MENTION_ROLE in
@@ -19,12 +20,8 @@ import { DEFAULT_DIARY_CHAT_WITH, DIARY_CHAT_WITH, filterThreadsByChatWith, noDi
 // regardless of who's actually reading the thread.
 export const STAFF_SENDER_ROLES = ["TEACHER", "DIRECTOR", "SCHOOL", "ADMIN"];
 
-export function salutationFor(gender) {
-  const normalized = (gender || "").toLowerCase();
-  if (normalized === "male") return "Mr.";
-  if (normalized === "female") return "Ms.";
-  return "";
-}
+// Moved to utils/salutation.js (the assigned-teacher pages use it too); still exported from here for the diary panels.
+export { salutationFor };
 
 // DISPLAY_DATETIME_FORMATTER ("ddd, DD MMM, YYYY hh:mm A"): the server date is in details.sourceTimezone and is shown in
 // the viewer's zone (utils/diaryDates.js; Asia/Singapore when the source zone is missing).

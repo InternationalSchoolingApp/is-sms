@@ -11,6 +11,7 @@ import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { useK5CourseColors } from "@/hooks/useK5CourseColors";
 import { getStudentCourseContent } from "@/services/dashboardApi";
 import { courseTint, subjectStyle } from "@/utils/k5Calendar";
+import { teacherShortName } from "@/utils/salutation";
 import { hasDueDate, openLmsLesson } from "@/utils/lmsCourseLink";
 import { K5Loading, K5Sk, K5TeacherSkeleton } from "@/components/k5/K5Skeletons";
 
@@ -240,8 +241,7 @@ export function K5AssignedTeacher({ courses, isLoading }) {
                     {course.teacherName ? initials(course.teacherName) : "?"}
                   </span>
                   <span className="flex min-w-0 flex-col leading-[1.2]">
-                    <span className="text-[13px] font-black text-[var(--k5-vX)]">Your teacher</span>
-                    <span className="font-k5-display text-[17px] font-semibold text-k5-ink">{course.teacherName || "Not picked yet"}</span>
+                    <span className="font-k5-display text-[17px] font-semibold text-k5-ink">{course.teacherName ? teacherShortName(course.teacherName, course.teacherGender) : "Not picked yet"}</span>
                   </span>
                 </div>
                 <button

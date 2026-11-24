@@ -11,6 +11,7 @@ import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useK5CourseColors } from "@/hooks/useK5CourseColors";
 import { getStudentBookedClasses } from "@/services/bookClassApi";
 import { bookedClassDateRange } from "@/utils/bookClass";
+import { useTeacherLabel } from "@/hooks/useTeacherLabel";
 import { K5Loading, K5RowsSkeleton } from "@/components/k5/K5Skeletons";
 
 // The From / To calendars are not limited to the current year: any date from 10 years back to 10 years ahead can be picked.
@@ -160,6 +161,7 @@ function sortValue(row, key) {
  * course), 8 "Total number of …" boxes, six columns with the teacher under the course. `subjects` = the student's courses.
  */
 export function K5BookedView({ course, subjects = [], onBack, onBook }) {
+  const teacherLabel = useTeacherLabel();
   const { isMiddle, isHigh } = useDashboardContext();
   const middle = Boolean(isMiddle);
   const high = Boolean(isHigh);
@@ -297,8 +299,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
               <span className="mt-1 flex items-center gap-2.5 self-start rounded-full bg-k5-vt py-1 pl-1 pr-3.5">
                 <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-k5-vi font-k5-display text-[15px] font-semibold text-white">{initialsOf(teacherName)}</span>
                 <span className="flex flex-col leading-[1.15]">
-                  <span className="text-xs font-black text-[var(--k5-vX)]">Your teacher</span>
-                  <span className="font-k5-display text-[17px] font-semibold">{teacherName}</span>
+                  <span className="font-k5-display text-[17px] font-semibold">{teacherLabel(teacherName)}</span>
                 </span>
               </span>
             )}
