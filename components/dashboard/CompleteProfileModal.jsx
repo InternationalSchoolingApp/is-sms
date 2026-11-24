@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { AlertCircle, CheckCircle2, UserCircle, X } from "lucide-react";
-import { loadProfileCompletingProcess } from "@/services/profileActionsApi";
-import { callServer } from "@/utils/serverCall";
+import { useProfileCompletingProcess } from "@/hooks/useProfileCompletingProcess";
 import { studentNavHref } from "@/utils/dashboardNav";
 
 /**
@@ -59,22 +58,9 @@ function SectionBlock({ section }) {
 
 export function CompleteProfileModal({ hold = false }) {
   const { school } = useParams();
-  const [data, setData] = useState(null);
+  // Shared answer (hooks/useProfileCompletingProcess.js): setting off or the call failed means no data, so no popup.
+  const { data } = useProfileCompletingProcess();
   const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    callServer(() => loadProfileCompletingProcess())
-      .then((result) => {
-        if (!cancelled) setData(result);
-      })
-      .catch(() => {
-        // setting off or the call failed: no popup
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   if (hold || dismissed || !data?.enabled || !data.profileData?.length) return null;
 

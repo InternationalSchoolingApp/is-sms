@@ -123,7 +123,8 @@ export function StudentHomeK5({ holdProfilePopup = false, dashboard = false }) {
 
 function K5Planner({ timezone, dashboard = false }) {
   const { context, isPreK, isSelfStudy } = useDashboardContext();
-  const model = useK5CalendarModel({ schoolUUID: context?.schoolUUID, userId: context?.userId, timezone });
+  // The month prefetch (the mini calendar dots) is for My Classes only: the dashboard home has no mini calendar any more.
+  const model = useK5CalendarModel({ schoolUUID: context?.schoolUUID, userId: context?.userId, timezone, prefetchMonth: !dashboard });
   const [clue, setClue] = useState(null);
   const [calOpen, setCalOpen] = useState(false);
   const [detailEvent, setDetailEvent] = useState(null);

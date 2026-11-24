@@ -17,6 +17,7 @@ import { AnnouncementsPanel } from "@/components/dashboard/AnnouncementsPanel";
 import { NewsPanel } from "@/components/dashboard/NewsPanel";
 import { DiaryPanel } from "@/components/dashboard/DiaryPanel";
 import { useDiaryLivePolling } from "@/hooks/useDiaryLivePolling";
+import { viaTier2 } from "@/utils/dashboardBootstrap";
 import { K5AnnouncementsPanel } from "@/components/k5/panels/K5AnnouncementsPanel";
 import { K5NewsPanel } from "@/components/k5/panels/K5NewsPanel";
 import { K5DiaryPanel } from "@/components/k5/panels/K5DiaryPanel";
@@ -60,7 +61,9 @@ function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
   const announcementsQuery = useQuery({
     queryKey: ["student-announcements", schoolUUID, userId, dummy.key],
     queryFn: () =>
-      dummy.enabled ? dummy.student.announcements() : getAnnouncementDetails({ schoolUUID, userId, startFrom: 0, pageSize: 20 }),
+      dummy.enabled
+        ? dummy.student.announcements()
+        : viaTier2(userId, "announcements", (a) => a.announcements, () => getAnnouncementDetails({ schoolUUID, userId, startFrom: 0, pageSize: 20 })),
     enabled: Boolean(schoolUUID && userId && dummy.settled),
     staleTime: 5 * 60_000,
     refetchOnWindowFocus: false,
@@ -70,7 +73,7 @@ function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
 
   const newsQuery = useQuery({
     queryKey: ["news-articles", dummy.key],
-    queryFn: () => (dummy.enabled ? dummy.student.newsList() : getAllArticles({ page: 1, size: 10 })),
+    queryFn: () => (dummy.enabled ? dummy.student.newsList() : viaTier2(userId, "news", (a) => a.news, () => getAllArticles({ page: 1, size: 10 }))),
     enabled: dummy.settled,
     staleTime: 5 * 60_000,
     refetchOnWindowFocus: false,
@@ -80,7 +83,7 @@ function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
 
   const chatCountQuery = useQuery({
     queryKey: ["chat-unseen-count", schoolUUID, userId],
-    queryFn: () => getChatUnseenCount({ schoolUUID, userId, userRole, email }),
+    queryFn: () => viaTier2(userId, "chatUnseen", (a) => a.chatUnseen, () => getChatUnseenCount({ schoolUUID, userId, userRole, email })),
     enabled: Boolean(schoolUUID && userId),
     staleTime: 60_000,
     refetchOnWindowFocus: false,

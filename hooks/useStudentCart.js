@@ -12,6 +12,7 @@ import {
   removeCartItem,
 } from "@/services/cartApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { viaTier2 } from "@/utils/dashboardBootstrap";
 
 // Query keys shared by the plans page, the cart page and the header badge, so a
 // cart change refreshes all three. Queries append the dummy-mode key, so these
@@ -51,7 +52,7 @@ export function useCartCount(userId) {
   return useQuery({
     queryKey: [...CART_KEYS.count(userId), dummy.key],
     queryFn: async () => {
-      const response = dummy.enabled ? dummy.student.cartCount() : await getCartCount();
+      const response = dummy.enabled ? dummy.student.cartCount() : await viaTier2(userId, "cart", (a) => a.cart, () => getCartCount());
       return Number(response?.cartCount) || 0;
     },
     enabled: Boolean(userId && dummy.settled),

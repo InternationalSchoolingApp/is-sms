@@ -18,6 +18,8 @@ export const FEEDBACK_SETTING = {
   delayMinutes: "FEEDBACK_MODAL_DELAY_MIN", // minutes to wait after the class end
   bulkDay: "BULK_FEEDBACK_SHOW_DAY", // day of the week (0 = Sunday) of the weekly Pending Feedback popup
 };
+// All five keys, read together in one call (hooks/useFeedbackSettings.js).
+export const FEEDBACK_SETTING_KEYS = Object.values(FEEDBACK_SETTING);
 
 const WALL_CLOCK = "yyyy-MM-dd'T'HH:mm:ss";
 export const wallClock = (date) => (date && isValid(date) ? format(date, WALL_CLOCK) : "");

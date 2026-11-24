@@ -5,6 +5,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import toast from "react-hot-toast";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { bootstrapUser, viaTier2 } from "@/utils/dashboardBootstrap";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
 import { useInboxCompose } from "@/hooks/useInboxCompose";
 import {
@@ -61,7 +62,7 @@ async function fetchRoute(path, payload, fallback) {
 const liveInbox = {
   dummy: false,
   list: (request) => ask(() => listInbox(request)),
-  unread: () => ask(() => getInboxUnread()),
+  unread: () => ask(() => (bootstrapUser() ? viaTier2(bootstrapUser(), "inbox", (a) => a.inbox, () => getInboxUnread()) : getInboxUnread())),
   async openEmail(id) {
     const email = await ask(() => openInboxEmail({ id }));
     // The email's own HTML is fetched as text and shown in a sandboxed frame (never put into the page).

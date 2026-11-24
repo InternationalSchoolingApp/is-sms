@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { X, Loader2, UserCircle, CheckCircle2, AlertCircle } from "lucide-react";
-import { loadProfileCompletingProcess } from "@/services/profileActionsApi";
-import { callServer } from "@/utils/serverCall";
+import { useProfileCompletingProcess } from "@/hooks/useProfileCompletingProcess";
 import { studentNavHref } from "@/utils/dashboardNav";
 
 function fieldLabel(field) {
@@ -64,24 +63,9 @@ function SectionBlock({ section }) {
 
 export function K5CompleteProfileModal() {
   const { school } = useParams();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Shared answer (hooks/useProfileCompletingProcess.js): setting off or API failed means no data, so no modal.
+  const { data, loading } = useProfileCompletingProcess();
   const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    callServer(() => loadProfileCompletingProcess())
-      .then((result) => {
-        if (!cancelled) setData(result);
-      })
-      .catch(() => {
-        // setting is off or API failed — no modal
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, []);
 
   if (loading || dismissed || !data) return null;
 

@@ -6,6 +6,7 @@ import { addDays, addMonths, addWeeks, endOfMonth, format, startOfDay, startOfMo
 import { toZonedTime, fromZonedTime, formatInTimeZone } from "date-fns-tz";
 import { getLiveClassAttendanceStatus, getSchoolCalendar } from "@/services/dashboardApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { viaTier1 } from "@/utils/dashboardBootstrap";
 import {
   DEFAULT_CALENDAR_FILTERS,
   applyCalendarFilters,
@@ -148,7 +149,12 @@ export function useStudentCalendar({ schoolUUID, userId, timezone: timezoneOptio
       queryFn: () =>
         dummy.enabled
           ? dummy.student.calendar({ ...range, timezone })
-          : getSchoolCalendar({ schoolUUID, userId, startDate: range.startDate, endDate: range.endDate }),
+          : viaTier1(
+              userId,
+              "calendar",
+              (a) => (a.calendar && a.calendar.startDate === range.startDate && a.calendar.endDate === range.endDate ? a.calendar.data : undefined),
+              () => getSchoolCalendar({ schoolUUID, userId, startDate: range.startDate, endDate: range.endDate }),
+            ),
       enabled,
       staleTime: 60_000,
       refetchOnWindowFocus: false,

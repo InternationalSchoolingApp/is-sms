@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getStudentDashboardOrMigration } from "@/services/dashboardApi";
 import { studentDashboardDetailsQuery } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { viaTier1 } from "@/utils/dashboardBootstrap";
 
 /**
  * The two dashboard-orchestrator calls the legacy rendereDashboardContent()
@@ -23,7 +24,7 @@ export function useStudentDashboardData({ schoolUUID, userId }) {
       // Dummy (demo) student mode: legacy getDummyGradeKDashboardOrMigrationSection / Details (no popups).
       if (dummy.enabled) return { migration: dummy.student.dashboardOrMigration(), details: dummy.student.dashboardDetails() };
       const [migration, details] = await Promise.all([
-        getStudentDashboardOrMigration({ schoolUUID, userId }),
+        viaTier1(userId, "migration", (a) => a.migration, () => getStudentDashboardOrMigration({ schoolUUID, userId })),
         // Same cached call the DashboardProvider's grade-band gate already made.
         queryClient.ensureQueryData(studentDashboardDetailsQuery({ schoolUUID, userId })),
       ]);

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { viaTier1 } from "@/utils/dashboardBootstrap";
 import { ChangePasswordModal } from "@/components/dashboard/ChangePasswordModal";
 import { K5ChangePasswordModal } from "@/components/k5/panels/K5ChangePasswordModal";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -57,7 +58,7 @@ export function ForcedPasswordChange() {
   // Same cache entry as the Add Siblings button (hooks/useAddSiblings.js).
   const { data: profile } = useQuery({
     queryKey: ["user-short-profile", schoolUUID, userId],
-    queryFn: () => getUserShortProfile({ schoolUUID, userId }),
+    queryFn: () => viaTier1(userId, "shortProfile", (a) => a.shortProfile, () => getUserShortProfile({ schoolUUID, userId })),
     enabled: wanted,
     staleTime: 60_000,
     refetchOnWindowFocus: false,

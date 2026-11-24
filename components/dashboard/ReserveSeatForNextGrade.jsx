@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
+import { viaTier3 } from "@/utils/dashboardBootstrap";
 import toast from "react-hot-toast";
 import { Check, Info, Lock, X, CalendarDays } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -268,7 +269,7 @@ export function ReserveSeatForNextGrade() {
 
   const query = useQuery({
     queryKey: ["reserve-seat-next-grade", context?.schoolUUID, context?.userId],
-    queryFn: () => getReserveSeatEligibility(),
+    queryFn: () => viaTier3(context?.userId, "reserveSeat", (a) => a.reserveSeat, () => getReserveSeatEligibility()),
     enabled: wanted,
     staleTime: Infinity,
     refetchOnWindowFocus: false,

@@ -3,6 +3,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { DEFAULT_POLICY, sanitizeAppearance } from "@/constant/appearance";
 import { getUserShortProfile, saveUserTheme } from "@/services/dashboardApi";
+import { useQueryClient } from "@tanstack/react-query";
+import { viaTier1 } from "@/utils/dashboardBootstrap";
 
 /**
  * Generic appearance provider (plan section 12, Step A): school policy + the user's saved
@@ -55,6 +57,7 @@ const subscribeReduced = subscribeMedia(REDUCED_QUERY);
 
 export function AppearanceProvider({ scope = "k5", userId, schoolUUID, policy = DEFAULT_POLICY, children }) {
   const key = userId ? `is-${scope}-look:${userId}` : null;
+  const queryClient = useQueryClient();
   const raw = useSyncExternalStore(subscribeStorage, () => readStorage(key), () => null);
   const systemDark = useSyncExternalStore(subscribeDark, () => window.matchMedia(DARK_QUERY).matches, () => false);
   const systemReduced = useSyncExternalStore(subscribeReduced, () => window.matchMedia(REDUCED_QUERY).matches, () => false);
@@ -69,7 +72,12 @@ export function AppearanceProvider({ scope = "k5", userId, schoolUUID, policy = 
   useEffect(() => {
     if (!userId || !schoolUUID || serverLoaded.current) return;
     serverLoaded.current = true;
-    getUserShortProfile({ schoolUUID, userId }).then((profile) => {
+    // fetchQuery shares the cache entry of the Add Siblings button / forced password check, so the profile is read once.
+    queryClient.fetchQuery({
+      queryKey: ["user-short-profile", schoolUUID, userId],
+      queryFn: () => viaTier1(userId, "shortProfile", (a) => a.shortProfile, () => getUserShortProfile({ schoolUUID, userId })),
+      staleTime: 60_000,
+    }).then((profile) => {
       if (!profile?.userThemeColorCode) { setServerReady(true); return; }
       try {
         const colorObj = typeof profile.userThemeColorCode === "string"
@@ -82,7 +90,7 @@ export function AppearanceProvider({ scope = "k5", userId, schoolUUID, policy = 
       } catch { /* ignore malformed */ }
       setServerReady(true);
     }).catch(() => setServerReady(true));
-  }, [userId, schoolUUID, key]);
+  }, [userId, schoolUUID, key, queryClient]);
 
   const allow = policy.allowUserCustomization !== false;
   const defaults = useMemo(() => sanitizeAppearance(policy.defaults), [policy.defaults]);

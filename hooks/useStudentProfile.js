@@ -8,6 +8,7 @@ import { getMyProfile } from "@/services/profileApi";
 import { createDummyProfileAnswer } from "@/utils/dummyProfile";
 import { buildProfileModel } from "@/utils/profileModel";
 import { callServer } from "@/utils/serverCall";
+import { afterStartup } from "@/utils/dashboardBootstrap";
 
 /**
  * The signed-in student's own profile, read-only (My Profile P1). The current enrolment (studentStandardId) comes
@@ -27,7 +28,8 @@ export function useStudentProfile({ schoolUUID, userId }) {
 
   const query = useQuery({
     queryKey: ["my-profile", userId, studentStandardId],
-    queryFn: () => callServer(() => getMyProfile({ studentStandardId })),
+    // The photo / profile call is the slowest of the page and nothing draws on it: it waits until the screen and the counts are in.
+    queryFn: () => callServer(() => afterStartup(userId, () => getMyProfile({ studentStandardId }))),
     enabled: Boolean(userId) && detailsSettled && live,
     staleTime: 60_000,
     refetchOnWindowFocus: false,

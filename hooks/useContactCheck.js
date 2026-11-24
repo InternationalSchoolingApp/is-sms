@@ -7,6 +7,7 @@ import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { usePicoLive } from "@/components/k5/pico/picoEvents";
 import { createContactCheckFlow } from "@/utils/contactCheckFlow";
 import { isSessionExpired, markSessionExpired } from "@/utils/sessionState";
+import { viaTier1 } from "@/utils/dashboardBootstrap";
 import { loadPendingContactChecks, sendContactCheckCode, skipContactCheck, stopContactCheckWhatsapp, verifyContactCheckCode } from "@/services/contactCheckApi";
 
 /**
@@ -62,7 +63,7 @@ function flowFor(userId) {
     };
     flow = createContactCheckFlow({
       api: {
-        pending: guard(loadPendingContactChecks),
+        pending: guard((request) => viaTier1(userId, "contactPending", (a) => a.contactPending, () => loadPendingContactChecks(request))),
         sendCode: guard(sendContactCheckCode),
         verify: guard(verifyContactCheckCode),
         noWhatsapp: guard(stopContactCheckWhatsapp),
