@@ -24,7 +24,7 @@ import { useTeacherLabel } from "@/hooks/useTeacherLabel";
 import { K5Loading, K5CardsSkeleton, K5Sk } from "@/components/k5/K5Skeletons";
 
 const MAX_TICKETS = 10;
-const BOOK_SAY = "This is where you book classes! Each ticket is one class with a teacher.";
+const BOOK_SAY = "Here you can book your classes with a teacher. Each booking is one class.";
 // Wording per look: the Grade 6–8 mockup talks about "classes" and "select", the K–5 one about tickets and "pick".
 const COPY = {
   k5: {
