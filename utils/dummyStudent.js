@@ -1198,10 +1198,17 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
       showBatchReEnrollmentPopUp: "N",
     };
   }
+  // The dummy LMS user the counselor picked (?dummyLmsUserId, else the demo row's), as legacy dummyLmsUserId(): the header's LMS
+  // switch opens that user's LMS (the dashboard builds the link from it); none picked = "not mapped" (legacy
+  // getDummyStudentLmsPendingMessage).
+  const dummyLmsUserId = () => String(param("dummyLmsUserId") || row?.dummyLmsUserId || "").trim();
+
   function dashboardDetails() {
     return {
       status: "1",
       statusCode: "S001",
+      dummyLmsUserId: dummyLmsUserId(),
+      isPayLmsPaymentPending: dummyLmsUserId() ? "" : "Dummy LMS user is not mapped.",
       userId: uid,
       userRole: "STUDENT",
       userName: userName(),
