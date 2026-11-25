@@ -56,7 +56,6 @@ export function BookClasses() {
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState(null);
   const [view, setView] = useState("book");
-  const [returningFromBooked, setReturningFromBooked] = useState(false);
   const [slotCourse, setSlotCourse] = useState(null);
   const [pickAllCourses, setPickAllCourses] = useState(false);
   // Grade 6–8: "Book a Class (n)" on Booked Class Details opens the booking steps in a dialog.
@@ -174,10 +173,8 @@ export function BookClasses() {
           details={details}
           subjects={subjects}
           course={course}
-          skipInitialBuddy={returningFromBooked}
           onShowBooked={(subjectId) => {
             if (subjects.some((s) => s.subjectId === subjectId)) setSelectedId(subjectId);
-            setReturningFromBooked(true);
             setView("booked");
           }}
           onBooked={() => {

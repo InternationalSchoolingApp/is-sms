@@ -8,7 +8,7 @@ import { Check, ChevronDown, ChevronLeft, Info, Volume2 } from "lucide-react";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { K5_CARD, SubjectIcon } from "@/components/k5/home/k5Bits";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
-import { picoSay } from "@/components/k5/pico/picoEvents";
+import { picoSay, setPicoLive } from "@/components/k5/pico/picoEvents";
 import { useSpeech } from "@/components/k5/pico/useSpeech";
 import { BUDDIES } from "@/constant/appearance";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
@@ -284,23 +284,28 @@ function BookPageSkeleton() {
 }
 
 /**
- * The student buddy says what to do on this step (mockup: Booky bkSay): the line is also said out loud when the page opens and at
- * every step (picoSay: the buddy voice, only when the student has its voice on), and the speaker button says it again. The
- * corner bubble stays closed on this page (PicoGuide), this strip is the buddy here.
+ * The student buddy says what to do on this step (mockup: Booky bkSay). The buddy never talks by itself when the page opens
+ * (rule of 2026-11-25): the line is said out loud when the student taps the speaker button or the corner buddy (PicoGuide reads
+ * it from pageText), and when the student's own taps move it to another step (picoSay: the buddy voice, only when the student
+ * has its voice on). Only a step change speaks: the line of the first step can still change while the page loads (classes
+ * left), which is not the student's doing. The corner bubble stays closed on this page (PicoGuide), this strip is the buddy here.
  */
-function BuddyStrip({ say, skipInitial = false }) {
+function BuddyStrip({ say, step }) {
   const { preferences } = useAppearance();
   const { speak } = useSpeech();
   const buddy = BUDDIES[preferences.buddy] || BUDDIES.pico;
-  const firstMessage = useRef(true);
+  const shownStep = useRef(step);
   useEffect(() => {
-    if (!say) return;
-    if (firstMessage.current) {
-      firstMessage.current = false;
-      if (skipInitial) return;
-    }
-    picoSay(say);
-  }, [say, skipInitial]);
+    if (shownStep.current === step) return;
+    shownStep.current = step;
+    if (say) picoSay(say);
+    // Only a new step speaks, not a new line on the same step.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+  useEffect(() => {
+    setPicoLive({ pageText: say || "" });
+    return () => setPicoLive({ pageText: "" });
+  }, [say]);
   return (
     <div role="status" className="flex items-center gap-3 rounded-[22px] bg-k5-vt py-2 pl-2 pr-2.5">
       <PicoMascot buddy={preferences.buddy} width={48} full={false} />
@@ -1170,7 +1175,7 @@ function ConfirmBooking({ open, when, course, color, teacher, busy, onBack, onCo
  * real booking request: the teacher, this week's slots, the free/busy/closed rules (getSlotState) and
  * the submit (submitBookClassSlot) are the ones the weekly slot picker used; only the flow is steps.
  */
-export function K5BookView({ details, subjects, course, onShowBooked, onBooked, popup = false, onClose, skipInitialBuddy = false }) {
+export function K5BookView({ details, subjects, course, onShowBooked, onBooked, popup = false, onClose }) {
   const teacherLabel = useTeacherLabel();
   const { middle, high, copy } = useCopy();
   const colorFor = useK5CourseColors();
@@ -1407,7 +1412,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   // The three steps: the section of the page, and the whole body of the Grade 6–8 "Book a Class" dialog.
   const flow = (
     <>
-          <BuddyStrip say={say} skipInitial={skipInitialBuddy} />
+          <BuddyStrip say={say} step={step} />
           <StepPills step={step} />
           <div className="flex flex-wrap items-center gap-3">
             {(step === 2 || step === 3) && (
