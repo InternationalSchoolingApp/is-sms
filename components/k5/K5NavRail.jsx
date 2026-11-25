@@ -119,7 +119,7 @@ export function K5NavRail({ menu, loading = false, open, onOpen, onClose, isPreK
         aria-label="Main menu"
         data-pin="side"
         data-open={open}
-        className="k5-side fixed z-20 flex max-h-[calc(100vh-120px)] flex-col items-center gap-1 overflow-y-auto overflow-x-hidden rounded-[26px] border-[3px] border-k5-line bg-k5-card px-1.5 py-2.5 shadow-k5-chunky"
+        className="k5-side fixed z-20 flex max-h-[calc(100vh-120px)] flex-col items-center gap-1 touch-pan-y overscroll-contain overflow-y-auto overflow-x-hidden rounded-[26px] border-[3px] border-k5-line bg-k5-card px-1.5 py-2.5 shadow-k5-chunky"
       >
         <button
           type="button"
@@ -168,8 +168,12 @@ function flattenItems(items) {
   return items.flatMap((item) => (item.children?.length ? item.children.map((child) => ({ ...child, label: `${item.label}: ${child.label}` })) : [item]));
 }
 
+// touch-pan-y (not touch-none): a finger that starts on a nav item can still scroll the rail up/down natively. The long-press
+// drag keeps working because useDragReorder only calls preventDefault on touchmove once a drag is actually active (the finger was
+// held still until then, so no native scroll had begun and preventDefault can still stop it). touch-none blocked native scroll
+// outright, which on iPad (where a finger is reported as a "mouse" pointer in desktop mode) left the rail unscrollable.
 const ITEM_CLASS =
-  "k5-ni relative isolate flex w-[46px] h-[46px] flex-none touch-none select-none flex-col items-center gap-1 rounded-2xl text-center text-xs font-black leading-[1.15] no-underline transition-colors duration-150 [overflow-wrap:anywhere]";
+  "k5-ni relative isolate flex w-[46px] h-[46px] flex-none touch-pan-y select-none flex-col items-center gap-1 rounded-2xl text-center text-xs font-black leading-[1.15] no-underline transition-colors duration-150 [overflow-wrap:anywhere]";
 
 function NavTile({ item, icon, active, picture }) {
   const { isHigh } = useDashboardContext();
