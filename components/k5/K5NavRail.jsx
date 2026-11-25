@@ -388,6 +388,8 @@ function ClubMark({ art }) {
  * the item is moved. The click that follows the drop is swallowed so dropping an item never navigates.
  */
 const LONG_PRESS_MS = 450;
+// A long press on a phone / iPad must not open the link preview or start selecting the label text.
+const NO_TOUCH_MENU = { WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none" };
 const TOUCH_SLOP = 8;
 function useDragReorder({ navRef, keys, onReorder, disabled }) {
   const [dragging, setDragging] = useState(null); // { key, dy }
@@ -485,10 +487,10 @@ function useDragReorder({ navRef, keys, onReorder, disabled }) {
           },
     style: (key) =>
       dragging?.key === key
-        ? { transform: `translateY(${dragging.dy}px)`, zIndex: 2, boxShadow: "0 10px 24px rgba(10,16,34,0.22)", cursor: "grabbing", WebkitTouchCallout: "none" }
+        ? { transform: `translateY(${dragging.dy}px)`, zIndex: 2, boxShadow: "0 10px 24px rgba(10,16,34,0.22)", cursor: "grabbing", ...NO_TOUCH_MENU }
         : disabled
           ? undefined
-          : { WebkitTouchCallout: "none" },
+          : NO_TOUCH_MENU,
     consumeClick: () => {
       const swallow = swallowClickRef.current;
       swallowClickRef.current = false;

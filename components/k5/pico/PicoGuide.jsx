@@ -186,6 +186,14 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   // The Book a Class page has its own buddy guide: here the buddy stays, its bubble never opens.
   const onBook = pathname.includes("book-a-session");
   const [tipOn, setTipOn] = useState(false);
+  // A bubble the buddy opened BY ITSELF (the first welcome / home tour, a module's explanation) starts with its speaker muted:
+  // it only shows the text - Next, page messages and the rest stay silent - until the student turns the speaker on (or taps
+  // "Hear it" / the buddy). The student's own Voice setting is not changed by this.
+  const [quiet, setQuiet] = useState(false);
+  const quietRef = useRef(false);
+  useEffect(() => {
+    quietRef.current = quiet;
+  }, [quiet]);
   const buddy = BUDDIES[preferences.buddy] || BUDDIES.pico;
   const pageSegment = pathname.split("/").filter(Boolean).pop();
   // A student's first visit to one of these pages is a short tour of its own: the welcome, then what the page is for (2 steps).
@@ -260,6 +268,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     else if (tourPage) setState((s) => ({ ...s, open: true, index: 0, say: null, pageTip: false, pageTour: true }));
     else setState((s) => ({ ...s, open: true, index: 0, say: { text, pin: null, id: "welcome" }, pageTip: true }));
     setTipOn(true);
+    setQuiet(true);
     setWelcomeSkip(pageSegment);
     // Muted by default (AUTO_MUTED), voice off, or no speech in this browser: the welcome is the bubble, and it is on screen.
     if (AUTO_MUTED || preferences.speech !== "on" || !supported) {
@@ -352,6 +361,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
       if (classesTour) setState((s) => ({ ...s, open: true, index: 0, say: null, skipLive: false, pageTip: false, pageTour: true }));
       else setState((s) => ({ ...s, open: true, index: 0, say: { text: pageTip.text, pin: pageTip.pin, id: `page-${pageSegment}` }, skipLive: false, pageTip: true }));
       setTipOn(true);
+      setQuiet(true);
     } else {
       setState((s) => (s.pageTip ? { ...s, open: false, say: null, pageTip: false } : s));
       setTipOn(false);
@@ -477,8 +487,9 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
         say: { text, pin: target || null, id: Date.now(), above: Boolean(above) },
       }));
       setTipOn(true);
-      // A page asked the buddy to talk (often by itself, e.g. the Book a Class strip): only in the recorded voice.
-      speak(text, { clipOnly: true });
+      // A page asked the buddy to talk (often by itself, e.g. the Book a Class strip): only in the recorded voice, and not while
+      // the bubble the buddy opened by itself is still muted.
+      if (!quietRef.current) speak(text, { clipOnly: true });
     };
     window.addEventListener(PICO_SAY_EVENT, onSay);
     return () => window.removeEventListener(PICO_SAY_EVENT, onSay);
@@ -488,6 +499,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   const [manualWait, setManualWait] = useState(false);
   const [manualSay, setManualSay] = useState(null);
   const explainNow = (text, { fromTap }) => {
+    setQuiet(false);
     setState((s) => ({ ...s, open: true, index: 0, say: { text, pin: null, id: `manual-${Date.now()}` }, pageTip: true }));
     setTipOn(true);
     if (fromTap) {
@@ -499,6 +511,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   };
   // My Classes: an explanation is its tour, from the first tip.
   const startClassesTour = ({ fromTap }) => {
+    setQuiet(false);
     setState((s) => ({ ...s, open: true, index: 0, say: null, skipLive: false, pageTip: false, pageTour: true }));
     setTipOn(true);
     if (fromTap) {
@@ -536,6 +549,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     stop();
     setManualWait(false);
     setTipOn(false);
+    setQuiet(false);
     setState((s) => ({ ...s, open: false }));
   };
   const finish = () => {
@@ -545,6 +559,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     stop();
     setManualWait(false);
     setTipOn(false);
+    setQuiet(false);
     setState({ open: false, index: 0, say: null, skipLive: false, pageTip: false });
   };
   const next = () => {
@@ -556,7 +571,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     while (i < steps.length && (!onPage(steps[i].pin) || (state.skipLive && steps[i].pin === "live"))) i += 1;
     if (i >= steps.length) return finish();
     setState((s) => ({ ...s, open: true, index: i, say: null }));
-    speak(steps[i].text);
+    if (!quiet) speak(steps[i].text);
     // The buddy has now told about the app: a click on Get the App no longer makes it say it again (K5Header openApp).
     if (steps[i].pin === "getApp") setPicoModuleCookie(userId, TOUR_GET_APP_KEY);
   };
@@ -564,6 +579,7 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   const hear = () => {
     welcomeAnswered();
     userActed.current = true;
+    setQuiet(false);
     if (preferences.speech !== "on") updatePreference("speech", "on");
     speak(tip.text, { force: true });
   };
@@ -588,6 +604,8 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     if (classesTour) return startClassesTour({ fromTap: true });
     explainNow(moduleNow?.text || NO_MODULE_TEXT, { fromTap: true });
   };
+  // The speaker shows muted while the bubble the buddy opened by itself is still quiet.
+  const voiceOn = preferences.speech === "on" && !quiet;
   const shown = state.pageTip ? [step] : steps.filter((s) => onPage(s.pin) && !(state.skipLive && s.pin === "live"));
   const position = Math.max(1, shown.indexOf(step) + 1);
 
@@ -619,15 +637,24 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
               {supported && (
                 <button
                   type="button"
-                  aria-pressed={preferences.speech === "on"}
-                  aria-label={preferences.speech === "on" ? `Turn ${buddy.name}'s voice off` : `Turn ${buddy.name}'s voice on`}
+                  aria-pressed={voiceOn}
+                  aria-label={voiceOn ? `Turn ${buddy.name}'s voice off` : `Turn ${buddy.name}'s voice on`}
                   onClick={() => {
+                    // Muted bubble: the speaker turns the voice on and says the tip on screen right away.
+                    if (quiet) {
+                      welcomeAnswered();
+                      userActed.current = true;
+                      setQuiet(false);
+                      if (preferences.speech !== "on") updatePreference("speech", "on");
+                      speak(tip.text, { force: true });
+                      return;
+                    }
                     if (preferences.speech === "on") stop();
                     updatePreference("speech", preferences.speech === "on" ? "off" : "on");
                   }}
-                  className={`flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-line ${preferences.speech === "on" ? "bg-k5-act text-k5-acx" : "bg-k5-card text-k5-mut"}`}
+                  className={`flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-line ${voiceOn ? "bg-k5-act text-k5-acx" : "bg-k5-card text-k5-mut"}`}
                 >
-                  {preferences.speech === "on" ? <Volume2 className="h-5 w-5" aria-hidden="true" /> : <VolumeX className="h-5 w-5" aria-hidden="true" />}
+                  {voiceOn ? <Volume2 className="h-5 w-5" aria-hidden="true" /> : <VolumeX className="h-5 w-5" aria-hidden="true" />}
                 </button>
               )}
               <button
