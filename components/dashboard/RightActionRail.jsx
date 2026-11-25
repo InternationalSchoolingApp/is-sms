@@ -12,6 +12,7 @@ import { getAnnouncementDetails, getChatUnseenCount } from "@/services/dashboard
 import { getAllArticles } from "@/services/newsApi";
 import { getDiaryUnreadCount } from "@/utils/diaryClient";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { useMustReEnroll } from "@/hooks/useReEnrollmentEntry";
 import { buildChatSignInUrl } from "@/utils/chatLink";
 import { AnnouncementsPanel } from "@/components/dashboard/AnnouncementsPanel";
 import { NewsPanel } from "@/components/dashboard/NewsPanel";
@@ -33,12 +34,15 @@ import { K5DiaryPanel } from "@/components/k5/panels/K5DiaryPanel";
  */
 // Legacy parity: the re-enrollment screen (studentGraduate == 'Y' -> renderMigrationDetailsOptionContent) never called
 // getAnnouncementAndNewsContent(), so none of the four rail buttons (Talk to Us, Announcement, News, Diary) existed there.
-// Gating in this wrapper (not inside the rail) also keeps the rail's queries and the diary bridge iframe from mounting.
+// A student with a re-enrollment still to finish does not get the rail on any page (My Classes and the other modules too),
+// and it waits until that is known so it does not flash. Gating in this wrapper (not inside the rail) also keeps the rail's
+// queries and the diary bridge iframe from mounting.
 const RE_ENROLLMENT_PATH = /\/student\/re-enrollment(\/|$)/;
 
 export function RightActionRail(props) {
   const pathname = usePathname();
-  if (RE_ENROLLMENT_PATH.test(pathname || "")) return null;
+  const mustReEnroll = useMustReEnroll({ schoolUUID: props.schoolUUID, userId: props.userId });
+  if (RE_ENROLLMENT_PATH.test(pathname || "") || mustReEnroll !== false) return null;
   return <RightActionRailContent {...props} />;
 }
 
