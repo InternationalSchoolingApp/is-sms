@@ -12,7 +12,6 @@
  * — see docs/migration/dummy-student-mode-plan.md.
  */
 
-import { toZonedTime } from "date-fns-tz";
 import { DUMMY_STUDENT_TIMEZONE } from "@/utils/calendarEvents";
 import { ELEMENTARY_GRADE_KEYS, GRADE_CONFIG, GRADE_KEYS, gradeKeyByLabel, gradeKeyByStandardId } from "@/utils/gradeBand";
 
@@ -32,7 +31,7 @@ const SUBJECT_ROWS = {
   12: [["ENG", "English 12", "English.jpg"], ["PRECAL", "Pre-Calculus", "Pre-Calculus.jpg"], ["ENV", "Environmental Studies", "ENVIRONMENTAL-STUDIES.jpg"], ["GOV", "Government and Politics", "Comparative-Government-and-Politics.jpg"], ["FIN", "Personal Financial Literacy", "Personal-Financial-Literacy.jpg"], ["MEDIA", "Media Studies", "Media-Studies.jpg"]],
 };
 
-const TEACHERS = ["Ms. Olivia Parker", "Ms. Emma Johnson", "Mr. Daniel Carter", "Ms. Sophia Williams", "Mr. Ethan Brooks", "Ms. Ava Thompson", "Dr. Mia Roberts", "Mr. Noah Anderson", "Ms. Lily Morgan", "Mr. Liam Foster", "Ms. Grace Bennett", "Mr. Lucas Rivera", "Ms. Isabella Clark", "Ms. Chloe Adams", "Mr. Henry Lee"];
+const TEACHERS = ["Ms. Olivia Parker", "Ms. Emma Johnson", "Mr. Daniel Carter", "Ms. Sophia Williams", "Mr. Ethan Brooks", "Ms. Ava Thompson", "Ms. Mia Roberts", "Mr. Noah Anderson", "Ms. Lily Morgan", "Mr. Liam Foster", "Ms. Grace Bennett", "Mr. Lucas Rivera", "Ms. Isabella Clark", "Ms. Chloe Adams", "Mr. Henry Lee"];
 
 const FEE_STRUCTURE = {
   Kindergarten: { group: [1186, 627, 627], oneToOne: [1470, 840, 840], installment: { group: 2440, oneToOne: 3150 }, lumpsum: { group: 2140, oneToOne: 2750 } },
@@ -141,6 +140,9 @@ function isOneToOneLearningProgram(value) {
   return program === "ONE_TO_ONE" || program.includes("ONE TO ONE") || program.includes("ONE-TO-ONE");
 }
 
+// Today's dummy class start per seed + grade + day, kept for the page's life (see classesForDay).
+const TODAY_CLASS_START = new Map();
+
 /**
  * One dummy student. `row` = the demo-data row (or null), `params` = URLSearchParams of the page,
  * `fallbackName` = the logged-in user's name (legacy USER_FULL_NAME) when no demo name is known.
@@ -159,11 +161,11 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
   const dbRow = rowMatches ? row : null;
   const hasDemoContext = DEMO_PARAMS.some((name) => param(name));
 
-  // "Now" is the dummy student's own clock: America/New_York wall-clock time (so a class made "live now" is live in the New
-  // York calendar the dashboard shows, whatever zone the browser is in). The Date's local fields hold those New York values.
+  // "Now" is the browser's own clock, as legacy window.getDummyStudentBaseDate (new Date()): the dummy "today" and the
+  // class times follow the browser date, while the events are still tagged America/New_York, same as the legacy dashboard.
   function baseDate() {
     const value = param("dummyDate");
-    const now = toZonedTime(new Date(), DUMMY_STUDENT_TIMEZONE);
+    const now = new Date();
     if (!value) return now;
     if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
       const [y, m, d] = value.split("-").map(Number);
@@ -222,6 +224,7 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
   }
 
   function teacher(subject, index) {
+    debugger;
     const teachers = (subject?.teachers || []).map(safeTeacherName).filter(Boolean);
     return teachers.length ? teachers[index % teachers.length] : TEACHERS[index % TEACHERS.length];
   }
@@ -1048,6 +1051,7 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
     return Math.floor(diffDays / 7) * 5 + Math.min(Math.max(diffDays % 7, 0), 4);
   }
   function classesForDay(day) {
+    debugger
     const dayDate = dayToDate(day);
     if (dayDate.getDay() === 0 || dayDate.getDay() === 6) return [];
     let course;
@@ -1058,7 +1062,15 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
       course = courses.length ? courses[businessDayIndex(day) % courses.length] : null;
     }
     if (!course) return [];
-    const start = day === today() ? plusMinutes(baseDate(), -15) : new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), 9, 0, 0);
+    // Today's class starts 15 minutes before "now" (legacy). Fixed at the first ask: the calendar asks for today in more than
+    // one window (today, the week, the month, the day re-opened) and merges by id + start, so a fresh "now" each time
+    // would add another copy of the same class on every visit.
+    let start;
+    if (day === today()) {
+      const cacheKey = `${randomSeed()}|${gradeKey}|${day}`;
+      if (!TODAY_CLASS_START.has(cacheKey)) TODAY_CLASS_START.set(cacheKey, plusMinutes(baseDate(), -15));
+      start = TODAY_CLASS_START.get(cacheKey);
+    } else start = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), 9, 0, 0);
     const teacherName = safeTeacherName(teacher(course, 0)) || "Teacher";
     return [
       {
