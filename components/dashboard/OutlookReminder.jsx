@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { viaTier3 } from "@/utils/dashboardBootstrap";
 import toast from "react-hot-toast";
 import { Copy, Eye, EyeOff, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -70,7 +71,7 @@ export function OutlookReminder({ hold = false }) {
 
   const reminder = useQuery({
     queryKey: ["outlook-reminder", userId],
-    queryFn: () => callServer(loadOutlookReminder),
+    queryFn: () => callServer(() => viaTier3(userId, "outlook", (a) => a.outlook, loadOutlookReminder)),
     enabled: Boolean(userId && isStudent && dummy.settled && !dummy.enabled),
     staleTime: Infinity,
     gcTime: Infinity,

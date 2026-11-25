@@ -197,8 +197,8 @@ export function K5HomeLeftSkeleton() {
   );
 }
 
-/** My Assigned Teacher's course cards while they load: icon tile and name, the teacher chip, the calendar button. */
-export function K5TeacherSkeleton({ count = 6 }) {
+/** My Assigned Teacher's course cards while they load: icon tile and name, the teacher chip (Grade 6–12 only), the calendar button. */
+export function K5TeacherSkeleton({ count = 6, teacherRow = true }) {
   return (
     <K5Loading label="Getting your courses" className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
       {Array.from({ length: count }, (_, i) => (
@@ -210,13 +210,15 @@ export function K5TeacherSkeleton({ count = 6 }) {
               <K5Sk className="h-3.5 w-1/3" />
             </span>
           </div>
-          <div className="flex items-center gap-2.5 rounded-full bg-k5-soft py-1.5 pl-1.5 pr-3">
-            <K5Sk className="h-10 w-10 flex-none rounded-full" />
-            <span className="flex flex-1 flex-col gap-1.5">
-              <K5Sk className="h-3 w-20" />
-              <K5Sk className="h-4 w-32" />
-            </span>
-          </div>
+          {teacherRow && (
+            <div className="flex items-center gap-2.5 rounded-full bg-k5-soft py-1.5 pl-1.5 pr-3">
+              <K5Sk className="h-10 w-10 flex-none rounded-full" />
+              <span className="flex flex-1 flex-col gap-1.5">
+                <K5Sk className="h-3 w-20" />
+                <K5Sk className="h-4 w-32" />
+              </span>
+            </div>
+          )}
           <K5Sk className="h-[52px] w-full rounded-full" />
         </div>
       ))}

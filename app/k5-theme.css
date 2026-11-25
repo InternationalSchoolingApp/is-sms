@@ -1906,3 +1906,23 @@
   .k5-brk-fp { opacity: 1; }
   .k5-brk-water, .k5-brk-ring { transition: none; }
 }
+
+/* Student's Diary drawer: the lavender page and the notebook paper follow night mode (the drawer's header and tab bar stay the light purple). */
+.theme-k5 {
+  --k5-diary-bg: #f6f0ff;
+}
+.theme-k5.dark {
+  --k5-diary-bg: var(--k5-card);
+}
+.k5-diary-paper {
+  background:
+    linear-gradient(to right, transparent 48px, #f4a3a3 48px, #f4a3a3 50px, transparent 50px) local,
+    repeating-linear-gradient(to bottom, transparent 0px, transparent 34px, #dce7f7 34px, #dce7f7 36px) local,
+    #fffbef;
+}
+.theme-k5.dark .k5-diary-paper {
+  background:
+    linear-gradient(to right, transparent 48px, #7a3b4a 48px, #7a3b4a 50px, transparent 50px) local,
+    repeating-linear-gradient(to bottom, transparent 0px, transparent 34px, #26324d 34px, #26324d 36px) local,
+    var(--k5-card);
+}

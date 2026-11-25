@@ -123,7 +123,8 @@ export function StudentHomeK5({ holdProfilePopup = false, dashboard = false }) {
 
 function K5Planner({ timezone, dashboard = false }) {
   const { context, isPreK, isSelfStudy } = useDashboardContext();
-  const model = useK5CalendarModel({ schoolUUID: context?.schoolUUID, userId: context?.userId, timezone });
+  // The month prefetch (the mini calendar dots) is for My Classes only: the dashboard home has no mini calendar any more.
+  const model = useK5CalendarModel({ schoolUUID: context?.schoolUUID, userId: context?.userId, timezone, prefetchMonth: !dashboard });
   const [clue, setClue] = useState(null);
   const [calOpen, setCalOpen] = useState(false);
   const [detailEvent, setDetailEvent] = useState(null);
@@ -228,7 +229,7 @@ function K5Planner({ timezone, dashboard = false }) {
     <PlanChromeContext.Provider value={chrome}>
     <div className="flex flex-col gap-4">
       {dashboard ? (
-        <K5Dashboard now={now} timezone={timezone} days={days} todayKey={todayKey} isLoading={model.isLoading} firstName={firstName} onJoin={setJoiningEvent} />
+        <K5Dashboard now={now} timezone={timezone} days={days} todayKey={todayKey} isLoading={model.isLoading} firstName={firstName} onJoin={setJoiningEvent} onOpenActivity={setDetailEvent} />
       ) : (
         <>
       <K5ClassesHeader now={now} timezone={timezone} />

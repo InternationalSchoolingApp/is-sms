@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { X, Loader2, UserCircle, CheckCircle2, AlertCircle } from "lucide-react";
-import { loadProfileCompletingProcess } from "@/services/profileActionsApi";
-import { callServer } from "@/utils/serverCall";
+import { useProfileCompletingProcess } from "@/hooks/useProfileCompletingProcess";
 import { studentNavHref } from "@/utils/dashboardNav";
 
 function fieldLabel(field) {
@@ -64,24 +63,9 @@ function SectionBlock({ section }) {
 
 export function K5CompleteProfileModal() {
   const { school } = useParams();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Shared answer (hooks/useProfileCompletingProcess.js): setting off or API failed means no data, so no modal.
+  const { data, loading } = useProfileCompletingProcess();
   const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    callServer(() => loadProfileCompletingProcess())
-      .then((result) => {
-        if (!cancelled) setData(result);
-      })
-      .catch(() => {
-        // setting is off or API failed — no modal
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, []);
 
   if (loading || dismissed || !data) return null;
 
@@ -151,7 +135,7 @@ export function K5CompleteProfileModal() {
         </div>
 
         {/* Body */}
-        <div className="flex flex-col gap-4 overflow-y-auto p-5 [scrollbar-width:thin]">
+        <div className="flex flex-col gap-4 overflow-y-auto p-5">
           <div className="flex items-center gap-2 rounded-2xl border-[3px] border-amber-400 bg-amber-50 px-4 py-3 text-sm font-black text-amber-700">
             <AlertCircle className="h-5 w-5 flex-none" />
             <span>{totalMissing} field{totalMissing !== 1 ? "s" : ""} need{totalMissing === 1 ? "s" : ""} your attention</span>

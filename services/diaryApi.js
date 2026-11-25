@@ -3,6 +3,7 @@
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { serviceKeyHeaders, smsAuthHeaders } from "@/lib/auth/session";
+import { getSessionIdentity } from "@/utils/backendRequest";
 
 /**
  * "Student Diary" is the legacy School Diary teacher<->student/parent
@@ -30,6 +31,11 @@ async function parseJsonResponse(response) {
 }
 
 async function postDiary(path, body) {
+  // These exports are server actions the browser can call with any sessionUserId: the diary is always the signed-in
+  // user's own (the id from this request's sign-in replaces whatever was passed in).
+  const me = await getSessionIdentity();
+  if (!me) return null;
+  body = { ...body, sessionUserId: me.userId };
   const baseUrl = await resolveServerBackendOrigin();
   const response = await fetch(`${baseUrl}/api/diary${path}`, {
     method: "POST",

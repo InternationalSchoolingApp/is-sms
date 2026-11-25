@@ -72,6 +72,7 @@ export function BackendSwitcher() {
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState("");
   const [customValue, setCustomValue] = useState("");
+  const [refused, setRefused] = useState(false);
   // What the <select> itself shows — independent of `current` (the applied
   // override), so picking "Custom…" reveals the text input immediately
   // instead of snapping back to the preset `current` still resolves to.
@@ -171,7 +172,12 @@ export function BackendSwitcher() {
   if (!allowed) return null;
 
   function apply(url) {
-    setClientBackendOverride(url);
+    // Only an allowed backend is saved (utils/backendOrigin.js allowedBackendOverride): the server sends the user's
+    // token and its service key there.
+    if (!setClientBackendOverride(url)) {
+      setRefused(true);
+      return;
+    }
     window.location.reload();
   }
 
@@ -235,7 +241,10 @@ export function BackendSwitcher() {
               <input
                 type="text"
                 value={customValue}
-                onChange={(e) => setCustomValue(e.target.value)}
+                onChange={(e) => {
+                  setCustomValue(e.target.value);
+                  setRefused(false);
+                }}
                 placeholder="http://164.52.x.x:port"
                 className="w-full rounded border border-gray-300 px-2 py-1"
               />
@@ -247,6 +256,9 @@ export function BackendSwitcher() {
                 Go
               </button>
             </div>
+          )}
+          {selectedOption === CUSTOM_VALUE && refused && (
+            <p className="text-xs text-red-600">This server is not a known UAT host (any port works on known hosts). Add a new server to NEXT_PUBLIC_EXTRA_BACKEND_URLS.</p>
           )}
 
           <button

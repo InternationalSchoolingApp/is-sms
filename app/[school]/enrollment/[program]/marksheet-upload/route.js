@@ -7,8 +7,8 @@ import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOri
  * than a Server Action because Server Actions cap request bodies at 1 MB.
  * Deliberately outside proxy.js's matcher (".../step/:path*"): the proxy only
  * buffers 10 MB of a body, which would silently cut a larger upload short.
- * Identity is established via the Bearer token in withSmsAuth; no
- * userId/loginHash in the payload body is needed.
+ * Identity is the Bearer token in withSmsAuth plus the session's own userId in
+ * the payload, which CourseAdvisorAccess.check compares with the token's user.
  *
  * Browser sends multipart "files" (already downscaled by utils/marksheetFiles);
  * this forwards to {schoolUUID}/student/enrollment/ai-course-advisor/marksheet/upload.
@@ -44,7 +44,9 @@ export async function POST(request) {
   const outgoing = new FormData();
   // Add Another Student names the child; the backend checks it belongs to this parent.
   const studentUserId = Number(form.get("studentUserId")) || null;
-  outgoing.append("payload", encodePayload(studentUserId ? { studentUserId } : {}));
+  // userId: the signed-in caller (CourseAdvisorAccess.check answers session-out without it, and checks that a named
+  // studentUserId is this caller's child or sibling). Always from the session, never from the form.
+  outgoing.append("payload", encodePayload({ userId: Number(session.userId), ...(studentUserId ? { studentUserId } : {}) }));
   files.forEach((file) => outgoing.append("files", file, file.name || "marksheet"));
 
   const response = await fetch(

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Salsa } from "next/font/google";
 import { useQuery } from "@tanstack/react-query";
+import { viaTier3 } from "@/utils/dashboardBootstrap";
 import { MessagesSquare, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { JoinClassModal } from "@/components/dashboard/calendar/JoinClassModal";
@@ -214,7 +215,7 @@ export function SystemTrainingPopup() {
 
   const query = useQuery({
     queryKey: ["system-training-popup", context?.schoolUUID, context?.userId],
-    queryFn: () => getSystemTrainingPopup(),
+    queryFn: () => viaTier3(context?.userId, "systemTraining", (a) => a.systemTraining, () => getSystemTrainingPopup()),
     enabled: wanted,
     staleTime: Infinity,
     refetchOnWindowFocus: false,

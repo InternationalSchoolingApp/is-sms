@@ -250,7 +250,7 @@ function MonthLegend({ courseRegistry }) {
   const courses = Object.values(courseRegistry || {});
   if (!courses.length) return null;
   return (
-    <div className="flex items-center gap-1 text-[13px] font-extrabold text-k5-mut @max-[640px]:hidden">
+    <div className="flex basis-full items-center justify-end gap-1 text-[13px] font-extrabold text-k5-mut @max-[640px]:hidden">
       {courses.map((c) => (
         <span key={c.id} aria-hidden="true" className="block h-2.5 w-2.5 rounded-full" style={{ background: c.color }} />
       ))}

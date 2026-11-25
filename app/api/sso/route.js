@@ -6,7 +6,7 @@ import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
 import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 import { addEnrollmentStepPath, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
 import { isTeacherStep, teacherStepPath } from "@/utils/teacherRegistrationSteps";
-import { detectOriginatingBackend, getBackendOverrideCookieName, isBackendOverrideAllowed, parseBackendOrigin } from "@/utils/backendOrigin";
+import { allowedBackendOverride, detectOriginatingBackend, getBackendOverrideCookieName } from "@/utils/backendOrigin";
 import { reEnrollmentBasePath } from "@/utils/reEnrollmentSteps";
 
 const VALID_STEPS = new Set(["1", "2", "3", "4"]);
@@ -100,7 +100,8 @@ async function handleSsoHandoff(request) {
   // getFinalEnrollmentUrl now appends this explicitly (same as ClientSignupStudentController's
   // anonymous-signup redirect handled in proxy.js) — prefer it over the Referer-based guess, which
   // is absent for a typed/bookmarked login page.
-  const backendParam = isBackendOverrideAllowed() ? parseBackendOrigin(url.searchParams.get("backend")) : "";
+  // Only a backend this deployment may use: the one-time token (and this server's service key) go to it.
+  const backendParam = allowedBackendOverride(url.searchParams.get("backend"));
   const backendOverride = backendParam || detectOriginatingBackend(request);
   // ae=Y means this student was enrolled by someone else (a parent adding a child),
   // so after the session is established the browser must land on the 3-step
@@ -118,14 +119,6 @@ async function handleSsoHandoff(request) {
         url.searchParams.get("sessionUserId"), step);
     }
   }
-
-  console.log("request", request)
-  console.log("url======>", url)
-  console.log("ssoToken======>", ssoToken)
-  console.log("schoolUUID======>", schoolUUID)
-  console.log("schoolName======>", schoolName)
-  console.log("step======>", step)
-  console.log("targetStep======>", targetStep)
 
   if (!ssoToken || !schoolUUID) {
     return redirectTo("/", request);

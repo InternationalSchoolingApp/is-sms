@@ -189,7 +189,7 @@ function NoClassFace() {
 }
 
 /** Reason card for a day without classes (holiday / weekend / free day / self-study day). */
-export function NoClassDay({ reason, isToday, onOpen }) {
+export function NoClassDay({ reason, isToday, onOpen, clue }) {
   // console.log("NoClassDay reason:", reason, "isToday:", isToday, "onOpen:", onOpen);
   const Wrap = onOpen ? "button" : "div";
   // A holiday card is red like the Holiday colour clue (flag in a red circle); the other reasons are the mockup's green card with the
@@ -202,7 +202,7 @@ export function NoClassDay({ reason, isToday, onOpen }) {
       {...(onOpen ? { type: "button", onClick: onOpen } : {})}
       className={`k5h-nocls flex w-full flex-wrap items-center gap-4 rounded-[24px] px-5 py-[18px] text-left ${
         holiday ? "border-[3px] border-solid border-[var(--k5-holiday)] bg-k5-rt" : "border-none bg-k5-gt"
-      } ${onOpen ? "cursor-pointer" : ""}`}
+      } ${onOpen ? "cursor-pointer" : ""} ${holiday && clue === "holiday" ? CLUE_RING : ""}`}
       style={holiday ? { "--k5-holiday": C.holiday } : undefined}
     >
       {holiday ? (
@@ -327,7 +327,7 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
         </div>
       ) : (
         <>
-          <NoClassDay reason={isChristmasKey(dateKey) ? { kind: "christmas", title: "Merry Christmas!", text: `It's Christmas Day! No school. Have a magical day${firstName ? `, ${firstName}` : ""}!` } : noClassReason(dateKey, day, { isSelfStudy, firstName })} isToday={isToday} onOpen={day.holidays.length ? () => onOpen(day.holidays[0]) : undefined} />
+          <NoClassDay reason={isChristmasKey(dateKey) ? { kind: "christmas", title: "Merry Christmas!", text: `It's Christmas Day! No school. Have a magical day${firstName ? `, ${firstName}` : ""}!` } : noClassReason(dateKey, day, { isSelfStudy, firstName })} isToday={isToday} clue={clue} onOpen={day.holidays.length ? () => onOpen(day.holidays[0]) : undefined} />
         </>
       )}
 

@@ -2,6 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { backendRequest } from "@/utils/backendRequest";
+import { isOwnStudentStandard } from "@/utils/ownEnrolments";
 
 /**
  * My Profile (read-only, P1). One Server Action that loads everything the page shows:
@@ -22,6 +23,10 @@ import { backendRequest } from "@/utils/backendRequest";
  * or { ok: false, code, message, sessionExpired? } (utils/backendRequest.js); never throws.
  */
 export async function getMyProfile({ studentStandardId } = {}) {
+  // Only the signed-in student's own enrolment: the backend loads it by id alone (utils/ownEnrolments.js).
+  if (Number(studentStandardId) && !(await isOwnStudentStandard(studentStandardId))) {
+    return { ok: false, code: "NOT_OWN", message: "This profile could not be loaded." };
+  }
   const loaded = await backendRequest({
     path: "dashboard/profile-view-content-new",
     buildBody: (me) => ({ userId: me.userId, actionType: "1a", studentStandardId: Number(studentStandardId) || 0 }),

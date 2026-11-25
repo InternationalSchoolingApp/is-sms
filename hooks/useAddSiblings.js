@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { viaTier1 } from "@/utils/dashboardBootstrap";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { getUserShortProfile } from "@/services/dashboardApi";
 import { getSettingsByTypeAndKey } from "@/services/settingsApi";
@@ -41,7 +42,7 @@ export function useAddSiblings() {
   // User short profile — parentId + partial-child state (polls every 60 s)
   const profileQuery = useQuery({
     queryKey: ["user-short-profile", schoolUUID, userId],
-    queryFn: () => getUserShortProfile({ schoolUUID, userId }),
+    queryFn: () => viaTier1(userId, "shortProfile", (a) => a.shortProfile, () => getUserShortProfile({ schoolUUID, userId })),
     enabled: Boolean(schoolUUID && userId && !dummy.enabled),
     staleTime: 60_000,
     refetchInterval: 60_000,

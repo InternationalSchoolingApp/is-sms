@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowLeft, ArrowRight, Camera, Check, Eye, EyeOff, FileText, IdCard, Info } from "lucide-react";
 import toast from "react-hot-toast";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
+import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { ConfirmDialog, EditableParents, EditablePersonal } from "@/components/k5/pages/K5ProfileEditors";
 import { K5PhotoDialog } from "@/components/k5/pages/K5PhotoDialog";
 import { SchoolEmailEditor, WithdrawalEditor } from "@/components/k5/pages/K5ProfileP5";
@@ -45,6 +46,11 @@ function Field({ label, value, mono, children, wide, floating = false }) {
       </span>
     </div>
   );
+}
+
+/** A read-only value as a floating-label field (FloatingLabelInput, K5 look): the label sits on the top border. */
+function FloatingField({ label, value, mono }) {
+  return <FloatingLabelInput k5 readOnly label={label} value={value || "—"} inputClassName={mono ? "font-mono" : ""} className="min-w-0" />;
 }
 
 /** "Verified" (accent, mockup .pfverd) / "WhatsApp" / "Emergency" marks under a value. */
@@ -242,12 +248,12 @@ function AcademicSection({ m, editor, actions }) {
   return (
     <>
       <div className={GRID3}>
-        <Field label="Student ID" value={a.studentId} mono />
-        <Field label="Academic Year Start Date" value={a.academicYearStart} />
-        <Field label="Enrollment Date" value={a.enrollmentDate} />
-        <Field label="Learning Program" value={a.learningProgram} />
-        <Field label="Grade" value={a.grade} />
-        <Field label="LMS Platform" value={a.lms} />
+        <FloatingField label="Student ID" value={a.studentId} mono />
+        <FloatingField label="Academic Year Start Date" value={a.academicYearStart} />
+        <FloatingField label="Enrollment Date" value={a.enrollmentDate} />
+        <FloatingField label="Learning Program" value={a.learningProgram} />
+        <FloatingField label="Grade" value={a.grade} />
+        <FloatingField label="LMS Platform" value={a.lms} />
       </div>
       <h3 className={H3}>{a.grade ? `Courses (${a.grade})` : "Courses"}</h3>
       <div className="flex flex-wrap gap-2.5">
@@ -267,11 +273,11 @@ function AcademicSection({ m, editor, actions }) {
         <EditablePreviousSchool m={m} editor={editor} />
       ) : (
         <div className={GRID3}>
-          <Field label="Previous/Current School Name" value={a.previousSchool} />
-          <Field label="Previous/Current Grade Name" value={a.previousGrade} />
-          <Field label="Previous/Current School Graduation Year" value={a.graduationYear} />
-          <Field label="Previous/Current School Country" value={a.previousCountry} />
-          <Field label="CTI Taken Recommended Grade" value={a.ctiRecommendedGrade} />
+          <FloatingField label="Previous/Current School Name" value={a.previousSchool} />
+          <FloatingField label="Previous/Current Grade Name" value={a.previousGrade} />
+          <FloatingField label="Previous/Current School Graduation Year" value={a.graduationYear} />
+          <FloatingField label="Previous/Current School Country" value={a.previousCountry} />
+          <FloatingField label="CTI Taken Recommended Grade" value={a.ctiRecommendedGrade} />
         </div>
       )}
       {HR}

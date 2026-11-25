@@ -13,6 +13,7 @@ import { useStudentAcademicPerformance } from "@/hooks/useStudentAcademicPerform
 import { asArray, daysTo, fmtShort, num } from "@/components/k5/pages/k5PerformanceData";
 import { cleanCourseLabel, keyToDate } from "@/utils/k5Calendar";
 import { getPendingAssignmentCount } from "@/services/dashboardApi";
+import { viaTier1 } from "@/utils/dashboardBootstrap";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 
 /*
@@ -215,7 +216,7 @@ export function MyAssignmentsCard({ days, todayKey, isLoading }) {
   const userId = context?.userId;
   const pending = useQuery({
     queryKey: ["student-pending-assignment-count", schoolUUID, userId, todayKey],
-    queryFn: () => getPendingAssignmentCount({ schoolUUID, userId }),
+    queryFn: () => viaTier1(userId, "pending", (a) => a.pending, () => getPendingAssignmentCount({ schoolUUID, userId })),
     enabled: Boolean(schoolUUID && userId && dummy.settled && !dummy.enabled) && !isLoading,
     staleTime: 5 * 60_000,
     refetchOnWindowFocus: false,

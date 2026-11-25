@@ -48,6 +48,8 @@ export function PlanViewSwitch({ chrome, isPreK = false }) {
 
 /** Day view: the small "‹ Thursday, October 22, 2026 ›" line under the title (mockup .pdline). */
 export function PlanDateLine({ chrome }) {
+  // Day: "November 24, 2026"; Week: "November 23 – 29, 2026"; Month: "November 2026".
+  const label = chrome.viewName === "week" ? `${chrome.titleBig}, ${chrome.titleSmall}` : chrome.viewName === "month" ? `${chrome.titleBig} ${chrome.titleSmall}` : chrome.titleSmall;
   const btn = "flex h-7 w-7 flex-none cursor-pointer items-center justify-center rounded-full border-2 border-k5-line bg-k5-card p-0 text-k5-ink";
   return (
     <div className="mt-1 flex items-center gap-1.5 max-[760px]:gap-1">
@@ -55,8 +57,7 @@ export function PlanDateLine({ chrome }) {
         <ChevronLeft className="h-4 w-4" strokeWidth={3} aria-hidden="true" />
       </button>
       <span className="whitespace-nowrap text-base font-extrabold text-k5-mut max-[760px]:text-sm">
-        {/* {chrome.titleBig},  */}
-        {chrome.titleSmall}
+        {label}
       </span>
       <button type="button" aria-label={chrome.nextLabel} onClick={chrome.onNext} className={btn}>
         <ChevronRight className="h-4 w-4" strokeWidth={3} aria-hidden="true" />

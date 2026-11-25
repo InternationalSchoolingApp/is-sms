@@ -18,13 +18,14 @@ import { backendRequest } from "@/utils/backendRequest";
  * details = { totalCount, page, pageSize, rows: [{ className, classDate "YYYY-MM-DD" (date only),
  * startTime / endTime / joinedTime (UTC instants or null), status "PRESENT"|"ABSENT", absentLabel, late, lateByMinutes }] }
  */
-export async function getStudentAttendanceDetails({ studentUserId, fromDate, toDate, dateFilter, status = "ALL", page = 1, checkSession = "Y" }) {
+// The student is always the signed-in user (me.userId): a studentUserId sent by the browser is not trusted.
+export async function getStudentAttendanceDetails({ fromDate, toDate, dateFilter, status = "ALL", page = 1, checkSession = "Y" }) {
   const result = await backendRequest({
     path: "dashboard/parent/student-attendance-details",
     checkSession,
     buildBody: (me) => ({
       userId: me.userId,
-      studentUserId: studentUserId ? Number(studentUserId) : me.userId,
+      studentUserId: me.userId,
       fromDate,
       toDate,
       dateFilter,
