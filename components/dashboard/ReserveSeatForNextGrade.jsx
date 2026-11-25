@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
+import { viaTier3 } from "@/utils/dashboardBootstrap";
 import toast from "react-hot-toast";
 import { Check, Info, Lock, X, CalendarDays } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
 import { CheckoutExtraDialogs } from "@/components/common/CheckoutExtraDialogs";
 import { FullScreenLoader } from "@/components/common/Loader";
+import { K5EnrollReserveDialog, K5ReserveFeeDialog } from "@/components/k5/panels/K5ReserveSeatDialogs";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
@@ -94,9 +96,31 @@ function OfferCountdown({ days }) {
 }
 
 /** Legacy enrollReserveModalContent: "Congratulations!" with the offer when there is one, else "Awesome!". */
-function EnrollReserveDialog({ open, onOpenChange, details, nextGrade, studentName, busy, onAccept }) {
+function EnrollReserveDialog({ open, onOpenChange, details, nextGrade, studentName, busy, onAccept, onMaybeLater, isK5 }) {
   const offer = details.eligibleFor === "ADV" && (hasAmount(details.progressionDiscount) || hasAmount(details.planDiscount));
   const offerAmount = hasAmount(details.progressionDiscount) ? details.progressionDiscount : details.planDiscount;
+  // The grade looks (Elementary / Middle / High) have their own design of the same popup; the data and the buttons are the same.
+  if (isK5) {
+    if (!open) return null;
+    return (
+      <K5EnrollReserveDialog
+        offer={offer}
+        offerAmount={offerAmount}
+        offerTag={hasAmount(details.progressionDiscount) ? "EXCLUSIVE RE-ENROLLMENT OFFER" : "EXCLUSIVE ONE-TIME OFFER"}
+        countdownDays={details.progressionDiscountDueDate}
+        nextGrade={nextGrade}
+        studentName={studentName}
+        acceptLabel={acceptText(details)}
+        busy={busy}
+        onAccept={onAccept}
+        onMaybeLater={() => {
+          onOpenChange(false);
+          onMaybeLater();
+        }}
+        onClose={() => onOpenChange(false)}
+      />
+    );
+  }
   const accept = (
     <button
       type="button"
@@ -147,7 +171,7 @@ function EnrollReserveDialog({ open, onOpenChange, details, nextGrade, studentNa
               <div className="flex gap-2.5">
                 <button
                   type="button"
-                  onClick={() => onOpenChange(false)}
+                  onClick={() => { onOpenChange(false); onMaybeLater(); }}
                   className="flex-1 cursor-pointer rounded-[10px] border-none bg-primary/10 px-4 py-2.5 text-base font-bold text-primary"
                 >
                   Maybe Later
@@ -168,7 +192,7 @@ function EnrollReserveDialog({ open, onOpenChange, details, nextGrade, studentNa
 }
 
 /** Legacy getReserveSeatModal: the fee, the discounts, the payable fee and Proceed to Pay. */
-function ReserveFeeDialog({ open, onOpenChange, details, busy, onPay }) {
+function ReserveFeeDialog({ open, onOpenChange, details, busy, onPay, isK5 }) {
   const title =
     details.eligibleFor === "ADV"
       ? details.monthName
@@ -176,6 +200,29 @@ function ReserveFeeDialog({ open, onOpenChange, details, busy, onPay }) {
         : `Pay Course Fee For ${details.grade}`
       : "Reserve A Seat For Next Grade";
   const totalFee = details.eligibleFor === "BAE" ? details.payableFee : details.courseFee;
+  if (isK5) {
+    const lines = [];
+    if (details.planDiscount && details.planDiscount !== NOTHING) lines.push({ label: "One Time Discount", value: details.planDiscount });
+    if (details.eligibleForProgressionDiscount === "Y" && details.progressionDiscount) lines.push({ label: "Progression Discount", value: details.progressionDiscount });
+    if (details.addtionalDiscount && details.addtionalDiscount !== NOTHING) lines.push({ label: "Additional Discount", value: details.addtionalDiscount });
+    if (!open) return null;
+    return (
+      <K5ReserveFeeDialog
+        title={title}
+        totalFee={totalFee}
+        lines={lines}
+        payableFee={details.payableFee}
+        note={
+          details.eligibleFor === "ADV"
+            ? `*This payable fee is for ${details.grade}${details.learningProgram === "DUAL_DIPLOMA" || details.learningProgram === "ONE_TO_ONE_FLEX" ? "" : ` for ${details.credits} regular credits.`}`
+            : "*This fee will be deducted from your Course Fee at the time of re-enrollment"
+        }
+        busy={busy}
+        onPay={onPay}
+        onClose={() => onOpenChange(false)}
+      />
+    );
+  }
   const line = (label, value) => (
     <div className="flex justify-between rounded-[10px] px-3 py-2 text-base font-semibold text-green-600">
       <span>{label}</span>
@@ -252,7 +299,7 @@ function NeedHelpPanel({ shown, standardId }) {
 }
 
 export function ReserveSeatForNextGrade() {
-  const { context } = useDashboardContext();
+  const { context, isK5 } = useDashboardContext();
   const dummy = useDummyStudent();
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
   const classLive = useClassLive();
@@ -268,7 +315,7 @@ export function ReserveSeatForNextGrade() {
 
   const query = useQuery({
     queryKey: ["reserve-seat-next-grade", context?.schoolUUID, context?.userId],
-    queryFn: () => getReserveSeatEligibility(),
+    queryFn: () => viaTier3(context?.userId, "reserveSeat", (a) => a.reserveSeat, () => getReserveSeatEligibility()),
     enabled: wanted,
     staleTime: Infinity,
     refetchOnWindowFocus: false,
@@ -280,6 +327,7 @@ export function ReserveSeatForNextGrade() {
   const offerReady = Boolean(details && sideButtonText(details));
 
   const [enrollOpen, setEnrollOpen] = useState(false);
+  const [showSideButton, setShowSideButton] = useState(false);
   const [fee, setFee] = useState(null);
   const [accepting, setAccepting] = useState(false);
   const autoOpened = useRef(false);
@@ -294,6 +342,8 @@ export function ReserveSeatForNextGrade() {
     const id = setTimeout(() => {
       const live = classLive.live ?? Boolean(document.querySelector(".calendar-live-dashed"));
       autoOpened.current = true;
+      // Legacy: the side button is on the page as soon as the offer is eligible, behind the popup too.
+      setShowSideButton(true);
       if (!live) setEnrollOpen(true);
     }, 1500);
     return () => clearTimeout(id);
@@ -353,12 +403,12 @@ export function ReserveSeatForNextGrade() {
 
   return (
     <>
-      {offerReady && (
-        <div className="fixed bottom-[20%] right-0 z-[998]">
+      {offerReady && showSideButton && !fee && !checkout.picker && (
+        <div className="fixed bottom-[212px] right-0 z-40 max-[760px]:bottom-[224px]">
           <button
             type="button"
             onClick={() => setEnrollOpen(true)}
-            className={`mr-1 cursor-pointer whitespace-nowrap rounded-md border border-white bg-secondary px-3 py-1.5 text-sm font-semibold text-white transition-transform duration-500 ease-in-out ${helpShown ? "translate-x-[400px]" : "translate-x-0"}`}
+            className={`mr-1 cursor-pointer whitespace-nowrap rounded-md border-none bg-[#172554] px-3 py-1.5 text-sm font-semibold text-white transition-transform duration-500 ease-in-out ${helpShown ? "translate-x-[400px]" : "translate-x-0"}`}
           >
             {sideButtonText(details)}
           </button>
@@ -374,9 +424,11 @@ export function ReserveSeatForNextGrade() {
           studentName={context?.userName || ""}
           busy={accepting}
           onAccept={accept}
+          onMaybeLater={() => setShowSideButton(true)}
+          isK5={isK5}
         />
       )}
-      {fee && <ReserveFeeDialog open onOpenChange={(open) => !open && setFee(null)} details={fee} busy={checkout.preparing} onPay={() => checkout.start(fee.userPaymentDetailsId)} />}
+      {fee && <ReserveFeeDialog open onOpenChange={(open) => !open && setFee(null)} details={fee} busy={checkout.preparing} onPay={() => checkout.start(fee.userPaymentDetailsId)} isK5={isK5} />}
       <CheckoutExtraDialogs checkout={checkout} />
       <PaymentGatewayPickerModal
         open={Boolean(checkout.picker)}

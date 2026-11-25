@@ -3,6 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { backendRequest } from "@/utils/backendRequest";
 import { loadMyProfileFacts } from "@/services/profileFacts";
+import { isOwnStudentStandard } from "@/utils/ownEnrolments";
 
 /**
  * My Profile P2: saving the student's own personal and parent/guardian details, plus the dropdown lists the
@@ -101,6 +102,10 @@ export async function saveMyProfile({ studentStandardId, items } = {}) {
   if (!list.length) return { ok: false, code: "EMPTY", message: "Nothing to save." };
   const refused = list.find((item) => !STUDENT_KEYS.has(item?.keyId));
   if (refused) return { ok: false, code: "LOCKED", message: "This detail can only be changed by the school." };
+  // Only the signed-in student's own enrolment: the backend saves into the row named by id alone (utils/ownEnrolments.js).
+  if (Number(studentStandardId) && !(await isOwnStudentStandard(studentStandardId))) {
+    return { ok: false, code: "NOT_OWN", message: "Your changes could not be saved." };
+  }
   // A custom field must be one on this student's profile and not a file field (a file's value is its stored name).
   const custom = list.filter((item) => item.keyId === "customProfileFieldId");
   if (custom.length) {

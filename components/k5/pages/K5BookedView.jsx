@@ -11,7 +11,14 @@ import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useK5CourseColors } from "@/hooks/useK5CourseColors";
 import { getStudentBookedClasses } from "@/services/bookClassApi";
 import { bookedClassDateRange } from "@/utils/bookClass";
+import { useTeacherLabel } from "@/hooks/useTeacherLabel";
 import { K5Loading, K5RowsSkeleton } from "@/components/k5/K5Skeletons";
+
+// The From / To calendars are not limited to the current year: any date from 10 years back to 10 years ahead can be picked.
+const PICKER_MIN = new Date(new Date().getFullYear() - 10, 0, 1);
+const PICKER_MAX = new Date(new Date().getFullYear() + 10, 11, 31);
+// Today's date stands out in both calendars (the default style is a faint grey).
+const TODAY_CLASS = "rounded-(--cell-radius) bg-primary/15 font-bold text-primary ring-2 ring-primary/60 data-[selected=true]:rounded-none";
 
 const DATE_TYPES = [
   { value: "today", label: "Today" },
@@ -154,6 +161,7 @@ function sortValue(row, key) {
  * course), 8 "Total number of …" boxes, six columns with the teacher under the course. `subjects` = the student's courses.
  */
 export function K5BookedView({ course, subjects = [], onBack, onBook }) {
+  const teacherLabel = useTeacherLabel();
   const { isMiddle, isHigh } = useDashboardContext();
   const middle = Boolean(isMiddle);
   const high = Boolean(isHigh);
@@ -249,6 +257,8 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
     (n) => n === 1 || n === pages || Math.abs(n - current) <= 1,
   );
   const [fromDate, toDate] = bookedClassDateRange(draft.dateType, draft.startDate, draft.endDate);
+  // The To calendar opens on the current month; when the picked From date is later than today, on From's month (nothing before From can be picked).
+  const toPickerMonth = draft.startDate && draft.startDate > new Date() ? draft.startDate : new Date();
 
   return (
     <div className="flex flex-col gap-4">
@@ -289,8 +299,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
               <span className="mt-1 flex items-center gap-2.5 self-start rounded-full bg-k5-vt py-1 pl-1 pr-3.5">
                 <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-k5-vi font-k5-display text-[15px] font-semibold text-white">{initialsOf(teacherName)}</span>
                 <span className="flex flex-col leading-[1.15]">
-                  <span className="text-xs font-black text-[var(--k5-vX)]">Your teacher</span>
-                  <span className="font-k5-display text-[17px] font-semibold">{teacherName}</span>
+                  <span className="font-k5-display text-[17px] font-semibold">{teacherLabel(teacherName)}</span>
                 </span>
               </span>
             )}
@@ -392,10 +401,10 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
         ) : (
           <>
             <div className="min-w-[150px] flex-[1_1_150px]">
-              <DatePicker icon={CalendarDays} label="From" value={fromDate} disabled={!isCustom} onChange={(date) => setDraft({ ...draft, startDate: date ?? null, endDate: null })} height={middle ? "h-[50px]" : "h-12"} />
+              <DatePicker icon={CalendarDays} label="From" value={fromDate} fromDate={PICKER_MIN} toDate={PICKER_MAX} defaultMonth={new Date()} todayClassName={TODAY_CLASS} disabled={!isCustom} onChange={(date) => setDraft({ ...draft, startDate: date ?? null, endDate: null })} height={middle ? "h-[50px]" : "h-12"} />
             </div>
             <div className="min-w-[150px] flex-[1_1_150px]">
-              <DatePicker icon={CalendarDays} label="To" value={toDate} fromDate={draft.startDate ?? undefined} disabled={!isCustom} onChange={(date) => setDraft({ ...draft, endDate: date ?? null })} height={middle ? "h-[50px]" : "h-12"} />
+              <DatePicker icon={CalendarDays} label="To" value={toDate} fromDate={draft.startDate ?? PICKER_MIN} toDate={PICKER_MAX} defaultMonth={toPickerMonth} todayClassName={TODAY_CLASS} disabled={!isCustom} onChange={(date) => setDraft({ ...draft, endDate: date ?? null })} height={middle ? "h-[50px]" : "h-12"} />
             </div>
           </>
         )}

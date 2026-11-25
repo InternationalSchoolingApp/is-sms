@@ -1,0 +1,60 @@
+/*
+ * Global custom scrollbar (the whole app, light and night): thin (7px), rounded thumb, transparent track.
+ *
+ * Colours come from three custom properties, so there is ONE place to change them:
+ *   --sb-thumb / --sb-thumb-hover / --sb-track   (light, on :root)
+ * and the same three for night. Night is the app's existing `.dark` class (AppearanceProvider puts it on the shell root, a
+ * descendant of <html>; useNightHint pages put it on their own root). A scrollbar reads the custom properties of the element
+ * it belongs to, so every scrollable box inside a `.dark` area is dark by itself, and the page's own (viewport) scrollbar
+ * follows through `:root:has(.dark)`. Switching the look changes the class, so the scrollbar changes at the same moment.
+ *
+ * Two engines, one look:
+ *   - Chrome, Edge, Safari (and Opera): ::-webkit-scrollbar. Newer Chrome ignores these rules for an element that sets the
+ *     standard `scrollbar-width` / `scrollbar-color`, so those two are only set where ::-webkit-scrollbar does not exist.
+ *   - Firefox: `scrollbar-width: thin` + `scrollbar-color` (its thin bar, in the same colours; it has no hover colour).
+ *
+ * Only a mouse / trackpad (hover: hover, fine pointer) gets it. On a touch device the browser keeps its own overlay
+ * scrollbars and the swipe gestures are untouched. Nothing here hides a scrollbar or changes what can scroll.
+ */
+:root {
+  --sb-size: 7px;
+  --sb-thumb: #cbd5e1;
+  --sb-thumb-hover: #94a3b8;
+  --sb-track: transparent;
+}
+
+.dark,
+:root:has(.dark) {
+  --sb-thumb: #475569;
+  --sb-thumb-hover: #64748b;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  @supports selector(::-webkit-scrollbar) {
+    *::-webkit-scrollbar {
+      width: var(--sb-size);
+      height: var(--sb-size);
+    }
+    *::-webkit-scrollbar-track {
+      background: var(--sb-track);
+    }
+    *::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+    *::-webkit-scrollbar-thumb {
+      background-color: var(--sb-thumb);
+      border-radius: 999px;
+      transition: background-color 0.15s ease;
+    }
+    *::-webkit-scrollbar-thumb:hover {
+      background-color: var(--sb-thumb-hover);
+    }
+  }
+
+  @supports not selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--sb-thumb) var(--sb-track);
+    }
+  }
+}

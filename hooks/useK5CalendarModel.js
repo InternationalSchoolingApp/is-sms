@@ -10,12 +10,13 @@ import { applyCalendarFilters } from "@/utils/calendarEvents";
 const nowIn = (timezone) => toZonedTime(new Date(), timezone);
 
 /**
- * Data for the Grade K–5 home planner: the existing school-calendar hook (same request,
- * normalization, course colours and course on/off as the legacy calendar), loaded a month
- * at a time and shown in `timezone`, plus a ticking `now` in that zone and per-day buckets.
+ * Data for the Grade K–5 home planner: the existing school-calendar hook (same requests as the legacy dashboard:
+ * today + tomorrow on the first render, a week / a month / another day only when opened; normalization, course colours
+ * and course on/off as the legacy calendar) shown in `timezone`, plus a ticking `now` in that zone and per-day buckets.
+ * `prefetchMonth` (My Classes only) also loads the selected month a moment later for the mini calendar's dots.
  * The legacy filters (item kinds, assignment and class states, course on/off) all apply; K5PlanFilters is their UI.
  */
-export function useK5CalendarModel({ schoolUUID, userId, timezone }) {
+export function useK5CalendarModel({ schoolUUID, userId, timezone, prefetchMonth = true }) {
   const [now, setNow] = useState(() => nowIn(timezone));
   useEffect(() => {
     const tick = () => setNow(nowIn(timezone));
@@ -24,7 +25,7 @@ export function useK5CalendarModel({ schoolUUID, userId, timezone }) {
     return () => clearInterval(id);
   }, [timezone]);
 
-  const calendar = useStudentCalendar({ schoolUUID, userId, timezone, monthFetch: true, initialDate: startOfDay(nowIn(timezone)) });
+  const calendar = useStudentCalendar({ schoolUUID, userId, timezone, monthFetch: true, prefetchMonth, initialDate: startOfDay(nowIn(timezone)) });
   const { viewName, setViewName, selectedDate, setSelectedDate, filters, events } = calendar;
 
   const visibleEvents = useMemo(() => applyCalendarFilters(events, filters, now), [events, filters, now]);

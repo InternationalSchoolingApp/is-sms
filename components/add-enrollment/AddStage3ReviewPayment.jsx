@@ -317,20 +317,23 @@ export function AddStage3ReviewPayment({ context, userId, rollNo, onEnrollmentCo
   // Paid through the payment link in another browser: poll the thank-you API and switch to the thank-you view.
   const { parentId } = useParams();
   const { data: authSession } = useSession();
+  // The backend validates both session fields as the caller's numeric USER.id.
+  // uniqueId is a UUID and makes the poll look like an unauthorized request.
+  const callerUserId = authSession?.studentUserId ?? authSession?.userId;
   useEffect(() => {
-    if (!userId || !parentId || !authSession?.uniqueId) return undefined;
+    if (!userId || !parentId || !callerUserId) return undefined;
     const timer = setInterval(async () => {
       const res = await getAddEnrollmentThankYou(authSession.schoolUUID, {
         parentId,
-        sessionUserId: authSession.userId,
-        sessionUniqueId: authSession.uniqueId,
+        sessionUserId: callerUserId,
+        sessionUniqueId: callerUserId,
         childUserId: userId,
       }).catch(() => null);
       if (res?.status === "1" && isFirstPayment(res.data)) onEnrollmentCompleted?.(true);
     }, 5000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, parentId, authSession?.uniqueId]);
+  }, [userId, parentId, authSession?.schoolUUID, callerUserId]);
   const paymentOption = useShowPaymentOption({ context, userId });
   const choosePlan = useChoosePaymentPlan({ context, userId });
   const submitApplication = useSubmitApplication({ context, userId });

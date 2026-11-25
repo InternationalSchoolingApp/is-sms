@@ -33,3 +33,20 @@ export async function getNumericSettingByTypeAndKey(type, key) {
   const value = /^\d+$/.test(text) ? Number(text) : NaN;
   return { ok: true, data: { value: Number.isSafeInteger(value) ? value : null, empty: text === "" } };
 }
+
+/**
+ * Several settings of one type in one call: data = { [key]: string | null } (the raw value like getSettingsByTypeAndKey, or null
+ * when that one read failed - a single failed key never fails the rest). The reads run side by side on the server, so the page
+ * pays one queued server action instead of one per key. A session-out answer on any of them is reported as a whole.
+ */
+export async function getSettingsByTypeAndKeys(type, keys) {
+  if (!type || !Array.isArray(keys) || !keys.length || keys.length > 10) return { ok: false, code: "V001", message: "A setting type and 1 to 10 keys are required." };
+  const results = await Promise.all(keys.map((key) => getSettingsByTypeAndKey(type, key)));
+  const expired = results.find((result) => result?.sessionExpired);
+  if (expired) return expired;
+  const data = {};
+  keys.forEach((key, index) => {
+    data[key] = results[index]?.ok ? results[index].data : null;
+  });
+  return { ok: true, data };
+}

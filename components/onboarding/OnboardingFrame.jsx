@@ -11,8 +11,9 @@ import { logoutEverywhere } from "@/utils/logout";
  * AdditionalLayerAtLogin.jsp.
  */
 export function OnboardingFrame({ children }) {
-  const { session, context, logoUrl, ready } = useDashboardContext();
-  if (!ready || !context) return <FullScreenLoader />;
+  const { session, context, logoUrl, logoSettled, ready } = useDashboardContext();
+  // Wait for the real school logo: no placeholder mark or name is ever shown in its place.
+  if (!ready || !context || (session?.schoolNumericId && !logoSettled)) return <FullScreenLoader />;
   return (
     <OnboardingShell
       schoolName={context.schoolName}

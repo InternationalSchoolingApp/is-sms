@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getStudentDashboardOrMigration } from "@/services/dashboardApi";
 import { studentDashboardDetailsQuery } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { viaTier1 } from "@/utils/dashboardBootstrap";
 
 /**
  * The two dashboard-orchestrator calls the legacy rendereDashboardContent()
@@ -23,7 +24,7 @@ export function useStudentDashboardData({ schoolUUID, userId }) {
       // Dummy (demo) student mode: legacy getDummyGradeKDashboardOrMigrationSection / Details (no popups).
       if (dummy.enabled) return { migration: dummy.student.dashboardOrMigration(), details: dummy.student.dashboardDetails() };
       const [migration, details] = await Promise.all([
-        getStudentDashboardOrMigration({ schoolUUID, userId }),
+        viaTier1(userId, "migration", (a) => a.migration, () => getStudentDashboardOrMigration({ schoolUUID, userId })),
         // Same cached call the DashboardProvider's grade-band gate already made.
         queryClient.ensureQueryData(studentDashboardDetailsQuery({ schoolUUID, userId })),
       ]);
@@ -34,8 +35,15 @@ export function useStudentDashboardData({ schoolUUID, userId }) {
     refetchOnWindowFocus: false,
   });
 
+  // The details themselves, subscribed: the combined query above keeps the copy it took when it ran, so a time zone saved
+  // later (Welcome page, My Profile) - which refreshes this shared query - shows up here without a page reload.
+  const detailsQuery = useQuery({
+    ...studentDashboardDetailsQuery({ schoolUUID, userId }),
+    enabled: Boolean(schoolUUID && userId && dummy.settled && !dummy.enabled),
+  });
+
   const migration = query.data?.migration;
-  const details = query.data?.details;
+  const details = (!dummy.enabled && detailsQuery.data) || query.data?.details;
 
   return {
     isLoading: query.isLoading,

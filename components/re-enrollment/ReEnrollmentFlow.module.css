@@ -1,5 +1,7 @@
 /* Inner forms match enrollment typography; dashboard chrome keeps its K–5 appearance. */
 .flow {
+  --k5-fd: var(--font-open-sans), sans-serif;
+  --k5-fb: var(--font-open-sans), sans-serif;
   font-family: var(--font-open-sans), sans-serif;
   font-size: 14px;
   font-weight: 400;

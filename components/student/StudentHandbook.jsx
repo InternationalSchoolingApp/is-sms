@@ -5,13 +5,12 @@ import { Download } from "lucide-react";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useModuleRights } from "@/hooks/useModuleRights";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { K5Handbook } from "@/components/k5/pages/K5Handbook";
 
 // Backend static assets (legacy PATH_FOLDER_IMAGE2).
-const assetUrl = (file) => `${resolveBackendOrigin()}/static/theme2/images/${file}`;
-const IS_POLICIES_URL = "https://internationalschooling.org/student-policies-and-code-of-conduct/";
+const assetUrl = (file) => `/backend-static-assets/images/${file}`;
+const IS_POLICIES_URL = "https://internationalschooling.org/policies-and-code-of-conduct-2025/";
 
 /**
  * Student Handbook — legacy studentHandbook.js + studentHandbookContent.js. The handbook file is

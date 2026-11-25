@@ -1,11 +1,13 @@
 "use client";
 
+import DOMPurify from "dompurify";
 import { format } from "date-fns";
 import { ActivityDetailsModal } from "@/components/dashboard/calendar/ActivityDetailsModal";
-import { CalendarModal, DetailRow } from "@/components/dashboard/calendar/CalendarModal";
+import { CalendarModal, DetailRow, calendarButtonClass } from "@/components/dashboard/calendar/CalendarModal";
 import { RateFeedbackButton } from "@/components/dashboard/calendar/RateFeedbackButton";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { openLmsLesson } from "@/utils/lmsCourseLink";
+import { cleanCourseLabel } from "@/utils/k5Calendar";
 import {
   getAssignmentStatus,
   getClassCompletionStatus,
@@ -65,7 +67,7 @@ function PastClassDetail({ event, onClose }) {
   const teacher = event.category !== "BATCH" && event.origName && event.origName !== "Teacher" ? event.origName : null;
   return (
     <>
-      {event.category === "BATCH" && event.batchName && <p className="text-center text-base font-extrabold">{event.batchName}</p>}
+      {event.category === "BATCH" && event.batchName && <p className="m-0 text-center text-base font-extrabold">{event.batchName}</p>}
       <DetailRow label="Date" value={event.startZoned ? format(event.startZoned, "MMM d, yyyy") : null} />
       <DetailRow label="Status" value="Expired" />
       <DetailRow label="Time" value={event.startZoned ? format(event.startZoned, "h:mm a") : null} />
@@ -79,8 +81,8 @@ function PastClassDetail({ event, onClose }) {
   );
 }
 
-function ClassOrActivityDetail({ event, courseRegistry, onClose }) {
-  const status = getEventStatus(event);
+function ClassOrActivityDetail({ event, courseRegistry, onClose, now }) {
+  const status = getEventStatus(event, now);
   if (event.eventKind === "class" && status === "completed") return <PastClassDetail event={event} onClose={onClose} />;
   const displayStatus = status === "completed" && event.eventKind === "class" ? getClassCompletionStatus(event) : status;
   const course = courseRegistry[event.courseId];
@@ -99,13 +101,14 @@ function ClassOrActivityDetail({ event, courseRegistry, onClose }) {
   );
 }
 
-function AssignmentDetail({ event }) {
-  const { lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
-  const aStatus = getAssignmentStatus(event);
+function AssignmentDetail({ event, now }) {
+  const { lmsProviderURL, isPayLmsPaymentPending, isK5 } = useDashboardContext();
+  const aStatus = getAssignmentStatus(event, now);
   return (
     <>
-      <DetailRow label="Course" value={event.subjectName} />
-      <DetailRow label="Due Date" value={event.dueDate ? format(new Date(event.dueDate), "MMM d, yyyy") : null} />
+      <DetailRow label="Course" value={cleanCourseLabel(event.subjectName)} />
+      {/* A due date is a plain day ("2026-11-16"): read as that day, never as UTC midnight (which is the day before west of UTC). */}
+      <DetailRow label="Due Date" value={event.startZoned ? format(event.startZoned, "MMM d, yyyy") : event.dueDate || null} />
       <DetailRow label="Status" value={aStatus.label} />
       {aStatus.timingLabel && <DetailRow label="Timing" value={aStatus.timingLabel} />}
       {aStatus.status === "submitted" && <DetailRow label="Submitted" value={aStatus.dateDisplay} />}
@@ -115,7 +118,7 @@ function AssignmentDetail({ event }) {
           <button
             type="button"
             onClick={() => openLmsLesson({ isPayLmsPaymentPending, lmsProviderUrl: lmsProviderURL })}
-            className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white"
+            className={calendarButtonClass(isK5, "primary")}
           >
             Attempt
           </button>
@@ -126,10 +129,16 @@ function AssignmentDetail({ event }) {
 }
 
 function HolidayOrEventDetail({ event }) {
+  const text = event.activities || event.title;
   return (
     <>
       <DetailRow label="Date" value={event.startZoned ? format(event.startZoned, "MMM d, yyyy") : null} />
-      {(event.activities || event.title) && <p className="pt-1 text-black/80">{event.activities || event.title}</p>}
+      {/* The description is HTML written by the school (<p>, <strong>...): render it, sanitized; inline colours are dropped so it follows the look. */}
+      {text && (/<[a-z][sS]*>/i.test(text) ? (
+        <div className="pt-1 leading-relaxed [&_p]:m-0 [&_p]:mb-2 [&_strong]:font-black [&_a]:underline" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(text, { FORBID_ATTR: ["style", "class"] }) }} />
+      ) : (
+        <p className="m-0 pt-1">{text}</p>
+      ))}
     </>
   );
 }
@@ -139,7 +148,8 @@ function HolidayOrEventDetail({ event }) {
  * openPastClassModal / openAssignmentModal / eventDetailsOnModal, plus the
  * "Rate this class" button of a finished class (class feedback).
  */
-export function EventDetailModal({ event, courseRegistry, onClose }) {
+// `now`: the clock in the zone the event times are shown in (the grade looks show a dummy student in New York), the browser's clock when omitted.
+export function EventDetailModal({ event, courseRegistry, onClose, now }) {
   if (!event) return null;
   // A school activity opens its own popup: purpose, attachment, countdown and the timed Join Event (legacy renderViewActitifyDetails).
   if (event.eventKind === "activity") return <ActivityDetailsModal event={event} onClose={onClose} />;
@@ -150,11 +160,11 @@ export function EventDetailModal({ event, courseRegistry, onClose }) {
     <CalendarModal title={title} onClose={onClose}>
       <div className="mb-1 h-1 w-10 rounded-full" style={{ background: accentColor }} />
       {event.eventKind === "assignment" ? (
-        <AssignmentDetail event={event} />
+        <AssignmentDetail event={event} now={now} />
       ) : event.eventKind === "holiday" || event.eventKind === "schoolEvent" ? (
         <HolidayOrEventDetail event={event} />
       ) : (
-        <ClassOrActivityDetail event={event} courseRegistry={courseRegistry} onClose={onClose} />
+        <ClassOrActivityDetail event={event} courseRegistry={courseRegistry} onClose={onClose} now={now} />
       )}
     </CalendarModal>
   );

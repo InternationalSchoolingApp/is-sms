@@ -4,7 +4,7 @@ import { backendRequest, getSessionIdentity, sessionExpiredResult } from "@/util
 import { encodePayload } from "@/utils/payloadEncoding";
 import { smsAuthHeaders, serviceKeyHeaders } from "@/lib/auth/session";
 import { resolveServerBackendOrigin } from "@/utils/backendOrigin";
-import { PROFILE_DOC_TYPES, loadMyProfileFacts } from "@/services/profileFacts";
+import { PROFILE_DOC_TYPES, loadMyProfileFacts, loadMyProfileRaw } from "@/services/profileFacts";
 
 /**
  * My Profile P3: the list-type changes the existing page saves straight away (not through Bulk Save):
@@ -186,5 +186,30 @@ export async function loadProfileCompletingProcess() {
   });
   if (!result.ok) return result;
   const profileData = result.data?.profileData || [];
+  await fillSavedProfileValues(profileData);
   return { ok: true, data: { enabled: true, profileData } };
+}
+
+// The completing-process answer only carries a value for custom fields (fieldValue); for every standard field (Address Proof,
+// phone, parent name ...) it is always empty. The legacy page (profileViewNew.js checkAndOrganizeFields / getFieldValue) decides
+// "missing" from the student's saved profile (profile-view-content-new), section by section (section.index), so the same is done
+// here: an empty fieldValue is filled from what the profile already holds. If the profile cannot be loaded the list is left as it is.
+async function fillSavedProfileValues(profileData) {
+  const profile = await loadMyProfileRaw();
+  if (!profile.ok) return;
+  const sp = profile.data.sp;
+  const COUNTRY = new Set(["motherCountry", "fatherCountry", "guardianCountry"]);
+  const fill = (child, saved) => {
+    if (!saved || child?.fieldValue === undefined || String(child.fieldValue ?? "").trim() !== "") return;
+    const value = saved[child.fieldId];
+    if (value === undefined || value === null) return;
+    // A country that is not chosen is saved as 0 (legacy: isEmpty = fieldValue == "0").
+    if (COUNTRY.has(child.fieldId) && String(value) === "0") return;
+    if (String(value).trim() !== "") child.fieldValue = String(value);
+  };
+  for (const section of profileData) {
+    const saved = sp[Number(section.index)];
+    for (const child of section.parentChildList || []) fill(child, saved);
+    for (const group of section.parentChildGroupList || []) for (const child of group.parentChildList || []) fill(child, saved);
+  }
 }

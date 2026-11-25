@@ -58,9 +58,36 @@ export function countStatuses(classes) {
  */
 export function noClassReason(key, day, { isSelfStudy, firstName }) {
   if (day.holidays.length) return { kind: "holiday", title: day.holidays[0].title || day.holidays[0].eventTitle || "Holiday", text: "It's a holiday. No school today!" };
-  if (isWeekendKey(key)) return { kind: "weekend", title: "Weekend!", text: "It's the weekend. No school today!" };
-  if (isSelfStudy) return { kind: "study", title: "No live classes", text: "Keep going with your courses today!" };
-  return { kind: "free", title: "No classes!", text: `There are no classes today. Enjoy your free day${firstName ? `, ${firstName}` : ""}!` };
+  if (isWeekendKey(key)) return { kind: "weekend",  title: `There are no classes today. Enjoy your free day${firstName ? `, ${firstName}` : ""}!` };
+  if (isSelfStudy) return { kind: "study", title: `There are no classes today. Enjoy your free day${firstName ? `, ${firstName}` : ""}!` };
+  return { kind: "free", title: `There are no classes today. Enjoy your free day${firstName ? `, ${firstName}` : ""}!` };
+}
+
+/** The two event types that count as a class for the games: 1:1 / doubt sessions and batch classes. Nothing else does. */
+export const isGameClass = (event) => event?.eventType === "STUDENT_DOUBT_SESSION" || event?.eventType === "BATCH";
+
+/**
+ * May the games be opened for `dateKey`? { locked, reason } with reason "live" | "pending" | "past" | "classes" | null.
+ * Applied in this order (only isGameClass events count as classes):
+ *   1. a class is live right now (today)             -> locked on every date
+ *   2. a class today has not finished yet            -> locked on every date
+ *   3. the selected day is already over              -> locked (past days never open)
+ *   4. the selected day is a holiday                 -> open (each day of a holiday period has its own holiday entry)
+ *   5. the selected day is today                     -> open (rules 1-2 passed: every class today is over)
+ *   6. the selected day has a class                  -> locked (open only for a day without a class)
+ *   7. otherwise (no class on the selected day)      -> open for that day only
+ */
+export function gameAccess(days, dateKey, todayKey) {
+  const todays = dayAt(days, todayKey).classes.filter(isGameClass);
+  if (todays.some((c) => c.k5Status === "live")) return { locked: true, reason: "live" };
+  if (todays.some((c) => c.k5Status !== "done")) return { locked: true, reason: "pending" };
+  if (dateKey < todayKey) return { locked: true, reason: "past" };
+  const day = dayAt(days, dateKey);
+  if (day.holidays.length) return { locked: false, reason: null };
+  // Today's classes are all over (nothing live, nothing still to come): play time.
+  if (dateKey === todayKey) return { locked: false, reason: null };
+  if (day.classes.some(isGameClass)) return { locked: true, reason: "classes" };
+  return { locked: false, reason: null };
 }
 
 /** Short summary for a day (month summary bar, tomorrow card). */
@@ -86,7 +113,10 @@ export function weekKeys(date) {
   return Array.from({ length: 7 }, (_, i) => dayKey(addDays(start, i)));
 }
 
-export const classTitle = (event) => event.courseName || event.subjectName || event.eventTitle || event.title || "Class";
+/** LMS course names carry a version/org suffix ("English I v24 (GS) IS-ORG 00"): the student sees only "English I". */
+export const cleanCourseLabel = (name) => String(name || "").replace(/\s+v\d+\b.*$/i, "").trim();
+
+export const classTitle =(event) => event.courseName || event.subjectName || event.eventTitle || event.title || "Class";
 export const activityTitle = (event) => event.title || event.eventTitle || "School activity";
 export const timeLabel = (event) => (event.startZoned && !event.allDay ? format(event.startZoned, "h:mm a") : "");
 export const timeRange = (event) =>

@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, FileText, Lock, Paperclip, Send, X } from "lucide-react";
+import { SimpleSelect } from "@/components/ui/simple-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EMAIL_SETTINGS_ALWAYS, EMAIL_SETTINGS_INTRO, FILE_ACCEPT, FILE_HELP, MAX_MESSAGE, MAX_SUBJECT, PRIVACY_NOTE, TEMPLATE_HELP, fileSize } from "@/utils/inbox";
 
@@ -136,18 +137,18 @@ export function InboxCompose({ compose }) {
           {compose.templateGroups.length > 0 && (
             <label className="flex flex-col gap-1 text-sm font-semibold text-black">
               Start from a template
-              <select value="" onChange={(e) => compose.applyTemplate(compose.templateGroups.flatMap((g) => g.templates).find((t) => String(t.id) === e.target.value))} className={`${FIELD} min-h-10 font-normal`}>
-                <option value="">Choose a template (optional)</option>
-                {compose.templateGroups.map((group) =>
-                  group.label ? (
-                    <optgroup key={group.label} label={group.label}>
-                      {group.templates.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
-                    </optgroup>
-                  ) : (
-                    group.templates.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)
-                  ),
-                )}
-              </select>
+              <SimpleSelect
+                aria-label="Start from a template"
+                value=""
+                placeholder="Choose a template (optional)"
+                onValueChange={(value) => compose.applyTemplate(compose.templateGroups.flatMap((g) => g.templates).find((t) => String(t.id) === value))}
+                options={compose.templateGroups
+                    .map((group) => {
+                      const items = group.templates.map((t) => ({ value: String(t.id), label: t.title }));
+                      return group.label ? { groupLabel: group.label, options: items } : items;
+                    })
+                    .flat()}
+              />
               <span className={`${HELP} font-normal`}>{TEMPLATE_HELP}</span>
             </label>
           )}

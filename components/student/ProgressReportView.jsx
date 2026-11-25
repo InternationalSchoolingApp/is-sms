@@ -8,13 +8,12 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useStudentGradebookReport } from "@/hooks/useStudentGradebookReport";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import { MobileTableCard } from "@/components/student/MobileTableCard";
 import { courseWareCourses, courseWareItems, courseWareLayout, cwText, isCourseWare } from "@/utils/courseWareReport";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 
 // Backend static assets (legacy PATH_FOLDER_IMAGE2).
-export const assetUrl = (file) => `${resolveBackendOrigin()}/static/theme2/images/${file}`;
+export const assetUrl = (file) => `/backend-static-assets/images/${file}`;
 
 // Legacy item.colorScoreText is a Bootstrap class pair.
 const SCORE_CLASS = {

@@ -27,6 +27,17 @@
   --k5-fb: var(--font-roboto), "Baloo Bhaijaan 2", sans-serif;
   /* The one-layer card shadow. */
   --k5m-card: 0 1px 2px rgba(16, 24, 40, 0.05);
+  /* Left nav line-icon colours (mockup Mature --nv*I, --bI, --gI, --yX); used by highNavIconFor (components/k5/navIcons.jsx). */
+  --k5-hn-nav: #0068d6;
+  --k5-hn-b: #2563eb;
+  --k5-hn-g: #237a45;
+  --k5-hn-y: #7a4a05;
+}
+.theme-k5.dark[data-k5-high] {
+  --k5-hn-nav: #7dbdff;
+  --k5-hn-b: #7dbdff;
+  --k5-hn-g: #6fd08e;
+  --k5-hn-y: #ffd877;
 }
 
 /* Text with no size or weight of its own is 13px / 500 (the mockup body) where K–5 inherits 16px / 400. */
@@ -35,7 +46,8 @@
   font-weight: 500;
 }
 
-:is([data-k5-high], [data-k5-high] *) {
+/* Keep grade-specific type and control overrides outside shared re-enrollment forms. */
+:is([data-k5-high], [data-k5-high] *):not(:where([data-re-enrollment-flow], [data-re-enrollment-flow] *)) {
   /* Type scale */
   &.text-\[11px\] {
     font-size: 11px;
@@ -258,7 +270,7 @@
 [data-k5-high] .k5h-ptile {
   width: 58px;
   height: 58px;
-  border-radius: 10px;
+  border-radius: 14px;
 }
 [data-k5-high] .k5h-ptile-top {
   font-size: 11px;
@@ -275,11 +287,11 @@
 [data-k5-high] .k5h-stile {
   width: 50px;
   height: 50px;
-  border-radius: 12px;
+  border-radius: 20px;
 }
 [data-k5-high] .k5h-sicon {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
 }
 [data-k5-high] .k5h-ctitle {
   font-size: 18px;
@@ -290,10 +302,16 @@
 [data-k5-high] .k5h-pill {
   color: var(--k5-ink);
 }
-/* My Courses rows: 8px corners on the 38px icon tile and the 26px tick. */
+/* My Courses rows: 12px corners on the 38px icon tile and the 26px tick. */
 [data-k5-high] .k5h-ctile,
 [data-k5-high] .k5h-cchk {
-  border-radius: 8px;
+  border-radius: 12px;
+}
+/* My Classes and Activities: the cards (header, calendar, courses, plan) and the class cards have 20px corners, the Done sticker too. */
+[data-k5-high] .k5h-pcard,
+[data-k5-high] .k5h-art,
+[data-k5-high] .k5h-done {
+  border-radius: 20px;
 }
 
 /* ── Book a Class (High.dc.html bk*) ────────────────────────────────────────────────────────────────── */
@@ -579,4 +597,27 @@
 }
 [data-k5-high] .k5h-tr-code {
   padding: 2px 6px !important;
+}
+
+/* "No classes" card (High.dc.html): 20px corners; the 30px title / 17px line already become 25px / 14px / 500 by the type map. */
+[data-k5-high] .k5h-nocls {
+  border-radius: 20px;
+}
+
+/* Right action rail: High draws it exactly like Middle (Middle.dc.html .rail): a soft blue circle on a 2px rim (the rim colour is the
+   button's --rim), 900-weight labels, and on desktop the count badge in the display font 15px / 700 with its soft shadow. The skin
+   above flattens every "shadow-[0_2px_0_..." and maps font-black / the badge's 13px, so those values are put back here. */
+.theme-k5[data-k5-high] .k5-rail > button {
+  font-weight: 900;
+}
+.theme-k5[data-k5-high] .k5-rail > button > span:first-child {
+  box-shadow: 0 2px 0 var(--rim);
+}
+@media (min-width: 761px) {
+  .theme-k5[data-k5-high] .k5-rail .k5-rail-badge {
+    font-family: var(--k5-fd);
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(11, 36, 71, 0.18);
+  }
 }

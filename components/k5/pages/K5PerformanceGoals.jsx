@@ -190,6 +190,7 @@ function GoalsDialog({ goals, avg, today, totalLeft, canCompare, onClose, onSave
                 label={end ? `Pick a date (by ${fmtShort(end)})` : "Pick a date"}
                 icon={CalendarDays}
                 height="h-[50px]"
+                layerClassName="z-[95]"
                 autoOpen={!custom}
                 value={custom ? new Date(`${custom}T00:00:00`) : undefined}
                 fromDate={tomorrow ? new Date(`${tomorrow}T00:00:00`) : undefined}
@@ -209,7 +210,7 @@ function GoalsDialog({ goals, avg, today, totalLeft, canCompare, onClose, onSave
 
         <div className="flex flex-col gap-2.5 border-t-[3px] border-k5-line pt-4">
           <div className="font-k5-display text-lg font-semibold">Reminders &amp; comparisons</div>
-          <Toggle checked={remind} onChange={setRemind} title="Remind me when I fall behind today’s target" help="Shown on this page — no extra emails." />
+          {/* <Toggle checked={remind} onChange={setRemind} title="Remind me when I fall behind today’s target" help="Shown on this page — no extra emails." /> */}
           {canCompare && (
             <Toggle checked={compare} onChange={setCompare} title="Show how I compare with my class" help="Names and scores of others are never shown." />
           )}
@@ -426,7 +427,7 @@ export function K5PerformanceGoals({ goals, avg, courses, week, today, initial, 
                   <div className="mb-2 flex flex-wrap justify-between gap-2 text-[15px] font-black">
                     <span>Score</span>
                     <span>
-                      {scored ? `${score.toFixed(2)}%` : "—"} <em className="font-extrabold not-italic text-k5-mut">· Goal: {goals.score}%</em>
+                      {scored ? `${score.toFixed(2)}%` : "—"} <em className="font-extrabold not-italic text-k5-mut">· Final Goal: {goals.score}%</em>
                     </span>
                   </div>
                   {scored && <Bar pct={score} col={tone.col} mark={goals.score} />}

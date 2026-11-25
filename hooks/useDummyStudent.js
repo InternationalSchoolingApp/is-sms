@@ -29,7 +29,9 @@ export function useDummyStudent() {
   const demoUser = Boolean(context?.demoUser);
   const enabled = search !== null && isDummyStudentMode(demoUser);
 
-  const rowQuery = useQuery(studentDemoRowQuery({ schoolUUID: context?.schoolUUID, userId: context?.userId, enabled: enabled && demoUser }));
+  const rowQuery = useQuery(
+    studentDemoRowQuery({ schoolUUID: context?.schoolUUID, userId: context?.userId, entityId: context?.demoEntityId, enabled: enabled && demoUser }),
+  );
 
   const row = rowQuery.data ?? null;
   // The dummy fee receipt page reads its data from this app's localStorage, so it must open on this
@@ -46,7 +48,7 @@ export function useDummyStudent() {
             fallbackName,
             schoolName,
             receiptBaseUrl,
-            imageBaseUrl: `${resolveBackendOrigin()}/static/theme2/images/`,
+            imageBaseUrl: "/backend-static-assets/images/",
           })
         : null,
     [enabled, row, search, fallbackName, schoolName, receiptBaseUrl],
@@ -55,5 +57,5 @@ export function useDummyStudent() {
   const settled = Boolean(context) && search !== null && !(enabled && demoUser && rowQuery.isLoading);
   // Part of each module's query key, so cached dummy data is rebuilt once the name / demo row arrive.
   const key = enabled ? `dummy|${row?.id ?? ""}|${fallbackName}|${search}` : "live";
-  return { settled, enabled, student, key };
+  return { settled, enabled, student, key, row };
 }

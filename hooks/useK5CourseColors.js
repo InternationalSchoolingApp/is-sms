@@ -7,7 +7,7 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useStudentCalendar } from "@/hooks/useStudentCalendar";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
-import { getBrowserTimezone, resolveTimezone } from "@/utils/calendarEvents";
+import { DUMMY_STUDENT_TIMEZONE, resolveTimezone } from "@/utils/calendarEvents";
 import { safeCourseColor } from "@/utils/k5Calendar";
 
 const plain = (text) =>
@@ -27,7 +27,7 @@ export function useK5CourseColors() {
   const { context } = useDashboardContext();
   const dummy = useDummyStudent();
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
-  const timezone = dummy.enabled ? getBrowserTimezone() : resolveTimezone(dashboardData.userTimezone);
+  const timezone = dummy.enabled ? DUMMY_STUDENT_TIMEZONE : resolveTimezone(dashboardData.userTimezone);
   const { courseRegistry } = useStudentCalendar({
     schoolUUID: context?.schoolUUID,
     userId: context?.userId,

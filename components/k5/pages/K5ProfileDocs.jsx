@@ -230,7 +230,7 @@ export function DocCropDialog({ file, onCancel, onCrop }) {
           )}
         </div>
         <div className="flex flex-wrap justify-end gap-2 border-t-[3px] border-k5-line px-4 py-3">
-          <button type="button" onClick={onCancel} className={`${FOOT_BTN} bg-k5-ink text-white`}>
+          <button type="button" onClick={onCancel} className={`${FOOT_BTN} border-[3px] !border-solid border-k5-line bg-k5-card text-k5-ink`}>
             Cancel
           </button>
           <button type="button" onClick={crop} disabled={!pic} className={`${FOOT_BTN} bg-k5-ac text-white`}>

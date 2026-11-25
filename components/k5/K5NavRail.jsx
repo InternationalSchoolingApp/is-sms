@@ -9,15 +9,20 @@ import {
 } from "lucide-react";
 import { InboxBadge, isInboxMenuItem } from "@/components/student/inbox/InboxBadge";
 import { CLUB_ART } from "@/components/k5/clubMarks";
-import { NAV_ART, navPictureFor } from "@/components/k5/navIcons";
+import { MyClassesArt, NAV_ART, highNavIconFor, navPictureFor } from "@/components/k5/navIcons";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { K5Sk } from "@/components/k5/K5Skeletons";
 import { studentNavHref } from "@/utils/dashboardNav";
+import { motion } from "framer-motion";
+import { DUR, EASE_OUT } from "@/components/motion/motionConfig";
+import { useMotionBand } from "@/components/motion/useMotionBand";
 
 // Icon key (utils/dashboardNav.js) -> lucide icon + the mockup's tile tint pair (T background / I icon).
 const ICONS = {
   dashboard: [LayoutDashboard, "bg-k5-bt", "text-k5-bi"],
   calendar: [CalendarDays, "bg-k5-ot", "text-k5-oi"],
+  "my-classes": [CalendarDays, "bg-k5-bt", "text-k5-bi"],
   teacher: [GraduationCap, "bg-k5-vt", "text-k5-vi"],
   "book-class": [CalendarCheck, "bg-k5-ot", "text-k5-oi"],
   cart: [ShoppingCart, "bg-k5-bt", "text-k5-bi"],
@@ -104,7 +109,6 @@ export function K5NavRail({ menu, loading = false, open, onOpen, onClose, isPreK
     const href = studentNavHref(school, segment);
     return segment ? pathname === href || pathname.startsWith(`${href}/`) : pathname === href;
   };
-  console.log("K5NavRail render", menu);
   return (
     <>
       {open && <button type="button" aria-label="Close menu" onClick={onClose} className="fixed inset-0 z-[45] cursor-pointer bg-[rgba(10,16,34,0.35)]" />}
@@ -115,13 +119,13 @@ export function K5NavRail({ menu, loading = false, open, onOpen, onClose, isPreK
         aria-label="Main menu"
         data-pin="side"
         data-open={open}
-        className="k5-side fixed [scrollbar-width:thin]   z-20 flex max-h-[calc(100vh-120px)] flex-col items-center gap-1 overflow-y-auto overflow-x-hidden rounded-[26px] border-[3px] border-k5-line bg-k5-card px-1.5 py-2.5 shadow-k5-chunky"
+        className="k5-side fixed z-20 flex max-h-[calc(100vh-120px)] flex-col items-center gap-1 overflow-y-auto overflow-x-hidden rounded-[26px] border-[3px] border-k5-line bg-k5-card px-1.5 py-2.5 shadow-k5-chunky"
       >
         <button
           type="button"
           onClick={onClose}
           aria-label="Close menu"
-          className="k5-nclose hidden h-11 w-11 flex-none items-center justify-center self-end rounded-full border-[3px] border-k5-line bg-k5-card text-k5-mut"
+          className="k5-nclose hidden h-11 w-11 flex-none items-center justify-center cursor-pointer self-end rounded-full border-[3px] border-red-500 bg-red-500 text-white hover:border-red-600 hover:bg-red-600"
         >
           <X className="h-4 w-4" strokeWidth={3} aria-hidden="true" />
         </button>
@@ -133,7 +137,7 @@ export function K5NavRail({ menu, loading = false, open, onOpen, onClose, isPreK
               Loading the menu…
             </span>
             {Array.from({ length: 12 }, (_, i) => (
-              <span key={i} aria-hidden="true" className="k5-ni relative flex w-[76px] flex-none flex-col items-center gap-1 py-1">
+              <span key={i} aria-hidden="true" className="k5-ni relative flex w-[46px] flex-none flex-col items-center gap-1 py-1">
                 <K5Sk className="h-[46px] w-[46px] rounded-[15px]" />
                 <K5Sk className="k5-nl h-2.5 w-12" />
               </span>
@@ -165,13 +169,32 @@ function flattenItems(items) {
 }
 
 const ITEM_CLASS =
-  "k5-ni relative flex w-[76px] flex-none touch-none select-none flex-col items-center gap-1 rounded-2xl py-1 text-center text-xs font-black leading-[1.15] no-underline [overflow-wrap:anywhere]";
+  "k5-ni relative isolate flex w-[46px] h-[46px] flex-none touch-none select-none flex-col items-center gap-1 rounded-2xl text-center text-xs font-black leading-[1.15] no-underline transition-colors duration-150 [overflow-wrap:anywhere]";
 
-function NavTile({ icon, active, picture }) {
+function NavTile({ item, icon, active, picture }) {
+  const { isHigh } = useDashboardContext();
   const [Icon, tile, stroke] = iconFor(icon);
   // The mockup's picture (a 36px PNG on a transparent tile); the drawn icon stays as the fallback when there is no
   // picture for the item or it cannot be loaded.
   const [pictureFailed, setPictureFailed] = useState(false);
+  // High (Mature) look: the mockup's line icon in the item's colour on a transparent tile, white when active.
+  const high = isHigh ? highNavIconFor(item) : null;
+  if (high) {
+    return (
+      <span className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[10px] bg-transparent">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`transition-[stroke] duration-150 ${active ? "stroke-white delay-100" : high.tone}`}>
+          {high.art}
+        </svg>
+      </span>
+    );
+  }
+  if (icon === "my-classes") {
+    return (
+      <span className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[15px] bg-transparent">
+        <MyClassesArt />
+      </span>
+    );
+  }
   if (picture && !pictureFailed) {
     return (
       <span className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[15px] bg-transparent">
@@ -180,7 +203,7 @@ function NavTile({ icon, active, picture }) {
     );
   }
   return (
-    <span className={`flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[15px] ${active ? "bg-white text-k5-ac" : `${tile} ${stroke}`}`}>
+    <span className={`flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[15px] transition-colors duration-150 ${active ? "bg-white text-k5-ac delay-100" : `${tile} ${stroke}`}`}>
       {NAV_ART[icon] ? (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           {NAV_ART[icon]}
@@ -189,6 +212,26 @@ function NavTile({ icon, active, picture }) {
         <Icon className="h-6 w-6" strokeWidth={2.3} aria-hidden="true" />
       )}
     </span>
+  );
+}
+
+/**
+ * The active item's highlight. One shared element (layoutId) that slides from the old active item to the new one, instead
+ * of two backgrounds switching. layout="position" moves it only: the pill's size follows the item's own CSS width
+ * (the rail widening on hover is a CSS transition), so a hover never stretches or squashes it. Under Reduced Motion
+ * MotionProvider makes the move instant. The label and tile of the item wait 100 ms (delay-100) so white text never
+ * shows on a page-coloured background while the pill is still on its way.
+ */
+function NavPill() {
+  const band = useMotionBand();
+  return (
+    <motion.span
+      layoutId="k5-nav-pill"
+      layout="position"
+      aria-hidden="true"
+      className="absolute inset-0 -z-10 rounded-2xl bg-k5-ac"
+      transition={band === "high" ? { duration: DUR.card, ease: EASE_OUT } : { type: "spring", stiffness: 520, damping: 40 }}
+    />
   );
 }
 
@@ -203,10 +246,11 @@ function NavLink({ item, href, active, onNavigate, drag }) {
       onClick={(e) => (drag.consumeClick() ? e.preventDefault() : onNavigate())}
       {...drag.handlers(item.key)}
       style={drag.style(item.key)}
-      className={`${ITEM_CLASS} ${active ? "bg-k5-ac text-white" : "text-k5-ink hover:bg-k5-soft"}`}
+      className={`k5-button-motion ${ITEM_CLASS} ${active ? "text-white delay-100" : "text-k5-ink hover:bg-k5-soft"}`}
     >
-      <NavTile icon={item.icon} active={active} picture={navPictureFor(item)} />
-      {isInboxMenuItem(item) && <InboxBadge className="absolute left-[46px] top-0 shadow-[0_0_0_2px_var(--k5-card)]" />}
+      {active && <NavPill />}
+      <NavTile item={item} icon={item.icon} active={active} picture={navPictureFor(item)} />
+      {isInboxMenuItem(item) && <InboxBadge className="absolute left-[32px] top-0 shadow-[0_0_0_2px_var(--k5-card)] [.k5-side:hover_&]:left-[36px] [.k5-side[data-open='true']_&]:left-[36px]" />}
       <span className="k5-nl">{item.label}</span>
     </Link>
   );
@@ -235,8 +279,8 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
         style={drag.style(item.key)}
         className={`${ITEM_CLASS} cursor-pointer border-none ${childActive ? "bg-k5-act text-k5-acx" : "bg-transparent text-k5-ink hover:bg-k5-soft"}`}
       >
-        <NavTile icon={item.icon} picture={navPictureFor(item)} />
-        {isInboxMenuItem(item) && <InboxBadge className="absolute left-[46px] top-0 shadow-[0_0_0_2px_var(--k5-card)]" />}
+        <NavTile item={item} icon={item.icon} picture={navPictureFor(item)} />
+        {isInboxMenuItem(item) && <InboxBadge className="absolute left-[40px] top-0 shadow-[0_0_0_2px_var(--k5-card)]" />}
         <span className="k5-nl">{item.label}</span>
         <span
           aria-hidden="true"
@@ -259,7 +303,7 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
                   title={child.label}
                   aria-label={child.label}
                   aria-current={active ? "page" : undefined}
-                  className={`flex w-[52px] items-center justify-center rounded-xl py-1.5 no-underline ${active ? "bg-k5-act" : "hover:bg-k5-soft"}`}
+                  className={`flex w-[52px] items-center justify-center rounded-xl py-1.5 no-underline transition-colors duration-150 ${active ? "bg-k5-act" : "hover:bg-k5-soft"}`}
                 >
                   <ClubMark art={art} />
                 </Link>
@@ -282,7 +326,7 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
                     active ? "bg-k5-act text-k5-acx" : "text-k5-ink hover:bg-k5-soft"
                   }`}
                 >
-                  {CLUB_ART[child.segment] && <ClubMark art={CLUB_ART[child.segment]} />}
+                  {CLUB_ART[child.segment] ? <ClubMark art={CLUB_ART[child.segment]} /> : <SubPicture item={child} parent={item} />}
                   <span className="min-w-0 truncate">{child.label}</span>
                 </Link>
               </li>
@@ -292,6 +336,29 @@ function NavGroup({ item, school, isActive, expandRail, onNavigate, drag }) {
       )}
     </>
   );
+}
+
+/**
+ * The little picture of a sub-menu item in the open menu (mockup: Academic Reports > Academic Performance / My Progress Report).
+ * Only items that have a mockup picture show one; the Communications group keeps plain names.
+ */
+function SubPicture({ item, parent }) {
+  const { isHigh } = useDashboardContext();
+  const [failed, setFailed] = useState(false);
+  // High (Mature) look: the mockup's 18px line icon on a soft green 32px tile (Academic Reports' sub-pages only).
+  const high = isHigh && parent.icon !== "inbox" ? highNavIconFor(item) : null;
+  if (high) {
+    return (
+      <span aria-hidden="true" className="flex h-8 w-8 flex-none items-center justify-center rounded-[10px] bg-k5-gt shadow-[0_0_0_2px_var(--k5-card),0_0_0_3px_var(--k5-line)]">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="[stroke:var(--k5-hn-g)]">
+          {high.art}
+        </svg>
+      </span>
+    );
+  }
+  const picture = parent.icon === "inbox" ? "" : navPictureFor(item);
+  if (!picture || failed) return null;
+  return <OptimizedImage src={picture} alt="" width={32} height={32} className="block h-8 w-8 flex-none object-contain" onError={() => setFailed(true)} />;
 }
 
 /** A club's little picture (mockup .nsub): its flag for a language club, an emoji on a soft tile for the others. */
@@ -315,35 +382,53 @@ function ClubMark({ art }) {
 }
 
 /**
- * Pointer drag to reorder the rail's top-level items (mouse and touch). A press that moves
- * more than a few pixels becomes a drag; the click that follows the drop is swallowed so
- * dropping an item never navigates.
+ * Pointer drag to reorder the rail's top-level items. Mouse: a press that moves more than a few pixels becomes a drag.
+ * Touch / pen: only a LONG PRESS (the finger held still for LONG_PRESS_MS) picks the item up - a finger that moves before that
+ * is scrolling the menu, so the press is dropped and the menu scrolls as usual; once picked up, the page does not scroll while
+ * the item is moved. The click that follows the drop is swallowed so dropping an item never navigates.
  */
+const LONG_PRESS_MS = 450;
+const TOUCH_SLOP = 8;
 function useDragReorder({ navRef, keys, onReorder, disabled }) {
   const [dragging, setDragging] = useState(null); // { key, dy }
   const pressRef = useRef(null);
   const swallowClickRef = useRef(false);
+  // Leaving the page while a long press is still waiting: its timer must not fire. (Not in the effect below: that one re-runs
+  // on every render, because `keys` is a new list each time, and must keep the press alive across those re-runs.)
+  useEffect(() => () => clearTimeout(pressRef.current?.timer), []);
 
   useEffect(() => {
     if (disabled) return;
+    const endPress = () => {
+      clearTimeout(pressRef.current?.timer);
+      pressRef.current = null;
+    };
     const onMove = (e) => {
       const press = pressRef.current;
-      if (!press) return;
+      if (!press || e.pointerId !== press.pointerId) return;
       const dy = e.clientY - press.startY;
+      if (press.touch && !press.active) {
+        // Moved before the long press finished: this is a scroll, not a drag.
+        if (Math.abs(dy) > TOUCH_SLOP || Math.abs(e.clientX - press.startX) > TOUCH_SLOP) endPress();
+        return;
+      }
       if (!press.active && Math.abs(dy) < 6) return;
       press.active = true;
       setDragging({ key: press.key, dy });
     };
     const onUp = (e) => {
       const press = pressRef.current;
-      pressRef.current = null;
-      if (!press?.active) return;
+      if (!press || e.pointerId !== press.pointerId) return;
+      endPress();
+      if (!press.active) return;
       // Only the click fired by this same release is swallowed.
       swallowClickRef.current = true;
       setTimeout(() => {
         swallowClickRef.current = false;
       }, 0);
       setDragging(null);
+      // A touch drag the browser cancelled has no drop position: the order stays.
+      if (e.type === "pointercancel") return;
       // Drop position: the item whose original middle the pointer has passed.
       const others = press.rects.filter((r) => r.key !== press.key);
       const index = others.filter((r) => e.clientY > r.mid).length;
@@ -351,13 +436,19 @@ function useDragReorder({ navRef, keys, onReorder, disabled }) {
       next.splice(index, 0, press.key);
       if (next.join() !== keys.join()) onReorder(next);
     };
+    // While a touch drag is on, the finger moves the item, not the page.
+    const onTouchMove = (e) => {
+      if (pressRef.current?.touch && pressRef.current.active) e.preventDefault();
+    };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onUp);
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
     return () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
+      window.removeEventListener("touchmove", onTouchMove);
     };
   }, [disabled, keys, onReorder]);
 
@@ -369,18 +460,35 @@ function useDragReorder({ navRef, keys, onReorder, disabled }) {
             "data-nav-key": key,
             onPointerDown: (e) => {
               if (e.button !== 0) return;
+              clearTimeout(pressRef.current?.timer);
               const nodes = navRef.current ? [...navRef.current.querySelectorAll(":scope > [data-nav-key]")] : [];
               const rects = nodes.map((node) => {
                 const rect = node.getBoundingClientRect();
                 return { key: node.dataset.navKey, mid: rect.top + rect.height / 2 };
               });
-              pressRef.current = { key, startY: e.clientY, rects, active: false };
+              const touch = e.pointerType !== "mouse";
+              const press = { key, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, rects, active: false, touch, timer: null };
+              if (touch) {
+                press.timer = setTimeout(() => {
+                  if (pressRef.current !== press) return;
+                  press.active = true;
+                  setDragging({ key, dy: 0 });
+                  navigator.vibrate?.(15);
+                }, LONG_PRESS_MS);
+              }
+              pressRef.current = press;
+            },
+            // A long press must not open the phone's link menu.
+            onContextMenu: (e) => {
+              if (pressRef.current?.touch) e.preventDefault();
             },
           },
     style: (key) =>
       dragging?.key === key
-        ? { transform: `translateY(${dragging.dy}px)`, zIndex: 2, boxShadow: "0 10px 24px rgba(10,16,34,0.22)", cursor: "grabbing" }
-        : undefined,
+        ? { transform: `translateY(${dragging.dy}px)`, zIndex: 2, boxShadow: "0 10px 24px rgba(10,16,34,0.22)", cursor: "grabbing", WebkitTouchCallout: "none" }
+        : disabled
+          ? undefined
+          : { WebkitTouchCallout: "none" },
     consumeClick: () => {
       const swallow = swallowClickRef.current;
       swallowClickRef.current = false;

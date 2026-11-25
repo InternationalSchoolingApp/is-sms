@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { openLmsLink } from "@/utils/lmsCourseLink";
+import { normalizeWebsite } from "@/constant/SchoolConstants";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Menu, LogOut, ChevronDown, User, KeyRound, UserPlus, Loader2 } from "lucide-react";
@@ -23,7 +24,7 @@ import { ChildSwitcher } from "@/components/parent/ChildSwitcher";
  * reference and wired as "coming soon" toasts until their target pages/SSO are
  * built (profile/change-password = Phase C; LMS = LMS SSO). Log out is live.
  */
-export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onHamburger, hideMenuButton = false, lmsProviderURL, isPayLmsPaymentPending }) {
+export function DashboardTopHeader({ schoolName, logoUrl, schoolWebsite, session, userName, onHamburger, lmsProviderURL, isPayLmsPaymentPending }) {
   const router = useRouter();
   const siblings = useAddSiblings();
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -46,24 +47,33 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
     <header className="fixed inset-x-0 top-[var(--maintenance-banner-h,0px)] z-50 flex h-[56px] items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 sm:px-5">
       {/* Left: hamburger + logo */}
       <div className="flex min-w-0 items-center gap-2">
-        {!hideMenuButton && (
-          <button
-            type="button"
-            aria-label="Toggle menu"
-            onClick={onHamburger}
-            className="rounded-md p-1.5 text-black hover:bg-slate-100"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-        )}
-        {logoUrl ? (
-          <Image src={logoUrl} alt={schoolName || ""} width={170} height={34} className="h-8 w-auto max-w-[140px] sm:max-w-[200px] object-contain" unoptimized />
-        ) : (
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-xs font-bold text-white">IS</div>
-            <span className="hidden text-sm font-bold text-black sm:inline">{schoolName}</span>
-          </div>
-        )}
+        <button
+          type="button"
+          aria-label="Toggle menu"
+          onClick={onHamburger}
+          className="rounded-md p-1.5 text-black hover:bg-slate-100"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        {/* Legacy header: the logo opens the school's website in a new tab (schoolSettingsLinks.schoolWebsite). */}
+        {(() => {
+          const logo = logoUrl ? (
+            <Image src={logoUrl} alt={schoolName || ""} width={170} height={34} className="h-8 w-auto max-w-[140px] sm:max-w-[200px] object-contain" unoptimized />
+          ) : (
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-xs font-bold text-white">IS</div>
+              <span className="hidden text-sm font-bold text-black sm:inline">{schoolName}</span>
+            </div>
+          );
+          const site = normalizeWebsite(schoolWebsite);
+          return site ? (
+            <a href={site} target="_blank" rel="noopener noreferrer" aria-label={`${schoolName || "School"} website`} title={site} className="flex flex-none items-center no-underline">
+              {logo}
+            </a>
+          ) : (
+            logo
+          );
+        })()}
       </div>
 
       {/* Center: the LMS switch; on the parent dashboard the page title, with the LMS switch only when the parent has an LMS user */}
@@ -146,6 +156,12 @@ export function DashboardTopHeader({ schoolName, logoUrl, session, userName, onH
                   className="flex w-full items-center gap-3 px-4 py-3 text-sm font-semibold text-black hover:bg-slate-100">
                   <KeyRound className="h-4 w-4" /> Change Password
                 </button>
+                {siblings.visible && (
+                  <button type="button" role="menuitem" disabled={siblings.busy} onClick={() => { setMenuOpen(false); siblings.handleClick(); }}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-sm font-semibold text-black hover:bg-slate-100 disabled:opacity-60">
+                    {siblings.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />} {siblings.label}
+                  </button>
+                )}
                 <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); setConfirmLogout(true); }}
                   className="flex w-full items-center gap-3 border-t border-slate-200 px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50">
                   <LogOut className="h-4 w-4" /> Log out

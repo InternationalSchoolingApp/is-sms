@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowLeft, ArrowRight, Camera, Check, Eye, EyeOff, FileText, IdCard, Info } from "lucide-react";
 import toast from "react-hot-toast";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
+import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { ConfirmDialog, EditableParents, EditablePersonal } from "@/components/k5/pages/K5ProfileEditors";
 import { K5PhotoDialog } from "@/components/k5/pages/K5PhotoDialog";
 import { SchoolEmailEditor, WithdrawalEditor } from "@/components/k5/pages/K5ProfileP5";
@@ -45,6 +46,11 @@ function Field({ label, value, mono, children, wide, floating = false }) {
       </span>
     </div>
   );
+}
+
+/** A read-only value as a floating-label field (FloatingLabelInput, K5 look): the label sits on the top border. */
+function FloatingField({ label, value, mono }) {
+  return <FloatingLabelInput k5 readOnly label={label} value={value || "—"} inputClassName={mono ? "font-mono" : ""} className="min-w-0" />;
 }
 
 /** "Verified" (accent, mockup .pfverd) / "WhatsApp" / "Emergency" marks under a value. */
@@ -107,8 +113,8 @@ function Ring({ pct }) {
   const C = 2 * Math.PI * 15;
   const color = pct >= 70 ? "var(--k5-ac)" : pct > 0 ? "#E8A200" : "var(--k5-line)";
   return (
-    <span className="relative block h-10 w-10 flex-none" aria-hidden="true">
-      <svg width="40" height="40" viewBox="0 0 40 40" className="block -rotate-90">
+    <span className="relative block h-[3.25rem] w-[3.25rem] flex-none" aria-hidden="true">
+      <svg viewBox="0 0 40 40" className="block h-full w-full -rotate-90">
         <circle cx="20" cy="20" r="15" fill="none" strokeWidth="5" style={{ stroke: "var(--k5-line)" }} />
         <circle
           cx="20"
@@ -152,22 +158,22 @@ function PersonalSection({ m }) {
   return (
     <>
       <div className={GRID3}>
-        <Field label="First Name" value={p.firstName} />
-        <Field label="Middle Name" value={p.middleName} />
-        <Field label="Last Name" value={p.lastName} />
-        <Field label="Gender" value={p.gender} />
+        <Field label="First Name" value={p.firstName} floating />
+        <Field label="Middle Name" value={p.middleName} floating />
+        <Field label="Last Name" value={p.lastName} floating />
+        <Field label="Gender" value={p.gender} floating />
         <Field label="Date of Birth" value={p.dob} floating />
-        <ValueWithMarks label="Phone" value={p.phone} marks={[[p.phoneWhatsApp, "WhatsApp"], [p.phoneVerified, "Verified"]]} />
-        <ValueWithMarks label="Alternate Phone" value={p.altPhone} marks={[[p.altPhoneWhatsApp, "WhatsApp"]]} />
-        <ValueWithMarks label="Email" value={p.email} marks={[[p.emailVerified, "Verified"]]} />
-        <ValueWithMarks label="Alternate Email" value={p.altEmail} marks={[[p.altEmailVerified, "Verified"]]} />
-        <Field label="Country" value={p.country} />
-        <Field label="State" value={p.state} />
-        <Field label="City" value={p.city} />
-        <Field label="Timezone" value={p.timezone} />
-        <Field label="Nationality" value={p.nationality} />
+        <ValueWithMarks label="Phone" value={p.phone} marks={[[p.phoneWhatsApp, "WhatsApp"], [p.phoneVerified, "Verified"]]} floating />
+        <ValueWithMarks label="Alternate Phone" value={p.altPhone} marks={[[p.altPhoneWhatsApp, "WhatsApp"]]} floating />
+        <ValueWithMarks label="Email" value={p.email} marks={[[p.emailVerified, "Verified"]]} floating />
+        <ValueWithMarks label="Alternate Email" value={p.altEmail} marks={[[p.altEmailVerified, "Verified"]]} floating />
+        <Field label="Country" value={p.country} floating />
+        <Field label="State" value={p.state} floating />
+        <Field label="City" value={p.city} floating />
+        <Field label="Timezone" value={p.timezone} floating />
+        <Field label="Nationality" value={p.nationality} floating />
       </div>
-      <Field label="Address" value={p.address} />
+      <Field label="Address" value={p.address} floating />
       {HR}
       <h3 className={H3}>Hobbies</h3>
       {p.hobbies.length ? (
@@ -185,7 +191,7 @@ function PersonalSection({ m }) {
       <h3 className={H3}>Social Media Links</h3>
       <div className={GRID2}>
         {p.social.map((link) => (
-          <Field key={link.label} label={`${link.label} Profile URL`}>
+          <Field key={link.label} label={`${link.label} Profile URL`} floating>
             {link.url ? (
               <a href={/^https?:\/\//i.test(link.url) ? link.url : `https://${link.url}`} target="_blank" rel="noopener noreferrer" className="text-k5-acx underline">
                 {link.url}
@@ -242,12 +248,12 @@ function AcademicSection({ m, editor, actions }) {
   return (
     <>
       <div className={GRID3}>
-        <Field label="Student ID" value={a.studentId} mono />
-        <Field label="Academic Year Start Date" value={a.academicYearStart} />
-        <Field label="Enrollment Date" value={a.enrollmentDate} />
-        <Field label="Learning Program" value={a.learningProgram} />
-        <Field label="Grade" value={a.grade} />
-        <Field label="LMS Platform" value={a.lms} />
+        <FloatingField label="Student ID" value={a.studentId} mono />
+        <FloatingField label="Academic Year Start Date" value={a.academicYearStart} />
+        <FloatingField label="Enrollment Date" value={a.enrollmentDate} />
+        <FloatingField label="Learning Program" value={a.learningProgram} />
+        <FloatingField label="Grade" value={a.grade} />
+        <FloatingField label="LMS Platform" value={a.lms} />
       </div>
       <h3 className={H3}>{a.grade ? `Courses (${a.grade})` : "Courses"}</h3>
       <div className="flex flex-wrap gap-2.5">
@@ -267,11 +273,11 @@ function AcademicSection({ m, editor, actions }) {
         <EditablePreviousSchool m={m} editor={editor} />
       ) : (
         <div className={GRID3}>
-          <Field label="Previous/Current School Name" value={a.previousSchool} />
-          <Field label="Previous/Current Grade Name" value={a.previousGrade} />
-          <Field label="Previous/Current School Graduation Year" value={a.graduationYear} />
-          <Field label="Previous/Current School Country" value={a.previousCountry} />
-          <Field label="CTI Taken Recommended Grade" value={a.ctiRecommendedGrade} />
+          <FloatingField label="Previous/Current School Name" value={a.previousSchool} />
+          <FloatingField label="Previous/Current Grade Name" value={a.previousGrade} />
+          <FloatingField label="Previous/Current School Graduation Year" value={a.graduationYear} />
+          <FloatingField label="Previous/Current School Country" value={a.previousCountry} />
+          <FloatingField label="CTI Taken Recommended Grade" value={a.ctiRecommendedGrade} />
         </div>
       )}
       {HR}
@@ -470,6 +476,7 @@ function Avatar({ header, onPick }) {
 export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownloadIdCard, downloading, downloadProgress, editor, actions }) {
   const [current, setCurrent] = useState(1);
   const [photoFile, setPhotoFile] = useState(null);
+  const [askActivate, setAskActivate] = useState(false);
   const pickPhoto = (file) => {
     // The existing page (cropperImage.js cropImage, docType "Profile Image"): JPG / PNG only, max 5 MB, one message for both.
     if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type) || file.size > 5 * 1024 * 1024) return toast.error("Please upload files in JPG, PNG, and JPEG with max size of 5MB");
@@ -536,9 +543,9 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
               aria-valuenow={model.pct}
               aria-valuemin={0}
               aria-valuemax={100}
-              className="block h-4 flex-[1_1_auto] overflow-hidden rounded-full border-2 border-k5-line bg-k5-soft"
+              className="k5h-pbar block h-4 flex-[1_1_auto] overflow-hidden rounded-full border-2 border-k5-line bg-k5-soft"
             >
-              <span className="block h-full rounded-full bg-k5-ac transition-[width] duration-400" style={{ width: `${model.pct}%` }} />
+              <span className="block h-full rounded-full bg-k5-grn transition-[width] duration-400" style={{ width: `${model.pct}%` }} />
             </span>
             <span className="whitespace-nowrap text-base font-black">{model.pct}% complete</span>
           </div>
@@ -574,14 +581,15 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
                 type="button"
                 onClick={() => go(s)}
                 aria-current={on ? "step" : undefined}
-                className={`k5m-r12 flex min-h-[56px] w-full cursor-pointer items-center gap-2.5 rounded-2xl border-[3px] px-2.5 py-1.5 text-start font-k5-body text-[15px] font-black text-k5-ink max-[900px]:w-auto max-[900px]:max-w-[220px] max-[900px]:flex-none ${on ? "border-k5-ac bg-k5-act" : "border-transparent bg-k5-card"}`}
+                className={`k5m-r12 flex min-h-[56px] w-full cursor-pointer items-center gap-2.5 rounded-2xl border-[3px] px-2.5 py-1.5 text-start font-k5-body text-[15px] font-black text-k5-ink max-[900px]:w-auto max-[900px]:max-w-[260px] max-[900px]:flex-none ${on ? "border-k5-ac bg-k5-act" : "border-transparent bg-k5-card"}`}
               >
                 <span
                   className={`flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full font-k5-display text-[15px] font-semibold ${on ? "bg-k5-ac text-white" : "bg-k5-soft text-k5-ink"}`}
                 >
                   {i + 1}
                 </span>
-                <span className="min-w-0 flex-[1_1_auto] leading-[1.2]">{s.title}</span>
+                {/* min-w on the phone strip: the longest word ("Parent/Guardian") keeps its room, so the title never runs under the ring. */}
+                <span className="min-w-0 flex-[1_1_auto] leading-[1.2] max-[900px]:min-w-[8.5rem]">{s.title}</span>
                 {s.pct !== null && <Ring pct={s.pct} />}
               </button>
             );
@@ -624,11 +632,7 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
                   Open Outlook
                 </a>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => toast("Activating your school user ID — coming soon", { icon: "🚧" })}
-                  className={ACCENT_BTN}
-                >
+                <button type="button" onClick={() => setAskActivate(true)} className={ACCENT_BTN}>
                   Activate your school user ID
                 </button>
               ))}
@@ -660,6 +664,24 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
         </section>
       </div>
       <ConfirmDialog confirm={editor?.confirm} />
+      {/* Legacy showWarningMessageShow("Are you sure you want to activate your school User ID?"): Yes opens Outlook. A sample (dummy)
+          profile has no real school user ID to create, so nothing is saved. */}
+      <ConfirmDialog
+        confirm={
+          askActivate
+            ? {
+                message: "Are you sure you want to activate your school User ID?",
+                okLabel: "Yes",
+                cancelLabel: "No",
+                cancel: () => setAskActivate(false),
+                accept: () => {
+                  setAskActivate(false);
+                  window.open("https://outlook.office.com", "_blank", "noopener,noreferrer");
+                },
+              }
+            : null
+        }
+      />
       <K5PhotoDialog key={photoFile ? `${photoFile.name}-${photoFile.size}-${photoFile.lastModified}` : "none"} file={photoFile} saving={actions?.busy === "doc:Profile Image"} onCancel={() => setPhotoFile(null)} onSave={savePhoto} />
     </div>
   );

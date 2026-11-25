@@ -6,6 +6,8 @@ import { Check, ChevronDown, Copy, Eye, EyeOff, KeyRound, Mail } from "lucide-re
 import toast from "react-hot-toast";
 import { activateSchoolEmail, confirmWithdrawal, getWithdrawal, resetSchoolEmailPassword, startWithdrawal, submitWithdrawalBank } from "@/services/profileP5Api";
 import { callServer } from "@/utils/serverCall";
+import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
+import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { K5Loading, K5ListSkeleton } from "@/components/k5/K5Skeletons";
 
 /*
@@ -441,7 +443,7 @@ function Policy({ title, children }) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex min-h-[56px] w-full cursor-pointer items-center gap-2.5 border-none bg-k5-card px-4 py-2 text-start font-k5-body text-[17px] font-black text-k5-ink"
+        className=" motion-none flex min-h-[56px] w-full cursor-pointer items-center gap-2.5 border-none bg-k5-card px-4 py-2 text-start font-k5-body text-[17px] font-black text-k5-ink"
       >
         <span>{title}</span>
         <span className="rounded-full border-2 border-k5-yb bg-k5-yt px-2.5 py-0.5 text-xs font-black uppercase tracking-[0.04em] text-k5-yx">Please read</span>
@@ -538,32 +540,11 @@ function NewRequest({ reasons, onDone }) {
   return (
     <>
       <h3 className={H3}>New Withdrawal Request</h3>
-      <label className={LABEL}>
-        <span>
-          Primary reason<span className="text-k5-ri"> *</span>
-        </span>
-        <select value={reasonId} onChange={(e) => setReasonId(e.target.value)} className={`${INPUT} cursor-pointer`}>
-          <option value="">Select a reason…</option>
-          {reasons.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.reason}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className={LABEL}>
-        <span>
-          Tell us more<span className="text-k5-ri"> *</span>
-        </span>
-        <textarea
-          value={details}
-          onChange={(e) => setDetails(e.target.value)}
-          rows={4}
-          maxLength={2000}
-          placeholder="Briefly explain the reason for this withdrawal request..."
-          className={`${INPUT} resize-y py-3 leading-[1.45]`}
-        />
-      </label>
+      <div className="min-w-0">
+        <FloatingLabelSelect k5 label="Primary reason" required alwaysFloat placeholder="Select a reason…" value={String(reasonId ?? "")} onValueChange={setReasonId} options={reasons.map((r) => ({ value: String(r.id), label: r.reason }))} searchable className="w-full" />
+      </div>
+      <FloatingLabelInput k5 multiline required label="Tell us more" value={details} onChange={(e) => setDetails(e.target.value)} rows={4} maxLength={2000} className="min-w-0" />
+
       <Policy title="Withdrawal Terms & Conditions">
         <ul className="m-0 flex flex-col gap-2 ps-5">
           <li>Once the withdrawal is completed, access to all the platforms you were enrolled in will be turned off.</li>
@@ -665,10 +646,7 @@ export function WithdrawalEditor({ m }) {
           ["Grade", student.standardName || m.academic.grade],
           ["Learning Program", m.academic.learningProgram || student.programName],
         ].map(([label, value, mono]) => (
-          <div key={label} className={LABEL}>
-            <span>{label}</span>
-            <span className={`${RO} ${mono ? "font-mono" : ""}`}>{value || "—"}</span>
-          </div>
+          <FloatingLabelInput key={label} k5 readOnly label={label} value={value || "—"} inputClassName={`k5h-pf-ro ${mono ? "font-mono" : ""}`} className="min-w-0" />
         ))}
       </div>
       {HR}

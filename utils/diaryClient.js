@@ -9,15 +9,11 @@
  * else, whose diary has no unread notes, and the badge then never shows. (The proxy that picks the account for page
  * requests does not run for /api routes.) It only chooses among the accounts this browser is already signed in to.
  */
-import { diaryLog } from "@/utils/diaryDebug";
-
 const ACCOUNT_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
 async function askDiary(action, params = {}, account) {
   const headers = { "Content-Type": "application/json" };
   if (typeof account === "string" && ACCOUNT_ID.test(account)) headers["X-Account"] = account;
-  const started = Date.now();
-  diaryLog(`request ${action}`, { ...params, account: headers["X-Account"] || "(none - tab's remembered account)" });
   try {
     const response = await fetch("/api/diary", {
       method: "POST",
@@ -25,22 +21,9 @@ async function askDiary(action, params = {}, account) {
       cache: "no-store",
       body: JSON.stringify({ action, ...params }),
     });
-    if (!response.ok) {
-      diaryLog(`answer ${action} FAILED`, { httpStatus: response.status, ms: Date.now() - started });
-      return null;
-    }
-    const answer = await response.json();
-    diaryLog(`answer ${action}`, {
-      httpStatus: response.status,
-      ms: Date.now() - started,
-      unreadMessageCount: answer?.details?.unreadMessageCount,
-      unreadThreadCount: answer?.details?.unreadThreadCount,
-      threads: Array.isArray(answer?.details?.threads) ? answer.details.threads.map((t) => `${t.threadId}:${t.unreadCount}`).join(",") : undefined,
-      badgeVersion: action === "badge-version" ? answer : undefined,
-    });
-    return answer;
-  } catch (error) {
-    diaryLog(`answer ${action} ERROR`, { error: String(error), ms: Date.now() - started });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
     return null;
   }
 }
@@ -53,6 +36,9 @@ export const getDiaryThreadList = ({ account, page = 0, size = 20 } = {}) => ask
 
 /** details: { threadId, threadStatus, courseName, sourceTimezone, page, size, totalPages, messages } (each page oldest first). */
 export const getDiaryThreadMessages = ({ account, threadId, page = 0, size = 20 }) => askDiary("messages", { threadId, page, size }, account);
+
+/** details: [{ userId, userName, roleType }] of the thread (the parent's name for the staff notes). */
+export const getDiaryMentionUsers = ({ account, threadId }) => askDiary("mention-users", { threadId }, account);
 
 export const markDiaryThreadRead = ({ account, threadId }) => askDiary("mark-read", { threadId }, account);
 

@@ -48,8 +48,9 @@ const BODIES = {
 /**
  * The K–5 buddy (Pico, Penny, Booky, Bolt, Twinkle). `talking` animates the mouth, `wave`
  * waves the arm, `walking` bobs and steps (while the guide walks between tips); both stop under reduced motion (appearance.css / prefers-reduced-motion).
+ * `santa` (25 December, components/k5/christmas): Pico wears a Santa hat instead of the graduation cap.
  */
-export function PicoMascot({ buddy = "pico", width = 140, talking = false, wave = true, full = true, walking = false }) {
+export function PicoMascot({ buddy = "pico", width = 140, talking = false, wave = true, full = true, walking = false, santa = false }) {
   const look = BUDDIES[buddy] || BUDDIES.pico;
   const height = full ? Math.round((width * 260) / 200) : width;
   return (
@@ -67,7 +68,15 @@ export function PicoMascot({ buddy = "pico", width = 140, talking = false, wave 
           <circle cx="186" cy="176" r="12" fill={look.arm} />
           {BODIES[buddy] || BODIES.pico}
           <Face talking={talking} />
-          {buddy === "pico" && (
+          {buddy === "pico" && santa && (
+            <g>
+              <path d="M52 48 C54 14 84 -4 114 1 C140 5 160 22 170 54 C158 42 148 37 139 39 L148 48 Z" fill="#E53935" />
+              <path d="M114 1 C140 5 160 22 170 54 C162 46 156 42 150 41 C146 26 134 12 114 1 Z" fill="#B71C1C" opacity="0.35" />
+              <rect x="42" y="38" width="116" height="22" rx="11" fill="#FFFFFF" stroke="#DDE3EE" strokeWidth="2" />
+              <circle cx="171" cy="57" r="12" fill="#FFFFFF" stroke="#DDE3EE" strokeWidth="2" />
+            </g>
+          )}
+          {buddy === "pico" && !santa && (
             <g>
               <path d="M70 36v14q30 12 60 0V36z" fill="#1C2640" />
               <path d="M100 8l56 20-56 20-56-20z" fill="#1C2640" />

@@ -4,9 +4,11 @@
 @import "./k5-theme.css";
 @import "./k5-middle.css";
 @import "./k5-mature.css";
+@import "./k5-christmas.css";
 @import "./appearance.css";
 @import "./k5-modules.css";
 @import "./profile-plain.css";
+@import "./scrollbar.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -468,4 +470,10 @@ input:-internal-autofill-selected {
   50% {
     opacity: 1;
   }
+}
+
+/* The three dots after "Verifying your credentials" (session-expired dialog) blink one after another. */
+@keyframes dots-blink {
+  0%, 80%, 100% { opacity: 0.15; }
+  40% { opacity: 1; }
 }

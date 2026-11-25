@@ -24,6 +24,11 @@ export const APPEARANCE_OPTIONS = {
   voiceSpeed: ["slow", "normal", "fast"],
   speech: ["on", "off"],
   buddyEnabled: ["on", "off"],
+  gameSound: ["on", "off"],
+  // The dashboard look (mockup "Theme"): auto = the student's own grade look.
+  gradeLook: ["auto", "playful", "balanced", "mature"],
+  // The Christmas (25 December) theme: snow, music and decorations (components/k5/christmas).
+  christmas: ["on", "off"],
 };
 
 // Decision 08: Light by default (System stays available in the dialog).
@@ -46,11 +51,29 @@ export const DEFAULT_APPEARANCE = {
   voiceSpeed: "normal",
   speech: "on",
   buddyEnabled: "on",
+  gameSound: "on",
+  gradeLook: "auto",
+  christmas: "on",
 };
 
 // School policy (admin CONFIGURATION keys arrive in Phase 4). Customization off = defaults
 // enforced; saved overrides are kept, just inactive.
 export const DEFAULT_POLICY = { allowUserCustomization: true, defaults: DEFAULT_APPEARANCE };
+
+// The three dashboard looks a student can pick from (mockup Look dialog > Theme): Playful is the Grade K-5 look, Balanced
+// the Grade 6-8 look (app/k5-middle.css), Mature the Grade 9-12 look (app/k5-mature.css). Only the look changes: what
+// the dashboard shows still follows the student's grade. dots: the colours in the mockup's preview card.
+export const GRADE_LOOKS = {
+  playful: { name: "Playful Theme", dots: ["#1E66E0", "#C92F6E", "#F2B807", "#1F7A3A"] },
+  balanced: { name: "Balanced Theme", dots: ["#027FFE", "#0F766E", "#C2410C", "#6A3FC4"] },
+  mature: { name: "Mature Theme", dots: ["#027FFE", "#5B6577", "#AEB6C4", "#E3E7ED"] },
+};
+
+/** The look of a grade band: Grade 9-12 Mature, Grade 6-8 Balanced, else Playful. */
+export const gradeLookOf = ({ isMiddle, isHigh }) => (isHigh ? "mature" : isMiddle ? "balanced" : "playful");
+
+/** The look on screen: the one the student picked, or their own grade's look (auto). */
+export const effectiveGradeLook = (preference, band) => (GRADE_LOOKS[preference] ? preference : gradeLookOf(band));
 
 export const THEME_SWATCHES = {
   ocean: { name: "Ocean", color: "#1E66E0" },

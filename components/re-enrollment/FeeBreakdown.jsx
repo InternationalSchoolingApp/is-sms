@@ -75,7 +75,7 @@ function Discounts({ youSave }) {
  * fee.advanceFeeDetails — the same fee lines the legacy review shows (getAdvancePaymentTable()), where the payable fee is
  * what is still due after the advance, not the plan's full amount.
  */
-export function FeeBreakdown({ fee, option, variantMode, gradeName, advance = false, courseFeeLabel }) {
+export function FeeBreakdown({ fee, option, variantMode, gradeName, advance = false, courseFeeLabel, payableOverride }) {
   if (!fee) return null;
   const useAdvance = advance && Boolean(fee.advanceFeeDetails);
   if (!useAdvance && !option) return null;
@@ -150,7 +150,7 @@ export function FeeBreakdown({ fee, option, variantMode, gradeName, advance = fa
           </tbody>
         </table>
       )}
-      <Row label="Payable Fee" value={plan?.payableFeeString} strong />
+      <Row label="Payable Fee" value={payableOverride ?? plan?.payableFeeString} strong />
     </div>
   );
 }

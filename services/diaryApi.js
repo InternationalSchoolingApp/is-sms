@@ -3,6 +3,7 @@
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { serviceKeyHeaders, smsAuthHeaders } from "@/lib/auth/session";
+import { getSessionIdentity } from "@/utils/backendRequest";
 
 /**
  * "Student Diary" is the legacy School Diary teacher<->student/parent
@@ -30,6 +31,11 @@ async function parseJsonResponse(response) {
 }
 
 async function postDiary(path, body) {
+  // These exports are server actions the browser can call with any sessionUserId: the diary is always the signed-in
+  // user's own (the id from this request's sign-in replaces whatever was passed in).
+  const me = await getSessionIdentity();
+  if (!me) return null;
+  body = { ...body, sessionUserId: me.userId };
   const baseUrl = await resolveServerBackendOrigin();
   const response = await fetch(`${baseUrl}/api/diary${path}`, {
     method: "POST",
@@ -37,7 +43,6 @@ async function postDiary(path, body) {
     headers: { "Content-Type": "application/json", ...serviceKeyHeaders(), ...(await smsAuthHeaders()) },
     body: JSON.stringify({ payload: encodePayload(body) }),
   });
-  console.log("postDiary", path, body, response);
   return parseJsonResponse(response);
 }
 
@@ -86,6 +91,17 @@ export async function replyToDiaryThread({ sessionUserId, threadId, message }) {
   if (!hasBackendOrigin() || !sessionUserId || !threadId || !message) return null;
   try {
     return await postDiary("/message/reply", { sessionUserId, threadId, message });
+  } catch {
+    return null;
+  }
+}
+
+// details: [{ userId, userName, roleType, ... }] - the people of the thread. Legacy suggestionList() takes the PARENT's userName as the
+// name a staff note is addressed to ("Mrs. Huma Zeb, Greetings from ...!").
+export async function getDiaryMentionUsers({ sessionUserId, threadId }) {
+  if (!hasBackendOrigin() || !sessionUserId || !threadId) return null;
+  try {
+    return await postDiary("/thread/mention-users", { sessionUserId, threadId });
   } catch {
     return null;
   }

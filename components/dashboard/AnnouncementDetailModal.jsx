@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
-import { CalendarDays, Eye, Megaphone, X } from "lucide-react";
+import { CalendarDays, CheckCircle2, Eye, Megaphone, X } from "lucide-react";
 import DOMPurify from "dompurify";
 import { submitAnnouncementAcknowledge } from "@/services/dashboardApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
@@ -34,6 +34,13 @@ export function AnnouncementDetailModal({ announcement, schoolUUID, userId, onCl
   const dummy = useDummyStudent();
   const [acknowledged, setAcknowledged] = useState(announcement.replyStatus === "Y");
   const [acknowledging, setAcknowledging] = useState(false);
+  // "Thanks for Acknowledgement" stays on screen for 5 seconds after an acknowledge goes through.
+  const [thanks, setThanks] = useState(false);
+  useEffect(() => {
+    if (!thanks) return undefined;
+    const id = setTimeout(() => setThanks(false), 5000);
+    return () => clearTimeout(id);
+  }, [thanks]);
   const attachmentUrl = getAttachmentUrl(announcement.attachment);
   // Like the legacy page: a picture opens in a preview dialog on this tab, any other file (PDF...) in a new tab.
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -49,6 +56,7 @@ export function AnnouncementDetailModal({ announcement, schoolUUID, userId, onCl
     if (result?.status !== "1" && result?.status !== 1) return;
 
     setAcknowledged(true);
+    setThanks(true);
     queryClient.setQueriesData({ queryKey: ["student-announcements", schoolUUID, userId] }, (data) => {
       if (!data) return data;
       return {
@@ -87,6 +95,13 @@ export function AnnouncementDetailModal({ announcement, schoolUUID, userId, onCl
           className="max-h-[45vh] overflow-y-auto px-5 py-4 text-sm leading-relaxed text-black [&_a]:text-primary [&_a]:underline [&_strong]:font-bold [&_ul]:list-disc [&_ul]:pl-5"
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(announcement.teacherRemarks || "") }}
         />
+
+        {thanks && (
+          <div role="status" aria-live="polite" className="flex items-center justify-center gap-2 border-t border-emerald-100 bg-emerald-50 px-5 py-2.5 text-sm font-bold text-emerald-700">
+            <CheckCircle2 className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+            Thanks for Acknowledgement
+          </div>
+        )}
 
         {(attachmentUrl || !acknowledged) && (
           <div className="flex gap-2 border-t border-slate-100 px-5 py-4">

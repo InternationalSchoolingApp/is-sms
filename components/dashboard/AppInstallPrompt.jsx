@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { viaTier3 } from "@/utils/dashboardBootstrap";
 import { AppDownloadDialog } from "@/components/k5/AppDownloadDialog";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
@@ -69,7 +70,7 @@ export function AppInstallPrompt({ hold = false }) {
 
   const eligible = useQuery({
     queryKey: ["app-install-eligible", userId],
-    queryFn: () => getAppInstallPromptEligible({ uniqueId: context.uniqueId }),
+    queryFn: () => viaTier3(userId, "appInstall", (a) => a.appInstall, () => getAppInstallPromptEligible({ uniqueId: context.uniqueId })),
     enabled: candidate && browserOk,
     staleTime: Infinity,
     gcTime: Infinity,

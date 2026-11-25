@@ -5,13 +5,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Bookmark, NotebookText, X } from "lucide-react";
 import { markDiaryThreadRead } from "@/utils/diaryClient";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
-import { useChatScroll, useDiaryMessages, useDiaryThreads, useFloatingDate, useLoadMoreAtEnd } from "@/hooks/useDiaryPaging";
+import { useChatScroll, useDiaryMessages, useDiaryParentName, useDiaryThreads, useFloatingDate, useLoadMoreAtEnd } from "@/hooks/useDiaryPaging";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { DiaryAvatar, DiaryLoadError, DiaryMessageText, FloatingDateChip } from "@/components/dashboard/DiaryBits";
 import { Skeleton } from "@/components/ui/skeleton";
 import { diaryInstant, formatDiaryDate } from "@/utils/diaryDates";
 import { isOwnDiaryMessage } from "@/utils/diaryChat";
 import { DEFAULT_DIARY_CHAT_WITH, DIARY_CHAT_WITH, filterThreadsByChatWith, noDiaryEntriesText } from "@/utils/diaryFilter";
+import { salutationFor } from "@/utils/salutation";
 
 // Roles that trigger the "Greetings from {school}!" letter template in
 // getParentSchoolDiaryTeacherCard/-ReplyCard (PARENT_MENTION_ROLE in
@@ -19,12 +20,8 @@ import { DEFAULT_DIARY_CHAT_WITH, DIARY_CHAT_WITH, filterThreadsByChatWith, noDi
 // regardless of who's actually reading the thread.
 export const STAFF_SENDER_ROLES = ["TEACHER", "DIRECTOR", "SCHOOL", "ADMIN"];
 
-export function salutationFor(gender) {
-  const normalized = (gender || "").toLowerCase();
-  if (normalized === "male") return "Mr.";
-  if (normalized === "female") return "Ms.";
-  return "";
-}
+// Moved to utils/salutation.js (the assigned-teacher pages use it too); still exported from here for the diary panels.
+export { salutationFor };
 
 // DISPLAY_DATETIME_FORMATTER ("ddd, DD MMM, YYYY hh:mm A"): the server date is in details.sourceTimezone and is shown in
 // the viewer's zone (utils/diaryDates.js; Asia/Singapore when the source zone is missing).
@@ -96,10 +93,9 @@ function ThreadList({ threads, chatWith, onSelect, sourceTimezone, endRef, loadi
  * a real reply from the thread's parent, or the viewer's own message, is
  * just plain text.
  */
-function DiaryEntryCard({ message, courseName, schoolName, viewerUserId, viewerName, sourceTimezone }) {
+function DiaryEntryCard({ message, courseName, schoolName, parentName, viewerUserId, viewerName, sourceTimezone }) {
   const isOwn = isOwnDiaryMessage(message, { userId: viewerUserId, role: "STUDENT", userName: viewerName });
   const isStaffSender = STAFF_SENDER_ROLES.includes((message.senderRole || "").toUpperCase());
-  const recipientName = message.mentions?.find((mention) => mention.roleType === "PARENT")?.userName || "Parent";
 
   return (
     <div data-diary-at={diaryInstant(message.createdAt, sourceTimezone)?.getTime()} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
@@ -116,7 +112,7 @@ function DiaryEntryCard({ message, courseName, schoolName, viewerUserId, viewerN
         )}
         {isStaffSender && (
           <div className="mb-1">
-            <p className="font-caveat text-xl font-bold text-black">{recipientName}</p>
+            <p className="font-caveat text-xl font-bold text-black">{parentName}</p>
             <p className="font-caveat text-lg font-semibold text-primary">Greetings from {schoolName}!</p>
             <p className="font-caveat text-lg font-semibold text-black">Hope you are doing well.</p>
           </div>
@@ -145,6 +141,7 @@ function ThreadView({ threadId, sessionUserId, schoolName }) {
   const dummy = useDummyStudent();
   const queryClient = useQueryClient();
   const { query: messagesQuery, messages, courseName, sourceTimezone } = useDiaryMessages({ sessionUserId, threadId });
+  const parentName = useDiaryParentName({ threadId });
   const { context } = useDashboardContext();
   const anchorRef = useRef(null);
   // Opens on the newest message; the older ones load in above when the top is reached (legacy loadOldMessages).
@@ -188,7 +185,7 @@ function ThreadView({ threadId, sessionUserId, schoolName }) {
           }}
         />
         <Bookmark aria-hidden="true" className="absolute -top-1 right-4 h-7 w-5 fill-primary text-primary" />
-        <FloatingDateChip label={floatingDate.label} visible={floatingDate.visible} className="bg-primary text-white" />
+        {/* <FloatingDateChip label={floatingDate.label} visible={floatingDate.visible} className="bg-primary text-white" /> */}
 
         <div className="space-y-4">
           {messagesQuery.isFetchingNextPage && <DiarySkeleton rows={1} />}
@@ -205,6 +202,7 @@ function ThreadView({ threadId, sessionUserId, schoolName }) {
                 message={message}
                 courseName={courseName}
                 schoolName={schoolName}
+                parentName={parentName}
                 viewerUserId={sessionUserId}
                 viewerName={context?.userName}
                 sourceTimezone={sourceTimezone}

@@ -5,6 +5,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import toast from "react-hot-toast";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { bootstrapUser, viaTier2 } from "@/utils/dashboardBootstrap";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
 import { useInboxCompose } from "@/hooks/useInboxCompose";
 import {
@@ -17,7 +18,7 @@ import {
   DEFAULT_INBOX_FILTERS, EMPTY_INBOX, EMPTY_SENT, INBOX_FOLDERS, SEND_ERROR, SEND_UNREACHABLE, SENT_FOLDER, SETTING_OFF, SETTING_ON, emailSettingRows,
   inboxListRequest, listSummary, shownFileName,
 } from "@/utils/inbox";
-import { getBrowserTimezone } from "@/utils/calendarEvents";
+import { DUMMY_STUDENT_TIMEZONE } from "@/utils/calendarEvents";
 import { SessionExpiredError, isSessionExpired, isSessionExpiredError, markSessionExpired } from "@/utils/sessionState";
 
 /**
@@ -61,7 +62,7 @@ async function fetchRoute(path, payload, fallback) {
 const liveInbox = {
   dummy: false,
   list: (request) => ask(() => listInbox(request)),
-  unread: () => ask(() => getInboxUnread()),
+  unread: () => ask(() => (bootstrapUser() ? viaTier2(bootstrapUser(), "inbox", (a) => a.inbox, () => getInboxUnread()) : getInboxUnread())),
   async openEmail(id) {
     const email = await ask(() => openInboxEmail({ id }));
     // The email's own HTML is fetched as text and shown in a sandboxed frame (never put into the page).
@@ -141,7 +142,7 @@ function useInboxSource() {
     [dummy.enabled, dummy.key, userId, band, studentName, schoolName],
   );
   // Dummy messages are placed around the viewer's own clock, so dummy mode shows them in the browser's zone.
-  const timeZone = resolveTimeZone(dummy.enabled ? getBrowserTimezone() : dashboardData.userTimezone);
+  const timeZone = resolveTimeZone(dummy.enabled ? DUMMY_STUDENT_TIMEZONE : dashboardData.userTimezone);
   const ready = Boolean(userId) && dummy.settled && (dummy.enabled || !dashboardData.isLoading);
   return { source, ready, timeZone, schoolName, scope: ["inbox", userId, dummy.key] };
 }

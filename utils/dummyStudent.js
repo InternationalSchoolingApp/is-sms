@@ -12,6 +12,7 @@
  * — see docs/migration/dummy-student-mode-plan.md.
  */
 
+import { DUMMY_STUDENT_TIMEZONE } from "@/utils/calendarEvents";
 import { ELEMENTARY_GRADE_KEYS, GRADE_CONFIG, GRADE_KEYS, gradeKeyByLabel, gradeKeyByStandardId } from "@/utils/gradeBand";
 
 const SUBJECT_ROWS = {
@@ -30,7 +31,7 @@ const SUBJECT_ROWS = {
   12: [["ENG", "English 12", "English.jpg"], ["PRECAL", "Pre-Calculus", "Pre-Calculus.jpg"], ["ENV", "Environmental Studies", "ENVIRONMENTAL-STUDIES.jpg"], ["GOV", "Government and Politics", "Comparative-Government-and-Politics.jpg"], ["FIN", "Personal Financial Literacy", "Personal-Financial-Literacy.jpg"], ["MEDIA", "Media Studies", "Media-Studies.jpg"]],
 };
 
-const TEACHERS = ["Ms. Olivia Parker", "Ms. Emma Johnson", "Mr. Daniel Carter", "Ms. Sophia Williams", "Mr. Ethan Brooks", "Ms. Ava Thompson", "Dr. Mia Roberts", "Mr. Noah Anderson", "Ms. Lily Morgan", "Mr. Liam Foster", "Ms. Grace Bennett", "Mr. Lucas Rivera", "Ms. Isabella Clark", "Ms. Chloe Adams", "Mr. Henry Lee"];
+const TEACHERS = ["Ms. Olivia Parker", "Ms. Emma Johnson", "Mr. Daniel Carter", "Ms. Sophia Williams", "Mr. Ethan Brooks", "Ms. Ava Thompson", "Ms. Mia Roberts", "Mr. Noah Anderson", "Ms. Lily Morgan", "Mr. Liam Foster", "Ms. Grace Bennett", "Mr. Lucas Rivera", "Ms. Isabella Clark", "Ms. Chloe Adams", "Mr. Henry Lee"];
 
 const FEE_STRUCTURE = {
   Kindergarten: { group: [1186, 627, 627], oneToOne: [1470, 840, 840], installment: { group: 2440, oneToOne: 3150 }, lumpsum: { group: 2140, oneToOne: 2750 } },
@@ -56,7 +57,6 @@ const DUMMY_CLUB_ANNOUNCEMENT_POOL = [
   { name: "Music Club", category: "The Music Club", focus: "singing, rhythm, composition, and performance practice" },
   { name: "The Aurelian Club", category: "The STEM Club", focus: "science, technology, engineering, and math projects" },
 ];
-const DUMMY_STUDENT_TIMEZONE = "America/New_York";
 const ASSIGNMENT_KINDS = ["Homework", "Worksheet", "Practice Set", "Reading Assignment", "Project Task", "Quiz Preparation", "Lab Report", "Essay Draft"];
 const ACTIVITY_ROWS = { K: 2, 1: 2, 2: 2, 3: 2, 4: 2, 5: 2, 6: 2, 7: 2, 8: 2, 9: 2, 10: 2, 11: 2, 12: 2 };
 const DUMMY_ACTIVITY_NAMES = ["Meet Your Classmates", "Creative Reading Circle", "Math Puzzle Challenge", "Science Discovery Lab", "Storytelling Workshop", "Art and Ideas Club", "Brain Games Hour", "Presentation Practice"];
@@ -140,6 +140,9 @@ function isOneToOneLearningProgram(value) {
   return program === "ONE_TO_ONE" || program.includes("ONE TO ONE") || program.includes("ONE-TO-ONE");
 }
 
+// Today's dummy class start per seed + grade + day, kept for the page's life (see classesForDay).
+const TODAY_CLASS_START = new Map();
+
 /**
  * One dummy student. `row` = the demo-data row (or null), `params` = URLSearchParams of the page,
  * `fallbackName` = the logged-in user's name (legacy USER_FULL_NAME) when no demo name is known.
@@ -158,6 +161,8 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
   const dbRow = rowMatches ? row : null;
   const hasDemoContext = DEMO_PARAMS.some((name) => param(name));
 
+  // "Now" is the browser's own clock, as legacy window.getDummyStudentBaseDate (new Date()): the dummy "today" and the
+  // class times follow the browser date, while the events are still tagged America/New_York, same as the legacy dashboard.
   function baseDate() {
     const value = param("dummyDate");
     const now = new Date();
@@ -218,12 +223,56 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
     }));
   }
 
-  function teacher(subject, index) {
-    const teachers = (subject?.teachers || []).map(safeTeacherName).filter(Boolean);
+  // The course as My Assigned Teacher knows it: the calendar / assignment lists (assignmentCourses) carry no teachers of their own, so
+  // their course is looked up in the student's courses (same id, else same name) to find the teacher assigned there.
+  function ownCourse(subject) {
+    if (!subject || (subject.teachers || []).length) return subject;
+    const list = subjects();
+    const name = cleanCourseName(subject.subjectName).toLowerCase();
+    return list.find((s) => String(s.subjectId) === String(subject.subjectId)) || list.find((s) => cleanCourseName(s.subjectName).toLowerCase() === name) || subject;
+  }
+  function courseTeacher(subject, index) {
+    const teachers = (ownCourse(subject)?.teachers || []).map(safeTeacherName).filter(Boolean);
     return teachers.length ? teachers[index % teachers.length] : TEACHERS[index % TEACHERS.length];
+  }
+  // Elementary has ONE class teacher for every course (My Assigned Teacher names the teacher listed on most courses, the first on
+  // a tie), so every screen - the courses, Book a Class, the classes - shows that same teacher. Grades 6-12: one per course.
+  let classTeacherName;
+  function classTeacher() {
+    if (classTeacherName === undefined) {
+      const counts = new Map();
+      subjects().forEach((subject, i) => {
+        const name = courseTeacher(subject, i);
+        counts.set(name, (counts.get(name) || 0) + 1);
+      });
+      let best = "";
+      let bestN = 0;
+      counts.forEach((n, name) => {
+        if (n > bestN) {
+          best = name;
+          bestN = n;
+        }
+      });
+      classTeacherName = best;
+    }
+    return classTeacherName;
+  }
+  // A course has ONE teacher on every screen (My Assigned Teacher, Book a Class, the classes in the calendar): the first of its
+  // own teachers, whatever position the caller counts from. (My Assigned Teacher counted from the course list, the calendar from
+  // 0, so Grade 6-12 showed two different teachers for the same course.)
+  function teacher(subject, index) {
+    return isElementary ? classTeacher() || courseTeacher(subject, index) : courseTeacher(subject, 0);
   }
 
   const userName = () => safeTeacherName(dbRow?.studentName) || param("demoStudentName") || fallbackName || "Demo Student";
+  // The learning program the counselor saved on the demo row (its code, e.g. SCHOLARSHIP = Self Study), else
+  // ?demoLearningProgram, else One to One - it decides Self-Study content and the grade look like a real student's.
+  const registrationType = (() => {
+    const code = String(dbRow?.learningProgram || param("demoLearningProgram") || "")
+      .trim()
+      .toUpperCase();
+    return /^[A-Z_]+$/.test(code) ? code : "ONE_TO_ONE";
+  })();
 
   // --- My Log in History (legacy dummyStudentLoginHistoryResponse) ---
   function loginHistory() {
@@ -345,11 +394,11 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
   // --- My Performance (legacy dummyAcademicPerformanceRows / ProgressDetail / GradeHistory) ---
   // K5 Class Comparison numbers per course (Playful.dc.html CD), so the tab can be seen without real class data.
   const DUMMY_CLASS = [
-    { size: 126, avgScore: 78.4, avgProgress: 18, scorePct: 58, progressPct: 78, youOnTime: 100, classOnTime: 72, onTimePct: 70, dist: [8, 14, 22, 26, 24, 16, 10, 6] },
-    { size: 98, avgScore: 86.1, avgProgress: 16, scorePct: 88, progressPct: 81, youOnTime: 100, classOnTime: 75, onTimePct: 66, dist: [10, 12, 18, 20, 17, 11, 6, 4] },
-    { size: 112, avgScore: 81.5, avgProgress: 12, scorePct: 90, progressPct: 34, youOnTime: 100, classOnTime: 69, onTimePct: 72, dist: [12, 20, 26, 24, 16, 8, 4, 2] },
-    { size: 14, avgScore: 72.5, avgProgress: 9, scorePct: 36, progressPct: 29, youOnTime: 75, classOnTime: 68, onTimePct: 52, dist: [2, 3, 4, 2, 1, 1, 1, 0] },
-    { size: 88, avgScore: 76.0, avgProgress: 11, scorePct: 38, progressPct: 41, youOnTime: 80, classOnTime: 70, onTimePct: 55, dist: [9, 17, 22, 18, 12, 6, 3, 1] },
+    { size: 126, avgScore: 78.4, avgProgress: 18, scorePct: 58, progressPct: 78, youOnTime: 100, classOnTime: 72, onTimePct: 70, dist: [22, 22, 26, 40, 16] },
+    { size: 98, avgScore: 86.1, avgProgress: 16, scorePct: 88, progressPct: 81, youOnTime: 100, classOnTime: 75, onTimePct: 66, dist: [22, 18, 20, 28, 10] },
+    { size: 112, avgScore: 81.5, avgProgress: 12, scorePct: 90, progressPct: 34, youOnTime: 100, classOnTime: 69, onTimePct: 72, dist: [32, 26, 24, 24, 6] },
+    { size: 14, avgScore: 72.5, avgProgress: 9, scorePct: 36, progressPct: 29, youOnTime: 75, classOnTime: 68, onTimePct: 52, dist: [5, 4, 2, 2, 1] },
+    { size: 88, avgScore: 76.0, avgProgress: 11, scorePct: 38, progressPct: 41, youOnTime: 80, classOnTime: 70, onTimePct: 55, dist: [26, 22, 18, 18, 4] },
   ];
 
   function academicPerformanceRows() {
@@ -764,7 +813,7 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
         end: fmt(plusMinutes(start, 90)),
         timezone: DUMMY_STUDENT_TIMEZONE,
         classStatus: i === 0 ? "Live" : "Upcoming",
-        eventType: "ONE_TO_ONE",
+        eventType: "STUDENT_DOUBT_SESSION",
         category: "CLASS",
         icon: img(subject),
         url: `dummy-student-class://dummy-student-schedule-${i + 1}`,
@@ -1037,6 +1086,7 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
     return Math.floor(diffDays / 7) * 5 + Math.min(Math.max(diffDays % 7, 0), 4);
   }
   function classesForDay(day) {
+    debugger
     const dayDate = dayToDate(day);
     if (dayDate.getDay() === 0 || dayDate.getDay() === 6) return [];
     let course;
@@ -1047,7 +1097,15 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
       course = courses.length ? courses[businessDayIndex(day) % courses.length] : null;
     }
     if (!course) return [];
-    const start = day === today() ? plusMinutes(baseDate(), -15) : new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), 9, 0, 0);
+    // Today's class starts 15 minutes before "now" (legacy). Fixed at the first ask: the calendar asks for today in more than
+    // one window (today, the week, the month, the day re-opened) and merges by id + start, so a fresh "now" each time
+    // would add another copy of the same class on every visit.
+    let start;
+    if (day === today()) {
+      const cacheKey = `${randomSeed()}|${gradeKey}|${day}`;
+      if (!TODAY_CLASS_START.has(cacheKey)) TODAY_CLASS_START.set(cacheKey, plusMinutes(baseDate(), -15));
+      start = TODAY_CLASS_START.get(cacheKey);
+    } else start = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), 9, 0, 0);
     const teacherName = safeTeacherName(teacher(course, 0)) || "Teacher";
     return [
       {
@@ -1061,7 +1119,7 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
         subjectId: course.subjectId,
         start: fmt(start),
         end: fmt(plusMinutes(start, 90)),
-        eventType: "ONE_TO_ONE",
+        eventType: "STUDENT_DOUBT_SESSION",
         salutation: "",
         name: teacherName,
         teacherName,
@@ -1145,23 +1203,31 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
       showBatchImpAnnouncementModal: "N",
       showAcademicYearSelectionModel: "N",
       showSystemTrainingSelectionModel: "N",
-      registrationType: "ONE_TO_ONE",
+      registrationType,
       showGraduationCeremonyPopup: "N",
       graduationCeremonyRegistrationDeadline: "",
       showBatchReEnrollmentPopUp: "N",
     };
   }
+  // The dummy LMS user the counselor picked (?dummyLmsUserId, else the demo row's), as legacy dummyLmsUserId(): the header's LMS
+  // switch opens that user's LMS (the dashboard builds the link from it); none picked = "not mapped" (legacy
+  // getDummyStudentLmsPendingMessage).
+  const dummyLmsUserId = () => String(param("dummyLmsUserId") || row?.dummyLmsUserId || "").trim();
+
   function dashboardDetails() {
     return {
       status: "1",
       statusCode: "S001",
+      dummyLmsUserId: dummyLmsUserId(),
+      isPayLmsPaymentPending: dummyLmsUserId() ? "" : "Dummy LMS user is not mapped.",
       userId: uid,
       userRole: "STUDENT",
       userName: userName(),
       standardId: grade.standardId,
       email: "demo.student@test.local",
       videoUrl: "N",
-      registrationType: "ONE_TO_ONE",
+      userTimezone: DUMMY_STUDENT_TIMEZONE,
+      registrationType,
       showGraduationCeremonyPopup: "N",
       graduationCeremonyRegistrationDeadline: "",
     };
@@ -1572,6 +1638,8 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
             subjectName: courseName,
             teacherAssignedForTeacherSupport: teacher(subject, index),
             teacherName: teacher(subject, index),
+            // The dummy names carry their own salutation ("Mr. Liam Foster"): the gender follows it.
+            teacherGender: /^mr\.?\s/i.test(teacher(subject, index)) ? "male" : /^(ms|mrs|miss)\.?\s/i.test(teacher(subject, index)) ? "female" : "",
           };
         }),
       },

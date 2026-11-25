@@ -5,7 +5,7 @@ import { defaultBackend, logoutAtSms, trustedBackend } from "@/lib/auth/smsToken
 import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
 import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 import { addEnrollmentStepPath, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
-import { detectOriginatingBackend, getBackendOverrideCookieName, isBackendOverrideAllowed, parseBackendOrigin } from "@/utils/backendOrigin";
+import { allowedBackendOverride, detectOriginatingBackend, getBackendOverrideCookieName } from "@/utils/backendOrigin";
 import { reEnrollmentBasePath } from "@/utils/reEnrollmentSteps";
 
 const VALID_STEPS = new Set(["1", "2", "3", "4"]);
@@ -95,7 +95,8 @@ async function handleSsoHandoff(request) {
   // getFinalEnrollmentUrl now appends this explicitly (same as ClientSignupStudentController's
   // anonymous-signup redirect handled in proxy.js) — prefer it over the Referer-based guess, which
   // is absent for a typed/bookmarked login page.
-  const backendParam = isBackendOverrideAllowed() ? parseBackendOrigin(url.searchParams.get("backend")) : "";
+  // Only a backend this deployment may use: the one-time token (and this server's service key) go to it.
+  const backendParam = allowedBackendOverride(url.searchParams.get("backend"));
   const backendOverride = backendParam || detectOriginatingBackend(request);
   // ae=Y means this student was enrolled by someone else (a parent adding a child),
   // so after the session is established the browser must land on the 3-step
@@ -113,14 +114,6 @@ async function handleSsoHandoff(request) {
         url.searchParams.get("sessionUserId"), step);
     }
   }
-
-  console.log("request", request)
-  console.log("url======>", url)
-  console.log("ssoToken======>", ssoToken)
-  console.log("schoolUUID======>", schoolUUID)
-  console.log("schoolName======>", schoolName)
-  console.log("step======>", step)
-  console.log("targetStep======>", targetStep)
 
   if (!ssoToken || !schoolUUID) {
     return redirectTo("/", request);
@@ -186,6 +179,16 @@ async function handleSsoHandoff(request) {
       email: exchanged.email || "",
       schoolUUID: exchanged.schoolUUID || schoolUUID,
       schoolName: schoolName || exchanged.schoolName || "",
+      // The counselor's dummy student (view-as link, DEMO_USER=Y) opens the dashboard in dummy mode with its demo data and
+      // grade look, like the legacy isDemoUser. The role id lets the sidebar menu load when the dashboard details have none.
+      demoUser: String(exchanged.demoUser || "").toUpperCase() === "Y",
+      // The demo row the counselor picked at "view as user" (legacy session DEMO_DASHBOARD_USER), sent by the backend on the
+      // hand-off URL. Only for a demo account; digits only.
+      demoEntityId:
+        String(exchanged.demoUser || "").toUpperCase() === "Y" && /^\d{1,10}$/.test(url.searchParams.get("demoEntityId") || "")
+          ? Number(url.searchParams.get("demoEntityId"))
+          : null,
+      roleId: Number.isInteger(Number(exchanged.roleId)) && Number(exchanged.roleId) > 0 ? Number(exchanged.roleId) : null,
       backend,
       signedInAt: Date.now(),
     },

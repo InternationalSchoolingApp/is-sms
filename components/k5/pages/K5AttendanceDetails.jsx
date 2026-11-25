@@ -4,12 +4,13 @@ import { useState } from "react";
 import { CalendarDays } from "lucide-react";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { DatePicker } from "@/components/ui/date-picker";
+import { K5Select } from "@/components/k5/K5Select";
 import { useAttendanceCustomRangeDays } from "@/hooks/useAttendanceCustomRangeDays";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useStudentAttendanceDetails } from "@/hooks/useStudentAttendanceDetails";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
-import { getBrowserTimezone } from "@/utils/calendarEvents";
+import { DUMMY_STUDENT_TIMEZONE } from "@/utils/calendarEvents";
 import {
   DATE_FILTERS,
   STATUS_OPTIONS,
@@ -38,8 +39,6 @@ const GRID = "75px minmax(150px,1.1fr) minmax(190px,1.4fr) minmax(100px,0.8fr) m
 const COLUMNS = ["S. No.", "Date", "Class", "Start Time", "End Time", "Joined", "Status"];
 const CELL =
   "px-3.5 py-2.5 max-[760px]:order-2 max-[760px]:px-3 max-[760px]:py-1.5 max-[760px]:before:mb-0.5 max-[760px]:before:block max-[760px]:before:text-xs max-[760px]:before:font-black max-[760px]:before:text-k5-mut max-[760px]:before:content-[attr(data-l)]";
-const SELECT =
-  "w-full min-h-[50px] cursor-pointer rounded-[14px] border-[3px] border-k5-line bg-k5-card px-3 text-base font-extrabold text-k5-ink disabled:cursor-default disabled:bg-k5-soft";
 // Each filter keeps room for a whole date ("Nov 30, 2026"); when the row is narrow they wrap two (or one) per line.
 const FIELD_LABEL = "flex min-w-[190px] flex-[1_1_190px] flex-col gap-1 text-[13px] font-black text-k5-mut max-[460px]:min-w-full";
 const PAGE_BUTTON = "min-h-11 cursor-pointer rounded-[14px] border-[3px] border-k5-line bg-k5-card px-4 font-k5-display text-base font-semibold text-k5-ink disabled:cursor-default disabled:opacity-45";
@@ -88,7 +87,7 @@ export function K5AttendanceDetails({ status, onStatusChange }) {
   const dummy = useDummyStudent();
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId });
   // The student's configured timezone when it is valid, else Asia/Singapore (a valid one is never overwritten).
-  const timeZone = resolveTimeZone(dummy.enabled ? getBrowserTimezone() : dashboardData.userTimezone);
+  const timeZone = resolveTimeZone(dummy.enabled ? DUMMY_STUDENT_TIMEZONE : dashboardData.userTimezone);
   const today = todayYmd(timeZone);
 
   const [dateFilter, setDateFilter] = useState("MONTH");
@@ -140,7 +139,7 @@ export function K5AttendanceDetails({ status, onStatusChange }) {
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
           {status && (
-            <span className="flex items-center gap-2 rounded-full py-1.5 pe-2 ps-3.5 text-[15px] font-black text-k5-ink" style={{ background: ATB[status] }}>
+            <span className="flex items-center gap-2 rounded-full py-1.5 pe-2 ps-3.5 text-[15px] font-black text-[#1C2640]" style={{ background: ATB[status] }}>
               {labels[status] || LABEL[status]}
               <button type="button" onClick={() => onStatusChange("")} aria-label="Show all" className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-none bg-k5-card">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" strokeWidth="3.4" strokeLinecap="round" aria-hidden="true" style={{ stroke: "var(--k5-ink)" }}><path d="M6 6l12 12M18 6L6 18" /></svg>
@@ -154,17 +153,18 @@ export function K5AttendanceDetails({ status, onStatusChange }) {
       </div>
 
       <div className="k5h-r10 flex flex-wrap items-end gap-3 rounded-[20px] bg-k5-soft px-3.5 py-3">
-        <label className={FIELD_LABEL}>
-          Date
-          <select value={dateFilter} onChange={(e) => changeDateFilter(e.target.value)} className={SELECT}>
-            {DATE_FILTERS.map((f) => (
-              <option key={f.value} value={f.value} disabled={f.value === "CUSTOM" && !custom.isLoading && !custom.days}>
-                {f.label}
-                {f.value === "CUSTOM" && !custom.isLoading && !custom.days ? " (not available)" : ""}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className={FIELD_LABEL}>
+          <span>Date</span>
+          <K5Select
+            aria-label="Date"
+            value={dateFilter}
+            onValueChange={changeDateFilter}
+            options={DATE_FILTERS.map((f) => {
+              const unavailable = f.value === "CUSTOM" && !custom.isLoading && !custom.days;
+              return { value: f.value, label: unavailable ? `${f.label} (not available)` : f.label, disabled: unavailable };
+            })}
+          />
+        </div>
         <div className={`${FIELD_LABEL} k5h-at-date`}>
           From
           <DatePicker
@@ -185,14 +185,17 @@ export function K5AttendanceDetails({ status, onStatusChange }) {
           {/* To is always today: when Custom is on the picker opens, but today is the only day that can be chosen. */}
           <DatePicker icon={CalendarDays} value={ymdToPickerDate(to)} disabled={!isCustom} height={isHigh ? "h-[43px]" : "h-[50px]"} fromDate={ymdToPickerDate(today)} toDate={ymdToPickerDate(today)} onChange={() => {}} />
         </div>
-        <label className={FIELD_LABEL}>
-          Status
-          <select value={status || (allChosen ? "all" : "")} onChange={(e) => changeStatus(e.target.value)} className={SELECT}>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s.key} value={s.key}>{s.label}</option>
-            ))}
-          </select>
-        </label>
+        <div className={FIELD_LABEL}>
+          <span>Status</span>
+          {/* "Select Status" is only what shows before a choice; "All" is the way to clear the filter. */}
+          <K5Select
+            aria-label="Status"
+            value={status || (allChosen ? "all" : "")}
+            onValueChange={changeStatus}
+            placeholder="Select Status"
+            options={STATUS_OPTIONS.filter((o) => o.key !== "").map((o) => ({ value: o.key, label: o.label }))}
+          />
+        </div>
       </div>
       {isCustom && (
         <p className="m-0 -mt-1 text-sm font-extrabold text-k5-mut">
@@ -233,7 +236,7 @@ export function K5AttendanceDetails({ status, onStatusChange }) {
                     <span className="block text-[13px]" style={{ color: note.color }}>{note.text}</span>
                   </span>
                   <span role="cell" data-l="Status" className={CELL}>
-                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full py-1 pe-3 ps-1 text-sm font-black text-k5-ink" style={{ background: ATB[kind.key] }}>
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full py-1 pe-3 ps-1 text-sm font-black text-[#1C2640]" style={{ background: ATB[kind.key] }}>
                       <span aria-hidden="true" className="h-5 w-5 flex-none rounded-full" style={{ background: AC[kind.key] }} />
                       {kind.label}
                     </span>

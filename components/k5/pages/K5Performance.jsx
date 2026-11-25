@@ -217,6 +217,55 @@ export function K5Performance({ isLoading, performance, courseProviderId, plain 
   const [dummyGoals, setDummyGoals] = useState(null);
   usePicoContentReady(!isLoading);
 
+  // Coming from the dashboard's My Assignments "View all" (?go=courses): once the page is ready, glide down until the
+  // My courses card sits right under the header. The marker is dropped from the address when the scroll starts.
+  useEffect(() => {
+    if (isLoading || tab !== "perf" || typeof window === "undefined") return undefined;
+    if (new URLSearchParams(window.location.search).get("go") !== "courses") return undefined;
+    // The card may not be there yet, and the page is still sliding / zooming in for a moment after it opens, so wait
+    // until the card exists and has stopped moving before gliding to it (up to ~30 s); the marker goes only after that.
+    let cleanup = null;
+    let watchdog = null;
+    let last = null;
+    let still = 0;
+    let ticks = 0;
+    const timer = setInterval(() => {
+      ticks += 1;
+      const el = document.getElementById("k5-my-courses");
+      const top = el ? Math.round(el.getBoundingClientRect().top + window.scrollY) : null;
+      still = top !== null && top === last ? still + 1 : 0;
+      last = top;
+      if (still < 3 && ticks < 300) return;
+      clearInterval(timer);
+      if (top === null) {
+        window.history.replaceState(null, "", window.location.pathname);
+        return;
+      }
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches || Boolean(el.closest('[data-motion="reduced"]'));
+      // 104 = the sticky header plus a little air, the same as scroll-mt on the card.
+      const target = Math.max(0, top - 104);
+      const glide = () => window.scrollTo({ top: target, behavior: reduced ? "auto" : "smooth" });
+      glide();
+      // Watchdog: if the router (or a late layout shift) drops the page back to the top while it should be gliding, glide again.
+      let seen = window.scrollY;
+      let checks = 0;
+      watchdog = setInterval(() => {
+        checks += 1;
+        const y = window.scrollY;
+        if (Math.abs(y - target) > 60 && y === seen && y < target - 100) glide();
+        seen = y;
+        if (checks >= 12) clearInterval(watchdog);
+      }, 250);
+      // The address is cleaned only after the glide: changing it earlier makes the router reset the scroll to the top.
+      cleanup = setTimeout(() => window.history.replaceState(null, "", window.location.pathname), 3200);
+    }, 100);
+    return () => {
+      clearInterval(timer);
+      clearInterval(watchdog);
+      clearTimeout(cleanup);
+    };
+  }, [isLoading, tab]);
+
   const courses = asArray(performance?.courses);
   const tiles = performance?.tiles || null;
   const compareAvailable = performance?.compareAvailable === true;
@@ -224,7 +273,7 @@ export function K5Performance({ isLoading, performance, courseProviderId, plain 
   const goals = { ...(performance?.goals || {}), ...(dummy.enabled && dummyGoals ? dummyGoals : {}) };
   goals.remind = goals.remind !== "N";
   goals.compare = goals.compare !== "N";
-  const session = sessionInfo(tiles);
+  const session = sessionInfo(tiles, courses);
   const badges = badgeView(performance?.badges, goals.score);
   const tips = asArray(performance?.insights);
   const studentName = String(context?.userName || "").split(" ")[0] || "there";

@@ -140,7 +140,7 @@
  * Plain (unlayered) rules so they win over the item's Tailwind utilities.
  */
 .k5-side {
-  width: 96px;
+  width: 76px;
   transition: width 0.22s ease, box-shadow 0.22s ease;
 }
 .k5-side .k5-nl,
@@ -361,6 +361,68 @@
 }
 .k5-live-ring {
   animation: k5LiveRing 1.6s ease-in-out infinite;
+}
+/* Live dot (mockup .live-dot / liveDot): fades to a quarter and back every second. */
+@keyframes k5LiveDot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+.k5-live-dot {
+  animation: k5LiveDot 1s ease-in-out infinite;
+}
+/* A live item of the Today card: the mockup's liveRing pulse around the pill. */
+@keyframes k5LivePill {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(47, 123, 245, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(47, 123, 245, 0);
+  }
+}
+.k5-live-pill {
+  animation: k5LivePill 1.6s ease-in-out infinite;
+}
+/* A live school activity: the same pulse in the School Activity colour of the colour clues (not the live-class blue). */
+@keyframes k5LivePillAct {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--k5-c-act) 50%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--k5-c-act) 0%, transparent);
+  }
+}
+.k5-live-pill.k5-live-pill-act {
+  animation-name: k5LivePillAct;
+}
+/* The Join class button of a live class: the same ring around its own hard shadow (flat in the High look). */
+@keyframes k5LiveJoin {
+  0%,
+  100% {
+    box-shadow: var(--k5-join-base, 0 5px 0 var(--k5-grnD)), 0 0 0 0 rgba(47, 123, 245, 0.5);
+  }
+  50% {
+    box-shadow: var(--k5-join-base, 0 5px 0 var(--k5-grnD)), 0 0 0 10px rgba(47, 123, 245, 0);
+  }
+}
+.k5-live-join {
+  animation: k5LiveJoin 1.6s ease-in-out infinite;
+}
+[data-k5-high] .k5-live-join {
+  --k5-join-base: 0 0 0 0 transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+  .k5-live-join,
+  .k5-live-dot,
+  .k5-live-pill {
+    animation: none;
+  }
 }
 /* Tour spotlight (mockup .spothole): fades in, then slides between tips. */
 @keyframes k5SpotIn {
@@ -1164,4 +1226,703 @@
   .k5-clact:hover .k5-clactic {
     animation: none;
   }
+}
+
+/* Log-out dialog ghost (Playful.dc.html .ghhop / .ghshadow / .ghwave / .ghtear / .ghspark): floats while calm, droops and
+   sobs on "Yes", spins and hops on "No". Reduced motion stops all of it (the rule above). */
+.k5-ghhop {
+  animation: k5GhFloat 3s ease-in-out infinite;
+}
+.k5-ghhop.k5-gh-sad {
+  animation: k5GhDroop 0.5s ease-out forwards;
+}
+.k5-ghhop.k5-gh-sad .k5-ghbody {
+  animation: k5GhSob 1.6s ease-in-out infinite;
+  transform-origin: 100px 190px;
+}
+.k5-ghhop.k5-gh-happy {
+  animation: k5GhHop 0.55s ease-in-out 0.7s infinite alternate;
+}
+.k5-ghhop.k5-gh-happy .k5-ghbody {
+  animation: k5GhSpin 0.75s cubic-bezier(0.3, 1.3, 0.5, 1) 1;
+  transform-origin: 100px 110px;
+}
+.k5-ghtear {
+  animation: k5GhTear 1.4s ease-in infinite;
+}
+.k5-ghspark {
+  animation: k5GhTw 1s ease-in-out infinite alternate;
+  transform-box: view-box;
+  transform-origin: 100px 100px;
+}
+.k5-ghshadow {
+  animation: k5GhShade 3s ease-in-out infinite;
+}
+.k5-ghshadow.k5-gs-sad {
+  animation: none;
+  transform: scaleX(1.15);
+}
+.k5-ghshadow.k5-gs-happy {
+  animation: k5GhShade 0.55s ease-in-out 0.7s infinite alternate;
+}
+@keyframes k5GhFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes k5GhDroop {
+  to { transform: translateY(10px) scale(0.94, 0.92); }
+}
+@keyframes k5GhSob {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+@keyframes k5GhHop {
+  from { transform: translateY(0); }
+  to { transform: translateY(-16px); }
+}
+@keyframes k5GhSpin {
+  from { transform: rotate(0) scale(0.9); }
+  to { transform: rotate(360deg) scale(1); }
+}
+@keyframes k5GhTear {
+  0% { transform: translateY(0); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(22px); opacity: 0; }
+}
+@keyframes k5GhTw {
+  from { opacity: 0.4; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1.08); }
+}
+@keyframes k5GhShade {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(0.82); }
+}
+
+/* My Dashboard hero (Playful.dc.html "K-5 LMS dashboard"): drifting cloud, bobbing dots, floating circles, and the shine sweeping over the Join button. */
+@keyframes k5Drift {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(14px);
+  }
+}
+@keyframes k5Bob2 {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+@keyframes k5Float {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+@keyframes k5Shine {
+  0% {
+    transform: translateX(-140%) skewX(-18deg);
+  }
+  55%,
+  100% {
+    transform: translateX(320%) skewX(-18deg);
+  }
+}
+.k5-drift {
+  animation: k5Drift 6s ease-in-out infinite;
+}
+.k5-bob2 {
+  animation: k5Bob2 3s ease-in-out infinite;
+}
+.k5-float {
+  animation: k5Float 7s ease-in-out infinite;
+}
+.k5-shine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.1) 30%, rgba(255, 255, 255, 0.85) 50%, rgba(255, 255, 255, 0.1) 70%, transparent 100%);
+  transform: translateX(-140%) skewX(-18deg);
+  animation: k5Shine 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .k5-drift,
+  .k5-bob2,
+  .k5-float {
+    animation: none;
+  }
+  .k5-shine {
+    animation: none;
+    opacity: 0.25;
+  }
+}
+
+/* My Dashboard (Playful.dc.html pgLms): date strip, birds, join button, goal boxes, weather. Copied from the mockup's CSS. */
+/* K-5 LMS dashboard (copied from IS LMS Main.dc.html home) */@keyframes k5dr{0%,100%{transform:translateX(0)}50%{transform:translateX(14px)}}
+.hstrip{position:relative;align-self:stretch;display:flex;align-items:center;width:100%;min-height:92px;padding:12px 12px 12px 10px;border-radius:24px;box-sizing:border-box;color:#FFFFFF;background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,.12));border:none;box-shadow:0 10px 26px rgba(0,40,150,.28),inset 0 -3px 10px rgba(255,255,255,.12);backdrop-filter:blur(10px) saturate(140%);-webkit-backdrop-filter:blur(10px) saturate(140%)}
+.hstrip::after{content:"";position:absolute;right:-16px;top:-20px;width:30px;height:28px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 28'%3E%3Cg stroke='%23FFD23F' stroke-width='3.2' stroke-linecap='round'%3E%3Cpath d='M5 13 3 4M14 11l3-8M20 17l7-5'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat;pointer-events:none}
+.hs-wave{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none;z-index:0}
+.hs-wave::before,.hs-wave::after{content:"";position:absolute;left:0;right:0;bottom:0;background-repeat:repeat-x;background-position:0 100%}
+.hs-wave::before{height:58%;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22240%22%20height%3D%2240%22%20viewBox%3D%220%200%20240%2040%22%3E%3Cpath%20d%3D%22M0%2018%20Q30%206%2060%2018%20T120%2018%20T180%2018%20T240%2018%20V40%20H0Z%22%20fill%3D%22%23FFFFFF%22%20fill-opacity%3D%22.32%22/%3E%3C/svg%3E");background-size:240px 100%;animation:hsWave 7s linear infinite}
+.hs-wave::after{height:46%;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22180%22%20height%3D%2240%22%20viewBox%3D%220%200%20180%2040%22%3E%3Cpath%20d%3D%22M0%2022%20Q22.5%2012%2045%2022%20T90%2022%20T135%2022%20T180%2022%20V40%20H0Z%22%20fill%3D%22%23FFFFFF%22%20fill-opacity%3D%22.22%22/%3E%3C/svg%3E");background-size:180px 100%;animation:hsWave2 5s linear infinite}
+.hstrip>.hs-sec,.hstrip>.hs-div{position:relative;z-index:1}
+.hstrip>.hs-sec.hs-mid{flex:0 0 auto;padding:0 22px}
+.hs-cal{flex:none}
+@keyframes hsWave{from{background-position-x:0}to{background-position-x:-240px}}
+@keyframes hsWave2{from{background-position-x:0}to{background-position-x:180px}}
+.hs-sec{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:14px;padding:0 18px;white-space:nowrap}
+.hs-txt{display:flex;flex-direction:column;line-height:1.15}
+.hs-d1{font-size:15px;font-weight:600;opacity:.95}
+.hs-d2{font-size:22px;font-weight:700}
+.hs-div{flex:none;width:1.5px;align-self:stretch;margin:10px 0;background:rgba(255,255,255,.45);border-radius:1px}
+.hs-time{display:flex;align-items:center;gap:12px;height:62px;padding:0 30px;border-radius:999px;background:linear-gradient(180deg,#FFFFFF,#E4ECFF);color:#1E2242;border:2px solid rgba(255,255,255,.95);box-shadow:0 6px 16px rgba(0,30,120,.28),0 0 0 4px rgba(255,255,255,.18),inset 0 -3px 0 rgba(110,130,220,.22);font-size:27px;font-weight:700;letter-spacing:.2px}
+.hs-time svg{flex:none}
+.hs-tm{display:flex;flex-direction:column;align-items:flex-start;line-height:1.05}
+.hs-tm>b{font-weight:700;font-variant-numeric:tabular-nums}
+.hs-tm>small{margin-top:3px;font-size:12px;font-weight:700;letter-spacing:.3px;color:#5B3FD4}
+.hs-sun{flex:none;filter:drop-shadow(0 2px 4px rgba(200,120,0,.35));animation:hsSun 16s linear infinite}
+.hs-t1{font-size:24px;font-weight:700;color:#1E2242;text-shadow:none}
+.hs-t2{font-size:15px;font-weight:700;color:#24508F;text-shadow:none}
+@keyframes hsSun{to{transform:rotate(360deg)}}
+.app.m-night .hs-moon{flex:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}
+.hb-sky{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:inherit}
+.hb-fly{position:absolute;left:-60px;display:block;animation:hbFly 18s linear infinite}
+.hb-fly.f1{top:12%;animation-duration:16s;animation-delay:-3s}
+.hb-fly.f2{top:40%;animation-duration:22s;animation-delay:-11s;transform:scale(.8)}
+.hb-fly.f3{top:80%;animation-duration:19s;animation-delay:-16s;transform:scale(.7)}
+.hb-bob{display:block;animation:hbBob 1.6s ease-in-out infinite}
+.hb-w,.hb-w2{transform-box:fill-box;animation:hbFlap .32s ease-in-out infinite alternate}
+.hb-w{transform-origin:50% 100%}
+.hb-w2{transform-origin:50% 0}
+.hb-fly svg{display:block;width:46px;height:34px}
+@keyframes hbFly{from{left:-60px}to{left:calc(100% + 60px)}}
+@keyframes hbBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes hbFlap{from{transform:scaleY(1)}to{transform:scaleY(-.55)}}
+.lmjoin{transform-origin:50% 60%;animation:lmShake 2.6s ease-in-out infinite}
+.lmjoin:hover,.lmjoin:focus-visible{animation-play-state:paused}
+@keyframes lmShake{0%,58%,100%{transform:translateX(0) rotate(0)}62%{transform:translateX(-3px) rotate(-2deg)}66%{transform:translateX(3px) rotate(2deg)}70%{transform:translateX(-3px) rotate(-1.5deg)}74%{transform:translateX(2px) rotate(1.5deg)}78%{transform:translateX(-1px) rotate(-.5deg)}82%{transform:translateX(0) rotate(0)}}
+.lmgb{transition:transform .2s ease}
+.lmgb:hover{transform:translateY(-3px)}
+.lmgi{animation:lmBob 2.8s ease-in-out infinite}
+.lmgb+.lmgb .lmgi{animation-delay:-1.4s}
+.lmflag{transform-box:fill-box;transform-origin:0 50%;animation:lmWave 1.8s ease-in-out infinite}
+@keyframes lmBob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-4px) rotate(-6deg)}}
+.lmjg{flex:none;margin:-4px -8px -4px 0;overflow:visible}
+.lmjg-hero{opacity:0;animation:lmjgHero 3.6s infinite}
+@keyframes lmjgHero{0%{transform:translate(0,0) scale(1);opacity:0}6%,14%{transform:translate(0,0) scale(1);opacity:1;animation-timing-function:ease-in-out}50%{transform:translate(30px,0) scale(1);opacity:1}64%,100%{transform:translate(30px,-1px) scale(.7);opacity:0}}
+.lmjg-wad{transform-box:fill-box;transform-origin:50% 100%;animation:lmjgWad 3.6s ease-in-out infinite}
+@keyframes lmjgWad{0%,14%{transform:rotate(0)}18%{transform:rotate(14deg)}23%{transform:rotate(-8deg)}28%{transform:rotate(14deg)}33%{transform:rotate(-8deg)}38%{transform:rotate(14deg)}43%{transform:rotate(-8deg)}47%{transform:rotate(8deg)}50%,100%{transform:rotate(0)}}
+.lmjg-hero{transform-box:fill-box;transform-origin:50% 100%}
+.lmjg-glow{animation:lmjgGlow 3.6s ease-out infinite}
+@keyframes lmjgGlow{0%,52%{opacity:0}62%{opacity:.4}80%,100%{opacity:0}}
+.lmjg-crowd{animation:lmjgBob .5s ease-in-out infinite alternate}
+@keyframes lmjgBob{from{transform:translateY(0)}to{transform:translateY(-.8px)}}
+.lmjg-tw{transform-box:fill-box;transform-origin:50% 50%;animation:lmjgTw 1.4s ease-in-out infinite alternate}
+.lmjg-tw2{animation-delay:-.7s}
+@keyframes lmjgTw{from{transform:scale(.4);opacity:.4}to{transform:scale(1.2);opacity:1}}
+.wxi{position:relative;flex:none;width:50px;height:50px}
+.wxi>*{position:absolute;inset:0;margin:auto;display:flex;align-items:center;justify-content:center}
+.wxi-1,.wxt-1{animation:wxP1 40s linear infinite}
+.wxi-2,.wxt-2{opacity:0;animation:wxP2 40s linear infinite}
+.wxi-3,.wxt-3{opacity:0;animation:wxP3 40s linear infinite}
+.wxi-4,.wxt-4{opacity:0;animation:wxP4 40s linear infinite}
+.wxi-dr{animation:wxIDrop .9s linear infinite}
+.wxi-dr.d2{animation-delay:-.3s}
+.wxi-dr.d3{animation-delay:-.6s}
+@keyframes wxIDrop{0%{transform:translateY(-4px);opacity:0}30%{opacity:1}100%{transform:translateY(5px);opacity:0}}
+.wxi-wl{stroke-dasharray:30 12;animation:wxIDash 1.1s linear infinite}
+.wxi-wl.d2{animation-duration:.9s}
+.wxi-wl.d3{animation-duration:.7s}
+@keyframes wxIDash{to{stroke-dashoffset:-42}}
+.lmhero .hero-sun{animation:wxSun 40s linear infinite}
+@keyframes wxSun{0%,23%{opacity:1}27%,48%{opacity:.45}52%,73%{opacity:0}78%,96%{opacity:.7}100%{opacity:1}}
+/* strip waves: one long seamless path per layer (no tile seams) */.hs-wave::before,.hs-wave::after{display:none}
+.hs-wv1,.hs-wv2{position:absolute;left:0;bottom:0;width:2400px;display:block}
+.hs-wv1{height:58%;animation:hsWv1 7s linear infinite}
+.hs-wv2{height:46%;animation:hsWv2 5s linear infinite}
+/* Good Evening: moon instead of the sun */.hero-moon{overflow:visible}
+.hero-moon .hm-glow{opacity:.2;animation:hmGlow 3s ease-in-out infinite alternate}
+@keyframes hmGlow{from{opacity:.12}to{opacity:.34}}
+.hero-moon .hm-body{transform-box:fill-box;transform-origin:50% 50%;animation:hmBob 4s ease-in-out infinite alternate}
+@keyframes hmBob{from{transform:translateY(0) rotate(-4deg)}to{transform:translateY(-2px) rotate(4deg)}}
+.hero-moon .hm-st{transform-box:fill-box;transform-origin:50% 50%;animation:lmjgTw 1.6s ease-in-out infinite alternate}
+.hero-moon .s2{animation-delay:-.5s}
+.hero-moon .s3{animation-delay:-1.1s}
+
+@keyframes lmWave{0%,100%{transform:skewY(0) scaleX(1)}50%{transform:skewY(-7deg) scaleX(.9)}}
+@media (prefers-reduced-motion:reduce){.lmflag{animation:none}}
+
+/* My Dashboard hero weather scene (Playful.dc.html .wxs / .wxu): the mockup's layers; here the real weather picks which one shows. */
+@keyframes wxP1{0%,23%{opacity:1}25%,98%{opacity:0}100%{opacity:1}}
+@keyframes wxP2{0%,23%{opacity:0}25%,48%{opacity:1}50%,100%{opacity:0}}
+@keyframes wxP3{0%,48%{opacity:0}50%,73%{opacity:1}75%,100%{opacity:0}}
+@keyframes wxP4{0%,73%{opacity:0}75%,98%{opacity:1}100%{opacity:0}}
+.wxt{display:grid}
+.wxt>span{grid-area:1/1;display:flex;flex-direction:column}
+.wxi-1,.wxt-1{animation:wxP1 40s linear infinite}
+.wxi-2,.wxt-2{opacity:0;animation:wxP2 40s linear infinite}
+.wxi-3,.wxt-3{opacity:0;animation:wxP3 40s linear infinite}
+.wxi-4,.wxt-4{opacity:0;animation:wxP4 40s linear infinite}
+.wxs{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:inherit}
+.wxs-dim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(28,38,78,.62),rgba(40,56,104,.25));opacity:0;animation:wxDim 40s linear infinite}
+@keyframes wxDim{0%,23%{opacity:0}28%,48%{opacity:.35}52%,73%{opacity:.8}78%,96%{opacity:.25}100%{opacity:0}}
+.wxs-cl{position:absolute;inset:0;opacity:0;animation:wxCl 40s linear infinite}
+@keyframes wxCl{0%,22%{transform:translateX(75%);opacity:0}24%{opacity:1}31%{transform:translateX(0);opacity:1}76%{transform:translateX(0)}97%{transform:translateX(-95%);opacity:1}100%{transform:translateX(-100%);opacity:0}}
+.wxs-c{position:absolute;height:auto;opacity:.95;animation:wxBob 4s ease-in-out infinite alternate}
+.wxs-c.c2{animation-delay:-1s}
+.wxs-c.c3{animation-delay:-2s}
+.wxs-c.c4{animation-delay:-3s}
+@keyframes wxBob{from{transform:translate(0,0)}to{transform:translate(-8px,3px)}}
+.wxs-dk{opacity:0;animation:wxP3 40s linear infinite}
+.wxs-rain{position:absolute;inset:0;opacity:0;animation:wxP3 40s linear infinite;-webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,.72) 0%,rgba(0,0,0,.66) 18%,transparent 78%);mask-image:linear-gradient(180deg,rgba(0,0,0,.72) 0%,rgba(0,0,0,.66) 18%,transparent 78%)}
+.wxs-rain::before,.wxs-rain::after{content:"";position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='60'%3E%3Cg stroke='%23fff' stroke-width='1.6' stroke-linecap='round' opacity='.85'%3E%3Cpath d='M8 4l-3 11M24 22l-3 11M36 40l-3 11M15 45l-3 11'/%3E%3C/g%3E%3C/svg%3E");background-size:40px 60px;animation:wxFall .45s linear infinite}
+.wxs-rain::after{background-size:64px 96px;opacity:.55;animation-duration:.75s;animation-name:wxFall2}
+@keyframes wxFall{from{background-position:0 0}to{background-position:-17px 60px}}
+@keyframes wxFall2{from{background-position:0 0}to{background-position:-27px 96px}}
+.wxs-wind{position:absolute;inset:0;opacity:0;animation:wxP4 40s linear infinite}
+.wxs-w{position:absolute;left:0;opacity:0;animation:wxGust 1.7s linear infinite}
+.wxs-w.w2{animation-delay:-.5s;animation-duration:1.4s}
+.wxs-w.w3{animation-delay:-1s}
+.wxs-w.w4{animation-delay:-1.3s;animation-duration:1.9s}
+@keyframes wxGust{0%{transform:translateX(-160px);opacity:0}15%,80%{opacity:.85}100%{transform:translateX(105cqw);opacity:0}}
+.wxs-lf{position:absolute;left:0;animation:wxLeaf 2.6s linear infinite}
+.wxs-lf.l2{animation-delay:-.9s;animation-duration:2.2s}
+.wxs-lf.l3{animation-delay:-1.7s;animation-duration:3s}
+@keyframes wxLeaf{0%{transform:translate(-30px,0) rotate(0)}25%{transform:translate(25cqw,-16px) rotate(170deg)}50%{transform:translate(52cqw,10px) rotate(340deg)}75%{transform:translate(78cqw,-12px) rotate(510deg)}100%{transform:translate(106cqw,6px) rotate(680deg)}}
+@keyframes wxSun{0%,23%{opacity:1}27%,48%{opacity:.45}52%,73%{opacity:0}78%,96%{opacity:.7}100%{opacity:1}}
+.wxu{position:absolute;top:-22px;right:12px;z-index:3;pointer-events:none;opacity:0;transform-origin:50% 80%;animation:wxUmb 40s linear infinite}
+.wxu svg{display:block;transform-origin:50% 90%;animation:wxUSway 1.3s ease-in-out infinite alternate;filter:drop-shadow(0 2px 2px rgba(0,30,90,.25))}
+@keyframes wxUSway{from{transform:rotate(-7deg)}to{transform:rotate(7deg)}}
+@keyframes wxUmb{0%,49%{opacity:0;transform:translate(0,-18px) scale(.5) rotate(0)}52%{opacity:1;transform:translate(0,0) scale(1.12) rotate(-6deg)}55%,74%{opacity:1;transform:translate(0,0) scale(1) rotate(0)}76%{opacity:1;transform:translate(-3px,-2px) scale(1) rotate(-16deg)}78%{opacity:1;transform:translate(6px,-12px) scale(1) rotate(26deg)}81%{opacity:1;transform:translate(34px,-50px) scale(.95) rotate(150deg)}84%,100%{opacity:0;transform:translate(70px,-96px) scale(.9) rotate(270deg)}}
+@media (max-width: 760px) {
+  .wxs-c {
+    transform-origin: 0 0;
+    scale: 0.62;
+  }
+  .wxs-c.c4 {
+    transform-origin: 100% 0;
+  }
+}
+/* Live weather: the mockup loops these layers every 40 s; the real weather keeps the right one on. */
+.wxs-live .wxs-dim,
+.wxs-live .wxs-rain,
+.wxs-live .wxs-wind {
+  animation: none;
+  opacity: 1;
+}
+.wxs-live .wxs-cl {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+.wxs-live .wxs-dk {
+  animation: none;
+  opacity: 0;
+}
+.wxs-live[data-scene="rain"] .wxs-dk {
+  opacity: 1;
+}
+.wxu-live {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+.wxi-live > * {
+  animation: none;
+  opacity: 1;
+}
+/* The cards rise in when the dashboard opens (mockup .lmd). */
+@keyframes pmrise {
+  0% {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.k5-dash-rise {
+  animation: pmrise 0.25s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wxs-c,
+  .wxs-w,
+  .wxs-lf,
+  .wxu svg {
+    animation: none;
+  }
+}
+
+/* Cloudy (or foggy): white clouds drift behind the strip, so the white date would vanish - the date goes dark like the clock and the weather. */
+.hstrip[data-scene="cloud"] .hs-date .hs-d1,
+.hstrip[data-scene="cloud"] .hs-date .hs-d2 {
+  color: #1e2242;
+  text-shadow: none;
+}
+.hstrip[data-scene="cloud"] .hs-date .hs-cal {
+  stroke: #1e2242;
+}
+.hstrip[data-scene="cloud"] .hs-date .hs-cal g {
+  fill: #1e2242;
+}
+
+/* Phone: the date is black and a little smaller (desktop keeps the mockup white). */
+@media (max-width: 760px) {
+  .hs-date .hs-d1,
+  .hs-date .hs-d2 {
+    color: #000000;
+    text-shadow: none;
+  }
+  .hs-date .hs-d2 {
+    font-size: 14px !important;
+  }
+}
+
+/* Hero container queries (the hero is narrower than the viewport beside the nav): the mockup's own rules. */
+@container hero (max-width: 640px){.hero-greet h1{font-size:26px!important;line-height:31px!important}.hero-greet .hero-sun{width:58px!important;height:58px!important;margin:-12px -10px -14px -14px!important}.hero-greet p{font-size:15px!important}}
+@container hero (max-width: 640px){.hstrip{min-height:80px;padding:10px 8px}.hs-sec{padding:0 10px;gap:9px}.hs-d2{font-size:17px}.hs-d1{font-size:13px}.hs-time{height:52px;padding:0 18px;font-size:21px}.hs-sun{width:34px;height:34px}.hs-t1{font-size:19px}.hstrip::after{display:none}}
+@container hero (max-width: 520px){.hs-cal,.hs-time svg{display:none}.hs-sec{padding:0 9px}.hs-d1{display:none}.hs-time{padding:0 12px;font-size:17px}.hs-tm>small{font-size:10.5px}}
+@media (max-width:760px){.wxi,.wxi svg{width:34px;height:34px}.wxs-c{transform-origin:0 0;scale:.62}.wxs-c.c4{transform-origin:100% 0}.hstrip .hs-sec.hs-mid{padding:0 10px}}
+
+@keyframes hsWv1{from{transform:translateX(0)}to{transform:translateX(-240px)}}
+@keyframes hsWv2{from{transform:translateX(-180px)}to{transform:translateX(0)}}
+@media (prefers-reduced-motion:reduce){.hs-wv1,.hs-wv2{animation:none}}
+
+@media (max-width:760px){.wxu svg{width:38px;height:38px}}
+
+@media (min-width: 761px) {
+  .hs-date .hs-d1,
+  .hs-date .hs-d2 {
+    text-shadow: 0 1px 3px rgba(0, 40, 150, 0.45);
+  }
+}
+
+/* ── My Dashboard: Balanced (Middle.dc.html) and Mature (High.dc.html) looks ─────────────────────────────────────────
+ * Same page as Playful (components/k5/home/K5Dashboard.jsx, data-dash="mid" | "high"). The Middle / High skins already turn
+ * 3px borders, chunky shadows, radii and the type scale into theirs; these are the differences the two mockups add on top. */
+[data-dash="mid"] .dash-hero,
+[data-dash="high"] .dash-hero {
+  border-radius: 20px !important;
+  box-shadow: none !important;
+}
+[data-dash="mid"] .dash-hero {
+  background: linear-gradient(100deg, #027ffe 0%, #2e95ff 45%, #66b8ff 85%, #9ad2ff 100%) !important;
+  border: 1.5px solid #0057b8 !important;
+}
+[data-dash="high"] .dash-hero {
+  background: linear-gradient(100deg, #0057b8 0%, #0068d6 45%, #1a7be0 85%, #3a8ee6 100%) !important;
+  border: 1px solid #0b3d7a !important;
+}
+/* Middle: no smiling cloud, the bobbing dots are plain white. High: a calm sky (no birds, circles, waves, clouds or dots). */
+[data-dash="mid"] .dash-faceCloud {
+  display: none;
+}
+[data-dash="mid"] .dash-bob {
+  background: rgba(255, 255, 255, 0.55) !important;
+}
+[data-dash="high"] .hb-sky,
+[data-dash="high"] .k5-float,
+[data-dash="high"] .dash-bottomWaves,
+[data-dash="high"] .dash-faceCloud,
+[data-dash="high"] .dash-smallCloud,
+[data-dash="high"] .dash-bob,
+[data-dash="high"] .wxs-cl,
+[data-dash="high"] .k5-pkspark,
+[data-dash="high"] .lmgi {
+  display: none !important;
+}
+/* Date strip */
+[data-dash="mid"] .hstrip {
+  border-radius: 16px;
+}
+[data-dash="high"] .hstrip {
+  border-radius: 20px;
+}
+[data-dash="mid"] .hs-time {
+  border-width: 1.5px;
+}
+[data-dash="high"] .hs-time {
+  border-width: 1px;
+}
+[data-dash="high"] .hs-d1 {
+  font-size: 13px;
+  font-weight: 500;
+}
+[data-dash="high"] .hs-d2 {
+  font-size: 18px;
+  font-weight: 500;
+}
+[data-dash="high"] .hs-t1 {
+  font-size: 20px;
+  font-weight: 500;
+}
+[data-dash="high"] .hs-t2,
+[data-dash="high"] .hs-tm > small {
+  font-size: 13px;
+  font-weight: 500;
+}
+[data-dash="high"] .hs-tm > small {
+  font-size: 12px;
+}
+[data-dash="high"] .hs-tm > b {
+  font-weight: 500;
+}
+@container hero (max-width: 640px) {
+  [data-dash="high"] .hs-d1 {
+    font-size: 12px;
+  }
+  [data-dash="high"] .hs-d2 {
+    font-size: 14px;
+  }
+  [data-dash="high"] .hs-t1 {
+    font-size: 16px;
+  }
+  [data-dash="high"] .hs-time {
+    font-size: 18px;
+  }
+}
+@container hero (max-width: 520px) {
+  [data-dash="high"] .hs-time {
+    font-size: 14px;
+  }
+}
+/* Small phones: the Balanced / Mature strip keeps the weather text inside (their type is a little wider than Playful's). */
+@container hero (max-width: 400px) {
+  [data-dash="mid"] .hstrip .hs-sec,
+  [data-dash="high"] .hstrip .hs-sec {
+    padding: 0 6px;
+    gap: 6px;
+  }
+  [data-dash="mid"] .hstrip .hs-sec.hs-mid,
+  [data-dash="high"] .hstrip .hs-sec.hs-mid {
+    padding: 0 6px;
+  }
+  [data-dash="mid"] .hs-time,
+  [data-dash="high"] .hs-time {
+    padding: 0 10px;
+    font-size: 16px;
+  }
+  [data-dash="mid"] .hs-t1 {
+    font-size: 16px;
+  }
+  [data-dash="mid"] .hs-t2,
+  [data-dash="high"] .hs-t2 {
+    font-size: 12px;
+  }
+  [data-dash="mid"] .hs-wx .wxi,
+  [data-dash="mid"] .hs-wx .wxi svg,
+  [data-dash="mid"] .hs-wx .wxu svg,
+  [data-dash="high"] .hs-wx .wxi,
+  [data-dash="high"] .hs-wx .wxi svg,
+  [data-dash="high"] .hs-wx .wxu svg {
+    width: 26px;
+    height: 26px;
+  }
+}
+/* Greeting */
+[data-dash="high"] .dash-greet {
+  font-size: 27px !important;
+  font-weight: 500 !important;
+}
+/* The class card in the hero */
+[data-dash="mid"] .dash-cont {
+  border-radius: 16px !important;
+  box-shadow: none !important;
+}
+[data-dash="high"] .dash-cont {
+  border-radius: 20px !important;
+  box-shadow: none !important;
+}
+[data-dash="mid"] .dash-cont > div > span:first-child,
+[data-dash="high"] .dash-cont > div > span:first-child {
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+[data-dash="high"] .dash-liveName {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+[data-dash="high"] .dash-liveLine {
+  font-weight: 500 !important;
+}
+[data-dash="high"] .dash-liveWith {
+  font-size: 12px !important;
+}
+/* Join class: a green button in both; Middle keeps a thin rim, High is flat and plain (no shine, no door, no shake). */
+[data-dash="mid"] .lmjoin,
+[data-dash="high"] .lmjoin {
+  background: var(--k5-grn) !important;
+  color: #ffffff !important;
+  border-radius: 14px !important;
+}
+[data-dash="mid"] .lmjoin {
+  box-shadow: 0 2px 0 var(--k5-grnD) !important;
+}
+[data-dash="high"] .lmjoin {
+  box-shadow: none !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  animation: none !important;
+}
+[data-dash="high"] .lmjoin .k5-shine,
+[data-dash="high"] .lmjoin .lmjg {
+  display: none;
+}
+/* Card headings: the accent tint instead of the playful pastel (the My Assignments one keeps its green) */
+[data-dash="mid"] section[aria-label="Today's Goal"] .dash-ico,
+[data-dash="mid"] section[aria-label="My Performance"] .dash-ico,
+[data-dash="high"] section[aria-label="Today's Goal"] .dash-ico,
+[data-dash="high"] section[aria-label="My Performance"] .dash-ico {
+  background: var(--k5-act) !important;
+  color: var(--k5-ac) !important;
+}
+/* Aim for / Finish by boxes */
+[data-dash="mid"] .lmgb {
+  background: linear-gradient(135deg, #f2f8ff, #dcebff) !important;
+  border-color: var(--k5-acl) !important;
+  box-shadow: none !important;
+}
+[data-dash="high"] .lmgb {
+  background: var(--k5-soft) !important;
+  border: 1px solid var(--k5-line) !important;
+  box-shadow: none !important;
+}
+[data-dash="mid"] .lmgb,
+[data-dash="mid"] .lmgi {
+  border-width: 1.5px !important;
+}
+/* High type (the Mature mockup's own sizes and the 500 weight) */
+[data-dash="high"] .dash-h2 {
+  font-size: 18px !important;
+  font-weight: 500 !important;
+}
+[data-dash="high"] .dash-ringN,
+[data-dash="high"] .dash-pValue {
+  font-size: 22px !important;
+  font-weight: 500 !important;
+}
+[data-dash="high"] .dash-liName {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+[data-dash="high"] .dash-liSub,
+[data-dash="high"] .dash-pLabel,
+[data-dash="high"] .dash-chip,
+[data-dash="high"] .dash-viewAll,
+[data-dash="high"] .dash-asgTitle,
+[data-dash="high"] .dash-start {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+[data-dash="high"] .dash-btn,
+[data-dash="high"] .dash-setGoals {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+[data-dash="high"] .dash-compT {
+  font-size: 15px !important;
+  font-weight: 500 !important;
+}
+[data-dash="high"] .dash-compPct {
+  font-size: 27px !important;
+  font-weight: 500 !important;
+}
+[data-dash="high"] .dash-compDone {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+[data-dash="high"] .dash-liCircle {
+  border-width: 1px !important;
+}
+[data-dash="mid"] .dash-liCircle {
+  border-width: 1.5px !important;
+}
+
+/* Page background dots (Playful.dc.html .app{--dot} / .app.m-night{--dot}): read by components/motion/canvas/DotGridBackground.jsx (day / night). */
+.theme-k5 {
+  --k5-dot: #d5e5ff;
+}
+.theme-k5.dark {
+  --k5-dot: #2b3a6b;
+}
+
+/* The dashboard skeleton's hero block has the real hero's corners in every look. */
+[data-dash="mid"] .dash-skHero,
+[data-dash="high"] .dash-skHero {
+  border-radius: 20px !important;
+}
+
+/* Brain break dialog (Break time: walk + water) - the mockups' brk-* animations (components/k5/break). */
+@keyframes k5ShoeHop {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(-8deg); }
+}
+@keyframes k5FpStep {
+  0%, 100% { opacity: 0.15; }
+  30%, 60% { opacity: 1; }
+}
+@keyframes k5BubbleUp {
+  0% { transform: translateY(0); opacity: 0; }
+  20% { opacity: 0.9; }
+  100% { transform: translateY(-60px); opacity: 0; }
+}
+@keyframes k5CloudDrift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(18px); }
+}
+@keyframes k5ClockShake {
+  0%, 80%, 100% { transform: rotate(0deg); }
+  84% { transform: rotate(-14deg); }
+  88% { transform: rotate(14deg); }
+  92% { transform: rotate(-10deg); }
+  96% { transform: rotate(8deg); }
+}
+@keyframes k5StarPop {
+  0% { transform: scale(0) rotate(0deg); opacity: 0; }
+  60% { transform: scale(1.2) rotate(20deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.k5-brk-shoe { animation: k5ShoeHop 0.7s ease-in-out infinite; transform-origin: 50% 90%; }
+.k5-brk-fp { animation: k5FpStep 2.4s ease-in-out infinite; }
+.k5-brk-bub { animation: k5BubbleUp 2.2s ease-in infinite; }
+.k5-brk-cloud { animation: k5CloudDrift 6s ease-in-out infinite; }
+.k5-brk-clock { animation: k5ClockShake 2.4s ease-in-out infinite; transform-origin: 50% 55%; }
+.k5-brk-star { animation: k5StarPop 0.6s ease-out both; }
+.k5-brk-water { transition: height 1.4s cubic-bezier(0.3, 1.4, 0.5, 1); }
+.k5-brk-ring { transition: stroke-dashoffset 1s linear; }
+@media (prefers-reduced-motion: reduce) {
+  .k5-brk-shoe, .k5-brk-fp, .k5-brk-bub, .k5-brk-cloud, .k5-brk-clock, .k5-brk-star { animation: none; }
+  .k5-brk-fp { opacity: 1; }
+  .k5-brk-water, .k5-brk-ring { transition: none; }
+}
+
+/* Student's Diary drawer: the lavender page and the notebook paper follow night mode (the drawer's header and tab bar stay the light purple). */
+.theme-k5 {
+  --k5-diary-bg: #f6f0ff;
+}
+.theme-k5.dark {
+  --k5-diary-bg: var(--k5-card);
+}
+.k5-diary-paper {
+  background:
+    linear-gradient(to right, transparent 48px, #f4a3a3 48px, #f4a3a3 50px, transparent 50px) local,
+    repeating-linear-gradient(to bottom, transparent 0px, transparent 34px, #dce7f7 34px, #dce7f7 36px) local,
+    #fffbef;
+}
+.theme-k5.dark .k5-diary-paper {
+  background:
+    linear-gradient(to right, transparent 48px, #7a3b4a 48px, #7a3b4a 50px, transparent 50px) local,
+    repeating-linear-gradient(to bottom, transparent 0px, transparent 34px, #26324d 34px, #26324d 36px) local,
+    var(--k5-card);
 }

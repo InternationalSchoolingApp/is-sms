@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
-import { formatAmount, weeksBetween, weeksLabel } from "@/utils/cartPlan";
+import { formatAmount } from "@/utils/cartPlan";
 import { studentNavHref } from "@/utils/dashboardNav";
 import { subjectStyle } from "@/utils/k5Calendar";
 import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
@@ -114,7 +114,6 @@ function CartSkeleton({ school }) {
 
 function CartItem({ item, symbol, school, busy, onRemove }) {
   const look = useCartLook();
-  const weeks = weeksBetween(item.planStartDate, item.planEndDate);
   const label = "text-[15px] font-extrabold text-k5-mut";
   return (
     <article className={`${K5_CARD} flex flex-wrap items-center gap-4 p-4`}>
@@ -139,10 +138,6 @@ function CartItem({ item, symbol, school, busy, onRemove }) {
         <dt className={label}>No. of classes</dt>
         <dd className="m-0 font-k5-display text-[19px] font-semibold">
           {item.classCount} extra {item.classCount === 1 ? "class" : "classes"}
-        </dd>
-        <dt className={label}>Plan duration</dt>
-        <dd className="m-0 text-base font-black">
-          {item.planStartDate} – {item.planEndDate} ({weeksLabel(weeks)})
         </dd>
         <dt className={label}>Plan fee</dt>
         <dd className="m-0 font-k5-display text-[22px] font-bold" style={{ color: look.blue }}>
@@ -284,7 +279,7 @@ export function K5TermsDialog({ open, intro, terms, extra, agreed, onAgree, busy
             onClick={onPay}
             className="min-h-14 cursor-pointer rounded-full border-none bg-k5-grn px-6 font-k5-display text-xl font-semibold text-white shadow-[0_5px_0_var(--k5-grnD)] disabled:cursor-default disabled:opacity-45"
           >
-            {busy ? "Please wait…" : `Pay Now${amountText ? ` · ${amountText}` : ""}`}
+            {busy ? "Please wait…" : `Pay Now${amountText ? ` ${amountText}` : ""}`}
           </button>
         </div>
       </DialogContent>

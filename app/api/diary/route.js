@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAccountSession } from "@/lib/auth/session";
-import { diaryLog } from "@/utils/diaryDebug";
-import { getDiaryBadgeVersion, getDiaryThreadList, getDiaryThreadMessages, getDiaryUnreadCount, markDiaryThreadRead } from "@/services/diaryApi";
+import { getDiaryBadgeVersion, getDiaryMentionUsers, getDiaryThreadList, getDiaryThreadMessages, getDiaryUnreadCount, markDiaryThreadRead } from "@/services/diaryApi";
 
 /**
  * The School Diary reads for the student dashboard, as a Route Handler instead of Server Actions.
@@ -28,9 +27,7 @@ const toInt = (value, fallback) => {
 
 export async function POST(request) {
   const me = await getAccountSession();
-  const tabAccount = request.headers.get("x-account");
   if (!me?.accessToken || !me?.userId) {
-    diaryLog("route 401 - no signed-in account for this request", { tabAccount });
     return reply(401, { message: "Your session has been logged out" });
   }
 
@@ -57,25 +54,20 @@ export async function POST(request) {
       if (!threadId) return reply(400, { message: "Bad request" });
       answer = await getDiaryThreadMessages({ sessionUserId, threadId, page, size });
       break;
+    case "mention-users":
+      if (!threadId) return reply(400, { message: "Bad request" });
+      answer = await getDiaryMentionUsers({ sessionUserId, threadId });
+      break;
     case "mark-read":
       if (!threadId) return reply(400, { message: "Bad request" });
       answer = await markDiaryThreadRead({ sessionUserId, threadId });
       break;
     case "badge-version": {
       const version = await getDiaryBadgeVersion({ etag: typeof body?.etag === "string" ? body.etag.slice(0, 64) : undefined });
-      diaryLog("route badge-version", { userId: sessionUserId, tabAccount, sentEtag: body?.etag, answer: version });
       return reply(200, version);
     }
     default:
       return reply(400, { message: "Bad request" });
   }
-  diaryLog(`route ${body?.action}`, {
-    userId: sessionUserId,
-    tabAccount,
-    threadId,
-    ok: Boolean(answer),
-    unreadMessageCount: answer?.details?.unreadMessageCount,
-    unreadThreadCount: answer?.details?.unreadThreadCount,
-  });
   return answer ? reply(200, answer) : reply(502, { message: "The diary could not be loaded right now." });
 }

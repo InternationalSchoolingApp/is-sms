@@ -5,6 +5,7 @@ import { Bell, CheckCheck, ChevronLeft, ChevronRight, Download, FileText, Filter
 import { K5Inbox } from "@/components/k5/pages/K5Inbox";
 import { InboxCompose, InboxSettings } from "@/components/student/inbox/InboxCompose";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SimpleSelect } from "@/components/ui/simple-select";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useInbox } from "@/hooks/useInbox";
 import { getAttachmentUrl } from "@/utils/announcementAttachment";
@@ -21,6 +22,7 @@ const BTN = "inline-flex min-h-10 cursor-pointer items-center gap-2 whitespace-n
 const BTN_PRIMARY = "inline-flex min-h-10 cursor-pointer items-center gap-2 whitespace-nowrap rounded-md border border-primary bg-primary px-4 text-sm font-semibold text-white disabled:cursor-default disabled:opacity-45";
 const FIELD = "min-h-10 w-full rounded-md border border-slate-300 bg-white px-2.5 text-sm text-black outline-none focus:border-primary";
 const CARD = "rounded-[10px] border border-slate-200 bg-white";
+const ANY_CATEGORY = "ANY";
 
 function PlainFilters({ inbox }) {
   const [draft, setDraft] = useState(inbox.filters);
@@ -38,27 +40,26 @@ function PlainFilters({ inbox }) {
         Search
         <input type="search" maxLength={200} value={draft.search} onChange={(e) => set({ search: e.target.value })} placeholder="Name, subject or words" className={FIELD} />
       </label>
-      <label className="flex flex-col gap-1 text-sm font-semibold text-black">
+      <div className="flex flex-col gap-1 text-sm font-semibold text-black">
         Date
-        <select value={draft.date} onChange={(e) => set({ date: e.target.value })} className={FIELD}>
-          {DATE_PRESETS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-      </label>
+        <SimpleSelect aria-label="Date" value={draft.date} onValueChange={(value) => set({ date: value })} options={DATE_PRESETS} />
+      </div>
       {!inbox.isSent && (
         <>
-      <label className="flex flex-col gap-1 text-sm font-semibold text-black">
+      <div className="flex flex-col gap-1 text-sm font-semibold text-black">
         Show
-        <select value={draft.read} onChange={(e) => set({ read: e.target.value })} className={FIELD}>
-          {READ_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-      </label>
-      <label className="flex flex-col gap-1 text-sm font-semibold text-black">
+        <SimpleSelect aria-label="Show" value={draft.read} onValueChange={(value) => set({ read: value })} options={READ_OPTIONS} />
+      </div>
+      <div className="flex flex-col gap-1 text-sm font-semibold text-black">
         Email category
-        <select value={draft.category} onChange={(e) => set({ category: e.target.value })} className={FIELD}>
-          <option value="">Any category</option>
-          {INBOX_CATEGORIES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-      </label>
+        {/* "Any category" is the empty filter; the dropdown needs a real value for it. */}
+        <SimpleSelect
+          aria-label="Email category"
+          value={draft.category || ANY_CATEGORY}
+          onValueChange={(value) => set({ category: value === ANY_CATEGORY ? "" : value })}
+          options={[{ value: ANY_CATEGORY, label: "Any category" }, ...INBOX_CATEGORIES]}
+        />
+      </div>
       <div className="flex flex-col gap-1.5 text-sm text-black">
         <label className="flex cursor-pointer items-center gap-2">
           <input type="checkbox" checked={draft.withAttachments} onChange={(e) => set({ withAttachments: e.target.checked })} className="h-4 w-4 accent-primary" />

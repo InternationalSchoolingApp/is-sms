@@ -103,7 +103,10 @@ function useResolveReEnrollment() {
       .then((technical) => {
         if (!cancelled) setRootcss(extractRootCss(technical?.parentColor));
       })
-      .catch((err) => console.error("School color theme fetch failed:", err));
+      .catch((err) => {
+        // Leaving the page (e.g. sidebar navigation) aborts the in-flight Server Action; nothing to report then.
+        if (!cancelled) console.error("School color theme fetch failed:", err);
+      });
     return () => {
       cancelled = true;
     };
@@ -116,7 +119,9 @@ function useResolveReEnrollment() {
       .then((info) => {
         if (!cancelled && info?.whatsAppNumber) setWhatsAppNumber(info.whatsAppNumber);
       })
-      .catch((err) => console.error("School public info fetch failed:", err));
+      .catch((err) => {
+        if (!cancelled) console.error("School public info fetch failed:", err);
+      });
     return () => {
       cancelled = true;
     };

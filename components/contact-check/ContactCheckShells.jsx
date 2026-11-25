@@ -100,7 +100,7 @@ export const k5Skin = {
       {children}
     </label>
   ),
-  body: "flex flex-col gap-4 overflow-y-auto p-5 [scrollbar-width:thin]",
+  body: "flex flex-col gap-4 overflow-y-auto p-5",
   footer: "flex flex-wrap items-center justify-end gap-3 border-t-[3px] border-k5-line px-5 py-4",
   footNote: "me-auto text-[13px] font-extrabold text-k5-mut",
   notice: "flex items-start gap-2 rounded-2xl border-[3px] border-amber-400 bg-amber-50 px-4 py-3 text-sm font-black text-amber-700",

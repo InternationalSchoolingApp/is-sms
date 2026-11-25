@@ -132,7 +132,7 @@ export function K5PerformanceCompare({ goals, courses, today, onTurnOn, saving }
   const aheadProgress = ready.filter((x) => (x.cc.progressPct ?? 0) >= 50).length;
 
   return (
-    <div className="k5-pmpanel flex flex-col gap-[18px]">
+    <div className="k5-pmpanel flex flex-col gap-[18px] safd">
       <section className={`${K5_CARD} flex flex-col gap-3.5 px-[22px] py-5`}>
         <div className="flex flex-wrap items-center gap-3">
           <h2 className="m-0 font-k5-display text-2xl font-semibold leading-tight">How you compare</h2>
@@ -219,7 +219,7 @@ export function K5PerformanceCompare({ goals, courses, today, onTurnOn, saving }
             <em className="font-extrabold not-italic text-k5-mut">students per pace band</em>
           </div>
           <div role="img" aria-label={`${cc.size} students · you are ${BANDS[youBand]}`} className="flex h-[150px] items-end gap-1.5 pt-[26px]">
-            {(cc.dist || []).map((n, i) => (
+            {(cc.dist || []).slice(0, BANDS.length).map((n, i) => (
               <div key={BANDS[i]} title={String(n)} className="relative flex h-full flex-1 flex-col items-center justify-end gap-1.5">
                 {i === youBand && <span className="absolute -top-6 rounded-lg border-2 border-k5-line bg-k5-card px-[7px] py-px text-xs font-black">You</span>}
                 <div className="w-full rounded-t-lg transition-[height] duration-400" style={{ height: `${Math.max(6, (n / maxC) * 100)}%`, background: i === youBand ? tone.col : "var(--k5-line)" }} />

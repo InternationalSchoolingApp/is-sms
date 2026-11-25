@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { CountUp } from "@/components/motion/CountUp";
+import { ProgressSparkle } from "@/components/motion/canvas/ProgressCanvas";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
+import { K5Select } from "@/components/k5/K5Select";
 import { K5AttendanceDetails, AC, ATB, LABEL } from "@/components/k5/pages/K5AttendanceDetails";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
@@ -272,7 +275,7 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
             />
             <StatTile
               label={`Attendance · ${monthLong}`}
-              value={cur ? `${cur.percent}%` : "–"}
+              value={cur ? <><CountUp value={cur.percent} />%</> : "–"}
               valueClass="text-k5-gx"
               tileClass="bg-k5-gt"
               icon={
@@ -310,11 +313,9 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                   <h2 id="k5-at-perf" className="m-0 font-k5-display text-2xl font-semibold">Performance Overview</h2>
                   <span className="text-[15px] font-extrabold text-k5-mut">Tap a month to see its summary.</span>
                 </div>
-                <select value={view} onChange={(e) => setView(e.target.value)} aria-label="Performance Overview" className="min-h-[46px] cursor-pointer rounded-[14px] border-[3px] border-k5-line bg-k5-card px-3 text-base font-extrabold text-k5-ink">
-                  {VIEWS.map(([v, label]) => (
-                    <option key={v} value={v}>{label}</option>
-                  ))}
-                </select>
+                <div className="w-[190px] max-[480px]:w-full">
+                  <K5Select aria-label="Performance Overview" value={view} onValueChange={setView} options={VIEWS.map(([v, label]) => ({ value: v, label }))} />
+                </div>
               </div>
 
               {view !== "year" ? (
@@ -348,7 +349,7 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                             }}
                             aria-pressed={isSel}
                             aria-label={d ? `${long}: ${d.percent}% attendance` : `${long}: Not yet`}
-                            className="group relative flex h-full min-w-0 flex-1 cursor-pointer flex-col items-center justify-end gap-1 border-none bg-transparent p-0"
+                            className="motion-none group relative flex h-full min-w-0 flex-1 cursor-pointer flex-col items-center justify-end gap-1 border-none bg-transparent p-0"
                           >
                             <span className="k5h-r10 pointer-events-none absolute bottom-[calc(100%+6px)] left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap rounded-[10px] bg-k5-ink px-2.5 py-1 text-[13px] font-black text-k5-card opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100">
                               {long}: {d ? `${d.percent}%` : "Not yet"}
@@ -374,14 +375,14 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
             </section>
 
             <section aria-labelledby="k5-at-sum" className={`${K5_CARD} flex flex-col gap-3.5 px-5 py-[18px]`}>
-              <div className="flex flex-col gap-0.5">
+              <div className="flex flex-col gap-0.5 max-[760px]:items-center max-[760px]:text-center">
                 <h2 id="k5-at-sum" className="m-0 font-k5-display text-2xl font-semibold">Monthly Summary</h2>
                 <span className="text-[15px] font-black text-k5-acx">{monthLong}</span>
               </div>
               {cur ? (
                 <>
-                  <div className="flex flex-wrap items-center gap-[18px]">
-                    <div className="relative h-[160px] w-[160px] flex-none">
+                  <div className="flex flex-wrap items-center gap-[18px] max-[760px]:justify-center">
+                    <div className="relative h-[160px] w-[160px] flex-none"><ProgressSparkle />
                       <svg width="160" height="160" viewBox="0 0 160 160" role="img" aria-label={`You came to ${cur.total - cur.absent} of ${cur.total} classes.`}>
                         <circle cx="80" cy="80" r={R} fill="none" strokeWidth="20" style={{ stroke: "var(--k5-soft)" }} />
                         {slices.map((s) => (
@@ -404,7 +405,7 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                         ))}
                       </svg>
                       <span className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-                        <span className="k5h-at-donut font-k5-display text-[34px] font-bold leading-none">{filter ? { present: cur.present, late: cur.late, absent: cur.absent, missS: cur.absent, missT: 0 }[filter] : cur.total}</span>
+                        <span className="k5h-at-donut font-k5-display text-[34px] font-bold leading-none"><CountUp value={filter ? { present: cur.present, late: cur.late, absent: cur.absent, missS: cur.absent, missT: 0 }[filter] : cur.total} /></span>
                         <span className="text-xs font-black text-k5-mut">{filter ? LABEL[filter] : "classes"}</span>
                       </span>
                     </div>
@@ -432,7 +433,7 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                                 )}
                               </span>
                               <span className="flex-1 text-base font-extrabold">{LABEL[k]}</span>
-                              <span className="font-k5-display text-[22px] font-bold">{count}</span>
+                              <span className="font-k5-display text-[22px] font-bold"><CountUp value={count} /></span>
                             </button>
                           </li>
                         );
@@ -443,8 +444,9 @@ export function K5Attendance({ isLoading, sessionOut, summary, months }) {
                     <Medal b={badge} />
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="self-start rounded-full px-2.5 py-0.5 text-xs font-black uppercase tracking-[0.04em] text-white" style={{ background: badge.c2 }}>{badge.name}</span>
-                      <span className="font-k5-display text-[19px] font-semibold leading-[1.2]">{badge.msg}</span>
-                      <span className="text-[15px] font-extrabold text-k5-mut">You came to {cur.total - cur.absent} of {cur.total} classes.</span>
+                      {/* The medal card keeps its cream background in every mode, so its text keeps a dark ink too (the theme ink turns light at night). */}
+                      <span className="font-k5-display text-[19px] font-semibold leading-[1.2] text-[#1C2640]">{badge.msg}</span>
+                      <span className="text-[15px] font-extrabold text-[#5B6580]">You came to {cur.total - cur.absent} of {cur.total} classes.</span>
                     </div>
                   </div>
                 </>

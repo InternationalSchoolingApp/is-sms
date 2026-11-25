@@ -20,10 +20,12 @@ export function picoSay(text, pin = null, options = {}) {
  * What the home page tells the buddy about the live class: `ready` — the plan has loaded (so the
  * tour knows whether a live class exists), `pending` — the "LIVE NOW" popup is waiting for an answer
  * (the buddy stays quiet until then), `name` — the title of the class that is live right now.
+ * `dayEmpty` / `holidayName`: today has no class and no activity (and the name of today's holiday, if it is one), so the plan tip does not
+ * claim there is something in it.
  * `menuReady` / `contentReady`: the left menu has its items and the page has finished loading — the
  * buddy's page tips (and their spotlight) wait for both, so nothing opens over an empty page.
  */
-const INITIAL_LIVE = { ready: false, pending: false, name: "", menuReady: false, contentReady: false };
+const INITIAL_LIVE = { ready: false, pending: false, name: "", dayEmpty: false, holidayName: "", menuReady: false, contentReady: false };
 let live = INITIAL_LIVE;
 const listeners = new Set();
 

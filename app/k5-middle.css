@@ -106,7 +106,8 @@
  * The K–5 components carry these as Tailwind arbitrary values (border-[3px], rounded-[26px],
  * shadow-[0_6px_0_…]); plain (unlayered) rules win over those utilities. Only exact class names
  * are matched, so responsive variants (max-[760px]:…) are left alone. */
-:is([data-k5-band="middle"], [data-k5-band="middle"] *) {
+/* Re-enrollment steps share the Elementary form styles across every grade. */
+:is([data-k5-band="middle"], [data-k5-band="middle"] *):not(:where([data-re-enrollment-flow], [data-re-enrollment-flow] *)) {
   /* 3px → 1.5px (mockup: every card, tile, input and button). */
   &.border-\[3px\] {
     border-width: 1.5px;
@@ -193,10 +194,6 @@
   &[class*="shadow-[0_6px_0_var(--k5-grnD)]"] {
     box-shadow: 0 2px 0 var(--k5-grnD);
   }
-  &[class*="shadow-[0_4px_0_var(--rim)]"],
-  &[class*="shadow-[0_6px_0_var(--rim)]"] {
-    box-shadow: 0 2px 0 var(--rim);
-  }
   &[class*="shadow-[0_4px_0_var(--k5-line)]"],
   &[class*="shadow-[0_5px_0_var(--k5-line)]"],
   &[class*="shadow-[0_6px_0_var(--k5-line)]"],
@@ -266,6 +263,12 @@
   min-height: 46px;
 }
 
+/* Header buttons (Communication, Appearance, Get the App, the LMS switch): a soft drop shadow in Grade 6–8 and 9–12 (this band
+   rule covers both). !important because each button also carries a K–5 hard-shadow class that the rules above remap. */
+[data-k5-band="middle"] .k5h-hdbtn {
+  box-shadow: 0 2px 6px rgba(16, 24, 40, 0.16) !important;
+}
+
 /* ── Page title tiles (Middle.dc.html): a 62px accent tile with 14px corners. The pages used to force the 14px with an inline
    style; they now use these hook classes (High overrides them to 10px in k5-mature.css, which is imported after this file). */
 [data-k5-band="middle"] :is(.k5h-pr-tile, .k5h-fee-tile, .k5h-ct-tile, .k5h-ax-tile, .k5h-hb-tile, .k5h-lb-tile, .k5h-lg-tile, .k5h-tr-tile) {
@@ -283,6 +286,50 @@
 }
 
 /* ── Home, My Courses (Middle.dc.html): the 38px course icon tile has 8px corners (rounded-xl would give 14px). */
-[data-k5-band="middle"] .k5h-ctile {
+[data-k5-band="middle"] .k5h-ctile,
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-cchk {
   border-radius: 8px;
+}
+
+/* ── Home, My Classes and Activities (Middle.dc.html): a 58px date tile with 13px corners (11px day, 25px date) and a 28px title, class
+   cards with 16px corners, a 50px white subject tile (12px corners, 26px icon) and a 22px class title. High has its own copy in
+   k5-mature.css, so these skip it. */
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-ptile {
+  width: 58px;
+  height: 58px;
+  border-radius: 13px;
+}
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-ptile-top {
+  font-size: 11px;
+}
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-ptile-big {
+  font-size: 25px;
+}
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-ptitle {
+  font-size: 28px;
+}
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-art {
+  border-radius: 16px;
+}
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-stile {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+}
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-sicon {
+  width: 26px;
+  height: 26px;
+}
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-ctitle {
+  font-size: 22px;
+}
+
+/* My Profile (Middle.dc.html / High.dc.html): the "% complete" bar has a 1.5px rim (Playful: 2px); its fill is the green of the Join button. */
+[data-k5-band="middle"] .k5h-pbar {
+  border-width: 1.5px;
+}
+
+/* "No classes" card (Middle.dc.html): 16px corners (the skin's 24 → 18 is a little more). High overrides it in k5-mature.css. */
+[data-k5-band="middle"]:not([data-k5-high]) .k5h-nocls {
+  border-radius: 16px;
 }

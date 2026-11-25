@@ -6,6 +6,7 @@ import { LogOut } from "lucide-react";
 import { Footer } from "@/components/common/Footer";
 import { LogoutConfirmDialog } from "@/components/student-enroll/wizard/LogoutConfirmDialog";
 import { SchoolThemeStyle } from "@/components/common/SchoolThemeStyle";
+import { OptimizedImage } from "../common/OptimizedImage";
 
 /**
  * Standalone page frame of the onboarding pages: the light dashboard background, a plain header with the school
@@ -21,11 +22,7 @@ export function OnboardingShell({ schoolName, logoUrl, rootcss, studentName, onL
       <SchoolThemeStyle rootcss={rootcss} />
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white px-4 py-2.5 shadow-sm sm:px-6">
         <div className="mx-auto flex max-w-[1310px] items-center justify-between gap-3">
-          {logoUrl ? (
-            <Image src={logoUrl} alt={schoolName || ""} width={160} height={36} className="h-9 w-auto max-w-[160px] sm:max-w-[220px]" unoptimized />
-          ) : (
-            <p className="text-sm font-bold text-black">{schoolName}</p>
-          )}
+          {logoUrl ? (<OptimizedImage src={logoUrl} alt={schoolName || ""} width={160} height={36} className="h-9 w-auto max-w-[160px] sm:max-w-[220px] object-contain" />) : ( <p className="text-sm font-bold text-primary">{schoolName}</p>)}
           <div className="flex items-center gap-3">
             {studentName && <span className="hidden text-sm font-semibold text-slate-700 sm:inline">{studentName}</span>}
             <button

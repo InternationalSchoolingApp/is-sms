@@ -37,12 +37,7 @@ function useWideLayout() {
  * toggles the collapse on md+.
  */
 export function DashboardShell({ children }) {
-  const { ready, gradeResolved, context, menu, logoUrl, session, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
-  // A parent's rail is about the selected child (announcements, diary badge) and has no News, as in the legacy JSP.
-  const isParent = context?.role === "parent";
-  const selectedChild = useOptionalSelectedChild()?.selectedChild;
-  // While the parent is choosing a child (the picker screen) the page has no menu and no right rail, as in legacy.
-  const choosing = isParent && !selectedChild;
+  const { ready, gradeResolved, context, menu, logoUrl, schoolWebsite, session, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // Defaults to the collapsed icon-rail, matching the legacy dashboard.
   const [collapsed, setCollapsed] = useState(true);
@@ -90,6 +85,7 @@ export function DashboardShell({ children }) {
       <DashboardTopHeader
         schoolName={context.schoolName}
         logoUrl={logoUrl}
+        schoolWebsite={schoolWebsite}
         session={session}
         userName={context.userName}
         onHamburger={onHamburger}

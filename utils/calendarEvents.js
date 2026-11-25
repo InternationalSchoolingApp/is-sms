@@ -29,6 +29,13 @@ export const DEFAULT_COURSE_PALETTE = [
 // Project rule: Asia/Singapore is the fallback whenever a timezone can't be resolved.
 export const FALLBACK_TIMEZONE = "Asia/Singapore";
 
+/**
+ * A dummy (demo) student - the one a counselor creates in Dummy Student Dashboard and opens with "View as user" - always lives in
+ * America/New_York, whatever the browser's zone (legacy dummyStudentDashboardData.js DUMMY_STUDENT_TIMEZONE): the calendar, the
+ * clock, the class times and every date of the dummy data are read in it.
+ */
+export const DUMMY_STUDENT_TIMEZONE = "America/New_York";
+
 export function getBrowserTimezone() {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || FALLBACK_TIMEZONE;
@@ -123,10 +130,15 @@ export function normalizeCalendarEvent(rawEvent, { timezone, courseDetails = [] 
     // for timezones behind UTC).
     const dateOnly = String(rawEvent.dueDate || rawEvent.paceDate).slice(0, 10);
     startZoned = parseISO(`${dateOnly}T00:00:00`);
+  } else if (eventKind === "holiday" && rawEvent.start) {
+    // A holiday is a plain calendar date (the admin picked "17 Nov"), not a point in time: converting its
+    // midnight from the holiday's timezone moved it a day back for students whose timezone is behind it.
+    const dateOnly = String(rawEvent.start).slice(0, 10);
+    startZoned = parseISO(`${dateOnly}T00:00:00`);
   } else {
     startZoned = normalizeDateTime(rawEvent.start || rawEvent.startDateTime || rawEvent.dueDate || rawEvent.paceDate, tz, rawEvent.timezone);
   }
-  const endZoned = normalizeDateTime(rawEvent.end || rawEvent.endDateTime, tz, rawEvent.timezone);
+  const endZoned = eventKind === "holiday" ? null : normalizeDateTime(rawEvent.end || rawEvent.endDateTime, tz, rawEvent.timezone);
   const allDay = rawEvent.allDay === true || eventKind === "holiday";
 
   let courseId = getCourseId(rawEvent);

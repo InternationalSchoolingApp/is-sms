@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { AlertCircle, CheckCircle2, UserCircle, X } from "lucide-react";
-import { loadProfileCompletingProcess } from "@/services/profileActionsApi";
-import { callServer } from "@/utils/serverCall";
+import { useProfileCompletingProcess } from "@/hooks/useProfileCompletingProcess";
 import { studentNavHref } from "@/utils/dashboardNav";
 
 /**
@@ -58,22 +58,9 @@ function SectionBlock({ section }) {
 
 export function CompleteProfileModal({ hold = false }) {
   const { school } = useParams();
-  const [data, setData] = useState(null);
+  // Shared answer (hooks/useProfileCompletingProcess.js): setting off or the call failed means no data, so no popup.
+  const { data } = useProfileCompletingProcess();
   const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    callServer(() => loadProfileCompletingProcess())
-      .then((result) => {
-        if (!cancelled) setData(result);
-      })
-      .catch(() => {
-        // setting off or the call failed: no popup
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   if (hold || dismissed || !data?.enabled || !data.profileData?.length) return null;
 
@@ -94,8 +81,8 @@ export function CompleteProfileModal({ hold = false }) {
   const mandatory = missingFields.some((f) => f.mandatoryOption === "Y");
 
   return (
-    <div data-blocking-popup="" className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4">
-      <div role="dialog" aria-modal="true" aria-labelledby="complete-profile-title" className="flex max-h-[90vh] w-full max-w-[520px] flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+    <div data-blocking-popup="" className="k5-fade-in fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4">
+      <div role="dialog" aria-modal="true" aria-labelledby="complete-profile-title" className="k5-zoom-in flex max-h-[90vh] w-full max-w-[520px] flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
         <div className="flex items-center gap-3 bg-primary px-5 py-4 text-white">
           <UserCircle className="h-7 w-7 flex-none" aria-hidden="true" />
           <h2 id="complete-profile-title" className="m-0 flex-1 text-xl font-semibold">
@@ -125,10 +112,10 @@ export function CompleteProfileModal({ hold = false }) {
               Later
             </button>
           )}
-          <a href={studentNavHref(school, "my-profile")} className="flex min-h-11 items-center gap-2 rounded-full bg-primary px-5 text-[15px] font-semibold text-white no-underline hover:opacity-90">
+          <Link href={studentNavHref(school, "my-profile")} className="flex min-h-11 items-center gap-2 rounded-full bg-primary px-5 text-[15px] font-semibold text-white no-underline hover:opacity-90">
             <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
             Go to My Profile
-          </a>
+          </Link>
         </div>
       </div>
     </div>

@@ -17,7 +17,7 @@ export function ReEnrollmentFlow({ children }) {
   if (!activeStep) return children;
   const displaySteps = steps.map(key => ({ key, label: STEP_LABELS[key] || key, icon: ICONS[key] || ClipboardCheck }));
   const currentIndex = displaySteps.findIndex(step => step.key === activeStep);
-  return <div className={styles.flow}>
+  return <div className={styles.flow} data-re-enrollment-flow>
     <header className="mb-6 text-center md:mb-8">
       <h1 className="text-xl font-extrabold sm:text-2xl">{option?.learningProgramLabel ? `${option.learningProgramLabel} Re-Enrollment` : "Re-Enrollment"}</h1>
       {currentIndex >= 0 && <p className="mt-1 text-sm text-slate-500">Step {currentIndex + 1} of {displaySteps.length} · {STEP_LABELS[activeStep]}</p>}
@@ -39,9 +39,9 @@ export function ReEnrollmentStepTitle({ children, subtitle }) {
 
 export function ReEnrollmentStepCard({ header, headerRight, children }) {
   return <section className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
-    {header && <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
+    {header && <header className="flex flex-wrap items-center justify-between gap-2 border-primary bg-primary px-4 py-3 text-white">
       <h3 className="text-base font-semibold">{header}</h3>
-      {headerRight && <span className="rounded-md bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">{headerRight}</span>}
+      {headerRight && <span className="rounded-md bg-white px-3 py-1 text-sm font-semibold text-primary">{headerRight}</span>}
     </header>}
     <div className="px-4 py-3 text-sm">{children}</div>
   </section>;

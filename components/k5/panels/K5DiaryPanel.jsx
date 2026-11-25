@@ -1,23 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Lock, NotebookText } from "lucide-react";
 import { STAFF_SENDER_ROLES, formatWhen, salutationFor } from "@/components/dashboard/DiaryPanel";
 import { EmptyNote, K5Drawer } from "@/components/k5/panels/K5Drawer";
 import { markDiaryThreadRead } from "@/utils/diaryClient";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
-import { useChatScroll, useDiaryMessages, useDiaryThreads, useFloatingDate, useLoadMoreAtEnd } from "@/hooks/useDiaryPaging";
+import { useChatScroll, useDiaryMessages, useDiaryParentName, useDiaryThreads, useFloatingDate, useLoadMoreAtEnd } from "@/hooks/useDiaryPaging";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { DiaryAvatar, DiaryLoadError, DiaryMessageText, FloatingDateChip } from "@/components/dashboard/DiaryBits";
-import { diaryInstant } from "@/utils/diaryDates";
+import { diaryDayChipLabel, diaryDayKey, diaryInstant } from "@/utils/diaryDates";
 import { isOwnDiaryMessage } from "@/utils/diaryChat";
 import { DEFAULT_DIARY_CHAT_WITH, DIARY_CHAT_WITH, filterThreadsByChatWith, noDiaryEntriesText } from "@/utils/diaryFilter";
 import { K5Loading, K5ListSkeleton } from "@/components/k5/K5Skeletons";
-
-// Notebook paper (mockup PAPER): red margin line + blue ruling on cream.
-const PAPER =
-  "linear-gradient(to right, transparent 48px, #F4A3A3 48px, #F4A3A3 50px, transparent 50px) local, repeating-linear-gradient(to bottom, transparent 0px, transparent 34px, #DCE7F7 34px, #DCE7F7 36px) local, #FFFBEF";
 
 function ThreadList({ threads, chatWith, onSelect, sourceTimezone, endRef, loadingMore }) {
   return (
@@ -32,7 +28,7 @@ function ThreadList({ threads, chatWith, onSelect, sourceTimezone, endRef, loadi
           <button
             type="button"
             onClick={() => onSelect(thread.threadId)}
-            className="flex w-full cursor-pointer items-center gap-3 rounded-[22px] border-[3px] border-[#D8C7F7] bg-white p-3 text-start text-[#2B2B3A] shadow-[0_3px_0_#D8C7F7]"
+            className="flex w-full cursor-pointer items-center gap-3 rounded-[22px] border-[3px] border-[#D8C7F7] bg-[#FFFFFF] p-3 text-start text-[#2B2B3A] shadow-[0_3px_0_#D8C7F7] dark:border-k5-line dark:bg-k5-soft dark:text-k5-ink dark:shadow-[0_3px_0_var(--k5-line)]"
           >
             <DiaryAvatar name={thread.teacherName} src={thread.profilePic} className="h-11 w-11 bg-[#9C6BF0]" initialsClassName="text-[15px] font-black text-white" />
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -40,9 +36,9 @@ function ThreadList({ threads, chatWith, onSelect, sourceTimezone, endRef, loadi
                 <span className="truncate font-k5-display text-lg font-semibold">{`${salutationFor(thread.teacherGender)} ${thread.teacherName}`.trim()}</span>
                 {thread.unreadCount > 0 && <span className="flex-none rounded-full bg-k5-red px-2 py-0.5 text-xs font-black text-white">{thread.unreadCount}</span>}
               </span>
-              <span className="truncate text-[15px] font-bold text-[#4A5675]">{thread.latestMessage}</span>
+              <span className="truncate text-[15px] font-bold text-[#4A5675] dark:text-k5-mut">{thread.latestMessage}</span>
             </span>
-            <span className="flex-none text-[11px] font-extrabold text-[#6B7489]">{formatWhen(thread.lastMessageAt, sourceTimezone)}</span>
+            <span className="flex-none text-[11px] font-extrabold text-[#6B7489] dark:text-k5-mut">{formatWhen(thread.lastMessageAt, sourceTimezone)}</span>
           </button>
         </li>
       ))}
@@ -58,39 +54,70 @@ function ThreadList({ threads, chatWith, onSelect, sourceTimezone, endRef, loadi
   );
 }
 
-function Note({ message, courseName, schoolName, viewerUserId, viewerName, sourceTimezone }) {
+/** The day chip between the days of a chat (mockup diary): a slightly tilted lilac label. */
+function DayChip({ label }) {
+  return (
+    <div className="mt-1.5 flex justify-center">
+      <span className="-rotate-2 bg-[rgba(232,218,255,0.92)] px-4 py-1 text-[13px] font-black text-[#4E2C9A] shadow-[0_1px_0_rgba(0,0,0,0.06)]">{label}</span>
+    </div>
+  );
+}
+
+function Note({ message, courseName, schoolName, parentName, chatWith, viewerUserId, viewerName, sourceTimezone }) {
   const isOwn = isOwnDiaryMessage(message, { userId: viewerUserId, role: "STUDENT", userName: viewerName });
   const isStaff = STAFF_SENDER_ROLES.includes((message.senderRole || "").toUpperCase());
-  const recipient = message.mentions?.find((m) => m.roleType === "PARENT")?.userName || "Parent";
+  const school = chatWith === "SCHOOL";
   return (
-    <div data-diary-at={diaryInstant(message.createdAt, sourceTimezone)?.getTime()} className={`flex w-full ${isOwn ? "justify-end" : "justify-start"}`}>
+    <div data-diary-at={diaryInstant(message.createdAt, sourceTimezone)?.getTime()} className={`flex w-full items-end gap-2 ${isOwn ? "justify-end" : "justify-start"}`}>
+      {!isOwn && (
+        <DiaryAvatar
+          name={message.senderName}
+          className={`h-[34px] w-[34px] border-2 border-white shadow-[0_2px_0_#4E2C9A] ${school ? "bg-[#0B5ED7]" : "bg-[#9C6BF0]"}`}
+          initialsClassName="text-[13px] font-black text-white"
+        />
+      )}
       <div
-        className="flex max-w-[92%] flex-col gap-1 rounded-[18px_18px_18px_4px] border-2 border-[#D8C7F7] px-3 pb-1.5 pt-2 text-[#2B2B3A] shadow-[0_2px_0_#D8C7F7]"
-        style={{ background: isOwn ? "#EAF3FF" : "#FFFFFF" }}
+        className={`flex max-w-[82%] flex-col gap-[3px] rounded-[18px_18px_18px_4px] border-2 px-3 pb-1.5 pt-2 text-[#2B2B3A] dark:border-k5-line dark:bg-k5-soft dark:text-k5-ink dark:shadow-[0_2px_0_var(--k5-line)] ${isOwn ? "border-[#BFD7F7] bg-[#EAF3FF] shadow-[0_2px_0_#BFD7F7]" : school ? "border-[#C9DDF7] bg-[#FFFFFF] shadow-[0_2px_0_#C9DDF7]" : "border-[#D8C7F7] bg-[#FFFFFF] shadow-[0_2px_0_#D8C7F7]"}`}
       >
         {!isOwn && (
-          <span className="text-xs font-black text-[#6E44C9]">
-            {salutationFor(message.senderGender)} {message.senderName}
+          <span className="text-xs font-black text-[#6E44C9] dark:text-[#C9B3FF]">
+            {isStaff ? (school ? "🏫 School note" : "📝 Teacher's note") : "✏️ Note"} · {salutationFor(message.senderGender)} {message.senderName}
             {courseName ? ` · ${courseName}` : ""}
           </span>
         )}
+        {/* The legacy letter: addressed to the thread's parent, a greeting, then the note, then the closing. */}
         {isStaff && (
-          <span className="text-[15px] font-bold">
-            {recipient}, greetings from {schoolName}!
-          </span>
+          <div className="flex flex-col">
+            <span className="text-[17px] font-black">{parentName}</span>
+            <span className="text-[15px] font-extrabold text-[#6E44C9] dark:text-[#C9B3FF]">Greetings from {schoolName}!</span>
+            <span className="text-[15px] font-bold">Hope you are doing well.</span>
+          </div>
         )}
-        <DiaryMessageText text={message.message} mentions={message.mentions} className="m-0 whitespace-pre-wrap text-base font-bold leading-[1.4] [overflow-wrap:anywhere]" mentionClassName="font-black text-[#1F9E5A]" />
-        {isStaff && <span className="text-sm font-bold text-[#4A5675]">{schoolName} Family</span>}
-        <span className="self-end text-[11px] font-extrabold text-[#6B7489]">{formatWhen(message.createdAt, sourceTimezone)}</span>
+        <div className="flex items-start justify-between gap-1.5">
+          <DiaryMessageText text={message.message} mentions={message.mentions} className="m-0 min-w-0 whitespace-pre-wrap text-base font-bold leading-[1.4] [overflow-wrap:anywhere]" mentionClassName="font-black text-[#1F9E5A]" />
+          {isStaff && (
+            <span aria-hidden="true" className="flex h-7 w-7 flex-none -rotate-12 items-center justify-center rounded-full border-2 border-[#E0A800] bg-[#FFD84D] text-[15px]">
+              ⭐
+            </span>
+          )}
+        </div>
+        {isStaff && (
+          <div className="flex flex-col text-sm font-bold text-[#4A5675] dark:text-k5-mut">
+            <span>Gratitude and prayers,</span>
+            <span>{schoolName} Family</span>
+          </div>
+        )}
+        <span className="self-end text-[11px] font-extrabold text-[#6B7489] dark:text-k5-mut">{formatWhen(message.createdAt, sourceTimezone)}</span>
       </div>
     </div>
   );
 }
 
-function ThreadView({ threadId, sessionUserId, schoolName }) {
+function ThreadView({ threadId, sessionUserId, schoolName, chatWith }) {
   const dummy = useDummyStudent();
   const queryClient = useQueryClient();
   const { query: messagesQuery, messages, courseName, sourceTimezone } = useDiaryMessages({ sessionUserId, threadId });
+  const parentName = useDiaryParentName({ threadId });
   const { context } = useDashboardContext();
   const anchorRef = useRef(null);
   // Opens on the newest note; the older ones load in above when the top is reached (legacy loadOldMessages).
@@ -121,21 +148,29 @@ function ThreadView({ threadId, sessionUserId, schoolName }) {
     );
   }
   if (messagesQuery.isError && messages.length === 0) {
-    return <DiaryLoadError onRetry={() => messagesQuery.refetch()} className="text-[#2B2B3A]" buttonClassName="border-[3px] border-[#6E44C9] bg-[#9C6BF0] font-k5-display text-white" />;
+    return <DiaryLoadError onRetry={() => messagesQuery.refetch()} className="text-[#2B2B3A] dark:text-k5-ink" buttonClassName="border-[3px] border-[#6E44C9] bg-[#9C6BF0] font-k5-display text-white" />;
   }
   if (messages.length === 0) return <EmptyNote>No notes yet.</EmptyNote>;
   return (
     <>
       <span ref={anchorRef} aria-hidden="true" className="hidden" />
-      <FloatingDateChip label={floatingDate.label} visible={floatingDate.visible} className="bg-[#6E44C9] text-white" />
+      {/* <FloatingDateChip label={floatingDate.label} visible={floatingDate.visible} className="bg-[#6E44C9] text-white" /> */}
       {messagesQuery.isFetchingNextPage && (
         <K5Loading label="Loading older notes" className="">
           <K5ListSkeleton rows={1} />
         </K5Loading>
       )}
-      {messages.map((message) => (
-        <Note key={message.id} message={message} courseName={courseName} schoolName={schoolName} viewerUserId={sessionUserId} viewerName={context?.userName} sourceTimezone={sourceTimezone} />
-      ))}
+      {messages.map((message, index) => {
+        const at = diaryInstant(message.createdAt, sourceTimezone);
+        const prevAt = index > 0 ? diaryInstant(messages[index - 1].createdAt, sourceTimezone) : null;
+        const newDay = at && (!prevAt || diaryDayKey(at) !== diaryDayKey(prevAt));
+        return (
+          <Fragment key={message.id}>
+            {newDay && <DayChip label={diaryDayChipLabel(at)} />}
+            <Note message={message} courseName={courseName} schoolName={schoolName} parentName={parentName} chatWith={chatWith} viewerUserId={sessionUserId} viewerName={context?.userName} sourceTimezone={sourceTimezone} />
+          </Fragment>
+        );
+      })}
     </>
   );
 }
@@ -152,16 +187,15 @@ export function K5DiaryPanel({ sessionUserId, schoolName, onClose }) {
   const shownThreads = filterThreadsByChatWith(threads, chatWith);
   const [selectedThreadId, setSelectedThreadId] = useState(null);
   const selectedName = threads.find((t) => t.threadId === selectedThreadId)?.teacherName;
-  const unread = threads.reduce((sum, t) => sum + (t.unreadCount || 0), 0);
 
   return (
     <K5Drawer
-      title={selectedThreadId && selectedName ? selectedName : "Student’s Diary"}
-      subtitle={selectedThreadId ? "Notes from your teacher" : unread > 0 ? `${unread} new` : "Notes from school"}
+      title="My School Diary"
+      subtitle={selectedThreadId && selectedName ? `Notes from ${selectedName}` : "Notes from school, every day"}
       icon={<NotebookText className="h-[30px] w-[30px] text-[#0B2447]" aria-hidden="true" />}
       accent="#9C6BF0"
       pastel="#E8DAFF"
-      bg="#F6F0FF"
+      bg="var(--k5-diary-bg)"
       leading={
         selectedThreadId ? (
           <button
@@ -176,16 +210,40 @@ export function K5DiaryPanel({ sessionUserId, schoolName, onClose }) {
       }
       bodyClassName="p-0"
       onClose={onClose}
+      belowHeader={
+        selectedThreadId ? null : (
+          <div role="tablist" aria-label="My School Diary" className="flex flex-none gap-2 border-b-2 border-[#D8C7F7] bg-[#E8DAFF] px-3 py-2.5">
+            {DIARY_CHAT_WITH.map((option) => {
+              const on = option.value === chatWith;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={on}
+                  onClick={() => setChatWith(option.value)}
+                  className={`flex min-h-[46px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-full border-[3px] font-k5-display text-[17px] font-semibold ${on ? "border-[#6E44C9] bg-[#6E44C9] text-white shadow-[0_3px_0_#4E2C9A]" : "border-[#D8C7F7] bg-[#FFFFFF] text-[#0B2447]"}`}
+                >
+                  <span aria-hidden="true" className="text-xl">
+                    {option.value === "SCHOOL" ? "🏫" : "👩‍🏫"}
+                  </span>
+                  {option.value === "SCHOOL" ? "School diary" : "Teacher diary"}
+                </button>
+              );
+            })}
+          </div>
+        )
+      }
       footer={
-        <div className="flex flex-none items-center justify-center gap-2 border-t-[3px] border-[#9C6BF0] bg-[#E8DAFF] px-3.5 py-3 text-center text-sm font-extrabold text-[#4E2C9A]">
-          <Lock className="h-[18px] w-[18px] flex-none" aria-hidden="true" />
-          This is read only. Your teacher writes here.
+        <div role="note" className="flex flex-none items-center justify-center gap-2 border-t-[3px] border-[#F2C94C] bg-[#FFF7DD] px-3.5 py-3 text-center text-sm font-extrabold text-[#1C2640]">
+          <Lock className="h-[18px] w-[18px] flex-none text-[#8A5A00]" aria-hidden="true" />
+          Only your teacher and school write in this diary.
         </div>
       }
     >
       {selectedThreadId ? (
-        <div className="flex min-h-full flex-col gap-3.5 py-4 pl-[60px] pr-3.5 overflow-y-auto overscroll-contain" style={{ background: PAPER }}>
-          <ThreadView threadId={selectedThreadId} sessionUserId={sessionUserId} schoolName={schoolName} />
+        <div className="k5-diary-paper flex min-h-full flex-col gap-3.5 overflow-y-auto overscroll-contain py-4 pl-[60px] pr-3.5" >
+          <ThreadView threadId={selectedThreadId} sessionUserId={sessionUserId} schoolName={schoolName} chatWith={chatWith} />
         </div>
       ) : (
         <div className="p-3.5">
@@ -194,26 +252,9 @@ export function K5DiaryPanel({ sessionUserId, schoolName, onClose }) {
               <K5ListSkeleton rows={4} />
             </K5Loading>
           ) : threadsQuery.isError && threads.length === 0 ? (
-            <DiaryLoadError onRetry={() => threadsQuery.refetch()} className="text-[#2B2B3A]" buttonClassName="border-[3px] border-[#6E44C9] bg-[#9C6BF0] font-k5-display text-white" />
+            <DiaryLoadError onRetry={() => threadsQuery.refetch()} className="text-[#2B2B3A] dark:text-k5-ink" buttonClassName="border-[3px] border-[#6E44C9] bg-[#9C6BF0] font-k5-display text-white" />
           ) : (
             <div className="flex flex-col gap-3">
-              <div role="tablist" aria-label="Chat with" className="flex gap-2">
-                {DIARY_CHAT_WITH.map((option) => {
-                  const on = option.value === chatWith;
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      role="tab"
-                      aria-selected={on}
-                      onClick={() => setChatWith(option.value)}
-                      className={`min-h-11 flex-1 cursor-pointer rounded-full border-[3px] font-k5-display text-base font-semibold ${on ? "border-[#6E44C9] bg-[#9C6BF0] text-white shadow-[0_3px_0_#6E44C9]" : "border-[#D8C7F7] bg-white text-[#4E2C9A]"}`}
-                    >
-                      {option.label}
-                    </button>
-                  );
-                })}
-              </div>
               <ThreadList threads={shownThreads} chatWith={chatWith} onSelect={setSelectedThreadId} sourceTimezone={sourceTimezone} endRef={endRef} loadingMore={threadsQuery.isFetchingNextPage} />
             </div>
           )}

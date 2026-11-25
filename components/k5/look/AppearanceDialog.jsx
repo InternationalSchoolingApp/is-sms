@@ -40,6 +40,7 @@ export function AppearanceDialog({ open, onClose, firstName = "" }) {
   const draftValue = useMemo(() => ({
     ...appearance,
     preferences: draft,
+    isDark: draft.mode === "dark" || (draft.mode === "system" && appearance.isDark),
     updatePreference: (name, value) => {
       setDraft((prev) => sanitizeAppearance({ ...prev, [name]: value }));
     },
@@ -92,7 +93,7 @@ export function AppearanceDialog({ open, onClose, firstName = "" }) {
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto px-[26px] py-[22px] max-[480px]:px-4">
           <AppearanceContext.Provider value={draftValue}>
-            <AppearanceSettingsPanel withBuddy onHear={hearVoice} />
+            <AppearanceSettingsPanel withBuddy onHear={hearVoice} firstName={firstName} />
           </AppearanceContext.Provider>
         </div>
 

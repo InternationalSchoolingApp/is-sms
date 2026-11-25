@@ -128,7 +128,8 @@ function PaymentScreen() {
   }
 
   // Plan confirmed / deleted just now: wait for the re-read fee instead of showing the old one for a moment.
-  if (detailsQuery.isLoading || awaitingDetails) return <FullScreenLoader />;
+  // The fee of the previous visit (other courses) stays cached: wait for this visit's read instead of showing the old amount.
+  if (detailsQuery.isLoading || !detailsQuery.isFetchedAfterMount || awaitingDetails) return <FullScreenLoader />;
 
   return (
     <>
@@ -161,6 +162,7 @@ function PaymentScreen() {
             )
           ) : (
             <FeePaymentPlans
+              isReEnrollment
               fee={data}
               options={planOptions}
               selected={currentPlan}
