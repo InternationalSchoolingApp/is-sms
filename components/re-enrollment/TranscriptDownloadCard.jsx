@@ -3,29 +3,35 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { CircleAlert, CirclePause, Download, FileText, Loader2, Lock, MessageCircle, Paperclip, RefreshCw, Upload } from "lucide-react";
+import { CircleAlert, CirclePause, Download, FileText, FileWarning, Hourglass, Lock, MessageCircle, Paperclip, RefreshCw, Upload } from "lucide-react";
 import { CHAT_BASE_URL } from "@/components/re-enrollment/ReEnrollmentParts";
 import { DocumentUploadPanel } from "@/components/re-enrollment/DocumentUploadPanel";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useModuleRights } from "@/hooks/useModuleRights";
 import { reEnrollmentDocumentsKey, useReEnrollmentContext, useReEnrollmentDocuments } from "@/hooks/useReEnrollment";
+import { notifyReEnrollmentDocumentsUploaded } from "@/services/reEnrollmentBackendApi";
 import { expireSession } from "@/utils/logout";
 import {
   BLOCKER_DOCUMENTS,
+  BLOCKER_REJECTED,
   DOC_STATUS_UPLOADED,
   BLOCKER_NOT_AVAILABLE,
   BLOCKER_ON_HOLD,
+  BLOCKER_UNDER_VERIFICATION,
   COPY,
   demoReEnrollmentDocuments,
   isReEnrollmentDocsMock,
   mapReEnrollmentDocuments,
   markDocumentUploaded,
+  needsUpload,
 } from "@/utils/reEnrollmentDocuments";
 import styles from "./K5PassedOptions.module.css";
 
 const REASON_ICON = {
   [BLOCKER_ON_HOLD]: CirclePause,
   [BLOCKER_DOCUMENTS]: Paperclip,
+  [BLOCKER_REJECTED]: FileWarning,
+  [BLOCKER_UNDER_VERIFICATION]: Hourglass,
   [BLOCKER_NOT_AVAILABLE]: CircleAlert,
 };
 
@@ -59,24 +65,68 @@ function HoldReason({ hold, chatUrl }) {
   );
 }
 
+// One "• Label [Not verified]" line with the admin's reason under it.
+function RejectedDocLine({ doc }) {
+  return (
+    <span className={styles.trLine}>
+      • <b>{doc.label}</b> <span className={`${styles.trChip} ${styles.trChipMissing}`}>{COPY.docStatus.REJECTED}</span>
+      <span className={styles.trLine}>
+        <b>{COPY.rejectedReasonLabel}</b> {doc.reason || COPY.rejectedNoReason}
+      </span>
+    </span>
+  );
+}
+
+// The upload / re-upload toggle shared by "missing" and "not verified" documents.
+function FixButton({ open, onToggle, panelId, label }) {
+  return (
+    <button type="button" className={styles.trCta} onClick={onToggle} aria-expanded={open} aria-controls={panelId}>
+      {!open && <Upload size={14} aria-hidden="true" />}
+      {open ? COPY.hideUpload : label}
+    </button>
+  );
+}
+
 function DocumentsReason({ reason, open, onToggle, panelId }) {
+  const rejected = reason.rejected ?? [];
   return (
     <>
       <span className={styles.trText}>
-        {COPY.docsTitle}
+        {reason.missing.length > 0 && COPY.docsTitle}
         {reason.missing.map((doc) => (
           <span key={doc.docType} className={styles.trLine}>
             • <b>{doc.label}</b> <span className={`${styles.trChip} ${styles.trChipMissing}`}>{COPY.docStatus.MISSING}</span>
           </span>
         ))}
-        <span className={`${styles.trLine} ${styles.trMuted}`}>{COPY.docsHint}</span>
+        {rejected.length > 0 && (
+          <span className={styles.trLine}>
+            {reason.missing.length > 0 ? <b>{COPY.rejectedMany}</b> : <b>{rejected.length === 1 ? COPY.rejectedOne : COPY.rejectedMany}</b>}
+          </span>
+        )}
+        {rejected.map((doc) => (
+          <RejectedDocLine key={doc.docType} doc={doc} />
+        ))}
+        <span className={`${styles.trLine} ${styles.trMuted}`}>{reason.missing.length > 0 ? COPY.docsHint : COPY.rejectedHint}</span>
       </span>
-      {reason.missing.length > 0 && (
-        <button type="button" className={styles.trCta} onClick={onToggle} aria-expanded={open} aria-controls={panelId}>
-          {!open && <Upload size={14} aria-hidden="true" />}
-          {open ? COPY.hideUpload : COPY.upload}
-        </button>
+      {(reason.missing.length > 0 || rejected.length > 0) && (
+        <FixButton open={open} onToggle={onToggle} panelId={panelId} label={reason.missing.length > 0 ? COPY.upload : COPY.reupload} />
       )}
+    </>
+  );
+}
+
+// DOCUMENTS_REJECTED: nothing is missing, an admin marked one or more documents "not verified" with a reason.
+function RejectedReason({ reason, open, onToggle, panelId }) {
+  return (
+    <>
+      <span className={styles.trText} role="alert">
+        <b>{reason.rejected.length === 1 ? COPY.rejectedOne : COPY.rejectedMany}</b>
+        {reason.rejected.map((doc) => (
+          <RejectedDocLine key={doc.docType} doc={doc} />
+        ))}
+        <span className={`${styles.trLine} ${styles.trMuted}`}>{COPY.rejectedHint}</span>
+      </span>
+      <FixButton open={open} onToggle={onToggle} panelId={panelId} label={COPY.reupload} />
     </>
   );
 }
@@ -84,8 +134,10 @@ function DocumentsReason({ reason, open, onToggle, panelId }) {
 /**
  * Re-enrollment option screen: "Download your transcript" card, after the option rows (plan v3).
  *   loading -> skeleton · ready -> Download (+ diploma for a Grade 12 PASS) · blocked -> disabled Download + every reason with
- *   its same-page fix (school hold: none; documents: inline upload) · hidden -> nothing. Pending fees are not shown here: the
- *   onboarding overdue-fee gate already handles them.
+ *   its same-page fix (school hold: none; documents: inline upload; under verification: none, a notice only) · hidden ->
+ *   nothing. Pending fees are not shown here: the onboarding overdue-fee gate already handles them.
+ * The last missing document uploaded -> "uploaded successfully, generated within 24 hours" (DOCUMENTS_UNDER_VERIFICATION);
+ *   Download stays disabled, the backend is told (documents-uploaded: marker + support mail), then the documents refetched.
  * Hidden on E004 / error / old backend (404) / no "student-transcript" view right (also off when showTranscriptMenu is false:
  * the menu then drops the module). Session out -> expireSession. Dummy (demo) student -> a demo card, no API.
  *
@@ -114,18 +166,36 @@ export function TranscriptDownloadCard({ look = "classic" }) {
   }, [dummy.enabled, eligibility?.currentGrade?.name, query.isError, query.data]);
 
   // After an upload: the document turns "Uploaded" on the card at once; the documents API is refreshed in the background
-  // (not awaited), and brings the links when nothing else blocks the transcript.
+  // (not awaited). The last missing document turns the documents reason into "under verification" (Download stays disabled).
   const queryClient = useQueryClient();
-  // The 3 documents as of the last upload (all Uploaded once the last one is in): the card turns ready and the documents
-  // blocker is gone, but the student can still View what was uploaded from this list, under the ready row.
+  // The 3 documents as of the last upload (all Uploaded once the last one is in): the documents reason is gone then, but the
+  // student can still View what was uploaded from this list, under the card.
   const [docsAfterUpload, setDocsAfterUpload] = useState(null);
   const onUploaded = (docType) => {
-    const docsReason = view.reasons?.find((reason) => reason.code === BLOCKER_DOCUMENTS);
+    // The reason the student is fixing now: missing documents, or documents an admin marked "not verified".
+    const docsReason = view.reasons?.find((reason) => reason.code === BLOCKER_DOCUMENTS || reason.code === BLOCKER_REJECTED);
     if (docsReason) {
-      setDocsAfterUpload(docsReason.docs.map((doc) => (doc.docType === docType ? { ...doc, status: DOC_STATUS_UPLOADED } : doc)));
+      setDocsAfterUpload(
+        docsReason.docs.map((doc) => (doc.docType === docType ? { ...doc, status: DOC_STATUS_UPLOADED, reason: "" } : doc)),
+      );
     }
     queryClient.setQueryData(reEnrollmentDocumentsKey(session?.userId), (old) => markDocumentUploaded(old, docType));
-    query.refetch();
+    // The last document that needed an upload (or a re-upload) is in: support is asked to verify them.
+    const toFix = docsReason ? docsReason.docs.filter(needsUpload) : [];
+    const lastDocument = toFix.length > 0 && toFix.every((doc) => doc.docType === docType);
+    if (!lastDocument || mock) {
+      // TEMP dev mock: mockUploadDocument already moved the mock to "under verification"; no backend call.
+      query.refetch();
+      return;
+    }
+    // Not awaited: tell the backend (verification marker + support mail), then refetch so the answer carries the marker.
+    // A failure only logs; the card already shows the notice and the refetch still runs.
+    notifyReEnrollmentDocumentsUploaded(session?.schoolUUID, { userId: session?.userId })
+      .then((result) => {
+        if (result?.status !== "1") console.error("[re-enrollment] documents-uploaded did not succeed", result);
+      })
+      .catch((error) => console.error("[re-enrollment] documents-uploaded failed", error))
+      .finally(() => query.refetch());
   };
 
   useEffect(() => {
@@ -161,7 +231,12 @@ export function TranscriptDownloadCard({ look = "classic" }) {
   );
 
   // One Download button; a Grade 12 PASS (diploma) gets two: Download Transcript + Download Diploma. Each opens the
-  // document's page in a new tab. Blocked: disabled. Right after the last upload: disabled with a spinner until the links arrive.
+  // document's page in a new tab. Blocked (incl. under verification): disabled.
+  const underVerificationDocs = view.reasons?.find((reason) => reason.code === BLOCKER_UNDER_VERIFICATION)?.docs?.length
+    ? view.reasons.find((reason) => reason.code === BLOCKER_UNDER_VERIFICATION).docs
+    : null;
+  const fixing = view.reasons?.some((reason) => reason.code === BLOCKER_DOCUMENTS || reason.code === BLOCKER_REJECTED);
+  const verifyingOnly = !ready && view.reasons.every((reason) => reason.code === BLOCKER_UNDER_VERIFICATION);
   const docs = view.showDiploma
     ? [
         { key: "transcript", label: COPY.downloadTranscript, href: view.links?.transcriptView || view.links?.transcript, aria: COPY.downloadTranscript },
@@ -169,14 +244,10 @@ export function TranscriptDownloadCard({ look = "classic" }) {
       ]
     : [{ key: "transcript", label: COPY.download, href: view.links?.transcriptView || view.links?.transcript, aria: `${COPY.download}: ${COPY.title}` }];
   const docButtons = docs.map((doc) =>
-    ready && !view.preparing ? (
+    ready ? (
       <a key={doc.key} className={buttonClass} href={doc.href} target="_blank" rel="noopener noreferrer" onClick={onDemoClick} aria-label={doc.aria}>
         {doc.label} <Download size={20} aria-hidden="true" />
       </a>
-    ) : ready ? (
-      <button key={doc.key} type="button" className={`${buttonClass} ${styles.trDisabled}`} aria-disabled="true" aria-busy="true">
-        {docs.length === 1 ? COPY.preparing : doc.label} <Loader2 size={20} className="animate-spin" aria-hidden="true" />
-      </button>
     ) : (
       <button
         key={doc.key}
@@ -184,7 +255,7 @@ export function TranscriptDownloadCard({ look = "classic" }) {
         className={`${buttonClass} ${styles.trDisabled}`}
         aria-disabled="true"
         aria-describedby={reasonsId}
-        title={COPY.downloadDisabledHint}
+        title={verifyingOnly ? COPY.underVerificationText : COPY.downloadDisabledHint}
       >
         {doc.label} <Download size={20} aria-hidden="true" />
       </button>
@@ -224,6 +295,20 @@ export function TranscriptDownloadCard({ look = "classic" }) {
                       )}
                     </>
                   )}
+                  {reason.code === BLOCKER_REJECTED && (
+                    <>
+                      <RejectedReason reason={reason} open={uploadOpen} onToggle={() => setUploadOpen((v) => !v)} panelId={panelId} />
+                      {uploadOpen && reason.docs.length > 0 && (
+                        <DocumentUploadPanel id={panelId} docs={reason.docs} onUploaded={onUploaded} schoolUUID={session?.schoolUUID} userId={session?.userId} mock={mock} />
+                      )}
+                    </>
+                  )}
+                  {reason.code === BLOCKER_UNDER_VERIFICATION && (
+                    // No action: support verifies the documents, then the backend enables the download.
+                    <span className={styles.trText} role="status">
+                      <b>{COPY.underVerificationTitle}</b> {COPY.underVerificationText}
+                    </span>
+                  )}
                   {reason.code === BLOCKER_NOT_AVAILABLE && (
                     <>
                       <span className={styles.trText}>{COPY.notAvailable}</span>
@@ -238,7 +323,11 @@ export function TranscriptDownloadCard({ look = "classic" }) {
             })}
           </ul>
         )}
-        {ready && docsAfterUpload && (
+        {/* The 3 documents with their View buttons: from the answer when it lists them, else the list of the last upload. */}
+        {!ready && underVerificationDocs && (
+          <DocumentUploadPanel docs={underVerificationDocs} schoolUUID={session?.schoolUUID} userId={session?.userId} mock={mock} />
+        )}
+        {docsAfterUpload && !underVerificationDocs && !fixing && (
           <DocumentUploadPanel docs={docsAfterUpload} schoolUUID={session?.schoolUUID} userId={session?.userId} mock={mock} />
         )}
       </section>

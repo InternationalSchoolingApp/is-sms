@@ -7,7 +7,7 @@ import { withSmsAuth } from "@/lib/auth/session";
 /**
  * Re-enrollment endpoints (ClientReEnrollmentController.java, is-rest-api):
  *   POST {school}/api/v1/student/re-enrollment/{eligibility,select-option,payment-details,
- *                                                 choose-payment-plan,review,complete,documents}
+ *                                                 choose-payment-plan,review,complete,documents,documents-uploaded}
  * Same envelope as studentSignupBackendApi.js: {payload: base64(JSON)}. The payload's `userId` selects the
  * student; the signed-in bearer token authenticates the caller. No browser session cookie is forwarded.
  * Business failures are HTTP 200 with their own status/statusCode, so a non-ok response or empty body means
@@ -83,9 +83,24 @@ export async function getReEnrollmentThankYou(schoolUUID, request) {
 
 /**
  * {userId} -> the "Download your transcript" card of the option screen: available, gradeName, result, transcript /
- * diploma links (only when available) and blockers[] (TRANSCRIPT_ON_HOLD, DOCUMENTS_PENDING, FEE_PENDING, NOT_AVAILABLE).
+ * diploma links (only when available) and blockers[] (TRANSCRIPT_ON_HOLD, DOCUMENTS_PENDING, DOCUMENTS_UNDER_VERIFICATION, NOT_AVAILABLE).
  * Called only on the option screen, never polled; an old backend without the endpoint answers 404 -> null (card hidden).
  */
 export async function getReEnrollmentDocuments(schoolUUID, request) {
   return postPayload(schoolUUID, "documents", request);
+}
+
+/**
+ * {userId} -> after the student's last missing mandatory document is uploaded on the card: the backend marks the documents
+ * as under verification (the documents answer then carries DOCUMENTS_UNDER_VERIFICATION) and sends the support mail.
+ * Idempotent: {status "1", statusCode "S001", requested, alreadyRequested}; "3" session out, "0"/E004, "0"/E005 (not all
+ * documents uploaded). Fire-and-forget from the card: any failure (404 old backend, network, no backend origin) -> null.
+ */
+export async function notifyReEnrollmentDocumentsUploaded(schoolUUID, request) {
+  try {
+    return await postPayload(schoolUUID, "documents-uploaded", request);
+  } catch (error) {
+    console.error("[re-enrollment-api] documents-uploaded failed", error);
+    return null;
+  }
 }

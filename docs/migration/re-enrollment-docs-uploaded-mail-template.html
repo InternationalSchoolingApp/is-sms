@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mail template: mandatory documents uploaded</title>
+<style>
+  body{margin:0;background:#eef2f8;font:14px/1.6 Lato,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#464646}
+  .note{max-width:720px;margin:18px auto 0;padding:12px 16px;border-left:4px solid #b5821a;background:#fff6e2;border-radius:8px;font-size:13px}
+  .meta{max-width:720px;margin:12px auto;padding:12px 16px;background:#fff;border:1px solid #dfe5ef;border-radius:10px;font-size:13px}
+  .meta b{color:#17202e}
+  .mail{max-width:720px;margin:12px auto 40px}
+</style>
+</head>
+<body>
+<div class="note"><b>Preview only.</b> Ye <code>external-resource/63_0_1_REENROLLMENT_DOCS_VERIFICATION.sql</code> ke template ki asli body hai, sample data ke saath (student ka naam, grade waghaira asli mail mein student ke record se aayenge). Layout <code>60_3_0_EMAIL_TEMPLATE.sql</code> ke admin mails (jaise <code>CALL_REQUEST_ADMIN_MAIL</code>) jaisa hai. School ka header / footer (logo, address) system mail mein apne aap lagta hai, yahan nahi dikhaya.</div>
+
+<div class="meta">
+  <div><b>To:</b> support@internationalschooling.org <span style="color:#536079">(setting <code>TRANSCRIPT_DOCS_SUPPORT_EMAIL</code> se badla ja sakta hai)</span></div>
+  <div><b>Subject:</b> Mandatory documents uploaded &ndash; please verify: Sample Student (Grade 9)</div>
+  <div><b>Kab jaati hai:</b> student ke teeno mandatory documents upload hote hi, ek student-grade ke liye sirf ek baar</div>
+</div>
+
+<div class="mail">
+<div templateFor="RE_ENROLLMENT_DOCS_UPLOADED_MAIL" class="body" style="margin:40px 0px;"> <div class="card" style="border-radius:9.013px; background:#fff; border: 1px solid #1f6fe5; padding-bottom:15px;"> <div style="margin:0 auto; background:#fff; width:80%; padding:10px 20px;text-align:left"> <p style="font:bold 14px Lato, sans-serif; color:#464646; line-height:22px;">Greetings from International Schooling!</p> <p style="font:bold 14px Lato, sans-serif; color:#464646; line-height:22px;">Dear Support Team,</p> <p style="font:normal 14px Lato, sans-serif; color:#464646; line-height:22px;">This is to inform you that a student has uploaded all of the <strong>mandatory documents</strong> from the re-enrollment "Download your transcript" card. Kindly verify the documents so that the transcript can be generated within 24 hours.</p> <p style="font:bold 15px Lato,sans-serif;color:#464646;line-height:22px;text-transform:capitalize;text-align:center;">STUDENT DOCUMENT DETAILS</p> <table cellpadding="0" cellspacing="0" style="width:100%;font:normal 13px arial;margin-top:15px"><tbody><tr><th style="text-align:center;width:130px;border:solid 1px #cfcfcf;word-break:break-word;padding:5px">Student Name</th><td style="border:solid 1px #cfcfcf;word-break:break-word;padding:5px">Sample Student</td></tr><tr><th style="text-align:center;width:130px;border:solid 1px #cfcfcf;word-break:break-word;padding:5px">Student ID</th><td style="border:solid 1px #cfcfcf;word-break:break-word;padding:5px">MEXJAPU260217093</td></tr><tr><th style="text-align:center;width:130px;border:solid 1px #cfcfcf;word-break:break-word;padding:5px">Student Email</th><td style="border:solid 1px #cfcfcf;word-break:break-word;padding:5px">sample.student@example.com</td></tr><tr><th style="text-align:center;width:130px;border:solid 1px #cfcfcf;word-break:break-word;padding:5px">Grade</th><td style="border:solid 1px #cfcfcf;word-break:break-word;padding:5px">Grade 9</td></tr><tr><th style="text-align:center;width:130px;border:solid 1px #cfcfcf;word-break:break-word;padding:5px">Learning Program</th><td style="border:solid 1px #cfcfcf;word-break:break-word;padding:5px">Group Learning</td></tr><tr><th style="text-align:center;width:130px;border:solid 1px #cfcfcf;word-break:break-word;padding:5px">Documents Uploaded</th><td style="border:solid 1px #cfcfcf;word-break:break-word;padding:5px">Age Proof, Parent Passport, Last academic proof</td></tr><tr><th style="text-align:center;width:130px;border:solid 1px #cfcfcf;word-break:break-word;padding:5px">Uploaded On</th><td style="border:solid 1px #cfcfcf;word-break:break-word;padding:5px">24 Nov 2026, 16:42 (Singapore time)</td></tr></tbody></table> <p style="font:normal 14px Lato, sans-serif; color:#464646; line-height:22px;margin-top:15px;">The documents can be seen in the student's profile under <strong>Academic Information &rarr; Documents</strong>. Kindly verify them at your earliest convenience.</p> <p style="font:normal 14px Lato, sans-serif; color:#464646; line-height:22px;text-align:left"><strong>Gratitude and Prayers,<br>International Schooling Family</strong></p></div><p style="font:normal 12px Lato, sans-serif; color:#464646; line-height:22px; text-align:center;"> Please do NOT reply to this email. Please note this is an auto generated e-mail.</p> </div> </div>
+</div>
+</body>
+</html>

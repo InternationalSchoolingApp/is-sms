@@ -6,7 +6,7 @@ import { Download, Eye, Loader2, Paperclip, Upload } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useProfileActions } from "@/hooks/useProfileActions";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
-import { COPY, DOC_STATUS_UPLOADED, mockUploadDocument } from "@/utils/reEnrollmentDocuments";
+import { COPY, DOC_STATUS_REJECTED, DOC_STATUS_VERIFIED, isDocumentIn, mockUploadDocument } from "@/utils/reEnrollmentDocuments";
 import styles from "./K5PassedOptions.module.css";
 
 // The profile's document key (utils/profileModel.js DOCS) of each docType: where the uploaded file's URL comes from,
@@ -99,7 +99,9 @@ function PreviewDialog({ doc, onClose }) {
 }
 
 function DocRow({ doc, busy, disabled, onUpload, view, onView }) {
-  const uploaded = doc.status === DOC_STATUS_UPLOADED;
+  // Uploaded or verified: View only. Missing or "not verified": choose a file and upload (again).
+  const uploaded = isDocumentIn(doc);
+  const rejected = doc.status === DOC_STATUS_REJECTED;
   const inputRef = useRef(null);
   const errorId = useId();
   const [file, setFile] = useState(null);
@@ -132,6 +134,11 @@ function DocRow({ doc, busy, disabled, onUpload, view, onView }) {
     <div className={styles.trDoc}>
       <div className={styles.trDocName}>
         <b>{doc.label}</b>
+        {rejected && (
+          <span className={styles.trDocError} role="alert">
+            {COPY.rejectedReasonLabel} {doc.reason || COPY.rejectedNoReason}
+          </span>
+        )}
         {error && (
           <span id={errorId} className={styles.trDocError} role="alert">
             {error}
@@ -142,7 +149,7 @@ function DocRow({ doc, busy, disabled, onUpload, view, onView }) {
         className={`${styles.trChip} ${uploaded ? styles.trChipUploaded : styles.trChipMissing}`}
         role={uploaded ? "status" : undefined}
       >
-        {uploaded ? COPY.docStatus.UPLOADED : COPY.docStatus.MISSING}
+        {COPY.docStatus[doc.status] ?? COPY.docStatus.MISSING}
       </span>
       <div className={styles.trDocActions}>
         <input
@@ -215,7 +222,8 @@ function DocRow({ doc, busy, disabled, onUpload, view, onView }) {
  * An uploaded document has a View button (the picture / PDF in a preview dialog, like My Profile > Documents). The file's URL
  * comes from the profile data (useStudentProfile), refreshed after every upload; "Loading…" shows for that moment.
  *
- * docs: [{ label, docType, status }] — the 3 mandatory documents (MISSING / UPLOADED). onUploaded(docType): called after a
+ * docs: [{ label, docType, status, reason }] — the 3 mandatory documents (MISSING / UPLOADED / VERIFIED / REJECTED, the last
+ * with the admin's reason: it is uploaded again here). onUploaded(docType): called after a
  * successful upload. schoolUUID / userId: for the profile data (the URLs). mock: TEMP dev mock on (no backend call).
  */
 export function DocumentUploadPanel({ id, docs, onUploaded, schoolUUID, userId, mock = false }) {
@@ -264,7 +272,7 @@ export function DocumentUploadPanel({ id, docs, onUploaded, schoolUUID, userId, 
   }
 
   const busy = mock ? mockBusy : actions.busy;
-  const allDone = docs.length > 0 && docs.every((doc) => doc.status === DOC_STATUS_UPLOADED);
+  const allDone = docs.length > 0 && docs.every(isDocumentIn);
   return (
     <div id={id} className={styles.trUpload} role="group" aria-label={allDone ? COPY.docsDoneTitle : COPY.uploadPanelTitle}>
       <div className={styles.trUploadHead}>

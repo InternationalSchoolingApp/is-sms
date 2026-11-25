@@ -6,8 +6,15 @@
  *   state "hidden"      : nothing to show (no response / 404 old backend / E003 / E004 / EX01 / available without a link)
  *   state "session-out" : status "3" -> the card calls expireSession
  *   state "ready"       : Download enabled (links.transcript, + links.diploma for a Grade 12 PASS)
- *   state "blocked"     : Download disabled + reasons[] in display order TRANSCRIPT_ON_HOLD -> DOCUMENTS_PENDING
- *                         (-> NOT_AVAILABLE), each with its own same-page fix (none for the school hold).
+ *   state "blocked"     : Download disabled + reasons[] in display order TRANSCRIPT_ON_HOLD -> DOCUMENTS_PENDING ->
+ *                         DOCUMENTS_REJECTED -> DOCUMENTS_UNDER_VERIFICATION (-> NOT_AVAILABLE), each with its own
+ *                         same-page fix (none for the school hold or the verification).
+ *
+ * After the last missing document is uploaded the transcript is NOT ready at once (user decision): the documents go to
+ * support for verification ("generated within 24 hours"), so DOCUMENTS_PENDING turns into DOCUMENTS_UNDER_VERIFICATION and
+ * Download stays disabled. An admin then marks each document verified or not verified: a "not verified" document comes
+ * back as DOCUMENTS_REJECTED with the admin's reason and is re-uploaded here (then it waits for verification again). Once
+ * every document is verified the backend sends `available` with the links.
  *
  * Pending fees are not a card reason (user decision: the onboarding overdue-fee gate handles them). Any other code the
  * backend may still send (e.g. an old FEE_PENDING) is ignored; blocked with nothing known left -> NOT_AVAILABLE (fail closed).
@@ -22,13 +29,22 @@ export const STATUS_SESSION_OUT = "3";
 
 export const BLOCKER_ON_HOLD = "TRANSCRIPT_ON_HOLD";
 export const BLOCKER_DOCUMENTS = "DOCUMENTS_PENDING";
+export const BLOCKER_REJECTED = "DOCUMENTS_REJECTED";
+export const BLOCKER_UNDER_VERIFICATION = "DOCUMENTS_UNDER_VERIFICATION";
 export const BLOCKER_NOT_AVAILABLE = "NOT_AVAILABLE";
 
 // Display order on the card (plan v3 D12): the school hold on top, then the fixes the student can make.
-const BLOCKER_ORDER = [BLOCKER_ON_HOLD, BLOCKER_DOCUMENTS, BLOCKER_NOT_AVAILABLE];
+const BLOCKER_ORDER = [BLOCKER_ON_HOLD, BLOCKER_DOCUMENTS, BLOCKER_REJECTED, BLOCKER_UNDER_VERIFICATION, BLOCKER_NOT_AVAILABLE];
 
 export const DOC_STATUS_MISSING = "MISSING";
 export const DOC_STATUS_UPLOADED = "UPLOADED";
+export const DOC_STATUS_VERIFIED = "VERIFIED";
+export const DOC_STATUS_REJECTED = "REJECTED";
+
+/** A document that is in (uploaded, or already verified): it can be viewed, nothing is left to do on it. */
+export const isDocumentIn = (doc) => doc?.status === DOC_STATUS_UPLOADED || doc?.status === DOC_STATUS_VERIFIED;
+/** A document the student must upload (again): not uploaded yet, or marked not verified by the admin. */
+export const needsUpload = (doc) => doc?.status === DOC_STATUS_MISSING || doc?.status === DOC_STATUS_REJECTED;
 
 // The admin's 3 academic documents and the profile upload's docType for each (Parent Passport is saved as "Signature").
 export const ACADEMIC_DOCS = [
@@ -41,7 +57,6 @@ export const COPY = {
   title: "Download your transcript",
   newBadge: "NEW",
   download: "Download",
-  preparing: "Preparing…",
   downloadTranscript: "Download Transcript",
   downloadDiploma: "Download Diploma",
   loading: "Checking your transcript…",
@@ -60,12 +75,17 @@ export const COPY = {
   docsTitle: "Mandatory documents missing:",
   docsHint: "Upload them here to unlock your transcript.",
   docsHintElsewhere: "Upload them to unlock your transcript.",
-  docStatus: { [DOC_STATUS_MISSING]: "Not uploaded", [DOC_STATUS_UPLOADED]: "Uploaded" },
+  docStatus: {
+    [DOC_STATUS_MISSING]: "Not uploaded",
+    [DOC_STATUS_UPLOADED]: "Uploaded",
+    [DOC_STATUS_VERIFIED]: "Verified",
+    [DOC_STATUS_REJECTED]: "Not verified",
+  },
   upload: "Upload",
   hideUpload: "Hide",
   uploadPanelTitle: "Upload documents",
   uploadPanelSubtitle: "— same upload as My Profile → Documents, done here",
-  uploadPanelNote: "PDF, JPG or PNG up to 5 MB. The transcript unlocks as soon as all mandatory documents are uploaded.",
+  uploadPanelNote: "PDF, JPG or PNG up to 5 MB. Once all mandatory documents are uploaded, your transcript will be generated within 24 hours.",
   docsDoneTitle: "Your mandatory documents",
   viewDocument: "View",
   loadingView: "Loading…",
@@ -76,6 +96,16 @@ export const COPY = {
   chooseFile: "Choose file",
   changeFile: "Change",
   uploading: "Uploading…",
+  // DOCUMENTS_UNDER_VERIFICATION — every mandatory document uploaded, support verifies them; Download stays disabled.
+  underVerificationTitle: "Your documents have been uploaded successfully.",
+  underVerificationText: "Your transcript will be generated within 24 hours.",
+  // DOCUMENTS_REJECTED — an admin marked a document "not verified"; the student re-uploads it.
+  rejectedOne: "Please re-upload your document. It is marked not verified due to this reason:",
+  rejectedMany: "Please re-upload these documents. Each is marked not verified due to the reason shown:",
+  rejectedReasonLabel: "Reason:",
+  rejectedNoReason: "No reason was given.",
+  rejectedHint: "Upload the corrected file here. It will be checked again within 24 hours.",
+  reupload: "Re-upload",
   // NOT_AVAILABLE
   notAvailable: "Your transcript cannot be checked right now. Please try again later.",
   tryAgain: "Try again",
@@ -108,26 +138,37 @@ function viewLinkOf(doc) {
 }
 
 /**
- * The last upload of a document, shown at once (no wait for the documents API): the document turns UPLOADED in the cached
- * answer; with no MISSING document left the documents blocker goes, and with no blocker left at all the answer says
- * `available` with `linksPending` — the card shows View / Download right away, enabled when the silent refetch brings the
- * links (the backend only ever sends them when nothing blocks the transcript, so they cannot be made up here).
- * Always followed by a refetch: the backend stays the truth (a hold that still blocks comes back as before).
+ * The blocker code of a documents list, the way the backend decides it: a missing document -> DOCUMENTS_PENDING, else a
+ * rejected one -> DOCUMENTS_REJECTED, else (all uploaded / verified, support still to verify) -> DOCUMENTS_UNDER_VERIFICATION.
+ */
+function documentsCodeOf(items) {
+  if (items.some((item) => text(item?.status).toUpperCase() === DOC_STATUS_MISSING)) return BLOCKER_DOCUMENTS;
+  if (items.some((item) => text(item?.status).toUpperCase() === DOC_STATUS_REJECTED)) return BLOCKER_REJECTED;
+  return BLOCKER_UNDER_VERIFICATION;
+}
+
+const DOCUMENT_BLOCKERS = [BLOCKER_DOCUMENTS, BLOCKER_REJECTED, BLOCKER_UNDER_VERIFICATION];
+
+/**
+ * An upload of a document, shown at once (no wait for the documents API): the document turns UPLOADED (its rejection reason
+ * is dropped) in the cached answer and the documents blocker takes the code that fits what is left: missing -> pending,
+ * rejected -> rejected, nothing left -> DOCUMENTS_UNDER_VERIFICATION (support verifies them; other blockers, e.g. the school
+ * hold, stay). Never makes the answer `available`. Always followed by a refetch: the backend stays the truth.
  */
 export function markDocumentUploaded(response, docType) {
   if (!response || typeof response !== "object" || !Array.isArray(response.blockers)) return response;
-  const blockers = response.blockers
-    .map((blocker) => {
-      if (text(blocker?.code).toUpperCase() !== BLOCKER_DOCUMENTS) return blocker;
-      const items = (Array.isArray(blocker.items) ? blocker.items : []).map((item) =>
-        text(item?.docType) === docType ? { ...item, status: DOC_STATUS_UPLOADED } : item,
-      );
-      const anyMissing = items.some((item) => text(item?.status).toUpperCase() !== DOC_STATUS_UPLOADED);
-      return anyMissing ? { ...blocker, items } : null;
-    })
-    .filter(Boolean);
-  if (blockers.length) return { ...response, blockers };
-  return { ...response, blockers, available: true, linksPending: true };
+  const blockers = response.blockers.map((blocker) => {
+    if (!DOCUMENT_BLOCKERS.includes(text(blocker?.code).toUpperCase())) return blocker;
+    const items = (Array.isArray(blocker.items) ? blocker.items : []).map((item) => {
+      if (text(item?.docType) !== docType) return item;
+      const { reason: _dropped, ...rest } = item;
+      return { ...rest, status: DOC_STATUS_UPLOADED };
+    });
+    // No items (old backend answer): the code is only kept when it is not the documents one.
+    if (!items.length) return text(blocker.code).toUpperCase() === BLOCKER_DOCUMENTS ? { code: BLOCKER_UNDER_VERIFICATION } : blocker;
+    return { ...blocker, code: documentsCodeOf(items), items };
+  });
+  return { ...response, blockers };
 }
 
 /** On-hold copy (plan v3 section 5): reason + remark from the admin; blank remark -> no line; blank reason -> generic line. */
@@ -138,14 +179,21 @@ export function holdLines(blocker) {
   return { title: COPY.holdTitle, reason, remark, contact: COPY.holdContact };
 }
 
+const KNOWN_DOC_STATUSES = [DOC_STATUS_UPLOADED, DOC_STATUS_VERIFIED, DOC_STATUS_REJECTED];
+
 function docsOf(blocker) {
   const items = Array.isArray(blocker?.items) ? blocker.items : [];
   return items
-    .map((item) => ({
-      label: text(item.label) || text(item.docType),
-      docType: text(item.docType),
-      status: text(item.status).toUpperCase() === DOC_STATUS_UPLOADED ? DOC_STATUS_UPLOADED : DOC_STATUS_MISSING,
-    }))
+    .map((item) => {
+      const raw = text(item.status).toUpperCase();
+      const status = KNOWN_DOC_STATUSES.includes(raw) ? raw : DOC_STATUS_MISSING;
+      return {
+        label: text(item.label) || text(item.docType),
+        docType: text(item.docType),
+        status,
+        reason: status === DOC_STATUS_REJECTED ? text(item.reason) : "",
+      };
+    })
     .filter((item) => item.docType);
 }
 
@@ -164,9 +212,17 @@ function reasonsOf(blockers) {
     if (code === BLOCKER_DOCUMENTS) {
       const docs = docsOf(blocker);
       const missing = docs.filter((d) => d.status === DOC_STATUS_MISSING);
-      // Uploaded = done (plan v3 D7): no missing document left -> nothing to fix here.
-      if (missing.length || !docs.length) reasons.push({ code, docs, missing });
+      const rejected = docs.filter((d) => d.status === DOC_STATUS_REJECTED);
+      // Uploaded = done (plan v3 D7): nothing missing or rejected left -> nothing to fix here.
+      if (missing.length || rejected.length || !docs.length) reasons.push({ code, docs, missing, rejected });
     }
+    if (code === BLOCKER_REJECTED) {
+      const docs = docsOf(blocker);
+      const rejected = docs.filter((d) => d.status === DOC_STATUS_REJECTED);
+      // No document the student can re-upload (old / odd answer): still blocked, shown as "being verified".
+      reasons.push(rejected.length ? { code, docs, rejected, missing: [] } : { code: BLOCKER_UNDER_VERIFICATION, docs });
+    }
+    if (code === BLOCKER_UNDER_VERIFICATION) reasons.push({ code, docs: docsOf(blocker) });
     if (code === BLOCKER_NOT_AVAILABLE) reasons.push({ code });
   });
   return reasons;
@@ -190,21 +246,7 @@ export function mapReEnrollmentDocuments(response) {
 
   if (response.available === true) {
     const transcript = linkOf(response.transcript);
-    if (!transcript) {
-      // The last document was just uploaded (markDocumentUploaded): ready now, the links come with the silent refetch.
-      if (response.linksPending === true) {
-        return {
-          state: "ready",
-          preparing: true,
-          gradeName,
-          links: { transcript: null, transcriptView: null, diploma: null, diplomaView: null },
-          showDiploma: diplomaGrade,
-          heading: COPY.ready(gradeName),
-          reasons: [],
-        };
-      }
-      return HIDDEN;
-    }
+    if (!transcript) return HIDDEN;
     const diploma = linkOf(response.diploma);
     return {
       state: "ready",
@@ -266,19 +308,24 @@ export function transcriptBlockReasons(blockers) {
  *   - URL:  /{school}/student/re-enrollment?transcriptMock=<scenario>
  *   - env:  NEXT_PUBLIC_RE_ENROLLMENT_DOCS_MOCK=<scenario>   (.env.local, restart `next dev`)
  * Switch off: drop the URL param / env var (or ?transcriptMock=off to override the env var for one visit).
- * Scenarios: ready, docs, multi, g12, fail, hold, all (+ holdgeneric, notavailable, oldfee, e004). No fee scenarios: pending fees
+ * Scenarios: ready, docs, multi, g12, fail, hold, all, verifying, rejected, rejectedmany (+ holdgeneric, notavailable, oldfee, e004). No fee scenarios: pending fees
  * are not a card reason any more (oldfee = a backend still sending FEE_PENDING -> NOT_AVAILABLE).
- * Upload is simulated in memory while the mock is on (no backend call), so a refetch shows the change.
+ * Upload is simulated in memory while the mock is on (no backend call), so a refetch shows the change: the last missing
+ * document turns the documents blocker into DOCUMENTS_UNDER_VERIFICATION (what documents-uploaded does on the backend).
  * ───────────────────────────────────────────────────────────────────────────────────────────────────────────── */
 
 const MOCK_LINK = { viewPath: "/dashboard/student-transcript-view-after-publish/mock", downloadPath: "/dashboard/student-transcript-view-after-publish/mock?forDownload=true" };
 const MOCK_DIPLOMA = { viewPath: "/dashboard/view-diploma/mock", downloadPath: "/dashboard/view-diploma/mock?forDownload=true" };
-const mockDocs = (a, p, l) => ({
-  code: BLOCKER_DOCUMENTS,
-  items: ACADEMIC_DOCS.map((d, i) => ({ ...d, status: [a, p, l][i] })),
-});
+// A status string, or [status, reason] for a rejected document.
+const mockItem = (d, value) => (Array.isArray(value) ? { ...d, status: value[0], reason: value[1] } : { ...d, status: value });
+const mockDocs = (a, p, l) => {
+  const items = ACADEMIC_DOCS.map((d, i) => mockItem(d, [a, p, l][i]));
+  return { code: documentsCodeOf(items), items };
+};
 const M = DOC_STATUS_MISSING;
 const U = DOC_STATUS_UPLOADED;
+const V = DOC_STATUS_VERIFIED;
+const R = (reason) => [DOC_STATUS_REJECTED, reason];
 
 const MOCK_SCENARIOS = {
   ready: { gradeName: "Grade 10", result: "PASS", blockers: [] },
@@ -296,6 +343,9 @@ const MOCK_SCENARIOS = {
     result: "PASS",
     blockers: [{ code: BLOCKER_ON_HOLD, reason: "Disciplinary review", remark: "" }, mockDocs(U, M, U)],
   },
+  verifying: { gradeName: "Grade 9", result: "PASS", blockers: [mockDocs(U, U, U)] },
+  rejected: { gradeName: "Grade 9", result: "PASS", blockers: [mockDocs(V, R("The photo is blurry. Please upload a clear scan of the passport page."), U)] },
+  rejectedmany: { gradeName: "Grade 9", result: "PASS", blockers: [mockDocs(R("The document is cropped, the date of birth is not visible."), R("Wrong file uploaded."), V)] },
   holdgeneric: { gradeName: "Grade 8", result: "PASS", blockers: [{ code: BLOCKER_ON_HOLD, reason: "", remark: "" }] },
   notavailable: { gradeName: "Grade 10", result: "PASS", blockers: [{ code: BLOCKER_NOT_AVAILABLE }] },
   oldfee: { gradeName: "Grade 10", result: "PASS", blockers: [{ code: "FEE_PENDING", items: [{ userPaymentDetailsId: 1, amount: 250 }] }] },
@@ -339,10 +389,7 @@ export async function mockReEnrollmentDocumentsResponse() {
   if (!s) return null;
   await new Promise((resolve) => setTimeout(resolve, 450));
   if (s.status) return { status: s.status, statusCode: s.statusCode, message: "Mock: not eligible" };
-  const blockers = s.blockers.filter((b) => {
-    if (b.code === BLOCKER_DOCUMENTS) return b.items.some((d) => d.status === DOC_STATUS_MISSING);
-    return true;
-  });
+  const blockers = s.blockers;
   const available = blockers.length === 0;
   const diploma = s.result === "PASS" && /^grade\s*12$/i.test(s.gradeName);
   return {
@@ -356,13 +403,19 @@ export async function mockReEnrollmentDocumentsResponse() {
   };
 }
 
-/** Mock upload: the document turns UPLOADED (uploaded = done). */
+/** Mock upload: the document turns UPLOADED (reason dropped); the blocker takes the code of what is left, like the backend. */
 export async function mockUploadDocument(docType) {
   const s = mockScenario();
   if (!s) return false;
   await new Promise((resolve) => setTimeout(resolve, 700));
-  s.blockers.forEach((b) => {
-    if (b.code === BLOCKER_DOCUMENTS) b.items.forEach((d) => d.docType === docType && (d.status = DOC_STATUS_UPLOADED));
+  s.blockers = s.blockers.map((b) => {
+    if (!Array.isArray(b.items) || !DOCUMENT_BLOCKERS.includes(b.code)) return b;
+    const items = b.items.map((d) => {
+      if (d.docType !== docType) return d;
+      const { reason: _dropped, ...rest } = d;
+      return { ...rest, status: DOC_STATUS_UPLOADED };
+    });
+    return { ...b, code: documentsCodeOf(items), items };
   });
   return true;
 }

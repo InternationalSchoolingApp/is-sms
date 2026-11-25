@@ -1914,9 +1914,9 @@
     "semantic_hash": ""
   },
   "components/re-enrollment/TranscriptDownloadCard.jsx": {
-    "mtime": 1795517171.4975314,
-    "seen": 1795517320.577565,
-    "ast_hash": "89f0e4c404f5706c6397610b89885b9b",
+    "mtime": 1795520075.8265882,
+    "seen": 1795520163.478977,
+    "ast_hash": "66bdd801f36bdeec12347d9df41f7a1b",
     "semantic_hash": ""
   },
   "components/student-enroll/AccountForm.jsx": {
@@ -3138,9 +3138,9 @@
     "semantic_hash": ""
   },
   "services/reEnrollmentBackendApi.js": {
-    "mtime": 1795504147.8457022,
-    "seen": 1795509804.0732381,
-    "ast_hash": "6ee958bb365553528c9060e728bcca97",
+    "mtime": 1795520011.265012,
+    "seen": 1795520163.483701,
+    "ast_hash": "82ed2bef0a3ec788f45708a2cd89da1c",
     "semantic_hash": ""
   },
   "services/reserveSeatApi.js": {
@@ -3540,9 +3540,9 @@
     "semantic_hash": ""
   },
   "utils/reEnrollmentDocuments.js": {
-    "mtime": 1795517154.2657452,
-    "seen": 1795517320.583406,
-    "ast_hash": "efead8d94a317975353f509132a88ae8",
+    "mtime": 1795520053.805765,
+    "seen": 1795520163.4850361,
+    "ast_hash": "4cdb563cd60fb3da7e605f87b1024a39",
     "semantic_hash": ""
   },
   "utils/reEnrollmentSteps.js": {
@@ -3594,8 +3594,8 @@
     "semantic_hash": ""
   },
   "utils/transcriptLinks.js": {
-    "mtime": 1795504147.8480477,
-    "seen": 1795509804.074582,
+    "mtime": 1795520086.2657971,
+    "seen": 1795520163.485214,
     "ast_hash": "5c300beb9633677799d383e4ce0bacfb",
     "semantic_hash": ""
   },
@@ -3972,9 +3972,9 @@
     "semantic_hash": ""
   },
   "components/student/TranscriptBlockedNotice.jsx": {
-    "mtime": 1795511830.6681042,
-    "seen": 1795512172.4020941,
-    "ast_hash": "de8a243e26cce9614be1f898f73f62a8",
+    "mtime": 1795520086.2607565,
+    "seen": 1795520163.48034,
+    "ast_hash": "54c753fbe5ecd4f2639754ef498516d2",
     "semantic_hash": ""
   },
   "app/[school]/(dashboard)/student/my-classes/MyClassesGate.jsx": {
@@ -4251,6 +4251,12 @@
     "mtime": 1795494415.6650565,
     "seen": 1795509804.075192,
     "ast_hash": "c3f777861be4910466c5450dcb7fd936",
+    "semantic_hash": ""
+  },
+  "docs/migration/re-enrollment-docs-uploaded-mail-template.html": {
+    "mtime": 1795519795.5074587,
+    "seen": 1795520163.4857101,
+    "ast_hash": "a46655094b9c8f4dbcc15f292db10062",
     "semantic_hash": ""
   },
   "package-lock.json": {

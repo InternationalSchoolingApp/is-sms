@@ -225,7 +225,7 @@ const I = {
 const MASCOT = '<svg viewBox="-12 0 224 260" aria-hidden="true"><ellipse cx="76" cy="240" rx="20" ry="11" fill="#0d47a1"/><ellipse cx="124" cy="240" rx="20" ry="11" fill="#0d47a1"/><path d="M30 130Q8 106 14 76" fill="none" stroke="#1f6fe5" stroke-width="13" stroke-linecap="round"/><circle cx="14" cy="70" r="12" fill="#1f6fe5"/><path d="M170 130Q192 106 186 76" fill="none" stroke="#1f6fe5" stroke-width="13" stroke-linecap="round"/><circle cx="186" cy="70" r="12" fill="#1f6fe5"/><path d="M100 30C52 30 18 66 18 112c0 58 82 124 82 124s82-66 82-124c0-46-34-82-82-82z" fill="#1f6fe5"/><circle cx="100" cy="112" r="56" fill="#fff"/><ellipse cx="80" cy="104" rx="9" ry="12" fill="#171B2E"/><circle cx="83" cy="99" r="3.5" fill="#fff"/><ellipse cx="120" cy="104" rx="9" ry="12" fill="#171B2E"/><circle cx="123" cy="99" r="3.5" fill="#fff"/><circle cx="66" cy="126" r="8" fill="#FF9EB5"/><circle cx="134" cy="126" r="8" fill="#FF9EB5"/><path d="M84 128Q100 146 116 128Z" fill="#171B2E"/><path d="M70 36v14q30 12 60 0V36z" fill="#171B2E"/><path d="m100 8 56 20-56 20-56-20z" fill="#171B2E"/><path d="M156 28v26" stroke="#FFC531" stroke-width="4" stroke-linecap="round"/><circle cx="156" cy="58" r="6" fill="#FFC531"/></svg>';
 
 // Display order = plan v3 section 5: school hold on top, then documents. (Fee/payment is not on the card: plan D21.)
-const ORDER = ['TRANSCRIPT_ON_HOLD','DOCUMENTS_PENDING'];
+const ORDER = ['TRANSCRIPT_ON_HOLD','DOCUMENTS_PENDING','DOCUMENTS_UNDER_VERIFICATION'];
 // Document status = plan v3: admin's 3 academic docs; uploaded = done (school verification comes later).
 const DOC_LABEL = {MISSING:'Not uploaded', UPLOADED:'Uploaded'};
 const DOC_TYPE = {'Age Proof':'Age Proof', 'Parent Passport':'Signature', 'Last academic proof':'Last Academic Proof'};
@@ -240,7 +240,8 @@ const SCENARIOS = {
   fail:{label:'5. Fail (comeback)', name:'Arjun Mehta', hero:'fail', cur:'Grade 9', prog:'1:1 Learning', offer:false, diploma:false},
   hold:{label:'6. On hold by school', name:'Omar Siddiqui', hero:'promoted', cur:'Grade 8', nxt:'Grade 9', prog:'Group Learning', offer:true, diploma:false,
     hold:{reason:'Pending fee clearance', remark:'Please contact the accounts team before 30 Nov to clear the old balance.'}},
-  all:{label:'7. Grade 12 · hold + docs', name:'Sara Okafor', hero:'g12', cur:'Grade 12', prog:'1:1 Learning', offer:false, diploma:true,
+  verifying:{label:'7. Documents under verification', name:'Aarav Nair', hero:'promoted', cur:'Grade 9', nxt:'Grade 10', prog:'Group Learning', offer:true, diploma:false, verifying:true, docs:docs('UPLOADED','UPLOADED','UPLOADED')},
+  all:{label:'8. Grade 12 · hold + docs', name:'Sara Okafor', hero:'g12', cur:'Grade 12', prog:'1:1 Learning', offer:false, diploma:true,
     hold:{reason:'Disciplinary review', remark:''},
     docs:docs('UPLOADED','MISSING','UPLOADED')},
 };
@@ -259,6 +260,8 @@ const B = {
   TRANSCRIPT_ON_HOLD:{icon:'⏸', text:s=>holdText(s.hold), cta:()=>'Talk to us', act:'help', ghost:true},
   DOCUMENTS_PENDING:{icon:'📎', text:s=>`Mandatory documents missing:<br>`+s.docs.filter(d=>d.status==='MISSING').map(d=>`• <b>${d.name}</b> <span class="chip missing">${DOC_LABEL.MISSING}</span>`).join('<br>')+`<br><span class="mutt">Upload them here to unlock your transcript.</span>`,
     cta:s=>s.upOpen?'Hide':'Upload', act:'docs', plain:true},
+  // After the last upload: support is told (mail) and Download stays disabled until the (next-step) verification. No action here.
+  DOCUMENTS_UNDER_VERIFICATION:{icon:'⏳', text:()=>`<b>Your documents have been uploaded successfully.</b> Your transcript will be generated within 24 hours.`, cta:null},
 };
 
 let key='ready', S, screen='main', loading=false, timer=null;
@@ -268,7 +271,9 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 function activeBlockers(){
   const b=[];
   if(S.hold) b.push('TRANSCRIPT_ON_HOLD');
-  if(S.docs && S.docs.some(d=>d.status==='MISSING')) b.push('DOCUMENTS_PENDING');
+  const missing = S.docs && S.docs.some(d=>d.status==='MISSING');
+  if(missing) b.push('DOCUMENTS_PENDING');
+  if(S.verifying && !missing) b.push('DOCUMENTS_UNDER_VERIFICATION');
   return b;
 }
 function log(html){const li=document.createElement('li');li.innerHTML=html;$('log').appendChild(li);$('log').scrollTop=1e9;}
@@ -340,19 +345,15 @@ function transcriptRow(){
     // One Download button; Grade 12 PASS: Download Transcript + Download Diploma. Each opens the page in a new tab.
     const two = Boolean(S.diploma);
     const btns = two
-      ? (S.preparing
-          ? `<div class="btns"><button class="next" disabled>Download Transcript ${I.spin}</button><button class="next" disabled>Download Diploma ${I.spin}</button></div>`
-          : `<div class="btns"><button class="next" data-act="download">Download Transcript ${I.dl}</button><button class="next" data-act="diploma">Download Diploma ${I.dl}</button></div>`)
-      : (S.preparing
-          ? `<button class="next" disabled>Preparing… ${I.spin}</button>`
-          : `<button class="next" data-act="download">Download ${I.dl}</button>`);
+      ? `<div class="btns"><button class="next" data-act="download">Download Transcript ${I.dl}</button><button class="next" data-act="diploma">Download Diploma ${I.dl}</button></div>`
+      : `<button class="next" data-act="download">Download ${I.dl}</button>`;
     return `<div class="row tr ready"><span class="tile">${I.file}</span><div class="c"><h4>Download your transcript <span class="newpill">NEW</span></h4><p>Your ${S.cur} transcript is ready to download.</p></div>${btns}</div>`;
   }
   const head = bl.length>1?`Complete these steps to download your ${S.cur} transcript.`:`Your ${S.cur} transcript is not available yet.`;
   return `<div class="row tr blocked"><span class="tile">${I.lock}</span><div class="c"><h4>Download your transcript <span class="newpill">NEW</span></h4><p>${head}</p>
       </div>
     ${S.diploma?`<div class="btns"><button class="next" disabled title="Complete the steps below first">Download Transcript ${I.dl}</button><button class="next" disabled title="Complete the steps below first">Download Diploma ${I.dl}</button></div>`:`<button class="next" disabled title="Complete the steps below first">Download ${I.dl}</button>`}
-    <ul class="reasons">${bl.map(c=>`<li><span>${B[c].icon}</span><span class="tx">${B[c].text(S)}</span><button class="cta ${B[c].ghost?'ghost':''}" data-act="${B[c].act}">${B[c].cta(S)}</button>${c==='DOCUMENTS_PENDING'&&S.upOpen?uploadPanel():''}</li>`).join('')}</ul></div>`;
+    <ul class="reasons">${bl.map(c=>`<li><span>${B[c].icon}</span><span class="tx">${B[c].text(S)}</span>${B[c].cta?`<button class="cta ${B[c].ghost?'ghost':''}" data-act="${B[c].act}">${B[c].cta(S)}</button>`:''}${(c==='DOCUMENTS_PENDING'&&S.upOpen)||c==='DOCUMENTS_UNDER_VERIFICATION'?uploadPanel():''}</li>`).join('')}</ul></div>`;
 }
 
 function render(){
@@ -397,10 +398,11 @@ document.addEventListener('click',e=>{
       toast(left?`Document uploaded — ${left} more to go`:'All mandatory documents uploaded');
       // Instant: the row flips to "Uploaded" on the card at once (no wait for the API); the documents API refreshes in the background.
       log(`Upload success → <b>${d.name}</b> turns <b>Uploaded</b> on the card at once (cache updated), documents API refreshed in the background`);
-      const unlocked=!activeBlockers().length;
-      if(unlocked){S.preparing=true;log('Last document done → card is ready: <b>Preparing…</b> at once (the links only come from the backend when nothing blocks)');}
-      render();
-      setTimeout(()=>{if(S.preparing){S.preparing=false;log('Background <code>documents</code> refetch → <code>available: true</code> + links → the single <b>Download</b> button is enabled');render();}},unlocked?500:0);},900);}
+      if(!left){
+        S.verifying=true;
+        log('Last document done → card calls <code>POST re-enrollment/documents-uploaded</code>: backend records the marker for this grade and mails <b>support@internationalschooling.org</b> ("please verify"), once. Then documents refetch → <code>DOCUMENTS_UNDER_VERIFICATION</code>. <b>Download stays disabled</b> (unlock = next step).');
+      }
+      render();},900);}
   if(a==='releaseHold'){delete S.hold;
     log('Admin turns <b>Show</b> on (<code>admin-transcript-toggle-visibility</code>) → <code>SHOW_TRANSCRIPT_TO_STUDENT = Y</code>, hide reason cleared');refetch(false,'Window focus');}
 });

@@ -1,17 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, CircleAlert, CirclePause, Lock, Paperclip } from "lucide-react";
-import { BLOCKER_DOCUMENTS, BLOCKER_NOT_AVAILABLE, BLOCKER_ON_HOLD, COPY } from "@/utils/reEnrollmentDocuments";
+import { ArrowRight, CircleAlert, CirclePause, FileWarning, Hourglass, Lock, Paperclip } from "lucide-react";
+import { BLOCKER_DOCUMENTS, BLOCKER_NOT_AVAILABLE, BLOCKER_ON_HOLD, BLOCKER_REJECTED, BLOCKER_UNDER_VERIFICATION, COPY } from "@/utils/reEnrollmentDocuments";
 
 const ICON = {
   [BLOCKER_ON_HOLD]: CirclePause,
   [BLOCKER_DOCUMENTS]: Paperclip,
+  [BLOCKER_REJECTED]: FileWarning,
+  [BLOCKER_UNDER_VERIFICATION]: Hourglass,
   [BLOCKER_NOT_AVAILABLE]: CircleAlert,
 };
 
-// A reason the student can fix on the re-enrollment card (upload a document); a school hold cannot be.
-const fixable = (reason) => reason.code === BLOCKER_DOCUMENTS;
+// A reason the student can fix on the re-enrollment card (upload / re-upload a document); a school hold or a verification cannot be.
+const fixable = (reason) => reason.code === BLOCKER_DOCUMENTS || reason.code === BLOCKER_REJECTED;
+
+function RejectedLines({ docs }) {
+  return docs.map((doc) => (
+    <span key={doc.docType} className="block">
+      • <b>{doc.label}</b>{" "}
+      <span className="whitespace-nowrap rounded-full bg-red-50 px-2 py-px text-[11.5px] font-bold text-red-700">{COPY.docStatus.REJECTED}</span>
+      <span className="block">
+        <b>{COPY.rejectedReasonLabel}</b> {doc.reason || COPY.rejectedNoReason}
+      </span>
+    </span>
+  ));
+}
 
 function ReasonText({ reason }) {
   if (reason.code === BLOCKER_ON_HOLD) {
@@ -38,14 +52,36 @@ function ReasonText({ reason }) {
   if (reason.code === BLOCKER_DOCUMENTS) {
     return (
       <>
-        {COPY.docsTitle}
+        {reason.missing.length > 0 && COPY.docsTitle}
         {reason.missing.map((doc) => (
           <span key={doc.docType} className="block">
             • <b>{doc.label}</b>{" "}
             <span className="whitespace-nowrap rounded-full bg-red-50 px-2 py-px text-[11.5px] font-bold text-red-700">{COPY.docStatus.MISSING}</span>
           </span>
         ))}
+        {reason.rejected?.length > 0 && (
+          <>
+            <b className="block">{reason.missing.length > 0 || reason.rejected.length > 1 ? COPY.rejectedMany : COPY.rejectedOne}</b>
+            <RejectedLines docs={reason.rejected} />
+          </>
+        )}
         <span className="block text-[13px] opacity-80">{COPY.docsHintElsewhere}</span>
+      </>
+    );
+  }
+  if (reason.code === BLOCKER_REJECTED) {
+    return (
+      <>
+        <b>{reason.rejected.length === 1 ? COPY.rejectedOne : COPY.rejectedMany}</b>
+        <RejectedLines docs={reason.rejected} />
+        <span className="block text-[13px] opacity-80">{COPY.docsHintElsewhere}</span>
+      </>
+    );
+  }
+  if (reason.code === BLOCKER_UNDER_VERIFICATION) {
+    return (
+      <>
+        <b>{COPY.underVerificationTitle}</b> {COPY.underVerificationText}
       </>
     );
   }
