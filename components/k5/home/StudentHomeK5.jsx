@@ -346,7 +346,7 @@ function K5Planner({ timezone, dashboard = false }) {
         }}
         onClose={answerAlert}
       />
-      {detailEvent && <EventDetailModal event={detailEvent} courseRegistry={model.courseRegistry} onClose={() => setDetailEvent(null)} />}
+      {detailEvent && <EventDetailModal event={detailEvent} courseRegistry={model.courseRegistry} now={now} onClose={() => setDetailEvent(null)} />}
       {joiningEvent && (
         <JoinClassModal event={joiningEvent} schoolUUID={context?.schoolUUID} courseRegistry={model.courseRegistry} onClose={() => setJoiningEvent(null)} />
       )}
