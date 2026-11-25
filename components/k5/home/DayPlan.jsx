@@ -262,6 +262,7 @@ export function DayPlan({ dateKey, todayKey, now, days, clue, isPreK, isSelfStud
   ) : (
     <K5Games locked={access.locked} past={dayOver} pending={access.reason === "pending"} middle={gradeBand === "MIDDLE"} defaultOpen={openGames} />
   );
+  console.log("DayPlan", { dateKey, todayKey, isToday, items, nowIndex, access, openGames, gamesAfterPlan });
   return (
     <div className="flex flex-col gap-4">
       <PlanHeader

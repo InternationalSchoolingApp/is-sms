@@ -228,7 +228,7 @@ export function K5AssignedTeacher({ courses, isLoading }) {
   ) : (
     courses.length > 0 && <ClassTeacherChip course={classTeacher} />
   );
-
+  console.log("assign teacher", shown)
   return (
     <div className="flex flex-col gap-4">
       {isMiddle ? (
