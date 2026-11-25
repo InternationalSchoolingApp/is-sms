@@ -153,7 +153,11 @@ function useResolveGradeBand({ role, session, authenticated }) {
     // The token sign-in carries no role id (only the role name); the dashboard details list the user's
     // role modules, each with that role id (needed by the sidebar menu and module rights).
     roleId: details?.roleAndModuleAssign?.roleAndModuleDTO?.[0]?.roleId ?? null,
-    lmsProviderURL: details?.lmsProviderURL ?? "",
+    // A dummy student's LMS link is the backend's dummy redirect (legacy dummyLmsProviderUrl); only its path is used (app/api/lms/redirect).
+    lmsProviderURL:
+      dummyEnabled && details?.dummyLmsUserId && session?.schoolUUID && session?.uniqueId
+        ? `/${session.schoolUUID}/lms-platform/redirect-dummy-user-to-LMS/${session.uniqueId}?dummyLmsUserId=${encodeURIComponent(details.dummyLmsUserId)}`
+        : (details?.lmsProviderURL ?? ""),
     isPayLmsPaymentPending: details?.isPayLmsPaymentPending ?? "",
     // Dummy mode with the counselor's demo row: the dashboard shows that row's student name (legacy
     // syncDummyStudentProfileName - header "Welcome back", profile).
