@@ -184,7 +184,14 @@ export function useStudentCalendar({ schoolUUID, userId, timezone: timezoneOptio
       const d = r.data;
       if (!d) return;
       anyData = true;
-      (d.event || []).forEach((event) => byKey.set([event.id ?? event.eventId ?? "", event.start ?? event.dueDate ?? event.paceDate ?? "", event.eventType ?? ""].join("|"), event));
+      // A dummy event's id already names its day ("dummy-class-2026-11-25"), so the id alone is its key: the same one asked for
+      // again (another window, a rebuilt dummy student) with a different start / type replaces the old copy, never adds one.
+      (d.event || []).forEach((event) =>
+        byKey.set(
+          String(event.id ?? "").startsWith("dummy-") ? event.id : [event.id ?? event.eventId ?? "", event.start ?? event.dueDate ?? event.paceDate ?? "", event.eventType ?? ""].join("|"),
+          event,
+        ),
+      );
       (d.holidays || []).forEach((h) => holidays.add(h));
       if (courseDetails === undefined && d.courseDetails) courseDetails = d.courseDetails;
     });

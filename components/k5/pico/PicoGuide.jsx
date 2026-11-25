@@ -149,7 +149,8 @@ function SpotHole({ pin, active }) {
  *  - My Classes: its own tour;
  *  - Book a Class: the line of the page's buddy strip for the step the student is on (the corner bubble stays closed there);
  *  - any other page: that module's line from constant/picoModules.js.
- * Pages may still make it answer the student's own taps elsewhere (picoSay: a colour clue, the live-class popup, joining a club).
+ * Pages may still make it answer the student's own taps elsewhere (picoSay: a colour clue, joining a club); the live-class
+ * popup never makes it talk.
  * Everything is said through one speech queue (useSpeech): a new sentence cancels the old one, so two never overlap and a
  * sentence from a page the student already left is never said. "Hear it" speaks in the student's voice (and turns the
  * voice back on), the red X hides the bubble only - the buddy stays and a tap brings it back. Below 760px the bubble

@@ -340,16 +340,11 @@ function K5Planner({ timezone, dashboard = false }) {
         now={now}
         firstName={firstName}
         onJoin={(event) => {
+          // The buddy stays quiet on the live-class popup (2026-11-25): it only talks when the student taps it.
           answerAlert();
-          // The buddy sends them off to the class they picked (the tour then skips its "class is live" tip).
-          picoSay(`Off you go to ${classTitle(event)} class! Have fun learning${firstName ? `, ${firstName}` : ""}!`, "plan", { intro: true, skipLive: true });
           setJoiningEvent(event);
         }}
-        onClose={() => {
-          const name = alertEvent ? classTitle(alertEvent) : "";
-          answerAlert();
-          picoSay(`Okay! Your ${name ? `${name} ` : ""}class is still live. Tap the green Join class button when you are ready.`, "plan", { intro: true });
-        }}
+        onClose={answerAlert}
       />
       {detailEvent && <EventDetailModal event={detailEvent} courseRegistry={model.courseRegistry} onClose={() => setDetailEvent(null)} />}
       {joiningEvent && (
