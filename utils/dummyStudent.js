@@ -223,10 +223,34 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
     }));
   }
 
-  function teacher(subject, index) {
-    debugger;
+  function courseTeacher(subject, index) {
     const teachers = (subject?.teachers || []).map(safeTeacherName).filter(Boolean);
     return teachers.length ? teachers[index % teachers.length] : TEACHERS[index % TEACHERS.length];
+  }
+  // Elementary has ONE class teacher for every course (My Assigned Teacher names the teacher listed on most courses, the first on
+  // a tie), so every screen - the courses, Book a Class, the classes - shows that same teacher. Grades 6-12: one per course.
+  let classTeacherName;
+  function classTeacher() {
+    if (classTeacherName === undefined) {
+      const counts = new Map();
+      subjects().forEach((subject, i) => {
+        const name = courseTeacher(subject, i);
+        counts.set(name, (counts.get(name) || 0) + 1);
+      });
+      let best = "";
+      let bestN = 0;
+      counts.forEach((n, name) => {
+        if (n > bestN) {
+          best = name;
+          bestN = n;
+        }
+      });
+      classTeacherName = best;
+    }
+    return classTeacherName;
+  }
+  function teacher(subject, index) {
+    return isElementary ? classTeacher() || courseTeacher(subject, index) : courseTeacher(subject, index);
   }
 
   const userName = () => safeTeacherName(dbRow?.studentName) || param("demoStudentName") || fallbackName || "Demo Student";
