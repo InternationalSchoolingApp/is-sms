@@ -386,11 +386,18 @@ function ClubMark({ art }) {
  * Touch / pen: only a LONG PRESS (the finger held still for LONG_PRESS_MS) picks the item up - a finger that moves before that
  * is scrolling the menu, so the press is dropped and the menu scrolls as usual; once picked up, the page does not scroll while
  * the item is moved. The click that follows the drop is swallowed so dropping an item never navigates.
+ *
+ * Touch is NOT decided from e.pointerType: an iPad (Safari / Chrome in desktop mode, which is the default) reports a finger as
+ * pointerType "mouse", so that would have made every scroll reorder the menu. Instead a real `touchstart` that lands during the
+ * press marks it as touch - a mouse never fires one.
  */
 const LONG_PRESS_MS = 450;
 // A long press on a phone / iPad must not open the link preview or start selecting the label text.
 const NO_TOUCH_MENU = { WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none" };
 const TOUCH_SLOP = 8;
+// The device can take touch at all (iPad maxTouchPoints is 5): only then is the long-press timer armed, so a plain mouse on a
+// non-touch desktop still picks an item up the instant it moves.
+const TOUCH_CAPABLE = typeof navigator !== "undefined" && navigator.maxTouchPoints > 0;
 function useDragReorder({ navRef, keys, onReorder, disabled }) {
   const [dragging, setDragging] = useState(null); // { key, dy }
   const pressRef = useRef(null);
@@ -405,17 +412,22 @@ function useDragReorder({ navRef, keys, onReorder, disabled }) {
       clearTimeout(pressRef.current?.timer);
       pressRef.current = null;
     };
+    // A finger (even one the browser reports as a "mouse" pointer): this press is a touch, so it needs the long press.
+    const onTouchStart = () => {
+      if (pressRef.current) pressRef.current.sawTouch = true;
+    };
     const onMove = (e) => {
       const press = pressRef.current;
       if (!press || e.pointerId !== press.pointerId) return;
       const dy = e.clientY - press.startY;
-      if (press.touch && !press.active) {
-        // Moved before the long press finished: this is a scroll, not a drag.
+      if (press.sawTouch && !press.active) {
+        // Moved before the long press finished: this is a scroll, not a drag — let the menu scroll.
         if (Math.abs(dy) > TOUCH_SLOP || Math.abs(e.clientX - press.startX) > TOUCH_SLOP) endPress();
         return;
       }
       if (!press.active && Math.abs(dy) < 6) return;
       press.active = true;
+      clearTimeout(press.timer);
       setDragging({ key: press.key, dy });
     };
     const onUp = (e) => {
@@ -440,13 +452,15 @@ function useDragReorder({ navRef, keys, onReorder, disabled }) {
     };
     // While a touch drag is on, the finger moves the item, not the page.
     const onTouchMove = (e) => {
-      if (pressRef.current?.touch && pressRef.current.active) e.preventDefault();
+      if (pressRef.current?.sawTouch && pressRef.current.active) e.preventDefault();
     };
+    window.addEventListener("touchstart", onTouchStart, { capture: true, passive: true });
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onUp);
     window.addEventListener("touchmove", onTouchMove, { passive: false });
     return () => {
+      window.removeEventListener("touchstart", onTouchStart, { capture: true });
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
@@ -468,11 +482,13 @@ function useDragReorder({ navRef, keys, onReorder, disabled }) {
                 const rect = node.getBoundingClientRect();
                 return { key: node.dataset.navKey, mid: rect.top + rect.height / 2 };
               });
-              const touch = e.pointerType !== "mouse";
-              const press = { key, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, rects, active: false, touch, timer: null };
-              if (touch) {
+              // Treat pointerType "touch"/"pen" as touch at once; on a touch-capable device a "mouse" pointer is still armed with
+              // the long-press timer, because an iPad reports a finger as "mouse" (a real touchstart then confirms it).
+              const maybeTouch = e.pointerType !== "mouse" || TOUCH_CAPABLE;
+              const press = { key, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, rects, active: false, sawTouch: e.pointerType !== "mouse", timer: null };
+              if (maybeTouch) {
                 press.timer = setTimeout(() => {
-                  if (pressRef.current !== press) return;
+                  if (pressRef.current !== press || press.active) return;
                   press.active = true;
                   setDragging({ key, dy: 0 });
                   navigator.vibrate?.(15);
@@ -482,7 +498,7 @@ function useDragReorder({ navRef, keys, onReorder, disabled }) {
             },
             // A long press must not open the phone's link menu.
             onContextMenu: (e) => {
-              if (pressRef.current?.touch) e.preventDefault();
+              if (pressRef.current?.sawTouch) e.preventDefault();
             },
           },
     style: (key) =>
