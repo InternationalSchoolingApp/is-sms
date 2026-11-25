@@ -383,11 +383,11 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
   // --- My Performance (legacy dummyAcademicPerformanceRows / ProgressDetail / GradeHistory) ---
   // K5 Class Comparison numbers per course (Playful.dc.html CD), so the tab can be seen without real class data.
   const DUMMY_CLASS = [
-    { size: 126, avgScore: 78.4, avgProgress: 18, scorePct: 58, progressPct: 78, youOnTime: 100, classOnTime: 72, onTimePct: 70, dist: [8, 14, 22, 26, 24, 16, 10, 6] },
-    { size: 98, avgScore: 86.1, avgProgress: 16, scorePct: 88, progressPct: 81, youOnTime: 100, classOnTime: 75, onTimePct: 66, dist: [10, 12, 18, 20, 17, 11, 6, 4] },
-    { size: 112, avgScore: 81.5, avgProgress: 12, scorePct: 90, progressPct: 34, youOnTime: 100, classOnTime: 69, onTimePct: 72, dist: [12, 20, 26, 24, 16, 8, 4, 2] },
-    { size: 14, avgScore: 72.5, avgProgress: 9, scorePct: 36, progressPct: 29, youOnTime: 75, classOnTime: 68, onTimePct: 52, dist: [2, 3, 4, 2, 1, 1, 1, 0] },
-    { size: 88, avgScore: 76.0, avgProgress: 11, scorePct: 38, progressPct: 41, youOnTime: 80, classOnTime: 70, onTimePct: 55, dist: [9, 17, 22, 18, 12, 6, 3, 1] },
+    { size: 126, avgScore: 78.4, avgProgress: 18, scorePct: 58, progressPct: 78, youOnTime: 100, classOnTime: 72, onTimePct: 70, dist: [22, 22, 26, 40, 16] },
+    { size: 98, avgScore: 86.1, avgProgress: 16, scorePct: 88, progressPct: 81, youOnTime: 100, classOnTime: 75, onTimePct: 66, dist: [22, 18, 20, 28, 10] },
+    { size: 112, avgScore: 81.5, avgProgress: 12, scorePct: 90, progressPct: 34, youOnTime: 100, classOnTime: 69, onTimePct: 72, dist: [32, 26, 24, 24, 6] },
+    { size: 14, avgScore: 72.5, avgProgress: 9, scorePct: 36, progressPct: 29, youOnTime: 75, classOnTime: 68, onTimePct: 52, dist: [5, 4, 2, 2, 1] },
+    { size: 88, avgScore: 76.0, avgProgress: 11, scorePct: 38, progressPct: 41, youOnTime: 80, classOnTime: 70, onTimePct: 55, dist: [26, 22, 18, 18, 4] },
   ];
 
   function academicPerformanceRows() {

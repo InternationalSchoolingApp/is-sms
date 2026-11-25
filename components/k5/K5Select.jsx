@@ -37,9 +37,11 @@ function Rows({ options }) {
 }
 
 function List({ options, container, wide }) {
-  const themeProps = useK5ThemeProps(`${LIST_BOX} ${wide ? "min-w-[260px] max-w-[min(360px,90vw)]" : ""}`);
+  // Opens BELOW the field, never over it (alignItemWithTrigger off), as wide as the field or as long as its longest option
+  // (up to 360px), so a long option is not cut off.
+  const themeProps = useK5ThemeProps(`${LIST_BOX} w-auto min-w-(--anchor-width) max-w-[min(360px,90vw)] ${wide ? "min-w-[260px]" : ""}`);
   return (
-    <SelectContent {...themeProps} container={container}>
+    <SelectContent {...themeProps} container={container} alignItemWithTrigger={false}>
       <Rows options={options} />
     </SelectContent>
   );

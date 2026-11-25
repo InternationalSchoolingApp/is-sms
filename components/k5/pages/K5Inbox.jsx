@@ -201,15 +201,15 @@ function Row({ item, inbox }) {
   const time = rowTime(item.at, inbox.timeZone);
   const title = item.title || NO_SUBJECT;
   return (
-    <div role="listitem" className={`flex items-stretch border-b-[3px] border-k5-line ${unread ? "bg-k5-card shadow-[inset_4px_0_0_var(--k5-ac)]" : "bg-k5-soft"}`}>
-      <button type="button" aria-pressed={item.starred} aria-label={item.starred ? "Remove star" : "Star"} onClick={() => inbox.toggleStar(item)} className="flex w-12 flex-none cursor-pointer items-center justify-center border-none bg-transparent p-0">
+    <div role="listitem" className={`k5-lift flex items-stretch border-b-[3px] border-k5-line ${unread ? "bg-k5-card shadow-[inset_4px_0_0_var(--k5-ac)]" : "bg-k5-soft"}`}>
+      <button type="button" aria-pressed={item.starred} aria-label={item.starred ? "Remove star" : "Star"} onClick={() => inbox.toggleStar(item)} className="motion-none flex w-12 flex-none cursor-pointer items-center justify-center border-none bg-transparent p-0">
         <Star className={`h-5 w-5 ${item.starred ? "fill-k5-hi text-k5-hi" : "text-k5-mut"}`} strokeWidth={2} aria-hidden="true" />
       </button>
       <button
         type="button"
         onClick={() => inbox.openItem(item)}
         aria-label={`${unread ? "Unread, " : ""}${channelLabel(item.channel)}, ${name}, ${title}, ${time}`}
-        className={`grid min-w-0 flex-1 cursor-pointer items-center gap-3 border-none bg-transparent py-3 pl-0 pr-[18px] text-left text-[16px] text-k5-ink max-[760px]:gap-y-1 max-[760px]:pr-3.5 ${ROW_GRID}`}
+        className={`motion-none grid min-w-0 flex-1 cursor-pointer items-center gap-3 border-none bg-transparent py-3 pl-0 pr-[18px] text-left text-[16px] text-k5-ink max-[760px]:gap-y-1 max-[760px]:pr-3.5 ${ROW_GRID}`}
       >
         <span aria-hidden="true" className={`k5h-cm-av flex h-10 w-10 items-center justify-center rounded-full text-[13px] font-extrabold ${CHANNEL_TINT[item.channel]}`}>{initialsOf(name)}</span>
         <span className="flex min-w-0 flex-col gap-[3px]">
