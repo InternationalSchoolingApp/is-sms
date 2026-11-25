@@ -8,7 +8,7 @@ import { Check, ChevronDown, ChevronLeft, Info, Volume2 } from "lucide-react";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { K5_CARD, SubjectIcon } from "@/components/k5/home/k5Bits";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
-import { picoSay, setPicoLive } from "@/components/k5/pico/picoEvents";
+import { picoSay } from "@/components/k5/pico/picoEvents";
 import { useSpeech } from "@/components/k5/pico/useSpeech";
 import { BUDDIES } from "@/constant/appearance";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
@@ -284,11 +284,11 @@ function BookPageSkeleton() {
 }
 
 /**
- * The student buddy says what to do on this step (mockup: Booky bkSay). The buddy never talks by itself when the page opens
- * (rule of 2026-11-25): the line is said out loud when the student taps the speaker button or the corner buddy (PicoGuide reads
- * it from pageText), and when the student's own taps move it to another step (picoSay: the buddy voice, only when the student
- * has its voice on). Only a step change speaks: the line of the first step can still change while the page loads (classes
- * left), which is not the student's doing. The corner bubble stays closed on this page (PicoGuide), this strip is the buddy here.
+ * The student buddy says what to do on this step (mockup: Booky bkSay). Arriving on the page it is muted by default (2026-11-25):
+ * the line is shown, not said; the speaker button says it. When the student's own taps move the booking to another step, that
+ * step's line is said (picoSay: the buddy voice, only when the student has its voice on). Only a step change speaks: the first
+ * line can still change while the page loads, and a revisited page re-runs its effects. The corner bubble stays closed on this
+ * page (PicoGuide), this strip is the buddy here.
  */
 function BuddyStrip({ say, step }) {
   const { preferences } = useAppearance();
@@ -302,10 +302,6 @@ function BuddyStrip({ say, step }) {
     // Only a new step speaks, not a new line on the same step.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
-  useEffect(() => {
-    setPicoLive({ pageText: say || "" });
-    return () => setPicoLive({ pageText: "" });
-  }, [say]);
   return (
     <div role="status" className="flex items-center gap-3 rounded-[22px] bg-k5-vt py-2 pl-2 pr-2.5">
       <PicoMascot buddy={preferences.buddy} width={48} full={false} />

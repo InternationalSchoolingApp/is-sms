@@ -158,22 +158,22 @@ function PersonalSection({ m }) {
   return (
     <>
       <div className={GRID3}>
-        <Field label="First Name" value={p.firstName} />
-        <Field label="Middle Name" value={p.middleName} />
-        <Field label="Last Name" value={p.lastName} />
-        <Field label="Gender" value={p.gender} />
+        <Field label="First Name" value={p.firstName} floating />
+        <Field label="Middle Name" value={p.middleName} floating />
+        <Field label="Last Name" value={p.lastName} floating />
+        <Field label="Gender" value={p.gender} floating />
         <Field label="Date of Birth" value={p.dob} floating />
-        <ValueWithMarks label="Phone" value={p.phone} marks={[[p.phoneWhatsApp, "WhatsApp"], [p.phoneVerified, "Verified"]]} />
-        <ValueWithMarks label="Alternate Phone" value={p.altPhone} marks={[[p.altPhoneWhatsApp, "WhatsApp"]]} />
-        <ValueWithMarks label="Email" value={p.email} marks={[[p.emailVerified, "Verified"]]} />
-        <ValueWithMarks label="Alternate Email" value={p.altEmail} marks={[[p.altEmailVerified, "Verified"]]} />
-        <Field label="Country" value={p.country} />
-        <Field label="State" value={p.state} />
-        <Field label="City" value={p.city} />
-        <Field label="Timezone" value={p.timezone} />
-        <Field label="Nationality" value={p.nationality} />
+        <ValueWithMarks label="Phone" value={p.phone} marks={[[p.phoneWhatsApp, "WhatsApp"], [p.phoneVerified, "Verified"]]} floating />
+        <ValueWithMarks label="Alternate Phone" value={p.altPhone} marks={[[p.altPhoneWhatsApp, "WhatsApp"]]} floating />
+        <ValueWithMarks label="Email" value={p.email} marks={[[p.emailVerified, "Verified"]]} floating />
+        <ValueWithMarks label="Alternate Email" value={p.altEmail} marks={[[p.altEmailVerified, "Verified"]]} floating />
+        <Field label="Country" value={p.country} floating />
+        <Field label="State" value={p.state} floating />
+        <Field label="City" value={p.city} floating />
+        <Field label="Timezone" value={p.timezone} floating />
+        <Field label="Nationality" value={p.nationality} floating />
       </div>
-      <Field label="Address" value={p.address} />
+      <Field label="Address" value={p.address} floating />
       {HR}
       <h3 className={H3}>Hobbies</h3>
       {p.hobbies.length ? (
@@ -191,7 +191,7 @@ function PersonalSection({ m }) {
       <h3 className={H3}>Social Media Links</h3>
       <div className={GRID2}>
         {p.social.map((link) => (
-          <Field key={link.label} label={`${link.label} Profile URL`}>
+          <Field key={link.label} label={`${link.label} Profile URL`} floating>
             {link.url ? (
               <a href={/^https?:\/\//i.test(link.url) ? link.url : `https://${link.url}`} target="_blank" rel="noopener noreferrer" className="text-k5-acx underline">
                 {link.url}
@@ -476,6 +476,7 @@ function Avatar({ header, onPick }) {
 export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownloadIdCard, downloading, downloadProgress, editor, actions }) {
   const [current, setCurrent] = useState(1);
   const [photoFile, setPhotoFile] = useState(null);
+  const [askActivate, setAskActivate] = useState(false);
   const pickPhoto = (file) => {
     // The existing page (cropperImage.js cropImage, docType "Profile Image"): JPG / PNG only, max 5 MB, one message for both.
     if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type) || file.size > 5 * 1024 * 1024) return toast.error("Please upload files in JPG, PNG, and JPEG with max size of 5MB");
@@ -631,11 +632,7 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
                   Open Outlook
                 </a>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => toast("Activating your school user ID — coming soon", { icon: "🚧" })}
-                  className={ACCENT_BTN}
-                >
+                <button type="button" onClick={() => setAskActivate(true)} className={ACCENT_BTN}>
                   Activate your school user ID
                 </button>
               ))}
@@ -667,6 +664,24 @@ export function K5Profile({ model, isLoading, error, onRetry, onBack, onDownload
         </section>
       </div>
       <ConfirmDialog confirm={editor?.confirm} />
+      {/* Legacy showWarningMessageShow("Are you sure you want to activate your school User ID?"): Yes opens Outlook. A sample (dummy)
+          profile has no real school user ID to create, so nothing is saved. */}
+      <ConfirmDialog
+        confirm={
+          askActivate
+            ? {
+                message: "Are you sure you want to activate your school User ID?",
+                okLabel: "Yes",
+                cancelLabel: "No",
+                cancel: () => setAskActivate(false),
+                accept: () => {
+                  setAskActivate(false);
+                  window.open("https://outlook.office.com", "_blank", "noopener,noreferrer");
+                },
+              }
+            : null
+        }
+      />
       <K5PhotoDialog key={photoFile ? `${photoFile.name}-${photoFile.size}-${photoFile.lastModified}` : "none"} file={photoFile} saving={actions?.busy === "doc:Profile Image"} onCancel={() => setPhotoFile(null)} onSave={savePhoto} />
     </div>
   );

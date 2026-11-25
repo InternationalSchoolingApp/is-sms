@@ -223,8 +223,16 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
     }));
   }
 
+  // The course as My Assigned Teacher knows it: the calendar / assignment lists (assignmentCourses) carry no teachers of their own, so
+  // their course is looked up in the student's courses (same id, else same name) to find the teacher assigned there.
+  function ownCourse(subject) {
+    if (!subject || (subject.teachers || []).length) return subject;
+    const list = subjects();
+    const name = cleanCourseName(subject.subjectName).toLowerCase();
+    return list.find((s) => String(s.subjectId) === String(subject.subjectId)) || list.find((s) => cleanCourseName(s.subjectName).toLowerCase() === name) || subject;
+  }
   function courseTeacher(subject, index) {
-    const teachers = (subject?.teachers || []).map(safeTeacherName).filter(Boolean);
+    const teachers = (ownCourse(subject)?.teachers || []).map(safeTeacherName).filter(Boolean);
     return teachers.length ? teachers[index % teachers.length] : TEACHERS[index % TEACHERS.length];
   }
   // Elementary has ONE class teacher for every course (My Assigned Teacher names the teacher listed on most courses, the first on
@@ -249,8 +257,11 @@ export function createDummyStudent({ row = null, params = new URLSearchParams(),
     }
     return classTeacherName;
   }
+  // A course has ONE teacher on every screen (My Assigned Teacher, Book a Class, the classes in the calendar): the first of its
+  // own teachers, whatever position the caller counts from. (My Assigned Teacher counted from the course list, the calendar from
+  // 0, so Grade 6-12 showed two different teachers for the same course.)
   function teacher(subject, index) {
-    return isElementary ? classTeacher() || courseTeacher(subject, index) : courseTeacher(subject, index);
+    return isElementary ? classTeacher() || courseTeacher(subject, index) : courseTeacher(subject, 0);
   }
 
   const userName = () => safeTeacherName(dbRow?.studentName) || param("demoStudentName") || fallbackName || "Demo Student";

@@ -2,8 +2,8 @@ import { INBOX_TIP } from "@/utils/inbox";
 import { CLUBS } from "@/constant/Clubs";
 
 /**
- * What Pico says about each dashboard module, in one place (the buddy explains the module the student is on when the
- * student taps it - never by itself).
+ * What Pico says about each dashboard module, in one place (the buddy explains the module the student is on, by itself
+ * once the page has finished loading, and again whenever the student taps it).
  *
  * Key = the last part of the page address (the module's pageLink); the home page is HOME_MODULE. A module that has no
  * entry gets NO_MODULE_TEXT when the student taps the buddy.

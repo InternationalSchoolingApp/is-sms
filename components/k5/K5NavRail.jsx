@@ -382,35 +382,53 @@ function ClubMark({ art }) {
 }
 
 /**
- * Pointer drag to reorder the rail's top-level items (mouse and touch). A press that moves
- * more than a few pixels becomes a drag; the click that follows the drop is swallowed so
- * dropping an item never navigates.
+ * Pointer drag to reorder the rail's top-level items. Mouse: a press that moves more than a few pixels becomes a drag.
+ * Touch / pen: only a LONG PRESS (the finger held still for LONG_PRESS_MS) picks the item up - a finger that moves before that
+ * is scrolling the menu, so the press is dropped and the menu scrolls as usual; once picked up, the page does not scroll while
+ * the item is moved. The click that follows the drop is swallowed so dropping an item never navigates.
  */
+const LONG_PRESS_MS = 450;
+const TOUCH_SLOP = 8;
 function useDragReorder({ navRef, keys, onReorder, disabled }) {
   const [dragging, setDragging] = useState(null); // { key, dy }
   const pressRef = useRef(null);
   const swallowClickRef = useRef(false);
+  // Leaving the page while a long press is still waiting: its timer must not fire. (Not in the effect below: that one re-runs
+  // on every render, because `keys` is a new list each time, and must keep the press alive across those re-runs.)
+  useEffect(() => () => clearTimeout(pressRef.current?.timer), []);
 
   useEffect(() => {
     if (disabled) return;
+    const endPress = () => {
+      clearTimeout(pressRef.current?.timer);
+      pressRef.current = null;
+    };
     const onMove = (e) => {
       const press = pressRef.current;
-      if (!press) return;
+      if (!press || e.pointerId !== press.pointerId) return;
       const dy = e.clientY - press.startY;
+      if (press.touch && !press.active) {
+        // Moved before the long press finished: this is a scroll, not a drag.
+        if (Math.abs(dy) > TOUCH_SLOP || Math.abs(e.clientX - press.startX) > TOUCH_SLOP) endPress();
+        return;
+      }
       if (!press.active && Math.abs(dy) < 6) return;
       press.active = true;
       setDragging({ key: press.key, dy });
     };
     const onUp = (e) => {
       const press = pressRef.current;
-      pressRef.current = null;
-      if (!press?.active) return;
+      if (!press || e.pointerId !== press.pointerId) return;
+      endPress();
+      if (!press.active) return;
       // Only the click fired by this same release is swallowed.
       swallowClickRef.current = true;
       setTimeout(() => {
         swallowClickRef.current = false;
       }, 0);
       setDragging(null);
+      // A touch drag the browser cancelled has no drop position: the order stays.
+      if (e.type === "pointercancel") return;
       // Drop position: the item whose original middle the pointer has passed.
       const others = press.rects.filter((r) => r.key !== press.key);
       const index = others.filter((r) => e.clientY > r.mid).length;
@@ -418,13 +436,19 @@ function useDragReorder({ navRef, keys, onReorder, disabled }) {
       next.splice(index, 0, press.key);
       if (next.join() !== keys.join()) onReorder(next);
     };
+    // While a touch drag is on, the finger moves the item, not the page.
+    const onTouchMove = (e) => {
+      if (pressRef.current?.touch && pressRef.current.active) e.preventDefault();
+    };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onUp);
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
     return () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
+      window.removeEventListener("touchmove", onTouchMove);
     };
   }, [disabled, keys, onReorder]);
 
@@ -436,18 +460,35 @@ function useDragReorder({ navRef, keys, onReorder, disabled }) {
             "data-nav-key": key,
             onPointerDown: (e) => {
               if (e.button !== 0) return;
+              clearTimeout(pressRef.current?.timer);
               const nodes = navRef.current ? [...navRef.current.querySelectorAll(":scope > [data-nav-key]")] : [];
               const rects = nodes.map((node) => {
                 const rect = node.getBoundingClientRect();
                 return { key: node.dataset.navKey, mid: rect.top + rect.height / 2 };
               });
-              pressRef.current = { key, startY: e.clientY, rects, active: false };
+              const touch = e.pointerType !== "mouse";
+              const press = { key, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, rects, active: false, touch, timer: null };
+              if (touch) {
+                press.timer = setTimeout(() => {
+                  if (pressRef.current !== press) return;
+                  press.active = true;
+                  setDragging({ key, dy: 0 });
+                  navigator.vibrate?.(15);
+                }, LONG_PRESS_MS);
+              }
+              pressRef.current = press;
+            },
+            // A long press must not open the phone's link menu.
+            onContextMenu: (e) => {
+              if (pressRef.current?.touch) e.preventDefault();
             },
           },
     style: (key) =>
       dragging?.key === key
-        ? { transform: `translateY(${dragging.dy}px)`, zIndex: 2, boxShadow: "0 10px 24px rgba(10,16,34,0.22)", cursor: "grabbing" }
-        : undefined,
+        ? { transform: `translateY(${dragging.dy}px)`, zIndex: 2, boxShadow: "0 10px 24px rgba(10,16,34,0.22)", cursor: "grabbing", WebkitTouchCallout: "none" }
+        : disabled
+          ? undefined
+          : { WebkitTouchCallout: "none" },
     consumeClick: () => {
       const swallow = swallowClickRef.current;
       swallowClickRef.current = false;

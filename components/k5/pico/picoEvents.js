@@ -24,9 +24,8 @@ export function picoSay(text, pin = null, options = {}) {
  * claim there is something in it.
  * `menuReady` / `contentReady`: the left menu has its items and the page has finished loading — the
  * buddy's page tips (and their spotlight) wait for both, so nothing opens over an empty page.
- * `pageText`: what the page's own buddy (the Book a Class strip) says right now - a tap on the corner buddy says it.
  */
-const INITIAL_LIVE = { ready: false, pending: false, name: "", dayEmpty: false, holidayName: "", menuReady: false, contentReady: false, pageText: "" };
+const INITIAL_LIVE = { ready: false, pending: false, name: "", dayEmpty: false, holidayName: "", menuReady: false, contentReady: false };
 let live = INITIAL_LIVE;
 const listeners = new Set();
 

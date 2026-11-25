@@ -7,9 +7,9 @@ import { useK5CalendarModel } from "@/hooks/useK5CalendarModel";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
 import { JoinClassModal } from "@/components/dashboard/calendar/JoinClassModal";
 import { LiveClassAlert } from "@/components/k5/home/LiveClassAlert";
-import { setPicoLive } from "@/components/k5/pico/picoEvents";
+import { picoSay, setPicoLive } from "@/components/k5/pico/picoEvents";
 import { resolveTimezone } from "@/utils/calendarEvents";
-import { dayAt } from "@/utils/k5Calendar";
+import { classTitle, dayAt } from "@/utils/k5Calendar";
 import { LIVE_ALERT_KEY } from "@/utils/liveAlertMemory";
 
 const noSubscribe = () => () => {};
@@ -73,11 +73,15 @@ function Watcher({ timezone }) {
         now={model.now}
         firstName={firstName}
         onJoin={(event) => {
-          // The buddy stays quiet on the live-class popup (2026-11-25): it only talks when the student taps it.
           answerAlert();
+          picoSay(`Off you go to ${classTitle(event)} class! Have fun learning${firstName ? `, ${firstName}` : ""}!`);
           setJoiningEvent(event);
         }}
-        onClose={answerAlert}
+        onClose={() => {
+          const name = alertEvent ? classTitle(alertEvent) : "";
+          answerAlert();
+          picoSay(`Okay! Your ${name ? `${name} ` : ""}class is still live. You can join it from your dashboard when you are ready.`);
+        }}
       />
       {joiningEvent && (
         <JoinClassModal event={joiningEvent} schoolUUID={context?.schoolUUID} courseRegistry={model.courseRegistry} onClose={() => setJoiningEvent(null)} />

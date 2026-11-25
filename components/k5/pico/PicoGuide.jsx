@@ -10,11 +10,22 @@ import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useChristmas } from "@/components/k5/christmas/ChristmasProvider";
 import { BUDDIES, voiceOf } from "@/constant/appearance";
 import { PICO_SAY_EVENT, usePicoLive } from "@/components/k5/pico/picoEvents";
-import { HOME_MODULE, NO_MODULE_TEXT, picoModuleFor, picoWelcomeText } from "@/constant/picoModules";
-import { TOUR_GET_APP_KEY, hasPicoWelcomeCookie, setPicoModuleCookie, setPicoWelcomeCookie } from "@/utils/picoCookies";
+import { HOME_MODULE, NO_MODULE_TEXT, isClubModule, isLanguageClub, picoModuleFor, picoWelcomeText } from "@/constant/picoModules";
+import { TOUR_GET_APP_KEY, hasPicoModuleCookie, hasPicoWelcomeCookie, setPicoModuleCookie, setPicoWelcomeCookie } from "@/utils/picoCookies";
 import { preparePicoClips } from "@/utils/picoVoice";
 
 const noSubscribe = () => () => {};
+
+// What the buddy shows BY ITSELF (the first welcome / home tour, a module's explanation on arrival) is muted by default
+// (2026-11-25): the bubble opens with the text, but nothing is said until the student taps "Hear it" or the buddy.
+const AUTO_MUTED = true;
+
+// A dialog the student has to deal with first (profile, training, password...): the first welcome waits until it is gone.
+const OTHER_POPUPS = '[data-blocking-popup], [data-slot="dialog-content"], dialog[open]';
+// A welcome that was cancelled by something other than the student (React Strict Mode, a route change) is tried again, a few times.
+const WELCOME_TRIES = 3;
+// Pages whose very first visit is a 2-step welcome tour (welcome + the page's own explanation), like the dashboard's tour.
+const WELCOME_TOUR_PAGES = new Set(["re-enrollment"]);
 
 // The tips of the home tour (the mockup's 8 plus inbox, LMS, announcements, news, diary, sibling, profile); `pin` is the
 // data-pin of the element the buddy spotlights. A tip whose element is not on the page (no live class right now, no
@@ -141,16 +152,14 @@ function SpotHole({ pin, active }) {
 
 /**
  * The buddy (plan Phase 3, mockup "pinwrap"): a small companion that always stands in the bottom
- * corner (right, or left for left-handed students) and bobs. It NEVER starts talking by itself - not after login, not on
- * arriving on a page (rule of 2026-11-25). Only a tap on the buddy makes it guide the page the student is on (waiting for the
- * page to finish loading first):
- *  - the home page: the whole home tour, from its first tip. A student's very first tour in this browser opens with the
- *    welcome to the school (cookie pico_welcome_completed_{userId}, utils/picoCookies.js, set when that tour starts);
- *  - My Classes: its own tour;
- *  - Book a Class: the line of the page's buddy strip for the step the student is on (the corner bubble stays closed there);
- *  - any other page: that module's line from constant/picoModules.js.
- * Pages may still make it answer the student's own taps elsewhere (picoSay: a colour clue, joining a club); the live-class
- * popup never makes it talk.
+ * corner (right, or left for left-handed students) and bobs. Three behaviours that work together but do not depend on each other:
+ *  1. The first welcome: once per student per BROWSER (cookie pico_welcome_completed_{userId}, utils/picoCookies.js), for a
+ *     student who has completed enrollment (the dashboard is only reached by one, and the shell passes `welcomeEligible`),
+ *     said once the dashboard is really on screen. On the home page it opens the 8-tip tour. If the browser refuses to
+ *     speak (autoplay before any touch) the cookie is NOT set: the welcome is said at the student's first tap or key press.
+ *  2. A module explanation by itself: arriving on a page, the buddy explains it once the page has finished loading
+ *     (usePicoContentReady); the text is in constant/picoModules.js.
+ *  3. A tap on the buddy explains the page the student is on (waiting for it to finish loading first).
  * Everything is said through one speech queue (useSpeech): a new sentence cancels the old one, so two never overlap and a
  * sentence from a page the student already left is never said. "Hear it" speaks in the student's voice (and turns the
  * voice back on), the red X hides the bubble only - the buddy stays and a tap brings it back. Below 760px the bubble
@@ -162,10 +171,11 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   // The welcome cookie (server snapshot "seen": nothing is decided before the browser is here).
   const cookieSeen = useSyncExternalStore(noSubscribe, () => hasPicoWelcomeCookie(userId), () => true);
   const [welcomedNow, setWelcomedNow] = useState(false);
-  // The first home tour this student starts in this browser opens with the welcome (kept in state so the words do not change
-  // when it is marked as done mid-tour).
+  const welcomeDue = welcomeEligible && !cookieSeen && !welcomedNow;
+  const seen = !welcomeEligible || cookieSeen || welcomedNow;
+  // Decided once the buddy knows it owes the welcome (kept in state so the words do not change when it is marked as done).
   const [welcome, setWelcome] = useState(false);
-  if (welcomeEligible && !cookieSeen && !welcomedNow && !welcome) setWelcome(true);
+  if (welcomeDue && !welcome) setWelcome(true);
   const [state, setState] = useState({ open: null, index: 0, say: null, skipLive: false, pageTip: false });
   const live = usePicoLive();
   // 25 December: Pico wears a Santa hat.
@@ -178,13 +188,26 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   const [tipOn, setTipOn] = useState(false);
   const buddy = BUDDIES[preferences.buddy] || BUDDIES.pico;
   const pageSegment = pathname.split("/").filter(Boolean).pop();
+  // A student's first visit to one of these pages is a short tour of its own: the welcome, then what the page is for (2 steps).
+  const tourPage = !home && welcome && WELCOME_TOUR_PAGES.has(pageSegment) ? picoModuleFor(pageSegment) : null;
   const classesTour = !home && pageSegment === "my-classes";
-  const steps = classesTour
-    ? classesTourSteps(live.name, live.dayEmpty, live.holidayName)
-    : tourSteps(firstName, buddy.name, live.name, welcome, schoolName, isMiddle && !isHigh);
+  const steps = tourPage
+    ? [
+        { pin: null, text: picoWelcomeText({ firstName, schoolName, buddyName: buddy.name, tour: false }) },
+        { pin: null, text: tourPage.text },
+      ]
+    : classesTour
+      ? classesTourSteps(live.name, live.dayEmpty, live.holidayName)
+      : tourSteps(firstName, buddy.name, live.name, welcome, schoolName, isMiddle && !isHigh);
   const mobile = useSyncExternalStore(subscribeMobile, isMobileView, () => false);
-  // Desktop: open after a tap (or a page's picoSay); mobile: while tapped open. The buddy stays quiet while the "LIVE NOW" popup waits.
-  const wanted = mobile ? tipOn : Boolean(state.open);
+  // No dialog is open on this page (checked by the effect below, only while the buddy has something to say by itself).
+  // Kept as "the page it was seen clear on", so a new page is never taken as clear before it has been looked at.
+  const [clearAt, setClearAt] = useState(null);
+  const clear = clearAt === pageSegment;
+  // The first tour opens by itself once the plan is known and no dialog is open; the buddy stays quiet while the "LIVE NOW" popup waits.
+  const autoOpen = home && !seen && live.ready && clear;
+  // Desktop: open for the first tour and after a tap; mobile: while tapped open (and after the buddy speaks up).
+  const wanted = mobile ? tipOn : (state.open ?? autoOpen);
   const open = wanted && !live.pending && !onBook;
   const step = steps[state.index];
   // A page can make the buddy explain something (e.g. a colour clue) between tour tips.
@@ -199,22 +222,203 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   // My Classes is the planner itself: its plan has loaded when the planner says so (live.ready), like the home page used to.
   const moduleReady = live.menuReady && (home || classesTour ? live.ready : live.contentReady);
 
-  // Leaving a page ends the sentence about it.
+  // ---- 1. The first welcome ----
+  const [welcomeSkip, setWelcomeSkip] = useState(null);
+  const [attempt, setAttempt] = useState(0);
+  const welcomeRun = useRef(false);
+  const userActed = useRef(false);
+  const retryOff = useRef(null);
+  // The page the welcome was said on does not also explain itself (one voice at a time).
+  if (welcomeSkip && welcomeSkip !== pageSegment) setWelcomeSkip(null);
+
+  // On a club page the first hello is about that club (its own line from constant/picoModules.js), not the general welcome;
+  // a Language Club line already starts with a hello (Bonjour!...), so it gets no "Hello {name}!" in front.
+  const clubWelcome = !home && isClubModule(pageSegment);
+  const welcomeText = home
+    ? steps[0].text
+    : clubWelcome
+      ? isLanguageClub(pageSegment)
+        ? moduleNow.text
+        : `Hello${firstName ? ` ${firstName}` : ""}! ${moduleNow.text}`
+      : picoWelcomeText({ firstName, schoolName, buddyName: buddy.name, tour: false });
+  const welcomeReady = welcomeDue && moduleReady && !live.pending && !onBook;
+
+  const finishWelcome = () => {
+    retryOff.current?.();
+    setPicoWelcomeCookie(userId);
+    // The club's own line was the welcome, so the club page does not say it again by itself next time.
+    if (clubWelcome || tourPage) setPicoModuleCookie(userId, pageSegment);
+    setWelcomedNow(true);
+  };
+
+  const startWelcome = () => {
+    if (welcomeRun.current) return;
+    welcomeRun.current = true;
+    const text = welcomeText;
+    // The bubble shows the welcome (on the home page it is the tour's first tip).
+    if (home) setState((s) => ({ ...s, open: true, index: 0, say: null }));
+    else if (tourPage) setState((s) => ({ ...s, open: true, index: 0, say: null, pageTip: false, pageTour: true }));
+    else setState((s) => ({ ...s, open: true, index: 0, say: { text, pin: null, id: "welcome" }, pageTip: true }));
+    setTipOn(true);
+    setWelcomeSkip(pageSegment);
+    // Muted by default (AUTO_MUTED), voice off, or no speech in this browser: the welcome is the bubble, and it is on screen.
+    if (AUTO_MUTED || preferences.speech !== "on" || !supported) {
+      finishWelcome();
+      return;
+    }
+    // By itself: only in the recorded voice, once /api/pico-voice has it (never the browser voice).
+    speak(text, { clipOnly: true }).then((result) => {
+      // "unavailable": the recorded voice could not be made - the bubble showed the welcome, so it counts as delivered.
+      if (result === "started" || result === "unavailable") {
+        finishWelcome();
+      } else if (result === "blocked") {
+        // The browser refused to speak before the student touched the page: nothing is marked; the welcome is said at the
+        // first tap or key press, and only then is it marked.
+        if (retryOff.current) return;
+        const retry = () => {
+          retryOff.current?.();
+          if (userActed.current) return;
+          speak(text, { force: true, clipOnly: true }).then((again) => {
+            // "cancelled": the student's own tap (Next, Hear it, X) took the voice over - they have the welcome, so it is done.
+            if (again === "started" || again === "cancelled") finishWelcome();
+          });
+        };
+        const events = ["pointerdown", "keydown"];
+        events.forEach((name) => document.addEventListener(name, retry, { capture: true, once: true }));
+        retryOff.current = () => {
+          events.forEach((name) => document.removeEventListener(name, retry, { capture: true }));
+          retryOff.current = null;
+        };
+      } else if (result === "cancelled" && !userActed.current) {
+        // Cancelled by something other than the student (React Strict Mode's remount, a route change): try again.
+        welcomeRun.current = false;
+        setAttempt((n) => n + 1);
+      }
+    });
+  };
+
+  useEffect(() => {
+    if (!(welcomeReady && clear) || welcomeRun.current || attempt >= WELCOME_TRIES) return;
+    // In a timer: the effect only schedules it, so React Strict Mode's extra mount/unmount never starts the welcome twice.
+    const timer = setTimeout(startWelcome, 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [welcomeReady, clear, attempt]);
+
+  useEffect(() => () => retryOff.current?.(), []);
+  // Leaving a page ends the sentence about it (the new page then says its own once it has loaded).
   useEffect(() => () => stop(), [pathname, stop]);
 
+  // ---- 2. A module explains itself - the FIRST time this user opens it in this browser - once its page has loaded ----
+  const pageModule = home ? null : moduleNow;
+  const pageTip = classesTour ? { text: steps[0].text, pin: steps[0].pin } : pageModule ? { text: pageModule.text, pin: null } : null;
+  const [tipFor, setTipFor] = useState(null);
+  // Every module has its own cookie (utils/picoCookies.js): a module that was explained by itself before - on this visit
+  // (doneModules) or an earlier one - never explains itself again. The page showing its explanation right now keeps it
+  // while it is spoken (the cookie is set as the voice starts). A tap on the buddy ignores all of this.
+  const [doneModules, setDoneModules] = useState(() => new Set());
+  const moduleHeard = doneModules.has(pageSegment) || hasPicoModuleCookie(userId, pageSegment);
+  // One key per page; null while the page loads, while the welcome is still owed, on the page the welcome has just been
+  // said on, and for a module that has already been explained.
+  // A page explains itself only once no dialog is open (a dialog it already started under does not stop it).
+  const tipWaiting = Boolean(pageTip) && moduleReady && !welcomeDue && welcomeSkip !== pageSegment;
+  const tipKey = tipWaiting && ((!moduleHeard && clear) || tipFor === pageSegment) ? pageSegment : null;
+
+  // Anything the buddy says by itself (the welcome / the tour, a page's explanation) waits for every dialog of the dashboard
+  // (profile, training, password, app install, live class...) to be closed, and starts as soon as the last one is gone.
+  const watchDialogs = welcomeReady || (tipWaiting && !moduleHeard);
+  useEffect(() => {
+    if (!watchDialogs) return undefined;
+    const check = () => setClearAt(document.querySelector(OTHER_POPUPS) ? null : pageSegment);
+    const first = setTimeout(check, 300);
+    const timer = setInterval(check, 700);
+    return () => {
+      clearTimeout(first);
+      clearInterval(timer);
+    };
+  }, [watchDialogs, pageSegment]);
   // A sentence that belonged to another page (the Book a Class buddy strip, a module's explanation) never carries over to the
-  // page the student has moved to: it would be shown and said there.
+  // page the student has moved to: it would be shown and said there. The new page then says its own (or nothing, once heard).
   const [sayPath, setSayPath] = useState(pathname);
   if (pathname !== sayPath) {
     setSayPath(pathname);
     setState((s) => (s.pageTip || s.pageTour ? { ...s, open: false, say: null, pageTip: false, pageTour: false } : s));
     setTipOn(false);
   }
-  // The buddy's voice for this page is got ready once the page is idle (the page's text, and the tour tips on the home page
-  // and My Classes), so the student's tap plays at once. In the voice and speed the student picked.
-  const voiceTexts = [onBook ? live.pageText : moduleNow?.text, ...(home || classesTour ? steps.map((t) => t.text) : [])].filter(Boolean).join("|");
+  if (tipKey !== tipFor) {
+    // Adjusted while rendering (React's way to reset state when an input changes), not in an effect.
+    setTipFor(tipKey);
+    if (tipKey && pageTip) {
+      if (classesTour) setState((s) => ({ ...s, open: true, index: 0, say: null, skipLive: false, pageTip: false, pageTour: true }));
+      else setState((s) => ({ ...s, open: true, index: 0, say: { text: pageTip.text, pin: pageTip.pin, id: `page-${pageSegment}` }, skipLive: false, pageTip: true }));
+      setTipOn(true);
+    } else {
+      setState((s) => (s.pageTip ? { ...s, open: false, say: null, pageTip: false } : s));
+      setTipOn(false);
+    }
+  }
+  // The buddy's voice for this page is got ready once the page is idle: the page's text, and on the home page the tour
+  // tips, so the student's tap (Next, Hear it) plays at once. In the voice and speed the student picked.
+  const voiceTexts = [pageTip?.text, moduleNow?.text, ...(home || tourPage || classesTour ? steps.map((t) => t.text) : [])].filter(Boolean).join("|");
   const { voice: voicePick, voiceSpeed } = preferences;
   useEffect(() => preparePicoClips(voiceTexts.split("|"), voiceOf(voicePick, voiceSpeed)), [voiceTexts, voicePick, voiceSpeed]);
+  // The explanation is also said out loud - once per arrival. Its cookie is set only when the voice really starts (or, with
+  // the buddy's voice off, when the bubble is on screen); a browser that refuses to speak before any touch is retried at the
+  // student's first tap or key press on that same page, and nothing is marked until then.
+  const moduleRetryOff = useRef(null);
+  const currentTip = useRef(null);
+  useEffect(() => {
+    currentTip.current = tipKey;
+  }, [tipKey]);
+  useEffect(() => {
+    if (!tipKey || !pageTip) return;
+    const key = tipKey;
+    const text = pageTip.text;
+    const delivered = () => {
+      moduleRetryOff.current?.();
+      setPicoModuleCookie(userId, key);
+      setDoneModules((set) => new Set(set).add(key));
+    };
+    // Muted by default: the bubble shows the explanation and that counts as delivered; "Hear it" or a tap on the buddy speaks it.
+    if (AUTO_MUTED) {
+      delivered();
+      return undefined;
+    }
+    speak(text, { clipOnly: true }).then((result) => {
+      if (currentTip.current !== key) return;
+      if (result === "started" || result === "off" || result === "unavailable") {
+        delivered();
+      } else if (result === "blocked" && !moduleRetryOff.current) {
+        // The browser refuses sound before the student has touched the page (e.g. right after login). The first real tap, click
+        // or key press on this page says it. Every event that counts as a user gesture is listened to (a touch screen only
+        // counts on pointerup / touchend), and a try that is still refused (not a gesture) keeps waiting for the next one.
+        const events = ["pointerdown", "pointerup", "touchend", "click", "keydown"];
+        const stopWaiting = () => {
+          events.forEach((name) => document.removeEventListener(name, retry, { capture: true }));
+          moduleRetryOff.current = null;
+        };
+        let trying = false;
+        const retry = () => {
+          if (currentTip.current !== key) {
+            stopWaiting();
+            return;
+          }
+          if (trying) return; // one tap fires several events: the sentence is started once
+          trying = true;
+          speak(text, { force: true, clipOnly: true }).then((again) => {
+            // "cancelled": the student's own tap (Hear it, the buddy) took the voice over, so they have heard it - no second try.
+            if ((again === "started" || again === "cancelled") && currentTip.current === key) delivered();
+            else trying = false;
+          });
+        };
+        events.forEach((name) => document.addEventListener(name, retry, { capture: true }));
+        moduleRetryOff.current = stopWaiting;
+      }
+    });
+    return () => moduleRetryOff.current?.();
+    // Once per arrival, not whenever the voice settings change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tipKey]);
 
   // Each tip: spotlight its element and scroll it into a comfortable spot.
   useEffect(() => {
@@ -280,10 +484,12 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
     return () => window.removeEventListener(PICO_SAY_EVENT, onSay);
   }, [speak]);
 
-  // ---- A tap guides the page the student is on ----
+  // ---- 3. A tap explains the page the student is on ----
   const [manualWait, setManualWait] = useState(false);
   const [manualSay, setManualSay] = useState(null);
-  const sayNow = (text, fromTap) => {
+  const explainNow = (text, { fromTap }) => {
+    setState((s) => ({ ...s, open: true, index: 0, say: { text, pin: null, id: `manual-${Date.now()}` }, pageTip: true }));
+    setTipOn(true);
     if (fromTap) {
       if (preferences.speech !== "on") updatePreference("speech", "on");
       speak(text, { force: true });
@@ -291,26 +497,21 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
       setManualSay({ text });
     }
   };
-  const explainNow = (text, { fromTap }) => {
-    setState((s) => ({ ...s, open: true, index: 0, say: { text, pin: null, id: `manual-${Date.now()}` }, pageTip: true }));
-    setTipOn(true);
-    sayNow(text, fromTap);
-  };
-  // The home page and My Classes: the guide is the page's whole tour, from its first tip. The first home tour of this student in
-  // this browser opens with the welcome, which is then marked as done (cookie).
-  const startTour = ({ fromTap }) => {
+  // My Classes: an explanation is its tour, from the first tip.
+  const startClassesTour = ({ fromTap }) => {
     setState((s) => ({ ...s, open: true, index: 0, say: null, skipLive: false, pageTip: false, pageTour: true }));
     setTipOn(true);
-    sayNow(steps[0].text, fromTap);
-    if (home && welcome && !welcomedNow) {
-      setPicoWelcomeCookie(userId);
-      setWelcomedNow(true);
+    if (fromTap) {
+      if (preferences.speech !== "on") updatePreference("speech", "on");
+      speak(steps[0].text, { force: true });
+    } else {
+      setManualSay({ text: steps[0].text });
     }
   };
-  // A tap while the page is still loading: the buddy says so, and guides as soon as the page is ready.
+  // A tap while the page is still loading: the buddy says so, and explains as soon as the page is ready.
   if (manualWait && moduleReady) {
     setManualWait(false);
-    if (home || classesTour) startTour({ fromTap: false });
+    if (classesTour) startClassesTour({ fromTap: false });
     else explainNow(moduleNow?.text || NO_MODULE_TEXT, { fromTap: false });
   }
   useEffect(() => {
@@ -322,22 +523,33 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
 
   if (preferences.buddyEnabled === "off") return null;
 
-  // Red X: closes the bubble only. The buddy stays; a tap brings the page's guide back.
+  // The student answered the welcome bubble (Next, Hear it, X, a tap on the buddy) while its voice was still owed (e.g. the
+  // browser blocked it after login): the welcome has been delivered, so it is marked now and not said again on the next visit.
+  const welcomeAnswered = () => {
+    if (welcomeRun.current && welcomeDue) finishWelcome();
+  };
+  // Red X: closes the bubble only. The buddy stays; a tap brings the same tip back.
   const hide = () => {
+    welcomeAnswered();
+    userActed.current = true;
+    retryOff.current?.();
     stop();
     setManualWait(false);
     setTipOn(false);
     setState((s) => ({ ...s, open: false }));
   };
   const finish = () => {
+    welcomeAnswered();
+    userActed.current = true;
+    retryOff.current?.();
     stop();
     setManualWait(false);
     setTipOn(false);
     setState({ open: false, index: 0, say: null, skipLive: false, pageTip: false });
-    // The welcome has been given: later tours start with the plain hello.
-    if (welcomedNow) setWelcome(false);
   };
   const next = () => {
+    welcomeAnswered();
+    userActed.current = true;
     if (state.pageTip) return finish();
     let i = state.index + 1;
     // After joining the live class, the "class is live" tip is skipped.
@@ -350,30 +562,30 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   };
   // Mockup hear / pinTap: asking the buddy to talk also turns its voice back on.
   const hear = () => {
+    welcomeAnswered();
+    userActed.current = true;
     if (preferences.speech !== "on") updatePreference("speech", "on");
     speak(tip.text, { force: true });
   };
-  // A tap guides the page the student is on. A tour that is already open keeps speaking its tip. A page still loading is
-  // waited for. A page Pico has no text for gets a short fallback.
+  // A tap explains the page the student is on (the dashboard on the home page). The home tour that is already open
+  // keeps speaking its tip. A page still loading is waited for. A page Pico has no text for gets a short fallback.
   const tap = () => {
-    // Book a Class: its buddy strip is the buddy here (the bubble stays closed): the tap says the strip's line for this step.
-    if (onBook) {
-      if (live.pageText) sayNow(live.pageText, true);
-      return;
-    }
+    welcomeAnswered();
+    userActed.current = true;
+    if (onBook) return;
     if (mobile && tipOn) {
       setTipOn(false);
       stop();
       return;
     }
-    if (open && (home || classesTour) && state.pageTour && !state.say) return hear();
+    if (open && (home || (classesTour && state.pageTour)) && !state.say) return hear();
     if (!moduleReady) {
       setManualWait(true);
       setState((s) => ({ ...s, open: true, index: 0, say: { text: "One moment! I'll tell you about this page as soon as it is ready.", pin: null, id: `wait-${Date.now()}` }, pageTip: true }));
       setTipOn(true);
       return;
     }
-    if (home || classesTour) return startTour({ fromTap: true });
+    if (classesTour) return startClassesTour({ fromTap: true });
     explainNow(moduleNow?.text || NO_MODULE_TEXT, { fromTap: true });
   };
   const shown = state.pageTip ? [step] : steps.filter((s) => onPage(s.pin) && !(state.skipLive && s.pin === "live"));
