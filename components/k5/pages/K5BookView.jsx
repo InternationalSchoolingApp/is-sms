@@ -22,6 +22,8 @@ import { getCourseSlots } from "@/utils/bookClassClient";
 import { courseTint, subjectStyle } from "@/utils/k5Calendar";
 import { useTeacherLabel } from "@/hooks/useTeacherLabel";
 import { K5Loading, K5CardsSkeleton, K5Sk } from "@/components/k5/K5Skeletons";
+import { DemandBookPanel } from "@/components/student/bookClass/DemandBookPanel";
+import { linkGridBooking } from "@/utils/demandBooking";
 
 const MAX_TICKETS = 10;
 const BOOK_SAY = "Here you can book your classes with a teacher. Each booking is one class.";
@@ -1185,6 +1187,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   const [unknown, setUnknown] = useState(false);
   const [grownOpen, setGrownOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [demandOff, setDemandOff] = useState(false);
   // Day-first booking (Elementary): the course picked last, with its own slot and teacher calendar.
   const [choice, setChoice] = useState(null);
   const inFlight = useRef(false);
@@ -1337,6 +1340,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
     }
     if (result.status === "1") {
       setConfirming(false);
+      linkGridBooking(target.slot.bookedStartDate);
       toast.success(result.message || "Your class has been booked.");
       setDone({ name: target.option.name, weekday: dayItem.weekday, num: dayItem.num, time: niceTime(target.slot.displayStartTime) });
       setStep(4);
@@ -1354,6 +1358,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   function startOver() {
     setDone(null);
     setUnknown(false);
+    setDemandOff(false);
     goTo(1);
     window.setTimeout(() => document.getElementById("k5-step")?.scrollIntoView({ behavior: "smooth", block: "center" }), 0);
   }
@@ -1361,8 +1366,31 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   function another() {
     setDone(null);
     setUnknown(false);
+    setDemandOff(false);
     goTo(1);
   }
+
+  const demandActive = !demandOff && !book.dummy.enabled && step !== 4 && left > 0 && bookable.length > 0;
+  const demandPanel = (
+    <DemandBookPanel
+      k5
+      options={bookable}
+      onDisabled={() => setDemandOff(true)}
+      onViewAll={(option) => {
+        setDemandOff(true);
+        if (!dayFirst) pickSubject(option);
+      }}
+      onBooked={({ option, slot }) => {
+        const d = new Date(`${slot.date}T00:00:00`);
+        setDone({ name: option.name, weekday: d.toLocaleDateString("en-US", { weekday: "short" }), num: d.getDate(), time: slot.startLabel });
+        setStep(4);
+        queryClient.invalidateQueries({ queryKey: ["book-class-slots"] });
+        queryClient.invalidateQueries({ queryKey: ["book-class-course-slots"] });
+        queryClient.invalidateQueries({ queryKey: ["book-class-grown-ups"] });
+        onBooked();
+      }}
+    />
+  );
 
   const notice = (text) => <p className="m-0 py-6 text-center font-k5-display text-xl font-semibold text-k5-mut">{text}</p>;
   const daysSkeleton = (
@@ -1594,7 +1622,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   if (popup) {
     return (
       <BookPopup onClose={onClose}>
-        {flow}
+        {demandActive ? demandPanel : flow}
         {confirmDialog}
       </BookPopup>
     );
@@ -1612,7 +1640,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
       {middle && <MiddleRules perWeek={perWeek} comp={details.compClassPerweek > 0} />}
 
       <section aria-labelledby="k5-step" className={`${K5_CARD} flex flex-col gap-[18px] px-[22px] py-5`}>
-        {flow}
+        {demandActive ? demandPanel : flow}
       </section>
 
       {confirmDialog}

@@ -13,6 +13,7 @@ import { getStudentBookedClasses } from "@/services/bookClassApi";
 import { bookedClassDateRange } from "@/utils/bookClass";
 import { useTeacherLabel } from "@/hooks/useTeacherLabel";
 import { K5Loading, K5RowsSkeleton } from "@/components/k5/K5Skeletons";
+import { CancelClassButton } from "@/components/student/bookClass/CancelClassButton";
 
 // The From / To calendars are not limited to the current year: any date from 10 years back to 10 years ahead can be picked.
 const PICKER_MIN = new Date(new Date().getFullYear() - 10, 0, 1);
@@ -41,6 +42,7 @@ const STATUSES = [
   { value: "Completed", label: "Completed" },
   { value: "Reschedule Session", label: "Rescheduled" },
   { value: "Missed by Student", label: "Missed by you" },
+  { value: "Cancelled", label: "Cancelled" },
 ];
 const STATUSES_MIDDLE = [
   { value: "", label: "Select Status" },
@@ -48,6 +50,7 @@ const STATUSES_MIDDLE = [
   { value: "Completed", label: "Completed" },
   { value: "Reschedule Session", label: "Reschedule Session" },
   { value: "Missed by Student", label: "Missed by you" },
+  { value: "Cancelled", label: "Cancelled" },
 ];
 // Count tiles. `status` = the backend status filter a tap applies (null = not a filter).
 const TILES = [
@@ -515,12 +518,15 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
                 const rowKey = `${row.meetingJoinDate}-${row.startTime}-${start + i}`;
                 const cellLabel = "max-[760px]:order-2 max-[760px]:px-3 max-[760px]:py-1.5 max-[760px]:[overflow-wrap:anywhere] max-[760px]:before:mb-0.5 max-[760px]:before:block max-[760px]:before:text-xs max-[760px]:before:font-black max-[760px]:before:text-k5-mut max-[760px]:before:content-[attr(data-l)]";
                 const status = (
+                  <>
                   <span
                     style={{ background: pill?.bg || "var(--k5-soft)", color: pill?.fg || "var(--k5-ink)" }}
                     className={`inline-block whitespace-nowrap rounded-full px-3 text-sm ${middle ? "py-1 font-black" : "py-1 font-black"}`}
                   >
                     {pill?.label || row.meetingResult || "N/A"}
                   </span>
+                  <CancelClassButton row={row} />
+                  </>
                 );
                 if (middle) {
                   return (

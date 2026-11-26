@@ -12,6 +12,7 @@ import { BOOKED_CLASS_STATUS_STYLES, bookedClassDateRange } from "@/utils/bookCl
 import { MobileTableCard } from "@/components/student/MobileTableCard";
 import { TableFooter } from "@/components/student/TableFooter";
 import { K5BookedView } from "@/components/k5/pages/K5BookedView";
+import { CancelClassButton } from "@/components/student/bookClass/CancelClassButton";
 
 const DATE_TYPES = [
   { value: "today", label: "Today" },
@@ -26,6 +27,7 @@ const STATUSES = [
   { value: "Completed", label: "Completed" },
   { value: "Reschedule Session", label: "Reschedule Session" },
   { value: "Missed by Student", label: "Missed by you" },
+  { value: "Cancelled", label: "Cancelled" },
 ];
 const COUNTS = [
   ["total", "Classes"],
@@ -280,7 +282,7 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
                       { label: "Class Type", value: row.classTypeExtraOrComp },
                       {
                         label: "Class Status",
-                        value: status ? <span className={`rounded px-2 py-0.5 font-bold ${status.className}`}>{status.label}</span> : <span className="font-bold">N/A</span>,
+                        value: status ? <span className={`rounded px-2 py-0.5 font-bold ${status.className}`}>{status.label}</span> : <><span className="font-bold">N/A</span><CancelClassButton row={row} /></>,
                       },
                     ]}
                   />
@@ -329,7 +331,10 @@ function LegacyBookedClasses({ course, onBack, onBook }) {
                       {status ? (
                         <span className={`rounded px-2 py-0.5 font-bold ${status.className}`}>{status.label}</span>
                       ) : (
-                        <span className="font-bold">N/A</span>
+                        <>
+                          <span className="font-bold">N/A</span>
+                          <CancelClassButton row={row} />
+                        </>
                       )}
                     </td>
                   </tr>

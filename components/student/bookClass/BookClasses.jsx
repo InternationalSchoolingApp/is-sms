@@ -11,7 +11,7 @@ import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { getBookAClassStatus, getStudentBookClassDetails } from "@/services/bookClassApi";
 import { getBrowserTimezone } from "@/utils/calendarEvents";
 import { studentNavHref } from "@/utils/dashboardNav";
-import { BookClassSlotModal } from "@/components/student/bookClass/BookClassSlotModal";
+import { DemandBookModal } from "@/components/student/bookClass/DemandBookModal";
 import { AllCoursesPickerModal } from "@/components/student/bookClass/AllCoursesPickerModal";
 import { BookedClasses } from "@/components/student/bookClass/BookedClasses";
 import { K5BookNotice, K5BookView } from "@/components/k5/pages/K5BookView";
@@ -124,7 +124,7 @@ export function BookClasses() {
 
   const modals = (
     <>
-      {slotCourse && <BookClassSlotModal course={slotCourse} onClose={() => setSlotCourse(null)} onBooked={handleBooked} />}
+      {slotCourse && <DemandBookModal course={slotCourse} onClose={() => setSlotCourse(null)} onBooked={handleBooked} />}
       {pickAllCourses && (
         <AllCoursesPickerModal
           studentStandardId={course.studentStandardId}
