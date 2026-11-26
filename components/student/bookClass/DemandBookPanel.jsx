@@ -63,16 +63,21 @@ function dayParts(iso) {
  * answer is the slot (confirm straight away), the nearest free slots, or "fully booked". "View all slots"
  * hands over to the existing weekly grid. With DEMAND_BOOKING_ENABLED = N it calls onDisabled.
  */
-export function DemandBookPanel({ options, k5 = false, onViewAll, onBooked, onDisabled }) {
+export function DemandBookPanel({ options, k5 = false, subjectLast = false, fixedDate = null, onChoose, onStage, onViewAll, onBooked, onDisabled }) {
   const look = k5 ? LOOK.k5 : LOOK.legacy;
-  const [course, setCourse] = useState(options.length === 1 ? options[0] : null);
-  const [date, setDate] = useState(null);
+  const [course, setCourse] = useState(options.length === 1 || subjectLast ? options[0] : null);
+  const [subject, setSubject] = useState(null);
+  const [date, setDate] = useState(fixedDate);
   const [time, setTime] = useState(null);
   const [result, setResult] = useState(null);
   const [confirmSlot, setConfirmSlot] = useState(null);
   const [busy, setBusy] = useState(false);
   const [unknown, setUnknown] = useState(false);
   const sessionId = useRef(newDemandSessionId());
+
+  useEffect(() => {
+    onStage?.(confirmSlot || result ? 3 : date ? 2 : 1);
+  }, [confirmSlot, result, date, onStage]);
 
   const teacherQuery = useQuery({
     queryKey: ["demand-teacher", course?.subjectId, course?.studentStandardId],
@@ -127,20 +132,21 @@ export function DemandBookPanel({ options, k5 = false, onViewAll, onBooked, onDi
       return;
     }
     if (r.result === "AVAILABLE") {
-      setConfirmSlot(r.requested);
+      if (onChoose) onChoose(r.requested, course);
+      else setConfirmSlot(r.requested);
       return;
     }
     setResult(r);
   }
 
   async function confirm() {
-    if (busy || unknown || !confirmSlot) return;
+    if (busy || unknown || !confirmSlot || (subjectLast && !subject)) return;
     setBusy(true);
     const res = await submitBookClassSlot({
       meetingDate: confirmSlot.meetingStart,
       meetingEndDate: confirmSlot.meetingEnd,
-      subjectId: course.subjectId,
-      studentStandardId: ssId,
+      subjectId: (subjectLast ? subject : course).subjectId,
+      studentStandardId: subjectLast ? subject.studentStandardId ?? ssId : ssId,
       teacherUserId: teacher.assignedTeacherUserId,
     });
     setBusy(false);
@@ -156,7 +162,7 @@ export function DemandBookPanel({ options, k5 = false, onViewAll, onBooked, onDi
     rememberDemandSession(null, null);
     linkDemandBooking({ studentStandardId: ssId, sessionId: sessionId.current, meetingStart: confirmSlot.meetingStart }).catch(() => {});
     toast.success(res.message || "Your class has been booked.");
-    onBooked?.({ option: course, slot: confirmSlot, teacherName: opts?.teacherName });
+    onBooked?.({ option: subjectLast ? subject : course, slot: confirmSlot, teacherName: opts?.teacherName });
   }
 
   if (!course) {
@@ -180,7 +186,7 @@ export function DemandBookPanel({ options, k5 = false, onViewAll, onBooked, onDi
 
   const duration = Number(opts.duration) || 50;
   const courseSwitch =
-    options.length > 1 ? (
+    options.length > 1 && !subjectLast ? (
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <span className={look.note}>Course:</span>
         {options.map((o) => (
@@ -200,9 +206,21 @@ export function DemandBookPanel({ options, k5 = false, onViewAll, onBooked, onDi
     return (
       <div className={look.box}>
         <p className={`${look.label} mb-3`}>Confirm Booking</p>
+        {subjectLast && (
+          <div className="mb-3">
+            <span className={look.label}>Choose a course</span>
+            <div className="flex flex-wrap gap-2">
+              {options.map((o) => (
+                <button key={o.subjectId} type="button" onClick={() => setSubject(o)} className={subject?.subjectId === o.subjectId ? look.chipSel : look.chip} style={{ padding: "0 14px" }}>
+                  {o.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <dl className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
           {[
-            ["Course", opts.subjectName || course.name],
+            ["Course", subjectLast ? subject?.name || "Choose a course above" : opts.subjectName || course.name],
             ["Teacher", opts.teacherName],
             ["Date", confirmSlot.dateLabel],
             [`Time (${opts.timezone})`, `${confirmSlot.startLabel} – ${confirmSlot.endLabel}`],
@@ -218,7 +236,7 @@ export function DemandBookPanel({ options, k5 = false, onViewAll, onBooked, onDi
           <button type="button" onClick={pickAnother} disabled={busy} className={look.cancel}>
             Cancel
           </button>
-          <button type="button" onClick={confirm} disabled={busy || unknown} className={look.ok}>
+          <button type="button" onClick={confirm} disabled={busy || unknown || (subjectLast && !subject)} className={look.ok}>
             {busy ? "Booking…" : "Confirm"}
           </button>
         </div>
@@ -238,7 +256,7 @@ export function DemandBookPanel({ options, k5 = false, onViewAll, onBooked, onDi
             </p>
             <div className="mb-4 flex flex-wrap gap-2">
               {result.nearest.map((s) => (
-                <button key={s.meetingStart} type="button" onClick={() => setConfirmSlot(s)} className={look.alt}>
+                <button key={s.meetingStart} type="button" onClick={() => (onChoose ? onChoose(s, course) : setConfirmSlot(s))} className={look.alt}>
                   {s.dateLabel} · <b>{s.startLabel}</b>
                 </button>
               ))}
@@ -270,8 +288,8 @@ export function DemandBookPanel({ options, k5 = false, onViewAll, onBooked, onDi
   return (
     <div>
       {courseSwitch}
-      <span className={look.label}>Choose a date</span>
-      <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+      {!fixedDate && <span className={look.label}>Choose a date</span>}
+      <div className={fixedDate ? "hidden" : "grid grid-cols-4 gap-2 sm:grid-cols-7"}>
         {opts.days.map((d) => {
           const p = dayParts(d.date);
           return (

@@ -18,7 +18,9 @@ export function CancelClassButton({ row, className = "" }) {
   const [busy, setBusy] = useState(false);
 
   const cancellableType = !row?.meetingType || ["STUDENT_DOUBT_SESSION", "PTM", "CUSTOM"].includes(String(row.meetingType).toUpperCase());
-  if (!row?.meetingId || row.meetingResult || !cancellableType || row.canCancel === false) return null;
+  const result = String(row?.meetingResult ?? "").trim();
+  const noResultYet = result === "" || result.toUpperCase() === "N/A";
+  if (!row?.meetingId || !noResultYet || !cancellableType || row.canCancel === false) return null;
   const late = row.cancelInsideCutoff === true;
 
   const close = () => {

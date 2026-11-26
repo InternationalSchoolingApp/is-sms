@@ -613,12 +613,12 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
             </span>
             <span className={"k5h-b-sname font-k5-display font-semibold leading-[1.1] " + (soft ? "text-[22px]" : "text-[20px]")}>{s.name}</span>
             {middle && s.teacherName && <span className="text-sm font-extrabold leading-[1.2] text-k5-mut">{teacherLabel(s.teacherName)}</span>}
-            {s.booked > 0 && (
+            {(s.weekBooked ?? s.booked) > 0 && (
               <span className={"k5h-b-booked  flex items-center gap-1 rounded-full border-k5-grn bg-k5-card px-2.5 py-1 text-[13px] font-black " + (soft ? "max-w-full border-[1.5px]" : "whitespace-nowrap border-[3px]")} style={middle ? { borderColor: "var(--k5-c-done)" } : undefined}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: "currentColor" }}>
                   <path d={CHECK_PATH} />
                 </svg>
-                {high || soft ? copy.bookedN(s.booked) : s.booked + " booked"}
+                {high || soft ? copy.bookedN(s.weekBooked ?? s.booked) : (s.weekBooked ?? s.booked) + " booked"}
               </span>
             )}
             {!none && (
@@ -711,7 +711,7 @@ function dayModel(days, slots, skipDates, left) {
   });
 }
 
-function DayStep({ model, onPick }) {
+function DayStep({ model, onPick, hideFree = false }) {
   const { middle, high, copy } = useCopy();
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(118px,1fr))] gap-2.5">
@@ -730,7 +730,7 @@ function DayStep({ model, onPick }) {
           <span className="text-[15px] font-black text-k5-mut">{d.weekday}</span>
           <span className="k5h-b-dnum font-k5-display text-[44px] font-semibold leading-none">{d.num}</span>
           <span className={"rounded-full px-3 py-[3px] text-sm font-black " + (!d.can ? "bg-k5-line text-k5-mut" : d.isToday ? "bg-k5-ac text-white" : "bg-k5-yt text-k5-yx")}>{d.tag === "No tickets left" ? copy.noLeft : d.tag}</span>
-          {d.can && <span className="mt-auto text-[13px] font-extrabold text-k5-mut">Free times: {d.free}</span>}
+          {d.can && !hideFree && <span className="mt-auto text-[13px] font-extrabold text-k5-mut">Free times: {d.free}</span>}
         </button>
       ))}
     </div>
@@ -1188,6 +1188,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   const [grownOpen, setGrownOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [demandOff, setDemandOff] = useState(false);
+  const [allSlots, setAllSlots] = useState(false);
   // Day-first booking (Elementary): the course picked last, with its own slot and teacher calendar.
   const [choice, setChoice] = useState(null);
   const inFlight = useRef(false);
@@ -1203,7 +1204,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   });
   const options = allMode
     ? (allQuery.data?.studentSubjectList ?? []).map((s) => ({ subjectId: s.subjectId, name: s.subjectName, studentStandardId: course.studentStandardId, teacherName: s.teacherName }))
-    : subjects.filter((s) => s.subjectId !== 0).map((s) => ({ subjectId: s.subjectId, name: s.name, studentStandardId: s.studentStandardId, teacherName: s.teacherName, booked: s.booked }));
+    : subjects.filter((s) => s.subjectId !== 0).map((s) => ({ subjectId: s.subjectId, name: s.name, studentStandardId: s.studentStandardId, teacherName: s.teacherName, booked: s.weekBooked ?? s.booked }));
   const leftOf = (opt) => (allMode ? course.weekLeftClass : subjects.find((s) => s.subjectId === opt.subjectId)?.weekLeftClass ?? 0);
   // The course the booking is for: picked first (Grade 6–12), or picked last at the course step (Elementary).
   const activeOpt = dayFirst ? choice?.course.option ?? null : picked;
@@ -1252,7 +1253,10 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   const model = dayFirst ? mergedDayModel(all.courses, leftOf, left) : dayModel(book.days, book.slots, book.skipDates, left).filter((d) => d.tag !== "Over");
   const dayItem = model.find((m) => m.key === dayKey) || null;
   // Elementary: the picked time, with the courses that are free at it.
-  const timeEntry = dayFirst && dayItem && selected ? dayItem.entries.find((e) => e.slot === selected) || null : null;
+  const timeEntry =
+    dayFirst && dayItem && selected
+      ? dayItem.entries.find((e) => e.slot === selected) || (selected.preferred ? { choices: all.courses.filter((c) => c.slots).map((c) => ({ course: c, slot: selected })) } : null)
+      : null;
   const zoneSlots = dayFirst ? all.courses.find((c) => c.slots)?.slots : book.slots;
   // What "Book it" sends: the course, its slot and its teacher's calendar.
   const target = dayFirst
@@ -1273,6 +1277,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   const title = step === 4 ? "Yay! Class booked!" : step === 1 && left < 1 ? copy.allTitle : copy.steps[step - 1];
 
   function goTo(nextStep) {
+    setAllSlots(false);
     setChoice(null);
     if (dayFirst) {
       // Day, time, course: going back to a step clears what was picked on it and after it.
@@ -1288,6 +1293,29 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
     }
     setStep(nextStep);
   }
+
+  const preferredOn = !demandOff && !book.dummy.enabled && !allSlots;
+  const preferredIso = dayItem && isValid(new Date(dayItem.key)) ? format(new Date(dayItem.key), "yyyy-MM-dd") : null;
+  const preferredOptions = dayFirst ? bookable : picked ? [picked] : [];
+  function chooseSlot(s) {
+    const slot = { bookedStartDate: s.meetingStart, displayStartTime: s.startLabel, displayEndTime: s.endLabel, bookedDate: s.date, preferred: true };
+    setSelected(slot);
+    setChoice(null);
+    if (dayFirst) setStep(3);
+    else if (middle) setConfirming(true);
+  }
+  const preferredPanel = preferredIso && preferredOptions.length > 0 && (
+    <DemandBookPanel
+      key={preferredIso + (picked?.subjectId ?? "")}
+      k5
+      subjectLast={dayFirst}
+      fixedDate={preferredIso}
+      options={preferredOptions}
+      onChoose={chooseSlot}
+      onDisabled={() => setDemandOff(true)}
+      onViewAll={() => setAllSlots(true)}
+    />
+  );
 
   function pickSubject(option) {
     if (left < 1) return;
@@ -1358,7 +1386,6 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   function startOver() {
     setDone(null);
     setUnknown(false);
-    setDemandOff(false);
     goTo(1);
     window.setTimeout(() => document.getElementById("k5-step")?.scrollIntoView({ behavior: "smooth", block: "center" }), 0);
   }
@@ -1366,31 +1393,8 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   function another() {
     setDone(null);
     setUnknown(false);
-    setDemandOff(false);
     goTo(1);
   }
-
-  const demandActive = !demandOff && !book.dummy.enabled && step !== 4 && left > 0 && bookable.length > 0;
-  const demandPanel = (
-    <DemandBookPanel
-      k5
-      options={bookable}
-      onDisabled={() => setDemandOff(true)}
-      onViewAll={(option) => {
-        setDemandOff(true);
-        if (!dayFirst) pickSubject(option);
-      }}
-      onBooked={({ option, slot }) => {
-        const d = new Date(`${slot.date}T00:00:00`);
-        setDone({ name: option.name, weekday: d.toLocaleDateString("en-US", { weekday: "short" }), num: d.getDate(), time: slot.startLabel });
-        setStep(4);
-        queryClient.invalidateQueries({ queryKey: ["book-class-slots"] });
-        queryClient.invalidateQueries({ queryKey: ["book-class-course-slots"] });
-        queryClient.invalidateQueries({ queryKey: ["book-class-grown-ups"] });
-        onBooked();
-      }}
-    />
-  );
 
   const notice = (text) => <p className="m-0 py-6 text-center font-k5-display text-xl font-semibold text-k5-mut">{text}</p>;
   const daysSkeleton = (
@@ -1453,7 +1457,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
               <h2 id="k5-step" className="m-0 font-k5-display text-[30px] font-semibold leading-[1.1]">{title}</h2>
               {step === 1 && <span className="mt-0.5 text-[15px] font-black text-k5-gx">{dayFirst ? copy.anyDay : copy.any}</span>}
               {dayFirst && step === 3 && <span className="mt-0.5 text-[15px] font-black text-k5-gx">{copy.anyCourse}</span>}
-              {!dayFirst && step === 3 && (
+              {!dayFirst && step === 3 && !(preferredOn && preferredPanel) && (
                 <span className="mt-0.5 flex items-center gap-1.5 text-[15px] font-black text-[var(--k5-vX)]">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-k5-vi text-[10px] text-white">{initialsOf(teacherName)}</span>
                   {teacherLabel(teacherName)} is free at these times
@@ -1481,7 +1485,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                   ? notice("No class slots are available for this week.")
                   : (
                     <>
-                      <DayStep
+                      <DayStep hideFree={preferredOn}
                         model={model}
                         onPick={(d) => {
                           setDayKey(d.key);
@@ -1494,7 +1498,8 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                     </>
                   ))}
 
-          {dayFirst && step === 2 && dayItem && (
+          {dayFirst && step === 2 && dayItem && preferredOn && preferredPanel}
+          {dayFirst && step === 2 && dayItem && !(preferredOn && preferredPanel) && (
             <>
               <TimeStep
                 dayItem={dayItem}
@@ -1532,7 +1537,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                 : !book.week
                   ? notice("No class slots are available for this week.")
                   : (
-                    <DayStep
+                    <DayStep hideFree={preferredOn}
                       model={model}
                       onPick={(d) => {
                         setDayKey(d.key);
@@ -1542,7 +1547,8 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                     />
                   ))}
 
-          {!dayFirst && step === 3 && dayItem && (
+          {!dayFirst && step === 3 && dayItem && preferredOn && preferredPanel}
+          {!dayFirst && step === 3 && dayItem && !(preferredOn && preferredPanel) && (
             <>
               <TimeStep
                 dayItem={dayItem}
@@ -1622,7 +1628,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   if (popup) {
     return (
       <BookPopup onClose={onClose}>
-        {demandActive ? demandPanel : flow}
+        {flow}
         {confirmDialog}
       </BookPopup>
     );
@@ -1640,7 +1646,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
       {middle && <MiddleRules perWeek={perWeek} comp={details.compClassPerweek > 0} />}
 
       <section aria-labelledby="k5-step" className={`${K5_CARD} flex flex-col gap-[18px] px-[22px] py-5`}>
-        {demandActive ? demandPanel : flow}
+        {flow}
       </section>
 
       {confirmDialog}
