@@ -198,7 +198,7 @@ export function DemandBookPanel({ options, k5 = false, subjectLast = false, fixe
     ) : null;
   const notes = (
     <p className={`mt-3 ${look.note}`}>
-      All times are in your timezone ({opts.timezone}). Each class is {duration} minutes.
+      Times are in {opts.timezone}. Each class is {duration} minutes.
     </p>
   );
 
