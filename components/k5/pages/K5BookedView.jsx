@@ -13,7 +13,7 @@ import { getStudentBookedClasses } from "@/services/bookClassApi";
 import { bookedClassDateRange } from "@/utils/bookClass";
 import { useTeacherLabel } from "@/hooks/useTeacherLabel";
 import { K5Loading, K5RowsSkeleton } from "@/components/k5/K5Skeletons";
-import { CancelClassButton } from "@/components/student/bookClass/CancelClassButton";
+import { CancelClassButton, StatusInfo } from "@/components/student/bookClass/CancelClassButton";
 
 // The From / To calendars are not limited to the current year: any date from 10 years back to 10 years ahead can be picked.
 const PICKER_MIN = new Date(new Date().getFullYear() - 10, 0, 1);
@@ -525,6 +525,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
                   >
                     {pill?.label || row.meetingResult || "N/A"}
                   </span>
+                  <StatusInfo row={row} />
                   <CancelClassButton row={row} />
                   </>
                 );

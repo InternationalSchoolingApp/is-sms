@@ -8,6 +8,24 @@ import { cancelStudentClass } from "@/services/bookClassApi";
 
 const LATE_CONFIRM = "LATE_CANCEL_CONFIRM";
 
+/** Who changed the class status, when, and why (from the class history). */
+export function StatusInfo({ row }) {
+  if (!row?.statusBy) return null;
+  return (
+    <span className="mt-1 block text-[11px] font-semibold leading-snug text-black/70">
+      By {row.statusBy}
+      <br />
+      {row.statusAt}
+      {row.statusReason ? (
+        <>
+          <br />
+          Reason: {row.statusReason}
+        </>
+      ) : null}
+    </span>
+  );
+}
+
 /** A student cancels an upcoming 1:1 class with a reason; after the cut-off they must confirm the class will not be given back. */
 export function CancelClassButton({ row, className = "" }) {
   const queryClient = useQueryClient();
@@ -83,6 +101,11 @@ export function CancelClassButton({ row, className = "" }) {
               {row.timezone ? ` (${row.timezone})` : ""}
             </DialogDescription>
           </DialogHeader>
+          <p className={`rounded-lg p-3 text-sm font-bold text-black ${late ? "bg-amber-100" : "bg-green-100"}`}>
+            {late
+              ? "Please note that cancelling this class will not give you the credit back due to late notice"
+              : "You are cancelling your class well in advance, your class will be credited back to you"}
+          </p>
           <label className="block text-sm font-bold text-black">
             Reason for cancelling
             <textarea
