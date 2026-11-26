@@ -313,7 +313,7 @@ export function DemandBookPanel({ options, k5 = false, subjectLast = false, fixe
 
       {date && (
         <div className="mt-4">
-          <span className={look.label}>Choose your preferred time</span>
+          {!fixedDate && <span className={look.label}>Choose your preferred time</span>}
           {timeGroups(opts.pickerFrom, opts.pickerTo, opts.pickerStep).map((g) => (
             <div key={g.label} className="mb-2">
               <span className="mb-1 block text-sm font-bold">{g.label}</span>
