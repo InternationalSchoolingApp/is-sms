@@ -597,11 +597,14 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
             </span>
             <span className={"k5h-b-sname font-k5-display font-semibold leading-[1.1] " + (soft ? "text-[22px]" : "text-[20px]")}>{s.name}</span>
             {middle && s.teacherName && <span className="text-sm font-extrabold leading-[1.2] text-k5-mut">{teacherLabel(s.teacherName)}</span>}
-            {(s.weekBooked ?? s.booked) > 0 && (
+            {(
+
               <span className={"k5h-b-booked  flex items-center gap-1 rounded-full border-k5-grn bg-k5-card px-2.5 py-1 text-[13px] font-black " + (soft ? "max-w-full border-[1.5px]" : "whitespace-nowrap border-[3px]")} style={middle ? { borderColor: "var(--k5-c-done)" } : undefined}>
+                {(s.weekBooked ?? s.booked) > 0 && (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: "currentColor" }}>
                   <path d={CHECK_PATH} />
                 </svg>
+                )}
                 {high || soft ? copy.bookedN(s.weekBooked ?? s.booked) : (s.weekBooked ?? s.booked) + " booked"}
               </span>
             )}
