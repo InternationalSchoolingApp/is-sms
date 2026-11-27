@@ -632,10 +632,10 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
             <button
               type="button"
               onClick={() => onDetails(s.subjectId)}
-              aria-label={"Booked class details: " + s.name}
+              aria-label={"My Booked Classes: " + s.name}
               className="k5h-b-details flex min-h-10 cursor-pointer items-center justify-center gap-1 rounded-full border-[3px] border-k5-ac bg-k5-card px-3 py-1 text-center font-k5-display text-sm font-semibold leading-[1.15] text-k5-acx"
             >
-              Booked class details
+              My Booked Classes
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="flex-none">
                 <path d="M9 6l6 6-6 6" />
               </svg>

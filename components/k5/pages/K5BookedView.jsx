@@ -275,7 +275,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
             </svg>
           </span>
           <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-            <h1 className="m-0 font-k5-display text-[30px] font-semibold leading-[1.05]">Booked Class Details</h1>
+            <h1 className="m-0 font-k5-display text-[30px] font-semibold leading-[1.05]">My Booked Classes</h1>
             <p className="m-0 text-base font-extrabold text-k5-mut">All the classes you booked, in one place.</p>
           </div>
           <div className="flex flex-wrap gap-2.5">
@@ -476,7 +476,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
         </div>
 
         <div className="overflow-x-auto rounded-[18px] border-[3px] border-k5-line max-[760px]:overflow-visible max-[760px]:border-0">
-          <div role="table" aria-label={middle ? "Booked Class Details" : "My booked classes"} className="min-w-[900px] text-[15px] font-extrabold max-[760px]:flex max-[760px]:min-w-0 max-[760px]:flex-col max-[760px]:gap-2.5">
+          <div role="table" aria-label={middle ? "My Booked Classes" : "My booked classes"} className="min-w-[900px] text-[15px] font-extrabold max-[760px]:flex max-[760px]:min-w-0 max-[760px]:flex-col max-[760px]:gap-2.5">
             <div role="row" style={{ "--cols": middle ? GRID_MIDDLE : GRID }} className="grid grid-cols-[var(--cols)] bg-k5-ac max-[760px]:hidden">
               {(middle ? COLUMNS_MIDDLE : COLUMNS).map((c, idx) => (
                 <span key={c.label + idx} role="columnheader" aria-sort={sort.key === c.key ? (sort.dir === "asc" ? "ascending" : "descending") : "none"} className="flex px-1 py-1">
