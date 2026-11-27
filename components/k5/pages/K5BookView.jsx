@@ -46,23 +46,6 @@ const COPY = {
     allSub: "Super job! New Classes come on Monday.",
     noLeft: "No Classes left",
   },
-  // Grade 9–12 (High.dc.html): classes are bought, so there are no weekly free classes and nothing expires on Friday.
-  high: {
-    sub: "Select a course, a day and a time. That's it!",
-    tickets: "My classes",
-    steps: ["Select a course", "Select a day", "Select a time"],
-    any: "Only the courses you bought classes for are shown.",
-    pickMe: "Book a class",
-    say: "This is where you book classes! Each class is with your teacher.",
-    say2: "Great choice! Now select a day.",
-    say3: () => "Now select a time.",
-    sayAll: "You booked all the classes you bought!",
-    allTitle: "All your classes are booked!",
-    allSub: "Buy extra classes to book more.",
-    noLeft: "No classes left",
-    fly: "Unused classes carry forward.",
-    bookedN: (n) => n + " booked",
-  },
   middle: {
     sub: "Select a course, a day and a time. That's it!",
     tickets: "My classes",
@@ -79,6 +62,7 @@ const COPY = {
     bookedN: (n) => n + " booked this week",
   },
 };
+COPY.high = COPY.middle;
 function useCopy() {
   const { isMiddle, isHigh } = useDashboardContext();
   return { middle: Boolean(isMiddle), high: Boolean(isHigh), copy: isHigh ? COPY.high : isMiddle ? COPY.middle : COPY.k5 };
@@ -382,7 +366,7 @@ function Tickets({ perWeek, left, color }) {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: middle ? "var(--k5-acx)" : "var(--k5-yX)" }}>
           <path d="M6 3h12M6 21h12M7 3c0 5 10 6 10 9s-10 4-10 9M17 3c0 5-10 6-10 9s10 4 10 9" />
         </svg>
-        {high ? copy.fly : "Use them by Friday!"}
+        Use them by Friday!
       </p>
     </section>
   );
@@ -819,7 +803,7 @@ function StatTile({ label, value, sub }) {
 }
 
 /** Grade 6–8 "Good to know": the three class rules, always visible between the tickets and the steps. */
-function MiddleRules({ perWeek, comp, ssp }) {
+function MiddleRules({ perWeek, comp }) {
   const { high } = useCopy();
   const tile = "flex items-center gap-3 rounded-[14px] border-[3px] border-k5-yb bg-k5-yt px-3 py-2.5";
   const box = "flex h-[52px] w-[52px] flex-none items-center justify-center bg-k5-card";
@@ -847,7 +831,6 @@ function MiddleRules({ perWeek, comp, ssp }) {
             </span>
             <span className={text}>Classes are Monday to Friday</span>
           </div>
-          {ssp && (
           <div className={tile} style={{ borderRadius: tr }}>
             <span className={box} style={{ borderRadius: 12 }}>
               <svg {...ico} aria-hidden="true">
@@ -857,9 +840,9 @@ function MiddleRules({ perWeek, comp, ssp }) {
                 <path d="M20 20.5V16h-4.5" />
               </svg>
             </span>
-            <span className={text}>There are no free classes in Self Study</span>
+            <span className={text}>You get {perWeek} {comp ? "free " : ""}classes every week</span>
           </div>
-          )}
+          {comp && (
           <div className={tile} style={{ borderRadius: tr }}>
             <span className={box} style={{ borderRadius: 12 }}>
               <svg {...ico} aria-hidden="true">
@@ -867,8 +850,9 @@ function MiddleRules({ perWeek, comp, ssp }) {
                 <path d="M7 3c0 5 10 6 10 9s-10 4-10 9M17 3c0 5-10 6-10 9s10 4 10 9" />
               </svg>
             </span>
-            <span className={text}>You can book only the classes you buy</span>
+            <span className={text}>Classes you don&apos;t book expire after Friday</span>
           </div>
+          )}
         </div>
       </div>
     );
@@ -935,7 +919,7 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
   const perWeekAll = n(free?.perWeek) + n(extra?.perWeek ?? extra?.perweek);
   const rows = calc?.subjects?.length ? calc.subjects : [{ subjectId: "all", subjectName: "All Courses", placeholder: true }];
   // Grade 9–12: no "Left" column (High.dc.html), and the four tiles add up the table.
-  const cols = high ? TABLE_COLS.filter(([, key]) => key !== "unused") : TABLE_COLS;
+  const cols = TABLE_COLS;
   const colSum = (key) => rows.reduce((a, r) => a + n(r.complimentary?.[key]) + n(r.customPlan?.[key]), 0);
   return (
     <section aria-labelledby="k5-grown" className={`${K5_CARD} flex flex-col gap-3.5 px-[18px] py-3.5`}>
@@ -1006,14 +990,6 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
           )}
 
           <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2.5">
-            {high ? (
-              <>
-                <StatTile label="Purchased classes" sub="Extra classes you bought" value={card(n(extra?.total))} />
-                <StatTile label="Booked" value={card(colSum("booked"))} />
-                <StatTile label="Unused" value={card(n(free?.unused) + n(extra?.unused))} />
-                <StatTile label="Expired" value={card(colSum("expired"))} />
-              </>
-            ) : (
               <>
                 <StatTile label="Total" value={card(n(free?.total) + n(extra?.total))} />
                 <StatTile label="Complimentary classes" value={card(n(free?.total))} />
@@ -1021,12 +997,11 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
                 <StatTile label="Per week" value={card(perWeekAll)} />
                 <StatTile label="Unused this week" value={card(n(free?.unused) + n(extra?.unused))} />
               </>
-            )}
           </div>
 
           <div className="overflow-x-auto rounded-[22px] border-[3px] border-k5-line">
             <div role="table" aria-label="Class numbers" className="text-[15px] font-extrabold">
-              <div role="row" className={`k5h-b-thead grid items-center bg-k5-act text-[17px] font-black ${high ? "min-w-[800px] grid-cols-[minmax(200px,1.8fr)_repeat(6,minmax(92px,1fr))]" : "min-w-[900px] grid-cols-[minmax(200px,1.8fr)_repeat(7,minmax(92px,1fr))]"}`}>
+              <div role="row" className={`k5h-b-thead grid items-center bg-k5-act text-[17px] font-black min-w-[900px] grid-cols-[minmax(200px,1.8fr)_repeat(7,minmax(92px,1fr))]`}>
                 <span role="columnheader" className="px-4 py-3.5 text-start">Course</span>
                 {cols.map(([label, , dot]) => (
                   <span key={label} role="columnheader" className="px-3 py-3.5 text-center leading-[1.25]">
@@ -1036,7 +1011,7 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
                 ))}
               </div>
               {rows.map((s) => (
-                <div key={s.subjectId} role="row" className={`grid items-center border-t-2 border-k5-line ${high ? "min-w-[800px] grid-cols-[minmax(200px,1.8fr)_repeat(6,minmax(92px,1fr))]" : "min-w-[900px] grid-cols-[minmax(200px,1.8fr)_repeat(7,minmax(92px,1fr))]"}`}>
+                <div key={s.subjectId} role="row" className={`grid items-center border-t-2 border-k5-line min-w-[900px] grid-cols-[minmax(200px,1.8fr)_repeat(7,minmax(92px,1fr))]`}>
                   <span role="cell" className="px-4 py-3 font-k5-display font-semibold">{s.subjectName}</span>
                   {cols.map(([label, key, , tone]) => (
                     <span key={label} role="cell" className="px-3 py-2 text-center">
@@ -1650,7 +1625,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
         <Tickets perWeek={ticketTotal} left={ticketLeft} color={color} />
       </div>
 
-      {middle && <MiddleRules perWeek={perWeek} comp={details.compClassPerweek > 0} ssp={String(details.registerType || "").toUpperCase() === "SSP"} />}
+      {middle && <MiddleRules perWeek={perWeek} comp={details.compClassPerweek > 0} />}
 
       <section aria-labelledby="k5-step" className={`${K5_CARD} flex flex-col gap-[18px] px-[22px] py-5`}>
         {flow}
