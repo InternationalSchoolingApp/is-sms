@@ -175,7 +175,8 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState({ key: "date", dir: "desc" });
   // The course filter (Middle): "" = All Courses, else a subject id. It starts on the course the student came from.
-  const [crs, setCrs] = useState(course.subjectId ? String(course.subjectId) : "");
+  const startCrs = course.subjectId ? String(course.subjectId) : "";
+  const [crs, setCrs] = useState(startCrs);
 
   const dummy = useDummyStudent();
   const realSubjects = subjects.filter((s) => s.subjectId !== 0);
@@ -221,7 +222,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
   const dirty =
     JSON.stringify(filter) !== JSON.stringify(DEFAULT_FILTER) ||
     JSON.stringify(draft) !== JSON.stringify(DEFAULT_FILTER) ||
-    (middle && crs !== "");
+    (middle && crs !== startCrs);
   const teacherName = rows[0]?.name || course.teacherName;
 
   const sorted = useMemo(() => {
@@ -245,7 +246,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
     setPage(1);
   }
   function reset() {
-    setCrs("");
+    setCrs(startCrs);
     apply(DEFAULT_FILTER);
   }
   function toggleSort(key) {

@@ -117,7 +117,7 @@ export function CancelClassButton({ row, className = "" }) {
               className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-sm font-normal text-black"
             />
           </label>
-          {lateMessage && <p className="rounded-lg bg-amber-100 p-3 text-sm font-bold text-black">{lateMessage}</p>}
+          {lateMessage && !late && <p className="rounded-lg bg-amber-100 p-3 text-sm font-bold text-black">{lateMessage}</p>}
           {error && <p className="text-sm font-bold text-red-700">{error}</p>}
           <DialogFooter>
             <button type="button" onClick={close} disabled={busy} className="cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-black">
