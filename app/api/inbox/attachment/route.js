@@ -9,13 +9,20 @@ import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOri
  * itself — only to the storage host — and streams the file back with its readable name. The browser never gets a
  * link from the backend, and only the opaque `payload` of the email answer is taken from it.
  */
-const STORAGE_HOSTS = (process.env.INBOX_ATTACHMENT_HOSTS || "amazonaws.com")
+// INBOX_ATTACHMENT_HOSTS (comma-separated host suffixes) when infra sets it; otherwise Amazon S3 hosts only
+// (bucket.s3.amazonaws.com, bucket.s3.us-east-1.amazonaws.com, s3.region.amazonaws.com), not every *.amazonaws.com
+// service (an API Gateway or EC2 host anyone can rent).
+const STORAGE_HOSTS = String(process.env.INBOX_ATTACHMENT_HOSTS || "")
   .split(",")
   .map((host) => host.trim().toLowerCase())
   .filter(Boolean);
+const S3_HOST = /^([a-z0-9.-]+\.)?s3([.-][a-z0-9-]+)*\.amazonaws\.com$/;
 const NOT_NOW = "This attachment cannot be opened just now. Please try again later.";
 const reply = (status, message) => NextResponse.json({ message }, { status });
-const isStorageHost = (hostname) => STORAGE_HOSTS.some((host) => hostname === host || hostname.endsWith(`.${host}`));
+const isStorageHost = (hostname) =>
+  STORAGE_HOSTS.length
+    ? STORAGE_HOSTS.some((host) => hostname === host || hostname.endsWith(`.${host}`))
+    : S3_HOST.test(hostname);
 
 export async function GET(request) {
   const me = await getAccountSession();

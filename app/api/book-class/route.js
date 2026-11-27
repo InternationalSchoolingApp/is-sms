@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAccountSession } from "@/lib/auth/session";
-import { getAssignedTeacherForCourse, getTeacherWeeklySlots } from "@/services/bookClassApi";
+import { getAssignedTeacherForCourse, getBookAClassStatus, getStudentBookClassDetails, getTeacherWeeklySlots } from "@/services/bookClassApi";
 
 /**
  * Book a Class reads for the Elementary "day first" flow, as a Route Handler instead of Server Actions.
@@ -17,9 +17,17 @@ import { getAssignedTeacherForCourse, getTeacherWeeklySlots } from "@/services/b
  *
  * POST { action: "course-slots", subjectId, studentStandardId, startDate } -> { teacher, slots } (slots null when the
  * course has no teacher), 401 when nobody is signed in, 400 for a bad request.
+ *
+ * The Book a Class page's own reads come here too, so they no longer wait in the browser's Server Action queue behind the
+ * dashboard's start-up actions. Each calls the existing service function unchanged (same backend call, same ownership checks):
+ *   POST { action: "status", userTimezone }       -> getBookAClassStatus's answer (or null)
+ *   POST { action: "details", studentStandardId } -> getStudentBookClassDetails's answer (or null; it checks the enrolment is
+ *                                                    the signed-in student's own)
  */
 const reply = (status, body) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
 const ID = /^\d{1,12}$/;
+// IANA names ("Asia/Calcutta", "America/Argentina/Buenos_Aires", "UTC", "Etc/GMT+5").
+const TIMEZONE = /^[A-Za-z][A-Za-z0-9_+\-/]{0,63}$/;
 
 export async function POST(request) {
   const me = await getAccountSession();
@@ -32,6 +40,16 @@ export async function POST(request) {
     body = await request.json();
   } catch {
     return reply(400, { message: "Bad request" });
+  }
+  if (body?.action === "status") {
+    const userTimezone = typeof body.userTimezone === "string" && TIMEZONE.test(body.userTimezone) ? body.userTimezone : null;
+    if (!userTimezone) return reply(400, { message: "Bad request" });
+    return reply(200, (await getBookAClassStatus({ userTimezone })) ?? null);
+  }
+  if (body?.action === "details") {
+    const studentStandardId = ID.test(String(body.studentStandardId ?? "")) ? Number(body.studentStandardId) : null;
+    if (!studentStandardId) return reply(400, { message: "Bad request" });
+    return reply(200, (await getStudentBookClassDetails({ studentStandardId })) ?? null);
   }
   if (body?.action !== "course-slots") return reply(400, { message: "Bad request" });
 

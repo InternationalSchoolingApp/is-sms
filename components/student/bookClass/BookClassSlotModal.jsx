@@ -4,7 +4,8 @@ import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { X } from "lucide-react";
-import { getAssignedTeacherForCourse, getTeacherWeeklySlots, submitBookClassSlot } from "@/services/bookClassApi";
+import { submitBookClassSlot } from "@/services/bookClassApi";
+import { getCourseSlots } from "@/utils/bookClassClient";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { getDayHeading, getSlotEnd, getSlotState } from "@/utils/bookClass";
@@ -67,7 +68,7 @@ function ModalShell({ title, onClose, children, footer, k5 }) {
  * Shows only the current week (legacy has no week navigation).
  */
 export function BookClassSlotModal({ course, onClose, onBooked }) {
-  const { isK5 } = useDashboardContext();
+  const { context, isK5 } = useDashboardContext();
   const CHIP = isK5 ? K5_CHIP : LEGACY_CHIP;
   const CHIP_STYLES = isK5 ? K5_CHIP_STYLES : LEGACY_CHIP_STYLES;
   const primaryBtn = isK5
@@ -89,38 +90,30 @@ export function BookClassSlotModal({ course, onClose, onBooked }) {
   // Dummy (demo) student mode: legacy getDummyAssignedTeacherDetailsResponse / getDummyTeacherWeeklyCalendarResponse /
   // getDummyStudentBookClassSubmitResponse (nothing is really booked).
   const dummy = useDummyStudent();
-  const teacherQuery = useQuery({
-    queryKey: ["book-class-teacher", course.subjectId, course.studentStandardId, dummy.key],
-    queryFn: () =>
-      dummy.enabled
-        ? dummy.student.assignedTeacher(course.subjectId)
-        : getAssignedTeacherForCourse({ subjectId: course.subjectId, studentStandardId: course.studentStandardId }),
+  // One route request for the course's teacher and that teacher's weekly slots (the same two backend calls, in the same
+  // order) instead of two Server Actions waiting in the browser's one-at-a-time action queue. The key starts with
+  // "book-class-slots" so the invalidation after a booking still refreshes it.
+  const courseQuery = useQuery({
+    queryKey: ["book-class-slots", "course", course.subjectId, course.studentStandardId, startDate, dummy.key],
+    queryFn: async () => {
+      if (dummy.enabled) {
+        const t = await dummy.student.assignedTeacher(course.subjectId);
+        const s = t?.teacherAssigned === "YES" ? await dummy.student.teacherWeeklyCalendar(t.assignedTeacherUserId, course.subjectId, new Date(startDate)) : null;
+        return { teacher: t, slots: s };
+      }
+      return getCourseSlots({ account: context?.uniqueId, subjectId: course.subjectId, studentStandardId: course.studentStandardId, startDate });
+    },
     enabled: dummy.settled,
     staleTime: 0,
   });
-  const teacher = teacherQuery.data;
+  const teacher = courseQuery.data?.teacher;
   const teacherAssigned = teacher?.teacherAssigned === "YES";
-
-  const slotsQuery = useQuery({
-    queryKey: ["book-class-slots", teacher?.assignedTeacherUserId, course.subjectId, startDate, dummy.key],
-    queryFn: () =>
-      dummy.enabled
-        ? dummy.student.teacherWeeklyCalendar(teacher.assignedTeacherUserId, course.subjectId, new Date(startDate))
-        : getTeacherWeeklySlots({
-            teacherUserId: teacher.assignedTeacherUserId,
-            studentStandardId: teacher.studentStandardId ?? course.studentStandardId,
-            subjectId: course.subjectId,
-            startDate,
-          }),
-    enabled: teacherAssigned,
-    staleTime: 0,
-  });
-  const slots = slotsQuery.data;
+  const slots = courseQuery.data?.slots ?? undefined;
   const week = slots?.teacherWeeklyTimeCurrLiveClass?.teacherAssignTimeWeekList?.[0];
   const days = week?.teacherAllDataInOneList ?? [];
   const skipDates = new Set(slots?.skipDateList ?? []);
 
-  const loading = teacherQuery.isLoading || (teacherAssigned && slotsQuery.isLoading);
+  const loading = courseQuery.isLoading;
   const subjectName = slots?.subjectName || teacher?.subjectName || course.name;
   const teacherName = slots?.teacherName || teacher?.teacherName || "";
   const end = selected ? getSlotEnd(selected.slot.bookedStartDate, slots?.classDuration) : null;

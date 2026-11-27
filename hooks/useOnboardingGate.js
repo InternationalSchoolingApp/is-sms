@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getOnboardingStatus } from "@/services/onboardingGateApi";
@@ -54,6 +54,29 @@ function writeGuard(userId) {
 
 export const ONBOARDING_STATUS_KEY = QUERY_KEY;
 
+// Which onboarding page this student was last sent to ("welcome" | "setup"), kept on this device until the check says nothing is left.
+// While the check is still running (a refresh, a new login) it lets the loading screen already be the onboarding page's skeleton
+// instead of the dashboard's, for a student who is going to land there anyway.
+const hintKey = (userId) => `onboardingGateTarget:${userId}`;
+const noSubscribe = () => () => {};
+function readHint(userId) {
+  if (!userId) return null;
+  try {
+    const value = window.localStorage.getItem(hintKey(userId));
+    return value === "welcome" || value === "setup" ? value : null;
+  } catch {
+    return null;
+  }
+}
+function writeHint(userId, target) {
+  try {
+    if (target === "welcome" || target === "setup") window.localStorage.setItem(hintKey(userId), target);
+    else window.localStorage.removeItem(hintKey(userId));
+  } catch {
+    // storage unavailable: the loading screen just stays the dashboard's
+  }
+}
+
 // Same order as legacy additionalLayer.js: overdue fee, Azure user, time zone, then Dashboard Setup.
 // The Azure user layer is switched off on the backend (its block is commented out in getAddtionalLayer), so it
 // has no Next.js screen: "legacy" sends it to the legacy page.
@@ -103,6 +126,12 @@ export function useOnboardingGate({ context, enabled = true }) {
   });
 
   const target = onboardingTarget(query.data);
+  const hintTarget = useSyncExternalStore(noSubscribe, () => readHint(context?.userId), () => null);
+  // Remember (or forget) the answer once the check has one.
+  useEffect(() => {
+    if (!active || !query.isSuccess || !context?.userId) return;
+    writeHint(context.userId, target);
+  }, [active, query.isSuccess, target, context?.userId]);
   const destination = useMemo(() => onboardingDestination(target, context), [target, context]);
   const recentlyRedirected = Boolean(destination?.external && query.data?.recentlyRedirected);
   const redirecting = Boolean(destination) && !recentlyRedirected;
@@ -132,6 +161,7 @@ export function useOnboardingGate({ context, enabled = true }) {
     checking: !dummy.settled || (active && query.isPending),
     redirecting,
     target,
+    hintTarget,
     status: query.data ?? null,
   };
 }

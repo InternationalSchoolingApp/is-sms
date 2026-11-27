@@ -170,7 +170,7 @@ export async function getAssignedTeachersForAllCourses({ studentStandardId }) {
  * showSlotAfter, skipDateList, previousDateOfWeekFirstDay, nextDateOfWeekLasttDay,
  * teacherWeeklyTimeCurrLiveClass.teacherAssignTimeWeekList[] }.
  */
-export async function getTeacherWeeklySlots({ teacherUserId, studentStandardId, subjectId, startDate }) {
+export async function getTeacherWeeklySlots({ teacherUserId, studentStandardId, subjectId, startDate, halfHourStarts = false }) {
   const me = await identity();
   if (!hasBackendOrigin() || !me || !teacherUserId) return null;
   if (studentStandardId && !(await isOwnStudentStandard(studentStandardId))) return null;
@@ -185,6 +185,7 @@ export async function getTeacherWeeklySlots({ teacherUserId, studentStandardId, 
       dataType: "CUSTOM",
       studentStandardId,
       sessionUserId: me.userId,
+      ...(halfHourStarts ? { halfHourStarts: true } : {}),
     });
   } catch {
     return null;

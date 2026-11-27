@@ -1,6 +1,6 @@
 "use client";
 
-import { FullScreenLoader } from "@/components/common/Loader";
+import { OnboardingSkeleton } from "@/components/onboarding/OnboardingSkeleton";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { logoutEverywhere } from "@/utils/logout";
@@ -13,7 +13,7 @@ import { logoutEverywhere } from "@/utils/logout";
 export function OnboardingFrame({ children }) {
   const { session, context, logoUrl, logoSettled, ready } = useDashboardContext();
   // Wait for the real school logo: no placeholder mark or name is ever shown in its place.
-  if (!ready || !context || (session?.schoolNumericId && !logoSettled)) return <FullScreenLoader />;
+  if (!ready || !context || (session?.schoolNumericId && !logoSettled)) return <OnboardingSkeleton />;
   return (
     <OnboardingShell
       schoolName={context.schoolName}

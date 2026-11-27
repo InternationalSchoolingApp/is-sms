@@ -1,4 +1,4 @@
-import { loginPageUrl, resolveBackendNavigationOrigin, withLoginPayload } from "@/utils/backendOrigin";
+import { loginPageUrl, resolveBackendNavigationOrigin, withLoginEmail } from "@/utils/backendOrigin";
 import { clearLiveAlertMarks } from "@/utils/liveAlertMemory";
 
 // Signs one user out of this browser (lib/auth: ends the SMS login, clears that user's cookies). Other
@@ -44,7 +44,8 @@ export async function expireSession(schoolUUID) {
 // finds through the browser's session cookie, so it has to be a browser navigation (a Server
 // Action call can't carry that cookie). It then 302s to /{schoolId}/common/login, so one navigation
 // both kills the session and lands on the login page.
-export async function logoutEverywhere(session, credentials) {
+// `loginEmail`: prefilled on the login page it ends on (never a password, see withLoginEmail).
+export async function logoutEverywhere(session, loginEmail) {
   // The flag keeps expireSession() from racing the logout navigation below.
   window.__loggingOut = true;
   try {
@@ -55,10 +56,39 @@ export async function logoutEverywhere(session, credentials) {
   const backend = resolveBackendNavigationOrigin();
   if (session?.schoolUUID && session?.studentUserId && backend) {
     const logoutUrl = `${backend}/${session.schoolUUID}/common/logout/${encodeURIComponent(session.studentUserId)}`;
-    window.location.assign(withLoginPayload(logoutUrl, credentials?.email, credentials?.password));
+    window.location.assign(withLoginEmail(logoutUrl, loginEmail));
     return;
   }
-  window.location.assign(withLoginPayload(loginPageUrl(session?.schoolUUID), credentials?.email, credentials?.password));
+  window.location.assign(withLoginEmail(loginPageUrl(session?.schoolUUID), loginEmail));
+}
+
+/**
+ * Signs a student in with a password they were just given (create-password page, first-payment thank-you), without
+ * the password ever leaving this app in a URL or a cookie: our server checks it with the existing Java login API
+ * (/api/session/verify-password, rate-limited) and the browser follows the one-time sign-in link the login answers with
+ * (this app's /api/sso). Returns false when that is not possible (no such link, refused, offline); the caller then
+ * sends the student to the login page with only the e-mail filled in.
+ */
+export async function signInWithPassword(schoolUUID, email, password) {
+  if (!schoolUUID || !email || !password) return false;
+  let answer = null;
+  try {
+    const response = await fetch("/api/session/verify-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, schoolUUID }),
+    });
+    answer = await response.json();
+  } catch {
+    return false;
+  }
+  if (!answer?.ok || !answer.ssoUrl) return false;
+  const url = new URL(answer.ssoUrl, window.location.origin);
+  // Which backend this sign-in belongs to (UAT only; /api/sso ignores it elsewhere), as the session-out dialog does.
+  const backend = resolveBackendNavigationOrigin();
+  if (backend) url.searchParams.set("backend", backend);
+  window.location.assign(url.toString());
+  return true;
 }
 
 // Add Another Student wizard "Log Off". It is the same caller account as the dashboard tab, and the account
