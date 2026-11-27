@@ -383,11 +383,6 @@ export function AccountCreationForm({ school, program, query, recaptchaSiteKey }
             <h1 className="text-[clamp(1.5rem,2.6vw,2.1rem)] font-extrabold leading-tight text-primary">
               {displayedProgramLabel}
             </h1>
-            {theme.subtitle && (
-              <p className="mt-1.5 max-w-sm text-[clamp(0.85rem,1vw,1rem)] font-medium text-slate-600">
-                {theme.subtitle}
-              </p>
-            )}
           </div>
 
           {/* Image takes all remaining column height (flex-1) and is pinned

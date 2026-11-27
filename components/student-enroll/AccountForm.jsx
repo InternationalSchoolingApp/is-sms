@@ -55,10 +55,6 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
   // recomputed live from `fields` on every render, so fixing the value
   // clears the red state immediately — no second blur/click needed.
   const [touched, setTouched] = useState({});
-  // Set once Next is clicked. Before that, blurring an EMPTY field shows no
-  // error (the user simply has not filled it yet); a field only goes red on
-  // blur when it has a value that is invalid. After Next, empty fields show too.
-  const [submitAttempted, setSubmitAttempted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
@@ -126,10 +122,7 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
   const captchaInvalid = !fields.captcha.trim();
   const checkTermsInvalid = !fields.checkTerms;
 
-  // Show a field error after Next, or after blur when the field actually has a value.
-  const shouldShow = (name, value) => submitAttempted || (touched[name] && String(value || "").trim().length > 0);
-
-  const emailError = shouldShow("email", fields.email) && emailInvalid ?"Please enter a valid email" : undefined;
+  const emailError = touched.email && emailInvalid ? "Please enter a valid email" : undefined;
   const confirmEmailError =
     fields.confirmEmail.trim() && (!emailsMatch || (touched.confirmEmail && confirmEmailInvalid))
       ? "Please re-enter the same email"
@@ -250,7 +243,6 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
       // but each one now keeps clearing live afterward instead of staying
       // frozen at whatever validateAccountFormOnline saw at this instant.
       setTouched({ email: true, confirmEmail: true, password: true, confirmPassword: true, captcha: true, checkTerms: true });
-      setSubmitAttempted(true);
 
       const { valid } = validateAccountFormOnline(domFields);
       if (!valid) return;
@@ -348,8 +340,8 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
 
         <AccountInput
           icon={Mail}
-          label="Enter parent's email"
-          filledLabel="Parent's Email"
+          label="Enter student's email"
+          filledLabel="Student's Email"
           required
           name="email"
           type="email"
@@ -407,7 +399,7 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
               if (e.key === " ") e.preventDefault();
             }}
             onChange={(e) => setField("password", e.target.value.replace(/ /g, ""))}
-            error={shouldShow("password", fields.password) && !passwordFocused && !passwordIsValid ? "Please enter a valid password" : undefined}
+            error={touched.password && !passwordFocused && !passwordIsValid ? "Please enter a valid password" : undefined}
             status={touched.password && passwordIsValid ? "valid" : undefined}
             trailing={
               <>
@@ -485,7 +477,7 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
 
         {errors.form && <p className="text-center text-sm font-semibold text-red-600">{errors.form}</p>}
 
-        <label className="flex items-start gap-2.5 text-[11px] leading-relaxed text-slate-600">
+        <label className="flex items-start gap-2.5 text-[13px] leading-relaxed text-slate-600 md:text-[10px]">
           <Checkbox
             checked={fields.checkTerms}
             onCheckedChange={(checked) => {
@@ -513,14 +505,15 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
             </a>
             , and the{" "}
             <a href={context.studentPolicyUrl} target="_blank" rel="noreferrer" className="text-primary">
-              Academic Integrity &amp; Student Code of Conduct.
+              Academic Integrity &amp; Student Code of Conduct
             </a>
+            .
           </span>
         </label>
         {checkTermsError && <p className="text-xs text-red-600">{checkTermsError}</p>}
 
         {isProdDeployment && recaptchaSiteKey && (
-          <p className="text-center text-[11px] leading-relaxed text-slate-400">
+          <p className="text-center text-[11px] leading-relaxed text-slate-400 md:whitespace-nowrap md:text-[9px]">
             This site is protected by reCAPTCHA and the Google{" "}
             <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline">
               Privacy Policy
