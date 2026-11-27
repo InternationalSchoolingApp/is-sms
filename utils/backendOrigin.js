@@ -1,4 +1,4 @@
-/**
+/** 
  * UAT-only "pick a backend" override — lets testers point this same
  * deployment at any of several UAT Spring Boot instances (different
  * IP:port combos) without a separate build/deploy per backend. Gated by
@@ -13,11 +13,61 @@
  * only ever read by OUR Next.js server to pick which origin string to call — it
  * is never forwarded to the backend itself.
  */
+import { UAT_BACKEND_URLS } from "../constant/UatBackendUrls.js";
+
 const BACKEND_OVERRIDE_COOKIE = "uat_backend_override";
 
+function deploymentMode() {
+  return String(process.env.NEXT_PUBLIC_DEPLOYMENT_MODE || "").trim().toUpperCase();
+}
+
 export function isBackendOverrideAllowed() {
-  const mode = String(process.env.NEXT_PUBLIC_DEPLOYMENT_MODE || "").trim().toUpperCase();
+  const mode = deploymentMode();
   return mode === "DEV" || mode === "UAT";
+}
+
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
+
+/**
+ * The backend origin an override names, if this deployment may use it; "" otherwise (and always "" on PROD).
+ *
+ * The server sends the signed-in user's SMS token and this server's X-Service-Key to whatever backend is chosen, and
+ * the override comes from places anybody can set: the `backend` query param (proxy.js, /api/sso), the Referer, and
+ * the uat_backend_override cookie. So its HOST must be a known one; the port is free, because UAT builds come up on
+ * new ports all the time and nobody should have to list each one. Known hosts:
+ *   - the host of this deployment's own backend (BACKEND_BASE_URL / NEXT_PUBLIC_BACKEND_BASE_URL);
+ *   - the hosts of the preset UAT instances (constant/UatBackendUrls.js: 164.52.203.90, 164.52.208.63, ...);
+ *   - extra hosts infra lists in NEXT_PUBLIC_EXTRA_BACKEND_URLS (comma-separated; a host or a URL, any port allowed)
+ *     — only needed for a brand-new UAT server/IP;
+ *   - on DEV only, this machine (localhost / 127.0.0.1 / [::1]).
+ */
+export function allowedBackendOverride(value) {
+  if (!isBackendOverrideAllowed()) return "";
+  const origin = parseBackendOrigin(typeof value === "string" ? value.trim() : value);
+  if (!origin) return "";
+  const host = new URL(origin).hostname;
+  if (knownBackendHosts().has(host)) return origin;
+  if (deploymentMode() === "DEV" && LOOPBACK_HOSTS.has(host)) return origin;
+  return "";
+}
+
+/** Hostnames (no port) a backend override may name; see allowedBackendOverride. */
+function knownBackendHosts() {
+  const hosts = new Set();
+  const entries = [
+    process.env.BACKEND_BASE_URL,
+    process.env.NEXT_PUBLIC_BACKEND_BASE_URL,
+    ...UAT_BACKEND_URLS,
+    ...String(process.env.NEXT_PUBLIC_EXTRA_BACKEND_URLS || "").split(","),
+  ];
+  for (const entry of entries) {
+    const text = String(entry || "").trim();
+    if (!text) continue;
+    // A bare host ("10.0.0.5") is accepted as well as a URL ("http://10.0.0.5:8100").
+    const origin = parseBackendOrigin(/^https?:\/\//i.test(text) ? text : `http://${text}`);
+    if (origin) hosts.add(new URL(origin).hostname);
+  }
+  return hosts;
 }
 
 export function getBackendOverrideCookieName() {
@@ -65,7 +115,8 @@ export function detectOriginatingBackend(request) {
     const refererUrl = new URL(referer);
     if (!/^https?:$/.test(refererUrl.protocol)) return "";
     if (refererUrl.origin === new URL(request.url).origin) return "";
-    return refererUrl.origin;
+    // Any site can be the Referer: only a backend this deployment may use counts.
+    return allowedBackendOverride(refererUrl.origin);
   } catch {
     return "";
   }
@@ -75,18 +126,29 @@ export function detectOriginatingBackend(request) {
 export function getClientBackendOverride() {
   if (!isBackendOverrideAllowed() || typeof document === "undefined") return "";
   const match = document.cookie.match(new RegExp(`(?:^|; )${BACKEND_OVERRIDE_COOKIE}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : "";
+  if (!match) return "";
+  try {
+    return allowedBackendOverride(decodeURIComponent(match[1]));
+  } catch {
+    return "";
+  }
 }
 
-/** Client-only write/clear — used by the BackendSwitcher picker. */
+/**
+ * Client-only write/clear — used by the BackendSwitcher picker. Returns false (and writes nothing) for a backend
+ * this deployment may not use (see allowedBackendOverride).
+ */
 export function setClientBackendOverride(url) {
-  if (typeof document === "undefined") return;
+  if (typeof document === "undefined") return false;
   const trimmed = (url || "").trim().replace(/\/+$/, "");
   if (!trimmed) {
     document.cookie = `${BACKEND_OVERRIDE_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
-    return;
+    return true;
   }
-  document.cookie = `${BACKEND_OVERRIDE_COOKIE}=${encodeURIComponent(trimmed)}; Path=/; Max-Age=2592000; SameSite=Lax`;
+  const origin = allowedBackendOverride(trimmed);
+  if (!origin) return false;
+  document.cookie = `${BACKEND_OVERRIDE_COOKIE}=${encodeURIComponent(origin)}; Path=/; Max-Age=2592000; SameSite=Lax`;
+  return true;
 }
 
 /**
@@ -140,7 +202,9 @@ export function hasBackendOrigin() {
 export async function resolveServerBackendOrigin() {
   if (isBackendOverrideAllowed()) {
     const { cookies } = await import("next/headers");
-    const override = (await cookies()).get(BACKEND_OVERRIDE_COOKIE)?.value;
+    // The cookie is browser-set (and proxy.js sets it from a query param): only an allowed backend may receive the
+    // user's token and the service key that every server call carries.
+    const override = allowedBackendOverride((await cookies()).get(BACKEND_OVERRIDE_COOKIE)?.value);
     if (override) return override;
   }
   if (process.env.BACKEND_BASE_URL) return process.env.BACKEND_BASE_URL;
@@ -176,16 +240,16 @@ export function withLoginPayload(url, email, password) {
 
 /**
  * The Java app's own legacy enrollment continuation page
- * (http://localhost:8080/{school}/student/enrollment/process/{uniqueId}) — where a
+ * (http://localhost:8080/{school}/student/enrollment/process/{studentUserId}) — where a
  * student belongs when CONFIGURATION/ENROLLMENT_VIA_NEXTJS is off and this Next.js
  * wizard must not run. Like loginPageUrl() it is a JSP page the Java app has to
  * serve itself, so it uses the real backend origin and not the dev proxy. Returns
  * "" when anything needed to build it is missing, so callers can skip the redirect.
  */
-export function legacyEnrollmentProcessUrl(schoolUUID, uniqueId) {
+export function legacyEnrollmentProcessUrl(schoolUUID, studentUserId) {
   const backend = resolveBackendNavigationOrigin();
-  if (!backend || !schoolUUID || !uniqueId) return "";
-  return `${backend}/${schoolUUID}/student/enrollment/process/${encodeURIComponent(uniqueId)}`;
+  if (!backend || !schoolUUID || !studentUserId) return "";
+  return `${backend}/${schoolUUID}/student/enrollment/process/${encodeURIComponent(studentUserId)}`;
 }
 
 /**
@@ -198,4 +262,16 @@ export function legacyEnrollmentSignupUrl(schoolUUID, program, query = "") {
   if (!backend || !schoolUUID || !program) return "";
   const base = `${backend.replace(/\/+$/, "")}/${encodeURIComponent(schoolUUID)}/student/enrollment/${encodeURIComponent(program)}`;
   return query ? `${base}?${query}` : base;
+}
+
+/**
+ * The Java app's student dashboard (http://localhost:8080/{school}/dashboard/student/{studentUserId}) — where a
+ * student belongs when re-enrollment does not apply, or when ENROLLMENT_VIA_NEXTJS is off. A JSP page the
+ * Java app serves itself, so it uses the real backend origin and not the dev proxy. "" when anything needed
+ * to build it is missing.
+ */
+export function legacyDashboardUrl(schoolUUID, studentUserId) {
+  const backend = resolveBackendNavigationOrigin();
+  if (!backend || !schoolUUID || !studentUserId) return "";
+  return `${backend}/${schoolUUID}/dashboard/student/${encodeURIComponent(studentUserId)}`;
 }

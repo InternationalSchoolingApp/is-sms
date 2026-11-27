@@ -1,0 +1,264 @@
+"use client";
+
+import { createContext, useContext, useEffect, useState } from "react";
+import { useParams, useRouter, useSelectedLayoutSegment } from "next/navigation";
+import { useSession } from "@/components/providers/AuthSessionProvider";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getSchoolSettingsTechnical } from "@/utils/schoolSettings";
+import { extractRootCss } from "@/utils/schoolColorTheme";
+import { getPublicSchoolInfo, isEnrollmentViaNextjs } from "@/services/studentSignupApi";
+import {
+  chooseReEnrollmentPaymentPlan,
+  completeReEnrollment,
+  getReEnrollmentEligibility,
+  getReEnrollmentPaymentDetails,
+  getReEnrollmentReview,
+  selectReEnrollmentOption,
+} from "@/services/reEnrollmentBackendApi";
+import { dashboardBasePath } from "@/utils/dashboardNav";
+import { callLocationForPaymentPromise, loadLocationGlobals } from "@/utils/locationFinder";
+import { getLearningProgramShortCode } from "@/utils/learningProgramTheme";
+
+// SeriConstant: "1" success, "0" failed, "2" exception.
+export const STATUS_SUCCESS = "1";
+
+const ReEnrollmentContext = createContext(null);
+
+// How often the re-enrollment pages re-read the eligibility: custom plan confirmed / deleted by the admin, or its
+// first installment paid through the admin's payment link.
+const ELIGIBILITY_POLL_MS = 3000;
+
+/** Admin confirmed custom plan whose first installment is not paid yet: the student pays it on the PAYMENT step. */
+export function isCustomPlanUnpaid(eligibility) {
+  return eligibility?.customPlan === true && eligibility?.feePaid === false;
+}
+
+// Only the screens where the student pays (payment, review) watch the plan / payment; the option and course screens don't.
+const POLLED_SEGMENTS = new Set(["payment", "review"]);
+
+function eligibilityPollMs(data, segment) {
+  if (!POLLED_SEGMENTS.has(segment)) return false;
+  if (data?.status !== STATUS_SUCCESS || data.nextAction !== "RE_ENROLLMENT") return false;
+  return ELIGIBILITY_POLL_MS;
+}
+
+export const eligibilityKey = (userId) => ["re-enrollment-eligibility", userId];
+
+/**
+ * Resolves everything the re-enrollment pages share, once, in the route layout:
+ *  - the Auth.js session (schoolUUID/userId, same SSO handoff as the enrollment wizard),
+ *  - CONFIGURATION/ENROLLMENT_VIA_NEXTJS: false -> the student goes back to the student dashboard home,
+ *  - the eligibility answer: DASHBOARD (not a re-enrollment student / not eligible) -> dashboard home too.
+ * `context` has the same shape the enrollment components (Stage3CourseSelection, the gateway modal) read.
+ */
+function useResolveReEnrollment() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const { school } = useParams();
+  // The re-enrollment screen on show (null = option screen); the provider sits in the re-enrollment layout.
+  const segment = useSelectedLayoutSegment();
+  const [rootcss, setRootcss] = useState("");
+  const [whatsAppNumber, setWhatsAppNumber] = useState(undefined);
+  const authenticated = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
+
+  const enrollmentViaNextjs = useQuery({
+    queryKey: ["enrollment-via-nextjs", session?.schoolUUID],
+    queryFn: () => isEnrollmentViaNextjs(session.schoolUUID),
+    enabled: authenticated,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+  // Same rule as the enrollment wizard: only an explicit `false` switches the new pages off.
+  const viaLegacyFlow = enrollmentViaNextjs.data === false;
+
+  const eligibilityQuery = useQuery({
+    queryKey: eligibilityKey(session?.userId),
+    queryFn: async () => {
+      const response = await getReEnrollmentEligibility(session.schoolUUID, { userId: session.userId });
+      if (!response) throw new Error("re-enrollment eligibility returned no response");
+      return response;
+    },
+    enabled: authenticated && enrollmentViaNextjs.isFetched && !viaLegacyFlow,
+    // The answer changes as the student pays / selects, always read it fresh when a page mounts.
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
+    retry: false,
+    refetchInterval: (query) => eligibilityPollMs(query.state.data, segment),
+  });
+  const eligibility = eligibilityQuery.data?.status === STATUS_SUCCESS ? eligibilityQuery.data : null;
+
+  const leaveForDashboard = viaLegacyFlow || eligibility?.nextAction === "DASHBOARD";
+  useEffect(() => {
+    if (leaveForDashboard && school) router.replace(dashboardBasePath(school));
+  }, [leaveForDashboard, school, router]);
+
+  // Per-school color theme (rootcss custom-properties block) — see useEnrollmentContext.js.
+  useEffect(() => {
+    if (!session?.schoolNumericId) return;
+    let cancelled = false;
+    getSchoolSettingsTechnical(session.schoolNumericId)
+      .then((technical) => {
+        if (!cancelled) setRootcss(extractRootCss(technical?.parentColor));
+      })
+      .catch((err) => {
+        // Leaving the page (e.g. sidebar navigation) aborts the in-flight Server Action; nothing to report then.
+        if (!cancelled) console.error("School color theme fetch failed:", err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.schoolNumericId]);
+
+  useEffect(() => {
+    if (!session?.schoolUUID) return;
+    let cancelled = false;
+    getPublicSchoolInfo(session.schoolUUID)
+      .then((info) => {
+        if (!cancelled && info?.whatsAppNumber) setWhatsAppNumber(info.whatsAppNumber);
+      })
+      .catch((err) => {
+        if (!cancelled) console.error("School public info fetch failed:", err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.schoolUUID]);
+
+  const ready = authenticated && !leaveForDashboard && eligibility?.nextAction === "RE_ENROLLMENT";
+
+  // The payment gateway call needs the payer's location (same capture the enrollment wizard does on load).
+  useEffect(() => {
+    if (!ready) return;
+    loadLocationGlobals({ schoolUUID: session.schoolUUID, userId: session.userId })
+      .then(() => callLocationForPaymentPromise())
+      .catch((err) => console.error("Payer location capture failed:", err));
+  }, [ready, session?.schoolUUID, session?.userId]);
+
+  // The option the student already selected (resume), if any.
+  // Its grade is the one on the started record (a Flexy student may have switched grade on the course screen).
+  const selectedOption = eligibility?.reEnrollmentInProgress
+    ? eligibility.options?.find((o) => o.enrollmentType === eligibility.selectedEnrollmentType) ?? null
+    : null;
+  const option = selectedOption
+    ? { ...selectedOption, grade: eligibility.selectedGrade?.id ? eligibility.selectedGrade : selectedOption.grade }
+    : null;
+
+  const context = ready
+    ? {
+        schoolUUID: session.schoolUUID,
+        schoolNumericId: session.schoolNumericId,
+        schoolName: session.schoolName,
+        whatsAppNumber,
+        enrollmentFor: "enrollment",
+        customPaymentEnabled: false,
+        learningProgram: getLearningProgramShortCode(option?.learningProgram || eligibility.currentLearningProgram) || "O",
+      }
+    : null;
+
+  return {
+    status,
+    session,
+    context,
+    rootcss,
+    ready,
+    loadFailed: eligibilityQuery.isError || (eligibilityQuery.data && !eligibility),
+    eligibility,
+    option,
+    inProgress: Boolean(option),
+    steps: option?.steps ?? [],
+    // Admin confirmed custom payment plan (CUSTOM_PLAN_DETAILS C) on the next record.
+    customPlan: eligibility?.customPlan === true,
+    customPlanUnpaid: isCustomPlanUnpaid(eligibility),
+    refetchEligibility: eligibilityQuery.refetch,
+    retryLoading: eligibilityQuery.refetch,
+    leavingForDashboard: leaveForDashboard,
+  };
+}
+
+export function ReEnrollmentProvider({ children }) {
+  const value = useResolveReEnrollment();
+  return <ReEnrollmentContext.Provider value={value}>{children}</ReEnrollmentContext.Provider>;
+}
+
+export function useReEnrollmentContext() {
+  const value = useContext(ReEnrollmentContext);
+  if (value === null) {
+    throw new Error("useReEnrollmentContext must be used within a ReEnrollmentProvider");
+  }
+  return value;
+}
+
+/** select-option: the student picked Next Grade / Repeat / Take Individual Course, in one of the option's learning programs. */
+export function useSelectReEnrollmentOption({ context, userId }) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ enrollmentType, learningProgram }) =>
+      selectReEnrollmentOption(context.schoolUUID, { userId, enrollmentType, learningProgram }),
+    onSuccess: (response) => {
+      // Steps / resume info change once the next record exists. Returned, so mutateAsync resolves only after the
+      // eligibility is read again: the step screen's guard (useRequireSelectedOption) must already see the selected
+      // option, or it sends the student straight back to the option screen.
+      if (response?.status === STATUS_SUCCESS) return queryClient.invalidateQueries({ queryKey: eligibilityKey(userId) });
+    },
+  });
+}
+
+/** PAYMENT screen: plans and amounts from the rule engine. */
+export function useReEnrollmentPaymentDetails({ context, userId }) {
+  return useQuery({
+    queryKey: ["re-enrollment-payment-details", userId],
+    queryFn: async () => {
+      const response = await getReEnrollmentPaymentDetails(context.schoolUUID, { userId });
+      if (!response) throw new Error("re-enrollment payment-details returned no response");
+      return response;
+    },
+    enabled: Boolean(context?.schoolUUID && userId),
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+}
+
+export function useChooseReEnrollmentPlan({ context, userId }) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (paymentMode) => chooseReEnrollmentPaymentPlan(context.schoolUUID, { userId, paymentMode }),
+    onSuccess: (response) => {
+      if (response?.status === STATUS_SUCCESS) queryClient.invalidateQueries({ queryKey: ["re-enrollment-review", userId] });
+    },
+  });
+}
+
+/** REVIEW screen; also called right after a plan is chosen to get the payment the gateway has to be started for. */
+export function useReEnrollmentReview({ context, userId }) {
+  return useQuery({
+    queryKey: ["re-enrollment-review", userId],
+    queryFn: async () => {
+      const response = await getReEnrollmentReview(context.schoolUUID, { userId });
+      if (!response) throw new Error("re-enrollment review returned no response");
+      return response;
+    },
+    enabled: Boolean(context?.schoolUUID && userId),
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+}
+
+/** Imperative review call (after choose-payment-plan, before opening the gateway). */
+export function useFetchReEnrollmentReview({ context, userId }) {
+  return useMutation({
+    mutationFn: () => getReEnrollmentReview(context.schoolUUID, { userId }),
+  });
+}
+
+export function useCompleteReEnrollment({ context, userId }) {
+  return useMutation({
+    mutationFn: () => completeReEnrollment(context.schoolUUID, { userId }),
+  });
+}

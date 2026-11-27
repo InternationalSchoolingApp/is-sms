@@ -97,11 +97,12 @@ async function parseJsonResponse(response, request) {
 }
 
 async function postPayload(schoolUUID, path, data, options) {
-  // Legacy's $.ajaxSetup beforeSend sends the session's UNIQUEUUID as a header on every call;
-  // a few payment endpoints read it (e.g. common/offline-payment), so callers that need it
-  // pass `uniqueId`.
+  // Legacy's $.ajaxSetup beforeSend sends the session's identifier as a header (named UNIQUEUUID
+  // by the backend — a plain String, and the backend's SessionUtil#getUser no longer consults its
+  // value for identity resolution at all) on every call; a few payment endpoints read it (e.g.
+  // common/offline-payment), so callers that need it pass `studentUserId`.
   const headers = { "Content-Type": "application/json" };
-  if (options?.uniqueId) headers.UNIQUEUUID = options.uniqueId;
+  if (options?.studentUserId) headers.UNIQUEUUID = options.studentUserId;
   const url = await backendUrl(schoolUUID, path, options);
   const init = await withSmsAuth({
     method: "POST",
@@ -191,8 +192,8 @@ export async function proceedToDashboard(schoolUUID, request) {
 }
 
 // --- Stage resume / polling ---
-export async function getSignupStageStatus(schoolUUID, uniqueId) {
-  return getPayload(schoolUUID, "student/enrollment-stage-status", { uniqueId });
+export async function getSignupStageStatus(schoolUUID, studentUserId) {
+  return getPayload(schoolUUID, "student/enrollment-stage-status", { studentUserId });
 }
 
 // --- Document upload ---
@@ -240,11 +241,11 @@ export async function cancelPaymentAttempt(schoolUUID, request) {
 // logoutConfimation(true, ...common/logout/UNIQUEUUID) in signupStudentStage3.js: the backend drops
 // the user's login hash, records the logout and invalidates its HTTP session (found via the
 // forwarded session cookie). The 302 to the Java login page is deliberately not followed.
-export async function logoutSignup(schoolUUID, uniqueId) {
-  await fetch(await backendUrl(schoolUUID, `common/logout/${encodeURIComponent(uniqueId)}`), await withSmsAuth({
+export async function logoutSignup(schoolUUID, studentUserId) {
+  await fetch(await backendUrl(schoolUUID, `common/logout/${encodeURIComponent(studentUserId)}`), {
     method: "GET",
     redirect: "manual",
-  }));
+  });
 }
 
 export async function getPaymentPaidStatus(schoolUUID, request) {
@@ -260,27 +261,29 @@ export async function getCommonScriptVariables(schoolUUID, request) {
 
 // Offline payments (CASH / WIRETRANSFER) — callOfflinePayment() in commonPaymentGateway.js:
 // {schoolId}/common/offline-payment, with the UNIQUEUUID header the controller reads.
-export async function submitOfflinePayment(schoolUUID, uniqueId, request) {
-  return postPayload(schoolUUID, "common/offline-payment", request, { uniqueId });
+export async function submitOfflinePayment(schoolUUID, studentUserId, request) {
+  return postPayload(schoolUUID, "common/offline-payment", request, { studentUserId });
 }
 
 // Proof-of-payment upload — bindFileUploadNew1() in jquery.commonFunction.js: multipart POST to
-// {schoolId}/api/upload/{UNIQUEUUID}; the `payload` form field carries the encoded
-// { uploadCategory, uploadUserId, skipSession } (getFinalValue() shape) and the file goes under
-// the input's name (`fileupload<index>`). Resolves to { status, message, uploadFiles:[{fileName}] }.
-// Server Actions accept File/FormData arguments directly, so the caller can
-// build this same FormData shape without any browser-only API.
-export async function uploadPaymentProof(schoolUUID, uniqueId, { file, uploadIndex, uploadCategory, uploadUserId }) {
+// {schoolId}/api/upload/{studentUserId} (backend path segment is a plain String, formerly a
+// UNIQUEUUID — the "skipSession: true" branch this call uses never consults it for identity,
+// relying on the payload's own `uploadUserId` instead; see UploadDocsUtil#uploadPhoto). The
+// `payload` form field carries the encoded { uploadCategory, uploadUserId, skipSession }
+// (getFinalValue() shape) and the file goes under the input's name (`fileupload<index>`).
+// Resolves to { status, message, uploadFiles:[{fileName}] }. Server Actions accept File/FormData
+// arguments directly, so the caller can build this same FormData shape without any browser-only API.
+export async function uploadPaymentProof(schoolUUID, studentUserId, { file, uploadIndex, uploadCategory, uploadUserId }) {
   const form = new FormData();
   form.append(
     "payload",
     JSON.stringify({ payload: encodePayload({ uploadCategory, uploadUserId, skipSession: true }) })
   );
   form.append(`fileupload${uploadIndex}`, file);
-  const response = await fetch(await backendUrl(schoolUUID, `api/upload/${uniqueId}`), await withSmsAuth({
+  const response = await fetch(await backendUrl(schoolUUID, `api/upload/${studentUserId}`), {
     method: "POST",
     body: form,
-  }));
+  });
   return parseJsonResponse(response);
 }
 
@@ -371,4 +374,3 @@ export async function resendEmailVerification(schoolUUID, request) {
 export async function verifyReferralCode(schoolUUID, request) {
   return postPayload(schoolUUID, "api/v1/common/verify-referral", request);
 }
-

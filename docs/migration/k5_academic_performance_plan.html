@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K5 Academic Performance — Migration Plan</title>
+<style>
+  :root { --bg: #f8f7f4; --card: #fff; --ink: #1a1a2e; --mut: #6b7280; --ac: #7c3aed; --ri: #e11d48; --ok: #059669; --warn: #d97706; --line: #e5e7eb; --soft: #f3f0ff; }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--ink); padding: 24px; line-height: 1.6; }
+  h1 { font-size: 28px; margin-bottom: 6px; }
+  .sub { color: var(--mut); font-size: 14px; margin-bottom: 28px; }
+  h2 { font-size: 20px; margin: 32px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--ac); display: inline-block; }
+  h3 { font-size: 16px; margin: 18px 0 8px; color: var(--ac); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+  .b-new { background: #dbeafe; color: #1d4ed8; }
+  .b-dyn { background: #d1fae5; color: #065f46; }
+  .b-static { background: #fef3c7; color: #92400e; }
+  .b-exist { background: #e5e7eb; color: #374151; }
+  .b-api { background: #fce7f3; color: #9d174d; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0; }
+  th { background: var(--ac); color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--line); }
+  tr:hover td { background: var(--soft); }
+  .api-box { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 12px; margin: 8px 0; font-size: 13px; }
+  .api-box code { background: #fee2e2; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+  .note { background: #fffbeb; border-left: 4px solid var(--warn); padding: 12px 16px; margin: 12px 0; font-size: 13px; border-radius: 0 8px 8px 0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
+  ul { padding-left: 20px; margin: 6px 0; }
+  li { margin: 4px 0; font-size: 14px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .section-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 16px 0; }
+  .stat-tile { text-align: center; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); }
+  .stat-tile .num { font-size: 28px; font-weight: 800; }
+  .stat-tile .lbl { font-size: 12px; color: var(--mut); margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<h1>K5 Academic Performance — Migration Plan</h1>
+<p class="sub">Route: <code>student-progress-report</code> · Component: <code>Performance.jsx</code> → naya <code>K5Performance.jsx</code><br>
+Date: 2026-11-07 · Mockup: Playful.dc.html (pgPerf, line 1298)</p>
+
+<div class="legend">
+  <span class="badge b-new">NAYA (mockup mein hai, backend mein nahi)</span>
+  <span class="badge b-dyn">DYNAMIC (backend se aayega)</span>
+  <span class="badge b-static">STATIC (hardcoded / decorative)</span>
+  <span class="badge b-exist">EXISTING API</span>
+  <span class="badge b-api">API NEEDED</span>
+</div>
+
+<div class="section-summary">
+  <div class="stat-tile"><div class="num" style="color:var(--ac)">3</div><div class="lbl">Tabs</div></div>
+  <div class="stat-tile"><div class="num" style="color:var(--ok)">3</div><div class="lbl">Existing APIs</div></div>
+  <div class="stat-tile"><div class="num" style="color:var(--ri)">0</div><div class="lbl">New APIs Needed</div></div>
+  <div class="stat-tile"><div class="num" style="color:var(--warn)">~15</div><div class="lbl">New UI Components</div></div>
+</div>
+
+<!-- =========================================================== -->
+<h2>1. Overview — Page Structure</h2>
+
+<div class="card">
+  <p><b>Mockup mein 3 tabs hain:</b></p>
+  <ol>
+    <li><b>Performance</b> <code>pmT1</code> — scores, streak, achievements, courses list, course detail</li>
+    <li><b>My Goals</b> <code>pmT2</code> — goal setting dialog, weekly tracker, per-course goals</li>
+    <li><b>Class Comparison</b> <code>pmT3</code> — anonymized class standing, histogram, per-course compare</li>
+  </ol>
+  <p style="margin-top:10px"><b>Existing page kya karti hai:</b> Simple DataTable — courses list (name, score, pace, teacher, end date, remaining days, pending assignments, progress bars). Sirf Agilix Buzz LMS providers (36/37/38) ke liye data aata hai. Course click pe modal mein assignment details + grade history.</p>
+</div>
+
+<!-- =========================================================== -->
+<h2>2. Existing Backend APIs (3 endpoints)</h2>
+
+<div class="api-box">
+  <b>API 1: Course List</b><br>
+  <code>POST /{schoolUUID}/dashboard/parent/student-academic-performance</code><br>
+  <b>Payload:</b> <code>{ userId, studentUserId }</code><br>
+  <b>Response:</b> <code>{ details: { courseProviderId, studentAcademicPerformances: [...] } }</code><br>
+  <b>Course fields:</b> courseName, score, progressPace (Ahead/OnTrack/Behind), teacherName, teacherGender, endDate, remainingDays, pendingAssignment, progressGradable, progressAllActivity, lmsEnrollmentId, lmsCourseId<br>
+  <b>Code:</b> <code>hooks/useStudentAcademicPerformance.js</code> → <code>services/dashboardApi.js → getStudentAcademicPerformance()</code><br>
+  <span class="badge b-exist">EXISTING — yeh primary data source hai</span>
+</div>
+
+<div class="api-box">
+  <b>API 2: Course Detail (assignments)</b><br>
+  <code>POST /{schoolUUID}/dashboard/get-student-progress-report-detail</code><br>
+  <b>Payload:</b> <code>{ studentUserId, lmsUserId, entityId }</code> + <code>UNIQUEUUID</code> header<br>
+  <b>Response:</b> <code>{ totalAssignment, submiteAssign, pendingAssign, upcomingAssign, passesAssign, failedAssign, response: { enrollments: { enrollment: [{ grades: { items: { item: [...] } } }] } } }</code><br>
+  <b>Assignment item fields:</b> itemid, title, duedate, submissionStatus, status, unitPercent<br>
+  <b>Code:</b> <code>components/student/PerformanceProgressModal.jsx</code> → <code>dashboardApi.js → getStudentProgressReportDetail()</code><br>
+  <span class="badge b-exist">EXISTING — course detail ke liye</span>
+</div>
+
+<div class="api-box">
+  <b>API 3: Grade History</b><br>
+  <code>POST /{schoolUUID}/dashboard/get-progress-report-grade-history</code><br>
+  <b>Payload:</b> <code>{ itemId, enrollId }</code> + <code>UNIQUEUUID</code> header<br>
+  <b>Response:</b> <code>{ response: { grades: { grade: [{ achieved, possible, percent, lastactivitydate }] } } }</code><br>
+  <b>Code:</b> <code>components/student/PerformanceGradeHistoryModal.jsx</code> → <code>dashboardApi.js → getProgressReportGradeHistory()</code><br>
+  <span class="badge b-exist">EXISTING — grade history sub-modal ke liye</span>
+</div>
+
+<!-- =========================================================== -->
+<h2>3. Tab 1: Performance <code>pmT1</code></h2>
+
+<h3>3.1 Hero Card + Motivational Tips</h3>
+<div class="card">
+  <table>
+    <tr><th>Element</th><th>Type</th><th>Detail</th></tr>
+    <tr><td>Animated scene (sun, clouds, flag, mountain trail)</td><td><span class="badge b-static">STATIC</span></td><td>Pure CSS/SVG decoration. Tip rotate hoga randomly.</td></tr>
+    <tr><td>Motivational tips (<code>pmTip1a/1b/2/3</code>)</td><td><span class="badge b-dyn">DYNAMIC</span></td><td>"You're ahead in Science. Keep that rhythm going." — Existing API ke courseName + progressPace se client-side generate. <b>Naya API nahi chahiye.</b></td></tr>
+    <tr><td>3 pill buttons (Progress / Streak / Scores)</td><td><span class="badge b-static">STATIC</span></td><td>UI toggle buttons — hero card ke sub-sections show/hide. Data already loaded.</td></tr>
+  </table>
+</div>
+
+<h3>3.2 Score Card <code>pkSc</code></h3>
+<div class="card">
+  <table>
+    <tr><th>Element</th><th>Type</th><th>Detail</th></tr>
+    <tr><td>5-star rating visual</td><td><span class="badge b-dyn">DYNAMIC</span></td><td>Avg score se calculate: 0-39=1star, 40-59=2, 60-79=3, 80-94=4, 95-100=5. Client-side. Data: existing API scores.</td></tr>
+    <tr><td>Word level (Outstanding / Excellent / Good / Fair / Needs Improvement)</td><td><span class="badge b-dyn">DYNAMIC</span></td><td>Score range se map. Client-side.</td></tr>
+    <tr><td>Average score display</td><td><span class="badge b-dyn">DYNAMIC</span></td><td>Existing API mein har course ka <code>score</code> field → average calculate.</td></tr>
+    <tr><td>Score ladder (5 levels with ranges)</td><td><span class="badge b-static">STATIC</span></td><td>Fixed thresholds: Needs Improvement 0-39, Fair 40-59, Good 60-79, Excellent 80-94, Outstanding 95-100. "You" marker dynamic.</td></tr>
+    <tr><td>Next level encouragement</td><td><span class="badge b-dyn">DYNAMIC</span></td><td>"X% more to reach Excellent" — current score se calculate. Client-side.</td></tr>
+  </table>
+</div>
+
+<h3>3.3 Streak Card <code>pkSk</code></h3>
+<div class="card">
+  <table>
+    <tr><th>Element</th><th>Type</th><th>Detail</th></tr>
+    <tr><td>Flame icon + "X days in a row"</td><td><span class="badge b-new">NAYA</span></td><td>Streak ka concept — existing API mein <b>streak field nahi hai</b>.</td></tr>
+    <tr><td>Dot indicators (filled = active days)</td><td><span class="badge b-new">NAYA</span></td><td>Same — streak data chahiye.</td></tr>
+    <tr><td>Next milestone text (3, 7, 14, 30 days)</td><td><span class="badge b-static">STATIC</span></td><td>Milestone thresholds fixed.</td></tr>
+  </table>
+  <div class="note"><b>Streak ka solution:</b> Assignment detail API (API 2) mein har assignment ki <code>duedate</code> aur <code>submissionStatus</code> available hai. In-se consecutive on-time submissions count karke streak nikaal sakte hain. Lekin <b>har course ka detail fetch karna padega</b> (N+1 problem). <b>Recommendation: Phase B mein karo — pehle core UI banao bina streak ke.</b></div>
+</div>
+
+<h3>3.4 Achievements / Badges <code>pkAchOn</code></h3>
+<div class="card">
+  <table>
+    <tr><th>Badge</th><th>Unlock Condition</th><th>Data Source</th></tr>
+    <tr><td>Early Submitter</td><td>9 assignments before due date</td><td><span class="badge b-new">Assignment dates se calculate — detail API needed per course</span></td></tr>
+    <tr><td>Clean Sweep</td><td>100% three times in a row</td><td><span class="badge b-new">Score history se — detail API needed</span></td></tr>
+    <tr><td>Perfect Score</td><td>100% in two courses</td><td><span class="badge b-dyn">EXISTING — <code>score</code> field per course, easy check</span></td></tr>
+    <tr><td>Halfway (locked)</td><td>50% progress in any course</td><td><span class="badge b-dyn">EXISTING — <code>progressGradable</code> field</span></td></tr>
+    <tr><td>On Target (locked)</td><td>Reach target avg %</td><td><span class="badge b-new">Needs goal setting (Tab 2). Skip initially.</span></td></tr>
+  </table>
+  <div class="note"><b>Recommendation:</b> "Perfect Score" aur "Halfway" existing data se easily check ho jaate hain. Baaki badges Phase B mein, ya skip. Medal SVGs static honge — sirf locked/unlocked toggle dynamic.</div>
+</div>
+
+<h3>3.5 Stat Tiles (4 tiles)</h3>
+<div class="card">
+  <div class="grid2">
+    <div>
+      <b>Average Score %</b> <span class="badge b-dyn">DYNAMIC</span><br>
+      All courses ka avg score. Client-side calculate from existing API.
+    </div>
+    <div>
+      <b>Assignments Submitted (X still to go)</b> <span class="badge b-dyn">DYNAMIC</span><br>
+      Options: (a) total pending from <code>pendingAssignment</code> sum across courses, ya (b) detail API per course. <b>Option (a) simpler — existing data.</b>
+    </div>
+    <div>
+      <b>Courses Ahead (X on track · Y behind)</b> <span class="badge b-dyn">DYNAMIC</span><br>
+      Existing: <code>progressPace</code> field per course. Count Ahead/OnTrack/Behind directly.
+    </div>
+    <div>
+      <b>Days Left (Ends date)</b> <span class="badge b-dyn">DYNAMIC</span><br>
+      Existing: <code>endDate</code> + <code>remainingDays</code>. Show min remaining.
+    </div>
+  </div>
+</div>
+
+<h3>3.6 My Courses List</h3>
+<div class="card">
+  <table>
+    <tr><th>Element</th><th>Type</th><th>Source</th></tr>
+    <tr><td>Course row with circular progress ring (%)</td><td><span class="badge b-dyn">DYNAMIC</span></td><td><code>progressGradable</code> ya <code>progressAllActivity</code></td></tr>
+    <tr><td>Course name</td><td><span class="badge b-dyn">DYNAMIC</span></td><td><code>courseName</code></td></tr>
+    <tr><td>Teacher name</td><td><span class="badge b-dyn">DYNAMIC</span></td><td><code>teacherName</code> (with salutation from <code>teacherGender</code>)</td></tr>
+    <tr><td>5-star rating + word level per course</td><td><span class="badge b-dyn">DYNAMIC</span></td><td><code>score</code> → star mapping (same formula as 3.2)</td></tr>
+    <tr><td>Score %</td><td><span class="badge b-dyn">DYNAMIC</span></td><td><code>score</code></td></tr>
+    <tr><td>Pace chip (Ahead / On Track / Behind) + stick figure animation</td><td><span class="badge b-dyn">DYNAMIC</span></td><td><code>progressPace</code>. Animated figure = <span class="badge b-static">STATIC CSS</span></td></tr>
+    <tr><td>Streak chip per course</td><td><span class="badge b-new">NAYA</span></td><td>No streak field — Phase B item. Skip initially.</td></tr>
+    <tr><td>"View assignments →" button</td><td><span class="badge b-dyn">DYNAMIC</span></td><td>Opens course detail view (clicks into pmCvOn)</td></tr>
+  </table>
+</div>
+
+<h3>3.7 Course Detail View <code>pmCvOn</code></h3>
+<div class="card">
+  <p>Course row click pe full detail view replace karta hai existing modal ko.</p>
+  <table>
+    <tr><th>Element</th><th>Type</th><th>Source</th></tr>
+    <tr><td>Header: Course name, Overall Score, Grade, Duration</td><td><span class="badge b-dyn">DYNAMIC</span></td><td>API 1 (course list) + API 2 (detail)</td></tr>
+    <tr><td>Completion: gradable % and all activities %</td><td><span class="badge b-dyn">DYNAMIC</span></td><td>API 1: <code>progressGradable</code> + <code>progressAllActivity</code></td></tr>
+    <tr><td>Pace indicator + streak</td><td><span class="badge b-dyn">DYNAMIC</span></td><td>Pace: API 1 <code>progressPace</code>. Streak: NAYA (Phase B)</td></tr>
+    <tr><td>Assignment stats donut/tiles</td><td><span class="badge b-dyn">DYNAMIC</span></td><td>API 2: total, submitted, pending, upcoming, passed, failed (6 of 9 mockup categories available)</td></tr>
+    <tr><td>Assignment table (name, due, status, score, time, submitted date)</td><td><span class="badge b-dyn">DYNAMIC</span></td><td>API 2: title, duedate, status/submissionStatus, unitPercent. <b>Time spent nahi hai API mein</b> — column ko hide ya "—" karo.</td></tr>
+    <tr><td>Row click → Grade history</td><td><span class="badge b-dyn">DYNAMIC</span></td><td>API 3: achieved, possible, percent, lastactivitydate</td></tr>
+  </table>
+  <div class="note"><b>Donut chart:</b> Mockup mein 9 categories (Total, Excused, Submitted, Upcoming, Pending, Passed, Failed, Before Time, On Time, Late). API mein sirf 6 hain (total, submitted, pending, upcoming, passed, failed). "Excused", "Before Time", "On Time", "Late" <b>available nahi hain</b>. → <b>6 categories ka donut banao</b>, baaki skip.</div>
+</div>
+
+<!-- =========================================================== -->
+<h2>4. Tab 2: My Goals <code>pmT2</code></h2>
+
+<div class="card">
+  <p><b>Pura tab naya concept hai.</b> Elements:</p>
+  <ul>
+    <li>"Set my goals" button → dialog with: target avg score slider, finish date picker (shadcn date-picker), pace hint, reminders toggle, class comparison toggle</li>
+    <li>Hero: dart illustration + "Aim for X% and finish by [date]" + gap calculation</li>
+    <li>Star jar (current avg vs target) — animated fill visual</li>
+    <li>Weekly goals ("This week's goals"): per-week tasks with checkmarks</li>
+    <li>Per-course goals with progress bars</li>
+    <li>"X assignments a week gets you there on time" calculation</li>
+  </ul>
+  <div class="note" style="border-left-color: var(--ri);"><b>PROBLEM:</b> Backend mein goal save/load ka <b>koi API nahi hai</b>.<br><br>
+  <b>Options:</b><br>
+  (A) <b>localStorage</b> mein save — simple, no backend, lekin device switch pe lost<br>
+  (B) <b>Naya backend endpoint</b> banwao — against "use existing APIs" rule<br>
+  (C) <b>"Coming Soon" placeholder</b> — safest<br><br>
+  <b>Recommendation: Option C — "Coming Soon" placeholder.</b> Pehle Tab 1 complete karo.</div>
+</div>
+
+<!-- =========================================================== -->
+<h2>5. Tab 3: Class Comparison <code>pmT3</code></h2>
+
+<div class="card">
+  <p><b>Pura tab naya concept hai — koi bhi data existing APIs mein nahi.</b></p>
+  <ul>
+    <li>"How you compare" — overall standing (Top/Bottom X% of class)</li>
+    <li>3 comparison bars: Score vs class avg, Progress vs class, On-time submissions</li>
+    <li>Histogram: "Where the class is (progress)" — students per band</li>
+    <li>"All courses at a glance" — per-course Your Score / Your Progress / Your Standing vs class</li>
+    <li>Privacy toggle: "Turn on/off comparison"</li>
+    <li>CTA: "Finish by [date] to stay ahead of X% of students"</li>
+  </ul>
+  <div class="note" style="border-left-color: var(--ri);"><b>PROBLEM:</b> Class average, ranking, distribution — <b>sab ke liye naye backend endpoints chahiye</b>. Existing APIs mein sirf student ka apna data aata hai, class ka nahi.<br><br>
+  <b>Recommendation: "Coming Soon" placeholder.</b></div>
+</div>
+
+<!-- =========================================================== -->
+<h2>6. Summary Table</h2>
+
+<div class="card">
+<table>
+  <tr><th>Category</th><th>Count</th><th>Examples</th></tr>
+  <tr>
+    <td><span class="badge b-dyn">DYNAMIC (existing APIs se)</span></td>
+    <td><b>~18 items</b></td>
+    <td>Course list, scores, pace, progress %, teacher names, end dates, assignment details, grade history, pending count, completion stats</td>
+  </tr>
+  <tr>
+    <td><span class="badge b-dyn">DYNAMIC (client-side calculated)</span></td>
+    <td><b>~8 items</b></td>
+    <td>Star ratings (score → 1-5), word levels, average score, stat tile totals, pace counts (Ahead/OnTrack/Behind), next-level encouragement, motivational tips, days remaining</td>
+  </tr>
+  <tr>
+    <td><span class="badge b-static">STATIC (decorative / fixed)</span></td>
+    <td><b>~10 items</b></td>
+    <td>Hero illustration (sun/clouds/trail), score ladder ranges, animated stick figures, pill toggle buttons, medal SVGs, milestone thresholds, tab headers, privacy badge text, section titles, donut chart colors</td>
+  </tr>
+  <tr>
+    <td><span class="badge b-new">NAYA (no backend, mockup-only)</span></td>
+    <td><b>~12 items</b></td>
+    <td>Streak tracking, achievements system, goal setting+saving, weekly goals, class comparison, histogram, ranking, Excused/Before Time/On Time/Late counts, per-course streak chip, star jar</td>
+  </tr>
+</table>
+</div>
+
+<!-- =========================================================== -->
+<h2>7. Implementation Plan</h2>
+
+<div class="card">
+  <h3>Phase A: Tab 1 — Core Performance (existing APIs se, fully buildable)</h3>
+  <ol>
+    <li><b>K5Performance.jsx</b> — main page component with 3 tab headers (Tab 2, 3 = "Coming Soon")</li>
+    <li><b>K5PerfHero.jsx</b> — hero card with SVG scene + rotating tips (course data se)</li>
+    <li><b>K5PerfScoreCard.jsx</b> — score ladder, star rating, avg score, word level, encouragement</li>
+    <li><b>K5PerfStatTiles.jsx</b> — 4 stat tiles (avg score, submitted/pending, courses ahead/behind, days left)</li>
+    <li><b>K5PerfCourseList.jsx</b> — course rows: progress ring, stars, pace chip, teacher, "View assignments"</li>
+    <li><b>K5PerfCourseDetail.jsx</b> — inline detail view replacing modal: header, 6-category donut, assignment table</li>
+    <li><b>K5PerfGradeHistory.jsx</b> — grade history K5-styled sub-modal</li>
+  </ol>
+  <p><b>APIs:</b> Saare 3 existing — koi naya endpoint nahi chahiye.<br>
+  <b>Data flow:</b> <code>useStudentAcademicPerformance</code> (hook) → courses list → K5 components. Course click → <code>getStudentProgressReportDetail</code> → detail view. Assignment click → <code>getProgressReportGradeHistory</code> → grade history.</p>
+</div>
+
+<div class="card">
+  <h3>Phase B: Tab 1 — Enhancements (optional, client-side calculated)</h3>
+  <ol>
+    <li><b>K5PerfStreakCard.jsx</b> — streak from assignment submission dates (needs lazy-loading detail per course)</li>
+    <li><b>K5PerfAchievements.jsx</b> — 5 medal badges, unlock conditions from course data</li>
+    <li>Enhanced motivational tips with streak + specific assignment data</li>
+    <li>Per-course streak chips in course list</li>
+  </ol>
+  <p><b>Note:</b> Expensive — har course ka detail fetch karna padega for streak/badges. User se puchho ki yeh priority hai ya nahi.</p>
+</div>
+
+<div class="card" style="opacity: 0.6;">
+  <h3>Phase C: Tab 2 — My Goals (BLOCKED — backend API needed)</h3>
+  <p>Goal save/load + weekly progress tracking ke liye backend chahiye. Filhaal "Coming Soon" placeholder. Tab header dikhega, content mein friendly message.</p>
+</div>
+
+<div class="card" style="opacity: 0.6;">
+  <h3>Phase D: Tab 3 — Class Comparison (BLOCKED — backend APIs needed)</h3>
+  <p>Class avg, ranking, distribution — sab naye endpoints chahiye. "Coming Soon" placeholder.</p>
+</div>
+
+<!-- =========================================================== -->
+<h2>8. File Structure</h2>
+
+<div class="card">
+<pre style="font-size:13px; overflow-x:auto; background:#f1f5f9; padding:12px; border-radius:8px;">
+components/k5/pages/
+├── K5Performance.jsx          ← main page (3 tabs, data loading, K5 route)
+├── K5PerfHero.jsx             ← hero illustration + tips + pill toggles
+├── K5PerfScoreCard.jsx        ← score ladder + 5 stars + word level
+├── K5PerfStreakCard.jsx        ← flame + streak dots (Phase B)
+├── K5PerfAchievements.jsx     ← 5 medal badges (Phase B)
+├── K5PerfStatTiles.jsx        ← 4 stat tiles row
+├── K5PerfCourseList.jsx       ← course rows: ring, stars, pace, teacher
+├── K5PerfCourseDetail.jsx     ← detail view (inline, replaces old modal)
+└── K5PerfGradeHistory.jsx     ← grade history sub-modal (K5 styled)
+
+hooks/
+└── useStudentAcademicPerformance.js  ← RE-USE existing hook (no changes)
+
+services/
+└── dashboardApi.js                   ← RE-USE existing functions (no changes)
+</pre>
+</div>
+
+<!-- =========================================================== -->
+<h2>9. Decisions Needed (User se poochna hai)</h2>
+
+<div class="card">
+  <ol>
+    <li><b>Streak feature:</b> Phase A mein include karein (expensive, har course fetch) ya Phase B mein?</li>
+    <li><b>Achievements:</b> Phase A mein karein ya baad mein?</li>
+    <li><b>Tab 2 (Goals):</b> localStorage approach ya "Coming Soon"?</li>
+    <li><b>Tab 3 (Class Comparison):</b> "Coming Soon" confirm?</li>
+    <li><b>Donut chart categories:</b> 6 (existing data) ya mockup wali 9 (3 missing)?</li>
+    <li><b>Course detail view:</b> Inline expand (mockup) ya modal (existing)?</li>
+    <li><b>"Time Spent" column:</b> API mein nahi hai — hide ya placeholder?</li>
+  </ol>
+</div>
+
+<div class="note" style="border-left-color: var(--ok);">
+  <b>Good News:</b> Tab 1 ka <b>~80% existing APIs se fully possible hai</b>. Sirf UI redesign karna hai K5 theme mein — naya backend nahi chahiye core features ke liye. Streak + achievements optional enhancements hain. Tab 2, 3 future phases mein aa sakte hain jab backend ready ho.
+</div>
+
+</body>
+</html>

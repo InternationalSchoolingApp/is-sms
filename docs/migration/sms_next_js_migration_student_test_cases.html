@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SMS → Next.js Migration — Student &amp; Parent Test Cases</title>
+<style>
+  :root{
+    --bg:#0f1420;--panel:#151c2c;--panel2:#1b2436;--ink:#e8edf6;--mut:#9fb0c9;--line:#2a364d;
+    --acc:#5b9dff;--v:#2fbf71;--u:#e0a52b;--oq:#b07cff;
+    --p0:#ff4d5e;--p1:#ff8a3d;--p2:#e0c23a;--p3:#58c0a8;
+  }
+  @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+    --bg:#f5f7fb;--panel:#fff;--panel2:#eef2f8;--ink:#17202e;--mut:#536079;--line:#d7deea;
+    --acc:#1f5fd6;--v:#1f9d57;--u:#b5821a;--oq:#7a4fd0;
+    --p0:#d61f36;--p1:#c75a12;--p2:#9a861a;--p3:#1f8f78;}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.85em;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:.03em .38em}
+  .wrap{display:flex;max-width:1600px;margin:0 auto}
+  aside{position:sticky;top:0;align-self:flex-start;height:100vh;overflow:auto;width:260px;flex:0 0 260px;background:var(--panel);border-right:1px solid var(--line);padding:16px 12px}
+  aside .brand{font-weight:800;font-size:15px;padding:4px 6px 10px;line-height:1.3}
+  aside h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:12px 6px 4px}
+  aside ol{list-style:none;margin:0;padding:0}
+  aside ol li a{display:flex;justify-content:space-between;gap:8px;padding:5px 8px;border-radius:7px;color:var(--mut);font-size:13px}
+  aside ol li a:hover,aside ol li a.active{background:var(--panel2);color:var(--ink);text-decoration:none}
+  aside ol li a .c{color:var(--acc);font-variant-numeric:tabular-nums;font-size:12px}
+  main{flex:1 1 auto;min-width:0;padding:22px 28px 120px}
+  header.top{border:1px solid var(--line);background:linear-gradient(135deg,var(--panel),var(--panel2));border-radius:16px;padding:22px 24px;margin-bottom:18px}
+  header.top h1{margin:0 0 6px;font-size:23px}
+  header.top .sub{color:var(--mut);font-size:13.5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-size:12px;color:var(--mut)}
+  .meta b{color:var(--ink)}
+  .grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:14px 0}
+  .card{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:12px 14px}
+  .card .big{font-size:24px;font-weight:800}.card .lbl{color:var(--mut);font-size:12px;margin-top:2px}
+  section{border-top:1px solid var(--line);padding-top:18px;margin-top:22px;scroll-margin-top:10px}
+  section>h2{font-size:18px;margin:0 0 6px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  section>h2 .id{color:var(--acc);font-size:13px;font-weight:700}
+  p{margin:7px 0}.lead{color:var(--mut)}
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:10px 0}
+  table{border-collapse:collapse;width:100%;font-size:12.6px;min-width:900px}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--panel2);position:sticky;top:0;font-size:11px;text-transform:uppercase;letter-spacing:.04em;z-index:1}
+  tbody tr:hover{background:color-mix(in srgb,var(--acc) 7%,transparent)}
+  td.id{white-space:nowrap;font-family:ui-monospace,monospace;font-size:11.5px;color:var(--mut)}
+  td.ttl{min-width:190px;font-weight:600}
+  td.steps{min-width:260px}td.exp{min-width:220px}
+  td code{white-space:nowrap}
+  .b{display:inline-block;font-size:10.5px;font-weight:700;border-radius:999px;padding:2px 8px;border:1px solid transparent;white-space:nowrap}
+  .b.P0{color:#fff;background:var(--p0);border-color:var(--p0)}
+  .b.P1{color:#191a10;background:var(--p1);border-color:var(--p1)}
+  .b.P2{color:#191a10;background:var(--p2);border-color:var(--p2)}
+  .b.P3{color:#07140f;background:var(--p3);border-color:var(--p3)}
+  .b.t{color:var(--mut);border-color:var(--line);background:var(--panel2)}
+  .b.v{color:var(--v);border-color:var(--v);background:color-mix(in srgb,var(--v) 14%,transparent)}
+  .b.u{color:var(--u);border-color:var(--u);background:color-mix(in srgb,var(--u) 14%,transparent)}
+  .b.oq{color:var(--oq);border-color:var(--oq);background:color-mix(in srgb,var(--oq) 14%,transparent)}
+  .st{font-size:11px;color:var(--mut);white-space:nowrap}
+  .controls{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0;border-bottom:1px solid var(--line);margin-bottom:8px}
+  .controls .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .controls input{flex:1 1 260px;min-width:200px;padding:8px 12px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:14px}
+  .btn{border:1px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:8px;padding:6px 11px;font-size:12.5px;cursor:pointer}
+  .btn.on{outline:2px solid var(--acc)}
+  .note{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--panel);border-radius:10px;padding:11px 14px;margin:12px 0}
+  .note.warn{border-left-color:var(--p1)}.note.bad{border-left-color:var(--p0)}.note.ok{border-left-color:var(--v)}
+  .note b.t2{display:block;margin-bottom:3px}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0;font-size:12px;color:var(--mut);align-items:center}
+  .small{font-size:12px;color:var(--mut)}
+  .mobtoggle{display:none}
+  @media (max-width:980px){
+    aside{position:fixed;z-index:30;transform:translateX(-102%);transition:transform .2s;box-shadow:0 0 40px rgba(0,0,0,.5)}
+    aside.open{transform:none}
+    .mobtoggle{display:inline-block;position:fixed;top:12px;left:12px;z-index:31}
+    main{padding:56px 14px 90px}
+  }
+  @media print{
+    aside,.mobtoggle,.controls{display:none!important}
+    main{padding:0}section{break-inside:auto}
+    body{background:#fff;color:#000}a{color:#000}
+    tr{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<button class="btn mobtoggle" id="navToggle">☰ Suites</button>
+<div class="wrap">
+<aside id="sidebar">
+  <div class="brand">Student &amp; Parent<br/>Test Cases</div>
+  <h2>Suites</h2>
+  <ol id="toc">
+    <li><a href="#sum"><span>Summary</span></a></li>
+    <li><a href="#env"><span>Env &amp; Coexistence</span><span class="c" data-count="env"></span></a></li>
+    <li><a href="#auth"><span>Auth / Session / SSO</span><span class="c" data-count="auth"></span></a></li>
+    <li><a href="#acc"><span>Account Creation</span><span class="c" data-count="acc"></span></a></li>
+    <li><a href="#s1"><span>Stage 1 — Student</span><span class="c" data-count="s1"></span></a></li>
+    <li><a href="#s2"><span>Stage 2 — Parent</span><span class="c" data-count="s2"></span></a></li>
+    <li><a href="#s3"><span>Stage 3 — Courses</span><span class="c" data-count="s3"></span></a></li>
+    <li><a href="#s4"><span>Stage 4 — Review/Pay</span><span class="c" data-count="s4"></span></a></li>
+    <li><a href="#res"><span>Resume / Nav / Concurrency</span><span class="c" data-count="res"></span></a></li>
+    <li><a href="#pay"><span>Payments</span><span class="c" data-count="pay"></span></a></li>
+    <li><a href="#ai"><span>AI Course Advisor</span><span class="c" data-count="ai"></span></a></li>
+    <li><a href="#add"><span>Add-Another-Student</span><span class="c" data-count="add"></span></a></li>
+    <li><a href="#dash"><span>Student Dashboard</span><span class="c" data-count="dash"></span></a></li>
+    <li><a href="#sec"><span>Security / Negative</span><span class="c" data-count="sec"></span></a></li>
+    <li><a href="#ui"><span>UI / Theme / A11y</span><span class="c" data-count="ui"></span></a></li>
+    <li><a href="#reg"><span>Regression (known fixes)</span><span class="c" data-count="reg"></span></a></li>
+    <li><a href="#api"><span>API Contract</span><span class="c" data-count="api"></span></a></li>
+  </ol>
+  <h2>Parent role</h2>
+  <ol id="toc2">
+    <li><a href="#p-auth"><span>Auth &amp; Routing</span><span class="c" data-count="p-auth"></span></a></li>
+    <li><a href="#p-child"><span>Multi-Child</span><span class="c" data-count="p-child"></span></a></li>
+    <li><a href="#p-dash"><span>Parent Dashboard</span><span class="c" data-count="p-dash"></span></a></li>
+    <li><a href="#p-fee"><span>Fees &amp; Payment</span><span class="c" data-count="p-fee"></span></a></li>
+    <li><a href="#p-add"><span>Add-Another-Student</span><span class="c" data-count="p-add"></span></a></li>
+    <li><a href="#p-sec"><span>Security / Isolation</span><span class="c" data-count="p-sec"></span></a></li>
+    <li><a href="#p-ui"><span>UI / Theme</span><span class="c" data-count="p-ui"></span></a></li>
+    <li><a href="#p-api"><span>API Contract</span><span class="c" data-count="p-api"></span></a></li>
+  </ol>
+</aside>
+
+<main>
+<header class="top">
+  <h1>SMS → Next.js Migration — Student &amp; Parent Test Cases</h1>
+  <div class="sub">Full test suite for the <b>Student</b> and <b>Parent</b> user roles (migrated Signup/Enrollment + planned dashboard parity). Remaining roles to follow. <b>Planning/QA deliverable — no app code changed.</b></div>
+  <div class="meta">
+    <span><b>Generated:</b> 2026-10-15</span>
+    <span><b>Legacy:</b> <code>is-rest-api</code> @ <code>8f0e2a1836</code></span>
+    <span><b>New:</b> <code>is-sms</code> @ <code>baaffd4</code></span>
+    <span><b>Scope:</b> STUDENT + PARENT roles</span>
+  </div>
+  <div class="legend" style="margin-top:12px">
+    <span>Priority:</span><span class="b P0">P0</span><span class="b P1">P1</span><span class="b P2">P2</span><span class="b P3">P3</span>
+    <span style="margin-left:10px">Type tags:</span><span class="b t">Functional</span><span class="b t">UI</span><span class="b t">API</span><span class="b t">Security</span><span class="b t">E2E</span><span class="b t">Negative</span><span class="b t">Regression</span>
+    <span style="margin-left:10px">Status:</span><span class="st">Not Run (default)</span>
+  </div>
+</header>
+
+<!-- SUMMARY -->
+<section id="sum" style="border-top:none;margin-top:0;padding-top:0">
+  <h2><span class="id">SUMMARY</span> Coverage Dashboard</h2>
+  <div class="grid">
+    <div class="card"><div class="big" id="sumTotal">0</div><div class="lbl">Total test cases</div></div>
+    <div class="card"><div class="big" id="sumP0" style="color:var(--p0)">0</div><div class="lbl">P0 (blocker/critical path)</div></div>
+    <div class="card"><div class="big" id="sumP1" style="color:var(--p1)">0</div><div class="lbl">P1 (critical)</div></div>
+    <div class="card"><div class="big" id="sumP2" style="color:var(--p2)">0</div><div class="lbl">P2 (important)</div></div>
+    <div class="card"><div class="big" id="sumP3" style="color:var(--p3)">0</div><div class="lbl">P3 (enhancement)</div></div>
+    <div class="card"><div class="big" id="sumShown">0</div><div class="lbl">Shown (after filter)</div></div>
+  </div>
+  <div class="note"><b class="t2">How to use</b> Use the search box (filters across <em>all</em> suites by any text — ID, title, endpoint, field). Priority buttons quick-filter. Each row carries a traceability ref to the legacy endpoint and the Next.js route/service. Default <b>Status = Not Run</b>; teams fill Pass/Fail during execution. "Expected result" is the <b>functional-equivalence</b> target (Next.js behaves like legacy unless a fix is noted).</div>
+  <div class="controls">
+    <div class="row">
+      <input id="q" type="text" placeholder="Search all test cases… (e.g. 'countryCode', 'resume', 'save-student-details', 'IDOR')" oninput="applyFilter()">
+      <button class="btn" data-pri="ALL" onclick="setPri(this,'ALL')">All</button>
+      <button class="btn" data-pri="P0" onclick="setPri(this,'P0')">P0</button>
+      <button class="btn" data-pri="P1" onclick="setPri(this,'P1')">P1</button>
+      <button class="btn" data-pri="P2" onclick="setPri(this,'P2')">P2</button>
+      <button class="btn" data-pri="P3" onclick="setPri(this,'P3')">P3</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ENV ============ -->
+<section id="env">
+<h2><span class="id">TS-ENV</span> Environment &amp; Coexistence</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps (precondition → action)</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref (legacy → next)</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P0" data-type="Functional"><td class="id">STU-ENV-001</td><td class="ttl">Toggle ON routes Student to Next.js wizard</td><td class="steps">Set <code>CONFIGURATION/ENROLLMENT_VIA_NEXTJS=true</code>; open a student enroll URL.</td><td class="exp">Browser lands on Next.js wizard, not legacy JSP.</td><td><span class="b t">Functional</span></td><td><span class="b P0">P0</span></td><td><code>CommonUtil#getFinalEnrollmentUrl</code> → <code>/{school}/enrollment/...</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Functional"><td class="id">STU-ENV-002</td><td class="ttl">Toggle OFF falls back to legacy JSP</td><td class="steps">Set flag <code>false</code>; open enroll URL.</td><td class="exp">Legacy JSP flow <code>{schoolId}/student/enrollment/process/{uuid}</code> renders; Next.js not used.</td><td><span class="b t">Functional</span></td><td><span class="b P0">P0</span></td><td><code>isEnrollmentViaNextjs</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">STU-ENV-003</td><td class="ttl">Same-origin proxy shares session cookie</td><td class="steps">Through the reverse proxy, load wizard then call a backend API.</td><td class="exp">Captcha image + login + API all share one session cookie; no CORS error.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td><code>next.config.mjs</code> rewrites / Nginx</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-ENV-004</td><td class="ttl">UAT backend switcher overrides origin</td><td class="steps">DEV/UAT: pick a backend from BackendSwitcher; run a wizard action.</td><td class="exp">All server-action calls hit the chosen backend; cookie persists per browser; hidden on PROD.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>BackendSwitcher</code>, <code>UatBackendUrls.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P3" data-type="Functional"><td class="id">STU-ENV-005</td><td class="ttl">Analytics fire only on PROD</td><td class="steps">Set <code>NEXT_PUBLIC_DEPLOYMENT_MODE</code> to DEV then PROD; load page.</td><td class="exp">GTM/Clarity scripts load only on PROD (mirrors JSP <code>DEPLOYMENT_MODE=='PROD'</code>).</td><td><span class="b t">Functional</span></td><td><span class="b P3">P3</span></td><td><code>AnalyticsScripts</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P3" data-type="UI"><td class="id">STU-ENV-006</td><td class="ttl">Maintenance banner shows when enabled</td><td class="steps">Enable maintenance flag; load wizard.</td><td class="exp">MaintenanceBanner renders; wizard still usable per policy.</td><td><span class="b t">UI</span></td><td><span class="b P3">P3</span></td><td><code>MaintenanceBanner</code>, <code>maintenanceApi</code></td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ AUTH ============ -->
+<section id="auth">
+<h2><span class="id">TS-AUTH</span> Authentication / Session / SSO</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P0" data-type="E2E"><td class="id">STU-AUTH-001</td><td class="ttl">SSO handoff from legacy Login.jsp</td><td class="steps">Student with in-progress enrollment logs in on Java <code>Login.jsp</code>.</td><td class="exp">Backend redirects to <code>app/api/sso</code>; <code>signIn('sso-token')</code> establishes next-auth session; lands on correct step.</td><td><span class="b t">E2E</span></td><td><span class="b P0">P0</span></td><td><code>app/api/sso/route.js</code>, <code>auth.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">STU-AUTH-002</td><td class="ttl">SSO token is single-use</td><td class="steps">Use an <code>ssoToken</code> once (success), then replay same token.</td><td class="exp">Second exchange fails (backend invalidates after one use).</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td><code>exchangeSsoToken</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Security"><td class="id">STU-AUTH-003</td><td class="ttl">Expired/invalid SSO token rejected</td><td class="steps">Hit <code>/api/sso</code> with a bad/expired token.</td><td class="exp"><code>authorize()</code> returns null; no session; redirected safely.</td><td><span class="b t">Security</span></td><td><span class="b P1">P1</span></td><td><code>auth.js</code> sso-token provider</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">STU-AUTH-004</td><td class="ttl">Unauthenticated wizard hit redirects to Java login</td><td class="steps">Open a <code>/:school/enrollment/:program/step/*</code> URL with no session.</td><td class="exp"><code>proxy.js</code> redirects to <code>{backend}/{school}/common/login</code> before any wizard HTML renders.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td><code>proxy.js</code> matcher</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-AUTH-005</td><td class="ttl">Session carries school &amp; user identity</td><td class="steps">After login, inspect session in a step page.</td><td class="exp"><code>session.schoolUUID / schoolNumericId / userId / uniqueId / schoolName</code> all populated.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>auth.js</code> jwt/session callbacks</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-AUTH-006</td><td class="ttl">schoolName passed through SSO credentials</td><td class="steps">SSO with a <code>schoolName</code> query value.</td><td class="exp">Session carries schoolName (provider declares it; not silently dropped).</td><td><span class="b t">Regression</span></td><td><span class="b P1">P1</span></td><td>sso-schoolname fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-AUTH-007</td><td class="ttl">Captcha validates against same session</td><td class="steps">Render captcha image, solve it, submit login via Credentials provider.</td><td class="exp">Cookie forwarded in <code>login()</code>; captcha validates; login succeeds.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>services/authApi.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Negative"><td class="id">STU-AUTH-008</td><td class="ttl">Login status "0"/"2"/"3" handled</td><td class="steps">Force each failure status from backend.</td><td class="exp">"0"/"2" = login failed message; "3" = session-out handling; no session created.</td><td><span class="b t">Negative</span></td><td><span class="b P1">P1</span></td><td><code>auth.js</code> authorize</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-AUTH-009</td><td class="ttl">Logout invalidates &amp; blocks back</td><td class="steps">Logout; press browser Back to a wizard step.</td><td class="exp"><code>no-store</code> header re-hits <code>proxy.js</code> → login; cached wizard not replayed.</td><td><span class="b t">Security</span></td><td><span class="b P1">P1</span></td><td><code>next.config.mjs</code> headers</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-AUTH-010</td><td class="ttl">Session expiry mid-wizard</td><td class="steps">Let Redis session expire (60m) then save a step.</td><td class="exp">API returns session-out; user sent to login; no partial corrupt save.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td>Redis 60m / status "3"</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="E2E"><td class="id">STU-AUTH-011</td><td class="ttl">Multi-school login (IS vs Anchored)</td><td class="steps">Login a student under <code>international-schooling</code>, then under <code>Anchored-Education</code>.</td><td class="exp">Correct schoolUUID/branding/currency in each; no cross-tenant bleed.</td><td><span class="b t">E2E</span></td><td><span class="b P2">P2</span></td><td><code>SchoolConstants.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Security"><td class="id">STU-AUTH-012</td><td class="ttl">No Next.js login page exists</td><td class="steps">Attempt to open a Next.js login route directly.</td><td class="exp">No in-app login; auth is SSO/Java only (by design).</td><td><span class="b t">Security</span></td><td><span class="b P1">P1</span></td><td>SSO handoff design</td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ ACC ============ -->
+<section id="acc">
+<h2><span class="id">TS-ACC</span> Account Creation (Online / Offline / B2B · all programs)</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P0" data-type="E2E"><td class="id">STU-ACC-001</td><td class="ttl">Online account creation</td><td class="steps">Open <code>/{school}/enrollment/{program}</code> (online); fill AccountCreationForm; submit.</td><td class="exp">Account created via <code>student/{enrollmentFor}/{program}</code>; redirect to step 1.</td><td><span class="b t">E2E</span></td><td><span class="b P0">P0</span></td><td><code>ClientSignupStudentController#signupStudent</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-ACC-002</td><td class="ttl">Offline mode account</td><td class="steps">Enter via offline mode (<code>signupType=OFFLINE</code>).</td><td class="exp">Offline branch handled; verify-email-offline path works.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>SignupStudentUtil</code> SIGN_TYPE_OFFLINE</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-ACC-003</td><td class="ttl">B2B partner-initiated enrollment</td><td class="steps">Enter via B2B partner flow.</td><td class="exp">B2B branch sets partner linkage; enrollment proceeds.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>EnrollmentPartnerUtil</code>, B2B roles</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-ACC-004</td><td class="ttl">Each learning program route resolves</td><td class="steps">Open program routes O, DD, G, F, A/S, SSP.</td><td class="exp">Each maps to correct backend program value + label + course provider.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>LearningPrograms.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-ACC-005</td><td class="ttl">Program short/route/backend code mapping</td><td class="steps">Pass abbreviations (e.g. "DD", "Flexy", "S").</td><td class="exp"><code>findLearningProgram</code> resolves to the right program; unknown → ONE_TO_ONE default.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>LearningPrograms.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-ACC-006</td><td class="ttl">Public school info resolution</td><td class="steps">Load account page for a valid slug.</td><td class="exp"><code>getPublicSchoolInfo</code> returns numericId/name/WhatsApp; header shows school.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>student/enrollment/public-info</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Negative"><td class="id">STU-ACC-007</td><td class="ttl">Duplicate email blocked</td><td class="steps">Create account with an email already enrolled.</td><td class="exp">Clear error; no duplicate account; existing enrollment may resume.</td><td><span class="b t">Negative</span></td><td><span class="b P1">P1</span></td><td>account create</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Negative"><td class="id">STU-ACC-008</td><td class="ttl">Invalid email / required fields</td><td class="steps">Submit with bad email / blank required fields.</td><td class="exp">Inline validation blocks submit; no API call.</td><td><span class="b t">Negative</span></td><td><span class="b P2">P2</span></td><td><code>studentSignupValidation.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Security"><td class="id">STU-ACC-009</td><td class="ttl">Password double-encoded correctly</td><td class="steps">Create account with a password containing special chars.</td><td class="exp">password/confirmPassword use <code>encodeRawString</code> (double-encode); backend decodes twice; account created.</td><td><span class="b t">Security</span></td><td><span class="b P1">P1</span></td><td><code>payloadEncoding.encodeRawString</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-ACC-010</td><td class="ttl">UTM / referral capture</td><td class="steps">Open account URL with utm_* + referralCode + ras + v params.</td><td class="exp"><code>getEnrollmentSignupInfo</code> preserves query (repeated keys); UTM persisted to enrollment.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>utmCookies</code>, <code>getEnrollmentSignupInfo</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-ACC-011</td><td class="ttl">Grade/program availability per school</td><td class="steps">Load account for IS vs Anchored for the same program.</td><td class="exp">Grade/program options reflect <code>GRADE_LEARNING_PROGRAM_MAPPING</code> for that school.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>GradeLearningProgramMappingDao</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-ACC-012</td><td class="ttl">Account → auto-redirect to step 1</td><td class="steps">Complete account creation.</td><td class="exp">Redirect to <code>step/student-details</code> with session established.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>EnrollRedirect.jsx</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-ACC-013</td><td class="ttl">Marketing consent / campaign cookies</td><td class="steps">Load with consent banner; accept/decline.</td><td class="exp">Consent recorded; campaign cookies initialized; privacy-preserving default.</td><td><span class="b t">Functional</span></td><td><span class="b P3">P3</span></td><td><code>ConsentBanner</code>, <code>campaignCookies</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-ACC-014</td><td class="ttl">Payer IP geolocation captured</td><td class="steps">Load account page from a known region.</td><td class="exp">ip-location server action forwards real visitor IP (<code>X-Forwarded-For</code>); region captured.</td><td><span class="b t">Functional</span></td><td><span class="b P3">P3</span></td><td><code>services/ipLocationApi.js</code></td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ S1 ============ -->
+<section id="s1">
+<h2><span class="id">TS-S1</span> Stage 1 — Student Details</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S1-001</td><td class="ttl">Prefill priority order</td><td class="steps">Open step 1 with partial saved data.</td><td class="exp">Prefill: backend → sessionStorage → session.email, in that order.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>useStudentDetailsPrefill</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="E2E"><td class="id">STU-S1-002</td><td class="ttl">Save student details success</td><td class="steps">Fill all fields; Continue.</td><td class="exp"><code>save-student-details</code> returns <code>status "1"</code>; advance to step 2.</td><td><span class="b t">E2E</span></td><td><span class="b P0">P0</span></td><td><code>save-student-details</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">STU-S1-003</td><td class="ttl">Nationality sent as NAME not id</td><td class="steps">Pick a nationality; save; inspect payload.</td><td class="exp">Payload <code>nationality</code> = name string (not id) — matches backend expectation.</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td>stage1 payload fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">STU-S1-004</td><td class="ttl">countryCode vs countryIsdCode mapping</td><td class="steps">Enter a phone with country; save; inspect payload.</td><td class="exp">DTO <code>countryCode</code> = dial digits, <code>countryIsdCode</code> = lowercase ISO2 — NOT swapped.</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td>stage1 swap fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">STU-S1-005</td><td class="ttl">Leading "+" not lost in phone</td><td class="steps">Enter "+1 585…"; save.</td><td class="exp">ISD code and number sent as separate fields; "+" not turned into a space by backend decode.</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td><code>payloadEncoding</code> quirk</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S1-006</td><td class="ttl">DOB + grade validation</td><td class="steps">Enter DOB/grade combinations (valid + edge).</td><td class="exp">Age/grade rules enforced (<code>ageValidation.js</code>); invalid blocked.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>ageValidation.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Negative"><td class="id">STU-S1-007</td><td class="ttl">Required fields block submit</td><td class="steps">Leave required fields blank; Continue.</td><td class="exp">Validation errors; no API call.</td><td><span class="b t">Negative</span></td><td><span class="b P2">P2</span></td><td><code>studentSignupValidation</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S1-008</td><td class="ttl">Change Grade &amp; DOB modal</td><td class="steps">Open the change-grade modal; change grade/DOB; save.</td><td class="exp">Reuses Stage-1 prefill/save hooks; grade updates propagate (affects step 3 courses).</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td>stage3 change-grade modal</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-S1-009</td><td class="ttl">courseProviderId / studyCenter sent</td><td class="steps">Save step 1; inspect payload.</td><td class="exp"><code>courseProviderId</code>, <code>studyCenter</code> and UTM fields included (not dropped).</td><td><span class="b t">Regression</span></td><td><span class="b P2">P2</span></td><td>stage1 payload fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S1-010</td><td class="ttl">learningProgram resolved dynamically</td><td class="steps">Open wizard where program differs from URL default "O".</td><td class="exp">Context resolves <code>learningProgram</code> from get-student-details, not hardcoded "O".</td><td><span class="b t">Regression</span></td><td><span class="b P1">P1</span></td><td>enrollment-context dynamic</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S1-011</td><td class="ttl">DUAL_DIPLOMA additive contact fields</td><td class="steps">Enroll a DD program student; fill email/phone/nationality + school fields.</td><td class="exp">Contact fields are additive with school fields (not either/or).</td><td><span class="b t">Regression</span></td><td><span class="b P1">P1</span></td><td>DUAL_DIPLOMA fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">STU-S1-012</td><td class="ttl">intl-tel-input default country &amp; validity</td><td class="steps">Open phone field; type number.</td><td class="exp">Default country "in"; separateDialCode; onChange returns contactNumber/countryIsdCode/countryCode/isValid.</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td><code>useIntlTelInput</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S1-013</td><td class="ttl">sessionStorage persistence across nav</td><td class="steps">Fill step 1; go to step 2; return.</td><td class="exp">Fields restored from <code>wizardStorage</code> (<code>is-sms:enrollment-student-fields:{schoolUUID}:{userId}</code>).</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>wizardStorage.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">STU-S1-014</td><td class="ttl">Skeleton gated on data, not timer</td><td class="steps">Throttle network; open step 1.</td><td class="exp">Skeleton shows until grades+countries React Query resolve (not a setTimeout).</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td>stage1 UI redesign</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">STU-S1-015</td><td class="ttl">Icon-card layout &amp; step row</td><td class="steps">View step 1 layout.</td><td class="exp">Icon-led fields, centered card, horizontal step row per reference.</td><td><span class="b t">UI</span></td><td><span class="b P3">P3</span></td><td>stage1 UI redesign</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S1-016</td><td class="ttl">Continue advances &amp; caches</td><td class="steps">Save; observe nav.</td><td class="exp"><code>saveWizardStudentFields</code> + <code>setQueryData</code> + <code>router.push(step 2)</code>.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>StudentDetailsStep.jsx</code></td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ S2 ============ -->
+<section id="s2">
+<h2><span class="id">TS-S2</span> Stage 2 — Parent Details</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P0" data-type="E2E"><td class="id">STU-S2-001</td><td class="ttl">Save parent details success</td><td class="steps">Fill parent fields; Continue.</td><td class="exp"><code>save-parent-details</code> returns <code>status "1"</code>; advance to step 3.</td><td><span class="b t">E2E</span></td><td><span class="b P0">P0</span></td><td><code>save-parent-details</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">STU-S2-002</td><td class="ttl">countryCode ISO2 overflow fixed</td><td class="steps">Save a parent phone with country; inspect DB column.</td><td class="exp">No VARCHAR(2) overflow — same swap fix as Stage 1 applied to parent phone.</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td>stage2 overflow fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S2-003</td><td class="ttl">"Change your Location" checkbox (inverted)</td><td class="steps">Toggle the checkbox on/off.</td><td class="exp">Inverted from old "Same as student": checked = enter different location; unchecked = reuse student location.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td>stage2 UI redesign</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">STU-S2-004</td><td class="ttl">Location fields disabled/grayed when unchecked</td><td class="steps">Leave checkbox unchecked.</td><td class="exp">Location fields shown disabled+grayed (not hidden).</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td>stage2 UI redesign</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S2-005</td><td class="ttl">Parent relation selection</td><td class="steps">Pick relation (Father/Mother/Guardian…).</td><td class="exp">Relation saved per <code>parentRelation.js</code>.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>parentRelation.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Negative"><td class="id">STU-S2-006</td><td class="ttl">Required parent fields validation</td><td class="steps">Submit blank required fields.</td><td class="exp">Inline errors; no save.</td><td><span class="b t">Negative</span></td><td><span class="b P2">P2</span></td><td><code>useParentDetailsSignup</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S2-007</td><td class="ttl">Parent prefill on return</td><td class="steps">Save parent; leave; return to step 2.</td><td class="exp">Fields restored from backend/sessionStorage.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>wizardStorage</code> parent-fields</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Regression"><td class="id">STU-S2-008</td><td class="ttl">Parent phone "+" preserved</td><td class="steps">Enter parent "+NN…"; save.</td><td class="exp">ISD + number split; "+" not dropped.</td><td><span class="b t">Regression</span></td><td><span class="b P1">P1</span></td><td>payload quirk</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-S2-009</td><td class="ttl">Email validation parent</td><td class="steps">Enter invalid parent email.</td><td class="exp">Blocked with message.</td><td><span class="b t">Negative</span></td><td><span class="b P2">P2</span></td><td>validation</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S2-010</td><td class="ttl">Continue advances to step 3</td><td class="steps">Save valid parent details.</td><td class="exp"><code>router.push(step 3)</code>; cache updated.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>ParentDetailsStep.jsx</code></td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ S3 ============ -->
+<section id="s3">
+<h2><span class="id">TS-S3</span> Stage 3 — Course Selection</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S3-001</td><td class="ttl">Course list loads by grade</td><td class="steps">Open step 3.</td><td class="exp">Courses load keyed by <code>["course-details", userId, standardId]</code>; grade change refetches.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>useCourseSelection</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="UI"><td class="id">STU-S3-002</td><td class="ttl">Category sidebar navigation</td><td class="steps">Click categories.</td><td class="exp">Courses filter by category; selection preserved.</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td>stage3 UI redesign</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S3-003</td><td class="ttl">Add / remove subject</td><td class="steps">Add a subject; remove it.</td><td class="exp">Selection updates locally (<code>setQueryData</code>), summary recounts.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>useLocalCourseUpdate</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S3-004</td><td class="ttl">Regular / Honor toggle</td><td class="steps">Toggle a subject Regular↔Honor.</td><td class="exp">Type switches; counts + credits update; no business rule broken.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td>stage3 UI redesign</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">STU-S3-005</td><td class="ttl">Recommended courses REPLACE selection</td><td class="steps">Make a selection; confirm recommended courses.</td><td class="exp">Confirm <b>replaces</b> the selection (does not merge).</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td>recommended-courses fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">STU-S3-006</td><td class="ttl">Electives/Advanced count from courseCategory</td><td class="steps">Select electives/advanced; check summary.</td><td class="exp">Electives/Advanced counts come from <code>courseCategory</code> (not <code>courseTypeOriginal</code>); Required/Regular/Honors unchanged.</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td>selection-summary fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S3-007</td><td class="ttl">Credit ring / summary accuracy</td><td class="steps">Add/remove subjects.</td><td class="exp">Credit ring + legend reflect live totals.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td>stage3 summary bar</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Negative"><td class="id">STU-S3-008</td><td class="ttl">Max/min credit limit enforced</td><td class="steps">Exceed allowed credits.</td><td class="exp">Over-limit blocked with message.</td><td><span class="b t">Negative</span></td><td><span class="b P2">P2</span></td><td>course rules</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S3-009</td><td class="ttl">Grade change recalculates courses</td><td class="steps">Change grade via modal (STU-S1-008).</td><td class="exp"><code>standardId</code> in queryKey changes → course list refetch; stale selection cleared/re-validated.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>courseDetailsKey</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="UI"><td class="id">STU-S3-010</td><td class="ttl">Mobile category sheet (&lt;768px)</td><td class="steps">Open step 3 at phone width.</td><td class="exp">Real <code>useIsMobile()</code> shows category-sheet modal (not CSS-hidden); same handlers reused.</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td>stage3 mobile</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">STU-S3-011</td><td class="ttl">Grade-badge row hidden on mobile</td><td class="steps">View step 3 on mobile.</td><td class="exp">Grade-badge row hidden; layout intact.</td><td><span class="b t">UI</span></td><td><span class="b P3">P3</span></td><td>stage3 mobile</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="E2E"><td class="id">STU-S3-012</td><td class="ttl">Save course selection</td><td class="steps">Finalize selection; Continue.</td><td class="exp">Selection persists to backend; advance to step 4.</td><td><span class="b t">E2E</span></td><td><span class="b P0">P0</span></td><td>course save endpoint</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">STU-S3-013</td><td class="ttl">Stage3 skeleton on course load</td><td class="steps">Throttle; open step 3.</td><td class="exp">Stage3Skeleton shows while courses load.</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td>stage3 skeleton</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S3-014</td><td class="ttl">Program-specific selection (DD vs O)</td><td class="steps">Compare DD vs O course rules.</td><td class="exp">Correct provider/catalog per program; rules differ as in legacy.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td>program rules</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-S3-015</td><td class="ttl">Review invalidates stale summary</td><td class="steps">Edit selection then go to review.</td><td class="exp"><code>removeQueries(["student-review-details", userId])</code> so review refetches.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>useCourseSelection</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-S3-016</td><td class="ttl">Upgrade subject to Honor flow</td><td class="steps">Upgrade a Regular subject.</td><td class="exp">Honor pricing/credits reflected in summary + review.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td>stage3</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Negative"><td class="id">STU-S3-017</td><td class="ttl">Continue blocked with no selection</td><td class="steps">Try to continue with empty selection.</td><td class="exp">Blocked with guidance (if required by program).</td><td><span class="b t">Negative</span></td><td><span class="b P2">P2</span></td><td>course rules</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P3" data-type="UI"><td class="id">STU-S3-018</td><td class="ttl">Summary-legend taxonomy matches legacy</td><td class="steps">Compare legend labels to legacy.</td><td class="exp">Required/Regular/Honors/Electives/Advanced labels and groupings match (see caveat).</td><td><span class="b t">UI</span></td><td><span class="b P3">P3</span></td><td>stage3 caveat</td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ S4 ============ -->
+<section id="s4">
+<h2><span class="id">TS-S4</span> Stage 4 — Review &amp; Payment</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S4-001</td><td class="ttl">Review shows all prior stages</td><td class="steps">Open step 4.</td><td class="exp">Student, parent, course selection summarized correctly.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>useStudentReview</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">STU-S4-002</td><td class="ttl">get-payment-details plumbing quirk</td><td class="steps">Trigger payment details fetch.</td><td class="exp"><code>courseId</code>/<code>controlType</code> sent as "" (legacy quirk); backend reads only <code>userId</code>/<code>callFrom</code>; correct fee returned.</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td>get-payment-details fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S4-003</td><td class="ttl">Fee breakdown + currency per school</td><td class="steps">Open review for IS (USD) and Anchored (ZAR).</td><td class="exp">Amounts + currency symbol correct per school (<code>currencyDisplay</code>).</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>currencyDisplay.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S4-004</td><td class="ttl">Payment gateway picker</td><td class="steps">Open gateway picker.</td><td class="exp">Only school-enabled gateways listed; client vs redirect types handled.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>paymentGatewayChecks</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="E2E"><td class="id">STU-S4-005</td><td class="ttl">Launch payment gateway (redirect)</td><td class="steps">Choose Stripe/Airwallex; pay.</td><td class="exp">Server returns redirectUrl; browser goes to hosted page; no secret in client.</td><td><span class="b t">E2E</span></td><td><span class="b P0">P0</span></td><td><code>launch-payment-gateway</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S4-006</td><td class="ttl">Custom payment forces step 4</td><td class="steps">Enable customPaymentEnabled; load any step.</td><td class="exp">User forced to step 4 (review) by resume logic.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>useWizardResume</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-S4-007</td><td class="ttl">Advance fee / payment option</td><td class="steps">Where enabled, choose advance/partial payment.</td><td class="exp">Advance-fee options per <code>SCHOOL_SETTINGS_ENROLLMENT</code>; totals correct.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td>enrollment settings</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S4-008</td><td class="ttl">Proceed to dashboard after pay</td><td class="steps">Complete payment.</td><td class="exp"><code>proceed-to-dashboard</code> returns <code>status "1"</code>; redirect to student dashboard.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>proceed-to-dashboard</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-S4-009</td><td class="ttl">Submit application</td><td class="steps">Submit final application.</td><td class="exp"><code>submit-application</code> succeeds; enrollment marked complete.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>submit-application</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-S4-010</td><td class="ttl">Edit from review returns to step</td><td class="steps">Click edit on a reviewed section.</td><td class="exp">Navigates back to the step; edits reflected on return.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>ReviewAndPaymentStep.jsx</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Regression"><td class="id">STU-S4-011</td><td class="ttl">Stage4 build integrity (no dup code)</td><td class="steps">Build the app; open step 4.</td><td class="exp">No duplicated imports/hooks/functions; page builds and renders (prior corruption fixed).</td><td><span class="b t">Regression</span></td><td><span class="b P1">P1</span></td><td>stage4 dup-code fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-S4-012</td><td class="ttl">Add-enrollment flag on gateway return URL</td><td class="steps">Pay within add-enrollment context.</td><td class="exp">add-enrollment flag carried on payment-gateway return URLs.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td>recent commit e92c15ef0d</td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ RES ============ -->
+<section id="res">
+<h2><span class="id">TS-RES</span> Resume / Navigation / Concurrency</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P0" data-type="Functional"><td class="id">STU-RES-001</td><td class="ttl">Resume at nextSessionStage on refresh</td><td class="steps">Save step 2; refresh at step 1 URL.</td><td class="exp"><code>signupPage</code>=2 → <code>router.replace</code> to step 2.</td><td><span class="b t">Functional</span></td><td><span class="b P0">P0</span></td><td><code>useWizardResume</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-RES-002</td><td class="ttl">Step ahead of marker pulled back</td><td class="steps">Marker=2; type step 3 URL.</td><td class="exp">Pulled back to step 2.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>resolveResumeStep</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-RES-003</td><td class="ttl">Behind marker resumes min(marker,3)</td><td class="steps">Marker=4; load step 1.</td><td class="exp">Resumes to step 3 (last detail step), not review.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>resolveResumeStep</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-RES-004</td><td class="ttl">In-app Back/Continue no re-trigger</td><td class="steps">Navigate steps using app buttons.</td><td class="exp"><code>window.__wizardResumeChecked</code> prevents resume re-trigger within a document load.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>useWizardResume</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="E2E"><td class="id">STU-RES-005</td><td class="ttl">Another browser completes → redirect</td><td class="steps">Open two sessions; complete in one.</td><td class="exp">Other tab's stage-status poll redirects to dashboard/appropriate page.</td><td><span class="b t">E2E</span></td><td><span class="b P1">P1</span></td><td><code>useSignupStageStatusPoll</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-RES-006</td><td class="ttl">Multi-tab concurrent edits</td><td class="steps">Edit step 1 in two tabs.</td><td class="exp">No corrupt save; last-write + server validation consistent.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td>concurrency</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">STU-RES-007</td><td class="ttl">Resume 404 guard</td><td class="steps">Backend returns a malformed redirectUri.</td><td class="exp">Same-origin + known-route guard prevents navigation to a non-existent route (no 404 loop).</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td>wizard-resume 404 fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-RES-008</td><td class="ttl">No signupPage stays put</td><td class="steps">process returns no signupPage.</td><td class="exp">User stays on current step (no redirect).</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>useWizardResume</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-RES-009</td><td class="ttl">Reopened tab / typed URL resumes</td><td class="steps">Close + reopen wizard tab.</td><td class="exp">Resumes to correct step from backend marker.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td>resume</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="UI"><td class="id">STU-RES-010</td><td class="ttl">Loader during resume (no flash)</td><td class="steps">Trigger a resume redirect.</td><td class="exp">Step shows loader (<code>redirecting</code>) instead of flashing content then moving.</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td><code>useWizardResume</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Security"><td class="id">STU-RES-011</td><td class="ttl">Deep-link to step without session</td><td class="steps">Open a step URL in a fresh browser.</td><td class="exp"><code>proxy.js</code> blocks before render → login.</td><td><span class="b t">Security</span></td><td><span class="b P2">P2</span></td><td><code>proxy.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-RES-012</td><td class="ttl">Back/forward cache (bfcache) correctness</td><td class="steps">Use browser back/forward across steps + after logout.</td><td class="exp"><code>no-store</code> + <code>pageshow</code> guard reloads correctly; no stale protected content.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>WizardChrome</code> pageshow</td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ PAY ============ -->
+<section id="pay">
+<h2><span class="id">TS-PAY</span> Payments (Student)</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P0" data-type="E2E"><td class="id">STU-PAY-001</td><td class="ttl">Stripe success end-to-end</td><td class="steps">Pay with Stripe (test mode) → return.</td><td class="exp">payment-response-success renders; server re-verifies before marking paid.</td><td><span class="b t">E2E</span></td><td><span class="b P0">P0</span></td><td><code>payment-response-success</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="E2E"><td class="id">STU-PAY-002</td><td class="ttl">Airwallex init &amp; return</td><td class="steps">Pay with Airwallex.</td><td class="exp">airwallex-payment-init works; return verified.</td><td><span class="b t">E2E</span></td><td><span class="b P1">P1</span></td><td><code>airwallex-payment-init/[UNIQUEUUID]</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Negative"><td class="id">STU-PAY-003</td><td class="ttl">Payment failure path</td><td class="steps">Force a failed/cancelled payment.</td><td class="exp">payment-response-failure renders with retry; enrollment not marked paid.</td><td><span class="b t">Negative</span></td><td><span class="b P1">P1</span></td><td><code>payment-response-failure/[customReference]/[UNIQUEUUID]</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="API"><td class="id">STU-PAY-004</td><td class="ttl">Webhook updates status</td><td class="steps">Simulate gateway webhook.</td><td class="exp">Backend records payment; Next.js return page reflects verified status.</td><td><span class="b t">API</span></td><td><span class="b P1">P1</span></td><td>Java PG webhook</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Negative"><td class="id">STU-PAY-005</td><td class="ttl">Duplicate payment prevented</td><td class="steps">Submit payment twice (double-click / back+resubmit).</td><td class="exp">No double charge; server idempotency/verification holds.</td><td><span class="b t">Negative</span></td><td><span class="b P0">P0</span></td><td>server re-verify</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">STU-PAY-006</td><td class="ttl">Browser cannot assert "paid"</td><td class="steps">Tamper client to claim success.</td><td class="exp">Server verification is authoritative; tamper rejected.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td><code>verifyPaymentSucess</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-PAY-007</td><td class="ttl">Response variants render</td><td class="steps">Hit registration/evaluation/other success pages.</td><td class="exp">Each variant renders the right confirmation.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>*-payment-response-success</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-PAY-008</td><td class="ttl">Back after payment safe</td><td class="steps">Press Back from success page.</td><td class="exp">No re-charge; status consistent.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td>return page</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-PAY-009</td><td class="ttl">Currency correct at gateway</td><td class="steps">Pay as Anchored (ZAR).</td><td class="exp">Gateway charges in school currency.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td>currency config</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-PAY-010</td><td class="ttl">Payment status polling terminates</td><td class="steps">Observe init/response polling.</td><td class="exp">Poll stops on terminal state; no runaway requests.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>paymentInitApi</code>/<code>paymentResponseApi</code></td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ AI ============ -->
+<section id="ai">
+<h2><span class="id">TS-AI</span> AI Course Advisor</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-AI-001</td><td class="ttl">Advisor opens in course step</td><td class="steps">Open AI advisor on step 3.</td><td class="exp">Advisor UI renders; requests recommendations.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>ai-advisor</code>, <code>useCourseAdvisor</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-AI-002</td><td class="ttl">Marksheet upload (route handler)</td><td class="steps">Upload a marksheet file (&gt;1MB).</td><td class="exp">Handled by Route Handler (not server action, due to 1MB cap); file accepted.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>marksheet-upload/route.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Negative"><td class="id">STU-AI-003</td><td class="ttl">Marksheet file validation</td><td class="steps">Upload invalid type/oversize.</td><td class="exp">Rejected with message; no server error.</td><td><span class="b t">Negative</span></td><td><span class="b P2">P2</span></td><td><code>marksheetFiles.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-AI-004</td><td class="ttl">Recommendation apply replaces selection</td><td class="steps">Apply an advisor recommendation.</td><td class="exp">Applies consistently with STU-S3-005 (replace semantics).</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>courseAdvisorApi</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P3" data-type="Negative"><td class="id">STU-AI-005</td><td class="ttl">Advisor error handling</td><td class="steps">Force advisor API error.</td><td class="exp">Graceful fallback; manual selection still possible.</td><td><span class="b t">Negative</span></td><td><span class="b P3">P3</span></td><td><code>useCourseAdvisor</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P3" data-type="Security"><td class="id">STU-AI-006</td><td class="ttl">AI keys stay server-side</td><td class="steps">Inspect network/client for API keys.</td><td class="exp">No AI/Anthropic key in client; calls proxied server-side.</td><td><span class="b t">Security</span></td><td><span class="b P3">P3</span></td><td>server action</td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ ADD ============ -->
+<section id="add">
+<h2><span class="id">TS-ADD</span> Add-Another-Student (student enrollment via parent)</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P1" data-type="E2E"><td class="id">STU-ADD-001</td><td class="ttl">Parent adds another student</td><td class="steps">Authenticated parent starts add-enrollment.</td><td class="exp">3-step flow (no parent-details) under <code>/{school}/add-enrollment/[parentId]/[sessionUserId]/step/*</code>.</td><td><span class="b t">E2E</span></td><td><span class="b P1">P1</span></td><td><code>addEnrollmentSteps.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-ADD-002</td><td class="ttl">Resume marker normalized (4→3)</td><td class="steps">Resume an add-enrollment at backend marker 4.</td><td class="exp"><code>normalizeAddSignupPage</code> maps 4→3 (no parent step).</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>useAddWizardResume</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-ADD-003</td><td class="ttl">Roll-number persistence</td><td class="steps">Enter roll no; navigate.</td><td class="exp">Persisted via <code>addEnrollmentStorage</code>.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>addEnrollmentStorage.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">STU-ADD-004</td><td class="ttl">Payment-method modal static assets (https)</td><td class="steps">Open payment-method modal on https.</td><td class="exp">Gateway logos/flags load via <code>/add-enrollment-assets/*</code> rewrite (no mixed-content block).</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td><code>next.config.mjs</code> rewrite</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-ADD-005</td><td class="ttl">Completion / thank-you view</td><td class="steps">Finish add-enrollment.</td><td class="exp">Completed view renders; no shared state leak with main flow.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>AddEnrollmentChrome</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Security"><td class="id">STU-ADD-006</td><td class="ttl">parentId/sessionUserId belong to session</td><td class="steps">Tamper URL parentId/sessionUserId to another parent.</td><td class="exp">Server derives/validates identity; cannot add student under another parent (IDOR).</td><td><span class="b t">Security</span></td><td><span class="b P1">P1</span></td><td><code>addEnrollmentBackendApi</code></td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ DASH ============ -->
+<section id="dash">
+<h2><span class="id">TS-DASH</span> Student Dashboard (post-migration parity) <span class="b oq">planned module</span></h2>
+<p class="small">These target functional equivalence when the Student dashboard is migrated (legacy <code>ClientDashboardStudentController</code>, 80 mappings / 39 JSP). Until then, run against the legacy JSP as the parity baseline.</p>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref (legacy endpoint)</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P1" data-type="E2E"><td class="id">STU-DASH-001</td><td class="ttl">Dashboard entry after login</td><td class="steps">Login as student.</td><td class="exp">Lands on student dashboard; shell + menu render.</td><td><span class="b t">E2E</span></td><td><span class="b P1">P1</span></td><td><code>/dashboard/student/{uuid}</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-DASH-002</td><td class="ttl">Menu built from USER_RIGHTS</td><td class="steps">Compare sidebar to DB rights.</td><td class="exp">Menu items match <code>getRoleAssignModuleList</code> for this role/school.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>ModulesUtil</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-DASH-003</td><td class="ttl">Syllabus</td><td class="steps">Open Syllabus.</td><td class="exp">Syllabus loads; parity with legacy.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>student-syllabus</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-DASH-004</td><td class="ttl">Tasks — view</td><td class="steps">Open Tasks.</td><td class="exp">Task list loads.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>student-task</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-DASH-005</td><td class="ttl">Tasks — submit request</td><td class="steps">Submit a task.</td><td class="exp">Submission saved; confirmation.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>student-task-request</code> submit</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-DASH-006</td><td class="ttl">Course timings</td><td class="steps">Open Course Timings.</td><td class="exp">Timings display correctly in user timezone.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>student-coursetimings</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-DASH-007</td><td class="ttl">Events</td><td class="steps">Open Events.</td><td class="exp">Events list/calendar renders.</td><td><span class="b t">Functional</span></td><td><span class="b P3">P3</span></td><td><code>student-events</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-DASH-008</td><td class="ttl">Exam details</td><td class="steps">Open Exam Details.</td><td class="exp">Exam schedule/details load.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>student-examination-details</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-DASH-009</td><td class="ttl">Performance</td><td class="steps">Open Performance.</td><td class="exp">Performance content/charts match legacy.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>student-performance-content</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-DASH-010</td><td class="ttl">PTM report</td><td class="steps">Open PTM Report.</td><td class="exp">PTM report renders.</td><td><span class="b t">Functional</span></td><td><span class="b P3">P3</span></td><td><code>student-PTM-report</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-DASH-011</td><td class="ttl">Transcript</td><td class="steps">Open Transcript.</td><td class="exp">Transcript content + download match legacy.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>student-transcript-content</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-DASH-012</td><td class="ttl">Course selection (dashboard)</td><td class="steps">Open in-dashboard course selection.</td><td class="exp">Theme2 course selection loads + saves.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>student-course-selection-content-theme2</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-DASH-013</td><td class="ttl">Book a session — free slots</td><td class="steps">Open booking; pick subject.</td><td class="exp">Free slots load (<code>get-student-free-slots</code>).</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>get-student-free-slots</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="E2E"><td class="id">STU-DASH-014</td><td class="ttl">Book a session — submit</td><td class="steps">Select slot; book.</td><td class="exp">Booking saved (<code>...slots-submit-new</code>); confirmation; no double-book.</td><td><span class="b t">E2E</span></td><td><span class="b P1">P1</span></td><td><code>student-book-session-slots-submit-new</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-DASH-015</td><td class="ttl">Cart — add</td><td class="steps">Add item to cart.</td><td class="exp">Cart count/detail update.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>add-to-cart</code>, <code>cartDetail.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="E2E"><td class="id">STU-DASH-016</td><td class="ttl">Buy extra class / cart payment</td><td class="steps">Buy an extra class; pay.</td><td class="exp">Payment via gateway; class credited.</td><td><span class="b t">E2E</span></td><td><span class="b P2">P2</span></td><td><code>buy-extra-class</code>, <code>cart-payment</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="E2E"><td class="id">STU-DASH-017</td><td class="ttl">LMS content + SSO launch</td><td class="steps">Open LMS; launch a course.</td><td class="exp">LMS content loads; SSO launch to Buzz/Canvas works.</td><td><span class="b t">E2E</span></td><td><span class="b P1">P1</span></td><td><code>student-lms-content</code>, SSO</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-DASH-018</td><td class="ttl">ID card</td><td class="steps">Open ID Card.</td><td class="exp">ID card renders/downloads (PDF/image).</td><td><span class="b t">Functional</span></td><td><span class="b P3">P3</span></td><td><code>student/id-card</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-DASH-019</td><td class="ttl">Confirmation of studies</td><td class="steps">Request confirmation.</td><td class="exp">Document generated.</td><td><span class="b t">Functional</span></td><td><span class="b P3">P3</span></td><td><code>confirmation-of-studies</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-DASH-020</td><td class="ttl">Academic year extension</td><td class="steps">Request extension.</td><td class="exp">Flow completes; status updates.</td><td><span class="b t">Functional</span></td><td><span class="b P3">P3</span></td><td><code>academic-year-extention</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-DASH-021</td><td class="ttl">Profile view</td><td class="steps">Open profile.</td><td class="exp">Student profile displays.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td>student ProfileView</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-DASH-022</td><td class="ttl">Profile update</td><td class="steps">Edit + save profile.</td><td class="exp">Update saved; validation enforced.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td>UpdateProfile</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">STU-DASH-023</td><td class="ttl">Parent login → student view (view-as-user)</td><td class="steps">Parent logs in.</td><td class="exp">Reaches <code>view-as-user</code> student dashboard for the child.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>view-as-user/{uuid}</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Security"><td class="id">STU-DASH-024</td><td class="ttl">PermissionGate hides unauthorized modules</td><td class="steps">Student without a module right.</td><td class="exp">Hidden in UI AND backend rejects direct access.</td><td><span class="b t">Security</span></td><td><span class="b P1">P1</span></td><td><code>USER_RIGHTS</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-DASH-025</td><td class="ttl">Dashboard overview tiles</td><td class="steps">Open dashboard home.</td><td class="exp">Summary tiles match legacy counts.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>get-teacher/student dashboard</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">STU-DASH-026</td><td class="ttl">Dashboard setup gating (orientation/training)</td><td class="steps">New student with pending orientation/system-training.</td><td class="exp">Routed through dashboard-setup gating per <code>SCHOOL_SETTINGS_ENROLLMENT</code>.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>common/dashboard-setup</code></td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ SEC ============ -->
+<section id="sec">
+<h2><span class="id">TS-SEC</span> Security / Negative (Student)</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">STU-SEC-001</td><td class="ttl">IDOR via userId in body</td><td class="steps">Change <code>authentication.userId</code> to another student; call save-*-details.</td><td class="exp">Backend derives identity from session; cross-user write rejected.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td>authz hardening</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">STU-SEC-002</td><td class="ttl">IDOR via schoolId</td><td class="steps">Change <code>schoolId</code> to another tenant.</td><td class="exp">Request scoped to session's school; cross-tenant access denied.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td>tenant scoping</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">STU-SEC-003</td><td class="ttl">Save endpoints require session</td><td class="steps">Call save-student-details with no session.</td><td class="exp">Rejected (session-out), no write.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td>session guard</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Security"><td class="id">STU-SEC-004</td><td class="ttl">No DATABASE_NAME in client</td><td class="steps">Inspect client JS/globals.</td><td class="exp"><code>DATABASE_NAME</code> not exposed to the browser (fixed from legacy leak).</td><td><span class="b t">Security</span></td><td><span class="b P1">P1</span></td><td>§18 finding</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Security"><td class="id">STU-SEC-005</td><td class="ttl">No raw SESSION_ID in client</td><td class="steps">Inspect client globals.</td><td class="exp">Session id not exposed as a JS global.</td><td><span class="b t">Security</span></td><td><span class="b P1">P1</span></td><td>§18 finding</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Security"><td class="id">STU-SEC-006</td><td class="ttl">Payload tamper rejected</td><td class="steps">Modify encoded payload to inject fields.</td><td class="exp">Server validation rejects unexpected/invalid fields.</td><td><span class="b t">Security</span></td><td><span class="b P1">P1</span></td><td>server validation</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Security"><td class="id">STU-SEC-007</td><td class="ttl">Cross-school data isolation</td><td class="steps">As IS student, query Anchored data by id.</td><td class="exp">No cross-school rows returned.</td><td><span class="b t">Security</span></td><td><span class="b P1">P1</span></td><td>tenant isolation</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Security"><td class="id">STU-SEC-008</td><td class="ttl">XSS in name/text fields</td><td class="steps">Enter <code>&lt;script&gt;</code> in name fields.</td><td class="exp">Rendered safely (React escaping); no execution.</td><td><span class="b t">Security</span></td><td><span class="b P1">P1</span></td><td>React escaping</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Security"><td class="id">STU-SEC-009</td><td class="ttl">Upload file validation</td><td class="steps">Upload disallowed file type/size to upload endpoints.</td><td class="exp">Rejected; not stored.</td><td><span class="b t">Security</span></td><td><span class="b P2">P2</span></td><td>upload validation</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Security"><td class="id">STU-SEC-010</td><td class="ttl">ENCRYPTED_USER_ID not reversible client-side</td><td class="steps">Inspect client for crypto keys.</td><td class="exp">No AES key/passphrase shipped to client that could reverse the id.</td><td><span class="b t">Security</span></td><td><span class="b P2">P2</span></td><td>§18 finding</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Security"><td class="id">STU-SEC-011</td><td class="ttl">Direct API access without UI</td><td class="steps">Call a student API directly (curl) without session.</td><td class="exp">401/session-out; no data.</td><td><span class="b t">Security</span></td><td><span class="b P2">P2</span></td><td>session guard</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Negative"><td class="id">STU-SEC-012</td><td class="ttl">Expired/garbage school slug</td><td class="steps">Open wizard with an unknown slug.</td><td class="exp">Does NOT silently render school-1 data (tighten legacy fallback); clear error.</td><td><span class="b t">Negative</span></td><td><span class="b P2">P2</span></td><td>slug resolution</td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ UI ============ -->
+<section id="ui">
+<h2><span class="id">TS-UI</span> UI / Theme / Accessibility (Student)</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P1" data-type="UI"><td class="id">STU-UI-001</td><td class="ttl">Responsive wizard (mobile/tablet/desktop)</td><td class="steps">Run wizard at 360/768/1280px.</td><td class="exp">No horizontal scroll; usable; step row adapts.</td><td><span class="b t">UI</span></td><td><span class="b P1">P1</span></td><td>responsive</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="UI"><td class="id">STU-UI-002</td><td class="ttl">Per-school theme applied</td><td class="steps">Load IS vs Anchored.</td><td class="exp">School <code>PARENT_COLOR</code> maps to shadcn tokens; <code>bg-primary</code>/<code>text-primary</code> reflect school branding; no FOUC.</td><td><span class="b t">UI</span></td><td><span class="b P1">P1</span></td><td><code>globals.css</code>, learningProgramTheme</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">STU-UI-003</td><td class="ttl">Currency symbol display</td><td class="steps">View fees for each school.</td><td class="exp">Correct symbol/format (USD $, ZAR R).</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td><code>currencyDisplay.js</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">STU-UI-004</td><td class="ttl">No gray text (text-black convention)</td><td class="steps">Inspect text colors.</td><td class="exp">No <code>text-slate-500</code>/<code>text-gray-*</code>; uses <code>text-black</code>.</td><td><span class="b t">UI</span></td><td><span class="b P3">P3</span></td><td>project convention</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">STU-UI-005</td><td class="ttl">Dialog styling convention</td><td class="steps">Open any wizard dialog.</td><td class="exp">Black/transparent overlay + red-bg/white close button.</td><td><span class="b t">UI</span></td><td><span class="b P3">P3</span></td><td>dialog convention</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">STU-UI-006</td><td class="ttl">No custom CSS beyond globals</td><td class="steps">Review components.</td><td class="exp">Theme classes reused; custom CSS confined to <code>globals.css</code>.</td><td><span class="b t">UI</span></td><td><span class="b P3">P3</span></td><td>project convention</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">STU-UI-007</td><td class="ttl">Toasts position + above dialogs</td><td class="steps">Trigger a toast with a dialog open.</td><td class="exp"><code>react-hot-toast</code> top-center, visible above dialog.</td><td><span class="b t">UI</span></td><td><span class="b P3">P3</span></td><td><code>AppToaster</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">STU-UI-008</td><td class="ttl">Loaders / skeletons consistent</td><td class="steps">Throttle; navigate steps.</td><td class="exp">GlobalLoader/skeletons show; no layout shift.</td><td><span class="b t">UI</span></td><td><span class="b P3">P3</span></td><td><code>GlobalLoader</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P3" data-type="UI"><td class="id">STU-UI-009</td><td class="ttl">Disable pinch-zoom (mobile)</td><td class="steps">Pinch on mobile.</td><td class="exp">Zoom disabled per viewport config (<code>DisableZoom</code>).</td><td><span class="b t">UI</span></td><td><span class="b P3">P3</span></td><td><code>DisableZoom</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">STU-UI-010</td><td class="ttl">Accessibility basics</td><td class="steps">Keyboard-tab the wizard; check contrast/labels.</td><td class="exp">Focusable controls, labels present, adequate contrast.</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td>a11y</td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ REG ============ -->
+<section id="reg">
+<h2><span class="id">TS-REG</span> Regression — Known Fixes (must not recur)</h2>
+<div class="note warn"><b class="t2">Why these matter</b> Each row is a real, previously-fixed defect in the Student flow. Keep them in every regression run.</div>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">STU-REG-001</td><td class="ttl">Stage1 countryCode/countryIsdCode not swapped</td><td class="steps">Save step 1 phone.</td><td class="exp">Correct mapping; no ISO2 misuse.</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td>stage1 swap fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">STU-REG-002</td><td class="ttl">Stage2 COUNTRY_CODE_ISO2 no overflow</td><td class="steps">Save parent phone.</td><td class="exp">No VARCHAR(2) overflow.</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td>stage2 overflow fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">STU-REG-003</td><td class="ttl">Recommended courses replace, not merge</td><td class="steps">Confirm recommended set.</td><td class="exp">Replaces selection.</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td>recommended fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Regression"><td class="id">STU-REG-004</td><td class="ttl">Selection summary uses courseCategory</td><td class="steps">Check Electives/Advanced counts.</td><td class="exp">From <code>courseCategory</code>, not <code>courseTypeOriginal</code>.</td><td><span class="b t">Regression</span></td><td><span class="b P1">P1</span></td><td>summary fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Regression"><td class="id">STU-REG-005</td><td class="ttl">learningProgram resolved dynamically</td><td class="steps">Non-"O" program.</td><td class="exp">From get-student-details, not hardcoded.</td><td><span class="b t">Regression</span></td><td><span class="b P1">P1</span></td><td>context fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Regression"><td class="id">STU-REG-006</td><td class="ttl">DUAL_DIPLOMA contact fields additive</td><td class="steps">DD enrollment.</td><td class="exp">Contact + school fields both sent.</td><td><span class="b t">Regression</span></td><td><span class="b P1">P1</span></td><td>DD fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Regression"><td class="id">STU-REG-007</td><td class="ttl">get-payment-details plumbing</td><td class="steps">Fetch payment details.</td><td class="exp">courseId/controlType empty; backend reads userId/callFrom.</td><td><span class="b t">Regression</span></td><td><span class="b P1">P1</span></td><td>payment-details fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Regression"><td class="id">STU-REG-008</td><td class="ttl">SSO schoolName not dropped</td><td class="steps">SSO with schoolName.</td><td class="exp">Declared in provider; carried to session.</td><td><span class="b t">Regression</span></td><td><span class="b P1">P1</span></td><td>sso-schoolname fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Regression"><td class="id">STU-REG-009</td><td class="ttl">Wizard resume no 404 loop</td><td class="steps">Malformed redirectUri.</td><td class="exp">Guarded; no navigation to missing route.</td><td><span class="b t">Regression</span></td><td><span class="b P0">P0</span></td><td>resume 404 fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Regression"><td class="id">STU-REG-010</td><td class="ttl">nationality sent as name</td><td class="steps">Save step 1.</td><td class="exp">nationality = name, not id.</td><td><span class="b t">Regression</span></td><td><span class="b P1">P1</span></td><td>stage1 payload fix</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Regression"><td class="id">STU-REG-011</td><td class="ttl">Re-enrollment list script-load failure handled</td><td class="steps">Load re-enrollment list with a failing script.</td><td class="exp">No silent unhandled rejection crash (fixed in commit 44ddd69b34).</td><td><span class="b t">Regression</span></td><td><span class="b P2">P2</span></td><td>recent commit</td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ API ============ -->
+<section id="api">
+<h2><span class="id">TS-API</span> API Contract (Student)</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P1" data-type="API"><td class="id">STU-API-001</td><td class="ttl">save-student-details contract</td><td class="steps">POST with valid DTO.</td><td class="exp">Body <code>{payload: encodePayload(dto)}</code>; response has <code>status "1"</code> (not statusCode) on success.</td><td><span class="b t">API</span></td><td><span class="b P1">P1</span></td><td>save-student-details</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="API"><td class="id">STU-API-002</td><td class="ttl">save-parent-details contract</td><td class="steps">POST valid DTO.</td><td class="exp"><code>status "1"</code> on success; parent saved.</td><td><span class="b t">API</span></td><td><span class="b P1">P1</span></td><td>save-parent-details</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="API"><td class="id">STU-API-003</td><td class="ttl">enrollment/process contract</td><td class="steps">GET process/{uuid}.</td><td class="exp">Returns signupPage, customPaymentEnabled, signupType; handles <code>{status:"REDIRECT"}</code>.</td><td><span class="b t">API</span></td><td><span class="b P1">P1</span></td><td>student/enrollment/process</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="API"><td class="id">STU-API-004</td><td class="ttl">get-setting contract</td><td class="steps">GET get-setting?metaType=CONFIGURATION&amp;metaKey=ENROLLMENT_VIA_NEXTJS.</td><td class="exp">Returns <code>{data:{metaValue}}</code>; missing row = "".</td><td><span class="b t">API</span></td><td><span class="b P2">P2</span></td><td>get-setting</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="API"><td class="id">STU-API-005</td><td class="ttl">public-info contract</td><td class="steps">GET public-info.</td><td class="exp">PublicSchoolInfoDTO (numericId/name/whatsapp).</td><td><span class="b t">API</span></td><td><span class="b P2">P2</span></td><td>enrollment/public-info</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="API"><td class="id">STU-API-006</td><td class="ttl">non-ok HTTP → null (not thrown)</td><td class="steps">Force a 5xx / Spring error page.</td><td class="exp"><code>parseJsonResponse</code> returns null; UI shows error state, doesn't crash.</td><td><span class="b t">API</span></td><td><span class="b P1">P1</span></td><td>parseJsonResponse</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="API"><td class="id">STU-API-007</td><td class="ttl">payment-details contract</td><td class="steps">POST get-payment-details.</td><td class="exp">Returns fee/sections; typo'd fields consumed as-is (<code>feeSetionTitile</code> etc.).</td><td><span class="b t">API</span></td><td><span class="b P2">P2</span></td><td>get-payment-details</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="API"><td class="id">STU-API-008</td><td class="ttl">stage-status poll contract</td><td class="steps">Call enrollment-stage-status.</td><td class="exp">Returns stage/redirect info; 3-min interval; terminates on completion.</td><td><span class="b t">API</span></td><td><span class="b P2">P2</span></td><td>enrollment-stage-status</td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ========================================================= -->
+<!-- =====================  PARENT ROLE  ===================== -->
+<!-- ========================================================= -->
+<section id="parent-banner" style="border-top:3px solid var(--acc)">
+<h2><span class="id">PARENT</span> Parent Role Test Cases</h2>
+<p class="lead">Parent is <b>not yet migrated</b> — these target functional equivalence for the planned module (run against legacy JSP as the parity baseline). Legacy entry: default <code>/dashboard/view-as-user/{uuid}</code> (parent dropped into the child's student dashboard) or, when <code>BUZZ_SSO_ENABLE</code>, <code>/dashboard/parent-dashboard/{uuid}</code> → <code>NewParentDashboard.jsp</code> (<code>ClientDashoboardParentController</code>, 17 mappings). Many widgets reuse the Student dashboard via view-as-user, and the parent-only APIs are <code>POST /parent/*</code>.</p>
+<div class="note warn"><b class="t2">Highest-risk area</b> Multi-child data isolation (IDOR): a parent must see <b>only their own children</b> and never another parent's student. See TS-PAR-SEC.</div>
+</section>
+
+<!-- ============ PAR-AUTH ============ -->
+<section id="p-auth">
+<h2><span class="id">TS-PAR-AUTH</span> Parent Auth &amp; Routing</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref (legacy → next)</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P0" data-type="E2E"><td class="id">PAR-AUTH-001</td><td class="ttl">Parent login → view-as-user (default)</td><td class="steps">Login as a PARENT (no Buzz SSO).</td><td class="exp">Routed to <code>/dashboard/view-as-user/{uuid}</code> — child's student dashboard.</td><td><span class="b t">E2E</span></td><td><span class="b P0">P0</span></td><td><code>SingleSignOnUtil.getRedirectUrl</code> → <code>/{school}/parent/*</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PAR-AUTH-002</td><td class="ttl">BUZZ_SSO_ENABLE → parent-dashboard route</td><td class="steps">Enable <code>BUZZ_SSO_ENABLE</code> for Buzz-LMS parent; login.</td><td class="exp">Routed to <code>/dashboard/parent-dashboard/{uuid}</code> → <code>NewParentDashboard</code>.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>ClientDashoboardParentController:43</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="E2E"><td class="id">PAR-AUTH-003</td><td class="ttl">SSO handoff for parent</td><td class="steps">Parent logs in on legacy <code>Login.jsp</code> with handoff.</td><td class="exp"><code>sso-token</code> exchange establishes session; lands on parent dashboard.</td><td><span class="b t">E2E</span></td><td><span class="b P0">P0</span></td><td><code>app/api/sso</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PAR-AUTH-004</td><td class="ttl">Session carries PARENT role</td><td class="steps">Inspect session after login.</td><td class="exp"><code>parentUserRole=PARENT</code> + roleId + schoolUUID/userId present.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td>auth.js (dashboard-role claims)</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">PAR-AUTH-005</td><td class="ttl">Unauthenticated parent route guarded</td><td class="steps">Open a parent route with no session.</td><td class="exp"><code>proxy.js</code> → Java login before render.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td><code>proxy.js</code> matcher</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PAR-AUTH-006</td><td class="ttl">Menu labels rewritten "My" → "View"</td><td class="steps">Open parent sidebar.</td><td class="exp">Module names show "View …" for PARENT (legacy rewrite in <code>getModuleRoleRights</code>).</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>UserRightsServiceImpl:106</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="E2E"><td class="id">PAR-AUTH-007</td><td class="ttl">Multi-school parent</td><td class="steps">Login a parent under IS, then Anchored.</td><td class="exp">Correct school branding/currency; children scoped to that school.</td><td><span class="b t">E2E</span></td><td><span class="b P2">P2</span></td><td>tenant</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PAR-AUTH-008</td><td class="ttl">Logout invalidates parent session</td><td class="steps">Logout; press Back.</td><td class="exp">No-store re-hits guard → login; no cached dashboard.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>next.config.mjs</code> headers</td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ PAR-CHILD ============ -->
+<section id="p-child">
+<h2><span class="id">TS-PAR-CHILD</span> Multi-Child Selection &amp; Context</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P0" data-type="Functional"><td class="id">PAR-CHILD-001</td><td class="ttl">List children of parent</td><td class="steps">Open parent dashboard.</td><td class="exp"><code>parent/get-students-by-parent</code> returns ALL children of this parent only.</td><td><span class="b t">Functional</span></td><td><span class="b P0">P0</span></td><td><code>parent/get-students-by-parent</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Functional"><td class="id">PAR-CHILD-002</td><td class="ttl">Switch active child</td><td class="steps">Select a different child.</td><td class="exp"><code>parent/select-student-by-parent</code>; all widgets refresh for the new child.</td><td><span class="b t">Functional</span></td><td><span class="b P0">P0</span></td><td><code>parent/select-student-by-parent</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PAR-CHILD-003</td><td class="ttl">Single child auto-selected</td><td class="steps">Parent with exactly one child.</td><td class="exp">Child auto-selected; no empty state.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td>child selector</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PAR-CHILD-004</td><td class="ttl">Switching child invalidates cached widgets</td><td class="steps">View child A's attendance; switch to B.</td><td class="exp">TanStack queries re-key by studentId; B's data shown (no A bleed-through).</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td>queryKey [..., studentId]</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">PAR-CHILD-005</td><td class="ttl">Cannot select a non-own child (IDOR)</td><td class="steps">Tamper select-student request with another parent's studentId.</td><td class="exp">Rejected server-side; context unchanged.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td>authz hardening</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Negative"><td class="id">PAR-CHILD-006</td><td class="ttl">Parent with no children</td><td class="steps">Login a parent with zero linked students.</td><td class="exp">Graceful empty state; no crash.</td><td><span class="b t">Negative</span></td><td><span class="b P2">P2</span></td><td>empty state</td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ PAR-DASH ============ -->
+<section id="p-dash">
+<h2><span class="id">TS-PAR-DASH</span> Parent Dashboard Widgets</h2>
+<p class="small">All <code>POST /parent/*</code> JSON, scoped to the selected child. Many also reachable via view-as-user (student dashboard reuse).</p>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref (legacy endpoint)</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PAR-DASH-001</td><td class="ttl">Dashboard overview tiles</td><td class="steps">Open overview.</td><td class="exp">Overview tiles for selected child match legacy.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>parent/student-dashboard-overview</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PAR-DASH-002</td><td class="ttl">Schedule</td><td class="steps">Open Schedule.</td><td class="exp">Class schedule in parent/child timezone.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>parent/student-schedule</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PAR-DASH-003</td><td class="ttl">Attendance (summary)</td><td class="steps">Open Attendance.</td><td class="exp">Attendance summary renders.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>parent/student-attendance</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PAR-DASH-004</td><td class="ttl">Attendance (full)</td><td class="steps">Open full attendance.</td><td class="exp">Detailed/month-wise attendance correct.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>parent/student-attendance-full</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PAR-DASH-005</td><td class="ttl">Assigned teacher</td><td class="steps">Open Assigned Teacher.</td><td class="exp">Teacher(s) for child's subjects listed.</td><td><span class="b t">Functional</span></td><td><span class="b P3">P3</span></td><td><code>parent/student-assgined-teacher</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PAR-DASH-006</td><td class="ttl">Course content</td><td class="steps">Open Course Content.</td><td class="exp">Child's course content/materials visible.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>parent/student-course-content</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PAR-DASH-007</td><td class="ttl">Class summary</td><td class="steps">Open Class Summary.</td><td class="exp">Class summary + schedule summary correct.</td><td><span class="b t">Functional</span></td><td><span class="b P3">P3</span></td><td><code>parent/student-class-summary</code>, <code>-class-schedule-summary</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PAR-DASH-008</td><td class="ttl">Academic details</td><td class="steps">Open Academic Details.</td><td class="exp">Grades/marks/academic info for child.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>parent/student-academic-details</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PAR-DASH-009</td><td class="ttl">Academic performance</td><td class="steps">Open Performance.</td><td class="exp">Performance charts match legacy.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>parent/student-academic-performance</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PAR-DASH-010</td><td class="ttl">Weekly progress reports</td><td class="steps">Open Weekly Progress.</td><td class="exp">Weekly progress report details load.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>parent/weekly-progress-reports-detail</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PAR-DASH-011</td><td class="ttl">View-as-user reuses student dashboard</td><td class="steps">Enter via view-as-user.</td><td class="exp">Student dashboard modules render for the child (shared code).</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>view-as-user/{uuid}</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="UI"><td class="id">PAR-DASH-012</td><td class="ttl">NewParentDashboard renders (Buzz path)</td><td class="steps">Open parent-dashboard route.</td><td class="exp"><code>NewParentDashboard</code> layout renders with child selector + widgets.</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td><code>parent/NewParentDashboard.jsp</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P3" data-type="Functional"><td class="id">PAR-DASH-013</td><td class="ttl">Demo parent data</td><td class="steps">Open a demo parent account.</td><td class="exp">Demo data renders (ParentDashboardDemoDataController) without touching real records.</td><td><span class="b t">Functional</span></td><td><span class="b P3">P3</span></td><td><code>ParentDashboardDemoDataController</code></td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ PAR-FEE ============ -->
+<section id="p-fee">
+<h2><span class="id">TS-PAR-FEE</span> Fees &amp; Payment (Parent)</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PAR-FEE-001</td><td class="ttl">Fee details for child</td><td class="steps">Open Fee Details.</td><td class="exp"><code>parent/student-fee-details</code> shows fee/installment status for selected child.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td><code>parent/student-fee-details</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="E2E"><td class="id">PAR-FEE-002</td><td class="ttl">Pay a child's fee / installment</td><td class="steps">Initiate payment for an installment.</td><td class="exp">Gateway launches; server re-verifies; status updates. Secrets stay server-side.</td><td><span class="b t">E2E</span></td><td><span class="b P1">P1</span></td><td>payment (shared, §TS-PAY)</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PAR-FEE-003</td><td class="ttl">Per-child fee separation</td><td class="steps">Parent with 2 children; view each child's fees.</td><td class="exp">Fees do not mix across children.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td>child scoping</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PAR-FEE-004</td><td class="ttl">Payment receipt / history</td><td class="steps">View receipts/history.</td><td class="exp">Receipts downloadable; history accurate.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td>payment history</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PAR-FEE-005</td><td class="ttl">Currency per school</td><td class="steps">IS (USD) vs Anchored (ZAR) parent.</td><td class="exp">Correct currency symbol/charge.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td><code>currencyDisplay</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">PAR-FEE-006</td><td class="ttl">Cannot pay/view another parent's child fees</td><td class="steps">Tamper fee request with another parent's studentId.</td><td class="exp">Rejected; no data/payment for non-own child.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td>authz</td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ PAR-ADD ============ -->
+<section id="p-add">
+<h2><span class="id">TS-PAR-ADD</span> Add-Another-Student (Parent as actor)</h2>
+<p class="small">Cross-references the Student suite <code>TS-ADD</code> — here from the parent's perspective.</p>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P1" data-type="E2E"><td class="id">PAR-ADD-001</td><td class="ttl">Parent starts add-enrollment</td><td class="steps">From parent dashboard, add another student.</td><td class="exp">Enters <code>/{school}/add-enrollment/[parentId]/[sessionUserId]/step/*</code> (3-step).</td><td><span class="b t">E2E</span></td><td><span class="b P1">P1</span></td><td>TS-ADD-001</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Functional"><td class="id">PAR-ADD-002</td><td class="ttl">New child appears in selector</td><td class="steps">Complete add-enrollment; return to dashboard.</td><td class="exp">Newly added child shows in <code>get-students-by-parent</code> selector.</td><td><span class="b t">Functional</span></td><td><span class="b P1">P1</span></td><td>child list refresh</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Functional"><td class="id">PAR-ADD-003</td><td class="ttl">Add multiple students sequentially</td><td class="steps">Add two students in one session.</td><td class="exp">Both persist; no cross-contamination of data.</td><td><span class="b t">Functional</span></td><td><span class="b P2">P2</span></td><td>add-enrollment</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">PAR-ADD-004</td><td class="ttl">parentId/sessionUserId bound to session</td><td class="steps">Tamper URL parentId to another parent.</td><td class="exp">Server validates against session; cannot add under another parent.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td>TS-ADD-006</td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ PAR-SEC ============ -->
+<section id="p-sec">
+<h2><span class="id">TS-PAR-SEC</span> Parent Security / Data Isolation</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">PAR-SEC-001</td><td class="ttl">IDOR: view only own children</td><td class="steps">Call any <code>parent/student-*</code> with a studentId not linked to this parent.</td><td class="exp">Rejected; no data returned.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td>authz hardening</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">PAR-SEC-002</td><td class="ttl">Cross-parent access denied</td><td class="steps">Parent A tries parent B's child data.</td><td class="exp">Denied; server resolves children from session parent only.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td>parent-child mapping</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Security"><td class="id">PAR-SEC-003</td><td class="ttl">Cross-school isolation</td><td class="steps">Parent of IS requests Anchored data.</td><td class="exp">No cross-tenant rows.</td><td><span class="b t">Security</span></td><td><span class="b P1">P1</span></td><td>tenant scoping</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P0" data-type="Security"><td class="id">PAR-SEC-004</td><td class="ttl">Parent-API requires session</td><td class="steps">Call <code>parent/*</code> without session.</td><td class="exp">Session-out; no data.</td><td><span class="b t">Security</span></td><td><span class="b P0">P0</span></td><td>session guard</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Security"><td class="id">PAR-SEC-005</td><td class="ttl">Parent cannot perform student-only writes</td><td class="steps">As parent, attempt a student-only write (e.g. submit task) not permitted to parent.</td><td class="exp">Backend blocks by role/USER_RIGHTS (not just hidden UI).</td><td><span class="b t">Security</span></td><td><span class="b P1">P1</span></td><td>role enforcement</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="Security"><td class="id">PAR-SEC-006</td><td class="ttl">Child switch cannot leak previous child</td><td class="steps">Switch child; inspect network responses.</td><td class="exp">No residual previous-child data in any response/cache.</td><td><span class="b t">Security</span></td><td><span class="b P1">P1</span></td><td>query re-key</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="Security"><td class="id">PAR-SEC-007</td><td class="ttl">No DATABASE_NAME/SESSION_ID in client</td><td class="steps">Inspect client globals on parent pages.</td><td class="exp">Not exposed (same hardening as Student).</td><td><span class="b t">Security</span></td><td><span class="b P2">P2</span></td><td>§18 finding</td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ PAR-UI ============ -->
+<section id="p-ui">
+<h2><span class="id">TS-PAR-UI</span> Parent UI / Theme</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P1" data-type="UI"><td class="id">PAR-UI-001</td><td class="ttl">Responsive parent dashboard</td><td class="steps">360/768/1280px.</td><td class="exp">No horizontal scroll; child selector + widgets usable.</td><td><span class="b t">UI</span></td><td><span class="b P1">P1</span></td><td>responsive</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="UI"><td class="id">PAR-UI-002</td><td class="ttl">Child switcher UX</td><td class="steps">Open child switcher with multiple children.</td><td class="exp">Clear active child; quick switch; keyboard accessible.</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td>child selector</td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">PAR-UI-003</td><td class="ttl">Per-school theme</td><td class="steps">IS vs Anchored parent.</td><td class="exp">Branding/colors/currency per school; no FOUC.</td><td><span class="b t">UI</span></td><td><span class="b P2">P2</span></td><td><code>globals.css</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="UI"><td class="id">PAR-UI-004</td><td class="ttl">Loaders/skeletons on child switch</td><td class="steps">Throttle; switch child.</td><td class="exp">Loading states while widgets refetch; no layout jump.</td><td><span class="b t">UI</span></td><td><span class="b P3">P3</span></td><td>GlobalLoader</td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ PAR-API ============ -->
+<section id="p-api">
+<h2><span class="id">TS-PAR-API</span> Parent API Contract</h2>
+<div class="tw"><table class="tc-table">
+<thead><tr><th>ID</th><th>Title</th><th>Steps</th><th>Expected result</th><th>Type</th><th>Pri</th><th>Ref</th><th>Status</th></tr></thead>
+<tbody>
+<tr class="tc" data-pri="P1" data-type="API"><td class="id">PAR-API-001</td><td class="ttl">get-students-by-parent contract</td><td class="steps">POST get-students-by-parent.</td><td class="exp">Returns only this parent's children; body <code>{payload: encodePayload(dto)}</code>.</td><td><span class="b t">API</span></td><td><span class="b P1">P1</span></td><td><code>parent/get-students-by-parent</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="API"><td class="id">PAR-API-002</td><td class="ttl">student-dashboard-overview contract</td><td class="steps">POST overview with studentId.</td><td class="exp">Overview DTO; status handling.</td><td><span class="b t">API</span></td><td><span class="b P2">P2</span></td><td><code>parent/student-dashboard-overview</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P1" data-type="API"><td class="id">PAR-API-003</td><td class="ttl">student-fee-details contract</td><td class="steps">POST fee-details.</td><td class="exp">Fee/installment structure returned for own child only.</td><td><span class="b t">API</span></td><td><span class="b P1">P1</span></td><td><code>parent/student-fee-details</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="API"><td class="id">PAR-API-004</td><td class="ttl">student-attendance-full contract</td><td class="steps">POST attendance-full.</td><td class="exp">Month-wise attendance DTO.</td><td><span class="b t">API</span></td><td><span class="b P2">P2</span></td><td><code>parent/student-attendance-full</code></td><td class="st">Not Run</td></tr>
+<tr class="tc" data-pri="P2" data-type="API"><td class="id">PAR-API-005</td><td class="ttl">weekly-progress contract</td><td class="steps">POST weekly-progress-reports-detail.</td><td class="exp">Weekly report DTO; non-ok → null (no crash).</td><td><span class="b t">API</span></td><td><span class="b P2">P2</span></td><td><code>parent/weekly-progress-reports-detail</code></td><td class="st">Not Run</td></tr>
+</tbody></table></div>
+</section>
+
+<p class="small" style="margin-top:36px;border-top:1px solid var(--line);padding-top:14px">
+Generated 2026-10-15 · Scope: STUDENT + PARENT roles · Legacy <code>8f0e2a1836</code> · New <code>baaffd4</code> · Self-contained, offline. Remaining roles (Teacher, Counselor, School/Admin, Auditor, B2B Partner) to be produced next on request. No secret values included.
+</p>
+</main>
+</div>
+
+<script>
+(function(){
+  var tog=document.getElementById('navToggle'),sb=document.getElementById('sidebar');
+  if(tog)tog.addEventListener('click',function(){sb.classList.toggle('open');});
+  document.querySelectorAll('#toc a, #toc2 a').forEach(function(a){a.addEventListener('click',function(){if(window.innerWidth<=980)sb.classList.remove('open');});});
+  // per-suite counts in TOC (auto: each .c[data-count] points at a section id)
+  document.querySelectorAll('.c[data-count]').forEach(function(el){
+    var sec=document.getElementById(el.getAttribute('data-count'));
+    if(sec)el.textContent=sec.querySelectorAll('tr.tc').length;
+  });
+  // active section highlight
+  var links=[].slice.call(document.querySelectorAll('#toc a, #toc2 a'));
+  var map={};links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  var obs=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.remove('active');});if(map[e.target.id])map[e.target.id].classList.add('active');}});},{rootMargin:'-15% 0px -75% 0px'});
+  document.querySelectorAll('section[id]').forEach(function(s){obs.observe(s);});
+  recount();
+})();
+var curPri='ALL';
+function setPri(btn,p){curPri=p;document.querySelectorAll('.controls .btn').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');applyFilter();}
+function applyFilter(){
+  var q=(document.getElementById('q').value||'').toLowerCase();
+  document.querySelectorAll('tr.tc').forEach(function(tr){
+    var okText=tr.textContent.toLowerCase().indexOf(q)>-1;
+    var okPri=(curPri==='ALL')||(tr.getAttribute('data-pri')===curPri);
+    tr.style.display=(okText&&okPri)?'':'none';
+  });
+  recount();
+}
+function recount(){
+  var all=[].slice.call(document.querySelectorAll('tr.tc'));
+  var shown=all.filter(function(t){return t.style.display!=='none';});
+  function c(p){return all.filter(function(t){return t.getAttribute('data-pri')===p;}).length;}
+  set('sumTotal',all.length);set('sumP0',c('P0'));set('sumP1',c('P1'));set('sumP2',c('P2'));set('sumP3',c('P3'));set('sumShown',shown.length);
+}
+function set(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+window.addEventListener('beforeprint',function(){document.querySelectorAll('tr.tc').forEach(function(t){t.style.display='';});});
+</script>
+</body>
+</html>

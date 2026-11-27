@@ -450,7 +450,7 @@ function Stage3Skeleton({ header }) {
   );
 }
 
-export function AddStage2CourseSelection({ context, userId, uniqueId, standardId: initialStandardId, onNext, onBack, onSessionExpired, inReview = false }) {
+export function AddStage2CourseSelection({ context, userId, standardId: initialStandardId, onNext, onBack, onSessionExpired, inReview = false }) {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   // Starts from the prop (Stage 1's saved grade at mount — see the doc
@@ -477,7 +477,7 @@ export function AddStage2CourseSelection({ context, userId, uniqueId, standardId
   const studentPrefill = useAddStudentDetailsPrefill({ context, userId });
   const grades = useGradeOptions(context);
   const countries = useAddCountryOptions(context);
-  const changeGrade = useAddStudentDetailsSignup({ context, userId, uniqueId, countries: countries.data });
+  const changeGrade = useAddStudentDetailsSignup({ context, userId, countries: countries.data });
   const [changeGradeOpen, setChangeGradeOpen] = useState(false);
 
   const [flaggedModal, setFlaggedModal] = useState(null);

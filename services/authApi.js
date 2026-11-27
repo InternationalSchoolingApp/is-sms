@@ -1,5 +1,5 @@
 import { encodePayload, encodeRawString } from "@/utils/payloadEncoding";
-import { isBackendOverrideAllowed, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { allowedBackendOverride, resolveBackendNavigationOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { getHash, getSystemTimezone } from "@/utils/common";
 import { withServiceKey } from "@/lib/auth/serviceKey";
 
@@ -33,11 +33,17 @@ import { withServiceKey } from "@/lib/auth/serviceKey";
  *   happens to be configured to. Falls back to resolveServerBackendOrigin()
  *   (the cookie/env chain) when absent, same as every other caller.
  * @returns {Promise<{status: string, uniqueId?: string, userId?: number,
- *   userLoginHash?: string, schoolUUID?: string, schoolNumericId?: number,
- *   schoolName?: string, message?: string}|null>}
+ *   studentUserId?: number, userLoginHash?: string, schoolUUID?: string,
+ *   schoolNumericId?: number, schoolName?: string, message?: string}|null>}
+ *   `studentUserId` is the Integer User.id of the token's owner — currently
+ *   always equal to `userId` (both are `user.getId()` server-side); kept as
+ *   a separate field since some callers need the numeric id specifically
+ *   (e.g. add-enrollment's enrollAnotherChild) rather than the uniqueId
+ *   UUID string.
  */
 export async function exchangeSsoToken(schoolUUID, ssoToken, backendOverride) {
-  const baseUrl = (isBackendOverrideAllowed() && backendOverride) || (await resolveServerBackendOrigin());
+  // The service key goes with this call: only a backend this deployment may use (callers already check; this holds anyway).
+  const baseUrl = allowedBackendOverride(backendOverride) || (await resolveServerBackendOrigin());
   if (!baseUrl || !schoolUUID || !ssoToken) {
     console.error("exchangeSsoToken: missing baseUrl, schoolUUID or ssoToken", {
       baseUrl,
@@ -136,7 +142,8 @@ export async function login(
 
   const response = await fetch(`${baseUrl}/${schoolUUID}/api/v1/common/login`, {
     method: "POST",
-    headers,
+    // The public API needs this app's service key (a request without it is refused as "visitor_required").
+    headers: withServiceKey({ headers }).headers,
     credentials: "include",
     body: JSON.stringify({ payload: encodePayload(request) }),
   });
@@ -147,3 +154,35 @@ export async function login(
 // checkBackendSessionStatus moved to services/sessionStatusApi.js as a server
 // action: it is polled from the browser, and an http:// backend cannot be reached
 // from this app's https:// pages (mixed active content).
+
+/**
+ * Cross-app single-logout support: asks the Java backend (is-rest-api) whether this
+ * uniqueId is still logged in THERE — independently of this app's own next-auth
+ * session. Backend: GET {schoolId}/api/v1/common/session-status/{uniqueId}
+ * (CommonController#getSessionStatusByUniqueId), looked up purely from the user's
+ * USER_LOGIN_HASH column (set on login, nulled on logout — see
+ * CommonUtil#sessionOut) rather than an HttpSession, so it works cross-origin with
+ * no shared cookie. Client-side only (used by useBackendSessionGuard's polling);
+ * returns true (assume valid) on any network/parse failure so a flaky request never
+ * logs a user out by mistake — only an explicit `false` from the backend does that.
+ *
+ * @param {string} schoolUUID
+ * @param {string|number} studentUserId
+ * @returns {Promise<boolean>}
+ */
+export async function checkBackendSessionStatus(schoolUUID, studentUserId) {
+  const baseUrl = resolveBackendNavigationOrigin();
+  if (!baseUrl || !schoolUUID || !studentUserId) return true;
+
+  try {
+    const response = await fetch(`${baseUrl}/${schoolUUID}/api/v1/common/session-status/${encodeURIComponent(studentUserId)}`, {
+      method: "GET",
+    });
+    if (!response.ok) return true;
+    const stillValid = await response.json();
+    return stillValid !== false;
+  } catch (err) {
+    console.error("checkBackendSessionStatus: fetch threw", err);
+    return true;
+  }
+}

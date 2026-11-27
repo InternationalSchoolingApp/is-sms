@@ -112,7 +112,7 @@ function validateAddStudentFields(fields) {
 // Learning Program field above it are exactly as wide as a normal field, centred; full width on mobile.
 const HALF_WIDTH = "mx-auto w-full sm:w-[calc((100%-0.875rem)/2)]";
 
-export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, initialFields, onNext }) {
+export function AddStage1StudentDetails({ context, userId, rollNo, initialFields, onNext }) {
   const [fields, setFields] = useState(() => ({ ...INITIAL_FIELDS, ...initialFields }));
   const [errors, setErrors] = useState({});
   // Every field name that has ever shown an error this session (set grows,
@@ -122,7 +122,7 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, ini
 
   const countries = useAddCountryOptions(context);
   const grades = useAddGradeOptions(context, fields.learningProgram);
-  const signup = useAddStudentDetailsSignup({ context, userId, uniqueId, countries: countries.data });
+  const signup = useAddStudentDetailsSignup({ context, userId, countries: countries.data });
   const dobBounds = getDobPickerBounds();
   const isDualDiploma = fields.learningProgram === "DUAL_DIPLOMA";
 
@@ -281,6 +281,7 @@ export function AddStage1StudentDetails({ context, userId, uniqueId, rollNo, ini
             searchable
           />
           <DatePicker
+            height="h-12"
             icon={Cake}
             label={<Req label={<>Date of Birth{" "}<span className="text-black text-[12px]">(Month Day, Year)</span></>} required />}
             value={fields.dob}

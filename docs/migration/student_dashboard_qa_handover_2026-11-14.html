@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Student Dashboard - QA handover</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#1b2130;--mut:#5b6577;--line:#e1e5ee;--ac:#0b65ff;--ok:#12803f;--bad:#c4263a;--warn:#a15c00;--soft:#eef2fb}
+@media (prefers-color-scheme:dark){:root{--bg:#10141c;--card:#171c27;--ink:#e8ecf4;--mut:#9aa6bb;--line:#2a3243;--ac:#6ea4ff;--ok:#4cc27d;--bad:#ff7b8b;--warn:#f0b35a;--soft:#1d2433}}
+*{box-sizing:border-box}body{overflow-wrap:break-word;margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header.top{background:var(--card);border-bottom:1px solid var(--line);padding:22px 20px}
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+h1{margin:0 0 4px;font-size:26px}h2{margin:0 0 8px;font-size:21px}h3{margin:22px 0 8px;font-size:17px}
+.sub{color:var(--mut);margin:0}
+nav.toc{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:8px 20px;overflow-x:auto;white-space:nowrap}
+nav.toc a{display:inline-block;margin-right:14px;color:var(--ac);text-decoration:none;font-size:14px}
+section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;margin:18px 0}
+.intro{color:var(--mut);margin:0 0 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:14px 0}
+.stat{background:var(--soft);border-radius:10px;padding:12px}.stat b{display:block;font-size:24px}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%}th,td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
+th{background:var(--soft);font-size:13px}
+table.info td.k{font-weight:600;white-space:nowrap}
+table.cases td.id{white-space:nowrap;font-weight:600;color:var(--mut)}
+table.cases td.what ol{margin:6px 0 0;padding-left:18px;color:var(--ink)}
+table.cases td.what li{margin:2px 0}
+table.cases td.tags{min-width:120px;font-size:13px}
+table.cases td.res{min-width:150px}
+.chip{display:inline-block;min-width:22px;text-align:center;border-radius:6px;padding:0 6px;margin:0 3px 3px 0;font-size:12px;font-weight:700;color:#fff}
+.b-E{background:#e0529c}.b-M{background:#0b8be8}.b-H{background:#3b4a6b}
+.prog{color:var(--mut);margin:2px 0}
+.ver{display:inline-block;border-radius:6px;padding:0 7px;font-size:12px;font-weight:700}
+.v-L{background:#d9f3e3;color:#0b5a2b}.v-D{background:#e3ecff;color:#1749b3}.v-C{background:#ffe9c9;color:#8a4a00}
+@media (prefers-color-scheme:dark){.v-L{background:#173d29;color:#7be0a4}.v-D{background:#1b2d57;color:#9bbcff}.v-C{background:#4a3410;color:#ffcf8a}}
+.need,.note{margin-top:6px;font-size:13px;color:var(--mut)}
+select,input.memo{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);width:100%;margin-bottom:4px}
+tr.case[data-state="pass"]{background:rgba(18,128,63,.08)}tr.case[data-state="fail"]{background:rgba(196,38,58,.10)}tr.case[data-state="blocked"]{background:rgba(161,92,0,.10)}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0}
+.bar select,.bar input,.bar button{width:auto;margin:0}
+button{font:inherit;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button.p{background:var(--ac);border-color:var(--ac);color:#fff}
+.callout{background:var(--soft);border-left:4px solid var(--ac);padding:10px 14px;border-radius:6px;margin:12px 0}
+.warn{border-left-color:var(--warn)}
+code,.mono{overflow-wrap:anywhere;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;background:var(--soft);padding:1px 5px;border-radius:4px}
+ul.tight{margin:6px 0;padding-left:20px}
+.hide{display:none!important}
+@media print{nav.toc,.bar,select,input.memo{display:none!important}section{break-inside:avoid-page}body{background:#fff}}
+</style></head><body>
+<header class="top"><div class="wrap">
+<h1>Student Dashboard - QA handover</h1>
+<p class="sub">Next.js student dashboard (is-sms, branch <span class="mono">feature/version_1_3_0_phase4</span>) with the Java backend (is-rest-api, <span class="mono">feature/63_0_0_STUDENT_DASHBOARD_NEXTJS_PHASE4</span>). Written 2026-11-14 from the code and the work done so far. 116 test cases.</p>
+<div class="grid">
+<div class="stat"><b>116</b>test cases</div>
+<div class="stat"><b>34</b>dev-tested live</div>
+<div class="stat"><b>40</b>dev-tested in dummy mode</div>
+<div class="stat"><b>42</b>need special data / restart</div>
+<div class="stat"><b id="sPass">0</b>passed (your results)</div>
+<div class="stat"><b id="sFail">0</b>failed (your results)</div>
+</div>
+</div></header>
+<nav class="toc"><div class="wrap"><a href="#how">A. Read first</a><a href="#cond">B. Conditions</a><a href="#order">C. Test order</a><a href="#shell">1. Shell, header, rails, appearance</a><a href="#home">2. Home</a><a href="#attendance">3. My Attendance</a><a href="#performance">4. My Performance / Academic Performance</a><a href="#progress">5. Progress Reports</a><a href="#fee">6. Fee Details, Cart and checkout</a><a href="#buy">7. Buy Extra Classes</a><a href="#book">8. Book a Class and Booked Class Details</a><a href="#teacher">9. Assigned Teacher / Syllabus</a><a href="#transcript">10. Transcript, Certificates, Handbook, Exam sheet</a><a href="#video">11. Video Library, Login History, Extension, Clubs</a><a href="#inbox">12. Inbox</a><a href="#profile">13. My Profile</a><a href="#popups">Popups</a><a href="#onboarding">Onboarding</a><a href="#reenroll">Re-enrollment</a><a href="#backend">H. Backend / prerequisites</a><a href="#limits">I. Limits</a><a href="#defects">J. Defects</a></div></nav>
+<main class="wrap">
+
+<section id="how"><h2>A. Read first</h2>
+<p>This is the whole student dashboard in one page: what exists, which student sees what (learning program, grade, school, settings) and what to check. Every test case has a result box; your results are kept in this browser only (use Export to share them).</p>
+<h3>What the dashboard is</h3>
+<ul class="tight">
+<li>One URL for every student: <span class="mono">/{school}/student</span>. What changes is the <b>look</b> (decided by grade) and the <b>content/conditions</b> (decided by learning program, school, settings and the student's data).</li>
+<li>Three new looks share the same components: <b>Elementary</b> (K-5, "Playful"), <b>Middle</b> (6-8, "Balanced"), <b>High</b> (9-12, "Mature"). A student for whom the new look is off sees the older <b>standard shell</b>.</li>
+<li>Modules were migrated from the legacy Java pages; the legacy page is the reference for behaviour. Looks follow the mockups in <span class="mono">D:\Workspace\K-5 dashboard</span>, <span class="mono">Grade 6-8 Dashboard</span> and <span class="mono">Grade 9-12 Dashboard</span> (each has the same 18 pages).</li>
+</ul>
+<h3>Column key used in every table</h3>
+<div class="tablewrap"><table class="info "><thead><tr><th>Mark</th><th>Meaning</th></tr></thead><tbody><tr><td class="k"><span class="chip b-E">E</span> <span class="chip b-M">M</span> <span class="chip b-H">H</span></td><td>Looks the case applies to (Elementary / Middle / High). Run it once per look unless only one is marked.</td></tr><tr><td class="k"><span class="ver v-L">Live</span></td><td>The developer tested this on a real test student.</td></tr><tr><td class="k"><span class="ver v-D">Dummy</span></td><td>Tested only with demo data (the dummy URLs below). Please test it with a real student too.</td></tr><tr><td class="k"><span class="ver v-C">Needs data</span></td><td>Written but the developer could not test it (needs special data, a backend restart or a live service). These are the most important ones for you.</td></tr></tbody></table></div>
+<div class="callout">The Live / Dummy / Needs-data marks come from the developer&#39;s own testing and some Live items were only partly checked (read the Note under the expected result). Please test every case, not only the ones marked Needs data.</div>
+<h3>Test students you need</h3>
+<p>Ask the developer for credentials (they are not written here). You need at least:</p>
+<div class="tablewrap"><table class="info "><thead><tr><th>Student</th><th>Why</th></tr></thead><tbody><tr><td class="k">One Elementary (K-5) student</td><td>Playful look; PreK/Nursery too if available (simpler layout).</td></tr><tr><td class="k">One Middle (6-8) student</td><td>Balanced look (needs the Middle flag, see B1).</td></tr><tr><td class="k">One High (9-12) student, ideally also a Grade 12 student</td><td>Mature look; Grade 12 for the Diploma link.</td></tr><tr><td class="k">One BATCH (group learning) student</td><td>Batch menu rules, exam sheet, batch classes, batch setup reminder.</td></tr><tr><td class="k">One Self-Study or Self-Study Plus student</td><td>'Course work day' wording.</td></tr><tr><td class="k">One student of school 1 and one of another school</td><td>School-specific items (app popup, handbook, evaluation label).</td></tr><tr><td class="k">Students with special data</td><td>Overdue fee, Outlook pending, invalid contact, empty profile fields, eligible for next grade, booked training, Canvas / Courseware LMS, issued certificates.</td></tr></tbody></table></div>
+<h3>Demo (dummy) URLs - no real data needed</h3>
+<p>Add these to any module URL after logging in: <span class="mono">?dummyStudent=Y&amp;dummyGrade=K</span> (or 1 to 12). Examples: <span class="mono">/{school}/student/student-transcript?dummyStudent=Y&amp;dummyGrade=10</span>. Extras: <span class="mono">&amp;dummyLms=40</span> or <span class="mono">41</span> on Progress Reports (Canvas / Courseware report), <span class="mono">dummyDate</span>, <span class="mono">demoStudentName</span>, <span class="mono">demoLearningProgram</span>. Dummy mode never writes anything and is read-only for the profile.</p>
+<div class="callout warn"><b>Login note.</b> Student login goes through the Java app (port 8080) and returns to the Next.js app (port 3000). If the Java backend is down you cannot sign in at all.</div>
+</section>
+
+<section id="cond"><h2>B. Conditions - what decides what a student sees</h2>
+<h3>B1. Which look does a student get?</h3>
+<div class="tablewrap"><table class="info "><thead><tr><th>Grade (standard id)</th><th>Band</th><th>Also needed for the new look</th><th>Look</th></tr></thead><tbody><tr><td class="k">PreK / Nursery (17), K-5 (11-16)</td><td>ELEMENTARY</td><td>Backend flag <span class='mono'>k5DashboardEnabled</span> = true</td><td>Playful. PreK: simpler, no Month view, no 'What to show'.</td></tr><tr><td class="k">Grade 6-8 (1, 2, 3)</td><td>MIDDLE</td><td><span class='mono'>k5DashboardEnabled</span> and <span class='mono'>NEXT_PUBLIC_MIDDLE_DASHBOARD=true</span></td><td>Balanced (blue, 1.5px borders, soft shadows).</td></tr><tr><td class="k">Grade 9-12 (4, 5, 6, 7)</td><td>HIGH</td><td><span class='mono'>k5DashboardEnabled</span> and <span class='mono'>NEXT_PUBLIC_HIGH_DASHBOARD=true</span></td><td>Mature (Roboto, small type, flat buttons). Built on the Middle look.</td></tr><tr><td class="k">Any grade when a flag above is off</td><td>-</td><td>-</td><td>Standard (older) shell.</td></tr><tr><td class="k">Unknown standard id (e.g. 19)</td><td>falls back</td><td>backend gradeBand, else MIDDLE</td><td>Check it shows something sensible.</td></tr></tbody></table></div>
+<p>Programs that get the new look: BATCH, CWS, DUAL_DIPLOMA, ONE_TO_ONE, ONE_TO_ONE_FLEX, SCHOLARSHIP (Self-Study), SSP (Self-Study Plus). Self-Study changes wording only. Demo mode always turns all looks on.</p>
+
+<h3>B2. Learning program - what is different</h3>
+<div class="tablewrap"><table class="info "><thead><tr><th>Area</th><th>One-to-One / Flex</th><th>Batch (group)</th><th>Self-Study / Self-Study Plus</th><th>CWS</th><th>Dual Diploma</th></tr></thead><tbody><tr><td class="k">New look</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td class="k">Left menu 'Batch Schedule'</td><td>No</td><td>Item exists in the legacy menu; the page is <b>not built</b> (dropped on purpose)</td><td>No</td><td>No</td><td>No</td></tr><tr><td class="k">Left menu 'Examination Schedule'</td><td>No</td><td>Only when an exam sheet is uploaded</td><td>No</td><td>No</td><td>No</td></tr><tr><td class="k">Fee Details</td><td>Only online-signup students (any program)</td><td>same</td><td>same</td><td>same</td><td>same</td></tr><tr><td class="k">Assigned Teacher / Syllabus</td><td>Built</td><td>Batch-teacher variant not built (placeholder)</td><td>Built, flag-driven</td><td>Built, flag-driven</td><td>Built, flag-driven</td></tr><tr><td class="k">Book a Class / Attendance / Transcript / Assigned Teacher menu</td><td>Shown or hidden by the student's menu flags (any program)</td><td>same</td><td>same</td><td>same</td><td>same</td></tr><tr><td class="k">Home wording</td><td>Normal</td><td>Batch classes show batch name, no teacher</td><td>'Course work day' on free days; Tomorrow card differs</td><td>Normal</td><td>Normal</td></tr><tr><td class="k">System Training popup</td><td>By settings and enrolment type (fresh / flex)</td><td>Only when the batch training setting is Y and there is no semester start date</td><td>By settings</td><td>By settings</td><td>By settings</td></tr><tr><td class="k">Dashboard Setup page</td><td>Book training or academic year start</td><td>Training or start date, or the group batch start-date reminder</td><td>As One-to-One</td><td>As One-to-One</td><td>As One-to-One</td></tr><tr><td class="k">Handbook</td><td>School handbook link</td><td>Batch handbook link (<span class='mono'>batchStudHBookUrl</span>)</td><td>School link</td><td>School link</td><td>School link</td></tr><tr><td class="k">Next-grade offer</td><td>Re-enroll / Reserve seat</td><td>same</td><td>same</td><td>Old flow (E2)</td><td>Fee note for Dual Diploma</td></tr></tbody></table></div>
+<h3>B3. Grade-specific conditions</h3>
+<div class="tablewrap"><table class="info "><thead><tr><th>Condition</th><th>Effect</th></tr></thead><tbody><tr><td class="k">PreK / Nursery (standard 17)</td><td>Simpler Elementary layout, no Month view, no 'What to show', larger controls.</td></tr><tr><td class="k">Grade 12 (standard 7) with a published transcript</td><td>Transcript menu also shows 'Diploma - Grade 12' (new).</td></tr><tr><td class="k">Student flagged as graduated (<span class='mono'>studentGraduate = Y</span>)</td><td>Belongs to the migration / re-enrollment work of another team. The new popups (reserve seat, training, forced password) run only for students who are <b>not</b> graduated.</td></tr><tr><td class="k">Next grade known</td><td>Reserve-seat popup says 'Ready for {next grade}?'.</td></tr><tr><td class="k">Reports</td><td>LMS provider 36/37/38 = gradebook report, 40 = Canvas, 41 = Courseware, 39 = no reports (menu item hidden).</td></tr></tbody></table></div>
+<h3>B4. School settings and flags that change behaviour</h3>
+<div class="tablewrap"><table class="info "><thead><tr><th>Setting / data</th><th>Effect</th><th>If off / missing</th></tr></thead><tbody><tr><td class="k"><span class='mono'>CONFIGURATION / QUOTE_SERVICE</span></td><td>Quote of the Moment card</td><td>No card</td></tr><tr><td class="k"><span class='mono'>ADD_SIBILING_BTN</span></td><td>'Have another child to enroll?' card</td><td>No card</td></tr><tr><td class="k">School Need Help number</td><td>'Need help?' WhatsApp button in the header</td><td>No button</td></tr><tr><td class="k">School 1 only + app activity</td><td>Install-the-app popup</td><td>No popup</td></tr><tr><td class="k">Contact-check service</td><td>Contact-check popup and 'My contact details' card</td><td>Nothing</td></tr><tr><td class="k">Profile-completing process setting</td><td>'Complete Your Profile' popup</td><td>No popup</td></tr><tr><td class="k">Forced-password setting (per school)</td><td>Must-change-password popup for due students</td><td>No popup</td></tr><tr><td class="k">Welcome video URL (dashboard details)</td><td>Mandatory onboarding video</td><td>No video</td></tr><tr><td class="k"><span class='mono'>LOGIN_HIGHLIGHT_TTS_API_KEY</span> row</td><td>Pico / Select-to-speak voice</td><td>No voice</td></tr><tr><td class="k">Maintenance downtime</td><td>Maintenance banner</td><td>None</td></tr><tr><td class="k">Student menu flags (<span class='mono'>student-menu-flags</span>)</td><td>Hide Assigned Teacher / Book a Class / Attendance / Transcript; 'Buy &amp; Book a Class' label</td><td>All shown</td></tr><tr><td class="k">Module rights (viewed right)</td><td>Receipt link, transcript links, handbook, certificates</td><td>Item hidden / 'no access'</td></tr><tr><td class="k">Student signup type = Online</td><td>Fee Details menu</td><td>Hidden</td></tr></tbody></table></div>
+</section>
+
+<section id="order"><h2>C. How to test - recommended order</h2>
+<p><b>Short answer: by learning program first for the logic, then by grade for the look.</b> The conditions (what appears) depend on program, school and data; the look (how it appears) depends only on the grade band. Testing every look for every program would repeat the same checks, so split it:</p>
+<ol class="tight">
+<li><b>Wave 1 - smoke per look (3 students).</b> Elementary, Middle, High: log in, open every menu item once, check no error page, the right look and the shell items (section 1).</li>
+<li><b>Wave 2 - program conditions (section B2).</b> One BATCH, one Self-Study, one One-to-One student: check only the rows of B2 that differ (menu items, home wording, batch classes, training popup, setup page).</li>
+<li><b>Wave 3 - modules, once per look.</b> Sections 2-13: run each case in all looks marked E M H. Use dummy URLs to switch looks quickly (<span class="mono">dummyGrade=3</span> / <span class="mono">6</span> / <span class="mono">10</span>), then repeat the "Needs data" cases with real students.</li>
+<li><b>Wave 4 - popups and gates (Popups section)</b> with students that have the special data.</li>
+<li><b>Wave 5 - onboarding (later).</b> Needs students that still have onboarding steps.</li>
+<li><b>Wave 6 - re-enrollment (phase3 branch).</b> After the project owner merges phase4 into phase3.</li>
+</ol>
+<div class="callout">Phone width: re-run Wave 1 once at about 375 px wide for each look.</div>
+</section>
+
+<section id="shell" class="mod"><h2>1. Shell, header, rails, appearance (every student)</h2><p class="intro">Applies to every student on the new look (Elementary, Middle, High). The standard (old) shell has its own header/sidebar; check it only if a school still runs without the grade flags.</p><div class="tablewrap"><table class="cases"><thead><tr><th>ID</th><th>What to do</th><th>Expected result</th><th>Applies to</th><th>Result</th></tr></thead><tbody><tr class="case" data-id="SH-01" data-bands="EMH" data-prog="all" data-ver="L" data-sec="shell">
+<td class="id">SH-01</td>
+<td class="what"><b>Login lands on the dashboard with the right look</b><ol><li>Log in as a student of each band.</li><li>Open /{school}/student.</li></ol></td>
+<td class="exp">Elementary shows the Playful look, Middle the Balanced look (blue, soft shadows), High the Mature look (Roboto, small type, flat buttons). The school name in the header/footer is the student's school (never a fixed name).</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for SH-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for SH-01"></td>
+</tr><tr class="case" data-id="SH-02" data-bands="EMH" data-prog="all" data-ver="L" data-sec="shell">
+<td class="id">SH-02</td>
+<td class="what"><b>Left menu comes from the database and hides items by rule</b><ol><li>Open the left menu.</li><li>Compare with the rules table in section B2.</li></ol></td>
+<td class="exp">Only modules the role has appear. Hidden by rule: Fee Details (non-online signup), Batch exam sheet (non-BATCH or no sheet), Transcript / Assigned Teacher / Book a Class / Attendance (when the menu flag is off), Academic Year Extension (LMS provider 39 or grade 8 record). 'Buy Extra' becomes 'Buy &amp; Book a Class' when that flag is on. Items without a built page open the 'being migrated' placeholder.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for SH-02"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for SH-02"></td>
+</tr><tr class="case" data-id="SH-03" data-bands="EMH" data-prog="all" data-ver="D" data-sec="shell">
+<td class="id">SH-03</td>
+<td class="what"><b>Header controls</b><ol><li>Look at the header on desktop.</li><li>Click Get the App.</li><li>Add something to the cart and look again.</li></ol></td>
+<td class="exp">Logo, Appearance (palette), Cart (only while the cart has items, with a count badge), Need help? (only when the school has a Need Help number), Get the App, LMS switch, welcome chip. Get the App opens the dialog with two QR codes and Google Play / App Store links.<div class="note"><b>Note:</b> Need help? and Cart badge depend on school data.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for SH-03"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for SH-03"></td>
+</tr><tr class="case" data-id="SH-04" data-bands="EMH" data-prog="all" data-ver="L" data-sec="shell">
+<td class="id">SH-04</td>
+<td class="what"><b>Profile menu</b><ol><li>Click the welcome chip (or More on mobile).</li><li>Open My profile, Change password, then Log out.</li></ol></td>
+<td class="exp">My profile opens /student/my-profile. Change password opens the dialog. Log out asks for confirmation and signs out.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for SH-04"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for SH-04"></td>
+</tr><tr class="case" data-id="SH-05" data-bands="EMH" data-prog="all" data-ver="L" data-sec="shell">
+<td class="id">SH-05</td>
+<td class="what"><b>Right rail: Talk to us, Announcements, News, Student's Diary</b><ol><li>Open each rail item.</li></ol></td>
+<td class="exp">Talk to us opens the chat in a new tab. Announcements and News open a panel with unread counts and details; an announcement can be acknowledged. Diary shows unread count and entries.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for SH-05"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for SH-05"></td>
+</tr><tr class="case" data-id="SH-06" data-bands="EMH" data-prog="all" data-ver="D" data-sec="shell">
+<td class="id">SH-06</td>
+<td class="what"><b>Mobile layout (&lt;= 760px)</b><ol><li>Resize the browser to a phone width (or use a phone).</li><li>Open Home, Fee Details, Profile, Inbox.</li></ol></td>
+<td class="exp">No horizontal page scroll. The rail becomes a bottom bar, the menu a drawer, tables become cards (label above each value).</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for SH-06"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for SH-06"></td>
+</tr><tr class="case" data-id="SH-07" data-bands="E M H" data-prog="all" data-ver="L" data-sec="shell">
+<td class="id">SH-07</td>
+<td class="what"><b>Appearance dialog ('Make it yours')</b><ol><li>Open Appearance.</li><li>Change font, text size, spacing, favourite colour, theme.</li><li>Do not save, close, reopen.</li><li>Change again and press Save.</li><li>Press Reset.</li></ol></td>
+<td class="exp">Nothing changes until Save. Save applies at once (no flash on reload), Reset goes back to the default. Toast messages follow the chosen font/size/spacing.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for SH-07"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for SH-07"></td>
+</tr><tr class="case" data-id="SH-08" data-bands="EMH" data-prog="all" data-ver="L" data-sec="shell">
+<td class="id">SH-08</td>
+<td class="what"><b>Pico buddy and Select-to-speak</b><ol><li>Open Home and wait for the tips.</li><li>Tap a colour clue.</li><li>Switch the buddy OFF/ON.</li><li>Select some text on a page.</li></ol></td>
+<td class="exp">Pico greets and explains clues; tips wait until the page and menu have loaded; the buddy never speaks over a live-class alert. Select-to-speak reads the selected text. Voice needs the TTS key row in settings.<div class="note"><b>Note:</b> Voice depends on LOGIN_HIGHLIGHT_TTS_API_KEY.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for SH-08"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for SH-08"></td>
+</tr><tr class="case" data-id="SH-09" data-bands="EMH" data-prog="all" data-ver="C" data-sec="shell">
+<td class="id">SH-09</td>
+<td class="what"><b>Quote of the Moment</b><ol><li>With the setting QUOTE_SERVICE = true open any module.</li><li>Dismiss the card.</li><li>Open another module.</li></ol></td>
+<td class="exp">One quote card above the module (words wrapped in ** ** are highlighted, author shown). Dismiss hides it until the next page load. No card when the setting is off or in dummy mode.<div class="need"><b>Needs:</b> QUOTE_SERVICE=true and an active quote for the student's role/grade.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for SH-09"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for SH-09"></td>
+</tr><tr class="case" data-id="SH-10" data-bands="EMH" data-prog="all" data-ver="L" data-sec="shell">
+<td class="id">SH-10</td>
+<td class="what"><b>Session expiry and sign-out</b><ol><li>Let the session expire (or log out in another tab).</li><li>Click anything in the dashboard.</li></ol></td>
+<td class="exp">A 'logged out' dialog appears once and the student is sent to sign in. No white page.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for SH-10"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for SH-10"></td>
+</tr><tr class="case" data-id="SH-11" data-bands="EMH" data-prog="all" data-ver="C" data-sec="shell">
+<td class="id">SH-11</td>
+<td class="what"><b>Maintenance banner</b><ol><li>Create a maintenance window in the admin settings.</li><li>Reload the dashboard.</li></ol></td>
+<td class="exp">The banner shows above the header and the layout shifts down with it.<div class="need"><b>Needs:</b> A maintenance downtime record.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for SH-11"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for SH-11"></td>
+</tr><tr class="case" data-id="SH-12" data-bands="EMH" data-prog="all" data-ver="D" data-sec="shell">
+<td class="id">SH-12</td>
+<td class="what"><b>Dummy (demo) mode is safe</b><ol><li>Add ?dummyStudent=Y&amp;dummyGrade=10 to any module URL (see section A).</li><li>Try to save a profile edit, pay, or send mail.</li></ol></td>
+<td class="exp">Demo data shows for the chosen grade. Profile is read-only, payments are not started, nothing is written for real.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for SH-12"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for SH-12"></td>
+</tr></tbody></table></div></section>
+<section id="home" class="mod"><h2>2. Home (planner, calendar, popups on top of it)</h2><p class="intro">Home is a Day / Week / Month planner. Elementary and Middle/High use the same logic; only the look differs. A standard-shell student sees the older calendar card instead.</p><div class="tablewrap"><table class="cases"><thead><tr><th>ID</th><th>What to do</th><th>Expected result</th><th>Applies to</th><th>Result</th></tr></thead><tbody><tr class="case" data-id="HOME-01" data-bands="EMH" data-prog="all" data-ver="L" data-sec="home">
+<td class="id">HOME-01</td>
+<td class="what"><b>Toolbar and views</b><ol><li>Open Home.</li><li>Switch Today / Week / Month, press Previous / Next / Today.</li></ol></td>
+<td class="exp">Dates and views change correctly. PreK/Nursery (standard 17) has no Month view and a simpler layout.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HOME-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HOME-01"></td>
+</tr><tr class="case" data-id="HOME-02" data-bands="EMH" data-prog="all" data-ver="L" data-sec="home">
+<td class="id">HOME-02</td>
+<td class="what"><b>Mini calendar</b><ol><li>Click different days in the mini calendar and on the plan.</li></ol></td>
+<td class="exp">Only the clicked day is selected (today keeps its own mark). Choosing a day opens its Day plan.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HOME-02"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HOME-02"></td>
+</tr><tr class="case" data-id="HOME-03" data-bands="EMH" data-prog="all" data-ver="L" data-sec="home">
+<td class="id">HOME-03</td>
+<td class="what"><b>Class cards (Today)</b><ol><li>Look at today's classes: upcoming, live, done.</li></ol></td>
+<td class="exp">Status is right (Next / Live / Done). A Join button shows only for a class with a join link that is not finished.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HOME-03"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HOME-03"></td>
+</tr><tr class="case" data-id="HOME-04" data-bands="EMH" data-prog="all" data-ver="C" data-sec="home">
+<td class="id">HOME-04</td>
+<td class="what"><b>Live-class alert</b><ol><li>While a class is live open Home.</li><li>Close the alert, reload.</li></ol></td>
+<td class="exp">One 'class is live' alert per live class per login; after it is answered it does not return. Pico and other popups wait for it.<div class="need"><b>Needs:</b> A class that is live right now.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HOME-04"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HOME-04"></td>
+</tr><tr class="case" data-id="HOME-05" data-bands="EMH" data-prog="all" data-ver="C" data-sec="home">
+<td class="id">HOME-05</td>
+<td class="what"><b>Join a class</b><ol><li>Click Join on a live class.</li><li>Try a class that is not live yet.</li><li>Use Copy Class Link.</li></ol></td>
+<td class="exp">A live class opens in a new tab and the popup shows the copyable link and Join Class. A not-live class says when it can be joined. If the server refuses, its own message is shown (not a generic one).<div class="need"><b>Needs:</b> A live class; a class the server refuses.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HOME-05"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HOME-05"></td>
+</tr><tr class="case" data-id="HOME-06" data-bands="EMH" data-prog="all" data-ver="L" data-sec="home">
+<td class="id">HOME-06</td>
+<td class="what"><b>Week and Month plans</b><ol><li>Open Week, then Month.</li><li>Click an event and a day.</li></ol></td>
+<td class="exp">Events appear on the right day in the student's time zone (fallback Asia/Singapore). Clicking an event opens its details; clicking a day opens that Day plan.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HOME-06"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HOME-06"></td>
+</tr><tr class="case" data-id="HOME-07" data-bands="EMH" data-prog="all" data-ver="L" data-sec="home">
+<td class="id">HOME-07</td>
+<td class="what"><b>Colour clues</b><ol><li>Tap each colour clue.</li></ol></td>
+<td class="exp">Matching items are outlined on the current view and the buddy explains with the student's own dates. The view never switches.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HOME-07"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HOME-07"></td>
+</tr><tr class="case" data-id="HOME-08" data-bands="EMH" data-prog="all" data-ver="L" data-sec="home">
+<td class="id">HOME-08</td>
+<td class="what"><b>'What to show' filters</b><ol><li>Open 'What to show' (not on PreK).</li><li>Turn off Holidays, Pending assignments, Missed classes, etc.</li><li>Reload.</li></ol></td>
+<td class="exp">Items disappear/appear at once; the count '(n hidden)' shows. The choice is remembered after reload and shared with the standard calendar.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HOME-08"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HOME-08"></td>
+</tr><tr class="case" data-id="HOME-09" data-bands="EMH" data-prog="all" data-ver="L" data-sec="home">
+<td class="id">HOME-09</td>
+<td class="what"><b>My Courses</b><ol><li>Toggle a course on/off in My Courses.</li></ol></td>
+<td class="exp">That course's classes and assignments hide/show on the plan.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HOME-09"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HOME-09"></td>
+</tr><tr class="case" data-id="HOME-10" data-bands="EMH" data-prog="all" data-ver="D" data-sec="home">
+<td class="id">HOME-10</td>
+<td class="what"><b>Completed class details</b><ol><li>Click a class that has ended.</li></ol></td>
+<td class="exp">Shows Date, Status 'Expired', start Time, Duration, 'Late' (h/min/sec) when late, and Teacher (not shown for a BATCH class; batch name shown instead). No 'Rate this class' button (class feedback is another team's work).</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HOME-10"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HOME-10"></td>
+</tr><tr class="case" data-id="HOME-11" data-bands="EMH" data-prog="all" data-ver="D" data-sec="home">
+<td class="id">HOME-11</td>
+<td class="what"><b>Assignment details</b><ol><li>Click an assignment (pending, submitted, upcoming).</li></ol></td>
+<td class="exp">Course, Due Date, Status (+Timing, Submitted). A Pending one has an Attempt button that opens the LMS (or says why it cannot, e.g. payment pending).</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HOME-11"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HOME-11"></td>
+</tr><tr class="case" data-id="HOME-12" data-bands="EMH" data-prog="all" data-ver="C" data-sec="home">
+<td class="id">HOME-12</td>
+<td class="what"><b>Activity details</b><ol><li>Click a school activity.</li></ol></td>
+<td class="exp">Shows category, purpose, date, time, details, a 'Time Remaining' countdown and View Attachment. 'Join Event' appears only from the lead time before the start until the end; a finished activity says 'Your activity has been completed.'<div class="need"><b>Needs:</b> A school activity with a link / attachment.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HOME-12"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HOME-12"></td>
+</tr><tr class="case" data-id="HOME-13" data-bands="EMH" data-prog="all" data-ver="D" data-sec="home">
+<td class="id">HOME-13</td>
+<td class="what"><b>Holiday / school event details</b><ol><li>Click a holiday or school event.</li></ol></td>
+<td class="exp">Shows its date and text.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HOME-13"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HOME-13"></td>
+</tr><tr class="case" data-id="HOME-14" data-bands="EMH" data-prog="all" data-ver="C" data-sec="home">
+<td class="id">HOME-14</td>
+<td class="what"><b>Status refresh when a class ends</b><ol><li>Keep Home open past the end time of a class.</li><li>Wait up to 15 seconds.</li></ol></td>
+<td class="exp">The class changes to Done / Missed / Late join without a reload.<div class="need"><b>Needs:</b> A class ending while the page is open.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HOME-14"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HOME-14"></td>
+</tr><tr class="case" data-id="HOME-15" data-bands="EMH" data-prog="SELF" data-ver="D" data-sec="home">
+<td class="id">HOME-15</td>
+<td class="what"><b>Self-Study wording</b><ol><li>Log in as a Self-Study / Self-Study Plus student.</li><li>Look at free days and the Tomorrow card.</li></ol></td>
+<td class="exp">Free days read 'Course work day' with a book icon (not 'free day' / ball). Tomorrow card does not say 'no classes' as a treat.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">Self-Study</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HOME-15"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HOME-15"></td>
+</tr><tr class="case" data-id="HOME-16" data-bands="EMH" data-prog="all" data-ver="L" data-sec="home">
+<td class="id">HOME-16</td>
+<td class="what"><b>Add siblings card</b><ol><li>With the ADD_SIBILING_BTN setting on, open Home.</li><li>Press the button.</li></ol></td>
+<td class="exp">Card 'Have another child to enroll?' shows and the button starts the sibling enrolment flow.<div class="need"><b>Needs:</b> Setting on.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HOME-16"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HOME-16"></td>
+</tr><tr class="case" data-id="HOME-17" data-bands="E" data-prog="all" data-ver="L" data-sec="home">
+<td class="id">HOME-17</td>
+<td class="what"><b>Games (Elementary)</b><ol><li>Open the games from Home.</li><li>Open them during a live class.</li></ol></td>
+<td class="exp">Games work; they are locked only while a class is live. Middle/High have different games in the mockups that are not built (see section I).</td>
+<td class="tags"><div><span class="chip b-E">E</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HOME-17"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HOME-17"></td>
+</tr><tr class="case" data-id="HOME-18" data-bands="EMH" data-prog="BATCH" data-ver="L" data-sec="home">
+<td class="id">HOME-18</td>
+<td class="what"><b>Batch classes on the plan</b><ol><li>Log in as a BATCH student.</li><li>Open a batch class.</li></ol></td>
+<td class="exp">The class shows the batch name and no individual teacher; join works like any class.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">Batch</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HOME-18"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HOME-18"></td>
+</tr></tbody></table></div></section>
+<section id="attendance" class="mod"><h2>3. My Attendance</h2><p class="intro">Menu item student-attendance-overview. Hidden when the attendance menu flag is off.</p><div class="tablewrap"><table class="cases"><thead><tr><th>ID</th><th>What to do</th><th>Expected result</th><th>Applies to</th><th>Result</th></tr></thead><tbody><tr class="case" data-id="AT-01" data-bands="EMH" data-prog="all" data-ver="D" data-sec="attendance">
+<td class="id">AT-01</td>
+<td class="what"><b>Overview and donut</b><ol><li>Open My Attendance.</li></ol></td>
+<td class="exp">Summary (classes today, attendance % this month, late %, deltas) and the 12-month chart load; numbers match the legacy page for the same student.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for AT-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for AT-01"></td>
+</tr><tr class="case" data-id="AT-02" data-bands="EMH" data-prog="all" data-ver="D" data-sec="attendance">
+<td class="id">AT-02</td>
+<td class="what"><b>Filters and details</b><ol><li>Use the From / To date pickers and the status chips.</li><li>Open the detail view.</li></ol></td>
+<td class="exp">List narrows to the dates/status; the detail view lists each class with its status. Pickers are the shadcn date pickers (no native date input).</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for AT-02"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for AT-02"></td>
+</tr><tr class="case" data-id="AT-03" data-bands="EMH" data-prog="all" data-ver="D" data-sec="attendance">
+<td class="id">AT-03</td>
+<td class="what"><b>Empty and error states</b><ol><li>Use a student with no classes.</li></ol></td>
+<td class="exp">Friendly empty state, no console errors.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for AT-03"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for AT-03"></td>
+</tr></tbody></table></div></section>
+<section id="performance" class="mod"><h2>4. My Performance / Academic Performance</h2><p class="intro">Menu item student-progress-report. Real rows exist only for Agilix Buzz LMS providers; others show an empty/info state.</p><div class="tablewrap"><table class="cases"><thead><tr><th>ID</th><th>What to do</th><th>Expected result</th><th>Applies to</th><th>Result</th></tr></thead><tbody><tr class="case" data-id="PF-01" data-bands="EMH" data-prog="all" data-ver="L" data-sec="performance">
+<td class="id">PF-01</td>
+<td class="what"><b>Course list and scores</b><ol><li>Open My Performance.</li><li>Compare each course's score with the legacy Academic Performance page.</li></ol></td>
+<td class="exp">Live Buzz scores are shown (the backend refreshes them from Buzz when the page opens) and rounded like legacy. Pace, streak, pending counts and progress are right.<div class="need"><b>Needs:</b> A Buzz student.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PF-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PF-01"></td>
+</tr><tr class="case" data-id="PF-02" data-bands="EMH" data-prog="all" data-ver="D" data-sec="performance">
+<td class="id">PF-02</td>
+<td class="what"><b>Tabs: Performance / My Goals / Class Comparison</b><ol><li>Open each tab.</li></ol></td>
+<td class="exp">Each tab loads, achievements/streak tiles show, goals can be viewed, comparison shows pace bands.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PF-02"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PF-02"></td>
+</tr><tr class="case" data-id="PF-03" data-bands="EMH" data-prog="all" data-ver="D" data-sec="performance">
+<td class="id">PF-03</td>
+<td class="what"><b>Course view</b><ol><li>Click a course.</li></ol></td>
+<td class="exp">Course, teacher, overall score and grade, Remaining Days, duration, gradable progress bar, a second 'all activities' bar (when Buzz sends the counts), pace and streak, assignment counters, and the assignment table. A late submission shows 'Late by N days'.<div class="note"><b>Note:</b> The all-activities bar needs the backend restart and Buzz counts; see section H.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PF-03"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PF-03"></td>
+</tr><tr class="case" data-id="PF-04" data-bands="EMH" data-prog="all" data-ver="D" data-sec="performance">
+<td class="id">PF-04</td>
+<td class="what"><b>Grade history</b><ol><li>Click View on a scored assignment.</li></ol></td>
+<td class="exp">History dialog lists each attempt with date, time and score.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PF-04"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PF-04"></td>
+</tr><tr class="case" data-id="PF-05" data-bands="EMH" data-prog="all" data-ver="C" data-sec="performance">
+<td class="id">PF-05</td>
+<td class="what"><b>Old shell table</b><ol><li>On the standard shell open Academic Performance.</li></ol></td>
+<td class="exp">Columns: Course, Score, Pace, Teacher, End date, Remaining Days, Pending, Progress (gradable), Progress (all activities); the course opens the progress detail.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PF-05"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PF-05"></td>
+</tr></tbody></table></div></section>
+<section id="progress" class="mod"><h2>5. Progress Reports</h2><p class="intro">Menu item progress-detail. List of reports, then the report view. The report body depends on the LMS provider.</p><div class="tablewrap"><table class="cases"><thead><tr><th>ID</th><th>What to do</th><th>Expected result</th><th>Applies to</th><th>Result</th></tr></thead><tbody><tr class="case" data-id="PR-01" data-bands="EMH" data-prog="all" data-ver="D" data-sec="progress">
+<td class="id">PR-01</td>
+<td class="what"><b>Report list</b><ol><li>Open Progress Reports.</li><li>Page through (10 per page).</li></ol></td>
+<td class="exp">Columns S.No, Report Type, Report Frequency, Published Date, View. 'No progress report found' when empty.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PR-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PR-01"></td>
+</tr><tr class="case" data-id="PR-02" data-bands="EMH" data-prog="all" data-ver="D" data-sec="progress">
+<td class="id">PR-02</td>
+<td class="what"><b>Gradebook report (providers 36/37/38)</b><ol><li>Press View on a report.</li></ol></td>
+<td class="exp">Student block, one block per course with the activity table (module, type, name, time spent, due, submitted, percentage, grade), counters, course grade, overall and completion %, school official stamp and the grading-system table.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PR-02"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PR-02"></td>
+</tr><tr class="case" data-id="PR-03" data-bands="EMH" data-prog="all" data-ver="D" data-sec="progress">
+<td class="id">PR-03</td>
+<td class="what"><b>Date search</b><ol><li>Change Due Start / End Date and press Search.</li><li>Use a 7-day range.</li></ol></td>
+<td class="exp">The report reloads for the dates; a 7-day range is 'weekly' and also shows Current Week Percentage. Bad ranges show the legacy messages.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PR-03"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PR-03"></td>
+</tr><tr class="case" data-id="PR-04" data-bands="EMH" data-prog="all" data-ver="C" data-sec="progress">
+<td class="id">PR-04</td>
+<td class="what"><b>Download</b><ol><li>Press Download.</li></ol></td>
+<td class="exp">A PDF/preparing state then the file downloads. Not shown when the report has no download link.<div class="need"><b>Needs:</b> A report with a download link.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PR-04"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PR-04"></td>
+</tr><tr class="case" data-id="PR-05" data-bands="EMH" data-prog="all" data-ver="C" data-sec="progress">
+<td class="id">PR-05</td>
+<td class="what"><b>Canvas report (provider 40)</b><ol><li>Open a report of a Canvas student (or dummy: add &amp;dummyLms=40 to the Progress Reports URL).</li></ol></td>
+<td class="exp">Per course: header, Sr.no / Type / Activity Name / Target Due Date / Submitted Date / Percentage / Grade, the three activity counters and last submission, Course Grade and Current Overall Percentage.<div class="need"><b>Needs:</b> A Canvas student, or the dummy URL.</div><div class="note"><b>Note:</b> Backend JSON for a real student not yet seen.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PR-05"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PR-05"></td>
+</tr><tr class="case" data-id="PR-06" data-bands="EMH" data-prog="all" data-ver="C" data-sec="progress">
+<td class="id">PR-06</td>
+<td class="what"><b>Courseware report (provider 41)</b><ol><li>Same with a Courseware student (dummy: &amp;dummyLms=41).</li></ol></td>
+<td class="exp">Same layout but only Sr.no / Type / Activity Name / Percentage / Grade, no counters.<div class="need"><b>Needs:</b> A Courseware student, or the dummy URL.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PR-06"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PR-06"></td>
+</tr><tr class="case" data-id="PR-07" data-bands="EMH" data-prog="all" data-ver="C" data-sec="progress">
+<td class="id">PR-07</td>
+<td class="what"><b>No reports for provider 39 / grade-8 record</b><ol><li>Open the menu for such a student.</li></ol></td>
+<td class="exp">The Reports group/Extension item is hidden.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PR-07"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PR-07"></td>
+</tr></tbody></table></div></section>
+<section id="fee" class="mod"><h2>6. Fee Details, Cart and checkout</h2><p class="intro">Fee Details is shown only to online-signup students. Pay Now / Try Again run the same checkout chain as the Cart.</p><div class="tablewrap"><table class="cases"><thead><tr><th>ID</th><th>What to do</th><th>Expected result</th><th>Applies to</th><th>Result</th></tr></thead><tbody><tr class="case" data-id="FE-01" data-bands="EMH" data-prog="all" data-ver="D" data-sec="fee">
+<td class="id">FE-01</td>
+<td class="what"><b>Fee table</b><ol><li>Open Fee Details (online signup student).</li></ol></td>
+<td class="exp">Rows: scheduled date, grade, payment name (1st/2nd… suffix), paid fee with school currency, paid date, status, receipt. Search and 10-per-page paging work.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for FE-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for FE-01"></td>
+</tr><tr class="case" data-id="FE-02" data-bands="EMH" data-prog="all" data-ver="C" data-sec="fee">
+<td class="id">FE-02</td>
+<td class="what"><b>Row actions by status</b><ol><li>Check rows with SUCCESS, PENDING/FAILURE/REJECTED, INITIATED (CONVERA / wire transfer).</li></ol></td>
+<td class="exp">SUCCESS: View Receipt (needs the module's viewed right). Next due row: Pay Now / Try Again; unpaid others: Try Again. INITIATED CONVERA: 'Payment in Process' + Change Payment Method. School 5 wire transfer awaiting review: only 'Payment Under Process'.<div class="need"><b>Needs:</b> Rows in each status; a school-5 wire-transfer row.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for FE-02"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for FE-02"></td>
+</tr><tr class="case" data-id="FE-03" data-bands="EMH" data-prog="all" data-ver="C" data-sec="fee">
+<td class="id">FE-03</td>
+<td class="what"><b>Pay Now chain</b><ol><li>Press Pay Now on the due row.</li></ol></td>
+<td class="exp">Loader, then (if more than one gateway) the gateway picker; after paying the page shows 'Payment received' and refreshes. 'Payment Incomplete' and 'under review' dialogs appear for those outcomes.<div class="need"><b>Needs:</b> A gateway test account.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for FE-03"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for FE-03"></td>
+</tr><tr class="case" data-id="FE-04" data-bands="EMH" data-prog="all" data-ver="C" data-sec="fee">
+<td class="id">FE-04</td>
+<td class="what"><b>Payment already in progress / paid / old fee</b><ol><li>Start a payment, leave, press Pay again.</li><li>Pay a fee already paid.</li><li>Pay a fee whose plan changed.</li></ol></td>
+<td class="exp">A 'payment in progress' dialog with cancel-attempt; an 'already paid' result; the 'School Payment Update' dialog (Important Notice + support card) for an outdated fee.<div class="need"><b>Needs:</b> Real gateway states.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for FE-04"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for FE-04"></td>
+</tr><tr class="case" data-id="FE-05" data-bands="EMH" data-prog="all" data-ver="D" data-sec="fee">
+<td class="id">FE-05</td>
+<td class="what"><b>Cart</b><ol><li>Open the Cart from the header.</li></ol></td>
+<td class="exp">Items, terms modal, totals in school currency, coupon removed (no discount code). Checkout uses the same chain as Fee Details.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for FE-05"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for FE-05"></td>
+</tr><tr class="case" data-id="FE-06" data-bands="EMH" data-prog="all" data-ver="D" data-sec="fee">
+<td class="id">FE-06</td>
+<td class="what"><b>Receipt (dummy)</b><ol><li>In dummy mode open a receipt link.</li></ol></td>
+<td class="exp">The dummy receipt page opens for that payment.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for FE-06"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for FE-06"></td>
+</tr></tbody></table></div></section>
+<section id="buy" class="mod"><h2>7. Buy Extra Classes (Buy &amp; Book a Class)</h2><p class="intro">Menu item student-addon. Label can be 'Buy &amp; Book a Class' by flag.</p><div class="tablewrap"><table class="cases"><thead><tr><th>ID</th><th>What to do</th><th>Expected result</th><th>Applies to</th><th>Result</th></tr></thead><tbody><tr class="case" data-id="BE-01" data-bands="EMH" data-prog="all" data-ver="D" data-sec="buy">
+<td class="id">BE-01</td>
+<td class="what"><b>Course cards and plans</b><ol><li>Open Buy Extra Classes.</li><li>Open a course's plans dialog.</li></ol></td>
+<td class="exp">Cards per course with teacher and 'from' price; the dialog lists plans (number of classes, price, saving, duration). Copy 'unused classes carry forward' is shown.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for BE-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for BE-01"></td>
+</tr><tr class="case" data-id="BE-02" data-bands="EMH" data-prog="all" data-ver="D" data-sec="buy">
+<td class="id">BE-02</td>
+<td class="what"><b>Add to cart</b><ol><li>Press Add to cart.</li><li>Open the plan again.</li></ol></td>
+<td class="exp">Button shows 'In cart' (disabled state) and the header cart count rises; 'Go to cart (n)' works.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for BE-02"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for BE-02"></td>
+</tr><tr class="case" data-id="BE-03" data-bands="EMH" data-prog="all" data-ver="D" data-sec="buy">
+<td class="id">BE-03</td>
+<td class="what"><b>Customise your plan</b><ol><li>Press 'Customise your plan'.</li></ol></td>
+<td class="exp">The customise dialog opens and a custom plan can be added to the cart.<div class="note"><b>Note:</b> Cart page and Customise dialog for High were not compared with the mockup.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for BE-03"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for BE-03"></td>
+</tr></tbody></table></div></section>
+<section id="book" class="mod"><h2>8. Book a Class and Booked Class Details</h2><p class="intro">Menu item book-a-session. Hidden when the Book a Class menu flag is off. A student whose academic year has not started sees only a notice.</p><div class="tablewrap"><table class="cases"><thead><tr><th>ID</th><th>What to do</th><th>Expected result</th><th>Applies to</th><th>Result</th></tr></thead><tbody><tr class="case" data-id="BK-01" data-bands="EMH" data-prog="all" data-ver="D" data-sec="book">
+<td class="id">BK-01</td>
+<td class="what"><b>Gate messages</b><ol><li>Open as a student with no purchased class; one whose academic year has not started.</li></ol></td>
+<td class="exp">'Buy a class first' with a button to Buy Extra; 'academic year has not started' notice. No booking possible.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for BK-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for BK-01"></td>
+</tr><tr class="case" data-id="BK-02" data-bands="EMH" data-prog="all" data-ver="D" data-sec="book">
+<td class="id">BK-02</td>
+<td class="what"><b>Course cards</b><ol><li>Open Book a Class with an active student.</li></ol></td>
+<td class="exp">A card per course (and an 'All Courses' card): teacher, 'n booked', 'Book a class'. A 'Booked class details' button sits under each card (Middle/High).</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for BK-02"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for BK-02"></td>
+</tr><tr class="case" data-id="BK-03" data-bands="EMH" data-prog="all" data-ver="D" data-sec="book">
+<td class="id">BK-03</td>
+<td class="what"><b>Slot booking</b><ol><li>Pick a course, a day, a time, confirm.</li></ol></td>
+<td class="exp">Confirm dialog shows the class; after confirming the cap counters change and the class appears in Booked Class Details.<div class="need"><b>Needs:</b> Real teacher availability to book for real.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for BK-03"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for BK-03"></td>
+</tr><tr class="case" data-id="BK-04" data-bands="EMH" data-prog="all" data-ver="D" data-sec="book">
+<td class="id">BK-04</td>
+<td class="what"><b>Limits</b><ol><li>Try to book with no teacher assigned; with 0 classes left this week.</li></ol></td>
+<td class="exp">'You do not have a teacher assigned yet' and 'You have booked all your classes for this week'. The 'Book a Class (n)' button turns dark at 0.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for BK-04"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for BK-04"></td>
+</tr><tr class="case" data-id="BK-05" data-bands="EMH" data-prog="all" data-ver="D" data-sec="book">
+<td class="id">BK-05</td>
+<td class="what"><b>All Courses</b><ol><li>Press Book a Class on the All Courses card.</li></ol></td>
+<td class="exp">A course picker opens first, then the slot booking for the chosen course.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for BK-05"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for BK-05"></td>
+</tr><tr class="case" data-id="BK-06" data-bands="EMH" data-prog="all" data-ver="D" data-sec="book">
+<td class="id">BK-06</td>
+<td class="what"><b>Booked Class Details</b><ol><li>Open Booked class details.</li><li>Filter by date range and status; Reset; Search.</li></ol></td>
+<td class="exp">Totals tiles (classes booked, left, expired, missed by you, rescheduled, completed, missed by teacher), and the table. Standard shell: search, header sort and 10-per-page paging. Book a Class button also on the All Courses view.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for BK-06"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for BK-06"></td>
+</tr></tbody></table></div></section>
+<section id="teacher" class="mod"><h2>9. Assigned Teacher / Syllabus</h2><p class="intro">Menu item syllabus-assigned-teacher (ONE_TO_ONE). Hidden when the assigned-teacher flag is off.</p><div class="tablewrap"><table class="cases"><thead><tr><th>ID</th><th>What to do</th><th>Expected result</th><th>Applies to</th><th>Result</th></tr></thead><tbody><tr class="case" data-id="AS-01" data-bands="EMH" data-prog="all" data-ver="D" data-sec="teacher">
+<td class="id">AS-01</td>
+<td class="what"><b>Course list</b><ol><li>Open Assigned Teacher / Syllabus.</li></ol></td>
+<td class="exp">A card (or table row on the standard shell) per course with its teacher ('Not assigned yet' when none). Search box and paging (9 per page on the new look, 10 on the standard shell) work.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for AS-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for AS-01"></td>
+</tr><tr class="case" data-id="AS-02" data-bands="EMH" data-prog="all" data-ver="L" data-sec="teacher">
+<td class="id">AS-02</td>
+<td class="what"><b>Course calendar</b><ol><li>Open a course's calendar.</li></ol></td>
+<td class="exp">Lessons grouped by module, collapsible, with due dates. Clicking a lesson opens the LMS in a new tab, or shows 'payment pending' / 'Course content is not available'.<div class="need"><b>Needs:</b> A Buzz course.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for AS-02"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for AS-02"></td>
+</tr><tr class="case" data-id="AS-03" data-bands="EMH" data-prog="BATCH" data-ver="L" data-sec="teacher">
+<td class="id">AS-03</td>
+<td class="what"><b>BATCH students</b><ol><li>Open the batch-teacher item as a BATCH student.</li></ol></td>
+<td class="exp">The batch-teacher variant is not built: the 'being migrated' placeholder opens (the legacy endpoint does not exist either).<div class="note"><b>Note:</b> Expected, not a bug.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">Batch</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for AS-03"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for AS-03"></td>
+</tr></tbody></table></div></section>
+<section id="transcript" class="mod"><h2>10. Transcript, Certificates, Handbook, Exam sheet</h2><p class="intro">Document-type modules.</p><div class="tablewrap"><table class="cases"><thead><tr><th>ID</th><th>What to do</th><th>Expected result</th><th>Applies to</th><th>Result</th></tr></thead><tbody><tr class="case" data-id="TR-01" data-bands="EMH" data-prog="all" data-ver="L" data-sec="transcript">
+<td class="id">TR-01</td>
+<td class="what"><b>Transcript row and menu</b><ol><li>Open Student Transcript.</li><li>Open the ⋮ Action menu.</li></ol></td>
+<td class="exp">Student name, email, grade, student ID; 'Transcript - {grade}' for each published grade. ' (New)' is added only when the student has more than one transcript and that row is an improve/complete-grades enrolment. The menu is empty ('--') when the module's viewed right is not Y.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for TR-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for TR-01"></td>
+</tr><tr class="case" data-id="TR-02" data-bands="EMH" data-prog="all" data-ver="C" data-sec="transcript">
+<td class="id">TR-02</td>
+<td class="what"><b>Diploma link (Grade 12)</b><ol><li>Use a student with a published Grade 12 transcript.</li><li>Open the Action menu.</li></ol></td>
+<td class="exp">'Diploma - Grade 12' appears and opens the diploma page (with transcript and QR code) in a new tab. It does not appear for other grades.<div class="need"><b>Needs:</b> Grade 12 student; backend restart.</div><div class="note"><b>Note:</b> New backend fields diplomaUrl and enrolmentType.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for TR-02"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for TR-02"></td>
+</tr><tr class="case" data-id="TR-03" data-bands="EMH" data-prog="all" data-ver="L" data-sec="transcript">
+<td class="id">TR-03</td>
+<td class="what"><b>Transcript view</b><ol><li>Open a transcript link.</li></ol></td>
+<td class="exp">The published transcript opens; student cannot open another student's by editing the link.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for TR-03"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for TR-03"></td>
+</tr><tr class="case" data-id="CE-01" data-bands="EMH" data-prog="all" data-ver="C" data-sec="transcript">
+<td class="id">CE-01</td>
+<td class="what"><b>Certificates list and search</b><ol><li>Open My Certificates with several certificates.</li></ol></td>
+<td class="exp">Cards show title, awarded to, issue date, ID, Download PDF (or 'being prepared'), Verify, Copy link. Search shows when there are more than 6.<div class="need"><b>Needs:</b> Issued certificates.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for CE-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for CE-01"></td>
+</tr><tr class="case" data-id="CE-02" data-bands="EMH" data-prog="all" data-ver="D" data-sec="transcript">
+<td class="id">CE-02</td>
+<td class="what"><b>Request a certificate</b><ol><li>Press Request a certificate.</li><li>Choose type, grade, purpose, send.</li></ol></td>
+<td class="exp">Request appears under My requests with a status chip and a progress track (Requested → Under review → Generating → Certificate generated). A Pending request can be cancelled; an approved one has Download and Verify.<div class="need"><b>Needs:</b> Request types enabled by the school.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for CE-02"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for CE-02"></td>
+</tr><tr class="case" data-id="HB-01" data-bands="EMH" data-prog="all" data-ver="D" data-sec="transcript">
+<td class="id">HB-01</td>
+<td class="what"><b>Student Handbook</b><ol><li>Open Student Handbook.</li></ol></td>
+<td class="exp">Floating book, school chip, Download Handbook (disabled when no file), the yellow note with the policies link. School 1 shows its own cover and policy link.<div class="need"><b>Needs:</b> Module right and a handbook file.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for HB-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for HB-01"></td>
+</tr><tr class="case" data-id="EX-01" data-bands="EMH" data-prog="BATCH" data-ver="L" data-sec="transcript">
+<td class="id">EX-01</td>
+<td class="what"><b>Examination Schedule (BATCH)</b><ol><li>Open the exam sheet as a BATCH student whose sheet is uploaded.</li></ol></td>
+<td class="exp">The PDF shows in a card with 'Open in new tab'; before upload: 'going to upload soon'. The menu item itself shows only for BATCH + uploaded.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">Batch</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for EX-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for EX-01"></td>
+</tr></tbody></table></div></section>
+<section id="video" class="mod"><h2>11. Video Library, Login History, Extension, Clubs</h2><p class="intro">Smaller modules.</p><div class="tablewrap"><table class="cases"><thead><tr><th>ID</th><th>What to do</th><th>Expected result</th><th>Applies to</th><th>Result</th></tr></thead><tbody><tr class="case" data-id="VL-01" data-bands="EMH" data-prog="all" data-ver="D" data-sec="video">
+<td class="id">VL-01</td>
+<td class="what"><b>Playlists and access</b><ol><li>Open Video Library.</li></ol></td>
+<td class="exp">Header, search, an access bar (trial / subscribed / renew), course chips, playlist with lessons. A locked course shows why and a Subscribe button.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for VL-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for VL-01"></td>
+</tr><tr class="case" data-id="VL-02" data-bands="EMH" data-prog="all" data-ver="C" data-sec="video">
+<td class="id">VL-02</td>
+<td class="what"><b>Trial and subscribe</b><ol><li>Press 'Start 7-day free trial' / Subscribe.</li></ol></td>
+<td class="exp">The trial starts or the subscribe/payment chain opens; access bar updates.<div class="need"><b>Needs:</b> A school with Video Library plans.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for VL-02"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for VL-02"></td>
+</tr><tr class="case" data-id="VL-03" data-bands="EMH" data-prog="all" data-ver="C" data-sec="video">
+<td class="id">VL-03</td>
+<td class="what"><b>Player</b><ol><li>Play a lesson, use Previous / Next / Autoplay, search all videos.</li></ol></td>
+<td class="exp">Plays, resumes ('Start over'), marks lessons watched, progress and counters update.<div class="need"><b>Needs:</b> An unlocked course with videos.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for VL-03"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for VL-03"></td>
+</tr><tr class="case" data-id="LH-01" data-bands="EMH" data-prog="all" data-ver="D" data-sec="video">
+<td class="id">LH-01</td>
+<td class="what"><b>Login History</b><ol><li>Open Login History.</li></ol></td>
+<td class="exp">First login, last login and total cards, the sessions table with search and paging, the security note.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for LH-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for LH-01"></td>
+</tr><tr class="case" data-id="AX-01" data-bands="EMH" data-prog="all" data-ver="D" data-sec="video">
+<td class="id">AX-01</td>
+<td class="what"><b>Academic Year Extension</b><ol><li>Open Academic Year Extension before and after the academic year starts.</li></ol></td>
+<td class="exp">Before: 'academic year has not started'. After: a card per course; opening one explains how to extend and (when eligible) shows 'Talk to us'; not-eligible text otherwise.<div class="need"><b>Needs:</b> A student with a started academic year.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for AX-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for AX-01"></td>
+</tr><tr class="case" data-id="CL-01" data-bands="EMH" data-prog="all" data-ver="D" data-sec="video">
+<td class="id">CL-01</td>
+<td class="what"><b>Clubs</b><ol><li>Open a club page (e.g. English club).</li></ol></td>
+<td class="exp">The club page loads with its title and image; clubs in the parked list (see I) are not in the menu.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for CL-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for CL-01"></td>
+</tr></tbody></table></div></section>
+<section id="inbox" class="mod"><h2>12. Inbox</h2><p class="intro">Menu item inbox (and inbox-compose). Folders: All, Emails, Notifications, Announcements, WhatsApp, Sent.</p><div class="tablewrap"><table class="cases"><thead><tr><th>ID</th><th>What to do</th><th>Expected result</th><th>Applies to</th><th>Result</th></tr></thead><tbody><tr class="case" data-id="IN-01" data-bands="EMH" data-prog="all" data-ver="D" data-sec="inbox">
+<td class="id">IN-01</td>
+<td class="what"><b>Folders, unread counts, list</b><ol><li>Open Inbox.</li><li>Switch folders; page through.</li></ol></td>
+<td class="exp">Counts match; unread rows are bold; the list pages correctly.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for IN-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for IN-01"></td>
+</tr><tr class="case" data-id="IN-02" data-bands="EMH" data-prog="all" data-ver="D" data-sec="inbox">
+<td class="id">IN-02</td>
+<td class="what"><b>Filters and search</b><ol><li>Open Filters; choose date range, read state, category, search text; Apply; Clear.</li></ol></td>
+<td class="exp">List narrows and a count shows on the Filters button.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for IN-02"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for IN-02"></td>
+</tr><tr class="case" data-id="IN-03" data-bands="EMH" data-prog="all" data-ver="D" data-sec="inbox">
+<td class="id">IN-03</td>
+<td class="what"><b>Read, star, mark unread, mark all read</b><ol><li>Open a message; star it; mark unread; press Mark all as read.</li></ol></td>
+<td class="exp">States change and counts update; opening marks as read.<div class="note"><b>Note:</b> Reading a real email was checked live; star, mark unread and Mark all as read were checked in dummy mode only.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for IN-03"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for IN-03"></td>
+</tr><tr class="case" data-id="IN-04" data-bands="EMH" data-prog="all" data-ver="C" data-sec="inbox">
+<td class="id">IN-04</td>
+<td class="what"><b>Attachments</b><ol><li>Open a message with a file.</li></ol></td>
+<td class="exp">Attachment buttons download/open the file.<div class="need"><b>Needs:</b> A message with an attachment.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for IN-04"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for IN-04"></td>
+</tr><tr class="case" data-id="IN-05" data-bands="EMH" data-prog="all" data-ver="L" data-sec="inbox">
+<td class="id">IN-05</td>
+<td class="what"><b>Compose and reply</b><ol><li>Write a message, add a recipient, send; reply to one.</li></ol></td>
+<td class="exp">The message appears in Sent; reply keeps the thread.<div class="note"><b>Note:</b> A real send and the Sent folder were checked live; reply was not.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for IN-05"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for IN-05"></td>
+</tr><tr class="case" data-id="IN-06" data-bands="EMH" data-prog="all" data-ver="C" data-sec="inbox">
+<td class="id">IN-06</td>
+<td class="what"><b>Email settings</b><ol><li>Open Email settings, change a setting, save.</li></ol></td>
+<td class="exp">Saved and shown again after reload.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for IN-06"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for IN-06"></td>
+</tr><tr class="case" data-id="IN-07" data-bands="EMH" data-prog="all" data-ver="C" data-sec="inbox">
+<td class="id">IN-07</td>
+<td class="what"><b>'I have read this'</b><ol><li>Open an announcement that needs acknowledgement.</li></ol></td>
+<td class="exp">Acknowledge button records it and the announcement stops asking.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for IN-07"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for IN-07"></td>
+</tr></tbody></table></div></section>
+<section id="profile" class="mod"><h2>13. My Profile</h2><p class="intro">Sections: 1 Personal, 2 Parent/Guardian, 3 Academic, 4 Live Classes - Preferred Timing, 5 Sport &amp; Extra Curricular, 6 School Email, 7 Withdrawal. In dummy mode the whole page is read-only.</p><div class="tablewrap"><table class="cases"><thead><tr><th>ID</th><th>What to do</th><th>Expected result</th><th>Applies to</th><th>Result</th></tr></thead><tbody><tr class="case" data-id="MP-01" data-bands="EMH" data-prog="all" data-ver="L" data-sec="profile">
+<td class="id">MP-01</td>
+<td class="what"><b>Hero and completion</b><ol><li>Open My Profile.</li></ol></td>
+<td class="exp">Photo/initial, name, grade, student ID, '% complete' bar; the section list shows a ring per section.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for MP-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for MP-01"></td>
+</tr><tr class="case" data-id="MP-02" data-bands="EMH" data-prog="all" data-ver="L" data-sec="profile">
+<td class="id">MP-02</td>
+<td class="what"><b>Edit a field</b><ol><li>Edit a personal field; Bulk Save.</li></ol></td>
+<td class="exp">Dirty count shows; save succeeds with the legacy rules (e.g. phone, country, date pickers are shadcn).</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for MP-02"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for MP-02"></td>
+</tr><tr class="case" data-id="MP-03" data-bands="EMH" data-prog="all" data-ver="C" data-sec="profile">
+<td class="id">MP-03</td>
+<td class="what"><b>OTP verification</b><ol><li>Change email / phone and verify with a code.</li></ol></td>
+<td class="exp">Code is sent and verified; field shows verified.<div class="need"><b>Needs:</b> A working mail/SMS.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for MP-03"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for MP-03"></td>
+</tr><tr class="case" data-id="MP-04" data-bands="EMH" data-prog="all" data-ver="C" data-sec="profile">
+<td class="id">MP-04</td>
+<td class="what"><b>Photo and documents</b><ol><li>Upload a profile picture (JPG/PNG up to 5 MB); upload a document.</li></ol></td>
+<td class="exp">Crop dialog then saved; wrong type/size shows the single legacy message.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for MP-04"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for MP-04"></td>
+</tr><tr class="case" data-id="MP-05" data-bands="EMH" data-prog="all" data-ver="L" data-sec="profile">
+<td class="id">MP-05</td>
+<td class="what"><b>My contact details card</b><ol><li>Open the Personal section.</li></ol></td>
+<td class="exp">Card 'My contact details' shows Email / Mobile / WhatsApp / App rows with status; 'Fix now' opens the contact-check fix flow, 'Get the app' the app dialog. Hidden when nothing needs attention.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for MP-05"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for MP-05"></td>
+</tr><tr class="case" data-id="MP-06" data-bands="EMH" data-prog="all" data-ver="C" data-sec="profile">
+<td class="id">MP-06</td>
+<td class="what"><b>School Email</b><ol><li>Open section 6.</li></ol></td>
+<td class="exp">Not active: 'Activate your school user ID' (asks for confirmation, then opens Outlook). Active: Email and Password with copy/show, Open Outlook, Reset password.<div class="need"><b>Needs:</b> A student with / without a school mailbox.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for MP-06"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for MP-06"></td>
+</tr><tr class="case" data-id="MP-07" data-bands="EMH" data-prog="all" data-ver="C" data-sec="profile">
+<td class="id">MP-07</td>
+<td class="what"><b>Withdrawal</b><ol><li>Open section 7 as an eligible student.</li></ol></td>
+<td class="exp">Terms accordion, then the request steps with OTP and bank details. Not shown to students whose parent handles it.<div class="need"><b>Needs:</b> An eligible student.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for MP-07"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for MP-07"></td>
+</tr><tr class="case" data-id="MP-08" data-bands="EMH" data-prog="all" data-ver="D" data-sec="profile">
+<td class="id">MP-08</td>
+<td class="what"><b>Dummy read-only</b><ol><li>Open My Profile in dummy mode and try to edit.</li></ol></td>
+<td class="exp">No editors; a demo note; no withdrawal.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for MP-08"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for MP-08"></td>
+</tr></tbody></table></div></section>
+
+<section id="popups" class="mod"><h2>14. Popups and gates on the dashboard</h2><p class="intro">These open on top of Home. They wait for each other and for a live class. All need the student's own data, so test them with the special students from section A.</p><div class="tablewrap"><table class="cases"><thead><tr><th>ID</th><th>What to do</th><th>Expected result</th><th>Applies to</th><th>Result</th></tr></thead><tbody><tr class="case" data-id="PU-01" data-bands="EMH" data-prog="all" data-ver="L" data-sec="popups">
+<td class="id">PU-01</td>
+<td class="what"><b>Contact check (first popup)</b><ol><li>Log in as a student with an invalid / unreachable email, mobile or WhatsApp.</li></ol></td>
+<td class="exp">A fix popup opens before other popups (choose a problem, send code, verify). It can be closed for now a limited number of times; a mandatory one cannot. It stands back for a live class.<div class="need"><b>Needs:</b> A contact marked invalid.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PU-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PU-01"></td>
+</tr><tr class="case" data-id="PU-02" data-bands="EMH" data-prog="all" data-ver="L" data-sec="popups">
+<td class="id">PU-02</td>
+<td class="what"><b>Complete Your Profile</b><ol><li>After the contact check, open Home as a student with empty 'NOW' profile fields.</li></ol></td>
+<td class="exp">Popup lists the empty fields; closable unless a field is required; 'Go to My Profile'. Works in the new look and the standard shell.<div class="need"><b>Needs:</b> Profile-completing setting on.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PU-02"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PU-02"></td>
+</tr><tr class="case" data-id="PU-03" data-bands="EMH" data-prog="all" data-ver="C" data-sec="popups">
+<td class="id">PU-03</td>
+<td class="what"><b>Reserve a seat / re-enroll for next grade</b><ol><li>Log in as a student eligible for the next-grade offer (studentGraduate = N).</li></ol></td>
+<td class="exp">After ~1.5 s (not during a live class) a popup offers 'Re-Enroll Now For The Next Grade' or 'Reserve a Seat Now For Next Grade' with the fee; accepting runs the checkout; a side button reopens it; 'Need any help' panel shows on its timer without Yes/No buttons.<div class="need"><b>Needs:</b> An eligible student; payment gateway.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PU-03"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PU-03"></td>
+</tr><tr class="case" data-id="PU-04" data-bands="EMH" data-prog="all" data-ver="L" data-sec="popups">
+<td class="id">PU-04</td>
+<td class="what"><b>School System Training popup</b><ol><li>Log in as a student with a booked training.</li></ol></td>
+<td class="exp">'Your School System Training is on …' with Join (class join flow) and a reschedule link; 'has been rescheduled' variant; nothing when COMPLETED/Skipped. A one-time 'Welcome to the family' popup shows before it (closes after 10 s).<div class="need"><b>Needs:</b> Booked training; Join only in the live window.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PU-04"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PU-04"></td>
+</tr><tr class="case" data-id="PU-05" data-bands="EMH" data-prog="all" data-ver="L" data-sec="popups">
+<td class="id">PU-05</td>
+<td class="what"><b>Reschedule training page</b><ol><li>Open the reschedule link.</li></ol></td>
+<td class="exp">Date picker ('Select Training Date'), times of that date, save; returns to the dashboard; skeleton while loading.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PU-05"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PU-05"></td>
+</tr><tr class="case" data-id="PU-06" data-bands="EMH" data-prog="all" data-ver="C" data-sec="popups">
+<td class="id">PU-06</td>
+<td class="what"><b>Forced password change</b><ol><li>Turn on the school's forced-password setting; log in with a due student (or a sibling on the temporary password).</li></ol></td>
+<td class="exp">A must-change Change Password popup that cannot be skipped.<div class="need"><b>Needs:</b> Setting on; due account.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PU-06"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PU-06"></td>
+</tr><tr class="case" data-id="PU-07" data-bands="EMH" data-prog="all" data-ver="C" data-sec="popups">
+<td class="id">PU-07</td>
+<td class="what"><b>Install the app popup (school 1, student)</b><ol><li>Log in on a browser (not the installed app) as a student who has not used the app.</li></ol></td>
+<td class="exp">After the contact check and when nothing else is open, the app dialog opens; close is locked for 10 s (button counts down); closing hides it for 7 days. Not shown when installed as app, in dummy mode or for other schools.<div class="need"><b>Needs:</b> School 1 student with no app activity.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PU-07"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PU-07"></td>
+</tr><tr class="case" data-id="PU-08" data-bands="EMH" data-prog="all" data-ver="C" data-sec="popups">
+<td class="id">PU-08</td>
+<td class="what"><b>School email (Outlook) reminder</b><ol><li>Log in as a student who skipped the school e-mail setup.</li></ol></td>
+<td class="exp">'Activate your school email' with email and temporary password (show/copy), Activate (creates the account if needed, opens Outlook), Do It Later (back after 5 min). It closes itself when the password gets set elsewhere.<div class="need"><b>Needs:</b> A student with Outlook setup pending.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PU-08"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PU-08"></td>
+</tr><tr class="case" data-id="PU-09" data-bands="EMH" data-prog="all" data-ver="C" data-sec="popups">
+<td class="id">PU-09</td>
+<td class="what"><b>Mandatory onboarding video</b><ol><li>Log in as a student for whom a welcome video is configured.</li></ol></td>
+<td class="exp">Fixed 'Welcome! {name}' dialog; no close; 'Watch Again' and 'Book System Training' unlock when the video ends (after 15 s if YouTube is blocked). Book System Training closes it and the training popup follows.<div class="need"><b>Needs:</b> A video URL in the school settings.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PU-09"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PU-09"></td>
+</tr><tr class="case" data-id="PU-10" data-bands="EMH" data-prog="all" data-ver="C" data-sec="popups">
+<td class="id">PU-10</td>
+<td class="what"><b>Graduation ceremony popup</b><ol><li>Log in as a student flagged for the ceremony.</li></ol></td>
+<td class="exp">Popup with the registration deadline and email.<div class="need"><b>Needs:</b> Flag from the dashboard-or-migration call.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PU-10"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PU-10"></td>
+</tr><tr class="case" data-id="PU-11" data-bands="EMH" data-prog="all" data-ver="D" data-sec="popups">
+<td class="id">PU-11</td>
+<td class="what"><b>Popup order and stacking</b><ol><li>Make a student have several of the above at once.</li></ol></td>
+<td class="exp">Popups never stack: each waits for any open dialog and for a live class, then opens once per page load (Outlook may come back after its snooze).</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-D" title="Dev tested in dummy mode only">Dummy</span></div></td>
+<td class="res"><select class="status" aria-label="Result for PU-11"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for PU-11"></td>
+</tr></tbody></table></div></section>
+
+<section id="onboarding" class="mod"><h2>15. Onboarding (entry gate, Welcome, Setup) - test later</h2><p class="intro">What a new student must finish before the dashboard. Marked as "later" by the project owner, but the screens are built (Welcome page <span class="mono">/student/welcome</span>, Dashboard Setup <span class="mono">/student/setup</span>, training reschedule <span class="mono">/student/system-training-reschedule</span>).</p><div class="tablewrap"><table class="cases"><thead><tr><th>ID</th><th>What to do</th><th>Expected result</th><th>Applies to</th><th>Result</th></tr></thead><tbody><tr class="case" data-id="OB-01" data-bands="EMH" data-prog="all" data-ver="L" data-sec="onboarding">
+<td class="id">OB-01</td>
+<td class="what"><b>Entry gate</b><ol><li>Open /{school}/student directly for a student who still has a step to do.</li></ol></td>
+<td class="exp">The student is sent to Welcome (overdue fee or time zone) or Setup (academic year start date / system training) first. If the check itself fails the dashboard opens (never a dead end). A student sent away and straight back within 30 s is let in (loop guard).</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for OB-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for OB-01"></td>
+</tr><tr class="case" data-id="OB-02" data-bands="EMH" data-prog="all" data-ver="C" data-sec="onboarding">
+<td class="id">OB-02</td>
+<td class="what"><b>Welcome: overdue payment</b><ol><li>Use a student with an overdue unpaid fee.</li></ol></td>
+<td class="exp">Overdue fee cards show; Pay Now runs the checkout chain; after paying the next screen shows.<div class="need"><b>Needs:</b> Overdue fee.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for OB-02"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for OB-02"></td>
+</tr><tr class="case" data-id="OB-03" data-bands="EMH" data-prog="all" data-ver="L" data-sec="onboarding">
+<td class="id">OB-03</td>
+<td class="what"><b>Welcome: confirm time zone</b><ol><li>Use a student who must confirm the zone.</li></ol></td>
+<td class="exp">The detected zone is pre-selected (Asia/Singapore when none); confirming saves it and 'all of your classes will follow this time zone' is shown first.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for OB-03"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for OB-03"></td>
+</tr><tr class="case" data-id="OB-04" data-bands="EMH" data-prog="all" data-ver="L" data-sec="onboarding">
+<td class="id">OB-04</td>
+<td class="what"><b>Setup: book system training</b><ol><li>Use a student who has to book training.</li></ol></td>
+<td class="exp">Date (+ free times of that date), Submit; then 'You're All Set!' with the booked date and time.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-L" title="Dev tested on a live test student">Live</span></div></td>
+<td class="res"><select class="status" aria-label="Result for OB-04"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for OB-04"></td>
+</tr><tr class="case" data-id="OB-05" data-bands="EMH" data-prog="all" data-ver="C" data-sec="onboarding">
+<td class="id">OB-05</td>
+<td class="what"><b>Setup: academic year start date</b><ol><li>Use a student who has to pick the academic year start.</li></ol></td>
+<td class="exp">Date picker limited to the allowed range with blocked dates; confirm (cannot be changed later).</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for OB-05"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for OB-05"></td>
+</tr><tr class="case" data-id="OB-06" data-bands="EMH" data-prog="BATCH" data-ver="C" data-sec="onboarding">
+<td class="id">OB-06</td>
+<td class="what"><b>Setup: BATCH reminder</b><ol><li>Use a BATCH student.</li></ol></td>
+<td class="exp">The group-batch start date reminder (UTC+ / UTC- batches) with Go to Dashboard.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">Batch</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for OB-06"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for OB-06"></td>
+</tr><tr class="case" data-id="OB-07" data-bands="EMH" data-prog="all" data-ver="C" data-sec="onboarding">
+<td class="id">OB-07</td>
+<td class="what"><b>Outlook is not gated</b><ol><li>Open the dashboard with Outlook setup pending.</li></ol></td>
+<td class="exp">The student is not redirected; the reminder popup (PU-08) is used instead.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for OB-07"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for OB-07"></td>
+</tr><tr class="case" data-id="OB-08" data-bands="EMH" data-prog="all" data-ver="C" data-sec="onboarding">
+<td class="id">OB-08</td>
+<td class="what"><b>Azure user layer</b><ol><li>Check the entry for a student the Azure layer would apply to.</li></ol></td>
+<td class="exp">Switched off in the backend: no screen, no redirect.<div class="note"><b>Note:</b> Expected.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for OB-08"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for OB-08"></td>
+</tr></tbody></table></div></section>
+
+<section id="reenroll" class="mod"><h2>16. Re-enrollment (phase 3)</h2>
+<p class="intro">Re-enrollment lives on another branch pair: is-sms <span class="mono">feature/version_1_2_0_phase3</span> and is-rest-api <span class="mono">feature/63_0_0_STUDENT_ENROLLEMNT_NEXTJS_PHASE3</span> (phase3 = phase4 plus about 24 re-enrollment commits; the dashboard work reaches it by merging phase4 into phase3, done by the project owner). Test on a build that has that merge.</p>
+<div class="callout warn">Open items: <b>E2</b> - programs CWS and ALL still use the old flow; <b>E3</b> - re-enrollment pages have no grade looks and no dummy mode yet. The batch re-enrollment popup was skipped on purpose (its text is fixed to September 2025).</div>
+<div class="tablewrap"><table class="cases"><thead><tr><th>ID</th><th>What to do</th><th>Expected result</th><th>Applies to</th><th>Result</th></tr></thead><tbody><tr class="case" data-id="RE-01" data-bands="EMH" data-prog="all" data-ver="C" data-sec="reenroll">
+<td class="id">RE-01</td>
+<td class="what"><b>Reserve a Seat (phase4, built)</b><ol><li>See PU-03.</li></ol></td>
+<td class="exp">Eligibility call, accept call, fee modal, payment; shown only for students not flagged as graduated.<div class="need"><b>Needs:</b> Eligible student.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for RE-01"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for RE-01"></td>
+</tr><tr class="case" data-id="RE-02" data-bands="EMH" data-prog="all" data-ver="C" data-sec="reenroll">
+<td class="id">RE-02</td>
+<td class="what"><b>Re-enrollment flow (phase3 branch)</b><ol><li>On the phase3 branch open /student/re-enrollment as a graduated / eligible student.</li></ol></td>
+<td class="exp">Options → course selection → payment → review → thank-you pages; discount offer with countdown; custom payment plan.<div class="need"><b>Needs:</b> phase3 branch; eligible student.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for RE-02"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for RE-02"></td>
+</tr><tr class="case" data-id="RE-03" data-bands="EMH" data-prog="all" data-ver="C" data-sec="reenroll">
+<td class="id">RE-03</td>
+<td class="what"><b>Home entry for a graduated student</b><ol><li>Log in as a graduated student on the phase3 branch.</li></ol></td>
+<td class="exp">Home shows the re-enrollment entry (useReEnrollmentEntry) instead of the regular dashboard.</td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for RE-03"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for RE-03"></td>
+</tr><tr class="case" data-id="RE-04" data-bands="EMH" data-prog="CWS" data-ver="C" data-sec="reenroll">
+<td class="id">RE-04</td>
+<td class="what"><b>Programs CWS and ALL</b><ol><li>Check the eligibility answer for CWS and ALL programs.</li></ol></td>
+<td class="exp">The eligibility service says these keep the old flow; there is no Next.js flow for them yet (E2).<div class="note"><b>Note:</b> Open item.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">CWS</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for RE-04"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for RE-04"></td>
+</tr><tr class="case" data-id="RE-05" data-bands="EMH" data-prog="all" data-ver="C" data-sec="reenroll">
+<td class="id">RE-05</td>
+<td class="what"><b>Look and dummy mode of the re-enrollment pages</b><ol><li>Open the re-enrollment pages for Elementary/Middle/High.</li></ol></td>
+<td class="exp">Not styled per grade look and no dummy mode yet (E3).<div class="note"><b>Note:</b> Open item.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">All programs</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for RE-05"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for RE-05"></td>
+</tr><tr class="case" data-id="RE-06" data-bands="EMH" data-prog="BATCH" data-ver="C" data-sec="reenroll">
+<td class="id">RE-06</td>
+<td class="what"><b>Batch re-enrollment popup</b><ol><li>Check as a BATCH student.</li></ol></td>
+<td class="exp">The legacy popup text is fixed to September 2025 and was skipped on purpose.<div class="note"><b>Note:</b> Skipped on purpose.</div></td>
+<td class="tags"><div><span class="chip b-E">E</span><span class="chip b-M">M</span><span class="chip b-H">H</span></div><div class="prog">Batch</div><div><span class="ver v-C" title="Coded; dev could not test (needs special data, a restart or a live service)">Needs data</span></div></td>
+<td class="res"><select class="status" aria-label="Result for RE-06"><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option></select><input class="memo" type="text" placeholder="Bug id / note" aria-label="Note for RE-06"></td>
+</tr></tbody></table></div></section>
+
+<section id="backend"><h2>H. Backend changes and prerequisites (for the test environment)</h2>
+<ul class="tight">
+<li><b>Restart the Java backend</b> after pulling the latest: it now has the Transcript <span class="mono">diplomaUrl</span> / <span class="mono">enrolmentType</span> fields and the performance "all activities" counts (<span class="mono">allDone</span>, <span class="mono">allTotal</span>, <span class="mono">allProgress</span>).</li>
+<li>Live Buzz scores: opening My Performance asks Buzz for the student's enrolments and saves the fresh scores (so numbers match the legacy page).</li>
+<li>Pico voice: the TTS key row must exist; the table <span class="mono">SMS_ERROR_LOGS_REQUEST_CAPTURE</span> must have the new columns (SQL file <span class="mono">SMS_ERROR_LOGS_REQUEST_CAPTURE.sql</span>) or error logging fails quietly.</li>
+<li>Progress Reports for Canvas/Courseware use the existing JSON of <span class="mono">getUserGradeBookSummary</span> (<span class="mono">courseWareReport</span>): check it once with a real student.</li>
+<li>Environment flags in the Next.js app: <span class="mono">NEXT_PUBLIC_MIDDLE_DASHBOARD</span>, <span class="mono">NEXT_PUBLIC_HIGH_DASHBOARD</span>, backend URL variables.</li>
+</ul></section>
+
+<section id="limits"><h2>I. Known limits - not bugs</h2>
+<div class="tablewrap"><table class="info "><thead><tr><th>Item</th><th>Status</th></tr></thead><tbody><tr><td class="k">Batch Schedule page (<span class='mono'>batch-schedule</span>)</td><td>Dropped on purpose (legacy page is a server-rendered teacher page with no JSON API).</td></tr><tr><td class="k">Parked pages: six older club pages, the 'Clubs' landing page, 'Evaluation test form details', 'My school calendar'</td><td>Parked; not in the menu of the test students. Will be asked about at the very end.</td></tr><tr><td class="k">Class feedback / 'Rate this class' / pending-feedback popup</td><td>Another team's work; the buttons are intentionally absent.</td></tr><tr><td class="k">Middle (6-8) Home</td><td>Uses the Elementary components with the Middle skin only (decision). Its fine layout is not compared with the mockup.</td></tr><tr><td class="k">Games for Middle and High</td><td>The mockups have different games; not built. Elementary games work.</td></tr><tr><td class="k">Batch-teacher syllabus page, Notifications module, Tasks, Events, PTM report, Course Timings, LMS page, Confirmation of Studies, Transfer Certificate</td><td>Not reachable or switched off in the legacy app; not migrated.</td></tr><tr><td class="k">Migration (graduate student flow)</td><td>Another team.</td></tr><tr><td class="k">Azure user layer at login</td><td>Switched off in the backend.</td></tr><tr><td class="k">Class-time (date/time) picking inside a popup</td><td>Stays on the Dashboard Setup page only.</td></tr><tr><td class="k">Welcome Note popup</td><td>Deliberately not built.</td></tr><tr><td class="k">Mockup-vs-live checks done in dummy mode</td><td>Visual sizes (fonts, radii, button heights) were compared with the mockups for High (all 18 pages) and Middle (all pages except Home) using demo data. Real-data-only parts (see 'Needs data') were not.</td></tr></tbody></table></div></section>
+
+<section id="defects"><h2>J. Reporting a defect</h2>
+<p>For every failed case please write: <b>case ID</b>, <b>look</b> (Elementary / Middle / High / Standard), <b>learning program</b>, <b>school</b>, <b>student (id, not password)</b>, <b>exact URL</b> (with any dummy params), steps, expected vs actual, a screenshot, and the browser/size. Mention if it also happens in dummy mode (that points to the front end) or only with real data (that points to data or the backend).</p>
+<p>Please run each "Needs data" case at least once and tell the developer which ones you could not run for lack of data.</p></section>
+</main>
+
+<script>
+(function(){
+  var KEY="studentDashboardQA2026-11-14", store={};
+  try{store=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){store={}}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(store))}catch(e){}}
+  var rows=[].slice.call(document.querySelectorAll("tr.case"));
+  function paint(r){var s=store[r.dataset.id]||{};r.querySelector(".status").value=s.s||"";r.querySelector(".memo").value=s.m||"";r.dataset.state=s.s||""}
+  function totals(){var p=0,f=0;rows.forEach(function(r){var s=(store[r.dataset.id]||{}).s;if(s==="pass")p++;if(s==="fail")f++});document.getElementById("sPass").textContent=p;document.getElementById("sFail").textContent=f}
+  rows.forEach(function(r){paint(r);
+    r.querySelector(".status").addEventListener("change",function(e){var o=store[r.dataset.id]||{};o.s=e.target.value;store[r.dataset.id]=o;r.dataset.state=o.s;save();totals()});
+    r.querySelector(".memo").addEventListener("input",function(e){var o=store[r.dataset.id]||{};o.m=e.target.value;store[r.dataset.id]=o;save()});
+  });totals();
+  var q=document.createElement("div");q.className="bar wrap";
+  q.innerHTML='<b>Filter:</b> <select id="fB"><option value="">Any look</option><option value="E">Elementary</option><option value="M">Middle</option><option value="H">High</option></select> <select id="fP"><option value="">Any program</option><option value="all">All programs only</option><option value="BATCH">Batch</option><option value="SELF">Self-Study</option><option value="CWS">CWS</option><option value="O2O">One-to-One</option></select> <select id="fV"><option value="">Any dev status</option><option value="C">Needs data</option><option value="D">Dummy only</option><option value="L">Live tested</option></select> <select id="fR"><option value="">Any result</option><option value="">Not run</option></select> <input id="fT" type="search" placeholder="Search text"> <button id="fX" class="p">Export results (CSV)</button> <button id="fC">Clear my results</button>';
+  document.getElementById("how").before(q);
+  document.getElementById("fR").innerHTML='<option value="*">Any result</option><option value="">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="na">N/A</option>';
+  function apply(){var b=fB.value,p=fP.value,v=fV.value,r=fR.value,t=fT.value.toLowerCase();
+    rows.forEach(function(row){var s=(store[row.dataset.id]||{}).s||"";var ok=(!b||row.dataset.bands.indexOf(b)>-1)&&(!p||row.dataset.prog===p||(p==="all"&&row.dataset.prog==="all"))&&(!v||row.dataset.ver===v)&&(r==="*"||r===s)&&(!t||row.textContent.toLowerCase().indexOf(t)>-1);row.classList.toggle("hide",!ok)})}
+  ["fB","fP","fV","fR"].forEach(function(id){document.getElementById(id).addEventListener("change",apply)});fT.addEventListener("input",apply);
+  fX.addEventListener("click",function(){var out=[["ID","Title","Result","Note","Looks","Program","Dev status"]];rows.forEach(function(r){var s=store[r.dataset.id]||{};out.push([r.dataset.id,r.querySelector(".what b").textContent,s.s||"",s.m||"",r.dataset.bands,r.dataset.prog,r.dataset.ver])});
+    var csv=out.map(function(a){return a.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"'}).join(",")}).join("\n");var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="student-dashboard-qa-results.csv";a.click()});
+  fC.addEventListener("click",function(){if(confirm("Clear all results saved in this browser?")){store={};save();rows.forEach(paint);totals();apply()}});
+})();
+</script>
+</body></html>

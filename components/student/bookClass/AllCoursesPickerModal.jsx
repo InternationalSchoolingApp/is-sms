@@ -1,0 +1,62 @@
+"use client";
+
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { CalendarModal } from "@/components/dashboard/calendar/CalendarModal";
+import { getAssignedTeachersForAllCourses } from "@/services/bookClassApi";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
+
+/**
+ * "All Courses" card (subjectId 0: some elementary standards and SSP) — legacy
+ * bookingSlotModalForElementry: the student first picks a course, then the
+ * normal per-course slot flow runs for it.
+ */
+export function AllCoursesPickerModal({ studentStandardId, onPick, onClose }) {
+  const [subjectId, setSubjectId] = useState("");
+  const { isK5 } = useDashboardContext();
+  const dummy = useDummyStudent();
+  const { data, isLoading } = useQuery({
+    queryKey: ["book-class-all-courses", studentStandardId, dummy.key],
+    queryFn: () => (dummy.enabled ? dummy.student.assignedTeachersForAllCourses() : getAssignedTeachersForAllCourses({ studentStandardId })),
+    staleTime: 0,
+  });
+  const list = data?.studentSubjectList ?? [];
+  const singleTeacher = new Set(list.map((s) => s.assignedTeacherUserId)).size === 1;
+  const picked = list.find((s) => String(s.subjectId) === String(subjectId));
+
+  return (
+    <CalendarModal title={singleTeacher && list[0] ? `Book a Class with ${list[0].teacherName}` : "Book a Class"} onClose={onClose}>
+      {isLoading ? (
+        <p className="py-4 text-center text-black/50">Loading…</p>
+      ) : list.length === 0 ? (
+        <p className="py-4 text-center text-black/60">You do not have a teacher assigned yet</p>
+      ) : (
+        <>
+          <select
+            value={subjectId}
+            onChange={(e) => setSubjectId(e.target.value)}
+            className={isK5 ? "min-h-12 w-full rounded-full border-[3px] border-k5-line bg-k5-card px-4 text-base font-bold text-k5-ink" : "w-full rounded-lg border border-slate-300 px-3 py-2 text-black"}
+          >
+            <option value="">Select Course*</option>
+            {list.map((s) => (
+              <option key={s.subjectId} value={s.subjectId}>
+                {singleTeacher ? s.subjectName : `${s.subjectName} | ${s.teacherName}`}
+              </option>
+            ))}
+          </select>
+          <div className="flex justify-end pt-3">
+            <button
+              type="button"
+              disabled={!picked}
+              onClick={() => onPick({ subjectId: picked.subjectId, name: picked.subjectName, studentStandardId })}
+              className={isK5 ? "min-h-12 cursor-pointer rounded-full border-none bg-k5-ac px-6 font-k5-display text-lg font-semibold text-white shadow-[0_4px_0_var(--k5-acd)] disabled:opacity-40" : "rounded-lg bg-primary px-4 py-2 font-bold text-white disabled:opacity-40"}
+            >
+              View Available Slots
+            </button>
+          </div>
+        </>
+      )}
+    </CalendarModal>
+  );
+}

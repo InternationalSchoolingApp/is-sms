@@ -19,7 +19,7 @@ import { CheckCircle2 } from "lucide-react";
 
 // The backend sends labels like "1<sup>st</sup> month fee"; render the <sup> as real superscript
 // without injecting the string as HTML.
-function SupText({ children }) {
+export function SupText({ children }) {
   return String(children ?? "")
     .split(/(<sup>.*?<\/sup>)/gi)
     .map((part, index) => {
@@ -289,7 +289,7 @@ function AnnualSummary({ fee, standardId, isFlexOrDual }) {
 }
 
 // getMonthlyPaymentTable() + monthlyFeeShchedule() — Installments plan (3/4/5/6-month variants).
-function InstallmentSummary({ fee, details, standardId, isFlexOrDual }) {
+function InstallmentSummary({ fee, details, standardId, isFlexOrDual, isReEnrollment }) {
   const monthly = details || fee.monthlyFeeDetails;
   const monthlyFees = monthly.monthlyFees || [];
   const rows = [baseRow({ fee, standardId, isFlexOrDual }), ...buildExtraRows(fee)];
@@ -312,7 +312,7 @@ function InstallmentSummary({ fee, details, standardId, isFlexOrDual }) {
       <DueNowCard
         eyebrow={`PAYMENT 1 OF ${monthlyFees.length}`}
         amount={monthlyFees[0]?.amountString}
-        subtitle={fee.enrollmentFee?.enrollmentFee > 0 ? "Enrollment fee + first installment" : "First installment"}
+        subtitle={isReEnrollment ? "1st Installment" : fee.enrollmentFee?.enrollmentFee > 0 ? "Enrollment fee + first installment" : "First installment"}
       />
       <FeeSummaryFlat
         rows={rows}
@@ -369,7 +369,7 @@ export function CustomPlanTable({ fee }) {
   );
 }
 
-export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVariant, onSelectVariant, disabled, standardId, isFlexOrDual }) {
+export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVariant, onSelectVariant, disabled, standardId, isFlexOrDual, isReEnrollment = false }) {
   const active = options.find((option) => option.key === selected);
   const activeChips = active?.variants?.length > 1 ? active.variants : null;
   const activeVariant = active?.variants?.find((variant) => variant.mode === selectedVariant) || active?.variants?.[0];
@@ -465,7 +465,7 @@ export function FeePaymentPlans({ fee, options, selected, onSelect, selectedVari
         {active?.kind === "registration" && <RegistrationSummary fee={fee} />}
         {active?.kind === "annual" && <AnnualSummary fee={fee} standardId={standardId} isFlexOrDual={isFlexOrDual} />}
         {active?.kind === "monthly" && (
-          <InstallmentSummary fee={fee} details={activeVariant?.details} standardId={standardId} isFlexOrDual={isFlexOrDual} />
+          <InstallmentSummary fee={fee} details={activeVariant?.details} standardId={standardId} isFlexOrDual={isFlexOrDual} isReEnrollment={isReEnrollment} />
         )}
       </div>
     </div>

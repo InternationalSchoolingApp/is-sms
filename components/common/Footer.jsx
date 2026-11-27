@@ -1,3 +1,4 @@
+import { copyrightLine } from "@/utils/schoolBrand";
 // `fixed`: the wizard footer, shown from md only, pinned to the bottom of the viewport. Below md the copyright line
 // is the in-flow one at the end of the page (`inFlow`).
 // `inFlow`: the mobile-only copyright line at the end of the page content (pinned to the bottom of the
@@ -16,7 +17,7 @@ export function Footer({ schoolName, fixed = false, inBar = false, inFlow = fals
           : "relative z-10 hidden bg-white py-4 md:block"
       }`}
     >
-      Copyright © {new Date().getFullYear()} - {schoolName || "International Schooling"} - All Rights Reserved.
+      {copyrightLine(schoolName)}
     </footer>
   );
 }

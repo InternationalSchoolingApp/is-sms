@@ -1,10 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  detectOriginatingBackend,
-  getBackendOverrideCookieName,
-  isBackendOverrideAllowed,
-  parseBackendOrigin,
-} from "@/utils/backendOrigin";
+import { allowedBackendOverride, detectOriginatingBackend, getBackendOverrideCookieName } from "@/utils/backendOrigin";
 import {
   ACCOUNT_HEADER,
   TAB_ACCOUNT_HEADER,
@@ -34,12 +29,6 @@ import { RENEWED_ELSEWHERE, TokenError, refreshTokens, trustedBackend, verifyAcc
 export default async function proxy(request) {
   const path = request.nextUrl.pathname;
   const segments = path.split("/").filter(Boolean);
-  // TEMP DEBUG [api-log]: every request the proxy sees, and which account cookies the browser sent
-  console.log("[api-log] proxy", request.method, path + request.nextUrl.search, {
-    accounts: heldAccounts(request.cookies).map((a) => a.account),
-    tabAccount: request.headers.get(TAB_ACCOUNT_HEADER),
-  });
-
   // Pre-login landing page (/{school}/enrollment/{program} — exactly school/enrollment/program,
   // nothing after; the protected wizard below additionally has /step/...). A UAT backend can send a
   // brand-new/anonymous student straight here (ClientSignupStudentController#commonSignupContent,
@@ -52,7 +41,7 @@ export default async function proxy(request) {
   // (components/common/BackendSwitcher.jsx) — otherwise this student's calls (and the picker's own
   // display) silently fall back to the default backend instead of the one that sent them.
   if (segments.length === 3 && segments[1] === "enrollment") {
-    const backendParam = isBackendOverrideAllowed() ? parseBackendOrigin(request.nextUrl.searchParams.get("backend")) : "";
+    const backendParam = allowedBackendOverride(request.nextUrl.searchParams.get("backend"));
     const backendOverride = backendParam || detectOriginatingBackend(request);
     if (!backendOverride) return NextResponse.next();
     let response;
@@ -180,7 +169,7 @@ function replaceCookie(header, name, value) {
 }
 
 function toLogin(request, school) {
-  const override = isBackendOverrideAllowed() ? request.cookies.get(getBackendOverrideCookieName())?.value : undefined;
+  const override = allowedBackendOverride(request.cookies.get(getBackendOverrideCookieName())?.value);
   const backend = override || process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
   if (school && backend) return NextResponse.redirect(`${backend}/${school}/common/login`);
   return NextResponse.redirect(new URL("/", request.url));
@@ -208,6 +197,9 @@ export const config = {
     "/:school/enrollment/:program",
     "/:school/enrollment/:program/step/:path*",
     "/:school/add-enrollment/:parentId/:sessionUserId/step/:path*",
+    // Student dashboard (Phase A). `:path*` also covers the bare /{school}/student home and the re-enrollment
+    // pages (/{school}/student/re-enrollment/...).
+    "/:school/student/:path*",
     // Only this app's own /common pages. Not "/:school/common/:path*": where the server reaches SMS through this
     // app's own origin (local-proxy rewrites, as on live), the server actions' SMS calls
     // (common/payment-gateway/options, invoke-payment-gateway, offline-payment, ...) came through here with no

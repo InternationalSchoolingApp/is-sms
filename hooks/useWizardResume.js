@@ -30,7 +30,7 @@ function resolveResumeStep(currentStep, marker) {
  * the first hook run per document load asks. Without a signupPage the page just
  * stays where it is.
  */
-export function useWizardResume({ currentStep, context, uniqueId, ready }) {
+export function useWizardResume({ currentStep, context, studentUserId, ready }) {
   const router = useRouter();
   const { school, program } = useParams();
 
@@ -38,7 +38,7 @@ export function useWizardResume({ currentStep, context, uniqueId, ready }) {
   // a loader instead of flashing its own content and then moving. Latched until this step
   // unmounts after the redirect.
   const redirecting = useRef(null);
-  if (redirecting.current === null && ready && uniqueId && typeof window !== "undefined") {
+  if (redirecting.current === null && ready && studentUserId && typeof window !== "undefined") {
     let block = false;
     if (context?.customPaymentEnabled) {
       block = currentStep !== 4;
@@ -50,7 +50,7 @@ export function useWizardResume({ currentStep, context, uniqueId, ready }) {
   }
 
   useEffect(() => {
-    if (!ready || !uniqueId || typeof window === "undefined") return;
+    if (!ready || !studentUserId || typeof window === "undefined") return;
     if (context?.customPaymentEnabled) {
       window.__wizardResumeChecked = true;
       if (currentStep !== 4) router.replace(stepPath(school, program, 4));
@@ -67,7 +67,7 @@ export function useWizardResume({ currentStep, context, uniqueId, ready }) {
     }
 
     // No signupPage (enrollment/process failed or returned none): stay on this step.
-  }, [ready, uniqueId, currentStep, context?.customPaymentEnabled, context?.signupPage, router, school, program]);
+  }, [ready, studentUserId, currentStep, context?.customPaymentEnabled, context?.signupPage, router, school, program]);
 
   return { redirecting: redirecting.current === true };
 }

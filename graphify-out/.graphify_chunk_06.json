@@ -1,0 +1,104 @@
+{
+  "nodes": [
+    {
+      "id": "public_images_ordersuccess_animation",
+      "label": "OrderSuccess.gif (Success Tick Animation)",
+      "file_type": "image",
+      "source_file": "is-sms\\public\\images\\OrderSuccess.gif",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "components_add_enrollment_addenrollmentwizardshell_stepcircle",
+      "label": "StepCircle Component (AddEnrollmentWizardShell.jsx)",
+      "file_type": "code",
+      "source_file": "is-sms\\components\\add-enrollment\\AddEnrollmentWizardShell.jsx",
+      "source_location": "L186-L214",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "components_student_enroll_wizard_enrollmentwizardshell_stepcircle",
+      "label": "StepCircle Component (EnrollmentWizardShell.jsx)",
+      "file_type": "code",
+      "source_file": "is-sms\\components\\student-enroll\\wizard\\EnrollmentWizardShell.jsx",
+      "source_location": "L179-L207",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "components_common_paymentresponseview_statusicon",
+      "label": "StatusIcon Component (PaymentResponseView.jsx)",
+      "file_type": "code",
+      "source_file": "is-sms\\components\\common\\PaymentResponseView.jsx",
+      "source_location": "L925-L938",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "components_add_enrollment_addenrollmentwizardshell_stepcircle",
+      "target": "public_images_ordersuccess_animation",
+      "relation": "RENDERS",
+      "type": "EXTRACTED",
+      "confidence_score": 1.0,
+      "description": "StepCircle renders /images/OrderSuccess.gif as a transient celebration animation (150x150 canvas, ~2.9s/2.8s cycle) when a step is just completed, before settling on a static checkmark."
+    },
+    {
+      "source": "components_student_enroll_wizard_enrollmentwizardshell_stepcircle",
+      "target": "public_images_ordersuccess_animation",
+      "relation": "RENDERS",
+      "type": "EXTRACTED",
+      "confidence_score": 1.0,
+      "description": "StepCircle renders /images/OrderSuccess.gif as a transient celebration animation (150x150 canvas, ~2.8s cycle) when a step is just completed, before settling on a static checkmark (duplicate wizard-shell implementation for student enrollment)."
+    },
+    {
+      "source": "components_common_paymentresponseview_statusicon",
+      "target": "public_images_ordersuccess_animation",
+      "relation": "RENDERS",
+      "type": "EXTRACTED",
+      "confidence_score": 1.0,
+      "description": "StatusIcon renders /images/OrderSuccess.gif (alt 'Payment successful') as the animated success tick shown for the 'success' variant of the payment response view."
+    },
+    {
+      "source": "public_images_ordersuccess_animation",
+      "target": "components_add_enrollment_addenrollmentwizardshell_stepcircle",
+      "relation": "DEPICTS_UI_STATE_FOR",
+      "type": "INFERRED",
+      "confidence_score": 0.85,
+      "description": "The GIF depicts a success/completion confirmation: a transparent-background animation that resolves into a 64px green circle with a checkmark/tick, used as visual feedback for completing an enrollment wizard step."
+    },
+    {
+      "source": "public_images_ordersuccess_animation",
+      "target": "components_common_paymentresponseview_statusicon",
+      "relation": "DEPICTS_UI_STATE_FOR",
+      "type": "INFERRED",
+      "confidence_score": 0.85,
+      "description": "The GIF depicts a success/order-confirmation animation (animated tick) used as visual feedback confirming a successful payment/order."
+    },
+    {
+      "source": "components_student_enroll_wizard_enrollmentwizardshell_stepcircle",
+      "target": "components_add_enrollment_addenrollmentwizardshell_stepcircle",
+      "relation": "DUPLICATES_LOGIC_OF",
+      "type": "INFERRED",
+      "confidence_score": 0.75,
+      "description": "Both StepCircle implementations share identical logic/comments for playing OrderSuccess.gif on step completion, suggesting EnrollmentWizardShell.jsx and AddEnrollmentWizardShell.jsx are parallel/duplicated wizard-shell components."
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "coverage": {
+    "is-sms\\public\\images\\OrderSuccess.gif": 1
+  }
+}

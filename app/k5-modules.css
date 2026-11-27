@@ -1,0 +1,137 @@
+/*
+ * Module pages inside the Grade K–5 shell (plan section 6 / Phase 3): the shared module
+ * components (attendance, transcript, fee, clubs, …) keep their markup and hardcoded
+ * Tailwind colours for every other student; only inside .theme-k5 are those colours
+ * re-pointed at the K–5 tokens, so modules follow the K–5 look, Night mode, high contrast
+ * and the colour-blind palette. Scoped to the page content (<main>) and to the K–5 rail
+ * panels (.k5-legacy) — the K–5 chrome itself already uses tokens. Plain (unlayered)
+ * rules, so they win over the utilities; hover / focus variants are left alone.
+ */
+
+/* ── shadcn tokens: components built on bg-card / text-muted-foreground / border … ──
+   (.theme-k5.dark beats the global .dark, which would turn --primary grey at night) */
+.theme-k5,
+.theme-k5.dark {
+  --background: var(--k5-page);
+  --foreground: var(--k5-ink);
+  --card: var(--k5-card);
+  --card-foreground: var(--k5-ink);
+  --popover: var(--k5-card);
+  --popover-foreground: var(--k5-ink);
+  --primary: var(--k5-ac);
+  --primary-foreground: #ffffff;
+  --secondary: var(--k5-soft);
+  --secondary-foreground: var(--k5-ink);
+  --muted: var(--k5-soft);
+  --muted-foreground: var(--k5-mut);
+  --accent: var(--k5-act);
+  --accent-foreground: var(--k5-acx);
+  --border: var(--k5-line);
+  --input: var(--k5-line);
+  --ring: var(--k5-ac);
+}
+
+/* ── Surfaces ── */
+:is(.theme-k5 main, .theme-k5 .k5-legacy) :is(.bg-white) {
+  background-color: var(--k5-card);
+}
+:is(.theme-k5 main, .theme-k5 .k5-legacy) :is(.bg-slate-50, .bg-slate-100, .bg-gray-50, .bg-gray-100, .bg-\[\#f5fafc\], .bg-\[\#e6e8eb\], .bg-\[\#f2f5fa\], .bg-\[\#fafdff\], .bg-\[\#fafafa\], .bg-\[\#f1f3f5\]) {
+  background-color: var(--k5-soft);
+}
+:is(.theme-k5 main, .theme-k5 .k5-legacy) :is(.bg-primary\/5, .bg-primary\/10, .bg-\[\#f4f8ff\]) {
+  background-color: var(--k5-act);
+}
+:is(.theme-k5 main, .theme-k5 .k5-legacy) :is(.bg-\[\#FFEDD5\]) {
+  background-color: var(--k5-oT);
+}
+:is(.theme-k5 main, .theme-k5 .k5-legacy) :is(.text-\[\#C2410C\]) {
+  color: var(--k5-oI);
+}
+
+/* ── Text ── */
+:is(.theme-k5 main, .theme-k5 .k5-legacy)
+  :is(.text-black, .text-black\/80, .text-slate-900, .text-slate-800, .text-slate-700, .text-gray-900, .text-gray-800, .text-gray-700, .text-\[\#30313d\], .text-\[\#001b44\]) {
+  color: var(--k5-ink);
+}
+:is(.theme-k5 main, .theme-k5 .k5-legacy)
+  :is(
+    .text-black\/70,
+    .text-black\/60,
+    .text-black\/50,
+    .text-black\/40,
+    .text-black\/30,
+    .text-slate-600,
+    .text-slate-500,
+    .text-slate-400,
+    .text-gray-600,
+    .text-gray-500,
+    .text-gray-400,
+    .text-\[\#8a8f98\],
+    .text-\[\#697386\],
+    .text-\[\#aab1bd\]
+  ) {
+  color: var(--k5-mut);
+}
+:is(.theme-k5 main, .theme-k5 .k5-legacy) :is(.text-\[\#027fff\], .text-\[\#007fff\], .text-\[\#2267f0\]) {
+  color: var(--k5-acx);
+}
+/* School-blue buttons -> the K–5 accent. */
+:is(.theme-k5 main, .theme-k5 .k5-legacy) :is(.bg-\[\#027fff\], .bg-\[\#1685fe\], .bg-\[\#0878d9\]) {
+  background-color: var(--k5-ac);
+}
+
+/* ── Borders ── */
+:is(.theme-k5 main, .theme-k5 .k5-legacy)
+  :is(
+    .border-slate-100,
+    .border-slate-200,
+    .border-slate-300,
+    .border-gray-200,
+    .border-gray-300,
+    .border-\[\#cdcdcd\],
+    .border-\[\#6fb0f1\],
+    .border-\[\#71c4c1\],
+    .border-\[\#91c8ff\],
+    .border-\[\#bcd4fb\],
+    .border-\[\#e6e8eb\],
+    .divide-slate-200 > *
+  ) {
+  border-color: var(--k5-line);
+}
+
+/* ApexCharts (attendance / performance) styles its own tooltip — follow the K–5 card. */
+.theme-k5 main .apexcharts-tooltip.apexcharts-theme-light {
+  background: var(--k5-card);
+  border-color: var(--k5-line);
+  color: var(--k5-ink);
+}
+.theme-k5 main .apexcharts-tooltip.apexcharts-theme-light .apexcharts-tooltip-title {
+  background: var(--k5-soft);
+  border-color: var(--k5-line);
+}
+
+/* ── Status colours: K–5 tint pairs (also follow Night and the colour-blind palette) ── */
+:is(.theme-k5 main, .theme-k5 .k5-legacy) :is(.bg-amber-50, .bg-amber-100, .bg-yellow-50, .bg-yellow-100) {
+  background-color: var(--k5-yT);
+}
+:is(.theme-k5 main, .theme-k5 .k5-legacy) :is(.bg-emerald-50, .bg-green-50, .bg-green-100) {
+  background-color: var(--k5-gT);
+}
+:is(.theme-k5 main, .theme-k5 .k5-legacy) :is(.bg-red-50, .bg-red-100) {
+  background-color: var(--k5-rT);
+}
+:is(.theme-k5 main, .theme-k5 .k5-legacy) :is(.text-amber-600, .text-amber-700, .text-amber-800) {
+  color: var(--k5-yX);
+}
+:is(.theme-k5 main, .theme-k5 .k5-legacy) :is(.text-green-600, .text-green-700, .text-emerald-600, .text-emerald-700) {
+  color: var(--k5-gX);
+}
+:is(.theme-k5 main, .theme-k5 .k5-legacy) :is(.text-red-600, .text-red-700) {
+  color: var(--k5-rI);
+}
+:is(.theme-k5 main, .theme-k5 .k5-legacy) :is(.bg-green-600) {
+  background-color: var(--k5-grn);
+}
+:is(.theme-k5 main, .theme-k5 .k5-legacy) :is(.bg-red-600, .bg-red-700, .bg-\[\#dc3545\]) {
+  background-color: var(--k5-red);
+}

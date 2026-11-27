@@ -1,10 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useContext, useState } from "react";
+import DOMPurify from "dompurify";
 import { ArrowLeft, ArrowRight, ArrowRightLeft, ChevronRight, CircleCheckBig, Info, ShieldCheck, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { AppearanceContext } from "@/components/appearance/AppearanceProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { OptimizedImage } from "@/components/common/OptimizedImage";
+import { resolveBackendOrigin } from "@/utils/backendOrigin";
 import {
   CURRENCY_TO_FLAG_COUNTRY,
   FLAG_COUNTRY_TO_CURRENCY,
@@ -70,8 +75,7 @@ function tabIcon(option) {
 
 function Flag({ country, alt }) {
   if (!country) return null;
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={assetUrl(FLAGS, `${country}.svg`)} alt={alt} className="h-6 w-8 shrink-0 rounded-sm object-cover" />;
+  return <OptimizedImage src={assetUrl(FLAGS, `${country}.svg`)} alt={alt} width={32} height={24} className="h-6 w-8 shrink-0 rounded-sm object-cover" />;
 }
 
 function CurrencyCard({ details, payerCountryCode }) {
@@ -88,44 +92,44 @@ function CurrencyCard({ details, payerCountryCode }) {
   const fee = details.paymentOptions?.[0]?.additionalFee || 0;
 
   return (
-    <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
-      <div className="flex items-center justify-center gap-2 text-sm font-semibold text-primary">
+    <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 dark:border-[#33425e] dark:bg-[#1b2940]">
+      <div className="flex items-center justify-center gap-2 text-sm font-semibold text-primary dark:text-[#6db3ff]">
         <Info className="h-4 w-4" /> Payable Fee
       </div>
       <div className="mt-3 flex min-w-0 flex-col items-center gap-4 xl:flex-row xl:justify-center">
         {/* Stack local and base currency on mobile so the amount cards stay readable in a narrow modal. */}
         <div className="flex w-full min-w-0 flex-col items-center gap-2 sm:flex-row sm:justify-center sm:gap-3 md:w-auto">
-          <div className="flex w-full min-w-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 sm:w-auto sm:max-w-[13rem] sm:flex-1 md:flex-none md:px-3">
+          <div className="flex w-full min-w-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 sm:w-auto sm:max-w-[13rem] sm:flex-1 md:flex-none md:px-3 dark:border-[#33425e] dark:bg-[#172338]">
             <Flag country={localFlag} alt={conversion.to} />
             <div className="min-w-0 text-center leading-tight">
               <span className="block break-words text-[13px] font-semibold sm:text-sm">
                 {getCurrencyDisplaySymbol(conversion.to)}
                 {formatMoneyWithCommas(details.payAmountWithCurrency)}
               </span>
-              <small className="block text-xs text-slate-500">({conversion.to})</small>
+              <small className="block text-xs text-slate-500 dark:text-[#b9c3dd]">({conversion.to})</small>
             </div>
           </div>
-          <ArrowRight className="h-4 w-4 shrink-0 rotate-90 text-primary sm:rotate-0" />
-          <div className="flex w-full min-w-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 sm:w-auto sm:max-w-[13rem] sm:flex-1 md:flex-none md:px-3">
+          <ArrowRight className="h-4 w-4 shrink-0 rotate-90 text-primary dark:text-[#6db3ff] sm:rotate-0" />
+          <div className="flex w-full min-w-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 sm:w-auto sm:max-w-[13rem] sm:flex-1 md:flex-none md:px-3 dark:border-[#33425e] dark:bg-[#172338]">
             <Flag country={baseFlag} alt={conversion.base} />
             <div className="min-w-0 text-center leading-tight">
               <span className="block break-words text-[13px] font-semibold sm:text-sm">
                 {getCurrencyDisplaySymbol(conversion.base)}
                 {formatMoneyWithCommas(details.payAmount)}
               </span>
-              <small className="block text-xs text-slate-500">({conversion.base})</small>
+              <small className="block text-xs text-slate-500 dark:text-[#b9c3dd]">({conversion.base})</small>
             </div>
           </div>
         </div>
         {/* <div className="hidden h-12 w-px bg-blue-100 md:block" /> */}
         <div className="ml-0 min-w-0 text-sm xl:ml-2 xl:flex-1">
-          <div className="flex items-center justify-center gap-2 font-semibold text-primary">
+          <div className="flex items-center justify-center gap-2 font-semibold text-primary dark:text-[#6db3ff]">
             <ArrowRightLeft className="h-4 w-4" /> Conversion Rate
           </div>
-          <div className="mt-1 font-bold text-black text-center">
+          <div className="mt-1 font-bold text-black dark:text-[#f1f4ff] text-center">
             1 {conversion.base} = {conversion.rate} {conversion.to}
           </div>
-          <div className="mt-1 flex items-center justify-center gap-1 text-xs text-slate-500">
+          <div className="mt-1 flex items-center justify-center gap-1 text-xs text-slate-500 dark:text-[#b9c3dd]">
             <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>
               Exchange rate and fees of your bank may apply{fee > 0 ? ` (includes ${fee}% conversion fee)` : ""}
@@ -143,11 +147,10 @@ function MethodTile({ image, label, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex h-32 w-32 flex-col items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-800 transition hover:border-primary hover:shadow disabled:opacity-60 sm:w-36"
+      className="flex h-32 w-32 flex-col items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-800 dark:text-[#f1f4ff] transition hover:border-primary hover:shadow disabled:opacity-60 sm:w-36 dark:border-[#33425e] dark:bg-[#1b2940] dark:text-[#f1f4ff]"
     >
       {image ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={image} alt="" className="max-h-12 max-w-full object-contain" />
+        <OptimizedImage src={image} alt="" width={192} height={48} className="max-h-12 max-w-full object-contain" />
       ) : null}
       <span className="text-center leading-tight">{label}</span>
     </button>
@@ -231,9 +234,9 @@ function OfflineForm({ option, details, onUploadProof, onSubmitOffline, busy }) 
 
   if (confirming) {
     return (
-      <div className="mt-4 rounded-xl border border-slate-200 p-5">
-        <h4 className="text-base font-semibold text-black">Confirmation!</h4>
-        <p className="mt-2 text-sm text-slate-700">
+      <div className="mt-4 rounded-xl border border-slate-200 p-5 dark:border-[#33425e]">
+        <h4 className="text-base font-semibold text-black dark:text-[#f1f4ff]">Confirmation!</h4>
+        <p className="mt-2 text-sm text-slate-700 dark:text-[#d4dbee]">
           Are you sure you want to submit this reference number? Once submitted, you won’t be able to change this number
           again.
         </p>
@@ -252,13 +255,13 @@ function OfflineForm({ option, details, onUploadProof, onSubmitOffline, busy }) 
   return (
     <div className="mt-4 space-y-4 text-sm">
       <div>
-        <label className="mb-1 block font-medium text-slate-700">
+        <label className="mb-1 block font-medium text-slate-700 dark:text-[#d4dbee]">
           Payable Fee &nbsp;<b>{currency}</b>
         </label>
-        <Input value={details.payAmount ?? ""} disabled readOnly className="h-10 bg-slate-50" />
+        <Input value={details.payAmount ?? ""} disabled readOnly className="h-10 bg-slate-50 dark:bg-[#1b2940]" />
       </div>
       <div>
-        <label className="mb-1 block font-medium text-slate-700">Reference Number</label>
+        <label className="mb-1 block font-medium text-slate-700 dark:text-[#d4dbee]">Reference Number</label>
         <Input
           value={referenceNumber}
           maxLength={150}
@@ -267,28 +270,33 @@ function OfflineForm({ option, details, onUploadProof, onSubmitOffline, busy }) 
             setReferenceNumber(e.target.value);
             setMessage(null);
           }}
-          className="h-10 bg-white"
+          className="h-10 bg-white dark:bg-[#1b2940]"
         />
       </div>
       <div>
-        <label className="mb-1 block font-medium text-slate-700">Proof of Payment</label>
+        <label className="mb-1 block font-medium text-slate-700 dark:text-[#d4dbee]">Proof of Payment</label>
         <div className="flex flex-wrap items-center gap-3">
           <label
-            className={`inline-flex cursor-pointer items-center rounded-md bg-primary px-4 py-2 text-white ${working ? "pointer-events-none opacity-60" : ""}`}
+            className={`inline-flex cursor-pointer items-center rounded-md bg-primary px-4 py-2 text-white dark:bg-[#027ffe] ${working ? "pointer-events-none opacity-60" : ""}`}
           >
             {uploading ? "Uploading…" : "Upload Proof of Payment"}
             <input type="file" accept=".jpg,.jpeg,.png,.pdf" className="hidden" onChange={handleFile} disabled={working} />
           </label>
           {fileName && (
-            <span className="flex items-center gap-2 text-slate-700">
-              {fileName}
+            <span className="flex items-center gap-2 text-slate-700 dark:text-[#d4dbee]">
+              <Tooltip>
+                <TooltipTrigger delay={100} render={<span className="max-w-[220px] truncate" title={fileName} />}>
+                  {fileName}
+                </TooltipTrigger>
+                <TooltipContent>{fileName}</TooltipContent>
+              </Tooltip>
               <button type="button" aria-label="Remove file" onClick={() => setFileName("")} className="text-red-500">
                 <Trash2 className="h-4 w-4" />
               </button>
             </span>
           )}
         </div>
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="mt-2 text-xs text-slate-500 dark:text-[#b9c3dd]">
           Please upload files in following formats (jpg, jpeg, pdf or png) with maximum size of 5 MB
         </p>
       </div>
@@ -298,7 +306,7 @@ function OfflineForm({ option, details, onUploadProof, onSubmitOffline, busy }) 
         </p>
       )}
       <div className="flex justify-end">
-        <Button type="button" onClick={submit} disabled={working} className="px-6">
+        <Button type="button" onClick={submit} disabled={working} className="px-6 dark:bg-[#027ffe] dark:text-white dark:hover:bg-[#0a6fe0]">
           {submitting ? "Submitting…" : "Submit"}
         </Button>
       </div>
@@ -323,7 +331,7 @@ function GatewayActions({ option, details, busy, onPay, onClose }) {
         <ArrowLeft className="h-4 w-4" /> Back
       </Button>
       {!NO_PAY_BUTTON.includes(option.name) && (
-        <Button type="button" onClick={() => onPay(option)} disabled={busy} className="shrink-0 gap-1.5 px-3 text-xs sm:gap-2 sm:px-6 sm:text-sm">
+        <Button type="button" onClick={() => onPay(option)} disabled={busy} className="shrink-0 gap-1.5 px-3 text-xs sm:gap-2 sm:px-6 sm:text-sm dark:bg-[#027ffe] dark:text-white dark:hover:bg-[#0a6fe0]">
           {busy ? "Please wait…" : `Pay ${payCurrency}${payAmountLabel}`} <ArrowRight className="h-4 w-4" />
         </Button>
       )}
@@ -334,14 +342,15 @@ function GatewayActions({ option, details, busy, onPay, onClose }) {
 function GatewayPanel({ option, details, airwallexMethods, busy, onPay, onClose, onUploadProof, onSubmitOffline }) {
   const pay = () => onPay(option);
   const hasBanner = ["STRIPE", "Airwallex", "YOCO", "WIRETRANSFER", "CONVERA", "AFS", "CASH"].includes(option.name);
-  const instructions = option.additionalDetails ?? option.addtionalDetails; // backend spells it both ways
+  // Admin-entered HTML from the backend: sanitized before it is rendered (an <img onerror> or <script> there would run on
+  // the payment page). Without a DOM (server render) DOMPurify cannot sanitize, so nothing is rendered rather than raw HTML.
+  const instructions = sanitizeInstructions(option.additionalDetails ?? option.addtionalDetails); // backend spells it both ways
 
   return (
     <div className="min-w-0">
       {hasBanner && (
-        <div className="flex justify-center rounded-xl bg-slate-100 px-5 py-4">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={assetUrl(IMAGES, option.icon)} alt={option.label} className="h-9 max-w-[220px] object-contain object-center" />
+        <div className="flex justify-center rounded-xl bg-slate-100 px-5 py-4 dark:bg-white">
+          <OptimizedImage src={assetUrl(IMAGES, option.icon)} alt={option.label} width={220} height={36} className="h-9 max-w-[220px] object-contain object-center" />
         </div>
       )}
 
@@ -349,7 +358,7 @@ function GatewayPanel({ option, details, airwallexMethods, busy, onPay, onClose,
 
       {option.name === "Airwallex" && (
         <div className="mt-4 flex flex-wrap gap-3 item-center justify-center">
-          {(airwallexMethods || []).length === 0 && <p className="text-sm text-slate-500">No Payment Methods Available</p>}
+          {(airwallexMethods || []).length === 0 && <p className="text-sm text-slate-500 dark:text-[#b9c3dd]">No Payment Methods Available</p>}
           {(airwallexMethods || []).map((method, index) => (
             <MethodTile
               key={index}
@@ -363,9 +372,9 @@ function GatewayPanel({ option, details, airwallexMethods, busy, onPay, onClose,
       )}
 
       {option.name === "CONVERA" && (
-        <div className="mt-4 text-sm text-slate-700">
+        <div className="mt-4 text-sm text-slate-700 dark:text-[#d4dbee]">
           {instructions && <div dangerouslySetInnerHTML={{ __html: instructions }} />}
-          <h3 className="mt-3 font-semibold text-black">
+          <h3 className="mt-3 font-semibold text-black dark:text-[#f1f4ff]">
             Pay money from the comfort of your own home - Reliable, convenient international money transfer using your
             home/local currency
           </h3>
@@ -388,7 +397,7 @@ function GatewayPanel({ option, details, airwallexMethods, busy, onPay, onClose,
       )}
 
       {option.name === "WIRETRANSFER" && (
-        <div className="mt-4 space-y-2 text-sm text-slate-700">
+        <div className="mt-4 space-y-2 text-sm text-slate-700 dark:text-[#d4dbee]">
           {instructions ? (
             <div dangerouslySetInnerHTML={{ __html: instructions }} />
           ) : (
@@ -439,22 +448,24 @@ export function PaymentGatewayPickerModal({
   onSubmitOffline,
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  // Outside the student dashboard (enrollment, sign-up) there is no appearance: the modal stays light.
+  const night = Boolean(useContext(AppearanceContext)?.isDark);
   const options = details?.paymentOptions || [];
   const active = options[Math.min(activeIndex, Math.max(options.length - 1, 0))];
   return (
     <Dialog open={open} onOpenChange={(next) => !busy && onOpenChange(next)}>
       <DialogContent
         showCloseButton={false}
-        className="flex h-[92dvh] max-h-[92dvh] flex-col gap-0 overflow-x-hidden overflow-y-hidden p-0 sm:max-w-4xl lg:h-[80vh] lg:max-h-[80vh] lg:max-w-5xl"
+        className={`flex h-[92dvh] max-h-[92dvh] flex-col gap-0 overflow-x-hidden overflow-y-hidden p-0 sm:max-w-4xl lg:h-[80vh] lg:max-h-[80vh] lg:max-w-5xl ${night ? "dark bg-[#172338] text-[#f1f4ff] ring-[#33425e]" : ""}`}
       >
         <DialogTitle className="sr-only">Select Your Payment Method</DialogTitle>
         {/* Fills the dialog's remaining height. From md each column scrolls independently so the Pay Now / Back
             bar can stay pinned to the bottom; below md the whole body (gateway list + selected gateway) is one
             scroll area, with the Pay Now / Back bar sticky at its bottom. */}
         <div className="grid min-w-0 flex-1 content-start overflow-x-hidden overflow-y-auto md:grid-cols-[18rem_minmax(0,1fr)] md:content-stretch md:overflow-hidden">
-          <aside className="min-w-0 border-b border-slate-200 bg-white p-5 md:overflow-y-auto md:border-r md:border-b-0">
+          <aside className="min-w-0 border-b border-slate-200 bg-white p-5 md:overflow-y-auto md:border-r md:border-b-0 dark:border-[#33425e] dark:bg-[#172338]">
             <div className="md:hidden">
-              <h3 className="text-xl font-extrabold text-black text-center">Select Your Payment Method</h3>
+              <h3 className="text-xl font-extrabold text-black dark:text-[#f1f4ff] text-center">Select Your Payment Method</h3>
             </div>
             <ul className="mt-4 space-y-3 md:mt-0" role="tablist">
               {options.map((option, index) => {
@@ -467,20 +478,18 @@ export function PaymentGatewayPickerModal({
                       aria-selected={selected}
                       onClick={() => setActiveIndex(index)}
                       className={`relative flex w-full min-w-0 items-center gap-3 rounded-xl border px-4 py-3 text-left font-semibold transition ${
-                        selected ? "border-primary bg-primary text-white shadow" : "border-slate-200 bg-white text-slate-800 hover:border-primary/50"
+                        selected ? "border-primary bg-primary text-white shadow dark:border-[#027ffe] dark:bg-[#027ffe]" : "border-slate-200 bg-white text-slate-800 dark:text-[#f1f4ff] hover:border-primary/50 dark:border-[#33425e] dark:bg-[#1b2940] dark:text-[#f1f4ff]"
                       }`}
                     >
-                      <span className="flex h-12 w-12 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 p-1">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={assetUrl(IMAGES, tabIcon(option))} alt="" className=" md:max-h-7 md:max-w-7 max-h-7.2 max-w-7.2 object-contain" />
+                      <span className="flex h-12 w-12 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 p-1 dark:bg-white">
+                        <OptimizedImage src={assetUrl(IMAGES, tabIcon(option))} alt="" width={28} height={28} className="md:max-h-7 md:max-w-7 max-h-7.2 max-w-7.2 object-contain" />
                       </span>
                       <span className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
                         <span className="max-w-full break-words text-center text-2xl md:text-[17px]">{option.label}</span>
                         {String(option.name).toUpperCase() === "STRIPE" && (
                           <span className="flex items-center justify-center gap-1.5 md:hidden">
                             {[["visa.png", "Visa"], ["master-card.png", "Mastercard"], ["american-express.png", "Amex"]].map(([file, alt]) => (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img key={file} src={assetUrl(IMAGES, file)} alt={alt} className="h-7 w-auto rounded-sm bg-white object-contain p-1" />
+                              <OptimizedImage key={file} src={assetUrl(IMAGES, file)} alt={alt} width={28} height={28} className="h-7 w-auto rounded-sm bg-white object-contain p-1" />
                             ))}
                           </span>
                         )}
@@ -491,11 +500,11 @@ export function PaymentGatewayPickerModal({
                 );
               })}
             </ul>
-            <div className="mt-6 rounded-xl border border-slate-200 p-4 text-center">
-              <div className="flex items-center justify-center gap-2 font-semibold text-black">
-                <ShieldCheck className="h-5 w-5 text-primary" /> Secure &amp; Trusted
+            <div className="mt-6 rounded-xl border border-slate-200 p-4 text-center dark:border-[#33425e]">
+              <div className="flex items-center justify-center gap-2 font-semibold text-black dark:text-[#f1f4ff]">
+                <ShieldCheck className="h-5 w-5 text-primary dark:text-[#6db3ff]" /> Secure &amp; Trusted
               </div>
-              <ul className="mt-3 space-y-2 text-sm text-slate-700">
+              <ul className="mt-3 space-y-2 text-sm text-slate-700 dark:text-[#d4dbee]">
                 {["SSL Encrypted", "PCI-DSS Certified", "Global Payment Gateways"].map((text) => (
                   <li key={text} className="flex items-center justify-center gap-2">
                     <CircleCheckBig className="h-5 w-5 text-green-500" /> {text}
@@ -510,10 +519,10 @@ export function PaymentGatewayPickerModal({
           <section className="flex min-w-0 flex-col md:min-h-0">
             <div className="min-w-0 p-5 sm:p-6 md:flex-1 md:overflow-y-auto">
               <div className="hidden md:block">
-                <h3 className="text-2xl font-extrabold text-black">Select Your Payment Method</h3>
+                <h3 className="text-2xl font-extrabold text-black dark:text-[#f1f4ff]">Select Your Payment Method</h3>
               </div>
               {details?.paymentLabel && (
-                <p className="mt-5 md:text-lg text-[17px] font-semibold text-slate-800 text-center">
+                <p className="mt-5 md:text-lg text-[17px] font-semibold text-slate-800 dark:text-[#f1f4ff] text-center">
                   <PaymentLabel>{details.paymentLabel}</PaymentLabel>
                 </p>
               )}
@@ -537,7 +546,7 @@ export function PaymentGatewayPickerModal({
               </div>
             </div>
             {active && (
-              <div className="sticky bottom-0 z-10 shrink-0 border-t border-slate-200 bg-white p-3 sm:px-8 sm:py-5 md:static">
+              <div className="sticky bottom-0 z-10 shrink-0 border-t border-slate-200 bg-white p-3 sm:px-8 sm:py-5 md:static dark:border-[#33425e] dark:bg-[#172338]">
                 <GatewayActions option={active} details={details} busy={busy} onPay={onPay} onClose={() => onOpenChange(false)} />
               </div>
             )}
@@ -546,4 +555,9 @@ export function PaymentGatewayPickerModal({
       </DialogContent>
     </Dialog>
   );
+}
+
+function sanitizeInstructions(html) {
+  if (!html || typeof html !== "string" || !DOMPurify.isSupported) return "";
+  return DOMPurify.sanitize(html);
 }

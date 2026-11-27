@@ -5,7 +5,8 @@ import { defaultBackend, logoutAtSms, trustedBackend } from "@/lib/auth/smsToken
 import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
 import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 import { addEnrollmentStepPath, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
-import { detectOriginatingBackend, getBackendOverrideCookieName, isBackendOverrideAllowed, parseBackendOrigin } from "@/utils/backendOrigin";
+import { allowedBackendOverride, detectOriginatingBackend, getBackendOverrideCookieName } from "@/utils/backendOrigin";
+import { reEnrollmentBasePath } from "@/utils/reEnrollmentSteps";
 
 const VALID_STEPS = new Set(["1", "2", "3", "4"]);
 
@@ -83,12 +84,19 @@ async function handleSsoHandoff(request) {
   const schoolUUID = url.searchParams.get("school");
   const schoolName = url.searchParams.get("schoolName");
   const step = url.searchParams.get("step");
+  // target=re-enrollment: an existing student who has to re-enroll (the backend sets it, see
+  // CommonUtil#getFinalEnrollmentUrl) goes to the re-enrollment pages instead of an enrollment wizard step.
+  let target = url.searchParams.get("target");
+  // resume=1: continue at the step the student is on (set by the backend on login / payment return); without it the
+  // re-enrollment starts from its options screen.
+  const resume = url.searchParams.get("resume");
   const targetStep = VALID_STEPS.has(step) ? step : "1";
   const program = getLearningProgramRouteCode(url.searchParams.get("program")) || DEFAULT_PROGRAM;
   // getFinalEnrollmentUrl now appends this explicitly (same as ClientSignupStudentController's
   // anonymous-signup redirect handled in proxy.js) — prefer it over the Referer-based guess, which
   // is absent for a typed/bookmarked login page.
-  const backendParam = isBackendOverrideAllowed() ? parseBackendOrigin(url.searchParams.get("backend")) : "";
+  // Only a backend this deployment may use: the one-time token (and this server's service key) go to it.
+  const backendParam = allowedBackendOverride(url.searchParams.get("backend"));
   const backendOverride = backendParam || detectOriginatingBackend(request);
   // ae=Y means this student was enrolled by someone else (a parent adding a child),
   // so after the session is established the browser must land on the 3-step
@@ -106,14 +114,6 @@ async function handleSsoHandoff(request) {
         url.searchParams.get("sessionUserId"), step);
     }
   }
-
-  // console.log("request", request)
-  // console.log("url======>", url)
-  // console.log("ssoToken======>", ssoToken)
-  // console.log("schoolUUID======>", schoolUUID)
-  // console.log("schoolName======>", schoolName)
-  // console.log("step======>", step)
-  // console.log("targetStep======>", targetStep)
 
   if (!ssoToken || !schoolUUID) {
     return redirectTo("/", request);
@@ -136,17 +136,32 @@ async function handleSsoHandoff(request) {
     return redirectTo("/", request);
   }
 
-  // Add-another-child wizard wins when ae=Y and the path could be built; otherwise the student's own enrollment step.
+  // A general, validated same-origin `next` (e.g. the Java dashboard redirect sends
+  // `next=/{school}/student` once STUDENT_DASHBOARD_VIA_NEXTJS is on) — lets any
+  // post-login destination ride the SAME one-time-token handoff that signs the user in,
+  // so proxy.js doesn't bounce the student back to login. Only for the non-add-enrollment
+  // case (ae=Y keeps its dedicated builder + fresh=1 above).
+  const nextPath = isAddEnrollment ? null : safeNextPath(url.searchParams.get("next"), schoolUUID);
+
+  // Destination priority: add-another-child wizard (ae=Y) -> validated `next` (e.g. the student dashboard)
+  // -> re-enrollment pages (target=re-enrollment) -> the student's own enrollment step path.
   // fresh=1 marks a real "start" of the add-enrollment wizard (dashboard button / enrollment link). Only such an
   // entry may reserve a new child; a reload of the wizard never does (see useAddEnrollmentContext).
-  const target = addEnrollmentPath != null
-    ? `${addEnrollmentPath}${addEnrollmentPath.includes("?") ? "&" : "?"}fresh=1`
-    : stepPath(schoolUUID, program, targetStep);
-  const response = redirectTo(target, request);
+  let destination;
+  if (addEnrollmentPath != null) {
+    destination = `${addEnrollmentPath}${addEnrollmentPath.includes("?") ? "&" : "?"}fresh=1`;
+  } else if (nextPath != null) {
+    destination = nextPath;
+  } else if (target === "re-enrollment") {
+    destination = `${reEnrollmentBasePath(schoolUUID)}${resume === "1" ? "?resume=1" : ""}`;
+  } else {
+    destination = stepPath(schoolUUID, program, targetStep);
+  }
+  const response = redirectTo(destination, request);
   const account = exchanged.uniqueId;
   // The step page right after this redirect is for the user who just signed in, even when the browser holds
   // other signed-in users: no "Choose account" page (proxy.js reads this one-time pick).
-  writePick(response.cookies, account, target);
+  writePick(response.cookies, account, destination);
   const backend = backendOverride || defaultBackend();
   // At most MAX_ACCOUNTS users per browser: signing in one more ends the oldest login here.
   const others = heldAccounts(request.cookies).filter((a) => a.account !== account);
@@ -164,6 +179,16 @@ async function handleSsoHandoff(request) {
       email: exchanged.email || "",
       schoolUUID: exchanged.schoolUUID || schoolUUID,
       schoolName: schoolName || exchanged.schoolName || "",
+      // The counselor's dummy student (view-as link, DEMO_USER=Y) opens the dashboard in dummy mode with its demo data and
+      // grade look, like the legacy isDemoUser. The role id lets the sidebar menu load when the dashboard details have none.
+      demoUser: String(exchanged.demoUser || "").toUpperCase() === "Y",
+      // The demo row the counselor picked at "view as user" (legacy session DEMO_DASHBOARD_USER), sent by the backend on the
+      // hand-off URL. Only for a demo account; digits only.
+      demoEntityId:
+        String(exchanged.demoUser || "").toUpperCase() === "Y" && /^\d{1,10}$/.test(url.searchParams.get("demoEntityId") || "")
+          ? Number(url.searchParams.get("demoEntityId"))
+          : null,
+      roleId: Number.isInteger(Number(exchanged.roleId)) && Number(exchanged.roleId) > 0 ? Number(exchanged.roleId) : null,
       backend,
       signedInAt: Date.now(),
     },

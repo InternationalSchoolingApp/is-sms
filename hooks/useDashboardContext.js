@@ -1,0 +1,329 @@
+"use client";
+
+import { createContext, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
+import { usePathname } from "next/navigation";
+import { useSession } from "@/components/providers/AuthSessionProvider";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
+import { getDashboardChatLinks, getDashboardMenu, getStudentDashboardDetails, getStudentDemoData, getStudentMenuFlags } from "@/services/dashboardApi";
+import { applyStudentNavRules, mapBackendMenu } from "@/utils/dashboardNav";
+import { viaTier1 } from "@/utils/dashboardBootstrap";
+import { bandFromStandardId, isHighDashboardOn, isK5LearningProgram, isMiddleDashboardOn, isPreKStandard, isSelfStudyProgram, normalizeGradeBand } from "@/utils/gradeBand";
+import { isDummyStudentMode } from "@/utils/paymentGatewayChecks";
+import { createDummyStudent } from "@/utils/dummyStudent";
+import { expireSession } from "@/utils/logout";
+import { useStudentName } from "@/hooks/useStudentName";
+
+/**
+ * Shared dashboard context, mounted ONCE by the (dashboard) route-group layout
+ * (DashboardChrome) and consumed by the shell + every module page — the same
+ * pattern as useEnrollmentContext for the wizard. Resolves the current user and
+ * school straight from the Auth.js session (no {schoolId} URL param), fetches
+ * the branding logo, and resolves the sidebar menu.
+ *
+ * Sidebar menu: always the dynamic DB-driven menu (getDashboardMenu →
+ * mapBackendMenu, the faithful copy of the Java USER_RIGHTS sidebar). Resolves
+ * to an empty array until the query settles, so `ready` never blocks on it.
+ *
+ * NOTE (Phase A): the STUDENT_DASHBOARD_VIA_NEXTJS coexistence toggle and the
+ * "redirect to legacy JSP dashboard when off" behavior are intentionally NOT
+ * wired here yet — the SETTINGS row does not exist during Phase A, so acting on
+ * its empty value would wrongly bounce every student to the legacy dashboard.
+ * It is added together with the backend toggle + redirect branch.
+ */
+export const DashboardContext = createContext(null);
+
+// The page's query string after hydration (null on the server) — same reader as useDummyStudent.
+const subscribe = () => () => {};
+const readSearch = () => window.location.search;
+const readSearchOnServer = () => null;
+
+// Last resolved grade band per user, for this tab only (sessionStorage). Read as the raw string so
+// the useSyncExternalStore snapshot stays stable; only allowlisted values are trusted back.
+const GRADE_CACHE_PREFIX = "is-dashboard-grade:";
+function readGradeCache(key) {
+  if (!key) return null;
+  try {
+    return window.sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function parseGradeCache(raw) {
+  
+  if (!raw) return null;
+  try {
+    const value = JSON.parse(raw);
+    const gradeBand = normalizeGradeBand(value?.gradeBand);
+    if (!gradeBand) return null;
+    const isHigh = value.isHigh === true && gradeBand === "HIGH" && isHighDashboardOn(false);
+    const isMiddle = (value.isMiddle === true && gradeBand === "MIDDLE" && isMiddleDashboardOn(false)) || isHigh;
+    const isK5 = value.isK5 === true && (gradeBand === "ELEMENTARY" || isMiddle);
+    return { gradeBand, isK5, isMiddle, isHigh, isPreK: isK5 && !isMiddle && value.isPreK === true, isSelfStudy: value.isSelfStudy === true };
+  } catch {
+    return null;
+  }
+}
+
+/** get-student-dashboard (StudentDetailsDTO) — shared by the grade-band gate and useStudentDashboardData. */
+export function studentDashboardDetailsQuery({ schoolUUID, userId }) {
+  return {
+    queryKey: ["student-dashboard-details", schoolUUID, userId],
+    // The first query of the page: it starts the one start-up request that carries most of the page (utils/dashboardBootstrap.js).
+    queryFn: () => viaTier1(userId, "details", (a) => a.details, () => getStudentDashboardDetails({ schoolUUID, userId })),
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+  };
+}
+
+/** A demo account's demo-data row — shared by the grade-band gate and useDummyStudent. */
+export function studentDemoRowQuery({ schoolUUID, userId, entityId, enabled }) {
+  return {
+    queryKey: ["student-demo-data", schoolUUID, userId, entityId ?? null],
+    queryFn: async () => {
+      const response = await getStudentDemoData({ schoolUUID, userId, entityId });
+      return String(response?.status) === "1" && Array.isArray(response.details) ? response.details[0] ?? null : null;
+    },
+    enabled: Boolean(enabled && schoolUUID && userId),
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    retry: false,
+  };
+}
+
+/**
+ * Grade K–5 dashboard gate (docs/migration/grade_k5_dashboard_plan.html, sections 6.1 + 7).
+ * Band: backend StudentDetailsDTO.gradeBand, else the standardId mapping, else MIDDLE (never show
+ * the kid UI by mistake). Dummy mode takes the dummy grade's standardId and treats the
+ * K5_DASHBOARD_ENABLED flag as on. isSelfStudy is content-only, never part of the gate.
+ * gradeResolved stays false until the band is known, so the shell can hold its loader — except
+ * when this tab already resolved it for the same user (sessionStorage), which is shown at once
+ * while get-student-dashboard refreshes it.
+ */
+function useResolveGradeBand({ role, session, authenticated }) {
+  // Re-render on route change so the query string (dummy mode) is read again: module links
+  // drop ?dummyStudent, and the shell must follow the same mode as the module pages.
+  usePathname();
+  
+  const search = useSyncExternalStore(subscribe, readSearch, readSearchOnServer);
+  const cacheKey = session?.userId ? `${GRADE_CACHE_PREFIX}${session.userId}` : null;
+  const cachedRaw = useSyncExternalStore(subscribe, () => readGradeCache(cacheKey), readSearchOnServer);
+  const cached = useMemo(() => parseGradeCache(cachedRaw), [cachedRaw]);
+  const isStudent = role === "student";
+  const demoUser = Boolean(session?.demoUser);
+  const dummyEnabled = authenticated && isStudent && search !== null && isDummyStudentMode(demoUser);
+
+  const demoRowQuery = useQuery(
+    studentDemoRowQuery({ schoolUUID: session?.schoolUUID, userId: session?.userId, entityId: session?.demoEntityId, enabled: dummyEnabled && demoUser }),
+  );
+  const detailsQuery = useQuery({
+    ...studentDashboardDetailsQuery({ schoolUUID: session?.schoolUUID, userId: session?.userId }),
+    enabled: authenticated && isStudent && search !== null && !dummyEnabled,
+  });
+
+  const demoRow = demoRowQuery.data ?? null;
+  const dummyDetails = useMemo(
+    () => (dummyEnabled ? createDummyStudent({ row: demoRow, params: new URLSearchParams(search || "") }).dashboardDetails() : null),
+    [dummyEnabled, demoRow, search],
+  );
+
+  const details = dummyEnabled ? dummyDetails : detailsQuery.data;
+  const standardId = details?.standardId ?? null;
+  const registrationType = details?.registrationType ?? null;
+  const gradeBand = (dummyEnabled ? null : normalizeGradeBand(details?.gradeBand)) ?? bandFromStandardId(standardId) ?? "MIDDLE";
+  const k5DashboardEnabled = dummyEnabled || details?.k5DashboardEnabled === true;
+  // Grade 6–8 reuses the K–5 dashboard with its own skin (see utils/gradeBand.js isMiddleDashboardOn); Grade 9–12 shares that
+  // structure ("isMiddle" is true for both) and adds the Mature look on top (isHigh, app/k5-mature.css).
+  const isHigh = gradeBand === "HIGH" && isHighDashboardOn(dummyEnabled);
+  const isMiddle = (gradeBand === "MIDDLE" && isMiddleDashboardOn(dummyEnabled)) || isHigh;
+  const isK5 = (gradeBand === "ELEMENTARY" || isMiddle) && k5DashboardEnabled && isK5LearningProgram(registrationType);
+  const fetched = authenticated && search !== null && (dummyEnabled ? !demoRowQuery.isLoading : !detailsQuery.isPending);
+
+  const resolved = {
+    gradeBand,
+    isK5,
+    // Sub-flag of isK5: Grade 6–8 — same components, "Balanced" skin.
+    isMiddle: isK5 && isMiddle,
+    // Sub-flag of isMiddle: Grade 9–12 only (the Mature look).
+    isHigh: isK5 && isHigh,
+    // Sub-flag of the K–5 UI: PreK / Nursery (standardId 17) gets the simpler variant (plan 12.8).
+    isPreK: isK5 && !isMiddle && isPreKStandard(standardId),
+    isSelfStudy: typeof details?.isSelfStudy === "boolean" ? details.isSelfStudy : isSelfStudyProgram(registrationType),
+    // The token sign-in carries no role id (only the role name); the dashboard details list the user's
+    // role modules, each with that role id (needed by the sidebar menu and module rights).
+    roleId: details?.roleAndModuleAssign?.roleAndModuleDTO?.[0]?.roleId ?? null,
+    // A dummy student's LMS link is the backend's dummy redirect (legacy dummyLmsProviderUrl); only its path is used (app/api/lms/redirect).
+    lmsProviderURL:
+      dummyEnabled && details?.dummyLmsUserId && session?.schoolUUID && session?.uniqueId
+        ? `/${session.schoolUUID}/lms-platform/redirect-dummy-user-to-LMS/${session.uniqueId}?dummyLmsUserId=${encodeURIComponent(details.dummyLmsUserId)}`
+        : (details?.lmsProviderURL ?? ""),
+    isPayLmsPaymentPending: details?.isPayLmsPaymentPending ?? "",
+    // Dummy mode with the counselor's demo row: the dashboard shows that row's student name (legacy
+    // syncDummyStudentProfileName - header "Welcome back", profile).
+    demoStudentName: dummyEnabled ? String(demoRow?.studentName || "").trim() : "",
+  };
+
+  // Remember the live (non-dummy) result for this tab, so the next load skips the loader.
+  // Only a real answer is remembered: when get-student-dashboard failed (no details) the defaults above are a guess, and a
+  // cached guess would keep this tab on the default dashboard.
+  const saveCache = isStudent && fetched && !dummyEnabled && cacheKey && details ? JSON.stringify(resolved) : null;
+  useEffect(() => {
+    if (!saveCache) return;
+    try {
+      window.sessionStorage.setItem(cacheKey, saveCache);
+    } catch {
+      // storage unavailable (private mode): every load just waits for the band
+    }
+  }, [cacheKey, saveCache]);
+
+  if (!isStudent) return { ...resolved, gradeResolved: true };
+  if (!fetched && !dummyEnabled && authenticated && search !== null && cached) return { ...cached, gradeResolved: true };
+  return { ...resolved, gradeResolved: fetched };
+}
+
+function useResolveDashboardContext({ role = "student" } = {}) {
+  const { data: session, status } = useSession();
+  const authenticated = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
+  const queryClient = useQueryClient();
+
+  // Session-expiry guard: a session dropping while the dashboard is open hands
+  // the user back to the school's Java login page (proxy.js already blocks
+  // unauthenticated navigations server-side; this covers the in-app drop).
+  useEffect(() => {
+    if (status === "unauthenticated") expireSession(session?.schoolUUID);
+  }, [status, session?.schoolUUID]);
+
+  // Before every other query: server actions run one at a time, and the shell waits for this one.
+  const grade = useResolveGradeBand({ role, session, authenticated });
+  // The dashboard details' role id first; the sign-in's (SSO profile) when they have none, e.g. dummy mode.
+  const roleId = grade.roleId ?? session?.roleId ?? null;
+
+  // Dynamic menu (faithful Java sidebar) — the only source for the sidebar now.
+  // For students, item-level visibility/labels are then adjusted to match
+  // DashboardLeftSideContentSchool.jsp's per-pageLink rules (see
+  // applyStudentNavRules), using the student-profile flags from
+  // the student's own get-student-dashboard (fee-details needs an Online signup, batch-schedule a BATCH signup).
+  // A student's start-up answer already holds the menu, its flags, the name, the links ... (utils/dashboardBootstrap.js); every
+  // other role, or a part the answer lacks, asks for it directly as before.
+  const via = (part, pick, fallback) => (role === "student" ? viaTier1(session?.userId, part, pick, fallback) : fallback());
+  const menuQuery = useQuery({
+    queryKey: ["dashboard-menu", role, session?.schoolNumericId, roleId, session?.userId],
+    queryFn: async () => {
+      const [dto, details, menuFlagsResp] = await Promise.all([
+        via("menu", (a) => (a.menu && a.menu.roleId === roleId ? a.menu.data : undefined), () =>
+          getDashboardMenu({
+            schoolUUID: session.schoolUUID,
+            schoolId: session.schoolNumericId,
+            roleId,
+            userId: session.userId,
+          }),
+        ),
+        role === "student" ? queryClient.fetchQuery(studentDashboardDetailsQuery({ schoolUUID: session.schoolUUID, userId: session.userId })) : null,
+        role === "student" ? via("menuFlags", (a) => a.menuFlags, () => getStudentMenuFlags({ schoolUUID: session.schoolUUID, studentUserId: session.userId })) : null,
+      ]);
+      const mapped = mapBackendMenu(dto) ?? [];
+      const menuFlags = menuFlagsResp?.details ?? null;
+      const navDetails = { signupType: details?.signupType, signupMode: details?.registrationType };
+      return role === "student" ? applyStudentNavRules(mapped, navDetails, { schoolNumericId: session.schoolNumericId, menuFlags }) : mapped;
+    },
+    // Waits for the role id (dashboard details) so the menu is not cached empty.
+    enabled: authenticated && Boolean(roleId),
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+  // Empty until the query settles, so the sidebar renders (empty) without
+  // waiting on the (possibly missing) endpoint.
+  const menu = menuQuery.data ?? [];
+  // True while the menu request is running: the K–5 / Grade 6–8 left rail shows skeleton tiles instead of an empty box.
+  const menuLoading = menuQuery.isLoading;
+  // True once the menu request has answered (or failed): only then is "this role has no such module" a fact (a menu still on its way is empty too).
+  const menuSettled = menuQuery.isSuccess || menuQuery.isError;
+
+  // Header "Welcome back, {name}" — the same full name Login History shows (legacy USER_FULL_NAME).
+  const studentName = useStudentName({ schoolUUID: session?.schoolUUID, userId: session?.userId, enabled: authenticated && role === "student" });
+
+  // CHAT_URL / DIARY_URL — rarely-changing per-school config, fetched once.
+  const chatLinksQuery = useQuery({
+    queryKey: ["dashboard-chat-links", session?.schoolUUID, session?.userId],
+    queryFn: () => via("chatLinks", (a) => a.chatLinks, () => getDashboardChatLinks({ schoolUUID: session.schoolUUID, userId: session.userId })),
+    enabled: authenticated,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+
+  // Branding logo (not carried in the session) — same source as the wizard/login.
+  // One shared read for every component that uses this hook (it used to be one request per component).
+  const linksQuery = useQuery({
+    queryKey: ["school-settings-links", session?.schoolNumericId],
+    queryFn: () => via("links", (a) => a.links, () => getSchoolSettingsLinks(session.schoolNumericId)),
+    enabled: Boolean(session?.schoolNumericId),
+    staleTime: Infinity,
+    gcTime: Infinity,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+  const logoUrl = linksQuery.data?.logoUrl || null;
+  // The school's website (schoolSettingsLinks.schoolWebsite): the header logo opens it in a new tab, as in the legacy header.
+  const schoolWebsite = linksQuery.data?.schoolWebsite || null;
+  // True once the school-links request has finished (logo found or not), so a page can wait for the logo before showing.
+  const logoSettled = linksQuery.isSuccess || linksQuery.isError;
+
+  const ready = authenticated;
+
+  const context = ready
+    ? {
+        role,
+        schoolUUID: session.schoolUUID,
+        schoolNumericId: session.schoolNumericId,
+        schoolName: session.schoolName,
+        userId: session.userId,
+        uniqueId: session.uniqueId,
+        userRole: session.userRole ?? session.role ?? null,
+        roleId,
+        userName: grade.demoStudentName || studentName,
+        // Demo account (USER.DEMO_USER) — pass to isDummyStudentMode() like legacy isDemoUser.
+        demoUser: Boolean(session.demoUser),
+        // The demo row picked at "view as user" (SSO hand-off); the demo-data request sends it as entityId.
+        demoEntityId: session.demoEntityId ?? null,
+        chatUrl: chatLinksQuery.data?.chatUrl || "",
+        diaryUrl: chatLinksQuery.data?.diaryUrl || "",
+      }
+    : null;
+
+  return { status, session, context, menu, menuLoading, menuSettled, logoUrl, logoSettled, schoolWebsite, ready, ...grade };
+}
+
+export function DashboardProvider({ role = "student", children }) {
+  
+  const value = useResolveDashboardContext({ role });
+  return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;
+}
+
+/**
+ * The dashboard look a student picked (Look dialog > Theme: playful / balanced / mature) for everything inside: isMiddle /
+ * isHigh then follow the look, so every K-5 page, rail and dialog draws in that look. The student's real grade stays in
+ * gradeIsMiddle / gradeIsHigh, for what the grade decides (e.g. the High brain games, which look is auto).
+ */
+export function DashboardLookProvider({ look, children }) {
+  const value = useContext(DashboardContext);
+  const scoped = useMemo(() => {
+    if (!value || !look) return value;
+    const gradeIsMiddle = value.gradeIsMiddle ?? value.isMiddle;
+    const gradeIsHigh = value.gradeIsHigh ?? value.isHigh;
+    return { ...value, gradeIsMiddle, gradeIsHigh, isMiddle: look !== "playful", isHigh: look === "mature" };
+  }, [value, look]);
+  return <DashboardContext.Provider value={scoped}>{children}</DashboardContext.Provider>;
+}
+
+export function useDashboardContext() {
+  const value = useContext(DashboardContext);
+  if (value === null) {
+    throw new Error("useDashboardContext must be used within a DashboardProvider");
+  }
+  return value;
+}

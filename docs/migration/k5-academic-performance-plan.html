@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K5 Academic Performance — Migration Plan</title>
+<style>
+  :root {
+    --bg: #faf7f2; --card: #fff; --ink: #1a1a2e; --mut: #6b7280;
+    --ac: #e91e90; --acd: #c4167a; --line: #e5e1d8; --soft: #f3efe8;
+    --green: #22c55e; --amber: #f59e0b; --red: #ef4444; --blue: #3b82f6;
+    --purple: #8b5cf6;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--ink); padding: 16px; line-height: 1.6; }
+  h1 { font-size: 1.6rem; margin-bottom: 4px; }
+  .subtitle { color: var(--mut); font-size: .9rem; margin-bottom: 24px; }
+  h2 { font-size: 1.25rem; margin: 28px 0 12px; padding-bottom: 6px; border-bottom: 3px solid var(--line); }
+  h3 { font-size: 1.05rem; margin: 16px 0 8px; color: var(--ac); }
+  .card { background: var(--card); border: 2px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: .75rem; font-weight: 700; }
+  .b-api { background: #dbeafe; color: #1d4ed8; }
+  .b-static { background: #fef3c7; color: #92400e; }
+  .b-new { background: #fce7f3; color: var(--acd); }
+  .b-blocked { background: #fee2e2; color: #991b1b; }
+  .b-reuse { background: #d1fae5; color: #065f46; }
+  table { width: 100%; border-collapse: collapse; font-size: .85rem; margin: 8px 0; }
+  th { background: var(--ac); color: #fff; text-align: left; padding: 8px 10px; }
+  td { padding: 6px 10px; border-bottom: 1px solid var(--line); }
+  tr:nth-child(even) td { background: var(--soft); }
+  .flex-row { display: flex; flex-wrap: wrap; gap: 10px; }
+  .stat-tile { flex: 1 1 140px; background: var(--soft); border: 2px solid var(--line); border-radius: 12px; padding: 12px; text-align: center; }
+  .stat-tile .num { font-size: 1.5rem; font-weight: 800; color: var(--ac); }
+  .stat-tile .lbl { font-size: .75rem; color: var(--mut); }
+  .phase { background: linear-gradient(135deg, var(--ac), var(--purple)); color: #fff; border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; }
+  .phase h3 { color: #fff; margin: 0 0 6px; }
+  .phase ul { margin: 0; padding-left: 18px; }
+  .note { background: #fffbeb; border-left: 4px solid var(--amber); padding: 10px 14px; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: .85rem; }
+  .blocked-note { background: #fef2f2; border-left: 4px solid var(--red); padding: 10px 14px; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: .85rem; }
+  code { background: var(--soft); padding: 1px 5px; border-radius: 4px; font-size: .82rem; }
+  .toc { background: var(--card); border: 2px solid var(--line); border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; }
+  .toc a { color: var(--ac); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc ul { margin: 0; padding-left: 18px; }
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 600px) { .compare-grid { grid-template-columns: 1fr; } }
+  .old-box { background: #fef2f2; border: 2px solid #fecaca; border-radius: 12px; padding: 12px; }
+  .new-box { background: #f0fdf4; border: 2px solid #bbf7d0; border-radius: 12px; padding: 12px; }
+</style>
+</head>
+<body>
+
+<h1>K5 Academic Performance — Migration Plan</h1>
+<p class="subtitle">Deep review: mockup vs existing backend &amp; Next.js code &bull; Hinglish me &bull; 2026-11-07</p>
+
+<div class="toc">
+  <strong>Contents:</strong>
+  <ul>
+    <li><a href="#overview">Overview — Kya hai ye page</a></li>
+    <li><a href="#tabs">3 Tabs ka breakdown</a></li>
+    <li><a href="#old-vs-new">Old (JSP/Phase4) vs New (K5 Mockup) — Kya badla</a></li>
+    <li><a href="#api-map">API Mapping — Kaunsa API kahan lagega</a></li>
+    <li><a href="#static-dynamic">Static vs Dynamic — Kya hardcode, kya API se</a></li>
+    <li><a href="#reuse">Reusable Code — Kya existing code use hoga</a></li>
+    <li><a href="#blocked">Blocked Items — Kya nahi ban sakta abhi</a></li>
+    <li><a href="#component-plan">Component Plan — File structure</a></li>
+    <li><a href="#phases">Implementation Phases</a></li>
+  </ul>
+</div>
+
+<!-- ================= OVERVIEW ================= -->
+<h2 id="overview">1. Overview — Kya hai ye page</h2>
+<div class="card">
+  <p><strong>Mockup me:</strong> "My Performance" page with <strong>3 tabs</strong>: Performance, My Goals, Class Comparison.</p>
+  <p><strong>Existing Next.js me:</strong> Ek simple DataTable hai <code>Performance.jsx</code> — course list with score, pace, teacher, progress bars. Click karo toh modal khulta hai assignment details ke saath.</p>
+  <p><strong>K5 version me:</strong> Bahut zyada naya hai — animated hero section, star rating system, streak tracker, achievement badges, stat tiles, redesigned course list with inline detail (modal hata ke). Lekin <strong>Tab 2 (My Goals)</strong> aur <strong>Tab 3 (Class Comparison)</strong> ke liye <strong>koi backend API nahi hai</strong>.</p>
+</div>
+
+<!-- ================= 3 TABS ================= -->
+<h2 id="tabs">2. Teen Tabs ka Breakdown</h2>
+
+<h3>Tab 1: Performance <span class="badge b-api">~80% API Available</span></h3>
+<div class="card">
+  <p><strong>Ye tab fully buildable hai</strong> existing APIs se (minus kuch calculated fields). Sections:</p>
+  <ol>
+    <li><strong>Hero Section</strong> — animated SVG scene + rotating motivational tips + 3 pills (Progress, Streak, Scores)</li>
+    <li><strong>Score Card</strong> — 5-star rating + word ladder (Superstar / Great / Good / Getting there / Let's practise)</li>
+    <li><strong>Streak Card</strong> — flame icon, consecutive on-time submissions, dot trail, streak badges</li>
+    <li><strong>Achievements</strong> — 5 medal badges (3 earned, 2 locked)</li>
+    <li><strong>4 Stat Tiles</strong> — Average score %, Assignments submitted, Courses ahead/behind, Days left</li>
+    <li><strong>Course List</strong> — progress ring, star rating, score %, on-time count, "View assignments" button</li>
+    <li><strong>Course Detail</strong> — inline expand (no modal!), assignment breakdown table</li>
+  </ol>
+</div>
+
+<h3>Tab 2: My Goals <span class="badge b-blocked">BLOCKED — No Backend API</span></h3>
+<div class="card">
+  <p>Mockup me dikhaya hai goal-setting UI: student apne goals set karta hai (score targets, submission targets). Lekin backend me <strong>koi API nahi hai</strong> goals save/load karne ke liye. "Coming Soon" placeholder lagana padega.</p>
+</div>
+
+<h3>Tab 3: Class Comparison <span class="badge b-blocked">BLOCKED — No Backend API</span></h3>
+<div class="card">
+  <p>Class ke saare students ka aggregate comparison. Backend me <strong>koi API nahi hai</strong> class-wide data ke liye (privacy reasons bhi ho sakte hain). "Coming Soon" placeholder lagana padega.</p>
+</div>
+
+<!-- ================= OLD vs NEW ================= -->
+<h2 id="old-vs-new">3. Old vs New — Kya Badla Hai</h2>
+
+<div class="compare-grid">
+  <div class="old-box">
+    <h3 style="color:#991b1b; margin-top:0;">Old (Existing Next.js)</h3>
+    <ul>
+      <li>Simple DataTable — rows with columns</li>
+      <li>Score = plain percentage text</li>
+      <li>Pace = GIF icons (forward.gif, behind.gif)</li>
+      <li>Progress = flat progress bars</li>
+      <li>Course click → <strong>Modal</strong> with assignment table</li>
+      <li>Grade history → nested sub-modal</li>
+      <li>No streak tracking</li>
+      <li>No achievements / badges</li>
+      <li>No star rating</li>
+      <li>No motivational tips</li>
+      <li>Desktop table + mobile cards</li>
+    </ul>
+  </div>
+  <div class="new-box">
+    <h3 style="color:#065f46; margin-top:0;">New (K5 Mockup)</h3>
+    <ul>
+      <li>Visual dashboard — cards, rings, animations</li>
+      <li>Score = <strong>5-star rating</strong> + word-level label</li>
+      <li>Pace = text labels (Ahead/On Track/Behind) + colored styling</li>
+      <li>Progress = <strong>circular ring</strong> (donut SVG)</li>
+      <li>Course click → <strong>Inline expand</strong> (no modal)</li>
+      <li>Grade history → same inline or nested card</li>
+      <li><strong>NEW: Streak card</strong> — on-time submissions ka streak</li>
+      <li><strong>NEW: Achievement badges</strong> — 5 medals</li>
+      <li><strong>NEW: Star rating system</strong> — percentage → stars convert</li>
+      <li><strong>NEW: Motivational tips</strong> — rotating text in hero</li>
+      <li>Single responsive layout — K5 theme tokens</li>
+    </ul>
+  </div>
+</div>
+
+<h3>Naye Elements Jo Bilkul New Hain <span class="badge b-new">NEW</span></h3>
+<div class="card">
+  <table>
+    <thead><tr><th>Element</th><th>Source</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>5-Star Rating</td>
+        <td class="badge b-static">Frontend Computed</td>
+        <td>API se <code>score</code> (%) aata hai → frontend convert karega: 90-100→5★, 75-89→4★, 60-74→3★, 40-59→2★, below→1★</td>
+      </tr>
+      <tr>
+        <td>Word-level Ladder</td>
+        <td class="badge b-static">Frontend Computed</td>
+        <td>Stars ke saath label: 5★=Superstar, 4★=Great, 3★=Good, 2★=Getting there, 1★=Let's practise</td>
+      </tr>
+      <tr>
+        <td>Streak Counter</td>
+        <td class="badge b-static">Frontend Computed</td>
+        <td>Backend se sirf <code>pendingAssign</code>/<code>submiteAssign</code> aata hai. Consecutive on-time ka data <strong>backend me nahi hai</strong>. Options: (a) fake/static, (b) assignment dates se calculate karo client-side, (c) omit. <strong>Recommendation: assignment due dates + submission status se approximate karo.</strong></td>
+      </tr>
+      <tr>
+        <td>Streak Badges</td>
+        <td class="badge b-static">Frontend Computed</td>
+        <td>Spark (3), Flame (7), Blaze (14), Fire Star (30) — threshold-based on streak count</td>
+      </tr>
+      <tr>
+        <td>Achievement Badges</td>
+        <td class="badge b-static">Frontend Computed</td>
+        <td>5 badges: Early Submitter, Clean Sweep, Perfect Score, Halfway, On Target. Calculated from assignment data — koi separate API nahi.</td>
+      </tr>
+      <tr>
+        <td>Animated Hero SVG</td>
+        <td class="badge b-static">Static Asset</td>
+        <td>Mockup me embedded base64 SVG hai. Extract karke static asset banana padega.</td>
+      </tr>
+      <tr>
+        <td>Motivational Tips</td>
+        <td class="badge b-static">Static / i18n</td>
+        <td>3-4 rotating tips (carousel). Text i18n strings se aayega, rotation frontend me.</td>
+      </tr>
+      <tr>
+        <td>Progress Ring (Donut)</td>
+        <td class="badge b-static">Frontend Computed</td>
+        <td>Old progress bar → new SVG donut ring. Same <code>progressGradable</code> / <code>progressAllActivity</code> data, sirf rendering changed.</td>
+      </tr>
+      <tr>
+        <td>Inline Course Detail</td>
+        <td class="badge b-api">API Available</td>
+        <td>Same <code>get-student-progress-report-detail</code> API, but render inline instead of modal.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ================= API MAPPING ================= -->
+<h2 id="api-map">4. API Mapping — Kaunsa API Kahan Lagega</h2>
+
+<div class="card">
+  <table>
+    <thead><tr><th>UI Section</th><th>API Endpoint</th><th>Key Fields</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Course List</strong> (sab courses)</td>
+        <td><code>{schoolId}/dashboard/parent/student-academic-performance</code></td>
+        <td><code>courseName</code>, <code>score</code>, <code>progressPace</code>, <code>teacherName</code>, <code>endDate</code>, <code>remainingDays</code>, <code>pendingAssignment</code>, <code>progressGradable</code>, <code>progressAllActivity</code>, <code>lmsEnrollmentId</code>, <code>lmsCourseId</code></td>
+      </tr>
+      <tr>
+        <td><strong>Score Card</strong> (average)</td>
+        <td>Same API ↑ (aggregate client-side)</td>
+        <td>Saare courses ka <code>score</code> average karo → star rating compute karo</td>
+      </tr>
+      <tr>
+        <td><strong>4 Stat Tiles</strong></td>
+        <td>Same API ↑ (aggregate client-side)</td>
+        <td>Average score = mean of scores, Submitted = sum, Ahead count = <code>progressPace === "Ahead"</code> filter, Days left = min of <code>remainingDays</code></td>
+      </tr>
+      <tr>
+        <td><strong>Course Detail</strong> (expand)</td>
+        <td><code>{schoolId}/dashboard/get-student-progress-report-detail</code></td>
+        <td><code>totalAssignment</code>, <code>submiteAssign</code>, <code>pendingAssign</code>, <code>upcomingAssign</code>, <code>passesAssign</code>, <code>failedAssign</code>, <code>enrollments.enrollment.grades.items.item[]</code></td>
+      </tr>
+      <tr>
+        <td><strong>Grade History</strong> (per assignment)</td>
+        <td><code>{schoolId}/dashboard/get-progress-report-grade-history</code></td>
+        <td><code>grades.grade[]</code> → <code>achieved</code>, <code>possible</code>, <code>percent</code>, <code>lastactivitydate</code></td>
+      </tr>
+      <tr>
+        <td><strong>Streak</strong></td>
+        <td>Koi direct API nahi ❌</td>
+        <td>Progress detail se assignment items ka <code>submissionStatus</code> + <code>duedate</code> use karke approximate streak calculate ho sakta hai</td>
+      </tr>
+      <tr>
+        <td><strong>Achievements</strong></td>
+        <td>Koi direct API nahi ❌</td>
+        <td>Frontend computed: Early Submitter (sab time pe), Clean Sweep (sab passed), Perfect Score (100%), Halfway (50%+ done), On Target (pace Ahead/OnTrack)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="note">
+  <strong>Note:</strong> <code>student-academic-performance</code> sirf <strong>Agilix Buzz LMS providers</strong> (courseProviderId 36/37/38) ke liye data return karta hai. Baaki providers ke liye empty list aati hai — ye existing behavior hai, K5 me bhi same rahega.
+</div>
+
+<!-- ================= STATIC vs DYNAMIC ================= -->
+<h2 id="static-dynamic">5. Static vs Dynamic</h2>
+
+<div class="card">
+  <table>
+    <thead><tr><th>Item</th><th>Type</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Hero SVG illustration</td><td class="badge b-static">STATIC</td><td>Embedded SVG asset, scene hamesha same rahega</td></tr>
+      <tr><td>Motivational tips text</td><td class="badge b-static">STATIC / i18n</td><td>3-4 hardcoded strings, i18n keys se, rotating</td></tr>
+      <tr><td>Star rating thresholds</td><td class="badge b-static">STATIC</td><td>Frontend constants: 90→5★, 75→4★, etc.</td></tr>
+      <tr><td>Word-level labels</td><td class="badge b-static">STATIC / i18n</td><td>Superstar/Great/Good/Getting there/Let's practise — i18n</td></tr>
+      <tr><td>Streak badge thresholds</td><td class="badge b-static">STATIC</td><td>Spark=3, Flame=7, Blaze=14, Fire Star=30</td></tr>
+      <tr><td>Achievement badge definitions</td><td class="badge b-static">STATIC</td><td>5 badge types + unlock conditions — frontend constants</td></tr>
+      <tr><td>Achievement badge icons</td><td class="badge b-static">STATIC</td><td>SVG medal icons — extract from mockup or draw</td></tr>
+      <tr><td>Tab names / labels</td><td class="badge b-static">STATIC / i18n</td><td>pmTabPerf, pmTabGoals, pmTabClass — i18n keys ready</td></tr>
+      <tr><td colspan="3" style="background: #dbeafe; font-weight: 700;">⬇ Dynamic (API se aata hai)</td></tr>
+      <tr><td>Course list data</td><td class="badge b-api">DYNAMIC</td><td><code>student-academic-performance</code> API</td></tr>
+      <tr><td>Average score %</td><td class="badge b-api">COMPUTED</td><td>API courses ke scores ka mean — client-side calculate</td></tr>
+      <tr><td>Assignments submitted count</td><td class="badge b-api">COMPUTED</td><td>Per-course detail API se total count — ya course list se approximate</td></tr>
+      <tr><td>Courses ahead/behind count</td><td class="badge b-api">COMPUTED</td><td><code>progressPace</code> field count karo</td></tr>
+      <tr><td>Days left</td><td class="badge b-api">COMPUTED</td><td>Min <code>remainingDays</code> across courses</td></tr>
+      <tr><td>Per-course score, pace, progress</td><td class="badge b-api">DYNAMIC</td><td>Direct API fields</td></tr>
+      <tr><td>Assignment details (expand)</td><td class="badge b-api">DYNAMIC</td><td><code>get-student-progress-report-detail</code> — lazy load on expand</td></tr>
+      <tr><td>Grade history</td><td class="badge b-api">DYNAMIC</td><td><code>get-progress-report-grade-history</code> — lazy load on click</td></tr>
+      <tr><td>Streak count</td><td class="badge b-api">COMPUTED</td><td>Assignment items se calculate — approximate from submission data</td></tr>
+      <tr><td>Achievement unlock status</td><td class="badge b-api">COMPUTED</td><td>Course + assignment data se derive karo — no separate API</td></tr>
+      <tr><td>Student name (Hero "Hey {name}")</td><td class="badge b-api">DYNAMIC</td><td>SSO session / dashboard context se</td></tr>
+      <tr><td>Session dates</td><td class="badge b-api">DYNAMIC</td><td>Dashboard context / school settings se</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ================= REUSE ================= -->
+<h2 id="reuse">6. Reusable Code — Kya Existing Use Hoga</h2>
+
+<div class="card">
+  <table>
+    <thead><tr><th>Existing File</th><th>Reuse</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>hooks/useStudentAcademicPerformance.js</code></td>
+        <td class="badge b-reuse">REUSE AS-IS</td>
+        <td>React Query hook — courses, courseProviderId return karta hai. K5 component me directly import karo. Dummy mode bhi support karta hai.</td>
+      </tr>
+      <tr>
+        <td><code>services/dashboardApi.js</code> — <code>getStudentAcademicPerformance()</code></td>
+        <td class="badge b-reuse">REUSE AS-IS</td>
+        <td>Hook ke through already use hota hai. Touch mat karo.</td>
+      </tr>
+      <tr>
+        <td><code>services/dashboardApi.js</code> — <code>getStudentProgressReportDetail()</code></td>
+        <td class="badge b-reuse">REUSE AS-IS</td>
+        <td>Course expand ke liye. Direct import karo aur useQuery me wrap karo (like existing modal karta hai).</td>
+      </tr>
+      <tr>
+        <td><code>services/dashboardApi.js</code> — <code>getProgressReportGradeHistory()</code></td>
+        <td class="badge b-reuse">REUSE AS-IS</td>
+        <td>Grade history ke liye. Same pattern — useQuery + lazy load.</td>
+      </tr>
+      <tr>
+        <td><code>components/student/Performance.jsx</code></td>
+        <td class="badge b-new">NOT REUSED</td>
+        <td>Ye old DataTable UI hai — K5 version bilkul different hai. Lekin <strong>logic reference</strong> ke liye dekho (PACE mapping, salutation, detailed providers check).</td>
+      </tr>
+      <tr>
+        <td><code>components/student/PerformanceProgressModal.jsx</code></td>
+        <td class="badge b-new">NOT REUSED</td>
+        <td>Modal approach hata raha hai → inline expand. But <strong>TILES definition</strong> aur <strong>data parsing logic</strong> (enrollments → items) copy karo.</td>
+      </tr>
+      <tr>
+        <td><code>components/student/PerformanceGradeHistoryModal.jsx</code></td>
+        <td class="badge b-new">PARTIAL REUSE</td>
+        <td>Grade history data fetching logic same hai — CalendarModal hata ke inline/card me render karo.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ================= BLOCKED ================= -->
+<h2 id="blocked">7. Blocked Items — Kya Nahi Ban Sakta</h2>
+
+<div class="blocked-note">
+  <strong>Tab 2 "My Goals" — FULLY BLOCKED</strong><br>
+  Backend me goals save/load ka koi API nahi hai. Naya endpoint banana padega (lekin rule hai: <em>don't create new backend endpoints</em>). Isko "Coming Soon" placeholder banana padega.
+</div>
+
+<div class="blocked-note">
+  <strong>Tab 3 "Class Comparison" — FULLY BLOCKED</strong><br>
+  Class-wide aggregate data ka koi API nahi hai. Privacy concerns bhi ho sakte hain. "Coming Soon" placeholder.
+</div>
+
+<div class="note">
+  <strong>Streak Counter — PARTIALLY BLOCKED</strong><br>
+  Direct "streak" API nahi hai. Lekin <code>get-student-progress-report-detail</code> se assignment items milte hain jisme <code>duedate</code> aur <code>submissionStatus</code> hota hai. In se <strong>approximate streak calculate ho sakta hai</strong>. Accurate nahi hoga lekin reasonable approximation ban sakti hai. Agar bahut complex lage toh simple "X assignments on time" count dikhao without streak logic.
+</div>
+
+<!-- ================= COMPONENT PLAN ================= -->
+<h2 id="component-plan">8. Component Plan — File Structure</h2>
+
+<div class="card">
+<pre style="font-size:.82rem; overflow-x:auto;">
+components/k5/pages/
+  K5Performance.jsx          ← Main page component (route: /performance)
+  K5PerformanceHero.jsx      ← Hero section: SVG scene + tips + pills
+  K5PerformanceScoreCard.jsx ← Star rating + word ladder
+  K5PerformanceStreak.jsx    ← Streak card + badges
+  K5PerformanceAchievements.jsx ← 5 medal badges
+  K5PerformanceStats.jsx     ← 4 stat tiles
+  K5PerformanceCourseList.jsx ← Course cards with progress ring
+  K5PerformanceCourseDetail.jsx ← Inline expand: assignment breakdown
+  K5PerformanceGradeHistory.jsx ← Per-assignment grade history (inline)
+
+hooks/
+  useStudentAcademicPerformance.js  ← EXISTING, reuse as-is
+
+services/
+  dashboardApi.js  ← EXISTING, reuse functions as-is
+</pre>
+</div>
+
+<div class="note">
+  <strong>Route:</strong> K5 sidebar me "My Performance" segment already mapped hoga. Page component <code>K5Performance.jsx</code> ko wahan point karna hai. Tab 1 default active, Tab 2 aur 3 "Coming Soon" cards.
+</div>
+
+<!-- ================= PHASES ================= -->
+<h2 id="phases">9. Implementation Phases</h2>
+
+<div class="phase">
+  <h3>Phase A — Core Course List + Stats (Priority 1)</h3>
+  <ul>
+    <li>K5Performance.jsx — main wrapper with 3-tab UI (Tab 2/3 = Coming Soon)</li>
+    <li>K5PerformanceCourseList.jsx — course cards with progress ring, score, pace, teacher</li>
+    <li>K5PerformanceStats.jsx — 4 stat tiles (computed from course data)</li>
+    <li>Wire up <code>useStudentAcademicPerformance</code> hook</li>
+  </ul>
+  <p style="margin-top:6px; font-size:.85rem;">Ye phase existing APIs se 100% buildable hai. Estimated: ~2-3 hours.</p>
+</div>
+
+<div class="phase">
+  <h3>Phase B — Score Card + Course Detail (Priority 2)</h3>
+  <ul>
+    <li>K5PerformanceScoreCard.jsx — star rating logic + word ladder</li>
+    <li>K5PerformanceCourseDetail.jsx — inline expand with assignment table</li>
+    <li>K5PerformanceGradeHistory.jsx — grade history per assignment</li>
+    <li>Wire up <code>getStudentProgressReportDetail</code> aur <code>getProgressReportGradeHistory</code></li>
+  </ul>
+  <p style="margin-top:6px; font-size:.85rem;">Existing APIs se buildable. Estimated: ~2 hours.</p>
+</div>
+
+<div class="phase">
+  <h3>Phase C — Hero + Streak + Achievements (Priority 3)</h3>
+  <ul>
+    <li>K5PerformanceHero.jsx — SVG scene extract from mockup + motivational tips carousel</li>
+    <li>K5PerformanceStreak.jsx — streak calculation + badges + dot trail</li>
+    <li>K5PerformanceAchievements.jsx — 5 badges with unlock logic</li>
+    <li>SVG assets extract karna padega mockup se</li>
+  </ul>
+  <p style="margin-top:6px; font-size:.85rem;">Mostly frontend-computed. Streak approximation se live data. Estimated: ~3 hours.</p>
+</div>
+
+<div style="background: var(--card); border: 2px solid var(--line); border-radius: 16px; padding: 16px; margin-top: 16px;">
+  <h3 style="margin-top: 0; color: var(--mut);">Summary Stats</h3>
+  <div class="flex-row">
+    <div class="stat-tile"><div class="num">5</div><div class="lbl">Existing APIs</div></div>
+    <div class="stat-tile"><div class="num">9</div><div class="lbl">New Components</div></div>
+    <div class="stat-tile"><div class="num">2</div><div class="lbl">Blocked Tabs</div></div>
+    <div class="stat-tile"><div class="num">~7h</div><div class="lbl">Estimated Work</div></div>
+    <div class="stat-tile"><div class="num">0</div><div class="lbl">New APIs Needed</div></div>
+  </div>
+</div>
+
+<p style="margin-top: 24px; text-align: center; color: var(--mut); font-size: .8rem;">
+  Generated for K5 Dashboard Migration &bull; is-sms &bull; Phase 4 &bull; 2026-11-07
+</p>
+
+</body>
+</html>

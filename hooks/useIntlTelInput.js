@@ -81,7 +81,7 @@ function decorateFullscreenPopup(closePopup) {
   };
 }
 
-export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry) {
+export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry, options) {
   useEffect(() => {
     let cancelled = false;
     const input = inputRef.current;
@@ -136,7 +136,7 @@ export function useIntlTelInput(inputRef, itiRef, onChange, initialCountry) {
         // Renders the dial-code selector as its own bordered box next to the number input
         // (two separate fields) instead of intl-tel-input's default flag+code overlay sitting
         // inside the input — see the "Phone number field" rules in app/globals.css.
-        classNames: { container: "iti-split", countrySelectorContainer: "iti-split-popup" },
+        classNames: { container: options?.containerClass ? `iti-split ${options.containerClass}` : "iti-split", countrySelectorContainer: "iti-split-popup" },
         formatAsYouType:false,
         // formatAsYouType only governs live typing. Loading an already-saved number still runs it through
         // #updateValueFromNumber once on init, which formats using numberDisplayFormat (default INTERNATIONAL,

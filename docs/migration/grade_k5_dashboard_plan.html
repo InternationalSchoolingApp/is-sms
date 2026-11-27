@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Grade K–5 Dashboard Plan</title>
+<style>
+:root{--bg:#0f1420;--panel:#151c2c;--panel2:#1b2436;--ink:#e8edf6;--mut:#9fb0c9;--line:#2a364d;--acc:#5b9dff;
+--in:#2fbf71;--out:#ff4d5e;--warn:#e0a52b;}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f5f7fb;--panel:#fff;--panel2:#eef2f8;--ink:#17202e;--mut:#536079;--line:#d7deea;--acc:#1f5fd6;--in:#1f9d57;--out:#d61f36;--warn:#b5821a;}}
+:root[data-theme="dark"]{--bg:#0f1420;--panel:#151c2c;--panel2:#1b2436;--ink:#e8edf6;--mut:#9fb0c9;--line:#2a364d;--acc:#5b9dff;--in:#2fbf71;--out:#ff4d5e;--warn:#e0a52b;}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.85em;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:.03em .4em;word-break:break-word}
+.wrap{display:flex;max-width:1240px;margin:0 auto}
+aside{position:sticky;top:0;align-self:flex-start;height:100vh;overflow:auto;width:250px;flex:0 0 250px;background:var(--panel);border-right:1px solid var(--line);padding:16px 12px}
+aside .brand{font-weight:800;font-size:15px;padding:4px 6px 10px;line-height:1.3}
+aside ol{list-style:none;margin:0;padding:0;counter-reset:s}
+aside ol li a{display:block;padding:5px 8px;border-radius:7px;color:var(--mut);font-size:13.5px}
+aside ol li a::before{counter-increment:s;content:counter(s) ". ";color:var(--acc)}
+aside ol li a:hover,aside ol li a.active{background:var(--panel2);color:var(--ink);text-decoration:none}
+main{flex:1 1 auto;min-width:0;padding:24px 32px 120px}
+header.top{border:1px solid var(--line);background:linear-gradient(135deg,var(--panel),var(--panel2));border-radius:16px;padding:22px 24px;margin-bottom:20px}
+header.top h1{margin:0 0 6px;font-size:25px}
+header.top .sub{color:var(--mut);font-size:14px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-size:12.5px;color:var(--mut)}
+.meta b{color:var(--ink)}
+section{border-top:1px solid var(--line);padding-top:22px;margin-top:26px;scroll-margin-top:12px}
+section>h2{font-size:20px;margin:0 0 6px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+section>h2 .n{color:var(--acc);font-size:14px}
+h3{font-size:16px;margin:18px 0 8px}
+p{margin:8px 0}.lead{color:var(--mut)}
+ul,ol{margin:8px 0;padding-left:22px}li{margin:3px 0}
+.b{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;border:1px solid transparent;white-space:nowrap}
+.b.in{color:var(--in);border-color:var(--in);background:color-mix(in srgb,var(--in) 14%,transparent)}
+.b.out{color:#fff;background:var(--out);border-color:var(--out)}
+.b.rec{color:var(--acc);border-color:var(--acc);background:color-mix(in srgb,var(--acc) 14%,transparent)}
+.b.warn{color:var(--warn);border-color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+.b.ph{background:var(--panel2);color:var(--ink);border-color:var(--line)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:640px}
+th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{background:var(--panel2);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+tbody tr:hover{background:color-mix(in srgb,var(--acc) 7%,transparent)}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin:14px 0}
+.card{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:14px 16px}
+.card .big{font-size:24px;font-weight:800}.card .lbl{color:var(--mut);font-size:12.5px;margin-top:2px}
+.note{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--panel);border-radius:10px;padding:12px 15px;margin:14px 0}
+.note.out{border-left-color:var(--out)}.note.ok{border-left-color:var(--in)}.note.warn{border-left-color:var(--warn)}
+.note b.t{display:block;margin-bottom:3px}
+figure{margin:16px 0;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:14px}
+figure svg{display:block;width:100%;height:auto}
+figcaption{color:var(--mut);font-size:12.5px;margin-top:8px}
+pre{overflow:auto;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:12.5px;line-height:1.5}
+.sw{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;border:1px solid var(--line);margin-right:4px}
+.svgbox{fill:var(--panel2);stroke:var(--line);stroke-width:1.4}
+.svgbox.acc{stroke:var(--acc)}.svgbox.in{stroke:var(--in)}.svgbox.warn{stroke:var(--warn)}
+.svgtxt{fill:var(--ink);font:12px -apple-system,Segoe UI,Roboto,sans-serif}.svgtxt.s{font-size:10.5px;fill:var(--mut)}.svgtxt.b{font-weight:700}
+.svgline{stroke:var(--mut);stroke-width:1.4;fill:none}
+/* Section 19.4 (backend security gaps): red text so it stands out; badges keep their own colours. */
+.gaps-red :is(h3,p,li,th,td,b:not(.b),code,.note,.note b.t){color:var(--out)}
+.gaps-red .note{border-left-color:var(--out)}
+#navToggle{display:none}
+@media (max-width:980px){
+  .wrap{display:block}
+  aside{position:fixed;left:0;top:0;z-index:20;transform:translateX(-100%);transition:transform .2s;box-shadow:0 0 40px rgba(0,0,0,.4)}
+  aside.open{transform:none}
+  #navToggle{display:block;position:fixed;right:14px;bottom:14px;z-index:30;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:10px 14px;font-weight:700}
+  main{padding:16px 16px 100px}
+}
+</style>
+</head>
+<body>
+<button id="navToggle" type="button">☰ Sections</button>
+<div class="wrap">
+<aside id="sidebar">
+  <div class="brand">Grade K–5 Dashboard<br><span style="color:var(--mut);font-weight:600;font-size:12.5px">Planning doc · Hinglish</span></div>
+  <ol id="toc">
+    <li><a href="#tldr">TL;DR</a></li>
+    <li><a href="#sources">Kya review kiya</a></li>
+    <li><a href="#frontend">is-sms: abhi ki state</a></li>
+    <li><a href="#backend">is-rest-api: grade data</a></li>
+    <li><a href="#design">Mockup design inventory</a></li>
+    <li><a href="#arch">Architecture decision</a></li>
+    <li><a href="#flow">Grade detection flow</a></li>
+    <li><a href="#be-changes">Backend changes (minimal)</a></li>
+    <li><a href="#files">Next.js file structure</a></li>
+    <li><a href="#mapping">Widget → data mapping</a></li>
+    <li><a href="#theme">Theme &amp; tokens</a></li>
+    <li><a href="#appearance">Appearance &amp; personalization</a></li>
+    <li><a href="#scope">MVP vs Later</a></li>
+    <li><a href="#phases">Phases</a></li>
+    <li><a href="#risks">Risks &amp; gaps</a></li>
+    <li><a href="#decisions">Final decisions</a></li>
+    <li><a href="#verify">Verification</a></li>
+    <li><a href="#gate">Green-signal gate</a></li>
+    <li><a href="#profile">My Profile (re-plan)</a></li>
+  </ol>
+</aside>
+
+<main>
+<header class="top">
+  <h1>Grade K–5 Student Dashboard — Implementation Plan</h1>
+  <div class="sub">Chhote bacchon (Kindergarten se Grade 5) ke liye "Playful" dashboard ka plan, jo existing Next.js student dashboard ke andar hi plug hoga. Ye sirf plan hai, abhi koi code nahi likha gaya.</div>
+  <div class="meta">
+    <span><b>Frontend:</b> is-sms · <code>feature/version_1_3_0_phase4</code></span>
+    <span><b>Backend:</b> is-rest-api</span>
+    <span><b>Design ref:</b> <code>D:\Workspace\K-5 dashboard\Playful.dc.html</code></span>
+    <span><b>Appearance ref:</b> <code>IS-SMS-Dashboard-Appearance-Plan (1).html</code></span>
+    <span><b>Date:</b> 2 Nov 2026 (appearance review ke saath updated)</span>
+  </div>
+</header>
+
+<section id="tldr">
+  <h2><span class="n">01</span> TL;DR</h2>
+  <div class="grid">
+    <div class="card"><div class="big">Same URLs</div><div class="lbl">Naya route nahi. <code>/{school}/student</code> pe hi grade dekh ke K–5 shell + home render hoga.</div></div>
+    <div class="card"><div class="big">1 DTO</div><div class="lbl">Backend me sirf existing <code>get-student-dashboard</code> DTO me <code>gradeBand</code> + <code>currentGrade</code> add karna hai.</div></div>
+    <div class="card"><div class="big">Data ready</div><div class="lbl">Calendar, announcements, news, diary aur chat ka data aur hooks pehle se hain. Bas K–5 UI banana hai.</div></div>
+    <div class="card"><div class="big">3 gaps</div><div class="lbl">Weather, homework markers aur stars/rewards ka backend data abhi exist nahi karta. Inko Later ya static rakhna padega.</div></div>
+  </div>
+  <div class="note ok"><b class="t">Short me approach</b>
+    <ol>
+      <li><b>Backend:</b> <code>GradeBandUtil</code> pehle se bana hua hai, lekin config missing hone ki wajah se sab students ko <code>MIDDLE</code> deta hai. Isko configure karo, aur <code>StudentDetailsDTO</code> me <code>gradeBand</code> expose karo.</li>
+      <li><b>Context:</b> <code>useDashboardContext</code> me <code>gradeBand</code> add karo (<code>"ELEMENTARY" | "MIDDLE" | "HIGH"</code>).</li>
+      <li><b>Layout level:</b> <code>DashboardChrome</code> ELEMENTARY band pe <code>K5Shell</code> render kare: kid header, 96px icon sidebar, right rail aur scoped <code>.theme-k5</code> tokens.</li>
+      <li><b>Page level:</b> <code>student/page.jsx</code> ELEMENTARY band pe <code>StudentHomeK5</code> render kare (Day/Week/Month planner + Pico guide). Baaki module pages shared rahenge, sirf naye theme me dikhenge.</li>
+      <li><b>Preview:</b> <code>?dummyStudent=Y&amp;dummyGrade=K</code> se backend change ke bina hi UI build aur test ho sakta hai.</li>
+      <li><b>Final decisions (section 16):</b> sabhi 7 learning programs incl. CWS (sirf Self-Study nahi), per-school feature flag se pilot, PreK bhi included, MVP = Phase 0–2 (Pico baad me), default Light mode, aur sirf Tailwind CSS (Bootstrap nahi).</li>
+    </ol>
+  </div>
+</section>
+
+<section id="sources">
+  <h2><span class="n">02</span> Kya review kiya</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Source</th><th>Kya dekha</th></tr></thead>
+    <tbody>
+      <tr><td><code>D:\Workspace\K-5 dashboard\</code></td><td><code>Playful.dc.html</code> (267 KB design component: "Day Week Month + Pico guide"), README. Ye reference mockup hai, production code nahi. README ke hisaab se values replicate karni hain, markup copy nahi karna.</td></tr>
+      <tr><td><code>D:\Workspace\is-sms</code> (phase4)</td><td><code>app/[school]/(dashboard)/*</code>, <code>components/dashboard/*</code>, calendar views, hooks, <code>services/dashboardApi.js</code>, <code>auth.js</code>, <code>proxy.js</code>, <code>utils/dashboardNav.js</code>, <code>utils/dummyStudent.js</code>, <code>globals.css</code>, <code>docs/migration/*</code></td></tr>
+      <tr><td><code>Downloads\IS-SMS-Dashboard-Appearance-Plan (1).html</code></td><td>Appearance &amp; Personalization product/tech plan (recording review, settings, provider architecture, admin policy, workflows, APP-001…022 test cases). Iska review aur codebase ke hisaab se adaptation <a href="#appearance">section 12</a> me hai.</td></tr>
+      <tr><td><code>D:\Workspace\is-rest-api</code></td><td><code>Standard</code>, <code>StudentStandard</code>, <code>LearningProgram</code> entities, <code>GradeBandUtil</code>/<code>GradeBand</code>, <code>ClientDashboardStudentProgressionController</code>, <code>ClientSchoolCalendarController</code>, legacy <code>Dashboard.jsp</code> aur elementary assets</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="frontend">
+  <h2><span class="n">03</span> is-sms: abhi ki state</h2>
+  <h3>Routing &amp; layout</h3>
+  <ul>
+    <li>Login Java pe hota hai, phir <code>app/api/sso/route.js</code> one-time <code>ssoToken</code> leta hai aur <code>signIn("sso-token")</code> call karta hai (<code>auth.js:101-145</code>). Uske baad student <code>/{school}/student</code> pe pahunchta hai.</li>
+    <li><code>proxy.js:83</code> (Next 16 me ye middleware ki jagah hai) <code>/:school/student/:path*</code> guard karta hai.</li>
+    <li><code>(dashboard)/layout.jsx</code> server component hai jo <code>&lt;DashboardChrome role="student"&gt;</code> render karta hai. <code>DashboardChrome</code> client component hai: <code>DashboardProvider</code> + <code>DashboardShell</code> ek baar mount hote hain aur module navigation me persist rehte hain.</li>
+    <li><code>student/page.jsx</code> client <code>StudentHome</code> render karta hai: <code>CalendarCard</code> + onboarding modal + graduation modal.</li>
+    <li><code>app/[school]/[mode]</code> sirf re-enrollment ke liye hai (embed/share). Dashboard variant se iska koi lena-dena nahi.</li>
+  </ul>
+  <h3>Grade kahan available hai?</h3>
+  <div class="note warn"><b class="t">Session aur context me grade nahi hai</b>
+    <code>auth.js:150-181</code> me <code>uniqueId, userId, userRole, roleId, schoolUUID, schoolName, demoUser</code> hain, grade nahi. <code>useDashboardContext</code> me bhi grade nahi hai.
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Source</th><th>Field</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td><code>POST /student/dashboard/dashboard-or-migration</code></td><td><code>standardId</code></td><td>Home pe already fetch hota hai (<code>useStudentDashboardData.js:42</code>), lekin use nahi hota</td></tr>
+      <tr><td><code>POST /api/v1/get-demo-dashboard-user-details</code></td><td><code>userStandard</code>, <code>providerId</code>, <code>signupMode</code></td><td>Menu query me fetch hota hai, <code>applyStudentNavRules</code> ke baad discard ho jata hai</td></tr>
+      <tr><td><code>POST /student/dashboard/get-student-dashboard</code></td><td><code>standardId</code>, <code>registrationType</code>, <code>userTimezone</code>, <code>nextGrade</code></td><td>Current grade name ya band nahi hai</td></tr>
+      <tr><td><code>utils/dummyStudent.js:15</code></td><td><code>GRADE_CONFIG</code>: K→11, 1–5→12–16, 6–12→1–7; <code>isElementary</code> (line 210)</td><td>Sirf dummy mode me use hota hai</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Home widgets &amp; data (reuse karne layak)</h3>
+  <ul>
+    <li><b>Calendar:</b> <code>useStudentCalendar</code> (<code>today|week|month</code>) → <code>/dashboard/school-calendar</code>. Isse events, courseDetails aur holidays aate hain. Components: TodayView, WeekView, MonthView, EventDetailModal, JoinClassModal, CalendarFilters, CourseColorPicker.</li>
+    <li><b>Live class:</b> join validation event ke <code>url</code> se hoti hai, aur <code>/dashboard/live-class-attendance-status</code> se attendance status aata hai.</li>
+    <li><b>Right rail:</b> <code>RightActionRail.jsx</code> me announcements, news (<code>newsApi.js</code>), chat count (<code>/api/v1/chat</code>) aur diary (<code>diaryApi.js</code>) hain.</li>
+    <li><b>Name:</b> <code>useStudentName</code> → <code>/dashboard/parent/student-academic-details</code> (<code>details.userName</code>).</li>
+    <li><b>Sidebar:</b> menu DB-driven hai (<code>/api/v1/module-details</code> → <code>mapBackendMenu</code>), aur <code>applyStudentNavRules</code> segments hide karta hai. <code>PermissionGate</code> default me allow karta hai.</li>
+  </ul>
+  <h3>Styling</h3>
+  <ul>
+    <li>Tailwind v4 + shadcn (<code>base-nova</code>, <code>@base-ui/react</code>). School vars <code>--pc #007fff</code>, <code>--sc</code> etc. <code>globals.css</code> me global hardcoded hain. Fonts: Open Sans + Caveat.</li>
+    <li>UI kit me button, dialog, popover, select, sheet, tooltip, date-picker hain. <b>Card, tabs, progress, avatar nahi hain.</b></li>
+    <li><code>DashboardShell</code> me <code>bg-[#f2f5fa]</code>, 56px header aur 64/256px sidebar hardcoded hain.</li>
+  </ul>
+</section>
+
+<section id="backend">
+  <h2><span class="n">04</span> is-rest-api: grade data</h2>
+  <div class="note ok"><b class="t">Achhi khabar: grade-band ka groundwork pehle se hai</b>
+    <code>v1/util/GradeBandUtil.java</code> + <code>v1/constant/GradeBand.java</code> (<code>ELEMENTARY | MIDDLE | HIGH</code>) Self-Study revamp me bane the. Legacy <code>Dashboard.jsp</code> me <code>data-grade-band</code> set hota hai, aur ELEMENTARY pe <code>self-study-elementary.css</code> + <code>elementaryHome.js</code> load hote hain.
+  </div>
+  <div class="note out"><b class="t">Lekin abhi effectively OFF hai</b>
+    <code>GradeBandUtil.resolve()</code> pehle Standard ke naam se match karta hai ("elementary", "middle", "high school"). Match na ho to <code>Standard.orderId</code> ko <code>GRADE_BAND_ELEMENTARY_MAX_ORDER</code> / <code>GRADE_BAND_MIDDLE_MAX_ORDER</code> settings se compare karta hai. Ye settings configured nahi hain, isliye <b>har student ke liye <code>MIDDLE</code></b> return hota hai (<code>GradeBandUtil.java:59-67</code>).
+  </div>
+  <h3>Standard → grade mapping</h3>
+  <div class="tw"><table>
+    <thead><tr><th>standardId</th><th>Grade</th><th>ORDER_ID</th><th>Band</th></tr></thead>
+    <tbody>
+      <tr><td>17</td><td>Nursery / PreK</td><td>—</td><td><b>ELEMENTARY</b> (backend se confirmed) + <code>isPreK</code> (decision 04)</td></tr>
+      <tr><td>11</td><td>Grade K</td><td>1</td><td>ELEMENTARY</td></tr>
+      <tr><td>12–16</td><td>Grade 1–5</td><td>2–6</td><td>ELEMENTARY</td></tr>
+      <tr><td>1–3</td><td>Grade 6–8</td><td>7–9</td><td>MIDDLE</td></tr>
+      <tr><td>4–7</td><td>Grade 9–12</td><td>10–13</td><td>HIGH</td></tr>
+      <tr><td>19</td><td>?</td><td>?</td><td><code>DashboardStudentUtil.java:9396</code> ise elementary maanta hai</td></tr>
+      <tr><td>orderId 14+</td><td>Flexy rows</td><td>14+</td><td>Naam se band nikalta hai</td></tr>
+    </tbody>
+  </table></div>
+  <p class="lead">Mapping ka source: <code>ParentDashboardDemoDataController.java:50</code>, <code>SeriUtil.getNextStandard()</code> aur GradeBandUtil ke comments. Kindergarten ka display naam <b>"Grade K"</b> hai (coded form "GRADE-0K").</p>
+  <h3>Aur kya mila</h3>
+  <ul>
+    <li><b>Main JSON BFF:</b> <code>ClientDashboardStudentProgressionController</code>, jisme <code>dashboard-or-migration</code> aur <code>get-student-dashboard</code> (<code>StudentDetailsDTO</code>) hain.</li>
+    <li><b>Calendar:</b> <code>ClientSchoolCalendarController</code> <code>POST /school-calendar</code> → <code>SchoolCalendarDTO</code> (holidays, event, courseCalendar, courseDetails, activitiesWithClass).</li>
+    <li><b>Elementary booking</b> ka alag endpoint hai: <code>/student-subject-session-booking-elementry</code>. Weekly class limit <code>BOOK_CLASS_PER_WEEK_LIMIT_ELEMENTARY</code> se aati hai.</li>
+    <li><b>Gamification data nahi hai:</b> stars, points, streaks ya rewards ki koi entity nahi hai. Sirf <code>StudentWeeklyReport.BADGES</code> (free text) hai.</li>
+  </ul>
+</section>
+
+<section id="design">
+  <h2><span class="n">05</span> Mockup design inventory (Playful.dc.html)</h2>
+  <p class="lead">Artboard 1440×1760 ka hai. Ye <b>calendar-centric</b> dashboard hai, aur ek mascot "Pico" guide karta hai.</p>
+  <h3>Layout</h3>
+  <ul>
+    <li><b>Header</b> (sticky): hamburger, logo + tagline, Appearance button, "Get the App", LMS toggle, aur user chip ("Welcome back, Lis!" avatar ke saath).</li>
+    <li><b>Left nav:</b> 96px icon rail, 46px icon tiles. Hover pe 300px tak expand hoti hai, aur drag se items reorder hote hain (<code>localStorage is-k5-nav</code>). 760px se neeche drawer ban jaati hai. Usme 15 items hain (Dashboard, Assigned Teacher, Book Classes, Transcript, Buy Extra Classes, Attendance, Reports, Clubs, Fee, Handbook, Login History, Course Extension, Certificates) aur language switcher.</li>
+    <li><b>Right rail:</b> 80px wide, chaar 58px round buttons count badges ke saath: Messages, News, Notices, Teacher.</li>
+    <li><b>Center:</b> toolbar card (clock + weather + prev/next + Today/Week/Month segment), colour-clues row, phir <code>.duo</code> layout: left column (mini calendar, "Today" card, My Courses) aur Plan section.</li>
+    <li><b>Mirror + RTL:</b> left-hand mode me layout flip hota hai, aur Arabic pe <code>dir=rtl</code> lagta hai.</li>
+  </ul>
+  <h3>Views</h3>
+  <div class="tw"><table>
+    <thead><tr><th>View</th><th>Kya dikhata hai</th></tr></thead>
+    <tbody>
+      <tr><td><b>Today</b></td><td>Date tile, "Today's Plan · 5 classes", aur pills (1 done / 1 live / 3 to go). Timeline grid <code>84px | 1fr</code> me dotted "now" line hai. Har class card ka status: <i>Done</i> pe grey + "Done!" sticker, <i>Live</i> pe dashed blue + pulse + green "Join class" button, <i>Upcoming</i> pe yellow "Starts 9:00". Neeche "Tomorrow" footer card. Jis din class na ho us din reason card + <b>Balloon Pop</b> game (25 Dec pe Christmas theme).</td></tr>
+      <tr><td><b>Week</b></td><td>5 weekday columns + ek narrow Sat·Sun column, har din ka head alag rang me. Mini class chips aur LIVE badge. Free day pe "Tap to play a game".</td></tr>
+      <tr><td><b>Month</b></td><td>7-col grid, 104px cells. Cells me subject dots, "All done", aur Free day / Holiday / Homework / Activity pills. Neeche yellow summary bar (<code>aria-live</code>) + "Open this day".</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Overlays &amp; Pico</h3>
+  <ul>
+    <li><b>Live-class alert on load:</b> "Hurry, Lis! Your class has started…" aur 76px "Join class now" button.</li>
+    <li><b>Pico guide:</b> blue map-pin mascot, 8-step tour (intro, live class, mini calendar, views, palette, clues, side menu, message). Ye target element ke paas chal ke jaata hai (<code>data-pin</code>) aur spotlight ring dikhata hai. Tips Web Speech API se bolta hai (voice presets ke saath). Alternate buddies: Penny, Booky, Bolt, Twinkle.</li>
+    <li><b>"Make it yours!" dialog:</b> buddy, voice, 5 colour themes, day/night, colour-blind palette, letter spacing, kaun sa haath, text size, aur 4 font options (Fredoka/Nunito, Lexend, Andika, Atkinson). Ye <code>localStorage is-k5-look</code> me save hota hai.</li>
+    <li><b>Brain break:</b> 60 min ke baad aata hai. Options: "Walk 10 minutes" (ring countdown) ya "Drink water", aur snooze 5 min.</li>
+    <li><b>Select-to-speak:</b> text select karo to "Listen in" bar aati hai, 5 languages me.</li>
+    <li><b>i18n:</b> en / es / fr / ar / zh.</li>
+  </ul>
+  <h3>Design tokens (replicate karne hain)</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Token</th><th>Value</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td><code>--ac / --acd / --act / --acl</code></td><td><span class="sw" style="background:#1E66E0"></span>#1E66E0 · #1747A6 · #E6EEFD · #CFE0FB</td><td>Brand accent, active, shadows</td></tr>
+      <tr><td><code>--ink / --mut</code></td><td><span class="sw" style="background:#1C2640"></span>#1C2640 · #4A5675</td><td>Text</td></tr>
+      <tr><td><code>--page / --card / --soft / --line</code></td><td><span class="sw" style="background:#EAF4FF"></span>#EAF4FF · #FFF · #F3F6FD · #D3E3FB</td><td>Surfaces</td></tr>
+      <tr><td><code>--grn / --red / highlight</code></td><td><span class="sw" style="background:#1F7A3A"></span>#1F7A3A <span class="sw" style="background:#D7263D"></span>#D7263D <span class="sw" style="background:#FFC531"></span>#FFC531</td><td>Join/live, badges/holiday, Pico focus</td></tr>
+      <tr><td>Tint pairs</td><td>yellow, green, teal, orange, pink, violet, mustard, red, blue (T/B/X/I)</td><td>Subject + weekday colours</td></tr>
+      <tr><td>Themes</td><td>berry #C42A6B · jungle #1F7A3A · grape #6A3FC4 · sunset #C2410C</td><td><code>--ac</code> override</td></tr>
+      <tr><td>Night / CVD</td><td>page #0E1530, card #1A2547 · Okabe-Ito palette</td><td>Dark mode + colour-blind palette</td></tr>
+      <tr><td>Fonts</td><td>Display <b>Fredoka</b> 500–700, body <b>Nunito</b> 600–900</td><td>Body text heavy hai (800–900 weight)</td></tr>
+      <tr><td>Radii / borders</td><td>26 cards · 24 tiles · 999 pills · 3px borders</td><td>Chunky, rounded</td></tr>
+      <tr><td>Shadows</td><td><code>0 6px 0 var(--line)</code>, buttons pe <code>0 4–5px 0 &lt;dark&gt;</code></td><td>Solid offset, blur nahi</td></tr>
+      <tr><td>Tap targets</td><td>min 44px, primary actions 52–76px</td><td>Kid-friendly</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note warn"><b class="t">Mockup data placeholder hai</b>
+    "Middle School Civics", "54°F Rainy", "New York time", "Lis" aur homework dates sab sample data hain. Real data <code>school-calendar</code> + student name API se aayega.
+  </div>
+</section>
+
+<section id="arch">
+  <h2><span class="n">06</span> Architecture decision</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td><b>A. Same URL, layout + home pe branch</b></td><td>SSO <code>next</code>, proxy matcher, last-path cookie aur <code>studentNavHref</code> sab waise hi kaam karte hain. Module pages shared rehte hain.</td><td>Grade resolve hone tak loader dikhana padega</td><td><span class="b rec">Recommended</span></td></tr>
+      <tr><td>B. Alag route <code>/student-k5</code></td><td>Code clean alag rehta hai</td><td>SSO redirect, proxy, nav hrefs, permissions sab duplicate karne padenge. Do jagah maintain karna padega.</td><td><span class="b out">Reject</span></td></tr>
+      <tr><td>C. Sirf CSS theme swap</td><td>Sabse fast</td><td>Mockup ka layout (Pico, planner, rail) CSS se nahi ban sakta</td><td><span class="b warn">Partial</span> (modules ke liye yahi karenge)</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><b>Shell level:</b> <code>DashboardShell</code> ELEMENTARY band pe <code>K5Shell</code> render karega (header, nav rail, right rail, Pico host).</li>
+    <li><b>Home level:</b> <code>student/page.jsx</code> ELEMENTARY band pe <code>StudentHomeK5</code> render karega, warna existing <code>StudentHome</code>.</li>
+    <li><b>Module pages</b> (transcript, attendance, fee…): Phase 1 me same component <code>.theme-k5</code> wrapper ke andar render hoga. Jinme slate/black hardcoded hai unhe dheere-dheere tokens pe shift karenge.</li>
+  </ul>
+
+  <h3>6.1 Learning programs: K–5 dashboard sabhi 7 programs ke liye (decision 10)</h3>
+  <div class="note ok"><b class="t">Ye plan sirf Self-Study ke liye nahi hai</b>
+    K–5 dashboard ELEMENTARY band ke <b>har</b> student ko milega, chahe uska learning program koi bhi ho: <b>BATCH, CWS, DUAL_DIPLOMA, ONE_TO_ONE, ONE_TO_ONE_FLEX, SCHOLARSHIP, SSP</b>. <code>isSelfStudy</code> K–5 ka gate <b>nahi</b> hai.
+  </div>
+  <ul>
+    <li><b>Backend me pehle se aisa hi hai:</b> legacy <code>ClientDashboardStudentController.java:345-347</code> me <code>gradeBand</code> aur <code>isSelfStudy</code> alag-alag set hote hain, aur <code>DashboardHeaderResourcePage.jsp:156</code> elementary assets sirf <code>gradeBand=='ELEMENTARY'</code> pe load karta hai, LP pe nahi. Naam "Self-Study revamp" hai, lekin band logic LP-independent hai.</li>
+    <li><b><code>isSelfStudy</code> ka kaam:</b> <code>GradeBandUtil.isSelfStudy()</code> sirf SCHOLARSHIP aur SSP ke liye true deta hai, aur <code>filterModulesForSelfStudy</code> se sidebar modules filter hote hain (line 390). K–5 me bhi ye sirf <b>content ka difference</b> hai (menu items, planner ka content), dashboard on/off ka nahi.</li>
+    <li><b>Gate rule:</b> <code>isK5 = gradeBand === "ELEMENTARY" &amp;&amp; k5DashboardEnabled &amp;&amp; K5_LEARNING_PROGRAMS.includes(registrationType)</code>. Allowlist <code>constant/appearance.js</code> ya <code>utils/gradeBand.js</code> me rahegi. <code>registrationType</code> pehle se <code>StudentDetailsDTO</code> me aata hai.</li>
+  </ul>
+  <div class="tw"><table>
+    <thead><tr><th>Learning program</th><th>isSelfStudy</th><th>K–5 dashboard</th><th>K–5 me kya alag dikhega</th></tr></thead>
+    <tbody>
+      <tr><td><code>BATCH</code></td><td>false</td><td><span class="b in">Yes</span></td><td>Batch class schedule calendar me. Batch-specific menu items existing <code>applyStudentNavRules</code> (<code>signupMode</code>) se.</td></tr>
+      <tr><td><code>DUAL_DIPLOMA</code></td><td>false</td><td><span class="b in">Yes</span></td><td>Live classes + DB menu jaisa aata hai. Program-specific items menu se hi.</td></tr>
+      <tr><td><code>ONE_TO_ONE</code></td><td>false</td><td><span class="b in">Yes</span></td><td>Book Classes / booked classes. Elementary booking endpoint + <code>BOOK_CLASS_PER_WEEK_LIMIT_ELEMENTARY</code> limit.</td></tr>
+      <tr><td><code>ONE_TO_ONE_FLEX</code></td><td>false</td><td><span class="b in">Yes</span></td><td>ONE_TO_ONE jaisa, flex booking rules ke saath.</td></tr>
+      <tr><td><code>SCHOLARSHIP</code></td><td><b>true</b></td><td><span class="b in">Yes</span></td><td>Self-study: live classes kam ya nahi. Modules <code>filterModulesForSelfStudy</code> se filter.</td></tr>
+      <tr><td><code>SSP</code></td><td><b>true</b></td><td><span class="b in">Yes</span></td><td>SCHOLARSHIP jaisa.</td></tr>
+      <tr><td><code>CWS</code></td><td>false</td><td><span class="b in">Yes</span></td><td>Baaki non-self-study programs jaisa: calendar + DB menu jo aata hai. CWS-specific menu items menu se hi; alag UI rule abhi nahi.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note warn"><b class="t">Self-study (SCHOLARSHIP / SSP) ke liye planner ka dhyan</b>
+    Mockup live-class wale din ke hisaab se bana hai: jis din class nahi, wahan "No classes! Game day" aur Balloon Pop. Self-study student ke liye ye roz dikhega, jo galat message hai. Isliye <code>isSelfStudy</code> pe:
+    <ul>
+      <li>Today view me "My Courses / aaj ka kaam" aur school activities primary rahenge, empty class timeline nahi.</li>
+      <li>"No classes, game day" card sirf weekend/holiday pe, normal din pe nahi.</li>
+      <li>Live / Upcoming colour clues tabhi dikhen jab calendar me sach me live events hon.</li>
+    </ul>
+  </div>
+  <div class="note"><b class="t">Menu filter gap</b> <code>filterModulesForSelfStudy</code> abhi sirf legacy JSP path me lagta hai. Next.js ka menu <code>/api/v1/module-details</code> se aata hai. Wahan ye filter lagta hai ya nahi, Phase 0 me verify karna hai. Agar nahi lagta to existing endpoint me hi lagana behtar hai, FE me duplicate nahi.</div>
+</section>
+
+<section id="flow">
+  <h2><span class="n">07</span> Grade detection flow</h2>
+  <figure>
+    <svg viewBox="0 0 900 250" role="img" aria-label="Grade detection flow">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--mut)"/></marker></defs>
+      <rect class="svgbox" x="10" y="20" width="160" height="60" rx="10"/>
+      <text class="svgtxt b" x="90" y="45" text-anchor="middle">SSO login</text>
+      <text class="svgtxt s" x="90" y="63" text-anchor="middle">/{school}/student</text>
+      <rect class="svgbox acc" x="220" y="20" width="200" height="60" rx="10"/>
+      <text class="svgtxt b" x="320" y="45" text-anchor="middle">DashboardProvider</text>
+      <text class="svgtxt s" x="320" y="63" text-anchor="middle">get-student-dashboard</text>
+      <rect class="svgbox warn" x="470" y="20" width="190" height="60" rx="10"/>
+      <text class="svgtxt b" x="565" y="45" text-anchor="middle">GradeBandUtil.resolve</text>
+      <text class="svgtxt s" x="565" y="63" text-anchor="middle">→ gradeBand in DTO</text>
+      <rect class="svgbox" x="710" y="20" width="180" height="60" rx="10"/>
+      <text class="svgtxt b" x="800" y="45" text-anchor="middle">context.gradeBand</text>
+      <text class="svgtxt s" x="800" y="63" text-anchor="middle">+ dummy override</text>
+      <path class="svgline" d="M170 50 H218" marker-end="url(#ar)"/>
+      <path class="svgline" d="M420 50 H468" marker-end="url(#ar)"/>
+      <path class="svgline" d="M660 50 H708" marker-end="url(#ar)"/>
+      <path class="svgline" d="M800 80 V120 H300 V150" marker-end="url(#ar)"/>
+      <path class="svgline" d="M800 120 V150" marker-end="url(#ar)"/>
+      <rect class="svgbox in" x="180" y="152" width="240" height="70" rx="10"/>
+      <text class="svgtxt b" x="300" y="180" text-anchor="middle">ELEMENTARY (K–5)</text>
+      <text class="svgtxt s" x="300" y="200" text-anchor="middle">K5Shell + StudentHomeK5 + .theme-k5</text>
+      <rect class="svgbox" x="680" y="152" width="210" height="70" rx="10"/>
+      <text class="svgtxt b" x="785" y="180" text-anchor="middle">MIDDLE / HIGH</text>
+      <text class="svgtxt s" x="785" y="200" text-anchor="middle">Existing DashboardShell</text>
+      <text class="svgtxt s" x="560" y="112" text-anchor="middle">Jab tak resolve na ho: neutral loader</text>
+    </svg>
+    <figcaption>Band backend decide karega. Frontend sirf fallback ke liye standardId mapping rakhega (dummy mode aur backend ke purane version ke liye).</figcaption>
+  </figure>
+  <pre>// hooks/useDashboardContext.js (proposed)
+gradeBand: dummy.enabled
+  ? (dummy.student.isElementary ? "ELEMENTARY" : "MIDDLE")
+  : details?.gradeBand ?? bandFromStandardId(details?.standardId) ?? "MIDDLE",
+isSelfStudy: details?.isSelfStudy ?? false,          // sirf content, gate nahi
+isK5: gradeBand === "ELEMENTARY"
+  &amp;&amp; details?.k5DashboardEnabled                       // decision 03
+  &amp;&amp; K5_LEARNING_PROGRAMS.includes(details?.registrationType), // decision 10: 7 LPs (sabhi)
+// K5_LEARNING_PROGRAMS = ["BATCH","CWS","DUAL_DIPLOMA","ONE_TO_ONE","ONE_TO_ONE_FLEX","SCHOLARSHIP","SSP"]</pre>
+  <div class="note"><b class="t">Fallback rule</b> Agar band unknown ho to <code>MIDDLE</code> (existing dashboard) dikhao. Ye backend ke default jaisa hi hai. Galti se bade bacche ko kid UI dikhana zyada bura hai.</div>
+</section>
+
+<section id="be-changes">
+  <h2><span class="n">08</span> Backend changes (minimal, existing API enhance)</h2>
+  <p class="lead">Rule: naya endpoint nahi banana, existing ko enhance karna hai.</p>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Change</th><th>File</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><code>GRADE_BAND_ELEMENTARY_MAX_ORDER = 6</code>, <code>GRADE_BAND_MIDDLE_MAX_ORDER = 9</code> CONFIGURATION me set karna (per school/env). PreK (17) backend se ELEMENTARY resolve hota hai (confirmed). Sirf 19 ka ORDER_ID confirm karna baaki hai.</td><td>DB config (SQL script)</td></tr>
+      <tr><td>2</td><td><code>StudentDetailsDTO</code> me <code>currentGrade</code>, <code>gradeBand</code>, <code>isSelfStudy</code> add karna. <code>registrationType</code> pehle se hai. Note: <code>isSelfStudy</code> sirf content ke liye hai, K–5 ka gate nahi (section 6.1).</td><td><code>v1/dto/student/dashboard/StudentDetailsDTO.java</code></td></tr>
+      <tr><td>3</td><td><code>getStudentDashboardDetails</code> me ye fields fill karna: <code>standardService.getStandardsNameById</code>, <code>gradeBandUtil.resolve(standardId).name()</code>, <code>GradeBandUtil.isSelfStudy(registrationType)</code></td><td><code>StudentMigrationUtil.java</code> (~584)</td></tr>
+      <tr><td>4</td><td><b>(Mandatory, decision 03)</b> <code>K5_DASHBOARD_ENABLED</code> per-school setting, jo DTO me <code>k5DashboardEnabled</code> ban ke aayegi. FE rule: <code>isK5 = gradeBand === "ELEMENTARY" &amp;&amp; k5DashboardEnabled</code>. Rollback = flag off.</td><td>CONFIGURATION + same DTO</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note warn"><b class="t">Timezone</b> Toolbar clock ke liye <code>StudentDetailsDTO.userTimezone</code> use karna hai. Agar ye missing, blank ya invalid ho to fallback <code>Asia/Singapore</code> (project rule). Explicitly configured valid timezone ko kabhi overwrite nahi karna.</div>
+</section>
+
+<section id="files">
+  <h2><span class="n">09</span> Next.js file structure (proposed)</h2>
+<pre>app/[school]/(dashboard)/
+  DashboardChrome.jsx           // gradeBand → K5Shell | DashboardShell
+  student/page.jsx              // isK5 ? &lt;StudentHomeK5/&gt; : &lt;StudentHome/&gt;
+components/k5/
+  K5Shell.jsx                   // header + nav rail + right rail + PicoHost
+  K5Header.jsx                  // logo, Get App, LMS toggle, user chip, Appearance btn
+  K5NavRail.jsx                 // DB menu → 96px icon rail, hover expand, drawer &lt;760px
+  K5RightRail.jsx               // messages/news/notices/teacher (RightActionRail data)
+  home/
+    StudentHomeK5.jsx
+    K5Toolbar.jsx               // clock (tz) + Today/Week/Month + prev/next
+    ColourClues.jsx
+    MiniCalendar.jsx  TodayCard.jsx  MyCourses.jsx
+    DayPlan.jsx  WeekPlan.jsx  MonthPlan.jsx
+    ClassCard.jsx               // done | live | upcoming states, Join button
+    NoClassDay.jsx              // reason card (+ BalloonPop later)
+    LiveClassAlert.jsx
+  pico/
+    PicoGuide.jsx  PicoMascot.jsx  usePicoTour.js  useSpeech.js
+  look/
+    AppearanceDialog.jsx        // "Make it yours!" (AppearanceSettingsPanel wrap karta hai)
+components/appearance/          // generic, band/role-aware (Appearance Plan)
+  AppearanceProvider.jsx        // policy + saved → effective, data-* attrs, save/reset
+  AppearanceSettingsPanel.jsx  AppearancePreview.jsx
+  ThemeModeSelector.jsx  AccentColorSelector.jsx  AccessibilityControls.jsx
+constant/
+  appearance.js                 // allowlist: themes, sizes, fonts, defaults, DEFAULT_POLICY
+hooks/
+  useAppearance.js              // preferences, isSaving, error, updatePreference, resetPreferences
+  useK5CalendarModel.js         // school-calendar events → {done/live/next} per day
+utils/
+  gradeBand.js                  // GRADE_CONFIG + bandFromStandardId (dummyStudent.js se nikal ke)
+app/k5-theme.css                // .theme-k5 { --ac … } scoped tokens (globals.css se import)
+app/appearance.css              // [data-text-size] [data-reading] [data-font] [data-hand] [data-k5-cvd] rules</pre>
+  <p class="lead">Calendar ka existing logic (<code>useStudentCalendar</code>, join flow, <code>JoinClassModal</code>, <code>EventDetailModal</code>) reuse hoga. Sirf presentation naya banega.</p>
+</section>
+
+<section id="mapping">
+  <h2><span class="n">10</span> Mockup widget → existing data mapping</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Mockup widget</th><th>Data source</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>User chip "Welcome back, Lis!"</td><td><code>useStudentName</code></td><td><span class="b in">Ready</span></td></tr>
+      <tr><td>Day / Week / Month planner, class status</td><td><code>useStudentCalendar</code> → <code>/dashboard/school-calendar</code></td><td><span class="b in">Ready</span> (model adapter chahiye)</td></tr>
+      <tr><td>Join class, live alert</td><td>event <code>url</code> validation + <code>JoinClassModal</code></td><td><span class="b in">Ready</span></td></tr>
+      <tr><td>Holidays, School Activity</td><td><code>SchoolCalendarDTO.holidays</code>, <code>activitiesWithClass</code></td><td><span class="b in">Ready</span></td></tr>
+      <tr><td>My Courses (colour per subject)</td><td><code>courseDetails</code> + <code>CourseColorPicker</code></td><td><span class="b in">Ready</span></td></tr>
+      <tr><td>Teacher name/avatar on class</td><td>calendar event teacher fields / <code>getStudentAssignedTeacher</code></td><td><span class="b warn">Verify</span></td></tr>
+      <tr><td>Right rail: Messages / News / Notices</td><td><code>/api/v1/chat</code>, <code>newsApi</code>, announcements</td><td><span class="b in">Ready</span></td></tr>
+      <tr><td>Right rail: Teacher (diary)</td><td><code>diaryApi</code></td><td><span class="b in">Ready</span></td></tr>
+      <tr><td>Left nav 15 items</td><td>DB menu (<code>module-details</code>) + K–5 order filter</td><td><span class="b in">Ready</span></td></tr>
+      <tr><td>Clock + greeting</td><td>client time + <code>userTimezone</code> (fallback Asia/Singapore)</td><td><span class="b warn">BE field</span></td></tr>
+      <tr><td>Assignment / Homework markers</td><td>Abhi koi JSON source nahi (tasks endpoint HTML fragment hai)</td><td><span class="b out">Gap</span></td></tr>
+      <tr><td>Weather tile</td><td>Koi source nahi. Third-party API + location chahiye.</td><td><span class="b out">Gap</span></td></tr>
+      <tr><td>"Free day / Game day"</td><td>Jis din koi event nahi, wo calendar se derive hoga</td><td><span class="b in">Derivable</span></td></tr>
+      <tr><td>Get the App QR / store links</td><td>Static config</td><td><span class="b ph">Static</span></td></tr>
+      <tr><td>LMS toggle</td><td>Existing LMS-SSO flow (header)</td><td><span class="b warn">Verify</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="theme">
+  <h2><span class="n">11</span> Theme &amp; tokens implementation</h2>
+  <ul>
+    <li><code>.theme-k5</code> class K5Shell root pe lagegi. Ye mockup ke tokens (<code>--ac</code>, <code>--ink</code>, <code>--page</code>, tint pairs) define karegi, aur shadcn vars (<code>--primary: var(--ac)</code>, <code>--radius: 1.5rem</code>) bhi wahin override honge. Isse global <code>--pc</code> ko touch nahi karna padega.</li>
+    <li>Theme variants ke liye <code>[data-k5-theme="berry|jungle|grape|sunset"]</code>, night ke liye <code>[data-k5-mode="night"]</code>, aur colour-blind ke liye <code>[data-k5-cvd]</code> attributes use honge.</li>
+    <li>Fonts: <code>next/font/google</code> se <b>Fredoka</b> + <b>Nunito</b> load karne hain, CSS variables <code>--font-fd</code>/<code>--font-fb</code> ke saath. Lexend / Andika / Atkinson Phase 3 me lazy load honge.</li>
+    <li>Chunky shadows ke liye Tailwind <code>@utility</code> banenge: <code>shadow-chunky</code> = <code>0 6px 0 var(--line)</code> aur <code>shadow-btn</code>.</li>
+    <li>Saare animations <code>prefers-reduced-motion</code> me band hone chahiye. Mockup me bhi aisa hi hai.</li>
+    <li>Icons: lucide-react use karo (mockup me stroke SVGs hain, wahi feel milegi). Pico mascot inline SVG component rahega.</li>
+    <li><b>Tailwind CSS only, Bootstrap nahi (decision 09):</b> K–5 ka saara UI Tailwind v4 utilities + <code>@utility</code> + CSS variables + existing shadcn/base-ui components se banega. Koi Bootstrap CSS/JS ya class import nahi hogi. Kuch backend responses legacy Bootstrap class names bhejte hain (jaise <code>AcademicYearExtension.jsx:25</code> ka <code>bgColor</code>, <code>ProgressReportView.jsx:16</code> ka <code>colorScoreText</code>). Inko existing pattern ki tarah Tailwind classes/tokens pe map karna hai, seedha render nahi.</li>
+    <li><b>Dark / Night:</b> naya <code>[data-theme="dark"]</code> mat banao. <code>globals.css:5</code> me <code>@custom-variant dark (&amp;:is(.dark *))</code> aur <code>.dark {}</code> (line 108) pehle se hain. Night mode me wrapper pe <code>.dark</code> class lagao, taaki shadcn ke <code>dark:</code> utilities bhi apne-aap kaam karein.</li>
+  </ul>
+</section>
+
+<section id="appearance">
+  <h2><span class="n">12</span> Appearance &amp; personalization (Appearance Plan review)</h2>
+  <p class="lead">Source: <code>IS-SMS-Dashboard-Appearance-Plan (1).html</code>. Ye doc ek ~12 sec ki recording par based hai jisme sirf personalization panel dikhta hai, dashboard nahi. Iske options mockup ke "Make it yours!" dialog se match karte hain, isliye K–5 plan me isko merge kiya gaya hai. Neeche likha hai ki doc se kya as-is liya, kya codebase ke hisaab se badla, aur kya abhi rakha nahi.</p>
+
+  <h3>12.1 Doc se kya liya (as-is)</h3>
+  <ul>
+    <li><b>Ek central provider:</b> <code>AppearanceProvider</code> + <code>useAppearance()</code> (<code>preferences, isLoading, isSaving, error, updatePreference, resetPreferences</code>). Har page apna alag theme logic nahi banayega.</li>
+    <li><b>Do layer policy:</b> school/admin defaults + user overrides. Customization OFF hone par user overrides delete nahi honge, sirf inactive rahenge.</li>
+    <li><b>Interaction:</b> instant preview, auto-save + "Saved" indicator, Reset pe confirmation, failure pe retry. Galat "Saved" message kabhi nahi dikhana.</li>
+    <li><b>Guardrails:</b> school logo/brand user preference se override nahi hoga. Accessibility options kisi grade se hide nahi honge. Status sirf colour se nahi dikhega, saath me icon/label bhi hoga. Reduced motion respect karna hai.</li>
+    <li><b>Buddy/voice rule:</b> non-functional controls ship nahi karne. K–5 me Pico + TTS real feature hai, isliye wahan buddy/voice controls dikhenge. MIDDLE/HIGH band me nahi.</li>
+    <li><b>Test cases APP-001…022</b> + Playwright scenarios. Mapping section 12.7 me hai.</li>
+  </ul>
+
+  <h3>12.2 Codebase ke hisaab se kya badla (doc vs reality)</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Doc kehta hai</th><th>Codebase me reality</th><th>Hamara adaptation</th></tr></thead>
+    <tbody>
+      <tr><td><code>src/app</code>, <code>src/config</code>, <code>src/styles</code> folders</td><td>Repo me <code>src/</code> nahi hai. Root pe <code>app/</code>, <code>components/</code>, <code>hooks/</code>, <code>services/</code>, <code>utils/</code>, <code>constant/</code> hain.</td><td><code>constant/appearance.js</code>, <code>components/appearance/*</code>, <code>hooks/useAppearance.js</code>, <code>app/appearance.css</code></td></tr>
+      <tr><td><code>(dashboard)/settings/appearance</code> page</td><td>Sidebar DB-driven hai (<code>module-details</code>). Naya page DB me menu row ke bina sidebar me nahi aayega. Mockup Appearance ko header button se dialog me kholta hai.</td><td>K–5 me <b>header button → AppearanceDialog</b>. Same <code>AppearanceSettingsPanel</code> baad me kisi page me bhi reuse ho sakta hai.</td></tr>
+      <tr><td><code>[data-theme="dark"]</code></td><td>Tailwind v4 <code>.dark</code> custom variant pehle se hai</td><td>Night = <code>.dark</code> class, baaki <code>data-*</code> attributes</td></tr>
+      <tr><td>REST <code>GET / PATCH / PUT</code> preferences API</td><td>Backend convention hai POST + <code>{payload: encodePayload()}</code> + session cookie. <b>User preference ki koi table ya endpoint nahi hai.</b> Sirf <code>TimePreference</code> hai, jo class timing ke liye hai. Course colours bhi sirf localStorage me save hote hain (<code>useStudentCalendar.js:17</code>, key <code>studentDashboardCalendarNew</code>).</td><td>Phased persistence (section 12.4). Server-side storage naya backend kaam hai, isliye ye open decision #6 hai.</td></tr>
+      <tr><td>Text size ke liye <code>--font-scale</code></td><td>Mockup CSS <code>zoom</code> (0.9 / 1.15) use karta hai. Tailwind v4 utilities rem me hain.</td><td>K5 wrapper ke liye root font-size scale karo (S 15px / M 16px / L 18px). <code>zoom</code> nahi, kyunki wo Pico ki position aur popovers todta hai.</td></tr>
+      <tr><td>Accent default "Ocean" #2563eb, buddy "Pimmy"</td><td>Mockup me <code>--ac</code> #1E66E0 aur buddy "Pico" hai. School brand <code>--pc</code> #007fff hai.</td><td>K–5 default <b>Ocean = #1E66E0</b> (mockup), buddy <b>Pico</b>. Berry/Jungle/Grape/Sunset mockup ki values se.</td></tr>
+      <tr><td>Compact / Comfortable density</td><td>K–5 me tap targets 44px se kam nahi hone chahiye</td><td>K–5 me density control <b>hide</b>, hamesha Comfortable. MIDDLE/HIGH ke liye future.</td></tr>
+      <tr><td>Admin settings UI</td><td>is-sms me admin panel nahi hai. Backend me school-level settings existing <code>CONFIGURATION</code> pattern (<code>commonUtil.getSettingValueByTypeAndKey…</code>) se padhi jaati hain, jaise GradeBandUtil me.</td><td>Admin policy = CONFIGURATION keys (12.5), jo <code>get-student-dashboard</code> DTO me return hongi. Admin UI Java admin side me, later.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>12.3 K–5 settings matrix (mockup + doc merged)</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Setting</th><th>Options</th><th>K–5 default</th><th>Priority</th><th>Apply kaise</th></tr></thead>
+    <tbody>
+      <tr><td>Day / Night</td><td>System / Light / Night</td><td><b>Light</b> (decision 08). System option dialog me rahega.</td><td><span class="b in">P0</span></td><td><code>.dark</code> on wrapper</td></tr>
+      <tr><td>Favourite colour</td><td>Ocean, Berry, Jungle, Grape, Sunset</td><td>Ocean / school-approved</td><td><span class="b in">P0</span></td><td><code>data-k5-theme</code> → <code>--ac</code>, <code>--acd</code></td></tr>
+      <tr><td>Text size</td><td>S / M / L</td><td>M</td><td><span class="b in">P0</span></td><td><code>data-text-size</code> → root font-size</td></tr>
+      <tr><td>Colour vision</td><td>Standard / Colour-blind friendly (Okabe-Ito)</td><td>Standard</td><td><span class="b rec">P1</span></td><td><code>data-k5-cvd</code></td></tr>
+      <tr><td>High contrast</td><td>Standard / High</td><td>Standard</td><td><span class="b rec">P1</span></td><td>Doc me hai, mockup me nahi. Token set add karna hoga.</td></tr>
+      <tr><td>Reading help</td><td>Normal / Extra spacing</td><td>Normal</td><td><span class="b rec">P1</span></td><td><code>data-reading</code> → letter/word spacing</td></tr>
+      <tr><td>Letters (font)</td><td>Cute (Fredoka/Nunito), Simple (Lexend), Easy (Andika), Super clear (Atkinson)</td><td>Cute</td><td><span class="b rec">P1</span></td><td><code>data-font</code>; extra fonts lazy load</td></tr>
+      <tr><td>Which hand</td><td>Right / Left</td><td>Right</td><td><span class="b rec">P1</span></td><td><code>data-hand="left"</code> → nav/rail mirror</td></tr>
+      <tr><td>Motion</td><td>System / Reduced</td><td>System</td><td><span class="b rec">P1</span></td><td>Doc me hai. Mockup sirf OS setting follow karta hai.</td></tr>
+      <tr><td>Buddy</td><td>Pico, Penny, Booky, Bolt, Twinkle</td><td>Pico</td><td><span class="b warn">P2</span></td><td>Pico feature ke saath</td></tr>
+      <tr><td>Voice</td><td>Cheerful, Calm, Squeaky, Robot, Slow &amp; clear</td><td>Cheerful</td><td><span class="b warn">P2</span></td><td>Web Speech presets (pitch/rate)</td></tr>
+      <tr><td>Density</td><td>—</td><td>Comfortable (fixed)</td><td><span class="b ph">Hidden</span></td><td>K–5 me control nahi</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>12.4 Persistence: phased plan</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Step</th><th>Storage</th><th>Covers</th><th>Backend</th></tr></thead>
+    <tbody>
+      <tr><td><b>A (MVP)</b></td><td>localStorage key <b>userId ke saath</b>: <code>is-k5-look:{userId}</code>. Saath me ek same-name cookie, jo server layout padhega taaki first paint flash na ho.</td><td>Refresh, logout/login (same browser), user isolation (APP-014)</td><td>Kuch nahi</td></tr>
+      <tr><td><b>B</b></td><td>Server-side user preference (JSON). Do options: (1) naya <code>USER_APPEARANCE_PREFERENCE</code> table + get/save endpoints, ya (2) kisi existing user/settings record me JSON column.</td><td>Cross-device (APP-005), admin reset-all</td><td><span class="b warn">Naya kaam</span>: approval chahiye (decision #6)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note warn"><b class="t">Existing bug jaisa risk (APP-014)</b>
+    Mockup ki keys <code>is-k5-look</code> / <code>is-k5-nav</code> aur current <code>studentDashboardCalendarNew</code> (course colours + filters) <b>user-scoped nahi hain</b>. Ek hi browser pe dusra student login kare to pehle wale ki settings dikhengi. Naye keys me <code>userId</code> zaroor ho, aur calendar key ko bhi isi pattern pe migrate karna chahiye.
+  </div>
+
+  <h3>12.5 Admin policy (school-level, existing CONFIGURATION pattern)</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Key (proposed)</th><th>Value</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td><code>APPEARANCE_ALLOW_USER_CUSTOMIZATION</code></td><td>Y / N</td><td>N ho to admin defaults enforce honge; dialog read-only/hidden; saved overrides preserve rahenge</td></tr>
+      <tr><td><code>APPEARANCE_DEFAULT_THEME</code></td><td>ocean | berry | jungle | grape | sunset</td><td>Jin users ka override nahi unke liye default</td></tr>
+      <tr><td><code>APPEARANCE_DEFAULT_MODE</code></td><td>light | dark | system</td><td>Same</td></tr>
+      <tr><td><code>APPEARANCE_DEFAULT_TEXT_SIZE</code></td><td>small | medium | large</td><td>Same</td></tr>
+    </tbody>
+  </table></div>
+  <p class="lead">Ye 4 keys usi <code>get-student-dashboard</code> DTO me <code>appearancePolicy</code> object ban ke aayengi jisme <code>gradeBand</code> add ho raha hai. Naya endpoint nahi chahiye. Doc ke admin actions "Reset all users" aur "New users only" Step B storage ke baad hi possible hain. "Reset all" aur "Disable customization" alag actions rakhne hain.</p>
+<pre>// components/appearance/AppearanceProvider.jsx (resolution)
+const policy = details?.appearancePolicy ?? DEFAULT_POLICY;         // constant/appearance.js
+const saved  = policy.allowUserCustomization ? readSaved(userId) : null;
+const effective = sanitize({ ...policy.defaults, ...saved });       // allowlist only, invalid → default</pre>
+
+  <h3>12.6 First paint / hydration (Next 16)</h3>
+  <ul>
+    <li><b>Cookie optional hai (decision 06).</b> Source of truth user-scoped localStorage hai. Cookie sirf first-paint flash rokne ke liye hai; cookie na ho to Light default se render hoga aur hydration ke baad saved look apply hoga.</li>
+    <li><code>(dashboard)/layout.jsx</code> server component hai. Cookie use karni ho to wahan <code>cookies()</code> se look cookie padh ke K5 wrapper pe <code>data-*</code> attributes aur <code>.dark</code> server-side hi set karo. Isse theme flash nahi hoga aur client-only DOM mutation ki zaroorat nahi padegi (doc ka hydration note).</li>
+    <li>Cookie me sirf allowlisted enum values hon (koi raw CSS ya hex nahi), taaki invalid token inject na ho sake (APP-016).</li>
+    <li>Grade band resolve hone tak neutral skeleton. Appearance apply hone ke liye band known hona chahiye.</li>
+    <li>Multi-tab sync (APP-020, P2): <code>window</code> ka <code>storage</code> event sun ke provider state update karo.</li>
+  </ul>
+
+  <h3>12.7 Test cases mapping (APP-001…022)</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Group</th><th>Cases</th><th>Kab testable</th></tr></thead>
+    <tbody>
+      <tr><td>Defaults, save, refresh, logout/login</td><td>APP-001, 002, 003, 004, 006</td><td>Step A (localStorage + cookie)</td></tr>
+      <tr><td>User isolation, invalid value, API/network failure</td><td>APP-014, 016, 015</td><td>Step A (015 Step B me full)</td></tr>
+      <tr><td>Large text, dark on shared components, system theme, keyboard/SR</td><td>APP-017, 018, 019, 022</td><td>Phase 3 UI ke saath</td></tr>
+      <tr><td>Cross-device</td><td>APP-005</td><td>Sirf Step B</td></tr>
+      <tr><td>Admin policy (OFF/ON, default change, direct access)</td><td>APP-007, 008, 009, 010, 011</td><td>CONFIGURATION keys + DTO ke baad</td></tr>
+      <tr><td>New-users-only, Reset all</td><td>APP-012, 013</td><td>Step B + admin UI</td></tr>
+      <tr><td>Multi-tab</td><td>APP-020</td><td>P2</td></tr>
+      <tr><td>Role matrix</td><td>APP-021</td><td>Abhi sirf student scope; parent/teacher/admin baad me</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><b class="t">Scope note</b> Doc sab roles (student, parent, teacher, admin) ke liye hai. Is plan me provider ko <b>generic</b> banayenge (band/role-aware config), lekin ship sirf K–5 student ke liye hoga. MIDDLE/HIGH aur baaki roles ke liye wahi provider baad me on hoga (decision 07).</div>
+
+  <h3>12.8 PreK / Nursery: age-appropriate UI (decision 04)</h3>
+  <p class="lead">PreK (standardId 17) K–5 dashboard me hi aayega (ELEMENTARY band). Saath me context me <code>isPreK</code> sub-flag hoga, jisse same components chhote bacchon ke liye simple ho jaayenge. Alag shell nahi banega.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Area</th><th>K–5 default</th><th>PreK adjustment</th></tr></thead>
+    <tbody>
+      <tr><td>Text</td><td>Short labels, M size</td><td>Default text size L, labels ke saath icon/picture hamesha, lambi sentences nahi</td></tr>
+      <tr><td>Home view</td><td>Today / Week / Month</td><td>Default Today; Month view hide (date grid PreK ke liye mushkil hai)</td></tr>
+      <tr><td>Navigation</td><td>DB menu, 15 items</td><td>Sirf zaroori items upar (Dashboard, Teacher, Classes); baaki "More" me. Authorization same rahega.</td></tr>
+      <tr><td>Join class</td><td>Live card + Join button</td><td>Ek bada Join button (76px), kam options</td></tr>
+      <tr><td>Colour clues</td><td>6 clues</td><td>Sirf Live / Upcoming / Done</td></tr>
+      <tr><td>Voice</td><td>P2 (Pico ke saath)</td><td>Pico aane par PreK ke liye voice-first tips by default on</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note ok"><b class="t">Confirmed</b> standardId 17 (PreK / Nursery) backend se <code>ELEMENTARY</code> resolve hota hai. FE fallback (<code>utils/gradeBand.js</code>) me bhi 17 → ELEMENTARY rakhna hai, taaki dono jagah same result aaye.</div>
+</section>
+
+<section id="scope">
+  <h2><span class="n">13</span> MVP vs Later</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Feature</th><th>Phase</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr><td>K5Shell (header, nav rail, right rail), theme tokens</td><td><span class="b in">MVP</span></td><td>Base</td></tr>
+      <tr><td>Today/Week/Month planner, mini calendar, Today card, My Courses, colour clues</td><td><span class="b in">MVP</span></td><td>Core value, data ready hai</td></tr>
+      <tr><td>Live class alert + Join</td><td><span class="b in">MVP</span></td><td>Existing join flow</td></tr>
+      <tr><td>PreK adjustments (<code>isPreK</code>)</td><td><span class="b in">MVP</span></td><td>Decision 04; shell/planner ke saath hi</td></tr>
+      <tr><td>Pico tour (8 tips, text only)</td><td><span class="b rec">Phase 3</span></td><td>Decision 05: Pico MVP me nahi. Tour ka state user-scoped localStorage me.</td></tr>
+      <tr><td>Pico voice (Web Speech), select-to-speak</td><td><span class="b rec">Phase 3</span></td><td>Browser support alag-alag hai, testing chahiye</td></tr>
+      <tr><td>AppearanceProvider + Light/Night + 5 colours + text size S/M/L + user-scoped persistence (Step A)</td><td><span class="b rec">Phase 3 · P0</span></td><td>Appearance Plan ka "recommended first implementation"</td></tr>
+      <tr><td>Colour-blind, high contrast, reading spacing, fonts, hand, reduced motion</td><td><span class="b rec">Phase 3 · P1</span></td><td>Accessibility; client-only</td></tr>
+      <tr><td>Buddy + voice choice</td><td><span class="b warn">Phase 3 · P2</span></td><td>Pico + TTS ke saath hi ship hoga</td></tr>
+      <tr><td>Admin policy keys (CONFIGURATION) + server-side user preference (Step B)</td><td><span class="b warn">Phase 4</span></td><td>Backend kaam; decision #6</td></tr>
+      <tr><td>Balloon Pop, Christmas mode, brain break</td><td><span class="b warn">Phase 4</span></td><td>Delight features, product approval chahiye</td></tr>
+      <tr><td>Weather tile</td><td><span class="b warn">Phase 4</span></td><td>3rd-party API + privacy review</td></tr>
+      <tr><td>Homework markers</td><td><span class="b warn">Phase 4</span></td><td>Tasks ke liye JSON endpoint chahiye (existing tasks endpoint enhance karna)</td></tr>
+      <tr><td>i18n es/fr/ar/zh + RTL</td><td><span class="b warn">Phase 4</span></td><td>Project me abhi i18n setup nahi hai</td></tr>
+      <tr><td>Stars / rewards / streaks</td><td><span class="b ph">Out</span></td><td>Mockup me bhi nahi hain, backend me bhi nahi</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="phases">
+  <h2><span class="n">14</span> Phases</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Phase</th><th>Kaam</th><th>Done kab maana jaayega</th></tr></thead>
+    <tbody>
+      <tr><td><b>0 · Foundation</b> <span class="b in">MVP</span></td><td><code>utils/gradeBand.js</code> banana (dummy se extract, PreK 17 bhi), context me <code>gradeBand</code> / <code>isK5</code> / <code>isPreK</code>, loader gate. Backend: DTO fields (<code>gradeBand</code>, <code>currentGrade</code>, <code>k5DashboardEnabled</code>) + config script.</td><td><code>?dummyStudent=Y&amp;dummyGrade=K</code> se <code>isK5 = true</code> aaye. Real Grade 2 student pe flag ON ho to K–5, flag OFF ho to existing dashboard.</td></tr>
+      <tr><td><b>1 · Shell + Theme</b> <span class="b in">MVP</span></td><td><code>.theme-k5</code> (sirf Tailwind), fonts, Light default, K5Shell, K5Header, K5NavRail (DB menu, drag order), K5RightRail, PreK nav. Responsive (&lt;760px drawer).</td><td>K–5 student ko naya chrome dikhe, sabhi module links kaam karein, aur 6–12 student pe koi change na ho.</td></tr>
+      <tr><td><b>2 · Home planner</b> <span class="b in">MVP</span></td><td><code>useK5CalendarModel</code>, Toolbar, Day/Week/Month, MiniCalendar, TodayCard, MyCourses, ColourClues, ClassCard states, LiveClassAlert, NoClassDay.</td><td>Legacy calendar ke saath parity: events, holidays, join aur status sab same hon.</td></tr>
+      <tr><td><b>3 · Pico + Appearance</b> <span class="b rec">After MVP</span></td><td>Pico tour, spotlight, speech. <code>AppearanceProvider</code> + <code>constant/appearance.js</code> + AppearanceDialog (P0 → P1 → P2 settings). Optional cookie se first paint (decision 06). Module pages ke hardcoded colours tokens pe.</td><td>Tour ek baar auto chale aur replay ho sake. APP-001/002/003/004/006/014/016 pass hon. Light/Night me sab shared components readable hon (APP-018).</td></tr>
+      <tr><td><b>4 · Delight + Gaps</b></td><td>Balloon Pop, brain break, homework markers (BE), weather, i18n. Appearance: admin CONFIGURATION keys + DTO <code>appearancePolicy</code>; approval mile to server-side user preference (Step B).</td><td>Product sign-off ke baad. APP-005, 007–013 pass hon.</td></tr>
+      <tr><td><b>5 · My Profile</b> <span class="b warn">Approval</span></td><td>Mockup v3 ka naya page; token merge ke baad dobara review (2026-11-06). P1 read-only → P5 withdrawal; detail section 19 me.</td><td>Section 19.6 ke steps; backend Batch A (19.4.3) ke baad</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="risks">
+  <h2><span class="n">15</span> Risks &amp; gaps</h2>
+  <ul>
+    <li><b>standardId mapping:</b> PreK (17) → ELEMENTARY confirmed hai. Sirf 19 ka band clear nahi hai. <code>userStandard === 8</code> ka pehle se special meaning hai (<code>dashboardNav.js:121</code>). STANDARD table se verify karna hai.</li>
+    <li><b>Flash of wrong layout:</b> grade async aata hai. Shell decide hone tak neutral skeleton dikhana hai.</li>
+    <li><b>Module pages ke hardcoded colours</b> (slate/black) theme follow nahi karenge. Inhe Phase 3 me clean karna hai.</li>
+    <li><b>DB-driven menu:</b> K–5 me items ka order/hide sirf client-side filter se hoga. Authorization backend hi enforce karega.</li>
+    <li><b>K–5 calendar rule</b> (max 3 classes/week) abhi sirf dummy data me hai. Real data me backend weekly limit enforce karta hai, isliye UI ko kuch alag nahi karna.</li>
+    <li><b>Web Speech / WebAudio:</b> iOS Safari pe autoplay restrictions hain. Pehle user gesture ke baad hi audio chalana hai.</li>
+    <li><b>localStorage keys user-scoped nahi:</b> <code>studentDashboardCalendarNew</code> (existing) aur mockup ke <code>is-k5-look</code> / <code>is-k5-nav</code> shared device pe dusre user ko leak ho sakte hain (APP-014). Naye keys me <code>userId</code> ho.</li>
+    <li><b>Cross-device persistence ka backend nahi hai:</b> user preference table/endpoint exist nahi karta. Appearance Plan ke APP-005 aur "Reset all users" isi pe depend karte hain.</li>
+    <li><b>Child privacy:</b> weather/location ya koi third-party call bina review ke nahi karni.</li>
+    <li><b>Legacy elementary JSP assets</b> (<code>self-study-elementary.css</code>, <code>elementaryHome.js</code>) bhi same band use karte hain. Config on karte hi legacy dashboard bhi badal jaayega. Ye coordinate karna padega (ya toggle ke peeche rakhna).</li>
+  </ul>
+</section>
+
+<section id="decisions">
+  <h2><span class="n">16</span> Final decisions (K–5 baseline) <span class="b in">Decided</span></h2>
+  <p class="lead">Saare 10 decisions final ho gaye hain. Alternatives reference ke liye rakhe hain, unpar ab kaam nahi hoga.</p>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Decision</th><th>Final</th><th>Plan me impact</th><th>Rejected alternative</th></tr></thead>
+    <tbody>
+      <tr><td>01</td><td>Band ka source</td><td><b>Backend <code>gradeBand</code> + FE fallback</b></td><td>GradeBandUtil config + <code>StudentDetailsDTO.gradeBand</code>; FE <code>utils/gradeBand.js</code> sirf fallback/dummy ke liye (section 7, 8)</td><td>Sirf FE standardId mapping</td></tr>
+      <tr><td>02</td><td>Routing</td><td><b>Same URLs + layout/home branch</b></td><td><code>DashboardChrome</code> → <code>K5Shell</code>, <code>student/page.jsx</code> → <code>StudentHomeK5</code> (section 6)</td><td>Alag <code>/student-k5</code> route</td></tr>
+      <tr><td>03</td><td>Rollout</td><td><b>Per-school feature-flag pilot</b></td><td><code>K5_DASHBOARD_ENABLED</code> CONFIGURATION key, DTO me. Flag off ho to ELEMENTARY student ko bhi existing dashboard (section 8 #4 ab mandatory)</td><td>Config on hote hi sab K–5 students</td></tr>
+      <tr><td>04</td><td>PreK / Nursery</td><td><b>Included, age-appropriate UI ke saath</b></td><td>standardId 17 → ELEMENTARY band; saath me <code>isPreK</code> sub-flag (section 12.8)</td><td>Existing dashboard pe rakhna</td></tr>
+      <tr><td>05</td><td>MVP scope</td><td><b>Phase 0–2; Pico later</b></td><td>MVP = foundation + shell/theme + home planner + live join. Pico tour Phase 3 me shift (section 13, 14)</td><td>Pico MVP me</td></tr>
+      <tr><td>06</td><td>Appearance persistence</td><td><b>Step A localStorage + optional cookie; Step B backend</b></td><td>Step A me user-scoped localStorage; cookie sirf first-paint flash rokne ke liye, optional. Step B (server-side) Phase 4 (section 12.4)</td><td>Abhi se backend table + endpoint</td></tr>
+      <tr><td>07</td><td>Appearance scope</td><td><b>Generic Appearance Provider; ship sirf K–5 student</b></td><td><code>components/appearance/*</code> generic; MIDDLE/HIGH aur baaki roles me abhi off (section 12)</td><td>Sab bands/roles ek saath</td></tr>
+      <tr><td>08</td><td>Default mode</td><td><b>Light</b></td><td><code>constant/appearance.js</code> me <code>mode: "light"</code>; System option dialog me available rahega (section 12.3)</td><td>System default</td></tr>
+      <tr><td>09</td><td>Styling stack</td><td><b>Tailwind CSS only, Bootstrap nahi</b></td><td>Tailwind v4 + shadcn/base-ui + CSS variables. Backend se aane wali legacy Bootstrap class names map karni hongi, render nahi (section 11)</td><td>Bootstrap / mixed CSS framework</td></tr>
+      <tr><td>10</td><td>Learning programs</td><td><b>Sabhi 7 LP: BATCH, CWS, DUAL_DIPLOMA, ONE_TO_ONE, ONE_TO_ONE_FLEX, SCHOLARSHIP, SSP</b></td><td><code>isSelfStudy</code> gate nahi, sirf content ka difference. <code>K5_LEARNING_PROGRAMS</code> allowlist me CWS bhi (section 6.1)</td><td>Sirf Self-Study (SCHOLARSHIP / SSP)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="verify">
+  <h2><span class="n">17</span> Verification</h2>
+  <ul>
+    <li><b>Dummy mode:</b> <code>/{school}/student?dummyStudent=Y&amp;dummyGrade=K</code> (aur 1–5) pe K–5 UI aana chahiye. <code>dummyGrade=7</code> pe existing UI.</li>
+    <li><b>Real pilot:</b> Grade K / 3 / 5 aur Grade 6 / 9 ke test accounts se SSO karo. Band, shell aur home check karo.</li>
+    <li><b>Learning programs:</b> har LP ka kam se kam ek ELEMENTARY test student (BATCH, CWS, DUAL_DIPLOMA, ONE_TO_ONE, ONE_TO_ONE_FLEX, SCHOLARSHIP, SSP). Sabko K–5 UI mile; SCHOLARSHIP/SSP me menu filter sahi ho aur normal din pe "game day" na dikhe. Grade 6+ ka student (kisi bhi LP ka) existing dashboard pe rahe.</li>
+    <li><b>Calendar parity:</b> live / done / upcoming, holidays, activity aur join flow ko legacy dashboard ke saath compare karo.</li>
+    <li><b>Responsive:</b> 1440, 1100, 760 aur 375px widths pe check karo. Tap targets kam se kam 44px hone chahiye.</li>
+    <li><b>Accessibility:</b> keyboard nav, <code>aria-live</code>, <code>prefers-reduced-motion</code>, aur status colour + border + label teeno se dikhe.</li>
+    <li><b>Timezone:</b> <code>userTimezone</code> null ya invalid ho to clock <code>Asia/Singapore</code> dikhaye.</li>
+    <li><b>Appearance:</b> APP-001…022 ko section 12.7 ki mapping ke hisaab se run karo. Release gate: jo P0 cases us phase me testable hain wo sab pass hon. Playwright scenarios "persists after refresh" aur "user isolation" Step A me hi automate ho sakte hain.</li>
+    <li><b>Test cases:</b> <code>sms_next_js_migration_student_test_cases.html</code> me K–5 aur APP-* ke naye cases add karne hain.</li>
+  </ul>
+</section>
+
+<section id="gate">
+  <h2><span class="n">18</span> 🟢 Green-signal gate</h2>
+  <div class="note ok"><b class="t">Decisions final ho gaye (10/10)</b>
+    Section 16 ke saare decisions lock hain aur plan unke hisaab se update ho gaya hai.
+  </div>
+  <div class="note out"><b class="t">STOP: abhi bhi sirf planning</b>
+    Koi application code nahi likha gaya. Code tabhi shuru hoga jab aap explicitly go-ahead doge (jaise "START PHASE 0"). Phase 0 me hoga:
+    <ul>
+      <li><b>FE:</b> <code>utils/gradeBand.js</code> (PreK 17 bhi), context me <code>gradeBand</code> / <code>isK5</code> / <code>isPreK</code> / <code>isSelfStudy</code>, <code>K5_LEARNING_PROGRAMS</code> allowlist (sabhi 7 LP), loader gate. <code>module-details</code> me self-study filter lagta hai ya nahi, verify.</li>
+      <li><b>BE:</b> <code>StudentDetailsDTO</code> me <code>currentGrade</code>, <code>gradeBand</code>, <code>isSelfStudy</code>, <code>k5DashboardEnabled</code>, aur grade-band + <code>K5_DASHBOARD_ENABLED</code> config script.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="profile">
+  <h2><span class="n">19</span> My Profile: re-plan after the token merge <span class="b warn">Plan · approval chahiye</span></h2>
+  <p class="lead">Updated 2026-11-06, dono repos ke merge ke baad dobara review. is-rest-api <code>97b59cd1db</code> (Merge pre-prod10 → <code>feature/63_0_0_STUDENT_DASHBOARD_NEXTJS_PHASE4</code>, token work <code>a54d6aadcd</code>), is-sms <code>04cebd2</code> (Merge pre-prod → <code>feature/version_1_3_0_phase4</code>). Mockup v3 <code>pgProfile</code> (~line 1302, 166 <code>pf*</code> strings). Rule: <b>naye backend endpoints nahi</b>, existing ko enhance.</p>
+
+  <div class="grid">
+    <div class="card"><div class="big">7</div><div class="lbl">sections (mockup = legacy order)</div></div>
+    <div class="card"><div class="big">~15</div><div class="lbl">existing endpoints jo page use karta hai</div></div>
+    <div class="card"><div class="big">13</div><div class="lbl">backend security gaps (9 purane + 4 naye, section 19.4)</div></div>
+    <div class="card"><div class="big">2</div><div class="lbl">merge se partly fix (#5, #9)</div></div>
+  </div>
+
+  <h3>19.0 Merge ke baad kya badla</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Repo</th><th>Pehle</th><th>Ab</th><th>Profile par asar</th></tr></thead>
+    <tbody>
+      <tr><td><b>is-rest-api</b></td><td>Java <code>HttpSession</code> (JSESSIONID), <code>sessionUtil</code> session se user</td><td>Stateless token auth (<code>v1/auth/SecurityConfig.java:70, 95-101</code>): <code>AuthTokenFilter</code> (Bearer), <code>BrowserTokenFilter</code> (cookie + <code>X-Account</code>), <code>BrowserCsrfFilter</code>, <code>ServiceKeyFilter</code>, <code>VisitorTokenFilter</code>. <code>auth.default-deny: enforce</code> (<code>application.yml:302</code>): <code>PublicRoutes</code> ke bahar har URL ko signed-in token user chahiye. <code>SessionUtil</code> ab <code>CurrentIdentity</code> ka facade hai (<code>SessionUtil.java:99-125</code>, <code>CurrentIdentity.java:46-48, 65-72</code>): <code>getUserId()</code> = token ka user.</td><td>Bina login wale (anonymous) calls ab 401. Lekin har profile endpoint ab bhi <b>payload ka <code>userId</code></b> use karta hai, token user ka nahi.</td></tr>
+      <tr><td><b>is-sms</b></td><td><code>auth.js</code> (next-auth) + browser cookies Java ko forward</td><td><code>proxy.js</code> token verify/renew karta hai (matcher me <code>/:school/student/:path*</code>), server par <code>getAccountSession()</code> (<code>lib/auth/session.js</code>), Java ko <code>Authorization: Bearer</code> + <code>X-Service-Key</code>. Client par <code>AuthSessionProvider</code> ka <code>useSession</code>. Dashboard services + <code>utils/backendRequest.js</code> token par shift ho chuke hain.</td><td>Naya route <code>student/my-profile</code> apne aap token-protected. BFF <code>backendRequest</code> se Bearer bhejega; 401 = global "Your session has been logged out" dialog.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>19.1 Legacy entry point</h3>
+  <ul>
+    <li><b>Header link</b> (<code>DashboardTopHeader.jsp:365</code>): <code>getContent('', 'profile-view', '', payloadProfile)</code>, <code>payloadProfile = encode({userId, actionType:"1a", studentStandardId})</code> (<code>ClientDashboardStudentController.java:351-355</code>) → <code>profileViewNewContent.js</code> → <code>renderStudentProfilePage()</code>.</li>
+    <li><b>Load</b>: <code>POST /{school}/dashboard/profile-view-content-new?payload=…</code> → <code>ClientDashboardCommonController.java:486-491</code> → <code>DashboardSchoolUtil.profileViewContentNew</code> (:14785).</li>
+    <li><b>School 4 &amp; 5</b> (<code>DashboardTopHeader.jsp:344, 387</code>) raw JSON naye tab me kholte hain: legacy bug. Port me sabke liye ek page.</li>
+    <li><b>Rendering</b>: poora jQuery (<code>profileViewNew.js</code> ~8.9k lines). Envelope <code>{payload: btoa(encodeURI(json))}</code> = is-sms <code>encodePayload</code> (AES nahi).</li>
+  </ul>
+
+  <h3>19.2 Load response (data model)</h3>
+  <p><code>details</code>: <code>status, rightToEdit, rightToUpload, studentStandardId, userId, userRole, standardStatus, profileData{studentProfile[8], profileContactVerification{fieldId:{verifiedStatus Y/N, verifiedAt}}}, withdrawnRequest, paymentExpire, expiryDate, enrollmentDetails[]</code>. <code>studentProfile</code> <b>positional array</b> hai (<code>DashboardStudentUtil.java:829-1654</code>):</p>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Block</th><th>Main fields</th><th>Gotcha</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td>Personal</td><td>first/middle/lastName, gender, dob, phoneNumber (+CountryCode iso2, WhatsAppStatus), altPhoneNumber, studentEmailId, altEmailId, country/state/city, timezone, nationality, address, profilePic, hobbies[], socialMedia[], customFields</td><td>nationality <b>text</b> bhejta hai</td></tr>
+      <tr><td>1</td><td>Parents</td><td>mother*/father*/guardian* (naam, email, phone + WhatsApp/Emergency, country/state/city, occupation, dob, facebook), relationType, weddingAnniversaryDate, pcWhatsappView/pcCallView/pcEmailView, callingTimePrefArray</td><td><code>motherName</code>, <code>gurdianFacebook</code></td></tr>
+      <tr><td>2</td><td>Academic</td><td>studentID, learningProgram, grade, academicYearStartDate, enrollmentDate, courses, previousCurrent*, ctiTakenRecommendedGrade, 4 proofs, studentIdCardDownloadUrl, standardStatus, reportType</td><td></td></tr>
+      <tr><td>3</td><td>Live-class timing</td><td>prefTimeList[{startTime, endTime, displayStartTime, displayEndTime, timePrefId}]</td><td>display 12h, store 24h</td></tr>
+      <tr><td>4</td><td>Sports &amp; EC</td><td>sportsAndECList, joinedSportsAndECList</td><td></td></tr>
+      <tr><td>5 / 7</td><td>Reserve seat / Enable registration</td><td>admin only</td><td>student ko nahi</td></tr>
+      <tr><td>6</td><td>School email</td><td>email, <b>password</b>, azureUserStatus, passwordCreatedDate</td><td>password plaintext (gap #4)</td></tr>
+    </tbody>
+  </table></div>
+  <p>Dates <code>MMM dd, yyyy</code> (<code>DateUtil.java:66</code>); timezone <code>COUNTRY_TIMEZONE</code> id.</p>
+
+  <h3>19.3 Sections: mockup ↔ legacy ↔ API</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Section</th><th>Student edit kar sakta hai</th><th>Locked / read-only</th><th>Existing API</th><th>Mockup diff</th></tr></thead>
+    <tbody>
+      <tr><td>1 · Personal</td><td>Naam, gender, phone*, alt phone, alt email, country/state/city*, timezone* (warning), nationality*, address, hobbies, social links</td><td>DOB, Email</td><td><code>update-user-profile-content</code> / <code>-bulk</code>; <code>/api/v1/common/masters</code></td><td>Same; phone + WhatsApp + "Send OTP".</td></tr>
+      <tr><td>2 · Parent/Guardian</td><td>Mother/Father/Guardian naam, phone (+WhatsApp, Emergency), facebook, country/state/city, occupation, dob; anniversary; communication; calling slots</td><td>Parent emails, relationType</td><td>same save (<code>W001</code> consent, <code>WPR01</code> primary switch)</td><td>Same.</td></tr>
+      <tr><td>3 · Academic</td><td>Previous school/grade/year/country, documents, progress-report frequency</td><td>ID, AY start, enrollment, program, grade, LMS, courses, CTI</td><td>save; <code>save-docs</code>, <code>delete-uploaded-docs</code>; <code>student/id-card-pdf</code></td><td>"Set Progress Report" + ID card button.</td></tr>
+      <tr><td>4 · Live Classes timing</td><td>Slots add/remove</td><td>-</td><td><code>report/save-time-preference</code>, <code>inactivate-time-preference</code></td><td>Same.</td></tr>
+      <tr><td>5 · Sport &amp; EC</td><td>Toggle, clubs, events</td><td>-</td><td>save, <code>save-joined-sports-ec-club</code>, <code>inactivate-joined-extra-curricular</code></td><td>Mockup me events table nahi.</td></tr>
+      <tr><td>6 · School Email</td><td>Activate, Outlook, reset</td><td>email/password</td><td><code>create-azure-user</code>, <code>reset-azure-password-notify-primary-mail</code></td><td>Mockup inputs; legacy read-only + copy.</td></tr>
+      <tr><td>7 · Withdrawal</td><td>Reason, details, T&amp;C, email OTP, status list</td><td>sirf <code>selfEligible</code></td><td><code>student/withdrawal-eligibility</code>, <code>parent/withdrawal-init</code> → <code>-send-otp</code> → <code>-verify-otp</code> → <code>-list</code></td><td>Same flow.</td></tr>
+      <tr><td>Photo</td><td>5 MB JPG/PNG, crop</td><td>-</td><td><code>save-docs</code> ("Profile Image", ID card dobara banta hai)</td><td>Avatar par camera button.</td></tr>
+    </tbody>
+  </table></div>
+  <p><b>% complete</b>: endpoint nahi, legacy DOM se ginta hai (<code>profileViewNew.js:2518-2768</code>); port me pure util. <b>OTP</b>: <code>/api/v1/common/otp-process</code> (1 send / 2 resend / 3 verify), sirf STUDENT role, 9 sends ke baad 1 ghanta lock.</p>
+
+  <div class="gaps-red">
+  <h3>19.4 Backend security gaps after the merge <span class="b warn">Approval</span></h3>
+  <p>Merge ne <b>"kaun call kar raha hai"</b> pakka kar diya (token), lekin <b>"kiska data"</b> ab bhi payload decide karta hai. Isliye 13 me se 11 gaps poore khule hain, 2 partly fix. Har gap code me dobara verify kiya (paths: <code>is-rest-api/src/main/java/com/c2e/is/</code>).</p>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Gap</th><th>Merge ke baad</th><th>Code (abhi)</th><th>Kya ho sakta hai</th><th>Severity</th><th>Fix (existing endpoint enhance)</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><b>Kisi bhi student ka profile padhna</b></td><td>STILL OPEN</td><td><code>DashboardSchoolUtil.java:14811-14817</code>: <code>userId</code> payload se, <code>userService.getUser(userId)</code>; login zaroori (:14789) par ownership/school check nahi</td><td>Koi bhi logged-in user doosre ka poora profile (DOB, phone, address, parents, documents, school email password) dekh sakta hai</td><td><span class="b out">Critical</span></td><td>Student token → target = <code>sessionUtil.getUserId()</code> (token user), payload <code>userId</code> ignore. Parent → sirf <code>PARENT_STUDENT_MAPPING</code> ke bachche. Staff → module rights.</td></tr>
+      <tr><td>2</td><td><b>Kisi bhi student ka profile badalna</b></td><td>STILL OPEN</td><td><code>ClientDashboardCommonController.java:1557, 1578</code> (single), <code>:1630, 1652</code> (bulk): <code>getUser(authentication.getUserId())</code>; token user sirf "lastUpdatedBy". <code>save-docs</code> (:2413-2418) payload DTO seedha</td><td>Doosre ka naam, phone, timezone (future classes shift), documents badalna</td><td><span class="b out">Critical</span></td><td>#1 wala ownership rule har save + <code>save-docs</code> par.</td></tr>
+      <tr><td>3</td><td><b>Locked fields sirf UI me</b></td><td>STILL OPEN</td><td><code>DashboardStudentUtil.saveStudentProfileNewTheme</code> (:2667) role use hi nahi karta: <code>relationType</code> :3152, <code>verifyUserEmail</code> :3479/:4271, <code>admissonDate</code> :3607, <code>dob</code> :3614, <code>reserveASeat</code> :4034. <code>studentStandardId</code> payload se (:2681)</td><td>Student apna DOB, enrollment date, primary parent badal sakta hai, email bina proof "verified"</td><td><span class="b out">High</span></td><td>Student role ke liye editable <code>keyId</code> allowlist; <code>studentStandardId</code> user ka hi ho.</td></tr>
+      <tr><td>4</td><td><b>School email password plaintext</b></td><td>STILL OPEN</td><td><code>DashboardStudentUtil.java:1622</code>; <code>createAzureUser</code> :12074-12096 payload user ka password lautata hai</td><td>Har load par Azure password network/logs me; #1 ke saath doosre ka bhi</td><td><span class="b out">High</span></td><td>Load response se hatao; sirf owner ke "show / copy" par.</td></tr>
+      <tr><td>5</td><td><b>Ownership check nahi (pehle session hi nahi tha)</b></td><td>PARTLY: ab token chahiye</td><td><code>id-card-pdf</code> (<code>ClientDashboardStudentController.java:2568</code>), <code>create-azure-user</code> (:2836), <code>delete-uploaded-docs</code> (<code>ClientDashboardCommonController.java:2386</code>), <code>inactivate-time-preference</code> / <code>-user-soc-media</code> (<code>StudentAssginReportUtil.java:3130, 3152</code>), <code>inactivate-joined-extra-curricular</code> (<code>DashboardStudentUtil.java:11179</code>); <code>otp-process</code> ab bhi public (visitor token / service key se)</td><td>Logged-in user kisi ka ID card PDF, Azure account, documents delete, slots/links hata sakta hai; OTP endpoint se SMS/email spam</td><td><span class="b out">High</span></td><td>#1 wala ownership rule; <code>otp-process</code> par user token + rate limit.</td></tr>
+      <tr><td>6</td><td><b>OTP verify galat value ko verified kar deta hai</b></td><td>STILL OPEN</td><td><code>CommonUtil.java:3769</code> lookup <code>entityId + entityType</code>; :3877 sirf code compare; :3895-3908 request ke <code>userId</code> + email/phone verified. Expiry, attempt limit, used-check nahi; sirf resend cap (:3797)</td><td>Apne number par OTP, verify par doosra number bhejo → verified; 6 digit brute force</td><td><span class="b warn">Medium-High</span></td><td>Bheja gaya value OTP row me, verify par match; 10 min expiry; 5 galat → lock; userId token se.</td></tr>
+      <tr><td>7</td><td><b>Withdrawal eligibility sirf UI me</b></td><td>STILL OPEN</td><td><code>ClientWithdrawalRequestParentController.java:79-99</code> sirf report; <code>canActOnStudent</code> (<code>WithdrawalRequestAdminServiceImpl.java:634-639</code>) student = actor ko hamesha allow</td><td>Parent-account wala student API se enrollment cancel shuru kar sakta hai</td><td><span class="b warn">Medium</span></td><td><code>withdrawal-init</code> par bhi eligibility rule.</td></tr>
+      <tr><td>8</td><td><b>"+" ka space ban jaana</b></td><td>STILL OPEN</td><td><code>v1/security/AesUtil.java:182-195</code> (<code>URLDecoder</code> :189); <code>decodePreservePlus</code> (:248) profile me use nahi; <code>Payload.getDecodedPayload</code> :43 bhi same</td><td><code>a+b@gmail.com</code> → <code>a b@gmail.com</code>, URLs kharab</td><td><span class="b warn">Medium</span></td><td>Profile/OTP/docs me <code>decodePreservePlus</code>.</td></tr>
+      <tr><td>9</td><td><b>Session-out par galat code</b></td><td>PARTLY: ab token na ho to 401 pehle hi</td><td><code>DashboardSchoolUtil.java:14792/14798</code> ab bhi <code>"0"</code></td><td>Token ho par user na mile to client farak nahi kar paata</td><td><span class="b ph">Low</span></td><td><code>"3"</code> lautao; BFF 401 + "0"+session message ko session-out maanega.</td></tr>
+      <tr><td>10</td><td><b>NEW: parent/student login email badalna</b></td><td>OPEN</td><td><code>switchParentStudEmailId</code> (<code>DashboardStudentUtil.java:2709-2750</code>): <code>studUserId</code> aur <code>parentId</code> payload se, un users ke login email rewrite</td><td>Kisi aur ka login email badal kar account le lena (password reset us email par)</td><td><span class="b out">Critical</span></td><td>Sirf token user ke apne mapping ke liye; student ke liye band.</td></tr>
+      <tr><td>11</td><td><b>NEW: Bearer token ka school URL se match nahi</b></td><td>OPEN</td><td><code>AuthTokenFilter</code> school compare nahi karta (sirf <code>BrowserTokenFilter</code> :98 karta hai)</td><td>School A ka token <code>/{schoolB}/dashboard/...</code> par chalta hai (Next.js BFF Bearer hi bhejta hai)</td><td><span class="b out">High</span></td><td><code>AuthTokenFilter</code> me bhi <code>sameSchool</code> check.</td></tr>
+      <tr><td>12</td><td><b>NEW: OTP 123456 jab OTP_SERVICE band</b></td><td>OPEN (prod value pata nahi)</td><td><code>CommonUtil.java:2742-2747</code> <code>generateOTPCode</code> → <code>123456</code></td><td>Setting off ho to har OTP (profile, withdrawal) ka code sabko pata</td><td><span class="b warn">High if off</span></td><td>Prod me setting confirm; fixed code sirf non-prod profile me.</td></tr>
+      <tr><td>13</td><td><b>NEW: guards ka jhootha bharosa</b></td><td>OPEN</td><td><code>BodyIdentityAdvice</code> (:121-129) sirf typed body me <code>getAuthentication()</code> dekhta hai, profile ke <code>Payload</code> body nahi; exempt roles me PARENT nahi (:50-53). <code>AccessPolicyInterceptor</code> prod me <code>log</code> (<code>application-prod8100.yml:171-178</code>), sirf <code>{UNIQUEUUID}</code> path var (:133-146); <code>UNIQUEUUID</code> header kahin check nahi</td><td>Lagta hai identity check enforce hai, par profile endpoints par chalta hi nahi</td><td><span class="b warn">Medium</span></td><td>Profile endpoints ka ownership check util me (#1), guard config par bharosa nahi.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note ok"><b class="t">Batch A code me ho gaya (2026-11-06, is-rest-api, uncommitted)</b>
+    Naya <code>v1/session/UserAccessGuard.java</code>: token user apna record hamesha; STUDENT sirf apna; PARENT apne mapped bachche (<code>PARENT_STUDENT_MAPPING</code>); SUPER_ADMIN sab; baaki roles sirf apne school ke users. Laga hai:
+    <ul>
+      <li>#1 <code>profile-view-content-new</code> (<code>DashboardSchoolUtil</code>) → mana ho to "You are not allowed to access this profile."</li>
+      <li>#2 <code>update-user-profile-content</code> + <code>-bulk</code> + <code>save-docs</code> (<code>ClientDashboardCommonController</code>).</li>
+      <li>#4 school e-mail password: <b>user ke kehne par pehle jaisa</b> (jo profile dekh sakta hai use dikhta hai, staff/teacher bhi). Ab sirf ownership guard (#1) ki wajah se doosre school / doosre student ka password nahi milta; plaintext rehna user ka decision.</li>
+      <li>#5 <code>id-card-pdf</code> (403), <code>create-azure-user</code>, <code>delete-uploaded-docs</code>.</li>
+      <li>#10 <code>switchParentStudEmailId</code>: student caller mana; ids sirf isi profile ke student aur uske apne parent ke (legacy UI me yeh switch pehle se band hai).</li>
+      <li>#11 <code>AuthTokenFilter</code> + <code>SecurityConfig</code>: Bearer token sirf apne school ke URL par user banata hai. Doosre school ke URL par request 401 "invalid token" nahi, <b>visitor</b> ki tarah chalti hai (<code>OTHER_SCHOOL_ATTRIBUTE</code> set; visitor token ke existing rules: public routes visitor cookie / <code>/{school}/auth/visitor</code> se, protected routes par login chahiye). Tests: AuthTokenFilterTest 11 (3 naye).</li>
+    </ul>
+    Pending: Batch B–D. <code>mvn compile</code> pass (merge ki <code>ClientDashboardAzlixbuzzController.getUserGradeBookSummary</code> error bhi theek: return <code>Object</code>, retry call me <code>format</code>). Auth tests pass: AuthTokenFilter 8, BrowserTokenFilter 41, DefaultDeny 17, BrowserSignInChain 5, BeanConstructors 1, DashboardParentUtilAttendanceDetails 37. Live test (19.4.3 checklist) baaki.
+  </div>
+
+  <h3>19.4.1 Merge ne kya theek kiya (bharosa kar sakte hain)</h3>
+  <ul>
+    <li>Bina login ke dashboard/profile URLs ab 401 (default-deny); <code>X-Account</code> sirf browser ke apne cookies me se chunta hai, kisi aur ban nahi sakte; <code>X-Service-Key</code> dashboard/profile nahi kholta.</li>
+    <li>Fix ab aasaan hai: <code>sessionUtil.getUserId()</code> (= <code>CurrentIdentity</code>, token user) har jagah pehle se available hai; bas profile utils me payload <code>userId</code> ki jagah use karna / compare karna hai.</li>
+    <li>Settings jo naam se dikhte hain par asar nahi: <code>auth.token.enabled</code> koi code nahi padhta (<code>application.yml:285-286</code> ka comment purana); <code>auth.sso.issue-tokens</code> ka switch nahi, SSO hamesha tokens deta hai (<code>SsoTokenHandoff.java:20-22</code>).</li>
+  </ul>
+
+  <h3>19.4.2 Next.js port khud kya karega</h3>
+  <ul>
+    <li><code>userId</code>, <code>studentStandardId</code>, <code>authentication</code> hamesha <code>getAccountSession()</code> (token) se; browser se kabhi nahi. Hamara UI kabhi doosre ka data nahi maangega, lekin direct API calls (#1-#5, #10) backend fix tak khule.</li>
+    <li>Locked keys (#3, #10) ki request hi nahi banegi; school email password default chhupa (#4).</li>
+    <li>401 aur load ka <code>"0"</code>+session message (#9) global session dialog kholenge.</li>
+    <li>Phone ISD aur number alag fields (#8).</li>
+  </ul>
+
+  <h3>19.4.3 Fix order (recommended)</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Batch</th><th>Gaps</th><th>Kab tak</th></tr></thead>
+    <tbody>
+      <tr><td><b>A</b> <span class="b in">Code done</span></td><td>#1, #2, #4, #10, #11; #5 ka <code>id-card-pdf</code> / <code>create-azure-user</code> / <code>delete-uploaded-docs</code></td><td>P1 (read-only) live hone se pehle · 2026-11-06 code me, test baaki</td></tr>
+      <tr><td><b>B</b> <span class="b in">Code done</span></td><td>#3 locked keys, #8 "+" bug, #13 (ownership util me)</td><td>2026-11-06 code me (is-rest-api, uncommitted). <code>DashboardStudentUtil.validateStudentProfileNewTheme</code>: STUDENT caller ke liye keyId allowlist (<code>STUDENT_EDITABLE_PROFILE_KEYS</code>: DOB, own email, parent emails, relationType, admissonDate, reserveASeat, verify flags band) + <code>studentStandardId</code> us user ka hi. "+" bug: <code>update-user-profile-content</code> / <code>-bulk</code> / <code>otp-process</code> ab <code>decodePreservePlus</code>. #13: ownership <code>UserAccessGuard</code> me hai.</td></tr>
+      <tr><td><b>C</b> <span class="b in">Code done</span></td><td>#6 OTP verify, #12 OTP_SERVICE confirm, #5 ka <code>otp-process</code> (user token + rate limit)</td><td>2026-11-06 code me (<code>CommonUtil.otpProcess</code>, sirf <code>STUDENT_PROFILE_CONTACT*</code> OTP). Request ka <code>userId</code> = <code>entityId</code> = token se access wala user; verify par OTP row me bheja gaya number / email request ke value se match; 10 min expiry; already-used reject; 5 galat codes par lock (in-memory counter, naye code par reset). #12: prod profile (<code>prod*</code>) me fixed 123456 kabhi nahi, setting off ho tab bhi. Prod me <code>OTP_SERVICE</code> value phir bhi confirm karni hai.</td></tr>
+      <tr><td><b>D</b> <span class="b in">Code done</span></td><td>#7 withdrawal, #5 ke <code>inactivate-*</code></td><td>2026-11-06 code me. #7: <code>canActOnStudent</code> me student khud tabhi jab uska parent account na ho; withdrawal OTP verify par expiry (10 min), already-confirmed reject, 5 galat tries. #5: <code>inactivate-time-preference</code>, <code>inactivate-user-soc-media</code>, <code>inactivate-joined-extra-curricular</code> row ke owner par <code>UserAccessGuard</code>. Naye gaps bhi band: <code>save-time-preference</code>, <code>save-joined-sports-ec-club</code>, <code>reset-azure-password-notify-primary-mail</code>.</td></tr>
+      <tr><td>-</td><td>#9</td><td>Kabhi bhi (BFF workaround plan me)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><b class="t">Har fix ka test</b>Do test students (A, B) + ek parent, alag token. A ke token se B ka <code>userId</code> → load / save / save-docs / id-card / delete-docs / azure / inactivate-* / switch email → sab reject; A ka apna kaam chale. School X ke token se school Y ka URL → 401. Locked key (DOB, email) save → reject. OTP: X par bhejo, Y verify → reject; 6th galat → lock; 10 min baad → expired. <code>a+b@…</code> save → waise hi wapas.</div>
+  </div>
+
+  <h3>19.5 Next.js design</h3>
+  <ul>
+    <li><b>Route</b>: <code>app/[school]/(dashboard)/student/my-profile/page.jsx</code> (proxy matcher <code>/:school/student/:path*</code> se token-protected) → <code>components/student/MyProfile.jsx</code> (logic) → <code>components/k5/pages/K5Profile.jsx</code> + editors <b>sab grades ke liye</b> (Elementary / Middle / High, 2026-11-07): K–5 apne look me, baaki <code>.theme-profile-plain</code> wrapper me (<code>app/profile-plain.css</code> — K–5 tokens ko school accent / slate / Open Sans par map karta hai, chunky shadow, 3px border, bade font halke). Edit <code>rightToEdit</code> par, grade par nahi. Dono headers ka "My Profile" toast ki jagah is route par.</li>
+    <li><b>BFF</b>: <code>services/profileApi.js</code> ("use server"), sab calls <code>utils/backendRequest.js</code> se: token check pehle, <code>Authorization: Bearer</code> + service key, 401 / session-out → <code>{sessionExpired}</code>. Ids token session se bhare jaayenge.</li>
+    <li><b>Model util</b> <code>utils/profileModel.js</code>: positional array → named sections, field → <code>keyId</code>, <code>MMM dd, yyyy</code> ⇄ shadcn <code>DatePicker</code>, % complete, phone ISD alag.</li>
+    <li><b>Save</b>: "Bulk Save" = <code>update-user-profile-bulk</code> (non-transactional, per-field errors); <code>W001</code> / <code>WPR01</code> par confirm dialog. Cookie writes nahi: Bearer requests CSRF filter se exempt hain.</li>
+    <li><b>Hooks</b>: <code>useStudentProfile</code> (React Query) + mutations; save ke baad sirf profile query invalidate.</li>
+    <li><b>Pico tip</b>: <code>my-profile</code> → "This page is all about you! Keep your details up to date."</li>
+    <li><b>Mobile</b>: section nav → horizontal chips / select; 3-column fields → 1 column ≤760px.</li>
+  </ul>
+
+  <h3>19.6 Port phases</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Step</th><th>Kaam</th><th>Writes / side effects</th></tr></thead>
+    <tbody>
+      <tr><td><b>P1 · Read-only</b></td><td>Route, BFF load, model util, 7 sections read-only, % ring, ID card link, header link.</td><td>Koi nahi · <span class="b in">Code done</span> live-checked</td></tr>
+      <tr><td><b>P2 · Personal + Parent save</b></td><td>Single + bulk save, masters, timezone warning, W001/WPR01, validations.</td><td>DB writes; naam → transcript/Lens sync, timezone → future classes shift · <span class="b in">Code done</span>; address / hobby save live-tested, parent fields nahi</td></tr>
+      <tr><td><b>P3 · Academic + timing + clubs</b></td><td>Previous school, documents, progress report frequency, slots, clubs.</td><td>Uploads, ID card regenerate · <span class="b in">Code done</span>; slots / activity / club live-tested, document upload nahi</td></tr>
+      <tr><td><b>P4 · OTP + photo</b></td><td>Send/resend/verify (phone, WhatsApp, email), photo crop + upload.</td><td>SMS / WhatsApp / email · <span class="b in">Code done</span>; email OTP + photo live-tested, SMS / WhatsApp nahi</td></tr>
+      <tr><td><b>P5 · School email + Withdrawal</b></td><td>Activate / reset; eligibility → init → OTP → list.</td><td>Azure account, emails, enrollment cancel shuru · <span class="b in">Code done</span>; Azure activation live-tested, reset / withdrawal submit nahi</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note warn"><b class="t">Testing rule</b>P2 se aage asli writes (SMS/email, withdrawal). Sirf test student par; withdrawal / azure activation explicit approval ke baad.</div>
+
+  <h3>19.7 Open questions (user se)</h3>
+  <ol>
+    <li>19.4.3 ka Batch A (backend) port P1 se pehle karna hai? (Recommended: haan, #1, #2, #10, #11 critical/high.)</li>
+    <li>Prod me <code>OTP_SERVICE</code> setting on hai? (#12)</li>
+    <li>Sports ka events table rakhna hai ya mockup jaisa hatana?</li>
+    <li>School email: read-only + copy (recommended) ya mockup jaisa input?</li>
+    <li><s>Non-K5 students ke liye bhi naya page (plain look) ya sirf K–5?</s> — <b>Jawab (2026-11-07):</b> sab grades; wahi page + editors, plain theme scope (approach A). Middle/High student par live test baaki.</li>
+  </ol>
+</section>
+
+<p style="color:var(--mut);font-size:12.5px;margin-top:40px">Generated 2026-11-02 · Scope: Grade K–5 student dashboard · Sources: is-sms (phase4), is-rest-api, K-5 dashboard/Playful.dc.html, IS-SMS-Dashboard-Appearance-Plan (1).html · Self-contained, offline.</p>
+</main>
+</div>
+<script>
+(function(){
+  var tog=document.getElementById('navToggle'),sb=document.getElementById('sidebar');
+  tog.addEventListener('click',function(){sb.classList.toggle('open');});
+  var links=[].slice.call(document.querySelectorAll('#toc a')),map={};
+  links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;a.addEventListener('click',function(){if(window.innerWidth<=980)sb.classList.remove('open');});});
+  var obs=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.remove('active');});if(map[e.target.id])map[e.target.id].classList.add('active');}});},{rootMargin:'-15% 0px -75% 0px'});
+  document.querySelectorAll('section[id]').forEach(function(s){obs.observe(s);});
+})();
+</script>
+</body>
+</html>

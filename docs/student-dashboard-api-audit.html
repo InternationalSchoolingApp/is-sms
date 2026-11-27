@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Student Dashboard API Audit</title>
+<style>
+  :root {
+    --bg: #f6f7fb; --card: #ffffff; --ink: #1c2640; --mut: #5b6478; --line: #e3e6ef;
+    --t0: #8a93a8; --t1: #2f6fed; --t2: #12a26b; --t3: #c77a08; --api: #8a4fd6; --bad: #d7263d; --soft: #eef2ff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1320; --card: #171c2c; --ink: #e8ecf6; --mut: #9aa3b8; --line: #2a3147;
+      --t0: #7c859b; --t1: #5b8ff5; --t2: #2fc489; --t3: #e7a23a; --api: #a97bf0; --bad: #ff5a6e; --soft: #1e2540;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1320; --card: #171c2c; --ink: #e8ecf6; --mut: #9aa3b8; --line: #2a3147;
+    --t0: #7c859b; --t1: #5b8ff5; --t2: #2fc489; --t3: #e7a23a; --api: #a97bf0; --bad: #ff5a6e; --soft: #1e2540;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1120px; margin: 0 auto; padding: 28px 16px 60px; }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  h2 { font-size: 20px; margin: 36px 0 12px; }
+  .sub { color: var(--mut); margin: 0 0 20px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .kpi b { display: block; font-size: 26px; }
+  .kpi span { color: var(--mut); font-size: 13px; }
+  .bad { color: var(--bad); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--mut); font-weight: 600; font-size: 13px; }
+  td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  code { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; background: var(--soft); padding: 1px 5px; border-radius: 5px; word-break: break-all; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 99px; color: #fff; }
+  .tg0 { background: var(--t0); } .tg1 { background: var(--t1); } .tg2 { background: var(--t2); } .tg3 { background: var(--t3); } .tga { background: var(--api); } .tgb { background: var(--bad); }
+
+  /* Flowchart */
+  .flow { display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .node { width: min(560px, 100%); border-radius: 12px; padding: 12px 14px; border: 2px solid var(--line); background: var(--card); }
+  .node h3 { margin: 0 0 2px; font-size: 15px; }
+  .node p { margin: 0; color: var(--mut); font-size: 13px; }
+  .node .time { float: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .n0 { border-color: var(--t0); } .n1 { border-color: var(--t1); } .n2 { border-color: var(--t2); } .n3 { border-color: var(--t3); } .na { border-color: var(--api); } .nb { border-color: var(--bad); }
+  .arrow { width: 2px; height: 26px; background: var(--mut); position: relative; }
+  .arrow::after { content: ""; position: absolute; left: -5px; bottom: -2px; border: 6px solid transparent; border-top-color: var(--mut); }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: min(760px, 100%); }
+  .mini { font-size: 12.5px; border-radius: 10px; border: 1px dashed var(--line); padding: 8px 10px; background: var(--soft); }
+  .mini code { background: transparent; padding: 0; }
+  .note { font-size: 12.5px; color: var(--mut); margin-top: 6px; }
+
+  /* Gantt */
+  .gantt { position: relative; }
+  .grow { display: grid; grid-template-columns: 300px 1fr; align-items: center; gap: 10px; min-height: 24px; }
+  .glabel { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gtrack { position: relative; height: 16px; border-left: 1px solid var(--line); }
+  .gbar { position: absolute; top: 2px; height: 12px; border-radius: 4px; min-width: 2px; }
+  .gbar span { position: absolute; left: calc(100% + 4px); top: -3px; font-size: 11px; color: var(--mut); white-space: nowrap; }
+  .gaxis { display: grid; grid-template-columns: 300px 1fr; gap: 10px; font-size: 11px; color: var(--mut); }
+  .gticks { position: relative; height: 16px; }
+  .gticks i { position: absolute; transform: translateX(-50%); font-style: normal; }
+  .gsec { margin: 14px 0 4px; font-weight: 700; font-size: 13px; }
+  ul.find li { margin-bottom: 8px; }
+  @media (max-width: 760px) {
+    .split { grid-template-columns: 1fr; }
+    .grow, .gaxis { grid-template-columns: 1fr; }
+    .glabel { white-space: normal; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Student Dashboard — API Audit</h1>
+  <p class="sub">25 Nov 2026 · local dev (<code>localhost:3000</code> → backend <code>localhost:8080</code>) · student account Liliana (Grade 6) · dashboard home <code>/international-schooling/student</code> par hard reload.</p>
+
+  <div class="card">
+    <p style="margin:0 0 10px"><b>Kaise naapa:</b> browser ki taraf se har request ka start/time <code>performance</code> API se, aur Next server se backend ko jaane wali har call Node ke <code>diagnostics_channel</code> (undici) se — sirf audit ke liye ek temporary logger <code>utils/backendRequest.js</code> mein laga tha, audit ke baad hata diya. Saare time <b>page load start se</b> (0s = navigation start) hain.</p>
+    <p class="note" style="margin:0">Ye <b>dev mode</b> ke numbers hain (Turbopack, local DB). Production mein absolute time alag honge, lekin kram (order), queue aur duplicate calls wahi hain. Do run kiye: <b>Run 2</b> neeche ka main data hai; Run 1 ke numbers comparison mein diye hain.</p>
+  </div>
+
+  <h2>Short mein</h2>
+  <div class="kpis">
+    <div class="card kpi"><b>~40s</b><span>Run 2: page khulne se Tier 1 + Tier 2 tak (content poora)</span></div>
+    <div class="card kpi"><b class="bad">21.6s</b><span>Maintenance check ne Tier 1 ko roke rakha (Run 1 mein sirf 0.17s)</span></div>
+    <div class="card kpi"><b>7 + 2</b><span>Browser → Next requests (7 server actions, 2 <code>/api/diary</code>)</span></div>
+    <div class="card kpi"><b>38</b><span>Backend API calls (Run 2), jinme 10 duplicate / repeat</span></div>
+    <div class="card kpi"><b>7.5s</b><span>Sabse dheemi Tier 1 call: <code>school-calendar</code></span></div>
+  </div>
+
+  <h2>Flowchart — kaun si API kab chalti hai</h2>
+  <div class="card">
+    <div class="flow">
+      <div class="node n0"><span class="time">0 → 0.4s</span><h3>1. Page request (SSR)</h3><p>Browser <code>/student</code> mangta hai. Server session check karta hai (<code>.well-known/jwks.json</code> se token verify, ~2ms). HTML 0.4s mein aata hai.</p></div>
+      <div class="arrow"></div>
+      <div class="node n0"><span class="time">0.4 → 3.2s</span><h3>2. JavaScript load + hydrate</h3><p>React page chalu hota hai. Pehla server action ~3.2s pe jaata hai (dev mode compile/hydrate ka time).</p></div>
+      <div class="arrow"></div>
+      <div class="node nb"><span class="time">3.2 → 24.9s</span><h3>3. Server action #1 — Maintenance check</h3><p><code>api/v1/maintenance-downtime-status</code> (MaintenanceBanner). <b>Server actions ek ek karke chalte hain</b>, isliye jab tak ye nahi lauta, Tier 1 queue mein ruka rha. Run 2 mein 21.6s (Run 1 mein 0.17s).</p></div>
+      <div class="arrow"></div>
+      <div class="node n1"><span class="time">24.9 → 35.8s</span><h3>4. Server action #2 — Tier 1 bootstrap (<code>getDashboardBootstrap</code>)</h3><p>Page jo draw karta hai. 12 backend calls ek saath (Promise.all); phir <code>get-student-dashboard</code> aane ke baad 2 aur.</p></div>
+      <div class="split" style="margin-top:8px">
+        <div class="mini"><b>Saath-saath (25.0s se):</b><br><code>get-student-dashboard</code> 6.2s · <code>school-calendar</code> 7.5s · <code>additinal-layer-details</code> 5.2s · <code>get-user-short-profile</code> 5.2s · <code>dashboard-or-migration</code> 4.6s · <code>student-academic-details</code> 3.7s · <code>pending-assignment-count</code> 3.3s · <code>student-menu-flags</code> 3.1s · <code>common-script-variables</code> 2.7s · <code>contact-check/pending</code> 2.1s · <code>links</code> 0.4s · <code>get-setting</code> 0.06s</div>
+        <div class="mini"><b>Details ke baad (31.2s se):</b><br><code>module-details</code> (sidebar menu, roleId chahiye) 1.1s<br><code>student-academic-performance</code> (k5 flag chahiye) 4.5s<br><br>Ye chain hai: 6.2s + 4.5s = <b>10.7s</b> — Tier 1 ka sabse lamba raasta.</div>
+      </div>
+      <div class="arrow"></div>
+      <div class="node n2"><span class="time">36.0 → 37.4s</span><h3>5. Server action #3 — Tier 2 badges (<code>getDashboardBadges</code>)</h3><p>Right-rail ke counts: <code>get-announcement-details</code> 0.7s · <code>get-all-articles</code> (news) 0.3s · <code>chat</code> 0.7s · <code>inbox/unread</code> 1.0s · <code>get-cart-count</code> 0.3s.</p></div>
+      <div class="arrow"></div>
+      <div class="node na"><span class="time">36.9 → 37.9s</span><h3>6. <code>/api/diary</code> ×2 (route handler — queue se bahar)</h3><p><code>diary/thread/unread-count</code> 0.7s · <code>diary/badge-version</code> 0.09s. Ye server action nahi, isliye queue mein nahi rukta.</p></div>
+      <div class="arrow"></div>
+      <div class="node n3"><span class="time">39.3 → 39.9s</span><h3>7. Server action #4 — ek setting</h3><p><code>api/v1/get-setting</code> 0.45s.</p></div>
+      <div class="arrow"></div>
+      <div class="node n3"><span class="time">39.9 → 43.8s</span><h3>8. Server action #5 — Tier 3 popups (<code>getDashboardExtras</code>)</h3><p>Pehla popup puchhta hai tab chalta hai.</p></div>
+      <div class="split" style="margin-top:8px">
+        <div class="mini"><b>System training:</b> <code>dashboard-or-migration</code> 2.0s → phir <code>student-course-selection-content-theme2</code> 1.6s<br><b>Reserve seat:</b> <code>eligible-for-ras-for-next-grade</code> 1.7s<br><b>Outlook:</b> <code>additinal-layer-details</code> 2.0s</div>
+        <div class="mini"><b>Feedback settings:</b> <code>get-setting</code> ×5 (0.1–0.3s)<br><b>Need help:</b> <code>get-chat-eligibility</code> 0.25s<br><b>App install:</b> <code>app-last-activity</code> 1.4s</div>
+      </div>
+      <div class="arrow"></div>
+      <div class="node nb"><span class="time">45.1 → 55.0s</span><h3>9. <code>get-student-dashboard</code> dobara (9.9s)</h3><p>Tier 1 ke baad wahi details call phir se chali (cache refresh / dusra hook). Snapshot ke waqt tak chal rahi thi.</p></div>
+    </div>
+  </div>
+
+  <h2>Timeline (Run 2) — har call kab shuru hui aur kitna chali</h2>
+  <div class="card">
+    <p class="note" style="margin-top:0"><span class="tag tg0">Page</span> <span class="tag tgb">Maintenance</span> <span class="tag tg1">Tier 1</span> <span class="tag tg2">Tier 2</span> <span class="tag tga">Diary</span> <span class="tag tg3">Tier 3 / baad mein</span> · bar = backend call ka time (seconds)</p>
+    <div class="gantt" id="gantt"></div>
+  </div>
+
+  <h2>Saari backend calls (Run 2)</h2>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Start</th><th>Time</th><th>API</th><th>Kis ke liye</th><th>Group</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <h2>Run 1 vs Run 2</h2>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Step</th><th>Run 1</th><th>Run 2</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Maintenance check</td><td class="n">0.17s</td><td class="n bad">21.6s</td><td>Run 2 mein pichhle page ki 46.5s wali <code>student-academic-performance</code> abhi backend pe chal rahi thi</td></tr>
+        <tr><td>Tier 1 bootstrap (poora)</td><td class="n">15.3s</td><td class="n">10.9s</td><td>Run 1 mein 12 calls har ek 8–11s; Run 2 mein 2–7.5s</td></tr>
+        <tr><td>Tier 2 badges</td><td class="n">1.3s</td><td class="n">1.4s</td><td>Tez aur stable</td></tr>
+        <tr><td>Tier 3 popups</td><td class="n">3.3s</td><td class="n">3.9s</td><td>—</td></tr>
+        <tr><td>Content poora (Tier 2 khatam)</td><td class="n">~24s</td><td class="n">~37s</td><td>Fark lagbhag poora maintenance check ka</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Kya mila (findings)</h2>
+  <div class="card">
+    <ul class="find">
+      <li><b>1. Maintenance check sabse aage queue mein hai.</b> Next.js server actions ek page pe ek-ek karke chalte hain. <code>getMaintenanceDowntimeStatus</code> (MaintenanceBanner, har 60s) ek server action hai aur Tier 1 se pehle chalta hai. Jab ye dheema hua (21.6s), poora dashboard utni der ruka. <i>Idea:</i> ise <code>/api/...</code> route handler bana do (jaise <code>/api/diary</code>), taaki ye queue mein na baithe.</li>
+      <li><b>2. Backend parallel load mein dheema ho jaata hai.</b> Wahi 12 Tier 1 calls Run 1 mein 8–11s aur Run 2 mein 2–7.5s; akeli chhoti calls (<code>get-setting</code>, <code>links</code>) 0.1–0.4s. Ye DB pool ki kami jaisa lagta hai — dev config mein read pool max <b>3</b> aur write pool max 8 hai, aur aaj backend log mein <code>APIWritePool - Connection is not available</code> bhi aaya tha.</li>
+      <li><b>3. Chhoda hua request backend ko pakde rehta hai.</b> Page reload ke baad bhi pichhle page ki <code>student-academic-performance</code> 46.5s tak chalti rahi aur connection ghere rahi.</li>
+      <li><b>4. Sabse dheemi APIs:</b> <code>school-calendar</code> 7.5s, <code>get-student-dashboard</code> 6.2s (Run 2 mein dobara 9.9s), <code>additinal-layer-details</code> 5.2s, <code>get-user-short-profile</code> 5.2s, <code>dashboard-or-migration</code> 4.6s, <code>student-academic-performance</code> 4.5s.</li>
+      <li><b>5. Chain:</b> sidebar menu (<code>module-details</code>) aur My Performance (<code>student-academic-performance</code>) <code>get-student-dashboard</code> ke jawab ka intezar karte hain (roleId / k5 flag). Isliye Tier 1 ≈ 6.2s + 4.5s.</li>
+      <li><b>6. Duplicate calls (ek hi load mein):</b>
+        <code>dashboard-or-migration</code> ×2 (Tier 1 + system training) ·
+        <code>additinal-layer-details</code> ×2 (onboarding + Outlook) ·
+        <code>get-student-dashboard</code> ×2 (Tier 1 + baad mein 9.9s) ·
+        <code>get-setting</code> ×7 (alag keys, alag calls). Tier 3 Tier 1 ke jawab dobara use kar sakta hai.</li>
+      <li><b>7. Jo theek hai:</b> Tier 2 aur diary tez hain (≤1s); Tier 1 ke andar calls sach mein saath-saath chal rahi hain (Promise.all); 39 → 5 server actions wali batching kaam kar rahi hai.</li>
+    </ul>
+    <p class="note">Ye audit hai — maine koi fix nahi lagaya. Upar ke ideas pe kaam karna ho to bataiye.</p>
+  </div>
+
+  <h2 id="remeasure">Dobara naapa — 26 Nov 2026 (fixes ke baad)</h2>
+  <p class="sub">Local dev (<code>localhost:3000</code> → <code>localhost:8080</code>) · test student Lucas (Grade K–5 look, 5 courses) · dashboard home par reload · backend calls Node <code>diagnostics_channel</code> se (temporary route, naapne ke baad hata diya). Dev read/write pool ab bada hai (<code>application-dev.yml</code>).</p>
+
+  <div class="kpis">
+    <div class="card kpi"><b>4.2s</b><span>Tier 1 (1.4s → 5.6s pe khatam). Pehle 10.9s (Run 2), 7.2–11.1s</span></div>
+    <div class="card kpi"><b>0s</b><span>Maintenance check ab route handler hai, queue mein nahi rukta (pehle 21.6s tak)</span></div>
+    <div class="card kpi"><b>1×</b><span><code>get-student-dashboard</code>, <code>dashboard-or-migration</code>, <code>additinal-layer-details</code> ab ek hi baar</span></div>
+    <div class="card kpi"><b>~8s</b><span>Tier 2 badges khatam (pehle ~37s)</span></div>
+  </div>
+
+  <h2>Kya badla</h2>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Badlav</th><th>Kahan</th><th>Asar</th></tr></thead>
+      <tbody>
+        <tr><td>Maintenance check server action se route handler</td><td>is-sms <code>app/api/maintenance</code>, <code>MaintenanceBanner</code></td><td>Tier 1 ke aage ki queue khatam</td></tr>
+        <tr><td>Student ke liye alag school-calendar endpoint</td><td>is-rest-api <code>/dashboard/student/school-calendar</code></td><td>Same JSON; 1 week 7.9s → ~3.9s, 1 month 24s → ~3.6s</td></tr>
+        <tr><td>My Performance chain todi (details ka wait nahi)</td><td>is-sms <code>dashboardBootstrapApi.js</code></td><td>Tier 1 = max(details, performance), sum nahi</td></tr>
+        <tr><td>Duplicate reads share (30s memo)</td><td>is-sms <code>utils/userReadMemo.js</code></td><td>dashboard-or-migration, additinal-layer-details, get-student-dashboard ek baar</td></tr>
+        <tr><td>My Performance bulk reads</td><td>is-rest-api <code>StudentPerformanceUtil</code> + 4 DAO</td><td>Same JSON; 7.7–9.6s → 2.2–3.2s (akele)</td></tr>
+        <tr><td>Class comparison bulk (10 → 2 queries)</td><td>is-rest-api <code>K5ClassComparisonUtil.loadAll</code></td><td>Same JSON (dono comparison blocks)</td></tr>
+        <tr><td>profile-view-content-new: contact verify + 4 proofs ek-ek read</td><td>is-rest-api <code>DashboardStudentUtil</code></td><td>Same JSON; contact verify 1.3–2.7s → 0.4–0.8s, attachments 0.6s → 0.05s</td></tr>
+        <tr><td>Short profile: 3–4 queries kam</td><td>is-rest-api <code>DashboardCommonUtil.getUserShortProfile</code></td><td>Same JSON</td></tr>
+        <tr><td>Settings cache 1 → 5 min, size 2000</td><td>is-rest-api <code>GupshupCacheConfig</code> (sirf <code>master:settings</code>)</td><td>get-setting cache hit zyada der</td></tr>
+        <tr><td>Dev DB pool bada</td><td>is-rest-api <code>application-dev.yml</code> (aapne badla)</td><td>Read pool 3 tha — 14 parallel calls isi pe line mein lagti thi</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Backend calls — 26 Nov (dev)</h2>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Start</th><th>Time</th><th>API</th><th>Group</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1.2s</td><td class="n">0.34s</td><td><code>maintenance-downtime-status</code></td><td>Route handler</td></tr>
+        <tr><td class="n">1.4s</td><td class="n">4.0s</td><td><code>get-student-dashboard</code></td><td>Tier 1</td></tr>
+        <tr><td class="n">1.4s</td><td class="n">4.2s</td><td><code>student-academic-performance</code> (k5)</td><td>Tier 1</td></tr>
+        <tr><td class="n">1.4s</td><td class="n">3.8s</td><td><code>dashboard/student/school-calendar</code></td><td>Tier 1</td></tr>
+        <tr><td class="n">1.5s</td><td class="n">2.3s</td><td><code>additinal-layer-details</code></td><td>Tier 1</td></tr>
+        <tr><td class="n">1.4s</td><td class="n">2.2s</td><td><code>get-user-short-profile</code></td><td>Tier 1</td></tr>
+        <tr><td class="n">1.5s</td><td class="n">2.0s</td><td><code>dashboard-or-migration</code></td><td>Tier 1</td></tr>
+        <tr><td class="n">1.4s</td><td class="n">0.6–2.0s</td><td>contact-check, academic-details, menu-flags, pending-count, common-script-variables, links, get-setting</td><td>Tier 1</td></tr>
+        <tr><td class="n">5.5s</td><td class="n">0.73s</td><td><code>module-details</code> (sidebar)</td><td>Tier 1 ke baad</td></tr>
+        <tr><td class="n">6.6s</td><td class="n">0.4–1.4s</td><td>announcements, news, chat, inbox, cart + diary</td><td>Tier 2</td></tr>
+        <tr><td class="n">9.0s</td><td class="n">0.4–3.2s</td><td>get-setting ×6, reserve seat 2.9s, course-selection 3.2s, app-last-activity 1.4s, chat eligibility</td><td>Tier 3</td></tr>
+        <tr><td class="n">13.2s</td><td class="n">2.2s</td><td><code>get-profile-completing-process</code></td><td>Baad mein (popup check)</td></tr>
+        <tr><td class="n">15.4s</td><td class="n bad">15.8s</td><td><code>profile-view-content-new</code></td><td>Baad mein (popup check)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Abhi kya bacha hai</h2>
+  <div class="card">
+    <ul class="find">
+      <li><b>Dev DB aaj dheema tha.</b> Wahi endpoint akele bhi pehle se 30–50% zyada le rahe the (<code>get-student-dashboard</code> 2.1–3.2s → 3.5–3.8s). Upar ke numbers isi din ke hain.</li>
+      <li><b><code>profile-view-content-new</code> ab bhi sabse dheema</b> (akele 11.6–13.2s, load mein 15.8s). Ye page ke 15s baad, sirf "profile complete karo" popup ke check ke liye chalta hai, dashboard ko nahi rokta. Andar ~30 sequential reads hain (academic, parents, extra-curricular, azure...). Aage ka idea: popup check ko sirf zaroori fields wala halka read de.</li>
+      <li><b>Production build yahan nahi naap paaye.</b> Port 3100 pe <code>next start</code> mein kuch calls ke saath session nahi gaya (backend ne login pe bheja), isliye wo numbers chhod diye.</li>
+      <li><b>Commit:</b> ye kaam baad mein commit ho gaya (is-sms "Student New Dashboard Part 92", is-rest-api "Student New Dashboard Part 33").</li>
+    </ul>
+  </div>
+
+  <h2 id="remeasure-27">27 Nov 2026 — "Complete Your Profile" check + aakhri naap</h2>
+  <p class="sub">Local dev · test students Lucas (koi popup field configure nahi) aur Andy (parents section ke 9 fields) · har badlav ke baad JSON pehle wale se milaya. is-rest-api ka kaam "Student New Dashboard Part 33" mein commit ho chuka hai.</p>
+
+  <div class="kpis">
+    <div class="card kpi"><b>0s</b><span>Popup check ab server action nahi, isliye baaki buttons / saves uske peeche nahi rukte (pehle 13–18s)</span></div>
+    <div class="card kpi"><b>~2s</b><span>Popup check jab koi field bharna na ho (pehle 2.2s + 12–16s ka poora profile)</span></div>
+    <div class="card kpi"><b>4.9–6.8s</b><span>Popup check jab fields bharne hon (Andy; pehle 2.2s + 15.8s)</span></div>
+    <div class="card kpi"><b>1.3–2.3s</b><span>Profile ka sirf zaroori section (pehle poora profile 13–14s)</span></div>
+  </div>
+
+  <h2>Kya badla (27 Nov)</h2>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>#</th><th>Badlav</th><th>Kahan</th><th>Asar</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Popup check server action se route handler <code>/api/profile-completing</code> (X-Account header)</td><td>is-sms <code>app/api/profile-completing</code>, <code>useProfileCompletingProcess</code></td><td>Action queue free; jawab wahi <code>{ ok, data }</code></td></tr>
+        <tr><td>2</td><td>Koi field bharna na ho to poora profile nahi padhte</td><td>is-sms <code>fillSavedProfileValues</code></td><td>Lucas: 12–16s bachat</td></tr>
+        <tr><td>3</td><td><code>profile-view-content-new</code> mein optional <code>sections</code>: sirf maange gaye sections bante hain (baaki khaali, index wahi); contact verification + withdrawn / enrolment extras skip. Bina flag sab pehle jaisa.</td><td>is-rest-api <code>DashboardSchoolUtil</code>, <code>DashboardStudentUtil</code>; is-sms <code>loadMyProfileRaw({ sections })</code></td><td>Full JSON same; section 1 = full ka section 1. 13–14s → 3.7–4.3s</td></tr>
+        <tr><td>4</td><td><code>get-profile-completing-process</code>: sab sections ke fields + custom fields 2 queries mein (pehle har section 1 + har field 2)</td><td>is-rest-api <code>getProfileCompletingProcess</code> + 2 DAO</td><td>JSON byte-to-byte same; 3.3–4.7s → 1.8–3.1s</td></tr>
+        <tr><td>5</td><td>Profile mein section list 8 ki jagah 1 baar; student standard + module rights jo bahar padh liye, andar dobara nahi</td><td>is-rest-api <code>getStudentProfileNew</code>, <code>getCustomFieldsForSection</code></td><td>Full + section JSON same; section 1: 4.1–4.4s → 1.3–2.3s</td></tr>
+        <tr><td>—</td><td>Dono popup modal mein duplicate React key (saare parent fields ka id 8) theek</td><td>is-sms <code>K5CompleteProfileModal</code>, <code>CompleteProfileModal</code></td><td>Console error khatam</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Aakhri naap — Andy, dashboard reload (27 Nov)</h2>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Start</th><th>Time</th><th>API</th><th>Group</th></tr></thead>
+      <tbody>
+        <tr><td class="n">2.7s</td><td class="n">0.23s</td><td><code>maintenance-downtime-status</code></td><td>Route handler</td></tr>
+        <tr><td class="n">2.8s</td><td class="n bad">7.7s</td><td><code>get-student-dashboard</code></td><td>Tier 1</td></tr>
+        <tr><td class="n">2.8s</td><td class="n">6.3s</td><td><code>student-academic-performance</code></td><td>Tier 1</td></tr>
+        <tr><td class="n">2.8s</td><td class="n">4.7s</td><td><code>dashboard/student/school-calendar</code></td><td>Tier 1</td></tr>
+        <tr><td class="n">2.8s</td><td class="n">4.2s</td><td><code>additinal-layer-details</code></td><td>Tier 1</td></tr>
+        <tr><td class="n">2.8s</td><td class="n">0.3–3.0s</td><td>dashboard-or-migration, short profile, common-script-variables, contact-check, menu-flags, pending-count, academic-details, links, get-setting</td><td>Tier 1</td></tr>
+        <tr><td class="n">10.5s</td><td class="n">0.79s</td><td><code>module-details</code> (sidebar)</td><td>Tier 1 ke baad</td></tr>
+        <tr><td class="n">11.6s</td><td class="n">0.4–1.6s</td><td>news, cart, announcements, chat, inbox + diary</td><td>Tier 2</td></tr>
+        <tr><td class="n">13.3s</td><td class="n">0.2–2.7s</td><td>get-setting ×6, reserve seat, course-selection, app-last-activity, chat eligibility</td><td>Tier 3</td></tr>
+        <tr><td class="n">17.5s</td><td class="n">2.1s</td><td><code>get-profile-completing-process</code></td><td>Popup check (route)</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Is run mein <code>profile-view-content-new</code> chala hi nahi: Andy ke liye ab completing-process 0 section deta hai (subah 1 section / 9 fields tha). Code wahi hai (aaj sirf "Part 33" ne ye file chhui), to ye DB config / Andy ke data ka badlav hai. Isliye popup check sirf ~2s mein khatam hua.</p>
+  </div>
+
+  <h2>Note</h2>
+  <div class="card">
+    <ul class="find">
+      <li><b>Dev DB ka shor bahut hai.</b> Is run mein <code>get-student-dashboard</code> 7.7s (26 Nov: 4.0s) aur Tier 1 ~8.6s raha; wahi endpoints doosre waqt mein aadhe time mein aaye. Har badlav ka asar isliye <i>same waqt</i> pe pehle/baad naap ke likha hai, poore page ka ek number pakka nahi.</li>
+      <li><b>Bootstrap action aur pehli backend call ke beech ~1.7s</b> (dev mode: action compile + session check). Production build mein ye kam hona chahiye; local par prod naap session ki wajah se nahi ho paaya — staging par naapna hai.</li>
+      <li><b>Abhi bhi bacha:</b> <code>get-student-dashboard</code> (migration file, chhoda gaya), settings memo (~7 get-setting calls, chhota fayda).</li>
+    </ul>
+  </div>
+</main>
+
+<script>
+  // Run 2 data: start ms from navigation start, duration ms, group, API, purpose.
+  const D = [
+    [0, 386, "0", "GET /student (HTML, SSR)", "Page"],
+    [3255, 21604, "b", "api/v1/maintenance-downtime-status", "Maintenance banner (server action #1)"],
+    [25015, 356, "1", "1/api/v1/links", "School links (logo, chat/diary URL)"],
+    [25018, 64, "1", "api/v1/get-setting", "School links setting"],
+    [25030, 5157, "1", "dashboard/additinal-layer-details", "Onboarding gate"],
+    [25031, 2090, "1", "dashboard/contact-check/pending", "Contact check popup"],
+    [25035, 6190, "1", "student/dashboard/get-student-dashboard", "Dashboard details (grade, time zone, roleId)"],
+    [25036, 4604, "1", "student/dashboard/dashboard-or-migration", "Migration / popups flags"],
+    [25037, 3142, "1", "dashboard/parent/student-menu-flags", "Menu flags"],
+    [25037, 3725, "1", "dashboard/parent/student-academic-details", "Academic details"],
+    [25038, 7494, "1", "dashboard/school-calendar", "Today's calendar"],
+    [25041, 3289, "1", "dashboard/pending-assignment-count", "Overdue count"],
+    [25041, 5187, "1", "api/v1/get-user-short-profile", "Name, look, forced password"],
+    [25042, 2747, "1", "api/v1/common-script-variables", "Chat / diary links"],
+    [31236, 1142, "1", "api/v1/module-details", "Sidebar menu (after details)"],
+    [31237, 4474, "1", "dashboard/parent/student-academic-performance", "My Performance (after details)"],
+    [36060, 315, "2", "api/v1/website/get-all-articles", "News"],
+    [36067, 1028, "2", "dashboard/inbox/unread", "Inbox count"],
+    [36068, 311, "2", "dashboard/get-cart-count", "Cart count"],
+    [36068, 733, "2", "dashboard/get-announcement-details", "Announcements"],
+    [36069, 672, "2", "api/v1/chat", "Chat unseen"],
+    [37190, 691, "a", "api/diary/thread/unread-count", "Diary badge (/api/diary)"],
+    [37218, 92, "a", "api/diary/badge-version", "Diary live badge (/api/diary)"],
+    [39396, 454, "3", "api/v1/get-setting", "A setting (server action #4)"],
+    [40111, 2038, "3", "student/dashboard/dashboard-or-migration", "System training (repeat)"],
+    [40114, 1713, "3", "dashboard/eligible-for-ras-for-next-grade", "Reserve a seat"],
+    [40115, 2012, "3", "dashboard/additinal-layer-details", "Outlook reminder (repeat)"],
+    [40115, 160, "3", "api/v1/get-setting", "Feedback setting"],
+    [40118, 183, "3", "api/v1/get-setting", "Feedback setting"],
+    [40119, 245, "3", "api/v1/get-setting", "Feedback setting"],
+    [40120, 136, "3", "api/v1/get-setting", "Feedback setting"],
+    [40121, 317, "3", "api/v1/get-setting", "Feedback setting"],
+    [40127, 246, "3", "api/v1/get-chat-eligibility", "Need help"],
+    [40128, 1374, "3", "{uniqueId}/api/v1/dashboard/app-last-activity", "App install prompt"],
+    [42155, 1587, "3", "dashboard/student-course-selection-content-theme2", "System training (after migration)"],
+    [45068, 9930, "b", "student/dashboard/get-student-dashboard", "Details again (repeat)"],
+  ];
+  const GROUP = { "0": ["tg0", "Page"], b: ["tgb", "Maintenance / repeat"], "1": ["tg1", "Tier 1"], "2": ["tg2", "Tier 2"], a: ["tga", "Diary"], "3": ["tg3", "Tier 3"] };
+  const COLOR = { "0": "var(--t0)", b: "var(--bad)", "1": "var(--t1)", "2": "var(--t2)", a: "var(--api)", "3": "var(--t3)" };
+  const MAX = 56000;
+  const g = document.getElementById("gantt");
+  const sec = (ms) => (ms / 1000).toFixed(ms < 10000 ? 2 : 1) + "s";
+  let last = null;
+  const SECTIONS = { "0": "Page", b: "", "1": "Tier 1 bootstrap", "2": "Tier 2 badges", a: "Diary (/api)", "3": "Tier 3 / baad mein" };
+  for (const [st, ms, grp, api] of D) {
+    if (grp !== last && SECTIONS[grp]) {
+      const h = document.createElement("div");
+      h.className = "gsec";
+      h.textContent = SECTIONS[grp];
+      g.appendChild(h);
+    }
+    last = grp;
+    const row = document.createElement("div");
+    row.className = "grow";
+    const left = (st / MAX) * 100;
+    const width = Math.max((ms / MAX) * 100, 0.25);
+    row.innerHTML = `<div class="glabel" title="${api}">${api}</div><div class="gtrack"><div class="gbar" style="left:${left}%;width:${width}%;background:${COLOR[grp]}"><span>${sec(ms)}</span></div></div>`;
+    g.appendChild(row);
+  }
+  const axis = document.createElement("div");
+  axis.className = "gaxis";
+  axis.innerHTML = `<div></div><div class="gticks">${[0, 10, 20, 30, 40, 50].map((s) => `<i style="left:${(s * 1000 / MAX) * 100}%">${s}s</i>`).join("")}</div>`;
+  g.appendChild(axis);
+
+  const tb = document.getElementById("rows");
+  for (const [st, ms, grp, api, why] of D) {
+    const [cls, name] = GROUP[grp];
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="n">${sec(st)}</td><td class="n ${ms > 4000 ? "bad" : ""}">${sec(ms)}</td><td><code>${api}</code></td><td>${why}</td><td><span class="tag ${cls}">${name}</span></td>`;
+    tb.appendChild(tr);
+  }
+</script>
+</body>
+</html>

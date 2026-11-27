@@ -58,3 +58,7 @@ async function getPaymentInitResponse(gateway, uniqueUuid, paramsString, schoolU
 export async function getStripePaymentInit(uniqueUuid, paramsString, schoolUUID) {
   return getPaymentInitResponse("stripe", uniqueUuid, paramsString, schoolUUID);
 }
+
+export async function getAirwallexPaymentInit(uniqueUuid, paramsString, schoolUUID) {
+  return getPaymentInitResponse("airwallex", uniqueUuid, paramsString, schoolUUID);
+}

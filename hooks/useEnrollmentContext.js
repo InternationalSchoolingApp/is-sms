@@ -3,7 +3,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "@/components/providers/AuthSessionProvider";
 import { useQuery } from "@tanstack/react-query";
-import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
+import { getSchoolSettingsLinks, getSchoolSettingsTechnical } from "@/utils/schoolSettings";
+import { extractRootCss } from "@/utils/schoolColorTheme";
 import { getEnrollmentProcess, getPublicSchoolInfo, isEnrollmentViaNextjs } from "@/services/studentSignupApi";
 import { legacyEnrollmentProcessUrl } from "@/utils/backendOrigin";
 import { trackRequest } from "@/utils/loaderStore";
@@ -44,6 +45,7 @@ const EnrollmentContext = createContext(null);
 function useResolveEnrollmentContext() {
   const { data: session, status } = useSession();
   const [logoUrl, setLogoUrl] = useState(null);
+  const [rootcss, setRootcss] = useState("");
   const [whatsAppNumber, setWhatsAppNumber] = useState(undefined);
   const authenticated = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
   const prefill = useStudentDetailsPrefill({
@@ -74,15 +76,15 @@ function useResolveEnrollmentContext() {
   const viaLegacyFlow = enrollmentViaNextjs.data === false;
 
   const enrollmentProcess = useQuery({
-    queryKey: ["enrollment-process", session?.schoolUUID, session?.uniqueId],
+    queryKey: ["enrollment-process", session?.schoolUUID, session?.userId],
     queryFn: () => {
       recordApiAttempt(
         "getEnrollmentProcess",
-        `${session.schoolUUID}/api/v1/student/enrollment/process/${session.uniqueId}`
+        `${session.schoolUUID}/api/v1/student/enrollment/process/${session.userId}`
       );
-      return getEnrollmentProcess(session.schoolUUID, session.uniqueId);
+      return getEnrollmentProcess(session.schoolUUID, session.userId);
     },
-    enabled: Boolean(authenticated && session?.uniqueId && !viaLegacyFlow),
+    enabled: Boolean(authenticated && session?.userId && !viaLegacyFlow),
     staleTime: Infinity,
     gcTime: Infinity,
     refetchOnWindowFocus: false,
@@ -130,6 +132,21 @@ function useResolveEnrollmentContext() {
     };
   }, [session?.schoolNumericId]);
 
+  // Per-school color theme (rootcss custom-properties block) — same schoolNumericId
+  // the logo fetch above uses, separate endpoint/entity (SchoolSettingsTechnical).
+  useEffect(() => {
+    if (!session?.schoolNumericId) return;
+    let cancelled = false;
+    trackRequest(() => getSchoolSettingsTechnical(session.schoolNumericId))
+      .then((technical) => {
+        if (!cancelled) setRootcss(extractRootCss(technical?.parentColor));
+      })
+      .catch((err) => console.error("School color theme fetch failed:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.schoolNumericId]);
+
   // Support number for the mobile action bar's WhatsApp button (same public-info call the landing page uses).
   useEffect(() => {
     if (!session?.schoolUUID) return;
@@ -146,7 +163,7 @@ function useResolveEnrollmentContext() {
     };
   }, [session?.schoolUUID]);
 
-  const processReady = !session?.uniqueId || enrollmentProcess.isFetched;
+  const processReady = !session?.userId || enrollmentProcess.isFetched;
   // Never report ready while the legacy redirect above is in flight — the wizard
   // would otherwise flash a step before the browser leaves the page.
   // Same for the post-enrollment redirect, so the step never fires its own calls
@@ -186,14 +203,14 @@ function useResolveEnrollmentContext() {
   // not just the review/payment screen) and polls enrollment-stage-status every 3 minutes.
   // Mounted once here instead of per-step so a student finishing enrollment+payment in one
   // browser (another device/tab, same account) gets this tab redirected automatically — the
-  // status is DB-authoritative per uniqueId (see SignupStudentUtil#signupStageStatus), not
+  // status is DB-authoritative per studentUserId (see SignupStudentUtil#signupStageStatus), not
   // tied to this browser's own session/cookies. Skipped for confirmed custom plans: their
   // stage-status redirectUri points back into this same wizard, not the dashboard, so polling
   // it would just bounce the student in a loop (same exception Stage 4 carved out before this
   // was centralized here).
   const stageStatus = useSignupStageStatusPoll({
     context,
-    uniqueId: session?.uniqueId,
+    studentUserId: session?.userId,
     enabled: ready && !context?.customPaymentEnabled,
   });
   const stageStatusData = stageStatus.data;
@@ -206,7 +223,7 @@ function useResolveEnrollmentContext() {
     }
   }, [stageStatusData, session?.schoolUUID]);
 
-  return { status, session, context, logoUrl, ready };
+  return { status, session, context, logoUrl, rootcss, ready };
 }
 
 /**

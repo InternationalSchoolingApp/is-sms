@@ -8,13 +8,13 @@ import Image from "next/image";
  * that desktop spacing (e.g. "md:mt-10"), and the WhatsApp icon is hidden there because
  * the shell shows its own floating icon and fixed footer.
  */
-export function MobileActionBar({ context, className = "", children }) {
+export function MobileActionBar({ context, className = "", embedded = false, children }) {
   return (
     // pb-[env(safe-area-inset-bottom)]: once the mobile browser's URL bar auto-hides on scroll, this
     // fixed bar sits flush against the real screen edge — on iOS/Android that's the home-indicator /
     // gesture-nav strip, so without this inset the buttons end up glued right against it.
     <div
-      className={`fixed inset-x-0 bottom-0 z-20 bg-white pb-[env(safe-area-inset-bottom)] md:static md:z-auto md:bg-transparent md:pb-0 ${className}`}
+      className={`${embedded ? "relative mt-6 bg-transparent md:mt-10" : "fixed inset-x-0 bottom-0 z-20 bg-white pb-[env(safe-area-inset-bottom)] md:static md:z-auto md:bg-transparent md:pb-0"} ${className}`}
     >
       <div className="flex items-center justify-between gap-3 px-4 py-2 max-[367px]:gap-2 max-[367px]:px-2 justify-center md:p-0">
         {/* {context?.whatsAppNumber ? (
