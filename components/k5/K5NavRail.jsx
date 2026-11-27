@@ -82,6 +82,13 @@ export function K5NavRail({ menu, loading = false, open, onOpen, onClose, isPreK
   const items = useMemo(() => {
     const rank = new Map(order.map((key, i) => [key, i]));
     const sorted = [...menu].sort((a, b) => (rank.get(a.key) ?? order.length + menu.indexOf(a)) - (rank.get(b.key) ?? order.length + menu.indexOf(b)));
+    // Nobody has dragged the menu yet (a fresh login on this browser): My Dashboard comes first, then My Classes, like the mockups'
+    // nav (navIds: lms, dash, teacher, book...). The database lists My Classes first, so without this the order flips after every
+    // new login. A student's own dragged order (saved above) always wins.
+    if (order.length === 0) {
+      const home = sorted.findIndex((item) => item.icon === "dashboard");
+      if (home > 0) sorted.unshift(sorted.splice(home, 1)[0]);
+    }
     if (!isPreK) return sorted;
     const primary = sorted.filter((item) => PREK_PRIMARY_ICONS.has(item.icon));
     const rest = sorted.filter((item) => !PREK_PRIMARY_ICONS.has(item.icon));
