@@ -243,3 +243,57 @@ export async function getStudentBookedClasses({ subjectId, studentStandardId, da
     return null;
   }
 }
+
+/**
+ * Student cancels their own 1:1 class — POST /dashboard/student-class-cancel.
+ * Before the cut-off the class is given back; after it the backend asks for confirmLate and the class lapses.
+ * Returns { status, message, code?, cutoffHours?, countReturned? } or null.
+ */
+export async function cancelStudentClass({ meetingId, reason, confirmLate = false }) {
+  const me = await identity();
+  if (!hasBackendOrigin() || !me || !meetingId) return null;
+  try {
+    return await callBackend(me.schoolUUID, "/dashboard/student-class-cancel", { meetingId, reason, confirmLate });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Demand-based booking (pick a date and time first) — is-rest-api DemandBookingController.
+ * options: is it on, the week's days, time-picker range, earliest bookable time, names.
+ * request: saves what the student asked for and answers AVAILABLE / NEAREST (with slots) / NONE.
+ * booked: links a confirmed booking to the pop-up's last open request.
+ */
+export async function getDemandBookingOptions({ studentStandardId, subjectId, teacherUserId }) {
+  const me = await identity();
+  if (!hasBackendOrigin() || !me || !studentStandardId) return null;
+  if (!(await isOwnStudentStandard(studentStandardId))) return null;
+  try {
+    return await callBackend(me.schoolUUID, "/dashboard/demand-booking/options", { studentStandardId, subjectId, teacherUserId });
+  } catch {
+    return null;
+  }
+}
+
+export async function requestDemandSlot({ studentStandardId, subjectId, teacherUserId, date, time, sessionId }) {
+  const me = await identity();
+  if (!hasBackendOrigin() || !me || !studentStandardId) return null;
+  if (!(await isOwnStudentStandard(studentStandardId))) return null;
+  try {
+    return await callBackend(me.schoolUUID, "/dashboard/demand-booking/request", { studentStandardId, subjectId, teacherUserId, date, time, sessionId });
+  } catch {
+    return null;
+  }
+}
+
+export async function linkDemandBooking({ studentStandardId, sessionId, meetingStart }) {
+  const me = await identity();
+  if (!hasBackendOrigin() || !me || !studentStandardId || !sessionId || !meetingStart) return null;
+  if (!(await isOwnStudentStandard(studentStandardId))) return null;
+  try {
+    return await callBackend(me.schoolUUID, "/dashboard/demand-booking/booked", { studentStandardId, sessionId, meetingStart });
+  } catch {
+    return null;
+  }
+}

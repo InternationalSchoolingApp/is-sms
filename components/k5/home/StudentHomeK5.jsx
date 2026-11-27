@@ -351,7 +351,7 @@ function K5Planner({ timezone, dashboard = false }) {
           picoSay(`Okay! Your ${name ? `${name} ` : ""}class is still live. Tap the green Join class button when you are ready.`, "plan", { intro: true });
         }}
       />
-      {detailEvent && <EventDetailModal event={detailEvent} courseRegistry={model.courseRegistry} onClose={() => setDetailEvent(null)} />}
+      {detailEvent && <EventDetailModal event={detailEvent} courseRegistry={model.courseRegistry} now={now} onClose={() => setDetailEvent(null)} />}
       {joiningEvent && (
         <JoinClassModal event={joiningEvent} schoolUUID={context?.schoolUUID} courseRegistry={model.courseRegistry} onClose={() => setJoiningEvent(null)} />
       )}

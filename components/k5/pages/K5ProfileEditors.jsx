@@ -671,7 +671,7 @@ export function ConfirmDialog({ confirm }) {
         </p>
         <div className="flex flex-wrap justify-end gap-2.5">
           <button type="button" onClick={confirm.cancel} className="min-h-12 cursor-pointer rounded-full border-[3px] border-k5-line bg-k5-card px-5 font-k5-display text-[17px] font-semibold text-k5-ink">
-            Cancel
+            {confirm.cancelLabel || "Cancel"}
           </button>
           <button
             ref={okRef}

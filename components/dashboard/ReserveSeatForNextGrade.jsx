@@ -428,7 +428,7 @@ export function ReserveSeatForNextGrade() {
           isK5={isK5}
         />
       )}
-      {fee && <ReserveFeeDialog open onOpenChange={(open) => !open && setFee(null)} details={fee} busy={checkout.preparing} onPay={() => checkout.start(fee.userPaymentDetailsId)} isK5={isK5} />}
+      {fee && <ReserveFeeDialog open={!checkout.picker} onOpenChange={(open) => !open && setFee(null)} details={fee} busy={checkout.preparing} onPay={() => checkout.start(fee.userPaymentDetailsId)} isK5={isK5} />}
       <CheckoutExtraDialogs checkout={checkout} />
       <PaymentGatewayPickerModal
         open={Boolean(checkout.picker)}

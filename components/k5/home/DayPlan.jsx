@@ -55,7 +55,7 @@ export function ClassCard({ event, clue, isPreK, onJoin, onOpen }) {
   return (
     <article
       data-pin={status === "live" ? "live" : undefined}
-      className={`k5h-art flex flex-wrap items-center gap-4 rounded-[24px] px-[18px] py-3.5 k5-button-motion ${status === "live" ? "k5-live-pill" : ""} ${
+      className={`k5h-art flex flex-wrap items-center gap-4 rounded-[24px] px-[18px] py-3.5 k5-lift ${status === "live" ? "k5-live-pill" : ""} ${
         clue === CLUE_FOR_STATUS[status] ? CLUE_RING : ""
       }`}
       style={CARD_STATE[status]}
@@ -153,7 +153,7 @@ function Assignments({ items, clue, onOpen }) {
           key={a.id}
           type="button"
           onClick={() => onOpen(a)}
-          className="flex min-h-11 cursor-pointer flex-wrap items-center gap-3 rounded-2xl border-none bg-k5-card px-3 py-2 text-left"
+          className="k5-lift flex min-h-11 cursor-pointer flex-wrap items-center gap-3 rounded-2xl border-none bg-k5-card px-3 py-2 text-left"
         >
           <span className="flex min-w-0 flex-1 flex-col">
             <span className="text-base font-black text-k5-ink">{a.title || a.eventTitle || "Assignment"}</span>

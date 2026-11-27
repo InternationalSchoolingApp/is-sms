@@ -16,7 +16,8 @@ import { getAccountSession, serviceKeyHeaders } from "@/lib/auth/session";
  * GET ?url=<link>  ->  200 { url }  |  401 { sessionExpired }  |  400/502 { message }
  */
 
-const LINK_PATH = /^\/([A-Za-z0-9-]+)\/lms-platform\/redirect-user-to-LMS\/([A-Za-z0-9-]+)$/;
+// A demo (dummy) student's header LMS switch uses the backend's dummy redirect instead, with the counselor's dummyLmsUserId.
+const LINK_PATH = /^\/([A-Za-z0-9-]+)\/lms-platform\/redirect-(user|dummy-user)-to-LMS\/([A-Za-z0-9-]+)$/;
 const reply = (status, body) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
 const FAILED = "The course could not be opened right now. Please try again.";
 
@@ -26,20 +27,30 @@ export async function GET(request) {
 
   let link;
   try {
-    link = new URL(String(request.nextUrl.searchParams.get("url") || ""));
+    // Also a bare path ("/school/lms-platform/..."): only the path and query are ever used.
+    link = new URL(String(request.nextUrl.searchParams.get("url") || ""), "http://link.invalid");
   } catch {
     return reply(400, { message: "Course content is not available." });
   }
   const match = LINK_PATH.exec(link.pathname);
   const lmsId = link.searchParams.get("lmsId");
-  // Own school and own unique id only; lmsId is a number.
-  if (!match || match[1] !== session.schoolUUID || match[2] !== session.uniqueId || (lmsId && !/^\d+$/.test(lmsId))) {
+  const dummy = match?.[2] === "dummy-user";
+  const dummyLmsUserId = link.searchParams.get("dummyLmsUserId") || "";
+  // Own school and own unique id only; lmsId is a number; a dummy link carries a plain dummy LMS user id.
+  if (
+    !match ||
+    match[1] !== session.schoolUUID ||
+    match[3] !== session.uniqueId ||
+    (lmsId && !/^\d+$/.test(lmsId)) ||
+    (dummy && !/^[A-Za-z0-9_.@-]{1,100}$/.test(dummyLmsUserId))
+  ) {
     return reply(400, { message: "Course content is not available." });
   }
 
   const backend = String(session.backend || "").replace(/\/+$/, "");
   if (!backend) return reply(502, { message: FAILED });
-  const target = `${backend}/${match[1]}/lms-platform/redirect-user-to-LMS/${match[2]}${lmsId ? `?lmsId=${lmsId}` : ""}`;
+  const query = dummy ? `?dummyLmsUserId=${encodeURIComponent(dummyLmsUserId)}` : lmsId ? `?lmsId=${lmsId}` : "";
+  const target = `${backend}/${match[1]}/lms-platform/redirect-${dummy ? "dummy-user" : "user"}-to-LMS/${match[3]}${query}`;
 
   let response;
   try {

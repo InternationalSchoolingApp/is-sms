@@ -6,6 +6,7 @@ import { addDays, addMonths, addWeeks, endOfMonth, format, startOfDay, startOfMo
 import { toZonedTime, fromZonedTime, formatInTimeZone } from "date-fns-tz";
 import { getLiveClassAttendanceStatus, getSchoolCalendar } from "@/services/dashboardApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { useMustReEnroll } from "@/hooks/useReEnrollmentEntry";
 import { viaTier1 } from "@/utils/dashboardBootstrap";
 import {
   DEFAULT_CALENDAR_FILTERS,
@@ -142,7 +143,10 @@ export function useStudentCalendar({ schoolUUID, userId, timezone: timezoneOptio
 
   // Dummy (demo) student mode: legacy patchDummySchoolCalendar's generated classes/assignments/holidays/activities.
   const dummy = useDummyStudent();
-  const enabled = Boolean(schoolUUID && userId && dummy.settled);
+  // Re-enrollment still in progress (migration partial entry): the current record is the finished grade, whose batch classes
+  // the calendar API would still return. Legacy never showed these students a calendar, so nothing is asked for.
+  const mustReEnroll = useMustReEnroll({ schoolUUID, userId });
+  const enabled = Boolean(schoolUUID && userId && dummy.settled && mustReEnroll === false);
   const results = useQueries({
     queries: wanted.map((range) => ({
       queryKey: ["student-school-calendar", schoolUUID, userId, range.startDate, range.endDate, timezone, dummy.key],
@@ -184,7 +188,14 @@ export function useStudentCalendar({ schoolUUID, userId, timezone: timezoneOptio
       const d = r.data;
       if (!d) return;
       anyData = true;
-      (d.event || []).forEach((event) => byKey.set([event.id ?? event.eventId ?? "", event.start ?? event.dueDate ?? event.paceDate ?? "", event.eventType ?? ""].join("|"), event));
+      // A dummy event's id already names its day ("dummy-class-2026-11-25"), so the id alone is its key: the same one asked for
+      // again (another window, a rebuilt dummy student) with a different start / type replaces the old copy, never adds one.
+      (d.event || []).forEach((event) =>
+        byKey.set(
+          String(event.id ?? "").startsWith("dummy-") ? event.id : [event.id ?? event.eventId ?? "", event.start ?? event.dueDate ?? event.paceDate ?? "", event.eventType ?? ""].join("|"),
+          event,
+        ),
+      );
       (d.holidays || []).forEach((h) => holidays.add(h));
       if (courseDetails === undefined && d.courseDetails) courseDetails = d.courseDetails;
     });
@@ -193,7 +204,7 @@ export function useStudentCalendar({ schoolUUID, userId, timezone: timezoneOptio
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signature]);
   // Loading until the days the view draws are in (nothing to load without a signed-in student).
-  const isLoading = !dummy.settled || (lazy ? enabled && !coveredBy(loadedRanges, need.must[0], need.must[1]) : Boolean(results[0]?.isLoading));
+  const isLoading = !dummy.settled || (Boolean(schoolUUID && userId) && mustReEnroll === null) || (lazy ? enabled && !coveredBy(loadedRanges, need.must[0], need.must[1]) : Boolean(results[0]?.isLoading));
   const isError = isLoading && results.length > 0 && results.every((r) => r.isError);
 
   const baseEvents = useMemo(

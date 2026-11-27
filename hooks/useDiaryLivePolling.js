@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { getDiaryBadgeVersion } from "@/utils/diaryClient";
+import { getDiaryBadgeVersion } from "@/utils/diaryClient"; 
 
 /*
  * Live diary updates by polling - legacy parentSchoolDiary.js diaryRealtimeStart / diaryRealtimePoll:
