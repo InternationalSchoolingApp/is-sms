@@ -224,7 +224,61 @@
       <li><b>Dev DB aaj dheema tha.</b> Wahi endpoint akele bhi pehle se 30–50% zyada le rahe the (<code>get-student-dashboard</code> 2.1–3.2s → 3.5–3.8s). Upar ke numbers isi din ke hain.</li>
       <li><b><code>profile-view-content-new</code> ab bhi sabse dheema</b> (akele 11.6–13.2s, load mein 15.8s). Ye page ke 15s baad, sirf "profile complete karo" popup ke check ke liye chalta hai, dashboard ko nahi rokta. Andar ~30 sequential reads hain (academic, parents, extra-curricular, azure...). Aage ka idea: popup check ko sirf zaroori fields wala halka read de.</li>
       <li><b>Production build yahan nahi naap paaye.</b> Port 3100 pe <code>next start</code> mein kuch calls ke saath session nahi gaya (backend ne login pe bheja), isliye wo numbers chhod diye.</li>
-      <li><b>Kuch commit nahi hua.</b> is-sms aur is-rest-api dono ke badlav uncommitted hain.</li>
+      <li><b>Commit:</b> ye kaam baad mein commit ho gaya (is-sms "Student New Dashboard Part 92", is-rest-api "Student New Dashboard Part 33").</li>
+    </ul>
+  </div>
+
+  <h2 id="remeasure-27">27 Nov 2026 — "Complete Your Profile" check + aakhri naap</h2>
+  <p class="sub">Local dev · test students Lucas (koi popup field configure nahi) aur Andy (parents section ke 9 fields) · har badlav ke baad JSON pehle wale se milaya. is-rest-api ka kaam "Student New Dashboard Part 33" mein commit ho chuka hai.</p>
+
+  <div class="kpis">
+    <div class="card kpi"><b>0s</b><span>Popup check ab server action nahi, isliye baaki buttons / saves uske peeche nahi rukte (pehle 13–18s)</span></div>
+    <div class="card kpi"><b>~2s</b><span>Popup check jab koi field bharna na ho (pehle 2.2s + 12–16s ka poora profile)</span></div>
+    <div class="card kpi"><b>4.9–6.8s</b><span>Popup check jab fields bharne hon (Andy; pehle 2.2s + 15.8s)</span></div>
+    <div class="card kpi"><b>1.3–2.3s</b><span>Profile ka sirf zaroori section (pehle poora profile 13–14s)</span></div>
+  </div>
+
+  <h2>Kya badla (27 Nov)</h2>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>#</th><th>Badlav</th><th>Kahan</th><th>Asar</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Popup check server action se route handler <code>/api/profile-completing</code> (X-Account header)</td><td>is-sms <code>app/api/profile-completing</code>, <code>useProfileCompletingProcess</code></td><td>Action queue free; jawab wahi <code>{ ok, data }</code></td></tr>
+        <tr><td>2</td><td>Koi field bharna na ho to poora profile nahi padhte</td><td>is-sms <code>fillSavedProfileValues</code></td><td>Lucas: 12–16s bachat</td></tr>
+        <tr><td>3</td><td><code>profile-view-content-new</code> mein optional <code>sections</code>: sirf maange gaye sections bante hain (baaki khaali, index wahi); contact verification + withdrawn / enrolment extras skip. Bina flag sab pehle jaisa.</td><td>is-rest-api <code>DashboardSchoolUtil</code>, <code>DashboardStudentUtil</code>; is-sms <code>loadMyProfileRaw({ sections })</code></td><td>Full JSON same; section 1 = full ka section 1. 13–14s → 3.7–4.3s</td></tr>
+        <tr><td>4</td><td><code>get-profile-completing-process</code>: sab sections ke fields + custom fields 2 queries mein (pehle har section 1 + har field 2)</td><td>is-rest-api <code>getProfileCompletingProcess</code> + 2 DAO</td><td>JSON byte-to-byte same; 3.3–4.7s → 1.8–3.1s</td></tr>
+        <tr><td>5</td><td>Profile mein section list 8 ki jagah 1 baar; student standard + module rights jo bahar padh liye, andar dobara nahi</td><td>is-rest-api <code>getStudentProfileNew</code>, <code>getCustomFieldsForSection</code></td><td>Full + section JSON same; section 1: 4.1–4.4s → 1.3–2.3s</td></tr>
+        <tr><td>—</td><td>Dono popup modal mein duplicate React key (saare parent fields ka id 8) theek</td><td>is-sms <code>K5CompleteProfileModal</code>, <code>CompleteProfileModal</code></td><td>Console error khatam</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Aakhri naap — Andy, dashboard reload (27 Nov)</h2>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Start</th><th>Time</th><th>API</th><th>Group</th></tr></thead>
+      <tbody>
+        <tr><td class="n">2.7s</td><td class="n">0.23s</td><td><code>maintenance-downtime-status</code></td><td>Route handler</td></tr>
+        <tr><td class="n">2.8s</td><td class="n bad">7.7s</td><td><code>get-student-dashboard</code></td><td>Tier 1</td></tr>
+        <tr><td class="n">2.8s</td><td class="n">6.3s</td><td><code>student-academic-performance</code></td><td>Tier 1</td></tr>
+        <tr><td class="n">2.8s</td><td class="n">4.7s</td><td><code>dashboard/student/school-calendar</code></td><td>Tier 1</td></tr>
+        <tr><td class="n">2.8s</td><td class="n">4.2s</td><td><code>additinal-layer-details</code></td><td>Tier 1</td></tr>
+        <tr><td class="n">2.8s</td><td class="n">0.3–3.0s</td><td>dashboard-or-migration, short profile, common-script-variables, contact-check, menu-flags, pending-count, academic-details, links, get-setting</td><td>Tier 1</td></tr>
+        <tr><td class="n">10.5s</td><td class="n">0.79s</td><td><code>module-details</code> (sidebar)</td><td>Tier 1 ke baad</td></tr>
+        <tr><td class="n">11.6s</td><td class="n">0.4–1.6s</td><td>news, cart, announcements, chat, inbox + diary</td><td>Tier 2</td></tr>
+        <tr><td class="n">13.3s</td><td class="n">0.2–2.7s</td><td>get-setting ×6, reserve seat, course-selection, app-last-activity, chat eligibility</td><td>Tier 3</td></tr>
+        <tr><td class="n">17.5s</td><td class="n">2.1s</td><td><code>get-profile-completing-process</code></td><td>Popup check (route)</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Is run mein <code>profile-view-content-new</code> chala hi nahi: Andy ke liye ab completing-process 0 section deta hai (subah 1 section / 9 fields tha). Code wahi hai (aaj sirf "Part 33" ne ye file chhui), to ye DB config / Andy ke data ka badlav hai. Isliye popup check sirf ~2s mein khatam hua.</p>
+  </div>
+
+  <h2>Note</h2>
+  <div class="card">
+    <ul class="find">
+      <li><b>Dev DB ka shor bahut hai.</b> Is run mein <code>get-student-dashboard</code> 7.7s (26 Nov: 4.0s) aur Tier 1 ~8.6s raha; wahi endpoints doosre waqt mein aadhe time mein aaye. Har badlav ka asar isliye <i>same waqt</i> pe pehle/baad naap ke likha hai, poore page ka ek number pakka nahi.</li>
+      <li><b>Bootstrap action aur pehli backend call ke beech ~1.7s</b> (dev mode: action compile + session check). Production build mein ye kam hona chahiye; local par prod naap session ki wajah se nahi ho paaya — staging par naapna hai.</li>
+      <li><b>Abhi bhi bacha:</b> <code>get-student-dashboard</code> (migration file, chhoda gaya), settings memo (~7 get-setting calls, chhota fayda).</li>
     </ul>
   </div>
 </main>

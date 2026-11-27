@@ -8,7 +8,7 @@ import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 import { useSpeech } from "@/components/k5/pico/useSpeech";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useChristmas } from "@/components/k5/christmas/ChristmasProvider";
-import { BUDDIES, voiceOf } from "@/constant/appearance";
+import { BUDDIES, buddyNameOf, voiceOf } from "@/constant/appearance";
 import { PICO_SAY_EVENT, usePicoLive } from "@/components/k5/pico/picoEvents";
 import { HOME_MODULE, NO_MODULE_TEXT, isClubModule, isLanguageClub, picoModuleFor, picoWelcomeText } from "@/constant/picoModules";
 import { TOUR_GET_APP_KEY, hasPicoModuleCookie, hasPicoWelcomeCookie, setPicoModuleCookie, setPicoWelcomeCookie } from "@/utils/picoCookies";
@@ -194,7 +194,8 @@ export function PicoGuide({ userId, firstName, schoolName, home = true, welcomeE
   useEffect(() => {
     quietRef.current = quiet;
   }, [quiet]);
-  const buddy = BUDDIES[preferences.buddy] || BUDDIES.pico;
+  // The student can rename the buddy (Make it yours > Your buddy's name): every line the buddy says uses that name.
+  const buddy = { ...(BUDDIES[preferences.buddy] || BUDDIES.pico), name: buddyNameOf(preferences) };
   const pageSegment = pathname.split("/").filter(Boolean).pop();
   // A student's first visit to one of these pages is a short tour of its own: the welcome, then what the page is for (2 steps).
   const tourPage = !home && welcome && WELCOME_TOUR_PAGES.has(pageSegment) ? picoModuleFor(pageSegment) : null;

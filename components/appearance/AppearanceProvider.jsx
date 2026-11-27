@@ -174,6 +174,17 @@ export function AppearanceProvider({ scope = "k5", userId, schoolUUID, policy = 
     };
   }, [preferences, allow, key, status, systemDark, systemReduced, save, defaults, unsaved, serverReady]);
 
+  // "Pick your pointer": the arrow is app/pointer.css, keyed on <html data-pointer> so dialogs and lists outside the shell follow it too.
+  const pointer = preferences.pointer;
+  useEffect(() => {
+    if (!key || serverReady === false || !pointer || pointer === "normal") return undefined;
+    const root = document.documentElement;
+    root.dataset.pointer = pointer;
+    return () => {
+      delete root.dataset.pointer;
+    };
+  }, [key, serverReady, pointer]);
+
   const isDark = value.isDark;
   useEffect(() => {
     if (!key || serverReady === false) return;

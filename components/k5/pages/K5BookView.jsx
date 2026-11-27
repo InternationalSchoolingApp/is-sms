@@ -4,13 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { addDays, format, isValid, startOfDay, startOfWeek } from "date-fns";
-import { Check, ChevronDown, ChevronLeft, Info, Volume2 } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, Info, Volume2, VolumeX } from "lucide-react";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { K5_CARD, SubjectIcon } from "@/components/k5/home/k5Bits";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 import { picoSay } from "@/components/k5/pico/picoEvents";
 import { useSpeech } from "@/components/k5/pico/useSpeech";
-import { BUDDIES } from "@/constant/appearance";
+import { buddyNameOf } from "@/constant/appearance";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useK5CourseColors } from "@/hooks/useK5CourseColors";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
@@ -278,8 +278,8 @@ function BookPageSkeleton() {
  */
 function BuddyStrip({ say, step }) {
   const { preferences } = useAppearance();
-  const { speak } = useSpeech();
-  const buddy = BUDDIES[preferences.buddy] || BUDDIES.pico;
+  const { speak, stop, speaking } = useSpeech();
+  const buddyName = buddyNameOf(preferences);
   const shownStep = useRef(step);
   useEffect(() => {
     if (shownStep.current === step) return;
@@ -292,16 +292,18 @@ function BuddyStrip({ say, step }) {
     <div role="status" className="flex items-center gap-3 rounded-[22px] bg-k5-vt py-2 pl-2 pr-2.5">
       <PicoMascot buddy={preferences.buddy} width={48} full={false} />
       <p className="m-0 min-w-0 flex-1 font-k5-display text-[19px] font-medium leading-[1.3]">
-        <span className="font-semibold text-[var(--k5-vX)]">{buddy.name}: </span>
+        <span className="font-semibold text-[var(--k5-vX)]">{buddyName}: </span>
         {say}
       </p>
       <button
         type="button"
-        onClick={() => speak(say, { force: true })}
-        aria-label="Hear it"
+        onClick={() => (speaking ? stop() : speak(say, { force: true }))}
+        aria-pressed={speaking}
+        aria-label={speaking ? "Mute" : "Hear it"}
+        title={speaking ? "Mute" : "Hear it"}
         className="k5h-b-bud-btn flex h-11 w-11 flex-none cursor-pointer items-center justify-center rounded-full border-[3px] border-k5-line bg-k5-card text-k5-acx"
       >
-        <Volume2 className="h-5 w-5" aria-hidden="true" />
+        {speaking ? <Volume2 className="h-5 w-5" aria-hidden="true" /> : <VolumeX className="h-5 w-5" aria-hidden="true" />}
       </button>
     </div>
   );

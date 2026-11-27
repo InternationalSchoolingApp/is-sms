@@ -1564,36 +1564,35 @@
   }
 }
 
-/* Cloudy (or foggy): white clouds drift behind the strip, so the white date would vanish - the date goes dark like the clock and the weather. */
-.hstrip[data-scene="cloud"] .hs-date .hs-d1,
-.hstrip[data-scene="cloud"] .hs-date .hs-d2 {
-  color: #1e2242;
-  text-shadow: none;
-}
-.hstrip[data-scene="cloud"] .hs-date .hs-cal {
-  stroke: #1e2242;
-}
-.hstrip[data-scene="cloud"] .hs-date .hs-cal g {
-  fill: #1e2242;
-}
-
-/* Phone: the date is black and a little smaller (desktop keeps the mockup white). */
+/* Phone: the date is a little smaller (white like the weather beside it, on the same glass card - the mockup's own colours). */
 @media (max-width: 760px) {
-  .hs-date .hs-d1,
-  .hs-date .hs-d2 {
-    color: #000000;
-    text-shadow: none;
-  }
   .hs-date .hs-d2 {
     font-size: 14px !important;
   }
 }
 
 /* Hero container queries (the hero is narrower than the viewport beside the nav): the mockup's own rules. */
-@container hero (max-width: 640px){.hero-greet h1{font-size:26px!important;line-height:31px!important}.hero-greet .hero-sun{width:58px!important;height:58px!important;margin:-12px -10px -14px -14px!important}.hero-greet p{font-size:15px!important}}
+@container hero (max-width: 640px){.hero-greet h1{font-size:26px!important;line-height:31px!important}.hero-greet .hero-sun:not(.hero-sun-sm){width:58px!important;height:58px!important;margin:-13px -11px -14px -6px!important}.hero-greet p{font-size:15px!important}}
 @container hero (max-width: 640px){.hstrip{min-height:80px;padding:10px 8px}.hs-sec{padding:0 10px;gap:9px}.hs-d2{font-size:17px}.hs-d1{font-size:13px}.hs-time{height:52px;padding:0 18px;font-size:21px}.hs-sun{width:34px;height:34px}.hs-t1{font-size:19px}.hstrip::after{display:none}}
 @container hero (max-width: 520px){.hs-cal,.hs-time svg{display:none}.hs-sec{padding:0 9px}.hs-d1{display:none}.hs-time{padding:0 12px;font-size:17px}.hs-tm>small{font-size:10.5px}}
 @media (max-width:760px){.wxi,.wxi svg{width:34px;height:34px}.wxs-c{transform-origin:0 0;scale:.62}.wxs-c.c4{transform-origin:100% 0}.hstrip .hs-sec.hs-mid{padding:0 10px}}
+
+/* My Dashboard hero, new layout (Playful.dc.html 2026-11-27): the greeting is a pill on top; under it the date + time + zone and the weather share one glass card (left) beside the class card (right). The seconds clock pill is gone. */
+.hstrip .hs-ny{font-size:12px;font-weight:700;letter-spacing:.3px;opacity:.95}
+.hstrip .hs-date .hs-d1{display:block}
+.hstrip .hs-date .hs-txt{display:flex;flex-direction:column;line-height:1.2}
+.hstrip.hstrip{width:auto;max-width:100%;flex:0 1 auto;align-self:center;margin-inline:0;padding-inline-end:18px}
+.hstrip .hs-sec{flex:0 0 auto}
+.hero-greet{z-index:3;flex:0 0 auto!important;align-self:flex-start}
+.hero-greet>div{align-items:center;padding:6px 22px 6px 10px;border-radius:999px;background:rgba(16,60,170,.38);box-shadow:0 6px 18px rgba(0,30,110,.25);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.hero-greet h1{text-shadow:0 2px 6px rgba(0,25,90,.45)}
+.hstrip .hs-wx .hs-t1,.hstrip .hs-wx .hs-t2{color:#FFFFFF;text-shadow:0 1px 4px rgba(0,25,90,.35)}
+@media (min-width:761px){.hero-row .hstrip .hs-wx{width:100%;padding-top:10px!important;border-top:1.5px solid rgba(255,255,255,.45)}}
+@media (min-width:761px){.hero-row{align-items:stretch!important}.hero-row .hstrip.hstrip{flex:1 1 auto;align-self:stretch;flex-direction:column;align-items:flex-start;justify-content:center;gap:12px;padding:16px 22px 16px 16px}.hero-row .hstrip .hs-sec{padding:0;gap:10px;justify-content:flex-start}.hero-row .hstrip>.hs-div{display:none}.hero-row .hstrip .hs-cal{display:none}.hero-row .hstrip .hs-date .hs-d2{font-size:20px}.hero-row .lmcont{flex:1 1 300px;min-width:260px}}
+@media (max-width:760px){.hero-row{flex-wrap:wrap!important}.lmcont{flex:1 1 100%!important;min-width:0!important;margin:0!important}}
+.lmcont{margin-inline-start:auto;transform-origin:50% 50%;animation:lmZoom 120s ease-in-out infinite}
+@keyframes lmZoom{0%,2.6%,100%{transform:scale(1)}0.7%{transform:scale(1.06)}1.4%{transform:scale(.98)}2%{transform:scale(1.03)}}
+@media (prefers-reduced-motion:reduce){.lmcont{animation:none}}
 
 @keyframes hsWv1{from{transform:translateX(0)}to{transform:translateX(-240px)}}
 @keyframes hsWv2{from{transform:translateX(-180px)}to{transform:translateX(0)}}
