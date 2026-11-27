@@ -29,15 +29,6 @@ const forgetGateReads = async () => {
   await forgetUserRead("additional-layer");
   await forgetUserRead("dashboard-or-migration");
 };
-// Forget AFTER the save: the save itself re-reads additinal-layer-details (setupFacts) BEFORE saving, which would
-// otherwise put the pre-save answer back in the memo and send the student back to the step they just finished.
-const forgettingGateReads = async (resultPromise) => {
-  try {
-    return await resultPromise;
-  } finally {
-    await forgetGateReads();
-  }
-};
 
 async function fetchLayerDetails() {
   const result = await readLayerDetails();
@@ -208,7 +199,7 @@ export async function bookSystemTraining({ date, stTime } = {}) {
   const slot = free.slots.find((s) => s.stTime === String(stTime));
   if (!slot) return { ok: false, code: "SLOT_GONE", message: "This time is no longer available. Please choose another time." };
   const bookEndTime = addMinutes(slot.stTime, slot.duration);
-  return forgettingGateReads(saveTimePreference((me) => ({
+  return saveTimePreference((me) => ({
     userId: me.userId,
     schoolId: me.schoolNumericId,
     slotAddUserId: me.userId,
@@ -220,7 +211,7 @@ export async function bookSystemTraining({ date, stTime } = {}) {
     bookStartTime: slot.stTime,
     bookEndTime,
     teacherTimeList: [{ startDate: dates.mmm, startTime: "09:00:00", endTime: "09:00:00" }],
-  }))).then((r) => (r.ok ? { ok: true, data: { message: r.data.message, dateTime: `${dates.mmm} ${slot.label}` } } : r));
+  })).then((r) => (r.ok ? { ok: true, data: { message: r.data.message, dateTime: `${dates.mmm} ${slot.label}` } } : r));
 }
 
 /**
@@ -233,18 +224,16 @@ export async function saveAcademicYearStart({ date } = {}) {
   if (!dates) return { ok: false, code: "BAD_DATE", message: "Please choose your academic year start date." };
   const facts = await setupFacts();
   if (!facts.ok) return facts;
-  return forgettingGateReads(
-    saveTimePreference((me) => ({
-      userId: me.userId,
-      schoolId: me.schoolNumericId,
-      slotAddUserId: me.userId,
-      studentStandardId: facts.setup.studentStandardId,
-      userRole: "STUDENT",
-      saveType: "SKIP",
-      semesterStartDate: dates.mdy,
-      teacherTimeList: [],
-    })),
-  );
+  return saveTimePreference((me) => ({
+    userId: me.userId,
+    schoolId: me.schoolNumericId,
+    slotAddUserId: me.userId,
+    studentStandardId: facts.setup.studentStandardId,
+    userRole: "STUDENT",
+    saveType: "SKIP",
+    semesterStartDate: dates.mdy,
+    teacherTimeList: [],
+  }));
 }
 
 /**
