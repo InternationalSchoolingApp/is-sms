@@ -102,7 +102,7 @@ export const DYSLEXIA_OFF = { dyslexia: "off", font: "cute", reading: "normal", 
 
 // Buddy art colours (mockup) — body, arm, feet.
 export const BUDDIES = {
-  pico: { name: "Pico", color: "#2F7BF5", arm: "#1E66E0", feet: "#1747A6" },
+  pico: { name: "Magic", color: "#2F7BF5", arm: "#1E66E0", feet: "#1747A6" },
   penny: { name: "Penny", color: "#FFC531", arm: "#E0A800", feet: "#A15C1E" },
   booky: { name: "Booky", color: "#6A3FC4", arm: "#7D55D6", feet: "#4C2A94" },
   bolt: { name: "Bolt", color: "#13A89E", arm: "#5C6B8A", feet: "#3A475F" },
@@ -128,6 +128,22 @@ export const VOICE_SPEEDS = {
   normal: { name: "Normal", value: 1.0 },
   fast: { name: "Fast", value: 1.2 },
 };
+
+// The six voice cards of "Buddy's voice" (mockup: Emma, Calm, Squeaky, Robot, Slow & clear, Cheerful). The mockup's cards are demo
+// voices; here each card is one of the real voices above at one speed, so a tap picks both. Cheerful is the default (heart, normal).
+export const VOICE_CARDS = [
+  { key: "emma", name: "Emma", voice: "emma", voiceSpeed: "normal" },
+  { key: "calm", name: "Calm", voice: "nicole", voiceSpeed: "slow" },
+  { key: "squeaky", name: "Squeaky", voice: "bella", voiceSpeed: "fast" },
+  { key: "robot", name: "Robot", voice: "adam", voiceSpeed: "normal" },
+  { key: "slow", name: "Slow & clear", voice: "george", voiceSpeed: "slow" },
+  { key: "cheerful", name: "Cheerful", voice: "heart", voiceSpeed: "normal" },
+];
+
+/** The voice card the saved voice + speed stands for (the exact pair, else the same voice); undefined when none fits. */
+export function voiceCardOf(voice, voiceSpeed) {
+  return VOICE_CARDS.find((c) => c.voice === voice && c.voiceSpeed === voiceSpeed) || VOICE_CARDS.find((c) => c.voice === voice);
+}
 
 /** The voice a request sends: {id, language, speed} for these preferences (unknown keys take the defaults). */
 export function voiceOf(voice, speed) {

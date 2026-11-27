@@ -116,9 +116,9 @@ export function AppearanceDialog({ open, onClose, firstName = "" }) {
             type="button"
             disabled={!dirty || !canCustomize}
             onClick={handleSave}
-            className="min-h-[54px] cursor-pointer rounded-full border-none bg-[#13802B] px-8 font-k5-display text-[21px] font-semibold text-white shadow-[0_5px_0_#0E5C1F] disabled:cursor-default disabled:opacity-40 disabled:shadow-none"
+            className="min-h-[54px] cursor-pointer rounded-full border-none bg-[#FFC531] px-8 font-k5-display text-[21px] font-semibold text-[#1C2640] shadow-[0_5px_0_#C9930A] disabled:cursor-default disabled:opacity-40 disabled:shadow-none"
           >
-            Save
+            Looks great! &amp; Save
           </button>
         </div>
         <span className="sr-only">{buddyName} is your buddy.</span>

@@ -5,7 +5,7 @@ import { BookOpen, Check } from "lucide-react";
 import { SpecialHelpBanner, SpecialHelpLock, SpecialHelpRequestForm, SpecialHelpSent } from "@/components/appearance/SpecialHelpGate";
 import { useSpecialHelp } from "@/hooks/useSpecialHelp";
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
-import { BUDDIES, BUDDY_NAME_MAX, DYSLEXIA_OFF, DYSLEXIA_ON, GRADE_LOOKS, PAGE_COLORS, THEME_SWATCHES, VOICE_SPEEDS, VOICES, buddyNameOf, cleanBuddyName, effectiveGradeLook, gradeLookOf } from "@/constant/appearance";
+import { BUDDIES, BUDDY_NAME_MAX, DYSLEXIA_OFF, DYSLEXIA_ON, GRADE_LOOKS, PAGE_COLORS, THEME_SWATCHES, VOICE_CARDS, VOICE_SPEEDS, buddyNameOf, cleanBuddyName, effectiveGradeLook, gradeLookOf, voiceCardOf } from "@/constant/appearance";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { PicoMascot } from "@/components/k5/pico/PicoMascot";
 
@@ -99,19 +99,61 @@ function GradeLookSection() {
   );
 }
 
-/** The small face on a voice card (mockup): a girl with a bow or a boy with short hair, in the same flat style as the other voice icons. */
-function VoiceFace({ gender }) {
-  return (
-    <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
+// The icons on the six voice cards (mockup art).
+const VOICE_ICONS = {
+  emma: (
+    <>
       <circle cx="12" cy="13" r="9" fill="#F9C9A8" />
-      <path d={gender === "boy" ? "M3.5 12c0-5.5 3.6-8.6 8.5-8.6s8.5 3.1 8.5 8.6c-1.6-2.4-4.6-3.4-8.5-3.4s-6.9 1-8.5 3.4z" : "M3 12c0-6 4-9 9-9s9 3 9 9c-2-3-5-4-9-4s-7 1-9 4z"} fill={gender === "boy" ? "#3A2A1A" : "#8A4B2A"} />
+      <path d="M3 12c0-6 4-9 9-9s9 3 9 9c-2-3-5-4-9-4s-7 1-9 4z" fill="#8A4B2A" />
       <circle cx="9" cy="13" r="1.4" fill="#1C2640" />
       <circle cx="15" cy="13" r="1.4" fill="#1C2640" />
       <path d="M9.5 16.5q2.5 2 5 0" fill="none" stroke="#1C2640" strokeWidth="1.5" strokeLinecap="round" />
-      {gender !== "boy" && <path d="M17 4l2.5-1.5L19 5.5z" fill="#C42A6B" />}
-    </svg>
-  );
-}
+      <path d="M17 4l2.5-1.5L19 5.5z" fill="#C42A6B" />
+    </>
+  ),
+  calm: (
+    <>
+      <circle cx="12" cy="12" r="10" fill="#8CE0C8" />
+      <path d="M7 10q2 1.5 4 0M13 10q2 1.5 4 0" fill="none" stroke="#1C2640" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M9 15q3 2 6 0" fill="none" stroke="#1C2640" strokeWidth="1.6" strokeLinecap="round" />
+    </>
+  ),
+  squeaky: (
+    <>
+      <circle cx="12" cy="13" r="9" fill="#FFB3D3" />
+      <circle cx="5" cy="5" r="3.5" fill="#FFB3D3" />
+      <circle cx="19" cy="5" r="3.5" fill="#FFB3D3" />
+      <circle cx="9" cy="12" r="1.4" fill="#1C2640" />
+      <circle cx="15" cy="12" r="1.4" fill="#1C2640" />
+      <circle cx="12" cy="16.5" r="1.8" fill="#1C2640" />
+    </>
+  ),
+  robot: (
+    <>
+      <path d="M12 2v3" stroke="#5C6B8A" strokeWidth="2" strokeLinecap="round" />
+      <rect x="3" y="5" width="18" height="16" rx="4" fill="#13A89E" />
+      <rect x="7" y="10" width="3" height="3" fill="#FFFFFF" />
+      <rect x="14" y="10" width="3" height="3" fill="#FFFFFF" />
+      <path d="M8 17h8" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+    </>
+  ),
+  slow: (
+    <>
+      <path d="M3 18c0-4 3-7 7-7s6 3 6 6v1z" fill="#7FBF5A" />
+      <circle cx="10" cy="14" r="4" fill="none" stroke="#3E7A2A" strokeWidth="1.6" />
+      <path d="M16 17l4-4M20 13v-3" stroke="#3E7A2A" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M2 19h20" stroke="#3E7A2A" strokeWidth="1.6" strokeLinecap="round" />
+    </>
+  ),
+  cheerful: (
+    <>
+      <circle cx="12" cy="12" r="10" fill="#FFC531" />
+      <circle cx="9" cy="10" r="1.4" fill="#1C2640" />
+      <circle cx="15" cy="10" r="1.4" fill="#1C2640" />
+      <path d="M7.5 13.5q4.5 5 9 0z" fill="#1C2640" />
+    </>
+  ),
+};
 
 // The pointers of "Pick your pointer" (mockup art; the arrows themselves are in app/pointer.css).
 const ARROW = "M5 3L5 25L10.5 19.8L14.5 28.5L18.6 26.6L14.7 18H22.5Z";
@@ -197,6 +239,25 @@ const POINTERS = [
     ),
   },
 ];
+
+/** The On / Off pill of "Your buddy" and "Game sounds" (mockup): the word, then a green switch, inside a rounded outline. */
+function PillSwitch({ on, onToggle, labelledBy }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-labelledby={labelledBy}
+      onClick={onToggle}
+      className="motion-none flex flex-none cursor-pointer items-center gap-2.5 rounded-full border-[3px] border-k5-line bg-k5-card py-1 pe-1 ps-3 font-k5-display text-base font-semibold text-k5-ink"
+    >
+      {on ? "On" : "Off"}
+      <span aria-hidden="true" className={`relative block h-7 w-[50px] rounded-full transition-colors duration-200 ${on ? "bg-[#2FB866]" : "bg-[#C9D2E3]"}`}>
+        <span className={`absolute start-[3px] top-[3px] block h-[22px] w-[22px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.3)] transition-transform duration-200 ${on ? "translate-x-[22px]" : ""}`} />
+      </span>
+    </button>
+  );
+}
 
 /** "Your buddy's name" (mockup): rename the buddy picked above (up to 14 letters) or put its own name back. */
 function BuddyNameRow() {
@@ -335,7 +396,7 @@ function DayNightSwitch() {
  * Buddy + voice only show where a buddy exists (`withBuddy`, K–5).
  */
 export function AppearanceSettingsPanel({ withBuddy = false, onHear, firstName = "" }) {
-  const { preferences, updatePreference: _panelUpdate, canCustomize } = useAppearance();
+  const { preferences, updatePreference: _panelUpdate, updatePreferences, canCustomize } = useAppearance();
   const specialHelp = useSpecialHelp();
   const [view, setView] = useState("settings");
   const [routedTo, setRoutedTo] = useState("");
@@ -438,19 +499,7 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear, firstName =
                 <h3 id="lk-buddy" className="m-0 font-k5-display text-xl font-semibold leading-[1.2]">
                   Your buddy
                 </h3>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={preferences.buddyEnabled !== "off"}
-                  aria-labelledby="lk-buddy"
-                  onClick={() => _panelUpdate("buddyEnabled", preferences.buddyEnabled === "off" ? "on" : "off")}
-                  className="flex cursor-pointer items-center gap-2.5 rounded-full border-[3px] border-k5-line bg-k5-card py-1 pe-1 ps-3 font-k5-display text-base font-semibold text-k5-ink"
-                >
-                  {preferences.buddyEnabled === "off" ? "Off" : "On"}
-                  <span aria-hidden="true" className={`relative block h-7 w-[50px] rounded-full transition-colors duration-200 ${preferences.buddyEnabled === "off" ? "bg-[#C9D2E3]" : "bg-[#2FB866]"}`}>
-                    <span className={`absolute start-[3px] top-[3px] block h-[22px] w-[22px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.3)] transition-transform duration-200 ${preferences.buddyEnabled === "off" ? "" : "translate-x-[22px]"}`} />
-                  </span>
-                </button>
+                <PillSwitch on={preferences.buddyEnabled !== "off"} labelledBy="lk-buddy" onToggle={() => _panelUpdate("buddyEnabled", preferences.buddyEnabled === "off" ? "on" : "off")} />
               </div>
               <div className={`grid grid-cols-5 gap-2.5 transition-opacity duration-200 ${preferences.buddyEnabled === "off" ? "pointer-events-none opacity-40" : ""}`}>
                 {Object.entries(BUDDIES).map(([key, b]) => (
@@ -463,22 +512,31 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear, firstName =
             </section>
 
             <Section id="lk-voice" title="Buddy's voice" subtitle="Tap one to hear it!">
-              <div className="grid grid-cols-4 gap-2.5 max-[560px]:grid-cols-2">
-                {Object.entries(VOICES).map(([key, v]) => (
-                  <button
-                    key={key}
-                    type="button"
-                    aria-pressed={preferences.voice === key}
-                    aria-label={`${v.name}, ${v.gender} voice, ${v.accent}`}
-                    onClick={() => (onHear ? onHear({ voice: key }) : _panelUpdate("voice", key))}
-                    title={`${v.gender === "boy" ? "Boy" : "Girl"} · ${v.accent}`}
-                    className={`${OPTION} !min-h-[84px] !gap-1.5 !px-1 !py-2 ${optionState(preferences.voice === key)}`}
-                  >
-                    <VoiceFace gender={v.gender} />
-                    <span>{v.name}</span>
-                  </button>
-                ))}
+              <div className="grid grid-cols-6 gap-2.5 max-[560px]:grid-cols-3">
+                {VOICE_CARDS.map((card) => {
+                  const selected = voiceCardOf(preferences.voice, preferences.voiceSpeed)?.key === card.key;
+                  return (
+                    <button
+                      key={card.key}
+                      type="button"
+                      aria-pressed={selected}
+                      aria-label={card.name}
+                      onClick={() => {
+                        const patch = { voice: card.voice, voiceSpeed: card.voiceSpeed };
+                        if (onHear) onHear(patch);
+                        else updatePreferences(patch);
+                      }}
+                      className={`${OPTION} !min-h-[84px] !gap-1.5 !px-1 !py-2 ${optionState(selected)}`}
+                    >
+                      <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
+                        {VOICE_ICONS[card.key]}
+                      </svg>
+                      <span>{card.name}</span>
+                    </button>
+                  );
+                })}
               </div>
+              {/* "How fast?" (slow / normal / fast) is not in the mockup, so it is switched off here; the voice keeps the speed the student had (normal by default).
               <div className="flex flex-col gap-2">
                 <span className="text-[15px] font-black text-k5-mut">How fast?</span>
                 <div className="grid grid-cols-3 gap-2.5">
@@ -495,6 +553,7 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear, firstName =
                   ))}
                 </div>
               </div>
+              */}
               <div className="grid grid-cols-2 gap-3">
                 <Choice name="speech" value="on" label="Buddy talks" />
                 <Choice name="speech" value="off" label="Buddy is quiet" />
@@ -515,19 +574,7 @@ export function AppearanceSettingsPanel({ withBuddy = false, onHear, firstName =
                 </h3>
                 <p className="m-0 text-[15px] font-bold text-k5-mut">Sounds in the games and balloons</p>
               </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={preferences.gameSound !== "off"}
-                aria-label="Game sounds"
-                onClick={() => _panelUpdate("gameSound", preferences.gameSound === "off" ? "on" : "off")}
-                className="flex flex-none cursor-pointer items-center gap-2 border-0 bg-transparent p-1 font-k5-display text-sm font-bold text-k5-ink"
-              >
-                <span>{preferences.gameSound === "off" ? "Off" : "On"}</span>
-                <span aria-hidden="true" className={`relative block h-[30px] w-[52px] flex-none rounded-full ${preferences.gameSound === "off" ? "bg-k5-line" : "bg-k5-ac"}`}>
-                  <span className={`absolute top-[3px] block h-6 w-6 rounded-full bg-white shadow-[0_2px_0_rgba(0,0,0,0.2)] transition-[left] ${preferences.gameSound === "off" ? "left-[3px]" : "left-[25px]"}`} />
-                </span>
-              </button>
+              <PillSwitch on={preferences.gameSound !== "off"} labelledBy="lk-game-sound" onToggle={() => _panelUpdate("gameSound", preferences.gameSound === "off" ? "on" : "off")} />
             </section>
           </>
         )}
