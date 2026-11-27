@@ -378,7 +378,7 @@ function Tickets({ perWeek, left, color }) {
  * Teacher + this week's slots of the picked course: the same requests (and query keys) the weekly
  * slot picker used, so what can be booked is exactly what it was before.
  */
-function useBookSlots(picked) {
+function useBookSlots(picked, halfHour = false) {
   const dummy = useDummyStudent();
   const [startDate] = useState(() => new Date().toISOString());
   const teacherQuery = useQuery({
@@ -393,7 +393,7 @@ function useBookSlots(picked) {
   const teacher = teacherQuery.data;
   const teacherAssigned = teacher?.teacherAssigned === "YES";
   const slotsQuery = useQuery({
-    queryKey: ["book-class-slots", teacher?.assignedTeacherUserId, picked?.subjectId, startDate, dummy.key],
+    queryKey: ["book-class-slots", teacher?.assignedTeacherUserId, picked?.subjectId, startDate, dummy.key, halfHour],
     queryFn: () =>
       dummy.enabled
         ? dummy.student.teacherWeeklyCalendar(teacher.assignedTeacherUserId, picked.subjectId, new Date(startDate))
@@ -402,6 +402,7 @@ function useBookSlots(picked) {
             studentStandardId: teacher.studentStandardId ?? picked.studentStandardId,
             subjectId: picked.subjectId,
             startDate,
+            halfHourStarts: halfHour,
           }),
     enabled: Boolean(picked) && teacherAssigned,
     staleTime: 0,
@@ -501,7 +502,7 @@ function mergedDayModel(courses, leftOf, left) {
       if (valid && diff < 0) tag = "Over";
       else if (entries.length === 0) tag = "No classes";
       else if (left < 1) tag = "No Class left";
-      else if (free === 0) tag = "Busy";
+      else if (free === 0) tag = entries.some((e) => e.state === "booked") ? "Busy" : "Closed";
       else if (diff === 0) tag = "Today";
       else if (diff === 1) tag = "Tomorrow";
       const can = free > 0 && left > 0 && valid && diff >= 0;
@@ -691,7 +692,7 @@ function dayModel(days, slots, skipDates, left) {
     if (valid && diff < 0) tag = "Over";
     else if (list.length === 0 || skipped) tag = "No classes";
     else if (left < 1) tag = "No tickets left";
-    else if (free === 0) tag = "Busy";
+    else if (free === 0) tag = entries.some((e) => e.state === "booked") ? "Busy" : "Closed";
     else if (diff === 0) tag = "Today";
     else if (diff === 1) tag = "Tomorrow";
     const can = free > 0 && left > 0 && valid && diff >= 0 && !skipped;
@@ -1173,7 +1174,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   // Day-first booking (Elementary): the course picked last, with its own slot and teacher calendar.
   const [choice, setChoice] = useState(null);
   const inFlight = useRef(false);
-  const book = useBookSlots(picked);
+  const book = useBookSlots(picked, allSlots && !demandOff);
   const dayFirst = !middle;
 
   const allMode = subjects.length === 1 && subjects[0].subjectId === 0;
