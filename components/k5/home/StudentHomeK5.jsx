@@ -11,11 +11,14 @@ import { OnboardingVideoModal } from "@/components/dashboard/OnboardingVideoModa
 import { GraduationCeremonyModal } from "@/components/dashboard/GraduationCeremonyModal";
 import { EventDetailModal } from "@/components/dashboard/calendar/EventDetailModal";
 import { JoinClassModal } from "@/components/dashboard/calendar/JoinClassModal";
-import { K5Toolbar } from "@/components/k5/home/K5Toolbar";
+import { titles } from "@/components/k5/home/K5Toolbar";
+import { K5ClassesHeader } from "@/components/k5/home/K5ClassesHeader";
+import { PlanChromeContext } from "@/components/k5/home/planChrome";
 import { K5PlanFilters } from "@/components/k5/home/K5PlanFilters";
 import { ColourClues } from "@/components/k5/home/ColourClues";
 import { CalendarPopup, MiniCalendar, MyCourses, TodayCard } from "@/components/k5/home/K5LeftColumn";
 import { DayPlan } from "@/components/k5/home/DayPlan";
+import { K5Dashboard } from "@/components/k5/home/K5Dashboard";
 import { MonthPlan, WeekPlan } from "@/components/k5/home/WeekMonthPlans";
 import { LiveClassAlert } from "@/components/k5/home/LiveClassAlert";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
@@ -26,6 +29,7 @@ import { classTitle, countStatuses, dayAt, dayKey, keyToDate, weekKeys } from "@
 import { celebrate } from "@/components/motion/canvas/celebrationEvents";
 import { revealPlanTop } from "@/utils/k5Scroll";
 import { picoSay, setPicoLive } from "@/components/k5/pico/picoEvents";
+import { isChristmasKey, setChristmasPlanner } from "@/components/k5/christmas/christmasStore";
 import { LIVE_ALERT_KEY } from "@/utils/liveAlertMemory";
 import { K5HomeLeftSkeleton, K5PlanSkeleton } from "@/components/k5/K5Skeletons";
 
@@ -88,7 +92,7 @@ const isJoinable = (event) => event.eventKind === "class" && Boolean(event.url) 
  * The onboarding video and graduation popups behave exactly as on the existing home.
  * holdProfilePopup: the "Complete Your Profile" popup waits (the contact check comes first, StudentHomeForGrade.jsx).
  */
-export function StudentHomeK5({ holdProfilePopup = false }) {
+export function StudentHomeK5({ holdProfilePopup = false, dashboard = false }) {
   const { context } = useDashboardContext();
   const dummy = useDummyStudent();
   const dashboardData = useStudentDashboardData({ schoolUUID: context?.schoolUUID, userId: context?.userId });
@@ -101,7 +105,7 @@ export function StudentHomeK5({ holdProfilePopup = false }) {
   return (
     <>
       {ready ? (
-        <K5Planner key={timezone} timezone={timezone} />
+        <K5Planner key={timezone} timezone={timezone} dashboard={dashboard} />
       ) : (
         <div className={`${K5_CARD} p-10 text-center text-lg font-extrabold text-k5-mut`}>Getting your plan ready…</div>
       )}
@@ -117,9 +121,10 @@ export function StudentHomeK5({ holdProfilePopup = false }) {
   );
 }
 
-function K5Planner({ timezone }) {
+function K5Planner({ timezone, dashboard = false }) {
   const { context, isPreK, isSelfStudy } = useDashboardContext();
-  const model = useK5CalendarModel({ schoolUUID: context?.schoolUUID, userId: context?.userId, timezone });
+  // The month prefetch (the mini calendar dots) is for My Classes only: the dashboard home has no mini calendar any more.
+  const model = useK5CalendarModel({ schoolUUID: context?.schoolUUID, userId: context?.userId, timezone, prefetchMonth: !dashboard });
   const [clue, setClue] = useState(null);
   const [calOpen, setCalOpen] = useState(false);
   const [detailEvent, setDetailEvent] = useState(null);
@@ -128,6 +133,24 @@ function K5Planner({ timezone }) {
 
   const { viewName, setViewName, selectedDate, selectedKey, todayKey, now, days } = model;
   const view = isPreK && viewName === "month" ? "today" : viewName;
+
+  // "My Classes and Activities" (Playful.dc.html, Middle.dc.html, High.dc.html): a header card on top, and the Today / Week / Month
+  // switch and the previous / next arrows inside the plan card (planChrome.jsx), in every look.
+  const [titleBig, titleSmall] = titles(view, selectedDate);
+  const unit = view === "week" ? "week" : view === "month" ? "month" : "day";
+  const chrome = {
+    viewName: view,
+    onView: setViewName,
+    onToday: model.goToday,
+    onPrev: model.goPrev,
+    onNext: model.goNext,
+    prevLabel: `Previous ${unit}`,
+    nextLabel: `Next ${unit}`,
+    // Week: the range is the big text and the year the small one (the heading already says "My Week").
+    titleBig: view === "week" ? titleSmall : titleBig,
+    titleSmall: view === "week" ? format(selectedDate, "yyyy") : titleSmall,
+    isPreK,
+  };
 
   // Opening a day (from the week, the month or the mini calendar) switches to its Day plan: bring it
   // into view when it is off-screen, but never move a page that already shows it.
@@ -162,11 +185,23 @@ function K5Planner({ timezone }) {
 
   // Tell the buddy about the live class: the plan is ready, the popup waits for an answer, and the real class title.
   const liveName = liveNow ? classTitle(liveNow) : "";
+  // Nothing planned today (no class, no activity), and the holiday's name when it is one: the buddy's plan tip says so.
+  const todayPlan = dayAt(days, todayKey);
+  const dayIsEmpty = todayPlan.classes.length === 0 && todayPlan.activities.length === 0;
+  const todayHoliday = todayPlan.holidays[0];
+  const holidayName = todayHoliday ? todayHoliday.title || todayHoliday.eventTitle || "Holiday" : "";
   const alertPending = Boolean(alertEvent);
   useEffect(() => {
-    setPicoLive({ ready: !model.isLoading, pending: alertPending, name: liveName });
-  }, [model.isLoading, alertPending, liveName]);
-  useEffect(() => () => setPicoLive({ ready: false, pending: false, name: "" }), []);
+    setPicoLive({ ready: !model.isLoading, pending: alertPending, name: liveName, dayEmpty: dayIsEmpty, holidayName });
+  }, [model.isLoading, alertPending, liveName, dayIsEmpty, holidayName]);
+  useEffect(() => () => setPicoLive({ ready: false, pending: false, name: "", dayEmpty: false, holidayName: "" }), []);
+
+  // My Classes tells the Christmas theme which screen is open: 25 December in the Day view, or in the Month view with it selected.
+  useEffect(() => {
+    if (dashboard) return;
+    setChristmasPlanner({ onXmasDay: (view === "today" || view === "month") && isChristmasKey(selectedKey), viewKey: `${view}:${selectedKey}` });
+  }, [dashboard, view, selectedKey]);
+  useEffect(() => () => setChristmasPlanner({ onXmasDay: false, viewKey: "" }), []);
 
   // Celebration: every class and activity of today is done. Once per student per day (remembered on this device; if the
   // device cannot remember, nothing is played rather than risking a repeat on every visit). It waits a moment so it does
@@ -191,21 +226,17 @@ function K5Planner({ timezone }) {
   }, [dayComplete, userKey, todayKey]);
 
   return (
+    <PlanChromeContext.Provider value={chrome}>
     <div className="flex flex-col gap-4">
-      <K5Toolbar
-        now={now}
-        timezone={timezone}
-        viewName={view}
-        onView={setViewName}
-        selectedDate={selectedDate}
-        onPrev={model.goPrev}
-        onNext={model.goNext}
-        onToday={model.goToday}
-        isPreK={isPreK}
-      />
+      {dashboard ? (
+        <K5Dashboard now={now} timezone={timezone} days={days} todayKey={todayKey} isLoading={model.isLoading} firstName={firstName} onJoin={setJoiningEvent} onOpenActivity={setDetailEvent} />
+      ) : (
+        <>
+      <K5ClassesHeader now={now} timezone={timezone} />
       <ColourClues
         clue={clue}
         isPreK={isPreK}
+        showHint={false}
         onClue={(key) => {
           setClue(key);
           if (!key) return;
@@ -218,7 +249,7 @@ function K5Planner({ timezone }) {
       {!isPreK && <K5PlanFilters filters={model.filters} onToggle={model.toggleFilter} />}
 
       <div className="flex flex-wrap items-start gap-5 in-data-[hand=left]:flex-row-reverse">
-        <div className="sticky top-[calc(var(--maintenance-banner-h,0px)+100px)] box-border flex max-h-[calc(100vh-120px)] min-w-0 flex-[1_1_300px] flex-col gap-4 overflow-y-auto pb-3 pr-1 [scrollbar-width:thin] max-[1100px]:static max-[1100px]:max-h-none max-[1100px]:overflow-visible">
+        <div className="sticky top-[calc(var(--maintenance-banner-h,0px)+100px)] box-border flex min-w-0 flex-[1_1_300px] flex-col gap-4 pb-3 max-[1100px]:static">
           <MiniCalendar
             selectedDate={selectedDate}
             todayKey={todayKey}
@@ -226,18 +257,21 @@ function K5Planner({ timezone }) {
             onPick={openDayAndShow}
             onMonth={(dir) => model.setSelectedDate((d) => addMonths(d, dir))}
           />
+          {/* The Today card and My Courses are switched off for now, so the left column is only the mini calendar and there is nothing
+              to show a skeleton for (K5HomeLeftSkeleton draws exactly these two cards; bring it back together with them).
           {model.isLoading ? (
             <K5HomeLeftSkeleton />
           ) : (
             <>
-              {/* <ZoomIn index={0}><TodayCard todayKey={todayKey} days={days} courseRegistry={model.courseRegistry} onOpen={open} /></ZoomIn> */}
+              <ZoomIn index={0}><TodayCard todayKey={todayKey} days={days} courseRegistry={model.courseRegistry} onOpen={open} /></ZoomIn>
               <ZoomIn index={1}><MyCourses courseRegistry={model.courseRegistry} courseVisibility={model.courseVisibility} onToggle={model.toggleCourseVisibility} /></ZoomIn>
             </>
           )}
+          */}
         </div>
 
         {/* Mobile (mockup .duo>[data-pin=plan]{order:-1}): the plan comes before the left column. */}
-        <section ref={planRef} aria-label="My plans" data-pin="calendar" className={`${K5_CARD} scroll-mt-[120px] @container box-border flex min-w-0 flex-[999_1_460px] flex-col gap-[18px] p-[22px] max-[760px]:order-first max-[560px]:p-3.5`}>
+        <section ref={planRef} aria-label="My plans" data-pin="calendar" className={`${K5_CARD} k5h-pcard scroll-mt-[120px] @container box-border flex min-w-0 flex-[999_1_460px] flex-col gap-[18px] p-[22px] max-[760px]:order-first max-[560px]:p-3.5`}>
           {model.isLoading ? (
             <K5PlanSkeleton />
           ) : (
@@ -282,7 +316,6 @@ function K5Planner({ timezone }) {
               firstName={firstName}
               onJoin={setJoiningEvent}
               onOpen={open}
-              onPeek={model.setSelectedDate}
               onShowCalendar={() => setCalOpen(true)}
             />
           )}
@@ -290,6 +323,8 @@ function K5Planner({ timezone }) {
           )}
         </section>
       </div>
+        </>
+      )}
 
       <CalendarPopup
         open={calOpen}
@@ -316,10 +351,11 @@ function K5Planner({ timezone }) {
           picoSay(`Okay! Your ${name ? `${name} ` : ""}class is still live. Tap the green Join class button when you are ready.`, "plan", { intro: true });
         }}
       />
-      {detailEvent && <EventDetailModal event={detailEvent} courseRegistry={model.courseRegistry} onClose={() => setDetailEvent(null)} />}
+      {detailEvent && <EventDetailModal event={detailEvent} courseRegistry={model.courseRegistry} now={now} onClose={() => setDetailEvent(null)} />}
       {joiningEvent && (
         <JoinClassModal event={joiningEvent} schoolUUID={context?.schoolUUID} courseRegistry={model.courseRegistry} onClose={() => setJoiningEvent(null)} />
       )}
     </div>
+    </PlanChromeContext.Provider>
   );
 }

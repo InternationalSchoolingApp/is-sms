@@ -20,16 +20,19 @@ import { getAssignedTeacherForCourse, getAssignedTeachersForAllCourses, getClass
 import { getSlotEnd, getSlotState } from "@/utils/bookClass";
 import { getCourseSlots } from "@/utils/bookClassClient";
 import { courseTint, subjectStyle } from "@/utils/k5Calendar";
+import { useTeacherLabel } from "@/hooks/useTeacherLabel";
 import { K5Loading, K5CardsSkeleton, K5Sk } from "@/components/k5/K5Skeletons";
+import { DemandBookPanel } from "@/components/student/bookClass/DemandBookPanel";
+import { linkGridBooking } from "@/utils/demandBooking";
 
 const MAX_TICKETS = 10;
-const BOOK_SAY = "This is where you book classes! Each ticket is one class with a teacher.";
+const BOOK_SAY = "Here you can book your classes with a teacher. Each booking is one class.";
 // Wording per look: the Grade 6–8 mockup talks about "classes" and "select", the K–5 one about tickets and "pick".
 const COPY = {
   k5: {
     // Elementary books day first: a day, a time, then a course that is free at that time.
     sub: "Pick a day, a time and a course. That's it!",
-    tickets: "My class tickets",
+    tickets: "My classes",
     steps: ["Pick a day", "Pick a time", "Pick a course"],
     any: "Every course is open. Pick any one you like!",
     anyDay: "Pick a day with free times.",
@@ -38,27 +41,10 @@ const COPY = {
     say: BOOK_SAY + " First, pick a day.",
     say2: "Great choice! Now pick a time.",
     say3: () => "Now pick a course for this time.",
-    sayAll: "Wow, you used all your tickets this week!",
-    allTitle: "All your tickets are used!",
-    allSub: "Super job! New tickets come on Monday.",
-    noLeft: "No tickets left",
-  },
-  // Grade 9–12 (High.dc.html): classes are bought, so there are no weekly free classes and nothing expires on Friday.
-  high: {
-    sub: "Select a course, a day and a time. That's it!",
-    tickets: "My classes",
-    steps: ["Select a course", "Select a day", "Select a time"],
-    any: "Only the courses you bought classes for are shown.",
-    pickMe: "Book a class",
-    say: "This is where you book classes! Each class is with your teacher.",
-    say2: "Great choice! Now select a day.",
-    say3: () => "Now select a time.",
-    sayAll: "You booked all the classes you bought!",
-    allTitle: "All your classes are booked!",
-    allSub: "Buy extra classes to book more.",
-    noLeft: "No classes left",
-    fly: "Unused classes carry forward.",
-    bookedN: (n) => n + " booked",
+    sayAll: "Wow, you used all your Classes this week!",
+    allTitle: "All your Classes are used!",
+    allSub: "Super job! New Classes come on Monday.",
+    noLeft: "No Classes left",
   },
   middle: {
     sub: "Select a course, a day and a time. That's it!",
@@ -73,8 +59,10 @@ const COPY = {
     allTitle: "All your classes are booked!",
     allSub: "Super job! New classes come on Monday.",
     noLeft: "No classes left",
+    bookedN: (n) => n + " booked this week",
   },
 };
+COPY.high = COPY.middle;
 function useCopy() {
   const { isMiddle, isHigh } = useDashboardContext();
   return { middle: Boolean(isMiddle), high: Boolean(isHigh), copy: isHigh ? COPY.high : isMiddle ? COPY.middle : COPY.k5 };
@@ -98,12 +86,12 @@ const initialsOf = (name) =>
 const niceTime = (value) => String(value || "").replace(/^0/, "");
 
 function TeacherChip({ name }) {
+  const teacherLabel = useTeacherLabel();
   return (
     <span className="mt-1.5 flex items-center gap-2.5 self-start rounded-full bg-k5-vt py-1 pl-1 pr-3.5">
       <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-k5-vi font-k5-display text-[15px] font-semibold text-white">{name ? initialsOf(name) : "?"}</span>
       <span className="flex flex-col leading-[1.15]">
-        <span className="text-xs font-black text-[var(--k5-vX)]">Your teacher</span>
-        <span className="font-k5-display text-[17px] font-semibold">{name || "Not picked yet"}</span>
+        <span className="font-k5-display text-[17px] font-semibold">{name ? teacherLabel(name) : "Not picked yet"}</span>
       </span>
     </span>
   );
@@ -150,6 +138,12 @@ function BookHeader({ teacherName, onStart, startLabel, startLoading = false }) 
         <p className="k5h-b-sub m-0 text-lg font-extrabold text-k5-mut">{copy.sub}</p>
         {/* Grade 6–8: no teacher chip here (each course card names its teacher); a "Book a Class (n)" button instead. */}
         {!middle && teacherName !== undefined && <TeacherChip name={teacherName} />}
+        {!middle && startLoading && (
+          <span className="mt-1.5 flex items-center gap-2.5 self-start rounded-full bg-k5-vt py-1 pl-1 pr-3.5">
+            <K5Sk className="h-[38px] w-[38px] flex-none rounded-full" />
+            <K5Sk className="h-5 w-28" />
+          </span>
+        )}
         {middle && startLoading && (
           <div className="mt-1.5">
             <K5Sk className="h-[46px] w-44 rounded-full" />
@@ -199,7 +193,7 @@ function BookPageSkeleton() {
           className="flex flex-[1_1_400px] flex-col gap-2.5 rounded-[26px] bg-k5-yt px-5 py-4"
           style={high ? { background: "var(--k5-act)", border: "none", borderRadius: 12 } : middle ? { background: "color-mix(in srgb, var(--k5-ac) 13%, var(--k5-card))", border: "1.5px solid color-mix(in srgb, var(--k5-ac) 28%, var(--k5-card))", borderRadius: 18 } : undefined}
         >
-          <K5Sk className="h-7 w-36" />
+          <K5Sk className="h-7 w-36 self-center" />
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[18px] bg-white/45 px-2.5 py-2">
             <span className="flex min-w-[104px] flex-col gap-1.5">
               <K5Sk className="h-4 w-20" />
@@ -212,7 +206,10 @@ function BookPageSkeleton() {
             </span>
             <K5Sk className="ms-auto h-8 w-20 rounded-full" />
           </div>
-          <K5Sk className="h-5 w-44" />
+          <span className="flex items-center justify-center gap-1.5">
+            <K5Sk className="h-[18px] w-[18px] rounded-md" />
+            <K5Sk className="h-5 w-36" />
+          </span>
         </section>
       </div>
 
@@ -273,23 +270,24 @@ function BookPageSkeleton() {
 }
 
 /**
- * The student buddy says what to do on this step (mockup: Booky bkSay): the line is also said out loud when the page opens and at
- * every step (picoSay: the buddy voice, only when the student has its voice on), and the speaker button says it again. The
- * corner bubble stays closed on this page (PicoGuide), this strip is the buddy here.
+ * The student buddy says what to do on this step (mockup: Booky bkSay). Arriving on the page it is muted by default (2026-11-25):
+ * the line is shown, not said; the speaker button says it. When the student's own taps move the booking to another step, that
+ * step's line is said (picoSay: the buddy voice, only when the student has its voice on). Only a step change speaks: the first
+ * line can still change while the page loads, and a revisited page re-runs its effects. The corner bubble stays closed on this
+ * page (PicoGuide), this strip is the buddy here.
  */
-function BuddyStrip({ say, skipInitial = false }) {
+function BuddyStrip({ say, step }) {
   const { preferences } = useAppearance();
   const { speak } = useSpeech();
   const buddy = BUDDIES[preferences.buddy] || BUDDIES.pico;
-  const firstMessage = useRef(true);
+  const shownStep = useRef(step);
   useEffect(() => {
-    if (!say) return;
-    if (firstMessage.current) {
-      firstMessage.current = false;
-      if (skipInitial) return;
-    }
-    picoSay(say);
-  }, [say, skipInitial]);
+    if (shownStep.current === step) return;
+    shownStep.current = step;
+    if (say) picoSay(say);
+    // Only a new step speaks, not a new line on the same step.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
   return (
     <div role="status" className="flex items-center gap-3 rounded-[22px] bg-k5-vt py-2 pl-2 pr-2.5">
       <PicoMascot buddy={preferences.buddy} width={48} full={false} />
@@ -339,7 +337,7 @@ function CapTile({ used }) {
   );
 }
 
-/** "My class tickets" (mockup): this week's tickets, used ones are filled with a tick. */
+/** "My class" (mockup): this week's, used ones are filled with a tick. */
 function Tickets({ perWeek, left, color }) {
   const { middle, high, copy } = useCopy();
   const total = Math.max(perWeek, left, 0);
@@ -353,7 +351,7 @@ function Tickets({ perWeek, left, color }) {
       className="flex flex-[1_1_400px] flex-col gap-2.5 rounded-[26px] bg-k5-yt px-5 py-4"
       style={high ? { background: "var(--k5-act)", border: "none", borderRadius: 12 } : middle ? { background: "color-mix(in srgb, var(--k5-ac) 13%, var(--k5-card))", border: "1.5px solid color-mix(in srgb, var(--k5-ac) 28%, var(--k5-card))", borderRadius: 18 } : undefined}
     >
-      <h2 id="k5-tix" className="m-0 font-k5-display text-[22px] font-semibold">{copy.tickets}</h2>
+      <h2 id="k5-tix" className="m-0 font-k5-display text-[22px] font-semibold text-center">{copy.tickets}</h2>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[18px] bg-white/45 px-2.5 py-2">
         <span className="flex min-w-[104px] flex-col leading-[1.15]">
           <span className="font-k5-display text-lg font-semibold">This week</span>
@@ -364,11 +362,11 @@ function Tickets({ perWeek, left, color }) {
         </span>
         <span className="ms-auto whitespace-nowrap rounded-full bg-k5-card px-3 py-1 font-k5-display text-[17px] font-semibold">{left} left</span>
       </div>
-      <p className={`m-0 flex items-center gap-1.5 text-[15px] font-black ${middle ? "text-k5-acx" : "text-k5-yx"}`}>
+      <p className={`m-0 flex items-center gap-1.5 text-[15px] font-black justify-center ${middle ? "text-k5-acx" : "text-k5-yx"}`}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: middle ? "var(--k5-acx)" : "var(--k5-yX)" }}>
           <path d="M6 3h12M6 21h12M7 3c0 5 10 6 10 9s-10 4-10 9M17 3c0 5-10 6-10 9s10 4 10 9" />
         </svg>
-        {high ? copy.fly : "Use them by Friday!"}
+        Use them by Friday!
       </p>
     </section>
   );
@@ -500,7 +498,7 @@ function mergedDayModel(courses, leftOf, left) {
       let tag = "This week";
       if (valid && diff < 0) tag = "Over";
       else if (entries.length === 0) tag = "No classes";
-      else if (left < 1) tag = "No tickets left";
+      else if (left < 1) tag = "No Class left";
       else if (free === 0) tag = "Busy";
       else if (diff === 0) tag = "Today";
       else if (diff === 1) tag = "Tomorrow";
@@ -557,6 +555,7 @@ function SubjectChip({ name, color }) {
 }
 
 function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, threePerRow = false }) {
+  const teacherLabel = useTeacherLabel();
   const { middle, high, copy } = useCopy();
   if (loading) {
     return (
@@ -569,9 +568,11 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
   const none = left < 1;
   return (
     // In the Grade 6–8 "Book a Class" dialog: three courses in a row, the rest on the next row (two on a small screen).
-    <div className={threePerRow ? "grid grid-cols-3 gap-3 max-[640px]:grid-cols-2" : "grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3"}>
+    <div className={threePerRow ? " grid grid-cols-3 gap-3 max-[640px]:grid-cols-2" : "grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3"}>
       {options.map((s) => {
-        const color = colorFor({ id: s.subjectId, name: s.name }) || subjectStyle(s.name).color;
+        // Grade 6–8: every course card uses the theme accent (blue) and one card holds the course and its details button.
+        const soft = middle && !high;
+        const color = soft ? "var(--k5-ac)" : colorFor({ id: s.subjectId, name: s.name }) || subjectStyle(s.name).color;
         const card = (
           <button
             key={middle ? undefined : s.subjectId}
@@ -579,31 +580,36 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
             aria-disabled={none}
             onClick={() => onPick(s)}
             className={
-              high
-                ? "k5h-b-scard-btn flex flex-[1_1_auto] flex-col items-center justify-start gap-1.5 border-none bg-transparent text-center text-k5-ink"
+              high || soft
+                ? "k5h-b-scard-btn flex motion-none flex-[1_1_auto] flex-col items-center justify-start gap-2 border-none bg-transparent text-center text-k5-ink"
                 : `flex min-h-[200px] flex-col items-center justify-start gap-2 rounded-3xl border-[3px] px-3 pb-3.5 pt-4 text-center text-k5-ink ${middle ? "flex-[1_1_auto]" : ""}`
             }
             style={
               high
                 ? { padding: "4px 4px 2px", borderRadius: 12, cursor: none ? "default" : "pointer" }
-                : { borderColor: color, background: courseTint(color), boxShadow: "0 5px 0 " + color, opacity: none ? 0.6 : 1, cursor: none ? "default" : "pointer", ...(middle ? { borderRadius: 16 } : {}) }
+                : soft
+                  ? { padding: "6px 2px 2px", cursor: none ? "default" : "pointer" }
+                  : { borderColor: color, background: courseTint(color), boxShadow: "0 5px 0 " + color, opacity: none ? 0.6 : 1, cursor: none ? "default" : "pointer", ...(middle ? { borderRadius: 16 } : {}) }
             }
           >
-            <span className="k5h-b-stile flex h-[72px] w-[72px] flex-none items-center justify-center rounded-[22px] bg-k5-card" style={{ color }}>
+            <span className={"k5h-b-stile flex h-[72px] w-[72px] flex-none items-center justify-center bg-k5-card " + (soft ? "rounded-2xl" : "rounded-[22px]")} style={{ color }}>
               <SubjectIcon name={s.name} className="k5h-b-sicon h-10 w-10" />
             </span>
-            <span className="k5h-b-sname font-k5-display text-[20px] font-semibold leading-[1.1]">{s.name}</span>
-            {middle && s.teacherName && <span className="text-sm font-extrabold leading-[1.2] text-k5-mut">{s.teacherName}</span>}
-            {s.booked > 0 && (
-              <span className="k5h-b-booked flex items-center gap-1 whitespace-nowrap rounded-full border-[3px] border-k5-grn bg-k5-card px-2.5 py-1 text-[13px] font-black" style={middle ? { borderColor: "var(--k5-c-done)" } : undefined}>
+            <span className={"k5h-b-sname font-k5-display font-semibold leading-[1.1] " + (soft ? "text-[22px]" : "text-[20px]")}>{s.name}</span>
+            {middle && s.teacherName && <span className="text-sm font-extrabold leading-[1.2] text-k5-mut">{teacherLabel(s.teacherName)}</span>}
+            {(
+
+              <span className={"k5h-b-booked  flex items-center gap-1 rounded-full border-k5-grn bg-k5-card px-2.5 py-1 text-[13px] font-black " + (soft ? "max-w-full border-[1.5px]" : "whitespace-nowrap border-[3px]")} style={middle ? { borderColor: "var(--k5-c-done)" } : undefined}>
+                {(s.weekBooked ?? s.booked) > 0 && (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ stroke: "currentColor" }}>
                   <path d={CHECK_PATH} />
                 </svg>
-                {high ? copy.bookedN(s.booked) : s.booked + " booked"}
+                )}
+                {high || soft ? copy.bookedN(s.weekBooked ?? s.booked) : (s.weekBooked ?? s.booked) + " booked"}
               </span>
             )}
             {!none && (
-              <span className={`k5h-b-pick mt-auto rounded-full px-[18px] py-1.5 font-k5-display text-[17px] font-semibold ${middle ? "text-k5-card" : "text-white"}`} style={{ background: color }}>
+              <span className={`k5h-b-pick mt-auto k5-button-motion rounded-full px-[18px] py-1.5 font-k5-display text-[17px] font-semibold ${middle ? "text-k5-card" : "text-white"}`} style={{ background: color }}>
                 {copy.pickMe}
               </span>
             )}
@@ -615,17 +621,21 @@ function SubjectStep({ options, loading, left, colorFor, onPick, onDetails, thre
         return (
           <div
             key={s.subjectId}
-            className={high ? "k5h-b-scard flex min-w-0 flex-col" : "flex min-w-0 flex-col gap-2"}
-            style={high ? { gap: 6, padding: 10, border: "1.5px solid " + color, borderRadius: 12, background: courseTint(color), boxShadow: "0 4px 0 " + color, opacity: none ? 0.6 : 1 } : undefined}
+            className={high ? "k5h-b-scard flex min-w-0 flex-col k5-button-motion " : " k5-button-motion flex min-w-0 flex-col gap-2"}
+            style={
+              high
+                ? { gap: 6, padding: 10, border: "1.5px solid " + color, borderRadius: 12, background: courseTint(color), boxShadow: "0 4px 0 " + color, opacity: none ? 0.6 : 1 }
+                : { gap: 8, padding: 12, border: "1.5px solid var(--k5-ac)", borderRadius: 16, background: "var(--k5-act)", boxShadow: "0 5px 0 var(--k5-ac)", opacity: none ? 0.6 : 1 }
+            }
           >
             {card}
             <button
               type="button"
               onClick={() => onDetails(s.subjectId)}
-              aria-label={"Booked class details: " + s.name}
+              aria-label={"My Booked Classes: " + s.name}
               className="k5h-b-details flex min-h-10 cursor-pointer items-center justify-center gap-1 rounded-full border-[3px] border-k5-ac bg-k5-card px-3 py-1 text-center font-k5-display text-sm font-semibold leading-[1.15] text-k5-acx"
             >
-              Booked class details
+              My Booked Classes
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="flex-none">
                 <path d="M9 6l6 6-6 6" />
               </svg>
@@ -688,7 +698,7 @@ function dayModel(days, slots, skipDates, left) {
   });
 }
 
-function DayStep({ model, onPick }) {
+function DayStep({ model, onPick, hideFree = false }) {
   const { middle, high, copy } = useCopy();
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(118px,1fr))] gap-2.5">
@@ -707,7 +717,7 @@ function DayStep({ model, onPick }) {
           <span className="text-[15px] font-black text-k5-mut">{d.weekday}</span>
           <span className="k5h-b-dnum font-k5-display text-[44px] font-semibold leading-none">{d.num}</span>
           <span className={"rounded-full px-3 py-[3px] text-sm font-black " + (!d.can ? "bg-k5-line text-k5-mut" : d.isToday ? "bg-k5-ac text-white" : "bg-k5-yt text-k5-yx")}>{d.tag === "No tickets left" ? copy.noLeft : d.tag}</span>
-          {d.can && <span className="mt-auto text-[13px] font-extrabold text-k5-mut">Free times: {d.free}</span>}
+          {d.can && !hideFree && <span className="mt-auto text-[13px] font-extrabold text-k5-mut">Free times: {d.free}</span>}
         </button>
       ))}
     </div>
@@ -833,8 +843,9 @@ function MiddleRules({ perWeek, comp }) {
                 <path d="M20 20.5V16h-4.5" />
               </svg>
             </span>
-            <span className={text}>There are no free classes in Self Study</span>
+            <span className={text}>You get {perWeek} {comp ? "free " : ""}classes every week</span>
           </div>
+          {comp && (
           <div className={tile} style={{ borderRadius: tr }}>
             <span className={box} style={{ borderRadius: 12 }}>
               <svg {...ico} aria-hidden="true">
@@ -842,8 +853,9 @@ function MiddleRules({ perWeek, comp }) {
                 <path d="M7 3c0 5 10 6 10 9s-10 4-10 9M17 3c0 5-10 6-10 9s10 4 10 9" />
               </svg>
             </span>
-            <span className={text}>You can book only the classes you buy</span>
+            <span className={text}>Classes you don&apos;t book expire after Friday</span>
           </div>
+          )}
         </div>
       </div>
     );
@@ -910,7 +922,7 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
   const perWeekAll = n(free?.perWeek) + n(extra?.perWeek ?? extra?.perweek);
   const rows = calc?.subjects?.length ? calc.subjects : [{ subjectId: "all", subjectName: "All Courses", placeholder: true }];
   // Grade 9–12: no "Left" column (High.dc.html), and the four tiles add up the table.
-  const cols = high ? TABLE_COLS.filter(([, key]) => key !== "unused") : TABLE_COLS;
+  const cols = TABLE_COLS;
   const colSum = (key) => rows.reduce((a, r) => a + n(r.complimentary?.[key]) + n(r.customPlan?.[key]), 0);
   return (
     <section aria-labelledby="k5-grown" className={`${K5_CARD} flex flex-col gap-3.5 px-[18px] py-3.5`}>
@@ -959,7 +971,7 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
                     </svg>
                   }
                 >
-                  You get {perWeek} {comp ? "free " : ""}class tickets every week
+                  You get {perWeek} {comp ? "free " : ""}classes  every week
                 </RuleTile>
                 {comp && (
                   <RuleTile
@@ -973,7 +985,7 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
                       </svg>
                     }
                   >
-                    Tickets you don&apos;t use fly away after Friday
+                    Classes you don&apos;t use fly away after Friday
                   </RuleTile>
                 )}
               </div>
@@ -981,14 +993,6 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
           )}
 
           <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2.5">
-            {high ? (
-              <>
-                <StatTile label="Purchased classes" sub="Extra classes you bought" value={card(n(extra?.total))} />
-                <StatTile label="Booked" value={card(colSum("booked"))} />
-                <StatTile label="Unused" value={card(n(free?.unused) + n(extra?.unused))} />
-                <StatTile label="Expired" value={card(colSum("expired"))} />
-              </>
-            ) : (
               <>
                 <StatTile label="Total" value={card(n(free?.total) + n(extra?.total))} />
                 <StatTile label="Complimentary classes" value={card(n(free?.total))} />
@@ -996,12 +1000,11 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
                 <StatTile label="Per week" value={card(perWeekAll)} />
                 <StatTile label="Unused this week" value={card(n(free?.unused) + n(extra?.unused))} />
               </>
-            )}
           </div>
 
           <div className="overflow-x-auto rounded-[22px] border-[3px] border-k5-line">
             <div role="table" aria-label="Class numbers" className="text-[15px] font-extrabold">
-              <div role="row" className={`k5h-b-thead grid items-center bg-k5-act text-[17px] font-black ${high ? "min-w-[800px] grid-cols-[minmax(200px,1.8fr)_repeat(6,minmax(92px,1fr))]" : "min-w-[900px] grid-cols-[minmax(200px,1.8fr)_repeat(7,minmax(92px,1fr))]"}`}>
+              <div role="row" className={`k5h-b-thead grid items-center bg-k5-act text-[17px] font-black min-w-[900px] grid-cols-[minmax(200px,1.8fr)_repeat(7,minmax(92px,1fr))]`}>
                 <span role="columnheader" className="px-4 py-3.5 text-start">Course</span>
                 {cols.map(([label, , dot]) => (
                   <span key={label} role="columnheader" className="px-3 py-3.5 text-center leading-[1.25]">
@@ -1011,7 +1014,7 @@ function GrownUps({ details, calc, busy, perWeek, open, onToggle }) {
                 ))}
               </div>
               {rows.map((s) => (
-                <div key={s.subjectId} role="row" className={`grid items-center border-t-2 border-k5-line ${high ? "min-w-[800px] grid-cols-[minmax(200px,1.8fr)_repeat(6,minmax(92px,1fr))]" : "min-w-[900px] grid-cols-[minmax(200px,1.8fr)_repeat(7,minmax(92px,1fr))]"}`}>
+                <div key={s.subjectId} role="row" className={`grid items-center border-t-2 border-k5-line min-w-[900px] grid-cols-[minmax(200px,1.8fr)_repeat(7,minmax(92px,1fr))]`}>
                   <span role="cell" className="px-4 py-3 font-k5-display font-semibold">{s.subjectName}</span>
                   {cols.map(([label, key, , tone]) => (
                     <span key={label} role="cell" className="px-3 py-2 text-center">
@@ -1060,6 +1063,7 @@ function BookPopup({ onClose, children }) {
  * badge, the date and time, the course and the teacher in one list, then Back / Confirm.
  */
 function ConfirmBooking({ open, when, course, color, teacher, busy, onBack, onConfirm }) {
+  const teacherLabel = useTeacherLabel();
   const themeProps = useK5ThemeProps(
     "flex max-h-[min(100%,calc(100vh-32px))] flex-col gap-[18px] overflow-y-auto rounded-[16px] border border-k5-line bg-k5-card px-[22px] pb-5 pt-6 text-k5-ink shadow-[0_20px_48px_rgba(16,24,40,0.22)] ring-0 sm:max-w-[460px]",
   );
@@ -1123,7 +1127,7 @@ function ConfirmBooking({ open, when, course, color, teacher, busy, onBack, onCo
             </span>
             <span className="flex min-w-0 flex-col gap-0.5">
               <span className={label}>Teacher Name</span>
-              <span className={value}>{teacher}</span>
+              <span className={value}>{teacherLabel(teacher)}</span>
             </span>
           </div>
         </div>
@@ -1149,7 +1153,8 @@ function ConfirmBooking({ open, when, course, color, teacher, busy, onBack, onCo
  * real booking request: the teacher, this week's slots, the free/busy/closed rules (getSlotState) and
  * the submit (submitBookClassSlot) are the ones the weekly slot picker used; only the flow is steps.
  */
-export function K5BookView({ details, subjects, course, onShowBooked, onBooked, popup = false, onClose, skipInitialBuddy = false }) {
+export function K5BookView({ details, subjects, course, onShowBooked, onBooked, popup = false, onClose }) {
+  const teacherLabel = useTeacherLabel();
   const { middle, high, copy } = useCopy();
   const colorFor = useK5CourseColors();
   const queryClient = useQueryClient();
@@ -1162,6 +1167,8 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   const [unknown, setUnknown] = useState(false);
   const [grownOpen, setGrownOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [demandOff, setDemandOff] = useState(false);
+  const [allSlots, setAllSlots] = useState(false);
   // Day-first booking (Elementary): the course picked last, with its own slot and teacher calendar.
   const [choice, setChoice] = useState(null);
   const inFlight = useRef(false);
@@ -1177,11 +1184,16 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   });
   const options = allMode
     ? (allQuery.data?.studentSubjectList ?? []).map((s) => ({ subjectId: s.subjectId, name: s.subjectName, studentStandardId: course.studentStandardId, teacherName: s.teacherName }))
-    : subjects.filter((s) => s.subjectId !== 0).map((s) => ({ subjectId: s.subjectId, name: s.name, studentStandardId: s.studentStandardId, teacherName: s.teacherName, booked: s.booked }));
+    : subjects.filter((s) => s.subjectId !== 0).map((s) => ({ subjectId: s.subjectId, name: s.name, studentStandardId: s.studentStandardId, teacherName: s.teacherName, booked: s.weekBooked ?? s.booked }));
   const leftOf = (opt) => (allMode ? course.weekLeftClass : subjects.find((s) => s.subjectId === opt.subjectId)?.weekLeftClass ?? 0);
   // The course the booking is for: picked first (Grade 6–12), or picked last at the course step (Elementary).
   const activeOpt = dayFirst ? choice?.course.option ?? null : picked;
   const left = Math.max(activeOpt ? leftOf(activeOpt) : allMode ? course.weekLeftClass || 0 : Math.max(0, ...options.map(leftOf)), 0);
+  // "My classes" ticks: this week's booked + left of the picked course, or of all courses until one is picked.
+  const weekBookedOf = (opt) => Number(allMode ? course.weekBooked : subjects.find((x) => x.subjectId === opt.subjectId)?.weekBooked) || 0;
+  const ticketLeft = activeOpt || allMode ? left : options.reduce((a, o) => a + (Number(leftOf(o)) || 0), 0);
+  const ticketBooked = activeOpt ? weekBookedOf(activeOpt) : allMode ? Number(course.weekBooked) || 0 : options.reduce((a, o) => a + weekBookedOf(o), 0);
+  const ticketTotal = ticketBooked + ticketLeft;
   // Elementary: every course with a teacher, for the merged days and times.
   const bookable = options.filter((o) => allMode || o.teacherName);
   const all = useAllCourseSlots(bookable, dayFirst && !(allMode && allQuery.isLoading));
@@ -1226,7 +1238,10 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   const model = dayFirst ? mergedDayModel(all.courses, leftOf, left) : dayModel(book.days, book.slots, book.skipDates, left).filter((d) => d.tag !== "Over");
   const dayItem = model.find((m) => m.key === dayKey) || null;
   // Elementary: the picked time, with the courses that are free at it.
-  const timeEntry = dayFirst && dayItem && selected ? dayItem.entries.find((e) => e.slot === selected) || null : null;
+  const timeEntry =
+    dayFirst && dayItem && selected
+      ? dayItem.entries.find((e) => e.slot === selected) || (selected.preferred ? { choices: all.courses.filter((c) => c.slots).map((c) => ({ course: c, slot: selected })) } : null)
+      : null;
   const zoneSlots = dayFirst ? all.courses.find((c) => c.slots)?.slots : book.slots;
   // What "Book it" sends: the course, its slot and its teacher's calendar.
   const target = dayFirst
@@ -1247,6 +1262,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   const title = step === 4 ? "Yay! Class booked!" : step === 1 && left < 1 ? copy.allTitle : copy.steps[step - 1];
 
   function goTo(nextStep) {
+    setAllSlots(false);
     setChoice(null);
     if (dayFirst) {
       // Day, time, course: going back to a step clears what was picked on it and after it.
@@ -1262,6 +1278,29 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
     }
     setStep(nextStep);
   }
+
+  const preferredOn = !demandOff && !book.dummy.enabled && !allSlots;
+  const preferredIso = dayItem && isValid(new Date(dayItem.key)) ? format(new Date(dayItem.key), "yyyy-MM-dd") : null;
+  const preferredOptions = dayFirst ? bookable : picked ? [picked] : [];
+  function chooseSlot(s) {
+    const slot = { bookedStartDate: s.meetingStart, displayStartTime: s.startLabel, displayEndTime: s.endLabel, bookedDate: s.date, preferred: true };
+    setSelected(slot);
+    setChoice(null);
+    if (dayFirst) setStep(3);
+    else if (middle) setConfirming(true);
+  }
+  const preferredPanel = preferredIso && preferredOptions.length > 0 && (
+    <DemandBookPanel
+      key={preferredIso + (picked?.subjectId ?? "")}
+      k5
+      subjectLast={dayFirst}
+      fixedDate={preferredIso}
+      options={preferredOptions}
+      onChoose={chooseSlot}
+      onDisabled={() => setDemandOff(true)}
+      onViewAll={() => setAllSlots(true)}
+    />
+  );
 
   function pickSubject(option) {
     if (left < 1) return;
@@ -1314,6 +1353,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
     }
     if (result.status === "1") {
       setConfirming(false);
+      linkGridBooking(target.slot.bookedStartDate);
       toast.success(result.message || "Your class has been booked.");
       setDone({ name: target.option.name, weekday: dayItem.weekday, num: dayItem.num, time: niceTime(target.slot.displayStartTime) });
       setStep(4);
@@ -1366,7 +1406,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
           <span className="font-k5-display text-[22px] font-semibold leading-[1.2]">
             {target.option.name} · {dayItem.weekday} {dayItem.num} · {niceTime(target.slot.displayStartTime)}
           </span>
-          <span className="text-sm font-extrabold text-k5-mut">with {teacherName}</span>
+          <span className="text-sm font-extrabold text-k5-mut">with {teacherLabel(teacherName)}</span>
         </div>
         <button
           type="button"
@@ -1385,7 +1425,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   // The three steps: the section of the page, and the whole body of the Grade 6–8 "Book a Class" dialog.
   const flow = (
     <>
-          <BuddyStrip say={say} skipInitial={skipInitialBuddy} />
+          <BuddyStrip say={say} step={step} />
           <StepPills step={step} />
           <div className="flex flex-wrap items-center gap-3">
             {(step === 2 || step === 3) && (
@@ -1402,10 +1442,10 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
               <h2 id="k5-step" className="m-0 font-k5-display text-[30px] font-semibold leading-[1.1]">{title}</h2>
               {step === 1 && <span className="mt-0.5 text-[15px] font-black text-k5-gx">{dayFirst ? copy.anyDay : copy.any}</span>}
               {dayFirst && step === 3 && <span className="mt-0.5 text-[15px] font-black text-k5-gx">{copy.anyCourse}</span>}
-              {!dayFirst && step === 3 && (
+              {!dayFirst && step === 3 && !(preferredOn && preferredPanel) && (
                 <span className="mt-0.5 flex items-center gap-1.5 text-[15px] font-black text-[var(--k5-vX)]">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-k5-vi text-[10px] text-white">{initialsOf(teacherName)}</span>
-                  {firstName(teacherName)} is free at these times
+                  {teacherLabel(teacherName)} is free at these times
                 </span>
               )}
             </div>
@@ -1430,7 +1470,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                   ? notice("No class slots are available for this week.")
                   : (
                     <>
-                      <DayStep
+                      <DayStep hideFree={preferredOn}
                         model={model}
                         onPick={(d) => {
                           setDayKey(d.key);
@@ -1443,7 +1483,8 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                     </>
                   ))}
 
-          {dayFirst && step === 2 && dayItem && (
+          {dayFirst && step === 2 && dayItem && preferredOn && preferredPanel}
+          {dayFirst && step === 2 && dayItem && !(preferredOn && preferredPanel) && (
             <>
               <TimeStep
                 dayItem={dayItem}
@@ -1481,7 +1522,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                 : !book.week
                   ? notice("No class slots are available for this week.")
                   : (
-                    <DayStep
+                    <DayStep hideFree={preferredOn}
                       model={model}
                       onPick={(d) => {
                         setDayKey(d.key);
@@ -1491,7 +1532,8 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                     />
                   ))}
 
-          {!dayFirst && step === 3 && dayItem && (
+          {!dayFirst && step === 3 && dayItem && preferredOn && preferredPanel}
+          {!dayFirst && step === 3 && dayItem && !(preferredOn && preferredPanel) && (
             <>
               <TimeStep
                 dayItem={dayItem}
@@ -1529,7 +1571,7 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
                 <p className="m-0 font-k5-display text-[22px] font-semibold leading-[1.25]">
                   {done.name} · {done.weekday} {done.num} · {done.time}
                 </p>
-                <span className={`text-[15px] font-extrabold ${high ? "text-k5-ink" : "text-k5-gx"}`}>with {teacherName}</span>
+                <span className={`text-[15px] font-extrabold ${high ? "text-k5-ink" : "text-k5-gx"}`}>with {teacherLabel(teacherName)}</span>
                 <div className="mt-2 flex flex-wrap gap-2.5">
                   <button
                     type="button"
@@ -1581,9 +1623,9 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-stretch gap-4">
         <div className="flex-[1_1_340px]">
-          <BookHeader teacherName={teacherName} onStart={startOver} startLabel={"Book a Class (" + left + ")"} />
+          <BookHeader teacherName={teacherName} onStart={startOver} startLabel={"Book a Class (" + ticketLeft + ")"} />
         </div>
-        <Tickets perWeek={perWeek} left={left} color={color} />
+        <Tickets perWeek={ticketTotal} left={ticketLeft} color={color} />
       </div>
 
       {middle && <MiddleRules perWeek={perWeek} comp={details.compClassPerweek > 0} />}

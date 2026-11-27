@@ -3,6 +3,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { DEFAULT_POLICY, sanitizeAppearance } from "@/constant/appearance";
 import { getUserShortProfile, saveUserTheme } from "@/services/dashboardApi";
+import { useQueryClient } from "@tanstack/react-query";
+import { viaTier1 } from "@/utils/dashboardBootstrap";
 
 /**
  * Generic appearance provider (plan section 12, Step A): school policy + the user's saved
@@ -14,6 +16,9 @@ import { getUserShortProfile, saveUserTheme } from "@/services/dashboardApi";
  */
 const AppearanceContext = createContext(null);
 const CHANGE_EVENT = "is-appearance-change";
+export const HAND_HINT_KEY = "is-k5-hand-hint";
+// Device-level "is night mode on" hint for the screens that load before / outside the shell (hooks/useNightHint.js).
+export const NIGHT_HINT_KEY = "is-k5-night-hint";
 
 function subscribeStorage(callback) {
   window.addEventListener("storage", callback);
@@ -54,6 +59,7 @@ const subscribeReduced = subscribeMedia(REDUCED_QUERY);
 
 export function AppearanceProvider({ scope = "k5", userId, schoolUUID, policy = DEFAULT_POLICY, children }) {
   const key = userId ? `is-${scope}-look:${userId}` : null;
+  const queryClient = useQueryClient();
   const raw = useSyncExternalStore(subscribeStorage, () => readStorage(key), () => null);
   const systemDark = useSyncExternalStore(subscribeDark, () => window.matchMedia(DARK_QUERY).matches, () => false);
   const systemReduced = useSyncExternalStore(subscribeReduced, () => window.matchMedia(REDUCED_QUERY).matches, () => false);
@@ -68,7 +74,12 @@ export function AppearanceProvider({ scope = "k5", userId, schoolUUID, policy = 
   useEffect(() => {
     if (!userId || !schoolUUID || serverLoaded.current) return;
     serverLoaded.current = true;
-    getUserShortProfile({ schoolUUID, userId }).then((profile) => {
+    // fetchQuery shares the cache entry of the Add Siblings button / forced password check, so the profile is read once.
+    queryClient.fetchQuery({
+      queryKey: ["user-short-profile", schoolUUID, userId],
+      queryFn: () => viaTier1(userId, "shortProfile", (a) => a.shortProfile, () => getUserShortProfile({ schoolUUID, userId })),
+      staleTime: 60_000,
+    }).then((profile) => {
       if (!profile?.userThemeColorCode) { setServerReady(true); return; }
       try {
         const colorObj = typeof profile.userThemeColorCode === "string"
@@ -81,7 +92,7 @@ export function AppearanceProvider({ scope = "k5", userId, schoolUUID, policy = 
       } catch { /* ignore malformed */ }
       setServerReady(true);
     }).catch(() => setServerReady(true));
-  }, [userId, schoolUUID, key]);
+  }, [userId, schoolUUID, key, queryClient]);
 
   const allow = policy.allowUserCustomization !== false;
   const defaults = useMemo(() => sanitizeAppearance(policy.defaults), [policy.defaults]);
@@ -89,6 +100,17 @@ export function AppearanceProvider({ scope = "k5", userId, schoolUUID, policy = 
     if (!allow) return defaults;
     return sanitizeAppearance({ ...defaults, ...(unsaved || parseSaved(raw) || {}) }, defaults);
   }, [allow, defaults, unsaved, raw]);
+
+  // Which hand, as a device-level hint ("left" | "right", nothing else): the loading skeleton is drawn before the student is known, and
+  // this lets it come mirrored like the page will be (components/dashboard/DashboardLoadingSkeleton.jsx). Not the look itself.
+  useEffect(() => {
+    if (!key || serverReady === false) return;
+    try {
+      window.localStorage.setItem(HAND_HINT_KEY, preferences.hand === "left" ? "left" : "right");
+    } catch {
+      // storage unavailable: the skeleton stays right-handed
+    }
+  }, [key, serverReady, preferences.hand]);
 
   const save = useCallback(
     (next) => {
@@ -151,6 +173,16 @@ export function AppearanceProvider({ scope = "k5", userId, schoolUUID, policy = 
       },
     };
   }, [preferences, allow, key, status, systemDark, systemReduced, save, defaults, unsaved, serverReady]);
+
+  const isDark = value.isDark;
+  useEffect(() => {
+    if (!key || serverReady === false) return;
+    try {
+      window.localStorage.setItem(NIGHT_HINT_KEY, isDark ? "dark" : "light");
+    } catch {
+      // storage unavailable: those screens stay light
+    }
+  }, [key, serverReady, isDark]);
 
   return <AppearanceContext.Provider value={value}>{children}</AppearanceContext.Provider>;
 }

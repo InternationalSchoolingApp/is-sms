@@ -1,10 +1,35 @@
 "use server";
 
-import { serviceKeyHeaders, smsAuthHeaders } from "@/lib/auth/session";
+import { getAccountSession, serviceKeyHeaders, smsAuthHeaders } from "@/lib/auth/session";
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { getSettingValue } from "@/services/studentSignupApi";
 import { getCommonScriptVariables } from "@/services/studentSignupBackendApi";
+import { getSessionIdentity } from "@/utils/backendRequest";
+import { isOwnStudentStandard, rememberCurrentStudentStandard, rememberOwnStudentStandard } from "@/utils/ownEnrolments";
+import { sharedUserRead } from "@/utils/userReadMemo";
+
+/**
+ * Who a call is for comes from this request's own sign-in, never from the caller. Every export here is a server action
+ * the browser can call with any arguments, and the backend's dashboard endpoints take the user named in the payload
+ * (DashboardParentUtil reads payload userId / studentUserId and only checks that someone is signed in): a userId passed
+ * in would read or change another student's data. Each action overwrites its identity arguments with these values.
+ * Nobody signed in: every id is undefined, so the action's own guard answers null as before.
+ * `fallback`: a school id or e-mail the session does not carry keeps the caller's value.
+ */
+async function signedIn(fallback = {}) {
+  const me = await getSessionIdentity();
+  if (!me) return {};
+  return {
+    schoolUUID: me.schoolUUID,
+    userId: me.userId,
+    studentUserId: me.userId,
+    uniqueId: me.uniqueId || undefined,
+    email: me.email || fallback.email,
+    schoolId: me.schoolNumericId ?? fallback.schoolId,
+    schoolNumericId: me.schoolNumericId ?? fallback.schoolNumericId,
+  };
+}
 
 /**
  * BFF for the dashboard foundation. Same server-action + origin resolution
@@ -43,6 +68,7 @@ async function parseJsonResponse(response) {
  * (AesUtil.decode on the server).
  */
 export async function getDashboardMenu({ schoolUUID, schoolId, roleId, userId }) {
+  ({ schoolUUID, userId, schoolId } = await signedIn({ schoolId }));
   if (!hasBackendOrigin() || !roleId || !schoolId || !schoolUUID) return null;
   try {
     const baseUrl = await resolveServerBackendOrigin();
@@ -74,6 +100,7 @@ export async function getDashboardMenu({ schoolUUID, schoolId, roleId, userId })
  * (not wrapped in {payload: ...}), so the response is parsed directly.
  */
 export async function getDashboardUserDetails({ schoolUUID, userId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     const baseUrl = await resolveServerBackendOrigin();
@@ -101,6 +128,7 @@ export async function getDashboardUserDetails({ schoolUUID, userId }) {
  * live unread-count updates (see RightActionRail).
  */
 export async function getDashboardChatLinks({ schoolUUID, userId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     const response = await getCommonScriptVariables(schoolUUID, { userId });
@@ -117,6 +145,7 @@ export async function getDashboardChatLinks({ schoolUUID, userId }) {
  * treats it as null → no menus hidden (safe fallback).
  */
 export async function getStudentMenuFlags({ schoolUUID, studentUserId }) {
+  ({ schoolUUID, studentUserId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !studentUserId) return null;
   try {
     return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-menu-flags", { studentUserId });
@@ -138,6 +167,7 @@ export async function getStudentMenuFlags({ schoolUUID, studentUserId }) {
  * sumUnseen; used here rather than reproducing the dead client-side bug.
  */
 export async function getChatUnseenCount({ schoolUUID, userId, userRole, email }) {
+  ({ schoolUUID, userId, email } = await signedIn({ email }));
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     const baseUrl = await resolveServerBackendOrigin();
@@ -209,9 +239,11 @@ async function postDashboardPayload(schoolUUID, path, body) {
  * re-enrollment popup fields (showBatchReEnrollmentPopUp/Date) are not acted on.
  */
 export async function getStudentDashboardOrMigration({ schoolUUID, userId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
-    return await postDashboardPayload(schoolUUID, "/student/dashboard/dashboard-or-migration", { userId });
+    // Shared for one page load with the System Training popup's own read (services/systemTrainingApi.js).
+    return await sharedUserRead("dashboard-or-migration", () => postDashboardPayload(schoolUUID, "/student/dashboard/dashboard-or-migration", { userId }));
   } catch {
     return null;
   }
@@ -223,9 +255,14 @@ export async function getStudentDashboardOrMigration({ schoolUUID, userId }) {
  * "no video to show") from this for Phase B's home widgets.
  */
 export async function getStudentDashboardDetails({ schoolUUID, userId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
-    return await postDashboardPayload(schoolUUID, "/student/dashboard/get-student-dashboard", { userId });
+    const details = await postDashboardPayload(schoolUUID, "/student/dashboard/get-student-dashboard", { userId });
+    // The signed-in student's own current enrolment, straight from this answer: the profile and enrolment checks that
+    // follow on the dashboard (utils/ownEnrolments.js) reuse it instead of asking this slow call again.
+    if (details?.studentStandardId) await rememberCurrentStudentStandard(details.studentStandardId).catch(() => {});
+    return details;
   } catch {
     return null;
   }
@@ -236,6 +273,7 @@ export async function getStudentDashboardDetails({ schoolUUID, userId }) {
  * announcements (HTML body in `teacherRemarks`, sanitize before rendering).
  */
 export async function getAnnouncementDetails({ schoolUUID, userId, startFrom = 0, pageSize = 5 }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     return await postDashboardPayload(schoolUUID, "/dashboard/get-announcement-details", { userId, startFrom, pageSize });
@@ -245,17 +283,21 @@ export async function getAnnouncementDetails({ schoolUUID, userId, startFrom = 0
 }
 
 export async function getSchoolCalendar({ schoolUUID, userId, startDate, endDate }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     const baseUrl = await resolveServerBackendOrigin();
     const body = { payload: encodePayload({ userId, startDate, endDate }) };
-    const response = await fetch(`${baseUrl}/${schoolUUID}/dashboard/school-calendar`, {
+    // A student reads the student-only endpoint (StudentSchoolCalendarUtil: same answer, its per-event lookups read once per
+    // request, and always the signed-in student's own calendar). Any other role keeps /dashboard/school-calendar.
+    const role = String((await getAccountSession())?.role || "").toLowerCase();
+    const path = role === "student" ? "dashboard/student/school-calendar" : "dashboard/school-calendar";
+    const response = await fetch(`${baseUrl}/${schoolUUID}/${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify(body),
     });
     const dayEvents = await parseJsonResponse(response);
-    console.log("getSchoolCalendar", dayEvents);
     return dayEvents;
   } catch {
     return null;
@@ -268,7 +310,29 @@ export async function getSchoolCalendar({ schoolUUID, userId, startDate, endDate
  * an AttendanceStatusDTO-shaped object: { attended, onTime, lateSeconds }.
  * Same session-cookie requirement as getSchoolCalendar.
  */
+/**
+ * Student dashboard "N assignments overdue": the number of the student's assignments still owed (not submitted, not excused) from
+ * the academic year start until now. Answer: { status: "SUCCESS", details: { pendingAssignmentCount } }.
+ */
+export async function getPendingAssignmentCount({ schoolUUID, userId }) {
+  ({ schoolUUID, userId } = await signedIn());
+  if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  try {
+    const baseUrl = await resolveServerBackendOrigin();
+    const body = { payload: encodePayload({ userId }) };
+    const response = await fetch(`${baseUrl}/${schoolUUID}/dashboard/pending-assignment-count`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify(body),
+    });
+    return parseJsonResponse(response);
+  } catch {
+    return null;
+  }
+}
+
 export async function getLiveClassAttendanceStatus({ schoolUUID, entityId, entityType, classDate, classStartTime }) {
+  ({ schoolUUID } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !entityId) return null;
   try {
     const baseUrl = await resolveServerBackendOrigin();
@@ -296,10 +360,14 @@ export async function getLiveClassAttendanceStatus({ schoolUUID, entityId, entit
  * dateStatus is "between".
  */
 export async function getClassJoinDetails({ schoolUUID, url }) {
+  ({ schoolUUID } = await signedIn());
   if (!hasBackendOrigin() || !url) return null;
   try {
     const baseUrl = await resolveServerBackendOrigin();
-    const absoluteUrl = /^https?:\/\//i.test(url) ? url : `${baseUrl}/${schoolUUID}${url.startsWith("/") ? "" : "/"}${url}`;
+    const link = new URL(/^https?:\/\//i.test(url) ? url : `${baseUrl}/${schoolUUID}${url.startsWith("/") ? "" : "/"}${url}`);
+    // The call carries the user's token and this server's service key, so it only ever goes to our own backend: an
+    // absolute link keeps its path and query, never its host (the backend may name itself by a public domain).
+    const absoluteUrl = `${new URL(baseUrl).origin}${link.pathname}${link.search}`;
     const response = await fetch(absoluteUrl, {
       method: "GET",
       headers: { ...(await authHeaders()) },
@@ -320,6 +388,7 @@ export async function getClassJoinDetails({ schoolUUID, url }) {
  * cached announcement list optimistically (same as the legacy JS does).
  */
 export async function submitAnnouncementAcknowledge({ schoolUUID, announceId, userId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !announceId || !userId) return null;
   try {
     return await postDashboardPayload(schoolUUID, "/dashboard/save-acknowledge-request", { announceId, userId, moduleId: 0 });
@@ -336,6 +405,7 @@ export async function submitAnnouncementAcknowledge({ schoolUUID, announceId, us
  * uploaded exam-sheet's public file URL, or "" if the admin hasn't uploaded one yet.
  */
 export async function getStudentExaminationDetails({ schoolUUID, userId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     return await postDashboardPayload(schoolUUID, "/dashboard/student-examination-details", { userId, studentUserId: userId });
@@ -354,12 +424,12 @@ export async function getStudentExaminationDetails({ schoolUUID, userId }) {
  * includeClassComparison (K5 My Performance only) also brings details.k5Goals and a classComparison block per course.
  */
 export async function getStudentAcademicPerformance({ schoolUUID, userId, k5Performance = false }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     // k5Performance: the new My Performance page; the backend answers from the daily cron's tables, not the LMS.
     const body = { userId, studentUserId: userId, ...(k5Performance ? { k5Performance: "Y", includeClassComparison: "Y" } : {}) };
     const data =  await postDashboardPayload(schoolUUID, "/dashboard/parent/student-academic-performance", body);
-    console.log("getStudentAcademicPerformance data:", data, null, 2);
     return data;
   } catch {
     return null;
@@ -425,6 +495,7 @@ export async function getStudentAcademicPerformance({ schoolUUID, userId, k5Perf
  * own rendered gradebook report page (/dashboard/get-user-gradebook/{uniqueId}?payload=...).
  */
 export async function getStudentWeeklyProgressReports({ schoolUUID, userId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     return await postDashboardPayload(schoolUUID, "/dashboard/parent/weekly-progress-reports-detail", { userId, studentUserId: userId });
@@ -455,6 +526,7 @@ async function postBuzzProgressPayload(schoolUUID, path, body, uniqueId) {
  * counts + items table). POST /{schoolUUID}/dashboard/get-student-progress-report-detail.
  */
 export async function getStudentProgressReportDetail({ schoolUUID, uniqueId, studentUserId, lmsEnrollmentId, lmsCourseId }) {
+  ({ schoolUUID, uniqueId, studentUserId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !uniqueId) return null;
   try {
     const data = await postBuzzProgressPayload(
@@ -463,7 +535,6 @@ export async function getStudentProgressReportDetail({ schoolUUID, uniqueId, stu
       { studentUserId, lmsUserId: lmsEnrollmentId, entityId: lmsCourseId },
       uniqueId,
     );
-    console.log("getStudentProgressReportDetail data:", JSON.stringify(data, null, 2));
     return data;
   } catch {
     return null;
@@ -475,6 +546,7 @@ export async function getStudentProgressReportDetail({ schoolUUID, uniqueId, stu
  * POST /{schoolUUID}/dashboard/get-progress-report-grade-history.
  */
 export async function getProgressReportGradeHistory({ schoolUUID, uniqueId, itemId, enrollId }) {
+  ({ schoolUUID, uniqueId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !uniqueId) return null;
   try {
     return await postBuzzProgressPayload(schoolUUID, "/dashboard/get-progress-report-grade-history", { itemId, enrollId }, uniqueId);
@@ -494,6 +566,7 @@ export async function getProgressReportGradeHistory({ schoolUUID, uniqueId, item
  * payload, sent back unchanged for the first view (the backend decrypts it).
  */
 export async function getStudentGradebookReport({ schoolUUID, uniqueId, params, rawPayload }) {
+  ({ schoolUUID, uniqueId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !/^[0-9a-f-]{36}$/i.test(uniqueId || "") || !(params?.data || rawPayload)) return null;
   try {
     const baseUrl = await resolveServerBackendOrigin();
@@ -530,6 +603,7 @@ export async function getStudentGradebookReport({ schoolUUID, uniqueId, params, 
  * { moduleId, moduleName, pageLink, viewed, added, ... }. Not session-gated (same as module-details).
  */
 export async function getModuleRights({ schoolUUID, schoolId, roleId, userId, moduleId }) {
+  ({ schoolUUID, userId, schoolId } = await signedIn({ schoolId }));
   if (!hasBackendOrigin() || !schoolUUID || !schoolId || !roleId || !moduleId) return null;
   try {
     const baseUrl = await resolveServerBackendOrigin();
@@ -552,6 +626,7 @@ export async function getModuleRights({ schoolUUID, schoolId, roleId, userId, mo
  * title ("Spanish Club"), looked up by name server-side. status 1 = registered, 2 = already a member.
  */
 export async function saveClubRequest({ schoolUUID, userId, clubName }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId || !clubName) return null;
   try {
     return await postDashboardPayload(schoolUUID, "/save-club-request", { userId, clubName });
@@ -569,6 +644,7 @@ export async function saveClubRequest({ schoolUUID, userId, clubName }) {
  * recieptLink }], nextUserPaymentDetailsId }.
  */
 export async function getStudentFeeDetails({ schoolUUID, userId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-fee-details", { userId, studentUserId: userId });
@@ -585,6 +661,7 @@ export async function getStudentFeeDetails({ schoolUUID, userId }) {
  * logOutTime, loginLocation, totalLoginDuretion }] } ("Duretion" is the backend's spelling).
  */
 export async function getStudentLoginHistory({ schoolUUID, userId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-attendance", { userId, studentUserId: userId });
@@ -600,6 +677,7 @@ export async function getStudentLoginHistory({ schoolUUID, userId }) {
  * the legacy USER_FULL_NAME page global), ... }. Used for the student's display name.
  */
 export async function getStudentAcademicDetails({ schoolUUID, userId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-academic-details", { userId, studentUserId: userId });
@@ -616,6 +694,7 @@ export async function getStudentAcademicDetails({ schoolUUID, userId }) {
  * Response: { status: "1", details: [row] }.
  */
 export async function getStudentDemoData({ schoolUUID, userId, entityId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   const id = Number(entityId);
   try {
@@ -634,6 +713,7 @@ export async function getStudentDemoData({ schoolUUID, userId, entityId }) {
  * session-cookie-gated). The "assgined" typo in the path is real, not ours.
  */
 export async function getStudentAssignedTeacher({ schoolUUID, userId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     const baseUrl = await resolveServerBackendOrigin();
@@ -656,10 +736,10 @@ export async function getStudentAssignedTeacher({ schoolUUID, userId }) {
  * `details`, or null when the call failed (status other than "1").
  */
 export async function getStudentCourseContent({ schoolUUID, userId, lmsUserId, lmsCourseId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId || !lmsUserId) return null;
   try {
     const response = await postDashboardPayload(schoolUUID, "/dashboard/parent/student-course-content", { userId, studentUserId: userId, lmsUserId, lmsCourseId });
-    console.log("getStudentCourseContent response:", JSON.stringify(response, null, 2));
     return response && String(response.status) === "1" ? (response.details ?? { modules: [] }) : null;
   } catch {
     return null;
@@ -674,6 +754,7 @@ export async function getStudentCourseContent({ schoolUUID, userId, lmsUserId, l
  *   - details.transcripts → [{ gradeName, viewPath }] per historical grade
  */
 export async function getStudentTranscriptStatus({ schoolUUID, userId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     return await postDashboardPayload(schoolUUID, "/dashboard/student-transcript-status", { studentUserId: userId });
@@ -698,6 +779,7 @@ export async function getStudentTranscriptStatus({ schoolUUID, userId }) {
  * "Jan", attendancePercent, ... }] x 12 for the current year }.
  */
 export async function getStudentAttendanceFull({ schoolUUID, userId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     return await postDashboardPayload(schoolUUID, "/dashboard/parent/student-attendance-full", { userId, studentUserId: userId });
@@ -715,6 +797,7 @@ export async function getStudentAttendanceFull({ schoolUUID, userId }) {
  * subjectIcon, subjectName, standardName, courseType }] }.
  */
 export async function getAcademicYearExtension({ schoolUUID, userId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     return await postDashboardPayload(schoolUUID, "/dashboard/academic-year-extention", { userId: userId + "", studentUserId: userId + "" });
@@ -731,13 +814,17 @@ export async function getAcademicYearExtension({ schoolUUID, userId }) {
  * extentionCost, studentStandardId } }.
  */
 export async function getAcademicYearExtensionProceed({ schoolUUID, userId, subjectId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId || !subjectId) return null;
   try {
-    return await postDashboardPayload(schoolUUID, "/dashboard/academic-year-extention-proceed", {
+    const answer = await postDashboardPayload(schoolUUID, "/dashboard/academic-year-extention-proceed", {
       userId: userId + "",
       studentUserId: userId + "",
       subjectId: subjectId + "",
     });
+    // The backend names the enrolment for this (session) user; availAcademicYearExtension sends it back.
+    await rememberOwnStudentStandard(answer?.details?.academicYearExtension?.studentStandardId);
+    return answer;
   } catch {
     return null;
   }
@@ -749,7 +836,9 @@ export async function getAcademicYearExtensionProceed({ schoolUUID, userId, subj
  * Response.details: { userPaymentDetailsId (EXTENSION-2: the EXTENSION_FEE payment to pay), message }.
  */
 export async function availAcademicYearExtension({ schoolUUID, userId, studentStandardId, subjectId, currentExtentionType }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
+  if (studentStandardId && !(await isOwnStudentStandard(studentStandardId))) return null;
   try {
     return await postDashboardPayload(schoolUUID, "/dashboard/academic-year-extention-avail", {
       studentStandardId,
@@ -772,6 +861,7 @@ export async function availAcademicYearExtension({ schoolUUID, userId, studentSt
  * Status "1" = success, "0"/"2" = error with message, "3" = session expired.
  */
 export async function changePassword({ schoolUUID, uniqueId, oldpassword, newpassword, confirmpassword }) {
+  ({ schoolUUID, uniqueId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !oldpassword || !newpassword || !confirmpassword) return null;
   try {
     const enc = (v) => btoa(encodeURI(v));
@@ -797,6 +887,7 @@ export async function changePassword({ schoolUUID, uniqueId, oldpassword, newpas
  * the Parents table.
  */
 export async function getUserShortProfile({ schoolUUID, userId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     return await postDashboardPayload(schoolUUID, "/api/v1/get-user-short-profile", { userId });
@@ -822,6 +913,7 @@ export async function isAddSiblingEnabled(schoolUUID) {
  * colorObj JSON in USER_THEME.COLOR_CODE and tracks edit counts.
  */
 export async function saveUserTheme({ schoolUUID, userId, appearance }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     return await postDashboardPayload(schoolUUID, "/api/v1/update-theme", {
@@ -838,6 +930,7 @@ export async function saveUserTheme({ schoolUUID, userId, appearance }) {
  * { userId } -> details { specialHelp: "N" | "R" | "Y", requestedAt, enabledAt }. null on any error (the panel then stays open).
  */
 export async function getSpecialHelpStatus({ schoolUUID, userId }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     return await postDashboardPayload(schoolUUID, "/dashboard/student/special-help/status", { userId });
@@ -852,6 +945,7 @@ export async function getSpecialHelpStatus({ schoolUUID, userId }) {
  * Returns the backend's answer ({ status, message, details }), or null when it could not be reached.
  */
 export async function requestSpecialHelp({ schoolUUID, userId, tools, reason, condition }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
     return await postDashboardPayload(schoolUUID, "/dashboard/student/special-help/request", { userId, tools, reason, condition });
@@ -866,6 +960,7 @@ export async function requestSpecialHelp({ schoolUUID, userId, tools, reason, co
  * only when the school has a Need Help number, else null (no link shown).
  */
 export async function getNeedHelpContact({ schoolUUID, userId, schoolNumericId }) {
+  ({ schoolUUID, userId, schoolNumericId } = await signedIn({ schoolNumericId }));
   if (!hasBackendOrigin() || !schoolUUID || !userId || !schoolNumericId) return null;
   try {
     const answer = await postDashboardPayload(schoolUUID, "/api/v1/get-chat-eligibility", { userId, schoolId: schoolNumericId });
@@ -883,6 +978,7 @@ export async function getNeedHelpContact({ schoolUUID, userId, schoolNumericId }
  * true = this student has not used the app, so the install popup may show.
  */
 export async function getAppInstallPromptEligible({ uniqueId }) {
+  ({ uniqueId } = await signedIn());
   if (!hasBackendOrigin() || !uniqueId) return false;
   try {
     const baseUrl = await resolveServerBackendOrigin();
@@ -904,6 +1000,7 @@ export async function getAppInstallPromptEligible({ uniqueId }) {
  * uploadFile, showLinkBeforeMinutes, joiningLink, ... }. Null on any failure.
  */
 export async function getActivityDetails({ schoolUUID, userId, activityId, occurrenceDate }) {
+  ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId || !activityId) return null;
   try {
     const request = { activityId: String(activityId), meetingId: "", userId };

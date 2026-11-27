@@ -2,7 +2,8 @@
 
 import { Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link"; 
+import Link from "next/link";
+import { useNightHint } from "@/hooks/useNightHint"; 
 import Image from "next/image";
 import { Check, Clock, Copy, Info, LoaderCircle, XCircle } from "lucide-react";
 import {
@@ -553,10 +554,10 @@ function ProcessingLoader() {
   return (
     <PageShell>
       <div className="flex flex-col items-center gap-5 py-10 text-center">
-        <LoaderCircle className="size-12 animate-spin text-primary" aria-hidden="true" />
+        <LoaderCircle className="size-12 animate-spin text-primary dark:text-[#6db3ff]" aria-hidden="true" />
         <div>
-          <h1 className="text-xl font-bold text-slate-800">Please wait…</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-xl font-bold text-slate-800 dark:text-[#f1f4ff]">Please wait…</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-[#b9c3dd]">
             We are processing your payment. This may take a few moments — please don’t close or refresh this page.
           </p>
         </div>
@@ -593,7 +594,7 @@ function PaymentLabel({ children }) {
 
 // Body copy per contentFor — mirrors the JSP's <c:choose> blocks.
 function SuccessBody({ data }) {
-  const amount = <b className="text-black">{data.payAmount}</b>;
+  const amount = <b className="text-black dark:text-[#f1f4ff]">{data.payAmount}</b>;
   switch (data.contentFor) {
     case "FIRST-PAYMENT":
       return (
@@ -728,18 +729,18 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
   return (
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
-        {firstName && <p className="text-lg font-bold text-slate-900">Dear {firstName},</p>}
-        <h2 className="mt-3 flex flex-col items-center justify-center gap-2 text-xl leading-tight font-extrabold tracking-tight text-emerald-700 min-[560px]:flex-row min-[560px]:gap-3 min-[560px]:text-2xl sm:text-[28px]">
-          <span className="flex size-9 shrink-0 sm:size-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600" aria-hidden="true">
+        {firstName && <p className="text-lg font-bold text-slate-900 dark:text-[#f1f4ff]">Dear {firstName},</p>}
+        <h2 className="mt-3 flex flex-col items-center justify-center gap-2 text-xl leading-tight font-extrabold tracking-tight text-emerald-700 dark:text-emerald-300 min-[560px]:flex-row min-[560px]:gap-3 min-[560px]:text-2xl sm:text-[28px]">
+          <span className="flex size-9 shrink-0 sm:size-10 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-300" aria-hidden="true">
             <Check className="size-5" strokeWidth={3} />
           </span>
           {isReEnrolled ? <span className="whitespace-nowrap text-[clamp(14px,4vw,20px)] sm:text-[22px]">You are successfully Re-enrolled!</span> : isEnrolled ? "You are successfully enrolled!" : "Payment successful!"}
         </h2>
         {data.displaySchoolName && (
-          <p className="mt-3 text-sm text-slate-800 sm:text-base">Thank you for choosing {data.displaySchoolName}.</p>
+          <p className="mt-3 text-sm text-slate-800 dark:text-[#f1f4ff] sm:text-base">Thank you for choosing {data.displaySchoolName}.</p>
         )}
 
-        <div className="mt-5 space-y-2 rounded-xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-sm sm:px-5 sm:py-4 leading-relaxed text-slate-800">
+        <div className="mt-5 space-y-2 rounded-xl border border-emerald-100 dark:border-emerald-900 bg-emerald-50/70 dark:bg-emerald-950/50 px-4 py-3 text-sm sm:px-5 sm:py-4 leading-relaxed text-slate-800 dark:text-[#f1f4ff]">
           <SuccessBody data={data} />
         </div>
 
@@ -771,11 +772,11 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
         )}
 
         {showReload && returnUrl && !redirected && (
-          <div className="mt-5 flex items-center justify-center gap-4 rounded-2xl bg-blue-50 px-5 py-4 text-left ring-1 ring-blue-100">
+          <div className="mt-5 flex items-center justify-center gap-4 rounded-2xl bg-blue-50 dark:bg-[#222e55] px-5 py-4 text-left ring-1 ring-blue-100 dark:ring-[#33416b]">
             <CircularCountdown value={countdown} />
             <div>
-              <p className="text-base font-bold text-primary">Please wait...</p>
-              <p className="mt-1 text-xs leading-5 text-slate-700">We are taking you to your dashboard in a moment.</p>
+              <p className="text-base font-bold text-primary dark:text-[#6db3ff]">Please wait...</p>
+              <p className="mt-1 text-xs leading-5 text-slate-700 dark:text-[#d4dbee]">We are taking you to your dashboard in a moment.</p>
             </div>
           </div>
         )}
@@ -786,7 +787,7 @@ export function SuccessCard({ data, addEnrollment, schoolUUID }) {
         {showReload && returnUrl && (
           <a
             href={returnUrl}
-            className="mt-5 inline-block text-sm font-semibold text-primary underline underline-offset-4"
+            className="mt-5 inline-block text-sm font-semibold text-primary dark:text-[#6db3ff] underline underline-offset-4"
           >
             If you are not redirected automatically, click here
           </a>
@@ -893,52 +894,52 @@ function LoginDetails({ data, sourceApi, fallbackName, loginHref, dashboardHref,
   const name = data.studentName || fallbackName;
 
   return (
-    <section className="mt-6 border-t border-slate-200 pt-6" aria-labelledby="login-details-h">
-      <h3 id="login-details-h" className="text-sm text-slate-800 sm:text-base">
+    <section className="mt-6 border-t border-slate-200 dark:border-[#33416b] pt-6" aria-labelledby="login-details-h">
+      <h3 id="login-details-h" className="text-sm text-slate-800 dark:text-[#f1f4ff] sm:text-base">
         Log in to your school dashboard with the details below
       </h3>
-      <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 text-left">
+      <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 dark:border-[#33416b] text-left">
         <div className="flex items-center gap-1 px-3 py-3 sm:gap-2 sm:px-4">
           <div className="min-w-0 flex-1">
-            {name && <p className="font-bold text-slate-900">{name}</p>}
-            <p className="mt-1 text-sm break-all text-slate-800">Login Email: {email}</p>
+            {name && <p className="font-bold text-slate-900 dark:text-[#f1f4ff]">{name}</p>}
+            <p className="mt-1 text-sm break-all text-slate-800 dark:text-[#f1f4ff]">Login Email: {email}</p>
           </div>
           <CopyButton value={email} label="Copy login email" />
         </div>
-        <div className="flex items-center gap-1 border-t border-slate-200 px-3 py-3 sm:gap-2 sm:px-4">
+        <div className="flex items-center gap-1 border-t border-slate-200 dark:border-[#33416b] px-3 py-3 sm:gap-2 sm:px-4">
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-slate-600">Login Password</p>
-            <p className="mt-0.5 font-mono text-sm break-all sm:text-base text-slate-900">
+            <p className="text-xs text-slate-600 dark:text-[#d4dbee]">Login Password</p>
+            <p className="mt-0.5 font-mono text-sm break-all sm:text-base text-slate-900 dark:text-[#f1f4ff]">
               {show ? password : "•".repeat(Math.min(password.length, 14))}
             </p>
           </div>
           <button
             type="button"
             onClick={() => setShow((v) => !v)}
-            className="min-h-10 px-2 text-sm font-semibold text-primary"
+            className="min-h-10 px-2 text-sm font-semibold text-primary dark:text-[#6db3ff]"
           >
             {show ? "Hide" : "Show"}
           </button>
           <CopyButton value={password} label="Copy login password" />
         </div>
       </div>
-      <p className="mt-4 text-sm text-slate-700">You can copy these details now. We have also sent them to your registered email address.</p>
+      <p className="mt-4 text-sm text-slate-700 dark:text-[#d4dbee]">You can copy these details now. We have also sent them to your registered email address.</p>
       <a
         href={dashboardHref || loginHref}
         onClick={dashboardHref ? undefined : goToDashboard}
         aria-disabled={leaving}
-        className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-primary px-8 text-base sm:w-auto font-semibold text-white shadow-sm transition hover:bg-primary/90"
+        className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-primary dark:bg-[#027ffe] px-8 text-base sm:w-auto font-semibold text-white shadow-sm transition hover:bg-primary/90 dark:hover:bg-[#0a6fe0]"
       >
         {leaving ? "Redirecting…" : "Go to my dashboard"}
       </a>
-       <p className="mt-1 text-sm text-slate-700">You can change your password once inside the dashboard.</p>
-      <p className="mt-5 flex flex-col items-center justify-center gap-1 text-sm text-slate-700 min-[480px]:flex-row min-[480px]:flex-wrap min-[480px]:gap-x-2">
+       <p className="mt-1 text-sm text-slate-700 dark:text-[#d4dbee]">You can change your password once inside the dashboard.</p>
+      <p className="mt-5 flex flex-col items-center justify-center gap-1 text-sm text-slate-700 dark:text-[#d4dbee] min-[480px]:flex-row min-[480px]:flex-wrap min-[480px]:gap-x-2">
         Need help?
         <a
           href="https://wa.me/15854990662"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-start gap-1.5 text-left font-bold text-primary hover:underline sm:items-center"
+          className="inline-flex items-start gap-1.5 text-left font-bold text-primary dark:text-[#6db3ff] hover:underline sm:items-center"
         >
           <Image src="/images/whatsapp-new.webp" alt="" width={20} height={20} unoptimized className="mt-0.5 size-5 shrink-0 sm:mt-0" />
           Chat with us on WhatsApp: +1 (585) 499-0662
@@ -964,7 +965,7 @@ function CopyButton({ value, label }) {
       type="button"
       onClick={copy}
       aria-label={label}
-      className={`flex size-10 shrink-0 items-center justify-center ${copied ? "text-emerald-700" : "text-primary"}`}
+      className={`flex size-10 shrink-0 items-center justify-center ${copied ? "text-emerald-700 dark:text-emerald-300" : "text-primary dark:text-[#6db3ff]"}`}
     >
       {copied ? <Check className="size-[18px]" aria-hidden="true" /> : <Copy className="size-[18px]" aria-hidden="true" />}
     </button>
@@ -987,26 +988,26 @@ function AccountInfoCard({ data }) {
   if (data.showAccountInfo !== "Y") return null;
   const hasOutlook = data.outlookEmail && data.outlookPassword;
   return (
-    <div className="mt-5 space-y-4 rounded-2xl bg-blue-50/80 px-5 py-4 text-left text-sm leading-relaxed text-slate-700 ring-1 ring-blue-100">
+    <div className="mt-5 space-y-4 rounded-2xl bg-blue-50/80 dark:bg-[#222e55] px-5 py-4 text-left text-sm leading-relaxed text-slate-700 dark:text-[#d4dbee] ring-1 ring-blue-100 dark:ring-[#33416b]">
       <div>
-        <p className="font-bold text-slate-900">Step 1: Create your SMS password</p>
+        <p className="font-bold text-slate-900 dark:text-[#f1f4ff]">Step 1: Create your SMS password</p>
         {data.createPasswordUrl && (
           <a
             href={data.createPasswordUrl}
-            className="mt-2 inline-block rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
+            className="mt-2 inline-block rounded-xl bg-primary dark:bg-[#027ffe] px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 dark:hover:bg-[#0a6fe0]"
           >
             Create Password
           </a>
         )}
       </div>
       <div>
-        <p className="font-bold text-slate-900">Step 2: Sign in to Outlook and set your new password</p>
+        <p className="font-bold text-slate-900 dark:text-[#f1f4ff]">Step 2: Sign in to Outlook and set your new password</p>
         {hasOutlook ? (
           <dl className="mt-2 space-y-1">
             <div>
               <dt className="inline font-semibold">Outlook login URL: </dt>
               <dd className="inline">
-                <a href={data.outlookLoginUrl} target="_blank" rel="noreferrer" className="text-primary underline">
+                <a href={data.outlookLoginUrl} target="_blank" rel="noreferrer" className="text-primary dark:text-[#6db3ff] underline">
                   {data.outlookLoginUrl}
                 </a>
               </dd>
@@ -1048,8 +1049,8 @@ function ReceiptButtons({ data, primaryCta }) {
           {...(l.external ? { target: "_blank", rel: "noreferrer" } : {})}
           className={
             l.primary
-              ? "rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
-              : "rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              ? "rounded-xl bg-primary dark:bg-[#027ffe] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 dark:hover:bg-[#0a6fe0]"
+              : "rounded-xl border border-slate-200 dark:border-[#33416b] px-5 py-2.5 text-sm font-semibold text-slate-700 dark:text-[#d4dbee] hover:bg-slate-50 dark:hover:bg-[#2a3768]"
           }
         >
           {l.label}
@@ -1099,19 +1100,19 @@ function UnderVerificationCard({ data }) {
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
         <StatusIcon variant="pending" />
-        <p className="mt-3 text-xl font-bold text-slate-800">Thank You!</p>
-        <h2 className="mt-1 text-2xl font-extrabold text-black">Payment Under Verification</h2>
-        {data.userName && <p className="mt-3 font-semibold text-primary">Dear {data.userName},</p>}
+        <p className="mt-3 text-xl font-bold text-slate-800 dark:text-[#f1f4ff]">Thank You!</p>
+        <h2 className="mt-1 text-2xl font-extrabold text-black dark:text-[#f1f4ff]">Payment Under Verification</h2>
+        {data.userName && <p className="mt-3 font-semibold text-primary dark:text-[#6db3ff]">Dear {data.userName},</p>}
         {data.displaySchoolName && (
-          <p className="mt-1 text-sm italic text-slate-600">Greetings from {data.displaySchoolName}!</p>
+          <p className="mt-1 text-sm italic text-slate-600 dark:text-[#d4dbee]">Greetings from {data.displaySchoolName}!</p>
         )}
-        <p className="mt-4 text-sm leading-relaxed text-slate-600">
+        <p className="mt-4 text-sm leading-relaxed text-slate-600 dark:text-[#d4dbee]">
           We believe that you were trying to complete a transaction with us. However, your payment transaction is under
           verification and you will be notified through email if there is any change in your payment status. Kindly let
           us know by mailing on <ContactEmail email={data.contactEmail} /> if you need more information.
         </p>
         {data.feeFailedReason && (
-          <p className="mt-3 text-sm text-slate-700">
+          <p className="mt-3 text-sm text-slate-700 dark:text-[#d4dbee]">
             <b>Fee Failed Reason:</b> {data.feeFailedReason}
           </p>
         )}
@@ -1129,17 +1130,17 @@ function FailedCard({ data }) {
     <PageShell schoolSettingsLinks={data.schoolSettingsLinks} schoolName={data.displaySchoolName}>
       <div className="text-center">
         <StatusIcon variant="failed" />
-        <p className="mt-3 text-xl font-bold text-slate-800">Oops!</p>
-        <h2 className="text-2xl font-extrabold tracking-tight text-rose-600 sm:text-3xl">
+        <p className="mt-3 text-xl font-bold text-slate-800 dark:text-[#f1f4ff]">Oops!</p>
+        <h2 className="text-2xl font-extrabold tracking-tight text-rose-600 dark:text-rose-300 sm:text-3xl">
           {data.failedTitle || "Payment Unsuccessful"}
         </h2>
-        {data.userName && <p className="mt-4 text-base font-bold text-black">Dear {data.userName}</p>}
+        {data.userName && <p className="mt-4 text-base font-bold text-black dark:text-[#f1f4ff]">Dear {data.userName}</p>}
         {data.displaySchoolName && (
-          <p className="mt-3 text-sm font-semibold italic text-slate-700">Greetings from {data.displaySchoolName}!</p>
+          <p className="mt-3 text-sm font-semibold italic text-slate-700 dark:text-[#d4dbee]">Greetings from {data.displaySchoolName}!</p>
         )}
-        <div className="mt-5 space-y-2 rounded-2xl bg-rose-50/80 px-5 py-4 text-sm leading-relaxed text-slate-700 ring-1 ring-rose-100">
+        <div className="mt-5 space-y-2 rounded-2xl bg-rose-50/80 dark:bg-rose-950/40 px-5 py-4 text-sm leading-relaxed text-slate-700 dark:text-[#d4dbee] ring-1 ring-rose-100 dark:ring-rose-900">
           {data.paymentName && (
-            <p className="font-semibold text-black">
+            <p className="font-semibold text-black dark:text-[#f1f4ff]">
               <PaymentLabel>{data.paymentName}</PaymentLabel>{data.payAmount ? ` · ${data.payAmount}` : ""}
             </p>
           )}
@@ -1149,7 +1150,7 @@ function FailedCard({ data }) {
             <ContactEmail email={data.contactEmail} /> if we could help you on the same.
           </p>
           {data.feeFailedReason && (
-            <p className="font-medium text-rose-700">
+            <p className="font-medium text-rose-700 dark:text-rose-300">
               <b>Fee Failed Reason:</b> {data.feeFailedReason}
             </p>
           )}
@@ -1239,11 +1240,11 @@ function ConfirmingCard({ data, schoolUUID, settlementRef, message, settledMessa
     <PageShell schoolSettingsLinks={data?.schoolSettingsLinks} schoolName={data?.displaySchoolName}>
       <div className="text-center" role="status" aria-live="polite">
         <StatusIcon variant={icon} />
-        <h2 className="mt-4 text-2xl font-extrabold text-black">{title}</h2>
-        <p className="mt-3 text-sm leading-relaxed text-slate-600">{text}</p>
+        <h2 className="mt-4 text-2xl font-extrabold text-black dark:text-[#f1f4ff]">{title}</h2>
+        <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-[#d4dbee]">{text}</p>
         {!settledMessage && result.phase === "CONFIRMING" && (
-          <p className="mt-6 flex items-center justify-center gap-2 text-xs font-medium text-slate-500">
-            <LoaderCircle className="size-4 animate-spin text-primary" aria-hidden="true" />
+          <p className="mt-6 flex items-center justify-center gap-2 text-xs font-medium text-slate-500 dark:text-[#b9c3dd]">
+            <LoaderCircle className="size-4 animate-spin text-primary dark:text-[#6db3ff]" aria-hidden="true" />
             This page updates by itself. Please keep it open.
           </p>
         )}
@@ -1264,14 +1265,14 @@ function ErrorCard({ data }) {
     <PageShell>
       <div className="text-center">
         <StatusIcon variant="failed" />
-        <h2 className="mt-4 text-2xl font-extrabold text-black">Something went wrong</h2>
-        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+        <h2 className="mt-4 text-2xl font-extrabold text-black dark:text-[#f1f4ff]">Something went wrong</h2>
+        <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-[#d4dbee]">
           {message || "We are experiencing a technical issue. Please try again later."}
         </p>
         {redirectTo && (
           <a
             href={buildRedirectHref(redirectTo)}
-            className="mt-6 inline-block rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
+            className="mt-6 inline-block rounded-xl bg-primary dark:bg-[#027ffe] px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 dark:hover:bg-[#0a6fe0]"
           >
             Continue
           </a>
@@ -1313,7 +1314,7 @@ function ReturnButton({ cta }) {
   return (
     <a
       href={cta.href}
-      className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-7 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary dark:bg-[#027ffe] px-7 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 dark:hover:bg-[#0a6fe0] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       {cta.label}
     </a>
@@ -1323,7 +1324,7 @@ function ReturnButton({ cta }) {
 function ContactEmail({ email }) {
   const address = email || "info@internationalschooling.org";
   return (
-    <a href={`mailto:${address}`} className="font-semibold text-primary underline underline-offset-2">
+    <a href={`mailto:${address}`} className="font-semibold text-primary dark:text-[#6db3ff] underline underline-offset-2">
       {address}
     </a>
   );
@@ -1345,10 +1346,10 @@ function StatusIcon({ variant }) {
     );
   }
   const map = {
-    pending: { Icon: Clock, ring: "bg-amber-50 text-amber-500" },
-    failed: { Icon: XCircle, ring: "bg-red-50 text-red-500" },
-    info: { Icon: Info, ring: "bg-sky-50 text-sky-600" },
-    confirmed: { Icon: Check, ring: "bg-emerald-50 text-emerald-600" },
+    pending: { Icon: Clock, ring: "bg-amber-50 dark:bg-amber-950/40 text-amber-500 dark:text-amber-300" },
+    failed: { Icon: XCircle, ring: "bg-red-50 dark:bg-red-950/40 text-red-500 dark:text-red-300" },
+    info: { Icon: Info, ring: "bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-300" },
+    confirmed: { Icon: Check, ring: "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-300" },
   };
   const { Icon, ring } = map[variant] || map.failed;
   return (
@@ -1365,7 +1366,7 @@ function CircularCountdown({ value }) {
   return (
     <div className="relative flex size-12 shrink-0 items-center justify-center" aria-label={`${value} seconds remaining`}>
       <svg viewBox="0 0 44 44" className="absolute inset-0 -rotate-90" aria-hidden="true">
-        <circle cx="22" cy="22" r="18" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-blue-100" />
+        <circle cx="22" cy="22" r="18" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-blue-100 dark:text-[#33416b]" />
         <circle
           cx="22"
           cy="22"
@@ -1376,10 +1377,10 @@ function CircularCountdown({ value }) {
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={progress}
-          className="text-blue-400 transition-[stroke-dashoffset] duration-500"
+          className="text-blue-400 dark:text-[#6db3ff] transition-[stroke-dashoffset] duration-500"
         />
       </svg>
-      <span className="text-sm font-semibold tabular-nums text-blue-700">{value}</span>
+      <span className="text-sm font-semibold tabular-nums text-blue-700 dark:text-[#9ec2ff]">{value}</span>
     </div>
   );
 }
@@ -1403,11 +1404,13 @@ function buildRedirectHref(redirectTo) {
 function PageShell({ children, schoolSettingsLinks, schoolName }) {
   const logoUrl = schoolSettingsLinks?.logo;
   const websiteUrl = schoolSettingsLinks?.website || "https://internationalschooling.org/";
+  // The student's night mode (device hint, hooks/useNightHint.js): this page is outside the dashboard shell.
+  const night = useNightHint();
 
   return (
     <main
-      className="flex min-h-screen flex-col items-center bg-[#eef4fb] bg-cover bg-center bg-no-repeat p-4 sm:p-8"
-      style={{ backgroundImage: "url('/images/signup-thankyou-bg.png')" }}
+      className={`flex min-h-screen flex-col items-center bg-cover bg-center bg-no-repeat p-4 sm:p-8 ${night ? "dark bg-[#0e1530]" : "bg-[#eef4fb]"}`}
+      style={night ? undefined : { backgroundImage: "url('/images/signup-thankyou-bg.png')" }}
     >
       <div className="mt-6 mb-4 flex justify-center">
         <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="inline-block">
@@ -1423,12 +1426,12 @@ function PageShell({ children, schoolSettingsLinks, schoolName }) {
       </div>
 
       <div className="flex w-full flex-1 items-center justify-center">
-        <div className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-xl shadow-slate-900/5 ring-1 ring-slate-900/5 sm:p-10">
+        <div className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-xl shadow-slate-900/5 ring-1 ring-slate-900/5 sm:p-10 dark:bg-[#1a2547] dark:ring-[#33416b]">
           {children}
         </div>
       </div>
 
-      <footer className="py-5 text-center text-xs text-slate-500">
+      <footer className="py-5 text-center text-xs text-slate-500 dark:text-[#b9c3dd]">
         Copyright © {new Date().getFullYear()} - {schoolName || "International Schooling"} - All Rights Reserved.
       </footer>
     </main>

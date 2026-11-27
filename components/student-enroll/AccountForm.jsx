@@ -477,7 +477,7 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
 
         {errors.form && <p className="text-center text-sm font-semibold text-red-600">{errors.form}</p>}
 
-        <label className="flex items-start gap-2.5 text-[13px] leading-relaxed text-slate-600">
+        <label className="flex items-start gap-2.5 text-[13px] leading-relaxed text-slate-600 md:text-[10px]">
           <Checkbox
             checked={fields.checkTerms}
             onCheckedChange={(checked) => {
@@ -507,12 +507,13 @@ export function AccountForm({ context, canSubmit = false, recaptchaSiteKey, onVe
             <a href={context.studentPolicyUrl} target="_blank" rel="noreferrer" className="text-primary">
               Academic Integrity &amp; Student Code of Conduct
             </a>
+            .
           </span>
         </label>
         {checkTermsError && <p className="text-xs text-red-600">{checkTermsError}</p>}
 
         {isProdDeployment && recaptchaSiteKey && (
-          <p className="text-center text-[11px] leading-relaxed text-slate-400">
+          <p className="text-center text-[11px] leading-relaxed text-slate-400 md:whitespace-nowrap md:text-[9px]">
             This site is protected by reCAPTCHA and the Google{" "}
             <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline">
               Privacy Policy

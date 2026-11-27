@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Bell, CheckCheck, ChevronLeft, ChevronRight, Filter, Inbox as InboxIcon, Mail, Megaphone, MessageCircle, Paperclip, PenLine, Search, Send, Settings, Star, X } from "lucide-react";
 import { K5_CARD } from "@/components/k5/home/k5Bits";
 import { K5Loading, K5Sk } from "@/components/k5/K5Skeletons";
+import { K5Select } from "@/components/k5/K5Select";
 import { K5InboxCompose, K5InboxSettings } from "@/components/k5/pages/K5InboxCompose";
 import { CHANNEL_TINT, CM_BTN, CM_BTN_PRIMARY, K5InboxReader } from "@/components/k5/pages/K5InboxReader";
 import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
@@ -16,6 +17,7 @@ import {
 const FOLDER_ICONS = { ALL: InboxIcon, EMAIL: Mail, NOTIFICATION: Bell, ANNOUNCEMENT: Megaphone, WHATSAPP: MessageCircle, SENT: Send };
 const UNREAD_KEY = { ALL: "TOTAL", EMAIL: "EMAIL", NOTIFICATION: "NOTIFICATION", ANNOUNCEMENT: "ANNOUNCEMENT" };
 const FIELD = "k5-cm-in min-h-[50px] w-full rounded-[14px] border-[3px] border-k5-line bg-k5-card px-2.5 text-[16px] font-extrabold text-k5-ink";
+const ANY_CATEGORY = "ANY";
 const ROW_GRID = "grid-cols-[40px_minmax(120px,210px)_minmax(0,1fr)_auto] max-[760px]:grid-cols-[40px_minmax(0,1fr)_auto]";
 
 /** "Inbox" title. Playful: a card with an 84px tile. Balanced / Mature (Middle / High.dc.html): no card, a smaller tile. */
@@ -112,27 +114,26 @@ function Filters({ inbox, onClose }) {
             <input type="search" maxLength={200} value={draft.search} onChange={(e) => set({ search: e.target.value })} placeholder="Name, subject or words" className="min-w-0 flex-1 border-none bg-transparent text-[16px] font-extrabold text-k5-ink outline-none" />
           </span>
         </label>
-        <label className={label}>
+        <div className={label}>
           <span className={caption}>Date</span>
-          <select value={draft.date} onChange={(e) => set({ date: e.target.value })} className={`${FIELD} cursor-pointer`}>
-            {DATE_PRESETS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        </label>
+          <K5Select aria-label="Date" value={draft.date} onValueChange={(value) => set({ date: value })} options={DATE_PRESETS} />
+        </div>
         {!inbox.isSent && (
           <>
-        <label className={label}>
+        <div className={label}>
           <span className={caption}>Show</span>
-          <select value={draft.read} onChange={(e) => set({ read: e.target.value })} className={`${FIELD} cursor-pointer`}>
-            {READ_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        </label>
-        <label className={label}>
+          <K5Select aria-label="Show" value={draft.read} onValueChange={(value) => set({ read: value })} options={READ_OPTIONS} />
+        </div>
+        <div className={label}>
           <span className={caption}>Email category</span>
-          <select value={draft.category} onChange={(e) => set({ category: e.target.value })} className={`${FIELD} cursor-pointer`}>
-            <option value="">Any category</option>
-            {INBOX_CATEGORIES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        </label>
+          {/* "Any category" is the empty filter; the dropdown needs a real value for it. */}
+          <K5Select
+            aria-label="Email category"
+            value={draft.category || ANY_CATEGORY}
+            onValueChange={(value) => set({ category: value === ANY_CATEGORY ? "" : value })}
+            options={[{ value: ANY_CATEGORY, label: "Any category" }, ...INBOX_CATEGORIES]}
+          />
+        </div>
         <div className="flex min-w-0 flex-col gap-2 text-[16px] font-extrabold">
           <label className="flex min-h-[22px] cursor-pointer items-center gap-2.5">
             <input type="checkbox" checked={draft.withAttachments} onChange={(e) => set({ withAttachments: e.target.checked })} className="m-0 h-5 w-5 cursor-pointer accent-[var(--k5-ac)]" />
@@ -200,15 +201,15 @@ function Row({ item, inbox }) {
   const time = rowTime(item.at, inbox.timeZone);
   const title = item.title || NO_SUBJECT;
   return (
-    <div role="listitem" className={`flex items-stretch border-b-[3px] border-k5-line ${unread ? "bg-k5-card shadow-[inset_4px_0_0_var(--k5-ac)]" : "bg-k5-soft"}`}>
-      <button type="button" aria-pressed={item.starred} aria-label={item.starred ? "Remove star" : "Star"} onClick={() => inbox.toggleStar(item)} className="flex w-12 flex-none cursor-pointer items-center justify-center border-none bg-transparent p-0">
+    <div role="listitem" className={`k5-lift flex items-stretch border-b-[3px] border-k5-line ${unread ? "bg-k5-card shadow-[inset_4px_0_0_var(--k5-ac)]" : "bg-k5-soft"}`}>
+      <button type="button" aria-pressed={item.starred} aria-label={item.starred ? "Remove star" : "Star"} onClick={() => inbox.toggleStar(item)} className="motion-none flex w-12 flex-none cursor-pointer items-center justify-center border-none bg-transparent p-0">
         <Star className={`h-5 w-5 ${item.starred ? "fill-k5-hi text-k5-hi" : "text-k5-mut"}`} strokeWidth={2} aria-hidden="true" />
       </button>
       <button
         type="button"
         onClick={() => inbox.openItem(item)}
         aria-label={`${unread ? "Unread, " : ""}${channelLabel(item.channel)}, ${name}, ${title}, ${time}`}
-        className={`grid min-w-0 flex-1 cursor-pointer items-center gap-3 border-none bg-transparent py-3 pl-0 pr-[18px] text-left text-[16px] text-k5-ink max-[760px]:gap-y-1 max-[760px]:pr-3.5 ${ROW_GRID}`}
+        className={`motion-none grid min-w-0 flex-1 cursor-pointer items-center gap-3 border-none bg-transparent py-3 pl-0 pr-[18px] text-left text-[16px] text-k5-ink max-[760px]:gap-y-1 max-[760px]:pr-3.5 ${ROW_GRID}`}
       >
         <span aria-hidden="true" className={`k5h-cm-av flex h-10 w-10 items-center justify-center rounded-full text-[13px] font-extrabold ${CHANNEL_TINT[item.channel]}`}>{initialsOf(name)}</span>
         <span className="flex min-w-0 flex-col gap-[3px]">

@@ -1,12 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { createContext, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "@/components/providers/AuthSessionProvider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { getDashboardChatLinks, getDashboardMenu, getStudentDashboardDetails, getStudentDemoData, getStudentMenuFlags } from "@/services/dashboardApi";
 import { applyStudentNavRules, mapBackendMenu } from "@/utils/dashboardNav";
+import { viaTier1 } from "@/utils/dashboardBootstrap";
 import { bandFromStandardId, isHighDashboardOn, isK5LearningProgram, isMiddleDashboardOn, isPreKStandard, isSelfStudyProgram, normalizeGradeBand } from "@/utils/gradeBand";
 import { isDummyStudentMode } from "@/utils/paymentGatewayChecks";
 import { createDummyStudent } from "@/utils/dummyStudent";
@@ -30,7 +31,7 @@ import { useStudentName } from "@/hooks/useStudentName";
  * its empty value would wrongly bounce every student to the legacy dashboard.
  * It is added together with the backend toggle + redirect branch.
  */
-const DashboardContext = createContext(null);
+export const DashboardContext = createContext(null);
 
 // The page's query string after hydration (null on the server) — same reader as useDummyStudent.
 const subscribe = () => () => {};
@@ -68,7 +69,8 @@ function parseGradeCache(raw) {
 export function studentDashboardDetailsQuery({ schoolUUID, userId }) {
   return {
     queryKey: ["student-dashboard-details", schoolUUID, userId],
-    queryFn: () => getStudentDashboardDetails({ schoolUUID, userId }),
+    // The first query of the page: it starts the one start-up request that carries most of the page (utils/dashboardBootstrap.js).
+    queryFn: () => viaTier1(userId, "details", (a) => a.details, () => getStudentDashboardDetails({ schoolUUID, userId })),
     staleTime: 5 * 60_000,
     refetchOnWindowFocus: false,
   };
@@ -151,7 +153,11 @@ function useResolveGradeBand({ role, session, authenticated }) {
     // The token sign-in carries no role id (only the role name); the dashboard details list the user's
     // role modules, each with that role id (needed by the sidebar menu and module rights).
     roleId: details?.roleAndModuleAssign?.roleAndModuleDTO?.[0]?.roleId ?? null,
-    lmsProviderURL: details?.lmsProviderURL ?? "",
+    // A dummy student's LMS link is the backend's dummy redirect (legacy dummyLmsProviderUrl); only its path is used (app/api/lms/redirect).
+    lmsProviderURL:
+      dummyEnabled && details?.dummyLmsUserId && session?.schoolUUID && session?.uniqueId
+        ? `/${session.schoolUUID}/lms-platform/redirect-dummy-user-to-LMS/${session.uniqueId}?dummyLmsUserId=${encodeURIComponent(details.dummyLmsUserId)}`
+        : (details?.lmsProviderURL ?? ""),
     isPayLmsPaymentPending: details?.isPayLmsPaymentPending ?? "",
     // Dummy mode with the counselor's demo row: the dashboard shows that row's student name (legacy
     // syncDummyStudentProfileName - header "Welcome back", profile).
@@ -178,11 +184,6 @@ function useResolveGradeBand({ role, session, authenticated }) {
 
 function useResolveDashboardContext({ role = "student" } = {}) {
   const { data: session, status } = useSession();
-  const [logoUrl, setLogoUrl] = useState(null);
-  // The school's website (schoolSettingsLinks.schoolWebsite): the header logo opens it in a new tab, as in the legacy header.
-  const [schoolWebsite, setSchoolWebsite] = useState(null);
-  // True once the school-links request has finished (logo found or not), so a page can wait for the logo before showing.
-  const [logoSettled, setLogoSettled] = useState(false);
   const authenticated = status === "authenticated" && Boolean(session?.userId && session?.schoolUUID);
   const queryClient = useQueryClient();
 
@@ -203,18 +204,23 @@ function useResolveDashboardContext({ role = "student" } = {}) {
   // DashboardLeftSideContentSchool.jsp's per-pageLink rules (see
   // applyStudentNavRules), using the student-profile flags from
   // the student's own get-student-dashboard (fee-details needs an Online signup, batch-schedule a BATCH signup).
+  // A student's start-up answer already holds the menu, its flags, the name, the links ... (utils/dashboardBootstrap.js); every
+  // other role, or a part the answer lacks, asks for it directly as before.
+  const via = (part, pick, fallback) => (role === "student" ? viaTier1(session?.userId, part, pick, fallback) : fallback());
   const menuQuery = useQuery({
     queryKey: ["dashboard-menu", role, session?.schoolNumericId, roleId, session?.userId],
     queryFn: async () => {
       const [dto, details, menuFlagsResp] = await Promise.all([
-        getDashboardMenu({
-          schoolUUID: session.schoolUUID,
-          schoolId: session.schoolNumericId,
-          roleId,
-          userId: session.userId,
-        }),
+        via("menu", (a) => (a.menu && a.menu.roleId === roleId ? a.menu.data : undefined), () =>
+          getDashboardMenu({
+            schoolUUID: session.schoolUUID,
+            schoolId: session.schoolNumericId,
+            roleId,
+            userId: session.userId,
+          }),
+        ),
         role === "student" ? queryClient.fetchQuery(studentDashboardDetailsQuery({ schoolUUID: session.schoolUUID, userId: session.userId })) : null,
-        role === "student" ? getStudentMenuFlags({ schoolUUID: session.schoolUUID, studentUserId: session.userId }) : null,
+        role === "student" ? via("menuFlags", (a) => a.menuFlags, () => getStudentMenuFlags({ schoolUUID: session.schoolUUID, studentUserId: session.userId })) : null,
       ]);
       const mapped = mapBackendMenu(dto) ?? [];
       const menuFlags = menuFlagsResp?.details ?? null;
@@ -233,6 +239,8 @@ function useResolveDashboardContext({ role = "student" } = {}) {
   const menu = menuQuery.data ?? [];
   // True while the menu request is running: the K–5 / Grade 6–8 left rail shows skeleton tiles instead of an empty box.
   const menuLoading = menuQuery.isLoading;
+  // True once the menu request has answered (or failed): only then is "this role has no such module" a fact (a menu still on its way is empty too).
+  const menuSettled = menuQuery.isSuccess || menuQuery.isError;
 
   // Header "Welcome back, {name}" — the same full name Login History shows (legacy USER_FULL_NAME).
   const studentName = useStudentName({ schoolUUID: session?.schoolUUID, userId: session?.userId, enabled: authenticated && role === "student" });
@@ -240,7 +248,7 @@ function useResolveDashboardContext({ role = "student" } = {}) {
   // CHAT_URL / DIARY_URL — rarely-changing per-school config, fetched once.
   const chatLinksQuery = useQuery({
     queryKey: ["dashboard-chat-links", session?.schoolUUID, session?.userId],
-    queryFn: () => getDashboardChatLinks({ schoolUUID: session.schoolUUID, userId: session.userId }),
+    queryFn: () => via("chatLinks", (a) => a.chatLinks, () => getDashboardChatLinks({ schoolUUID: session.schoolUUID, userId: session.userId })),
     enabled: authenticated,
     staleTime: Infinity,
     gcTime: Infinity,
@@ -249,23 +257,21 @@ function useResolveDashboardContext({ role = "student" } = {}) {
   });
 
   // Branding logo (not carried in the session) — same source as the wizard/login.
-  useEffect(() => {
-    if (!session?.schoolNumericId) return;
-    let cancelled = false;
-    getSchoolSettingsLinks(session.schoolNumericId)
-      .then((links) => {
-        if (cancelled) return;
-        if (links?.logoUrl) setLogoUrl(links.logoUrl);
-        if (links?.schoolWebsite) setSchoolWebsite(links.schoolWebsite);
-      })
-      .catch((err) => console.error("School links fetch failed:", err))
-      .finally(() => {
-        if (!cancelled) setLogoSettled(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [session?.schoolNumericId]);
+  // One shared read for every component that uses this hook (it used to be one request per component).
+  const linksQuery = useQuery({
+    queryKey: ["school-settings-links", session?.schoolNumericId],
+    queryFn: () => via("links", (a) => a.links, () => getSchoolSettingsLinks(session.schoolNumericId)),
+    enabled: Boolean(session?.schoolNumericId),
+    staleTime: Infinity,
+    gcTime: Infinity,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+  const logoUrl = linksQuery.data?.logoUrl || null;
+  // The school's website (schoolSettingsLinks.schoolWebsite): the header logo opens it in a new tab, as in the legacy header.
+  const schoolWebsite = linksQuery.data?.schoolWebsite || null;
+  // True once the school-links request has finished (logo found or not), so a page can wait for the logo before showing.
+  const logoSettled = linksQuery.isSuccess || linksQuery.isError;
 
   const ready = authenticated;
 
@@ -289,7 +295,7 @@ function useResolveDashboardContext({ role = "student" } = {}) {
       }
     : null;
 
-  return { status, session, context, menu, menuLoading, logoUrl, logoSettled, schoolWebsite, ready, ...grade };
+  return { status, session, context, menu, menuLoading, menuSettled, logoUrl, logoSettled, schoolWebsite, ready, ...grade };
 }
 
 export function DashboardProvider({ role = "student", children }) {

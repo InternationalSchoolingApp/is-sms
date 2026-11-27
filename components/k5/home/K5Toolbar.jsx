@@ -26,7 +26,7 @@ function greeting(hour) {
 // "America/New_York" -> "New York time".
 const zoneLabel = (timezone) => `${String(timezone).split("/").pop().replace(/_/g, " ")} time`;
 
-function titles(viewName, selectedDate) {
+export function titles(viewName, selectedDate) {
   if (viewName === "week") {
     const keys = weekKeys(selectedDate);
     const first = keyToDate(keys[0]);

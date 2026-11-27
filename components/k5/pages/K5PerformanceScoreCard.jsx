@@ -40,11 +40,11 @@ export function K5PerformanceScoreCard({ avg }) {
           return (
             <li
               key={l.label}
-              className="flex min-h-10 items-center gap-3 rounded-[14px] border-[3px] px-3 py-1"
+              className="flex min-h-10 flex-wrap items-center gap-x-3 gap-y-0.5 rounded-[14px] border-[3px] px-3 py-1"
               style={{ background: on ? l.bg : "transparent", borderColor: on ? l.acc : "transparent" }}
             >
               <Stars n={l.stars} size={18} />
-              <b className="min-w-0 flex-1 font-k5-display text-base font-semibold" style={{ color: on ? l.fg : "var(--k5-ink)" }}>
+              <b className="min-w-[80px] flex-1 font-k5-display text-base font-semibold" style={{ color: on ? l.fg : "var(--k5-ink)" }}>
                 {l.label}
               </b>
               {on && (
@@ -52,7 +52,10 @@ export function K5PerformanceScoreCard({ avg }) {
                   You are here
                 </span>
               )}
-              <span className="whitespace-nowrap text-sm font-black text-k5-mut">{l.range}</span>
+              {/* The picked row keeps its own pastel background in every mode, so its range takes the row's dark ink (the muted theme colour is light at night). */}
+              <span className={`ml-auto whitespace-nowrap text-sm font-black ${on ? "" : "text-k5-mut"}`} style={on ? { color: l.fg } : undefined}>
+                {l.range}
+              </span>
             </li>
           );
         })}

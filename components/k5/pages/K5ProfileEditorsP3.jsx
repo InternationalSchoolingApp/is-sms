@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { CalendarDays, Clock, Plus, Trash2 } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
+import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
+import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { EditSelect, EditText, UnitBar } from "@/components/k5/pages/K5ProfileEditors";
 import { useProfileMaster } from "@/hooks/useProfileEditor";
 import { REPORT_TYPES, formatProfileDate, parseProfileDate, reportDays, reportRange } from "@/utils/profileEdit";
@@ -44,17 +46,9 @@ const startOfToday = () => {
 
 function TimeSelect({ label, value, onChange }) {
   return (
-    <label className={LABEL}>
-      <span>{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className={`${INPUT} cursor-pointer`}>
-        <option value="">Select</option>
-        {TIME_OPTIONS.map((t) => (
-          <option key={t.value} value={t.value}>
-            {t.label}
-          </option>
-        ))}
-      </select>
-    </label>
+    <div className="min-w-0">
+      <FloatingLabelSelect k5 label={label} value={value} onValueChange={onChange} options={TIME_OPTIONS} searchable className="w-full" />
+    </div>
   );
 }
 
@@ -77,17 +71,9 @@ function TimeRangeAdd({ onAdd, busy, roles }) {
     <div className="flex flex-col gap-2">
       <div className={`${GRID3} items-end`}>
         {roles && (
-          <label className={LABEL}>
-            <span>Who</span>
-            <select value={role} onChange={(e) => setRole(e.target.value)} className={`${INPUT} cursor-pointer`}>
-              <option value="">Select</option>
-              {roles.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="min-w-0">
+            <FloatingLabelSelect k5 label="Who" value={role} onValueChange={setRole} options={roles.map((r) => ({ value: r, label: r }))} searchable className="w-full" />
+          </div>
         )}
         <TimeSelect label="Start time" value={start} onChange={setStart} />
         <TimeSelect label="End time" value={end} onChange={setEnd} />
@@ -170,10 +156,7 @@ export function EditablePreviousSchool({ m, editor }) {
       <EditSelect editor={editor} k="prevGrade" label="Previous/Current Grade Name" options={(grades.data || []).map((g) => ({ value: g.key, label: g.value }))} loading={grades.isFetching} />
       <EditSelect editor={editor} k="gradYear" label="Previous/Current School Graduation Year" options={years} />
       <EditSelect editor={editor} k="prevCountry" label="Previous/Current School Country" options={countries} loading={!countries.length} />
-      <div className={LABEL}>
-        <span>CTI Taken Recommended Grade</span>
-        <span className="flex min-h-[50px] items-center rounded-[14px] border-[3px] border-k5-line bg-k5-soft px-3.5 font-k5-body text-base font-extrabold text-k5-ink">{m.academic.ctiRecommendedGrade}</span>
-      </div>
+      <FloatingLabelInput k5 readOnly label="CTI Taken Recommended Grade" value={m.academic.ctiRecommendedGrade || "—"} className="min-w-0" />
     </div>
   );
 }
@@ -294,16 +277,15 @@ export function EditableSports({ m, editor, actions }) {
       {showForm && (
         <div className="flex flex-col gap-3 rounded-[18px] border-[3px] border-dashed border-k5-line p-3.5">
           <div className={GRID3}>
-            <label className={LABEL}>
-              <span>Sport or activity</span>
-              <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} className={INPUT} />
-            </label>
-            <div className={LABEL}>
-              <span>Start date</span>
+            <FloatingLabelInput k5 label="Sport or activity" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} className="min-w-0" />
+            <div className="min-w-0">
               {/* The existing page: the start is today or later, and a new start clears an earlier end. */}
               <DatePicker
+                k5
+                label="Start date"
                 icon={CalendarDays}
                 height="h-[50px]"
+                triggerClassName="motion-none"
                 value={parseProfileDate(start)}
                 fromDate={startOfToday()}
                 toDate={new Date(new Date().getFullYear() + 1, 11, 31)}
@@ -314,14 +296,10 @@ export function EditableSports({ m, editor, actions }) {
                 }}
               />
             </div>
-            <div className={LABEL}>
-              <span>End date</span>
-              <DatePicker icon={CalendarDays} height="h-[50px]" value={parseProfileDate(end)} fromDate={parseProfileDate(start) || startOfToday()} toDate={new Date(new Date().getFullYear() + 1, 11, 31)} onChange={(d) => setEnd(formatProfileDate(d))} />
+            <div className="min-w-0">
+              <DatePicker k5 label="End date" icon={CalendarDays} height="h-[50px]" triggerClassName="motion-none" value={parseProfileDate(end)} fromDate={parseProfileDate(start) || startOfToday()} toDate={new Date(new Date().getFullYear() + 1, 11, 31)} onChange={(d) => setEnd(formatProfileDate(d))} />
             </div>
-            <label className={`${LABEL} col-span-2 max-[600px]:col-span-1`}>
-              <span>Where</span>
-              <input value={place} onChange={(e) => setPlace(e.target.value)} maxLength={300} className={INPUT} />
-            </label>
+            <FloatingLabelInput k5 label="Where" value={place} onChange={(e) => setPlace(e.target.value)} maxLength={300} className="col-span-2 min-w-0 max-[600px]:col-span-1" />
             <div className="flex items-end">
               <button type="button" onClick={add} disabled={!ready || Boolean(actions.busy)} className={ADD_BTN}>
                 <Plus className="h-5 w-5" strokeWidth={3} aria-hidden="true" />

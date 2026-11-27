@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getOnboardingStatus } from "@/services/onboardingGateApi";
 import { callServer } from "@/utils/serverCall";
+import { viaTier1 } from "@/utils/dashboardBootstrap";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { legacyDashboardUrl } from "@/utils/backendOrigin";
 
@@ -91,7 +92,7 @@ export function useOnboardingGate({ context, enabled = true }) {
   const query = useQuery({
     queryKey: [QUERY_KEY, context?.schoolUUID, context?.userId],
     queryFn: async () => {
-      const status = await callServer(() => getOnboardingStatus());
+      const status = await callServer(() => viaTier1(context.userId, "onboarding", (a) => a.onboarding, () => getOnboardingStatus()));
       // Read with the answer (not during render): a recent redirect for this user means we just came back from it.
       return { ...status, recentlyRedirected: Date.now() - readGuard(context.userId) < LOOP_GUARD_MS };
     },

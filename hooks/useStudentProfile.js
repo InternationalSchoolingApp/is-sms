@@ -8,6 +8,7 @@ import { getMyProfile } from "@/services/profileApi";
 import { createDummyProfileAnswer } from "@/utils/dummyProfile";
 import { buildProfileModel } from "@/utils/profileModel";
 import { callServer } from "@/utils/serverCall";
+import { afterStartup } from "@/utils/dashboardBootstrap";
 
 /**
  * The signed-in student's own profile, read-only (My Profile P1). The current enrolment (studentStandardId) comes
@@ -17,17 +18,20 @@ import { callServer } from "@/utils/serverCall";
  * Dummy (demo) student mode: a sample profile (utils/dummyProfile.js) is shown, view-only. Nothing of the signed-in
  * account is read, and there is no enrolment id or edit right, so no editor or action can save anything for real.
  */
-export function useStudentProfile({ schoolUUID, userId }) {
+export function useStudentProfile({ schoolUUID, userId, dummyOnly = false }) {
   const dummy = useDummyStudent();
   const { context } = useDashboardContext();
-  const live = dummy.settled && !dummy.enabled;
+  // `dummyOnly`: a reader that only needs the dummy student's sample profile (the header avatar in demo mode) never loads the
+  // real one - for a real student it reads nothing here.
+  const live = dummy.settled && !dummy.enabled && !dummyOnly;
   const detailsQuery = useQuery({ ...studentDashboardDetailsQuery({ schoolUUID, userId }), enabled: Boolean(schoolUUID && userId) && live });
   const studentStandardId = live ? detailsQuery.data?.studentStandardId ?? null : null;
   const detailsSettled = !detailsQuery.isPending;
 
   const query = useQuery({
     queryKey: ["my-profile", userId, studentStandardId],
-    queryFn: () => callServer(() => getMyProfile({ studentStandardId })),
+    // The photo / profile call is the slowest of the page and nothing draws on it: it waits until the screen and the counts are in.
+    queryFn: () => callServer(() => afterStartup(userId, () => getMyProfile({ studentStandardId }))),
     enabled: Boolean(userId) && detailsSettled && live,
     staleTime: 60_000,
     refetchOnWindowFocus: false,

@@ -7,6 +7,7 @@ import { useStudentAssignedTeacher } from "@/hooks/useStudentAssignedTeacher";
 import { SyllabusCourseContentModal } from "@/components/student/SyllabusCourseContentModal";
 import { TableFooter } from "@/components/student/TableFooter";
 import { K5AssignedTeacher } from "@/components/k5/pages/K5AssignedTeacher";
+import { teacherShortName } from "@/utils/salutation";
 
 const PAGE_SIZE = 10;
 
@@ -87,7 +88,7 @@ export function Syllabus() {
                         {course.courseName}
                       </button>
                     </td>
-                    <td className="px-3 py-3">{course.teacherName || "Not assigned yet"}</td>
+                    <td className="px-3 py-3">{course.teacherName ? teacherShortName(course.teacherName, course.teacherGender) : "Not assigned yet"}</td>
                   </tr>
                 ))
               )}

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getAccountSession } from "@/lib/auth/session";
 import { clearAccount, heldAccounts } from "@/lib/auth/accountCookies";
 import { logoutAtSms, trustedBackend } from "@/lib/auth/smsTokens";
-import { getBackendOverrideCookieName, isBackendOverrideAllowed } from "@/utils/backendOrigin";
+import { allowedBackendOverride, getBackendOverrideCookieName } from "@/utils/backendOrigin";
 
 /**
  * GET /{school}/common/logout/{uniqueId} on the Next.js origin — the legacy
@@ -28,7 +28,8 @@ const SAFE_SEGMENT = /^[A-Za-z0-9_-]+$/;
 const AUTH_COOKIE = /^(__Secure-|__Host-)?(authjs|next-auth)\.(session-token|csrf-token|callback-url)(\.\d+)?$/;
 
 function backendOrigin(request) {
-  const override = isBackendOverrideAllowed() ? request.cookies.get(getBackendOverrideCookieName())?.value : undefined;
+  // The cookie is browser-set: an unknown host here would make this an open redirect.
+  const override = allowedBackendOverride(request.cookies.get(getBackendOverrideCookieName())?.value);
   return override || process.env.NEXT_PUBLIC_BACKEND_BASE_URL || "";
 }
 

@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { InboxBadge, isInboxMenuItem } from "@/components/student/inbox/InboxBadge";
 import { CLUB_ART } from "@/components/k5/clubMarks";
-import { NAV_ART, highNavIconFor, navPictureFor } from "@/components/k5/navIcons";
+import { MyClassesArt, NAV_ART, highNavIconFor, navPictureFor } from "@/components/k5/navIcons";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { K5Sk } from "@/components/k5/K5Skeletons";
@@ -22,6 +22,7 @@ import { useMotionBand } from "@/components/motion/useMotionBand";
 const ICONS = {
   dashboard: [LayoutDashboard, "bg-k5-bt", "text-k5-bi"],
   calendar: [CalendarDays, "bg-k5-ot", "text-k5-oi"],
+  "my-classes": [CalendarDays, "bg-k5-bt", "text-k5-bi"],
   teacher: [GraduationCap, "bg-k5-vt", "text-k5-vi"],
   "book-class": [CalendarCheck, "bg-k5-ot", "text-k5-oi"],
   cart: [ShoppingCart, "bg-k5-bt", "text-k5-bi"],
@@ -118,7 +119,7 @@ export function K5NavRail({ menu, loading = false, open, onOpen, onClose, isPreK
         aria-label="Main menu"
         data-pin="side"
         data-open={open}
-        className="k5-side fixed [scrollbar-width:thin] z-20 flex max-h-[calc(100vh-120px)] flex-col items-center gap-1 overflow-y-auto overflow-x-hidden rounded-[26px] border-[3px] border-k5-line bg-k5-card px-1.5 py-2.5 shadow-k5-chunky"
+        className="k5-side fixed z-20 flex max-h-[calc(100vh-120px)] flex-col items-center gap-1 touch-pan-y overscroll-contain overflow-y-auto overflow-x-hidden rounded-[26px] border-[3px] border-k5-line bg-k5-card px-1.5 py-2.5 shadow-k5-chunky"
       >
         <button
           type="button"
@@ -167,8 +168,12 @@ function flattenItems(items) {
   return items.flatMap((item) => (item.children?.length ? item.children.map((child) => ({ ...child, label: `${item.label}: ${child.label}` })) : [item]));
 }
 
+// touch-pan-y (not touch-none): a finger that starts on a nav item can still scroll the rail up/down natively. The long-press
+// drag keeps working because useDragReorder only calls preventDefault on touchmove once a drag is actually active (the finger was
+// held still until then, so no native scroll had begun and preventDefault can still stop it). touch-none blocked native scroll
+// outright, which on iPad (where a finger is reported as a "mouse" pointer in desktop mode) left the rail unscrollable.
 const ITEM_CLASS =
-  "k5-ni relative isolate flex w-[46px] h-[46px] flex-none touch-none select-none flex-col items-center gap-1 rounded-2xl text-center text-xs font-black leading-[1.15] no-underline transition-colors duration-150 [overflow-wrap:anywhere]";
+  "k5-ni relative isolate flex w-[46px] h-[46px] flex-none touch-pan-y select-none flex-col items-center gap-1 rounded-2xl text-center text-xs font-black leading-[1.15] no-underline transition-colors duration-150 [overflow-wrap:anywhere]";
 
 function NavTile({ item, icon, active, picture }) {
   const { isHigh } = useDashboardContext();
@@ -184,6 +189,13 @@ function NavTile({ item, icon, active, picture }) {
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`transition-[stroke] duration-150 ${active ? "stroke-white delay-100" : high.tone}`}>
           {high.art}
         </svg>
+      </span>
+    );
+  }
+  if (icon === "my-classes") {
+    return (
+      <span className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[15px] bg-transparent">
+        <MyClassesArt />
       </span>
     );
   }
@@ -374,35 +386,67 @@ function ClubMark({ art }) {
 }
 
 /**
- * Pointer drag to reorder the rail's top-level items (mouse and touch). A press that moves
- * more than a few pixels becomes a drag; the click that follows the drop is swallowed so
- * dropping an item never navigates.
+ * Pointer drag to reorder the rail's top-level items. Mouse: a press that moves more than a few pixels becomes a drag.
+ * Touch / pen: only a LONG PRESS (the finger held still for LONG_PRESS_MS) picks the item up - a finger that moves before that
+ * is scrolling the menu, so the press is dropped and the menu scrolls as usual; once picked up, the page does not scroll while
+ * the item is moved. The click that follows the drop is swallowed so dropping an item never navigates.
+ *
+ * Touch is NOT decided from e.pointerType: an iPad (Safari / Chrome in desktop mode, which is the default) reports a finger as
+ * pointerType "mouse", so that would have made every scroll reorder the menu. Instead a real `touchstart` that lands during the
+ * press marks it as touch - a mouse never fires one.
  */
+const LONG_PRESS_MS = 450;
+// A long press on a phone / iPad must not open the link preview or start selecting the label text.
+const NO_TOUCH_MENU = { WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none" };
+const TOUCH_SLOP = 8;
+// The device can take touch at all (iPad maxTouchPoints is 5): only then is the long-press timer armed, so a plain mouse on a
+// non-touch desktop still picks an item up the instant it moves.
+const TOUCH_CAPABLE = typeof navigator !== "undefined" && navigator.maxTouchPoints > 0;
 function useDragReorder({ navRef, keys, onReorder, disabled }) {
   const [dragging, setDragging] = useState(null); // { key, dy }
   const pressRef = useRef(null);
   const swallowClickRef = useRef(false);
+  // Leaving the page while a long press is still waiting: its timer must not fire. (Not in the effect below: that one re-runs
+  // on every render, because `keys` is a new list each time, and must keep the press alive across those re-runs.)
+  useEffect(() => () => clearTimeout(pressRef.current?.timer), []);
 
   useEffect(() => {
     if (disabled) return;
+    const endPress = () => {
+      clearTimeout(pressRef.current?.timer);
+      pressRef.current = null;
+    };
+    // A finger (even one the browser reports as a "mouse" pointer): this press is a touch, so it needs the long press.
+    const onTouchStart = () => {
+      if (pressRef.current) pressRef.current.sawTouch = true;
+    };
     const onMove = (e) => {
       const press = pressRef.current;
-      if (!press) return;
+      if (!press || e.pointerId !== press.pointerId) return;
       const dy = e.clientY - press.startY;
+      if (press.sawTouch && !press.active) {
+        // Moved before the long press finished: this is a scroll, not a drag — let the menu scroll.
+        if (Math.abs(dy) > TOUCH_SLOP || Math.abs(e.clientX - press.startX) > TOUCH_SLOP) endPress();
+        return;
+      }
       if (!press.active && Math.abs(dy) < 6) return;
       press.active = true;
+      clearTimeout(press.timer);
       setDragging({ key: press.key, dy });
     };
     const onUp = (e) => {
       const press = pressRef.current;
-      pressRef.current = null;
-      if (!press?.active) return;
+      if (!press || e.pointerId !== press.pointerId) return;
+      endPress();
+      if (!press.active) return;
       // Only the click fired by this same release is swallowed.
       swallowClickRef.current = true;
       setTimeout(() => {
         swallowClickRef.current = false;
       }, 0);
       setDragging(null);
+      // A touch drag the browser cancelled has no drop position: the order stays.
+      if (e.type === "pointercancel") return;
       // Drop position: the item whose original middle the pointer has passed.
       const others = press.rects.filter((r) => r.key !== press.key);
       const index = others.filter((r) => e.clientY > r.mid).length;
@@ -410,13 +454,21 @@ function useDragReorder({ navRef, keys, onReorder, disabled }) {
       next.splice(index, 0, press.key);
       if (next.join() !== keys.join()) onReorder(next);
     };
+    // While a touch drag is on, the finger moves the item, not the page.
+    const onTouchMove = (e) => {
+      if (pressRef.current?.sawTouch && pressRef.current.active) e.preventDefault();
+    };
+    window.addEventListener("touchstart", onTouchStart, { capture: true, passive: true });
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onUp);
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
     return () => {
+      window.removeEventListener("touchstart", onTouchStart, { capture: true });
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
+      window.removeEventListener("touchmove", onTouchMove);
     };
   }, [disabled, keys, onReorder]);
 
@@ -428,18 +480,37 @@ function useDragReorder({ navRef, keys, onReorder, disabled }) {
             "data-nav-key": key,
             onPointerDown: (e) => {
               if (e.button !== 0) return;
+              clearTimeout(pressRef.current?.timer);
               const nodes = navRef.current ? [...navRef.current.querySelectorAll(":scope > [data-nav-key]")] : [];
               const rects = nodes.map((node) => {
                 const rect = node.getBoundingClientRect();
                 return { key: node.dataset.navKey, mid: rect.top + rect.height / 2 };
               });
-              pressRef.current = { key, startY: e.clientY, rects, active: false };
+              // Treat pointerType "touch"/"pen" as touch at once; on a touch-capable device a "mouse" pointer is still armed with
+              // the long-press timer, because an iPad reports a finger as "mouse" (a real touchstart then confirms it).
+              const maybeTouch = e.pointerType !== "mouse" || TOUCH_CAPABLE;
+              const press = { key, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, rects, active: false, sawTouch: e.pointerType !== "mouse", timer: null };
+              if (maybeTouch) {
+                press.timer = setTimeout(() => {
+                  if (pressRef.current !== press || press.active) return;
+                  press.active = true;
+                  setDragging({ key, dy: 0 });
+                  navigator.vibrate?.(15);
+                }, LONG_PRESS_MS);
+              }
+              pressRef.current = press;
+            },
+            // A long press must not open the phone's link menu.
+            onContextMenu: (e) => {
+              if (pressRef.current?.sawTouch) e.preventDefault();
             },
           },
     style: (key) =>
       dragging?.key === key
-        ? { transform: `translateY(${dragging.dy}px)`, zIndex: 2, boxShadow: "0 10px 24px rgba(10,16,34,0.22)", cursor: "grabbing" }
-        : undefined,
+        ? { transform: `translateY(${dragging.dy}px)`, zIndex: 2, boxShadow: "0 10px 24px rgba(10,16,34,0.22)", cursor: "grabbing", ...NO_TOUCH_MENU }
+        : disabled
+          ? undefined
+          : NO_TOUCH_MENU,
     consumeClick: () => {
       const swallow = swallowClickRef.current;
       swallowClickRef.current = false;

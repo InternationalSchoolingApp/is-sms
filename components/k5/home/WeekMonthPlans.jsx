@@ -6,6 +6,8 @@ import { BookOpen, CalendarRange, Check, ChevronRight, Flag, PartyPopper, Smile 
 import { CLUE_RING, K5_PRIMARY_BTN, PlanHeader, PlanTile, StatusPills } from "@/components/k5/home/k5Bits";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { getCourseColor, getMonthGridDays } from "@/utils/calendarEvents";
+import { ChristmasTreeIcon } from "@/components/k5/christmas/ChristmasArt";
+import { isChristmasKey } from "@/components/k5/christmas/christmasStore";
 import {
   CLUE_COLORS as C,
   WEEKDAY_TEXT,
@@ -248,7 +250,7 @@ function MonthLegend({ courseRegistry }) {
   const courses = Object.values(courseRegistry || {});
   if (!courses.length) return null;
   return (
-    <div className="flex items-center gap-1 text-[13px] font-extrabold text-k5-mut @max-[640px]:hidden">
+    <div className="flex basis-full items-center justify-end gap-1 text-[13px] font-extrabold text-k5-mut @max-[640px]:hidden">
       {courses.map((c) => (
         <span key={c.id} aria-hidden="true" className="block h-2.5 w-2.5 rounded-full" style={{ background: c.color }} />
       ))}
@@ -402,7 +404,9 @@ export function MonthPlan({ selectedDate, selectedKey, todayKey, days, courseReg
                 isSel ? "border-[#FFC531]" : isToday ? "border-k5-acd" : "border-k5-line"
               } ${isToday ? "bg-k5-ac" : isSel ? "bg-k5-yt" : weekend ? "bg-k5-soft" : "bg-k5-card"}`}
             >
-              <span className={`font-k5-display text-xl font-semibold ${isToday ? "text-white" : "text-k5-ink"}`}>{date.getDate()}</span>
+              <span className={`font-k5-display text-xl font-semibold ${isToday ? "text-white" : "text-k5-ink"}`}>
+                {isChristmasKey(key) ? <ChristmasTreeIcon size={36} label={`${format(date, "MMMM d")}, Christmas`} /> : date.getDate()}
+              </span>
               {day.classes.length > 0 && (
                 <span className={`flex flex-col gap-[3px] rounded-lg ${["done", "live", "upcoming"].includes(clue) ? "outline outline-[3px] outline-offset-2 outline-[#FFC531]" : ""}`}>
                   <span className="flex flex-wrap gap-[3px]">

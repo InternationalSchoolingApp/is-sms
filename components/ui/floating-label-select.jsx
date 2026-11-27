@@ -28,7 +28,7 @@ import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
  * K5 look (`k5` prop, used by the K–5 My Profile page): same box as the profile inputs — 50px tall,
  * 14px radius, 3px border (`k5Border` = the field status colour class, accent while open), K5 card colours.
  */
-const K5_TRIGGER = "!h-[50px] rounded-[14px] border-[3px] pt-1 font-k5-body text-base font-extrabold text-k5-ink";
+const K5_TRIGGER = "motion-none !h-[50px] rounded-[14px] border-[3px] pt-1 font-k5-body text-base font-extrabold text-k5-ink";
 function k5Trigger({ disabled, open, error, k5Border }) {
   if (disabled) return `${K5_TRIGGER} border-k5-line bg-k5-soft cursor-not-allowed`;
   return `${K5_TRIGGER} bg-k5-card ${error ? "border-k5-ri" : open ? "border-k5-ac" : k5Border || "border-k5-line"} focus:!border-k5-ac focus-visible:!border-k5-ac`;
@@ -231,10 +231,10 @@ function MobileSelectSheet({ options, value, onSelect, onClose, searchable, k5 =
   );
 }
 
-function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, onValueChange, options, error, disabled = false, className = "", k5 = false, k5Border }) {
+function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, onValueChange, options, error, disabled = false, className = "", k5 = false, k5Border, alwaysFloat = false, placeholder = "" }) {
   const [open, setOpen] = useState(false);
   const isTouch = useIsTouch();
-  const floated = open || Boolean(value);
+  const floated = alwaysFloat || open || Boolean(value);
   const selected = options.find((option) => option.value === value);
 
   return (
@@ -270,7 +270,7 @@ function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, 
                   : `bg-white ${error ? "border-2 border-red-500" : open ? "border-2 border-primary" : value ? "border-2 border-emerald-500" : "border-slate-300"}`
               }`, k5 && k5Trigger({ disabled, open, error, k5Border }))}
             >
-              <span className="truncate relative bottom-0.75">{selected?.label ?? ""}</span>
+              <span className="truncate relative bottom-0.75">{selected?.label ?? <span className="text-slate-400">{floated ? placeholder : ""}</span>}</span>
             </button>
             <ChevronDown className={`pointer-events-none absolute right-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 ${disabled ? "text-slate-400" : "text-slate-500"}`} />
             {open && (
@@ -295,7 +295,7 @@ function PlainFloatingLabelSelect({ icon: Icon, label, required = false, value, 
                   : `bg-white ${error ? "border-2 border-red-500 focus:!border-red-500 focus-visible:!border-red-500" : open ? "border-2 border-primary" : value ? "border-2 border-emerald-500" : "border-slate-300"}`
               }`, k5 && k5Trigger({ disabled, open, error, k5Border }))}
             >
-              <SelectValue>{selected?.label ?? ""}</SelectValue>
+              <SelectValue>{selected?.label ?? <span className="text-slate-400">{floated ? placeholder : ""}</span>}</SelectValue>
             </SelectTrigger>
             {k5 ? (
               <K5SelectList options={options} />
@@ -325,11 +325,11 @@ function canAutoFocusSearch() {
   return !window.matchMedia("(pointer: coarse)").matches;
 }
 
-function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, value, onValueChange, options, error, disabled = false, className, k5 = false, k5Border }) {
+function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, value, onValueChange, options, error, disabled = false, className, k5 = false, k5Border, alwaysFloat = false, placeholder = "" }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const isTouch = useIsTouch();
-  const floated = open || Boolean(value);
+  const floated = alwaysFloat || open || Boolean(value);
   const selected = options.find((option) => option.value === value);
 
   const filtered = useMemo(() => {
@@ -386,7 +386,7 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
                   : `bg-white ${error ? "border-2 border-red-500" : open ? "border-2 border-primary" : value ? "border-2 border-emerald-500" : "border-slate-300"}`
               }`, k5 && k5Trigger({ disabled, open, error, k5Border }))}
             >
-              <span className="truncate relative bottom-0.75">{selected?.label ?? ""}</span>
+              <span className="truncate relative bottom-0.75">{selected?.label ?? <span className="text-slate-400">{floated ? placeholder : ""}</span>}</span>
             </button>
             <ChevronDown className={`pointer-events-none absolute right-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 ${disabled ? "text-slate-400" : "text-slate-500"}`} />
             {open && <SelectSheet k5={k5} searchable options={options} value={value} onSelect={handleSelect} onClose={() => handleOpenChange(false)} />}
@@ -402,7 +402,7 @@ function SearchableFloatingLabelSelect({ icon: Icon, label, required = false, va
                   : `bg-white ${error ? "border-2 border-red-500 focus:!border-red-500 focus-visible:!border-red-500" : open ? "border-2 border-primary" : value ? "border-2 border-emerald-500" : "border-slate-300"}`
               }`, k5 && k5Trigger({ disabled, open, error, k5Border }))}
             >
-              <span className="truncate relative bottom-0.75">{selected?.label ?? ""}</span>
+              <span className="truncate relative bottom-0.75">{selected?.label ?? <span className="text-slate-400">{floated ? placeholder : ""}</span>}</span>
             </PopoverTrigger>
             <ChevronDown className={`pointer-events-none absolute right-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 ${disabled ? "text-slate-400" : "text-slate-500"}`} />
             {k5 ? (

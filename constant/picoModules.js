@@ -11,7 +11,7 @@ import { CLUBS } from "@/constant/Clubs";
 
 export const HOME_MODULE = {
   title: "Dashboard",
-  text: "This is your dashboard. Here you can see today's classes, your calendar and everything planned for you. Tap a day to see its plan!",
+  text: "This is your dashboard. See your courses, your goal for the today and what's due next. Your calendar is in My classes.",
 };
 
 export const NO_MODULE_TEXT = "I'm here to help you around your dashboard! Use the side menu to open a section and tap me there, and I'll tell you what it is.";

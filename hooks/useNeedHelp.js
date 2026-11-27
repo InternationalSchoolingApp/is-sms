@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getNeedHelpContact } from "@/services/dashboardApi";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { viaTier3 } from "@/utils/dashboardBootstrap";
 
 /** The header's "Need help?" WhatsApp link ({ href } or null). Student role only, like legacy. */
 export function useNeedHelp() {
@@ -10,7 +11,7 @@ export function useNeedHelp() {
   const { schoolUUID, userId, schoolNumericId, role } = context ?? {};
   const query = useQuery({
     queryKey: ["need-help-contact", schoolUUID, userId],
-    queryFn: () => getNeedHelpContact({ schoolUUID, userId, schoolNumericId }),
+    queryFn: () => viaTier3(userId, "needHelp", (a) => a.needHelp, () => getNeedHelpContact({ schoolUUID, userId, schoolNumericId })),
     enabled: Boolean(schoolUUID && userId && schoolNumericId && String(role).toLowerCase() === "student"),
     staleTime: 30 * 60_000,
     refetchOnWindowFocus: false,

@@ -81,8 +81,8 @@ function PastClassDetail({ event, onClose }) {
   );
 }
 
-function ClassOrActivityDetail({ event, courseRegistry, onClose }) {
-  const status = getEventStatus(event);
+function ClassOrActivityDetail({ event, courseRegistry, onClose, now }) {
+  const status = getEventStatus(event, now);
   if (event.eventKind === "class" && status === "completed") return <PastClassDetail event={event} onClose={onClose} />;
   const displayStatus = status === "completed" && event.eventKind === "class" ? getClassCompletionStatus(event) : status;
   const course = courseRegistry[event.courseId];
@@ -101,9 +101,9 @@ function ClassOrActivityDetail({ event, courseRegistry, onClose }) {
   );
 }
 
-function AssignmentDetail({ event }) {
+function AssignmentDetail({ event, now }) {
   const { lmsProviderURL, isPayLmsPaymentPending, isK5 } = useDashboardContext();
-  const aStatus = getAssignmentStatus(event);
+  const aStatus = getAssignmentStatus(event, now);
   return (
     <>
       <DetailRow label="Course" value={cleanCourseLabel(event.subjectName)} />
@@ -148,7 +148,8 @@ function HolidayOrEventDetail({ event }) {
  * openPastClassModal / openAssignmentModal / eventDetailsOnModal, plus the
  * "Rate this class" button of a finished class (class feedback).
  */
-export function EventDetailModal({ event, courseRegistry, onClose }) {
+// `now`: the clock in the zone the event times are shown in (the grade looks show a dummy student in New York), the browser's clock when omitted.
+export function EventDetailModal({ event, courseRegistry, onClose, now }) {
   if (!event) return null;
   // A school activity opens its own popup: purpose, attachment, countdown and the timed Join Event (legacy renderViewActitifyDetails).
   if (event.eventKind === "activity") return <ActivityDetailsModal event={event} onClose={onClose} />;
@@ -159,11 +160,11 @@ export function EventDetailModal({ event, courseRegistry, onClose }) {
     <CalendarModal title={title} onClose={onClose}>
       <div className="mb-1 h-1 w-10 rounded-full" style={{ background: accentColor }} />
       {event.eventKind === "assignment" ? (
-        <AssignmentDetail event={event} />
+        <AssignmentDetail event={event} now={now} />
       ) : event.eventKind === "holiday" || event.eventKind === "schoolEvent" ? (
         <HolidayOrEventDetail event={event} />
       ) : (
-        <ClassOrActivityDetail event={event} courseRegistry={courseRegistry} onClose={onClose} />
+        <ClassOrActivityDetail event={event} courseRegistry={courseRegistry} onClose={onClose} now={now} />
       )}
     </CalendarModal>
   );

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>School Calendar Impact</title>
+<style>
+  :root { --bg:#f6f7fb; --card:#fff; --ink:#1c2640; --mut:#5b6478; --line:#e3e6ef; --ok:#12a26b; --warn:#c77a08; --bad:#d7263d; --t:#2f6fed; --soft:#eef2ff; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0f1320; --card:#171c2c; --ink:#e8ecf6; --mut:#9aa3b8; --line:#2a3147; --ok:#2fc489; --warn:#e7a23a; --bad:#ff5a6e; --t:#5b8ff5; --soft:#1e2540; } }
+  :root[data-theme="dark"] { --bg:#0f1320; --card:#171c2c; --ink:#e8ecf6; --mut:#9aa3b8; --line:#2a3147; --ok:#2fc489; --warn:#e7a23a; --bad:#ff5a6e; --t:#5b8ff5; --soft:#1e2540; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  main { max-width:1040px; margin:0 auto; padding:28px 16px 60px; }
+  h1 { font-size:26px; margin:0 0 4px; } h2 { font-size:19px; margin:32px 0 10px; }
+  .sub { color:var(--mut); margin:0 0 18px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 18px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--mut); font-size:13px; font-weight:600; }
+  code { font-family:ui-monospace,Consolas,monospace; font-size:12.5px; background:var(--soft); padding:1px 5px; border-radius:5px; word-break:break-all; }
+  .pill { display:inline-block; font-size:11.5px; font-weight:700; padding:1px 8px; border-radius:99px; color:#fff; white-space:nowrap; }
+  .ok { background:var(--ok); } .warn { background:var(--warn); } .bad { background:var(--bad); } .t { background:var(--t); }
+  .verdict { border-left:5px solid var(--ok); }
+  .flow { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; }
+  .box { border:2px solid var(--line); border-radius:12px; padding:10px 12px; background:var(--card); font-size:13.5px; }
+  .box h3 { margin:0 0 4px; font-size:14px; }
+  .shared { border-color:var(--warn); } .stu { border-color:var(--t); } .tch { border-color:var(--ok); }
+  ul li { margin-bottom:6px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>School Calendar API — Impact Analysis (Point 7)</h1>
+  <p class="sub">26 Nov 2026 · backend <code>POST {school}/dashboard/school-calendar</code> → <code>DashboardSchoolCalendarUtil.getSchoolCalendar()</code> (is-rest-api) · sirf analysis, koi code change nahi.</p>
+
+  <div class="card verdict">
+    <b>Faisla:</b> haan, impact hai — ye ek hi Java method student <b>aur</b> teacher dono ke liye chalta hai (aur legacy student, parent, bulk-feedback popup ke liye bhi). Isliye Point 7 ko teen hisson mein baanta:
+    <ul style="margin:8px 0 0">
+      <li><span class="pill ok">7a — safe</span> ek request ke andar <b>memo/cache</b> (feedback form mapping, teacher lookup). Output byte-for-byte same rehta hai, sirf queries kam. Teacher dashboard pe bhi koi functional badlaav nahi — wo bhi tez hoga.</li>
+      <li><span class="pill warn">7b — test chahiye</span> attendance / feedback ki <b>batch (bulk) queries</b>. Nayi DAO queries lagengi (naya endpoint nahi). Student <b>aur</b> teacher dono ka regression test zaroori.</li>
+      <li><span class="pill bad">7c — abhi nahi</span> holidays ki ek-range query. Maujooda holiday query ye nahi batati ki holiday <i>kis din</i> ka hai, isliye bina nayi query ke merge nahi ho sakti — aur home pe sirf 3 din = 3 queries, fayda chhota.</li>
+    </ul>
+  </div>
+
+  <h2>1. Ye API kaun kaun bulata hai</h2>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Caller</th><th>Project / file</th><th>Role branch</th><th>Range</th></tr></thead>
+      <tbody>
+        <tr><td>Naya student dashboard (home, My Classes, Week/Month)</td><td>is-sms — <code>services/dashboardApi.js</code>, <code>dashboardBootstrapApi.js</code>, <code>hooks/useStudentCalendar.js</code></td><td><span class="pill t">STUDENT</span></td><td>Home 3 din; My Classes mahina; Week 9 din</td></tr>
+        <tr><td>Class feedback host (naya)</td><td>is-sms — <code>components/dashboard/ClassFeedbackHost.jsx</code></td><td><span class="pill t">STUDENT</span></td><td>—</td></tr>
+        <tr><td>Teacher dashboard calendar (Java)</td><td>is-rest-api — <code>dashboardCalendarNew.js</code> (DashboardHeaderResourcePage.jsp)</td><td><span class="pill ok">TEACHER</span></td><td>View ke hisaab se</td></tr>
+        <tr><td>Legacy student dashboard (Java)</td><td>is-rest-api — <code>dashboardCalendarNew.js</code>, <code>dashboard/student/elementaryHome.js</code></td><td><span class="pill t">STUDENT</span></td><td>View ke hisaab se</td></tr>
+        <tr><td>Bulk pending-feedback popup (Java)</td><td>is-rest-api — <code>dashboardCalendarNew.js</code> <code>maybeShowBulkPendingFeedback</code></td><td>Student / Teacher</td><td>Pichhla poora hafta (7 din)</td></tr>
+        <tr><td>App install notification (Java)</td><td>is-rest-api — <code>appInstallNotification.js</code> (wahi shared fetch padhta hai)</td><td>—</td><td>—</td></tr>
+        <tr><td>Parent → child schedule</td><td>is-rest-api — <code>parentStudentClassSchedule.js</code></td><td colspan="2">Call comment-out hai — abhi use nahi hota</td></tr>
+      </tbody>
+    </table>
+    <p style="color:var(--mut);font-size:13px;margin:8px 0 0">Note: <code>CommonSchedularController.getSchoolCalendar</code> naam se milta hai lekin alag cheez hai (<code>/notify-school-classes</code> cron) — is method se juda nahi. <code>D:\Workspace\is-rest-api-1</code> mein code ki ek aur copy hai; change sirf <code>is-rest-api</code> mein hoga.</p>
+  </div>
+
+  <h2>2. Method ke andar kaun sa hissa kis role ke liye chalta hai</h2>
+  <div class="flow">
+    <div class="box shared"><h3>Shared — shuru</h3>Session user, payload user, school UUID, dates ki list.</div>
+    <div class="box stu"><h3>Sirf STUDENT</h3>studentStandard, batch id, apni single classes (<code>getAllClassDetailsForStudent</code>).<br><b>Har din:</b> holiday query + batch classes; <b>har batch class:</b> attendance count ×1–2, attendance status, feedback submission, feedback form mapping ×1–2, teacher lookup.</div>
+    <div class="box tch"><h3>Sirf TEACHER</h3>teacher, standards, providers, apni single classes (<code>getAllClassDetailsForTeacher</code>).<br><b>Har din:</b> holiday query + batch classes; <b>har batch class:</b> attendance count ×1–2, feedback submission, feedback form mapping ×1–2.</div>
+    <div class="box shared"><h3>Shared — single classes loop</h3>Dono role. <b>Har class:</b> attendance count, attendance status, feedback submission, feedback form mapping ×1–2, teacher lookup (+ orientation id agar orientation class).</div>
+    <div class="box shared"><h3>Shared — activities loop</h3>Dono role. Ek query se activities, phir <b>har activity:</b> attendance count, attendance status, feedback submission, form mapping ×1–2, teacher lookup.</div>
+    <div class="box stu"><h3>Sirf STUDENT — aakhir mein</h3>Buzz assignments (ek query), active course list (2 queries).</div>
+  </div>
+  <p style="color:var(--mut);font-size:13px">Matlab: ek calendar event pe lagbhag <b>5–8 DB queries</b>. 3 din mein 6 events = ~40 queries; Week (9 din) ya mahine mein ye kai guna. Ye N+1 hi 7.5s ka mukhya kaaran hai (upar se dev ka read pool 3).</p>
+
+  <h2>3. Point 7 ke har badlaav ka impact</h2>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Badlaav</th><th>Kahan lagega</th><th>Student (Next + legacy)</th><th>Teacher (Java)</th><th>Risk</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>7a.1</b> Feedback form mapping ek request mein sirf ek baar per (eventType, roleId) — chhota Map</td>
+          <td>Teeno loops (student batch, teacher batch, shared single + activities)</td>
+          <td>Output same, queries kam</td><td>Output same, queries kam</td>
+          <td><span class="pill ok">Bahut kam</span> jawab sirf eventType + roleId pe nirbhar hai</td>
+        </tr>
+        <tr>
+          <td><b>7a.2</b> Teacher lookup (<code>getTeacherByUserId</code>) ek request mein memo</td>
+          <td>Student batch loop, shared single + activities loops</td>
+          <td>Output same (salutation wahi)</td><td>Output same</td>
+          <td><span class="pill ok">Bahut kam</span> ek request ke andar teacher ka data nahi badalta</td>
+        </tr>
+        <tr>
+          <td><b>7b.1</b> Attendance count + status saare events ke liye ek bulk query</td>
+          <td>Teeno loops</td>
+          <td>Same hona chahiye</td><td>Same hona chahiye</td>
+          <td><span class="pill warn">Medium</span> nayi DAO query; count abhi <code>user.getUserFullName()</code> (naam) se match hota hai — bulk mein bhi exact wahi shart rakhni hogi</td>
+        </tr>
+        <tr>
+          <td><b>7b.2</b> Feedback submission saare events ke liye ek bulk query</td>
+          <td>Teeno loops</td>
+          <td>Same hona chahiye</td><td>Same hona chahiye</td>
+          <td><span class="pill warn">Medium</span> (userId, eventType, eventId, UTC start) ka exact match</td>
+        </tr>
+        <tr>
+          <td><b>7c</b> Holidays: har din ki jagah ek query</td>
+          <td>Student + teacher per-day loops</td>
+          <td colspan="2">Maujooda query ye nahi batati ki holiday kis din ka hai (<code>holiday.date</code> poori list daal deta hai) → bina nayi query ke galat ho sakta hai</td>
+          <td><span class="pill bad">Abhi nahi</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>4. Teacher dashboard pe asar — saar</h2>
+  <div class="card">
+    <ul style="margin:0">
+      <li><b>Functional asar:</b> 7a se <b>koi nahi</b> — response wahi rahega. 7b se tabhi nahi jab bulk queries exact purani shart rakhein; isliye 7b ke baad teacher ka calendar test karna zaroori.</li>
+      <li><b>Performance asar:</b> positive — teacher ka calendar bhi tez hoga, khaas kar Week/Month aur bulk-feedback popup (7 din) mein.</li>
+      <li><b>API contract:</b> URL, request, response format — kuch nahi badlega. Legacy Java pages aur Next dono bina change chalenge.</li>
+      <li><b>Data:</b> sirf reads hain — koi write/update nahi badlega.</li>
+    </ul>
+  </div>
+
+  <h2>5. Test plan (implement karne ke baad)</h2>
+  <div class="card">
+    <ul style="margin:0">
+      <li>Badlaav se <b>pehle</b> aur <b>baad</b> ka JSON response save karke diff — student (Liliana) aur ek teacher, 3 range: 3 din, 1 hafta, 1 mahina. Diff khaali hona chahiye.</li>
+      <li>Batch student (agar koi test account ho) — batch classes wala hissa sirf usi se chalta hai.</li>
+      <li>Holiday wala din aur orientation class wala din (orientation id ka hissa).</li>
+      <li>Teacher dashboard (Java) pe calendar khol ke dekhna; legacy student dashboard pe bhi.</li>
+      <li>Time: pehle/baad ka backend time (wahi audit logger) — home 3 din aur My Classes mahina.</li>
+    </ul>
+  </div>
+
+  <h2>6. Baaki points (Phase 1) — student-only, teacher pe asar nahi</h2>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Point</th><th>Kahan</th><th>Teacher / Java pe asar</th></tr></thead>
+      <tbody>
+        <tr><td>1. Maintenance check ko route handler</td><td>is-sms</td><td>Nahi — backend wahi endpoint</td></tr>
+        <tr><td>2. Calendar / performance alag request</td><td>is-sms</td><td>Nahi</td></tr>
+        <tr><td>3. Dusra <code>get-student-dashboard</code> hatana</td><td>is-sms</td><td>Nahi</td></tr>
+        <tr><td>4. Tier 3 duplicate (migration, additional layer) memo</td><td>is-sms server</td><td>Nahi</td></tr>
+        <tr><td>5. <code>get-setting</code> cache</td><td>is-sms server</td><td>Nahi</td></tr>
+        <tr><td>6. Menu / performance chain todna</td><td>is-sms</td><td>Nahi</td></tr>
+        <tr><td>8–9. Dusri dheemi APIs ki profiling</td><td>is-rest-api</td><td>Har API alag dekhni hogi (kuch shared ho sakti hain)</td></tr>
+        <tr><td>10. Dev read pool badhana</td><td><code>application-dev.yml</code></td><td>Sirf local dev; prod config nahi chhedna</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+</body>
+</html>

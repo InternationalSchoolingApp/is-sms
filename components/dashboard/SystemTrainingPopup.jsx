@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Salsa } from "next/font/google";
 import { useQuery } from "@tanstack/react-query";
+import { viaTier3 } from "@/utils/dashboardBootstrap";
 import { MessagesSquare, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { JoinClassModal } from "@/components/dashboard/calendar/JoinClassModal";
@@ -14,7 +15,9 @@ import { useDummyStudent } from "@/hooks/useDummyStudent";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
 import { getSystemTrainingPopup } from "@/services/systemTrainingApi";
 
-const salsa = Salsa({ weight: "400", subsets: ["latin"], display: "swap" });
+// preload: false — this font is only used inside the popup below, which most visits never open; without it Next adds a <link rel="preload">
+// for the font on every dashboard page and the browser warns that it was preloaded but not used.
+const salsa = Salsa({ weight: "400", subsets: ["latin"], display: "swap", preload: false });
 
 /**
  * School System Training popup on the dashboard — legacy studentTimePreference.js (getStudentTimePreference ->
@@ -212,7 +215,7 @@ export function SystemTrainingPopup() {
 
   const query = useQuery({
     queryKey: ["system-training-popup", context?.schoolUUID, context?.userId],
-    queryFn: () => getSystemTrainingPopup(),
+    queryFn: () => viaTier3(context?.userId, "systemTraining", (a) => a.systemTraining, () => getSystemTrainingPopup()),
     enabled: wanted,
     staleTime: Infinity,
     refetchOnWindowFocus: false,

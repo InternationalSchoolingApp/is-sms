@@ -1,6 +1,7 @@
 "use server";
 
 import { backendRequest } from "@/utils/backendRequest";
+import { forgetUserRead, sharedUserRead } from "@/utils/userReadMemo";
 
 /**
  * What a student still has to do before the dashboard: the legacy "additional layer" screens
@@ -20,11 +21,17 @@ const SESSION_EXPIRED = { ok: false, sessionExpired: true, code: "SESSION_EXPIRE
 // Project timezone rule: Asia/Singapore when the student's time zone is missing / unknown.
 const FALLBACK_TIMEZONE = "Asia/Singapore";
 
+// The onboarding gate (Tier 1) and the Outlook reminder (Tier 3) read the same additinal-layer-details on one dashboard
+// load: shared for a moment (utils/userReadMemo.js); a save in the gate below forgets it.
+const readLayerDetails = () =>
+  sharedUserRead("additional-layer", () => backendRequest({ path: "dashboard/additinal-layer-details", buildBody: (me) => ({ userId: me.userId }) }), (r) => r?.ok);
+const forgetGateReads = async () => {
+  await forgetUserRead("additional-layer");
+  await forgetUserRead("dashboard-or-migration");
+};
+
 async function fetchLayerDetails() {
-  const result = await backendRequest({
-    path: "dashboard/additinal-layer-details",
-    buildBody: (me) => ({ userId: me.userId }),
-  });
+  const result = await readLayerDetails();
   if (!result.ok) return result;
   const answer = result.data;
   if (String(answer?.status) === "3") return SESSION_EXPIRED;
@@ -181,6 +188,7 @@ async function saveTimePreference(body) {
  * The chosen time is checked against that date's free slots on the server (its duration comes from there too).
  */
 export async function bookSystemTraining({ date, stTime } = {}) {
+  await forgetGateReads();
   const dates = legacyDates(date);
   if (!dates) return { ok: false, code: "BAD_DATE", message: "Please choose your school system training date." };
   if (!stTime) return { ok: false, code: "BAD_TIME", message: "Please choose your school system training time." };
@@ -211,6 +219,7 @@ export async function bookSystemTraining({ date, stTime } = {}) {
  * date only - it cannot be changed later.
  */
 export async function saveAcademicYearStart({ date } = {}) {
+  await forgetGateReads();
   const dates = legacyDates(date);
   if (!dates) return { ok: false, code: "BAD_DATE", message: "Please choose your academic year start date." };
   const facts = await setupFacts();
@@ -233,6 +242,7 @@ export async function saveAcademicYearStart({ date } = {}) {
  * screen is not shown again.
  */
 export async function saveTimezone(timezoneId) {
+  await forgetGateReads();
   const id = Number(timezoneId);
   if (!(id > 0)) return { ok: false, code: "REQUIRED", message: "Please select your time zone." };
   const result = await backendRequest({
@@ -260,6 +270,7 @@ export async function saveTimezone(timezoneId) {
  * date's free slots on the server, and the student's own studentStandardId is read on the server.
  */
 export async function rescheduleSystemTraining({ date, stTime } = {}) {
+  await forgetGateReads();
   const dates = legacyDates(date);
   if (!dates) return { ok: false, code: "BAD_DATE", message: "Please select your system training date." };
   if (!stTime) return { ok: false, code: "BAD_TIME", message: "Please select your system training time." };

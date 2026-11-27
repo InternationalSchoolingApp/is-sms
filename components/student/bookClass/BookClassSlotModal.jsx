@@ -148,7 +148,7 @@ export function BookClassSlotModal({ course, onClose, onBooked }) {
     }
     if (result.status === "1") {
       toast.success(result.message || "Your class has been booked.");
-      onBooked();
+      onBooked(selected.slot.bookedStartDate);
       return;
     }
     toast.error(result.message || "Unable to book this class. Please try again.");

@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { AlertCircle, CheckCircle2, UserCircle, X } from "lucide-react";
-import { loadProfileCompletingProcess } from "@/services/profileActionsApi";
-import { callServer } from "@/utils/serverCall";
+import { useProfileCompletingProcess } from "@/hooks/useProfileCompletingProcess";
 import { studentNavHref } from "@/utils/dashboardNav";
 
 /**
@@ -38,8 +37,9 @@ function SectionBlock({ section }) {
       <h4 className="m-0 text-sm font-bold text-black">{section.labelName}</h4>
       {loose.length > 0 && (
         <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
-          {loose.map((field) => (
-            <FieldLine key={field.id || field.fieldId} field={field} />
+          {loose.map((field, i) => (
+            // Several fields of one section can share an id (e.g. all parent-name fields have id 8): fieldId tells them apart.
+            <FieldLine key={`${field.fieldId ?? field.id}-${i}`} field={field} />
           ))}
         </ul>
       )}
@@ -47,8 +47,8 @@ function SectionBlock({ section }) {
         <div key={group.name} className="flex flex-col gap-1.5 pl-2">
           <span className="text-xs font-bold text-black/60">{group.name}</span>
           <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
-            {group.missing.map((field) => (
-              <FieldLine key={field.id || field.fieldId} field={field} />
+            {group.missing.map((field, i) => (
+              <FieldLine key={`${field.fieldId ?? field.id}-${i}`} field={field} />
             ))}
           </ul>
         </div>
@@ -59,22 +59,9 @@ function SectionBlock({ section }) {
 
 export function CompleteProfileModal({ hold = false }) {
   const { school } = useParams();
-  const [data, setData] = useState(null);
+  // Shared answer (hooks/useProfileCompletingProcess.js): setting off or the call failed means no data, so no popup.
+  const { data } = useProfileCompletingProcess();
   const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    callServer(() => loadProfileCompletingProcess())
-      .then((result) => {
-        if (!cancelled) setData(result);
-      })
-      .catch(() => {
-        // setting off or the call failed: no popup
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   if (hold || dismissed || !data?.enabled || !data.profileData?.length) return null;
 

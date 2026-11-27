@@ -6,13 +6,14 @@ import { ClassFeedbackModal } from "@/components/dashboard/calendar/ClassFeedbac
 import { PendingFeedbackPopup } from "@/components/dashboard/calendar/PendingFeedbackPopup";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
-import { useFeedbackSetting } from "@/hooks/useFeedbackSetting";
+import { useFeedbackSettings } from "@/hooks/useFeedbackSettings";
 import { useStudentDashboardData } from "@/hooks/useStudentDashboardData";
 import { getSchoolCalendar } from "@/services/dashboardApi";
 import { getFeedbackSubmission } from "@/services/feedbackApi";
 import { normalizeCalendarEvents, resolveTimezone } from "@/utils/calendarEvents";
 import {
   FEEDBACK_SETTING,
+  FEEDBACK_SETTING_KEYS,
   buildEmbedUrl,
   buildWebhook,
   classDateTimeOf,
@@ -49,11 +50,13 @@ export function ClassFeedbackHost() {
   const timezone = resolveTimezone(dashboardData.userTimezone);
   const wanted = Boolean(userId && schoolUUID) && (context?.role || "student") === "student" && dummy.settled && !dummy.enabled;
 
-  const afterClass = useFeedbackSetting(FEEDBACK_SETTING.afterClass, { userId, enabled: wanted });
-  const delay = useFeedbackSetting(FEEDBACK_SETTING.delayMinutes, { userId, enabled: wanted });
-  const testUsers = useFeedbackSetting(FEEDBACK_SETTING.testUsers, { userId, enabled: wanted });
-  const showFromDate = useFeedbackSetting(FEEDBACK_SETTING.showFromDate, { userId, enabled: wanted });
-  const bulkDay = useFeedbackSetting(FEEDBACK_SETTING.bulkDay, { userId, enabled: wanted });
+  // The five settings come in one round trip (hooks/useFeedbackSettings.js), not one queued server action each.
+  const { values: settings } = useFeedbackSettings(FEEDBACK_SETTING_KEYS, { userId, enabled: wanted });
+  const afterClass = { value: settings[FEEDBACK_SETTING.afterClass] };
+  const delay = { value: settings[FEEDBACK_SETTING.delayMinutes] };
+  const testUsers = { value: settings[FEEDBACK_SETTING.testUsers] };
+  const showFromDate = { value: settings[FEEDBACK_SETTING.showFromDate] };
+  const bulkDay = { value: settings[FEEDBACK_SETTING.bulkDay] };
 
   const [modal, setModal] = useState(null);
   const [pending, setPending] = useState(null);

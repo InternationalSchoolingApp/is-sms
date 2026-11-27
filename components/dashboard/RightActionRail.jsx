@@ -12,11 +12,13 @@ import { getAnnouncementDetails, getChatUnseenCount } from "@/services/dashboard
 import { getAllArticles } from "@/services/newsApi";
 import { getDiaryUnreadCount } from "@/utils/diaryClient";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { useMustReEnroll } from "@/hooks/useReEnrollmentEntry";
 import { buildChatSignInUrl } from "@/utils/chatLink";
 import { AnnouncementsPanel } from "@/components/dashboard/AnnouncementsPanel";
 import { NewsPanel } from "@/components/dashboard/NewsPanel";
 import { DiaryPanel } from "@/components/dashboard/DiaryPanel";
 import { useDiaryLivePolling } from "@/hooks/useDiaryLivePolling";
+import { viaTier2 } from "@/utils/dashboardBootstrap";
 import { K5AnnouncementsPanel } from "@/components/k5/panels/K5AnnouncementsPanel";
 import { K5NewsPanel } from "@/components/k5/panels/K5NewsPanel";
 import { K5DiaryPanel } from "@/components/k5/panels/K5DiaryPanel";
@@ -27,17 +29,20 @@ import { K5DiaryPanel } from "@/components/k5/panels/K5DiaryPanel";
  * real backend data and open their own slide-in panel. Talk to Us opens a
  * signed sign-in link into the chat app directly instead of a panel.
  * variant="k5": the Grade K–5 look (Messages / News / Notices / Teacher), same data and panels.
- * middle (with variant="k5"): the Balanced look - the same pastel buttons on their coloured rims as Playful. high: the
- * Mature look - the same pastel buttons, flat (no rim).
+ * middle (with variant="k5"): the Balanced look - one soft blue circle on a 2px blue rim for all four buttons. high: the
+ * Mature look - drawn exactly like Balanced (middle is true for it too).
  */
 // Legacy parity: the re-enrollment screen (studentGraduate == 'Y' -> renderMigrationDetailsOptionContent) never called
 // getAnnouncementAndNewsContent(), so none of the four rail buttons (Talk to Us, Announcement, News, Diary) existed there.
-// Gating in this wrapper (not inside the rail) also keeps the rail's queries and the diary bridge iframe from mounting.
+// A student with a re-enrollment still to finish does not get the rail on any page (My Classes and the other modules too),
+// and it waits until that is known so it does not flash. Gating in this wrapper (not inside the rail) also keeps the rail's
+// queries and the diary bridge iframe from mounting.
 const RE_ENROLLMENT_PATH = /\/student\/re-enrollment(\/|$)/;
 
 export function RightActionRail(props) {
   const pathname = usePathname();
-  if (RE_ENROLLMENT_PATH.test(pathname || "")) return null;
+  const mustReEnroll = useMustReEnroll({ schoolUUID: props.schoolUUID, userId: props.userId });
+  if (RE_ENROLLMENT_PATH.test(pathname || "") || mustReEnroll !== false) return null;
   return <RightActionRailContent {...props} />;
 }
 
@@ -60,7 +65,9 @@ function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
   const announcementsQuery = useQuery({
     queryKey: ["student-announcements", schoolUUID, userId, dummy.key],
     queryFn: () =>
-      dummy.enabled ? dummy.student.announcements() : getAnnouncementDetails({ schoolUUID, userId, startFrom: 0, pageSize: 20 }),
+      dummy.enabled
+        ? dummy.student.announcements()
+        : viaTier2(userId, "announcements", (a) => a.announcements, () => getAnnouncementDetails({ schoolUUID, userId, startFrom: 0, pageSize: 20 })),
     enabled: Boolean(schoolUUID && userId && dummy.settled),
     staleTime: 5 * 60_000,
     refetchOnWindowFocus: false,
@@ -70,7 +77,7 @@ function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
 
   const newsQuery = useQuery({
     queryKey: ["news-articles", dummy.key],
-    queryFn: () => (dummy.enabled ? dummy.student.newsList() : getAllArticles({ page: 1, size: 10 })),
+    queryFn: () => (dummy.enabled ? dummy.student.newsList() : viaTier2(userId, "news", (a) => a.news, () => getAllArticles({ page: 1, size: 10 }))),
     enabled: dummy.settled,
     staleTime: 5 * 60_000,
     refetchOnWindowFocus: false,
@@ -80,7 +87,7 @@ function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
 
   const chatCountQuery = useQuery({
     queryKey: ["chat-unseen-count", schoolUUID, userId],
-    queryFn: () => getChatUnseenCount({ schoolUUID, userId, userRole, email }),
+    queryFn: () => viaTier2(userId, "chatUnseen", (a) => a.chatUnseen, () => getChatUnseenCount({ schoolUUID, userId, userRole, email })),
     enabled: Boolean(schoolUUID && userId),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
@@ -183,8 +190,8 @@ function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
   }, [diaryUrl, userId]);
 
   // Balanced look (Middle.dc.html .rail): every button is the same soft blue circle on a 2px #027FFE rim, its icon cut-outs #DCEEFF.
-  // Playful and Mature keep each button's own pastel (the icon cut-outs take it too).
-  const balanced = middle && !high;
+  // Playful keeps each button's own pastel (the icon cut-outs take it too). The Mature (High) rail is drawn exactly like this one.
+  const balanced = middle;
   const cut = (k5Colour) => (balanced ? "#DCEEFF" : k5Colour);
   // Same data and props either way; the k5 variant swaps in the K–5 drawer look.
   const AnnouncementsView = variant === "k5" ? K5AnnouncementsPanel : AnnouncementsPanel;
@@ -298,7 +305,7 @@ function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
 // Grade K–5 rail button (Playful.dc.html .rail): 62px pastel circle on a coloured rim, label
 // under it, red count badge. In the mobile tab bar: a quarter of the width, 46px circle.
 // Every look keeps each button's own pastel (green / blue / yellow / purple). Playful and Balanced sit it on its coloured
-// rim; Mature (`high`) is the flat pastel circle with no rim.
+// rim; Mature (`high`) is drawn exactly like Balanced (the same soft blue circle on a 2px rim).
 function K5RailButton({ index = 0, label, onClick, badge, tint, rim, ink, pin, high, balanced, children }) {
   // Balanced (Middle.dc.html .rail): one soft blue circle with a 2px blue rim for all four buttons.
   if (balanced) {
@@ -314,12 +321,12 @@ function K5RailButton({ index = 0, label, onClick, badge, tint, rim, ink, pin, h
       data-pin={pin}
       onClick={onClick}
       aria-label={badge ? `${label}, ${badge} new` : label}
-      className="relative flex w-20 cursor-pointer flex-col items-center gap-2 rounded-[18px] border-none bg-transparent py-1 text-center text-xs font-black leading-[1.15] text-k5-ink max-[760px]:w-1/4 max-[760px]:gap-1.5 max-[760px]:p-0"
+      className="relative flex w-20 cursor-pointer flex-col items-center gap-1.5 rounded-[18px] border-none bg-transparent py-0.5 text-center text-[11px] font-black leading-[1.15] text-k5-ink max-[760px]:w-1/4 max-[760px]:gap-1.5 max-[760px]:p-0"
     >
       {/* Playful's rim is written "0px_6px" (not "0_6px") so app/k5-middle.css, which thins every "shadow-[0_6px_0_...]" in the
           Balanced look, leaves it alone; Balanced has its own 2px rim. */}
       <span
-        className={`flex h-[62px] w-[62px] items-center justify-center rounded-full max-[760px]:h-[46px] max-[760px]:w-[46px] max-[760px]:[&>svg]:h-6 max-[760px]:[&>svg]:w-6 ${high ? "shadow-none" : balanced ? "shadow-[0_2px_0_var(--rim)]" : "shadow-[0px_6px_0_var(--rim)] max-[760px]:shadow-[0px_4px_0_var(--rim)]"}`}
+        className={`flex h-[48px] w-[48px] items-center justify-center rounded-full [&>svg]:h-6 [&>svg]:w-6 max-[760px]:h-[46px] max-[760px]:w-[46px] max-[760px]:[&>svg]:h-6 max-[760px]:[&>svg]:w-6 ${balanced ? "shadow-[0_2px_0_var(--rim)]" : high ? "shadow-none" : "shadow-[0px_4px_0_var(--rim)] max-[760px]:shadow-[0px_4px_0_var(--rim)]"}`}
         style={{ background: tint, color: ink, "--rim": rim }}
       >
         {children}
@@ -332,7 +339,7 @@ function K5RailButton({ index = 0, label, onClick, badge, tint, rim, ink, pin, h
           animate={{ scale: 1 }}
           transition={{ duration: DUR.card, ease: EASE_OUT }}
           aria-hidden="true"
-          className={`k5-rail-badge absolute -right-0.5 -top-1 flex h-[30px] min-w-[30px] items-center justify-center rounded-full border-[3px] border-k5-card bg-k5-red px-1.5 text-[13px] font-black text-white ${balanced ? "min-[761px]:border-[1.5px] min-[761px]:border-white" : ""} max-[760px]:-top-1.5 max-[760px]:right-[calc(50%-36px)] max-[760px]:h-6 max-[760px]:min-w-6 max-[760px]:border-2 max-[760px]:px-[5px] max-[760px]:text-xs`}
+          className={`k5-rail-badge absolute right-1.5 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full border-[2.5px] border-k5-card bg-k5-red px-1 text-xs font-black text-white ${balanced ? "min-[761px]:border-[1.5px] min-[761px]:border-white" : ""} max-[760px]:-top-1.5 max-[760px]:right-[calc(50%-36px)] max-[760px]:h-6 max-[760px]:min-w-6 max-[760px]:border-2 max-[760px]:px-[5px] max-[760px]:text-xs`}
         >
           {badge}
         </motion.span>

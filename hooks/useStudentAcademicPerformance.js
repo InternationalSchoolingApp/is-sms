@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getStudentAcademicPerformance } from "@/services/dashboardApi";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { viaTier1 } from "@/utils/dashboardBootstrap";
 
 /**
  * Performance ("My Performance") — legacy studentAcademicPerformance.js's list
@@ -16,7 +17,9 @@ export function useStudentAcademicPerformance({ schoolUUID, userId, k5Performanc
   const query = useQuery({
     queryKey: ["student-academic-performance", schoolUUID, userId, k5Performance, dummy.key],
     queryFn: () =>
-      dummy.enabled ? dummy.student.academicPerformance() : getStudentAcademicPerformance({ schoolUUID, userId, k5Performance }),
+      dummy.enabled
+        ? dummy.student.academicPerformance()
+        : viaTier1(userId, "performance", (a) => (a.performance && a.performance.k5 === k5Performance ? a.performance.data : undefined), () => getStudentAcademicPerformance({ schoolUUID, userId, k5Performance })),
     enabled: Boolean(schoolUUID && userId && dummy.settled),
     staleTime: 2 * 60_000,
     refetchOnWindowFocus: false,

@@ -4,9 +4,11 @@
 @import "./k5-theme.css";
 @import "./k5-middle.css";
 @import "./k5-mature.css";
+@import "./k5-christmas.css";
 @import "./appearance.css";
 @import "./k5-modules.css";
 @import "./profile-plain.css";
+@import "./scrollbar.css";
 
 @custom-variant dark (&:is(.dark *));
 

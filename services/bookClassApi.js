@@ -3,6 +3,7 @@
 import { getAccountSession, serviceKeyHeaders, smsAuthHeaders } from "@/lib/auth/session";
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { isOwnStudentStandard, rememberOwnStudentStandard } from "@/utils/ownEnrolments";
 
 /**
  * Phase C — Book Classes (sidebar pageLink `book-a-session`). Ports the live
@@ -84,6 +85,8 @@ export async function getBookAClassStatus({ userTimezone }) {
 export async function getStudentBookClassDetails({ studentStandardId }) {
   const me = await identity();
   if (!hasBackendOrigin() || !me || !studentStandardId) return null;
+  // Only the signed-in student's own enrolment (utils/ownEnrolments.js): the backend loads it by id alone.
+  if (studentStandardId && !(await isOwnStudentStandard(studentStandardId))) return null;
   try {
     return await callBackend(
       me.schoolUUID,
@@ -105,9 +108,10 @@ export async function getStudentBookClassDetails({ studentStandardId }) {
 export async function getClassCalculationForGrownUps({ studentStandardId }) {
   const me = await identity();
   if (!hasBackendOrigin() || !me || !studentStandardId) return null;
+  // Only the signed-in student's own enrolment (utils/ownEnrolments.js): the backend loads it by id alone.
+  if (studentStandardId && !(await isOwnStudentStandard(studentStandardId))) return null;
   try {
     const data = await callBackend(me.schoolUUID, "/dashboard/class-calculation-for-grown-ups", { studentStandardId });
-    console.log("getClassCalculationForGrownUps", JSON.stringify({ studentStandardId, data }, null, 2));
     return data?.details ?? null;
   } catch {
     return null;
@@ -121,13 +125,17 @@ export async function getClassCalculationForGrownUps({ studentStandardId }) {
 export async function getAssignedTeacherForCourse({ subjectId, studentStandardId }) {
   const me = await identity();
   if (!hasBackendOrigin() || !me || !subjectId) return null;
+  if (studentStandardId && !(await isOwnStudentStandard(studentStandardId))) return null;
   try {
-    return await callBackend(
+    const teacher = await callBackend(
       me.schoolUUID,
       "/dashboard/student-subject-session-booking-new",
       { userId: me.userId, subjectId, studentStandardId },
       { method: "GET", asQuery: true },
     );
+    // The backend resolves this enrolment from the session user's own userId; the slot and submit calls send it back.
+    await rememberOwnStudentStandard(teacher?.studentStandardId);
+    return teacher;
   } catch {
     return null;
   }
@@ -141,6 +149,8 @@ export async function getAssignedTeacherForCourse({ subjectId, studentStandardId
 export async function getAssignedTeachersForAllCourses({ studentStandardId }) {
   const me = await identity();
   if (!hasBackendOrigin() || !me || !studentStandardId) return null;
+  // Only the signed-in student's own enrolment (utils/ownEnrolments.js): the backend loads it by id alone.
+  if (studentStandardId && !(await isOwnStudentStandard(studentStandardId))) return null;
   try {
     return await callBackend(
       me.schoolUUID,
@@ -163,6 +173,7 @@ export async function getAssignedTeachersForAllCourses({ studentStandardId }) {
 export async function getTeacherWeeklySlots({ teacherUserId, studentStandardId, subjectId, startDate }) {
   const me = await identity();
   if (!hasBackendOrigin() || !me || !teacherUserId) return null;
+  if (studentStandardId && !(await isOwnStudentStandard(studentStandardId))) return null;
   try {
     return await callBackend(me.schoolUUID, "/teacherautoassign/get-teacher-time-to-show-weekly-calendar", {
       userId: teacherUserId,
@@ -188,6 +199,7 @@ export async function getTeacherWeeklySlots({ teacherUserId, studentStandardId, 
 export async function submitBookClassSlot({ meetingDate, meetingEndDate, subjectId, studentStandardId, teacherUserId }) {
   const me = await identity();
   if (!hasBackendOrigin() || !me) return null;
+  if (studentStandardId && !(await isOwnStudentStandard(studentStandardId))) return null;
   try {
     return await callBackend(me.schoolUUID, "/dashboard/student-book-session-slots-submit-new", {
       authentication: { schoolId: me.schoolId, schoolUUID: me.schoolUUID, userType: "STUDENT", userId: me.userId },
@@ -217,6 +229,8 @@ export async function submitBookClassSlot({ meetingDate, meetingEndDate, subject
 export async function getStudentBookedClasses({ subjectId, studentStandardId, dateType, startDate = "", endDate = "", classStatus = "" }) {
   const me = await identity();
   if (!hasBackendOrigin() || !me || !studentStandardId) return null;
+  // Only the signed-in student's own enrolment (utils/ownEnrolments.js): the backend loads it by id alone.
+  if (studentStandardId && !(await isOwnStudentStandard(studentStandardId))) return null;
   try {
     const data = await callBackend(
       me.schoolUUID,
@@ -224,8 +238,61 @@ export async function getStudentBookedClasses({ subjectId, studentStandardId, da
       { userId: me.userId, subjectId, studentStandardId, callFrom: "STUDENT", startDate, endDate, classStatus, dateType },
       { method: "GET", asQuery: true },
     );
-    console.log("getStudentBookedClasses", { userId: me.userId, subjectId, studentStandardId, callFrom: "STUDENT", startDate, endDate, classStatus, dateType, data });
     return data;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Student cancels their own 1:1 class — POST /dashboard/student-class-cancel.
+ * Before the cut-off the class is given back; after it the backend asks for confirmLate and the class lapses.
+ * Returns { status, message, code?, cutoffHours?, countReturned? } or null.
+ */
+export async function cancelStudentClass({ meetingId, reason, confirmLate = false }) {
+  const me = await identity();
+  if (!hasBackendOrigin() || !me || !meetingId) return null;
+  try {
+    return await callBackend(me.schoolUUID, "/dashboard/student-class-cancel", { meetingId, reason, confirmLate });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Demand-based booking (pick a date and time first) — is-rest-api DemandBookingController.
+ * options: is it on, the week's days, time-picker range, earliest bookable time, names.
+ * request: saves what the student asked for and answers AVAILABLE / NEAREST (with slots) / NONE.
+ * booked: links a confirmed booking to the pop-up's last open request.
+ */
+export async function getDemandBookingOptions({ studentStandardId, subjectId, teacherUserId }) {
+  const me = await identity();
+  if (!hasBackendOrigin() || !me || !studentStandardId) return null;
+  if (!(await isOwnStudentStandard(studentStandardId))) return null;
+  try {
+    return await callBackend(me.schoolUUID, "/dashboard/demand-booking/options", { studentStandardId, subjectId, teacherUserId });
+  } catch {
+    return null;
+  }
+}
+
+export async function requestDemandSlot({ studentStandardId, subjectId, teacherUserId, date, time, sessionId }) {
+  const me = await identity();
+  if (!hasBackendOrigin() || !me || !studentStandardId) return null;
+  if (!(await isOwnStudentStandard(studentStandardId))) return null;
+  try {
+    return await callBackend(me.schoolUUID, "/dashboard/demand-booking/request", { studentStandardId, subjectId, teacherUserId, date, time, sessionId });
+  } catch {
+    return null;
+  }
+}
+
+export async function linkDemandBooking({ studentStandardId, sessionId, meetingStart }) {
+  const me = await identity();
+  if (!hasBackendOrigin() || !me || !studentStandardId || !sessionId || !meetingStart) return null;
+  if (!(await isOwnStudentStandard(studentStandardId))) return null;
+  try {
+    return await callBackend(me.schoolUUID, "/dashboard/demand-booking/booked", { studentStandardId, sessionId, meetingStart });
   } catch {
     return null;
   }

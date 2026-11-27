@@ -11,6 +11,7 @@ import { usePicoContentReady } from "@/components/k5/pico/picoEvents";
 import { useK5CourseColors } from "@/hooks/useK5CourseColors";
 import { getStudentCourseContent } from "@/services/dashboardApi";
 import { courseTint, subjectStyle } from "@/utils/k5Calendar";
+import { teacherShortName } from "@/utils/salutation";
 import { hasDueDate, openLmsLesson } from "@/utils/lmsCourseLink";
 import { K5Loading, K5Sk, K5TeacherSkeleton } from "@/components/k5/K5Skeletons";
 
@@ -154,7 +155,42 @@ function CourseContentDialog({ course, color, onClose }) {
   );
 }
 
-/** K–5 look of "Syllabus & Assigned Teacher" (mockup My Assigned Teacher): one card per course, in the course's colour. */
+/** Elementary: one class teacher for every course - the teacher named on most courses (the first one on a tie). */
+function classTeacherOf(courses) {
+  const counts = new Map();
+  courses.forEach((course) => {
+    if (!course.teacherName) return;
+    const entry = counts.get(course.teacherName) || { course, n: 0 };
+    entry.n += 1;
+    counts.set(course.teacherName, entry);
+  });
+  let best = null;
+  counts.forEach((entry) => {
+    if (!best || entry.n > best.n) best = entry;
+  });
+  return best ? best.course : null;
+}
+
+/** "Your teacher" in the Elementary header: the initials and the teacher's name (salutation + first name). */
+function ClassTeacherChip({ course }) {
+  return (
+    <div className="flex items-center gap-3 rounded-full bg-k5-soft py-1.5 pl-1.5 pr-5 max-[560px]:w-full">
+      <span className="flex h-[52px] w-[52px] flex-none items-center justify-center rounded-full bg-k5-vi font-k5-display text-lg font-semibold text-white">
+        {course ? initials(course.teacherName) : "?"}
+      </span>
+      <span className="flex min-w-0 flex-col leading-[1.2]">
+        <span className="text-sm font-black text-[var(--k5-vX)]">Your teacher</span>
+        <span className="font-k5-display text-xl font-semibold text-k5-ink">{course ? teacherShortName(course.teacherName, course.teacherGender) : "Not picked yet"}</span>
+      </span>
+    </div>
+  );
+}
+
+/**
+ * K–5 look of "Syllabus & Assigned Teacher" (mockup My Assigned Teacher): one card per course, in the course's colour.
+ * Elementary: the class teacher once, in the header ("Your teacher"), and the course cards without a teacher row or a search box.
+ * Grade 6–12: every course card names its teacher, with the search box above them.
+ */
 const PAGE_SIZE = 9;
 
 export function K5AssignedTeacher({ courses, isLoading }) {
@@ -168,12 +204,31 @@ export function K5AssignedTeacher({ courses, isLoading }) {
   }, [courses, search]);
   const pageCount = Math.max(1, Math.ceil(matching.length / PAGE_SIZE));
   const shown = matching.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
-  const { isMiddle, isHigh } = useDashboardContext();
+  // isMiddle / isHigh follow the look the student picked (Make it yours: Playful / Balanced / Mature); gradeIsMiddle is the
+  // student's real grade. The page's CONTENT follows the grade (an Elementary class has one teacher, shown once in the header),
+  // only its skin follows the look.
+  const { isMiddle, isHigh, gradeIsMiddle } = useDashboardContext();
+  const elementary = !(gradeIsMiddle ?? isMiddle);
+  const subtitle = elementary ? "Your courses and your teacher" : "Your courses and the teacher for each one";
+  const classTeacher = useMemo(() => classTeacherOf(courses), [courses]);
   usePicoContentReady(!isLoading);
   const colorFor = useK5CourseColors();
   // The colour the student already sees on the home plan; a course without one falls back to its subject colour.
   const colorOf = (course) => colorFor({ id: course.coruseId, name: course.courseName }) || subjectStyle(course.courseName).color;
 
+  // Elementary: the class teacher on the right of the title, in every look.
+  const teacherSlot = !elementary ? null : isLoading ? (
+    <span className="flex items-center gap-3 rounded-full bg-k5-soft py-1.5 pl-1.5 pr-5 max-[560px]:w-full">
+      <K5Sk className="h-[52px] w-[52px] flex-none rounded-full" />
+      <span className="flex flex-col gap-1.5">
+        <K5Sk className="h-3.5 w-20" />
+        <K5Sk className="h-5 w-36" />
+      </span>
+    </span>
+  ) : (
+    courses.length > 0 && <ClassTeacherChip course={classTeacher} />
+  );
+  console.log("assign teacher", shown)
   return (
     <div className="flex flex-col gap-4">
       {isMiddle ? (
@@ -184,8 +239,9 @@ export function K5AssignedTeacher({ courses, isLoading }) {
           </span>
           <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
             <h1 className="m-0 font-k5-display text-[30px] font-semibold leading-[1.05]">My Assigned Teacher</h1>
-            <p className="m-0 text-base font-extrabold text-k5-mut">Your courses and the teacher for each one</p>
+            <p className="m-0 text-base font-extrabold text-k5-mut">{subtitle}</p>
           </div>
+          {teacherSlot}
         </div>
       ) : (
         <div className={`${K5_CARD} flex flex-wrap items-center gap-4 px-[22px] py-[18px]`}>
@@ -194,17 +250,19 @@ export function K5AssignedTeacher({ courses, isLoading }) {
           </span>
           <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
             <h1 className="m-0 font-k5-display text-4xl font-semibold leading-[1.05]">My Assigned Teacher</h1>
-            <p className="m-0 text-lg font-extrabold text-k5-mut">Your courses and the teacher for each one</p>
+            <p className="m-0 text-lg font-extrabold text-k5-mut">{subtitle}</p>
           </div>
+          {teacherSlot}
         </div>
       )}
 
       {isLoading ? (
-        <K5TeacherSkeleton />
+        <K5TeacherSkeleton teacherRow={!elementary} />
       ) : courses.length === 0 ? (
         <p className={`${K5_CARD} m-0 p-8 text-center font-k5-display text-2xl font-semibold text-k5-mut`}>No courses yet.</p>
       ) : (
         <>
+          {!elementary && (
           <label className="relative block max-w-sm">
             <span className="sr-only">Search courses</span>
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-k5-mut" aria-hidden="true" />
@@ -219,6 +277,7 @@ export function K5AssignedTeacher({ courses, isLoading }) {
               className="min-h-12 w-full rounded-full border-[3px] border-k5-line bg-k5-card py-0 pl-11 pr-4 font-k5-body text-base font-extrabold text-k5-ink"
             />
           </label>
+          )}
           {matching.length === 0 && <p className={`${K5_CARD} m-0 p-6 text-center font-k5-display text-xl font-semibold text-k5-mut`}>No matching courses.</p>}
         <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
           {shown.map((course) => {
@@ -235,15 +294,16 @@ export function K5AssignedTeacher({ courses, isLoading }) {
                     <h2 className="m-0 font-k5-display text-[22px] font-semibold leading-[1.15] text-k5-ink">{course.courseName}</h2>
                   </div>
                 </div>
+                {!elementary && (
                 <div className="flex items-center gap-2.5 rounded-full bg-k5-soft py-1.5 pl-1.5 pr-3">
                   <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-k5-vi font-k5-display text-base font-semibold text-white" style={isMiddle ? { background: color } : undefined}>
                     {course.teacherName ? initials(course.teacherName) : "?"}
                   </span>
                   <span className="flex min-w-0 flex-col leading-[1.2]">
-                    <span className="text-[13px] font-black text-[var(--k5-vX)]">Your teacher</span>
-                    <span className="font-k5-display text-[17px] font-semibold text-k5-ink">{course.teacherName || "Not picked yet"}</span>
+                    <span className="font-k5-display text-[17px] font-semibold text-k5-ink">{course.teacherName ? teacherShortName(course.teacherName, course.teacherGender) : "Not picked yet"}</span>
                   </span>
                 </div>
+                )}
                 <button
                   type="button"
                   onClick={() => setSelected({ course, color })}
