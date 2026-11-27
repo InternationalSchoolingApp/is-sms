@@ -179,10 +179,10 @@ export function ParentProfileDetails({ onWithdrawal }) {
           <span className="flex h-8 w-8 items-center justify-center rounded bg-primary/10 text-primary">
             <UserRound className="h-5 w-5" aria-hidden="true" />
           </span>
-          <h2 className="text-lg font-bold text-black">Personal Details</h2>
+          <h2 className="text-xl font-bold text-black">Personal Details</h2>
         </div>
         {!editing && (
-          <button type="button" onClick={startEdit} className="inline-flex items-center gap-1.5 rounded-full border border-primary px-4 py-1.5 text-sm font-semibold text-primary hover:bg-primary/5">
+          <button type="button" onClick={startEdit} className="fbtn o !h-[38px] gap-1.5 !px-4">
             <Pencil className="h-4 w-4" aria-hidden="true" />
             Edit
           </button>
@@ -234,10 +234,10 @@ export function ParentProfileDetails({ onWithdrawal }) {
             <LanguageSelect value={draft.languages} onChange={(languages) => patch({ languages })} />
           </div>
           <div className="mt-5 flex flex-wrap justify-end gap-2">
-            <button type="button" onClick={cancelEdit} disabled={profile.saving} className="rounded-full border border-primary px-5 py-2 text-sm font-semibold text-primary hover:bg-primary/5 disabled:opacity-50">
+            <button type="button" onClick={cancelEdit} disabled={profile.saving} className="fbtn o disabled:opacity-50">
               Cancel
             </button>
-            <button type="submit" disabled={profile.saving || !dirty} className="rounded-full bg-green-600 px-6 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
+            <button type="submit" disabled={profile.saving || !dirty} className="fbtn p disabled:cursor-not-allowed disabled:opacity-50">
               {profile.saving ? "Saving…" : "Save"}
             </button>
           </div>
@@ -260,7 +260,7 @@ export function ParentProfileDetails({ onWithdrawal }) {
 
       {!editing && (
         <div className="mt-6 flex justify-end">
-          <button type="button" onClick={onWithdrawal} className="rounded-full border border-primary px-5 py-2 text-sm font-semibold text-primary hover:bg-primary/5">
+          <button type="button" onClick={onWithdrawal} className="fbtn o">
             Withdrawal Request
           </button>
         </div>
@@ -272,5 +272,5 @@ export function ParentProfileDetails({ onWithdrawal }) {
 }
 
 function Card({ children }) {
-  return <div className="rounded-[10px] border border-slate-200 bg-white p-4 sm:p-6">{children}</div>;
+  return <div className="fcard">{children}</div>;
 }

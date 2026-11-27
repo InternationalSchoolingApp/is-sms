@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, Eye } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { ParentChildRequired } from "@/components/parent/ParentChildRequired";
-import { ParentMobileTableCard } from "@/components/parent/common/ParentMobileTableCard";
-import { ParentTableFooter } from "@/components/parent/common/ParentTableFooter";
+import { ProgressFooter } from "@/components/parent/progress/ProgressFooter";
+import "@/components/parent/progress/progress.css";
 import { ParentProgressReportView } from "@/components/parent/progress/ParentProgressReportView";
 import { useParentProgressReports } from "@/hooks/parent/useParentProgressReports";
 import { useSelectedChild } from "@/hooks/parent/useSelectedChild";
@@ -14,6 +14,7 @@ import { dateRange, monthEndYmd, normalizeUrl, reportType } from "@/components/p
 
 const PAGE_SIZE = 10;
 const HEADERS = ["S. No.", "Report Type", "Report Frequency", "Report Published Date", "View"];
+const DATE_FIELD = "!rounded-xl !border-[1.5px] !border-[color:var(--line)] !bg-[var(--soft)]";
 
 /**
  * Parent > Progress — legacy parentProgressContent.js / parentProgress.js: the selected child's "Progress Report"
@@ -90,139 +91,118 @@ function ProgressForChild() {
           : null;
   const retryable = failed && !sessionOut ? retry : null;
 
-  const viewButton = (row) => (
-    <button
-      type="button"
-      onClick={() => setSelected({ url: row.url, range })}
-      disabled={!row.url}
-      className="flex shrink-0 items-center gap-1 rounded bg-primary px-2 py-1 text-xs text-white disabled:opacity-60"
-    >
-      View
-      <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-    </button>
-  );
-  const presetClass = (active, edge) =>
-    `px-4 py-1.5 text-sm ${edge} ${active ? "bg-primary text-white" : "bg-slate-100 text-black hover:bg-slate-200"}`;
+  const firstName = (selectedChild?.studentName || "").trim().split(/\s+/)[0];
+  const heading = firstName ? `${firstName}\u2019s Progress Report` : "Progress Report";
+  const tabs = [
+    ["month", "Monthly"],
+    ["week", "Weekly"],
+    ["custom", "Custom"],
+  ];
 
   return (
-    <div className="mx-auto w-full max-w-7xl">
-      <div className="rounded-[10px] border border-slate-200 bg-white py-4">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 px-4 sm:px-5">
-          <h1 className="text-lg font-bold text-black sm:text-xl">Progress Report</h1>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex overflow-hidden rounded-full border border-slate-200" role="group" aria-label="Report period">
-              <button type="button" aria-pressed={mode === "month"} onClick={() => pickPreset("month")} className={presetClass(mode === "month", "")}>
-                Monthly
-              </button>
-              <button type="button" aria-pressed={mode === "week"} onClick={() => pickPreset("week")} className={presetClass(mode === "week", "border-l border-slate-200")}>
-                Weekly
-              </button>
+    <section className="sch on" aria-label="Progress report">
+      <div className="sc-hero">
+        <div>
+          <h2>{heading}</h2>
+          <p>Weekly reports, one for every week of school.</p>
+        </div>
+      </div>
+
+      <div className="fcard">
+        <div className="pgr-head">
+          <h3>Progress Report</h3>
+          <div className="sc-seg pgr-seg" role="tablist" aria-label="Report period">
+            {tabs.map(([key, label]) => (
               <button
+                key={key}
                 type="button"
-                aria-pressed={mode === "custom"}
+                role="tab"
+                aria-selected={mode === key}
                 onClick={() => {
-                  setMode("custom");
-                  setCustomError("");
+                  if (key === "custom") {
+                    setMode("custom");
+                    setCustomError("");
+                  } else pickPreset(key);
                 }}
-                className={presetClass(mode === "custom", "border-l border-slate-200")}
               >
-                Custom
+                {label}
               </button>
-            </div>
+            ))}
           </div>
         </div>
 
         {mode === "custom" && (
-          <div className="mb-3 px-4 sm:px-5">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="w-full sm:w-52">
-                <DatePicker icon={CalendarDays} label="Start Date" value={customStart} onChange={setCustomStart} height="h-10" />
+          <div className="pgr-custom">
+            <div className="pgr-custom-row">
+              <div className="pgr-dp">
+                <DatePicker icon={CalendarDays} label="Start Date" value={customStart} onChange={setCustomStart} height="h-[42px]" triggerClassName={DATE_FIELD} />
               </div>
-              <div className="w-full sm:w-52">
-                <DatePicker icon={CalendarDays} label="End Date" value={customEnd} onChange={setCustomEnd} height="h-10" />
+              <div className="pgr-dp">
+                <DatePicker icon={CalendarDays} label="End Date" value={customEnd} onChange={setCustomEnd} height="h-[42px]" triggerClassName={DATE_FIELD} />
               </div>
-              <button type="button" onClick={searchCustom} className="h-10 rounded-md bg-primary px-5 text-sm text-white">
+              <button type="button" onClick={searchCustom} className="sc-go">
                 Search
               </button>
             </div>
             {customError && (
-              <p className="mt-2 text-sm text-red-600" role="alert">
+              <p className="pgr-err" role="alert">
                 {customError}
               </p>
             )}
           </div>
         )}
 
-        {/* Phones: one card per report instead of the 5-column table. */}
-        <div className="md:hidden" aria-busy={isLoading}>
-          {status ? (
-            <StatusText status={status} retry={retryable} />
-          ) : (
-            <ul className="space-y-3 px-4">
-              {pageRows.map((row) => (
-                <li key={row.key}>
-                  <ParentMobileTableCard
-                    rows={[
-                      { label: HEADERS[0], value: row.serial },
-                      { label: HEADERS[1], value: row.type },
-                      { label: HEADERS[2], value: row.frequency },
-                      { label: HEADERS[3], value: row.published },
-                      { label: HEADERS[4], value: viewButton(row) },
-                    ]}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="hidden overflow-x-auto md:block">
-          <table className="w-full whitespace-nowrap text-left text-sm text-black">
-            <thead className="bg-primary text-white">
-              <tr>
-                {HEADERS.map((header, index) => (
-                  <th key={header} className={`py-3 pr-3 font-normal ${index === 0 ? "pl-5" : "pl-3"}`}>
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {status ? (
-                <tr>
-                  <td colSpan={HEADERS.length}>
-                    <StatusText status={status} retry={retryable} />
-                  </td>
-                </tr>
-              ) : (
-                pageRows.map((row) => (
-                  <tr key={row.key} className="border-b border-slate-200">
-                    <td className="py-3 pl-5 pr-3">{row.serial}</td>
-                    <td className="px-3 py-3">{row.type}</td>
-                    <td className="px-3 py-3">{row.frequency}</td>
-                    <td className="px-3 py-3">{row.published}</td>
-                    <td className="px-3 py-3">{viewButton(row)}</td>
+        {status ? (
+          <StatusText status={status} retry={retryable} busy={isLoading} />
+        ) : (
+          <>
+            <div className="ftw">
+              <table className="ftbl">
+                <thead>
+                  <tr>
+                    {HEADERS.map((header) => (
+                      <th key={header}>{header}</th>
+                    ))}
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {!status && <ParentTableFooter page={page} pageSize={PAGE_SIZE} total={reports.length} onPageChange={setPage} />}
+                </thead>
+                <tbody>
+                  {pageRows.map((row) => (
+                    <tr key={row.key}>
+                      <td data-l={HEADERS[0]}>{row.serial}</td>
+                      <td data-l={HEADERS[1]}>{row.type}</td>
+                      <td data-l={HEADERS[2]}>{row.frequency}</td>
+                      <td data-l="Published">{row.published}</td>
+                      <td className="fa" data-l={HEADERS[4]}>
+                        <button
+                          type="button"
+                          className="fbtn o"
+                          onClick={() => setSelected({ url: row.url, range })}
+                          disabled={!row.url}
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <ProgressFooter page={page} pageSize={PAGE_SIZE} total={reports.length} onPageChange={setPage} />
+          </>
+        )}
       </div>
-    </div>
+    </section>
   );
 }
 
-function StatusText({ status, retry }) {
+function StatusText({ status, retry, busy }) {
   return (
-    <p className="py-8 text-center text-sm text-black/50" role="status">
+    <p className="pgr-status" role="status" aria-busy={busy}>
       {status}
       {retry && (
         <>
           {" "}
-          <button type="button" onClick={retry} className="text-primary underline">
+          <button type="button" onClick={retry} className="pgr-retry">
             Try again
           </button>
         </>

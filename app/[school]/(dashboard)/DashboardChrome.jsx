@@ -12,7 +12,10 @@ import { DashboardLoadingSkeleton } from "@/components/dashboard/DashboardLoadin
 import { SessionExpiredDialog } from "@/components/providers/SessionExpiredDialog";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { K5Shell } from "@/components/k5/K5Shell";
+import { FullScreenLoader } from "@/components/common/Loader";
+import { ParentShell } from "@/components/parent/shell/ParentShell";
 import { rememberDashboardPath } from "@/utils/lastDashboardPath";
+import { DevApiConsoleLogger } from "@/components/dev/DevApiConsoleLogger";
 
 // Needs the dashboard context (schoolUUID), so it lives inside DashboardProvider.
 function SessionExpiryWatcher() {
@@ -39,9 +42,13 @@ function DashboardTitle() {
 
 // Same URLs for every grade: a Grade K–5 student (isK5) gets the K–5 chrome, everyone else
 // the existing shell. Holds the loader until the grade band is known, so neither shell flashes.
-function ShellForGrade({ children }) {
+function ShellForGrade({ role, children }) {
   const { ready, gradeResolved, isK5 } = useDashboardContext();
+  // A parent waits behind the common loader (like the student shell), not a student-home skeleton.
+  if (role === "parent" && (!ready || !gradeResolved)) return <FullScreenLoader />;
   if (!ready || !gradeResolved) return <DashboardLoadingSkeleton />;
+  // A parent has its own theme (the same for every child), never a student's K-5 or Balanced one.
+  if (role === "parent") return <ParentShell>{children}</ParentShell>;
   return isK5 ? <K5Shell>{children}</K5Shell> : <DashboardShell>{children}</DashboardShell>;
 }
 
@@ -63,7 +70,7 @@ function DashboardBody({ role, children }) {
   if (role === "student" && isOnboardingPath(pathname)) return <OnboardingFrame>{children}</OnboardingFrame>;
   return (
     <OnboardingGate role={role}>
-      <ShellForGrade>{children}</ShellForGrade>
+      <ShellForGrade role={role}>{children}</ShellForGrade>
     </OnboardingGate>
   );
 }
@@ -99,7 +106,11 @@ export function DashboardChrome({ role = "student", children }) {
       <SessionExpiredDialog />
       <LastPathRecorder />
       <DashboardTitle />
-      <DashboardBody role={role}>{children}</DashboardBody>
+      {/* DEV ONLY: each module's API calls (endpoint, time) in the browser console; dropped from production builds. */}
+      {process.env.NODE_ENV === "development" && <DevApiConsoleLogger />}
+      <ParentChildScope role={role}>
+        <DashboardBody role={role}>{children}</DashboardBody>
+      </ParentChildScope>
     </DashboardProvider>
   );
 }

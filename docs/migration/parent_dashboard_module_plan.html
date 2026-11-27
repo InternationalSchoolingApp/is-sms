@@ -82,7 +82,8 @@
     <li><a href="#s5">Phase A — Parent Foundation</a></li>
     <li><a href="#s6">Phase B — Child Selection Layer</a></li>
     <li><a href="#s7">Phase C — Parent Home</a></li>
-    <li><a href="#s7b">Phase C2 — Theme per Child (not doing)</a></li>
+    <li><a href="#s7b">Phase C2 — Theme per Child (dropped)</a></li>
+    <li><a href="#s7c">Phase T — Parent Theme (new design, plan T3/T7)</a></li>
     <li><a href="#s8">Phase D — Parent Modules</a></li>
     <li><a href="#s8b">Module-wise detail (APIs, backend, flow)</a></li>
     <li><a href="#s9">Phase E — Cutover &amp; Release</a></li>
@@ -121,7 +122,7 @@
   <li><span class="b in">IN</span> Child picker plus <b>home</b> (<code>parentDashboardContent.js</code>, <code>parentDashboard.js</code>): child overview, attendance and grade charts, upcoming classes and activities, payments, announcements, diary count, chat, Switch to LMS, Add Another Child, mobile bottom bar.</li>
   <li><span class="b in">IN</span> Modules: Attendance, Login History, Assigned Teachers, Fee Details, Academic Performance, Progress, Class Schedule, Class Summary, Download Academic Docs. Header items: My Profile (with Withdrawal Request and the app-install prompt) and Change Password.</li>
   <li><span class="b out">SKIP v1</span> Teacher Feedback and PTM (demo-only, no backend calls), parent demo mode (<code>dummyParentDashboardData.js</code>, <code>?parentDemoPreview=Y</code>), Transcript (no <code>pageConfig</code> entry; confirm <code>USER_RIGHTS</code> first), and <b>Notifications</b> (no controller or JSP handles <code>notifications</code>, and the parent MODULES seed has no such item).</li>
-  <li><span class="b in">IN</span> <b>Theme per child</b> (added after Phase C): the dashboard theme is the selected child's, reusing the theme already built for the student dashboard (section 7b).</li>
+  <li><span class="b out">OUT</span> <b>Theme per child</b> (dropped, 2026-11-27): the parent dashboard has its own theme and does not take the selected child's (K-5 / Balanced / High) student theme. Section 7b is kept only as a record.</li>
   <li><span class="b out">OUT</span> Re-enrollment (student-only). Add Another Child is <b>already</b> built in Next.js (<code>/add-enrollment/...</code>), so only the button wiring is in scope. Admin "view as parent" flows (<code>view-as-user</code>, <code>/redirect-parent-from-student</code>) are not touched in v1.</li>
 </ul>
 </section>
@@ -147,7 +148,7 @@ Auth and SSO (<code>app/api/sso</code>, <code>lib/auth/*</code>), <code>proxy.js
 <tr><td>Layout</td><td><code>(dashboard)/layout.jsx</code> hardcodes <code>role="student"</code></td><td><b>Same <code>layout.jsx</code>, role resolved dynamically</b> from the session (<code>claims.role</code>, compared case-insensitively)</td></tr>
 <tr><td>Menu <code>roleId</code></td><td>From <code>get-student-dashboard</code> (the grade gate)</td><td>The grade gate is skipped for parents, so <code>roleId</code> is null and the menu never loads. <b>Fix:</b> <code>get-students-by-parent</code> also returns <code>roleAndModuleAssign</code>, same as the student gate.</td></tr>
 <tr><td>Nav rules</td><td><code>applyStudentNavRules</code></td><td>New <code>applyParentNavRules</code> (hide skipped items, "My" → "View" names are done server-side)</td></tr>
-<tr><td>K5 / grade band theme</td><td><code>K5Shell</code> (Elementary, and Middle with the Balanced skin) vs <code>DashboardShell</code> (High), chosen from the student's own grade band</td><td><b>Follows the selected child</b> (Phase C2): an elementary child gives the K-5 theme, a middle child the Balanced skin, a high-school child the default one, and switching child switches the theme. Performance data stays legacy-style: no <code>k5Performance</code>.</td></tr>
+<tr><td>K5 / grade band theme</td><td><code>K5Shell</code> (Elementary, and Middle with the Balanced skin) vs <code>DashboardShell</code> (High), chosen from the student's own grade band</td><td><b>Parent's own theme</b>, the same for every child: it never follows the selected child's grade band (Phase C2 dropped, 2026-11-27). Performance data stays legacy-style: no <code>k5Performance</code>.</td></tr>
 <tr><td>Header</td><td>Cart, Add Siblings, student profile</td><td>No cart. Add Another Child (<code>ADD_ANOTHER_CHILD_BTN</code>), Switch to LMS, parent profile, the card picker and the Select Another Child button above the page (<code>ChildPicker</code>, <code>SelectAnotherChildButton</code>).</td></tr>
 <tr><td>Hardcoded <code>"STUDENT"</code></td><td><code>utils/authentication.js</code>, <code>profileApi</code> L63, <code>profileOtpApi</code> L51, <code>profileSaveApi</code> L97, <code>bookClassApi</code> L193</td><td>Use the session role on the parent path</td></tr>
 </tbody></table></div>
@@ -230,10 +231,10 @@ All widgets above except demo data. Announcements, diary and chat are <b>not</b>
 </section>
 
 <section id="s7b">
-<h2><span class="n">07b</span> Phase C2 — Theme follows the selected child <span class="b ph">added after Phase C</span> <span class="b out">NOT being done (user decision 2026-11-12)</span></h2>
-<div class="note warn"><b class="t">Decision (2026-11-12): this theme phase is not being done</b>
-Phases D1, D2, D3 and E are built first, with the default theme, and this phase (C2) follows once they are done. The label "C2" is kept because the section was added after Phase C; in time it comes after E. Until then every child gets the default theme, and nothing in the work above waits on this. The theme sub-decisions below (Q21a, Q22 to Q24) stay open until then.</div>
-<div class="note"><b class="t">Requirement (settled)</b>
+<h2><span class="n">07b</span> Phase C2 — Theme follows the selected child <span class="b ph">added after Phase C</span> <span class="b out">DROPPED (user decision 2026-11-27)</span></h2>
+<div class="note warn"><b class="t">Decision (2026-11-27): dropped for good</b>
+The parent dashboard has its own theme, separate from the student themes, so it does not switch to the selected child's K-5, Balanced or High theme. This phase will not come after E or later. Everything below this box is the old proposal, kept only as a record; the sub-decisions Q21a to Q25 are void. (2026-11-12 had already put it on hold.)</div>
+<div class="note"><b class="t">Old requirement (dropped)</b>
 A parent with three children, one in elementary, one in middle school and one in high school: when the parent selects the elementary child the whole dashboard (shell, header, menu rail, pages) is in the elementary (K-5) theme; the middle child gives the middle theme; the high-school child gives the high-school theme. The theme itself is already built for the student dashboard and is reused, not redrawn.</div>
 
 <h3>How the student theme works today (what we reuse)</h3>
@@ -267,6 +268,81 @@ A parent with three children, one in elementary, one in middle school and one in
 <h3>Open sub-decisions (recommended answers in section 13)</h3>
 <p>Q21 where the per-child theme data comes from, Q22 how parent pages look in the K-5 theme, Q23 who owns the appearance choices, Q24 Pico guide for parents, Q25 which theme shows before a child is picked (no such state now: Child 1 is selected from the start).</p>
 <div class="note warn"><b class="t">Effort</b>Backend: a few lines in <code>getStudentsByParent</code> (check that <code>GradeBandUtil</code> and the standard service are injected there). Frontend: one hook, a few role-aware changes in K-5 chrome files, and a visual pass of the parent pages in each theme. The theme code itself is not rewritten.</div>
+</section>
+
+<section id="s7c">
+<h2><span class="n">07c</span> Phase T — Parent theme from the new design <span class="b ph">started 2026-11-27</span> <span class="b warn">design first, logic next</span></h2>
+<div class="note"><b class="t">Source</b>
+<code>~/Downloads/Parents-Dashboard-Web/ParentsDashboard.html</code> (exported from the SMS UI boards; live copy with every parent page: <code>https://sms-ui-xi.vercel.app/ParentsDashboard.html</code>). One theme for the whole parent dashboard ("Mature" blue: brand #027FFE, Roboto), the same for every child. The export has only the <b>first screen</b> (child picker); the child dashboard page it links to (<code>ParentChildDashboard.html</code>) and its pictures (<code>parents/kid-*.jpg</code>, <code>parents/badge-*.png</code>) are not in it.</div>
+
+<h3>T1. Built now (design only, no backend change)</h3>
+<ul>
+  <li><span class="b in">DONE</span> <b>Child picker</b> in the new design (<code>components/parent/ChildPicker.jsx</code>, <code>components/parent/picker/*</code>): blue banner with the box grid and floating education doodles, greeting pill (sun or moon), today's date, "Hi {first name}, which dashboard would you like to open?", the children count; overlapping child cards (photo or initials in a spinning ring, name, grade pill, View Dashboard, pointer light and tilt); the phone layout (row cards with an arrow, "Parent Dashboard" overline). Real data: children, photos and grades from the parent gate, as before.</li>
+  <li><span class="b in">DONE</span> <b>Have another child to enroll?</b> box with <b>Enroll More Child</b>, wired to the existing Add Another Child (school setting; "Resume {name}'s Enrollment" when a child is partly enrolled). Hidden when the school has it off.</li>
+  <li><span class="b in">DONE</span> <b>Parent header</b> (all parent pages): the parent's initial on a blue avatar, "Welcome back, {name}", the pill LMS switch (only when the parent has an LMS user), the plain menu (Profile, Change Password, Add More Siblings, Log out). On the picker the header has no title, as in the design (the banner carries it).</li>
+  <li><span class="b in">DONE</span> Roboto (self-hosted by <code>next/font</code>) and the theme colours on the picker screen. Reduced-motion turns the animations off.</li>
+  <li><span class="b rec">Kept</span> The school logo from the backend stays in the header (the design shows the IS pin logo; other schools have their own logo).</li>
+</ul>
+
+<h3>T2. Still to do: needs backend or more design (next step)</h3>
+<table>
+  <tr><th>#</th><th>Item in the design</th><th>What is missing</th></tr>
+  <tr><td>1</td><td><b>Badge on each child card</b> (Explorer, Achiever, Trailblazer, Champion)</td><td>Backend: the rule (earned through habits: on time, assignments on time, few reschedules, behaviour, not marks) and a badge field per child in the parent gate response. Design: the badge pictures (not in the export). The card already leaves room for it (name moves down under the badge on the web; badge sits before the arrow on a phone).</td></tr>
+  <tr><td>2</td><td><b>AI Assistant</b> (orb at the bottom right, full-screen chat): family mode on the picker, child mode inside a child's dashboard; "What I see right now" tiles, topic tabs, suggested questions, typing, voice input, Listen, picture upload, Talk to School Administration</td><td>Backend: an assistant endpoint that answers only from this family's records (children, classes, teachers, grades, attendance, fees, documents), with the parent-child access check; routing for Talk to School Administration (Communications). The export's answers are canned from page data, a demo only.</td></tr>
+  <tr><td>3</td><td><b>Notifications bell</b> in the header with a popover ("You're all caught up.")</td><td>Notifications were skipped in v1 (dead in legacy). Needs a parent notifications list and unread count from the backend before the bell is shown.</td></tr>
+  <tr><td>4</td><td><b>Child dashboard pages</b> in the new theme (plan: T3 below)</td><td>Design: not in the export, but live on the board: <code>https://sms-ui-xi.vercel.app/ParentChildDashboard.html?child=1</code> (all parent modules; the user's reference for any doubt, 2026-11-27). It also shows a "class is live now" popup, a bottom bar on the phone (Talk to us, Alerts, Announcement, Diary) and the badge next to the child. Next design step; until then the child pages keep their current look and only the header follows the new theme.</td></tr>
+  <tr><td>5</td><td>Communications link in the AI Assistant and "Write a message"</td><td>Communications (Inbox/Compose) is still a placeholder in Next.js.</td></tr>
+</table>
+
+<div class="note"><b class="t">Progress (2026-11-27)</b>
+Done: <b>T3.1 shell</b> (<code>components/parent/shell/*</code>: <code>ParentShell</code>, header, rounded menu, rail / phone bottom bar; chosen in <code>DashboardChrome</code> for role parent) and the theme (<code>components/parent/theme/parentDashboard.css</code>, the board's CSS ported verbatim and scoped under <code>.pdash</code>), <b>T3.2 home</b> (blue child tile, today's timeline, payment card, trio tiles, performance chart, live-class popup, top row). The page restyles T3.3 to T3.9 follow, each from the board's views. Decisions applied: T-Q1 (classes tile dropped), T-Q2 (header child dropdown kept), T-Q3 (greeting banner replaced by the blue tile), T-Q4 (popup once per live class per tab), T-Q5 (profile styles only). Old parent-only code in the shared student files <code>DashboardShell.jsx</code> / <code>DashboardTopHeader.jsx</code> is now unused and can be reverted to the committed version.</div>
+<h3>T3. How the child dashboard pages will be built (plan, 2026-11-27)</h3>
+<div class="note"><b class="t">Design reference</b>
+Live board: <code>https://sms-ui-xi.vercel.app/ParentChildDashboard.html?child=1</code>. It is one page holding every parent module as a view: Home (bento), Class Schedule, Assigned Teachers, Fee Details, Download Academic Docs, Attendance, Academic Performance (with Status level), Progress plus the grade book summary, Child Log in History, Communications (Inbox). Plus the menu, the right rail, the live-class popup, the phone bottom bar and the AI Assistant. The child picker (T1) is already done.</div>
+
+<p><b>Ground rules for the design steps:</b></p>
+<ul>
+  <li>Design only: no API, hook, route, access-check or payload change. Every page keeps its current hook and data; only the markup and styles change. Logic and backend come in T7.</li>
+  <li>Routes stay as they are (<code>/parent/parent-attendance</code> and so on). The selected child stays out of the URL. Every page stays inside <code>ParentChildRequired</code>.</li>
+  <li>Data in the design that we do not have yet: that element is <b>hidden</b> (never dummy numbers) and listed in T7. Data we show today that the design leaves out: kept unless the user says drop it (see the T-questions below).</li>
+  <li>Phone and desktop are done in the same step for each page. Images use <code>next/image</code> as before; reduced motion turns the animations off.</li>
+  <li>The student and K-5 dashboards must look exactly the same after each step.</li>
+</ul>
+
+<p><b>Approach: a parent shell of its own, picked by role.</b> <code>ShellForGrade</code> already chooses <code>K5Shell</code> or <code>DashboardShell</code>. It will choose a new <code>ParentShell</code> for <code>role === "parent"</code> (<code>components/parent/shell/*</code>), so the parent header, menu, rail and footer are restyled without <code>isParent</code> checks inside the shared student files. The parent changes made in T1 to <code>DashboardShell</code> and <code>DashboardTopHeader</code> move there, and those files go back to student-only. The theme tokens and the shared pieces (page hero, tile, corner arrow button, stat cards, card, table, pagination, chips, segmented switch) go into one CSS module, <code>components/parent/theme/parentTheme.module.css</code>, used by every parent page. Roboto then applies to the whole parent dashboard, not just the picker.</p>
+
+<table>
+  <tr><th>Step</th><th>What</th><th>Files (new or changed)</th><th>Data source (unchanged)</th></tr>
+  <tr><td><b>T3.1</b> Shell</td><td>Header: logo, pill LMS, parent avatar and menu (inbox icon hidden until T7). Menu: labels on wide screens, the burger folds it to icons, a drawer on a phone, the active item in the theme colour. Right rail: Talk to us, Announcements, Diary in the new round buttons; Alerts hidden (T7). Footer. The top row of every child page: greeting, the parent's name, Select Another Child, Enroll another child.</td><td><code>components/parent/shell/ParentShell.jsx</code>, <code>ParentHeader.jsx</code>, <code>ParentSideMenu.jsx</code>, <code>ParentRail.jsx</code>, <code>ParentTopRow.jsx</code>; <code>DashboardChrome.jsx</code> (choose the shell)</td><td>Dashboard context, menu, rail counts, <code>useAddAnotherChild</code></td></tr>
+  <tr><td><b>T3.2</b> Home</td><td>Bento layout. Left: blue child tile (thank-you line, photo, name, grade, program, last active); "{name}'s Classes &amp; Activities Today" timeline (Completed / Live now / Upcoming); Due &amp; Upcoming Payment (medal plus "No payment due", or the due list in the same card). Right: Attendance, Courses and Performance tiles in one row (count-up, gauge A+ to D, trend); Performance Overview chart with Attendance / Grades tabs. <b>Live-class popup</b> from today's schedule (status live), once per class per tab.</td><td><code>ParentHome.jsx</code>, <code>components/parent/home/*</code> (restyle, one new <code>LiveClassPopup.jsx</code>)</td><td><code>useParentChildOverview</code>, today's schedule, payments due (all built)</td></tr>
+  <tr><td><b>T3.3</b> Simple tables</td><td>Assigned Teachers (card grid), Fee Details (table, status pill, receipt), Download Academic Docs (Transcript / Diploma / Verification table), Child Log in History (sessions table). Common page hero, card table, "Showing x to y" and pagination.</td><td><code>components/parent/teachers</code>, <code>fees</code>, <code>academicDocs</code>, <code>loginHistory</code>, <code>common/*</code></td><td>Built hooks for each page</td></tr>
+  <tr><td><b>T3.4</b> Class Schedule and Class Summary</td><td>Page hero with the live clock and time zone, the Daily / Weekly / Custom switch, All / Classes / Activity chips with counts, the date range form, the class list cards.</td><td><code>components/parent/classSchedule/*</code>, <code>classSummary/*</code></td><td><code>useParentClassSchedule</code>, <code>useParentClassSummary</code>; time zone from the child, fallback <code>Asia/Singapore</code> (rule unchanged)</td></tr>
+  <tr><td><b>T3.5</b> Attendance</td><td>Stat cards (classes today, attendance this month with the change, late this month), Attendance Overview (months), Monthly Summary donut, Attendance Details table.</td><td><code>components/parent/attendance/*</code></td><td><code>useParentAttendance</code>, <code>useParentAttendanceDetails</code></td></tr>
+  <tr><td><b>T3.6</b> Academic Performance</td><td>Message line ("{name} is doing best in ..."), stat cards (average score, assignments submitted, courses ahead, days left), course rows with the ring, opening the existing progress detail and grade history. Achievements and Status level stay hidden (T7).</td><td><code>components/parent/performance/*</code></td><td><code>useParentAcademicPerformance</code> (days left from the course end date when it is there)</td></tr>
+  <tr><td><b>T3.7</b> Progress</td><td>Progress Report table and the grade book summary view (Back, summary, sessions table), PDF download as today.</td><td><code>components/parent/progress/*</code></td><td><code>useParentProgressReports</code>, <code>useParentGradebookReport</code></td></tr>
+  <tr><td><b>T3.8</b> Phone</td><td>Bottom bar (Talk to us, Alerts, Announcement, Diary) in the new style, replacing <code>ParentMobileBar</code>'s look; Alerts hidden until T7. Check every page at 375 px.</td><td><code>components/parent/home/ParentMobileBar.jsx</code>, shell</td><td>Rail counts</td></tr>
+  <tr><td><b>T3.9</b> My Profile</td><td>Not in the board. It gets the shell, page hero and card styles only; its forms stay as they are.</td><td><code>components/parent/profile/*</code> (styles only)</td><td>Unchanged</td></tr>
+</table>
+
+<h3>T7. Backend and logic, after the design (the T2 items in order)</h3>
+<ol>
+  <li><b>Status level and badge</b>: the points rule (on time for class +10, assignment on time +15, early +20, a week with no reschedule +25, behaviour star, minus for reschedules), the levels (Explorer 0–499, Achiever 500–999, Trailblazer 1000–1499, Champion 1500+), the fee discount per level (10% to 50%, a business decision, dummy in the board) and the rewards. Backend: points per child per session, a recent points log, the level in the parent gate response (for the picker and home badge) and a Status level endpoint. Then: the badge on the picker card and home tile, the Status level tab in Academic Performance.</li>
+  <li><b>Achievements</b> in Academic Performance (Early Submitter, Clean Sweep, Perfect Score, Halfway, On Target; locked ones in grey): the rules plus an endpoint, or worked out from assignment data if it has submitted and due dates.</li>
+  <li><b>Communications (Inbox)</b>: All, Emails, Notifications, Announcements, WhatsApp, Sent; Write a message; mark all as read; filters; email settings; unread count for the header inbox icon. Needs message storage and endpoints (today it is a placeholder).</li>
+  <li><b>Alerts / Notifications</b> (rail and phone bar): a notifications list and unread count (skipped in v1 because it is dead in legacy).</li>
+  <li><b>AI Assistant</b>: an endpoint that answers only from this family's records with the parent-child check; Talk to School Administration opens Communications.</li>
+</ol>
+
+<h3>T-questions (to settle before or during T3)</h3>
+<table>
+  <tr><th>#</th><th>Question</th><th>Recommended</th></tr>
+  <tr><td>T-Q1</td><td>The home has a "No. of Classes &amp; Activities {month}" tile today; the design has only Attendance, Courses and Performance. Drop it?</td><td>Follow the design (drop it from the home; the number is still in Class Schedule).</td></tr>
+  <tr><td>T-Q2</td><td>The design switches child with "Select Another Child" on the page; the header child dropdown (ChildSwitcher, asked for on 2026-11-13) is not in the design. Keep the dropdown?</td><td>Keep it in the header, styled to the theme (the user asked for it); the page button stays too.</td></tr>
+  <tr><td>T-Q3</td><td>The green greeting banner hides after 6 s once per load; the design's blue child tile stays. Replace it?</td><td>Yes, the blue tile replaces the banner (no timer).</td></tr>
+  <tr><td>T-Q4</td><td>Live-class popup: how often?</td><td>Once per live class per tab (sessionStorage), with "Okay, I'll remind {name}".</td></tr>
+  <tr><td>T-Q5</td><td>The design has no My Profile page. Restyle only?</td><td>Yes, shell and card styles only.</td></tr>
+</table>
+<div class="note warn"><b class="t">Order and checks</b>T3.1 first (every page depends on it), then T3.2, then the pages one by one; each step ends with lint, a browser check on desktop and phone, and a student-dashboard check, before the next. A production build runs at the end of T3. Nothing is committed by Claude.</div>
 </section>
 
 <section id="s8">
@@ -334,7 +410,7 @@ Class Schedule and Class Summary are two routes on one service (<code>services/p
 <tr><td>12</td><td>Add Another Child (button under the child cards)</td><td>D3</td><td>3</td><td>None</td><td>~100 (counted in row 0)</td><td><span class="b in">built</span></td></tr>
 <tr><td>13</td><td>Change Password (header modal)</td><td>D3</td><td>1</td><td>None</td><td>0 (shared modal already works)</td><td><span class="b in">works as is</span></td></tr>
 <tr><td>14</td><td>Teacher Feedback, PTM, Transcript, Notifications, demo mode</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="b out">skipped in v1</span></td></tr>
-<tr><td>15</td><td>Theme per child (C2)</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="b out">not being done</span></td></tr>
+<tr><td>15</td><td>Theme per child (C2)</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="b out">dropped (parent has its own theme)</span></td></tr>
 </tbody></table></div>
 
 <h3>Backend (Java) changes, all of them</h3>
@@ -349,7 +425,7 @@ Class Schedule and Class Summary are two routes on one service (<code>services/p
 <tr><td><code>PaymentResponseApiController</code></td><td>+3 / −1</td><td>Parent payment return to Fee Details (Next.js payment-response page)</td><td>E</td></tr>
 <tr><td><code>ClientCommonPaymentController</code></td><td>+6 / −2</td><td>Same, for the legacy JSP payment result page</td><td>E</td></tr>
 </tbody></table></div>
-<p>Nothing was deleted: the old JSP parent dashboard, <code>/redirect-parent-from-student</code> and <code>select-student-by-parent</code> stay, and the replaced return-URL lines are kept as comments. <b>Where the changes live:</b> they were made on <code>feature/63_0_0_STUDENT_DASHBOARD_NEXTJS_PHASE4</code> and are currently in git stash <code>par-Dsh:-4</code> (stash <code>parDs-2</code> holds an earlier subset). The backend on <code>feature/63_0_0_PARENT_DASHBOARD_NEXTJS_PHASE1</code> does not have them until they are applied: without the gate change the parent sidebar is empty.</p>
+<p>Nothing was deleted: the old JSP parent dashboard, <code>/redirect-parent-from-student</code> and <code>select-student-by-parent</code> stay, and the replaced return-URL lines are kept as comments. <b>Where the changes live (checked 2026-11-27):</b> all of the above are already <b>committed on <code>feature/63_0_0_PARENT_DASHBOARD_NEXTJS_PHASE1</code></b> (gate with <code>roleAndModuleAssign</code>, <code>getFinalParentDashboardUrl</code>, <code>getParentPaymentReturnUrl</code> and their callers). No stash needs to be applied; the old stashes <code>par-Dsh:-4</code> / <code>parDs-2</code> are history only.</p>
 
 <h3>Every page (shell, menu, child picker) — Phases 0, A, B</h3>
 <div class="tw"><table>
@@ -416,9 +492,28 @@ Class Schedule and Class Summary are two routes on one service (<code>services/p
 
 <h3>What is still open</h3>
 <ul>
-  <li><b>Apply the backend changes</b> on the new backend branch (they are in the stash named above), then restart the backend.</li>
-  <li><b>Browser and live-backend checks</b> of every module: so far only lint, build and helper tests.</li>
-  <li><b>Backend ownership gaps</b> (a few lines each): the two Buzz progress calls, <code>student-class-summary</code>, gradebook and PDF, profile get/save, <code>app-last-activity</code>, announcements, <code>excuse-activity</code>; plus the diary count answering 401 from the server.</li>
+  <li><s>Apply the backend changes</s>: <b>done</b>, they are already committed on the PHASE1 backend branch (see above).</li>
+  <li><b>Browser check, 2026-11-27</b> (local Next.js + local backend, a parent with 2 children, Grade 4 and Grade 6; the backend changes of that day were <i>not</i> yet running, the backend had not been restarted):
+    <ul>
+      <li><b>Works:</b> Java login → SSO → <code>/{school}/parent</code>; card picker (2 children); home (overview, attendance/grades chart, upcoming, payments); header child switcher (switches every card); reload keeps the child and the address bar has no child id; Attendance; Academic Performance with Progress Detail (after the fix above) and Grade History; Fee Details (receipt, Pay Now on the next row); Progress list and gradebook report; Class Schedule; Class Summary; Assigned Teachers; Login History; Academic Docs (no documents for this child); My Profile (details, Edit, Withdrawal Request, Get App); Student Diary panel; every <code>/api/diary</code> call 200 (the diary 401 was not seen).</li>
+      <li><b>Slow:</b> one server action takes 20–22 s on every home load and child switch (the overview card is the last to fill, so most likely <code>student-dashboard-overview</code>); because server actions run one at a time, other cards wait behind it.</li>
+      <li><b>Not in the plan:</b> the parent menu from the DB has a <b>Communications</b> group (Inbox, Compose) that opens the "being migrated" placeholder.</li>
+      <li><b>Doc vs code:</b> "Select Another Child" is shown on the home only (deliberate, commit <code>fe846dd</code>); on other pages the header switcher is the way to change child.</li>
+      <li>Minor: Escape does not close the diary panel (the X does). Class Summary is not in the parent's DB menu (the route works).</li>
+      <li>Still to do after a backend restart: re-run Academic Performance (progress detail and grade history now go through the new checks), My Profile, announcements and the app-install prompt; try an unmapped child id to see the refusals.</li>
+    </ul></li>
+  <li><b>Backend ownership gaps: closed on 2026-11-27</b> (PHASE1 branch, uncommitted), all with the existing <code>UserAccessGuard</code> (self, own child, own-school staff, super admin):
+    <ul>
+      <li><code>get-student-progress-report-detail</code>: the student named must be one the signed-in user may see; a student or parent must name one.</li>
+      <li><code>get-progress-report-grade-history</code>: takes <code>studentUserId</code> (a student without it means themselves, a parent without it is refused, staff as before) and, for a student or parent, the Buzz enrollment must be that student's when it is in the local copy. Next.js and the legacy parent JS (custom and min) now send the child's id.</li>
+      <li><code>excuse-activity</code>: refused for STUDENT, PARENT and TEACHER (the button is admin-only).</li>
+      <li><code>get-common-profile-details</code> / <code>save-common-profile-details</code>: guarded; <code>rightToEdit</code> now comes from the token, not the body's <code>userIdSession</code>.</li>
+      <li><code>app-last-activity</code> (POST) and <code>get-announcement-details</code>: guarded.</li>
+      <li><code>DashboardParentUtil</code>: attendance, fee details, academic details and weekly progress reports used the body <code>userId</code> as the "session user" (a parent could name another parent and pass the mapping check); they now use the token user, the body only when there is no session, as the sibling methods do.</li>
+    </ul></li>
+  <li><b>Bug fixed (Next.js):</b> the parent's Progress Detail modal sent the parent's own id as <code>studentUserId</code> (the shared <code>getStudentProgressReportDetail</code> overwrote it with the session id), so the backend looked up the parent's LMS courses and the modal stayed empty. It now sends the selected child's id; grade history too.</li>
+  <li><b>Still open, need live data to do safely:</b> <code>student-class-summary</code> (needs a "meeting belongs to this child" lookup; the legacy page sends only <code>meetingId</code>) and the gradebook view / PDF (public route for the headless PDF browser that accepts a plain base64 payload; fix: check the student when signed in, else accept only an encrypted payload or a render token, and check the student when issuing render tokens).</li>
+  <li><b>Diary count 401:</b> not reproduced. The backend count for a parent is limited to the parent's own threads (the child filter cannot leak another family's count). The parent badge goes through a server action, not the <code>/api/diary</code> route; check in the browser whether that is where the 401 comes from.</li>
   <li><b>Three things to watch:</b> the Academic Docs link pages rendering, Fee receipts depending on module rights, and the 5-minute single-use SSO token in the payment return URL.</li>
 </ul>
 </section>
@@ -445,7 +540,7 @@ Class Schedule and Class Summary are two routes on one service (<code>services/p
 <tr><td>4</td><td>Legacy parent GET redirects to Next.js</td><td><code>ClientDashoboardParentController#parentDashboard</code></td><td>A</td></tr>
 <tr><td>5</td><td>Payment return URLs for parents go to Next.js</td><td><code>PaymentResponseApiController</code> L612, <code>ClientCommonPaymentController</code> L579</td><td>E</td></tr>
 <tr><td>6</td><td>Thin JSON endpoint only where a module returns HTML fragments (none known yet)</td><td>per module</td><td>D</td></tr>
-<tr><td>7</td><td>Per-child theme fields in the parent gate: <code>gradeBand</code>, <code>standardId</code>, <code>registrationType</code>, <code>isSelfStudy</code> per child, <code>k5DashboardEnabled</code> once</td><td><code>DashboardStudentUtil#getStudentsByParent</code></td><td>C2</td></tr>
+<tr><td>7</td><td><s>Per-child theme fields in the parent gate:</s> <b>Dropped</b> with Phase C2 (parent has its own theme). <code>gradeBand</code>, <code>standardId</code>, <code>registrationType</code>, <code>isSelfStudy</code> per child, <code>k5DashboardEnabled</code> once</td><td><code>DashboardStudentUtil#getStudentsByParent</code></td><td>C2</td></tr>
 </tbody></table></div>
 <p>Not planned: any JWT change, any new setting or SQL seed. Everything else reuses the existing <code>/dashboard/parent/*</code> JSON endpoints through the BFF.</p>
 </section>
@@ -523,12 +618,12 @@ proxy.js                           // matcher += "/:school/parent/:path*" + role
 <tr><td>Q18</td><td>K5 child performance</td><td>Legacy behaviour: no <code>k5Performance</code></td></tr>
 <tr><td>Q19</td><td>Mobile bottom bar</td><td>Build it in v1</td></tr>
 <tr><td>Q20</td><td>Parent pages and components (set at Phase A)</td><td><b>Changed from "reuse":</b> parent gets its own pages and components, like the student; only the shell and non-UI services/utils are shared</td></tr>
-<tr><td>Q21</td><td>Dashboard theme follows the selected child</td><td><b>Settled (added after Phase C):</b> elementary child gives the K-5 theme, middle the middle theme, high the high-school theme; reuses the student theme</td></tr>
-<tr><td>Q21a</td><td>Where the per-child theme data comes from</td><td><i>Recommended:</i> <code>get-students-by-parent</code> returns <code>gradeBand</code>, <code>standardId</code>, <code>registrationType</code>, <code>isSelfStudy</code> per child and <code>k5DashboardEnabled</code> once. Alternative: <code>get-student-dashboard</code> per child (no ownership check, not recommended).</td></tr>
-<tr><td>Q22</td><td>Parent pages inside the K-5 theme</td><td><i>Recommended:</i> <code>k5-legacy</code> compatibility wrapper first; dedicated K-5 parent pages later, per module, if wanted</td></tr>
-<tr><td>Q23</td><td>Who owns the appearance choices</td><td><i>Recommended:</i> the parent account (one setting for all children)</td></tr>
-<tr><td>Q24</td><td>Pico guide for a parent</td><td><i>Recommended:</i> hidden</td></tr>
-<tr><td>Q25</td><td>Theme before a child is picked</td><td><b>No such state:</b> the first child is selected from the start, so the theme is that child's from the first paint (only a parent with no children sees the neutral default)</td></tr>
+<tr><td>Q21</td><td>Dashboard theme follows the selected child</td><td><b>Changed (2026-11-27): No.</b> The parent dashboard has its own theme, the same whatever child is selected. Phase C2 is dropped and Q21a to Q25 below are void.</td></tr>
+<tr><td>Q21a</td><td>Where the per-child theme data comes from</td><td><b>Void</b> (C2 dropped). <i>Recommended:</i> <code>get-students-by-parent</code> returns <code>gradeBand</code>, <code>standardId</code>, <code>registrationType</code>, <code>isSelfStudy</code> per child and <code>k5DashboardEnabled</code> once. Alternative: <code>get-student-dashboard</code> per child (no ownership check, not recommended).</td></tr>
+<tr><td>Q22</td><td>Parent pages inside the K-5 theme</td><td><b>Void</b> (C2 dropped). <i>Recommended:</i> <code>k5-legacy</code> compatibility wrapper first; dedicated K-5 parent pages later, per module, if wanted</td></tr>
+<tr><td>Q23</td><td>Who owns the appearance choices</td><td><b>Void</b> (C2 dropped). <i>Recommended:</i> the parent account (one setting for all children)</td></tr>
+<tr><td>Q24</td><td>Pico guide for a parent</td><td><b>Void</b> (C2 dropped). <i>Recommended:</i> hidden</td></tr>
+<tr><td>Q25</td><td>Theme before a child is picked</td><td><b>Void</b> (C2 dropped). <b>No such state:</b> the first child is selected from the start, so the theme is that child's from the first paint (only a parent with no children sees the neutral default)</td></tr>
 </tbody></table></div>
 </section>
 
@@ -538,17 +633,18 @@ proxy.js                           // matcher += "/:school/parent/:path*" + role
   <li>Run is-sms locally against is-rest-api. Log in as a parent with <b>one child</b> and as a parent with <b>2+ children</b>, including a K5 child, and with a blank <code>NEXTJS_APP_URL</code> to check the JSP fallback.</li>
   <li>Compare each phase with the legacy JSP: menu items and order, the card picker, Select Another Child (all widgets refetch), reload keeps the child, the address bar never shows a child id, and edited <code>sessionStorage</code> opens the picker.</li>
   <li><b>Regression on the student dashboard</b> after every shared-file change (layout, <code>dashboardApi</code> params, hooks, Sidebar, TopHeader, <code>proxy.js</code>). Re-run the STU-DASH cases.</li>
-  <li>Theme per child (Phase C2): a parent with an elementary, a middle and a high-school child: each selection shows its own theme, switching changes it at once, reload keeps child and theme, K5 off or middle flag off falls back to default, the picker is neutral, and the student themes are unchanged.</li>
+  <li>Theme: switching between an elementary, a middle and a high-school child keeps the parent's own theme (no K-5 / Balanced shell for a parent), and the student themes are unchanged.</li>
   <li>Role redirects: a parent on <code>/student</code>, a student on <code>/parent</code>, and another role on either, with no sign-out in each case.</li>
   <li>Legacy callers of <code>get-students-by-parent</code> (e.g. <code>withdrawalRequestUser.js</code>) still work after the Phase 0 fix.</li>
   <li>Fee payment end to end: pay, then land on the Next.js payment-response page, then Fee Details.</li>
   <li><code>npm run lint</code> and <code>npm run build</code> after each phase. PAR-DASH-* is the parity checklist.</li>
+  <li><b>API timing in the browser console (DEV only, added 2026-11-27):</b> under <code>next dev</code> every API call the server makes for a page (endpoint, status, ms) is printed in the browser console as <code>[API] &lt;module&gt; POST /{uuid}/dashboard/parent/... → 200 · 412 ms</code>, plus a collapsed <code>console.table</code> per module (count, total, slowest). Pieces: <code>instrumentation.js</code> (timing wrapper), <code>utils/devApiLog.js</code>, <code>app/api/dev/api-log</code> (stream, 404 outside dev), <code>components/dev/DevApiConsoleLogger.jsx</code> (mounted in <code>DashboardChrome</code>). Production: the wrapper is not installed, the route answers 404 and the logger is not rendered. Needs a <code>next dev</code> restart after first install.</li>
 </ul>
 </section>
 
 <section id="s15">
 <h2><span class="n">15</span> Status</h2>
-<div class="note ok"><b class="t">Built: Phase 0, A, B, C, D1, D2, D3 and E</b>Backend changes are on the PHASE4 branch and the Next.js work on the parent-dashboard branch, all uncommitted. <b>Phase C2 (theme per child) is not being done</b> (user decision, 2026-11-12): every child gets the default theme, and C2 stays in this document only as a record, not to be started unless asked. Not done on purpose: removal of any legacy parent code (the JSP dashboard, <code>/redirect-parent-from-student</code>, <code>select-student-by-parent</code> stay until after cutover). Open items: the backend gaps listed above, and browser or live-backend checks of every module.</div>
+<div class="note ok"><b class="t">Built: Phase 0, A, B, C, D1, D2, D3 and E</b>Backend changes are on the PHASE4 branch and the Next.js work on the parent-dashboard branch, all uncommitted. <b>Phase C2 (theme per child) is dropped</b> (user decision, 2026-11-27): the parent dashboard has its own theme for every child, and C2 stays in this document only as a record. Not done on purpose: removal of any legacy parent code (the JSP dashboard, <code>/redirect-parent-from-student</code>, <code>select-student-by-parent</code> stay until after cutover). Open items (2026-11-27): browser or live-backend checks of every module, and two backend gaps (<code>student-class-summary</code>, gradebook view / PDF). The other ownership gaps are closed (section 08b, "What is still open").</div>
 </section>
 <p class="small" style="color:var(--mut);font-size:12px;margin-top:40px">Generated 2026-11-11 · Scope: Parent dashboard (child picker, home, left-side modules) · Legacy 18d8889979 · New 0d35d29 · Self-contained, offline. No secret values included.</p>
 </main>

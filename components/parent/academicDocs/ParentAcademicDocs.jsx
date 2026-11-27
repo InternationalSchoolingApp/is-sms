@@ -1,30 +1,30 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Download, FileText, Loader2 } from "lucide-react";
 import { ParentChildRequired } from "@/components/parent/ParentChildRequired";
-import { ParentMobileTableCard } from "@/components/parent/common/ParentMobileTableCard";
-import { ParentTableFooter } from "@/components/parent/common/ParentTableFooter";
+import { PdFooter } from "@/components/parent/pageParts/PdFooter";
+import { PdHero } from "@/components/parent/pageParts/PdHero";
+import { firstName } from "@/components/parent/childLabels";
+import "@/components/parent/academicDocs/academicDocs.css";
 import { VIEWS, filterRows } from "@/components/parent/academicDocs/docRows";
 import { useSelectedChild } from "@/hooks/parent/useSelectedChild";
 import { useAcademicDocDownload, useParentAcademicDocs } from "@/hooks/parent/useParentAcademicDocs";
 import { resolveTimeZone } from "@/utils/attendanceDates";
 
 const PAGE_SIZE = 10;
-const HEADERS = ["S.No", "Grade", "Academic Year", "Learning Program", "Transcript", "Diploma", "Academic Verification"];
+const HEADERS = ["S. No.", "Grade", "Academic Year", "Learning Program", "Transcript", "Diploma", "Academic Verification"];
+const KIND_LABEL = { transcript: "Transcript", diploma: "Diploma", verification: "Academic Verification" };
 
 function DownloadButton({ row, kind, busy, onDownload }) {
   if (!row[kind]) return <span aria-label="Not available">--</span>;
   const working = busy === `${row.index}:${kind}`;
   return (
-    <button
-      type="button"
-      onClick={() => onDownload(row, kind)}
-      disabled={Boolean(busy)}
-      className="inline-flex items-center gap-1.5 rounded border border-primary px-3 py-1 text-xs font-medium text-primary hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-    >
+    <button type="button" onClick={() => onDownload(row, kind)} disabled={Boolean(busy)} className="fbtn o dc-dl">
       {working ? "Preparing…" : "Download"}
-      {working ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <Download className="h-3.5 w-3.5" aria-hidden="true" />}
+      <span className="dc-k">&nbsp;{KIND_LABEL[kind]}</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+      </svg>
     </button>
   );
 }
@@ -56,16 +56,6 @@ function SelectedChildAcademicDocs() {
   const filtered = useMemo(() => filterRows(rows, view, timeZone), [rows, view, timeZone]);
   const pageRows = filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
-  const cells = (row, index) => [
-    page * PAGE_SIZE + index + 1,
-    row.gradeName || "N/A",
-    row.sessionName || "N/A",
-    row.learningProgram || "N/A",
-    <DownloadButton key="t" row={row} kind="transcript" busy={busy} onDownload={download} />,
-    <DownloadButton key="d" row={row} kind="diploma" busy={busy} onDownload={download} />,
-    <DownloadButton key="v" row={row} kind="verification" busy={busy} onDownload={download} />,
-  ];
-
   const status = isLoading
     ? "Loading…"
     : sessionOut
@@ -75,33 +65,27 @@ function SelectedChildAcademicDocs() {
         : filtered.length === 0
           ? "No academic documents found"
           : null;
-  const retryButton =
-    failed && !isLoading ? (
-      <button type="button" onClick={retry} className="mt-3 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 md:ml-3 md:mt-0 md:px-3 md:py-1 md:text-xs">
-        Try again
-      </button>
-    ) : null;
+
+  const name = firstName(selectedChild?.studentName);
 
   return (
-    <div className="mx-auto w-full max-w-7xl">
-      <div className="mb-3 flex items-center gap-3 px-1">
-        <FileText className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
-        <h1 className="text-lg font-bold text-black sm:text-xl">Academic Documents - {selectedChild?.studentName || "N/A"}</h1>
-      </div>
+    <section className="sch on" id="docsView" aria-label="Academic docs" aria-busy={isLoading}>
+      <PdHero title={name ? `${name}\u2019s Academic Docs` : "Academic Docs"} subtitle="School record for each grade." />
 
-      <div className="rounded-[10px] border border-slate-200 bg-white py-4">
-        <div className="mb-3 px-4 sm:px-5">
-          <div className="inline-flex overflow-hidden rounded-full border border-slate-200" role="group" aria-label="Show documents">
+      <div className="fcard">
+        <div className="pv-hd" style={{ alignItems: "center", marginBottom: 14 }}>
+          <h3 style={{ margin: 0 }}>Student Transcript</h3>
+          <div className="sc-seg dc-seg" role="tablist" aria-label="Show documents">
             {VIEWS.map(({ key, label }) => (
               <button
                 key={key}
                 type="button"
-                aria-pressed={view === key}
+                role="tab"
+                aria-selected={view === key}
                 onClick={() => {
                   setView(key);
                   setPage(0);
                 }}
-                className={`px-4 py-1.5 text-sm ${view === key ? "bg-primary text-white" : "bg-slate-100 text-black hover:bg-slate-200"}`}
               >
                 {label}
               </button>
@@ -109,51 +93,45 @@ function SelectedChildAcademicDocs() {
           </div>
         </div>
 
-        {/* Phones: one card per document row instead of a 7-column table. */}
-        <div className="md:hidden">
-          {status ? (
-            <div className="border-t border-slate-200 py-8 text-center text-sm text-black/50">
-              <p>{status}</p>
-              {retryButton}
-            </div>
-          ) : (
-            <ul className="space-y-3 px-4">
-              {pageRows.map((row, index) => (
-                <li key={`${row.index}-${row.rowKey}`}>
-                  <ParentMobileTableCard rows={cells(row, index).map((value, column) => ({ label: HEADERS[column], value }))} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="hidden overflow-x-auto md:block">
-          <table className="w-full whitespace-nowrap text-left text-sm text-black">
-            <thead className="bg-primary text-white">
+        <div className="ftw">
+          <table className="ftbl">
+            <thead>
               <tr>
-                {HEADERS.map((header, index) => (
-                  <th key={header} className={`py-3 pr-3 font-normal ${index === 0 ? "pl-5" : "pl-3"}`}>
-                    {header}
-                  </th>
+                {HEADERS.map((header) => (
+                  <th key={header}>{header}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {status ? (
                 <tr>
-                  <td colSpan={HEADERS.length} className="py-8 text-center text-black/50">
+                  <td colSpan={HEADERS.length} className="pv-empty" style={{ display: "block", textAlign: "center" }}>
                     {status}
-                    {retryButton}
+                    {failed && !isLoading && (
+                      <button type="button" onClick={retry} className="fbtn o" style={{ marginLeft: 12, height: 32, cursor: "pointer" }}>
+                        Try again
+                      </button>
+                    )}
                   </td>
                 </tr>
               ) : (
                 pageRows.map((row, index) => (
-                  <tr key={`${row.index}-${row.rowKey}`} className="border-b border-slate-200">
-                    {cells(row, index).map((value, column) => (
-                      <td key={HEADERS[column]} className={`py-3 pr-3 ${column === 0 ? "pl-5" : "pl-3"}`}>
-                        {value}
-                      </td>
-                    ))}
+                  <tr key={`${row.index}-${row.rowKey}`}>
+                    <td data-l={HEADERS[0]}>{page * PAGE_SIZE + index + 1}</td>
+                    <td data-l={HEADERS[1]}>
+                      <span className="pv-tag">{row.gradeName || "N/A"}</span>
+                    </td>
+                    <td data-l={HEADERS[2]}>{row.sessionName || "N/A"}</td>
+                    <td data-l={HEADERS[3]}>{row.learningProgram || "N/A"}</td>
+                    <td className="fa" data-l={HEADERS[4]}>
+                      <DownloadButton row={row} kind="transcript" busy={busy} onDownload={download} />
+                    </td>
+                    <td className="fa" data-l={HEADERS[5]}>
+                      <DownloadButton row={row} kind="diploma" busy={busy} onDownload={download} />
+                    </td>
+                    <td className="fa" data-l={HEADERS[6]}>
+                      <DownloadButton row={row} kind="verification" busy={busy} onDownload={download} />
+                    </td>
                   </tr>
                 ))
               )}
@@ -161,8 +139,8 @@ function SelectedChildAcademicDocs() {
           </table>
         </div>
 
-        {!status && <ParentTableFooter page={page} pageSize={PAGE_SIZE} total={filtered.length} onPageChange={setPage} />}
+        {!status && <PdFooter page={page} pageSize={PAGE_SIZE} total={filtered.length} onPageChange={setPage} />}
       </div>
-    </div>
+    </section>
   );
 }

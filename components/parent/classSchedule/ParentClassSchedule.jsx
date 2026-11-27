@@ -1,6 +1,5 @@
 "use client";
 
-import { CalendarDays } from "lucide-react";
 import { ParentChildRequired } from "@/components/parent/ParentChildRequired";
 import { ClassCalendarPanel } from "@/components/parent/classSchedule/ClassCalendarPanel";
 import { scheduleRange } from "@/components/parent/classSchedule/scheduleRows";
@@ -39,26 +38,22 @@ function SelectedChildClassSchedule() {
   const calendar = useClassCalendarState({ kind: "schedule", rangeFor: scheduleRange, useData: useParentClassSchedule, now, timeZone });
   const childName = String(selectedChild?.studentName ?? "").trim();
 
+  const first = childName.split(/\s+/)[0];
+
   return (
-    <div className="mx-auto w-full max-w-7xl">
-      <div className="flex items-center gap-2 px-1 pb-4">
-        <CalendarDays className="h-5 w-5 text-primary" aria-hidden="true" />
-        <h1 className="text-lg font-extrabold text-black sm:text-xl">Class Schedule{childName ? ` - ${childName}` : ""}</h1>
-      </div>
-      <ClassCalendarPanel
-        title="Class Schedule"
-        timeZone={timeZone}
-        clock={clockText(now, timeZone)}
-        now={now}
-        view={calendar.view}
-        onView={calendar.onView}
-        category={calendar.category}
-        onCategory={calendar.onCategory}
-        counts={calendar.counts}
-        days={calendar.days}
-        custom={calendar.custom}
-        state={calendar.state}
-      />
-    </div>
+    <ClassCalendarPanel
+      title={first ? `${first}\u2019s Class Schedule` : "Class Schedule"}
+      timeZone={timeZone}
+      clock={clockText(now, timeZone)}
+      now={now}
+      view={calendar.view}
+      onView={calendar.onView}
+      category={calendar.category}
+      onCategory={calendar.onCategory}
+      counts={calendar.counts}
+      days={calendar.days}
+      custom={calendar.custom}
+      state={calendar.state}
+    />
   );
 }

@@ -40,18 +40,26 @@ import { K5DiaryPanel } from "@/components/k5/panels/K5DiaryPanel";
 // queries and the diary bridge iframe from mounting.
 const RE_ENROLLMENT_PATH = /\/student\/re-enrollment(\/|$)/;
 
+/** Fired on window with detail "announcements" | "diary" to open that rail panel from elsewhere on the page. */
+export const RAIL_OPEN_EVENT = "is-rail-open";
+
 export function RightActionRail(props) {
   const pathname = usePathname();
-  const mustReEnroll = useMustReEnroll({ schoolUUID: props.schoolUUID, userId: props.userId });
-  if (RE_ENROLLMENT_PATH.test(pathname || "") || mustReEnroll !== false) return null;
+  // The re-enrollment gate is the signed-in student's own; a parent (studentUserId set) skips it, and passing no userId
+  // keeps the student dashboard queries from running for the parent's id.
+  const isParent = props.studentUserId != null;
+  const mustReEnroll = useMustReEnroll({ schoolUUID: props.schoolUUID, userId: isParent ? undefined : props.userId });
+  if (!isParent && (RE_ENROLLMENT_PATH.test(pathname || "") || mustReEnroll !== false)) return null;
   return <RightActionRailContent {...props} />;
 }
 
-function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueId, userRole, email, schoolName, variant = "default", middle = false, high = false }) {
+function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueId, userRole, email, schoolName, variant = "default", middle = false, high = false, studentUserId, hideNews = false, hideOnPhone = false, parentRail = false }) {
   const queryClient = useQueryClient();
   // Parent dashboard: announcements and the diary badge are about the selected child (legacy fetched them with the
   // child's id), chat stays the parent's own. Students leave studentUserId unset, so nothing changes for them.
   const announcementUserId = studentUserId ?? userId;
+  // The start-up batches (viaTier2) are the signed-in student's; a parent asks each endpoint directly.
+  const isParent = studentUserId != null;
   const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const [newsOpen, setNewsOpen] = useState(false);
   const [diaryOpen, setDiaryOpen] = useState(false);
@@ -68,11 +76,12 @@ function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
   const dummy = useDummyStudent();
   const announcementsQuery = useQuery({
     queryKey: ["student-announcements", schoolUUID, announcementUserId, dummy.key],
-    queryFn: () =>
-      dummy.enabled
-        ? dummy.student.announcements()
-        : viaTier2(userId, "announcements", (a) => a.announcements, () => getAnnouncementDetails({ schoolUUID, userId, startFrom: 0, pageSize: 20 })),
-    enabled: Boolean(schoolUUID && userId && dummy.settled),
+    queryFn: () => {
+      if (dummy.enabled) return dummy.student.announcements();
+      const ask = () => getAnnouncementDetails({ schoolUUID, userId: announcementUserId, startFrom: 0, pageSize: 20 });
+      return isParent ? ask() : viaTier2(userId, "announcements", (a) => a.announcements, ask);
+    },
+    enabled: Boolean(schoolUUID && announcementUserId && dummy.settled),
     staleTime: 5 * 60_000,
     refetchOnWindowFocus: false,
   });
@@ -82,7 +91,7 @@ function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
   const newsQuery = useQuery({
     queryKey: ["news-articles", dummy.key],
     queryFn: () => (dummy.enabled ? dummy.student.newsList() : viaTier2(userId, "news", (a) => a.news, () => getAllArticles({ page: 1, size: 10 }))),
-    enabled: dummy.settled,
+    enabled: dummy.settled && !hideNews,
     staleTime: 5 * 60_000,
     refetchOnWindowFocus: false,
   });
@@ -91,7 +100,10 @@ function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
 
   const chatCountQuery = useQuery({
     queryKey: ["chat-unseen-count", schoolUUID, userId],
-    queryFn: () => viaTier2(userId, "chatUnseen", (a) => a.chatUnseen, () => getChatUnseenCount({ schoolUUID, userId, userRole, email })),
+    queryFn: () => {
+      const ask = () => getChatUnseenCount({ schoolUUID, userId, userRole, email });
+      return isParent ? ask() : viaTier2(userId, "chatUnseen", (a) => a.chatUnseen, ask);
+    },
     enabled: Boolean(schoolUUID && userId),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
@@ -200,6 +212,20 @@ function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diaryUrl, userId]);
 
+  // Other parts of the page (the parent mobile bottom bar) open a panel through this event: the rail owns the
+  // panels, so they ask it instead of holding a copy of its state.
+  useEffect(() => {
+    const onOpen = (event) => {
+      if (event.detail === "announcements") setAnnouncementsOpen(true);
+      else if (event.detail === "diary") {
+        setDiaryOpen(true);
+        queryClient.invalidateQueries({ queryKey: ["diary-unread-count", userId] });
+      }
+    };
+    window.addEventListener(RAIL_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(RAIL_OPEN_EVENT, onOpen);
+  }, [queryClient, userId]);
+
   // Balanced look (Middle.dc.html .rail): every button is the same soft blue circle on a 2px #027FFE rim, its icon cut-outs #DCEEFF.
   // Playful keeps each button's own pastel (the icon cut-outs take it too). The Mature (High) rail is drawn exactly like this one.
   const balanced = middle;
@@ -228,7 +254,28 @@ function RightActionRailContent({ chatUrl, diaryUrl, schoolUUID, userId, uniqueI
         />
       )}
 
-      {variant === "k5" ? (
+      {parentRail ? (
+        // The parent theme's rail (design board .rail): round buttons down the right edge, a bottom bar on a phone.
+        // Alerts / Notifications are not here yet (they need a backend list, see the parent plan doc).
+        <aside className="rail" aria-label="Quick links">
+          <ParentRailItem label="Talk to us" newCount={unseenChatMessages} onClick={openTalkToUs} chat>
+            <path d="M4 4h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H9l-4 3v-3H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm16 4h0a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-1v3l-4-3h-4a2 2 0 0 1-1.7-1H16a4 4 0 0 0 4-4z" />
+          </ParentRailItem>
+          <ParentRailItem label="Announcement" newCount={newAnnouncementCount} onClick={() => setAnnouncementsOpen(true)}>
+            <path d="M18 3v18l-6-4H7l1 4H5l-1-4a3 3 0 0 1-3-3v-2a3 3 0 0 1 3-3h8zm2 6a3 3 0 0 1 0 6z" />
+          </ParentRailItem>
+          <ParentRailItem
+            label="Diary"
+            newCount={unreadDiaryMessages}
+            onClick={() => {
+              setDiaryOpen(true);
+              refreshDiaryBadge();
+            }}
+          >
+            <path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm6 5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zm-4.5 10h9c0-2-2-3.5-4.5-3.5S7.5 15 7.5 17z" />
+          </ParentRailItem>
+        </aside>
+      ) : variant === "k5" ? (
         // Mockup rail: a column of pastel buttons on the right; below 760px a bottom tab bar.
         <div className={`k5-rail fixed -mt-1 right-[calc(max(20px,(100vw-100%)/0)+0px)] top-[calc(var(--maintenance-banner-h,0px)+100px)] z-20 flex w-20 flex-col items-center gap-1 max-[760px]:inset-x-0 max-[760px]:bottom-0 max-[760px]:top-auto max-[760px]:z-40 max-[760px]:w-full max-[760px]:flex-row max-[760px]:items-start max-[760px]:justify-around max-[760px]:gap-0 max-[760px]:border-t-[3px] max-[760px]:border-k5-line max-[760px]:bg-k5-card max-[760px]:px-1 max-[760px]:pb-[max(8px,env(safe-area-inset-bottom))] max-[760px]:pt-2.5`}>
           <K5RailButton index={0} high={high} balanced={balanced} label="Talk to us" pin="msg" onClick={openTalkToUs} badge={unseenChatMessages} tint="#C3F0DC" rim="#0E8F67" ink="#0B6B4D">
@@ -358,6 +405,21 @@ function K5RailButton({ index = 0, label, onClick, badge, tint, rim, ink, pin, h
         </motion.span>
       ) : null}
     </motion.button>
+  );
+}
+
+// One button of the parent rail: the round icon button with its count badge, and its label (shown in the phone bottom bar).
+function ParentRailItem({ label, newCount, onClick, chat = false, children }) {
+  return (
+    <span className="it">
+      <button type="button" className={chat ? "chat" : undefined} aria-label={newCount ? `${label}, ${newCount} new` : label} onClick={onClick}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          {children}
+        </svg>
+        {newCount ? <span className="badge">{newCount}</span> : null}
+      </button>
+      <span className="lbl">{label}</span>
+    </span>
   );
 }
 

@@ -27,7 +27,7 @@ export function ParentWithdrawal({ onBack }) {
   if (childId) return <ChildWithdrawal key={childId} studentUserId={childId} onBackToChildren={() => setChildId(null)} />;
 
   return (
-    <div className="rounded-[10px] border border-slate-200 bg-white p-4 sm:p-6">
+    <div className="fcard">
       <button type="button" onClick={onBack} className={BACK}>
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         Back
@@ -243,7 +243,7 @@ function ChildWithdrawal({ studentUserId, onBackToChildren }) {
   }
 
   return (
-    <div className="rounded-[10px] border border-slate-200 bg-white p-4 sm:p-6">
+    <div className="fcard">
       <button type="button" onClick={onBackToChildren} className={BACK}>
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         Back to my children

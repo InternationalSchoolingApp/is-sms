@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { FileText } from "lucide-react";
 import { ParentChildRequired } from "@/components/parent/ParentChildRequired";
 import { ClassCalendarPanel } from "@/components/parent/classSchedule/ClassCalendarPanel";
 import { summaryRange } from "@/components/parent/classSchedule/scheduleRows";
@@ -37,14 +36,12 @@ function SelectedChildClassSummary() {
   const [opened, setOpened] = useState(null);
   const childName = String(selectedChild?.studentName ?? "").trim();
 
+  const first = childName.split(/\s+/)[0];
+
   return (
-    <div className="mx-auto w-full max-w-7xl">
-      <div className="flex items-center gap-2 px-1 pb-4">
-        <FileText className="h-5 w-5 text-primary" aria-hidden="true" />
-        <h1 className="text-lg font-extrabold text-black sm:text-xl">Class Summary{childName ? ` - ${childName}` : ""}</h1>
-      </div>
+    <>
       <ClassCalendarPanel
-        title="Class Summary"
+        title={first ? `${first}\u2019s Class Summary` : "Class Summary"}
         timeZone={timeZone}
         now={now}
         view={calendar.view}
@@ -58,6 +55,6 @@ function SelectedChildClassSummary() {
         onViewSummary={setOpened}
       />
       <ClassSummarySheet event={opened} onClose={() => setOpened(null)} />
-    </div>
+    </>
   );
 }

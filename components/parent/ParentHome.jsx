@@ -1,20 +1,23 @@
 "use client";
 
+import { Loader } from "@/components/common/Loader";
 import { ParentChildRequired } from "@/components/parent/ParentChildRequired";
-import { ParentGreetingBanner } from "@/components/parent/home/ParentGreetingBanner";
-import { ChildOverviewCard } from "@/components/parent/home/ChildOverviewCard";
+import { useSelectedChild } from "@/hooks/parent/useSelectedChild";
+import { HomeTopRow } from "@/components/parent/home/HomeTopRow";
+import { ChildBlueTile, ChildKpiTrio } from "@/components/parent/home/ChildOverviewCard";
 import { PerformanceOverview } from "@/components/parent/home/PerformanceOverview";
 import { UpcomingSchedule } from "@/components/parent/home/UpcomingSchedule";
 import { PaymentsDueCard } from "@/components/parent/home/PaymentsDueCard";
-import { ParentMobileBar } from "@/components/parent/home/ParentMobileBar";
+import { LiveClassPopup } from "@/components/parent/home/LiveClassPopup";
 import { ParentAppInstallPrompt } from "@/components/parent/profile/ParentAppInstallPrompt";
+import { firstName } from "@/components/parent/childLabels";
 import { useParentChildOverview } from "@/hooks/parent/useParentHome";
 
 /**
- * Parent dashboard home: the selected child's home (the child tabs sit above it, in parent/layout.jsx) (legacy
- * parentDashboardContent.js): the overview card with KPIs and the performance charts on the left, today's
- * classes and the due payments on the right. Announcements, diary and chat are the shell's right rail, which
- * follows the selected child. On a phone the two right-hand cards move behind the bottom bar.
+ * Parent dashboard home: the selected child's home in the parent theme (design board bento; legacy
+ * parentDashboardContent.js for the data). Left: the child tile, today's classes and the due payments. Right: the
+ * Attendance / Courses / Performance tiles and the performance chart. Announcements, diary and chat are the shell's
+ * right rail, which follows the selected child.
  */
 export function ParentHome() {
   return (
@@ -25,41 +28,43 @@ export function ParentHome() {
 }
 
 function SelectedChildHome() {
+  const { selectedChild } = useSelectedChild();
   const overview = useParentChildOverview();
   const withClass = overview.details?.activitiesWithClass !== false;
+  const childName = firstName(overview.details?.student?.studentName || selectedChild?.studentName);
 
   return (
-    <div className="mx-auto max-w-7xl">
-      <ParentGreetingBanner />
-      <div className="grid gap-5 lg:grid-cols-3">
-        <div className="min-w-0 lg:col-span-2">
+    <>
+      <HomeTopRow />
+      <div className="bento">
+        <div className="col cl">
+          <ChildBlueTile details={overview.details} />
+          <UpcomingSchedule withClass={withClass} childName={childName} />
+          <PaymentsDueCard />
+        </div>
+        <div className="col cr">
           {overview.isLoading ? (
-            <div className="space-y-4" aria-busy="true">
-              <div className="h-48 animate-pulse rounded-2xl bg-slate-200" />
-              <div className="h-80 animate-pulse rounded-2xl bg-slate-200" />
+            <div className="tile flex min-h-[420px] items-center justify-center" role="status" aria-busy="true">
+              <Loader />
             </div>
           ) : overview.failed ? (
-            <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
-              <p className="text-sm text-black/70">We could not load this child&apos;s overview.</p>
-              <button type="button" onClick={overview.retry} className="mt-3 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
+            <div className="tile text-center">
+              <p className="m-0 text-sm">We could not load this child&apos;s overview.</p>
+              <button type="button" onClick={overview.retry} className="btn mt-3">
                 Try again
               </button>
             </div>
           ) : (
             <>
-              <ChildOverviewCard details={overview.details} />
+              <ChildKpiTrio details={overview.details} />
               <PerformanceOverview details={overview.details} />
             </>
           )}
         </div>
-        <div className="space-y-5 max-sm:hidden">
-          <UpcomingSchedule withClass={withClass} />
-          <PaymentsDueCard />
-        </div>
       </div>
-      <ParentMobileBar withClass={withClass} />
+      <LiveClassPopup />
       {/* Legacy opens the app-install prompt from the parent home (school 1, not an installed app, not closed in the last 7 days, app not in use). */}
       <ParentAppInstallPrompt />
-    </div>
+    </>
   );
 }

@@ -7,8 +7,9 @@ import { PaymentName } from "@/components/common/PaymentName";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PaymentGatewayPickerModal } from "@/components/student-enroll/PaymentGatewayPickerModal";
 import { ParentChildRequired } from "@/components/parent/ParentChildRequired";
-import { ParentMobileTableCard } from "@/components/parent/common/ParentMobileTableCard";
-import { ParentTableFooter } from "@/components/parent/common/ParentTableFooter";
+import { PdFooter } from "@/components/parent/pageParts/PdFooter";
+import { PdHero } from "@/components/parent/pageParts/PdHero";
+import { firstName } from "@/components/parent/childLabels";
 import { feeAction, receiptHref } from "@/components/parent/fees/feeActions";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useModuleRights } from "@/hooks/useModuleRights";
@@ -62,17 +63,14 @@ function FeeDetailsBody() {
     const href = action.receipt ? receiptHref(payment) : "";
     if (!href && !action.pay && action.notes.length === 0) return null;
     return (
-      <div className="flex flex-wrap items-center gap-2">
+      <>
         {action.notes.map((note) => (
-          <span key={note}>{note}</span>
+          <span key={note} style={{ marginRight: 8 }}>
+            {note}
+          </span>
         ))}
         {href && (
-          <a
-            href={href}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded border border-primary px-2 py-1 text-primary hover:bg-primary hover:text-white"
-          >
+          <a href={href} target="_blank" rel="noreferrer" className="fbtn o">
             View Receipt
           </a>
         )}
@@ -81,29 +79,14 @@ function FeeDetailsBody() {
             type="button"
             onClick={() => checkout.start(payment.id)}
             disabled={checkout.preparing}
-            className="rounded bg-primary px-3 py-1 text-white disabled:opacity-60"
+            className="fbtn p"
+            style={{ cursor: "pointer", opacity: checkout.preparing ? 0.6 : 1 }}
           >
             {action.pay}
           </button>
         )}
-      </div>
+      </>
     );
-  };
-
-  const cells = (row) => {
-    const { payment } = row;
-    return [
-      row.serial,
-      payment.scheduledPayDate || "",
-      payment.standardName || "",
-      payment.paymentName ? <PaymentName key="name" name={String(payment.paymentName).replace(/<br\s*\/?>/gi, " ")} /> : "",
-      `${symbol} ${payment.totalFeeWithMaterialFee ?? ""}`.trim(),
-      payment.payDate || "--",
-      <span key="status" className={payment.status === "SUCCESS" ? "font-bold text-[#58D68D]" : ""}>
-        {payment.status}
-      </span>,
-      actionCell(row),
-    ];
   };
 
   const loading = !context || isLoading;
@@ -117,78 +100,86 @@ function FeeDetailsBody() {
           ? "No fee details found"
           : null;
 
+  const name = firstName(selectedChild?.studentName);
+  const paidCount = payments.filter((payment) => payment.status === "SUCCESS").length;
+  const subtitle = message
+    ? ""
+    : `${payments.length} payment${payments.length === 1 ? "" : "s"}${paidCount === payments.length ? " \u00b7 all paid" : ` \u00b7 ${paidCount} paid`}`;
+
   return (
-    <div className="w-full">
-      <div className="rounded-[15px] border border-slate-200 bg-white p-3 sm:p-5">
-        <div className="rounded-t-[10px] border border-slate-200 px-4 py-2">
-          <h1 className="text-lg font-semibold text-black">Fee Details</h1>
-        </div>
+    <section className="sch on" aria-label="Fee details" aria-busy={loading}>
+      <PdHero title={name ? `${name}\u2019s Fee Details` : "Fee Details"} subtitle={subtitle} />
 
-        {/* Phone: one card per payment (column title beside each value) instead of an 8-column table. */}
-        <div className="md:hidden">
-          {message ? (
-            <div className="border-x border-b border-slate-200 py-8 text-center text-sm text-black/50">
-              <p>{message}</p>
-              {failed && !sessionOut && (
-                <button type="button" onClick={() => refetch()} className="mt-3 rounded border border-primary px-3 py-1 text-primary">
-                  Try again
-                </button>
-              )}
-            </div>
-          ) : (
-            <ul className="mt-3 space-y-3">
-              {rows.map((row) => (
-                <li key={row.payment.id}>
-                  <ParentMobileTableCard
-                    rows={cells(row)
-                      .map((value, index) => ({ label: HEADERS[index], value }))
-                      .filter(({ value }) => value !== null && value !== "")}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="hidden overflow-x-auto md:block">
-          <table className="w-full whitespace-nowrap border border-t-0 border-slate-200 text-left text-sm text-black">
-            <thead className="bg-primary text-white">
+      <div className="fcard">
+        <h3>Fee Details</h3>
+        <div className="ftw">
+          <table className="ftbl">
+            <thead>
               <tr>
-                {HEADERS.map((header, index) => (
-                  <th key={header} className={`py-3 pr-3 font-normal ${index === 0 ? "pl-4" : "pl-3"}`}>
-                    {header}
-                  </th>
+                {HEADERS.map((header) => (
+                  <th key={header}>{header}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {message ? (
                 <tr>
-                  <td colSpan={HEADERS.length} className="py-8 text-center text-black/50">
+                  <td colSpan={HEADERS.length} className="pv-empty" style={{ display: "block", textAlign: "center" }}>
                     {message}
                     {failed && !sessionOut && (
-                      <button type="button" onClick={() => refetch()} className="ml-3 rounded border border-primary px-3 py-1 text-primary">
+                      <button type="button" onClick={() => refetch()} className="fbtn o" style={{ marginLeft: 12, height: 32, cursor: "pointer" }}>
                         Try again
                       </button>
                     )}
                   </td>
                 </tr>
               ) : (
-                rows.map((row) => (
-                  <tr key={row.payment.id} className="border-b border-slate-200">
-                    {cells(row).map((value, index) => (
-                      <td key={HEADERS[index]} className={`py-3 pr-3 ${index === 0 ? "pl-4 text-center" : "pl-3"}`}>
-                        {value}
+                rows.map((row) => {
+                  const { payment } = row;
+                  const ok = payment.status === "SUCCESS";
+                  return (
+                    <tr key={payment.id}>
+                      <td data-l={HEADERS[0]}>{row.serial}</td>
+                      <td data-l={HEADERS[1]}>{payment.scheduledPayDate || ""}</td>
+                      <td data-l={HEADERS[2]}>{payment.standardName || ""}</td>
+                      <td data-l={HEADERS[3]}>
+                        {payment.paymentName ? <PaymentName name={String(payment.paymentName).replace(/<br\s*\/?>/gi, " ")} /> : ""}
                       </td>
-                    ))}
-                  </tr>
-                ))
+                      <td data-l={HEADERS[4]}>{`${symbol} ${payment.totalFeeWithMaterialFee ?? ""}`.trim()}</td>
+                      <td data-l={HEADERS[5]}>{payment.payDate || "--"}</td>
+                      <td data-l={HEADERS[6]}>
+                        {ok ? (
+                          <span className="fst ok">
+                            <i>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M5 12.5l4.5 4.5L19 7.5" />
+                              </svg>
+                            </i>
+                            Success
+                          </span>
+                        ) : (
+                          <span className="fst sc">
+                            <i>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
+                                <circle cx="12" cy="12" r="8" />
+                                <path d="M12 8v4l2.5 1.5" />
+                              </svg>
+                            </i>
+                            {payment.status}
+                          </span>
+                        )}
+                      </td>
+                      <td className="fa" data-l={HEADERS[7]}>
+                        {actionCell(row)}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
-
-        {!message && <ParentTableFooter page={page} pageSize={PAGE_SIZE} total={payments.length} onPageChange={setPage} />}
+        {!message && <PdFooter page={page} pageSize={PAGE_SIZE} total={payments.length} onPageChange={setPage} />}
       </div>
 
       {context && (
@@ -244,7 +235,7 @@ function FeeDetailsBody() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </section>
   );
 }
 

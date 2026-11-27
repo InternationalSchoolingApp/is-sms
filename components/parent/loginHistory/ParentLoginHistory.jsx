@@ -1,37 +1,42 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarCheck, Clock, LogIn, LogOut, Search, ShieldCheck, TrendingUp } from "lucide-react";
-import { OptimizedImage } from "@/components/common/OptimizedImage";
 import { ParentChildRequired } from "@/components/parent/ParentChildRequired";
-import { ParentMobileTableCard } from "@/components/parent/common/ParentMobileTableCard";
-import { ParentTableFooter } from "@/components/parent/common/ParentTableFooter";
+import { PdFooter } from "@/components/parent/pageParts/PdFooter";
+import { PdHero } from "@/components/parent/pageParts/PdHero";
+import { firstName } from "@/components/parent/childLabels";
 import { useSelectedChild } from "@/hooks/parent/useSelectedChild";
 import { useParentLoginHistory } from "@/hooks/parent/useParentLoginHistory";
-import { resolveBackendOrigin } from "@/utils/backendOrigin";
 
-// Backend static assets (legacy PATH_FOLDER_IMAGE2).
-const assetUrl = (file) => `${resolveBackendOrigin()}/static/theme2/images/${file}`;
 const PAGE_SIZE = 10;
 const HEADERS = ["S.No", "Log in Date | Time", "Log out Date | Time", "Location", "Duration"];
 
-const TONES = {
-  success: { badge: "bg-green-100 text-green-600", text: "text-green-600" },
-  warning: { badge: "bg-amber-100 text-amber-500", text: "text-amber-500" },
-  primary: { badge: "bg-primary/10 text-primary", text: "text-primary" },
+const ICONS = {
+  flag: "M5 21V4M5 4h11l-2 4 2 4H5",
+  clock: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2",
+  trend: "M3 17l6-6 4 4 8-8M15 7h6v6",
+  info: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 8h.01M11 12h1v4h1",
 };
 
-function SummaryCard({ label, value, sub, icon: Icon, tone }) {
+function Svg({ d, size = 22 }) {
   return (
-    <div className="h-full rounded-[10px] border border-slate-200 bg-white p-4">
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <h2 className="font-medium text-black">{label}</h2>
-        <span className={`flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full ${TONES[tone].badge}`}>
-          <Icon className="h-5 w-5" aria-hidden="true" />
-        </span>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={d} />
+    </svg>
+  );
+}
+
+function SummaryCard({ label, value, sub, icon, iconStyle }) {
+  return (
+    <div className="pv-st">
+      <div>
+        <small>{label}</small>
+        <b className="sm">{value || "N/A"}</b>
+        <span className="d">{sub || "N/A"}</span>
       </div>
-      <div className="mb-1 text-xl font-medium text-black">{value || "N/A"}</div>
-      <div className={TONES[tone].text}>{sub || "N/A"}</div>
+      <i style={iconStyle}>
+        <Svg d={icon} />
+      </i>
     </div>
   );
 }
@@ -79,22 +84,6 @@ function SelectedChildLoginHistory() {
   }, [sessions, search]);
   const pageRows = filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
-  const cells = (row, index) => [
-    page * PAGE_SIZE + index + 1,
-    <span key="in" className="inline-flex items-center gap-1">
-      <LogIn className="h-3.5 w-3.5 shrink-0 text-green-600" aria-hidden="true" />
-      {row.login}
-    </span>,
-    <span key="out" className="inline-flex items-center gap-1">
-      <LogOut className="h-3.5 w-3.5 shrink-0 text-red-600" aria-hidden="true" />
-      {row.logout}
-    </span>,
-    row.location,
-    <span key="duration" className={row.duration !== "N/A" ? "text-primary" : ""}>
-      {row.duration}
-    </span>,
-  ];
-
   const status = isLoading
     ? "Loading…"
     : sessionOut
@@ -105,78 +94,66 @@ function SelectedChildLoginHistory() {
           ? "No log in history found"
           : null;
 
+  const name = firstName(studentName);
+
   return (
-    <div className="mx-auto w-full max-w-7xl">
-      <div className="mb-3 flex items-center gap-3 px-1">
-        <OptimizedImage src={assetUrl("Icon/sidebar/Login_History.png")} alt="" width={36} height={36} className="h-9 w-9 object-contain" />
-        <h1 className="text-lg font-bold text-black sm:text-xl">Log in History - {studentName || "N/A"}</h1>
+    <section className="sch on" aria-label="Log in history" aria-busy={isLoading}>
+      <PdHero title={name ? `${name}\u2019s Log in History` : "Log in History"} subtitle={name ? `See when and where ${name} logged in.` : ""} />
+
+      <div className="pv-stats">
+        <SummaryCard label="First Login" value={firstLoginDate} sub={firstLoginTime} icon={ICONS.flag} />
+        <SummaryCard
+          label="Last Login | Duration"
+          value={attendance.lastLogin}
+          sub={attendance.duration}
+          icon={ICONS.clock}
+          iconStyle={{ background: "#E2F3E6", color: "#13802B" }}
+        />
+        <SummaryCard
+          label="Total Login | Duration"
+          value="Till Now"
+          sub={attendance.totalLoginDuretion}
+          icon={ICONS.trend}
+          iconStyle={{ background: "#FFF2CC", color: "#B98200" }}
+        />
       </div>
 
-      <div className="mb-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-        <SummaryCard label="First Log in" value={firstLoginDate} sub={firstLoginTime} icon={CalendarCheck} tone="success" />
-        <SummaryCard label="Last Log in | Duration" value={attendance.lastLogin} sub={attendance.duration} icon={Clock} tone="warning" />
-        <SummaryCard label="Total Log in | Duration" value="Till Now" sub={attendance.totalLoginDuretion} icon={TrendingUp} tone="primary" />
-      </div>
-
-      <div className="rounded-[10px] border border-slate-200 bg-white py-4">
-        <div className="mb-3 flex flex-col gap-3 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-          <h2 className="text-lg font-bold text-black sm:text-xl">Log in Sessions</h2>
-          <label className="relative w-full sm:w-[260px]">
-            <span className="sr-only">Search sessions</span>
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-            <input
-              type="text"
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                setPage(0);
-              }}
-              placeholder="Search sessions..."
-              className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm text-black outline-none focus:border-primary"
-            />
-          </label>
+      <div className="fcard">
+        <div className="pv-hd" style={{ alignItems: "center", marginBottom: 14 }}>
+          <h3 style={{ margin: 0 }}>Log in Sessions</h3>
+          <div className="dc-tools">
+            <label className="dc-srch">
+              <Svg d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-3.5-3.5" size={18} />
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setPage(0);
+                }}
+                placeholder="Search sessions..."
+                aria-label="Search sessions"
+              />
+            </label>
+          </div>
         </div>
 
-        {/* Phones: one card per session (column title beside each value) instead of a 5-column table. */}
-        <div className="md:hidden">
-          {status ? (
-            <div className="border-t border-slate-200 py-8 text-center text-sm text-black/50">
-              <p>{status}</p>
-              {failed && !isLoading && (
-                <button type="button" onClick={retry} className="mt-3 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
-                  Try again
-                </button>
-              )}
-            </div>
-          ) : (
-            <ul className="space-y-3 px-4">
-              {pageRows.map((row, index) => (
-                <li key={`${row.login}-${page}-${index}`}>
-                  <ParentMobileTableCard rows={cells(row, index).map((value, column) => ({ label: HEADERS[column], value }))} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="hidden overflow-x-auto md:block">
-          <table className="w-full whitespace-nowrap text-left text-sm text-black">
-            <thead className="bg-primary text-white">
+        <div className="ftw">
+          <table className="ftbl">
+            <thead>
               <tr>
-                {HEADERS.map((header, index) => (
-                  <th key={header} className={`py-3 pr-3 font-normal ${index === 0 ? "pl-5" : "pl-3"}`}>
-                    {header}
-                  </th>
+                {HEADERS.map((header) => (
+                  <th key={header}>{header}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {status ? (
                 <tr>
-                  <td colSpan={HEADERS.length} className="py-8 text-center text-black/50">
+                  <td colSpan={HEADERS.length} className="pv-empty" style={{ display: "block", textAlign: "center" }}>
                     {status}
                     {failed && !isLoading && (
-                      <button type="button" onClick={retry} className="ml-3 rounded-lg bg-primary px-3 py-1 text-xs font-semibold text-white hover:opacity-90">
+                      <button type="button" onClick={retry} className="fbtn o" style={{ marginLeft: 12, height: 32, cursor: "pointer" }}>
                         Try again
                       </button>
                     )}
@@ -184,12 +161,12 @@ function SelectedChildLoginHistory() {
                 </tr>
               ) : (
                 pageRows.map((row, index) => (
-                  <tr key={`${row.login}-${page}-${index}`} className="border-b border-slate-200">
-                    {cells(row, index).map((value, column) => (
-                      <td key={HEADERS[column]} className={`py-3 pr-3 ${column === 0 ? "pl-5" : "pl-3"}`}>
-                        {value}
-                      </td>
-                    ))}
+                  <tr key={`${row.login}-${page}-${index}`}>
+                    <td data-l={HEADERS[0]}>{page * PAGE_SIZE + index + 1}</td>
+                    <td data-l="Log in">{row.login}</td>
+                    <td data-l="Log out">{row.logout}</td>
+                    <td data-l={HEADERS[3]}>{row.location}</td>
+                    <td data-l={HEADERS[4]}>{row.duration}</td>
                   </tr>
                 ))
               )}
@@ -198,7 +175,7 @@ function SelectedChildLoginHistory() {
         </div>
 
         {!status && (
-          <ParentTableFooter
+          <PdFooter
             page={page}
             pageSize={PAGE_SIZE}
             total={filtered.length}
@@ -206,18 +183,15 @@ function SelectedChildLoginHistory() {
             info={(start, end, total) => `Showing ${start}-${end} of ${total} sessions`}
           />
         )}
-      </div>
 
-      <div className="mt-3 rounded-[10px] border border-[#bcd4fb] bg-[#f4f8ff] px-4 py-3">
-        <p className="flex items-start gap-2 text-sm text-primary sm:text-base">
-          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
-          <span>
-            <span className="font-semibold">Security Notice: </span>
-            If you notice any suspicious log in activity or unrecognized locations, please contact your administrator immediately. Your account
-            security is important to us.
-          </span>
-        </p>
+        <div className="pv-note">
+          <Svg d={ICONS.info} size={20} />
+          <div>
+            <b>Security Notice:</b> If you notice any suspicious login activity or a location you don’t recognise{name ? ` on ${name}\u2019s account` : ""}, please
+            contact the school immediately.
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

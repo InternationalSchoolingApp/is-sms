@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { RightActionRail } from "@/components/dashboard/RightActionRail";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useOptionalSelectedChild } from "@/hooks/parent/useSelectedChild";
+import { parentFont } from "@/components/parent/picker/parentFont";
 
 // Above this width, the header and footer stay pinned to the viewport and
 // the content between them becomes its own scroll region (matching the
@@ -38,6 +39,11 @@ function useWideLayout() {
  */
 export function DashboardShell({ children }) {
   const { ready, gradeResolved, context, menu, logoUrl, schoolWebsite, session, lmsProviderURL, isPayLmsPaymentPending } = useDashboardContext();
+  // A parent's rail is about the selected child (announcements, diary badge) and has no News, as in the legacy JSP.
+  const isParent = context?.role === "parent";
+  const selectedChild = useOptionalSelectedChild()?.selectedChild;
+  // While the parent is choosing a child (the picker screen) the page has no menu and no right rail, as in legacy.
+  const choosing = isParent && !selectedChild;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // Defaults to the collapsed icon-rail, matching the legacy dashboard.
   const [collapsed, setCollapsed] = useState(true);
@@ -81,7 +87,8 @@ export function DashboardShell({ children }) {
   if (!ready || !gradeResolved) return <FullScreenLoader />;
 
   return (
-    <div className="min-h-screen bg-[#f2f5fa]" style={{ "--dash-header-h": "56px", "--dash-footer-h": `${footerHeight}px` }}>
+    // The parent's child picker is a full-width page in the parent theme (its own banner and padding, Roboto).
+    <div className={`min-h-screen ${choosing ? `bg-[#f5f7fa] ${parentFont.className}` : "bg-[#f2f5fa]"}`} style={{ "--dash-header-h": "56px", "--dash-footer-h": `${footerHeight}px` }}>
       <DashboardTopHeader
         schoolName={context.schoolName}
         logoUrl={logoUrl}
@@ -90,6 +97,7 @@ export function DashboardShell({ children }) {
         userName={context.userName}
         onHamburger={onHamburger}
         hideMenuButton={choosing}
+        choosingChild={choosing}
         lmsProviderURL={lmsProviderURL}
         isPayLmsPaymentPending={isPayLmsPaymentPending}
       />
@@ -109,7 +117,7 @@ export function DashboardShell({ children }) {
         style={isWideLayout ? { height: "100vh", minHeight: "100vh" } : undefined}
       >
         <main
-          className="flex-1 px-4 py-5 pr-4 sm:px-6 md:px-4 md:pr-15"
+          className={choosing ? "flex-1" : "flex-1 px-4 py-5 pr-4 sm:px-6 md:px-4 md:pr-15"}
           style={isWideLayout ? { height: `calc(100vh - 56px - ${footerHeight}px)`, overflowY: "auto" } : undefined}
         >
           {children}

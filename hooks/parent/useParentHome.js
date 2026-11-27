@@ -16,13 +16,22 @@ function useHomeScope() {
   return { schoolUUID, parentUserId, studentUserId, enabled: Boolean(schoolUUID && parentUserId && studentUserId), child: selectedChild };
 }
 
-/** The selected child's overview (student, KPIs, attendance and grade series). */
+/**
+ * The selected child's overview (student, KPIs, attendance and grade series).
+ * The overview is by far the slowest home call (about 18 s on UAT: the backend works out a year of attendance and
+ * grades), and the browser runs server actions one at a time, so anything sent after it waits for it. It therefore
+ * starts only once today's schedule and the fee rows (both quick, and the same cached queries the home shows anyway)
+ * have answered, and the rail counts are not stuck behind it.
+ */
 export function useParentChildOverview() {
   const { schoolUUID, parentUserId, studentUserId, enabled } = useHomeScope();
+  const schedule = useParentChildSchedule();
+  const fees = useParentChildFees();
+  const quickCallsDone = !schedule.isLoading && !fees.isLoading;
   const query = useQuery({
     queryKey: ["parent-overview", schoolUUID, parentUserId, studentUserId],
     queryFn: () => getParentChildOverview({ schoolUUID, studentUserId }),
-    enabled,
+    enabled: enabled && quickCallsDone,
     staleTime: 2 * 60_000,
     refetchOnWindowFocus: false,
   });

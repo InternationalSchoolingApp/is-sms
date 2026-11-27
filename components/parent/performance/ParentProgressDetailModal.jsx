@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Eye } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ParentMobileTableCard } from "@/components/parent/common/ParentMobileTableCard";
+import { PerfDialog } from "@/components/parent/performance/PerfDialog";
 import { ParentGradeHistoryModal } from "@/components/parent/performance/ParentGradeHistoryModal";
-import { asArray, submitStatusText, textClass } from "@/components/parent/performance/performanceHelpers";
+import { asArray, subjectColors, submitStatusText, textClass } from "@/components/parent/performance/performanceHelpers";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { getStudentProgressReportDetail } from "@/services/dashboardApi";
 
@@ -40,13 +38,13 @@ const ITEM_HEADERS = [
 function ActivityProgress({ label, percent, done, total }) {
   const width = Math.min(100, Math.max(0, Number(percent) || 0));
   return (
-    <div className="flex items-start gap-2">
-      <div className="mt-1 h-3 w-24 shrink-0 overflow-hidden rounded bg-slate-200 sm:w-32">
-        <div className="h-full bg-primary" style={{ width: `${width}%` }} />
-      </div>
-      <span>
-        {percent}% of {label} activities completed ({done} of {total})
-      </span>
+    <div className="pop-prog">
+      <p>
+        <b>{percent}%</b> of {label} activities completed ({done} of {total})
+      </p>
+      <i className="rp-bar">
+        <i style={{ width: `${width}%` }} />
+      </i>
     </div>
   );
 }
@@ -87,59 +85,81 @@ export function ParentProgressDetailModal({ course, onClose }) {
     const submitStatus = submitStatusText(item);
     const status = String(item.status || item.submissionStatus || "").toUpperCase();
     return [
-      <span key="t" className="whitespace-normal">{item.title || "N/A"}</span>,
+      item.title || "N/A",
       item.duedate || "N/A",
       <span key="s" className={textClass(item.colorDueText)}>{item.submitteddate || "N/A"}</span>,
-      item.unitTimeSpent || "N/A",
+      <span key="t" className="dc-id">{item.unitTimeSpent || "N/A"}</span>,
       <span key="ss" className={textClass(item.colorDueText)}>{submitStatus || "N/A"}</span>,
-      <span key="sc" className={textClass(item.colorScoreText)}>{item.unitPercent ? `${item.unitPercent}%` : ""}</span>,
-      item.letter || "",
+      item.unitPercent ? <b key="sc" className={`rp-pc ${textClass(item.colorScoreText)}`}>{item.unitPercent}%</b> : "",
+      item.letter ? <span key="l" className="rp-gr">{item.letter}</span> : "",
       item.teacherGradeStatus || "N",
       submitStatus ? (
-        <button
-          key="v"
-          type="button"
-          onClick={() => setHistoryItem(item)}
-          className="inline-flex items-center gap-1 text-primary hover:underline"
-        >
-          <Eye className="h-4 w-4" aria-hidden="true" />
+        <button key="v" type="button" onClick={() => setHistoryItem(item)} className="fbtn o">
           View
         </button>
       ) : (
         ""
       ),
       status === "SUBMITTED" ? (
-        <Check key="st" className="h-4 w-4 text-green-600" aria-label="Submitted" />
+        <span key="st" className="pv-ok">Submitted</span>
       ) : status === "EXCUSED" ? (
-        <span key="st" className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">Excused</span>
+        <span key="st" className="ex">Excused</span>
       ) : (
         ""
       ),
     ];
   };
 
+  const [strong, tint] = subjectColors(course.courseName, 0);
+  const teacher = String(course.teacherName ?? "").trim();
+
   return (
     <>
-      <Dialog open onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl">
-          <DialogHeader>
-            <DialogTitle>{course.courseName || "Course"}</DialogTitle>
-          </DialogHeader>
+      <PerfDialog title={course.courseName || "Course"} onClose={onClose} wide>
+        {isPending ? (
+          <p className="pop-msg">Loading…</p>
+        ) : !data ? (
+          <p className="pop-msg">The course details could not be loaded.</p>
+        ) : (
+          <>
+            <div className="rp-c pv-card" style={{ "--cc": strong, "--ct": tint, padding: 0, border: 0, animation: "none" }}>
+              <div className="rp-ch">
+                <span className="ic">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M3 5.5C5.5 4 8.5 4 12 6c3.5-2 6.5-2 9-.5V19c-2.5-1.5-5.5-1.5-9 .5-3.5-2-6.5-2-9-.5z" />
+                    <path d="M12 6v13.5" />
+                  </svg>
+                </span>
+                <div className="t">
+                  <small>COURSE</small>
+                  <b>{enrollment?.entity?.title || course.courseName || "N/A"}</b>
+                  {teacher && (
+                    <span>
+                      Teacher Name: <strong>{teacher}</strong>
+                    </span>
+                  )}
+                </div>
+                <div className="rp-chips">
+                  <span>{enrollment ? `${percent}%` : "N/A"}</span>
+                  {grades.letter && <span>Grade {grades.letter}</span>}
+                </div>
+              </div>
+            </div>
 
-          {isPending ? (
-            <p className="py-8 text-center text-black/50">Loading…</p>
-          ) : !data ? (
-            <p className="py-8 text-center text-black/50">The course details could not be loaded.</p>
-          ) : (
-            <div className="space-y-4 text-sm text-black">
-              <div className="space-y-1">
-                <p><b>Course:</b> {enrollment?.entity?.title || course.courseName || "N/A"}</p>
-                <p><b>Current Overall Score:</b> {enrollment ? `${percent}%` : "N/A"}</p>
-                <p><b>Current Overall Grade:</b> {grades.letter || "N/A"}</p>
-                <p><b>Duration:</b> {enrollment ? `${enrollment.startdate || "N/A"} - ${enrollment.enddate || "N/A"}` : "N/A"}</p>
+            <div className="rp-2 pop-sec">
+              <div className="rp-box pop-lead">
+                <p>
+                  <span>Current Overall Score:</span> <b>{enrollment ? `${percent}%` : "N/A"}</b>
+                </p>
+                <p>
+                  <span>Current Overall Grade:</span> <b>{grades.letter || "N/A"}</b>
+                </p>
+                <p>
+                  <span>Duration:</span> <b>{enrollment ? `${enrollment.startdate || "N/A"} - ${enrollment.enddate || "N/A"}` : "N/A"}</b>
+                </p>
               </div>
               {enrollment && (
-                <div className="space-y-1">
+                <div className="rp-box">
                   <ActivityProgress
                     label="gradable"
                     percent={grades.complete ?? 0}
@@ -149,61 +169,48 @@ export function ParentProgressDetailModal({ course, onClose }) {
                   <ActivityProgress label="all" percent={grades.completeall ?? 0} done={grades.completed ?? 0} total={grades.completable ?? 0} />
                 </div>
               )}
+            </div>
 
-              <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
-                {COUNT_TILES.map(([key, label]) => (
-                  <div key={key} className="rounded-lg border border-slate-200 p-2 text-center">
-                    <dd className="text-lg font-extrabold">{data[key] != null ? data[key] : 0}</dd>
-                    <dt className="text-[11px] text-black/60">{label}</dt>
-                  </div>
-                ))}
-              </dl>
+            <div className="pv-stats pop-counts">
+              {COUNT_TILES.map(([key, label]) => (
+                <div key={key} className="pv-st">
+                  <small>{label}</small>
+                  <b>{data[key] != null ? data[key] : 0}</b>
+                </div>
+              ))}
+            </div>
 
+            <div className="pop-sec">
               {items.length === 0 ? (
-                <p className="py-4 text-center text-black/50">No record found</p>
+                <p className="pop-msg">No record found</p>
               ) : (
-                <>
-                  <ul className="space-y-3 md:hidden">
-                    {items.map((item, index) => (
-                      <li key={item.itemid ?? index}>
-                        <ParentMobileTableCard
-                          rows={itemCells(item)
-                            .map((value, i) => ({ label: ITEM_HEADERS[i], value }))
-                            .filter(({ value }) => value !== "")}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="hidden overflow-x-auto md:block">
-                    <table className="w-full whitespace-nowrap border border-slate-200 text-left text-sm">
-                      <thead className="bg-primary text-white">
-                        <tr>
-                          {ITEM_HEADERS.map((header) => (
-                            <th key={header} className="px-3 py-2 font-normal">
-                              {header}
-                            </th>
+                <div className="ftw">
+                  <table className="ftbl rp-t pop-tbl">
+                    <thead>
+                      <tr>
+                        {ITEM_HEADERS.map((header) => (
+                          <th key={header}>{header}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((item, index) => (
+                        <tr key={item.itemid ?? index}>
+                          {itemCells(item).map((value, i) => (
+                            <td key={ITEM_HEADERS[i]} data-l={ITEM_HEADERS[i]} className={i === 0 ? "wr" : undefined}>
+                              {value}
+                            </td>
                           ))}
                         </tr>
-                      </thead>
-                      <tbody>
-                        {items.map((item, index) => (
-                          <tr key={item.itemid ?? index} className="border-b border-slate-200">
-                            {itemCells(item).map((value, i) => (
-                              <td key={ITEM_HEADERS[i]} className="px-3 py-2">
-                                {value}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </>
+        )}
+      </PerfDialog>
 
       {historyItem && (
         <ParentGradeHistoryModal

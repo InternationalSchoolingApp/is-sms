@@ -8,7 +8,8 @@ import { parentPost, parentSessionUserId } from "@/services/parentApiBase";
  * is not mapped to that parent (E004 "Unauthorized student access").
  *
  * The per-course Buzz detail and grade-history calls are the shared ones in services/dashboardApi.js
- * (getStudentProgressReportDetail / getProgressReportGradeHistory); they already take the student id as a parameter.
+ * (getStudentProgressReportDetail / getProgressReportGradeHistory); both take the child's id (studentUserId), which the
+ * backend checks against the signed-in parent.
  */
 
 /**

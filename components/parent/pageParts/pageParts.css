@@ -1,0 +1,7 @@
+/* Empty / loading row inside the reference table: plain text, not the bold cell style. */
+.pdash .ftbl td.pv-empty {
+  font-weight: 400;
+}
+.pdash .pg > span {
+  color: var(--mut);
+}

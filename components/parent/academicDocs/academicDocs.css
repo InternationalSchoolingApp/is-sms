@@ -1,0 +1,12 @@
+/* Weekly / Monthly / All switch in the reference's segmented-control look (no sliding thumb: the selected button is filled). */
+.pdash .dc-seg button[aria-selected="true"] {
+  background: var(--brand);
+  box-shadow: 0 8px 16px -10px rgba(2, 127, 254, 0.9);
+}
+.pdash .dc-dl:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.pdash .dc-dl {
+  cursor: pointer;
+}

@@ -6,7 +6,8 @@ import { useSession } from "@/components/providers/AuthSessionProvider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSchoolSettingsLinks } from "@/utils/schoolSettings";
 import { getDashboardChatLinks, getDashboardMenu, getStudentDashboardDetails, getStudentDemoData, getStudentMenuFlags } from "@/services/dashboardApi";
-import { applyStudentNavRules, mapBackendMenu } from "@/utils/dashboardNav";
+import { applyParentNavRules, applyStudentNavRules, mapBackendMenu } from "@/utils/dashboardNav";
+import { useParentGate } from "@/hooks/parent/useParentGate";
 import { viaTier1 } from "@/utils/dashboardBootstrap";
 import { bandFromStandardId, isHighDashboardOn, isK5LearningProgram, isMiddleDashboardOn, isPreKStandard, isSelfStudyProgram, normalizeGradeBand } from "@/utils/gradeBand";
 import { isDummyStudentMode } from "@/utils/paymentGatewayChecks";
@@ -196,8 +197,10 @@ function useResolveDashboardContext({ role = "student" } = {}) {
 
   // Before every other query: server actions run one at a time, and the shell waits for this one.
   const grade = useResolveGradeBand({ role, session, authenticated });
-  // The dashboard details' role id first; the sign-in's (SSO profile) when they have none, e.g. dummy mode.
-  const roleId = grade.roleId ?? session?.roleId ?? null;
+  // A parent has no grade band; its gate (get-students-by-parent) supplies the role id, children and LMS link.
+  const parent = useParentGate({ role, session, authenticated });
+  // The dashboard details' role id first; the sign-in's (SSO profile) when they have none, e.g. dummy mode; a parent's gate last.
+  const roleId = grade.roleId ?? session?.roleId ?? parent.roleId ?? null;
 
   // Dynamic menu (faithful Java sidebar) — the only source for the sidebar now.
   // For students, item-level visibility/labels are then adjusted to match
@@ -286,7 +289,7 @@ function useResolveDashboardContext({ role = "student" } = {}) {
         uniqueId: session.uniqueId,
         userRole: session.userRole ?? session.role ?? null,
         roleId,
-        userName: grade.demoStudentName || studentName,
+        userName: grade.demoStudentName || studentName || parent.name || null,
         // Demo account (USER.DEMO_USER) — pass to isDummyStudentMode() like legacy isDemoUser.
         demoUser: Boolean(session.demoUser),
         // The demo row picked at "view as user" (SSO hand-off); the demo-data request sends it as entityId.
@@ -296,7 +299,14 @@ function useResolveDashboardContext({ role = "student" } = {}) {
       }
     : null;
 
-  return { status, session, context, menu, menuLoading, menuSettled, logoUrl, logoSettled, schoolWebsite, ready, ...grade };
+  // For a parent the gate stands in for the grade band: it holds the shell's loader until it has settled, and
+  // supplies the role id, LMS link and children (parentChildren is [] for every other role).
+  const parentOverrides =
+    role === "parent"
+      ? { roleId, lmsProviderURL: parent.lmsProviderURL, gradeResolved: parent.resolved }
+      : {};
+
+  return { status, session, context, menu, menuLoading, menuSettled, logoUrl, logoSettled, schoolWebsite, ready, ...grade, ...parentOverrides, parentChildren: parent.children };
 }
 
 export function DashboardProvider({ role = "student", children }) {

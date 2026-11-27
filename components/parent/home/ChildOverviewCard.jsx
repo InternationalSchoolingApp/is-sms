@@ -2,110 +2,135 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowDown, ArrowUp, GraduationCap, Minus, TrendingDown, TrendingUp, Users } from "lucide-react";
+import { useState } from "react";
+import Image from "next/image";
 import { useSelectedChild } from "@/hooks/parent/useSelectedChild";
-import { ChildAvatar } from "@/components/parent/ChildAvatar";
+import { BLUE_DOODLES_HTML } from "@/components/parent/home/blueDoodles";
 import { dashboardNavHref } from "@/utils/dashboardNav";
 import { gradeFromPercentage, learningProgramLabel, monthLong } from "@/utils/parentHome";
 
-/**
- * The selected child's header and the four KPI tiles (legacy performance card): Courses, Classes & Activities
- * this month, Attendance, Performance. Each tile opens its module by pageLink (legacy hard-coded module ids).
- */
-export function ChildOverviewCard({ details }) {
-  const { school } = useParams();
+const ARROW = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M7 17 17 7M8 7h9v9" />
+  </svg>
+);
+
+// The child's photo, or their initial when there is none (or it fails to load): only an absolute http(s) URL is tried
+// and it is not run through the Next optimizer (any school CDN host), like ChildAvatar.
+function KavInner({ child }) {
+  const [failed, setFailed] = useState(false);
+  const pic = typeof child?.profilePic === "string" ? child.profilePic.trim() : "";
+  const name = String(child?.studentName ?? "").trim();
+  return /^https?:\/\//i.test(pic) && !failed ? (
+    <span>
+      <Image src={pic} alt="" width={42} height={42} unoptimized onError={() => setFailed(true)} />
+    </span>
+  ) : (
+    <span aria-hidden="true">{name ? name[0].toUpperCase() : "?"}</span>
+  );
+}
+
+/** The blue tile of the parent home (design board): the thank-you line and the child's photo, name, grade, program and last activity. */
+export function ChildBlueTile({ details }) {
   const { selectedChild } = useSelectedChild();
   const student = details?.student ?? {};
-  const summary = details?.summary ?? {};
-  const withClass = details?.activitiesWithClass !== false;
-  const now = new Date();
-  const monthYear = `${monthLong(now)} ${now.getFullYear()}`;
-  const href = (pageLink) => dashboardNavHref(school, "parent", pageLink);
-
-  const child = { studentName: student.studentName || selectedChild?.studentName, profilePic: student.profilePic || selectedChild?.profilePic };
+  const name = student.studentName || selectedChild?.studentName;
+  const child = { studentName: name, profilePic: student.profilePic || selectedChild?.profilePic };
   const program = learningProgramLabel(student.learningProgram);
 
-  // Legacy: a delta under 1 is shown as a red decline (so 0 to 0.9 reads as down). Kept for parity with the JSP.
-  const delta = Number(summary.attendanceDeltaFromLastMonth);
-  const deltaDown = !Number.isFinite(delta) || delta < 1;
-  const gradeNow = Number(summary.avgGradeThisMonth);
-  const gradeLast = Number(summary.avgGradeLastMonth);
-  const gradeTrend = gradeNow > gradeLast ? "up" : gradeNow < gradeLast ? "down" : "same";
-
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <ChildAvatar child={child} size={56} />
-          <div className="min-w-0">
-            <h2 className="truncate text-base font-extrabold text-black">{child.studentName}</h2>
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-black/60">
-              {student.grade && (
-                <span className="inline-flex items-center gap-1"><GraduationCap className="h-3.5 w-3.5" aria-hidden="true" />{student.grade}</span>
-              )}
-              {program && (
-                <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" aria-hidden="true" />{program}</span>
-              )}
-            </div>
-          </div>
-        </div>
-        <span className="inline-flex items-center gap-1.5 text-xs text-black/60">
-          <span className="h-2 w-2 rounded-full bg-slate-400" aria-hidden="true" />
-          Last active: {student.lastActive || "N/A"}
+    <section className="tile blue" aria-label="Your child">
+      {/* static design markup, not user input */}
+      <div className="doodles" aria-hidden="true" dangerouslySetInnerHTML={{ __html: BLUE_DOODLES_HTML }} />
+      <p className="thx">Thank you for standing strong in your child&apos;s journey.</p>
+      <div className="kidpill">
+        <span className="kav">
+          <KavInner child={child} />
         </span>
-      </div>
-
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Tile href={href("parent-syllabus-assigned-teacher")} value={summary.totalCourses ?? 0} label="Courses" tone="text-slate-600" />
-        <Tile
-          href={href("parent-class-schedule")}
-          value={summary.totalClassesThisMonth ?? 0}
-          label={`No. of ${withClass ? "Classes & " : ""}Activities ${monthYear}`}
-          tone="text-indigo-600"
-        />
-        <Tile
-          href={href("parent-attendance")}
-          value={`${Number.isFinite(Number(summary.attendancePercentThisMonth)) ? Number(summary.attendancePercentThisMonth) : 0}%`}
-          label="Attendance"
-          tone="text-emerald-600"
-          foot={
-            <span className="inline-flex items-center gap-1.5 text-xs text-black/60">
-              <span className={`flex h-5 w-5 items-center justify-center rounded-full ${deltaDown ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"}`}>
-                {deltaDown ? <TrendingDown className="h-3 w-3" aria-hidden="true" /> : <TrendingUp className="h-3 w-3" aria-hidden="true" />}
-              </span>
-              {Number.isFinite(delta) ? delta : 0}% {monthYear}
-            </span>
-          }
-        />
-        <Tile
-          href={href("parent-academic-performance")}
-          value={gradeFromPercentage(summary.avgGradeThisMonth)}
-          label="Performance"
-          tone="text-primary"
-          foot={
-            <span className="inline-flex items-center gap-1.5 text-xs text-black/60">
-              <span
-                className={`flex h-5 w-5 items-center justify-center rounded-full ${
-                  gradeTrend === "up" ? "bg-emerald-50 text-emerald-600" : gradeTrend === "down" ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-600"
-                }`}
-              >
-                {gradeTrend === "up" ? <ArrowUp className="h-3 w-3" aria-hidden="true" /> : gradeTrend === "down" ? <ArrowDown className="h-3 w-3" aria-hidden="true" /> : <Minus className="h-3 w-3" aria-hidden="true" />}
-              </span>
-              {gradeFromPercentage(summary.avgGradeThisMonth)} from {gradeFromPercentage(summary.avgGradeLastMonth)}
-            </span>
-          }
-        />
+        <div className="kp-t">
+          <b>{name}</b>
+          <span>
+            {[student.grade, program].filter(Boolean).join(" · ")}
+          </span>
+          <span className="kp-seen">
+            <i />
+            Last active: {student.lastActive || "N/A"}
+          </span>
+        </div>
       </div>
     </section>
   );
 }
 
-function Tile({ href, value, label, tone, foot }) {
+/** Attendance, Courses and Performance tiles (design board "trio"). Each opens its module by pageLink. */
+export function ChildKpiTrio({ details }) {
+  const { school } = useParams();
+  const summary = details?.summary ?? {};
+  const now = new Date();
+  const monthYear = `${monthLong(now)} ${now.getFullYear()}`;
+  const href = (pageLink) => dashboardNavHref(school, "parent", pageLink);
+
+  // Legacy: a delta under 1 is shown as a red decline (so 0 to 0.9 reads as down). Kept for parity with the JSP.
+  const delta = Number(summary.attendanceDeltaFromLastMonth);
+  const deltaDown = !Number.isFinite(delta) || delta < 1;
+  const attendance = Number.isFinite(Number(summary.attendancePercentThisMonth)) ? Number(summary.attendancePercentThisMonth) : 0;
+  const gradeNow = Number(summary.avgGradeThisMonth);
+  const gradeLast = Number(summary.avgGradeLastMonth);
+  const gaugePct = Number.isFinite(gradeNow) ? Math.max(0, Math.min(100, gradeNow)) : 0;
+
   return (
-    <Link href={href} className="block rounded-xl border border-slate-200 p-4 no-underline transition-colors hover:border-primary hover:bg-primary/5">
-      <span className={`block text-2xl font-extrabold ${tone}`}>{value}</span>
-      <span className="mt-1 block text-xs font-semibold text-black/70">{label}</span>
-      {foot && <span className="mt-2 block">{foot}</span>}
-    </Link>
+    <div className="trio">
+      <section className="tile num" style={{ animationDelay: ".05s" }}>
+        <span className="lab">Attendance</span>
+        <Link className="go lt" href={href("parent-attendance")} aria-label="Open attendance">
+          {ARROW}
+        </Link>
+        <b className="bl">{attendance}%</b>
+        <small className={deltaDown ? "dn" : "mu"} style={deltaDown ? undefined : { color: "var(--grn)" }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d={deltaDown ? "m3 7 6 6 4-4 8 8M21 11v6h-6" : "m3 17 6-6 4 4 8-8M21 13V7h-6"} />
+          </svg>
+          {Number.isFinite(delta) ? delta : 0}% {monthYear}
+        </small>
+      </section>
+      <section className="tile num" style={{ animationDelay: ".1s" }}>
+        <span className="lab">Courses</span>
+        <Link className="go lt" href={href("parent-syllabus-assigned-teacher")} aria-label="Open courses">
+          {ARROW}
+        </Link>
+        <b>{summary.totalCourses ?? 0}</b>
+        <small className="mu">Enrolled</small>
+      </section>
+      <section className="tile gauge" aria-labelledby="pd-gauge" style={{ animationDelay: ".15s" }}>
+        <span className="lab" id="pd-gauge">
+          Performance
+        </span>
+        <Link className="go" href={href("parent-academic-performance")} aria-label="Open academic performance">
+          {ARROW}
+        </Link>
+        <div className="gwrap">
+          <svg viewBox="0 0 220 124" aria-hidden="true">
+            <defs>
+              <linearGradient id="pd-gg" gradientUnits="userSpaceOnUse" x1="20" y1="0" x2="200" y2="0">
+                <stop offset="0" stopColor="#FF8A3D" />
+                <stop offset=".33" stopColor="#FFC531" />
+                <stop offset=".66" stopColor="#1F6BFF" />
+                <stop offset="1" stopColor="#1F8A4C" />
+              </linearGradient>
+            </defs>
+            <path className="garc bg" d="M20 112a90 90 0 0 1 180 0" />
+            <path className="garc fg" d="M20 112a90 90 0 0 1 180 0" style={{ stroke: "url(#pd-gg)", strokeDashoffset: 283 * (1 - gaugePct / 100) }} />
+          </svg>
+          <span className="gval">{gradeFromPercentage(summary.avgGradeThisMonth)}</span>
+        </div>
+        <div className="gfoot">
+          <span>D</span>
+          <span>A+</span>
+        </div>
+        <span className="gtrend">
+          {gradeNow > gradeLast ? "↑" : gradeNow < gradeLast ? "↓" : "→"} {gradeFromPercentage(summary.avgGradeThisMonth)} from {gradeFromPercentage(summary.avgGradeLastMonth)}
+        </span>
+      </section>
+    </div>
   );
 }

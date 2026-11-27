@@ -1,0 +1,689 @@
+/* Parent dashboard child picker: the "Mature" parent theme (design: Parents-Dashboard-Web/ParentsDashboard.html).
+   The parent dashboard has one theme for every child (no theme per child). */
+.theme {
+  --brand: #027ffe;
+  --acd: #0057b8;
+  --act: #e6f2ff;
+  --acl: #c7e1ff;
+  --ink: #1b2130;
+  --mut: #5b6577;
+  --line: #e3e7ed;
+  --soft: #f4f6f9;
+  --page: #f5f7fa;
+  --card: #ffffff;
+  min-height: 100%;
+  background: var(--page);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(135deg, #0a3a8c 0%, #0057d9 100%);
+  padding: 56px 24px 128px;
+  text-align: center;
+}
+/* box grid at the left and right edges, fading out towards the middle */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 22px 22px;
+  background-position: center top;
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, rgba(0, 0, 0, 0.6) 18%, transparent 38%, transparent 62%, rgba(0, 0, 0, 0.6) 82%, #000 100%);
+  mask-image: linear-gradient(90deg, #000 0%, rgba(0, 0, 0, 0.6) 18%, transparent 38%, transparent 62%, rgba(0, 0, 0, 0.6) 82%, #000 100%);
+}
+.heroIn {
+  position: relative;
+  z-index: 3;
+  max-width: 920px;
+  margin: 0 auto;
+}
+.heroIn > * {
+  animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+.heroIn > .ovl {
+  animation-delay: 0.1s;
+}
+.heroIn > .pills {
+  animation-delay: 0.15s;
+}
+.heroIn > h1 {
+  animation-delay: 0.25s;
+}
+.heroIn > p {
+  animation-delay: 0.35s;
+}
+.ovl {
+  display: none;
+}
+.pills {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.date {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.92);
+}
+.greet {
+  gap: 7px;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #7cc4ff;
+  animation: pulse 2.4s ease-out infinite;
+}
+.hero h1,
+.hero p {
+  text-shadow: 0 2px 24px rgba(4, 20, 60, 0.35);
+  text-wrap: balance;
+}
+.hero h1 {
+  margin: 18px 0 10px;
+  font-weight: 300;
+  font-size: 38px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+.hero h1 b {
+  font-weight: 500;
+}
+.hero p {
+  margin: 0;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.82);
+}
+.hero p b {
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Education doodles floating on the banner */
+.doodles {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.dd {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--s);
+  height: var(--s);
+  color: #fff;
+  opacity: var(--o, 0.22);
+  animation: ddFloat var(--t, 9s) ease-in-out infinite;
+  animation-delay: var(--dl, 0s);
+}
+.dd svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.spin svg {
+  animation: ddSpin 18s linear infinite;
+}
+
+/* ---------- Children ---------- */
+.main {
+  position: relative;
+  z-index: 2;
+  margin-top: -84px;
+  padding: 0 24px 64px;
+}
+.kids {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+}
+.kid {
+  position: relative;
+  width: 300px;
+  height: 100%;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  color: var(--ink);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 18px 40px -18px rgba(10, 35, 80, 0.22);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s, border-color 0.3s;
+  animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: var(--d);
+}
+.kid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 0%), rgba(2, 127, 254, 0.1), transparent 60%);
+}
+.kid:hover::after {
+  opacity: 1;
+}
+.kid:hover,
+.kid:focus-visible {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-6px);
+  border-color: var(--acl);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 28px 56px -20px rgba(2, 87, 184, 0.35);
+  outline: none;
+}
+.kid:focus-visible {
+  outline: 2px solid var(--acd);
+  outline-offset: 3px;
+}
+.band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 96px;
+  background: radial-gradient(160px 80px at 85% 0%, rgba(2, 127, 254, 0.18), transparent 70%),
+    linear-gradient(180deg, #eef5ff 0%, #f8fbff 100%);
+  border-bottom: 1px solid #edf2f9;
+}
+.band::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(2, 87, 184, 0.12) 1px, transparent 1.2px);
+  background-size: 14px 14px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 70%);
+  mask-image: linear-gradient(90deg, transparent, #000 70%);
+}
+.av {
+  position: relative;
+  margin-top: 40px;
+  width: 104px;
+  height: 104px;
+  flex: none;
+  border-radius: 50%;
+  padding: 4px;
+  transition: transform 0.3s;
+}
+.av::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 210deg, var(--brand), #7cc4ff, var(--acd), #eaf4ff, var(--brand));
+  animation: spinAll 8s linear infinite;
+}
+.kid:hover .av {
+  transform: scale(1.05);
+}
+.avIn {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  overflow: hidden;
+  background: var(--act);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--acd);
+  font-weight: 500;
+  font-size: 30px;
+}
+.avIn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.1);
+  display: block;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.kid:hover .avIn img {
+  transform: scale(1.2);
+}
+.body {
+  flex: 1;
+  padding: 16px 24px 0;
+}
+.name {
+  display: block;
+  margin: 0 0 10px;
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+.grade {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px 5px 10px;
+  border-radius: 999px;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.grade svg {
+  color: var(--brand);
+}
+.cta {
+  margin: 24px 20px 20px;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 46px;
+  border-radius: 12px;
+  background: var(--act);
+  color: var(--acd);
+  font-weight: 500;
+  font-size: 14px;
+  transition: background 0.25s, color 0.25s;
+}
+.cta svg,
+.go svg {
+  transition: transform 0.25s;
+}
+.kid:hover .cta,
+.kid:focus-visible .cta {
+  background: var(--brand);
+  color: #fff;
+}
+.kid:hover .cta svg,
+.kid:focus-visible .cta svg {
+  transform: translateX(4px);
+}
+.go {
+  display: none;
+}
+
+/* Enroll another child */
+.more {
+  position: relative;
+  overflow: hidden;
+  max-width: 948px;
+  margin: 32px auto 0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 22px 24px 22px 22px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: linear-gradient(100deg, #ffffff 50%, #eef5ff 100%);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 12px 32px -20px rgba(10, 35, 80, 0.25);
+  animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: var(--d, 700ms);
+}
+.more::after {
+  content: "";
+  position: absolute;
+  right: -70px;
+  top: 50%;
+  width: 240px;
+  height: 240px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 56px, rgba(2, 127, 254, 0.08) 57px, transparent 58px, transparent 86px,
+    rgba(2, 127, 254, 0.07) 87px, transparent 88px, transparent 116px, rgba(2, 127, 254, 0.06) 117px, transparent 118px);
+  pointer-events: none;
+}
+.moreIc {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--act);
+  color: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.moreIc svg {
+  animation: bob 3.6s ease-in-out infinite;
+}
+.moreT {
+  flex: 1;
+  min-width: 0;
+}
+.moreT h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.moreT p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--mut);
+}
+.moreBtn {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 22px;
+  border-radius: 12px;
+  border: 0;
+  background: var(--brand);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 8px 18px -8px rgba(2, 127, 254, 0.6);
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.moreBtn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 40%;
+  transform: skewX(-20deg);
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.38), transparent);
+  animation: shine 4.5s ease-in-out 1.8s infinite;
+}
+.moreBtn svg {
+  transition: transform 0.3s;
+}
+.moreBtn:hover:not(:disabled) svg.plus {
+  transform: rotate(90deg);
+}
+.moreBtn:hover:not(:disabled) {
+  background: var(--acd);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px -10px rgba(2, 87, 184, 0.7);
+}
+.moreBtn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+.moreBtn:focus-visible {
+  outline: 2px solid var(--acd);
+  outline-offset: 3px;
+}
+
+/* No children linked */
+.empty {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 32px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 18px 40px -18px rgba(10, 35, 80, 0.22);
+}
+.empty h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 500;
+}
+.empty p {
+  margin: 0;
+  color: var(--mut);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(124, 196, 255, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(124, 196, 255, 0);
+  }
+}
+@keyframes spinAll {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes ddFloat {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(var(--r, 0deg));
+  }
+  25% {
+    transform: translate(10px, -14px) rotate(calc(var(--r, 0deg) + 6deg));
+  }
+  50% {
+    transform: translate(-6px, -24px) rotate(calc(var(--r, 0deg) - 4deg));
+  }
+  75% {
+    transform: translate(-12px, -8px) rotate(calc(var(--r, 0deg) + 3deg));
+  }
+}
+@keyframes ddSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+@keyframes shine {
+  0% {
+    left: -60%;
+  }
+  22%,
+  100% {
+    left: 130%;
+  }
+}
+
+/* ---------- Phone ---------- */
+@media (max-width: 640px) {
+  .dd {
+    opacity: calc(var(--o, 0.22) * 0.7);
+  }
+  .hidePhone {
+    display: none;
+  }
+  .hero {
+    padding: 32px 20px 96px;
+  }
+  .heroIn {
+    max-width: none;
+  }
+  .ovl {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #9fd0ff;
+    margin-bottom: 10px;
+  }
+  .date:not(.greet) {
+    display: none;
+  }
+  .pills {
+    margin-bottom: 12px;
+  }
+  .hero h1 {
+    font-size: 26px;
+    margin: 0 0 8px;
+  }
+  .hero p {
+    font-size: 14px;
+  }
+
+  .main {
+    margin-top: -64px;
+    padding: 0 16px 32px;
+  }
+  .kids {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .kids > li {
+    width: 100%;
+  }
+  .kid {
+    width: 100%;
+    flex-direction: row;
+    text-align: left;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    border-radius: 16px;
+  }
+  .kid:hover,
+  .kid:focus-visible {
+    transform: translateY(-2px);
+  }
+  .band,
+  .cta {
+    display: none;
+  }
+  .av {
+    margin: 0;
+    width: 64px;
+    height: 64px;
+    padding: 3px;
+  }
+  .avIn {
+    border-width: 3px;
+    font-size: 20px;
+  }
+  .body {
+    padding: 0;
+    flex: 1;
+    min-width: 0;
+  }
+  .name {
+    font-size: 16px;
+    margin: 0 0 6px;
+  }
+  .grade {
+    font-size: 12px;
+    padding: 3px 10px 3px 8px;
+  }
+  .go {
+    display: flex;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--act);
+    color: var(--acd);
+    align-items: center;
+    justify-content: center;
+    transition: background 0.25s, color 0.25s;
+  }
+  .kid:hover .go {
+    background: var(--brand);
+    color: #fff;
+  }
+
+  .more {
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 20px;
+    padding: 18px;
+    border-radius: 16px;
+    align-items: flex-start;
+    background: linear-gradient(160deg, #ffffff 45%, #eef5ff 100%);
+  }
+  .more::after {
+    right: -110px;
+    top: 20px;
+    transform: none;
+  }
+  .moreIc {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+  }
+  .moreIc svg {
+    width: 22px;
+    height: 22px;
+  }
+  .moreT h3 {
+    font-size: 16px;
+  }
+  .moreT p {
+    font-size: 13px;
+  }
+  .moreBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme *,
+  .theme *::before,
+  .theme *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

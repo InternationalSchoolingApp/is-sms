@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Smartphone, UserRound } from "lucide-react";
+import { Smartphone } from "lucide-react";
 import { ParentAppInstallPrompt } from "@/components/parent/profile/ParentAppInstallPrompt";
 import { ParentProfileDetails } from "@/components/parent/profile/ParentProfileDetails";
 import { ParentWithdrawal } from "@/components/parent/profile/ParentWithdrawal";
@@ -15,26 +15,26 @@ export function ParentProfile() {
   const [view, setView] = useState("profile"); // profile | withdrawal
   const [appOpen, setAppOpen] = useState(false);
 
+  const withdrawal = view === "withdrawal";
+
   return (
-    <div className="mx-auto w-full max-w-7xl">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
-        <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <UserRound className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <h1 className="text-lg font-bold text-black sm:text-xl">{view === "withdrawal" ? "Withdrawal Request" : "Profile"}</h1>
+    <section className="sch on" aria-label="My profile">
+      <div className="sc-hero">
+        <div>
+          <h2>{withdrawal ? "Withdrawal Request" : "My Profile"}</h2>
+          <p>{withdrawal ? "Request a withdrawal for your child." : "Your own details, kept up to date."}</p>
         </div>
-        {view === "profile" && (
-          <button type="button" onClick={() => setAppOpen(true)} className="inline-flex items-center gap-1.5 rounded-full border border-primary px-4 py-1.5 text-sm font-semibold text-primary hover:bg-primary/5">
+        {!withdrawal && (
+          <button type="button" onClick={() => setAppOpen(true)} className="inline-flex h-[42px] items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-[var(--brand)] shadow-sm hover:bg-white/90">
             <Smartphone className="h-4 w-4" aria-hidden="true" />
             Get App
           </button>
         )}
       </div>
 
-      {view === "withdrawal" ? <ParentWithdrawal onBack={() => setView("profile")} /> : <ParentProfileDetails onWithdrawal={() => setView("withdrawal")} />}
+      {withdrawal ? <ParentWithdrawal onBack={() => setView("profile")} /> : <ParentProfileDetails onWithdrawal={() => setView("withdrawal")} />}
 
       <ParentAppInstallPrompt open={appOpen} onClose={() => setAppOpen(false)} />
-    </div>
+    </section>
   );
 }

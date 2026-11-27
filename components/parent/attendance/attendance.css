@@ -1,0 +1,24 @@
+/* Attendance extras that the reference theme does not cover (Today's Session tiles, 12-month bars). */
+.pdash .at-bars12{grid-template-columns:repeat(12,minmax(0,1fr));gap:8px}
+.pdash .at-mon12{grid-template-columns:repeat(12,minmax(0,1fr));gap:8px}
+.pdash .pv-bar{cursor:default}
+.pdash .at-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pdash .at-hd .fbtn{height:36px;padding:0 16px;font-size:13px}
+.pdash .at-ses{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin:0;padding:0;list-style:none}
+.pdash .at-ses li{min-width:0}
+.pdash .at-ses a{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1.5px solid var(--line);border-radius:18px;text-decoration:none;color:#000;transition:transform .2s,box-shadow .2s}
+.pdash .at-ses a:hover{transform:translateY(-2px);box-shadow:0 14px 26px -20px rgba(16,40,90,.5)}
+.pdash .at-ses .ic{flex:none;width:44px;height:44px;border-radius:14px;background:var(--act);object-fit:cover}
+.pdash .at-ses .tx{min-width:0;flex:1}
+.pdash .at-ses .tx b{display:block;font-size:14px;font-weight:700;color:#000;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pdash .at-ses .tx span{display:block;font-size:12px;color:var(--mut)}
+.pdash .at-badge{flex:none;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;color:#000;white-space:nowrap}
+.pdash .at-badge.live{background:#E2F3E6}
+.pdash .at-badge.danger{background:#FDE6E8}
+.pdash .at-badge.muted{background:var(--soft)}
+.pdash .at-badge.warning{background:#FFF2CC}
+.pdash .at-skel{height:56px;border-radius:18px;background:var(--soft);animation:at-pulse 1.6s ease-in-out infinite}
+.pdash .at-load{display:block;border-radius:24px;background:var(--soft);animation:at-pulse 1.6s ease-in-out infinite}
+@keyframes at-pulse{50%{opacity:.5}}
+/* theme bug: `.pdash .sub` (side-menu sub list) hides the cards' subtitles; restore them */
+.pdash .pv-card .sub{display:block}

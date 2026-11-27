@@ -1,0 +1,35 @@
+/* Academic Performance extras that the reference theme does not cover, plus the course dialogs in the same card language.
+   The dialogs are portaled outside the page, so they wrap their content in its own .pdash root. */
+.pdash .pf-more{margin-top:16px}
+.pdash .pf-grade{font-size:13px;font-weight:700;color:#000;margin-top:2px}
+.pdash.pdash-pop{min-height:0;display:block;background:#fff;border-radius:24px;padding:20px 22px;font-size:14px}
+.pdash.pdash-pop .pop-title{margin:0 0 14px;padding-right:36px;font-size:22px;font-weight:700;line-height:1.2;letter-spacing:-.01em;color:#000}
+.pdash .pop-counts{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:14px}
+.pdash .pop-counts .pv-st{padding:10px 14px;border-radius:16px;flex-direction:column;align-items:flex-start;gap:0}
+.pdash .pop-counts .pv-st b{font-size:22px}
+.pdash .pop-counts .pv-st small{font-size:12px}
+.pdash .pop-sec{margin-top:16px}
+.pdash .pop-lead p{margin:0;padding:10px 14px;font-size:13px;color:#000;border-top:1px solid var(--line)}
+.pdash .pop-lead p:first-child{border-top:0}
+.pdash .pop-lead p span{color:var(--mut);font-weight:600}
+.pdash .pop-lead p b{font-weight:700}
+.pdash .pop-prog{padding:12px 14px 4px}
+.pdash .pop-prog+.pop-prog{border-top:1px solid var(--line)}
+.pdash .pop-prog p{margin:0;padding:0;border:0;font-size:13px;color:#000}
+.pdash .pop-prog .rp-bar{margin:6px 0 8px}
+.pdash .pop-tbl td .fbtn{height:34px;padding:0 16px;font-size:13px}
+.pdash .pop-tbl td .ex{display:inline-flex;height:24px;align-items:center;padding:0 10px;border-radius:999px;background:#FFF2CC;font-size:12px;font-weight:700}
+.pdash .pop-tbl th{white-space:normal;line-height:1.25}
+.pdash .pop-tbl td.wr{white-space:normal;min-width:170px}
+.pdash .pop-msg{padding:28px 12px;text-align:center;color:var(--mut);font-size:14px}
+.pdash .pf-skel{border-radius:20px;background:var(--soft);animation:pf-pulse 1.6s ease-in-out infinite}
+.pdash .pf-nogo{cursor:default}
+.pdash .pf-nogo:hover{transform:none;box-shadow:none}
+@keyframes pf-pulse{50%{opacity:.5}}
+@media (max-width:760px){
+  .pdash.pdash-pop{padding:16px 14px;border-radius:20px}
+  .pdash .pop-tbl td:empty{display:none}
+  .pdash .pop-tbl td.wr{min-width:0}
+}
+/* theme bug: `.pdash .sub` (side-menu sub list) hides the cards' subtitles; restore them */
+.pdash .pv-card .sub{display:block}

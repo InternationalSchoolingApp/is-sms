@@ -1,25 +1,18 @@
 "use client";
 
-import dynamic from "next/dynamic";
-
-// ApexCharts touches `window` on import, so it only loads in the browser.
-const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
-
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const PRESENT = "#16a34a";
-const NO_CLASSES = "#e3e8e6";
-// Present / Late / Absent. Early Leave stays hidden, as in the legacy widget (product decision). Every slice is
-// also labelled with its name and count, so colour is never the only signal.
+// Present / Late / Absent, in the design's colours. Early Leave stays hidden, as in the legacy widget (product decision).
+// Every slice is also labelled with its name and count, so colour is never the only signal.
 const SUMMARY = [
-  { key: "classesAttended", label: "Present", color: PRESENT },
-  { key: "late", label: "Late", color: "#d97706" },
-  { key: "absent", label: "Absent", color: "#e11d48" },
+  { key: "classesAttended", label: "Present", color: "#13802B" },
+  { key: "late", label: "Late", color: "#FFB020" },
+  { key: "absent", label: "Absent", color: "#D21F4C" },
 ];
+const RADIUS = 52;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-const esc = (value) => String(value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-
-/** Attendance % per month of `year` (legacy "Performance Overview" bars). A month with no class held is grey, not 0%. */
-export function MonthlyChart({ months, year }) {
+/** Attendance % per month of `year` as the design's bars. A month with no class held is a grey stub, not 0%. */
+export function MonthlyChart({ months, year, currentMonthIndex }) {
   const byLabel = Object.fromEntries(
     months.filter((m) => String(m?.monthKey ?? "").startsWith(String(year))).map((m) => [m.monthLabel, m]),
   );
@@ -28,72 +21,79 @@ export function MonthlyChart({ months, year }) {
     return month && month.totalClassesHeld > 0 ? Number(month.attendancePercent) || 0 : null;
   });
 
-  const options = {
-    chart: { type: "bar", toolbar: { show: false }, fontFamily: "inherit" },
-    plotOptions: { bar: { columnWidth: "45%", borderRadius: 4, borderRadiusApplication: "end", distributed: true } },
-    colors: values.map((v) => (v === null ? NO_CLASSES : PRESENT)),
-    legend: { show: false },
-    dataLabels: { enabled: false },
-    xaxis: { categories: MONTHS, axisBorder: { show: false }, axisTicks: { show: false } },
-    yaxis: { min: 0, max: 100, tickAmount: 4, labels: { formatter: (v) => `${v}%` } },
-    grid: { borderColor: "#e5e7eb", strokeDashArray: 4 },
-    states: { hover: { filter: { type: "darken", value: 0.9 } } },
-    tooltip: {
-      custom: ({ dataPointIndex }) => {
-        const value = values[dataPointIndex];
-        if (value === null) return "";
-        const month = byLabel[MONTHS[dataPointIndex]];
-        return `<div style="padding:8px 12px;text-align:center;min-width:140px">
-          <div style="font-size:18px;font-weight:700;color:#111">${esc(value)}%</div>
-          <div style="font-size:12px;color:#444">${esc(month.attendedClasses ?? 0)} of ${esc(month.totalClassesHeld)} classes attended</div>
-          <div style="font-size:12px;color:#666">${MONTHS[dataPointIndex]} ${esc(year)}</div>
-        </div>`;
-      },
-    },
-  };
-
-  return <Chart type="bar" height={320} options={options} series={[{ name: "Attendance", data: values }]} />;
+  return (
+    <>
+      <div className="pv-bars at-bars12" role="img" aria-label={`Attendance per month of ${year}`}>
+        {values.map((value, i) => {
+          const month = byLabel[MONTHS[i]];
+          const title = value === null ? `${MONTHS[i]} ${year}: no classes held` : `${MONTHS[i]} ${year}: ${month.attendedClasses ?? 0} of ${month.totalClassesHeld} classes attended`;
+          return (
+            <div
+              key={MONTHS[i]}
+              className={`pv-bar${value === null ? " no" : i === currentMonthIndex ? " cur" : ""}`}
+              style={{ height: `${value === null ? 3 : value * 0.86}%` }}
+              title={title}
+            >
+              {value !== null && <span>{value}%</span>}
+            </div>
+          );
+        })}
+      </div>
+      <div className="pv-mon at-mon12">
+        {MONTHS.map((label, i) => (
+          <span key={label} className={values[i] === null ? "no" : undefined}>
+            {label}
+          </span>
+        ))}
+      </div>
+    </>
+  );
 }
 
-/** This month's Present / Late / Absent breakdown (legacy "Monthly Summary" radial chart plus a legend list). */
+/** This month's Present / Late / Absent breakdown: the design's ring plus its legend. */
 export function SummaryChart({ summary }) {
   const held = Number(summary.totalClassesHeldThisMonth) || 0;
   const counts = SUMMARY.map((s) => Number(summary[s.key]) || 0);
-  const percents = counts.map((count) => (held > 0 ? Number(((count / held) * 100).toFixed(1)) : 0));
-
-  const options = {
-    chart: { type: "radialBar", fontFamily: "inherit" },
-    plotOptions: {
-      radialBar: {
-        startAngle: 0,
-        endAngle: 270,
-        hollow: { margin: 5, size: "30%", background: "transparent" },
-        dataLabels: { name: { show: false }, value: { show: false } },
-        barLabels: { enabled: true, useSeriesColors: false, offsetX: -8, fontSize: "14px", formatter: (name, opts) => `${name}: ${counts[opts.seriesIndex]}` },
-      },
-    },
-    colors: SUMMARY.map((s) => s.color),
-    labels: SUMMARY.map((s) => s.label),
-    tooltip: { enabled: false },
-  };
+  const lengths = counts.map((count) => (held > 0 ? Math.min(CIRCUMFERENCE, (count / held) * CIRCUMFERENCE) : 0));
+  const arcs = SUMMARY.map((s, i) => ({ ...s, length: lengths[i], offset: lengths.slice(0, i).reduce((a, b) => a + b, 0) }));
 
   return (
-    <>
-      <Chart type="radialBar" height={320} options={options} series={percents} />
-      <ul className="mt-2 space-y-1 text-sm text-black">
+    <div className="pv-don">
+      <svg width="130" height="130" viewBox="0 0 130 130" role="img" aria-label={`${held} classes held this month`}>
+        <circle cx="65" cy="65" r={RADIUS} fill="none" stroke="#E2F3E6" strokeWidth="16" />
+        {arcs.map(
+          (arc) =>
+            arc.length > 0 && (
+              <circle
+                key={arc.key}
+                cx="65"
+                cy="65"
+                r={RADIUS}
+                fill="none"
+                stroke={arc.color}
+                strokeWidth="16"
+                strokeDasharray={`${arc.length} ${CIRCUMFERENCE - arc.length}`}
+                strokeDashoffset={-arc.offset}
+                transform="rotate(-90 65 65)"
+              />
+            ),
+        )}
+        <text x="65" y="62" textAnchor="middle" fontSize="26" fontWeight="700" fill="#000">
+          {held}
+        </text>
+        <text x="65" y="82" textAnchor="middle" fontSize="12" fill="#6B7280">
+          classes
+        </text>
+      </svg>
+      <div className="pv-leg">
         {SUMMARY.map((s, i) => (
-          <li key={s.key} className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-sm" style={{ background: s.color }} aria-hidden="true" />
-            <span className="flex-1">{s.label}</span>
-            <span className="font-semibold">{counts[i]}</span>
-            <span className="w-14 text-right text-black/60">{percents[i]}%</span>
-          </li>
+          <div key={s.key}>
+            <i style={{ background: s.color }} />
+            {s.label}
+            <b>{counts[i]}</b>
+          </div>
         ))}
-        <li className="flex justify-between border-t border-slate-200 pt-1 text-black/60">
-          <span>Classes held this month</span>
-          <span className="font-semibold text-black">{held}</span>
-        </li>
-      </ul>
-    </>
+      </div>
+    </div>
   );
 }

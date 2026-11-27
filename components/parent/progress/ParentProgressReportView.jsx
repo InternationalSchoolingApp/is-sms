@@ -2,23 +2,23 @@
 
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { ArrowLeft, CalendarDays, Landmark } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { differenceInCalendarDays, format, isValid, parse } from "date-fns";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useParentGradebookReport } from "@/hooks/parent/useParentGradebookReport";
 import { resolveBackendOrigin } from "@/utils/backendOrigin";
-import { ParentMobileTableCard } from "@/components/parent/common/ParentMobileTableCard";
 import { parseReportUrl } from "@/components/parent/progress/reportPayload";
 import { OptimizedImage } from "@/components/common/OptimizedImage";
+import "@/components/parent/progress/progress.css";
 
 // Backend static assets (legacy PATH_FOLDER_IMAGE2).
 const assetUrl = (file) => `${resolveBackendOrigin()}/static/theme2/images/${file}`;
 
 // Legacy item.colorScoreText is a Bootstrap class pair.
 const SCORE_CLASS = {
-  "bg-danger text-white": "bg-[#dc3545] text-white",
-  "bg-warning text-white": "bg-[#ffc107] text-white",
+  "bg-danger text-white": "rp-bad",
+  "bg-warning text-white": "rp-warn",
 };
 
 const GRADING_SYSTEM = [
@@ -31,10 +31,10 @@ const GRADING_SYSTEM = [
   ["C+", "76-78"],
   ["C", "73-75"],
   ["C-", "69-72"],
-  ["D+", "66-68", "bg-[#ffc107]"],
-  ["D", "63-65", "bg-[#ffc107]"],
-  ["D-", "60-62", "bg-[#ffc107]"],
-  ["F", "Below 60", "bg-[#dc3545] text-white"],
+  ["D+", "66-68"],
+  ["D", "63-65"],
+  ["D-", "60-62"],
+  ["F", "Below 60"],
 ];
 
 // Backend dates are mm-dd-yyyy; the DatePicker works with Date objects.
@@ -45,186 +45,123 @@ const toDate = (value) => {
 };
 const orNA = (value) => (value === undefined || value === null || value === "" ? "N/A" : value);
 
-function DetailRows({ rows }) {
-  return (
-    <table className="w-full border border-[#6fb0f1] text-left text-sm">
-      <tbody>
-        {rows.map(([label, value], index) => (
-          <tr key={label} className={index % 2 ? "bg-white" : "bg-[#f5fafc]"}>
-            <td className="border border-[#6fb0f1] px-2 py-2">
-              <span className="font-bold">{label}: </span>
-              {value}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
+const svgProps = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" };
+const DATE_FIELD = "!rounded-xl !border-[1.5px] !border-[color:var(--line)] !bg-[var(--soft)]";
 
-function EnrollmentReport({ enrollment, report, logoUrl }) {
+function EnrollmentReport({ enrollment, report }) {
   const grades = enrollment.grades ?? {};
   const items = (grades.items?.item ?? []).filter((item) => item.unitTitle);
   const showModule = !grades.unitStatus;
+  const completion = Number.parseFloat(grades.complete);
+  const teacher = enrollment.teacherName;
 
   return (
-    <div className="mb-6">
-      <div className="bg-[#fafdff] p-3">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            {logoUrl && (
-              <OptimizedImage src={logoUrl} alt="School logo" width={300} height={80} sizes="(max-width: 768px) 100vw, 300px" className="mb-6 h-auto w-full max-w-[300px]" />
-            )}
-            <DetailRows
-              rows={[
-                ["Student Name", report.studentName],
-                ["Grade", report.standardName],
-                ["Course", enrollment.entity?.title],
-              ]}
-            />
-          </div>
-          <div className="space-y-4">
-            <DetailRows
-              rows={[
-                ["Academic Year Start Date", enrollment.startdate],
-                ["Academic Year End Date", enrollment.enddate],
-              ]}
-            />
-            <DetailRows
-              rows={[
-                ["Student ID", report.rollNumber],
-                ["Country", report.country],
-                ["Teacher Name", orNA(enrollment.teacherName)],
-              ]}
-            />
-          </div>
+    <div className="pv-card rp-c" style={{ "--cc": "#027FFE", "--ct": "#E8F3FF" }}>
+      <div className="rp-ch">
+        <span className="ic">
+          <svg width="24" height="24" {...svgProps}>
+            <path d="M3 5.5C5.5 4 8.5 4 12 6c3.5-2 6.5-2 9-.5V19c-2.5-1.5-5.5-1.5-9 .5-3.5-2-6.5-2-9-.5z" />
+            <path d="M12 6v13.5" />
+          </svg>
+        </span>
+        <div className="t">
+          <small>COURSE</small>
+          <b>{orNA(enrollment.entity?.title)}</b>
+          <span>
+            Teacher Name: <strong>{orNA(teacher)}</strong>
+          </span>
         </div>
-        <div className="mt-2 text-center">
-          <h3 className="text-lg font-bold uppercase text-[#007fff] sm:text-[30px] sm:leading-tight">
-            Detailed Student Grading Report
-          </h3>
-          <h4 className="text-base font-bold uppercase sm:text-2xl">
-            Duration: {report.reportStartDate} - {report.reportEndDate}
-          </h4>
-        </div>
+        {report.standardName && (
+          <div className="rp-chips">
+            <span>{report.standardName}</span>
+          </div>
+        )}
       </div>
+      <h4>DETAILED STUDENT GRADING REPORT</h4>
+      <p className="rp-dur">
+        DURATION: {report.reportStartDate} - {report.reportEndDate}
+      </p>
 
-      {/* Mobile: one card per activity (column title beside each value) instead of the 8-column table. */}
-      <ul className="mt-4 space-y-3 md:hidden">
-        {items.map((item, index) => {
-          const scoreClass = SCORE_CLASS[item.colorScoreText] ?? "";
-          return (
-            <li key={item.itemid || index}>
-              <ParentMobileTableCard
-                labelClassName="bg-[#f5fafc] font-semibold text-black"
-                rows={[
-                  showModule && { label: "Module | Activity", value: item.unit },
-                  { label: "Type", value: item.unitType },
-                  { label: "Activity Name", value: item.unitTitle },
-                  { label: "Time Spent (hh:mm:ss)", value: orNA(item.unitTimeSpent) },
-                  { label: "Target Due Date", value: orNA(item.duedate) },
-                  { label: "Submitted Date (hh:mm:ss)", value: orNA(item.submitteddate) },
-                  { label: "Percentage", value: orNA(item.unitPercent), className: scoreClass },
-                  { label: "Grade", value: orNA(item.letter), className: scoreClass },
-                ].filter(Boolean)}
-              />
-            </li>
-          );
-        })}
-      </ul>
-
-      <div className="mt-4 hidden overflow-x-auto md:block">
-        <table className="w-full min-w-[980px] border border-[#6fb0f1] text-center text-sm">
+      <div className="ftw">
+        <table className="ftbl rp-t">
           <thead>
             <tr>
-              {showModule && (
-                <th className="border border-[#6fb0f1] p-1 align-middle">
-                  Module | <span className="text-[#17a2b8]">Activity</span>
-                </th>
-              )}
-              <th className="border border-[#6fb0f1] p-1 align-middle">Type</th>
-              <th className="border border-[#6fb0f1] p-1 align-middle">Activity Name</th>
-              <th className="border border-[#6fb0f1] p-1 align-middle">
-                Time Spent
-                <br />
-                (hh:mm:ss)
-              </th>
-              <th className="border border-[#6fb0f1] p-1 align-middle">Target Due Date</th>
-              <th className="border border-[#6fb0f1] p-1 align-middle">
-                Submitted Date
-                <br />
-                (hh:mm:ss)
-              </th>
-              <th className="border border-[#6fb0f1] p-1 align-middle">Percentage</th>
-              <th className="border border-[#6fb0f1] p-1 align-middle">Grade</th>
+              {showModule && <th>Module | Activity</th>}
+              <th>Type</th>
+              <th>Activity Name</th>
+              <th>Time Spent (hh:mm:ss)</th>
+              <th>Target Due Date</th>
+              <th>Submitted Date (hh:mm:ss)</th>
+              <th>Percentage</th>
+              <th>Grade</th>
             </tr>
           </thead>
           <tbody>
             {items.map((item, index) => {
               const scoreClass = SCORE_CLASS[item.colorScoreText] ?? "";
               return (
-                <tr key={item.itemid || index} className={index % 2 ? "bg-white" : "bg-[#f5fafc]"}>
-                  {showModule && <td className="border border-[#cdcdcd] p-2">{item.unit}</td>}
-                  <td className="border border-[#cdcdcd] p-2">{item.unitType}</td>
-                  <td className="border border-[#cdcdcd] p-2 text-left">{item.unitTitle}</td>
-                  <td className="border border-[#cdcdcd] p-2">{orNA(item.unitTimeSpent)}</td>
-                  <td className="border border-[#cdcdcd] p-2">{orNA(item.duedate)}</td>
-                  <td className="border border-[#cdcdcd] p-2">{orNA(item.submitteddate)}</td>
-                  <td className={`border border-[#cdcdcd] p-2 ${scoreClass}`}>{orNA(item.unitPercent)}</td>
-                  <td className={`border border-[#cdcdcd] p-2 ${scoreClass}`}>{orNA(item.letter)}</td>
+                <tr key={item.itemid || index}>
+                  {showModule && <td data-l="Module | Activity">{item.unit}</td>}
+                  <td data-l="Type">{item.unitType ? <span className="pv-tag">{item.unitType}</span> : "N/A"}</td>
+                  <td data-l="Activity Name">{item.unitTitle}</td>
+                  <td data-l="Time Spent">
+                    <span className="dc-id">{orNA(item.unitTimeSpent)}</span>
+                  </td>
+                  <td data-l="Target Due Date">{orNA(item.duedate)}</td>
+                  <td data-l="Submitted Date">{orNA(item.submitteddate)}</td>
+                  <td data-l="Percentage">
+                    <b className={`rp-pc ${scoreClass}`}>{orNA(item.unitPercent)}</b>
+                  </td>
+                  <td data-l="Grade">
+                    <span className={`rp-gr ${scoreClass}`}>{orNA(item.letter)}</span>
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
-      <p className="mt-1 text-left font-bold">*N/A - Not Available</p>
+      <p className="rp-na">*N/A - Not Available</p>
 
-      <div className="mt-3 grid gap-4 md:grid-cols-[1fr_auto]">
-        <table className="w-full border border-[#6fb0f1] text-center text-sm sm:text-lg">
-          <tbody>
-            {[
-              ["Total Activity Time", orNA(grades.totalDays)],
-              ["Number of Activities - Submitted & Graded", grades.submiteActivityGrade],
-              ["Number of Activities - Waiting for the Grade", grades.activityWaitingForGrade],
-              ["Number of Activities - Not Submitted", grades.activityNotSubmited],
-            ].map(([label, value]) => (
-              <tr key={label}>
-                <td className="border border-[#6fb0f1] p-2">
-                  {label}: <b>{value}</b>
-                </td>
-              </tr>
-            ))}
-            <tr>
-              <td className="border border-[#6fb0f1] p-2">
-                Last Submission Date: <b>{orNA(grades.lastSubmissionDate)}</b> | Activity Name:{" "}
-                <b>{orNA(grades.lastsubmissionName)}</b>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <table className="h-fit w-full border border-[#6fb0f1] text-left text-sm sm:text-base md:w-auto">
-          <tbody>
-            {[
-              ["Course Grade", grades.letter],
-              ["Current Overall Percentage", grades.percentage],
-              report.subReportType === "weekly" && ["Current Week Percentage", grades.percentWeekly],
-              ["Course Completion Percentage", grades.complete],
-            ]
-              .filter(Boolean)
-              .map(([label, value], index) => (
-                <tr key={label} className={index % 2 ? "bg-white" : "bg-[#f5fafc]"}>
-                  <td className="border border-[#6fb0f1] p-2 text-right font-bold">{label}:</td>
-                  <td className="border border-[#6fb0f1] p-2">{value}</td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="mt-6 space-y-1">
-        <div className="-skew-x-[30deg] border-b-2 border-dashed border-[#91c8ff]" />
-        <div className="-skew-x-[30deg] border-b-2 border-dashed border-[#91c8ff]" />
+      <div className="rp-sum">
+        <div className="rp-l">
+          <p>
+            Total Activity Time: <b>{orNA(grades.totalDays)}</b>
+          </p>
+          <p>
+            Number of Activities - Submitted &amp; Graded: <b>{orNA(grades.submiteActivityGrade)}</b>
+          </p>
+          <p>
+            Number of Activities - Waiting for the Grade: <b>{orNA(grades.activityWaitingForGrade)}</b>
+          </p>
+          <p>
+            Number of Activities - Not Submitted: <b>{orNA(grades.activityNotSubmited)}</b>
+          </p>
+          <p>
+            Last Submission Date: <b>{orNA(grades.lastSubmissionDate)}</b> | Activity Name: <b>{orNA(grades.lastsubmissionName)}</b>
+          </p>
+        </div>
+        <div className="rp-r">
+          <p>
+            Course Grade: <span className="rp-gr big">{orNA(grades.letter)}</span>
+          </p>
+          <p>
+            Current Overall Percentage: <b>{orNA(grades.percentage)}</b>
+          </p>
+          {report.subReportType === "weekly" && (
+            <p>
+              Current Week Percentage: <b>{orNA(grades.percentWeekly)}</b>
+            </p>
+          )}
+          <p>
+            Course Completion Percentage: <b>{orNA(grades.complete)}</b>
+          </p>
+          {Number.isFinite(completion) && (
+            <i className="rp-bar">
+              <i style={{ width: `${Math.max(0, Math.min(100, completion))}%` }} />
+            </i>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -337,111 +274,136 @@ export function ParentProgressReportView({ url, range, onBack }) {
   const { isLoading, report, startdate, enddate, setStartdate, setEnddate, search, error, enrollments, unsupported } = useProgressReport(url, range);
   const { preparing, download } = useReportDownload(report?.downloadUrl);
 
+  const gradeTone = (index) => (index < 3 ? "ga" : index < 6 ? "gb" : index < 9 ? "gc" : index < 12 ? "gd" : "gf");
+
   return (
-    <div className="w-full">
-      <div className="mb-2 flex justify-end">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-1 rounded bg-slate-800 px-4 py-2 text-sm text-white hover:bg-slate-900"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+    <section className="sch on" aria-label="Progress report details">
+      <div className="rp-top">
+        <button type="button" onClick={onBack} className="pv-ibtn" id="rpBack">
+          <svg width="18" height="18" {...svgProps}>
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
           Back
         </button>
+        <h2>Grade book summary | {report?.studentName ?? ""}</h2>
       </div>
 
-      <div className="mb-3 flex items-center gap-3 rounded-[10px] bg-white px-4 py-3">
-        <Landmark className="h-5 w-5 text-primary" aria-hidden="true" />
-        <span className="text-black">Grade book summary | {report?.studentName ?? ""}</span>
-      </div>
-
-      <div className="mb-3 rounded-[10px] border border-slate-200 bg-white p-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="w-full sm:w-52">
-            <DatePicker icon={CalendarDays} label="Due Start Date" value={startdate} onChange={setStartdate} height="h-10" />
-          </div>
-          <div className="w-full sm:w-52">
-            <DatePicker icon={CalendarDays} label="Due End Date" value={enddate} onChange={setEnddate} height="h-10" />
-          </div>
-          <button type="button" onClick={search} className="flex h-10 items-center cursor-pointer rounded-md bg-[#28a745] px-5 text-sm text-white">
-            Search
-          </button>
-          {report?.downloadUrl && (
-            <button
-              type="button"
-              onClick={download}
-              disabled={preparing}
-              aria-busy={preparing}
-              className="ml-auto flex h-10 items-center rounded-md bg-[#17a2b8] px-5 cursor-pointer text-sm text-white disabled:cursor-wait disabled:opacity-70"
-            >
-              {preparing ? "Preparing…" : "Download"}
-            </button>
-          )}
+      <div className="rp-fil">
+        <div className="sc-f rp-dp">
+          <DatePicker icon={CalendarDays} label="Due Start Date" value={startdate} onChange={setStartdate} height="h-[42px]" triggerClassName={DATE_FIELD} />
         </div>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        <div className="sc-f rp-dp">
+          <DatePicker icon={CalendarDays} label="Due End Date" value={enddate} onChange={setEnddate} height="h-[42px]" triggerClassName={DATE_FIELD} />
+        </div>
+        <button type="button" onClick={search} className="rp-go">
+          Search
+        </button>
+        {report?.downloadUrl && (
+          <button type="button" onClick={download} disabled={preparing} aria-busy={preparing} className="pv-ibtn pri">
+            <svg width="18" height="18" {...svgProps}>
+              <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+            </svg>
+            {preparing ? "Preparing…" : "Download"}
+          </button>
+        )}
+        {error && <p className="pgr-err rp-err">{error}</p>}
       </div>
 
-      <div className="rounded-[10px] border border-slate-200 bg-white p-3 text-black sm:p-4">
-        {isLoading ? (
-          <p className="py-8 text-center text-black/50">Loading…</p>
-        ) : !report || report.status !== "SUCCESS" ? (
-          <p className="py-8 text-center font-bold">{report?.reportMessage || "Unable to load progress report detail."}</p>
-        ) : report.reportMessage ? (
-          <p className="py-8 text-center font-bold">{report.reportMessage}</p>
-        ) : unsupported ? (
-          <p className="py-8 text-center font-bold">This report type is not available here yet.</p>
-        ) : (
-          <>
-            {enrollments.map((enrollment) => (
-              <EnrollmentReport key={enrollment.id} enrollment={enrollment} report={report} logoUrl={logoUrl} />
-            ))}
-
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <OptimizedImage src={assetUrl("repost-bottom-graphic.png")} alt="" width={300} height={100} className="h-auto w-full max-w-[300px]" />
-              <div className="w-full text-right sm:w-auto">
-                <div className="relative inline-block pr-2">
-                  <OptimizedImage src={assetUrl("is-stamp.png")} alt="School stamp" width={100} height={100} className="h-auto w-full max-w-[100px]" />
-                  <OptimizedImage
-                    src={assetUrl("signature-report.png")}
-                    alt="Signature"
-                    width={100}
-                    height={100}
-                    className="absolute -bottom-[30px] -left-[30px] h-auto w-full max-w-[100px]"
-                  />
-                </div>
-                <p className="mt-2">School Official</p>
-                <div className="mt-3 overflow-x-auto">
-                  <table className="ml-auto w-full min-w-[420px] max-w-[600px] border-collapse text-center text-[10px]">
-                    <tbody>
-                      <tr>
-                        <td colSpan={GRADING_SYSTEM.length + 1} className="border border-[#71c4c1] p-0.5 text-[13px] font-bold">
-                          GRADING SYSTEM
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="border border-[#71c4c1] p-0.5">Grade</td>
-                        {GRADING_SYSTEM.map(([grade, , className]) => (
-                          <td key={grade} className={`border border-[#71c4c1] p-0.5 ${className ?? ""}`}>
-                            {grade}
-                          </td>
-                        ))}
-                      </tr>
-                      <tr>
-                        <td className="border border-[#71c4c1] p-0.5">Percentage</td>
-                        {GRADING_SYSTEM.map(([grade, range, className]) => (
-                          <td key={grade} className={`border border-[#71c4c1] p-0.5 ${className ?? ""}`}>
-                            {range}
-                          </td>
-                        ))}
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+      {isLoading ? (
+        <div className="pv-card rp-msg">
+          <p className="pgr-status" role="status">
+            Loading…
+          </p>
+        </div>
+      ) : !report || report.status !== "SUCCESS" ? (
+        <div className="pv-card rp-msg">
+          <p>{report?.reportMessage || "Unable to load progress report detail."}</p>
+        </div>
+      ) : report.reportMessage ? (
+        <div className="pv-card rp-msg">
+          <p>{report.reportMessage}</p>
+        </div>
+      ) : unsupported ? (
+        <div className="pv-card rp-msg">
+          <p>This report type is not available here yet.</p>
+        </div>
+      ) : (
+        <>
+          <div className="pv-card rp-info">
+            {logoUrl && (
+              <div className="rp-logo">
+                <OptimizedImage src={logoUrl} alt="School logo" width={240} height={68} sizes="240px" className="h-[34px] w-auto max-w-full" />
+              </div>
+            )}
+            <div className="rp-2">
+              <div className="rp-box">
+                <p>
+                  <span>Student Name:</span> <b>{orNA(report.studentName)}</b>
+                </p>
+                <p>
+                  <span>Grade:</span> <b>{orNA(report.standardName)}</b>
+                </p>
+                <p>
+                  <span>Student ID:</span> <b className="dc-id">{orNA(report.rollNumber)}</b>
+                </p>
+              </div>
+              <div className="rp-box">
+                <p>
+                  <span>Country:</span> <b>{orNA(report.country)}</b>
+                </p>
+                {enrollments[0] && (
+                  <>
+                    <p>
+                      <span>Academic Year Start Date:</span> <b>{orNA(enrollments[0].startdate)}</b>
+                    </p>
+                    <p>
+                      <span>Academic Year End Date:</span> <b>{orNA(enrollments[0].enddate)}</b>
+                    </p>
+                  </>
+                )}
               </div>
             </div>
-          </>
-        )}
-      </div>
-    </div>
+          </div>
+
+          {enrollments.map((enrollment) => (
+            <EnrollmentReport key={enrollment.id} enrollment={enrollment} report={report} />
+          ))}
+
+          <div className="pv-card rp-gs">
+            <div className="rp-sig">
+              <div className="rp-stamp">
+                <OptimizedImage src={assetUrl("is-stamp.png")} alt="School stamp" width={100} height={100} className="h-auto w-[84px]" />
+                <OptimizedImage src={assetUrl("signature-report.png")} alt="Signature" width={100} height={100} className="rp-signature h-auto w-[84px]" />
+              </div>
+              <span></span>
+              <small>School Official</small>
+            </div>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <h4>Grading System</h4>
+              <div className="ftw rp-gsw">
+                <table className="rp-gst">
+                  <tbody>
+                    <tr>
+                      <th>Grade</th>
+                      {GRADING_SYSTEM.map(([grade], index) => (
+                        <td key={grade} className={gradeTone(index)}>
+                          {grade}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr>
+                      <th>Percentage</th>
+                      {GRADING_SYSTEM.map(([grade, range]) => (
+                        <td key={grade}>{range}</td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </section>
   );
 }

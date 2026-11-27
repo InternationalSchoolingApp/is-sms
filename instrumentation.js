@@ -1,39 +1,35 @@
-// TEMP DEBUG [api-log]: prints every server-side fetch (backend/SMS calls from server actions, route
-// handlers, proxy token calls) to the terminal: method, url, status, duration and the response body.
-// Remove this file once the post-payment login redirect is found.
-const SECRET_KEY = /token|password|secret|authorization|cookie/i;
-const MAX_BODY = 3000;
-
-function redact(text) {
-  try {
-    return JSON.stringify(JSON.parse(text), (key, value) => (SECRET_KEY.test(key) ? "[redacted]" : value));
-  } catch {
-    return text;
-  }
-}
-
-export function register() {
-  if (process.env.NEXT_RUNTIME !== "nodejs" || globalThis.__apiLogInstalled) return;
-  globalThis.__apiLogInstalled = true;
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async function loggedFetch(input, init) {
-    const url = typeof input === "string" ? input : input instanceof URL ? input.href : input?.url;
-    const method = (init?.method || (typeof input === "object" && input?.method) || "GET").toUpperCase();
-    const started = Date.now();
+// DEV ONLY: times every server-side fetch (server actions, route handlers) and keeps endpoint, status and duration in
+// utils/devApiLog.js, which the dashboard prints to the browser console per module (DevApiConsoleLogger). Never
+// installed outside `next dev` (NODE_ENV "development"); no request or response bodies are kept.
+async function installDevApiTiming() {
+  if (process.env.NODE_ENV !== "development" || globalThis.__devApiTimingInstalled) return;
+  globalThis.__devApiTimingInstalled = true;
+  const { devApiEndpoint, recordDevApiCall } = await import("./utils/devApiLog.js");
+  const innerFetch = globalThis.fetch;
+  globalThis.fetch = async function timedFetch(input, init) {
+    let url;
     try {
-      const response = await originalFetch(input, init);
-      let body = "";
-      try {
-        body = redact(await response.clone().text());
-      } catch {
-        body = "<unreadable>";
-      }
-      const shown = body.length > MAX_BODY ? `${body.slice(0, MAX_BODY)}…(${body.length} chars)` : body;
-      console.log(`[api-log] ${method} ${url} -> ${response.status} (${Date.now() - started}ms)\n          ${shown}`);
+      url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input?.url);
+    } catch {
+      return innerFetch(input, init);
+    }
+    if (url.pathname.startsWith("/_next") || url.pathname.startsWith("/api/dev/")) return innerFetch(input, init);
+    const method = (init?.method || (typeof input === "object" && input?.method) || "GET").toUpperCase();
+    const at = Date.now();
+    const started = performance.now();
+    const record = (status) =>
+      recordDevApiCall({ at, method, host: url.host, endpoint: devApiEndpoint(url), status, ms: Math.round(performance.now() - started) });
+    try {
+      const response = await innerFetch(input, init);
+      record(response.status);
       return response;
     } catch (err) {
-      console.log(`[api-log] ${method} ${url} -> FAILED (${Date.now() - started}ms)`, err?.message);
+      record("FAILED");
       throw err;
     }
   };
+}
+
+export async function register() {
+  if (process.env.NEXT_RUNTIME === "nodejs") await installDevApiTiming();
 }

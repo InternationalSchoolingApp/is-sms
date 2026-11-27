@@ -1,0 +1,18 @@
+/* Extras for the parent Class Schedule / Class Summary pages (theme rules live in theme/parentDashboard.css). */
+.pdash .sc-hero .sc-clock b.sc-clock-t{font-size:20px}
+.pdash .sc-rng .sc-dp{flex:1 1 170px;min-width:0}
+.pdash .sc-p.s.x{background:#FDECEA}
+.pdash .sc-p.s.x:before{background:#C0352B}
+.pdash .sc-p.s.m{background:#EEF1F5}
+.pdash .sc-p.s.m:before{background:#7A8699}
+.pdash .sc-at.n{color:var(--mut)}
+.pdash .sc-it.vs{grid-template-columns:150px minmax(0,1fr) 92px 124px minmax(76px,auto) 84px}
+.pdash .sc-vw{display:flex;justify-content:flex-end}
+.pdash .sc-vw .fbtn{height:34px;padding:0 18px}
+.pdash .sc-empty .sc-go{margin-top:12px}
+.pdash .sc-seg i{width:0}
+@media (max-width:760px){
+  .pdash .sc-it.vs{grid-template-columns:1fr auto}
+  .pdash .sc-vw{grid-column:1 / -1;grid-row:4;justify-content:stretch}
+  .pdash .sc-vw .fbtn{width:100%}
+}

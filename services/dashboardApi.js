@@ -526,7 +526,11 @@ async function postBuzzProgressPayload(schoolUUID, path, body, uniqueId) {
  * counts + items table). POST /{schoolUUID}/dashboard/get-student-progress-report-detail.
  */
 export async function getStudentProgressReportDetail({ schoolUUID, uniqueId, studentUserId, lmsEnrollmentId, lmsCourseId }) {
+  // The report is of studentUserId: a parent passes the selected child, a student is always themselves. The backend
+  // refuses a student the signed-in user may not see (UserAccessGuard), so the id from the browser grants nothing.
+  const childId = Number(studentUserId) > 0 ? Number(studentUserId) : null;
   ({ schoolUUID, uniqueId, studentUserId } = await signedIn());
+  if (childId) studentUserId = childId;
   if (!hasBackendOrigin() || !schoolUUID || !uniqueId) return null;
   try {
     const data = await postBuzzProgressPayload(
@@ -545,11 +549,15 @@ export async function getStudentProgressReportDetail({ schoolUUID, uniqueId, stu
  * Progress-detail item row click — the grade-history sub-modal.
  * POST /{schoolUUID}/dashboard/get-progress-report-grade-history.
  */
-export async function getProgressReportGradeHistory({ schoolUUID, uniqueId, itemId, enrollId }) {
-  ({ schoolUUID, uniqueId } = await signedIn());
+export async function getProgressReportGradeHistory({ schoolUUID, uniqueId, itemId, enrollId, studentUserId }) {
+  // studentUserId: whose enrollment this is (a parent passes the selected child; a student defaults to themselves).
+  // The backend checks the signed-in user may see that student and that the enrollment is theirs.
+  const childId = Number(studentUserId) > 0 ? Number(studentUserId) : null;
+  ({ schoolUUID, uniqueId, studentUserId } = await signedIn());
+  if (childId) studentUserId = childId;
   if (!hasBackendOrigin() || !schoolUUID || !uniqueId) return null;
   try {
-    return await postBuzzProgressPayload(schoolUUID, "/dashboard/get-progress-report-grade-history", { itemId, enrollId }, uniqueId);
+    return await postBuzzProgressPayload(schoolUUID, "/dashboard/get-progress-report-grade-history", { itemId, enrollId, studentUserId }, uniqueId);
   } catch {
     return null;
   }
