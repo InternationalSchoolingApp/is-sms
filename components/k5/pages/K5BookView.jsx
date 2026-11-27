@@ -819,7 +819,7 @@ function StatTile({ label, value, sub }) {
 }
 
 /** Grade 6–8 "Good to know": the three class rules, always visible between the tickets and the steps. */
-function MiddleRules({ perWeek, comp }) {
+function MiddleRules({ perWeek, comp, ssp }) {
   const { high } = useCopy();
   const tile = "flex items-center gap-3 rounded-[14px] border-[3px] border-k5-yb bg-k5-yt px-3 py-2.5";
   const box = "flex h-[52px] w-[52px] flex-none items-center justify-center bg-k5-card";
@@ -847,6 +847,7 @@ function MiddleRules({ perWeek, comp }) {
             </span>
             <span className={text}>Classes are Monday to Friday</span>
           </div>
+          {ssp && (
           <div className={tile} style={{ borderRadius: tr }}>
             <span className={box} style={{ borderRadius: 12 }}>
               <svg {...ico} aria-hidden="true">
@@ -858,6 +859,7 @@ function MiddleRules({ perWeek, comp }) {
             </span>
             <span className={text}>There are no free classes in Self Study</span>
           </div>
+          )}
           <div className={tile} style={{ borderRadius: tr }}>
             <span className={box} style={{ borderRadius: 12 }}>
               <svg {...ico} aria-hidden="true">
@@ -1209,6 +1211,11 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
   // The course the booking is for: picked first (Grade 6–12), or picked last at the course step (Elementary).
   const activeOpt = dayFirst ? choice?.course.option ?? null : picked;
   const left = Math.max(activeOpt ? leftOf(activeOpt) : allMode ? course.weekLeftClass || 0 : Math.max(0, ...options.map(leftOf)), 0);
+  // "My classes" ticks: this week's booked + left of the picked course, or of all courses until one is picked.
+  const weekBookedOf = (opt) => Number(allMode ? course.weekBooked : subjects.find((x) => x.subjectId === opt.subjectId)?.weekBooked) || 0;
+  const ticketLeft = activeOpt || allMode ? left : options.reduce((a, o) => a + (Number(leftOf(o)) || 0), 0);
+  const ticketBooked = activeOpt ? weekBookedOf(activeOpt) : allMode ? Number(course.weekBooked) || 0 : options.reduce((a, o) => a + weekBookedOf(o), 0);
+  const ticketTotal = ticketBooked + ticketLeft;
   // Elementary: every course with a teacher, for the merged days and times.
   const bookable = options.filter((o) => allMode || o.teacherName);
   const all = useAllCourseSlots(bookable, dayFirst && !(allMode && allQuery.isLoading));
@@ -1638,12 +1645,12 @@ export function K5BookView({ details, subjects, course, onShowBooked, onBooked, 
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-stretch gap-4">
         <div className="flex-[1_1_340px]">
-          <BookHeader teacherName={teacherName} onStart={startOver} startLabel={"Book a Class (" + left + ")"} />
+          <BookHeader teacherName={teacherName} onStart={startOver} startLabel={"Book a Class (" + ticketLeft + ")"} />
         </div>
-        <Tickets perWeek={perWeek} left={left} color={color} />
+        <Tickets perWeek={ticketTotal} left={ticketLeft} color={color} />
       </div>
 
-      {middle && <MiddleRules perWeek={perWeek} comp={details.compClassPerweek > 0} />}
+      {middle && <MiddleRules perWeek={perWeek} comp={details.compClassPerweek > 0} ssp={String(details.registerType || "").toUpperCase() === "SSP"} />}
 
       <section aria-labelledby="k5-step" className={`${K5_CARD} flex flex-col gap-[18px] px-[22px] py-5`}>
         {flow}
