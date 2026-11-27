@@ -7,7 +7,8 @@ import Image from "next/image";
 import { ArrowRight, Check, Eye, EyeOff, Lock, LockOpen, LoaderCircle, Phone, X } from "lucide-react";
 import { createAddEnrollmentPassword } from "@/services/addEnrollmentPasswordApi";
 import { loadCreatePasswordTarget } from "@/utils/addEnrollmentCreatePassword";
-import { loginPageUrl, withLoginPayload } from "@/utils/backendOrigin";
+import { loginPageUrl, withLoginEmail } from "@/utils/backendOrigin";
+import { signInWithPassword } from "@/utils/logout";
 import { getPasswordStrength } from "@/utils/studentSignupValidation";
 
 const RULES = [
@@ -48,8 +49,11 @@ export function AddCreatePassword({ schoolUUID }) {
 
   // This page creates the CHILD's password while the browser may still be signed in as the parent in another tab.
   // Do not clear shared browser storage or log out the current session here; that would invalidate the dashboard.
+  // Signed in directly with the new password when possible (utils/logout.js signInWithPassword: the password never goes
+  // into a URL or cookie); otherwise the login page with only the e-mail filled in.
   const goToLogin = async (credentials) => {
-    window.location.assign(withLoginPayload(loginPageUrl(schoolUUID), credentials?.email, credentials?.password));
+    if (await signInWithPassword(schoolUUID, credentials?.email, credentials?.password)) return;
+    window.location.assign(withLoginEmail(loginPageUrl(schoolUUID), credentials?.email));
   };
 
   const submit = async (event) => {
@@ -70,18 +74,6 @@ export function AddCreatePassword({ schoolUUID }) {
     if (!res || ["0", "2", "3"].includes(status)) {
       if (status === "3") return goToLogin({ email: target.email, password: password.trim() });
       return setError(res?.message || "Something went wrong. Please try again.");
-    }
-    try {
-      const credentialsResponse = await fetch("/api/add-enrollment/login-credentials", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ school: schoolUUID, email: target.email, password: password.trim() }),
-      });
-      if (!credentialsResponse.ok) {
-        return setError("Password was created, but automatic login fill could not be prepared. Please try again.");
-      }
-    } catch {
-      return setError("Password was created, but automatic login fill could not be prepared. Please try again.");
     }
     setDone(true);
     setTimeout(() => goToLogin({ email: target.email, password: password.trim() }), 1500);

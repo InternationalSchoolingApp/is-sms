@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { login } from "@/services/authApi";
+import { getPublicSchoolInfo } from "@/services/studentSignupApi";
 import { blockedMinutesLeft, clientAddress, recordRightPassword, recordWrongPassword } from "@/utils/loginAttemptGuard";
 
 const noStore = { headers: { "Cache-Control": "no-store" } };
@@ -36,6 +37,8 @@ function sameSite(request) {
  * POST /api/session/verify-password { email, password, schoolUUID, schoolNumericId } - the dashboard's "session logged
  * out" dialog checks the password the student typed with the existing Java login API (services/authApi.js login(),
  * POST {school}/api/v1/common/login), so a wrong password is answered inside the dialog instead of on the login page.
+ * Also signs a student in right after they get a password (utils/logout.js signInWithPassword: create-password page,
+ * first-payment thank-you) so that password never travels in a URL or cookie; schoolNumericId is optional then.
  * Answers { ok: true, ssoUrl? } (ssoUrl: this app's own /api/sso sign-in link from the login answer, when it has one),
  * { ok: false, wrongPassword: true, attemptsLeft }, { ok: false, blocked: true, message } once the address has given
  * LOGIN_LIMIT_COUNT wrong passwords (utils/loginAttemptGuard.js, SMS's own rule), or { ok: false, message } for any other
@@ -59,13 +62,20 @@ export async function POST(request) {
   } catch {
     return NextResponse.json({ ok: false, message: "Invalid request" }, { status: 400, ...noStore });
   }
-  const { email, password, schoolUUID, schoolNumericId } = body || {};
-  if (!email || !password || !SCHOOL.test(String(schoolUUID || "")) || !schoolNumericId) {
+  const { email, password, schoolUUID } = body || {};
+  if (!email || !password || !SCHOOL.test(String(schoolUUID || ""))) {
     return NextResponse.json({ ok: false, message: "Invalid request" }, { status: 400, ...noStore });
+  }
+  // The school's numeric id: from the caller (the session-out dialog knows it), else the school's public info
+  // (create-password / payment thank-you pages run without one).
+  let schoolNumericId = Number(body?.schoolNumericId) || 0;
+  if (!schoolNumericId) {
+    schoolNumericId = Number((await getPublicSchoolInfo(schoolUUID).catch(() => null))?.schoolNumericId) || 0;
+    if (!schoolNumericId) return NextResponse.json({ ok: false, unavailable: true }, { status: 502, ...noStore });
   }
   let answer;
   try {
-    answer = await login({ email, password, schoolUUID, schoolNumericId: Number(schoolNumericId) });
+    answer = await login({ email, password, schoolUUID, schoolNumericId });
   } catch (err) {
     console.error("verify-password: login request failed", err);
     return NextResponse.json({ ok: false, unavailable: true }, { status: 502, ...noStore });

@@ -224,12 +224,13 @@ export function loginPageUrl(schoolUUID) {
 }
 
 /**
- * Appends a Base64URL JSON `payload` ({email, password}) to a Java login/logout URL. The Java login page
- * prefills from it when the cross-domain cookie (api/add-enrollment/login-credentials) can't reach it.
+ * Appends a Base64URL JSON `payload` ({email}) to a Java login/logout URL: the Java login page prefills the e-mail field
+ * from it. Never a password: a URL ends up in browser history, server and proxy logs and the Referer header. A student
+ * who just got a password is signed in directly instead (signInWithPassword in utils/logout.js).
  */
-export function withLoginPayload(url, email, password) {
-  if (!url || !email || !password) return url;
-  const bytes = new TextEncoder().encode(JSON.stringify({ email, password }));
+export function withLoginEmail(url, email) {
+  if (!url || !email) return url;
+  const bytes = new TextEncoder().encode(JSON.stringify({ email }));
   let binary = "";
   bytes.forEach((b) => {
     binary += String.fromCharCode(b);

@@ -22,9 +22,9 @@ import {
   loadLastAddEnrollmentRollNo,
 } from "@/utils/addEnrollmentStorage";
 import { AccountSetupSection } from "@/components/add-enrollment/AccountSetupSection";
-import { loginPageUrl, resolveBackendOrigin, withLoginPayload } from "@/utils/backendOrigin";
+import { loginPageUrl, resolveBackendOrigin, withLoginEmail } from "@/utils/backendOrigin";
 import { getBrowserDetailsForSignup } from "@/utils/utmCookies";
-import { expireSession, logoutEverywhere } from "@/utils/logout";
+import { expireSession, logoutEverywhere, signInWithPassword } from "@/utils/logout";
 import { copyrightLine } from "@/utils/schoolBrand";
 import { TAB_ACCOUNT_STORAGE_KEY } from "@/components/auth/TabAccount";
 
@@ -865,27 +865,19 @@ function LoginDetails({ data, sourceApi, fallbackName, loginHref, dashboardHref,
   const { data: session } = useSession();
   const [show, setShow] = useState(true);
   const [leaving, setLeaving] = useState(false);
-  // Same hand-off the add-enrollment create-password page uses: a short-lived HttpOnly cookie pair set by our
-  // API route, scoped to the school's login page, which the Java login controller reads (then clears) to prefill.
-  const storeLoginPrefill = () =>
-    fetch("/api/add-enrollment/login-credentials", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ school: schoolUUID, email, password }),
-    }).catch(() => {});
-  // Sign the current user out (Next.js session + Java session) and land on the login page so they can log in
-  // with the details above.
+  // Sign the student in with the details above, as the add-enrollment create-password page does
+  // (utils/logout.js signInWithPassword: the password never goes into a URL or cookie). When that is not possible:
+  // sign the current user out (Next.js session + Java session) and land on the login page with only the e-mail filled in.
   const goToDashboard = async (event) => {
     event.preventDefault();
     if (leaving) return;
     setLeaving(true);
     try {
-      await storeLoginPrefill();
-      // The cookie above only reaches the Java login page on a shared parent domain; the payload covers the rest.
-      if (session?.uniqueId) await logoutEverywhere(session, { email, password });
-      else window.location.assign(withLoginPayload(loginHref, email, password));
+      if (await signInWithPassword(schoolUUID, email, password)) return;
+      if (session?.uniqueId) await logoutEverywhere(session, email);
+      else window.location.assign(withLoginEmail(loginHref, email));
     } catch {
-      window.location.assign(withLoginPayload(loginHref, email, password));
+      window.location.assign(withLoginEmail(loginHref, email));
     }
   };
   const email = data.outlookEmail || data.loginEmail;

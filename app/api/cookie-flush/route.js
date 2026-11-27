@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isPicoCookie } from "@/utils/picoCookies";
+import { isTrustedRequestSite } from "@/utils/requestSite";
 
 /**
  * GET /api/cookie-flush: expires every cookie this browser holds for THIS host, then answers with a 1x1 GIF.
@@ -30,6 +31,10 @@ export async function GET(request) {
       "Cross-Origin-Resource-Policy": "cross-origin",
     },
   });
+
+  // Only our SMS site (or this app) may flush: an <img> on any other site would otherwise sign every visitor out. The
+  // pixel is still answered, so the calling page behaves the same (utils/requestSite.js).
+  if (!isTrustedRequestSite(request)) return response;
 
   for (const { name } of request.cookies.getAll()) {
     // Pico's "welcome / module explained" marks are not sign-in cookies: clearing them would make Pico explain it all again.

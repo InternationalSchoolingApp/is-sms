@@ -387,7 +387,7 @@ function TodayGoal({ classes, activities = [], assignments = [], classesHref, pl
             <circle cx="12" cy="12" r="3.5" />
           </svg>
         </span>
-        <span className="flex-1 font-semibold max-[420px]:flex-none">Today&apos;s Goal</span>
+        <span className="flex-1 font-semibold max-[420px]:flex-none">{total > 0 ? <>Today&apos;s Goal</> : 'No goals for today'}</span>
       </h2>
       {/* Side by side with the hero (desktop) the card keeps the hero's height: the ring stays, the list beside it scrolls; stacked it just grows. */}
       <div className="flex items-center gap-5 pl-0.5 max-[420px]:flex-col max-[420px]:items-center max-[420px]:pl-0 @min-[844px]:min-h-0 @min-[844px]:flex-1 @min-[844px]:items-stretch">
