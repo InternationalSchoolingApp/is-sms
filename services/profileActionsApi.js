@@ -194,13 +194,26 @@ export async function loadProfileCompletingProcess() {
 // phone, parent name ...) it is always empty. The legacy page (profileViewNew.js checkAndOrganizeFields / getFieldValue) decides
 // "missing" from the student's saved profile (profile-view-content-new), section by section (section.index), so the same is done
 // here: an empty fieldValue is filled from what the profile already holds. If the profile cannot be loaded the list is left as it is.
+// A field the saved profile could fill: it has a fieldValue key and that value is still empty (the same test `fill` uses).
+const needsSavedValue = (child) => child?.fieldValue !== undefined && String(child.fieldValue ?? "").trim() === "";
+
 async function fillSavedProfileValues(profileData) {
-  const profile = await loadMyProfileRaw();
+  // The saved profile is the slowest read of the dashboard (profile-view-content-new, 11-16s on dev): skip it when no field
+  // is waiting for a value (no fields set up for this grade, or only custom fields that already carry theirs).
+  const waiting = (profileData || []).filter(
+    (section) =>
+      (section.parentChildList || []).some(needsSavedValue) ||
+      (section.parentChildGroupList || []).some((group) => (group.parentChildList || []).some(needsSavedValue)),
+  );
+  if (!waiting.length) return;
+  // Only the sections those fields are in (section.index = their place in the saved profile): the backend builds just these.
+  const sections = [...new Set(waiting.map((section) => Number(section.index)).filter((i) => Number.isInteger(i) && i >= 0))];
+  const profile = await loadMyProfileRaw(sections.length ? { sections } : {});
   if (!profile.ok) return;
   const sp = profile.data.sp;
   const COUNTRY = new Set(["motherCountry", "fatherCountry", "guardianCountry"]);
   const fill = (child, saved) => {
-    if (!saved || child?.fieldValue === undefined || String(child.fieldValue ?? "").trim() !== "") return;
+    if (!saved || !needsSavedValue(child)) return;
     const value = saved[child.fieldId];
     if (value === undefined || value === null) return;
     // A country that is not chosen is saved as 0 (legacy: isEmpty = fieldValue == "0").

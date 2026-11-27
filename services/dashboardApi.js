@@ -1,12 +1,13 @@
 "use server";
 
-import { serviceKeyHeaders, smsAuthHeaders } from "@/lib/auth/session";
+import { getAccountSession, serviceKeyHeaders, smsAuthHeaders } from "@/lib/auth/session";
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
 import { getSettingValue } from "@/services/studentSignupApi";
 import { getCommonScriptVariables } from "@/services/studentSignupBackendApi";
 import { getSessionIdentity } from "@/utils/backendRequest";
-import { isOwnStudentStandard, rememberOwnStudentStandard } from "@/utils/ownEnrolments";
+import { isOwnStudentStandard, rememberCurrentStudentStandard, rememberOwnStudentStandard } from "@/utils/ownEnrolments";
+import { sharedUserRead } from "@/utils/userReadMemo";
 
 /**
  * Who a call is for comes from this request's own sign-in, never from the caller. Every export here is a server action
@@ -241,7 +242,8 @@ export async function getStudentDashboardOrMigration({ schoolUUID, userId }) {
   ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
-    return await postDashboardPayload(schoolUUID, "/student/dashboard/dashboard-or-migration", { userId });
+    // Shared for one page load with the System Training popup's own read (services/systemTrainingApi.js).
+    return await sharedUserRead("dashboard-or-migration", () => postDashboardPayload(schoolUUID, "/student/dashboard/dashboard-or-migration", { userId }));
   } catch {
     return null;
   }
@@ -256,7 +258,11 @@ export async function getStudentDashboardDetails({ schoolUUID, userId }) {
   ({ schoolUUID, userId } = await signedIn());
   if (!hasBackendOrigin() || !schoolUUID || !userId) return null;
   try {
-    return await postDashboardPayload(schoolUUID, "/student/dashboard/get-student-dashboard", { userId });
+    const details = await postDashboardPayload(schoolUUID, "/student/dashboard/get-student-dashboard", { userId });
+    // The signed-in student's own current enrolment, straight from this answer: the profile and enrolment checks that
+    // follow on the dashboard (utils/ownEnrolments.js) reuse it instead of asking this slow call again.
+    if (details?.studentStandardId) await rememberCurrentStudentStandard(details.studentStandardId).catch(() => {});
+    return details;
   } catch {
     return null;
   }
@@ -282,7 +288,11 @@ export async function getSchoolCalendar({ schoolUUID, userId, startDate, endDate
   try {
     const baseUrl = await resolveServerBackendOrigin();
     const body = { payload: encodePayload({ userId, startDate, endDate }) };
-    const response = await fetch(`${baseUrl}/${schoolUUID}/dashboard/school-calendar`, {
+    // A student reads the student-only endpoint (StudentSchoolCalendarUtil: same answer, its per-event lookups read once per
+    // request, and always the signed-in student's own calendar). Any other role keeps /dashboard/school-calendar.
+    const role = String((await getAccountSession())?.role || "").toLowerCase();
+    const path = role === "student" ? "dashboard/student/school-calendar" : "dashboard/school-calendar";
+    const response = await fetch(`${baseUrl}/${schoolUUID}/${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...(await authHeaders()) },
       body: JSON.stringify(body),

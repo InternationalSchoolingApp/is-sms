@@ -18,10 +18,12 @@ import { afterStartup } from "@/utils/dashboardBootstrap";
  * Dummy (demo) student mode: a sample profile (utils/dummyProfile.js) is shown, view-only. Nothing of the signed-in
  * account is read, and there is no enrolment id or edit right, so no editor or action can save anything for real.
  */
-export function useStudentProfile({ schoolUUID, userId }) {
+export function useStudentProfile({ schoolUUID, userId, dummyOnly = false }) {
   const dummy = useDummyStudent();
   const { context } = useDashboardContext();
-  const live = dummy.settled && !dummy.enabled;
+  // `dummyOnly`: a reader that only needs the dummy student's sample profile (the header avatar in demo mode) never loads the
+  // real one - for a real student it reads nothing here.
+  const live = dummy.settled && !dummy.enabled && !dummyOnly;
   const detailsQuery = useQuery({ ...studentDashboardDetailsQuery({ schoolUUID, userId }), enabled: Boolean(schoolUUID && userId) && live });
   const studentStandardId = live ? detailsQuery.data?.studentStandardId ?? null : null;
   const detailsSettled = !detailsQuery.isPending;

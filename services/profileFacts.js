@@ -1,5 +1,6 @@
 import { backendRequest } from "@/utils/backendRequest";
 import { customFieldsOf } from "@/utils/profileModel";
+import { currentStudentStandard } from "@/utils/ownEnrolments";
 
 /**
  * Server-only helper (not a Server Action) for My Profile writes: finds the signed-in user's current enrolment
@@ -45,15 +46,20 @@ function contactsOf(sp) {
 /**
  * The signed-in user's own saved profile, as the existing page gets it (profile-view-content-new): { enrolment, sp } with
  * sp = profileData.studentProfile (sp[0] personal, sp[1] parents, sp[2] academic ...). Same two calls as loadMyProfileFacts.
+ *
+ * `sections` (optional, e.g. [1]): only those sp indexes are filled by the backend (the others come back empty, each index
+ * keeps its place) - much quicker. For readers that look at a few sections only (the "Complete Your Profile" check).
  */
-export async function loadMyProfileRaw() {
-  const dashboard = await backendRequest({ path: "student/dashboard/get-student-dashboard", checkSession: null, buildBody: (me) => ({ userId: me.userId }) });
+export async function loadMyProfileRaw({ sections } = {}) {
+  const only = Array.isArray(sections) ? [...new Set(sections.map(Number).filter((i) => Number.isInteger(i) && i >= 0 && i < 16))] : null;
+  // The current enrolment (get-student-dashboard for the session's own user), reused from the dashboard's start-up for 5 min.
+  const dashboard = await currentStudentStandard();
   if (!dashboard.ok) return dashboard;
   const enrolment = Number(dashboard.data?.studentStandardId) || 0;
   if (!enrolment) return { ok: false, code: "NO_ENROLMENT", message: "No current enrolment was found on your profile." };
   const loaded = await backendRequest({
     path: "dashboard/profile-view-content-new",
-    buildBody: (me) => ({ userId: me.userId, actionType: "1a", studentStandardId: enrolment }),
+    buildBody: (me) => ({ userId: me.userId, actionType: "1a", studentStandardId: enrolment, ...(only?.length ? { sections: only } : {}) }),
   });
   if (!loaded.ok) return loaded;
   const sp = loaded.data?.profileData?.studentProfile;
@@ -64,7 +70,8 @@ export async function loadMyProfileRaw() {
 }
 
 export async function loadMyProfileFacts() {
-  const dashboard = await backendRequest({ path: "student/dashboard/get-student-dashboard", checkSession: null, buildBody: (me) => ({ userId: me.userId }) });
+  // The current enrolment (get-student-dashboard for the session's own user), reused from the dashboard's start-up for 5 min.
+  const dashboard = await currentStudentStandard();
   if (!dashboard.ok) return dashboard;
   const enrolment = Number(dashboard.data?.studentStandardId) || 0;
   if (!enrolment) return { ok: false, code: "NO_ENROLMENT", message: "No current enrolment was found on your profile." };

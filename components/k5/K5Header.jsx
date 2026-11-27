@@ -8,8 +8,12 @@ import { useParams, useRouter } from "next/navigation";
 import { ChevronDown, KeyRound, Loader2, LogOut, Menu, MessageCircle, MoreVertical, Palette, ShoppingCart, Smartphone, User, UserPlus } from "lucide-react";
 import toast from "react-hot-toast";
 import { AppDownloadDialog } from "@/components/k5/AppDownloadDialog";
+import { useQuery } from "@tanstack/react-query";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { useDummyStudent } from "@/hooks/useDummyStudent";
+import { getUserShortProfile } from "@/services/dashboardApi";
+import { viaTier1 } from "@/utils/dashboardBootstrap";
 import { useCartCount } from "@/hooks/useStudentCart";
 import { useNeedHelp } from "@/hooks/useNeedHelp";
 import { useAddSiblings } from "@/hooks/useAddSiblings";
@@ -43,9 +47,20 @@ function HeaderAvatar({ photo, initial, className, textClass }) {
  * are still "coming soon"; Log out is live. "Get the App" opens the store links (constant/appLinks.js).
  */
 export function K5Header({ userId, schoolUUID, schoolName, logoUrl, schoolWebsite, session, userName, menu, navOpen, onMenu, onAppearance, lmsProviderURL, isPayLmsPaymentPending }) {
-  // Same profile query as My Profile (shared cache): saving a new photo there refreshes this avatar too.
-  const { model: profileModel } = useStudentProfile({ schoolUUID, userId });
-  const photo = profileModel?.header?.photo || "";
+  // The avatar photo comes from the short profile the dashboard already reads at start-up (Tier 1, shared cache with the
+  // Appearance / Add Siblings / forced-password checks): its profileImagePath is the same backend value
+  // (commonUtil.profilePicture) as the full profile's photo, so the header no longer loads the whole profile on every page.
+  // A new photo saved on My Profile refreshes this query (hooks/useProfileActions.js). Dummy (demo) mode keeps the sample
+  // profile's photo: the short profile is the signed-in account's own.
+  const dummy = useDummyStudent();
+  const { model: dummyProfile } = useStudentProfile({ schoolUUID, userId, dummyOnly: true });
+  const shortProfile = useQuery({
+    queryKey: ["user-short-profile", schoolUUID, userId],
+    queryFn: () => viaTier1(userId, "shortProfile", (a) => a.shortProfile, () => getUserShortProfile({ schoolUUID, userId })),
+    staleTime: 60_000,
+    enabled: Boolean(schoolUUID && userId) && dummy.settled && !dummy.enabled,
+  });
+  const photo = (dummy.enabled ? dummyProfile?.header?.photo : shortProfile.data?.profileImagePath) || "";
   // Grade 9–12 (Mature) look: the "Welcome back" chip of High.dc.html (blue rim on the soft accent, blue avatar, 12 / 17px 500).
   // Sizes in rem so the Mature type map (app/k5-mature.css) leaves them as the mockup has them.
   // Grade 6–8 (Balanced) has the same blue chip (Middle.dc.html: 1.5px accent rim on the soft accent, blue avatar with a white 22 / 700

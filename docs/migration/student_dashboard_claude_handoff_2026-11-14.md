@@ -70,7 +70,7 @@ The legacy Java/JSP student dashboard (is-rest-api, Spring Boot, port 8080) is b
 ## 7. Testing how-to
 
 - Login: open `http://localhost:3000/{school}/student/common/login` → redirects to the 8080 login; if a saved account shows, use "Switch account" → "Use another account". The user gives test credentials in chat (do not store passwords). Test students used: an Elementary, a Middle, a High and a BATCH account (the user knows them).
-- Dev server: start with the preview tool name `student-signup-ui` (port 3000). If fonts break after a build ("next/font/google queries have exactly one entry"), stop the server, delete `.next/dev`, restart. You may not be able to kill external node processes (ask the user to `taskkill`).
+- Dev server: start with the preview tool name `school-management-system` (port 3000). If fonts break after a build ("next/font/google queries have exactly one entry"), stop the server, delete `.next/dev`, restart. You may not be able to kill external node processes (ask the user to `taskkill`).
 - Mockup comparison method that worked: extract the page block from the mockup, diff Middle vs High blocks, then measure computed styles in dummy mode (`getComputedStyle`) and fix only real differences with `k5h-*` hook classes. A temporary comparer (spec JSON + `cmp.js` served from `public/__spec`) was used and deleted afterwards — never leave files in `public/`.
 - Bash heredocs with several `EOF` blocks or `node -e '...'` containing quotes failed in this shell; write scripts with the Write tool into the scratchpad and run them with `node`.
 
