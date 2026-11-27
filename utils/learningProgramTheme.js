@@ -2,7 +2,7 @@ import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 
 const LEARNING_PROGRAM_THEME = {
   O: {
-    label: "One-to-One Enrollment",
+    label: "One-to-One Learning",
     subtitle: "Personalized learning. Real attention. Brighter outcomes.",
     image: "/images/enrollement_bg.png",
   },

@@ -34,8 +34,9 @@ function SectionBlock({ section }) {
       <h4 className="m-0 text-sm font-black text-k5-ink">{section.labelName}</h4>
       {missing.length > 0 && (
         <ul className="m-0 flex list-none flex-col gap-1.5 pl-0">
-          {missing.map((f) => (
-            <li key={f.id || f.fieldId} className="flex items-center gap-2 text-sm text-k5-mut">
+          {missing.map((f, i) => (
+            // Several fields of one section can share an id (e.g. all parent-name fields have id 8): fieldId tells them apart.
+            <li key={`${f.fieldId ?? f.id}-${i}`} className="flex items-center gap-2 text-sm text-k5-mut">
               <AlertCircle className="h-4 w-4 flex-none text-amber-500" />
               <span className="font-extrabold">{fieldLabel(f)}</span>
               {f.mandatoryOption === "Y" && <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-black text-k5-ri">Required</span>}
@@ -47,8 +48,8 @@ function SectionBlock({ section }) {
         <div key={g.groupName} className="flex flex-col gap-1.5 pl-2">
           <span className="text-xs font-black text-k5-mut">{g.groupName}</span>
           <ul className="m-0 flex list-none flex-col gap-1.5 pl-0">
-            {g.missing.map((f) => (
-              <li key={f.id || f.fieldId} className="flex items-center gap-2 text-sm text-k5-mut">
+            {g.missing.map((f, i) => (
+              <li key={`${f.fieldId ?? f.id}-${i}`} className="flex items-center gap-2 text-sm text-k5-mut">
                 <AlertCircle className="h-4 w-4 flex-none text-amber-500" />
                 <span className="font-extrabold">{fieldLabel(f)}</span>
                 {f.mandatoryOption === "Y" && <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-black text-k5-ri">Required</span>}

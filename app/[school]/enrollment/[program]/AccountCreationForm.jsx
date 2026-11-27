@@ -59,6 +59,7 @@ export function AccountCreationForm({ school, program, query, recaptchaSiteKey }
   const enrollmentFor = program;
   const learningProgram = getLearningProgramRouteCode(program) || "O";
   const theme = getLearningProgramTheme(learningProgram);
+  console.log(theme);
 
   const [schoolInfo, setSchoolInfo] = useState(FALLBACK_SCHOOL_INFO);
 

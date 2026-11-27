@@ -5,7 +5,17 @@ import { Circle } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useSession } from "@/components/providers/AuthSessionProvider";
 import { useQuery } from "@tanstack/react-query";
-import { getMaintenanceDowntimeStatus } from "@/services/maintenanceApi";
+
+// A plain request (app/api/maintenance), not a Server Action: actions run one at a time, and this check - on every page -
+// used to sit in front of the page's own start-up calls. null when the check fails (the banner then shows nothing).
+async function loadMaintenanceStatus(schoolUUID) {
+  try {
+    const response = await fetch(`/api/maintenance?school=${encodeURIComponent(schoolUUID)}`, { cache: "no-store" });
+    return response.ok ? await response.json() : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Site-wide maintenance/downtime notice. Polls
@@ -34,7 +44,7 @@ export function MaintenanceBanner() {
 
   const { data } = useQuery({
     queryKey: ["maintenance-downtime-status", schoolUUID],
-    queryFn: () => getMaintenanceDowntimeStatus(schoolUUID),
+    queryFn: () => loadMaintenanceStatus(schoolUUID),
     enabled: Boolean(schoolUUID),
     refetchInterval: 60_000,
     refetchOnWindowFocus: true,
