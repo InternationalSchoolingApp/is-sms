@@ -1,4 +1,4 @@
-import { allowedBackendOverride, parseBackendOrigin } from "@/utils/backendOrigin";
+import { allowedBackendOverride, isBackendOverrideAllowed, parseBackendOrigin } from "@/utils/backendOrigin";
 
 /**
  * Did this GET/POST come from this app, from our own SMS (Java) site, or from nowhere (a typed URL / bookmark)? Server-
@@ -10,13 +10,23 @@ import { allowedBackendOverride, parseBackendOrigin } from "@/utils/backendOrigi
  *   - otherwise the Origin (or, for a navigation, the Referer) is this app, our SMS backend (BACKEND_BASE_URL /
  *     NEXT_PUBLIC_BACKEND_BASE_URL, or on DEV/UAT an allowed backend, utils/backendOrigin.js), or a host on the same
  *     parent domain as this app (sms.example.org next to app.example.org);
- *   - neither header at all (an old browser, a privacy setting that drops the Referer): allowed, as before.
+ *   - neither header at all (an old browser, a privacy setting that drops the Referer): allowed, as before;
+ *   - a cross-site navigation with neither header: allowed only on a DEV / UAT build (isBackendOverrideAllowed), where an https
+ *     SMS hands off to an http://localhost app and the browser drops the Referer; refused on PROD.
  */
 export function isTrustedRequestSite(request) {
   const fetchSite = request.headers.get("sec-fetch-site");
   if (fetchSite === "same-origin" || fetchSite === "same-site" || fetchSite === "none") return true;
   const source = request.headers.get("origin") || request.headers.get("referer") || "";
-  if (!source || source === "null") return !fetchSite;
+  if (!source || source === "null") {
+    if (!fetchSite) return true;
+    // A cross-site navigation with no Origin / Referer at all. In production that is the odd case (an https SMS page sends its
+    // origin to an https app), so it stays refused. But on a DEV / UAT build the app is often opened on http://localhost while the
+    // tester's SMS is an https UAT server (sms-is.ischoolusa.com ...): the browser drops the Referer on an https -> http hop, so
+    // EVERY real sign-in hand-off from that SMS looks like this. Refusing it sent the student to "/" and, with no session, on to
+    // the signup page (/enrollment/O) instead of their dashboard / saved wizard step; it also stopped the logout cookie flush.
+    return isBackendOverrideAllowed();
+  }
   const origin = parseBackendOrigin(source);
   if (!origin) return false;
   const appHost = (request.headers.get("x-forwarded-host") || request.headers.get("host") || new URL(request.url).host)

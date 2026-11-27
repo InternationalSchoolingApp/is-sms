@@ -105,7 +105,7 @@ export function K5NewsPanel({ articles, totalNews, userId, onClose }) {
           <>
             {visible.map((item) => (
               <article key={item.id} className="flex flex-col gap-3 rounded-3xl border-[3px] border-[#F2B705] bg-k5-card p-4 shadow-[0_4px_0_#F2B705]">
-                <h3 className="m-0 font-k5-display text-[22px] font-semibold leading-tight text-k5-ink">{item.title}</h3>
+                <h3 className="m-0 font-k5-display text-[22px] font-semibold leading-tight text-k5-ink [overflow-wrap:anywhere]">{item.title}</h3>
                 <div className="relative flex h-[210px] items-center justify-center overflow-hidden rounded-[18px] bg-[linear-gradient(160deg,#FFF8D6_0%,#FFE27A_55%,#FFC94D_100%)]">
                   {item.image ? (
                     <OptimizedImage src={item.image} alt="" fill sizes="(max-width: 760px) 100vw, 560px" className="object-cover" />

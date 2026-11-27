@@ -102,7 +102,7 @@ export const DYSLEXIA_OFF = { dyslexia: "off", font: "cute", reading: "normal", 
 
 // Buddy art colours (mockup) — body, arm, feet.
 export const BUDDIES = {
-  pico: { name: "Magic", color: "#2F7BF5", arm: "#1E66E0", feet: "#1747A6" },
+  pico: { name: "Magix", color: "#2F7BF5", arm: "#1E66E0", feet: "#1747A6" },
   penny: { name: "Penny", color: "#FFC531", arm: "#E0A800", feet: "#A15C1E" },
   booky: { name: "Booky", color: "#6A3FC4", arm: "#7D55D6", feet: "#4C2A94" },
   bolt: { name: "Bolt", color: "#13A89E", arm: "#5C6B8A", feet: "#3A475F" },

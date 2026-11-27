@@ -7,6 +7,7 @@ import { useDashboardSessionExpiry } from "@/hooks/useDashboardSessionExpiry";
 import { useNavigationSessionGuard } from "@/hooks/useNavigationSessionGuard";
 import { useOnboardingGate } from "@/hooks/useOnboardingGate";
 import { OnboardingFrame } from "@/components/onboarding/OnboardingFrame";
+import { OnboardingSkeleton } from "@/components/onboarding/OnboardingSkeleton";
 import { DashboardLoadingSkeleton } from "@/components/dashboard/DashboardLoadingSkeleton";
 import { SessionExpiredDialog } from "@/components/providers/SessionExpiredDialog";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
@@ -48,7 +49,11 @@ function ShellForGrade({ children }) {
 // loader while checking and sends the student there instead of rendering the dashboard (hooks/useOnboardingGate.js).
 function OnboardingGate({ role, children }) {
   const { context } = useDashboardContext();
-  const { checking, redirecting } = useOnboardingGate({ context, enabled: role === "student" });
+  const { checking, redirecting, target, hintTarget } = useOnboardingGate({ context, enabled: role === "student" });
+  // The skeleton of the page the student is going to see: the onboarding page's (Confirm Your Time Zone, Dashboard Setup...) once the check
+  // says so, or already while it runs when this student was sent there last time (hintTarget); the dashboard's for everyone else.
+  const bound = redirecting ? target : checking ? hintTarget : null;
+  if (bound === "welcome" || bound === "setup") return <OnboardingSkeleton />;
   if (checking || redirecting) return <DashboardLoadingSkeleton />;
   return children;
 }
