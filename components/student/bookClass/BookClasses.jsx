@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import { CalendarPlus, Info } from "lucide-react";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDummyStudent } from "@/hooks/useDummyStudent";
-import { getBookAClassStatus, getStudentBookClassDetails } from "@/services/bookClassApi";
+import { getBookAClassStatusViaRoute, getStudentBookClassDetailsViaRoute } from "@/utils/bookClassClient";
 import { getBrowserTimezone } from "@/utils/calendarEvents";
 import { studentNavHref } from "@/utils/dashboardNav";
 import { BookClassSlotModal } from "@/components/student/bookClass/BookClassSlotModal";
@@ -65,7 +65,11 @@ export function BookClasses() {
   const dummy = useDummyStudent();
   const statusQuery = useQuery({
     queryKey: ["book-a-class", context?.userId, dummy.key],
-    queryFn: () => (dummy.enabled ? dummy.student.bookAClass() : getBookAClassStatus({ userTimezone: getBrowserTimezone() })),
+    // Route request, not a Server Action: actions are sent one at a time, so this waited behind the dashboard's start-up actions.
+    queryFn: () =>
+      dummy.enabled
+        ? dummy.student.bookAClass()
+        : getBookAClassStatusViaRoute({ account: context?.uniqueId, userTimezone: getBrowserTimezone() }),
     enabled: Boolean(context?.userId && dummy.settled),
     staleTime: 0,
   });
@@ -74,7 +78,10 @@ export function BookClasses() {
 
   const detailsQuery = useQuery({
     queryKey: ["book-class-details", studentStandardId, dummy.key],
-    queryFn: () => (dummy.enabled ? dummy.student.bookClassDetails() : getStudentBookClassDetails({ studentStandardId })),
+    queryFn: () =>
+      dummy.enabled
+        ? dummy.student.bookClassDetails()
+        : getStudentBookClassDetailsViaRoute({ account: context?.uniqueId, studentStandardId }),
     enabled: Boolean(studentStandardId) && gate?.details?.showAcademicYearValidation !== "Y",
     staleTime: 0,
   });
