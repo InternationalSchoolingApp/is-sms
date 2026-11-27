@@ -527,7 +527,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
                     {pill?.label || row.meetingResult || "N/A"}
                   </span>
                   <StatusInfo row={row} />
-                  <CancelClassButton row={row} />
+                  <CancelClassButton row={row} themed />
                   </>
                 );
                 if (middle) {

@@ -27,7 +27,7 @@ export function StatusInfo({ row }) {
 }
 
 /** A student cancels an upcoming 1:1 class with a reason; after the cut-off they must confirm the class will not be given back. */
-export function CancelClassButton({ row, className = "" }) {
+export function CancelClassButton({ row, className = "", themed = false }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -84,9 +84,13 @@ export function CancelClassButton({ row, className = "" }) {
           setOpen(true);
         }}
         className={
-          late
-            ? `mt-1 block cursor-pointer rounded border border-slate-400 bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600 ${className}`
-            : `mt-1 block cursor-pointer rounded border border-red-600 bg-white px-2 py-0.5 text-xs font-bold text-red-700 hover:bg-red-600 hover:text-white ${className}`
+          themed
+            ? late
+              ? `mt-1.5 block min-h-9 cursor-pointer whitespace-nowrap rounded-full border-[3px] border-k5-line bg-k5-card px-4 py-1 font-k5-display text-sm font-semibold text-k5-mut ${className}`
+              : `mt-1.5 block min-h-9 cursor-pointer whitespace-nowrap rounded-full border-[3px] border-[var(--k5-rI)] bg-k5-card px-4 py-1 font-k5-display text-sm font-semibold text-k5-ri hover:bg-k5-rt ${className}`
+            : late
+              ? `mt-1 block cursor-pointer rounded-full border border-slate-400 bg-slate-100 px-3 py-0.5 text-xs font-bold text-slate-600 ${className}`
+              : `mt-1 block cursor-pointer rounded-full border border-red-600 bg-white px-3 py-0.5 text-xs font-bold text-red-700 hover:bg-red-600 hover:text-white ${className}`
         }
       >
         Cancel class
