@@ -16,7 +16,7 @@ import { useK5CourseColors } from "@/hooks/useK5CourseColors";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useK5ThemeProps } from "@/components/k5/useK5ThemeProps";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { getAssignedTeacherForCourse, getAssignedTeachersForAllCourses, getClassCalculationForGrownUps, getStudentBookedClasses, getTeacherWeeklySlots, submitBookClassSlot } from "@/services/bookClassApi";
+import { getAssignedTeachersForAllCourses, getClassCalculationForGrownUps, getStudentBookedClasses, submitBookClassSlot } from "@/services/bookClassApi";
 import { getSlotEnd, getSlotState } from "@/utils/bookClass";
 import { getCourseSlots } from "@/utils/bookClassClient";
 import { courseTint, subjectStyle } from "@/utils/k5Calendar";
@@ -380,17 +380,26 @@ function Tickets({ perWeek, left, color }) {
  */
 function useBookSlots(picked, halfHour = false) {
   const dummy = useDummyStudent();
+  const { context } = useDashboardContext();
+  const account = context?.uniqueId;
   const [startDate] = useState(() => new Date().toISOString());
-  const teacherQuery = useQuery({
-    queryKey: ["book-class-teacher", picked?.subjectId, picked?.studentStandardId, dummy.key],
-    queryFn: () =>
-      dummy.enabled
-        ? dummy.student.assignedTeacher(picked.subjectId)
-        : getAssignedTeacherForCourse({ subjectId: picked.subjectId, studentStandardId: picked.studentStandardId }),
+  // One route request for the course's teacher and that teacher's weekly slots (the same two backend calls, in the same
+  // order) instead of two Server Actions waiting in the browser's one-at-a-time action queue. The key starts with
+  // "book-class-slots" so the invalidation after a booking still refreshes it.
+  const courseQuery = useQuery({
+    queryKey: ["book-class-slots", "course", picked?.subjectId, picked?.studentStandardId, startDate, dummy.key],
+    queryFn: async () => {
+      if (dummy.enabled) {
+        const teacher = await dummy.student.assignedTeacher(picked.subjectId);
+        const slots = teacher?.teacherAssigned === "YES" ? await dummy.student.teacherWeeklyCalendar(teacher.assignedTeacherUserId, picked.subjectId, new Date(startDate)) : null;
+        return { teacher, slots };
+      }
+      return getCourseSlots({ account, subjectId: picked.subjectId, studentStandardId: picked.studentStandardId, startDate });
+    },
     enabled: dummy.settled && Boolean(picked),
     staleTime: 0,
   });
-  const teacher = teacherQuery.data;
+  const teacher = courseQuery.data?.teacher;
   const teacherAssigned = teacher?.teacherAssigned === "YES";
   const slotsQuery = useQuery({
     queryKey: ["book-class-slots", teacher?.assignedTeacherUserId, picked?.subjectId, startDate, dummy.key, halfHour],
@@ -417,7 +426,7 @@ function useBookSlots(picked, halfHour = false) {
     week,
     days: week?.teacherAllDataInOneList ?? [],
     skipDates: new Set(slots?.skipDateList ?? []),
-    loading: Boolean(picked) && (teacherQuery.isLoading || (teacherAssigned && slotsQuery.isLoading)),
+    loading: Boolean(picked) && courseQuery.isLoading,
   };
 }
 

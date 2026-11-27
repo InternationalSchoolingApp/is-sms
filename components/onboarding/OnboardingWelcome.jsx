@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { AlertTriangle, Clock, CreditCard, FileText, Globe, Info } from "lucide-react";
 import { FullScreenLoader } from "@/components/common/Loader";
+import { OnboardingCardSkeleton } from "@/components/onboarding/OnboardingSkeleton";
 import { PaymentName } from "@/components/common/PaymentName";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -67,7 +68,7 @@ export function OnboardingWelcome() {
       </div>
     );
   }
-  if (!live || query.isPending || leaving) return <FullScreenLoader />;
+  if (!live || query.isPending || leaving) return <OnboardingCardSkeleton />;
 
   return (
     <div className="mx-auto w-full max-w-6xl px-3 py-6 sm:px-4">

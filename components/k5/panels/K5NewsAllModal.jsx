@@ -11,7 +11,7 @@ function Story({ article }) {
   return (
     <article className="flex flex-col gap-3 border-b-[3px] border-k5-line pb-6 last:border-b-0 last:pb-0">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="m-0 font-k5-display text-[22px] font-semibold leading-tight text-k5-ink">{article.title}</h3>
+        <h3 className="m-0 font-k5-display text-[22px] font-semibold leading-tight text-k5-ink [overflow-wrap:anywhere]">{article.title}</h3>
         {article.country && <span className="flex-none text-[13px] font-extrabold text-k5-mut">📍 {article.country}</span>}
       </div>
 

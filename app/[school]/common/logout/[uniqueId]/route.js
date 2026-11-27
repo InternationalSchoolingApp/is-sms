@@ -3,6 +3,7 @@ import { getAccountSession } from "@/lib/auth/session";
 import { clearAccount, heldAccounts } from "@/lib/auth/accountCookies";
 import { logoutAtSms, trustedBackend } from "@/lib/auth/smsTokens";
 import { allowedBackendOverride, getBackendOverrideCookieName } from "@/utils/backendOrigin";
+import { isTrustedRequestSite } from "@/utils/requestSite";
 
 /**
  * GET /{school}/common/logout/{uniqueId} on the Next.js origin — the legacy
@@ -34,6 +35,12 @@ function backendOrigin(request) {
 }
 
 export async function GET(request, { params }) {
+  // A link or <img> on another site must not sign a visitor out (utils/requestSite.js): nothing is changed then.
+  if (!isTrustedRequestSite(request)) {
+    const response = NextResponse.redirect(new URL("/", request.url), 303);
+    response.headers.set("Cache-Control", "no-store");
+    return response;
+  }
   const { school, uniqueId } = await params;
   const session = await getAccountSession();
   const backend = backendOrigin(request);

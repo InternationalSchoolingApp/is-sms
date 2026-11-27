@@ -75,11 +75,19 @@ export function AppearanceProvider({ scope = "k5", userId, schoolUUID, policy = 
     if (!userId || !schoolUUID || serverLoaded.current) return;
     serverLoaded.current = true;
     // fetchQuery shares the cache entry of the Add Siblings button / forced password check, so the profile is read once.
-    queryClient.fetchQuery({
-      queryKey: ["user-short-profile", schoolUUID, userId],
-      queryFn: () => viaTier1(userId, "shortProfile", (a) => a.shortProfile, () => getUserShortProfile({ schoolUUID, userId })),
-      staleTime: 60_000,
-    }).then((profile) => {
+    // getUserShortProfile answers null when the call could not be made (the token still being renewed right after signing in again,
+    // a slow backend): that must not become "this student has no saved look" (the default look would then show, and the first
+    // change would overwrite the real one), so a null answer is asked again, a little later each time, before giving up.
+    const read = (attempt) =>
+      queryClient.fetchQuery({
+        queryKey: ["user-short-profile", schoolUUID, userId],
+        queryFn: () => viaTier1(userId, "shortProfile", (a) => a.shortProfile, () => getUserShortProfile({ schoolUUID, userId })),
+        staleTime: attempt === 0 ? 60_000 : 0,
+      }).then((profile) => {
+        if (profile || attempt >= 2) return profile;
+        return new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1))).then(() => read(attempt + 1));
+      });
+    read(0).then((profile) => {
       if (!profile?.userThemeColorCode) { setServerReady(true); return; }
       try {
         const colorObj = typeof profile.userThemeColorCode === "string"

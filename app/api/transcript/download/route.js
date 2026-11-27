@@ -86,6 +86,8 @@ export async function GET(request) {
       "Content-Type": type,
       "Content-Disposition": `attachment; filename="${filename.replace(/"/g, "")}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
       "Cache-Control": "no-store",
+      // The backend's type is passed on (it can be text/html): never let the browser guess another one.
+      "X-Content-Type-Options": "nosniff",
     },
   });
   if (/^[A-Za-z0-9]{8,40}$/.test(token)) answer.headers.append("Set-Cookie", `tdl-${token}=1; Path=/; Max-Age=120; SameSite=Lax`);

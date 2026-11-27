@@ -6,6 +6,7 @@ import { DEFAULT_PROGRAM, stepPath } from "@/utils/wizardSteps";
 import { getLearningProgramRouteCode } from "@/constant/LearningPrograms";
 import { addEnrollmentStepPath, normalizeAddSignupPage } from "@/utils/addEnrollmentSteps";
 import { allowedBackendOverride, detectOriginatingBackend, getBackendOverrideCookieName } from "@/utils/backendOrigin";
+import { isTrustedRequestSite } from "@/utils/requestSite";
 import { reEnrollmentBasePath } from "@/utils/reEnrollmentSteps";
 
 const VALID_STEPS = new Set(["1", "2", "3", "4"]);
@@ -79,6 +80,12 @@ function redirectTo(path, request) {
 }
 
 async function handleSsoHandoff(request) {
+  // Login CSRF guard: a sign-in link opened from some other site (with the sender's own one-time token) would sign the
+  // visitor into the sender's account. Hand-offs come from our SMS pages, this app, or a typed link (utils/requestSite.js).
+  if (!isTrustedRequestSite(request)) {
+    console.warn("SSO hand-off refused: opened from another site");
+    return redirectTo("/", request);
+  }
   const url = new URL(request.url);
   const ssoToken = url.searchParams.get("token");
   const schoolUUID = url.searchParams.get("school");

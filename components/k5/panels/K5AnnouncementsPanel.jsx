@@ -42,7 +42,7 @@ export function K5AnnouncementsPanel({ announcements, newCount, schoolUUID, user
                     {/* Dummy-mode club announcements carry their own label ("upcoming", "last week"). */}
                     <span className="ms-auto text-[13px] font-extrabold text-k5-mut">{item.timeLabel || formatRelativeAgo(item.createdDate)}</span>
                   </div>
-                  <h3 className="m-0 font-k5-display text-[19px] font-semibold leading-tight text-k5-ink">{item.announceTitle}</h3>
+                  <h3 className="m-0 font-k5-display text-[19px] font-semibold leading-tight text-k5-ink [overflow-wrap:anywhere]">{item.announceTitle}</h3>
                   <button
                     type="button"
                     onClick={() => setSelected(item)}
