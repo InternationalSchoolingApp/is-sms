@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Student School Calendar Plan</title>
+<style>
+  :root { --bg:#f6f7fb; --card:#fff; --ink:#1c2640; --mut:#5b6478; --line:#e3e6ef; --ok:#12a26b; --warn:#c77a08; --bad:#d7263d; --t:#2f6fed; --soft:#eef2ff; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0f1320; --card:#171c2c; --ink:#e8ecf6; --mut:#9aa3b8; --line:#2a3147; --ok:#2fc489; --warn:#e7a23a; --bad:#ff5a6e; --t:#5b8ff5; --soft:#1e2540; } }
+  :root[data-theme="dark"] { --bg:#0f1320; --card:#171c2c; --ink:#e8ecf6; --mut:#9aa3b8; --line:#2a3147; --ok:#2fc489; --warn:#e7a23a; --bad:#ff5a6e; --t:#5b8ff5; --soft:#1e2540; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  main { max-width:1040px; margin:0 auto; padding:28px 16px 60px; }
+  h1 { font-size:26px; margin:0 0 4px; } h2 { font-size:19px; margin:32px 0 10px; } h3 { font-size:15px; margin:14px 0 6px; }
+  .sub { color:var(--mut); margin:0 0 18px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 18px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--mut); font-size:13px; font-weight:600; }
+  code { font-family:ui-monospace,Consolas,monospace; font-size:12.5px; background:var(--soft); padding:1px 5px; border-radius:5px; word-break:break-all; }
+  pre { background:var(--soft); border-radius:10px; padding:12px; overflow-x:auto; font-size:12.5px; line-height:1.5; margin:8px 0; }
+  .pill { display:inline-block; font-size:11.5px; font-weight:700; padding:1px 8px; border-radius:99px; color:#fff; white-space:nowrap; }
+  .ok { background:var(--ok); } .warn { background:var(--warn); } .bad { background:var(--bad); } .t { background:var(--t); }
+  .flow { display:flex; flex-direction:column; align-items:center; }
+  .node { width:min(640px,100%); border:2px solid var(--line); border-radius:12px; padding:10px 14px; background:var(--card); font-size:13.5px; }
+  .node b { font-size:14px; }
+  .n-new { border-color:var(--t); } .n-same { border-color:var(--ok); }
+  .arrow { width:2px; height:22px; background:var(--mut); position:relative; }
+  .arrow::after { content:""; position:absolute; left:-5px; bottom:-2px; border:6px solid transparent; border-top-color:var(--mut); }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:760px) { .two { grid-template-columns:1fr; } }
+  ul li, ol li { margin-bottom:6px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Naya Student School Calendar Endpoint — Plan</h1>
+  <p class="sub">26 Nov 2026 · approval ke liye · teacher / legacy wala <code>/dashboard/school-calendar</code> bilkul nahi chhedna · naya endpoint sirf naye student dashboard (Next) ke liye.</p>
+
+  <div class="card">
+    <b>Short mein:</b> is-rest-api mein ek naya endpoint <code>POST {school}/dashboard/student/school-calendar</code>, ek nayi class <code>StudentSchoolCalendarUtil</code> mein. Request aur response ka format <b>wahi</b> jo purane endpoint ka hai, isliye Next mein sirf URL badlega. Andar sirf student wala code, aur saari speed-up ideas (7a + 7b). Purana endpoint aur uska code ek line bhi nahi badlega.
+    <p style="margin:8px 0 0;color:var(--mut);font-size:13px">Note: project ka rule hai "naye backend endpoint nahi banane" — ye aapke kehne par is baar ka exception hai.</p>
+  </div>
+
+  <h2>1. Call kaise hogi (pehle vs baad)</h2>
+  <div class="two">
+    <div class="card">
+      <h3>Teacher, legacy student (Java), bulk feedback popup</h3>
+      <div class="flow">
+        <div class="node n-same"><b>dashboardCalendarNew.js / elementaryHome.js</b></div>
+        <div class="arrow"></div>
+        <div class="node n-same"><b>POST /dashboard/school-calendar</b><br>ClientSchoolCalendarController.getSchoolCalendar</div>
+        <div class="arrow"></div>
+        <div class="node n-same"><b>DashboardSchoolCalendarUtil.getSchoolCalendar</b><br><span class="pill ok">bilkul same — koi change nahi</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Naya student dashboard (Next)</h3>
+      <div class="flow">
+        <div class="node n-new"><b>useStudentCalendar / bootstrap / ClassFeedbackHost</b></div>
+        <div class="arrow"></div>
+        <div class="node n-new"><b>services/dashboardApi.js getSchoolCalendar()</b><br>student session → naya URL</div>
+        <div class="arrow"></div>
+        <div class="node n-new"><b>POST /dashboard/student/school-calendar</b><br>ClientSchoolCalendarController.getStudentSchoolCalendar <span class="pill t">naya</span></div>
+        <div class="arrow"></div>
+        <div class="node n-new"><b>StudentSchoolCalendarUtil.getStudentSchoolCalendar</b> <span class="pill t">naya</span></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>2. Backend (is-rest-api) — kaun sa function, kya karega</h2>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>File</th><th>Function</th><th>Kaam</th></tr></thead>
+      <tbody>
+        <tr><td><code>api/v1/calendar/ClientSchoolCalendarController.java</code> (maujooda file, sirf naya method add)</td><td><code>getStudentSchoolCalendar(@RequestBody Payload)</code> → <code>@PostMapping("/student/school-calendar")</code></td><td>Naye util ko call; response <code>SchoolCalendarDTO</code> (wahi DTO).</td></tr>
+        <tr><td><code>api/v1/calendar/StudentSchoolCalendarUtil.java</code> <span class="pill t">nayi file</span></td><td><code>getStudentSchoolCalendar(Payload)</code></td><td>Main method. Payload decode → <code>startDate</code>, <code>endDate</code>. <b>User sirf session se</b> (<code>sessionUtil.getUserId()</code>), payload ka <code>userId</code> use nahi hoga. Role STUDENT nahi to error status (purane wale jaisa session-out / user-not-found code).</td></tr>
+        <tr><td></td><td><code>loadContext(user)</code></td><td>studentStandard, batchId, learning program, standard / provider / subject ids — purane student branch jaisa hi.</td></tr>
+        <tr><td></td><td><code>addHolidays(day, ctx, events)</code></td><td>Har din ki holiday query — <b>abhi wahi</b> (7c chhoda).</td></tr>
+        <tr><td></td><td><code>addBatchClasses(day, ctx, cache, events)</code></td><td>Batch student ke group classes — purana logic, per-event checks <code>cache</code> se.</td></tr>
+        <tr><td></td><td><code>addSingleClasses(ctx, cache, events)</code></td><td>1:1 / orientation classes — purana logic, <code>cache</code> se.</td></tr>
+        <tr><td></td><td><code>addActivities(ctx, cache, events)</code></td><td>School activities (REC dates bhi) — purana logic, <code>cache</code> se.</td></tr>
+        <tr><td></td><td><code>removeHolidayEvents</code>, <code>activitiesWithClass</code>, <code>addAssignments</code> (buzz), <code>courseDetails</code></td><td>Purane jaisa, koi badlaav nahi.</td></tr>
+        <tr><td></td><td><code>RequestCache</code> (inner class, ek request tak)</td><td>
+          <code>feedbackFormId(eventType)</code> — Map, ek type ek baar (7a)<br>
+          <code>teacher(userId)</code> — Map, ek teacher ek baar (7a)<br>
+          <code>graceSeconds</code> — <code>GRACE_TIME_TO_JOIN_CLASS</code> setting ek baar (abhi har attended event pe padhi jaati hai)<br>
+          <code>feedback(entityType, entityId, utcStart)</code> — saari feedback ek query se, phir memory mein match (7b)
+        </td></tr>
+        <tr><td><code>v1/dao/FeedbackSubmissionDao.java</code></td><td><code>getAllByUserIdAndFeedbackDateRange(userId, fromUtc, toUtc)</code> <span class="pill t">nayi query</span></td><td><code>WHERE USER_ID=? AND FEEDBACK_DATE_TIME BETWEEN ? AND ?</code>. (Maujooda <code>getAllByUserIdAndDateRange</code> submission date pe filter karti hai, class date pe nahi — isliye kaam ki nahi.) Range dono taraf 1 din chauda rakhenge (timezone).</td></tr>
+        <tr><td><code>v1/service/FeedbackSubmissionService(+Impl).java</code></td><td>Upar wali query ka service method</td><td>Sirf pass-through.</td></tr>
+        <tr><td><code>v1/service/sse/LiveClassroomAttendanceService(+Impl).java</code></td><td><code>getAttendanceStatus(..., int graceSeconds)</code> overload <span class="pill t">naya</span></td><td>Purana method waisa hi; naya overload setting dobara nahi padhta. Purana method andar se naya call kar sakta hai — behaviour same.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>3. Kya speed-up lagega aur kya nahi</h2>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Cheez</th><th>Abhi</th><th>Naye endpoint mein</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Feedback form mapping</td><td>Har event pe 1–2 query</td><td>Har event type ek baar</td><td><span class="pill ok">7a</span></td></tr>
+        <tr><td>Teacher lookup (salutation)</td><td>Har event pe 1 query</td><td>Har teacher ek baar</td><td><span class="pill ok">7a</span></td></tr>
+        <tr><td>Grace time setting</td><td>Har attended event pe 1 query</td><td>Request mein 1 baar</td><td><span class="pill ok">7a</span></td></tr>
+        <tr><td>Feedback submission</td><td>Har event pe 1 query</td><td>Poori range ki 1 query</td><td><span class="pill warn">7b</span></td></tr>
+        <tr><td>Attendance count + attendance status</td><td>Har event pe 2–4 query</td><td><b>Abhi wahi rakhenge</b> — inki queries naam-matching (<code>LIKE</code>) aur kai tables wali hain; bulk karna risky. Diff test ke baad agla step.</td><td><span class="pill warn">baad mein</span></td></tr>
+        <tr><td>Holidays per din</td><td>Har din 1 query</td><td>Wahi (home pe sirf 3)</td><td><span class="pill bad">7c nahi</span></td></tr>
+        <tr><td>Teacher wala code</td><td>Method mein maujood</td><td>Naye mein hai hi nahi</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <p style="color:var(--mut);font-size:13px;margin:8px 0 0">Andaaza: har event pe 5–8 query → 2–4 query. Asli fark diff test ke saath naapenge.</p>
+  </div>
+
+  <h2>4. Frontend (is-sms) — kya badlega</h2>
+  <div class="card">
+    <ul style="margin:0">
+      <li><code>services/dashboardApi.js</code> → <code>getSchoolCalendar()</code>: sirf URL <code>dashboard/school-calendar</code> → <code>dashboard/student/school-calendar</code>, jab session STUDENT ka ho. Body wahi (<code>{ userId, startDate, endDate }</code>; naya endpoint userId ignore karega). Response wahi, isliye <code>useStudentCalendar</code>, bootstrap (Tier 1), <code>ClassFeedbackHost</code>, dummy mode — kuch nahi badlega.</li>
+      <li>Koi aur role (agar kabhi) purana URL hi use karega.</li>
+    </ul>
+  </div>
+
+  <h2>5. Security</h2>
+  <div class="card">
+    <ul style="margin:0">
+      <li>Purana endpoint payload ke <code>userId</code> pe chalta hai (kisi ka bhi calendar mang sakte ho) — usse nahi chhedna.</li>
+      <li>Naya endpoint <b>sirf session user</b> ka calendar dega, aur sirf STUDENT role ko. Isse student ki taraf ka ye IDOR khatam.</li>
+    </ul>
+  </div>
+
+  <h2>6. Kaam ka kram</h2>
+  <div class="card">
+    <ol style="margin:0">
+      <li>is-rest-api: <code>StudentSchoolCalendarUtil</code> (student branch copy + <code>RequestCache</code>), controller method, feedback DAO query + service, attendance overload.</li>
+      <li>Backend compile (<code>mvnw compile</code>).</li>
+      <li><b>Diff test</b>: Liliana ke liye purana aur naya dono endpoint — 3 din, 1 hafta, 1 mahina — JSON compare (event order sort karke). Diff khaali hona chahiye. Batch student / orientation / holiday wale din agar test account mile to wo bhi.</li>
+      <li>Time naapna: dono endpoint same range ke liye.</li>
+      <li>is-sms: <code>getSchoolCalendar</code> ka URL switch → lint + build → dashboard home aur My Classes browser mein check.</li>
+      <li>Teacher dashboard (Java) ek baar khol ke dekhna — confirm ki wahan kuch nahi badla (purana endpoint).</li>
+    </ol>
+    <p style="color:var(--mut);font-size:13px;margin:8px 0 0">Backend restart chahiye hoga (naya controller method). Koi commit nahi — sab uncommitted chhodunga.</p>
+  </div>
+</main>
+</body>
+</html>

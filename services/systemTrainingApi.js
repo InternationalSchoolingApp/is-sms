@@ -3,6 +3,7 @@
 import { getAccountSession, serviceKeyHeaders, smsAuthHeaders } from "@/lib/auth/session";
 import { encodePayload } from "@/utils/payloadEncoding";
 import { hasBackendOrigin, resolveServerBackendOrigin } from "@/utils/backendOrigin";
+import { sharedUserRead } from "@/utils/userReadMemo";
 
 /**
  * The dashboard's School System Training popup data — legacy studentTimePreference.js getStudentTimePreference()
@@ -54,7 +55,8 @@ export async function getSystemTrainingPopup() {
   const me = await getAccountSession();
   if (!me?.userId || !me?.schoolUUID || !hasBackendOrigin()) return null;
   try {
-    const dashboard = await post(me.schoolUUID, "/student/dashboard/dashboard-or-migration", { userId: me.userId });
+    // The dashboard's start-up (Tier 1) has just read this same answer: shared for one page load (utils/userReadMemo.js).
+    const dashboard = await sharedUserRead("dashboard-or-migration", () => post(me.schoolUUID, "/student/dashboard/dashboard-or-migration", { userId: me.userId }));
     if (!dashboard || dashboard.studentGraduate !== "N" || dashboard.showStudentCourseSelectionModel !== "Y") return null;
     return await courseSelection(me, dashboard);
   } catch {

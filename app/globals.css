@@ -9,6 +9,7 @@
 @import "./k5-modules.css";
 @import "./profile-plain.css";
 @import "./scrollbar.css";
+@import "./pointer.css";
 
 @custom-variant dark (&:is(.dark *));
 

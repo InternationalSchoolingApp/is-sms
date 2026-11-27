@@ -2,7 +2,7 @@
 
 import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
-import { BUDDIES } from "@/constant/appearance";
+import { BUDDIES, buddyNameOf } from "@/constant/appearance";
 
 // The pictures of the Christmas theme, drawn like the mockups (Playful / Middle / High .dc.html).
 
@@ -43,7 +43,7 @@ export function SantaBuddy() {
   const color = buddy === "pico" && isMiddle ? "#3B9BFF" : BUDDIES[buddy].color;
   return (
     <span className="relative flex flex-none">
-      <svg width="92" height="92" viewBox="0 0 200 200" role="img" aria-label={`${BUDDIES[buddy].name} dressed as Santa`} className="flex-none overflow-visible">
+      <svg width="92" height="92" viewBox="0 0 200 200" role="img" aria-label={`${buddyNameOf(preferences)} dressed as Santa`} className="flex-none overflow-visible">
         <circle cx="100" cy="104" r="92" fill={color} />
         <circle cx="100" cy="114" r="60" fill="#FFE3D3" />
         <circle cx="56" cy="146" r="20" fill="#FFFFFF" />

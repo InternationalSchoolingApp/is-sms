@@ -13,6 +13,7 @@ import { getStudentBookedClasses } from "@/services/bookClassApi";
 import { bookedClassDateRange } from "@/utils/bookClass";
 import { useTeacherLabel } from "@/hooks/useTeacherLabel";
 import { K5Loading, K5RowsSkeleton } from "@/components/k5/K5Skeletons";
+import { CancelClassButton, StatusInfo } from "@/components/student/bookClass/CancelClassButton";
 
 // The From / To calendars are not limited to the current year: any date from 10 years back to 10 years ahead can be picked.
 const PICKER_MIN = new Date(new Date().getFullYear() - 10, 0, 1);
@@ -41,6 +42,7 @@ const STATUSES = [
   { value: "Completed", label: "Completed" },
   { value: "Reschedule Session", label: "Rescheduled" },
   { value: "Missed by Student", label: "Missed by you" },
+  { value: "Cancelled", label: "Cancelled" },
 ];
 const STATUSES_MIDDLE = [
   { value: "", label: "Select Status" },
@@ -48,6 +50,7 @@ const STATUSES_MIDDLE = [
   { value: "Completed", label: "Completed" },
   { value: "Reschedule Session", label: "Reschedule Session" },
   { value: "Missed by Student", label: "Missed by you" },
+  { value: "Cancelled", label: "Cancelled" },
 ];
 // Count tiles. `status` = the backend status filter a tap applies (null = not a filter).
 const TILES = [
@@ -172,7 +175,8 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState({ key: "date", dir: "desc" });
   // The course filter (Middle): "" = All Courses, else a subject id. It starts on the course the student came from.
-  const [crs, setCrs] = useState(course.subjectId ? String(course.subjectId) : "");
+  const startCrs = course.subjectId ? String(course.subjectId) : "";
+  const [crs, setCrs] = useState(startCrs);
 
   const dummy = useDummyStudent();
   const realSubjects = subjects.filter((s) => s.subjectId !== 0);
@@ -218,7 +222,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
   const dirty =
     JSON.stringify(filter) !== JSON.stringify(DEFAULT_FILTER) ||
     JSON.stringify(draft) !== JSON.stringify(DEFAULT_FILTER) ||
-    (middle && crs !== "");
+    (middle && crs !== startCrs);
   const teacherName = rows[0]?.name || course.teacherName;
 
   const sorted = useMemo(() => {
@@ -242,7 +246,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
     setPage(1);
   }
   function reset() {
-    setCrs("");
+    setCrs(startCrs);
     apply(DEFAULT_FILTER);
   }
   function toggleSort(key) {
@@ -272,7 +276,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
             </svg>
           </span>
           <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
-            <h1 className="m-0 font-k5-display text-[30px] font-semibold leading-[1.05]">Booked Class Details</h1>
+            <h1 className="m-0 font-k5-display text-[30px] font-semibold leading-[1.05]">My Booked Classes</h1>
             <p className="m-0 text-base font-extrabold text-k5-mut">All the classes you booked, in one place.</p>
           </div>
           <div className="flex flex-wrap gap-2.5">
@@ -473,7 +477,7 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
         </div>
 
         <div className="overflow-x-auto rounded-[18px] border-[3px] border-k5-line max-[760px]:overflow-visible max-[760px]:border-0">
-          <div role="table" aria-label={middle ? "Booked Class Details" : "My booked classes"} className="min-w-[900px] text-[15px] font-extrabold max-[760px]:flex max-[760px]:min-w-0 max-[760px]:flex-col max-[760px]:gap-2.5">
+          <div role="table" aria-label={middle ? "My Booked Classes" : "My booked classes"} className="min-w-[900px] text-[15px] font-extrabold max-[760px]:flex max-[760px]:min-w-0 max-[760px]:flex-col max-[760px]:gap-2.5">
             <div role="row" style={{ "--cols": middle ? GRID_MIDDLE : GRID }} className="grid grid-cols-[var(--cols)] bg-k5-ac max-[760px]:hidden">
               {(middle ? COLUMNS_MIDDLE : COLUMNS).map((c, idx) => (
                 <span key={c.label + idx} role="columnheader" aria-sort={sort.key === c.key ? (sort.dir === "asc" ? "ascending" : "descending") : "none"} className="flex px-1 py-1">
@@ -515,12 +519,16 @@ export function K5BookedView({ course, subjects = [], onBack, onBook }) {
                 const rowKey = `${row.meetingJoinDate}-${row.startTime}-${start + i}`;
                 const cellLabel = "max-[760px]:order-2 max-[760px]:px-3 max-[760px]:py-1.5 max-[760px]:[overflow-wrap:anywhere] max-[760px]:before:mb-0.5 max-[760px]:before:block max-[760px]:before:text-xs max-[760px]:before:font-black max-[760px]:before:text-k5-mut max-[760px]:before:content-[attr(data-l)]";
                 const status = (
+                  <>
                   <span
                     style={{ background: pill?.bg || "var(--k5-soft)", color: pill?.fg || "var(--k5-ink)" }}
                     className={`inline-block whitespace-nowrap rounded-full px-3 text-sm ${middle ? "py-1 font-black" : "py-1 font-black"}`}
                   >
                     {pill?.label || row.meetingResult || "N/A"}
                   </span>
+                  <StatusInfo row={row} />
+                  <CancelClassButton row={row} themed />
+                  </>
                 );
                 if (middle) {
                   return (

@@ -61,11 +61,7 @@ export async function isOwnStudentStandard(studentStandardId) {
   const ids = new Set(remembered(me.userId));
   if (ids.has(id)) return true;
 
-  const dashboard = await backendRequest({
-    path: "student/dashboard/get-student-dashboard",
-    checkSession: null,
-    buildBody: (user) => ({ userId: user.userId }),
-  });
+  const dashboard = await currentStudentStandard();
   const current = asId(dashboard.ok && dashboard.data?.studentStandardId);
   if (current) ids.add(current);
 
@@ -81,4 +77,40 @@ export async function isOwnStudentStandard(studentStandardId) {
 
   if (ids.size) remember(me.userId, ids);
   return ids.has(id);
+}
+
+/**
+ * The signed-in student's CURRENT enrolment, the studentStandardId of student/dashboard/get-student-dashboard (for the
+ * session's own userId). The dashboard asks get-student-dashboard on every start-up (Tier 1, getStudentDashboardDetails
+ * calls rememberCurrentStudentStandard with its answer), so the profile and enrolment checks that follow reuse that answer
+ * for 5 minutes instead of asking the slow call again. Answers { ok: true, data: { studentStandardId } } or the backend
+ * failure (utils/backendRequest.js shape), as the call itself did.
+ */
+const currentByUser = new Map(); // userId -> { id: number, until: number }
+
+export async function rememberCurrentStudentStandard(studentStandardId) {
+  const id = asId(studentStandardId);
+  const me = id ? await getSessionIdentity() : null;
+  if (!me) return;
+  if (currentByUser.size >= MAX_USERS) currentByUser.clear();
+  currentByUser.set(me.userId, { id, until: Date.now() + TTL_MS });
+  const ids = new Set(remembered(me.userId));
+  ids.add(id);
+  remember(me.userId, ids);
+}
+
+export async function currentStudentStandard() {
+  const me = await getSessionIdentity();
+  const hit = me ? currentByUser.get(me.userId) : null;
+  if (hit && hit.until > Date.now()) return { ok: true, data: { studentStandardId: hit.id } };
+  const dashboard = await backendRequest({
+    path: "student/dashboard/get-student-dashboard",
+    checkSession: null,
+    buildBody: (user) => ({ userId: user.userId }),
+  });
+  if (dashboard.ok && me) {
+    const id = asId(dashboard.data?.studentStandardId);
+    if (id) currentByUser.set(me.userId, { id, until: Date.now() + TTL_MS });
+  }
+  return dashboard;
 }

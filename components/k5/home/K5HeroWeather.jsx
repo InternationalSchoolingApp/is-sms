@@ -157,7 +157,7 @@ export function WeatherIcon({ scene, night }) {
 /** The moon beside the greeting after dark (mockup .hero-moon): it bobs and the stars twinkle. */
 export function HeroMoon() {
   return (
-    <svg className="hero-sun hero-moon" width="72" height="72" viewBox="0 0 72 72" aria-hidden="true" style={{ flex: "none", margin: "-16px -12px -18px -18px" }}>
+    <svg className="hero-sun hero-moon" width="72" height="72" viewBox="0 0 72 72" aria-hidden="true" style={{ flex: "none", margin: "-16px -14px -18px -8px" }}>
       <circle className="hm-glow" cx="34" cy="38" r="27" fill="#FFF3B0" />
       <g className="hm-body">
         <path d="M34.7 16A22 22 0 1 0 54.6 45.8A18 18 0 0 1 34.7 16Z" fill="#FFE27A" stroke="#E0B12E" strokeWidth="2.2" strokeLinejoin="round" />

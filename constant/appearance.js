@@ -29,6 +29,8 @@ export const APPEARANCE_OPTIONS = {
   gradeLook: ["auto", "playful", "balanced", "mature"],
   // The Christmas (25 December) theme: snow, music and decorations (components/k5/christmas).
   christmas: ["on", "off"],
+  // "Pick your pointer" (mockup): the mouse arrow and the little trail it leaves (components/appearance/PointerTrail.jsx).
+  pointer: ["normal", "rocket", "star", "wand", "block", "rainbow", "paw"],
 };
 
 // Decision 08: Light by default (System stays available in the dialog).
@@ -54,6 +56,8 @@ export const DEFAULT_APPEARANCE = {
   gameSound: "on",
   gradeLook: "auto",
   christmas: "on",
+  pointer: "normal",
+  buddyNames: {},
 };
 
 // School policy (admin CONFIGURATION keys arrive in Phase 4). Customization off = defaults
@@ -131,10 +135,37 @@ export function voiceOf(voice, speed) {
   return { id: v.id, language: v.language, speed: (VOICE_SPEEDS[speed] || VOICE_SPEEDS.normal).value };
 }
 
+// The name a student gave a buddy (mockup "Your buddy's name"): up to 14 characters, one per buddy.
+export const BUDDY_NAME_MAX = 14;
+
+/** A typed buddy name: no control characters, at most BUDDY_NAME_MAX characters (an empty result means "the default name"). */
+export function cleanBuddyName(value) {
+  return String(value ?? "").replace(/[\u0000-\u001f\u007f<>]/g, "").slice(0, BUDDY_NAME_MAX);
+}
+
+function sanitizeBuddyNames(value) {
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const names = {};
+  Object.keys(BUDDIES).forEach((key) => {
+    const name = cleanBuddyName(source[key]).trim();
+    if (name) names[key] = name;
+  });
+  return names;
+}
+
+/** The name to show for a buddy: the student's own name for it, else its default (Pico, Penny...). */
+export function buddyNameOf(preferences, key = preferences?.buddy) {
+  const id = BUDDIES[key] ? key : "pico";
+  return preferences?.buddyNames?.[id] || BUDDIES[id].name;
+}
+
 /** Only allowlisted values survive; everything else takes the default. */
 export function sanitizeAppearance(value, defaults = DEFAULT_APPEARANCE) {
   const source = value && typeof value === "object" ? value : {};
-  return Object.fromEntries(
-    Object.entries(APPEARANCE_OPTIONS).map(([key, allowed]) => [key, allowed.includes(source[key]) ? source[key] : defaults[key]]),
-  );
+  return {
+    ...Object.fromEntries(
+      Object.entries(APPEARANCE_OPTIONS).map(([key, allowed]) => [key, allowed.includes(source[key]) ? source[key] : defaults[key]]),
+    ),
+    buddyNames: sanitizeBuddyNames(source.buddyNames ?? defaults.buddyNames),
+  };
 }

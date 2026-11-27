@@ -1,4 +1,9 @@
 -- Test-user finder queries (READ ONLY, SELECT only, no passwords).
+-- 2026-11-27: every column below was checked against the is-rest-api entities (@Table / @Column) and native queries.
+-- phpMyAdmin: select the database first (left panel), or keep the USE line below. The dev database name comes from
+-- is-rest-api .env.local (SMS_DB_READ_URL -> ${DATABASE_NAME:ildbbkp}); change it if your DATABASE_NAME is different.
+USE ildbbkp;
+
 -- Column names were taken from the is-rest-api entities / DAO queries:
 --   STUDENT_STANDARD (USER_ID, STANDARD_ID, STANDARD_STATUS, ENROLMENT_TYPE, SHOW_TRANSCRIPT_TO_STUDENT, REGISTRATION_TYPE)
 --   LMS_USER (STUDENT_STANDARD_ID, LMS_PROVIDER_ID, ENTITY_ROLE, ACTIVE)
@@ -48,8 +53,8 @@ LIMIT 20;
 
 -- ################################################################################
 -- Q3 .. Q16: rules were read from the is-rest-api code by a research agent (not line by line by me).
--- Run each query separately. Lines marked ASSUMED are join columns the code did not show - if MySQL
--- says "Unknown column", send me the error and I will fix it.
+-- Run each query separately (with the USE line above, or the database selected). The columns that were marked
+-- ASSUMED before are now checked against the entities (2026-11-27). If MySQL still says "Unknown column", send me the error.
 -- "Active student" = STUDENT_STANDARD.STANDARD_STATUS = 0.
 -- ################################################################################
 
@@ -82,19 +87,19 @@ LIMIT 20;
 
 -- ============================================================
 -- Q4  Reserve Seat popup (easy path: cached flag ELIGIBLE_FOR_ADV_FOR_NEXT_GRADE = 'Y')
---     studentGraduate must be false: SELECTED_SUBJECTS not empty AND MARKS_PUBLISHED <> 'Y'.
+--     studentGraduate must be false: SELECTED_SUBJECT not empty AND MARKS_PUBLISHED <> 'Y'.
 --     Not Grade 12 (STANDARD_ID 7). No SUCCESS payment of type REGISTRATION_FEE_ADV.
---     ASSUMED: STUDENT_STANDARD_DETAILS.STUDENT_STANDARD_ID = STUDENT_STANDARD.ID
+--     (Checked: STUDENT_STANDARD_DETAILS.STUDENT_STANDARD_ID = STUDENT_STANDARD.ID; the column is SELECTED_SUBJECT, singular.)
 -- ============================================================
 SELECT U.EMAIL, U.SCHOOL AS SCHOOL_ID, ST.NAME AS GRADE, SS.REGISTRATION_TYPE,
        SSD.ELIGIBLE_FOR_ADV_FOR_NEXT_GRADE, SSD.ELIGIBLE_FOR_BAE_FOR_NEXT_GRADE
 FROM STUDENT_STANDARD SS
-INNER JOIN STUDENT_STANDARD_DETAILS SSD ON SSD.STUDENT_STANDARD_ID = SS.ID          -- ASSUMED column
+INNER JOIN STUDENT_STANDARD_DETAILS SSD ON SSD.STUDENT_STANDARD_ID = SS.ID
 INNER JOIN `USER` U     ON U.ID = SS.USER_ID
 LEFT  JOIN STANDARD ST  ON ST.STANDARD_ID = SS.STANDARD_ID
 WHERE SS.STANDARD_STATUS = 0
   AND SS.STANDARD_ID <> 7
-  AND IFNULL(SS.SELECTED_SUBJECTS, '') <> ''
+  AND IFNULL(SS.SELECTED_SUBJECT, '') <> ''
   AND IFNULL(SS.MARKS_PUBLISHED, 'N') <> 'Y'
   AND (SSD.ELIGIBLE_FOR_ADV_FOR_NEXT_GRADE = 'Y' OR SSD.ELIGIBLE_FOR_BAE_FOR_NEXT_GRADE = 'Y')
   AND NOT EXISTS (SELECT 1 FROM USER_PAYMENT_DETAILS UP
@@ -220,7 +225,7 @@ LIMIT 20;
 -- Q12 Academic-year Extension card (PARTIAL: some checks in the code were not located)
 --     Active standard, an active subject whose dates span today, LMS user not disabled.
 --     The menu hides it for provider 39 and standard 8.
---     ASSUMED: LMS_USER.LMS_STATUS exists (the code treats LMS_STATUS = 0 as disabled).
+--     (Checked: LMS_USER.LMS_STATUS exists; the code treats LMS_STATUS = 0 as disabled.)
 -- ============================================================
 SELECT DISTINCT U.EMAIL, U.SCHOOL AS SCHOOL_ID, ST.NAME AS GRADE, LU.LMS_PROVIDER_ID
 FROM STUDENT_STANDARD SS
@@ -228,7 +233,7 @@ INNER JOIN `USER` U ON U.ID = SS.USER_ID
 INNER JOIN STUDENT_SESSION_SUBJECTS SSS ON SSS.STUDENT_STANDARD_ID = SS.ID
        AND SSS.SUBJECT_STATUS = 'A' AND CURDATE() BETWEEN SSS.START_DATE AND SSS.END_DATE
 INNER JOIN LMS_USER LU ON LU.STUDENT_STANDARD_ID = SS.ID AND LU.ENTITY_ROLE = 'STUDENT'
-       AND LU.ACTIVE = 'Y' AND IFNULL(LU.LMS_STATUS, 1) <> 0                      -- ASSUMED column
+       AND LU.ACTIVE = 'Y' AND IFNULL(LU.LMS_STATUS, 1) <> 0
 LEFT  JOIN STANDARD ST ON ST.STANDARD_ID = SS.STANDARD_ID
 WHERE SS.STANDARD_STATUS = 0
   AND SS.STANDARD_ID <> 8

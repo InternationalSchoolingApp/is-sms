@@ -75,21 +75,9 @@ function DateStrip({ now, timezone, weather, night, scene }) {
           </g>
         </svg>
         <div className="hs-txt">
-          <span className="hs-d1">{format(now, "EEEE")}</span>
-          <span className="hs-d2">{format(now, "MMM d, yyyy")}</span>
-        </div>
-      </div>
-      <span className="hs-div" aria-hidden="true" />
-      <div className="hs-sec hs-mid">
-        <div className="hs-time">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5B3FD4" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 7v5l3.2 2" />
-          </svg>
-          <span className="hs-tm">
-            <b>{format(clock, "h:mm:ss a")}</b>
-            <small>{zoneLabel(timezone)}</small>
-          </span>
+          <span className="hs-d1">{format(clock, "EEEE")},</span>
+          <span className="hs-d2">{format(clock, "MMM d, yyyy, h:mm a")}</span>
+          <span className="hs-ny">{zoneLabel(timezone)}</span>
         </div>
       </div>
       <span className="hs-div" aria-hidden="true" />
@@ -173,7 +161,7 @@ function ThoughtCard() {
   // No quote (service off, demo mode): the thought the login page falls back to.
   const text = quote?.quoteText || "Every expert was once a beginner. Keep pushing forward.";
   return (
-    <div className="dash-cont relative flex min-w-[210px] flex-[0_2_340px] flex-col gap-3 rounded-3xl bg-k5-card p-4 pb-4 text-k5-ink shadow-[0_5px_0_rgba(0,40,140,0.35)] max-[760px]:min-w-0 max-[760px]:flex-[1_1_100%] @max-[640px]/hero:min-w-0 @max-[640px]/hero:flex-[1_1_100%]">
+    <div className="lmcont dash-cont relative flex min-w-[210px] flex-[0_2_340px] flex-col gap-3 rounded-3xl bg-k5-card p-4 pb-4 text-k5-ink shadow-[0_5px_0_rgba(0,40,140,0.35)] max-[760px]:min-w-0 max-[760px]:flex-[1_1_100%] @max-[640px]/hero:min-w-0 @max-[640px]/hero:flex-[1_1_100%]">
       <div className="flex items-center gap-2.5">
         <span aria-hidden="true" className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-k5-act text-k5-acx">
           <Sparkles className="h-[18px] w-[18px]" strokeWidth={2.4} />
@@ -205,7 +193,7 @@ function ClassCard({ live, next, liveActivity, onJoin, onOpenActivity, classesHr
   const teacher = teacherName(event);
   const title = isActivity ? activityTitle(event) : classTitle(event);
   return (
-    <div className="dash-cont relative flex min-w-[210px] flex-[0_2_340px] flex-col gap-3 rounded-3xl bg-k5-card p-4 pb-4 text-k5-ink shadow-[0_5px_0_rgba(0,40,140,0.35)] max-[760px]:min-w-0 max-[760px]:flex-[1_1_100%] @max-[640px]/hero:min-w-0 @max-[640px]/hero:flex-[1_1_100%]">
+    <div className="lmcont dash-cont relative flex min-w-[210px] flex-[0_2_340px] flex-col gap-3 rounded-3xl bg-k5-card p-4 pb-4 text-k5-ink shadow-[0_5px_0_rgba(0,40,140,0.35)] max-[760px]:min-w-0 max-[760px]:flex-[1_1_100%] @max-[640px]/hero:min-w-0 @max-[640px]/hero:flex-[1_1_100%]">
       <div className="flex items-center gap-3">
         {isActivity ? (
           <span aria-hidden="true" className="flex h-12 w-12 flex-none items-center justify-center rounded-[14px] bg-k5-act text-k5-acx">
@@ -292,7 +280,7 @@ function Hero({ now, timezone, firstName, live, next, liveActivity, onJoin, onOp
     <section
       aria-label="My Dashboard"
       data-pin="hero"
-      className="dash-hero relative box-border flex min-h-[262px] min-w-[520px] flex-[2_1_0] flex-col justify-center gap-[18px] overflow-hidden rounded-[30px] border-[3px] border-[#00398F] bg-[linear-gradient(100deg,#0166FE_0%,#288AFE_45%,#7DDAE3_85%,#8BE6D8_100%)] p-6 text-white shadow-[0_6px_0_#00398F] [container-name:hero] [container-type:inline-size] max-[760px]:min-w-0 max-[760px]:basis-full max-[760px]:p-4"
+      className="dash-hero relative box-border flex min-h-[262px] min-w-[520px] flex-[2_1_0] flex-col justify-center gap-[18px] min-[761px]:gap-[22px] overflow-hidden rounded-[30px] border-[3px] border-[#00398F] bg-[linear-gradient(100deg,#0166FE_0%,#288AFE_45%,#7DDAE3_85%,#8BE6D8_100%)] p-6 text-white shadow-[0_6px_0_#00398F] [container-name:hero] [container-type:inline-size] max-[760px]:min-w-0 max-[760px]:basis-full max-[760px]:p-4"
     >
       <WeatherScene scene={scene} />
       {festive && (
@@ -326,10 +314,8 @@ function Hero({ now, timezone, firstName, live, next, liveActivity, onJoin, onOp
       <span aria-hidden="true" className="dash-bob k5-bob2 pointer-events-none absolute left-[43%] top-[92px] block h-[9px] w-[9px] rounded-full bg-[#FFF1A8] [animation-delay:-1s]" />
       <span aria-hidden="true" className="dash-bob k5-bob2 pointer-events-none absolute bottom-[58px] left-[52%] block h-2.5 w-2.5 rounded-full bg-[#B9F5E1] [animation-delay:-2s]" />
 
-      <DateStrip now={now} timezone={timezone} weather={weather} night={night} scene={scene} />
-
-      <div className="hero-row relative flex flex-nowrap items-center gap-5 max-[760px]:flex-wrap @max-[640px]/hero:flex-wrap">
-        <div className="hero-greet relative flex min-w-0 flex-[1_1_auto] items-center gap-3.5">
+      <div className="hero-greet relative flex min-w-0 max-w-full flex-col">
+        <div className="flex items-center gap-3.5">
           {look === "high" ? (
             night ? (
               <svg width="42" height="42" viewBox="0 0 48 48" aria-hidden="true" className="flex-none self-center">
@@ -346,14 +332,18 @@ function Hero({ now, timezone, firstName, live, next, liveActivity, onJoin, onOp
           ) : night ? (
             <HeroMoon />
           ) : (
-            <K5ClockIcon kind="sun" night={false} className="hero-sun !-m-4 !-mr-3 !h-[72px] !w-[72px]" />
+            <K5ClockIcon kind="sun" night={false} className="hero-sun hero-sun-sm !m-0 !-mr-1.5 !h-[38px] !w-[38px]" />
           )}
-          <h1 className="dash-greet m-0 text-[32px] font-semibold leading-[38px]">
-            <span className="whitespace-nowrap">{festive ? "Merry Christmas" : greeting(now.getHours())},</span>
-            <br />
-            {firstName}
+          <h1 className="dash-greet m-0 min-w-0 text-[32px] font-semibold leading-[38px]">
+            <span className="whitespace-nowrap">
+              {festive ? "Merry Christmas" : greeting(now.getHours())}, {firstName}
+            </span>
           </h1>
         </div>
+      </div>
+
+      <div className="hero-row relative flex flex-nowrap items-center gap-5 max-[760px]:flex-wrap @max-[640px]/hero:flex-wrap">
+        <DateStrip now={now} timezone={timezone} weather={weather} night={night} scene={scene} />
         <ClassCard live={live} next={next} liveActivity={liveActivity} onJoin={onJoin} onOpenActivity={onOpenActivity} classesHref={classesHref} />
       </div>
     </section>

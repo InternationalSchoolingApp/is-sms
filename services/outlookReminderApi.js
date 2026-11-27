@@ -1,6 +1,7 @@
 "use server";
 
 import { backendRequest } from "@/utils/backendRequest";
+import { forgetUserRead, sharedUserRead } from "@/utils/userReadMemo";
 
 /**
  * School e-mail (Outlook) activation reminder on the dashboard (legacy studentDashboardContent.js renderOutlookModalOnDashboard):
@@ -16,7 +17,8 @@ const okStatus = (answer) => String(answer?.status ?? "") === "1";
 
 /** { pending, email, password, needsAzureCreation } - pending is false when the setup is done or never needed. */
 export async function loadOutlookReminder() {
-  const layer = await backendRequest({ path: "dashboard/additinal-layer-details", buildBody: (me) => ({ userId: me.userId }) });
+  // Shared with the onboarding gate's read of the same call on this page load (services/onboardingGateApi.js).
+  const layer = await sharedUserRead("additional-layer", () => backendRequest({ path: "dashboard/additinal-layer-details", buildBody: (me) => ({ userId: me.userId }) }), (r) => r?.ok);
   if (!layer.ok) return { ok: false, message: layer.message || FAILED };
   const details = okStatus(layer.data) ? layer.data.details || {} : {};
   if (!details.outlookSetupPending) return { ok: true, data: { pending: false } };
@@ -45,6 +47,7 @@ export async function isOutlookActivated() {
  * password), otherwise mark the credentials viewed. Outlook itself is opened by the browser afterwards.
  */
 export async function activateOutlook({ needsAzureCreation } = {}) {
+  await forgetUserRead("additional-layer");
   if (needsAzureCreation) {
     const created = await backendRequest({ path: "dashboard/create-azure-user", buildBody: (me) => ({ userId: me.userId }) });
     if (!created.ok) return { ok: false, message: created.message || FAILED };

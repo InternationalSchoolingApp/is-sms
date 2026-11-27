@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { addActivity, addClassTime, removeActivity, removeClassTime, removeCustomFile, removeDocument, removeSocialLink } from "@/services/profileActionsApi";
 import { saveMyProfile } from "@/services/profileSaveApi";
@@ -33,6 +34,7 @@ const MAX_TIMES = 3;
 
 export function useProfileActions({ studentStandardId, refetch, callingSlots = [], classSlots = [], socialLinks = [] }) {
   const [busy, setBusy] = useState(null);
+  const queryClient = useQueryClient();
 
   const run = useCallback(
     async (key, action, done) => {
@@ -90,7 +92,15 @@ export function useProfileActions({ studentStandardId, refetch, callingSlots = [
     addActivity: (values) => run("activity:add", () => callServer(() => addActivity(values)), "Activity added!"),
     removeActivity: (id) => run(`activity:${id}`, () => callServer(() => removeActivity({ id })), "Activity removed."),
     uploadDocument: (docType, file) =>
-      run(`doc:${docType}`, () => postDocuments([{ docType, file }]), docType === "Profile Image" ? "Your new photo is saved!" : "Document saved!"),
+      run(
+        `doc:${docType}`,
+        async () => {
+          await postDocuments([{ docType, file }]);
+          // The header avatar reads the photo from the short profile (components/k5/K5Header.jsx): refresh it too.
+          if (docType === "Profile Image") await queryClient.invalidateQueries({ queryKey: ["user-short-profile"] });
+        },
+        docType === "Profile Image" ? "Your new photo is saved!" : "Document saved!",
+      ),
     // Documents section "Save Documents": every chosen proof in one save-docs call, like the existing page.
     uploadDocuments: (list) => run("doc:save", () => postDocuments(list), list.length > 1 ? "Documents saved!" : "Document saved!"),
     // "Add other social media link" (profileViewNew.js addOtherSocialLinks): saved as socialMedia "0~url~title".

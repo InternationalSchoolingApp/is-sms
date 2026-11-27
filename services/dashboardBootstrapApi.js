@@ -57,17 +57,17 @@ export async function getDashboardBootstrap({ calendar } = {}) {
   const base = { schoolUUID: me.schoolUUID, userId: me.userId };
   const range = calendar && DAY.test(String(calendar.startDate)) && DAY.test(String(calendar.endDate)) ? { startDate: String(calendar.startDate), endDate: String(calendar.endDate) } : null;
 
-  // The grade band and the role id come from the details; the menu and the performance flavour wait for them, the rest do not.
+  // The role id comes from the details, so the menu waits for them; the rest do not.
   const details = settle(getStudentDashboardDetails(base));
   const menu = details.then(async (d) => {
     const roleId = d?.roleAndModuleAssign?.roleAndModuleDTO?.[0]?.roleId ?? null;
     if (!roleId) return undefined;
     return { roleId, data: await settle(getDashboardMenu({ ...base, schoolId: me.schoolNumericId, roleId })) };
   });
-  const performance = details.then(async (d) => {
-    const k5 = d?.k5DashboardEnabled === true;
-    return { k5, data: await settle(getStudentAcademicPerformance({ ...base, k5Performance: k5 })) };
-  });
+  // My Performance: every reader asks the k5 flavour (K5DashCards, the My Performance page - hooks/useStudentAcademicPerformance.js
+  // with k5Performance: true), so it starts at once instead of waiting for the details to tell the k5 flag; the slowest chain of
+  // the start-up (details, then performance) is gone. A reader that asks another flavour still gets its own call (viaTier1 checks k5).
+  const performance = settle(getStudentAcademicPerformance({ ...base, k5Performance: true })).then((data) => ({ k5: true, data }));
 
   const [detailsAnswer, menuAnswer, performanceAnswer, migration, academic, chatLinks, links, menuFlags, onboarding, calendarData, pending, quote, shortProfile, contactPending] = await Promise.all([
     details,

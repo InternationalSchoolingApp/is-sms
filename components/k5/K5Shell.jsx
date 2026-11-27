@@ -6,6 +6,7 @@ import { useParams, usePathname } from "next/navigation";
 import { RightActionRail } from "@/components/dashboard/RightActionRail";
 import { AppearanceProvider } from "@/components/appearance/AppearanceProvider";
 import { ReadingRuler } from "@/components/appearance/ReadingRuler";
+import { PointerTrail } from "@/components/appearance/PointerTrail";
 import { K5Header } from "@/components/k5/K5Header";
 import { MotionProvider, useMotion } from "@/components/motion/MotionProvider";
 import { PageReveal } from "@/components/motion/PageReveal";
@@ -205,6 +206,7 @@ function K5Frame({ children }) {
       <K5BrainBreak firstName={String(context.userName || "").split(" ")[0]} />
       <SelectToSpeak />
       <ReadingRuler />
+      <PointerTrail />
       {/* The "session logged out" dialog, inside the student's own theme (colour, Day / Night, grade look). */}
       <SessionExpiredDialog themed />
       <AppearanceDialog open={lookOpen} onClose={() => setLookOpen(false)} firstName={String(context.userName || "").split(" ")[0]} />
