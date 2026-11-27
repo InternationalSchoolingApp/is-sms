@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "@/components/providers/AuthSessionProvider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -101,6 +101,8 @@ export function studentDemoRowQuery({ schoolUUID, userId, entityId, enabled }) {
  * when this tab already resolved it for the same user (sessionStorage), which is shown at once
  * while get-student-dashboard refreshes it.
  */
+const DETAILS_RETRIES = 3;
+
 function useResolveGradeBand({ role, session, authenticated }) {
   // Re-render on route change so the query string (dummy mode) is read again: module links
   // drop ?dummyStudent, and the shell must follow the same mode as the module pages.
@@ -129,6 +131,22 @@ function useResolveGradeBand({ role, session, authenticated }) {
   );
 
   const details = dummyEnabled ? dummyDetails : detailsQuery.data;
+  // get-student-dashboard never throws: a call that could not be made (the token still being renewed right after signing in again,
+  // the backend choice not yet back, a slow backend) answers null, and react-query stores that null as a good answer for 5 minutes.
+  // Taken as is, a student whose own dashboard simply failed to load once is shown the DEFAULT one (every flag false) until they
+  // reload. So a null answer is asked again (3 more times, a little later each time) and, meanwhile, never decides the look.
+  const noAnswer = !dummyEnabled && detailsQuery.isSuccess && !details;
+  const [retries, setRetries] = useState(0);
+  useEffect(() => {
+    if (!noAnswer || retries >= DETAILS_RETRIES) return undefined;
+    const timer = setTimeout(() => {
+      setRetries((n) => n + 1);
+      detailsQuery.refetch();
+    }, 1500 * (retries + 1));
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [noAnswer, retries, detailsQuery.dataUpdatedAt]);
+  const gaveUp = noAnswer && retries >= DETAILS_RETRIES;
   const standardId = details?.standardId ?? null;
   const registrationType = details?.registrationType ?? null;
   const gradeBand = (dummyEnabled ? null : normalizeGradeBand(details?.gradeBand)) ?? bandFromStandardId(standardId) ?? "MIDDLE";
@@ -138,7 +156,8 @@ function useResolveGradeBand({ role, session, authenticated }) {
   const isHigh = gradeBand === "HIGH" && isHighDashboardOn(dummyEnabled);
   const isMiddle = (gradeBand === "MIDDLE" && isMiddleDashboardOn(dummyEnabled)) || isHigh;
   const isK5 = (gradeBand === "ELEMENTARY" || isMiddle) && k5DashboardEnabled && isK5LearningProgram(registrationType);
-  const fetched = authenticated && search !== null && (dummyEnabled ? !demoRowQuery.isLoading : !detailsQuery.isPending);
+  // A null answer only counts as "fetched" once the asking again has given up.
+  const fetched = authenticated && search !== null && (dummyEnabled ? !demoRowQuery.isLoading : !detailsQuery.isPending && (!noAnswer || gaveUp));
 
   const resolved = {
     gradeBand,
@@ -178,7 +197,9 @@ function useResolveGradeBand({ role, session, authenticated }) {
   }, [cacheKey, saveCache]);
 
   if (!isStudent) return { ...resolved, gradeResolved: true };
-  if (!fetched && !dummyEnabled && authenticated && search !== null && cached) return { ...cached, gradeResolved: true };
+  // This tab already knows the student's band: while the answer is missing (still loading, or asked again, or it never came), keep
+  // showing it instead of flipping to the default dashboard.
+  if ((!fetched || (noAnswer && gaveUp)) && !dummyEnabled && authenticated && search !== null && cached) return { ...cached, gradeResolved: true };
   return { ...resolved, gradeResolved: fetched };
 }
 

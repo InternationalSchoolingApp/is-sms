@@ -1797,6 +1797,12 @@
   border: 1px solid var(--k5-line) !important;
   box-shadow: none !important;
 }
+/* Mature draws these boxes on the page's own soft colour (it turns dark at night), so their text follows the ink too: the playful
+   boxes' fixed dark ink (#1C2640) was unreadable on it in night mode. Playful and Balanced keep their light boxes + dark ink. */
+[data-dash="high"] .lmgb .dash-pLabel,
+[data-dash="high"] .lmgb .dash-pValue {
+  color: var(--k5-ink) !important;
+}
 [data-dash="mid"] .lmgb,
 [data-dash="mid"] .lmgi {
   border-width: 1.5px !important;

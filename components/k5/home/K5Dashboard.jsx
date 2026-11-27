@@ -391,16 +391,19 @@ function TodayGoal({ classes, activities = [], assignments = [], classesHref, pl
       </h2>
       {/* Side by side with the hero (desktop) the card keeps the hero's height: the ring stays, the list beside it scrolls; stacked it just grows. */}
       <div className="flex items-center gap-5 pl-0.5 max-[420px]:flex-col max-[420px]:items-center max-[420px]:pl-0 @min-[844px]:min-h-0 @min-[844px]:flex-1 @min-[844px]:items-stretch">
-        <div className="relative h-[120px] w-[120px] flex-none @min-[844px]:self-center">
-          <svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label={`${done} of ${total} done today`} className="absolute left-0 top-0">
-            <circle cx="60" cy="60" r="54" strokeWidth="12" className="fill-k5-card stroke-k5-soft" />
-            <circle cx="60" cy="60" r="54" fill="none" stroke="#00CD89" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${(RING * done / Math.max(1, total)).toFixed(1)} ${RING}`} transform="rotate(-90 60 60)" />
-          </svg>
-          <div className="absolute left-0 top-0 flex h-[120px] w-[120px] flex-col items-center justify-center">
-            <span className="dash-ringN text-[26px] font-bold leading-none">{done}/{total}</span>
-            <span className="mt-0.5 text-xs font-medium text-k5-mut">Done</span>
+        {/* Nothing is planned today (0 of 0): there is no goal to count, so no ring either. */}
+        {total > 0 && (
+          <div className="relative h-[120px] w-[120px] flex-none @min-[844px]:self-center">
+            <svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label={`${done} of ${total} done today`} className="absolute left-0 top-0">
+              <circle cx="60" cy="60" r="54" strokeWidth="12" className="fill-k5-card stroke-k5-soft" />
+              <circle cx="60" cy="60" r="54" fill="none" stroke="#00CD89" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${(RING * done / Math.max(1, total)).toFixed(1)} ${RING}`} transform="rotate(-90 60 60)" />
+            </svg>
+            <div className="absolute left-0 top-0 flex h-[120px] w-[120px] flex-col items-center justify-center">
+              <span className="dash-ringN text-[26px] font-bold leading-none">{done}/{total}</span>
+              <span className="mt-0.5 text-xs font-medium text-k5-mut">Done</span>
+            </div>
           </div>
-        </div>
+        )}
         <div className="flex min-w-0 flex-1 flex-col gap-3 max-[420px]:w-full @min-[844px]:min-h-0 @min-[844px]:overflow-y-auto @min-[844px]:[justify-content:safe_center]">
         {playGames ? (
           // Every class, activity and assignment of the day is over (or there are none): the games card moves to the top and the list of the day sits below it. Tapping goes to My Classes, where Your Games slides open.
